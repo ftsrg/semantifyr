@@ -152,117 +152,161 @@ sync component CrossroadSystem [
 
 verification case ControllerOperatingReachable {
     component system : CrossroadSystem
-    property { EF isActive (system.controller.Main.Operating) }
+    property {
+        EF isActive (system.controller.Main.Operating)
+    }
 }
 
 verification case ControllerOperatingBothYellowReachable {
     component system : CrossroadSystem
-    property { EF isActive (system.controller.Main.Operating.OperatingRegion.BothYellow) }
+    property {
+        EF isActive (system.controller.Main.Operating.OperatingRegion.BothYellow)
+    }
 }
 
 verification case ControllerOperatingBothRedReachable {
     component system : CrossroadSystem
-    property { EF isActive (system.controller.Main.Operating.OperatingRegion.BothRed) }
+    property {
+        EF isActive (system.controller.Main.Operating.OperatingRegion.BothRed)
+    }
 }
 
 verification case ControllerOperatingStoppingAReachable {
     component system : CrossroadSystem
-    property { EF isActive (system.controller.Main.Operating.OperatingRegion.StoppingA) }
+    property {
+        EF isActive (system.controller.Main.Operating.OperatingRegion.StoppingA)
+    }
 }
 
 verification case ControllerOperatingStoppingBReachable {
     component system : CrossroadSystem
-    property { EF isActive (system.controller.Main.Operating.OperatingRegion.StoppingB) }
+    property {
+        EF isActive (system.controller.Main.Operating.OperatingRegion.StoppingB)
+    }
 }
 
 verification case ControllerOperatingTrafficOnAReachable {
     component system : CrossroadSystem
-    property { EF isActive (system.controller.Main.Operating.OperatingRegion.TrafficOnA) }
+    property {
+        EF isActive (system.controller.Main.Operating.OperatingRegion.TrafficOnA)
+    }
 }
 
 verification case ControllerOperatingTrafficOnBReachable {
     component system : CrossroadSystem
-    property { EF isActive (system.controller.Main.Operating.OperatingRegion.TrafficOnB) }
+    property {
+        EF isActive (system.controller.Main.Operating.OperatingRegion.TrafficOnB)
+    }
 }
 
 
 verification case ControllerInterruptedReachable {
     component system : CrossroadSystem
-    property { EF isActive (system.controller.Main.Interrupted) }
+    property {
+        EF isActive (system.controller.Main.Interrupted)
+    }
 }
 
 // TrafficLightController A verification cases
 
 verification case ANormalReachable {
     component system : CrossroadSystem
-    property { EF isActive (system.trafficLightA.Main.Normal) }
+    property {
+        EF isActive (system.trafficLightA.Main.Normal)
+    }
 }
 
 verification case AInterruptedReachable {
     component system : CrossroadSystem
-    property { EF isActive (system.trafficLightA.Main.Interrupted) }
+    property {
+        EF isActive (system.trafficLightA.Main.Interrupted)
+    }
 }
 
 verification case ACanBeYellow {
     component system : CrossroadSystem
-    property { EF isActive (system.trafficLightA.Main.Normal.NormalRegion.Yellow) }
+    property {
+        EF isActive (system.trafficLightA.Main.Normal.NormalRegion.Yellow)
+    }
 }
 
 verification case ACanBeRed {
     component system : CrossroadSystem
-    property { EF isActive (system.trafficLightA.Main.Normal.NormalRegion.Red) }
+    property {
+        EF isActive (system.trafficLightA.Main.Normal.NormalRegion.Red)
+    }
 }
 
 verification case ACanBeGreen {
     component system : CrossroadSystem
-    property { EF isActive (system.trafficLightA.Main.Normal.NormalRegion.Green) }
+    property {
+        EF isActive (system.trafficLightA.Main.Normal.NormalRegion.Green)
+    }
 }
 
 verification case ACanBeBlinkingYellow {
     component system : CrossroadSystem
-    property { EF isActive (system.trafficLightA.Main.Interrupted.InterruptedRegion.Yellow) }
+    property {
+        EF isActive (system.trafficLightA.Main.Interrupted.InterruptedRegion.Yellow)
+    }
 }
 
 verification case ACanBeBlinkingBlack {
     component system : CrossroadSystem
-    property { EF isActive (system.trafficLightA.Main.Interrupted.InterruptedRegion.Black) }
+    property {
+        EF isActive (system.trafficLightA.Main.Interrupted.InterruptedRegion.Black)
+    }
 }
 
 // TrafficLightController B verification cases
 
 verification case BNormalReachable {
     component system : CrossroadSystem
-    property { EF isActive (system.trafficLightB.Main.Normal) }
+    property {
+        EF isActive (system.trafficLightB.Main.Normal)
+    }
 }
 
 verification case BInterruptedReachable {
     component system : CrossroadSystem
-    property { EF isActive (system.trafficLightB.Main.Interrupted) }
+    property {
+        EF isActive (system.trafficLightB.Main.Interrupted)
+    }
 }
 
 verification case BCanBeYellow {
     component system : CrossroadSystem
-    property { EF isActive (system.trafficLightB.Main.Normal.NormalRegion.Yellow) }
+    property {
+        EF isActive (system.trafficLightB.Main.Normal.NormalRegion.Yellow)
+    }
 }
 
 verification case BCanBeRed {
     component system : CrossroadSystem
-    property { EF isActive (system.trafficLightB.Main.Normal.NormalRegion.Red) }
+    property {
+        EF isActive (system.trafficLightB.Main.Normal.NormalRegion.Red)
+    }
 }
 
 verification case BCanBeGreen {
     component system : CrossroadSystem
-    property { EF isActive (system.trafficLightB.Main.Normal.NormalRegion.Green) }
+    property {
+        EF isActive (system.trafficLightB.Main.Normal.NormalRegion.Green)
+    }
 }
 
 verification case BCanBeBlinkingYellow {
     component system : CrossroadSystem
-    property { EF isActive (system.trafficLightB.Main.Interrupted.InterruptedRegion.Yellow) }
+    property {
+        EF isActive (system.trafficLightB.Main.Interrupted.InterruptedRegion.Yellow)
+    }
 }
 
 verification case BCanBeBlinkingBlack {
     component system : CrossroadSystem
-    property { EF isActive (system.trafficLightB.Main.Interrupted.InterruptedRegion.Black) }
+    property {
+        EF isActive (system.trafficLightB.Main.Interrupted.InterruptedRegion.Black)
+    }
 }
 
 // Combined safety verification cases

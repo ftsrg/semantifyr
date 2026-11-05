@@ -55,48 +55,64 @@ sync component System[
 verification case LeaderStatechartIdleReachable {
     component system : System
 
-    property { EF isActive (system.leader.Main.Idle) }
+    property {
+        EF isActive (system.leader.Main.Idle)
+    }
 }
 
 verification case LeaderStatechartOperationalReachable {
     component system : System
 
-    property { EF isActive (system.leader.Main.Operational) }
+    property {
+        EF isActive (system.leader.Main.Operational)
+    }
 }
 
 verification case LeaderStatechartStoppedReachable {
     component system : System
 
-    property { EF isActive (system.leader.Main.Stopped) }
+    property {
+        EF isActive (system.leader.Main.Stopped)
+    }
 }
 
 verification case LeaderStatechartUnreachable {
     component system : System
 
-    property { AG not isActive (system.leader.Main.Unreachable) }
+    property {
+        AG not isActive (system.leader.Main.Unreachable)
+    }
 }
 
 
 verification case WorkerStatechartIdleReachable {
     component system : System
 
-    property { EF isActive (system.worker.Main.Idle) }
+    property {
+        EF isActive (system.worker.Main.Idle)
+    }
 }
 
 verification case WorkerStatechartOperationalReachable {
     component system : System
 
-    property { EF isActive (system.worker.Main.Operational) }
+    property {
+        EF isActive (system.worker.Main.Operational)
+    }
 }
 
 verification case WorkerStatechartStoppedReachable {
     component system : System
 
-    property { EF isActive (system.worker.Main.Stopped) }
+    property {
+        EF isActive (system.worker.Main.Stopped)
+    }
 }
 
 verification case WorkerStatechartUnreachable {
     component system : System
 
-    property { AG not isActive (system.worker.Main.Unreachable) }
+    property {
+        AG not isActive (system.worker.Main.Unreachable)
+    }
 }

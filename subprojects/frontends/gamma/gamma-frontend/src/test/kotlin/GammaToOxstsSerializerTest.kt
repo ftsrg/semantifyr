@@ -533,7 +533,9 @@ class GammaToOxstsSerializerTest {
             """
                 verification case LeaderIdleReachable {
                     component system : System
-                    property { EF isActive (system.leader.Main.Idle) }
+                    property {
+                        EF isActive (system.leader.Main.Idle)
+                    }
                 }
             """,
         )
@@ -558,7 +560,9 @@ class GammaToOxstsSerializerTest {
             """
                 verification case LeaderCountStaysSmall {
                     component system : System
-                    property { AG system.leader.count < 2 }
+                    property {
+                        AG system.leader.count < 2
+                    }
                 }
             """,
         )
