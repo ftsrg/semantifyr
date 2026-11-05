@@ -31,7 +31,7 @@ function fakeVerification(overrides: Partial<ActiveVerificationInfo>): ActiveVer
 }
 
 function createFakeApi(initial: ActiveVerificationInfo[]): FakeApi {
-  let handler: ((params: { active?: ActiveVerificationInfo[] }) => void) | null = null;
+  let handler: ((parameters: { active?: ActiveVerificationInfo[] }) => void) | null = null;
   let unsubscribed = false;
   const listVerifications = vi.fn(async () => ({ active: initial }));
   const cancelVerification = vi.fn(async () => true);
@@ -40,8 +40,8 @@ function createFakeApi(initial: ActiveVerificationInfo[]): FakeApi {
     listVerifications,
     cancelVerification,
     cancelAllVerifications,
-    onVerificationsChanged: (cb: (params: { active?: ActiveVerificationInfo[] }) => void) => {
-      handler = cb;
+    onVerificationsChanged: (listener: (parameters: { active?: ActiveVerificationInfo[] }) => void) => {
+      handler = listener;
       return () => { unsubscribed = true; handler = null; };
     },
   };
@@ -69,14 +69,14 @@ describe('useActiveVerifications', () => {
     const { result } = renderHook(() => useActiveVerifications(fake.api, true));
 
     await waitFor(() => {
-      expect(result.current.items.map((i) => i.verificationId)).toEqual(['r1']);
+      expect(result.current.items.map((item) => item.verificationId)).toEqual(['r1']);
     });
     expect(fake.listVerifications).toHaveBeenCalled();
 
     act(() => {
       fake.emit([fakeVerification({ verificationId: 'r1' }), fakeVerification({ verificationId: 'r2', kind: 'Validate' })]);
     });
-    expect(result.current.items.map((i) => i.verificationId)).toEqual(['r1', 'r2']);
+    expect(result.current.items.map((item) => item.verificationId)).toEqual(['r1', 'r2']);
   });
 
   it('treats a missing active field as empty', async () => {

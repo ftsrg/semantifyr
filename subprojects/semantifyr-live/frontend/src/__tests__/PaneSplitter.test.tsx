@@ -19,16 +19,16 @@ interface HostProps {
 }
 
 function Host({ rect, size, onChange, orientation, minBefore, minAfter }: HostProps): React.JSX.Element {
-  const ref = useRef<HTMLDivElement | null>(null);
+  const container = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    if (ref.current) {
-      ref.current.getBoundingClientRect = () => rect;
+    if (container.current) {
+      container.current.getBoundingClientRect = () => rect;
     }
   }, [rect]);
   return (
-    <div ref={ref} data-testid="host">
+    <div ref={container} data-testid="host">
       <PaneSplitter
-        containerRef={ref}
+        containerRef={container}
         size={size}
         onChange={onChange}
         orientation={orientation ?? 'vertical'}

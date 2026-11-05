@@ -15,7 +15,7 @@ import {
 
 describe('LIVE_FLAVORS registry', () => {
   it('exposes the registered flavors in display order', () => {
-    expect(LIVE_FLAVORS.map((f) => f.id)).toEqual([
+    expect(LIVE_FLAVORS.map((flavor) => flavor.id)).toEqual([
       'oxsts',
       'oxsts-with-gamma-library',
       'oxsts-with-sysmlv2-library',
@@ -40,7 +40,7 @@ describe('LIVE_FLAVORS registry', () => {
 
   it('example ids are unique within a flavor', () => {
     for (const flavor of LIVE_FLAVORS) {
-      const ids = flavor.examples.map((e) => e.id);
+      const ids = flavor.examples.map((example) => example.id);
       expect(new Set(ids).size).toBe(ids.length);
     }
   });
@@ -55,7 +55,7 @@ describe('LIVE_FLAVORS registry', () => {
 
   it('the trafficlight tutorial snapshots are registered as named oxsts examples', () => {
     const oxsts = findFlavor('oxsts')!;
-    const ids = oxsts.examples.map((e) => e.id);
+    const ids = oxsts.examples.map((example) => example.id);
     expect(ids).toContain('basics');
     expect(ids).toContain('intermediate');
     expect(ids).toContain('advanced');

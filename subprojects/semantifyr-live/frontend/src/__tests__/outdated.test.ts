@@ -13,10 +13,10 @@ function servePage(html: string, status = 200): ReturnType<typeof vi.fn> {
   return fetchMock;
 }
 
-function runEntry(src: string): void {
+function runEntry(source: string): void {
   const script = document.createElement('script');
   script.type = 'module';
-  script.setAttribute('src', src);
+  script.setAttribute('src', source);
   document.head.appendChild(script);
 }
 

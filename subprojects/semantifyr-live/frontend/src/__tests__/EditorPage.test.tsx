@@ -9,7 +9,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 vi.mock('../components/editor/LiveEditor', () => ({
-  default: (props: {
+  default: (properties: {
     flavorId: string;
     languageId: string;
     fileName: string;
@@ -18,12 +18,12 @@ vi.mock('../components/editor/LiveEditor', () => ({
   }) => (
     <div
       data-testid="live-editor"
-      data-flavor-id={props.flavorId}
-      data-language={props.languageId}
-      data-file-name={props.fileName}
-      data-backend-url={props.backendUrl}
+      data-flavor-id={properties.flavorId}
+      data-language={properties.languageId}
+      data-file-name={properties.fileName}
+      data-backend-url={properties.backendUrl}
     >
-      <pre data-testid="initial-code">{props.initialCode}</pre>
+      <pre data-testid="initial-code">{properties.initialCode}</pre>
     </div>
   ),
 }));

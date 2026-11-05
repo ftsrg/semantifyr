@@ -42,11 +42,11 @@ describe("witnessStateChanges", () => {
 
     it("keeps the value of a variable a step leaves out", () => {
         const changes = witnessStateChanges({
-            initialStep: { values: [{ variable: "x", value: "0" }, { variable: "y", value: "0" }] },
+            initialStep: { values: [{ variable: "counter", value: "0" }, { variable: "limit", value: "0" }] },
             initializedStep: null,
             steps: [
-                { values: [{ variable: "x", value: "1" }] },
-                { values: [{ variable: "x", value: "1" }, { variable: "y", value: "0" }] },
+                { values: [{ variable: "counter", value: "1" }] },
+                { values: [{ variable: "counter", value: "1" }, { variable: "limit", value: "0" }] },
             ],
         });
 

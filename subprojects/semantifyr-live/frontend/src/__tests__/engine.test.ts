@@ -24,18 +24,18 @@ import {
 
 function captureStates(): {
   states: VerificationState[];
-  setState: (next: VerificationState | ((prev: VerificationState) => VerificationState)) => void;
+  setState: (next: VerificationState | ((previous: VerificationState) => VerificationState)) => void;
 } {
   const states: VerificationState[] = [];
   let current: VerificationState = { phase: 'idle', cases: [] };
-  const setState = (next: VerificationState | ((prev: VerificationState) => VerificationState)): void => {
+  const setState = (next: VerificationState | ((previous: VerificationState) => VerificationState)): void => {
     current = typeof next === 'function' ? next(current) : next;
     states.push(current);
   };
   return { states, setState };
 }
 
-const noopProgress = (_: (params: unknown) => void) => () => {};
+const noopProgress = (_: (parameters: unknown) => void) => () => {};
 
 describe('runAllVerifications', () => {
   it('walks queued -> running -> verdict for each case and folds in metrics + backendId', async () => {
@@ -59,7 +59,7 @@ describe('runAllVerifications', () => {
     });
 
     const final = states.at(-1)!;
-    expect(final.cases.map((c) => c.status)).toEqual(['passed', 'failed']);
+    expect(final.cases.map((verificationCase) => verificationCase.status)).toEqual(['passed', 'failed']);
     expect(final.cases[0]!.metrics?.totalDuration).toBe('PT1S');
     expect(final.cases[0]!.backendId).toBe('theta-cegar');
     expect(final.cases[0]!.portfolioId).toBe('smart-full');
@@ -67,7 +67,7 @@ describe('runAllVerifications', () => {
     expect(final.message).toMatch(/some cases failed/i);
 
     // The first batch transition should mark all cases queued.
-    expect(states[0]!.cases.every((c) => c.status === 'queued')).toBe(true);
+    expect(states[0]!.cases.every((verificationCase) => verificationCase.status === 'queued')).toBe(true);
   });
 
   it('reports "All cases passed" when every verdict is passed', async () => {
@@ -115,9 +115,9 @@ describe('runAllVerifications', () => {
   });
 
   it('dispatches a follow-up validateWitness when getAutoValidateRequest returns a command', async () => {
-    const sendRequest = vi.fn<LspClient['sendRequest']>(async (_method, params) => {
-      const cmd = (params as { command?: string }).command;
-      if (cmd === 'oxsts.case.verify') {
+    const sendRequest = vi.fn<LspClient['sendRequest']>(async (_method, parameters) => {
+      const command = (parameters as { command?: string }).command;
+      if (command === 'oxsts.case.verify') {
         return failedResult;
       }
       // validate response
@@ -152,14 +152,14 @@ describe('runAllVerifications', () => {
       expect(last.cases[0]!.witnessValidation).toBe('valid');
     });
     expect(sendRequest).toHaveBeenCalledTimes(2);
-    expect(states.some((s) => s.cases[0]?.validating === true)).toBe(true);
+    expect(states.some((state) => state.cases[0]?.validating === true)).toBe(true);
     expect(states.at(-1)!.cases[0]!.validationBackendId).toBe('theta-cegar');
   });
 
   it('sends the case location instead of the witness location when the command validates by case', async () => {
     const gammaCase = { ...sampleCase('a'), location: { uri: 'file:///workspace/snippet.gamma', range: { start: { line: 4, character: 0 }, end: { line: 6, character: 1 } } } };
-    const sendRequest = vi.fn<LspClient['sendRequest']>(async (_method, params) => {
-      if ((params as { command?: string }).command === 'gamma.case.verify') {
+    const sendRequest = vi.fn<LspClient['sendRequest']>(async (_method, parameters) => {
+      if ((parameters as { command?: string }).command === 'gamma.case.verify') {
         return failedResult;
       }
       return { status: 'valid', verdict: 'passed', message: null, backendId: null, portfolioId: 'smart-full', metrics: null };
@@ -180,10 +180,10 @@ describe('runAllVerifications', () => {
     await vi.waitFor(() => {
       expect(states.at(-1)!.cases[0]!.witnessValidation).toBe('valid');
     });
-    const params = sendRequest.mock.calls[1]![1] as { command: string; arguments: { uri: string; range: unknown }[] };
-    expect(params.command).toBe('gamma.witness.validate');
-    expect(params.arguments[0]!.uri).toBe(gammaCase.location.uri);
-    expect(params.arguments[0]!.range).toEqual(gammaCase.location.range);
+    const parameters = sendRequest.mock.calls[1]![1] as { command: string; arguments: { uri: string; range: unknown }[] };
+    expect(parameters.command).toBe('gamma.witness.validate');
+    expect(parameters.arguments[0]!.uri).toBe(gammaCase.location.uri);
+    expect(parameters.arguments[0]!.range).toEqual(gammaCase.location.range);
   });
 
   it('skips auto-validation when the trace has no witnessUri', async () => {
@@ -208,7 +208,7 @@ describe('runAllVerifications', () => {
       expect(states.at(-1)?.phase).toBe('done');
     });
     expect(sendRequest).toHaveBeenCalledTimes(1);
-    expect(states.some((s) => s.cases[0]?.validating === true)).toBe(false);
+    expect(states.some((state) => state.cases[0]?.validating === true)).toBe(false);
   });
 });
 
@@ -233,10 +233,10 @@ describe('validateWitness', () => {
     expect(outcome.backendId).toBe('theta-bmc');
     expect(outcome.portfolioId).toBe('smart-full');
 
-    const callArgs = sendRequest.mock.calls[0]!;
-    const params = callArgs[1] as { arguments: { portfolio?: string; caseLabel?: string }[] };
-    expect(params.arguments[0]!.portfolio).toBe('smart-full');
-    expect(params.arguments[0]!.caseLabel).toBe('Case a');
+    const callArguments = sendRequest.mock.calls[0]!;
+    const parameters = callArguments[1] as { arguments: { portfolio?: string; caseLabel?: string }[] };
+    expect(parameters.arguments[0]!.portfolio).toBe('smart-full');
+    expect(parameters.arguments[0]!.caseLabel).toBe('Case a');
   });
 
   it('treats unknown response shapes as errored', async () => {

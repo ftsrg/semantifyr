@@ -24,14 +24,14 @@ function serverOptions(executable: string) {
     return (client.serverOptions as () => Promise<{ reader: net.Socket; writer: net.Socket }>)();
 }
 
-function portOf(args: readonly string[]): number {
-    return Number(/^--socket=(\d+)$/.exec(args[0]!)![1]);
+function portOf(serverArguments: readonly string[]): number {
+    return Number(/^--socket=(\d+)$/.exec(serverArguments[0]!)![1]);
 }
 
 function startChild(behave: (child: Child, port: number) => void) {
-    spawnMock.mockImplementation(((_command: string, args: readonly string[]) => {
+    spawnMock.mockImplementation(((_command: string, serverArguments: readonly string[]) => {
         const child = new EventEmitter();
-        behave(child, portOf(args));
+        behave(child, portOf(serverArguments));
         return child;
     }) as never);
 }
@@ -56,8 +56,8 @@ describe('createLspClient', () => {
 
         expect(streams.reader).toBe(streams.writer);
         expect(streams.reader.remotePort).toBe(childSocket!.localPort);
-        const [command, args] = spawnMock.mock.calls[0]!;
-        expect(args).toEqual([`--socket=${String(streams.reader.localPort)}`]);
+        const [command, serverArguments] = spawnMock.mock.calls[0]!;
+        expect(serverArguments).toEqual([`--socket=${String(streams.reader.localPort)}`]);
         if (platform === 'win32') {
             expect(command).toBe('"/extension path/bin/oxsts.lang.ide/bin/oxsts.lang.ide"');
         } else {

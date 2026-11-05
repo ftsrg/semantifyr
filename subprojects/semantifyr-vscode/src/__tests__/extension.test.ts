@@ -15,7 +15,7 @@ interface ExecuteCommandParams {
     arguments: unknown[];
 }
 
-let requests: { client: string; params: ExecuteCommandParams }[];
+let requests: { client: string; parameters: ExecuteCommandParams }[];
 
 function client(id: string): LanguageClient {
     return LanguageClient.instances.find((instance) => instance.id === id)!;
@@ -24,9 +24,9 @@ function client(id: string): LanguageClient {
 beforeEach(() => {
     resetVscode();
     requests = [];
-    LanguageClient.respond = (instance, _method, params) => {
-        requests.push({ client: instance.id, params: params as ExecuteCommandParams });
-        return (params as ExecuteCommandParams).command.endsWith('.case.discover') ? [] : null;
+    LanguageClient.respond = (instance, _method, parameters) => {
+        requests.push({ client: instance.id, parameters: parameters as ExecuteCommandParams });
+        return (parameters as ExecuteCommandParams).command.endsWith('.case.discover') ? [] : null;
     };
 });
 
@@ -73,8 +73,8 @@ describe('activate', () => {
         await activate(createExtensionContext('/extension') as never);
 
         expect(requests).toEqual([
-            { client: 'oxstsLSP', params: { command: 'oxsts.case.discover', arguments: ['file:///workspace/lamp.oxsts'] } },
-            { client: 'gammaLSP', params: { command: 'gamma.case.discover', arguments: ['file:///workspace/crossroads.gamma'] } },
+            { client: 'oxstsLSP', parameters: { command: 'oxsts.case.discover', arguments: ['file:///workspace/lamp.oxsts'] } },
+            { client: 'gammaLSP', parameters: { command: 'gamma.case.discover', arguments: ['file:///workspace/crossroads.gamma'] } },
         ]);
     });
 
@@ -87,8 +87,8 @@ describe('activate', () => {
         await compile();
 
         expect(requests).toEqual([
-            { client: 'gammaLSP', params: { command: 'gamma.compile', arguments: ['file:///workspace/crossroads.gamma'] } },
-            { client: 'gammaLSP', params: { command: 'gamma.compile', arguments: ['file:///workspace/open.gamma'] } },
+            { client: 'gammaLSP', parameters: { command: 'gamma.compile', arguments: ['file:///workspace/crossroads.gamma'] } },
+            { client: 'gammaLSP', parameters: { command: 'gamma.compile', arguments: ['file:///workspace/open.gamma'] } },
         ]);
     });
 

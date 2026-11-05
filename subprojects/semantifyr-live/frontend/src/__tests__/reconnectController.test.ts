@@ -16,15 +16,15 @@ const BACKOFF = [1000, 2000, 4000] as const
 interface Harness {
   statuses: { status: ReconnectStatus; info?: string }[]
   attemptResults: ('success' | 'fail')[]
-  cancelledRef: { value: boolean }
+  cancelled: { value: boolean }
   controller: ReturnType<typeof createReconnectController>
   options: ReconnectControllerOptions
 }
 
-function harness(overrides?: Partial<ReconnectControllerOptions>): Harness {
+function createHarness(overrides?: Partial<ReconnectControllerOptions>): Harness {
   const statuses: Harness['statuses'] = []
   const attemptResults: ('success' | 'fail')[] = []
-  const cancelledRef = { value: false }
+  const cancelled = { value: false }
   const options: ReconnectControllerOptions = {
     maxAttempts: 3,
     backoffMs: BACKOFF,
@@ -35,14 +35,14 @@ function harness(overrides?: Partial<ReconnectControllerOptions>): Harness {
       }
       throw new Error('connect failed')
     },
-    isCancelled: () => cancelledRef.value,
+    isCancelled: () => cancelled.value,
     onStatus: (status, info) => {
       statuses.push(info !== undefined ? { status, info } : { status })
     },
     ...overrides,
   }
   const controller = createReconnectController(options)
-  return { statuses, attemptResults, cancelledRef, controller, options }
+  return { statuses, attemptResults, cancelled, controller, options }
 }
 
 describe('reconnectController', () => {
@@ -54,86 +54,86 @@ describe('reconnectController', () => {
   })
 
   it('walks the backoff sequence and gives up after maxAttempts', async () => {
-    const h = harness()
-    h.attemptResults.push('fail', 'fail', 'fail')
+    const harness = createHarness()
+    harness.attemptResults.push('fail', 'fail', 'fail')
 
-    h.controller.schedule()
-    expect(h.statuses[0]?.status).toBe('reconnecting')
-    expect(h.statuses[0]?.info).toMatch(/attempt 1\/3/)
-    expect(h.controller.attempts()).toBe(1)
+    harness.controller.schedule()
+    expect(harness.statuses[0]?.status).toBe('reconnecting')
+    expect(harness.statuses[0]?.info).toMatch(/attempt 1\/3/)
+    expect(harness.controller.attempts()).toBe(1)
 
     await vi.advanceTimersByTimeAsync(BACKOFF[0])
-    expect(h.statuses[1]?.info).toMatch(/attempt 2\/3/)
+    expect(harness.statuses[1]?.info).toMatch(/attempt 2\/3/)
 
     await vi.advanceTimersByTimeAsync(BACKOFF[1])
-    expect(h.statuses[2]?.info).toMatch(/attempt 3\/3/)
+    expect(harness.statuses[2]?.info).toMatch(/attempt 3\/3/)
 
     await vi.advanceTimersByTimeAsync(BACKOFF[2])
-    expect(h.statuses.at(-1)?.status).toBe('errored')
+    expect(harness.statuses.at(-1)?.status).toBe('errored')
   })
 
   it('resets the attempt counter on a successful connect', async () => {
-    const h = harness()
-    h.attemptResults.push('fail', 'success')
+    const harness = createHarness()
+    harness.attemptResults.push('fail', 'success')
 
-    h.controller.schedule()
+    harness.controller.schedule()
     await vi.advanceTimersByTimeAsync(BACKOFF[0])
     // After fail, the controller schedules attempt 2 immediately.
-    expect(h.controller.attempts()).toBe(2)
+    expect(harness.controller.attempts()).toBe(2)
 
     await vi.advanceTimersByTimeAsync(BACKOFF[1])
-    expect(h.controller.attempts()).toBe(0)
+    expect(harness.controller.attempts()).toBe(0)
   })
 
   it('emits connected status when the connect attempt succeeds', async () => {
-    const h = harness()
-    h.attemptResults.push('success')
+    const harness = createHarness()
+    harness.attemptResults.push('success')
 
-    h.controller.schedule()
+    harness.controller.schedule()
     await vi.advanceTimersByTimeAsync(BACKOFF[0])
-    expect(h.statuses.at(-1)?.status).toBe('connected')
+    expect(harness.statuses.at(-1)?.status).toBe('connected')
   })
 
   it('stops attempting once isCancelled returns true', async () => {
-    const h = harness()
-    h.attemptResults.push('fail', 'fail')
+    const harness = createHarness()
+    harness.attemptResults.push('fail', 'fail')
 
-    h.controller.schedule()
-    h.cancelledRef.value = true
+    harness.controller.schedule()
+    harness.cancelled.value = true
     await vi.advanceTimersByTimeAsync(BACKOFF[0])
     // The fail callback observed cancelled=true and did not schedule attempt 2.
-    expect(h.statuses.filter((s) => s.status === 'reconnecting')).toHaveLength(1)
+    expect(harness.statuses.filter((entry) => entry.status === 'reconnecting')).toHaveLength(1)
   })
 
   it('cancel clears a pending timer without firing the connect', async () => {
     const connect = vi.fn(async () => {})
-    const h = harness({ connect })
-    h.controller.schedule()
-    h.controller.cancel()
+    const harness = createHarness({ connect })
+    harness.controller.schedule()
+    harness.controller.cancel()
     await vi.advanceTimersByTimeAsync(BACKOFF[2] + 100)
     expect(connect).not.toHaveBeenCalled()
   })
 
   it('resetAttempts forces the counter back to zero', () => {
-    const h = harness()
-    h.attemptResults.push('fail', 'fail', 'fail')
-    h.controller.schedule()
-    expect(h.controller.attempts()).toBe(1)
-    h.controller.resetAttempts()
-    expect(h.controller.attempts()).toBe(0)
+    const harness = createHarness()
+    harness.attemptResults.push('fail', 'fail', 'fail')
+    harness.controller.schedule()
+    expect(harness.controller.attempts()).toBe(1)
+    harness.controller.resetAttempts()
+    expect(harness.controller.attempts()).toBe(0)
   })
 
   it('reuses the last backoff entry for attempts past the array end', async () => {
     const connect = vi.fn(async () => {
       throw new Error('boom')
     })
-    const h = harness({ maxAttempts: 5, backoffMs: [100], connect })
-    h.controller.schedule()
-    for (let i = 0; i < 5; i++) {
+    const harness = createHarness({ maxAttempts: 5, backoffMs: [100], connect })
+    harness.controller.schedule()
+    for (let attempt = 0; attempt < 5; attempt++) {
       await vi.advanceTimersByTimeAsync(100)
     }
     // Five failed attempts then errored.
     expect(connect).toHaveBeenCalledTimes(5)
-    expect(h.statuses.at(-1)?.status).toBe('errored')
+    expect(harness.statuses.at(-1)?.status).toBe('errored')
   })
 })

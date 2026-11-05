@@ -25,17 +25,17 @@ function createFakeHandle(): FakeHandle {
   // discoverVerificationCases (in @semantifyr/editor-common) sends workspace/executeCommand
   // with the discovery command in params.command; verifyCase does the same with the verify
   // command. Route on params.command so a single fake covers both flows.
-  const sendRequestRouted = vi.fn<LspClient['sendRequest']>(async (method, params) => {
+  const sendRequestRouted = vi.fn<LspClient['sendRequest']>(async (method, parameters) => {
     if (method !== 'workspace/executeCommand') {
       return null;
     }
-    const cmd = (params as { command?: string }).command;
-    if (cmd === 'oxsts.case.discover') {
+    const command = (parameters as { command?: string }).command;
+    if (command === 'oxsts.case.discover') {
       return new Promise((resolve) => {
-        resolveDiscovery = (cs) => { resolve(cs); };
+        resolveDiscovery = (discovered) => { resolve(discovered); };
       });
     }
-    if (cmd === 'oxsts.case.verify') {
+    if (command === 'oxsts.case.verify') {
       return passedResult;
     }
     return null;
@@ -61,13 +61,13 @@ function createFakeHandle(): FakeHandle {
   };
   return {
     handle,
-    resolveDiscovery: (cs) => { resolveDiscovery(cs); },
+    resolveDiscovery: (discovered) => { resolveDiscovery(discovered); },
     sendRequest: sendRequestRouted,
   };
 }
 
 
-function renderPanel(args: {
+function renderPanel(options: {
   fake: FakeHandle;
   validateWitnessCommand?: string;
   onCasesChange?: (cases: readonly VerificationCaseState[]) => void;
@@ -84,21 +84,21 @@ function renderPanel(args: {
     onShowWitness: (caseId: string) => void;
     onAutoValidateChange: (enabled: boolean) => void;
   }> = {};
-  if (args.validateWitnessCommand !== undefined) optional.validateWitnessCommand = args.validateWitnessCommand;
-  if (args.onCasesChange !== undefined) optional.onCasesChange = args.onCasesChange;
-  if (args.onShowWitness !== undefined) optional.onShowWitness = args.onShowWitness;
-  if (args.onAutoValidateChange !== undefined) optional.onAutoValidateChange = args.onAutoValidateChange;
+  if (options.validateWitnessCommand !== undefined) optional.validateWitnessCommand = options.validateWitnessCommand;
+  if (options.onCasesChange !== undefined) optional.onCasesChange = options.onCasesChange;
+  if (options.onShowWitness !== undefined) optional.onShowWitness = options.onShowWitness;
+  if (options.onAutoValidateChange !== undefined) optional.onAutoValidateChange = options.onAutoValidateChange;
   return {
     onStatusMessage,
     ...render(
       <VerificationPanel
-        editorHandle={args.fake.handle}
+        editorHandle={options.fake.handle}
         verificationCommand="oxsts.case.verify"
         discoveryCommand="oxsts.case.discover"
         connected
         portfolioId="smart-full"
         validationPortfolioId="smart-full"
-        autoValidate={args.autoValidate ?? false}
+        autoValidate={options.autoValidate ?? false}
         panelHeight={240}
         onClose={() => {}}
         onStatusMessage={onStatusMessage}
@@ -138,21 +138,21 @@ describe('VerificationPanel', () => {
       expect(last[0]).toMatch(/all cases passed/i);
     });
     // The intermediate "Verifying ..." status was reported with busy=true.
-    expect(onStatusMessage.mock.calls.some(([msg, busy]) =>
-      typeof msg === 'string' && /Verifying Case a/i.test(msg) && busy === true,
+    expect(onStatusMessage.mock.calls.some(([message, busy]) =>
+      typeof message === 'string' && /Verifying Case a/i.test(message) && busy === true,
     )).toBe(true);
   });
 
   it('cancel button collapses queued/running cases back to stale and ends in cancelled phase', async () => {
     const fake = createFakeHandle();
     // Make verify never resolve so we can cancel mid-flight.
-    fake.sendRequest.mockImplementation(async (method, params) => {
+    fake.sendRequest.mockImplementation(async (method, parameters) => {
       if (method !== 'workspace/executeCommand') return null;
-      const cmd = (params as { command?: string }).command;
-      if (cmd === 'oxsts.case.discover') {
+      const command = (parameters as { command?: string }).command;
+      if (command === 'oxsts.case.discover') {
         return [sampleCase('a'), sampleCase('b')];
       }
-      if (cmd === 'oxsts.case.verify') {
+      if (command === 'oxsts.case.verify') {
         return new Promise(() => { /* hangs */ });
       }
       return null;
@@ -165,7 +165,7 @@ describe('VerificationPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Run verification' }));
     // Wait for the running state to surface.
     await waitFor(() => {
-      expect(onStatusMessage.mock.calls.some(([_msg, busy]) => busy === true)).toBe(true);
+      expect(onStatusMessage.mock.calls.some(([_message, busy]) => busy === true)).toBe(true);
     });
 
     await user.click(screen.getByRole('button', { name: 'Cancel verification' }));
@@ -214,11 +214,11 @@ describe('VerificationPanel', () => {
 
   it('show-witness button surfaces only when the case has a trace and forwards the case id', async () => {
     const fake = createFakeHandle();
-    fake.sendRequest.mockImplementation(async (method, params) => {
+    fake.sendRequest.mockImplementation(async (method, parameters) => {
       if (method !== 'workspace/executeCommand') return null;
-      const cmd = (params as { command?: string }).command;
-      if (cmd === 'oxsts.case.discover') return [sampleCase('a')];
-      if (cmd === 'oxsts.case.verify') return failedResult;
+      const command = (parameters as { command?: string }).command;
+      if (command === 'oxsts.case.discover') return [sampleCase('a')];
+      if (command === 'oxsts.case.verify') return failedResult;
       return null;
     });
 
