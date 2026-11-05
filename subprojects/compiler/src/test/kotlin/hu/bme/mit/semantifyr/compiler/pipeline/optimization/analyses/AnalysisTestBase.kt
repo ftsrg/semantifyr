@@ -35,6 +35,11 @@ abstract class AnalysisTestBase {
     @Inject
     protected lateinit var injector: Injector
 
+    protected data class AnalyzedModel<T>(
+        val inlined: InlinedOxsts,
+        val result: T,
+    )
+
     protected data class Fixture(
         val inlinedOxsts: InlinedOxsts,
         val evaluator: MetaCompileTimeExpressionEvaluator,
@@ -68,32 +73,32 @@ abstract class AnalysisTestBase {
         }
     }
 
-    protected fun runLiveness(source: String): Pair<InlinedOxsts, LivenessInfo> {
+    protected fun runLiveness(source: String): AnalyzedModel<LivenessInfo> {
         return withCompiled(source) { (inlined, evaluator) ->
-            inlined to LivenessComputation(inlined, evaluator).compute()
+            AnalyzedModel(inlined, LivenessComputation(inlined, evaluator).compute())
         }
     }
 
-    protected fun runConstantValue(source: String): Pair<InlinedOxsts, ConstantValueInfo> {
+    protected fun runConstantValue(source: String): AnalyzedModel<ConstantValueInfo> {
         return withCompiled(source) { (inlined, evaluator, child) ->
             val result = ConstantValueComputation(
                 inlined,
                 evaluator,
                 child.getInstance(ConstantExpressionEvaluatorProvider::class.java),
             ).compute()
-            inlined to result
+            AnalyzedModel(inlined, result)
         }
     }
 
-    protected fun runReachingDefinitions(source: String): Pair<InlinedOxsts, ReachingDefinitionsInfo> {
+    protected fun runReachingDefinitions(source: String): AnalyzedModel<ReachingDefinitionsInfo> {
         return withCompiled(source) { (inlined, evaluator) ->
-            inlined to ReachingDefinitionsComputation(inlined, evaluator).compute()
+            AnalyzedModel(inlined, ReachingDefinitionsComputation(inlined, evaluator).compute())
         }
     }
 
-    protected fun runConeOfInfluence(source: String): Pair<InlinedOxsts, ConeOfInfluenceInfo> {
+    protected fun runConeOfInfluence(source: String): AnalyzedModel<ConeOfInfluenceInfo> {
         return withCompiled(source) { (inlined, evaluator) ->
-            inlined to ConeOfInfluenceComputation(inlined, evaluator).compute()
+            AnalyzedModel(inlined, ConeOfInfluenceComputation(inlined, evaluator).compute())
         }
     }
 
@@ -101,7 +106,7 @@ abstract class AnalysisTestBase {
         source: String,
         havocRange: (VariableDeclaration) -> IntegerRange = { IntegerRange.UNBOUNDED },
         limit: (VariableDeclaration) -> IntegerRange = { IntegerRange.UNBOUNDED },
-    ): Pair<InlinedOxsts, VariableBoundsInfo> {
+    ): AnalyzedModel<VariableBoundsInfo> {
         return withCompiled(source) { (inlined, evaluator, child) ->
             val result = VariableBoundsComputation(
                 inlined,
@@ -110,7 +115,7 @@ abstract class AnalysisTestBase {
                 havocRange,
                 limit,
             ).compute()
-            inlined to result
+            AnalyzedModel(inlined, result)
         }
     }
 

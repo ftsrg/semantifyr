@@ -60,7 +60,7 @@ abstract class DockerBasedBackendExecutor(
             dockerClient.inspectImageCmd(image).exec()
             logger.debug { "Docker image $image already present locally" }
         } catch (_: NotFoundException) {
-            val (repository, tag) = splitImageRef(image)
+            val (repository, tag) = splitImageReference(image)
             logger.info { "Pulling Docker image $repository:$tag (not present locally)" }
             dockerClient.pullImageCmd(repository)
                 .withTag(tag)
@@ -139,14 +139,19 @@ abstract class DockerBasedBackendExecutor(
         }
     }
 
-    private fun splitImageRef(reference: String): Pair<String, String> {
+    private fun splitImageReference(reference: String): ImageReference {
         if (reference.contains('@')) { // digest
-            return reference to "latest"
+            return ImageReference(reference, "latest")
         }
         val colonIndex = reference.lastIndexOf(':')
         if (colonIndex >= 0 && !reference.substring(colonIndex + 1).contains('/')) {
-            return reference.substring(0, colonIndex) to reference.substring(colonIndex + 1)
+            return ImageReference(reference.substring(0, colonIndex), reference.substring(colonIndex + 1))
         }
-        return reference to "latest"
+        return ImageReference(reference, "latest")
     }
+
+    private data class ImageReference(
+        val repository: String,
+        val tag: String,
+    )
 }

@@ -73,16 +73,21 @@ class UppaalTraceParser {
         return UppaalTrace(states)
     }
 
-    private fun splitAssignment(token: String): Pair<String, String>? {
-        val idx = token.indexOf('=')
-        if (idx <= 0 || idx == token.length - 1) {
+    private fun splitAssignment(token: String): Assignment? {
+        val index = token.indexOf('=')
+        if (index <= 0 || index == token.length - 1) {
             return null
         }
-        val name = token.substring(0, idx).trim()
-        val value = token.substring(idx + 1).trim()
+        val name = token.substring(0, index).trim()
+        val value = token.substring(index + 1).trim()
         if (name.isEmpty() || value.isEmpty()) {
             return null
         }
-        return name to value
+        return Assignment(name, value)
     }
+
+    private data class Assignment(
+        val name: String,
+        val value: String,
+    )
 }

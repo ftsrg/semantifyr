@@ -113,13 +113,13 @@ class GammaReferenceTraceTest {
         }.hasMessageContaining("is not an event raise")
     }
 
-    private fun compileReferenceCase(): Pair<VerificationCaseDeclaration, GammaNameStore> {
+    private fun compileReferenceCase(): CompiledReferenceCase {
         val crossroads = read(CROSSROADS).single()
         val nameStore = gammaCompiler.compile(crossroads, temporaryDirectory.resolve("model.oxsts"))
         val verificationCase = crossroads.verificationCases.single {
             it.name == "ACanBeGreen"
         }
-        return verificationCase to nameStore
+        return CompiledReferenceCase(verificationCase, nameStore)
     }
 
     private fun referenceCallTrace(): CallTrace {
@@ -165,6 +165,11 @@ class GammaReferenceTraceTest {
             },
         )
     }
+
+    private data class CompiledReferenceCase(
+        val verificationCase: VerificationCaseDeclaration,
+        val nameStore: GammaNameStore,
+    )
 
     companion object {
         private val CROSSROADS = Path("build", "test-models", "Crossroads.gamma")
