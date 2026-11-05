@@ -85,7 +85,7 @@ See the [Standard Library](standard-library.md) for full details.
 |------------|---------|
 | `@VerificationCase` | Marks a class as a verification target |
 | `@Tag` | Categorizes verification cases |
-| `@Control` | Marks a variable that steers the model |
+| `@Control` | Marks a variable as important to track |
 | `@Shared` | Marks containment feature instances as shared across instances |
 | `@Trace` | Marks transitions for counterexample tracing |
 | `@Clock` | Marks a variable as a clock for time-aware backends |
