@@ -12,9 +12,6 @@ import hu.bme.mit.semantifyr.verifier.FakeBackend
 import hu.bme.mit.semantifyr.verifier.FakeConfig
 import hu.bme.mit.semantifyr.verifier.fakeMetadata
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonObject
 
 fun fakePortfolio(id: String, vararg verdicts: VerificationVerdict): SingleBackendPortfolio<FakeConfig> {
     val remaining = ArrayDeque(verdicts.toList())
@@ -24,10 +21,10 @@ fun fakePortfolio(id: String, vararg verdicts: VerificationVerdict): SingleBacke
     return SingleBackendPortfolio(backend, FakeConfig(id))
 }
 
-fun jsonLines(output: String): List<JsonObject> {
+inline fun <reified T> jsonLines(output: String): List<T> {
     return output.lines().filter {
         it.isNotBlank()
     }.map {
-        Json.parseToJsonElement(it).jsonObject
+        jsonLineFormat.decodeFromString<T>(it)
     }
 }

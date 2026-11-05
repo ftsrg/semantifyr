@@ -31,6 +31,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
+import hu.bme.mit.semantifyr.verifier.VerificationReport
 import hu.bme.mit.semantifyr.verifier.caseReportPath
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
@@ -38,9 +39,6 @@ import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.boolean
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.eclipse.emf.ecore.EObject
@@ -220,19 +218,8 @@ class SemantifyrVerifierImplTest {
 
         val result = build(portfolio, output, artifacts = ArtifactConfig.ALL).verify(case)
 
-        val report = Json.parseToJsonElement(caseReportPath(output, case).readText())
-        val verifier = report.jsonObject.getValue("result").jsonObject.getValue("metrics").jsonObject.getValue("verifier").jsonObject
-        assertThat(verifier.getValue("compilation").jsonObject.keys).contains(
-            "createDuration",
-            "instantiationDuration",
-            "inliningDuration",
-            "flatteningDuration",
-            "inliningOptimization",
-            "flatteningOptimization",
-            "inputSize",
-            "inlinedSize",
-            "flattenedSize",
-        )
+        val report = Json.decodeFromString<VerificationReport>(caseReportPath(output, case).readText())
+        assertThat(report.result.metrics.verifier.compilation).isEqualTo(result.metrics.verifier.compilation)
         assertThat(result.metrics.verifier.compilationDuration).isEqualTo(result.metrics.verifier.compilation.unfoldingDuration)
     }
 
@@ -248,11 +235,10 @@ class SemantifyrVerifierImplTest {
 
         build(portfolio, output, artifacts = ArtifactConfig.ALL).verify(case)
 
-        val report = Json.parseToJsonElement(caseReportPath(output, case).readText())
-        val result = report.jsonObject.getValue("result").jsonObject
-        assertThat(result.getValue("verdict").jsonPrimitive.content).isEqualTo("Passed")
-        assertThat(result.getValue("soundness").jsonPrimitive.content).isEqualTo("UnderApproximating")
-        assertThat(result.getValue("isTrusted").jsonPrimitive.boolean).isFalse
+        val result = Json.decodeFromString<VerificationReport>(caseReportPath(output, case).readText()).result
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(result.soundness).isEqualTo(SoundnessDirection.UnderApproximating)
+        assertThat(result.isTrusted).isFalse
     }
 
     private fun build(

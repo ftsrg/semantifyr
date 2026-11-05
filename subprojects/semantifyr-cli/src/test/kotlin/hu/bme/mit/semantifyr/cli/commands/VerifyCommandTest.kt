@@ -14,7 +14,10 @@ import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.cli.SMOKE_CASE
+import hu.bme.mit.semantifyr.cli.common.CompilationFailureLine
+import hu.bme.mit.semantifyr.cli.common.VerifyOutcomeLine
 import hu.bme.mit.semantifyr.cli.common.fakePortfolio
+import hu.bme.mit.semantifyr.cli.common.jsonLineFormat
 import hu.bme.mit.semantifyr.cli.common.jsonLines
 import hu.bme.mit.semantifyr.cli.runCli
 import hu.bme.mit.semantifyr.cli.smokeModel
@@ -22,14 +25,12 @@ import hu.bme.mit.semantifyr.cli.testModels
 import hu.bme.mit.semantifyr.verifier.FakeBackend
 import hu.bme.mit.semantifyr.verifier.FakeConfig
 import hu.bme.mit.semantifyr.verifier.ProgressContext
+import hu.bme.mit.semantifyr.verifier.VerificationReport
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.int
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -64,13 +65,12 @@ class VerifyCommandTest {
         val result = runCli("verify", "--json", "--portfolio", portfolio.id, "-d", artifacts.toString(), smokeModel.toString(), portfolios = listOf(portfolio))
 
         assertThat(result.statusCode).describedAs(result.output).isEqualTo(exitCode)
-        val line = jsonLines(result.stdout).single()
-        assertThat(line.getValue("case").jsonPrimitive.content).isEqualTo(SMOKE_CASE)
-        assertThat(line.getValue("exitCode").jsonPrimitive.int).isEqualTo(exitCode)
-        val report = Path(line.getValue("report").jsonPrimitive.content)
+        val line = jsonLines<VerifyOutcomeLine>(result.stdout).single()
+        assertThat(line.case).isEqualTo(SMOKE_CASE)
+        assertThat(line.exitCode).isEqualTo(exitCode)
+        val report = Path(line.report)
         assertThat(report).isAbsolute().startsWith(artifacts.toAbsolutePath())
-        val reportResult = Json.parseToJsonElement(report.readText()).jsonObject.getValue("result").jsonObject
-        assertThat(reportResult.getValue("verdict").jsonPrimitive.content).isEqualTo(verdict.name)
+        assertThat(Json.decodeFromString<VerificationReport>(report.readText()).result.verdict).isEqualTo(verdict)
     }
 
     @Test
@@ -111,7 +111,11 @@ class VerifyCommandTest {
         )
 
         assertThat(result.statusCode).isEqualTo(7)
-        assertThat(jsonLines(result.stdout).map { it.getValue("exitCode").jsonPrimitive.int }).containsExactly(7, 5)
+        assertThat(
+            jsonLines<VerifyOutcomeLine>(result.stdout).map {
+                it.exitCode
+            },
+        ).containsExactly(7, 5)
     }
 
     @Test
@@ -175,16 +179,18 @@ class VerifyCommandTest {
         val result = runCli("verify", "--json", "--portfolio", portfolio.id, "-d", directory.resolve("artifacts").toString(), model.toString(), portfolios = listOf(portfolio))
 
         assertThat(result.statusCode).isEqualTo(4)
-        val lines = jsonLines(result.stdout)
+        val lines = result.stdout.lines().filter {
+            it.isNotBlank()
+        }
         assertThat(lines).hasSize(2)
-        val (failing, passing) = lines
-        assertThat(failing.keys).containsExactlyInAnyOrder("case", "exitCode", "error")
-        assertThat(failing.getValue("case").jsonPrimitive.content).isEqualTo("untemporal::Untemporal")
-        assertThat(failing.getValue("exitCode").jsonPrimitive.int).isEqualTo(4)
-        assertThat(failing.getValue("error").jsonPrimitive.content).contains("temporal operator")
-        assertThat(passing.getValue("case").jsonPrimitive.content).isEqualTo("untemporal::Temporal")
-        assertThat(passing.getValue("exitCode").jsonPrimitive.int).isZero()
-        assertThat(Path(passing.getValue("report").jsonPrimitive.content)).exists()
+        val failing = jsonLineFormat.decodeFromString<CompilationFailureLine>(lines[0])
+        val passing = jsonLineFormat.decodeFromString<VerifyOutcomeLine>(lines[1])
+        assertThat(failing.case).isEqualTo("untemporal::Untemporal")
+        assertThat(failing.exitCode).isEqualTo(4)
+        assertThat(failing.error).contains("temporal operator")
+        assertThat(passing.case).isEqualTo("untemporal::Temporal")
+        assertThat(passing.exitCode).isZero()
+        assertThat(Path(passing.report)).exists()
         assertThat(result.stderr).contains("Compiling untemporal::Untemporal failed").contains("temporal operator")
         assertThat(backend.invocations.get()).isEqualTo(1)
     }

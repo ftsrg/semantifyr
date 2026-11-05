@@ -6,11 +6,12 @@
 
 package hu.bme.mit.semantifyr.cli
 
+import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.cli.common.DistributionTestBase
+import hu.bme.mit.semantifyr.cli.common.VerifyOutcomeLine
+import hu.bme.mit.semantifyr.cli.common.jsonLineFormat
+import hu.bme.mit.semantifyr.verifier.VerificationReport
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.int
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import kotlin.io.path.Path
@@ -38,11 +39,9 @@ class DistributionTest : DistributionTestBase("semantifyr") {
         )
 
         assertThat(run.exitCode).describedAs(run.stderr).isEqualTo(5)
-        val line = Json.parseToJsonElement(run.stdout.trim()).jsonObject
-        assertThat(line.getValue("exitCode").jsonPrimitive.int).isEqualTo(5)
+        assertThat(jsonLineFormat.decodeFromString<VerifyOutcomeLine>(run.stdout.trim()).exitCode).isEqualTo(5)
         val report = reportOf(run)
-        val result = Json.parseToJsonElement(report.readText()).jsonObject.getValue("result").jsonObject
-        assertThat(result.getValue("verdict").jsonPrimitive.content).isEqualTo("Failed")
+        assertThat(Json.decodeFromString<VerificationReport>(report.readText()).result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(report.resolveSibling("witness.json")).exists()
     }
 

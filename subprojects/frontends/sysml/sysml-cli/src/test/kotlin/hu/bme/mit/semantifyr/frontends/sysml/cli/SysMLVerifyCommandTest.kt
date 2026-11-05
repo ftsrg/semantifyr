@@ -7,9 +7,9 @@
 package hu.bme.mit.semantifyr.frontends.sysml.cli
 
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.cli.common.VerifyOutcomeLine
 import hu.bme.mit.semantifyr.cli.common.fakePortfolio
 import hu.bme.mit.semantifyr.cli.common.jsonLines
-import kotlinx.serialization.json.jsonPrimitive
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -35,17 +35,17 @@ class SysMLVerifyCommandTest {
         val result = runSysMLCli("verify", "--json", "--portfolio", portfolio.id, "-d", artifacts.toString(), model.toString(), portfolios = listOf(portfolio))
 
         assertThat(result.statusCode).describedAs(result.output).isEqualTo(5)
-        val lines = jsonLines(result.stdout)
+        val lines = jsonLines<VerifyOutcomeLine>(result.stdout)
         assertThat(
             lines.map {
-                it.getValue("case").jsonPrimitive.content
+                it.case
             },
         ).containsExactly(
             "semantifyr::sysml::model::LampLitReachable",
             "semantifyr::sysml::model::LampNeverLitViolated",
             "semantifyr::sysml::model::LampLitOnlyWhileSwitchOnViolated",
         )
-        assertThat(Path(lines.first().getValue("report").jsonPrimitive.content))
+        assertThat(Path(lines.first().report))
             .isEqualTo(artifacts.resolve("room.LampLitReachable").resolve("report.json").toAbsolutePath().normalize())
             .exists()
     }
