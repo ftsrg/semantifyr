@@ -22,7 +22,7 @@ class ShellBasedNuxmvExecutor :
 
     override suspend fun execute(nuxmvExecutionSpecification: NuxmvExecutionSpecification): NuxmvExecutionResult {
         val exitCode = runProcess(
-            args = listOf("-source", nuxmvExecutionSpecification.commandFile.absolutePath),
+            arguments = listOf("-source", nuxmvExecutionSpecification.commandFile.absolutePath),
             workingDirectory = nuxmvExecutionSpecification.workingDirectory,
             logFile = nuxmvExecutionSpecification.logFile,
             errorFile = nuxmvExecutionSpecification.errorFile,

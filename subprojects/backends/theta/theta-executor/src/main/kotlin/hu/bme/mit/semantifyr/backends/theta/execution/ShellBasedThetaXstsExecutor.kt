@@ -24,7 +24,7 @@ class ShellBasedThetaXstsExecutor :
 
     override suspend fun execute(thetaExecutionSpecification: ThetaExecutionSpecification): ThetaExecutionResult {
         val exitCode = runProcess(
-            args = thetaExecutionSpecification.command,
+            arguments = thetaExecutionSpecification.command,
             workingDirectory = thetaExecutionSpecification.workingDirectory,
             logFile = thetaExecutionSpecification.logFile,
             errorFile = thetaExecutionSpecification.errorFile,

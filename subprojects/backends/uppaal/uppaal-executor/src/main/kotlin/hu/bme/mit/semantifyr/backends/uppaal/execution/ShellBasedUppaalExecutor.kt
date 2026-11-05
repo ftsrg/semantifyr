@@ -20,7 +20,7 @@ class ShellBasedUppaalExecutor :
 
     override suspend fun execute(uppaalExecutionSpecification: UppaalExecutionSpecification): UppaalExecutionResult {
         val exitCode = runProcess(
-            args = uppaalExecutionSpecification.command,
+            arguments = uppaalExecutionSpecification.command,
             workingDirectory = uppaalExecutionSpecification.workingDirectory,
             logFile = uppaalExecutionSpecification.logFile,
             errorFile = uppaalExecutionSpecification.errorFile,
