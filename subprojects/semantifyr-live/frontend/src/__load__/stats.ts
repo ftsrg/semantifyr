@@ -106,8 +106,8 @@ export function failures(summary: Summary, maxVerificationP95Ms: number, aborted
   return reasons
 }
 
-function seconds(ms: number): string {
-  return `${(ms / 1000).toFixed(2)} s`
+function seconds(milliseconds: number): string {
+  return `${(milliseconds / 1000).toFixed(2)} s`
 }
 
 export function formatSummary(summary: Summary): string {

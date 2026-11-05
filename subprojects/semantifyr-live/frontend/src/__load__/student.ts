@@ -17,7 +17,7 @@ import {
 import type { LoadTestModel } from './models.ts'
 
 export interface StudentOptions {
-  wsBase: string
+  webSocketBase: string
   flavor: FlavorInfo
   portfolio: string
   model: LoadTestModel
@@ -152,7 +152,7 @@ export async function runStudent(student: number, round: number, options: Studen
   }
   const uri = `file:///workspace/${flavor.fileName}`
   const state: { phase: Phase, closeReason: string | null } = { phase: 'connect', closeReason: null }
-  const webSocket = new WebSocket(`${options.wsBase}/ws/lsp/${encodeURIComponent(flavor.id)}`)
+  const webSocket = new WebSocket(`${options.webSocketBase}/ws/lsp/${encodeURIComponent(flavor.id)}`)
   webSocket.addEventListener('close', (event) => {
     state.closeReason = `${event.code} ${event.reason}`.trim()
   })
@@ -164,11 +164,11 @@ export async function runStudent(student: number, round: number, options: Studen
   const timed = async <T>(promise: Promise<T>, onTimeout?: () => void) => {
     const startedAt = performance.now()
     const value = await withTimeout(promise, timeoutMs, onTimeout)
-    return { value, ms: performance.now() - startedAt }
+    return { value, elapsedMs: performance.now() - startedAt }
   }
 
   try {
-    run.connectMs = (await timed(opened(webSocket))).ms
+    run.connectMs = (await timed(opened(webSocket))).elapsedMs
     const socket = toSocket(webSocket)
     const connection = createMessageConnection(new WebSocketMessageReader(socket), new WebSocketMessageWriter(socket), new ConsoleLogger())
     connection.onClose(() => {
@@ -188,7 +188,7 @@ export async function runStudent(student: number, round: number, options: Studen
         workspace: { workspaceFolders: true, executeCommand: {} },
         window: { workDoneProgress: true },
       },
-    }))).ms
+    }))).elapsedMs
     await connection.sendNotification('initialized', {})
 
     state.phase = 'diagnostics'
@@ -197,13 +197,13 @@ export async function runStudent(student: number, round: number, options: Studen
       textDocument: { uri, languageId: flavor.languageId, version: 1, text: model.text },
     })
     const diagnostics = await timed(firstDiagnostics)
-    run.firstDiagnosticsMs = diagnostics.ms
+    run.firstDiagnosticsMs = diagnostics.elapsedMs
     run.errorDiagnostics = diagnostics.value.filter((diagnostic) => diagnostic.severity === 1).length
 
     const discover = async () => {
       state.phase = 'discovery'
       const cases = await timed(discoverVerificationCases(connection, flavor.discoveryCommand, uri))
-      run.discoveryMs.push(cases.ms)
+      run.discoveryMs.push(cases.elapsedMs)
       const discovered = cases.value.map(caseName).sort().join(', ')
       const declared = model.cases.map((declaredCase) => declaredCase.name).sort().join(', ')
       if (discovered !== declared) {
@@ -238,7 +238,7 @@ export async function runStudent(student: number, round: number, options: Studen
           status,
           message: result.value?.message ?? null,
           ok: expected ? status === expected : status === VerificationStatus.Passed || status === VerificationStatus.Failed,
-          wallMs: result.ms,
+          wallMs: result.elapsedMs,
           queueMs: runningAt === null ? null : runningAt - sentAt,
           serverMs: milliseconds(result.value?.metrics?.totalDuration),
         })
@@ -254,7 +254,7 @@ export async function runStudent(student: number, round: number, options: Studen
         textDocument: { uri, version: 2 },
         contentChanges: [{ text: `${model.text}\n// edited\n` }],
       })
-      run.editDiagnosticsMs = (await timed(editDiagnostics)).ms
+      run.editDiagnosticsMs = (await timed(editDiagnostics)).elapsedMs
       await verifyAll(await discover(), true)
     }
   } catch (error) {
