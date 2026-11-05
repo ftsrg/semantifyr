@@ -28,11 +28,11 @@ public class MixedBooleanOperatorsValidationTest {
 
     @ParameterizedTest
     @CsvSource({
-        "a || b && c, a || (b && c)",
-        "a && b || c, (a && b) || c",
-        "a ^^ b && c, a ^^ (b && c)",
-        "a || b ^^ c, a || (b ^^ c)",
-        "(a) || (b) && c, (a) || ((b) && c)",
+        "left || middle && right, left || (middle && right)",
+        "left && middle || right, (left && middle) || right",
+        "left ^^ middle && right, left ^^ (middle && right)",
+        "left || middle ^^ right, left || (middle ^^ right)",
+        "(left) || (middle) && right, (left) || ((middle) && right)",
     })
     void mixingWithoutParenthesesWarnsWithTheReading(String expression, String reading) {
         assertThat(mixedOperatorIssues(expression)).isNotEmpty().allSatisfy(issue -> {
@@ -44,31 +44,31 @@ public class MixedBooleanOperatorsValidationTest {
     @ParameterizedTest
     @ValueSource(
             strings = {
-                "a || (b && c)",
-                "(a || b) && c",
-                "(a && b) || c",
-                "a ^^ (b && c)",
-                "a || (b ^^ c)",
-                "a && b && c",
-                "a || b || c",
-                "(a || b) && (b ^^ c)",
+                "left || (middle && right)",
+                "(left || middle) && right",
+                "(left && middle) || right",
+                "left ^^ (middle && right)",
+                "left || (middle ^^ right)",
+                "left && middle && right",
+                "left || middle || right",
+                "(left || middle) && (middle ^^ right)",
             })
     void parenthesesOrASingleOperatorDoNotWarn(String expression) {
         assertThat(mixedOperatorIssues(expression)).isEmpty();
     }
 
     private List<Issue> mixedOperatorIssues(String expression) {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var a: bool := false
-                var b: bool := false
-                var c: bool := false
+            class Guards {
+                var left: bool := false
+                var middle: bool := false
+                var right: bool := false
                 redefine tran { assume(%s) }
             }
             """.formatted(expression), CheckMode.ALL);
-        pkg.assertNoResourceErrors();
-        return pkg.getIssues().stream()
+        parsedPackage.assertNoResourceErrors();
+        return parsedPackage.getIssues().stream()
                 .filter(it -> OxstsValidator.MIXED_BOOLEAN_OPERATORS.equals(it.getCode()))
                 .toList();
     }

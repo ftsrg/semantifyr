@@ -37,7 +37,7 @@ abstract prop maximum(): int
 
 ## Redefining Properties
 
-Override an inherited property of the **same name** with `redefine`. The parameter and return-type signature must match.
+Override an inherited property of the **same name** with `redefine`. The redefinition takes as many parameters as the inherited property, and its return type must be assignable to the inherited one.
 
 ```oxsts
 redefine prop maximum(): int {
@@ -79,7 +79,7 @@ class Reaches10 {
 
 When the class is verified, the model checker decides the body over the reachable states: `AG p` holds when `p` holds in every reachable state, `EF p` when it holds in at least one.
 
-The verdict is **Passed** when the property holds and **Failed** when it does not. Otherwise it is **Inconclusive** when the backends finished without a verdict the portfolio trusts (see [soundness directions](../cli/portfolios.mdx#soundness-directions)), **Timeout** when the time limit ran out before a backend decided, **Not supported** when the chosen backend cannot translate a construct of the model, Spin meets an integer without a static bound, Spin or Uppaal meet arithmetic that may leave 32 bits, or a value leaves the range Uppaal declared for its variable (the message names each construct or variable and its source line), or **Errored** when a backend run failed or trusted backends disagreed.
+The verdict is **Passed** when the property holds and **Failed** when it does not. Otherwise it is **Inconclusive** when the backends finished without a verdict the portfolio trusts (see [soundness directions](../cli/portfolios.mdx#soundness-directions)), **Timeout** when the time limit ran out before a backend decided, **Not supported** when the chosen backend refuses a construct of the model (the pages of [Theta](../backends/theta.mdx), [nuXmv](../backends/nuxmv.mdx), [Spin](../backends/spin.mdx) and [Uppaal](../backends/uppaal.mdx) list what each refuses and why) or a value leaves the range Uppaal declared for its variable (the message names each construct or variable and its source line), or **Errored** when a backend run failed or trusted backends disagreed.
 
 ## Properties vs Transitions
 

@@ -26,134 +26,142 @@ public class InlineOperationSyntaxTest {
 
     @Test
     void inlineCall() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                tran step() { x := x + 1 }
+            class Counter {
+                var count: int := 0
+                tran step() { count := count + 1 }
                 redefine tran { inline step() }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var calls = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), InlineCall.class);
+        parsedPackage.assertNoResourceErrors();
+        var calls = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Counter").anonymousMain().eObject(), InlineCall.class);
         assertThat(calls).hasSize(1);
         assertThat(calls.getFirst().getCallExpression()).isNotNull();
     }
 
     @Test
     void inlineIfWithElse() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                redefine tran { inline if (1 < 2) { x := 1 } else { x := 2 } }
+            class Counter {
+                var count: int := 0
+                redefine tran { inline if (1 < 2) { count := 1 } else { count := 2 } }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var ifs = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), InlineIfOperation.class);
-        assertThat(ifs).hasSize(1);
-        var op = ifs.getFirst();
-        assertThat(op.getGuard()).isNotNull();
-        assertThat(op.getBody()).isNotNull();
-        assertThat(op.getElse()).isNotNull();
+        parsedPackage.assertNoResourceErrors();
+        var inlineIfs = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Counter").anonymousMain().eObject(), InlineIfOperation.class);
+        assertThat(inlineIfs).hasSize(1);
+        var inlineIf = inlineIfs.getFirst();
+        assertThat(inlineIf.getGuard()).isNotNull();
+        assertThat(inlineIf.getBody()).isNotNull();
+        assertThat(inlineIf.getElse()).isNotNull();
     }
 
     @Test
     void inlineIfWithoutElse() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                redefine tran { inline if (1 < 2) { x := 1 } }
+            class Counter {
+                var count: int := 0
+                redefine tran { inline if (1 < 2) { count := 1 } }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var ifs = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), InlineIfOperation.class);
-        assertThat(ifs).hasSize(1);
-        assertThat(ifs.getFirst().getElse()).isNull();
+        parsedPackage.assertNoResourceErrors();
+        var inlineIfs = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Counter").anonymousMain().eObject(), InlineIfOperation.class);
+        assertThat(inlineIfs).hasSize(1);
+        assertThat(inlineIfs.getFirst().getElse()).isNull();
     }
 
     @Test
     void inlineSeqForBare() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Counter {
                 var total: int := 0
-                redefine tran { inline for (n in 1..3) { total := total + 1 } }
+                redefine tran { inline for (index in 1..3) { total := total + 1 } }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var fors = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), InlineSeqFor.class);
-        assertThat(fors).hasSize(1);
-        var f = fors.getFirst();
-        assertThat(f.getLoopVariable().getName()).isEqualTo("n");
-        assertThat(f.getRangeExpression()).isNotNull();
-        assertThat(f.getBody()).isNotNull();
-        assertThat(f.getElse()).isNull();
+        parsedPackage.assertNoResourceErrors();
+        var inlineFors = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Counter").anonymousMain().eObject(), InlineSeqFor.class);
+        assertThat(inlineFors).hasSize(1);
+        var inlineFor = inlineFors.getFirst();
+        assertThat(inlineFor.getLoopVariable().getName()).isEqualTo("index");
+        assertThat(inlineFor.getRangeExpression()).isNotNull();
+        assertThat(inlineFor.getBody()).isNotNull();
+        assertThat(inlineFor.getElse()).isNull();
     }
 
     @Test
     void inlineSeqForExplicitSeqKeyword() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Counter {
                 var total: int := 0
-                redefine tran { inline for seq (n in 1..3) { total := total + 1 } }
+                redefine tran { inline for seq (index in 1..3) { total := total + 1 } }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var fors = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), InlineSeqFor.class);
-        assertThat(fors).hasSize(1);
+        parsedPackage.assertNoResourceErrors();
+        var inlineFors = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Counter").anonymousMain().eObject(), InlineSeqFor.class);
+        assertThat(inlineFors).hasSize(1);
     }
 
     @Test
     void inlineSeqForWithElse() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Counter {
                 var total: int := 0
                 redefine tran {
-                    inline for (n in 1..0) { total := total + 1 }
+                    inline for (index in 1..0) { total := total + 1 }
                     else { total := -1 }
                 }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var fors = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), InlineSeqFor.class);
-        assertThat(fors).hasSize(1);
-        assertThat(fors.getFirst().getElse()).isNotNull();
+        parsedPackage.assertNoResourceErrors();
+        var inlineFors = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Counter").anonymousMain().eObject(), InlineSeqFor.class);
+        assertThat(inlineFors).hasSize(1);
+        assertThat(inlineFors.getFirst().getElse()).isNotNull();
     }
 
     @Test
     void inlineChoiceFor() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Counter {
                 var chosen: int := 0
-                redefine tran { inline for choice (n in 1..3) { chosen := n } }
+                redefine tran { inline for choice (index in 1..3) { chosen := index } }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var fors = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), InlineChoiceFor.class);
-        assertThat(fors).hasSize(1);
-        assertThat(fors.getFirst().getLoopVariable().getName()).isEqualTo("n");
+        parsedPackage.assertNoResourceErrors();
+        var inlineFors = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Counter").anonymousMain().eObject(), InlineChoiceFor.class);
+        assertThat(inlineFors).hasSize(1);
+        assertThat(inlineFors.getFirst().getLoopVariable().getName()).isEqualTo("index");
     }
 
     @Test
     void inlineChoiceForWithElse() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Counter {
                 var chosen: int := 0
                 redefine tran {
-                    inline for choice (n in 1..0) { chosen := n }
+                    inline for choice (index in 1..0) { chosen := index }
                     else { chosen := -1 }
                 }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var fors = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), InlineChoiceFor.class);
-        assertThat(fors).hasSize(1);
-        assertThat(fors.getFirst().getElse()).isNotNull();
+        parsedPackage.assertNoResourceErrors();
+        var inlineFors = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Counter").anonymousMain().eObject(), InlineChoiceFor.class);
+        assertThat(inlineFors).hasSize(1);
+        assertThat(inlineFors.getFirst().getElse()).isNotNull();
     }
 }

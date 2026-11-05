@@ -25,59 +25,59 @@ public class ParameterBindingTest {
 
     @Test
     void allRequiredArgumentsBound_passes() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                tran addBy(n: int) { x := x + n }
+            class Counter {
+                var count: int := 0
+                tran addBy(amount: int) { count := count + amount }
                 redefine tran { inline addBy(5) }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void missingRequiredArgument_isRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                tran addBy(n: int) { x := x + n }
+            class Counter {
+                var count: int := 0
+                tran addBy(amount: int) { count := count + amount }
                 redefine tran { inline addBy() }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.INVALID_CALL_ARGUMENTS_COUND, "non-optional");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.INVALID_CALL_ARGUMENTS_COUND, "non-optional");
     }
 
     @Test
     void missingSomeRequiredArguments_listsTheUnboundNames() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                tran addTwo(a: int, b: int) { x := x + a + b }
+            class Counter {
+                var count: int := 0
+                tran addTwo(first: int, second: int) { count := count + first + second }
                 redefine tran { inline addTwo(1) }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.INVALID_CALL_ARGUMENTS_COUND, "b");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.INVALID_CALL_ARGUMENTS_COUND, "second");
     }
 
     @Test
     void extraArgument_isRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                tran addBy(n: int) { x := x + n }
+            class Counter {
+                var count: int := 0
+                tran addBy(amount: int) { count := count + amount }
                 redefine tran { inline addBy(1, 2) }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.INVALID_CALL_ARGUMENTS_COUND, "at most");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.INVALID_CALL_ARGUMENTS_COUND, "at most");
     }
 
     @Test
@@ -86,145 +86,146 @@ public class ParameterBindingTest {
         // legal. The tran body refers to `delta` only conditionally, so
         // the model compiles even when no binding is provided (the inliner
         // handles the omitted-parameter case as absent).
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                tran addOptional(n: int, delta: int[0..1]) { x := x + n }
+            class Counter {
+                var count: int := 0
+                tran addOptional(amount: int, delta: int[0..1]) { count := count + amount }
                 redefine tran { inline addOptional(5) }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void optionalParameterMayAlsoBeBound() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                tran addOptional(n: int, delta: int[0..1]) { x := x + n }
+            class Counter {
+                var count: int := 0
+                tran addOptional(amount: int, delta: int[0..1]) { count := count + amount }
                 redefine tran { inline addOptional(5, 2) }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void missingRequiredBeforeOptional_isRejected() {
-        // Required n is missing; optional delta is present via named arg.
-        // Using positional-only for simplicity here: no arguments at all.
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                tran addOptional(n: int, delta: int[0..1]) { x := x + n }
+            class Counter {
+                var count: int := 0
+                tran addOptional(amount: int, delta: int[0..1]) { count := count + amount }
                 redefine tran { inline addOptional() }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.INVALID_CALL_ARGUMENTS_COUND, "n");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.INVALID_CALL_ARGUMENTS_COUND, "amount");
     }
 
     @Test
     void requiredBeforeOptional_isAccepted() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                tran addOptional(n: int, delta: int[0..1]) { x := x + n }
+            class Counter {
+                var count: int := 0
+                tran addOptional(amount: int, delta: int[0..1]) { count := count + amount }
                 redefine tran { inline addOptional(5) }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void requiredAfterOptional_isRejected() {
-        // `delta` is optional [0..1] but precedes the required `n`.
-        // Positional calls would be ambiguous if `delta` is omitted, so
-        // the declaration itself is rejected.
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                tran addBad(delta: int[0..1], n: int) { x := x + n }
+            class Counter {
+                var count: int := 0
+                tran addBad(delta: int[0..1], amount: int) { count := count + amount }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.INVALID_CALL_ARGUMENTS_COUND, "cannot follow optional parameter");
+        parsedPackage.assertHasValidationIssue(
+                OxstsValidator.INVALID_CALL_ARGUMENTS_COUND, "cannot follow optional parameter");
     }
 
     @Test
     void multipleOptionalsAfterRequired_isAccepted() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                tran threeArg(a: int, b: int[0..1], c: int[0..1]) { x := x + a }
-                redefine tran { inline threeArg(1) }
+            class Counter {
+                var count: int := 0
+                tran threeParameters(required: int, firstOptional: int[0..1], secondOptional: int[0..1]) { count := count + required }
+                redefine tran { inline threeParameters(1) }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void requiredBetweenOptionals_isRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                tran messy(a: int, b: int[0..1], c: int, d: int[0..1]) { x := x + a + c }
+            class Counter {
+                var count: int := 0
+                tran messy(first: int, firstOptional: int[0..1], second: int, secondOptional: int[0..1]) { count := count + first + second }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.INVALID_CALL_ARGUMENTS_COUND, "'c'");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.INVALID_CALL_ARGUMENTS_COUND, "'second'");
     }
 
     @Test
     void annotationDeclarationParameterOrder_isAlsoChecked() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             annotation Tagged(maybe: string[0..1], required: string)
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.INVALID_CALL_ARGUMENTS_COUND, "cannot follow optional parameter");
+        parsedPackage.assertHasValidationIssue(
+                OxstsValidator.INVALID_CALL_ARGUMENTS_COUND, "cannot follow optional parameter");
     }
 
     @Test
     void annotationPositionalArgumentAfterNamed_bindsTheParameterAtItsPosition() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             annotation Pair(first: int, second: bool)
             @Pair(first = 1, true)
-            class C { }
+            class Annotated { }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void annotationNamedArgument_bindsTheParameterOfThatName() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             annotation Pair(first: int, second: int[0..1])
             @Pair(second = 2)
-            class C { }
+            class Annotated { }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
-        var annotation =
-                pkg.classByName("C").eObject().getAnnotation().getAnnotations().getFirst();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
+        var annotation = parsedPackage
+                .classByName("Annotated")
+                .eObject()
+                .getAnnotation()
+                .getAnnotations()
+                .getFirst();
         var parameters = annotation.getDeclaration().getParameters();
         assertThat(OxstsUtils.getAnnotationValue(annotation, parameters.get(0))).isNull();
         assertThat(OxstsUtils.getAnnotationValue(annotation, parameters.get(1)))
@@ -235,13 +236,13 @@ public class ParameterBindingTest {
 
     @Test
     void annotationNamedArgumentOfWrongType_isRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             annotation Pair(first: int, second: bool)
             @Pair(second = 1, first = 2)
-            class C { }
+            class Annotated { }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "parameter 'second'");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "parameter 'second'");
     }
 }

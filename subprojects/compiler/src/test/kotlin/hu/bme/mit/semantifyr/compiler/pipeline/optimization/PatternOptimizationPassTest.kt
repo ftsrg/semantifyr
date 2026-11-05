@@ -102,10 +102,15 @@ class PatternOptimizationPassTest {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                init { }
-                tran { a := 1 }
-                prop { AG (a == 1) }
+                var value : int := 0
+                init {
+                }
+                tran {
+                    value := 1
+                }
+                prop {
+                    AG (value == 1)
+                }
             """.trimIndent(),
         )
         val classDeclaration = inlined.classDeclaration

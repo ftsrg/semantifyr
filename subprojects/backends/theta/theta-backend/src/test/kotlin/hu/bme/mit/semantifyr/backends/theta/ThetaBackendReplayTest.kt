@@ -12,8 +12,9 @@ import hu.bme.mit.semantifyr.backend.BackendTestModels
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.backend.enumeration
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.valuesByName
+import hu.bme.mit.semantifyr.backend.integer
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import kotlinx.coroutines.Dispatchers
@@ -70,7 +71,7 @@ class ThetaBackendReplayTest {
         val result = verifyFixture("control_flow", "ChoiceBranch1Reach")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
-        assertThat(result.inlinedWitness!!.transitionStates.last().valuesByName()).containsEntry("\$\$root\$\$x", 1)
+        assertThat(result.inlinedWitness!!.transitionStates.last().integer("\$\$root\$\$x")).isEqualTo(1)
     }
 
     @Test
@@ -80,7 +81,11 @@ class ThetaBackendReplayTest {
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
         val states = listOfNotNull(witness.initializedState) + witness.transitionStates
-        assertThat(states.map { it.valuesByName()["x"] }).containsExactly(0, 1, 2)
+        assertThat(
+            states.map {
+                it.integer("counter")
+            },
+        ).containsExactly(0, 1, 2)
     }
 
     @Test
@@ -90,7 +95,13 @@ class ThetaBackendReplayTest {
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
         val states = listOfNotNull(witness.initializedState) + witness.transitionStates
-        assertThat(states.map { state -> state.values.map { it.variable.name } }).containsOnly(listOf("y", "x", "b"))
+        assertThat(
+            states.map { state ->
+                state.values.map {
+                    it.variable.name
+                }
+            },
+        ).containsOnly(listOf("counter", "unchanged", "flag"))
     }
 
     @Test
@@ -114,7 +125,7 @@ class ThetaBackendReplayTest {
         val result = verifyFixture("initial_values", "UninitializedIntegerBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
-        assertThat(result.inlinedWitness!!.initialState.valuesByName()["\$\$root\$\$x"]).isNotNull().isNotEqualTo(0)
+        assertThat(result.inlinedWitness!!.initialState.integer("\$\$root\$\$x")).isNotEqualTo(0)
     }
 
     @Test
@@ -122,7 +133,7 @@ class ThetaBackendReplayTest {
         val result = verifyFixture("initial_values", "UninitializedEnumBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
-        assertThat(result.inlinedWitness!!.initialState.valuesByName()["\$\$root\$\$light"]).isEqualTo("On")
+        assertThat(result.inlinedWitness!!.initialState.enumeration("\$\$root\$\$light")).isEqualTo("On")
     }
 
     @Test
@@ -132,16 +143,20 @@ class ThetaBackendReplayTest {
             models.parse(
                 """
                     inlined oxsts of semantifyr::Anything
-                    var r : real := 0.5
-                    init { }
-                    tran { }
-                    prop { AG true }
+                    var ratio : real := 0.5
+                    init {
+                    }
+                    tran {
+                    }
+                    prop {
+                        AG true
+                    }
                 """,
             ),
         )
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
-        assertThat(result.message).matches("theta:cegar-expl does not support \\S+:2: variables of type real \\(r\\); \\S+:2: real literals")
+        assertThat(result.message).matches("theta:cegar-expl does not support \\S+:2: variables of type real \\(ratio\\); \\S+:2: real literals")
     }
 
     @Test
@@ -170,7 +185,7 @@ class ThetaBackendReplayTest {
         val result = verifyFixture("runtime_for", "InclusiveRangeReach")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
-        assertThat(result.inlinedWitness!!.transitionStates.last().valuesByName()).containsEntry("\$\$root\$\$x", 3)
+        assertThat(result.inlinedWitness!!.transitionStates.last().integer("\$\$root\$\$x")).isEqualTo(3)
     }
 
     @Test

@@ -42,8 +42,6 @@ jobs:
           - macos-latest
     runs-on: ${{ matrix.os }}
     env:
-      # one value for every Gradle step, since it is a test input and a change reruns all tests
-      REQUIRED_BACKENDS: ${{ matrix.os == 'ubuntu-latest' && 'theta,spin' || 'theta' }}
       # only the ubuntu leg uploads the website
       WEBSITE_API_DOCS: ${{ matrix.os == 'ubuntu-latest' }}
     steps:
@@ -68,12 +66,13 @@ jobs:
           cache-dependency-path: package-lock.json
       - name: Install Spin
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y spin
+        run: sudo apt-get update && sudo apt-get install -y spin
+      - name: Check the engines
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: .github/scripts/check-engines.sh spin docker
       - name: Gradle build
         shell: bash
-        run: ./gradlew build --continue -Ptests.requiredBackends=$REQUIRED_BACKENDS -Pwebsite.apiDocs=$WEBSITE_API_DOCS
+        run: ./gradlew build --continue -Pwebsite.apiDocs=$WEBSITE_API_DOCS
       - name: Read the VS Code version of the integration test
         id: vscode
         if: ${{ matrix.os == 'ubuntu-latest' }}
@@ -86,11 +85,11 @@ jobs:
           key: vscode-${{ runner.os }}-${{ steps.vscode.outputs.version }}
       - name: Run integration tests
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: ./gradlew integrationTest --continue -Ptests.requiredBackends=$REQUIRED_BACKENDS -Ptests.requireDocker=true
+        run: ./gradlew integrationTest --continue
       - name: Merge coverage reports
         if: ${{ matrix.os == 'ubuntu-latest' }}
         shell: bash
-        run: ./gradlew mergedJacocoReport -Ptests.requiredBackends=$REQUIRED_BACKENDS
+        run: ./gradlew mergedJacocoReport
       - name: Upload coverage reports
         if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: actions/upload-artifact@v7
@@ -104,47 +103,59 @@ jobs:
         shell: bash
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          if [ -n "$SONAR_TOKEN" ]; then
-            ./gradlew sonar -Ptests.requiredBackends=$REQUIRED_BACKENDS
-          fi
+        run: .github/scripts/sonar.sh
       - name: Upload GitHub Pages artifact
         if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: actions/upload-pages-artifact@v5
         with:
           path: subprojects/website/build/docusaurus
           retention-days: 90
-      - name: Stage the distributions and the live image context
+      - name: Pack the live image context
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        shell: bash
-        # a tarball, because upload-artifact drops the execute bits the launchers need
-        run: |
-          ./gradlew :semantifyr-vscode:bundleExtension :semantifyr-live-backend:prepareDockerBuild
-          tar -czf live-image-context.tar.gz -C subprojects/semantifyr-live/backend \
-            Dockerfile build/install build/staging build/theta-xsts-cli
-          mkdir distributions
-          cp subprojects/semantifyr-vscode/build/semantifyr-*.vsix subprojects/semantifyr-cli/build/distributions/semantifyr-*.zip distributions/
-      - name: Smoke test the CLI distribution
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: |
-          version=$(sed -n 's/^version=//p' gradle.properties)
-          unzip -q "distributions/semantifyr-$version.zip" -d cli
-          "cli/semantifyr-$version/bin/semantifyr" verify --theta-executor shell "cli/semantifyr-$version/models/smoke"
-      - name: Upload the distributions
+        run: ./gradlew :semantifyr-live-backend:liveImageContext
+      - name: Upload semantifyr-cli
         if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: actions/upload-artifact@v7
         with:
-          name: distributions
-          path: distributions/
+          name: semantifyr-cli
+          path: subprojects/semantifyr-cli/build/distributions/semantifyr-*.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 90
+      - name: Upload sysml-cli
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: sysml-cli
+          path: subprojects/frontends/sysml/sysml-cli/build/distributions/semantifyr-sysml-*.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 90
+      - name: Upload gamma-cli
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: gamma-cli
+          path: subprojects/frontends/gamma/gamma-cli/build/distributions/semantifyr-gamma-*.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 90
+      - name: Upload semantifyr-vscode
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: semantifyr-vscode
+          path: subprojects/semantifyr-vscode/build/semantifyr-*.vsix
           if-no-files-found: error
           compression-level: 0
           retention-days: 90
       - name: Upload the live image context
         if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: actions/upload-artifact@v7
+        # a tarball, because upload-artifact drops the execute bits the image needs
         with:
           name: live-image-context
-          path: live-image-context.tar.gz
+          path: subprojects/semantifyr-live/backend/build/distributions/live-image-context.tar.gz
           compression-level: 0
           retention-days: 1
 
@@ -180,14 +191,10 @@ jobs:
         with:
           name: live-image-context
       - name: Unpack the live image context
-        run: |
-          mkdir context
-          tar -xzf live-image-context.tar.gz -C context
+        run: mkdir context && tar -xzf live-image-context.tar.gz -C context
       - name: Compute the tag
         id: tag
-        run: |
-          version=$(sed -n 's/^version=//p' gradle.properties)
-          echo "tag=$version-dev.${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+        run: echo "tag=$(sed -n 's/^version=//p' gradle.properties)-dev.${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
       - name: Set up Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - name: Build
@@ -208,16 +215,7 @@ jobs:
       - name: Smoke test
         env:
           TAG: ${{ steps.tag.outputs.tag }}
-        run: |
-          docker run -d --name live -p 8080:8080 --cap-drop ALL --security-opt no-new-privileges:true "$IMAGE:$TAG"
-          for _ in $(seq 60); do
-            curl -fsS http://localhost:8080/api/health > /dev/null && break
-            sleep 3
-          done
-          curl -fsS http://localhost:8080/api/health
-          curl -fsS http://localhost:8080/ > /dev/null
-          test "$(curl -s -o /dev/null -w '%{http_code}' -H 'X-Auth-Request-User: smoke' http://localhost:8080/api/admin/status)" = 403
-          docker exec live theta-xsts-cli --version
+        run: .github/scripts/smoke-test-live-image.sh live "$IMAGE:$TAG"
       - name: Show the container log
         if: ${{ failure() }}
         run: docker logs live
@@ -231,6 +229,4 @@ jobs:
         if: ${{ inputs.publish }}
         env:
           TAG: ${{ steps.tag.outputs.tag }}
-        run: |
-          docker push "$IMAGE:$TAG"
-          docker push "$IMAGE:snapshot"
+        run: docker push "$IMAGE:$TAG" && docker push "$IMAGE:snapshot"

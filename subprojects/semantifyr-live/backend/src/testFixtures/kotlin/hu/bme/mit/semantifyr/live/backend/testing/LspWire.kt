@@ -182,7 +182,11 @@ private fun JsonObject.idAsInt(): Int? {
         return null
     }
     val primitive = id.asJsonPrimitive
-    return if (primitive.isNumber) primitive.asInt else null
+    return if (primitive.isNumber) {
+        primitive.asInt
+    } else {
+        null
+    }
 }
 
 suspend fun DefaultClientWebSocketSession.ackIfRequest(message: JsonObject) {

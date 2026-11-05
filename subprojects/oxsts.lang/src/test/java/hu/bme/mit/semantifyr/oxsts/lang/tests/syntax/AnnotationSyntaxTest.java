@@ -21,78 +21,82 @@ public class AnnotationSyntaxTest {
 
     @Test
     void singleAnnotationWithoutArguments() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             @VerificationCase
             class Case { }
             """);
-        pkg.assertNoResourceErrors();
-        var container = pkg.classByName("Case").eObject().getAnnotation();
+        parsedPackage.assertNoResourceErrors();
+        var container = parsedPackage.classByName("Case").eObject().getAnnotation();
         assertThat(container).isNotNull();
         assertThat(container.getAnnotations()).hasSize(1);
     }
 
     @Test
     void annotationWithPositionalArgument() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             @VerificationCase("reachability")
             class Case { }
             """);
-        pkg.assertNoResourceErrors();
-        var ann = pkg.classByName("Case")
+        parsedPackage.assertNoResourceErrors();
+        var annotation = parsedPackage
+                .classByName("Case")
                 .eObject()
                 .getAnnotation()
                 .getAnnotations()
                 .getFirst();
-        assertThat(ann.getArguments()).hasSize(1);
-        assertThat(ann.getArguments().getFirst().getExpression()).isNotNull();
+        assertThat(annotation.getArguments()).hasSize(1);
+        assertThat(annotation.getArguments().getFirst().getExpression()).isNotNull();
     }
 
     @Test
     void annotationWithNamedArgument() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             @VerificationCase(summary = "reachability")
             class Case { }
             """);
-        pkg.assertNoResourceErrors();
-        var ann = pkg.classByName("Case")
+        parsedPackage.assertNoResourceErrors();
+        var annotation = parsedPackage
+                .classByName("Case")
                 .eObject()
                 .getAnnotation()
                 .getAnnotations()
                 .getFirst();
-        assertThat(ann.getArguments()).hasSize(1);
-        assertThat(ann.getArguments().getFirst().getParameter()).isNotNull();
-        assertThat(ann.getArguments().getFirst().getParameter().getName()).isEqualTo("summary");
+        assertThat(annotation.getArguments()).hasSize(1);
+        assertThat(annotation.getArguments().getFirst().getParameter()).isNotNull();
+        assertThat(annotation.getArguments().getFirst().getParameter().getName())
+                .isEqualTo("summary");
     }
 
     @Test
     void multipleAnnotationsOnSameDeclaration() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             annotation Tag(category: string)
             @VerificationCase
             @Tag(category = "demo")
             class Case { }
             """);
-        pkg.assertNoResourceErrors();
-        assertThat(pkg.classByName("Case").eObject().getAnnotation().getAnnotations())
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.classByName("Case").eObject().getAnnotation().getAnnotations())
                 .hasSize(2);
     }
 
     @Test
     void annotationOnVariableDeclaration() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             annotation Tracked
-            class C {
+            class Sensor {
                 @Tracked
-                var x: int := 0
+                var reading: int := 0
             }
             """);
-        pkg.assertNoResourceErrors();
-        var variable = pkg.classByName("C").variableByName("x").eObject();
+        parsedPackage.assertNoResourceErrors();
+        var variable =
+                parsedPackage.classByName("Sensor").variableByName("reading").eObject();
         assertThat(variable.getAnnotation()).isNotNull();
         assertThat(variable.getAnnotation().getAnnotations()).hasSize(1);
     }

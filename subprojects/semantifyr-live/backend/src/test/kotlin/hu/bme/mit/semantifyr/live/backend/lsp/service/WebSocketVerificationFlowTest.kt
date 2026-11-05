@@ -254,7 +254,7 @@ class WebSocketVerificationFlowTest {
                     LspWire.didOpenNotification(
                         uri = documentUri,
                         languageId = "oxsts",
-                        text = "package test\n\n@VerificationCase\nclass CaseA {\n    prop { return true }\n}\n",
+                        text = "package test\n\n@VerificationCase\nclass CaseA {\n    prop {\n        return true\n    }\n}\n",
                     ),
                 ),
             )

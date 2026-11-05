@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.mockito.Mockito.mock
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.seconds
 
 class AllAgreeFullPortfolioTest {
 
@@ -29,7 +28,6 @@ class AllAgreeFullPortfolioTest {
         @TempDir output: Path,
     ) {
         val portfolio = AllAgreeFullPortfolio(
-            timeout = 5.seconds,
             theta = PassingBackend("theta"),
             nuxmv = PassingBackend("nuxmv"),
             uppaal = PassingBackend("uppaal"),
@@ -46,7 +44,6 @@ class AllAgreeFullPortfolioTest {
         @TempDir output: Path,
     ) {
         val portfolio = AllAgreeFullPortfolio(
-            timeout = 5.seconds,
             theta = PassingBackend("theta"),
             nuxmv = PassingBackend("nuxmv"),
             uppaal = PassingBackend("uppaal"),
@@ -64,7 +61,6 @@ class AllAgreeFullPortfolioTest {
         @TempDir output: Path,
     ) {
         val portfolio = AllAgreeFullPortfolio(
-            timeout = 5.seconds,
             theta = FailingBackend("theta"),
             nuxmv = FailingBackend("nuxmv"),
             uppaal = PassingBackend("uppaal"),
@@ -82,7 +78,6 @@ class AllAgreeFullPortfolioTest {
         @TempDir output: Path,
     ) {
         val portfolio = AllAgreeFullPortfolio(
-            timeout = 5.seconds,
             theta = PassingBackend("theta"),
             nuxmv = PassingBackend("nuxmv"),
             uppaal = PassingBackend("uppaal"),
@@ -100,7 +95,6 @@ class AllAgreeFullPortfolioTest {
         @TempDir output: Path,
     ) {
         val portfolio = AllAgreeFullPortfolio(
-            timeout = 5.seconds,
             theta = PassingBackend("theta", UnavailableKey),
             nuxmv = PassingBackend("nuxmv", UnavailableKey),
             uppaal = PassingBackend("uppaal", UnavailableKey),
@@ -118,7 +112,6 @@ class AllAgreeFullPortfolioTest {
         @TempDir output: Path,
     ) {
         val portfolio = AllAgreeFullPortfolio(
-            timeout = 5.seconds,
             theta = ErroringBackend("theta"),
             nuxmv = ErroringBackend("nuxmv"),
             uppaal = ErroringBackend("uppaal"),
@@ -136,7 +129,6 @@ class AllAgreeFullPortfolioTest {
         @TempDir output: Path,
     ) {
         val portfolio = AllAgreeFullPortfolio(
-            timeout = 5.seconds,
             theta = NotSupportedBackend("theta"),
             nuxmv = NotSupportedBackend("nuxmv"),
             uppaal = NotSupportedBackend("uppaal"),

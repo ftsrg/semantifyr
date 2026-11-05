@@ -1,4 +1,4 @@
-pan:1: assertion violated  !( !(( !(semantifyr_stable)||(y<2)))) (at depth 9)
+pan:1: assertion violated  !( !(( !(semantifyr_stable)||(counter<2)))) (at depth 9)
 pan: wrote model.pml.trail
 
 (Spin Version 6.5.2 -- 6 December 2019)
@@ -27,5 +27,5 @@ Stats on memory usage (in Megabytes):
 
 
 
-pan: elapsed time 0.01 seconds
-ltl p: [] ((! (__semantifyr_stable)) || ((y<2)))
+pan: elapsed time 0 seconds
+ltl p: [] ((! (__semantifyr_stable)) || ((counter<2)))

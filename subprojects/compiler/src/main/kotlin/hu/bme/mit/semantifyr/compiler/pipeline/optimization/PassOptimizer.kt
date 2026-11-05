@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization
 
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.checkInterrupted
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
@@ -47,6 +48,7 @@ class PassOptimizer<T>(
             iteration = false
             var roundFires = 0
             for (pass in passes) {
+                checkInterrupted()
                 val passName = pass.javaClass.simpleName
                 val passMark = markNow()
                 val result = pass.run(input, analysisManager)

@@ -13,28 +13,116 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
 
     private val colors = """
         package test::colors
-        enum Color { Red, Green }
+        enum Color {
+            Red,
+            Green,
+        }
     """
 
-    private fun unsupported(body: String): List<String> {
+    private fun unsupported(
+        body: String,
+        checkerClass: Class<out UppaalCapabilityChecker> = UppaalCapabilityChecker::class.java,
+    ): List<String> {
         val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors)
-        return withCapabilityChecker {
+        return withCapabilityChecker(checkerClass) {
             it.check(inlinedOxsts)
         }.map {
             it.description
         }
     }
 
+    private fun overApproximationUnsupported(body: String): List<String> {
+        return unsupported(body, UppaalOverApproximationCapabilityChecker::class.java)
+    }
+
+    @Test
+    fun `the over-approximation refuses a havoced integer read other than in comparisons with literals`() {
+        val havoc = """
+            var counter : int := 0
+            var copy : int := 0
+            init {
+            }
+            tran {
+                havoc(counter)
+                copy := counter + 1
+            }
+            prop {
+                AG copy < 5
+            }
+        """
+        val uninitialized = """
+            var counter : int
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG counter * 2 < 5
+            }
+        """
+        val local = """
+            var copy : int := 0
+            init {
+            }
+            tran {
+                var temporary : int
+                copy := temporary
+            }
+            prop {
+                AG copy < 5
+            }
+        """
+
+        assertThat(overApproximationUnsupported(havoc)).containsExactly("havoced integers read other than in comparisons with literals")
+        assertThat(overApproximationUnsupported(uninitialized)).contains("havoced integers read other than in comparisons with literals")
+        assertThat(overApproximationUnsupported(local)).containsExactly("havoced integers read other than in comparisons with literals")
+        assertThat(unsupported(havoc)).isEmpty()
+    }
+
+    @Test
+    fun `the over-approximation accepts havoced integers compared only with literals and havoced booleans`() {
+        val unsupported = overApproximationUnsupported(
+            """
+                var counter : int
+                var flag : bool
+                init {
+                }
+                tran {
+                    havoc(counter)
+                    havoc(flag)
+                }
+                prop {
+                    AG (counter == 3 || counter < 0 || flag)
+                }
+            """,
+        )
+
+        assertThat(unsupported).isEmpty()
+    }
+
     @Test
     fun `a model of supported constructs passes`() {
         val unsupported = unsupported(
             """
-                var x : int := 0
-                var b : bool
-                var c : test::colors::Color := test::colors::Color::Red
-                init { havoc(b) }
-                tran { choice { assume(x < 3) x := x + 1 } or { if (b) { c := test::colors::Color::Green } } }
-                prop { AG (x <= 3 && (if b then true else c == test::colors::Color::Red)) }
+                var counter : int := 0
+                var flag : bool
+                var color : test::colors::Color := test::colors::Color::Red
+                init {
+                    havoc(flag)
+                }
+                tran {
+                    choice {
+                        assume(counter < 3)
+                        counter := counter + 1
+                    } or {
+                        if (flag) {
+                            color := test::colors::Color::Green
+                        }
+                    }
+                }
+                prop {
+                    AG (counter <= 3 && (if flag then true else color == test::colors::Color::Red))
+                }
             """,
         )
 
@@ -45,18 +133,32 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
     fun `every unsupported construct is reported`() {
         val unsupported = unsupported(
             """
-                var r : real := 0.5
-                @semantifyr::Clock var c : int := 0
-                @semantifyr::Clock var e : test::colors::Color := test::colors::Color::Red
-                var x : int := 0
-                init { }
-                tran { c := 0 c := 5 havoc(c) for (i in 0..2) { x := x + i } }
-                prop { AG true }
+                var ratio : real := 0.5
+                var anything : any := 0
+                @semantifyr::Clock
+                var elapsed : int := 0
+                @semantifyr::Clock
+                var clockColor : test::colors::Color := test::colors::Color::Red
+                var counter : int := 0
+                init {
+                }
+                tran {
+                    elapsed := 0
+                    elapsed := 5
+                    havoc(elapsed)
+                    for (index in 0..2) {
+                        counter := counter + index
+                    }
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
         assertThat(unsupported).containsExactlyInAnyOrder(
             "variables of type real",
+            "variables of type any",
             "@Clock on variables that are not data-typed",
             "clock resets to values other than 0",
             "havoc on clocks",
@@ -70,9 +172,15 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
             """
                 var counted : int := 1
                 var ignored : int := 1
-                init { }
-                tran { counted := counted * 3 ignored := ignored * 3 }
-                prop { AG counted > 0 }
+                init {
+                }
+                tran {
+                    counted := counted * 3
+                    ignored := ignored * 3
+                }
+                prop {
+                    AG counted > 0
+                }
             """,
         )
 
@@ -85,9 +193,15 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
             """
                 var counted : int := 0
                 var doubled : int := 1
-                init { }
-                tran { counted := counted + 1 doubled := doubled * 2 }
-                prop { AG (counted >= 0 && doubled > 0) }
+                init {
+                }
+                tran {
+                    counted := counted + 1
+                    doubled := doubled * 2
+                }
+                prop {
+                    AG (counted >= 0 && doubled > 0)
+                }
             """,
         )
 
@@ -98,11 +212,19 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
     fun `an unbounded integer without arithmetic that may leave 32 bits is not reported`() {
         val unsupported = unsupported(
             """
-                var x : int := 0
-                var y : int := 0
-                init { }
-                tran { if (x < 100) { x := x + 1 } y := y / 2 + x }
-                prop { AG y >= 0 }
+                var counter : int := 0
+                var combined : int := 0
+                init {
+                }
+                tran {
+                    if (counter < 100) {
+                        counter := counter + 1
+                    }
+                    combined := combined / 2 + counter
+                }
+                prop {
+                    AG combined >= 0
+                }
             """,
         )
 
@@ -113,12 +235,21 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
     fun `arithmetic is reported only when it may leave 32 bits under the declared ranges`() {
         val unsupported = unsupported(
             """
-                var x : int := 1
+                var counter : int := 1
                 var doubled : int := 2
                 var scaled : int := 100000
-                init { }
-                tran { if (x < 32767) { x := x + 1 } doubled := x * 2 scaled := x * 100000 }
-                prop { AG (doubled > 0 && scaled > 0) }
+                init {
+                }
+                tran {
+                    if (counter < 32767) {
+                        counter := counter + 1
+                    }
+                    doubled := counter * 2
+                    scaled := counter * 100000
+                }
+                prop {
+                    AG (doubled > 0 && scaled > 0)
+                }
             """,
         )
 

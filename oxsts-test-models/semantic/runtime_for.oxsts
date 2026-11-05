@@ -6,20 +6,15 @@
 
 package semantifyr::verification::lang::runtime_for
 
-// A runtime for-operation iterates its whole range within one step:
-// `a..b` includes b, `a..<b` stops before it. Summing the loop
-// variable distinguishes every off-by-one.
-
 @VerificationCase
 @Tag("expect-pass")
-@Tag("engine-limit:nuxmv,spin,uppaal")
 class InclusiveRangeReach {
     var x: int := 0
 
     redefine tran {
         assume(x == 0)
-        for (i in 0..2) {
-            x := x + i
+        for (index in 0..2) {
+            x := x + index
         }
     }
 
@@ -30,14 +25,13 @@ class InclusiveRangeReach {
 
 @VerificationCase
 @Tag("expect-pass")
-@Tag("engine-limit:nuxmv,spin,uppaal")
 class InclusiveRangeBound {
     var x: int := 0
 
     redefine tran {
         assume(x == 0)
-        for (i in 0..2) {
-            x := x + i
+        for (index in 0..2) {
+            x := x + index
         }
     }
 
@@ -48,14 +42,13 @@ class InclusiveRangeBound {
 
 @VerificationCase
 @Tag("expect-pass")
-@Tag("engine-limit:nuxmv,spin,uppaal")
 class ExclusiveRangeReach {
     var x: int := 0
 
     redefine tran {
         assume(x == 0)
-        for (i in 0..<3) {
-            x := x + i
+        for (index in 0..<3) {
+            x := x + index
         }
     }
 
@@ -66,14 +59,13 @@ class ExclusiveRangeReach {
 
 @VerificationCase
 @Tag("expect-pass")
-@Tag("engine-limit:nuxmv,spin,uppaal")
 class ExclusiveRangeBound {
     var x: int := 0
 
     redefine tran {
         assume(x == 0)
-        for (i in 0..<3) {
-            x := x + i
+        for (index in 0..<3) {
+            x := x + index
         }
     }
 
@@ -82,17 +74,14 @@ class ExclusiveRangeBound {
     }
 }
 
-// A loop variable the body never reads still drives the iteration count.
-
 @VerificationCase
 @Tag("expect-pass")
-@Tag("engine-limit:nuxmv,spin,uppaal")
 class UnreadLoopVariableReach {
     var x: int := 0
 
     redefine tran {
         assume(x == 0)
-        for (i in 0..2) {
+        for (index in 0..2) {
             x := x + 1
         }
     }
@@ -104,18 +93,34 @@ class UnreadLoopVariableReach {
 
 @VerificationCase
 @Tag("expect-pass")
-@Tag("engine-limit:nuxmv,spin,uppaal")
 class UnreadLoopVariableBound {
     var x: int := 0
 
     redefine tran {
         assume(x == 0)
-        for (i in 0..2) {
+        for (index in 0..2) {
             x := x + 1
         }
     }
 
     prop {
         return AG x <= 3
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class InclusiveRangeViolated {
+    var x: int := 0
+
+    redefine tran {
+        assume(x == 0)
+        for (index in 0..2) {
+            x := x + index
+        }
+    }
+
+    prop {
+        return AG x <= 2
     }
 }

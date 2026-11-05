@@ -14,25 +14,31 @@ class CopyPropagationPassTest : PassTestBase() {
     fun `read with single reaching definition to a literal is substituted`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            var b : int := 0
-            init { }
-            tran {
-                a := 7
-                b := a
+            var source : int := 0
+            var copy : int := 0
+            init {
             }
-            prop { AG true }
+            tran {
+                source := 7
+                copy := source
+            }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            var b : int := 0
-            init { }
-            tran {
-                a := 7
-                b := 7
+            var source : int := 0
+            var copy : int := 0
+            init {
             }
-            prop { AG true }
+            tran {
+                source := 7
+                copy := 7
+            }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -43,17 +49,27 @@ class CopyPropagationPassTest : PassTestBase() {
     fun `a single init write does not fold the property read since the property holds before init too`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { a := 1 }
-            tran { }
-            prop { AG (a == 1) }
+            var value : int := 0
+            init {
+                value := 1
+            }
+            tran {
+            }
+            prop {
+                AG (value == 1)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { a := 1 }
-            tran { }
-            prop { AG (a == 1) }
+            var value : int := 0
+            init {
+                value := 1
+            }
+            tran {
+            }
+            prop {
+                AG (value == 1)
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -61,28 +77,42 @@ class CopyPropagationPassTest : PassTestBase() {
     }
 
     @Test
-    fun `multiple reaching defs prevent propagation`() = assertPassTransforms(
+    fun `multiple reaching definitions prevent propagation`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            var b : int := 0
-            init { }
-            tran {
-                choice { a := 1 } or { a := 2 }
-                b := a
+            var source : int := 0
+            var copy : int := 0
+            init {
             }
-            prop { AG true }
+            tran {
+                choice {
+                    source := 1
+                } or {
+                    source := 2
+                }
+                copy := source
+            }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            var b : int := 0
-            init { }
-            tran {
-                choice { a := 1 } or { a := 2 }
-                b := a
+            var source : int := 0
+            var copy : int := 0
+            init {
             }
-            prop { AG true }
+            tran {
+                choice {
+                    source := 1
+                } or {
+                    source := 2
+                }
+                copy := source
+            }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -90,28 +120,34 @@ class CopyPropagationPassTest : PassTestBase() {
     }
 
     @Test
-    fun `havoc blocks propagation - a havoced variable has no single reaching def`() = assertPassTransforms(
+    fun `havoc blocks propagation - a havoced variable has no single reaching definition`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            var b : int := 0
-            init { }
-            tran {
-                havoc(a)
-                b := a
+            var source : int := 0
+            var copy : int := 0
+            init {
             }
-            prop { AG true }
+            tran {
+                havoc(source)
+                copy := source
+            }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            var b : int := 0
-            init { }
-            tran {
-                havoc(a)
-                b := a
+            var source : int := 0
+            var copy : int := 0
+            init {
             }
-            prop { AG true }
+            tran {
+                havoc(source)
+                copy := source
+            }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -119,30 +155,36 @@ class CopyPropagationPassTest : PassTestBase() {
     }
 
     @Test
-    fun `RHS that is not a literal or element reference is not propagated`() = assertPassTransforms(
+    fun `Right-hand side that is not a literal or element reference is not propagated`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            var b : int := 0
-            var c : int := 0
-            init { }
-            tran {
-                a := b + 1
-                c := a
+            var sum : int := 0
+            var operand : int := 0
+            var copy : int := 0
+            init {
             }
-            prop { AG true }
+            tran {
+                sum := operand + 1
+                copy := sum
+            }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            var b : int := 0
-            var c : int := 0
-            init { }
-            tran {
-                a := b + 1
-                c := a
+            var sum : int := 0
+            var operand : int := 0
+            var copy : int := 0
+            init {
             }
-            prop { AG true }
+            tran {
+                sum := operand + 1
+                copy := sum
+            }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -153,25 +195,31 @@ class CopyPropagationPassTest : PassTestBase() {
     fun `self-read-same-variable check is narrow - transitive self-assignment is allowed`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var x : int := 0
-            var y : int := 0
-            init { }
-            tran {
-                y := x
-                x := y
+            var left : int := 0
+            var right : int := 0
+            init {
             }
-            prop { AG true }
+            tran {
+                right := left
+                left := right
+            }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var x : int := 0
-            var y : int := 0
-            init { }
-            tran {
-                y := x
-                x := x
+            var left : int := 0
+            var right : int := 0
+            init {
             }
-            prop { AG true }
+            tran {
+                right := left
+                left := left
+            }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -179,7 +227,7 @@ class CopyPropagationPassTest : PassTestBase() {
     }
 
     @Test
-    fun `read in init before its write does not see the later write as a reaching def`() = assertPassTransforms(
+    fun `read in init before its write does not see the later write as a reaching definition`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
             var step : int := -1
@@ -187,8 +235,11 @@ class CopyPropagationPassTest : PassTestBase() {
                 assume (step == -1)
                 step := 0
             }
-            tran { }
-            prop { AG true }
+            tran {
+            }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
@@ -197,8 +248,11 @@ class CopyPropagationPassTest : PassTestBase() {
                 assume (step == -1)
                 step := 0
             }
-            tran { }
-            prop { AG true }
+            tran {
+            }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -210,20 +264,26 @@ class CopyPropagationPassTest : PassTestBase() {
         source = """
             inlined oxsts of semantifyr::Anything
             var done : bool := false
-            init { }
+            init {
+            }
             tran {
                 done := true
             }
-            prop { AG (done == true) }
+            prop {
+                AG (done == true)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var done : bool := false
-            init { }
+            init {
+            }
             tran {
                 done := true
             }
-            prop { AG (done == true) }
+            prop {
+                AG (done == true)
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -234,23 +294,31 @@ class CopyPropagationPassTest : PassTestBase() {
     fun `a single init write folds a tran read since init masks the initializer there`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            var b : int := 0
-            init { a := 1 }
-            tran {
-                b := a
+            var source : int := 0
+            var copy : int := 0
+            init {
+                source := 1
             }
-            prop { AG (b != 99) }
+            tran {
+                copy := source
+            }
+            prop {
+                AG (copy != 99)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            var b : int := 0
-            init { a := 1 }
-            tran {
-                b := 1
+            var source : int := 0
+            var copy : int := 0
+            init {
+                source := 1
             }
-            prop { AG (b != 99) }
+            tran {
+                copy := 1
+            }
+            prop {
+                AG (copy != 99)
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -265,10 +333,14 @@ class CopyPropagationPassTest : PassTestBase() {
             init {
                 choice {
                     current := 0
-                } or { }
+                } or {
+                }
             }
-            tran { }
-            prop { AG (current != 99) }
+            tran {
+            }
+            prop {
+                AG (current != 99)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
@@ -276,10 +348,14 @@ class CopyPropagationPassTest : PassTestBase() {
             init {
                 choice {
                     current := 0
-                } or { }
+                } or {
+                }
             }
-            tran { }
-            prop { AG (current != 99) }
+            tran {
+            }
+            prop {
+                AG (current != 99)
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -290,17 +366,27 @@ class CopyPropagationPassTest : PassTestBase() {
     fun `init havoc is a must-write so a single tran write can fold`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { havoc(a) }
-            tran { }
-            prop { AG (a != 99) }
+            var value : int := 0
+            init {
+                havoc(value)
+            }
+            tran {
+            }
+            prop {
+                AG (value != 99)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { havoc(a) }
-            tran { }
-            prop { AG (a != 99) }
+            var value : int := 0
+            init {
+                havoc(value)
+            }
+            tran {
+            }
+            prop {
+                AG (value != 99)
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -308,32 +394,38 @@ class CopyPropagationPassTest : PassTestBase() {
     }
 
     @Test
-    fun `chain of copies - single pass only folds via the stored reaching-def map`() = assertPassTransforms(
+    fun `chain of copies - single pass only folds via the stored reaching-definition map`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            var b : int := 0
-            var c : int := 0
-            init { }
-            tran {
-                a := 5
-                b := a
-                c := b
+            var head : int := 0
+            var middle : int := 0
+            var tail : int := 0
+            init {
             }
-            prop { AG true }
+            tran {
+                head := 5
+                middle := head
+                tail := middle
+            }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            var b : int := 0
-            var c : int := 0
-            init { }
-            tran {
-                a := 5
-                b := 5
-                c := a
+            var head : int := 0
+            var middle : int := 0
+            var tail : int := 0
+            init {
             }
-            prop { AG true }
+            tran {
+                head := 5
+                middle := 5
+                tail := head
+            }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -344,27 +436,33 @@ class CopyPropagationPassTest : PassTestBase() {
     fun `a copy is not propagated across a later write of its source`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var p : int := 0
-            var q : int := 0
-            init { }
-            tran {
-                q := p
-                p := p + 1
-                assume (q == 0)
+            var source : int := 0
+            var copy : int := 0
+            init {
             }
-            prop { AG true }
+            tran {
+                copy := source
+                source := source + 1
+                assume (copy == 0)
+            }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var p : int := 0
-            var q : int := 0
-            init { }
-            tran {
-                q := p
-                p := p + 1
-                assume (q == 0)
+            var source : int := 0
+            var copy : int := 0
+            init {
             }
-            prop { AG true }
+            tran {
+                copy := source
+                source := source + 1
+                assume (copy == 0)
+            }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -375,27 +473,39 @@ class CopyPropagationPassTest : PassTestBase() {
     fun `a copy is not propagated when a branch between the copy and the read writes its source`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var p : int := 0
-            var q : int := 0
-            init { }
-            tran {
-                q := p
-                choice { p := 1 } or { }
-                assume (q == 0)
+            var source : int := 0
+            var copy : int := 0
+            init {
             }
-            prop { AG true }
+            tran {
+                copy := source
+                choice {
+                    source := 1
+                } or {
+                }
+                assume (copy == 0)
+            }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var p : int := 0
-            var q : int := 0
-            init { }
-            tran {
-                q := p
-                choice { p := 1 } or { }
-                assume (q == 0)
+            var source : int := 0
+            var copy : int := 0
+            init {
             }
-            prop { AG true }
+            tran {
+                copy := source
+                choice {
+                    source := 1
+                } or {
+                }
+                assume (copy == 0)
+            }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -406,31 +516,37 @@ class CopyPropagationPassTest : PassTestBase() {
     fun `a copy is not propagated into a loop whose body writes its source`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var p : int := 0
-            var q : int := 0
-            init { }
+            var source : int := 0
+            var copy : int := 0
+            init {
+            }
             tran {
-                q := p
-                for (i in 0..2) {
-                    assume (q == 0)
-                    p := p + 1
+                copy := source
+                for (index in 0..2) {
+                    assume (copy == 0)
+                    source := source + 1
                 }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var p : int := 0
-            var q : int := 0
-            init { }
+            var source : int := 0
+            var copy : int := 0
+            init {
+            }
             tran {
-                q := p
-                for (i in 0..2) {
-                    assume (q == 0)
-                    p := p + 1
+                copy := source
+                for (index in 0..2) {
+                    assume (copy == 0)
+                    source := source + 1
                 }
             }
-            prop { AG true }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -441,25 +557,33 @@ class CopyPropagationPassTest : PassTestBase() {
     fun `a copy made in init is not propagated into tran when tran writes its source`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var p : int := 0
-            var q : int := 0
-            init { q := p }
-            tran {
-                p := p + 1
-                assume (q == 0)
+            var source : int := 0
+            var copy : int := 0
+            init {
+                copy := source
             }
-            prop { AG true }
+            tran {
+                source := source + 1
+                assume (copy == 0)
+            }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var p : int := 0
-            var q : int := 0
-            init { q := p }
-            tran {
-                p := p + 1
-                assume (q == 0)
+            var source : int := 0
+            var copy : int := 0
+            init {
+                copy := source
             }
-            prop { AG true }
+            tran {
+                source := source + 1
+                assume (copy == 0)
+            }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -470,27 +594,33 @@ class CopyPropagationPassTest : PassTestBase() {
     fun `a copy is propagated when its source is written only after the read`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var p : int := 0
-            var q : int := 0
-            init { }
-            tran {
-                q := p
-                assume (q == 0)
-                p := p + 1
+            var source : int := 0
+            var copy : int := 0
+            init {
             }
-            prop { AG true }
+            tran {
+                copy := source
+                assume (copy == 0)
+                source := source + 1
+            }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var p : int := 0
-            var q : int := 0
-            init { }
-            tran {
-                q := p
-                assume (p == 0)
-                p := p + 1
+            var source : int := 0
+            var copy : int := 0
+            init {
             }
-            prop { AG true }
+            tran {
+                copy := source
+                assume (source == 0)
+                source := source + 1
+            }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -501,23 +631,31 @@ class CopyPropagationPassTest : PassTestBase() {
     fun `a copy made in init is propagated into tran when nothing writes its source after it`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var p : int := 0
-            var q : int := 0
-            init { q := p }
-            tran {
-                assume (q == 0)
+            var source : int := 0
+            var copy : int := 0
+            init {
+                copy := source
             }
-            prop { AG true }
+            tran {
+                assume (copy == 0)
+            }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var p : int := 0
-            var q : int := 0
-            init { q := p }
-            tran {
-                assume (p == 0)
+            var source : int := 0
+            var copy : int := 0
+            init {
+                copy := source
             }
-            prop { AG true }
+            tran {
+                assume (source == 0)
+            }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -528,31 +666,37 @@ class CopyPropagationPassTest : PassTestBase() {
     fun `an init write on one branch is not propagated to a later init read`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var c : bool := false
-            var q : int := 0
-            var r : int := 9
+            var condition : bool := false
+            var source : int := 0
+            var copy : int := 9
             init {
-                if (c) {
-                    q := 5
+                if (condition) {
+                    source := 5
                 }
-                r := q
+                copy := source
             }
-            tran { }
-            prop { AG true }
+            tran {
+            }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var c : bool := false
-            var q : int := 0
-            var r : int := 9
+            var condition : bool := false
+            var source : int := 0
+            var copy : int := 9
             init {
-                if (c) {
-                    q := 5
+                if (condition) {
+                    source := 5
                 }
-                r := q
+                copy := source
             }
-            tran { }
-            prop { AG true }
+            tran {
+            }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {

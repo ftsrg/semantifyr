@@ -22,61 +22,74 @@ import org.junit.jupiter.api.Test
 
 class SemanticsEdgeCaseTest : AnalysisTestBase() {
     @Test
-    fun `variable declaration is a reaching def for property reads although init overwrites it`() {
+    fun `variable declaration is a reaching definition for property reads although init overwrites it`() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                init { a := 1 }
-                tran { }
-                prop { AG (a != 27) }
-            """,
-        )
-        val a = inlined.varNamed("a")
-        val propRead = inlined.findPropertyReadOf(a)
-        assertThat(result.definitionsOf[propRead]!!).contains(a as EObject)
-    }
-
-    @Test
-    fun `declaration without initializer counts the implicit havoc as a reaching def`() {
-        val (inlined, result) = runReachingDefinitions(
-            """
-                inlined oxsts of semantifyr::Anything
-                var a : int
-                init { }
-                tran { a := 5 }
-                prop { AG (a != 27) }
-            """,
-        )
-        val a = inlined.varNamed("a")
-        val propRead = inlined.findPropertyReadOf(a)
-        val defs = result.definitionsOf[propRead]!!
-        val aWrite = inlined.assignmentsTo(a).single()
-        assertThat(defs).containsExactlyInAnyOrder(aWrite as EObject, a as EObject)
-    }
-
-    @Test
-    fun `havoc kills prior defs within the same sequence`() {
-        val (inlined, result) = runReachingDefinitions(
-            """
-                inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                var b : int := 0
-                init { }
-                tran {
-                    a := 1
-                    havoc(a)
-                    b := a
+                var value : int := 0
+                init {
+                    value := 1
                 }
-                prop { AG true }
+                tran {
+                }
+                prop {
+                    AG (value != 27)
+                }
             """,
         )
-        val a = inlined.varNamed("a")
-        val havoc = inlined.havocsOn(a).single()
-        val bWrite = inlined.assignmentsTo(inlined.varNamed("b")).single()
-        val aReadInBRhs = bWrite.expression as ElementReference
+        val value = inlined.varNamed("value")
+        val propertyRead = inlined.findPropertyReadOf(value)
+        assertThat(result.definitionsOf[propertyRead]!!).contains(value as EObject)
+    }
 
-        assertThat(result.definitionsOf[aReadInBRhs]!!).containsExactly(havoc as EObject)
+    @Test
+    fun `declaration without initializer counts the implicit havoc as a reaching definition`() {
+        val (inlined, result) = runReachingDefinitions(
+            """
+                inlined oxsts of semantifyr::Anything
+                var value : int
+                init {
+                }
+                tran {
+                    value := 5
+                }
+                prop {
+                    AG (value != 27)
+                }
+            """,
+        )
+        val value = inlined.varNamed("value")
+        val propertyRead = inlined.findPropertyReadOf(value)
+        val definitions = result.definitionsOf[propertyRead]!!
+        val valueWrite = inlined.assignmentsTo(value).single()
+        assertThat(definitions).containsExactlyInAnyOrder(valueWrite as EObject, value as EObject)
+    }
+
+    @Test
+    fun `havoc kills prior definitions within the same sequence`() {
+        val (inlined, result) = runReachingDefinitions(
+            """
+                inlined oxsts of semantifyr::Anything
+                var source : int := 0
+                var target : int := 0
+                init {
+                }
+                tran {
+                    source := 1
+                    havoc(source)
+                    target := source
+                }
+                prop {
+                    AG true
+                }
+            """,
+        )
+        val source = inlined.varNamed("source")
+        val havoc = inlined.havocsOn(source).single()
+        val targetWrite = inlined.assignmentsTo(inlined.varNamed("target")).single()
+        val sourceReadInTarget = targetWrite.expression as ElementReference
+
+        assertThat(result.definitionsOf[sourceReadInTarget]!!).containsExactly(havoc as EObject)
     }
 
     @Test
@@ -84,61 +97,71 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 7
-                init { a := 7 }
-                tran {
-                    havoc(a)
-                    a := 7
+                var value : int := 7
+                init {
+                    value := 7
                 }
-                prop { AG (a == 7) }
+                tran {
+                    havoc(value)
+                    value := 7
+                }
+                prop {
+                    AG (value == 7)
+                }
             """,
         )
-        val a = inlined.varNamed("a")
-        assertThat(result.isConstant(a)).isFalse
+        val value = inlined.varNamed("value")
+        assertThat(result.isConstant(value)).isFalse
     }
 
     @Test
-    fun `assume does not kill defs - the walker treats it as a no-op for RD`() {
+    fun `assume does not kill definitions - the walker treats it as a no-op for reaching definitions`() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                var b : int := 0
-                init { }
-                tran {
-                    a := 5
-                    assume(a == 5)
-                    b := a
+                var source : int := 0
+                var target : int := 0
+                init {
                 }
-                prop { AG true }
+                tran {
+                    source := 5
+                    assume(source == 5)
+                    target := source
+                }
+                prop {
+                    AG true
+                }
             """,
         )
-        val a = inlined.varNamed("a")
-        val aWrite = inlined.assignmentsTo(a).single()
-        val bWrite = inlined.assignmentsTo(inlined.varNamed("b")).single()
-        val aReadInBRhs = bWrite.expression as ElementReference
+        val source = inlined.varNamed("source")
+        val sourceWrite = inlined.assignmentsTo(source).single()
+        val targetWrite = inlined.assignmentsTo(inlined.varNamed("target")).single()
+        val sourceReadInTarget = targetWrite.expression as ElementReference
 
-        assertThat(result.definitionsOf[aReadInBRhs]!!).containsExactly(aWrite as EObject)
+        assertThat(result.definitionsOf[sourceReadInTarget]!!).containsExactly(sourceWrite as EObject)
     }
 
     @Test
-    fun `assume false does NOT prune subsequent writes from RD`() {
+    fun `assume false does NOT prune subsequent writes from reaching definitions`() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                init { }
+                var value : int := 0
+                init {
+                }
                 tran {
                     assume(false)
-                    a := 5
+                    value := 5
                 }
-                prop { AG (a != 5) }
+                prop {
+                    AG (value != 5)
+                }
             """,
         )
-        val a = inlined.varNamed("a")
-        val write = inlined.assignmentsTo(a).single()
-        val propRead = inlined.findPropertyReadOf(a)
-        assertThat(result.definitionsOf[propRead]!!).contains(write as EObject)
+        val value = inlined.varNamed("value")
+        val write = inlined.assignmentsTo(value).single()
+        val propertyRead = inlined.findPropertyReadOf(value)
+        assertThat(result.definitionsOf[propertyRead]!!).contains(write as EObject)
     }
 
     @Test
@@ -146,49 +169,69 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                var b : int := 0
-                init { }
-                tran {
-                    choice { a := 1 } or { a := 2 }
-                    b := a
+                var source : int := 0
+                var target : int := 0
+                init {
                 }
-                prop { AG true }
+                tran {
+                    choice {
+                        source := 1
+                    } or {
+                        source := 2
+                    }
+                    target := source
+                }
+                prop {
+                    AG true
+                }
             """,
         )
-        val a = inlined.varNamed("a")
-        val aWrites = inlined.assignmentsTo(a).toSet()
-        val bWrite = inlined.assignmentsTo(inlined.varNamed("b")).single()
-        val aReadInBRhs = bWrite.expression as ElementReference
-        val defs = result.definitionsOf[aReadInBRhs]!!
+        val source = inlined.varNamed("source")
+        val sourceWrites = inlined.assignmentsTo(source).toSet()
+        val targetWrite = inlined.assignmentsTo(inlined.varNamed("target")).single()
+        val sourceReadInTarget = targetWrite.expression as ElementReference
+        val definitions = result.definitionsOf[sourceReadInTarget]!!
 
-        assertThat(defs)
+        assertThat(definitions)
             .`as`("after a choice, both branches' writes reach the downstream read")
-            .containsAll(aWrites.map { it as EObject })
+            .containsAll(
+                sourceWrites.map {
+                    it as EObject
+                },
+            )
     }
 
     @Test
-    fun `if-without-else passes through the original defs on the false arm`() {
+    fun `if-without-else passes through the original definitions on the false arm`() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                var b : int := 0
-                init { }
-                tran {
-                    a := 1
-                    if (b == 0) { a := 2 }
-                    b := a
+                var source : int := 0
+                var target : int := 0
+                init {
                 }
-                prop { AG true }
+                tran {
+                    source := 1
+                    if (target == 0) {
+                        source := 2
+                    }
+                    target := source
+                }
+                prop {
+                    AG true
+                }
             """,
         )
-        val a = inlined.varNamed("a")
-        val allAWrites = inlined.assignmentsTo(a).toSet()
-        val bWrite = inlined.assignmentsTo(inlined.varNamed("b")).single()
-        val aReadInBRhs = bWrite.expression as ElementReference
-        val defs = result.definitionsOf[aReadInBRhs]!!
-        assertThat(defs).containsAll(allAWrites.map { it as EObject })
+        val source = inlined.varNamed("source")
+        val allSourceWrites = inlined.assignmentsTo(source).toSet()
+        val targetWrite = inlined.assignmentsTo(inlined.varNamed("target")).single()
+        val sourceReadInTarget = targetWrite.expression as ElementReference
+        val definitions = result.definitionsOf[sourceReadInTarget]!!
+        assertThat(definitions).containsAll(
+            allSourceWrites.map {
+                it as EObject
+            },
+        )
     }
 
     @Test
@@ -196,24 +239,26 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                var b : int := 0
+                var copy : int := 0
+                var source : int := 0
                 init {
-                    a := b
+                    copy := source
                 }
                 tran {
-                    b := 99
+                    source := 99
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
-        val b = inlined.varNamed("b")
-        val initRead = inlined.readsOfInInit(b).single()
-        val bWriteInTran = inlined.assignmentsTo(b).single()
+        val source = inlined.varNamed("source")
+        val initRead = inlined.readsOfInInit(source).single()
+        val sourceWriteInTran = inlined.assignmentsTo(source).single()
 
-        val defs = result.definitionsOf[initRead]!!
-        assertThat(defs).doesNotContain(bWriteInTran as EObject)
-        assertThat(defs).containsExactly(b as EObject)
+        val definitions = result.definitionsOf[initRead]!!
+        assertThat(definitions).doesNotContain(sourceWriteInTran as EObject)
+        assertThat(definitions).containsExactly(source as EObject)
     }
 
     @Test
@@ -221,24 +266,27 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                var b : int := 0
-                init { }
-                tran {
-                    b := a
-                    a := 5
+                var source : int := 0
+                var target : int := 0
+                init {
                 }
-                prop { AG true }
+                tran {
+                    target := source
+                    source := 5
+                }
+                prop {
+                    AG true
+                }
             """,
         )
-        val a = inlined.varNamed("a")
-        val bWrite = inlined.assignmentsTo(inlined.varNamed("b")).single()
-        val aReadInBRhs = bWrite.expression as ElementReference
-        val aWrite = inlined.assignmentsTo(a).single()
+        val source = inlined.varNamed("source")
+        val targetWrite = inlined.assignmentsTo(inlined.varNamed("target")).single()
+        val sourceReadInTarget = targetWrite.expression as ElementReference
+        val sourceWrite = inlined.assignmentsTo(source).single()
 
-        val defs = result.definitionsOf[aReadInBRhs]!!
-        assertThat(defs).contains(aWrite as EObject)
-        assertThat(defs).contains(a as EObject)
+        val definitions = result.definitionsOf[sourceReadInTarget]!!
+        assertThat(definitions).contains(sourceWrite as EObject)
+        assertThat(definitions).contains(source as EObject)
     }
 
     @Test
@@ -246,17 +294,22 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                var b : int := 0
-                init { }
-                tran { b := 1 }
-                prop { AG (a == 0) }
+                var observed : int := 0
+                var unread : int := 0
+                init {
+                }
+                tran {
+                    unread := 1
+                }
+                prop {
+                    AG (observed == 0)
+                }
             """,
         )
-        val b = inlined.varNamed("b")
-        val bWrite = inlined.assignmentsTo(b).single()
-        assertThat(result.isRelevant(b)).isFalse
-        assertThat(result.isRelevant(bWrite)).isFalse
+        val unread = inlined.varNamed("unread")
+        val unreadWrite = inlined.assignmentsTo(unread).single()
+        assertThat(result.isRelevant(unread)).isFalse
+        assertThat(result.isRelevant(unreadWrite)).isFalse
     }
 
     @Test
@@ -264,29 +317,32 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                var b : int := 0
-                var c : int := 0
-                init { }
+                var value : int := 0
+                var outerGuard : int := 0
+                var innerGuard : int := 0
+                init {
+                }
                 tran {
-                    if (b == 0) {
-                        if (c == 0) {
-                            a := 1
+                    if (outerGuard == 0) {
+                        if (innerGuard == 0) {
+                            value := 1
                         }
                     }
                 }
-                prop { AG (a != 1) }
+                prop {
+                    AG (value != 1)
+                }
             """,
         )
-        val a = inlined.varNamed("a")
-        val b = inlined.varNamed("b")
-        val c = inlined.varNamed("c")
-        assertThat(result.isRelevant(a)).isTrue
-        assertThat(result.isRelevant(b))
-            .`as`("outer if-guard variable 'b' should be in the cone")
+        val value = inlined.varNamed("value")
+        val outerGuard = inlined.varNamed("outerGuard")
+        val innerGuard = inlined.varNamed("innerGuard")
+        assertThat(result.isRelevant(value)).isTrue
+        assertThat(result.isRelevant(outerGuard))
+            .`as`("outer if-guard variable 'outerGuard' should be in the cone")
             .isTrue
-        assertThat(result.isRelevant(c))
-            .`as`("inner if-guard variable 'c' should be in the cone")
+        assertThat(result.isRelevant(innerGuard))
+            .`as`("inner if-guard variable 'innerGuard' should be in the cone")
             .isTrue
     }
 
@@ -295,14 +351,19 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                init { }
-                tran { havoc(a) }
-                prop { AG (a != 42) }
+                var value : int := 0
+                init {
+                }
+                tran {
+                    havoc(value)
+                }
+                prop {
+                    AG (value != 42)
+                }
             """,
         )
-        val a = inlined.varNamed("a")
-        val havoc = inlined.havocsOn(a).single()
+        val value = inlined.varNamed("value")
+        val havoc = inlined.havocsOn(value).single()
         assertThat(result.isRelevant(havoc))
             .`as`("havoc on a property-relevant variable must be kept")
             .isTrue
@@ -316,21 +377,23 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
 
     private fun InlinedOxsts.assignmentsTo(variable: VariableDeclaration): List<AssignmentOperation> {
         return eAllOfType<AssignmentOperation>().filter {
-            val ref = it.reference
-            ref is ElementReference && ref.element === variable
+            val reference = it.reference
+            reference is ElementReference && reference.element === variable
         }.toList()
     }
 
     private fun InlinedOxsts.havocsOn(variable: VariableDeclaration): List<HavocOperation> {
         return eAllOfType<HavocOperation>().filter {
-            val ref = it.reference
-            ref is ElementReference && ref.element === variable
+            val reference = it.reference
+            reference is ElementReference && reference.element === variable
         }.toList()
     }
 
     private fun InlinedOxsts.readsOfInInit(variable: VariableDeclaration): List<Expression> {
-        val init = eAllOfType<TransitionDeclaration>().first { it.kind == TransitionKind.INIT }
-        return init.eAllOfType<ElementReference>().filter {
+        val initTransition = eAllOfType<TransitionDeclaration>().first {
+            it.kind == TransitionKind.INIT
+        }
+        return initTransition.eAllOfType<ElementReference>().filter {
             it.element === variable
         }.filterNot {
             val parent = it.eContainer()

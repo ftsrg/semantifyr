@@ -18,6 +18,9 @@ class SpinArtifactManager(
     val logFile: File
         get() = rootDirectory.resolve("spin.out").toFile()
 
+    val unmergedLogFile: File
+        get() = rootDirectory.resolve("spin-unmerged.out").toFile()
+
     val errorFile: File
         get() = rootDirectory.resolve("spin.err").toFile()
 

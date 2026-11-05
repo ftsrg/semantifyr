@@ -18,6 +18,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
+import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
 import org.eclipse.xtext.serializer.ISerializer
@@ -29,7 +30,7 @@ import java.nio.file.Path
 abstract class FlatteningTestBase {
 
     @TempDir
-    lateinit var tempDir: Path
+    lateinit var temporaryDirectory: Path
 
     @Inject
     private lateinit var parseHelper: OxstsPackageParseHelper
@@ -51,11 +52,27 @@ abstract class FlatteningTestBase {
         val classDeclaration = EcoreUtil2.eAllOfType(parsed.oxstsPackage, ClassDeclaration::class.java).single {
             it.name == className
         }
-        return SemantifyrCompiler(injector, ArtifactConfig.NONE, optimization).compile(classDeclaration, tempDir)
+        return SemantifyrCompiler(injector, ArtifactConfig.NONE, optimization).compile(classDeclaration, temporaryDirectory)
     }
 
     protected fun serialize(eObject: EObject): String {
         return serializer.serializeFormatted(eObject)
+    }
+
+    protected fun assertFlattenedModel(
+        className: String,
+        source: String,
+        expected: String,
+    ) {
+        val inlinedOxsts = flatten(className, source).inlinedOxsts
+        val actual = listOf(
+            inlinedOxsts.initTransition,
+            inlinedOxsts.mainTransition,
+            inlinedOxsts.property,
+        ).joinToString("\n\n") {
+            serialize(it).trim().replace("\t", "    ")
+        }
+        assertThat(actual).isEqualTo(expected.trimIndent())
     }
 
     protected fun FlattenedCompilationContext.variableNamed(name: String): VariableDeclaration {

@@ -6,16 +6,9 @@
 
 package semantifyr::verification::lang::local_vars
 
-// Local variables scoped to a transition body. The compiler lifts them
-// to class-level slots with a reset semantics each step. Tests pair
-// reachability of the accumulated state with a safety bound.
-
-// --- local accumulation ---
-
-// Reachable: local `part` accumulates 1 + 2, then 3 is added to total.
 @VerificationCase
 @Tag("expect-pass")
-class LocalVarAccumulateReach {
+class LocalVariableAccumulateReach {
     var total: int := 0
 
     redefine tran {
@@ -31,10 +24,9 @@ class LocalVarAccumulateReach {
     }
 }
 
-// Dual: total never exceeds 3.
 @VerificationCase
 @Tag("expect-pass")
-class LocalVarAccumulateBound {
+class LocalVariableAccumulateBound {
     var total: int := 0
 
     redefine tran {
@@ -50,12 +42,9 @@ class LocalVarAccumulateBound {
     }
 }
 
-// --- local havoc with narrowing assume ---
-
-// Reachable: delta lands at 3 at least once.
 @VerificationCase
 @Tag("expect-pass")
-class LocalVarHavocReach {
+class LocalVariableHavocReach {
     var x: int := 0
 
     redefine tran {
@@ -71,11 +60,9 @@ class LocalVarHavocReach {
     }
 }
 
-// Dual: x stays in [0, 3] because the local narrowing plus the outer
-// guard hem in each step.
 @VerificationCase
 @Tag("expect-pass")
-class LocalVarHavocBound {
+class LocalVariableHavocBound {
     var x: int := 0
 
     redefine tran {
@@ -91,16 +78,9 @@ class LocalVarHavocBound {
     }
 }
 
-// --- local variable does not persist across steps ---
-
-// Each step resets the local to its initializer; even after setting a
-// local to 9 in one step, the next step reads 0 again. If the compiler
-// accidentally promoted the local to a class variable this would fail.
-// Uppaal counts up to its 31-bit range before it stops, which takes longer than the suite's timeout.
 @VerificationCase
 @Tag("expect-pass")
-@Tag("engine-limit:spin")
-class LocalVarNotPersistedBound {
+class LocalVariableNotPersistedBound {
     var total: int := 0
 
     redefine tran {
@@ -114,12 +94,9 @@ class LocalVarNotPersistedBound {
     }
 }
 
-// --- local variable without an initializer ---
-
-// Reachable: an uninitialized local is havoced at its declaration, so it may hold 3.
 @VerificationCase
 @Tag("expect-pass")
-class LocalVarUninitializedReach {
+class LocalVariableUninitializedReach {
     var x: int := 0
 
     redefine tran {
@@ -133,10 +110,9 @@ class LocalVarUninitializedReach {
     }
 }
 
-// Violated: the havoced local is not bound to its smallest admissible value.
 @VerificationCase
 @Tag("expect-fail")
-class LocalVarUninitializedBound {
+class LocalVariableUninitializedBound {
     var x: int := 0
 
     redefine tran {
@@ -147,5 +123,23 @@ class LocalVarUninitializedBound {
 
     prop {
         return AG x <= 1
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class LocalVariableAccumulateViolated {
+    var total: int := 0
+
+    redefine tran {
+        assume(total < 3)
+        var part: int := 0
+        part := part + 1
+        part := part + 2
+        total := total + part
+    }
+
+    prop {
+        return AG total <= 2
     }
 }

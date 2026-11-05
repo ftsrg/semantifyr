@@ -113,7 +113,7 @@ class Wrapper {
 }
 ```
 
-This is the primary way semantic libraries declaratively add instances to a collection defined in a superclass.
+This is the primary way semantic libraries declaratively add instances to a collection defined in a superclass. A redefinition that names no `subsets` keeps the superset of the feature it redefines.
 
 ## `redefine` and `redefines`
 
@@ -126,7 +126,7 @@ class Counter10Pair : CounterPair {
 }
 ```
 
-The `redefines` modifier may be applied to a redefining feature for additional clarity.
+`redefines` replaces an inherited feature under a new name: the old name no longer resolves on the subclass, and inherited members that use it reach the new feature.
 
 ```oxsts
 class Counter10Pair : CounterPair {

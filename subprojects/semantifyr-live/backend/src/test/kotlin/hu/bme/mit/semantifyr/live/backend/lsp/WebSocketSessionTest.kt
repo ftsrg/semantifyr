@@ -55,7 +55,9 @@ class WebSocketSessionTest {
 
         @VerificationCase
         class CaseA {
-            prop { return true }
+            prop {
+                return true
+            }
         }
     """.trimIndent()
 

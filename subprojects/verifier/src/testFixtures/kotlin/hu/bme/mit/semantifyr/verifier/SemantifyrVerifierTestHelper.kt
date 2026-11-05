@@ -8,9 +8,12 @@ package hu.bme.mit.semantifyr.verifier
 
 import com.google.inject.Inject
 import com.google.inject.Injector
+import com.google.inject.Module
+import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
-import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.scopes.withVerificationScopeBlocking
+import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
@@ -27,8 +30,6 @@ import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import hu.bme.mit.semantifyr.verifier.witness.WitnessValidator
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Named
 import org.junit.jupiter.params.provider.Arguments
 import java.nio.file.Path
@@ -85,6 +86,34 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         }
     }
 
+    fun collectAcceptedCasesAsArguments(
+        context: SemantifyrModelContext,
+        backendModule: Module,
+        capabilityChecker: Class<out BackendCapabilityChecker>,
+        outputDirectory: Path,
+        filter: CaseFilter = CaseFilter.All,
+    ): List<Arguments> {
+        val backendInjector = injector.createChildInjector(backendModule)
+        val compiler = SemantifyrCompiler(injector, ArtifactConfig.NONE)
+        return collectVerificationCases(context, filter).filter { case ->
+            val inlinedOxsts = compiler.compile(case.classDeclaration, outputDirectory.resolve(caseDirectoryName(case))).inlinedOxsts
+            val unsupported = withVerificationScopeBlocking {
+                backendInjector.getInstance(capabilityChecker).check(inlinedOxsts)
+            }
+            if (unsupported.isNotEmpty()) {
+                logger.info {
+                    val refusals = unsupported.map {
+                        it.description
+                    }.distinct().joinToString()
+                    "Leaving out ${case.qualifiedName}: ${capabilityChecker.simpleName} refuses $refusals"
+                }
+            }
+            unsupported.isEmpty()
+        }.map {
+            Arguments.of(Named.of(it.qualifiedName, it))
+        }
+    }
+
     suspend fun checkVerificationCase(
         context: SemantifyrModelContext,
         case: VerificationCase,
@@ -97,11 +126,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         validationPortfolio: VerificationPortfolio? = null,
     ) {
         val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment, optimization = optimization)
-        Assertions.assertEquals(
-            expectedVerdict,
-            result.verdict,
-            "Expected ${case.qualifiedName} verdict $expectedVerdict, got ${result.verdict} (${result.message ?: "no message"})",
-        )
+        assertVerdict(case.qualifiedName, expectedVerdict, result)
 
         if (expectsWitness(case, expectedVerdict)) {
             assertThat(result.trace)
@@ -199,52 +224,12 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         validationTimeout: Duration = 1.minutes,
         environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
         expectedVerdict: VerificationVerdict = expectedVerdictFromTags(case),
-        requiredBackends: Set<String> = hostRequiredBackends,
     ) {
         logger.info { "Checking test case $case (artifacts at $outputDirectory)" }
 
-        val limitedEngines = engineLimitsFromTags(case)
-        val engineLimited = verificationPortfolio.executorKeys.isNotEmpty() && verificationPortfolio.executorKeys.all {
-            it.name in limitedEngines
-        }
-        val required = verificationPortfolio.executorKeys.any {
-            it.name in requiredBackends
-        }
-        val availability = verificationPortfolio.availability(environment)
-        if (availability is AvailabilityReport.Unavailable) {
-            if (required) {
-                Assertions.fail<Unit>("Portfolio ${verificationPortfolio.id} is required on this host: ${availability.reason}")
-            }
-            Assumptions.abort<Unit>("${availability.reason}, skipping")
-        }
-
+        assumePortfolioAvailable(verificationPortfolio, environment)
         val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment)
-        if (engineLimited) {
-            Assertions.assertEquals(VerificationVerdict.NotSupported, result.verdict) {
-                "${case.qualifiedName} is tagged $ENGINE_LIMIT_TAG_PREFIX${limitedEngines.joinToString(",")}, so ${verificationPortfolio.id} must report NotSupported, got ${result.verdict} (${result.message ?: "no message"})"
-            }
-            return
-        }
-        Assumptions.assumeFalse(
-            result.verdict == VerificationVerdict.Timeout,
-            "Portfolio ${verificationPortfolio.id} timed out on ${case.qualifiedName} within $timeout: ${result.message ?: "no message"}",
-        )
-        if (!result.verdict.isDecisive) {
-            Assumptions.assumeTrue(
-                required || result.verdict == VerificationVerdict.Errored,
-                "Portfolio ${verificationPortfolio.id} reports ${result.verdict} for ${case.qualifiedName} and none of its engines is required: ${result.message ?: "no message"}",
-            )
-            Assertions.fail<Unit>(
-                "Portfolio ${verificationPortfolio.id} did not produce a decisive verdict for ${case.qualifiedName} (got ${result.verdict}: ${result.message ?: "no message"}).${backendDiagnostics(outputDirectory, case)}",
-            )
-        }
-        Assertions.assertEquals(
-            expectedVerdict,
-            result.verdict,
-        ) {
-            "Expected ${case.qualifiedName} verdict $expectedVerdict, got ${result.verdict} " +
-                "(${result.message ?: "no message"}).${backendDiagnostics(outputDirectory, case)}"
-        }
+        assertVerdict(case.qualifiedName, expectedVerdict, result, backendDiagnostics(outputDirectory, case))
         logger.info { "Result: ${result.verdict}" }
 
         val trace = result.trace ?: return
@@ -263,9 +248,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         val context = semantifyrLoader.loadStandaloneModel(modelPath)
         val case = verificationCaseDiscoverer.findByQualifiedName(context, qualifiedName)
         val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment)
-        Assertions.assertEquals(expectedVerdictFromTags(case), result.verdict) {
-            "Expected ${case.qualifiedName} verdict ${expectedVerdictFromTags(case)}, got ${result.verdict} (${result.message ?: "no message"})"
-        }
+        assertVerdict(case.qualifiedName, expectedVerdictFromTags(case), result)
 
         val witnessPath = outputDirectory.resolve(caseDirectoryName(case)).resolve("witness.oxsts")
         assertThat(witnessPath.exists())
@@ -297,11 +280,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         environment: ExecutionEnvironment,
         originalVerdict: VerificationVerdict,
     ) {
-        val report = validation.availability(environment)
-        Assumptions.assumeTrue(
-            report is AvailabilityReport.Available,
-            "Validation portfolio ${validation.id} is unavailable on this host. Skipping witness validation for ${case.qualifiedName}",
-        )
+        assumePortfolioAvailable(validation, environment)
 
         logger.info { "Validating returned witness" }
 
@@ -334,16 +313,6 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         return "\n\nBackend diagnostics (last $tailLineLimit lines per file):\n${sections.joinToString("\n")}"
     }
 
-    private fun engineLimitsFromTags(case: VerificationCase): Set<String> {
-        return case.tags.filter {
-            it.startsWith(ENGINE_LIMIT_TAG_PREFIX)
-        }.flatMap {
-            it.removePrefix(ENGINE_LIMIT_TAG_PREFIX).split(',')
-        }.map {
-            it.trim()
-        }.toSet()
-    }
-
     private fun expectedVerdictFromTags(case: VerificationCase): VerificationVerdict {
         return when {
             "expect-pass" in case.tags -> VerificationVerdict.Passed
@@ -355,8 +324,6 @@ class SemantifyrVerifierTestHelper @Inject constructor(
     }
 
     companion object {
-        private const val ENGINE_LIMIT_TAG_PREFIX = "engine-limit:"
-
         @JvmStatic
         fun testArtifactRoot(testClass: Class<*>): Path {
             return Path("build", "test-artifacts", testClass.simpleName)

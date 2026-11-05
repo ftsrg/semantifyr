@@ -13,15 +13,19 @@ import portfolios from '@cli-reference/portfolios-help.txt';
 
 # Command Line
 
-The `semantifyr` command lists, compiles, measures and verifies the verification cases of OXSTS models. Install it from the release zip ([Getting Started](../getting-started.md#option-d-install-the-command-line-interface-for-scripts-and-ci)) or build it from source with `./gradlew :semantifyr-cli:installDist`; the launcher is `subprojects/semantifyr-cli/build/install/semantifyr/bin/semantifyr`. It needs a Java 25 runtime and at least one verification backend.
+The `semantifyr` command lists, compiles, measures and verifies the verification cases of OXSTS models. `semantifyr-sysml` for [SysML v2 models](sysml.mdx) and `semantifyr-gamma` for [Gamma models](gamma.mdx) share its verification options, output and exit codes. Each launcher comes in a release zip of its own with the Theta backend ([Getting Started](../getting-started.md#option-d-install-the-command-line-interface-for-scripts-and-ci)), or builds from source with `./gradlew :semantifyr-cli:installDist`, `:sysml-cli:installDist` or `:gamma-cli:installDist`; `semantifyr` is then `subprojects/semantifyr-cli/build/install/semantifyr/bin/semantifyr`. They need a Java 25 runtime and at least one verification backend.
 
 <CodeBlock language="text">{help}</CodeBlock>
 
-A model or library path is an `.oxsts` file or a directory, which is searched recursively for `.oxsts` files. `verify` also takes a SysML v2 model file (`.sysml`): it translates the model with the bundled SysIDE fork, which needs Node.js on `PATH` and reads every `.sysml` file below the model's directory, verifies its cases, and writes `trace.sysml` next to each witness ([SysML v2 on the Command Line](../tutorials/sysml-v2.md)).
+A model or library path is an `.oxsts` file or a directory, which is searched recursively for `.oxsts` files. `--log-level` before the command sets the level of the log on standard error, `WARN` by default.
+
+`--case-name` selects cases by qualified name and overrides the tag filters. Without it, a command takes the cases that carry one of the `--include-tag` tags, or every case when none is given, except those that carry an `--exclude-tag` tag. `--artifacts debug` also writes the model after every compiler pass, which is slow and meant for bisecting compiler regressions.
 
 ## `verify`
 
 <CodeBlock language="text">{verify}</CodeBlock>
+
+`--timeout-seconds` bounds each case as a whole: its compilation, every backend run of the portfolio and the back-annotation of the witness. `--theta-executor` runs Theta from `PATH` (`shell`), in Docker (`docker`), or from `PATH` when it is there and in Docker otherwise (`auto`); `--theta-docker-image` is the image Docker runs, a `repository:tag` or `@digest` reference.
 
 For each case, `verify` prints `Verifying <case> ...`, then the verdict with the time it took, then the path of the `report.json` it wrote for the case. A case that does not compile gets `COMPILATION_ERROR` in place of the verdict and no report, and the compiler's message goes to standard error. With `--quiet` it prints only the verdict of each case, one per line: `PASSED`, `FAILED`, `INCONCLUSIVE`, `NOT_SUPPORTED`, `TIMEOUT`, `ERRORED` or `COMPILATION_ERROR`.
 
@@ -36,6 +40,8 @@ With `--json` it prints one JSON object per case and line, as each case finishes
 ## `compile`
 
 <CodeBlock language="text">{compile}</CodeBlock>
+
+For each case, `compile` prints `Compiling <case> to <file>`, writes the inlined model to the file, and prints the directory holding the artifacts of the case, a temporary directory unless `--artifact-directory` names one. With one selected case, `--output` is the file, `<model>.inlined.oxsts` next to the model by default; with several, it is a directory, `<model>.inlined` next to the model by default, holding `<case qualified name>.oxsts` for each case.
 
 ## `list`
 
@@ -66,11 +72,11 @@ The portfolio ids are listed under [Portfolios](portfolios.mdx).
 | 0 | Every selected case passed, or the command completed. |
 | 1 | Internal error: an unexpected exception, or the launcher could not start Java. |
 | 2 | Usage error: an unknown command or option, a missing or invalid value, conflicting options, an unknown portfolio. |
-| 3 | Input error: a model or library path does not exist, is not readable, or is neither an `.oxsts` file (or, for `verify`, a `.sysml` file) nor a directory holding one, or the case selection names or matches no case. |
+| 3 | Input error: a model or library path does not exist, is not readable, or is not a model file of the launcher (`.oxsts`, `.sysml` or `.gamma`) or, where a directory is allowed, a directory holding one, or the case selection names or matches no case. |
 | 4 | Compilation error: the model does not parse, validate or translate, or a case does not compile. |
 | 5 | Failed: a property does not hold. |
 | 6 | Inconclusive or NotSupported: a backend could not decide a case. |
 | 7 | Timeout. |
 | 8 | Errored: a backend failed, or the portfolio has no available backend. |
 
-Codes 2 to 4 and an unavailable portfolio stop the command before it verifies anything, or, in `compile` and `metrics`, at the case that does not compile. `verify` runs every case, including those after a case that does not compile, and exits with the highest of their codes: 0 means every case passed, 4 that some case did not compile and the rest passed, 5 that some case failed and the rest passed, failed or did not compile.
+Codes 2 to 4 and an unavailable portfolio stop the command before it verifies anything, or, in `compile` and `metrics`, at the case that does not compile. Every launcher's `verify` runs every case, including those after a case that does not compile, and exits with the highest of their codes: 0 means every case passed, 4 that some case did not compile and the rest passed, 5 that some case failed and the rest passed, failed or did not compile.

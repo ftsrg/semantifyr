@@ -18,15 +18,19 @@ class LivenessAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runLiveness(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                init { }
-                tran { }
-                prop { AG (a == 1) }
+                var observed : int := 0
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG (observed == 1)
+                }
             """,
         )
 
-        val a = inlined.varNamed("a")
-        assertThat(result.isRead(a)).isTrue
+        val observed = inlined.varNamed("observed")
+        assertThat(result.isRead(observed)).isTrue
     }
 
     @Test
@@ -34,17 +38,22 @@ class LivenessAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runLiveness(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                var b : int := 0
-                init { }
-                tran { b := 1 }
-                prop { AG (a == 1) }
+                var observed : int := 0
+                var written : int := 0
+                init {
+                }
+                tran {
+                    written := 1
+                }
+                prop {
+                    AG (observed == 1)
+                }
             """,
         )
 
-        val b = inlined.varNamed("b")
-        assertThat(result.isRead(b)).isFalse
-        assertThat(result.isAssigned(b)).isTrue
+        val written = inlined.varNamed("written")
+        assertThat(result.isRead(written)).isFalse
+        assertThat(result.isAssigned(written)).isTrue
     }
 
     @Test
@@ -52,18 +61,21 @@ class LivenessAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runLiveness(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                init { }
-                tran {
-                    havoc(a)
-                    a := 1
+                var value : int := 0
+                init {
                 }
-                prop { AG (a == 1) }
+                tran {
+                    havoc(value)
+                    value := 1
+                }
+                prop {
+                    AG (value == 1)
+                }
             """,
         )
 
-        val a = inlined.varNamed("a")
-        assertThat(result.assignmentCount(a))
+        val value = inlined.varNamed("value")
+        assertThat(result.assignmentCount(value))
             .`as`("assignments map must include both the havoc and the assignment")
             .isEqualTo(2)
     }
@@ -73,20 +85,23 @@ class LivenessAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runLiveness(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                var b : int := 0
-                init { }
-                tran {
-                    assume(a == 0)
-                    b := 1
+                var guard : int := 0
+                var written : int := 0
+                init {
                 }
-                prop { AG true }
+                tran {
+                    assume(guard == 0)
+                    written := 1
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
-        val a = inlined.varNamed("a")
-        assertThat(result.isRead(a))
-            .`as`("'a' is read inside the assume guard - must be marked read")
+        val guard = inlined.varNamed("guard")
+        assertThat(result.isRead(guard))
+            .`as`("'guard' is read inside the assume guard - must be marked read")
             .isTrue
     }
 

@@ -37,11 +37,11 @@ public class TypeCompatibilityTest {
 
     @Test
     void anyIsSupertypeOfEveryPrimitive() {
-        var pkg = parse("""
+        var parsedPackage = parse("""
             package test
-            class C { var x: int := 0 }
+            class Counter { var count: int := 0 }
             """);
-        var context = pkg.getOxstsPackage();
+        var context = parsedPackage.getOxstsPackage();
 
         var anyType = typeOf(builtinSymbolResolver.anyDatatype(context));
         var intType = typeOf(builtinSymbolResolver.intDatatype(context));
@@ -55,11 +55,11 @@ public class TypeCompatibilityTest {
 
     @Test
     void intNotAssignableToBool() {
-        var pkg = parse("""
+        var parsedPackage = parse("""
             package test
-            class C { var x: int := 0 }
+            class Counter { var count: int := 0 }
             """);
-        var context = pkg.getOxstsPackage();
+        var context = parsedPackage.getOxstsPackage();
 
         var intType = typeOf(builtinSymbolResolver.intDatatype(context));
         var boolType = typeOf(builtinSymbolResolver.boolDatatype(context));
@@ -70,40 +70,39 @@ public class TypeCompatibilityTest {
 
     @Test
     void subclassAssignableToSuperclass() {
-        var pkg = parse("""
+        var parsedPackage = parse("""
             package test
-            class A { }
-            class B : A { }
-            class C : B { }
+            class Vehicle { }
+            class Car : Vehicle { }
+            class SportsCar : Car { }
             """);
-        var context = pkg.getOxstsPackage();
-        var a = typeOf(pkg.classByName("A").eObject());
-        var b = typeOf(pkg.classByName("B").eObject());
-        var c = typeOf(pkg.classByName("C").eObject());
+        var context = parsedPackage.getOxstsPackage();
+        var vehicle = typeOf(parsedPackage.classByName("Vehicle").eObject());
+        var car = typeOf(parsedPackage.classByName("Car").eObject());
+        var sportsCar = typeOf(parsedPackage.classByName("SportsCar").eObject());
 
-        // C -> B -> A : walking up the chain is allowed.
-        assertThat(typeCompatibility.isAssignable(a, b, context))
-                .as("B should be assignable to A (direct supertype)")
+        assertThat(typeCompatibility.isAssignable(vehicle, car, context))
+                .as("Car should be assignable to Vehicle (direct supertype)")
                 .isTrue();
-        assertThat(typeCompatibility.isAssignable(a, c, context))
-                .as("C should be assignable to A (transitive supertype)")
+        assertThat(typeCompatibility.isAssignable(vehicle, sportsCar, context))
+                .as("SportsCar should be assignable to Vehicle (transitive supertype)")
                 .isTrue();
-        assertThat(typeCompatibility.isAssignable(b, c, context))
-                .as("C should be assignable to B")
+        assertThat(typeCompatibility.isAssignable(car, sportsCar, context))
+                .as("SportsCar should be assignable to Car")
                 .isTrue();
 
         // Reverse direction should fail.
-        assertThat(typeCompatibility.isAssignable(b, a, context))
-                .as("A should NOT be assignable to B")
+        assertThat(typeCompatibility.isAssignable(car, vehicle, context))
+                .as("Vehicle should NOT be assignable to Car")
                 .isFalse();
-        assertThat(typeCompatibility.isAssignable(c, a, context))
-                .as("A should NOT be assignable to C")
+        assertThat(typeCompatibility.isAssignable(sportsCar, vehicle, context))
+                .as("Vehicle should NOT be assignable to SportsCar")
                 .isFalse();
     }
 
     @Test
     void featureSubsetChainIsAssignable() {
-        var pkg = parse("""
+        var parsedPackage = parse("""
             package test
             class Item { }
             class Holder {
@@ -112,12 +111,15 @@ public class TypeCompatibilityTest {
                 contains veryImportant: Item[1] subsets priority
             }
             """);
-        var context = pkg.getOxstsPackage();
-        var all = typeOf(pkg.classByName("Holder").featureByName("allItems").eObject());
-        var priority =
-                typeOf(pkg.classByName("Holder").featureByName("priority").eObject());
-        var important =
-                typeOf(pkg.classByName("Holder").featureByName("veryImportant").eObject());
+        var context = parsedPackage.getOxstsPackage();
+        var all = typeOf(
+                parsedPackage.classByName("Holder").featureByName("allItems").eObject());
+        var priority = typeOf(
+                parsedPackage.classByName("Holder").featureByName("priority").eObject());
+        var important = typeOf(parsedPackage
+                .classByName("Holder")
+                .featureByName("veryImportant")
+                .eObject());
 
         // Subset chain: veryImportant -> priority -> allItems.
         assertThat(typeCompatibility.isAssignable(all, priority, context)).isTrue();
@@ -132,17 +134,18 @@ public class TypeCompatibilityTest {
 
     @Test
     void dataFeatureUnwrapsToUnderlyingType() {
-        var pkg = parse("""
+        var parsedPackage = parse("""
             package test
-            class C {
+            class Buffer {
                 refers size: int = 3
-                var n: int := size
+                var capacity: int := size
             }
             """);
-        var context = pkg.getOxstsPackage();
+        var context = parsedPackage.getOxstsPackage();
         var intType = typeOf(builtinSymbolResolver.intDatatype(context));
-        var sizeExpr = pkg.classByName("C").variableByName("n").initializer();
-        var sizeType = typeEvaluatorProvider.evaluate(sizeExpr);
+        var sizeExpression =
+                parsedPackage.classByName("Buffer").variableByName("capacity").initializer();
+        var sizeType = typeEvaluatorProvider.evaluate(sizeExpression);
 
         // `size` types as the feature; unwrap should make it int-compatible.
         assertThat(typeCompatibility.isAssignable(intType, sizeType, context))
@@ -155,26 +158,26 @@ public class TypeCompatibilityTest {
 
     @Test
     void unrelatedClassesNotAssignable() {
-        var pkg = parse("""
+        var parsedPackage = parse("""
             package test
-            class A { }
-            class X { }
+            class Vehicle { }
+            class Plant { }
             """);
-        var context = pkg.getOxstsPackage();
-        var a = typeOf(pkg.classByName("A").eObject());
-        var x = typeOf(pkg.classByName("X").eObject());
+        var context = parsedPackage.getOxstsPackage();
+        var vehicle = typeOf(parsedPackage.classByName("Vehicle").eObject());
+        var plant = typeOf(parsedPackage.classByName("Plant").eObject());
 
-        assertThat(typeCompatibility.isAssignable(a, x, context)).isFalse();
-        assertThat(typeCompatibility.isAssignable(x, a, context)).isFalse();
+        assertThat(typeCompatibility.isAssignable(vehicle, plant, context)).isFalse();
+        assertThat(typeCompatibility.isAssignable(plant, vehicle, context)).isFalse();
     }
 
     @Test
     void numericPredicateMatchesIntRealAny() {
-        var pkg = parse("""
+        var parsedPackage = parse("""
             package test
-            class C { var x: int := 0 }
+            class Counter { var count: int := 0 }
             """);
-        var context = pkg.getOxstsPackage();
+        var context = parsedPackage.getOxstsPackage();
 
         assertThat(typeCompatibility.isNumeric(typeOf(builtinSymbolResolver.intDatatype(context)), context))
                 .isTrue();
@@ -190,11 +193,11 @@ public class TypeCompatibilityTest {
 
     @Test
     void booleanPredicateMatchesBoolAny() {
-        var pkg = parse("""
+        var parsedPackage = parse("""
             package test
-            class C { var x: int := 0 }
+            class Counter { var count: int := 0 }
             """);
-        var context = pkg.getOxstsPackage();
+        var context = parsedPackage.getOxstsPackage();
 
         assertThat(typeCompatibility.isBoolean(typeOf(builtinSymbolResolver.boolDatatype(context)), context))
                 .isTrue();
@@ -205,9 +208,9 @@ public class TypeCompatibilityTest {
     }
 
     private WrappedOxstsPackage parse(String source) {
-        var pkg = parseHelper.parse(source);
-        pkg.assertNoResourceErrors();
-        return pkg;
+        var parsedPackage = parseHelper.parse(source);
+        parsedPackage.assertNoResourceErrors();
+        return parsedPackage;
     }
 
     private TypeEvaluation typeOf(EObject domain) {

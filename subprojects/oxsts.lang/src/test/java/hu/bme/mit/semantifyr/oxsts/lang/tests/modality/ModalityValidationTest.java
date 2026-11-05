@@ -23,307 +23,307 @@ public class ModalityValidationTest {
 
     @Test
     void featureBoundWithLiteral_passes() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Holder {
                 refers size: int = 3
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void featureBoundWithFeatureReference_passes() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Holder {
                 refers size: int = 3
                 refers twiceSize: int = size * 2
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void featureBoundWithVariableReference_isRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Holder {
                 var runtimeValue: int := 3
                 refers derivedSize: int = runtimeValue
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "compile time");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "compile time");
     }
 
     @Test
     void inlineIfGuardWithCompileTimeComparison_passes() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Holder {
                 redefine tran {
                     inline if (1 < 2) { } else { }
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void inlineIfGuardWithVariableReference_isRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
+            class Holder {
+                var value: int := 0
                 redefine tran {
-                    inline if (x > 0) { } else { }
+                    inline if (value > 0) { } else { }
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "inline if");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "inline if");
     }
 
     @Test
     void inlineForOverIntegerRange_passes() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Holder {
                 var total: int := 0
                 redefine tran {
-                    inline for (n in 1..3) {
-                        total := total + n
+                    inline for (index in 1..3) {
+                        total := total + index
                     }
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void inlineForOverFeatureRange_passes() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Item { var done: bool := false }
-            class C {
+            class Holder {
                 features elements: Item[0..*]
-                contains e1: Item[1] subsets elements
+                contains firstItem: Item[1] subsets elements
                 redefine tran {
-                    inline for (it in elements) {
-                        it.done := true
+                    inline for (element in elements) {
+                        element.done := true
                     }
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void inlineIfGuardOverInlineForLoopVariable_passes() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Holder {
                 var total: int := 0
                 redefine tran {
-                    inline for (n in 1..3) {
-                        inline if (n == 2) {
-                            total := total + n
+                    inline for (index in 1..3) {
+                        inline if (index == 2) {
+                            total := total + index
                         }
                     }
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void inlineIfGuardOverRuntimeForLoopVariable_isRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Holder {
                 var total: int := 0
                 redefine tran {
-                    for (n in 1..3) {
-                        inline if (n == 2) {
-                            total := total + n
+                    for (index in 1..3) {
+                        inline if (index == 2) {
+                            total := total + index
                         }
                     }
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "inline if");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "inline if");
     }
 
     @Test
     void assignmentToInlineForLoopVariable_isRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Holder {
                 redefine tran {
-                    inline for (n in 1..3) {
-                        n := 5
+                    inline for (index in 1..3) {
+                        index := 5
                     }
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.INCORRECT_ASSIGNMENT, "modality COMPILE_TIME");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.INCORRECT_ASSIGNMENT, "modality COMPILE_TIME");
     }
 
     @Test
     void havocOfInlineForLoopVariable_isRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Holder {
                 redefine tran {
-                    inline for (n in 1..3) {
-                        havoc(n)
+                    inline for (index in 1..3) {
+                        havoc(index)
                     }
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.INCORRECT_ASSIGNMENT, "modality COMPILE_TIME");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.INCORRECT_ASSIGNMENT, "modality COMPILE_TIME");
     }
 
     @Test
     void assignmentOfCompileTimeValueToVariable_passes() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Holder {
                 refers limit: int = 3
                 var total: int := 0
                 redefine tran {
-                    inline for (n in 1..3) {
-                        total := n + limit
+                    inline for (index in 1..3) {
+                        total := index + limit
                     }
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void annotationArgumentWithConstant_passes() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             @Tag("slow")
-            class C { }
+            class Holder { }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void annotationArgumentWithFeatureReference_isRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             annotation Limit(value: int)
-            class C {
+            class Holder {
                 refers limit: int = 3
                 @Limit(limit)
-                var x: int := 0
+                var value: int := 0
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "Annotation argument");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "Annotation argument");
     }
 
     @Test
     void annotationArgumentWithVariableReference_isRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             annotation Limit(value: int)
-            class C {
+            class Holder {
                 var limit: int := 3
                 @Limit(limit)
-                var x: int := 0
+                var value: int := 0
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "Annotation argument");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "Annotation argument");
     }
 
     @Test
     void inlineForOverVariable_isRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Holder {
                 var runtimeBound: int := 0
                 var total: int := 0
                 redefine tran {
-                    inline for (n in 1..runtimeBound) {
-                        total := total + n
+                    inline for (index in 1..runtimeBound) {
+                        total := total + index
                     }
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "inline for");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "inline for");
     }
 
     @Test
     void classVariableInitializerWithLiteralPasses() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 42
+            class Holder {
+                var value: int := 42
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void classVariableInitializerWithFeatureReferencePasses() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Holder {
                 refers default: int = 3
-                var x: int := default
+                var value: int := default
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void classVariableInitializerWithRuntimeVariableIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Holder {
                 var source: int := 0
                 var derived: int := source
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "initializer");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "initializer");
     }
 
     @Test
     void localVariableInitializerWithRuntimeVariableIsAllowed() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Holder {
                 var source: int := 0
                 redefine tran {
                     var snapshot: int := source
@@ -332,13 +332,13 @@ public class ModalityValidationTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void multiplicityBoundWithIntegerLiteralPasses() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Item { }
             class Host {
@@ -346,13 +346,13 @@ public class ModalityValidationTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void multiplicityBoundWithFeatureReferencePasses() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Item { }
             class Host {
@@ -361,13 +361,13 @@ public class ModalityValidationTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void multiplicityBoundWithRuntimeVariableIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Item { }
             class Host {
@@ -376,25 +376,25 @@ public class ModalityValidationTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "Multiplicity");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "Multiplicity");
     }
 
     @Test
     void wrapperExposesClassAndFeaturesAfterParse() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Worker { var done: bool := false }
             class Holder {
-                contains w1: Worker[1]
-                contains w2: Worker[1]
+                contains firstWorker: Worker[1]
+                contains secondWorker: Worker[1]
             }
             """);
 
-        pkg.assertNoResourceErrors();
-        var holder = pkg.classByName("Holder");
+        parsedPackage.assertNoResourceErrors();
+        var holder = parsedPackage.classByName("Holder");
         assertThat(holder.features()).hasSize(2);
-        assertThat(holder.featureByName("w1").kind().toString()).isEqualTo("CONTAINMENT");
-        assertThat(holder.featureByName("w1").typeDomain())
-                .isSameAs(pkg.classByName("Worker").eObject());
+        assertThat(holder.featureByName("firstWorker").kind().toString()).isEqualTo("CONTAINMENT");
+        assertThat(holder.featureByName("firstWorker").typeDomain())
+                .isSameAs(parsedPackage.classByName("Worker").eObject());
     }
 }

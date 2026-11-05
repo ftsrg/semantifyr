@@ -1,7 +1,13 @@
 (XstsStateSequence
-  (XstsState pre_init last_env (ExplState (b true) (x 5) (y 0)))
-  (XstsState post_init last_internal (ExplState (b true) (x 5) (y 0)))
-  (XstsState post_init last_env (ExplState (b true) (x 5) (y 0)))
-  (XstsState post_init last_internal (ExplState (b true) (x 5) (y 1)))
-  (XstsState post_init last_env (ExplState (b true) (x 5) (y 1)))
-  (XstsState post_init last_internal (ExplState (b true) (x 5) (y 2))))
+  (XstsState pre_init last_env
+    (ExplState (counter 0) (flag true) (unchanged 5)))
+  (XstsState post_init last_internal
+    (ExplState (counter 0) (flag true) (unchanged 5)))
+  (XstsState post_init last_env
+    (ExplState (counter 0) (flag true) (unchanged 5)))
+  (XstsState post_init last_internal
+    (ExplState (counter 1) (flag true) (unchanged 5)))
+  (XstsState post_init last_env
+    (ExplState (counter 1) (flag true) (unchanged 5)))
+  (XstsState post_init last_internal
+    (ExplState (counter 2) (flag true) (unchanged 5))))

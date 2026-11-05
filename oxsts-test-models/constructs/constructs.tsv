@@ -1,16 +1,16 @@
 construct	outcome	fixture	detail
-Exclusive range `a..<b`	pass	semantic/inline_operations.oxsts	InlineSeqForExclusiveBound
-Array literals `[a, b, c]`	pass	semantic/arrays.oxsts	ArrayLiteralInit0Reach
+Exclusive range `a..<b`	pass	hu.bme.mit.semantifyr.compiler.pipeline.inlining.InlineOperationExpanderTest	inline seq for over an exclusive range stops before the upper bound
+Array literals `[a, b, c]`	pass	semantic/arrays.oxsts	ArrayLiteralInitializer0Reach
 Indexing `a[K]` (constant)	pass	semantic/arrays.oxsts	ArraySlotIndependenceReach
 Indexing `a[i]` (runtime)	pass	semantic/arrays.oxsts	ArrayRuntimeIndexReach
 Array `[lb..ub]` multiplicity	pass	semantic/arrays.oxsts	ArrayRangedMultiplicityReach
 Class-typed arrays	pass	semantic/arrays.oxsts	ClassTypedArrayReach
 Feature-typed arrays	pass	semantic/arrays.oxsts	FeatureTypedArrayHavocBound
 Local arrays	pass	semantic/arrays.oxsts	LocalArrayRuntimeIndexReach
-Local arrays of class or feature type	pass	semantic/local_instances.oxsts	LocalFeatureTypedArrayHavocBound
+Local arrays of class or feature type	pass	hu.bme.mit.semantifyr.compiler.pipeline.flattening.LocalInstanceFlatteningTest	each slot of a feature-typed local array chooses among the instances of the feature
 Parameter arrays	reject	constructs/parameter_array.oxsts	OXSTS.UNSUPPORTED_FEATURE
 Unbounded variable multiplicity `[]`, `[lb..*]`	reject	constructs/unbounded_variable.oxsts	OXSTS.TYPE_MISMATCH
-Call through a variable `v.t()`	pass	semantic/variable_dispatch.oxsts	ClassTypedDispatchReach
+Call through a variable `v.t()`	pass	hu.bme.mit.semantifyr.compiler.pipeline.inlining.VariableDispatchInliningTest	a call through a class-typed variable chooses among the instances of the class
 Member access through a variable `v.x`	reject	constructs/member_access_through_variable.oxsts	OXSTS.UNSUPPORTED_FEATURE
 `record X { ... }`	pass	semantic/records.oxsts	RecordFieldWriteReach
 Record literal `Point { x = 0 }`	pass	semantic/records.oxsts	RecordLiteralAssignReach

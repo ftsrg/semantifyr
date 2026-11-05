@@ -22,9 +22,13 @@ class PackageInliningOperationTest : InliningTestBase() {
                 package inlining::tests
                 @VerificationCase
                 class Host {
-                    var x : int := 0
-                    redefine tran { x := x + 1 }
-                    prop { return EF x == 1 }
+                    var counter : int := 0
+                    redefine tran {
+                        counter := counter + 1
+                    }
+                    prop {
+                        return EF counter == 1
+                    }
                 }
             """,
         ) {
@@ -41,16 +45,22 @@ class PackageInliningOperationTest : InliningTestBase() {
                 package inlining::tests
                 @VerificationCase
                 class Host {
-                    var x : int := 0
-                    tran step() { x := x + 1 }
-                    redefine tran { inline step() }
-                    prop { return EF x == 1 }
+                    var counter : int := 0
+                    tran step() {
+                        counter := counter + 1
+                    }
+                    redefine tran {
+                        inline step()
+                    }
+                    prop {
+                        return EF counter == 1
+                    }
                 }
             """,
         ) {
             inlineAll(it)
             assertNoInlineOperationsInMain(it)
-            assertMainContains(it, "root.x + 1")
+            assertMainContains(it, "root.counter + 1")
         }
     }
 
@@ -62,16 +72,22 @@ class PackageInliningOperationTest : InliningTestBase() {
                 package inlining::tests
                 @VerificationCase
                 class Host {
-                    var x : int := 0
-                    tran step() { x := x + 1 }
-                    redefine tran { inline self.step() }
-                    prop { return EF x == 1 }
+                    var counter : int := 0
+                    tran step() {
+                        counter := counter + 1
+                    }
+                    redefine tran {
+                        inline self.step()
+                    }
+                    prop {
+                        return EF counter == 1
+                    }
                 }
             """,
         ) {
             inlineAll(it)
             assertNoInlineOperationsInMain(it)
-            assertMainContains(it, "root.x + 1")
+            assertMainContains(it, "root.counter + 1")
         }
     }
 
@@ -83,19 +99,25 @@ class PackageInliningOperationTest : InliningTestBase() {
                 package inlining::tests
                 class Worker {
                     var done : bool := false
-                    tran step() { done := true }
+                    tran step() {
+                        done := true
+                    }
                 }
                 @VerificationCase
                 class Host {
-                    contains w : Worker[1]
-                    redefine tran { inline w.step() }
-                    prop { return EF w.done }
+                    contains worker : Worker[1]
+                    redefine tran {
+                        inline worker.step()
+                    }
+                    prop {
+                        return EF worker.done
+                    }
                 }
             """,
         ) {
             inlineAll(it)
             assertNoInlineOperationsInMain(it)
-            assertMainContains(it, "root.w.done := true")
+            assertMainContains(it, "root.worker.done := true")
         }
     }
 
@@ -106,23 +128,29 @@ class PackageInliningOperationTest : InliningTestBase() {
             """
                 package inlining::tests
                 class Leaf {
-                    var v : int := 0
-                    tran bump() { v := v + 1 }
+                    var value : int := 0
+                    tran bump() {
+                        value := value + 1
+                    }
                 }
-                class Mid {
+                class Middle {
                     contains leaf : Leaf[1]
                 }
                 @VerificationCase
                 class Host {
-                    contains mid : Mid[1]
-                    redefine tran { inline mid.leaf.bump() }
-                    prop { return EF mid.leaf.v == 1 }
+                    contains middle : Middle[1]
+                    redefine tran {
+                        inline middle.leaf.bump()
+                    }
+                    prop {
+                        return EF middle.leaf.value == 1
+                    }
                 }
             """,
         ) {
             inlineAll(it)
             assertNoInlineOperationsInMain(it)
-            assertMainContains(it, "root.mid.leaf.v + 1")
+            assertMainContains(it, "root.middle.leaf.value + 1")
         }
     }
 
@@ -133,18 +161,25 @@ class PackageInliningOperationTest : InliningTestBase() {
             """
                 package inlining::tests
                 class Base {
-                    tran someBehavior() { }
+                    tran someBehavior() {
+                    }
                 }
                 class Child : Base {
-                    var x : int := 0
-                    redefine tran someBehavior() { x := 10 }
+                    var counter : int := 0
+                    redefine tran someBehavior() {
+                        counter := 10
+                    }
                 }
                 @VerificationCase
                 class Testing {
-                    contains b : Base[0..*]
-                    contains c : Child[1] subsets b
-                    redefine tran { inline b.someBehavior() }
-                    prop { return EF c.x == 10 }
+                    contains bases : Base[0..*]
+                    contains child : Child[1] subsets bases
+                    redefine tran {
+                        inline bases.someBehavior()
+                    }
+                    prop {
+                        return EF child.counter == 10
+                    }
                 }
             """,
         ) {
@@ -162,22 +197,31 @@ class PackageInliningOperationTest : InliningTestBase() {
             """
                 package inlining::tests
                 class Base {
-                    tran act() { }
+                    tran act() {
+                    }
                 }
-                class Mid : Base {
-                    var m : int := 0
-                    redefine tran act() { m := 1 }
+                class Middle : Base {
+                    var middleValue : int := 0
+                    redefine tran act() {
+                        middleValue := 1
+                    }
                 }
-                class Leaf : Mid {
-                    var l : int := 0
-                    redefine tran act() { l := 2 }
+                class Leaf : Middle {
+                    var leafValue : int := 0
+                    redefine tran act() {
+                        leafValue := 2
+                    }
                 }
                 @VerificationCase
                 class Testing {
-                    contains b : Base[0..*]
-                    contains leaf : Leaf[1] subsets b
-                    redefine tran { inline b.act() }
-                    prop { return EF leaf.l == 2 }
+                    contains bases : Base[0..*]
+                    contains leaf : Leaf[1] subsets bases
+                    redefine tran {
+                        inline bases.act()
+                    }
+                    prop {
+                        return EF leaf.leafValue == 2
+                    }
                 }
             """,
         ) {
@@ -196,19 +240,29 @@ class PackageInliningOperationTest : InliningTestBase() {
                 package inlining::tests
                 class Worker {
                     var done : bool := false
-                    tran step() { done := true }
+                    tran step() {
+                        done := true
+                    }
                 }
                 @VerificationCase
                 class Dispatcher {
                     contains workers : Worker[0..*]
-                    contains a : Worker[1] subsets workers
-                    contains b : Worker[1] subsets workers
+                    contains first : Worker[1] subsets workers
+                    contains second : Worker[1] subsets workers
                     var current : workers[0..1] := nothing
                     redefine init {
-                        choice { current := a } or { current := b }
+                        choice {
+                            current := first
+                        } or {
+                            current := second
+                        }
                     }
-                    redefine tran { inline current.step() }
-                    prop { return EF (a.done && b.done) }
+                    redefine tran {
+                        inline current.step()
+                    }
+                    prop {
+                        return EF (first.done && second.done)
+                    }
                 }
             """,
         ) {
@@ -217,8 +271,8 @@ class PackageInliningOperationTest : InliningTestBase() {
             val mainText = serializer.serializeFormatted(it.inlinedOxsts.mainTransition)
             assertThat(mainText)
                 .`as`("dispatch should produce branches referring to both candidates")
-                .contains("a")
-                .contains("b")
+                .contains("first")
+                .contains("second")
         }
     }
 
@@ -230,18 +284,28 @@ class PackageInliningOperationTest : InliningTestBase() {
                 package inlining::tests
                 class Worker {
                     var done : bool := false
-                    tran step() { done := true }
+                    tran step() {
+                        done := true
+                    }
                 }
                 @VerificationCase
                 class Dispatcher {
-                    contains a : Worker[1]
-                    contains b : Worker[1]
+                    contains first : Worker[1]
+                    contains second : Worker[1]
                     var current : Worker[0..1] := nothing
                     redefine init {
-                        choice { current := a } or { current := b }
+                        choice {
+                            current := first
+                        } or {
+                            current := second
+                        }
                     }
-                    redefine tran { inline current.step() }
-                    prop { return EF (a.done && b.done) }
+                    redefine tran {
+                        inline current.step()
+                    }
+                    prop {
+                        return EF (first.done && second.done)
+                    }
                 }
             """,
         ) {
@@ -250,8 +314,8 @@ class PackageInliningOperationTest : InliningTestBase() {
             val mainText = serializer.serializeFormatted(it.inlinedOxsts.mainTransition)
             assertThat(mainText)
                 .`as`("class-typed dispatch should guard each branch with an equality to a candidate")
-                .contains("a")
-                .contains("b")
+                .contains("first")
+                .contains("second")
         }
     }
 
@@ -262,14 +326,20 @@ class PackageInliningOperationTest : InliningTestBase() {
             """
                 package inlining::tests
                 class Leaf {
-                    var v : int := 0
-                    tran bump() { v := v + 1 }
+                    var value : int := 0
+                    tran bump() {
+                        value := value + 1
+                    }
                 }
                 @VerificationCase
                 class Host {
                     contains leaf : Leaf[0..1]
-                    redefine tran { inline leaf?.bump() }
-                    prop { return AG true }
+                    redefine tran {
+                        inline leaf?.bump()
+                    }
+                    prop {
+                        return AG true
+                    }
                 }
             """,
         ) {
@@ -291,11 +361,17 @@ class PackageInliningOperationTest : InliningTestBase() {
                 package inlining::tests
                 @VerificationCase
                 class Host {
-                    var x : int := 0
+                    var counter : int := 0
                     var base : int := 3
-                    tran addBy(n : int) { x := x + n }
-                    redefine tran { inline addBy(base + 2) }
-                    prop { return EF x == 5 }
+                    tran addBy(amount : int) {
+                        counter := counter + amount
+                    }
+                    redefine tran {
+                        inline addBy(base + 2)
+                    }
+                    prop {
+                        return EF counter == 5
+                    }
                 }
             """,
         ) {
@@ -314,21 +390,28 @@ class PackageInliningOperationTest : InliningTestBase() {
             "Host",
             """
                 package inlining::tests
-                enum Command { Inc, Dec }
+                enum Command {
+                    Increment,
+                    Decrement,
+                }
                 @VerificationCase
                 class Host {
-                    var x : int := 0
-                    tran apply(cmd : Command) {
+                    var counter : int := 0
+                    tran apply(command : Command) {
                         choice {
-                            assume(cmd == Command::Inc)
-                            x := x + 1
+                            assume(command == Command::Increment)
+                            counter := counter + 1
                         } or {
-                            assume(cmd == Command::Dec)
-                            x := x - 1
+                            assume(command == Command::Decrement)
+                            counter := counter - 1
                         }
                     }
-                    redefine tran { inline apply(Command::Inc) }
-                    prop { return EF x == 3 }
+                    redefine tran {
+                        inline apply(Command::Increment)
+                    }
+                    prop {
+                        return EF counter == 3
+                    }
                 }
             """,
         ) {
@@ -336,46 +419,48 @@ class PackageInliningOperationTest : InliningTestBase() {
             assertNoInlineOperationsInMain(it)
             val mainText = serializer.serializeFormatted(it.inlinedOxsts.mainTransition)
             assertThat(mainText)
-                .`as`("enum argument must be substituted, leaving only the Inc-branch increment")
-                .contains("x := root.x + 1")
+                .`as`("enum argument must be substituted, leaving only the Increment-branch increment")
+                .contains("counter := root.counter + 1")
                 .doesNotContain("- 1")
         }
     }
 
     @Test
-    fun `nested inline calls declaring local vars of the same name avoid collision`() {
+    fun `nested inline calls declaring local variables of the same name avoid collision`() {
         prepare(
             "Host",
             """
                 package inlining::tests
                 @VerificationCase
                 class Host {
-                    var x : int := 0
+                    var counter : int := 0
                     tran step() {
-                        var tmp : int := 0
-                        tmp := 1
-                        x := x + tmp
+                        var scratch : int := 0
+                        scratch := 1
+                        counter := counter + scratch
                     }
                     redefine tran {
                         inline step()
                         inline step()
                     }
-                    prop { return EF x == 2 }
+                    prop {
+                        return EF counter == 2
+                    }
                 }
             """,
         ) {
             inlineAll(it)
             assertNoInlineOperationsInMain(it)
             val mainText = serializer.serializeFormatted(it.inlinedOxsts.mainTransition)
-            val localDeclarationMatches = Regex("""var\s+'?tmp[^\s:']*'?\s*:""").findAll(mainText).toList()
+            val localDeclarationMatches = Regex("""var\s+'?scratch[^\s:']*'?\s*:""").findAll(mainText).toList()
             val distinctNames = localDeclarationMatches.map {
                 it.value
             }.toSet()
             assertThat(localDeclarationMatches)
-                .`as`("expected two local tmp declarations after two inline expansions, got main body: $mainText")
+                .`as`("expected two local scratch declarations after two inline expansions, got main body: $mainText")
                 .hasSize(2)
             assertThat(distinctNames)
-                .`as`("the two inlined tmp declarations must be renamed apart: $distinctNames")
+                .`as`("the two inlined scratch declarations must be renamed apart: $distinctNames")
                 .hasSize(2)
         }
     }
@@ -388,20 +473,24 @@ class PackageInliningOperationTest : InliningTestBase() {
                 package inlining::tests
                 @VerificationCase
                 class Host {
-                    var x : int := 0
-                    var y : int := 0
+                    var left : int := 0
+                    var right : int := 0
                     tran set(first : int, second : int) {
-                        x := first
-                        y := second
+                        left := first
+                        right := second
                     }
-                    redefine tran { inline set(second = 2, first = 1) }
-                    prop { return EF x == 1 }
+                    redefine tran {
+                        inline set(second = 2, first = 1)
+                    }
+                    prop {
+                        return EF left == 1
+                    }
                 }
             """,
         ) {
             inlineAll(it)
-            assertMainContains(it, "root.x := 1")
-            assertMainContains(it, "root.y := 2")
+            assertMainContains(it, "root.left := 1")
+            assertMainContains(it, "root.right := 2")
         }
     }
 
@@ -415,24 +504,28 @@ class PackageInliningOperationTest : InliningTestBase() {
                     abstract tran set(first : int, second : int)
                 }
                 class Leaf : Base {
-                    var x : int := 0
-                    var y : int := 0
+                    var left : int := 0
+                    var right : int := 0
                     redefine tran set(first : int, second : int) {
-                        x := first
-                        y := second
+                        left := first
+                        right := second
                     }
                 }
                 @VerificationCase
                 class Host {
                     contains leaf : Leaf[1]
-                    redefine tran { inline leaf.set(second = 2, first = 1) }
-                    prop { return EF leaf.x == 1 }
+                    redefine tran {
+                        inline leaf.set(second = 2, first = 1)
+                    }
+                    prop {
+                        return EF leaf.left == 1
+                    }
                 }
             """,
         ) {
             inlineAll(it)
-            assertMainContains(it, "root.leaf.x := 1")
-            assertMainContains(it, "root.leaf.y := 2")
+            assertMainContains(it, "root.leaf.left := 1")
+            assertMainContains(it, "root.leaf.right := 2")
         }
     }
 
@@ -442,7 +535,8 @@ class PackageInliningOperationTest : InliningTestBase() {
             "Host",
             """
                 package inlining::tests
-                class Worker { }
+                class Worker {
+                }
                 @VerificationCase
                 class Host {
                     contains worker : Worker[1]
@@ -450,8 +544,12 @@ class PackageInliningOperationTest : InliningTestBase() {
                     tran select(target : Worker[0..1]) {
                         current := target
                     }
-                    redefine tran { inline select() }
-                    prop { return EF current == nothing }
+                    redefine tran {
+                        inline select()
+                    }
+                    prop {
+                        return EF current == nothing
+                    }
                 }
             """,
         ) {
@@ -470,16 +568,20 @@ class PackageInliningOperationTest : InliningTestBase() {
                     abstract tran set()
                 }
                 class Leaf : Base {
-                    var x : int := 0
+                    var counter : int := 0
                     redefine tran set(value : int) {
-                        x := value
+                        counter := value
                     }
                 }
                 @VerificationCase
                 class Host {
                     contains leaf : Leaf[1]
-                    redefine tran { inline leaf.set() }
-                    prop { return EF leaf.x == 1 }
+                    redefine tran {
+                        inline leaf.set()
+                    }
+                    prop {
+                        return EF leaf.counter == 1
+                    }
                 }
             """,
         ) {

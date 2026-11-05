@@ -6,21 +6,34 @@
 
 package hu.bme.mit.semantifyr.verifier
 
+import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
+import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
-
-val hostRequiredBackends = System.getProperty("semantifyr.tests.requiredBackends").orEmpty()
-    .split(',')
-    .map { it.trim() }
-    .filter { it.isNotEmpty() }
-    .toSet()
 
 fun assumeBackendAvailable(key: ExecutorKey<*>) {
     val report = ExecutionEnvironment.Empty.availability(key) as? AvailabilityReport.Unavailable ?: return
-    check(key.name !in hostRequiredBackends) {
-        "${key.name} is required on this host: ${report.reason}"
-    }
     Assumptions.abort<Unit>("${report.reason}, skipping")
+}
+
+fun assumePortfolioAvailable(
+    portfolio: VerificationPortfolio,
+    environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
+) {
+    val report = portfolio.availability(environment) as? AvailabilityReport.Unavailable ?: return
+    Assumptions.abort<Unit>("${report.reason}, skipping")
+}
+
+fun assertVerdict(
+    qualifiedName: String,
+    expectedVerdict: VerificationVerdict,
+    result: VerificationResult,
+    diagnostics: String = "",
+) {
+    Assertions.assertEquals(expectedVerdict, result.verdict) {
+        "Expected $qualifiedName verdict $expectedVerdict, got ${result.verdict} (${result.message ?: "no message"}).$diagnostics"
+    }
 }

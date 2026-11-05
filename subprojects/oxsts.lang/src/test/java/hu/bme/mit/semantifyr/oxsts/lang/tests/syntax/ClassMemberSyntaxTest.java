@@ -12,6 +12,7 @@ import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionKind;
+import org.eclipse.xtext.resource.XtextSyntaxDiagnostic;
 import org.junit.jupiter.api.Test;
 
 @InjectWithOxsts
@@ -22,53 +23,64 @@ public class ClassMemberSyntaxTest {
 
     @Test
     void variableWithTypeAndInitializer() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C { var x: int := 5 }
+            class Host { var counter: int := 5 }
             """);
-        pkg.assertNoResourceErrors();
-        var variable = pkg.classByName("C").variableByName("x");
+        parsedPackage.assertNoResourceErrors();
+        var variable = parsedPackage.classByName("Host").variableByName("counter");
         assertThat(variable.typeSpecification()).isNotNull();
         assertThat(variable.initializer()).isNotNull();
     }
 
     @Test
     void variableWithTypeOnly() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C { var x: int }
+            class Host { var counter: int }
             """);
-        pkg.assertNoResourceErrors();
-        var variable = pkg.classByName("C").variableByName("x");
+        parsedPackage.assertNoResourceErrors();
+        var variable = parsedPackage.classByName("Host").variableByName("counter");
         assertThat(variable.typeSpecification()).isNotNull();
         assertThat(variable.initializer()).isNull();
     }
 
     @Test
     void variableWithInitializerOnly() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C { var x := 5 }
+            class Host { var counter := 5 }
             """);
-        pkg.assertNoResourceErrors();
-        var variable = pkg.classByName("C").variableByName("x");
+        parsedPackage.assertNoResourceErrors();
+        var variable = parsedPackage.classByName("Host").variableByName("counter");
         assertThat(variable.typeSpecification()).isNull();
         assertThat(variable.initializer()).isNotNull();
     }
 
-    // --- transitions ---
+    @Test
+    void redefinedVariableIsAParseError() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Base { var counter: int := 0 }
+            class Child : Base {
+                redefine var counter: int := 1
+            }
+            """);
+        assertThat(parsedPackage.getResourceErrors())
+                .anySatisfy(error -> assertThat(error).isInstanceOf(XtextSyntaxDiagnostic.class));
+    }
 
     @Test
     void anonymousMainTransition() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                redefine tran { x := 1 }
+            class Host {
+                var counter: int := 0
+                redefine tran { counter := 1 }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var main = pkg.classByName("C").anonymousMain();
+        parsedPackage.assertNoResourceErrors();
+        var main = parsedPackage.classByName("Host").anonymousMain();
         assertThat(main.kind()).isEqualTo(TransitionKind.TRAN);
         assertThat(main.name()).isNull();
         assertThat(main.isRedefine()).isTrue();
@@ -76,28 +88,28 @@ public class ClassMemberSyntaxTest {
 
     @Test
     void anonymousInitTransition() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                redefine init { x := 1 }
+            class Host {
+                var counter: int := 0
+                redefine init { counter := 1 }
             }
             """);
-        pkg.assertNoResourceErrors();
-        assertThat(pkg.classByName("C").anonymousInit().kind()).isEqualTo(TransitionKind.INIT);
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.classByName("Host").anonymousInit().kind()).isEqualTo(TransitionKind.INIT);
     }
 
     @Test
     void namedTransitionWithoutParameters() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                tran step() { x := x + 1 }
+            class Host {
+                var counter: int := 0
+                tran step() { counter := counter + 1 }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var step = pkg.classByName("C").namedTransition("step");
+        parsedPackage.assertNoResourceErrors();
+        var step = parsedPackage.classByName("Host").namedTransition("step");
         assertThat(step.parameters()).isEmpty();
         assertThat(step.isAbstract()).isFalse();
         assertThat(step.isRedefine()).isFalse();
@@ -105,87 +117,89 @@ public class ClassMemberSyntaxTest {
 
     @Test
     void namedParametricTransition() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                tran addBy(n: int) { x := x + n }
+            class Host {
+                var counter: int := 0
+                tran addBy(amount: int) { counter := counter + amount }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var addBy = pkg.classByName("C").namedTransition("addBy");
+        parsedPackage.assertNoResourceErrors();
+        var addBy = parsedPackage.classByName("Host").namedTransition("addBy");
         assertThat(addBy.parameters()).hasSize(1);
-        assertThat(addBy.parameters().getFirst().name()).isEqualTo("n");
+        assertThat(addBy.parameters().getFirst().name()).isEqualTo("amount");
         assertThat(addBy.parameters().getFirst().typeDomain()).isNotNull();
     }
 
     @Test
     void transitionWithMultipleParameters() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                tran setBy(a: int, b: int) { x := a + b }
+            class Host {
+                var counter: int := 0
+                tran setBy(first: int, second: int) { counter := first + second }
             }
             """);
-        pkg.assertNoResourceErrors();
-        assertThat(pkg.classByName("C").namedTransition("setBy").parameters()).hasSize(2);
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.classByName("Host").namedTransition("setBy").parameters())
+                .hasSize(2);
     }
 
     @Test
     void abstractTransition() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             abstract class Base {
                 abstract tran doIt()
             }
             """);
-        pkg.assertNoResourceErrors();
-        var doIt = pkg.classByName("Base").namedTransition("doIt");
+        parsedPackage.assertNoResourceErrors();
+        var doIt = parsedPackage.classByName("Base").namedTransition("doIt");
         assertThat(doIt.isAbstract()).isTrue();
         assertThat(doIt.branches()).isEmpty();
     }
 
     @Test
     void redefinedTransition() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Base { tran act() { } }
             class Child : Base {
                 redefine tran act() { }
             }
             """);
-        pkg.assertNoResourceErrors();
-        assertThat(pkg.classByName("Child").namedTransition("act").isRedefine()).isTrue();
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.classByName("Child").namedTransition("act").isRedefine())
+                .isTrue();
     }
 
     @Test
     void anonymousProperty() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                redefine tran { x := x + 1 }
-                prop { return AG (x >= 0) }
+            class Host {
+                var counter: int := 0
+                redefine tran { counter := counter + 1 }
+                prop { return AG (counter >= 0) }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var prop = pkg.classByName("C").anonymousProperty();
-        assertThat(prop.name()).isNull();
-        assertThat(prop.expression()).isNotNull();
+        parsedPackage.assertNoResourceErrors();
+        var property = parsedPackage.classByName("Host").anonymousProperty();
+        assertThat(property.name()).isNull();
+        assertThat(property.expression()).isNotNull();
     }
 
     @Test
     void namedParametricProperty() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                prop equals(n: int): bool { return x == n }
+            class Host {
+                var counter: int := 0
+                prop equals(value: int): bool { return counter == value }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var equals = pkg.classByName("C").namedProperty("equals");
+        parsedPackage.assertNoResourceErrors();
+        var equals = parsedPackage.classByName("Host").namedProperty("equals");
         assertThat(equals.parameters()).hasSize(1);
         assertThat(equals.returnTypeSpecification()).isNotNull();
         assertThat(equals.returnTypeDomain()).isNotNull();
@@ -193,21 +207,21 @@ public class ClassMemberSyntaxTest {
 
     @Test
     void abstractProperty() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             abstract class Base {
                 abstract prop marker(): bool
             }
             """);
-        pkg.assertNoResourceErrors();
-        var marker = pkg.classByName("Base").namedProperty("marker");
+        parsedPackage.assertNoResourceErrors();
+        var marker = parsedPackage.classByName("Base").namedProperty("marker");
         assertThat(marker.isAbstract()).isTrue();
         assertThat(marker.expression()).isNull();
     }
 
     @Test
     void redefinedProperty() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             abstract class Base {
                 abstract prop marker(): bool
@@ -216,28 +230,28 @@ public class ClassMemberSyntaxTest {
                 redefine prop marker(): bool { return true }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var marker = pkg.classByName("Child").namedProperty("marker");
+        parsedPackage.assertNoResourceErrors();
+        var marker = parsedPackage.classByName("Child").namedProperty("marker");
         assertThat(marker.isRedefine()).isTrue();
         assertThat(marker.expression()).isNotNull();
     }
 
     @Test
     void classWithMultipleMemberKinds() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                contains other: C[0..1]
-                tran step() { x := x + 1 }
-                prop positive(): bool { return x > 0 }
+            class Host {
+                var counter: int := 0
+                contains other: Host[0..1]
+                tran step() { counter := counter + 1 }
+                prop positive(): bool { return counter > 0 }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var c = pkg.classByName("C");
-        assertThat(c.variables()).hasSize(1);
-        assertThat(c.features()).hasSize(1);
-        assertThat(c.transitions()).hasSize(1);
-        assertThat(c.properties()).hasSize(1);
+        parsedPackage.assertNoResourceErrors();
+        var host = parsedPackage.classByName("Host");
+        assertThat(host.variables()).hasSize(1);
+        assertThat(host.features()).hasSize(1);
+        assertThat(host.transitions()).hasSize(1);
+        assertThat(host.properties()).hasSize(1);
     }
 }

@@ -25,7 +25,7 @@ interface Portfolio {
 // The line format of `semantifyr portfolios`; availability depends on the build host, so it is dropped.
 const ENTRY = /^(\S+) {2}- {2}.+? {2}(?:Available|Unavailable \(.*\))$/;
 const LEG = /^ {4}leg: (\S+) \((\w+)\)$/;
-const DEFAULT_PORTFOLIO = /Portfolio id\. Default: '([^']+)'/;
+const DEFAULT_PORTFOLIO = /--portfolio=[^(]*\(default:\s+([^)\s]+)\)/;
 
 function parsePortfolios(listing: string): Portfolio[] {
   const portfolios: Portfolio[] = [];

@@ -27,6 +27,12 @@ class SpinLogVerdictParser {
         return summarize(lines).toVerdict()
     }
 
+    fun exceedsMergeLimit(lines: Sequence<String>): Boolean {
+        return lines.any {
+            "merge requires more than 256 bups" in it
+        }
+    }
+
     fun summarize(lines: Sequence<String>): SpinLogSummary {
         var violationFound = false
         var reportedNoErrors = false

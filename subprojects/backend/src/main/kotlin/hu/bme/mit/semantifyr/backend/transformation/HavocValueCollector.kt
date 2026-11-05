@@ -8,10 +8,12 @@ package hu.bme.mit.semantifyr.backend.transformation
 
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
@@ -26,6 +28,35 @@ class HavocValueCollector {
         return cache.getOrPut(variable) {
             compute(variable)
         }
+    }
+
+    // the candidates flank every literal the variable is compared with, so they cover all values such comparisons tell apart
+    fun isComplete(variable: VariableDeclaration): Boolean {
+        val root = EcoreUtil2.getContainerOfType(variable, InlinedOxsts::class.java) ?: return false
+        return root.eAllContents().asSequence().filterIsInstance<ElementReference>().filter {
+            it.element === variable
+        }.all {
+            isWrite(it) || isLiteralComparison(it)
+        }
+    }
+
+    private fun isWrite(reference: ElementReference): Boolean {
+        return when (val container = reference.eContainer()) {
+            is AssignmentOperation -> container.reference === reference
+            is HavocOperation -> container.reference === reference
+            else -> false
+        }
+    }
+
+    private fun isLiteralComparison(reference: ElementReference): Boolean {
+        val comparison = reference.eContainer() as? ComparisonOperator ?: return false
+        val other = if (comparison.left === reference) {
+            comparison.right
+        } else {
+            comparison.left
+        }
+        val literal = other.asInt() ?: return false
+        return literal != Int.MIN_VALUE && literal != Int.MAX_VALUE
     }
 
     private fun compute(variable: VariableDeclaration): List<Int> {
@@ -112,6 +143,10 @@ class HavocValueCollector {
 
         out += valid
         out += invalid
+        // an equality cuts on both sides of its literal
+        if (comparison.op == ComparisonOp.EQ || comparison.op == ComparisonOp.NOT_EQ) {
+            out += literal - 1
+        }
     }
 
     private fun Expression.referencesVariable(variable: VariableDeclaration): Boolean {

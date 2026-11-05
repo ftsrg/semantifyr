@@ -73,7 +73,7 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
         unsupported: List<UnsupportedConstruct>,
     ): BackendVerificationResult {
         val constructs = unsupported.map {
-            describe(it)
+            describe(it.element, it.description)
         }.distinct().joinToString("; ")
         logger.info { "[$backendId] verification not supported: $constructs" }
         return BackendVerificationResult(
@@ -83,13 +83,13 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
         )
     }
 
-    protected fun describe(construct: UnsupportedConstruct): String {
-        val source = sourceElementOf(construct.element)
+    protected fun describe(element: EObject, description: String): String {
+        val source = sourceElementOf(element)
         val location = SourceLocation.prefixFor(source)
         if (source is VariableDeclaration) {
-            return "$location${construct.description} (${source.name})"
+            return "$location$description (${source.name})"
         }
-        return "$location${construct.description}"
+        return "$location$description"
     }
 
     private fun sourceElementOf(element: EObject): EObject {

@@ -19,7 +19,7 @@ import java.nio.file.Path
 @InjectWithOxsts
 class ArtifactManagerTest {
     @TempDir
-    lateinit var tempDir: Path
+    lateinit var temporaryDirectory: Path
 
     @Inject
     lateinit var parseHelper: InlinedOxstsParseHelper
@@ -28,15 +28,19 @@ class ArtifactManagerTest {
         parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                init {}
-                tran {}
-                prop { AG true }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """.trimIndent(),
         )
     }
 
     private fun managerFor(config: ArtifactConfig): ArtifactManager {
-        val request = CompilationRequest(inlinedOxsts = emptyInlined, outputDirectory = tempDir)
+        val request = CompilationRequest(inlinedOxsts = emptyInlined, outputDirectory = temporaryDirectory)
         return ArtifactManager(config, request)
     }
 
@@ -66,13 +70,13 @@ class ArtifactManagerTest {
 
         val uri = manager.resolveUri("sub/model.oxsts")
 
-        assertThat(uri.toFileString()).isEqualTo(tempDir.resolve("sub/model.oxsts").toFile().absolutePath)
+        assertThat(uri.toFileString()).isEqualTo(temporaryDirectory.resolve("sub/model.oxsts").toFile().absolutePath)
     }
 
     @Test
     fun `resolveUri by ArtifactKind uses the kind-specific path`() {
         val manager = managerFor(ArtifactConfig.DEBUG)
-        val expected = tempDir.resolve(manager.pathOf(ArtifactKind.InlinedModel)).toFile().absolutePath
+        val expected = temporaryDirectory.resolve(manager.pathOf(ArtifactKind.InlinedModel)).toFile().absolutePath
 
         val uri = manager.resolveUri(ArtifactKind.InlinedModel)
 
@@ -102,7 +106,7 @@ class ArtifactManagerTest {
             it.writeText("hello")
         }
 
-        assertThat(receivedPath).isEqualTo(tempDir.resolve(manager.pathOf(ArtifactKind.InlinedModel)))
+        assertThat(receivedPath).isEqualTo(temporaryDirectory.resolve(manager.pathOf(ArtifactKind.InlinedModel)))
         assertThat(Files.readString(receivedPath)).isEqualTo("hello")
     }
 
@@ -115,7 +119,7 @@ class ArtifactManagerTest {
             it.writeText("x")
         }
 
-        val expected = tempDir.resolve(manager.pathOf(ArtifactKind.InstantiatedModel))
+        val expected = temporaryDirectory.resolve(manager.pathOf(ArtifactKind.InstantiatedModel))
         assertThat(Files.exists(expected.parent)).isTrue
         assertThat(Files.readString(expected)).isEqualTo("x")
     }

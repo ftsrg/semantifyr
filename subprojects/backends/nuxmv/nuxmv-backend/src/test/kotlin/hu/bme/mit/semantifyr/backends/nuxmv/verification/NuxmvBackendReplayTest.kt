@@ -12,13 +12,15 @@ import hu.bme.mit.semantifyr.backend.BackendTestModels
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.backend.enumeration
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.valuesByName
+import hu.bme.mit.semantifyr.backend.integer
 import hu.bme.mit.semantifyr.backends.nuxmv.NuxmvExecutorKey
 import hu.bme.mit.semantifyr.backends.nuxmv.ReplayingNuxmvExecutor
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -43,12 +45,13 @@ class NuxmvBackendReplayTest {
         case: String,
         inlinedOxsts: InlinedOxsts,
         artifactDirectory: Path = cleanArtifactDirectory(case),
+        config: NuxmvConfig = NuxmvConfig.Ic3Invar,
     ): BackendVerificationResult {
         val environment = ExecutionEnvironment.builder().put(NuxmvExecutorKey) {
             ReplayingNuxmvExecutor(case)
         }.build()
         val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory)
-        return NuxmvBackend().verify(injector, NuxmvConfig.Ic3Invar, request, environment)
+        return NuxmvBackend().verify(injector, config, request, environment)
     }
 
     private suspend fun verifyFixture(file: String, className: String): BackendVerificationResult {
@@ -69,9 +72,27 @@ class NuxmvBackendReplayTest {
         val result = verifyFixture("control_flow", "ChoiceBranch1Reach")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
-        assertThat(result.inlinedWitness!!.transitionStates.last().valuesByName()).containsEntry("\$\$root\$\$x", 1)
+        assertThat(result.inlinedWitness!!.transitionStates.last().integer("\$\$root\$\$x")).isEqualTo(1)
         val commands = Path("build", "test-artifacts", "NuxmvBackendReplayTest", "ChoiceBranch1Reach", "commands.cmd").readText()
         assertThat(commands).contains("set traces_hiding_prefix \"~\"")
+    }
+
+    @Test
+    suspend fun `the bound of a configuration reaches the check command`() {
+        val artifactDirectory = cleanArtifactDirectory("ChoiceBound")
+        val inlinedOxsts = models.compile("control_flow", "ChoiceBound", artifactDirectory)
+
+        verify("ChoiceBound", inlinedOxsts, artifactDirectory, NuxmvConfig.BmcInvar.copy(bound = 50))
+
+        val commands = artifactDirectory.resolve("commands.cmd").readText()
+        assertThat(commands).contains("msat_check_invar_bmc -a een-sorensson -k 50 -p \"")
+    }
+
+    @Test
+    fun `a bound must be positive`() {
+        assertThatThrownBy {
+            NuxmvConfig.BmcInvar.copy(bound = 0)
+        }.isInstanceOf(IllegalArgumentException::class.java)
     }
 
     @Test
@@ -81,21 +102,36 @@ class NuxmvBackendReplayTest {
             models.parse(
                 """
                     inlined oxsts of semantifyr::Anything
-                    var x : int := 0
+                    var chosen : int := 0
                     var step : int := 0
-                    init { }
-                    tran {
-                        assume(step == 0) choice { x := 1 } or { x := 2 } step := 1
-                    } or {
-                        assume(step == 1) choice { x := 3 } or { x := 4 } step := 2
+                    init {
                     }
-                    prop { EF x == 4 }
+                    tran {
+                        assume(step == 0)
+                        choice {
+                            chosen := 1
+                        } or {
+                            chosen := 2
+                        }
+                        step := 1
+                    } or {
+                        assume(step == 1)
+                        choice {
+                            chosen := 3
+                        } or {
+                            chosen := 4
+                        }
+                        step := 2
+                    }
+                    prop {
+                        EF chosen == 4
+                    }
                 """,
             ),
         )
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
-        assertThat(result.inlinedWitness!!.transitionStates.last().valuesByName()).containsEntry("x", 4)
+        assertThat(result.inlinedWitness!!.transitionStates.last().integer("chosen")).isEqualTo(4)
     }
 
     @Test
@@ -105,7 +141,11 @@ class NuxmvBackendReplayTest {
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
         val states = listOfNotNull(witness.initializedState) + witness.transitionStates
-        assertThat(states.map { it.valuesByName()["x"] }).containsExactly(0, 1, 2)
+        assertThat(
+            states.map {
+                it.integer("counter")
+            },
+        ).containsExactly(0, 1, 2)
     }
 
     @Test
@@ -121,7 +161,7 @@ class NuxmvBackendReplayTest {
         val result = verifyFixture("initial_values", "UninitializedIntegerBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
-        assertThat(result.inlinedWitness!!.initializedState!!.valuesByName()["\$\$root\$\$x"]).isNotNull().isNotEqualTo(0)
+        assertThat(result.inlinedWitness!!.initializedState!!.integer("\$\$root\$\$x")).isNotEqualTo(0)
     }
 
     @Test
@@ -129,7 +169,7 @@ class NuxmvBackendReplayTest {
         val result = verifyFixture("initial_values", "UninitializedEnumBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
-        assertThat(result.inlinedWitness!!.initializedState!!.valuesByName()["\$\$root\$\$light"]).isEqualTo("On")
+        assertThat(result.inlinedWitness!!.initializedState!!.enumeration("\$\$root\$\$light")).isEqualTo("On")
     }
 
     @Test
@@ -139,15 +179,19 @@ class NuxmvBackendReplayTest {
             models.parse(
                 """
                     inlined oxsts of semantifyr::Anything
-                    var r : real := 0.5
-                    init { }
-                    tran { }
-                    prop { AG true }
+                    var ratio : real := 0.5
+                    init {
+                    }
+                    tran {
+                    }
+                    prop {
+                        AG true
+                    }
                 """,
             ),
         )
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
-        assertThat(result.message).matches("nuxmv:ic3-invar does not support \\S+:2: variables of type real \\(r\\)")
+        assertThat(result.message).matches("nuxmv:ic3-invar does not support \\S+:2: variables of type real \\(ratio\\)")
     }
 }

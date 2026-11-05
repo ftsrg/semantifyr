@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.portfolios
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backends.theta.ThetaConfig
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.portfolio.LimitedConcurrencyGate
 import org.assertj.core.api.Assertions.assertThat
@@ -16,7 +17,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.mockito.Mockito.mock
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.milliseconds
 
 class ThetaFullPortfolioTest {
 
@@ -28,7 +29,6 @@ class ThetaFullPortfolioTest {
         @TempDir output: Path,
     ) {
         val portfolio = ThetaFullPortfolio(
-            5.seconds,
             PassingBackend("theta"),
         )
 
@@ -38,11 +38,24 @@ class ThetaFullPortfolioTest {
     }
 
     @Test
+    suspend fun `the request's timeout bounds every racing leg`(
+        @TempDir output: Path,
+    ) {
+        val theta = SlowBackend<ThetaConfig>("theta")
+        val portfolio = ThetaFullPortfolio(theta)
+
+        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 200.milliseconds), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Timeout)
+        assertThat(result.message).contains("no trusted verdict within 200ms")
+        assertThat(theta.cancellations.get()).isPositive
+    }
+
+    @Test
     suspend fun `unavailable Theta executor yields Inconclusive with an explanatory message`(
         @TempDir output: Path,
     ) {
         val portfolio = ThetaFullPortfolio(
-            5.seconds,
             PassingBackend("theta", UnavailableKey),
         )
 

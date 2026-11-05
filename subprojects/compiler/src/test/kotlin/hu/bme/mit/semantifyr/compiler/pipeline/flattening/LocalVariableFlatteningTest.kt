@@ -17,20 +17,22 @@ import org.junit.jupiter.api.Test
 class LocalVariableFlatteningTest : FlatteningTestBase() {
 
     @Test
-    fun `a local var without an initializer is havoced at its declaration`() {
+    fun `a local variable without an initializer is havoced at its declaration`() {
         val flattened = flatten(
             "Host",
             """
                 package flattening::locals
                 @VerificationCase
                 class Host {
-                    var x: int := 0
+                    var counter: int := 0
                     redefine tran {
                         var delta: int
                         assume(delta > 0)
-                        x := delta
+                        counter := delta
                     }
-                    prop { return EF x == 1 }
+                    prop {
+                        return EF counter == 1
+                    }
                 }
             """,
         )

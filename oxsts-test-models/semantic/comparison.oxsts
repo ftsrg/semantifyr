@@ -6,29 +6,23 @@
 
 package semantifyr::verification::lang::comparison
 
-// Comparison operators: <, <=, >, >=, ==, !=. The fixtures bind
-// x and y to small bounded ranges via havoc + assume so the state
-// space is tractable, then verify each operator independently.
-
-// --- less-than ---
-
 @VerificationCase
 @Tag("expect-pass")
 class LessTrueReach {
     var x: int := 0
     var y: int := 0
-    var r: bool := false
+    var result: bool := false
 
     redefine tran {
         havoc(x)
         havoc(y)
         assume(x >= 0 && x <= 3)
         assume(y >= 0 && y <= 3)
-        r := x < y
+        result := x < y
     }
 
     prop {
-        return EF r == true
+        return EF result == true
     }
 }
 
@@ -37,70 +31,66 @@ class LessTrueReach {
 class LessTrueImpliesOrder {
     var x: int := 0
     var y: int := 0
-    var r: bool := false
+    var result: bool := false
 
     redefine tran {
         havoc(x)
         havoc(y)
         assume(x >= 0 && x <= 3)
         assume(y >= 0 && y <= 3)
-        r := x < y
+        result := x < y
     }
 
     prop {
-        return AG (r == false || x < y)
-    }
-}
-
-// --- less-or-equal ---
-
-@VerificationCase
-@Tag("expect-pass")
-class LessEqEqualIsTrue {
-    var r: bool := false
-
-    redefine tran {
-        r := 3 <= 3
-    }
-
-    prop {
-        return EF r == true
+        return AG (result == false || x < y)
     }
 }
 
 @VerificationCase
 @Tag("expect-pass")
-class LessEqStrictGreaterIsFalse {
-    var r: bool := true
+class LessOrEqualOfEqualOperandsIsTrue {
+    var result: bool := false
 
     redefine tran {
-        r := 4 <= 3
+        result := 3 <= 3
     }
 
     prop {
-        return EF r == false
+        return EF result == true
     }
 }
 
-// --- greater-than ---
+@VerificationCase
+@Tag("expect-pass")
+class LessOrEqualOfGreaterOperandIsFalse {
+    var result: bool := true
+
+    redefine tran {
+        result := 4 <= 3
+    }
+
+    prop {
+        return EF result == false
+    }
+}
 
 @VerificationCase
 @Tag("expect-pass")
 class GreaterTrueReach {
     var x: int := 0
     var y: int := 0
-    var r: bool := false
+    var result: bool := false
 
     redefine tran {
         havoc(x)
         havoc(y)
         assume(x >= 0 && x <= 3)
         assume(y >= 0 && y <= 3)
-        r := x > y
+        result := x > y
     }
 
     prop {
-        return EF r == true
+        return EF result == true
     }
 }
 
@@ -109,105 +99,199 @@ class GreaterTrueReach {
 class GreaterTrueImpliesOrder {
     var x: int := 0
     var y: int := 0
-    var r: bool := false
+    var result: bool := false
 
     redefine tran {
         havoc(x)
         havoc(y)
         assume(x >= 0 && x <= 3)
         assume(y >= 0 && y <= 3)
-        r := x > y
+        result := x > y
     }
 
     prop {
-        return AG (r == false || x > y)
+        return AG (result == false || x > y)
     }
 }
 
-// --- greater-or-equal ---
-
 @VerificationCase
 @Tag("expect-pass")
-class GreaterEqEqualIsTrue {
-    var r: bool := false
+class GreaterOrEqualOfEqualOperandsIsTrue {
+    var result: bool := false
 
     redefine tran {
-        r := 3 >= 3
+        result := 3 >= 3
     }
 
     prop {
-        return EF r == true
+        return EF result == true
     }
 }
 
-// --- equality ---
-
 @VerificationCase
 @Tag("expect-pass")
-class EqSameIsTrue {
-    var r: bool := false
+class EqualOfSameOperandsIsTrue {
+    var result: bool := false
 
     redefine tran {
-        r := 5 == 5
+        result := 5 == 5
     }
 
     prop {
-        return EF r == true
+        return EF result == true
     }
 }
 
 @VerificationCase
 @Tag("expect-pass")
-class EqDifferentIsFalse {
-    var r: bool := true
+class EqualOfDifferentOperandsIsFalse {
+    var result: bool := true
 
     redefine tran {
-        r := 5 == 4
+        result := 5 == 4
     }
 
     prop {
-        return EF r == false
+        return EF result == false
     }
 }
 
-// --- inequality ---
-
 @VerificationCase
 @Tag("expect-pass")
-class NotEqTrueReach {
+class NotEqualTrueReach {
     var x: int := 0
     var y: int := 0
-    var r: bool := false
+    var result: bool := false
 
     redefine tran {
         havoc(x)
         havoc(y)
         assume(x >= 0 && x <= 3)
         assume(y >= 0 && y <= 3)
-        r := x != y
+        result := x != y
     }
 
     prop {
-        return EF r == true
+        return EF result == true
     }
 }
 
 @VerificationCase
 @Tag("expect-pass")
-class NotEqTrueImpliesDiffer {
+class NotEqualTrueImpliesDiffer {
     var x: int := 0
     var y: int := 0
-    var r: bool := false
+    var result: bool := false
 
     redefine tran {
         havoc(x)
         havoc(y)
         assume(x >= 0 && x <= 3)
         assume(y >= 0 && y <= 3)
-        r := x != y
+        result := x != y
     }
 
     prop {
-        return AG (r == false || x != y)
+        return AG (result == false || x != y)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class LessOfEqualOperandsUnreachable {
+    var x: int := 0
+    var y: int := 0
+    var result: bool := false
+
+    redefine tran {
+        havoc(x)
+        havoc(y)
+        assume(x >= 0 && x <= 3)
+        assume(y >= 0 && y <= 3)
+        result := x < y
+    }
+
+    prop {
+        return EF (result == true && x == y)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class LessOrEqualOfGreaterOperandUnreachable {
+    var x: int := 0
+    var y: int := 0
+    var result: bool := false
+
+    redefine tran {
+        havoc(x)
+        havoc(y)
+        assume(x >= 0 && x <= 3)
+        assume(y >= 0 && y <= 3)
+        result := x <= y
+    }
+
+    prop {
+        return EF (result == true && x > y)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class GreaterOrEqualOfLessOperandUnreachable {
+    var x: int := 0
+    var y: int := 0
+    var result: bool := false
+
+    redefine tran {
+        havoc(x)
+        havoc(y)
+        assume(x >= 0 && x <= 3)
+        assume(y >= 0 && y <= 3)
+        result := x >= y
+    }
+
+    prop {
+        return EF (result == true && x < y)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class NotEqualOfEqualOperandsUnreachable {
+    var x: int := 0
+    var y: int := 0
+    var result: bool := false
+
+    redefine tran {
+        havoc(x)
+        havoc(y)
+        assume(x >= 0 && x <= 3)
+        assume(y >= 0 && y <= 3)
+        result := x != y
+    }
+
+    prop {
+        return EF (result == true && x == y)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class EqualViolated {
+    var x: int := 0
+    var y: int := 0
+    var result: bool := false
+
+    redefine tran {
+        havoc(x)
+        havoc(y)
+        assume(x >= 0 && x <= 3)
+        assume(y >= 0 && y <= 3)
+        result := x == y
+    }
+
+    prop {
+        return AG result == false
     }
 }

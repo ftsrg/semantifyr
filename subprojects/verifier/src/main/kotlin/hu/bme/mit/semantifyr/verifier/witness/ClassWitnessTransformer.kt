@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationConte
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.checkInterrupted
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
@@ -31,6 +32,7 @@ class ClassWitnessTransformer @Inject constructor(
         val mappings = mutableMapOf<WitnessState, ClassWitnessState>()
 
         fun transform(witnessState: WitnessState) = mappings.getOrPut(witnessState) {
+            checkInterrupted()
             val (tracerVariableValues, nonTracerValues) = witnessState.values.partition {
                 TransitionTracerNames.isTracerName(it.variable.name)
             }

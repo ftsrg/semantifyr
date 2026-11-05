@@ -24,11 +24,8 @@ import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import hu.bme.mit.semantifyr.verifier.portfolio.withSubPath
 import kotlin.time.Clock
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 
 class ThetaFullPortfolio(
-    private val stageTimeout: Duration = 10.minutes,
     private val theta: VerificationBackend<ThetaConfig> = ThetaBackend(),
 ) : VerificationPortfolio() {
     override val id: String = "theta-full"
@@ -79,7 +76,7 @@ class ThetaFullPortfolio(
             )
         }
         progress.reportProgress("racing ${tasks.size} Theta configurations")
-        val outcome = firstDecisive(gate, stageTimeout, progress) {
+        val outcome = firstDecisive(gate, request.timeout, progress) {
             for (task in tasks) {
                 async {
                     gate.withPermit {

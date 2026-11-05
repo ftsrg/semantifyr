@@ -15,7 +15,10 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
 
     private val colors = """
         package test::colors
-        enum Color { Red, Green }
+        enum Color {
+            Red,
+            Green,
+        }
     """
 
     private suspend fun transform(body: String): SpinArtifacts {
@@ -34,37 +37,42 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
     suspend fun `a model renders globals, the stable flag, the init block, the transition loop and the claim`() {
         val artifacts = transform(
             """
-                var x : int := 0
-                init { }
-                tran { x := x + 1 }
-                prop { AG x < 3 }
+                var counter : int := 0
+                init {
+                }
+                tran {
+                    counter := counter + 1
+                }
+                prop {
+                    AG counter < 3
+                }
             """,
         )
 
         assertThat(artifacts.promela).isEqualTo(
             """
-                |int x = 0;
-                |
-                |bool $SPIN_STABLE_FLAG = false;
-                |
-                |init {
-                |    atomic {
-                |        $SPIN_STABLE_FLAG = false;
-                |        skip;
-                |        $SPIN_STABLE_FLAG = true;
-                |    }
-                |    do
-                |    :: atomic {
-                |        $SPIN_STABLE_FLAG = false;
-                |        x = (x + 1);
-                |        $SPIN_STABLE_FLAG = true;
-                |    }
-                |    od;
-                |}
-                |
-                |ltl p { [] (!$SPIN_STABLE_FLAG || ((x < 3))) }
-                |
-            """.trimMargin(),
+                int counter = 0;
+
+                bool $SPIN_STABLE_FLAG = false;
+
+                init {
+                    atomic {
+                        $SPIN_STABLE_FLAG = false;
+                        skip;
+                        $SPIN_STABLE_FLAG = true;
+                    }
+                    do
+                    :: atomic {
+                        $SPIN_STABLE_FLAG = false;
+                        counter = (counter + 1);
+                        $SPIN_STABLE_FLAG = true;
+                    }
+                    od;
+                }
+
+                ltl p { [] (!$SPIN_STABLE_FLAG || ((counter < 3))) }
+
+            """.trimIndent(),
         )
     }
 
@@ -72,27 +80,36 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
     suspend fun `a variable with an initializer is declared with it`() {
         val lines = promelaLines(
             """
-                var x : int := 2
-                var b : bool := true
-                init { }
-                tran { }
-                prop { AG true }
+                var counter : int := 2
+                var flag : bool := true
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
-        assertThat(lines).containsSequence("int x = 2;", "bool b = true;")
+        assertThat(lines).containsSequence("int counter = 2;", "bool flag = true;")
     }
 
     @Test
     suspend fun `variables without an initializer start at any value of their type`() {
         val lines = promelaLines(
             """
-                var x : int
-                var b : bool
-                var c : test::colors::Color
-                init { x := x + 1 }
-                tran { }
-                prop { AG x < 5 }
+                var counter : int
+                var flag : bool
+                var color : test::colors::Color
+                init {
+                    counter := counter + 1
+                }
+                tran {
+                }
+                prop {
+                    AG counter < 5
+                }
             """,
         )
 
@@ -100,22 +117,22 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
             "init {",
             "atomic {",
             "if",
-            ":: x = 1",
-            ":: x = 4",
-            ":: x = 5",
+            ":: counter = 1",
+            ":: counter = 4",
+            ":: counter = 5",
             "fi;",
             "if",
-            ":: b = false",
-            ":: b = true",
+            ":: flag = false",
+            ":: flag = true",
             "fi;",
             "if",
-            ":: c = Red",
-            ":: c = Green",
+            ":: color = Red",
+            ":: color = Green",
             "fi;",
             "}",
             "atomic {",
             "$SPIN_STABLE_FLAG = false;",
-            "x = (x + 1);",
+            "counter = (counter + 1);",
             "$SPIN_STABLE_FLAG = true;",
             "}",
         )
@@ -125,10 +142,14 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
     suspend fun `variables with an initializer are not chosen again`() {
         val lines = promelaLines(
             """
-                var x : int := 0
-                init { }
-                tran { }
-                prop { AG x < 5 }
+                var counter : int := 0
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG counter < 5
+                }
             """,
         )
 
@@ -139,21 +160,27 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
     suspend fun `a local variable without an initializer starts at any value in every step`() {
         val promela = transform(
             """
-                var x : int := 0
-                init { }
-                tran { var d : int x := d }
-                prop { AG x < 3 }
+                var counter : int := 0
+                init {
+                }
+                tran {
+                    var delta : int
+                    counter := delta
+                }
+                prop {
+                    AG counter < 3
+                }
             """,
         ).promela
 
-        val local = Regex("int (d_\\d+);").find(promela)!!.groupValues[1]
+        val local = Regex("int (delta_\\d+);").find(promela)!!.groupValues[1]
         assertThat(promela.lines().map { it.trim() }).containsSequence(
             "int $local;",
             "if",
             ":: $local = 0",
             ":: $local = 3",
             "fi;",
-            "x = $local;",
+            "counter = $local;",
         )
     }
 
@@ -161,203 +188,220 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
     suspend fun `an enum variable declares its mtype`() {
         val lines = promelaLines(
             """
-                var c : test::colors::Color := test::colors::Color::Green
-                init { }
-                tran { }
-                prop { AG c == test::colors::Color::Red }
+                var color : test::colors::Color := test::colors::Color::Green
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG color == test::colors::Color::Red
+                }
             """,
         )
 
-        assertThat(lines).contains("mtype:Color = { Red, Green };", "mtype:Color c = Green;")
-        assertThat(lines).contains("ltl p { [] (!$SPIN_STABLE_FLAG || ((c == Red))) }")
+        assertThat(lines).contains("mtype:Color = { Red, Green };", "mtype:Color color = Green;")
+        assertThat(lines).contains("ltl p { [] (!$SPIN_STABLE_FLAG || ((color == Red))) }")
     }
 
     @Test
     suspend fun `an assumption is a blocking guard`() {
         val lines = promelaLines(
             """
-                var x : int := 0
-                init { }
-                tran { assume(x < 3) }
-                prop { AG true }
+                var counter : int := 0
+                init {
+                }
+                tran {
+                    assume(counter < 3)
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
-        assertThat(lines).containsSequence("$SPIN_STABLE_FLAG = false;", "((x < 3));", "$SPIN_STABLE_FLAG = true;")
+        assertThat(lines).containsSequence("$SPIN_STABLE_FLAG = false;", "((counter < 3));", "$SPIN_STABLE_FLAG = true;")
     }
 
     @Test
     suspend fun `a choice renders an atomic option per branch`() {
         val lines = promelaLines(
             """
-                var x : int := 0
-                init { }
-                tran { choice { x := 1 } or { } }
-                prop { AG true }
+                var counter : int := 0
+                init {
+                }
+                tran {
+                    choice {
+                        counter := 1
+                    } or {
+                    }
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
-        assertThat(lines).containsSequence("if", ":: atomic {", "x = 1;", "}", ":: skip", "fi;")
+        assertThat(lines).containsSequence("if", ":: atomic {", "counter = 1;", "}", ":: skip", "fi;")
     }
 
     @Test
     suspend fun `a choice option starting with an if starts with skip so the if's else does not guard the option`() {
         val lines = promelaLines(
             """
-                var x : int := 0
+                var counter : int := 0
                 init { }
-                tran { choice { if (x < 3) { x := 1 } } or { if (x > 5) { x := 2 } } }
+                tran { choice { if (counter < 3) { counter := 1 } } or { if (counter > 5) { counter := 2 } } }
                 prop { AG true }
             """,
         )
 
-        assertThat(lines).containsSequence("if", ":: atomic {", "skip;", "if", ":: ((x < 3)) ->")
-        assertThat(lines).containsSequence(":: atomic {", "skip;", "if", ":: ((x > 5)) ->")
+        assertThat(lines).containsSequence("if", ":: atomic {", "skip;", "if", ":: ((counter < 3)) ->")
+        assertThat(lines).containsSequence(":: atomic {", "skip;", "if", ":: ((counter > 5)) ->")
     }
 
     @Test
     suspend fun `an if with an else renders both guarded options`() {
         val lines = promelaLines(
             """
-                var x : int := 0
+                var counter : int := 0
                 init { }
-                tran { if (x < 3) { x := 1 } else { x := 2 } }
+                tran { if (counter < 3) { counter := 1 } else { counter := 2 } }
                 prop { AG true }
             """,
         )
 
-        assertThat(lines).containsSequence("if", ":: ((x < 3)) ->", "x = 1;", ":: else ->", "x = 2;", "fi;")
+        assertThat(lines).containsSequence("if", ":: ((counter < 3)) ->", "counter = 1;", ":: else ->", "counter = 2;", "fi;")
     }
 
     @Test
     suspend fun `an if without an else skips on the else option`() {
         val lines = promelaLines(
             """
-                var x : int := 0
+                var counter : int := 0
                 init { }
-                tran { if (x < 3) { x := 1 } }
+                tran { if (counter < 3) { counter := 1 } }
                 prop { AG true }
             """,
         )
 
-        assertThat(lines).containsSequence("if", ":: ((x < 3)) ->", "x = 1;", ":: else -> skip", "fi;")
+        assertThat(lines).containsSequence("if", ":: ((counter < 3)) ->", "counter = 1;", ":: else -> skip", "fi;")
     }
 
     @Test
     suspend fun `an integer havoc chooses among the values the model compares against`() {
         val lines = promelaLines(
             """
-                var x : int := 0
+                var counter : int := 0
                 init { }
-                tran { havoc(x) }
-                prop { AG x < 5 }
+                tran { havoc(counter) }
+                prop { AG counter < 5 }
             """,
         )
 
-        assertThat(lines).containsSequence("if", ":: x = 0", ":: x = 4", ":: x = 5", "fi;")
+        assertThat(lines).containsSequence("if", ":: counter = 0", ":: counter = 4", ":: counter = 5", "fi;")
     }
 
     @Test
     suspend fun `a boolean havoc chooses both values`() {
         val lines = promelaLines(
             """
-                var b : bool := false
+                var flag : bool := false
                 init { }
-                tran { havoc(b) }
+                tran { havoc(flag) }
                 prop { AG true }
             """,
         )
 
-        assertThat(lines).containsSequence("if", ":: b = false", ":: b = true", "fi;")
+        assertThat(lines).containsSequence("if", ":: flag = false", ":: flag = true", "fi;")
     }
 
     @Test
     suspend fun `an enum havoc chooses every literal`() {
         val lines = promelaLines(
             """
-                var c : test::colors::Color := test::colors::Color::Red
+                var color : test::colors::Color := test::colors::Color::Red
                 init { }
-                tran { havoc(c) }
+                tran { havoc(color) }
                 prop { AG true }
             """,
         )
 
-        assertThat(lines).containsSequence("if", ":: c = Red", ":: c = Green", "fi;")
+        assertThat(lines).containsSequence("if", ":: color = Red", ":: color = Green", "fi;")
     }
 
     @Test
     suspend fun `a local variable is declared inside the step`() {
         val promela = transform(
             """
-                var x : int := 0
+                var counter : int := 0
                 init { }
-                tran { var d : int := 2 x := x + d }
+                tran { var delta : int := 2 counter := counter + delta }
                 prop { AG true }
             """,
         ).promela
 
-        val local = Regex("int (d_\\d+) = 2;").find(promela)
+        val local = Regex("int (delta_\\d+) = 2;").find(promela)
         assertThat(local).isNotNull()
-        assertThat(promela).contains("x = (x + ${local!!.groupValues[1]});")
+        assertThat(promela).contains("counter = (counter + ${local!!.groupValues[1]});")
     }
 
     @Test
     suspend fun `arithmetic operators keep their grouping`() {
         val lines = promelaLines(
             """
-                var x : int := 0
+                var counter : int := 0
                 init { }
-                tran { x := ((x + 1) - (2 * x)) / 3 }
-                prop { AG x == -x }
+                tran { counter := ((counter + 1) - (2 * counter)) / 3 }
+                prop { AG counter == -counter }
             """,
         )
 
-        assertThat(lines).contains("x = (((x + 1) - (2 * x)) / 3);", "ltl p { [] (!$SPIN_STABLE_FLAG || ((x == (-x)))) }")
+        assertThat(lines).contains("counter = (((counter + 1) - (2 * counter)) / 3);", "ltl p { [] (!$SPIN_STABLE_FLAG || ((counter == (-counter)))) }")
     }
 
     @Test
     suspend fun `boolean operators render with xor as inequality`() {
         val lines = promelaLines(
             """
-                var a : bool := false
-                var b : bool := true
+                var left : bool := false
+                var right : bool := true
                 init { }
-                tran { a := (a && b) || !(a ^^ b) }
+                tran { left := (left && right) || !(left ^^ right) }
                 prop { AG true }
             """,
         )
 
-        assertThat(lines).contains("a = ((a && b) || !((a != b)));")
+        assertThat(lines).contains("left = ((left && right) || !((left != right)));")
     }
 
     @Test
     suspend fun `comparison operators render as in C`() {
         val lines = promelaLines(
             """
-                var x : int := 0
+                var counter : int := 0
                 init { }
-                tran { assume(x < 1 && x <= 2 && x > -3 && x >= -4 && x == 0 && x != 5) }
+                tran { assume(counter < 1 && counter <= 2 && counter > -3 && counter >= -4 && counter == 0 && counter != 5) }
                 prop { AG true }
             """,
         )
 
-        assertThat(lines).contains("(((((((x < 1) && (x <= 2)) && (x > (-3))) && (x >= (-4))) && (x == 0)) && (x != 5)));")
+        assertThat(lines).contains("(((((((counter < 1) && (counter <= 2)) && (counter > (-3))) && (counter >= (-4))) && (counter == 0)) && (counter != 5)));")
     }
 
     @Test
     suspend fun `an if-then-else expression is a conditional in a step and a disjunction in the claim`() {
         val lines = promelaLines(
             """
-                var x : int := 0
+                var counter : int := 0
                 init { }
-                tran { x := if x < 3 then x + 1 else 0 }
-                prop { AG (if x < 3 then x == 0 else x == 1) }
+                tran { counter := if counter < 3 then counter + 1 else 0 }
+                prop { AG (if counter < 3 then counter == 0 else counter == 1) }
             """,
         )
 
         assertThat(lines).contains(
-            "x = (((x < 3)) -> ((x + 1)) : (0));",
-            "ltl p { [] (!$SPIN_STABLE_FLAG || (((((x < 3)) && ((x == 0))) || ((!((x < 3))) && ((x == 1)))))) }",
+            "counter = (((counter < 3)) -> ((counter + 1)) : (0));",
+            "ltl p { [] (!$SPIN_STABLE_FLAG || (((((counter < 3)) && ((counter == 0))) || ((!((counter < 3))) && ((counter == 1)))))) }",
         )
     }
 
@@ -365,8 +409,8 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
     suspend fun `several init branches become a choice of atomic blocks`() {
         val lines = promelaLines(
             """
-                var x : int := 0
-                init { x := 1 } or { x := 2 }
+                var counter : int := 0
+                init { counter := 1 } or { counter := 2 }
                 tran { }
                 prop { AG true }
             """,
@@ -377,12 +421,12 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
             "if",
             ":: atomic {",
             "$SPIN_STABLE_FLAG = false;",
-            "x = 1;",
+            "counter = 1;",
             "$SPIN_STABLE_FLAG = true;",
             "}",
             ":: atomic {",
             "$SPIN_STABLE_FLAG = false;",
-            "x = 2;",
+            "counter = 2;",
             "$SPIN_STABLE_FLAG = true;",
             "}",
             "fi;",
@@ -393,9 +437,9 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
     suspend fun `several transition branches become options of the loop`() {
         val lines = promelaLines(
             """
-                var x : int := 0
+                var counter : int := 0
                 init { }
-                tran { x := 1 } or { x := 2 }
+                tran { counter := 1 } or { counter := 2 }
                 prop { AG true }
             """,
         )
@@ -404,12 +448,12 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
             "do",
             ":: atomic {",
             "$SPIN_STABLE_FLAG = false;",
-            "x = 1;",
+            "counter = 1;",
             "$SPIN_STABLE_FLAG = true;",
             "}",
             ":: atomic {",
             "$SPIN_STABLE_FLAG = false;",
-            "x = 2;",
+            "counter = 2;",
             "$SPIN_STABLE_FLAG = true;",
             "}",
             "od;",
@@ -420,46 +464,46 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
     suspend fun `an AG property is checked in stable states`() {
         val property = transform(
             """
-                var x : int := 0
+                var counter : int := 0
                 init { }
                 tran { }
-                prop { AG x == 5 }
+                prop { AG counter == 5 }
             """,
         ).property
 
         assertThat(property.invertVerdict).isFalse()
-        assertThat(property.ltl).isEqualTo("[] (!$SPIN_STABLE_FLAG || ((x == 5)))")
+        assertThat(property.ltl).isEqualTo("[] (!$SPIN_STABLE_FLAG || ((counter == 5)))")
     }
 
     @Test
     suspend fun `an EF property is checked as the negated invariant with an inverted verdict`() {
         val property = transform(
             """
-                var x : int := 0
+                var counter : int := 0
                 init { }
                 tran { }
-                prop { EF x == 5 }
+                prop { EF counter == 5 }
             """,
         ).property
 
         assertThat(property.invertVerdict).isTrue()
-        assertThat(property.ltl).isEqualTo("[] !($SPIN_STABLE_FLAG && ((x == 5)))")
+        assertThat(property.ltl).isEqualTo("[] !($SPIN_STABLE_FLAG && ((counter == 5)))")
     }
 
     @Test
     suspend fun `the stable flag is written only at the boundaries of whole steps`() {
         val promela = transform(
             """
-                var x : int
-                var b : bool := false
-                init { choice { x := 1 } or { havoc(b) } } or { x := 2 }
+                var counter : int
+                var flag : bool := false
+                init { choice { counter := 1 } or { havoc(flag) } } or { counter := 2 }
                 tran {
-                    assume(x < 5)
-                    if (b) { choice { x := x + 1 } or { var d : int := 1 x := x - d } } else { havoc(x) }
+                    assume(counter < 5)
+                    if (flag) { choice { counter := counter + 1 } or { var delta : int := 1 counter := counter - delta } } else { havoc(counter) }
                 } or {
-                    b := !b
+                    flag := !flag
                 }
-                prop { AG x < 5 }
+                prop { AG counter < 5 }
             """,
         ).promela
         val lines = promela.lines()
@@ -483,7 +527,7 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         val exception = assertThrows<BackendUnsupportedException> {
             transform(
                 """
-                    var r : real := 0.5
+                    var ratio : real := 0.5
                     init { }
                     tran { }
                     prop { AG true }
@@ -491,7 +535,7 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
             )
         }
 
-        assertThat(exception.message).isEqualTo("Spin does not support variables of type real (r)")
+        assertThat(exception.message).isEqualTo("Spin does not support variables of type real (ratio)")
     }
 
     @Test
@@ -499,9 +543,9 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         assertThrows<BackendUnsupportedException> {
             transform(
                 """
-                    var x : int := 0
+                    var counter : int := 0
                     init { }
-                    tran { for (i in 0..2) { x := x + i } }
+                    tran { for (index in 0..2) { counter := counter + index } }
                     prop { AG true }
                 """,
             )

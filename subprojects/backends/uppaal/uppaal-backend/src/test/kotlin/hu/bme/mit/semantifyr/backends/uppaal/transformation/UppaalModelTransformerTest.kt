@@ -20,7 +20,10 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
 
     private val colors = """
         package test::colors
-        enum Color { Red, Green }
+        enum Color {
+            Red,
+            Green,
+        }
     """
 
     private val startToRunning = UppaalEdge("start", "running")
@@ -45,10 +48,15 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `a model is one template with a committed start and a stable running location`() {
         val template = nta(
             """
-                var x : int := 0
-                init { }
-                tran { x := x + 1 }
-                prop { AG x < 3 }
+                var counter : int := 0
+                init {
+                }
+                tran {
+                    counter := counter + 1
+                }
+                prop {
+                    AG counter < 3
+                }
             """,
         ).templates.single()
 
@@ -60,7 +68,7 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
         )
         assertThat(template.edges).containsExactly(
             startToRunning,
-            UppaalEdge("running", "running", assignment = "x = (x + 1)"),
+            UppaalEdge("running", "running", assignment = "counter = (counter + 1)"),
         )
     }
 
@@ -68,20 +76,24 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `variables are declared with their initializers`() {
         val declarations = nta(
             """
-                var x : int := 2
-                var b : bool := true
-                var c : test::colors::Color := test::colors::Color::Green
-                init { }
-                tran { }
-                prop { AG true }
+                var counter : int := 2
+                var flag : bool := true
+                var color : test::colors::Color := test::colors::Color::Green
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """,
         ).globalDeclarations
 
         assertThat(declarations.typedefs).containsExactly("// enum Color", "const int Red = 0;", "const int Green = 1;")
         assertThat(declarations.variables).containsExactly(
-            UppaalVariableDecl("int[2,2]", "x", "2"),
-            UppaalVariableDecl("bool", "b", "true"),
-            UppaalVariableDecl("int", "c", "Green"),
+            UppaalVariableDecl("int[2,2]", "counter", "2"),
+            UppaalVariableDecl("bool", "flag", "true"),
+            UppaalVariableDecl("int", "color", "Green"),
         )
     }
 
@@ -93,14 +105,23 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
                 var large : int := 0
                 var huge : int := 1
                 var unbounded : int := 0
-                init { }
+                init {
+                }
                 tran {
-                    if (bounded < 3) { bounded := bounded + 1 }
-                    if (large < 100000) { large := large + 25000 }
-                    if (huge < 100000) { huge := huge * 100000 }
+                    if (bounded < 3) {
+                        bounded := bounded + 1
+                    }
+                    if (large < 100000) {
+                        large := large + 25000
+                    }
+                    if (huge < 100000) {
+                        huge := huge * 100000
+                    }
                     unbounded := unbounded + 1
                 }
-                prop { AG bounded <= 3 }
+                prop {
+                    AG bounded <= 3
+                }
             """,
         ).globalDeclarations
 
@@ -116,24 +137,29 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `variables without an initializer start at any value of their type`() {
         val template = nta(
             """
-                var x : int
-                var b : bool
-                var c : test::colors::Color
-                init { x := x + 1 }
-                tran { }
-                prop { AG x < 5 }
+                var counter : int
+                var flag : bool
+                var color : test::colors::Color
+                init {
+                    counter := counter + 1
+                }
+                tran {
+                }
+                prop {
+                    AG counter < 5
+                }
             """,
         ).templates.single()
 
         assertThat(template.initialLocationId).isEqualTo("initial")
         assertThat(template.locations).contains(UppaalLocation("initial", "Initial", UppaalLocationKind.Committed))
         assertThat(template.edges).containsExactly(
-            UppaalEdge("initial", "loc_0", assignment = "x = 1"),
-            UppaalEdge("initial", "loc_0", assignment = "x = 4"),
-            UppaalEdge("initial", "loc_0", assignment = "x = 5"),
-            UppaalEdge("loc_0", "loc_1", select = "havoc_b_0 : int[0, 1]", assignment = "b = havoc_b_0"),
-            UppaalEdge("loc_1", "start", select = "havoc_c_1 : int[0, 1]", assignment = "c = havoc_c_1"),
-            UppaalEdge("start", "running", assignment = "x = (x + 1)"),
+            UppaalEdge("initial", "loc_0", assignment = "counter = 1"),
+            UppaalEdge("initial", "loc_0", assignment = "counter = 4"),
+            UppaalEdge("initial", "loc_0", assignment = "counter = 5"),
+            UppaalEdge("loc_0", "loc_1", select = "havoc_flag_0 : int[0, 1]", assignment = "flag = havoc_flag_0"),
+            UppaalEdge("loc_1", "start", select = "havoc_color_1 : int[0, 1]", assignment = "color = havoc_color_1"),
+            UppaalEdge("start", "running", assignment = "counter = (counter + 1)"),
             UppaalEdge("running", "running"),
         )
     }
@@ -142,10 +168,14 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `a model whose variables are initialized starts at start`() {
         val template = nta(
             """
-                var x : int := 0
-                init { }
-                tran { }
-                prop { AG x < 5 }
+                var counter : int := 0
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG counter < 5
+                }
             """,
         ).templates.single()
 
@@ -157,10 +187,16 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `a local variable without an initializer starts at any value in every step`() {
         val model = nta(
             """
-                var x : int := 0
-                init { }
-                tran { var d : int x := d }
-                prop { AG x < 3 }
+                var counter : int := 0
+                init {
+                }
+                tran {
+                    var delta : int
+                    counter := delta
+                }
+                prop {
+                    AG counter < 3
+                }
             """,
         )
 
@@ -169,7 +205,7 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
             startToRunning,
             UppaalEdge("running", "loc_0", assignment = "$local = 0"),
             UppaalEdge("running", "loc_0", assignment = "$local = 3"),
-            UppaalEdge("loc_0", "running", assignment = "x = $local"),
+            UppaalEdge("loc_0", "running", assignment = "counter = $local"),
         )
     }
 
@@ -177,24 +213,35 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `an assumption is an edge guard`() {
         val edges = edges(
             """
-                var x : int := 0
-                init { }
-                tran { assume(x < 3) }
-                prop { AG true }
+                var counter : int := 0
+                init {
+                }
+                tran {
+                    assume(counter < 3)
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
-        assertThat(edges).containsExactly(startToRunning, UppaalEdge("running", "running", guard = "(x < 3)"))
+        assertThat(edges).containsExactly(startToRunning, UppaalEdge("running", "running", guard = "(counter < 3)"))
     }
 
     @Test
     suspend fun `a sequence chains its steps through committed locations`() {
         val model = nta(
             """
-                var x : int := 0
-                init { }
-                tran { assume(x < 3) x := x + 1 }
-                prop { AG true }
+                var counter : int := 0
+                init {
+                }
+                tran {
+                    assume(counter < 3)
+                    counter := counter + 1
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -202,8 +249,8 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
         assertThat(template.locations).contains(UppaalLocation("loc_0", "seq_loc_0", UppaalLocationKind.Committed))
         assertThat(template.edges).containsExactly(
             startToRunning,
-            UppaalEdge("running", "loc_0", guard = "(x < 3)"),
-            UppaalEdge("loc_0", "running", assignment = "x = (x + 1)"),
+            UppaalEdge("running", "loc_0", guard = "(counter < 3)"),
+            UppaalEdge("loc_0", "running", assignment = "counter = (counter + 1)"),
         )
     }
 
@@ -211,16 +258,24 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `a choice is an edge per branch between the same locations`() {
         val edges = edges(
             """
-                var x : int := 0
-                init { }
-                tran { choice { x := 1 } or { } }
-                prop { AG true }
+                var counter : int := 0
+                init {
+                }
+                tran {
+                    choice {
+                        counter := 1
+                    } or {
+                    }
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
         assertThat(edges).containsExactly(
             startToRunning,
-            UppaalEdge("running", "running", assignment = "x = 1"),
+            UppaalEdge("running", "running", assignment = "counter = 1"),
             UppaalEdge("running", "running"),
         )
     }
@@ -229,18 +284,25 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `an if guards its branches with the condition and its negation`() {
         val edges = edges(
             """
-                var x : int := 0
-                init { }
-                tran { if (x < 3) { x := 1 } }
-                prop { AG true }
+                var counter : int := 0
+                init {
+                }
+                tran {
+                    if (counter < 3) {
+                        counter := 1
+                    }
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
         assertThat(edges).containsExactly(
             startToRunning,
-            UppaalEdge("running", "loc_0", guard = "(x < 3)"),
-            UppaalEdge("loc_0", "running", assignment = "x = 1"),
-            UppaalEdge("running", "loc_1", guard = "!((x < 3))"),
+            UppaalEdge("running", "loc_0", guard = "(counter < 3)"),
+            UppaalEdge("loc_0", "running", assignment = "counter = 1"),
+            UppaalEdge("running", "loc_1", guard = "!((counter < 3))"),
             UppaalEdge("loc_1", "running"),
         )
     }
@@ -249,18 +311,23 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `an integer havoc is an edge per value the model compares against`() {
         val edges = edges(
             """
-                var x : int := 0
-                init { }
-                tran { havoc(x) }
-                prop { AG x < 5 }
+                var counter : int := 0
+                init {
+                }
+                tran {
+                    havoc(counter)
+                }
+                prop {
+                    AG counter < 5
+                }
             """,
         )
 
         assertThat(edges).containsExactly(
             startToRunning,
-            UppaalEdge("running", "running", assignment = "x = 0"),
-            UppaalEdge("running", "running", assignment = "x = 4"),
-            UppaalEdge("running", "running", assignment = "x = 5"),
+            UppaalEdge("running", "running", assignment = "counter = 0"),
+            UppaalEdge("running", "running", assignment = "counter = 4"),
+            UppaalEdge("running", "running", assignment = "counter = 5"),
         )
     }
 
@@ -268,18 +335,24 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `boolean and enum havocs select over the domain`() {
         val edges = edges(
             """
-                var b : bool := false
-                var c : test::colors::Color := test::colors::Color::Red
-                init { }
-                tran { havoc(b) havoc(c) }
-                prop { AG true }
+                var flag : bool := false
+                var color : test::colors::Color := test::colors::Color::Red
+                init {
+                }
+                tran {
+                    havoc(flag)
+                    havoc(color)
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
         assertThat(edges).containsExactly(
             startToRunning,
-            UppaalEdge("running", "loc_0", select = "havoc_b_0 : int[0, 1]", assignment = "b = havoc_b_0"),
-            UppaalEdge("loc_0", "running", select = "havoc_c_1 : int[0, 1]", assignment = "c = havoc_c_1"),
+            UppaalEdge("running", "loc_0", select = "havoc_flag_0 : int[0, 1]", assignment = "flag = havoc_flag_0"),
+            UppaalEdge("loc_0", "running", select = "havoc_color_1 : int[0, 1]", assignment = "color = havoc_color_1"),
         )
     }
 
@@ -287,20 +360,26 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `a local variable is a global assigned by its declaration`() {
         val model = nta(
             """
-                var x : int := 0
-                init { }
-                tran { var d : int := 2 x := x + d }
-                prop { AG true }
+                var counter : int := 0
+                init {
+                }
+                tran {
+                    var delta : int := 2
+                    counter := counter + delta
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
         val local = model.globalDeclarations.variables.last()
-        assertThat(local.name).matches("d_\\d+")
+        assertThat(local.name).matches("delta_\\d+")
         assertThat(local.initialValue).isNull()
         assertThat(model.templates.single().edges).containsExactly(
             startToRunning,
             UppaalEdge("running", "loc_0", assignment = "${local.name} = 2"),
-            UppaalEdge("loc_0", "running", assignment = "x = (x + ${local.name})"),
+            UppaalEdge("loc_0", "running", assignment = "counter = (counter + ${local.name})"),
         )
     }
 
@@ -308,29 +387,34 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `operators render in Uppaal syntax`() {
         val edges = edges(
             """
-                var x : int := 0
-                var a : bool := false
-                var b : bool := true
-                init { }
-                tran { choice {
-                    x := ((x + 1) - (2 * x)) / 3
-                } or {
-                    a := (a && b) || !(a ^^ b)
-                } or {
-                    assume(x < 1 && x <= 2 && x > -3 && x >= -4 && x == 0 && x != 5)
-                } or {
-                    x := if x < 3 then x + 1 else 0
-                } }
-                prop { AG true }
+                var counter : int := 0
+                var left : bool := false
+                var right : bool := true
+                init {
+                }
+                tran {
+                    choice {
+                        counter := ((counter + 1) - (2 * counter)) / 3
+                    } or {
+                        left := (left && right) || !(left ^^ right)
+                    } or {
+                        assume(counter < 1 && counter <= 2 && counter > -3 && counter >= -4 && counter == 0 && counter != 5)
+                    } or {
+                        counter := if counter < 3 then counter + 1 else 0
+                    }
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
         assertThat(edges).containsExactly(
             startToRunning,
-            UppaalEdge("running", "running", assignment = "x = (((x + 1) - (2 * x)) / 3)"),
-            UppaalEdge("running", "running", assignment = "a = ((a && b) || !((a != b)))"),
-            UppaalEdge("running", "running", guard = "((((((x < 1) && (x <= 2)) && (x > (-3))) && (x >= (-4))) && (x == 0)) && (x != 5))"),
-            UppaalEdge("running", "running", assignment = "x = (((x < 3)) ? ((x + 1)) : (0))"),
+            UppaalEdge("running", "running", assignment = "counter = (((counter + 1) - (2 * counter)) / 3)"),
+            UppaalEdge("running", "running", assignment = "left = ((left && right) || !((left != right)))"),
+            UppaalEdge("running", "running", guard = "((((((counter < 1) && (counter <= 2)) && (counter > (-3))) && (counter >= (-4))) && (counter == 0)) && (counter != 5))"),
+            UppaalEdge("running", "running", assignment = "counter = (((counter < 3)) ? ((counter + 1)) : (0))"),
         )
     }
 
@@ -338,18 +422,28 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `init branches leave start and transition branches loop on running`() {
         val edges = edges(
             """
-                var x : int := 0
-                init { x := 1 } or { x := 2 }
-                tran { x := 3 } or { x := 4 }
-                prop { AG true }
+                var counter : int := 0
+                init {
+                    counter := 1
+                } or {
+                    counter := 2
+                }
+                tran {
+                    counter := 3
+                } or {
+                    counter := 4
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
         assertThat(edges).containsExactly(
-            UppaalEdge("start", "running", assignment = "x = 1"),
-            UppaalEdge("start", "running", assignment = "x = 2"),
-            UppaalEdge("running", "running", assignment = "x = 3"),
-            UppaalEdge("running", "running", assignment = "x = 4"),
+            UppaalEdge("start", "running", assignment = "counter = 1"),
+            UppaalEdge("start", "running", assignment = "counter = 2"),
+            UppaalEdge("running", "running", assignment = "counter = 3"),
+            UppaalEdge("running", "running", assignment = "counter = 4"),
         )
     }
 
@@ -357,16 +451,35 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `only the running location lets time pass between whole steps`() {
         val template = nta(
             """
-                var x : int
-                var b : bool := false
-                init { choice { x := 1 } or { havoc(b) } } or { x := 2 }
-                tran {
-                    assume(x < 5)
-                    if (b) { choice { x := x + 1 } or { var d : int := 1 x := x - d } } else { havoc(x) }
+                var counter : int
+                var flag : bool := false
+                init {
+                    choice {
+                        counter := 1
+                    } or {
+                        havoc(flag)
+                    }
                 } or {
-                    b := !b
+                    counter := 2
                 }
-                prop { AG x < 5 }
+                tran {
+                    assume(counter < 5)
+                    if (flag) {
+                        choice {
+                            counter := counter + 1
+                        } or {
+                            var delta : int := 1
+                            counter := counter - delta
+                        }
+                    } else {
+                        havoc(counter)
+                    }
+                } or {
+                    flag := !flag
+                }
+                prop {
+                    AG counter < 5
+                }
             """,
         ).templates.single()
 
@@ -384,28 +497,36 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `an AG property is an invariant over the running location`() {
         val query = query(
             """
-                var x : int := 0
-                init { }
-                tran { }
-                prop { AG x == 5 }
+                var counter : int := 0
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG counter == 5
+                }
             """,
         )
 
-        assertThat(query).isEqualTo("A[] (Model.Running imply ((x == 5)))")
+        assertThat(query).isEqualTo("A[] (Model.Running imply ((counter == 5)))")
     }
 
     @Test
     suspend fun `an EF property is a reachability query over the running location`() {
         val query = query(
             """
-                var c : test::colors::Color := test::colors::Color::Red
-                init { }
-                tran { }
-                prop { EF c == test::colors::Color::Green }
+                var color : test::colors::Color := test::colors::Color::Red
+                init {
+                }
+                tran {
+                }
+                prop {
+                    EF color == test::colors::Color::Green
+                }
             """,
         )
 
-        assertThat(query).isEqualTo("E<> (Model.Running and ((c == Green)))")
+        assertThat(query).isEqualTo("E<> (Model.Running and ((color == Green)))")
     }
 
     @Test
@@ -413,10 +534,17 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
         assertThrows<BackendUnsupportedException> {
             nta(
                 """
-                    var x : int := 0
-                    init { }
-                    tran { for (i in 0..2) { x := x + i } }
-                    prop { AG true }
+                    var counter : int := 0
+                    init {
+                    }
+                    tran {
+                        for (index in 0..2) {
+                            counter := counter + index
+                        }
+                    }
+                    prop {
+                        AG true
+                    }
                 """,
             )
         }
@@ -432,84 +560,117 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `a real variable is not supported`() {
         val message = unsupportedMessage(
             """
-                var r : real := 0.5
-                init { }
-                tran { }
-                prop { AG true }
+                var ratio : real := 0.5
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
-        assertThat(message).isEqualTo("Uppaal does not support variables of type real (r)")
+        assertThat(message).isEqualTo("Uppaal does not support variables of type real (ratio)")
     }
 
     @Test
     suspend fun `a clock must be data-typed`() {
         val message = unsupportedMessage(
             """
-                @semantifyr::Clock var c : test::colors::Color := test::colors::Color::Red
-                init { }
-                tran { }
-                prop { AG true }
+                @semantifyr::Clock
+                var elapsed : test::colors::Color := test::colors::Color::Red
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
-        assertThat(message).isEqualTo("Uppaal supports @Clock only on data-typed variables (c)")
+        assertThat(message).isEqualTo("Uppaal supports @Clock only on data-typed variables (elapsed)")
     }
 
     @Test
     suspend fun `a clock is reset only to zero`() {
         val message = unsupportedMessage(
             """
-                @semantifyr::Clock var c : int := 0
-                init { }
-                tran { c := 5 }
-                prop { AG true }
+                @semantifyr::Clock
+                var elapsed : int := 0
+                init {
+                }
+                tran {
+                    elapsed := 5
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
-        assertThat(message).isEqualTo("Uppaal resets clock c only to 0")
+        assertThat(message).isEqualTo("Uppaal resets clock elapsed only to 0")
     }
 
     @Test
     suspend fun `a clock is not reset to an expression`() {
         val message = unsupportedMessage(
             """
-                @semantifyr::Clock var c : int := 0
-                var x : int := 0
-                init { }
-                tran { c := x }
-                prop { AG true }
+                @semantifyr::Clock
+                var elapsed : int := 0
+                var counter : int := 0
+                init {
+                }
+                tran {
+                    elapsed := counter
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
-        assertThat(message).isEqualTo("Uppaal resets clock c only to 0")
+        assertThat(message).isEqualTo("Uppaal resets clock elapsed only to 0")
     }
 
     @Test
     suspend fun `a clock is not havoced`() {
         val message = unsupportedMessage(
             """
-                @semantifyr::Clock var c : int := 0
-                init { }
-                tran { havoc(c) }
-                prop { AG true }
+                @semantifyr::Clock
+                var elapsed : int := 0
+                init {
+                }
+                tran {
+                    havoc(elapsed)
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
-        assertThat(message).isEqualTo("Uppaal does not support havoc on clock c")
+        assertThat(message).isEqualTo("Uppaal does not support havoc on clock elapsed")
     }
 
     @Test
     suspend fun `a clock is reset to zero`() {
         val edges = edges(
             """
-                @semantifyr::Clock var c : int := 0
-                init { }
-                tran { c := 0 }
-                prop { AG true }
+                @semantifyr::Clock
+                var elapsed : int := 0
+                init {
+                }
+                tran {
+                    elapsed := 0
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
-        assertThat(edges).containsExactly(startToRunning, UppaalEdge("running", "running", assignment = "c = 0"))
+        assertThat(edges).containsExactly(startToRunning, UppaalEdge("running", "running", assignment = "elapsed = 0"))
     }
 }

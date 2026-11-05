@@ -46,218 +46,293 @@ public class OperatorSyntaxTest {
 
     @Test
     void arithmeticAdd() {
-        assertArithmeticBinaryOp("x + 1", ArithmeticOp.ADD);
+        assertArithmeticBinaryOperator("value + 1", ArithmeticOp.ADD);
     }
 
     @Test
-    void arithmeticSub() {
-        assertArithmeticBinaryOp("x - 1", ArithmeticOp.SUB);
+    void arithmeticSubtract() {
+        assertArithmeticBinaryOperator("value - 1", ArithmeticOp.SUB);
     }
 
     @Test
-    void arithmeticMul() {
-        assertArithmeticBinaryOp("x * 2", ArithmeticOp.MUL);
+    void arithmeticMultiply() {
+        assertArithmeticBinaryOperator("value * 2", ArithmeticOp.MUL);
     }
 
     @Test
-    void arithmeticDiv() {
-        assertArithmeticBinaryOp("x / 2", ArithmeticOp.DIV);
+    void arithmeticDivide() {
+        assertArithmeticBinaryOperator("value / 2", ArithmeticOp.DIV);
     }
 
-    private void assertArithmeticBinaryOp(String expression, ArithmeticOp expectedOp) {
-        var pkg = parseHelper.parse("""
+    private void assertArithmeticBinaryOperator(String expression, ArithmeticOp expectedOperator) {
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                redefine tran { x := %s }
+            class Host {
+                var value: int := 0
+                redefine tran { value := %s }
             }
             """.formatted(expression));
-        pkg.assertNoResourceErrors();
-        var ops = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), ArithmeticBinaryOperator.class);
-        assertThat(ops).isNotEmpty();
-        assertThat(ops.getFirst().getOp()).isEqualTo(expectedOp);
+        parsedPackage.assertNoResourceErrors();
+        var operators = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Host").anonymousMain().eObject(), ArithmeticBinaryOperator.class);
+        assertThat(operators).isNotEmpty();
+        assertThat(operators.getFirst().getOp()).isEqualTo(expectedOperator);
     }
 
     @Test
     void arithmeticUnaryPlus() {
-        assertArithmeticUnaryOp("+x", UnaryOp.PLUS);
+        assertArithmeticUnaryOperator("+operand", UnaryOp.PLUS);
     }
 
     @Test
     void arithmeticUnaryMinus() {
-        assertArithmeticUnaryOp("-x", UnaryOp.MINUS);
+        assertArithmeticUnaryOperator("-operand", UnaryOp.MINUS);
     }
 
-    private void assertArithmeticUnaryOp(String expression, UnaryOp expectedOp) {
-        var pkg = parseHelper.parse("""
+    private void assertArithmeticUnaryOperator(String expression, UnaryOp expectedOperator) {
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                var y: int := 0
-                redefine tran { y := %s }
+            class Host {
+                var operand: int := 0
+                var result: int := 0
+                redefine tran { result := %s }
             }
             """.formatted(expression));
-        pkg.assertNoResourceErrors();
-        var ops = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), ArithmeticUnaryOperator.class);
-        assertThat(ops).isNotEmpty();
-        assertThat(ops.getFirst().getOp()).isEqualTo(expectedOp);
-    }
-
-    @Test
-    void booleanAnd() {
-        assertBooleanOp("a && b", BooleanOp.AND);
-    }
-
-    @Test
-    void booleanOr() {
-        assertBooleanOp("a || b", BooleanOp.OR);
-    }
-
-    @Test
-    void booleanXor() {
-        assertBooleanOp("a ^^ b", BooleanOp.XOR);
-    }
-
-    private void assertBooleanOp(String expression, BooleanOp expectedOp) {
-        var pkg = parseHelper.parse("""
-            package test
-            class C {
-                var a: bool := false
-                var b: bool := false
-                redefine tran { assume(%s) }
-            }
-            """.formatted(expression));
-        pkg.assertNoResourceErrors();
-        var ops = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), BooleanOperator.class);
-        assertThat(ops).isNotEmpty();
-        assertThat(ops.getFirst().getOp()).isEqualTo(expectedOp);
+        parsedPackage.assertNoResourceErrors();
+        var operators = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Host").anonymousMain().eObject(), ArithmeticUnaryOperator.class);
+        assertThat(operators).isNotEmpty();
+        assertThat(operators.getFirst().getOp()).isEqualTo(expectedOperator);
     }
 
     @ParameterizedTest
     @CsvSource({
-        "a || b && c, (a || (b && c))",
-        "a && b || c, ((a && b) || c)",
-        "a ^^ b && c, (a ^^ (b && c))",
-        "a || b ^^ c, (a || (b ^^ c))",
-        "a ^^ b || c, ((a ^^ b) || c)",
-        "a || b || c, ((a || b) || c)",
-        "a && b && c, ((a && b) && c)",
-        "(a || b) && c, ((a || b) && c)",
+        "left + middle * right, (left + (middle * right))",
+        "left * middle + right, ((left * middle) + right)",
+        "left - middle / right, (left - (middle / right))",
+        "left - middle - right, ((left - middle) - right)",
+        "left / middle * right, ((left / middle) * right)",
+        "(left + middle) * right, ((left + middle) * right)",
+        "-left * middle, ((-left) * middle)",
+        "left..middle + right, (left..(middle + right))",
+        "left + middle < right, ((left + middle) < right)",
+        "left < middle && middle <= right, ((left < middle) && (middle <= right))",
+        "left == middle || !(middle != right), ((left == middle) || (!(middle != right)))",
     })
-    void booleanOperatorsBindAndThenXorThenOr(String expression, String expectedReading) {
-        var pkg = parseHelper.parse("""
+    void operatorsBindByTheirPrecedenceLevel(String expression, String expectedReading) {
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var a: bool := false
-                var b: bool := false
-                var c: bool := false
+            class Host {
+                var left: int := 0
+                var middle: int := 0
+                var right: int := 0
                 redefine tran { assume(%s) }
             }
             """.formatted(expression));
-        pkg.assertNoResourceErrors();
+        parsedPackage.assertNoResourceErrors();
         var assumption = EcoreUtil2.eAllOfType(
-                        pkg.classByName("C").anonymousMain().eObject(), AssumptionOperation.class)
+                        parsedPackage.classByName("Host").anonymousMain().eObject(), AssumptionOperation.class)
+                .getFirst();
+        assertThat(parenthesize(assumption.getExpression())).isEqualTo(expectedReading);
+    }
+
+    @Test
+    void booleanAnd() {
+        assertBooleanOperator("left && right", BooleanOp.AND);
+    }
+
+    @Test
+    void booleanOr() {
+        assertBooleanOperator("left || right", BooleanOp.OR);
+    }
+
+    @Test
+    void booleanXor() {
+        assertBooleanOperator("left ^^ right", BooleanOp.XOR);
+    }
+
+    private void assertBooleanOperator(String expression, BooleanOp expectedOperator) {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Host {
+                var left: bool := false
+                var right: bool := false
+                redefine tran { assume(%s) }
+            }
+            """.formatted(expression));
+        parsedPackage.assertNoResourceErrors();
+        var operators = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Host").anonymousMain().eObject(), BooleanOperator.class);
+        assertThat(operators).isNotEmpty();
+        assertThat(operators.getFirst().getOp()).isEqualTo(expectedOperator);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "left || middle && right, (left || (middle && right))",
+        "left && middle || right, ((left && middle) || right)",
+        "left ^^ middle && right, (left ^^ (middle && right))",
+        "left || middle ^^ right, (left || (middle ^^ right))",
+        "left ^^ middle || right, ((left ^^ middle) || right)",
+        "left || middle || right, ((left || middle) || right)",
+        "left && middle && right, ((left && middle) && right)",
+        "(left || middle) && right, ((left || middle) && right)",
+    })
+    void booleanOperatorsBindAndThenXorThenOr(String expression, String expectedReading) {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Host {
+                var left: bool := false
+                var middle: bool := false
+                var right: bool := false
+                redefine tran { assume(%s) }
+            }
+            """.formatted(expression));
+        parsedPackage.assertNoResourceErrors();
+        var assumption = EcoreUtil2.eAllOfType(
+                        parsedPackage.classByName("Host").anonymousMain().eObject(), AssumptionOperation.class)
                 .getFirst();
         assertThat(parenthesize(assumption.getExpression())).isEqualTo(expectedReading);
     }
 
     private static String parenthesize(Expression expression) {
         if (expression instanceof BooleanOperator operator) {
-            var op = switch (operator.getOp()) {
+            var symbol = switch (operator.getOp()) {
                 case AND -> "&&";
                 case OR -> "||";
                 case XOR -> "^^";
             };
-            return "(" + parenthesize(operator.getLeft()) + " " + op + " " + parenthesize(operator.getRight()) + ")";
+            return "(" + parenthesize(operator.getLeft()) + " " + symbol + " " + parenthesize(operator.getRight())
+                    + ")";
+        }
+        if (expression instanceof ComparisonOperator operator) {
+            var symbol = switch (operator.getOp()) {
+                case LESS -> "<";
+                case LESS_EQ -> "<=";
+                case GREATER -> ">";
+                case GREATER_EQ -> ">=";
+                case EQ -> "==";
+                case NOT_EQ -> "!=";
+            };
+            return "(" + parenthesize(operator.getLeft()) + " " + symbol + " " + parenthesize(operator.getRight())
+                    + ")";
+        }
+        if (expression instanceof ArithmeticBinaryOperator operator) {
+            var symbol = switch (operator.getOp()) {
+                case ADD -> "+";
+                case SUB -> "-";
+                case MUL -> "*";
+                case DIV -> "/";
+            };
+            return "(" + parenthesize(operator.getLeft()) + " " + symbol + " " + parenthesize(operator.getRight())
+                    + ")";
+        }
+        if (expression instanceof RangeExpression range) {
+            return "(" + parenthesize(range.getLeft()) + (range.isExclusive() ? "..<" : "..")
+                    + parenthesize(range.getRight()) + ")";
+        }
+        if (expression instanceof ArithmeticUnaryOperator operator) {
+            var symbol = switch (operator.getOp()) {
+                case PLUS -> "+";
+                case MINUS -> "-";
+            };
+            return "(" + symbol + parenthesize(operator.getBody()) + ")";
+        }
+        if (expression instanceof NegationOperator operator) {
+            return "(!" + parenthesize(operator.getBody()) + ")";
         }
         return NamingUtil.getName(((ElementReference) expression).getElement());
     }
 
     @Test
     void comparisonLess() {
-        assertComparisonOp("x < 5", ComparisonOp.LESS);
+        assertComparisonOperator("value < 5", ComparisonOp.LESS);
     }
 
     @Test
-    void comparisonLessEq() {
-        assertComparisonOp("x <= 5", ComparisonOp.LESS_EQ);
+    void comparisonLessOrEqual() {
+        assertComparisonOperator("value <= 5", ComparisonOp.LESS_EQ);
     }
 
     @Test
     void comparisonGreater() {
-        assertComparisonOp("x > 5", ComparisonOp.GREATER);
+        assertComparisonOperator("value > 5", ComparisonOp.GREATER);
     }
 
     @Test
-    void comparisonGreaterEq() {
-        assertComparisonOp("x >= 5", ComparisonOp.GREATER_EQ);
+    void comparisonGreaterOrEqual() {
+        assertComparisonOperator("value >= 5", ComparisonOp.GREATER_EQ);
     }
 
     @Test
-    void comparisonEq() {
-        assertComparisonOp("x == 5", ComparisonOp.EQ);
+    void comparisonEqual() {
+        assertComparisonOperator("value == 5", ComparisonOp.EQ);
     }
 
     @Test
-    void comparisonNotEq() {
-        assertComparisonOp("x != 5", ComparisonOp.NOT_EQ);
+    void comparisonNotEqual() {
+        assertComparisonOperator("value != 5", ComparisonOp.NOT_EQ);
     }
 
-    private void assertComparisonOp(String expression, ComparisonOp expectedOp) {
-        var pkg = parseHelper.parse("""
+    private void assertComparisonOperator(String expression, ComparisonOp expectedOperator) {
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
+            class Host {
+                var value: int := 0
                 redefine tran { assume(%s) }
             }
             """.formatted(expression));
-        pkg.assertNoResourceErrors();
-        var ops = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), ComparisonOperator.class);
-        assertThat(ops).isNotEmpty();
-        assertThat(ops.getFirst().getOp()).isEqualTo(expectedOp);
+        parsedPackage.assertNoResourceErrors();
+        var operators = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Host").anonymousMain().eObject(), ComparisonOperator.class);
+        assertThat(operators).isNotEmpty();
+        assertThat(operators.getFirst().getOp()).isEqualTo(expectedOperator);
     }
 
     @Test
     void negationOfBoolean() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var b: bool := false
-                redefine tran { assume(!b) }
+            class Host {
+                var flag: bool := false
+                redefine tran { assume(!flag) }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var ops = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), NegationOperator.class);
-        assertThat(ops).isNotEmpty();
-        assertThat(ops.getFirst().getBody()).isNotNull();
+        parsedPackage.assertNoResourceErrors();
+        var operators = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Host").anonymousMain().eObject(), NegationOperator.class);
+        assertThat(operators).isNotEmpty();
+        assertThat(operators.getFirst().getBody()).isNotNull();
     }
 
     @Test
     void rangeInclusive() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Host {
                 var total: int := 0
-                redefine tran { inline for (n in 1..5) { total := total + 1 } }
+                redefine tran { inline for (index in 1..5) { total := total + 1 } }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var ranges = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), RangeExpression.class);
+        parsedPackage.assertNoResourceErrors();
+        var ranges = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Host").anonymousMain().eObject(), RangeExpression.class);
         assertThat(ranges).hasSize(1);
         assertThat(ranges.getFirst().isExclusive()).isFalse();
     }
 
     @Test
     void rangeExclusive() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Host {
                 var total: int := 0
-                redefine tran { inline for (n in 1..<5) { total := total + 1 } }
+                redefine tran { inline for (index in 1..<5) { total := total + 1 } }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var ranges = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), RangeExpression.class);
+        parsedPackage.assertNoResourceErrors();
+        var ranges = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Host").anonymousMain().eObject(), RangeExpression.class);
         assertThat(ranges).hasSize(1);
         assertThat(ranges.getFirst().isExclusive()).isTrue();
     }
@@ -291,15 +366,16 @@ public class OperatorSyntaxTest {
     }
 
     private RangeEvaluation evaluateFirstRange(String rangeText) {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Host {
                 var total: int := 0
-                redefine tran { inline for (n in %s) { total := total + 1 } }
+                redefine tran { inline for (index in %s) { total := total + 1 } }
             }
             """.formatted(rangeText));
-        pkg.assertNoResourceErrors();
-        var ranges = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), RangeExpression.class);
+        parsedPackage.assertNoResourceErrors();
+        var ranges = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Host").anonymousMain().eObject(), RangeExpression.class);
         assertThat(ranges).hasSize(1);
         var evaluation = constantExpressionEvaluatorProvider.evaluate(ranges.getFirst());
         assertThat(evaluation).isInstanceOf(RangeEvaluation.class);
@@ -308,52 +384,55 @@ public class OperatorSyntaxTest {
 
     @Test
     void temporalAG() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                redefine tran { x := 1 }
-                prop { return AG (x >= 0) }
+            class Host {
+                var counter: int := 0
+                redefine tran { counter := 1 }
+                prop { return AG (counter >= 0) }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var ag = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousProperty().eObject(), AG.class);
-        assertThat(ag).hasSize(1);
-        assertThat(ag.getFirst().getBody()).isNotNull();
+        parsedPackage.assertNoResourceErrors();
+        var alwaysGlobally = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Host").anonymousProperty().eObject(), AG.class);
+        assertThat(alwaysGlobally).hasSize(1);
+        assertThat(alwaysGlobally.getFirst().getBody()).isNotNull();
     }
 
     @Test
     void temporalEF() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                redefine tran { x := x + 1 }
-                prop { return EF (x == 5) }
+            class Host {
+                var counter: int := 0
+                redefine tran { counter := counter + 1 }
+                prop { return EF (counter == 5) }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var ef = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousProperty().eObject(), EF.class);
-        assertThat(ef).hasSize(1);
-        assertThat(ef.getFirst().getBody()).isNotNull();
+        parsedPackage.assertNoResourceErrors();
+        var existsFinally = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Host").anonymousProperty().eObject(), EF.class);
+        assertThat(existsFinally).hasSize(1);
+        assertThat(existsFinally.getFirst().getBody()).isNotNull();
     }
 
     @Test
     void ifThenElseExpression() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var n: int := 0
+            class Host {
+                var number: int := 0
                 redefine tran {
                     var result: int := 0
-                    result := if n > 0 then 1 else -1
+                    result := if number > 0 then 1 else -1
                 }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var ite = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), IfThenElse.class);
-        assertThat(ite).hasSize(1);
-        var first = ite.getFirst();
+        parsedPackage.assertNoResourceErrors();
+        var ifThenElses = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Host").anonymousMain().eObject(), IfThenElse.class);
+        assertThat(ifThenElses).hasSize(1);
+        var first = ifThenElses.getFirst();
         assertThat(first.getGuard()).isNotNull();
         assertThat(first.getThen()).isNotNull();
         assertThat(first.getElse()).isNotNull();
@@ -361,15 +440,16 @@ public class OperatorSyntaxTest {
 
     @Test
     void parenthesisedExpressionPreservesStructure() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                redefine tran { x := (x + 1) * 2 }
+            class Host {
+                var counter: int := 0
+                redefine tran { counter := (counter + 1) * 2 }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var ops = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), ArithmeticBinaryOperator.class);
-        assertThat(ops).hasSize(2);
+        parsedPackage.assertNoResourceErrors();
+        var operators = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Host").anonymousMain().eObject(), ArithmeticBinaryOperator.class);
+        assertThat(operators).hasSize(2);
     }
 }

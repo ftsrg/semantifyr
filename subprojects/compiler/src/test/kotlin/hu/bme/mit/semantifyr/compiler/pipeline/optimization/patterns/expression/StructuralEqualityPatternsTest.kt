@@ -15,17 +15,25 @@ class StructuralEqualityPatternsTest : PatternTestBase() {
         pattern = SelfArithmeticPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran { }
-            prop { AG (a - a == 0) }
+            var operand : int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand - operand == 0)
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran { }
-            prop { AG (0 == 0) }
+            var operand : int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (0 == 0)
+            }
         """,
     )
 
@@ -34,17 +42,25 @@ class StructuralEqualityPatternsTest : PatternTestBase() {
         pattern = SelfComparisonPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran { }
-            prop { AG (a == a) }
+            var operand : int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand == operand)
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran { }
-            prop { AG true }
+            var operand : int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG true
+            }
         """,
     )
 
@@ -53,17 +69,25 @@ class StructuralEqualityPatternsTest : PatternTestBase() {
         pattern = SelfComparisonPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran { }
-            prop { AG (a < a) }
+            var operand : int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand < operand)
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran { }
-            prop { AG false }
+            var operand : int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG false
+            }
         """,
     )
 }

@@ -199,9 +199,13 @@ abstract class VerificationPortfolio {
 
         val decisive = mutableListOf<BackendVerificationResult>()
         val outcome = receiveResultsWithTimeout(scope, timeout, progress) { result ->
-            if (!result.isTrusted) return@receiveResultsWithTimeout null
+            if (!result.isTrusted) {
+                return@receiveResultsWithTimeout null
+            }
             decisive += result
-            if (decisive.size < count) return@receiveResultsWithTimeout null
+            if (decisive.size < count) {
+                return@receiveResultsWithTimeout null
+            }
             val allAgree = decisive.map { it.verdict }.distinct().size == 1
             if (allAgree) {
                 decisive.first()
@@ -307,7 +311,9 @@ abstract class VerificationPortfolio {
                 if (result == null) {
                     val failure = received.exceptionOrNull()
                     logger.warn { "$id: job errored: ${failure?.message ?: ""}" }
-                    if (failure != null) errors += failure
+                    if (failure != null) {
+                        errors += failure
+                    }
                     continue
                 }
                 progress.reportProgress("result $done/$total: ${result.verdict}")

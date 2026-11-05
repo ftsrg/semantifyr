@@ -30,204 +30,218 @@ public class OperationSyntaxTest {
 
     @Test
     void assignmentOperation() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                redefine tran { x := 5 }
+            class Holder {
+                var value: int := 0
+                redefine tran { value := 5 }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var ops = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), AssignmentOperation.class);
-        assertThat(ops).hasSize(1);
-        assertThat(ops.getFirst().getReference()).isNotNull();
-        assertThat(ops.getFirst().getExpression()).isNotNull();
+        parsedPackage.assertNoResourceErrors();
+        var operations = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Holder").anonymousMain().eObject(), AssignmentOperation.class);
+        assertThat(operations).hasSize(1);
+        assertThat(operations.getFirst().getReference()).isNotNull();
+        assertThat(operations.getFirst().getExpression()).isNotNull();
     }
 
     @Test
     void assumptionOperation() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                redefine tran { assume(x > 0); x := 1 }
+            class Holder {
+                var value: int := 0
+                redefine tran { assume(value > 0); value := 1 }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var ops = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), AssumptionOperation.class);
-        assertThat(ops).hasSize(1);
-        assertThat(ops.getFirst().getExpression()).isNotNull();
+        parsedPackage.assertNoResourceErrors();
+        var operations = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Holder").anonymousMain().eObject(), AssumptionOperation.class);
+        assertThat(operations).hasSize(1);
+        assertThat(operations.getFirst().getExpression()).isNotNull();
     }
 
     @Test
     void havocOperation() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var b: bool := false
-                redefine tran { havoc(b) }
+            class Holder {
+                var flag: bool := false
+                redefine tran { havoc(flag) }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var ops = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), HavocOperation.class);
-        assertThat(ops).hasSize(1);
-        assertThat(ops.getFirst().getReference()).isNotNull();
+        parsedPackage.assertNoResourceErrors();
+        var operations = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Holder").anonymousMain().eObject(), HavocOperation.class);
+        assertThat(operations).hasSize(1);
+        assertThat(operations.getFirst().getReference()).isNotNull();
     }
 
     @Test
     void choiceOperationWithTwoBranches() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                redefine tran { choice { x := 1 } or { x := 2 } }
+            class Holder {
+                var value: int := 0
+                redefine tran { choice { value := 1 } or { value := 2 } }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var choices = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), ChoiceOperation.class);
+        parsedPackage.assertNoResourceErrors();
+        var choices = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Holder").anonymousMain().eObject(), ChoiceOperation.class);
         assertThat(choices).hasSize(1);
         assertThat(choices.getFirst().getBranches()).hasSize(2);
     }
 
     @Test
     void choiceOperationWithManyBranches() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
+            class Holder {
+                var value: int := 0
                 redefine tran {
-                    choice { x := 1 } or { x := 2 } or { x := 3 } or { x := 4 }
+                    choice { value := 1 } or { value := 2 } or { value := 3 } or { value := 4 }
                 }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var choices = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), ChoiceOperation.class);
+        parsedPackage.assertNoResourceErrors();
+        var choices = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Holder").anonymousMain().eObject(), ChoiceOperation.class);
         assertThat(choices).hasSize(1);
         assertThat(choices.getFirst().getBranches()).hasSize(4);
     }
 
     @Test
     void sequenceOperationFromBlock() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                var y: int := 0
-                redefine tran { x := 1; y := 2 }
+            class Holder {
+                var value: int := 0
+                var other: int := 0
+                redefine tran { value := 1; other := 2 }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var seqs = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), SequenceOperation.class);
-        assertThat(seqs).isNotEmpty();
-        var outer = pkg.classByName("C").anonymousMain().eObject().getBranches().getFirst();
+        parsedPackage.assertNoResourceErrors();
+        var sequences = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Holder").anonymousMain().eObject(), SequenceOperation.class);
+        assertThat(sequences).isNotEmpty();
+        var outer = parsedPackage
+                .classByName("Holder")
+                .anonymousMain()
+                .eObject()
+                .getBranches()
+                .getFirst();
         assertThat(outer.getSteps()).hasSize(2);
     }
 
     @Test
     void ifOperationWithElse() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var b: bool := false
-                var x: int := 0
-                redefine tran { if (b) { x := 1 } else { x := 0 } }
+            class Holder {
+                var flag: bool := false
+                var value: int := 0
+                redefine tran { if (flag) { value := 1 } else { value := 0 } }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var ifs = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), IfOperation.class);
-        assertThat(ifs).hasSize(1);
-        assertThat(ifs.getFirst().getGuard()).isNotNull();
-        assertThat(ifs.getFirst().getBody()).isNotNull();
-        assertThat(ifs.getFirst().getElse()).isNotNull();
+        parsedPackage.assertNoResourceErrors();
+        var ifOperations = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Holder").anonymousMain().eObject(), IfOperation.class);
+        assertThat(ifOperations).hasSize(1);
+        assertThat(ifOperations.getFirst().getGuard()).isNotNull();
+        assertThat(ifOperations.getFirst().getBody()).isNotNull();
+        assertThat(ifOperations.getFirst().getElse()).isNotNull();
     }
 
     @Test
     void ifOperationWithoutElse() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var b: bool := false
-                var x: int := 0
-                redefine tran { if (b) { x := 1 } }
+            class Holder {
+                var flag: bool := false
+                var value: int := 0
+                redefine tran { if (flag) { value := 1 } }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var ifs = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), IfOperation.class);
-        assertThat(ifs).hasSize(1);
-        assertThat(ifs.getFirst().getElse()).isNull();
+        parsedPackage.assertNoResourceErrors();
+        var ifOperations = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Holder").anonymousMain().eObject(), IfOperation.class);
+        assertThat(ifOperations).hasSize(1);
+        assertThat(ifOperations.getFirst().getElse()).isNull();
     }
 
     @Test
     void runtimeForOverIntegerRange() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Holder {
                 var total: int := 0
-                redefine tran { for (n in 1..3) { total := total + 1 } }
+                redefine tran { for (index in 1..3) { total := total + 1 } }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var fors = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), ForOperation.class);
-        assertThat(fors).hasSize(1);
-        var f = fors.getFirst();
-        assertThat(f.getLoopVariable()).isNotNull();
-        assertThat(f.getLoopVariable().getName()).isEqualTo("n");
-        assertThat(f.getRangeExpression()).isNotNull();
-        assertThat(f.getBody()).isNotNull();
+        parsedPackage.assertNoResourceErrors();
+        var forOperations = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Holder").anonymousMain().eObject(), ForOperation.class);
+        assertThat(forOperations).hasSize(1);
+        var forOperation = forOperations.getFirst();
+        assertThat(forOperation.getLoopVariable()).isNotNull();
+        assertThat(forOperation.getLoopVariable().getName()).isEqualTo("index");
+        assertThat(forOperation.getRangeExpression()).isNotNull();
+        assertThat(forOperation.getBody()).isNotNull();
     }
 
     @Test
     void localVariableDeclarationWithInitializer() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
+            class Holder {
+                var value: int := 0
                 redefine tran {
-                    var tmp: int := 5
-                    x := tmp
+                    var snapshot: int := 5
+                    value := snapshot
                 }
             }
             """);
-        pkg.assertNoResourceErrors();
+        parsedPackage.assertNoResourceErrors();
         var locals = EcoreUtil2.eAllOfType(
-                pkg.classByName("C").anonymousMain().eObject(), LocalVarDeclarationOperation.class);
+                parsedPackage.classByName("Holder").anonymousMain().eObject(), LocalVarDeclarationOperation.class);
         assertThat(locals).hasSize(1);
-        assertThat(locals.getFirst().getName()).isEqualTo("tmp");
+        assertThat(locals.getFirst().getName()).isEqualTo("snapshot");
         assertThat(locals.getFirst().getTypeSpecification()).isNotNull();
         assertThat(locals.getFirst().getExpression()).isNotNull();
     }
 
     @Test
     void localVariableDeclarationWithTypeOnly() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
+            class Holder {
+                var value: int := 0
                 redefine tran {
-                    var tmp: int
-                    havoc(tmp)
-                    x := tmp
+                    var snapshot: int
+                    havoc(snapshot)
+                    value := snapshot
                 }
             }
             """);
-        pkg.assertNoResourceErrors();
+        parsedPackage.assertNoResourceErrors();
         var locals = EcoreUtil2.eAllOfType(
-                pkg.classByName("C").anonymousMain().eObject(), LocalVarDeclarationOperation.class);
+                parsedPackage.classByName("Holder").anonymousMain().eObject(), LocalVarDeclarationOperation.class);
         assertThat(locals).hasSize(1);
         assertThat(locals.getFirst().getExpression()).isNull();
     }
 
     @Test
     void transitionWithMultipleOrBranches() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                redefine tran { x := 1 } or { x := 2 } or { x := 3 }
+            class Holder {
+                var value: int := 0
+                redefine tran { value := 1 } or { value := 2 } or { value := 3 }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var main = pkg.classByName("C").anonymousMain().eObject();
-        assertThat(main.getBranches()).hasSize(3);
+        parsedPackage.assertNoResourceErrors();
+        var mainTransition = parsedPackage.classByName("Holder").anonymousMain().eObject();
+        assertThat(mainTransition.getBranches()).hasSize(3);
     }
 }

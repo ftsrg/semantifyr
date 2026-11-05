@@ -24,20 +24,20 @@ public class DiagnosticSuppressionTest {
 
     @Test
     void arithmeticErrorDoesNotCascadeToAssignment() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                var b: bool := false
+            class Holder {
+                var counter: int := 0
+                var flag: bool := false
                 redefine tran {
-                    x := b + 1
+                    counter := flag + 1
                 }
             }
             """, CheckMode.ALL);
 
-        var typeMismatches = pkg.getIssues().stream()
-                .filter(i -> i.getSeverity() == Severity.ERROR)
-                .filter(i -> OxstsValidator.TYPE_MISMATCH.equals(i.getCode()))
+        var typeMismatches = parsedPackage.getIssues().stream()
+                .filter(issue -> issue.getSeverity() == Severity.ERROR)
+                .filter(issue -> OxstsValidator.TYPE_MISMATCH.equals(issue.getCode()))
                 .toList();
         assertThat(typeMismatches)
                 .as("exactly one type-mismatch error should be reported for the inner arithmetic operand, "
@@ -48,20 +48,20 @@ public class DiagnosticSuppressionTest {
 
     @Test
     void booleanErrorDoesNotCascadeToAG() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             @VerificationCase
-            class C {
-                var b: bool := true
-                var n: int := 0
-                redefine tran { n := n + 1 }
-                prop { return AG (b && n) }
+            class Holder {
+                var flag: bool := true
+                var counter: int := 0
+                redefine tran { counter := counter + 1 }
+                prop { return AG (flag && counter) }
             }
             """, CheckMode.ALL);
 
-        var typeMismatches = pkg.getIssues().stream()
-                .filter(i -> i.getSeverity() == Severity.ERROR)
-                .filter(i -> OxstsValidator.TYPE_MISMATCH.equals(i.getCode()))
+        var typeMismatches = parsedPackage.getIssues().stream()
+                .filter(issue -> issue.getSeverity() == Severity.ERROR)
+                .filter(issue -> OxstsValidator.TYPE_MISMATCH.equals(issue.getCode()))
                 .toList();
         assertThat(typeMismatches)
                 .as("only the innermost bool-operand error should fire")
@@ -71,20 +71,20 @@ public class DiagnosticSuppressionTest {
 
     @Test
     void ifGuardErrorDoesNotCascadeToBranches() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var n: int := 0
+            class Holder {
+                var counter: int := 0
                 var result: int := 0
                 redefine tran {
-                    result := if n then 1 else 2
+                    result := if counter then 1 else 2
                 }
             }
             """, CheckMode.ALL);
 
-        var typeMismatches = pkg.getIssues().stream()
-                .filter(i -> i.getSeverity() == Severity.ERROR)
-                .filter(i -> OxstsValidator.TYPE_MISMATCH.equals(i.getCode()))
+        var typeMismatches = parsedPackage.getIssues().stream()
+                .filter(issue -> issue.getSeverity() == Severity.ERROR)
+                .filter(issue -> OxstsValidator.TYPE_MISMATCH.equals(issue.getCode()))
                 .toList();
         assertThat(typeMismatches)
                 .as("only the guard type error should fire, not the branch compatibility check")
@@ -94,21 +94,21 @@ public class DiagnosticSuppressionTest {
 
     @Test
     void comparisonErrorDoesNotCascadeToBooleanOperator() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var b: bool := false
-                var x: int := 0
-                var r: bool := false
+            class Holder {
+                var flag: bool := false
+                var counter: int := 0
+                var result: bool := false
                 redefine tran {
-                    r := b && (x < true)
+                    result := flag && (counter < true)
                 }
             }
             """, CheckMode.ALL);
 
-        var typeMismatches = pkg.getIssues().stream()
-                .filter(i -> i.getSeverity() == Severity.ERROR)
-                .filter(i -> OxstsValidator.TYPE_MISMATCH.equals(i.getCode()))
+        var typeMismatches = parsedPackage.getIssues().stream()
+                .filter(issue -> issue.getSeverity() == Severity.ERROR)
+                .filter(issue -> OxstsValidator.TYPE_MISMATCH.equals(issue.getCode()))
                 .toList();
         assertThat(typeMismatches)
                 .as("only the innermost comparison error should fire")

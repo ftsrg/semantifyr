@@ -20,15 +20,19 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                init { }
-                tran { }
-                prop { AG (a == 1) }
+                var observed : int := 0
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG (observed == 1)
+                }
             """,
         )
 
-        val a = inlined.varNamed("a")
-        assertThat(result.isRelevant(a)).isTrue
+        val observed = inlined.varNamed("observed")
+        assertThat(result.isRelevant(observed)).isTrue
     }
 
     @Test
@@ -36,18 +40,23 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                var b : int := 0
-                init { }
-                tran { b := 2 }
-                prop { AG (a == 1) }
+                var observed : int := 0
+                var unrelated : int := 0
+                init {
+                }
+                tran {
+                    unrelated := 2
+                }
+                prop {
+                    AG (observed == 1)
+                }
             """,
         )
 
-        val b = inlined.varNamed("b")
-        assertThat(result.isRelevant(b)).isFalse
-        val bAssignment = inlined.assignmentsTo(b).single()
-        assertThat(result.isRelevant(bAssignment)).isFalse
+        val unrelated = inlined.varNamed("unrelated")
+        assertThat(result.isRelevant(unrelated)).isFalse
+        val unrelatedAssignment = inlined.assignmentsTo(unrelated).single()
+        assertThat(result.isRelevant(unrelatedAssignment)).isFalse
     }
 
     @Test
@@ -55,21 +64,25 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                init { a := 1 }
-                tran {
-                    a := 2
-                    a := 3
+                var observed : int := 0
+                init {
+                    observed := 1
                 }
-                prop { AG (a == 1) }
+                tran {
+                    observed := 2
+                    observed := 3
+                }
+                prop {
+                    AG (observed == 1)
+                }
             """,
         )
 
-        val a = inlined.varNamed("a")
-        assertThat(result.isRelevant(a)).isTrue
-        for (assignment in inlined.assignmentsTo(a)) {
+        val observed = inlined.varNamed("observed")
+        assertThat(result.isRelevant(observed)).isTrue
+        for (assignment in inlined.assignmentsTo(observed)) {
             assertThat(result.isRelevant(assignment))
-                .`as`("assignment $assignment to $a should be relevant")
+                .`as`("assignment $assignment to $observed should be relevant")
                 .isTrue
         }
     }
@@ -79,27 +92,30 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                var b : int := 0
-                init { }
+                var observed : int := 0
+                var guard : int := 0
+                init {
+                }
                 tran {
                     choice {
-                        assume(b == 0)
-                        a := 1
+                        assume(guard == 0)
+                        observed := 1
                     } or {
-                        assume(b != 0)
-                        a := 2
+                        assume(guard != 0)
+                        observed := 2
                     }
                 }
-                prop { AG (a == 1) }
+                prop {
+                    AG (observed == 1)
+                }
             """,
         )
 
-        val a = inlined.varNamed("a")
-        val b = inlined.varNamed("b")
-        assertThat(result.isRelevant(a)).isTrue
-        assertThat(result.isRelevant(b))
-            .`as`("sibling-assume guard variable 'b' should be in the cone")
+        val observed = inlined.varNamed("observed")
+        val guard = inlined.varNamed("guard")
+        assertThat(result.isRelevant(observed)).isTrue
+        assertThat(result.isRelevant(guard))
+            .`as`("sibling-assume guard variable 'guard' should be in the cone")
             .isTrue
     }
 
@@ -108,28 +124,31 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int := 0
-                var y : int := 0
-                init { }
+                var counter : int := 0
+                var observed : int := 0
+                init {
+                }
                 tran {
                     choice {
-                        x := x + 1
+                        counter := counter + 1
                     } or {
-                        if (x <= 5) {
+                        if (counter <= 5) {
                             assume(false)
                         }
-                        y := 1
+                        observed := 1
                     }
                 }
-                prop { AG (y == 0) }
+                prop {
+                    AG (observed == 0)
+                }
             """,
         )
 
-        val x = inlined.varNamed("x")
-        assertThat(result.isRelevant(x))
-            .`as`("'x' decides whether the assumption blocks the write of 'y'")
+        val counter = inlined.varNamed("counter")
+        assertThat(result.isRelevant(counter))
+            .`as`("'counter' decides whether the assumption blocks the write of 'observed'")
             .isTrue
-        assertThat(result.isRelevant(inlined.assignmentsTo(x).single())).isTrue
+        assertThat(result.isRelevant(inlined.assignmentsTo(counter).single())).isTrue
     }
 
     @Test
@@ -137,26 +156,29 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                var b : int := 0
-                init { }
-                tran {
-                    b := 5
-                    a := b
+                var observed : int := 0
+                var feeder : int := 0
+                init {
                 }
-                prop { AG (a == 5) }
+                tran {
+                    feeder := 5
+                    observed := feeder
+                }
+                prop {
+                    AG (observed == 5)
+                }
             """,
         )
 
-        val a = inlined.varNamed("a")
-        val b = inlined.varNamed("b")
-        assertThat(result.isRelevant(a)).isTrue
-        assertThat(result.isRelevant(b))
-            .`as`("data-dep via 'a := b' should pull 'b' into the cone")
+        val observed = inlined.varNamed("observed")
+        val feeder = inlined.varNamed("feeder")
+        assertThat(result.isRelevant(observed)).isTrue
+        assertThat(result.isRelevant(feeder))
+            .`as`("data-dep via 'observed := feeder' should pull 'feeder' into the cone")
             .isTrue
-        val bWrite = inlined.assignmentsTo(b).single()
-        assertThat(result.isRelevant(bWrite))
-            .`as`("assignment 'b := 5' should be relevant because 'b' is in the cone")
+        val feederWrite = inlined.assignmentsTo(feeder).single()
+        assertThat(result.isRelevant(feederWrite))
+            .`as`("assignment 'feeder := 5' should be relevant because 'feeder' is in the cone")
             .isTrue
     }
 
@@ -166,7 +188,9 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var activeState : int := -1
-                init { activeState := 0 }
+                init {
+                    activeState := 0
+                }
                 tran {
                     choice {
                         assume(activeState == 0)
@@ -174,7 +198,9 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                         activeState := 25
                     }
                 }
-                prop { AG (activeState != 25) }
+                prop {
+                    AG (activeState != 25)
+                }
             """,
         )
 
@@ -196,7 +222,9 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                 inlined oxsts of semantifyr::Anything
                 var activeState : int := -1
                 var inputEvent : int := 0
-                init { activeState := 0 }
+                init {
+                    activeState := 0
+                }
                 tran {
                     choice {
                         assume(activeState == 0 && inputEvent == 1)
@@ -206,7 +234,9 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                         activeState := 0
                     }
                 }
-                prop { AG (activeState != 25) }
+                prop {
+                    AG (activeState != 25)
+                }
             """,
         )
 
@@ -228,51 +258,54 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                var b : int := 0
-                var c : int := 0
-                var d : int := 0
-                init { }
+                var observed : int := 0
+                var outerGuard : int := 0
+                var ifGuard : int := 0
+                var innerGuard : int := 0
+                init {
+                }
                 tran {
                     choice {
-                        assume(b == 0)
-                        if (c == 1) {
+                        assume(outerGuard == 0)
+                        if (ifGuard == 1) {
                             choice {
-                                assume(d == 1)
-                                a := 1
+                                assume(innerGuard == 1)
+                                observed := 1
                             } or {
-                                assume(d == 2)
-                                a := 2
+                                assume(innerGuard == 2)
+                                observed := 2
                             }
                         } else {
-                            a := 3
+                            observed := 3
                         }
                     } or {
-                        assume(b != 0)
-                        a := 4
+                        assume(outerGuard != 0)
+                        observed := 4
                     }
                 }
-                prop { AG (a == 1) }
+                prop {
+                    AG (observed == 1)
+                }
             """,
         )
 
-        val a = inlined.varNamed("a")
-        val b = inlined.varNamed("b")
-        val c = inlined.varNamed("c")
-        val d = inlined.varNamed("d")
-        assertThat(result.isRelevant(a)).isTrue
-        assertThat(result.isRelevant(b))
-            .`as`("outer choice's assume guards ('b') must be in the cone")
+        val observed = inlined.varNamed("observed")
+        val outerGuard = inlined.varNamed("outerGuard")
+        val ifGuard = inlined.varNamed("ifGuard")
+        val innerGuard = inlined.varNamed("innerGuard")
+        assertThat(result.isRelevant(observed)).isTrue
+        assertThat(result.isRelevant(outerGuard))
+            .`as`("outer choice's assume guards ('outerGuard') must be in the cone")
             .isTrue
-        assertThat(result.isRelevant(c))
-            .`as`("nested if-guard ('c') must be in the cone")
+        assertThat(result.isRelevant(ifGuard))
+            .`as`("nested if-guard ('ifGuard') must be in the cone")
             .isTrue
-        assertThat(result.isRelevant(d))
-            .`as`("deeply nested inner-choice assume guards ('d') must be in the cone under atomic commit")
+        assertThat(result.isRelevant(innerGuard))
+            .`as`("deeply nested inner-choice assume guards ('innerGuard') must be in the cone under atomic commit")
             .isTrue
-        for (write in inlined.assignmentsTo(a)) {
+        for (write in inlined.assignmentsTo(observed)) {
             assertThat(result.isRelevant(write))
-                .`as`("every nested write to relevant var 'a' must stay relevant")
+                .`as`("every nested write to relevant var 'observed' must stay relevant")
                 .isTrue
         }
     }
@@ -282,22 +315,25 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var n : int := 5
+                var bound : int := 5
                 var sum : int := 0
-                init { }
+                init {
+                }
                 tran {
-                    for (x in 0..n) {
-                        sum := sum + x
+                    for (index in 0..bound) {
+                        sum := sum + index
                     }
                 }
-                prop { AG (sum != 999) }
+                prop {
+                    AG (sum != 999)
+                }
             """,
         )
 
-        val n = inlined.varNamed("n")
+        val bound = inlined.varNamed("bound")
         val sum = inlined.varNamed("sum")
         assertThat(result.isRelevant(sum)).isTrue
-        assertThat(result.isRelevant(n))
+        assertThat(result.isRelevant(bound))
             .`as`("the for-loop's range variable controls how many writes to 'sum' fire and must be in the cone")
             .isTrue
     }
@@ -308,12 +344,16 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var step : int := -1
-                init { step := 1 }
+                init {
+                    step := 1
+                }
                 tran {
                     assume(step == 1)
                     step := 2
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -337,8 +377,11 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                 init {
                     assume(seed == 7)
                 }
-                tran { }
-                prop { AG true }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -349,25 +392,27 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
     }
 
     @Test
-    fun `assume on x backward-constrains earlier writes to x - they must all stay in the cone`() {
+    fun `assume on value backward-constrains earlier writes to value - they must all stay in the cone`() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int := 0
+                var value : int := 0
                 init {
-                    x := 5
+                    value := 5
                 }
                 tran {
-                    assume(x == 5)
-                    x := 6
+                    assume(value == 5)
+                    value := 6
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
 
-        val x = inlined.varNamed("x")
-        assertThat(result.isRelevant(x)).isTrue
-        val writes = inlined.assignmentsTo(x)
+        val value = inlined.varNamed("value")
+        assertThat(result.isRelevant(value)).isTrue
+        val writes = inlined.assignmentsTo(value)
         assertThat(writes).hasSize(2)
         for (write in writes) {
             assertThat(result.isRelevant(write))
@@ -381,26 +426,28 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var x : int := 0
-                var y : int := 0
+                var first : int := 0
+                var second : int := 0
                 init {
-                    x := 1
-                    y := 2
+                    first := 1
+                    second := 2
                 }
                 tran {
-                    assume(x == 1 && y == 2)
+                    assume(first == 1 && second == 2)
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
 
-        val x = inlined.varNamed("x")
-        val y = inlined.varNamed("y")
-        assertThat(result.isRelevant(x))
-            .`as`("'x' is read in the assume's first conjunct")
+        val first = inlined.varNamed("first")
+        val second = inlined.varNamed("second")
+        assertThat(result.isRelevant(first))
+            .`as`("'first' is read in the assume's first conjunct")
             .isTrue
-        assertThat(result.isRelevant(y))
-            .`as`("'y' is read in the assume's second conjunct")
+        assertThat(result.isRelevant(second))
+            .`as`("'second' is read in the assume's second conjunct")
             .isTrue
     }
 
@@ -418,7 +465,9 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
                 tran {
                     assume(selected == 7)
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -435,18 +484,21 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
+                var observed : int := 0
                 var guard : int := 0
-                init { }
+                init {
+                }
                 tran {
                     assume(guard == 1)
                     choice {
-                        a := 1
+                        observed := 1
                     } or {
-                        a := 2
+                        observed := 2
                     }
                 }
-                prop { AG (a == 1) }
+                prop {
+                    AG (observed == 1)
+                }
             """,
         )
 
@@ -461,31 +513,34 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                var y : int := 0
+                var observed : int := 0
+                var unrelated : int := 0
                 var siblingGuard : int := 0
-                init { }
+                init {
+                }
                 tran {
                     choice {
-                        a := 1
+                        observed := 1
                     } or {
                         assume(siblingGuard == 7)
-                        y := 5
+                        unrelated := 5
                     }
                 }
-                prop { AG (a == 1) }
+                prop {
+                    AG (observed == 1)
+                }
             """,
         )
 
-        val y = inlined.varNamed("y")
+        val unrelated = inlined.varNamed("unrelated")
         val siblingGuard = inlined.varNamed("siblingGuard")
-        assertThat(result.isRelevant(y))
-            .`as`("'y' is not read by the property and has no transitive dependence on it")
+        assertThat(result.isRelevant(unrelated))
+            .`as`("'unrelated' is not read by the property and has no transitive dependence on it")
             .isFalse
-        val yWrites = inlined.assignmentsTo(y)
-        for (write in yWrites) {
+        val unrelatedWrites = inlined.assignmentsTo(unrelated)
+        for (write in unrelatedWrites) {
             assertThat(result.isRelevant(write))
-                .`as`("irrelevant 'y := 5' must not gate anything in the cone")
+                .`as`("irrelevant 'unrelated := 5' must not gate anything in the cone")
                 .isFalse
         }
 
@@ -499,23 +554,23 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
+                var toggled : int := 0
                 var seen : int := 0
                 init { }
                 tran {
-                    a := 1 - a
-                    var s : int := a
-                    seen := s
+                    toggled := 1 - toggled
+                    var local : int := toggled
+                    seen := local
                 }
                 prop { EF (seen == 1) }
             """,
         )
 
-        val a = inlined.varNamed("a")
-        assertThat(result.isRelevant(a))
-            .`as`("'a' feeds the local 's' through its initializer, and 's' feeds the property")
+        val toggled = inlined.varNamed("toggled")
+        assertThat(result.isRelevant(toggled))
+            .`as`("'toggled' feeds the local 'local' through its initializer, and 'local' feeds the property")
             .isTrue
-        assertThat(result.isRelevant(inlined.assignmentsTo(a).single())).isTrue
+        assertThat(result.isRelevant(inlined.assignmentsTo(toggled).single())).isTrue
     }
 
     @Test
@@ -523,23 +578,26 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
+                var toggled : int := 0
                 var seen : int := 0
                 var other : int := 0
-                init { }
+                init {
+                }
                 tran {
-                    a := 1 - a
-                    var s : int := a
-                    other := s
+                    toggled := 1 - toggled
+                    var local : int := toggled
+                    other := local
                     seen := 1
                 }
-                prop { EF (seen == 1) }
+                prop {
+                    EF (seen == 1)
+                }
             """,
         )
 
-        val a = inlined.varNamed("a")
-        assertThat(result.isRelevant(a)).isFalse
-        assertThat(result.isRelevant(inlined.assignmentsTo(a).single())).isFalse
+        val toggled = inlined.varNamed("toggled")
+        assertThat(result.isRelevant(toggled)).isFalse
+        assertThat(result.isRelevant(inlined.assignmentsTo(toggled).single())).isFalse
     }
 
     private fun InlinedOxsts.varNamed(name: String): VariableDeclaration {
@@ -550,8 +608,8 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
 
     private fun InlinedOxsts.assignmentsTo(variable: VariableDeclaration): List<AssignmentOperation> {
         return eAllOfType<AssignmentOperation>().filter {
-            val ref = it.reference
-            ref is ElementReference && ref.element === variable
+            val reference = it.reference
+            reference is ElementReference && reference.element === variable
         }.toList()
     }
 }

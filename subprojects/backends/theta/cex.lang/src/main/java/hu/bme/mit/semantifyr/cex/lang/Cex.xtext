@@ -93,7 +93,12 @@ LiteralExpression:
 ;
 
 LiteralInteger:
-	value = INT
+	value = Natural
+;
+
+// Theta's integers are unbounded, so a value is read whole and checked where it meets a 32-bit model
+Natural returns Ecore::EBigInteger:
+	INT
 ;
 
 LiteralBoolean:

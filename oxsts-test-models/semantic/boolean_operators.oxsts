@@ -6,214 +6,255 @@
 
 package semantifyr::verification::lang::boolean_operators
 
-// Boolean operators: &&, ||, ^^, !. Each case drives the operator
-// with havoc'd operands and asserts the truth-table outcome is
-// reachable; the dual asserts no unintended output escapes.
-
-// --- && (and) ---
-
-// Both-true is reachable.
 @VerificationCase
 @Tag("expect-pass")
 class AndTrueReach {
-    var p: bool := false
-    var q: bool := false
-    var r: bool := false
+    var left: bool := false
+    var right: bool := false
+    var result: bool := false
 
     redefine tran {
-        havoc(p)
-        havoc(q)
-        r := p && q
+        havoc(left)
+        havoc(right)
+        result := left && right
     }
 
     prop {
-        return EF r == true
+        return EF result == true
     }
 }
 
-// Dual: r = true only when both operands are true.
 @VerificationCase
 @Tag("expect-pass")
 class AndTrueImpliesBoth {
-    var p: bool := false
-    var q: bool := false
-    var r: bool := false
+    var left: bool := false
+    var right: bool := false
+    var result: bool := false
 
     redefine tran {
-        havoc(p)
-        havoc(q)
-        r := p && q
+        havoc(left)
+        havoc(right)
+        result := left && right
     }
 
     prop {
-        return AG (r == false || (p == true && q == true))
+        return AG (result == false || (left == true && right == true))
     }
 }
 
-// --- || (or) ---
-
-// Any-true is reachable.
 @VerificationCase
 @Tag("expect-pass")
 class OrTrueReach {
-    var p: bool := false
-    var q: bool := false
-    var r: bool := false
+    var left: bool := false
+    var right: bool := false
+    var result: bool := false
 
     redefine tran {
-        havoc(p)
-        havoc(q)
-        r := p || q
+        havoc(left)
+        havoc(right)
+        result := left || right
     }
 
     prop {
-        return EF r == true
+        return EF result == true
     }
 }
 
-// Dual: r = false only when both operands are false.
 @VerificationCase
 @Tag("expect-pass")
 class OrFalseImpliesBothFalse {
-    var p: bool := false
-    var q: bool := false
-    var r: bool := false
+    var left: bool := false
+    var right: bool := false
+    var result: bool := false
 
     redefine tran {
-        havoc(p)
-        havoc(q)
-        r := p || q
+        havoc(left)
+        havoc(right)
+        result := left || right
     }
 
     prop {
-        return AG (r == true || (p == false && q == false))
+        return AG (result == true || (left == false && right == false))
     }
 }
 
-// --- ^^ (xor) ---
-
-// Xor-true is reachable (operands differ).
 @VerificationCase
 @Tag("expect-pass")
 class XorTrueReach {
-    var p: bool := false
-    var q: bool := false
-    var r: bool := false
+    var left: bool := false
+    var right: bool := false
+    var result: bool := false
 
     redefine tran {
-        havoc(p)
-        havoc(q)
-        r := p ^^ q
+        havoc(left)
+        havoc(right)
+        result := left ^^ right
     }
 
     prop {
-        return EF r == true
+        return EF result == true
     }
 }
 
-// Dual: r = true iff operands differ.
 @VerificationCase
 @Tag("expect-pass")
 class XorTrueImpliesDiffer {
-    var p: bool := false
-    var q: bool := false
-    var r: bool := false
+    var left: bool := false
+    var right: bool := false
+    var result: bool := false
 
     redefine tran {
-        havoc(p)
-        havoc(q)
-        r := p ^^ q
+        havoc(left)
+        havoc(right)
+        result := left ^^ right
     }
 
     prop {
-        return AG (r == false || p != q)
+        return AG (result == false || left != right)
     }
 }
 
-// --- ! (negation) ---
-
-// Negation flips value: starting true, flipping yields false.
 @VerificationCase
 @Tag("expect-pass")
 class NegationReach {
-    var p: bool := true
+    var operand: bool := true
 
     redefine tran {
-        p := !p
+        operand := !operand
     }
 
     prop {
-        return EF p == false
+        return EF operand == false
     }
 }
 
-// Dual: p stays boolean - always in {true, false}.
 @VerificationCase
 @Tag("expect-pass")
 class NegationBound {
-    var p: bool := true
+    var operand: bool := true
 
     redefine tran {
-        p := !p
+        operand := !operand
     }
 
     prop {
-        return AG (p == true || p == false)
+        return AG (operand == true || operand == false)
     }
 }
 
-// --- short-circuit-free evaluation: && / || are strict over pure reads ---
-
-// A chain of boolean ops: (p && q) || !p - classical tautology.
 @VerificationCase
 @Tag("expect-pass")
 class TautologyAlwaysTrue {
-    var p: bool := false
-    var q: bool := false
-    var r: bool := false
+    var left: bool := false
+    var right: bool := false
+    var result: bool := false
 
     redefine tran {
-        havoc(p)
-        havoc(q)
-        r := (p && q) || !p
+        havoc(left)
+        havoc(right)
+        result := (left && right) || !left
     }
 
     prop {
-        return AG (r == false || r == true)
+        return AG (result == false || result == true)
     }
 }
 
-// --- nested negation (double negation) ---
-
-// !!p == p is reachable as true.
 @VerificationCase
 @Tag("expect-pass")
 class DoubleNegationTrueReach {
-    var p: bool := true
-    var r: bool := false
+    var operand: bool := true
+    var result: bool := false
 
     redefine tran {
-        r := !(!p)
+        result := !(!operand)
     }
 
     prop {
-        return EF r == true
+        return EF result == true
     }
 }
 
-// Dual: !!p never differs from p.
 @VerificationCase
 @Tag("expect-pass")
 class DoubleNegationMatchesInput {
-    var p: bool := false
-    var r: bool := false
+    var operand: bool := false
+    var result: bool := false
 
     redefine tran {
-        havoc(p)
-        r := !(!p)
+        havoc(operand)
+        result := !(!operand)
     }
 
     prop {
-        return AG (r == false || p == true)
+        return AG (result == false || operand == true)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class AndWithFalseOperandUnreachable {
+    var left: bool := false
+    var right: bool := false
+    var result: bool := false
+
+    redefine tran {
+        havoc(left)
+        havoc(right)
+        result := left && right
+    }
+
+    prop {
+        return EF (result == true && right == false)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class OrWithTrueOperandViolated {
+    var left: bool := false
+    var right: bool := false
+    var result: bool := false
+
+    redefine tran {
+        havoc(left)
+        havoc(right)
+        result := left || right
+    }
+
+    prop {
+        return AG (result == false || left == true)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class XorOfEqualOperandsUnreachable {
+    var left: bool := false
+    var right: bool := false
+    var result: bool := false
+
+    redefine tran {
+        havoc(left)
+        havoc(right)
+        result := left ^^ right
+    }
+
+    prop {
+        return EF (result == true && left == right)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class NegationViolated {
+    var operand: bool := true
+
+    redefine tran {
+        operand := !operand
+    }
+
+    prop {
+        return AG operand == true
     }
 }

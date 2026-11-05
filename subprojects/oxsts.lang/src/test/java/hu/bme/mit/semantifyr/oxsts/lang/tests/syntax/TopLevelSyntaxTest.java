@@ -24,171 +24,202 @@ public class TopLevelSyntaxTest {
 
     @Test
     void packageDeclaration() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test::coverage::example
-            class X { }
+            class Example { }
             """);
-        pkg.assertNoResourceErrors();
-        assertThat(pkg.getOxstsPackage().getName()).isEqualTo("test::coverage::example");
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.getOxstsPackage().getName()).isEqualTo("test::coverage::example");
     }
 
     @Test
     void emptyPackage() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test::empty
             """);
-        pkg.assertNoResourceErrors();
-        assertThat(pkg.getOxstsPackage().getDeclarations()).isEmpty();
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.getOxstsPackage().getDeclarations()).isEmpty();
     }
 
     @Test
     void importStatement() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test::base
             import semantifyr
             class Shared { }
             """);
-        pkg.assertNoResourceErrors();
+        parsedPackage.assertNoResourceErrors();
     }
 
     @Test
     void enumWithLiterals() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            enum Color { Red, Green, Blue }
+            enum Color {
+                Red,
+                Green,
+                Blue,
+            }
             """);
-        pkg.assertNoResourceErrors();
-        var colorEnum = pkg.enumByName("Color");
+        parsedPackage.assertNoResourceErrors();
+        var colorEnum = parsedPackage.enumByName("Color");
         assertThat(colorEnum.literalNames()).containsExactly("Red", "Green", "Blue");
     }
 
     @Test
     void enumWithoutLiterals() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             enum Empty { }
             """);
-        pkg.assertNoResourceErrors();
-        assertThat(pkg.enumByName("Empty").literals()).isEmpty();
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.enumByName("Empty").literals()).isEmpty();
     }
 
     @Test
     void concreteClass() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Concrete { }
             """);
-        pkg.assertNoResourceErrors();
-        assertThat(pkg.classByName("Concrete").isAbstract()).isFalse();
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.classByName("Concrete").isAbstract()).isFalse();
     }
 
     @Test
     void abstractClass() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             abstract class Base { }
             """);
-        pkg.assertNoResourceErrors();
-        assertThat(pkg.classByName("Base").isAbstract()).isTrue();
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.classByName("Base").isAbstract()).isTrue();
     }
 
     @Test
     void classWithSingleInheritance() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Base { }
             class Child : Base { }
             """);
-        pkg.assertNoResourceErrors();
-        var child = pkg.classByName("Child");
+        parsedPackage.assertNoResourceErrors();
+        var child = parsedPackage.classByName("Child");
         assertThat(child.superTypes()).hasSize(1);
         assertThat(child.superTypes().getFirst().name()).isEqualTo("Base");
     }
 
     @Test
     void classWithMultipleInheritance() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class A { }
-            class B { }
-            class Child : A, B { }
+            class Left { }
+            class Right { }
+            class Child : Left, Right { }
             """);
-        pkg.assertNoResourceErrors();
-        var child = pkg.classByName("Child");
+        parsedPackage.assertNoResourceErrors();
+        var child = parsedPackage.classByName("Child");
         assertThat(child.superTypes()).hasSize(2);
-        assertThat(child.superTypes().stream().map(s -> s.name())).containsExactly("A", "B");
+        assertThat(child.superTypes().stream().map(superType -> superType.name()))
+                .containsExactly("Left", "Right");
     }
 
     @Test
     void classWithSemicolonOnly() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Marker;
             """);
-        pkg.assertNoResourceErrors();
-        assertThat(pkg.classByName("Marker").eObject().getMembers()).isEmpty();
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.classByName("Marker").eObject().getMembers()).isEmpty();
+    }
+
+    @Test
+    void classWithoutBody() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Sentinel
+            """);
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.classByName("Sentinel").eObject().getMembers()).isEmpty();
     }
 
     @Test
     void globalContainmentFeature() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Shared { }
             global containment shared: Shared[1]
             """);
-        pkg.assertNoResourceErrors();
-        var sharedFeature = pkg.globalFeatureByName("shared");
+        parsedPackage.assertNoResourceErrors();
+        var sharedFeature = parsedPackage.globalFeatureByName("shared");
         assertThat(sharedFeature.kind()).isEqualTo(FeatureKind.CONTAINMENT);
     }
 
     @Test
     void globalReferenceFeature() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Thing { }
             global reference pointer: Thing[1]
             """);
-        pkg.assertNoResourceErrors();
-        assertThat(pkg.globalFeatureByName("pointer").kind()).isEqualTo(FeatureKind.REFERENCE);
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.globalFeatureByName("pointer").kind()).isEqualTo(FeatureKind.REFERENCE);
+    }
+
+    @Test
+    void globalFeatureWithSubsets() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Event { }
+            global containment events: Event[0..*]
+            global containment sharedEvent: Event subsets events
+            """);
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.globalFeatureByName("sharedEvent").superset().eObject())
+                .isSameAs(parsedPackage.globalFeatureByName("events").eObject());
     }
 
     @Test
     void annotationDeclarationNoParameters() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             annotation Marker
             """);
-        pkg.assertNoResourceErrors();
-        var ann = EcoreUtil2.eAllOfType(pkg.getOxstsPackage(), AnnotationDeclaration.class);
-        assertThat(ann).hasSize(1);
-        assertThat(ann.getFirst().getName()).isEqualTo("Marker");
-        assertThat(ann.getFirst().getParameters()).isEmpty();
+        parsedPackage.assertNoResourceErrors();
+        var annotations = EcoreUtil2.eAllOfType(parsedPackage.getOxstsPackage(), AnnotationDeclaration.class);
+        assertThat(annotations).hasSize(1);
+        assertThat(annotations.getFirst().getName()).isEqualTo("Marker");
+        assertThat(annotations.getFirst().getParameters()).isEmpty();
     }
 
     @Test
     void annotationDeclarationWithParameters() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             annotation Tag(category: string)
             """);
-        pkg.assertNoResourceErrors();
-        var ann = EcoreUtil2.eAllOfType(pkg.getOxstsPackage(), AnnotationDeclaration.class)
+        parsedPackage.assertNoResourceErrors();
+        var annotation = EcoreUtil2.eAllOfType(parsedPackage.getOxstsPackage(), AnnotationDeclaration.class)
                 .getFirst();
-        assertThat(ann.getParameters()).hasSize(1);
-        assertThat(ann.getParameters().getFirst().getName()).isEqualTo("category");
+        assertThat(annotation.getParameters()).hasSize(1);
+        assertThat(annotation.getParameters().getFirst().getName()).isEqualTo("category");
     }
 
     @Test
     void multipleTopLevelDeclarations() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            enum Color { Red, Green }
+            enum Color {
+                Red,
+                Green,
+            }
             annotation Marker
-            class A { }
-            class B { }
+            class Left { }
+            class Right { }
             """);
-        pkg.assertNoResourceErrors();
-        assertThat(pkg.classes()).hasSize(2);
-        assertThat(pkg.enums()).hasSize(1);
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.classes()).hasSize(2);
+        assertThat(parsedPackage.enums()).hasSize(1);
     }
 }

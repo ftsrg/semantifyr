@@ -46,57 +46,57 @@ class InstanceTest {
     @Test
     fun `grandchild composes names recursively`() {
         val root = Instance(domain("Root"), parent = null, tree = tree)
-        val mid = Instance(domain("Mid"), parent = root, tree = tree)
-        val leaf = Instance(domain("Leaf"), parent = mid, tree = tree)
+        val middle = Instance(domain("Middle"), parent = root, tree = tree)
+        val leaf = Instance(domain("Leaf"), parent = middle, tree = tree)
 
-        val sep = InstanceNames.INSTANCE_NAME_SEPARATOR
-        assertThat(leaf.name).isEqualTo("${sep}Mid${sep}Leaf")
+        val separator = InstanceNames.INSTANCE_NAME_SEPARATOR
+        assertThat(leaf.name).isEqualTo("${separator}Middle${separator}Leaf")
     }
 
     @Test
     fun `instancesAt on an empty slot returns an empty set`() {
         val root = Instance(domain("Root"), parent = null, tree = tree)
 
-        assertThat(root.instancesAt(feature("f"))).isEmpty()
+        assertThat(root.instancesAt(feature("children"))).isEmpty()
     }
 
     @Test
     fun `placeInSlot makes the instance visible via instancesAt`() {
         val root = Instance(domain("Root"), parent = null, tree = tree)
         val child = Instance(domain("Child"), parent = root, tree = tree)
-        val f = feature("children")
+        val childrenFeature = feature("children")
 
-        root.placeInSlot(f, child)
+        root.placeInSlot(childrenFeature, child)
 
-        assertThat(root.instancesAt(f)).containsExactly(child)
+        assertThat(root.instancesAt(childrenFeature)).containsExactly(child)
     }
 
     @Test
     fun `placeInSlot deduplicates the same instance added twice`() {
         val root = Instance(domain("Root"), parent = null, tree = tree)
         val child = Instance(domain("Child"), parent = root, tree = tree)
-        val f = feature("children")
+        val childrenFeature = feature("children")
 
-        root.placeInSlot(f, child)
-        root.placeInSlot(f, child)
+        root.placeInSlot(childrenFeature, child)
+        root.placeInSlot(childrenFeature, child)
 
-        assertThat(root.instancesAt(f)).containsExactly(child)
+        assertThat(root.instancesAt(childrenFeature)).containsExactly(child)
     }
 
     @Test
     fun `children aggregates instances across all slots`() {
         val root = Instance(domain("Root"), parent = null, tree = tree)
-        val a = Instance(domain("A"), parent = root, tree = tree)
-        val b = Instance(domain("B"), parent = root, tree = tree)
-        val c = Instance(domain("C"), parent = root, tree = tree)
-        val featureX = feature("x")
-        val featureY = feature("y")
+        val firstSensor = Instance(domain("TemperatureSensor"), parent = root, tree = tree)
+        val secondSensor = Instance(domain("PressureSensor"), parent = root, tree = tree)
+        val valve = Instance(domain("Valve"), parent = root, tree = tree)
+        val sensorsFeature = feature("sensors")
+        val valvesFeature = feature("valves")
 
-        root.placeInSlot(featureX, a)
-        root.placeInSlot(featureX, b)
-        root.placeInSlot(featureY, c)
+        root.placeInSlot(sensorsFeature, firstSensor)
+        root.placeInSlot(sensorsFeature, secondSensor)
+        root.placeInSlot(valvesFeature, valve)
 
-        assertThat(root.children).containsExactlyInAnyOrder(a, b, c)
+        assertThat(root.children).containsExactlyInAnyOrder(firstSensor, secondSensor, valve)
     }
 
     @Test
@@ -110,13 +110,13 @@ class InstanceTest {
     fun `instances placed in one slot are not returned by another`() {
         val root = Instance(domain("Root"), parent = null, tree = tree)
         val child = Instance(domain("Child"), parent = root, tree = tree)
-        val fx = feature("x")
-        val fy = feature("y")
+        val sensorsFeature = feature("sensors")
+        val valvesFeature = feature("valves")
 
-        root.placeInSlot(fx, child)
+        root.placeInSlot(sensorsFeature, child)
 
-        assertThat(root.instancesAt(fx)).containsExactly(child)
-        assertThat(root.instancesAt(fy)).isEmpty()
+        assertThat(root.instancesAt(sensorsFeature)).containsExactly(child)
+        assertThat(root.instancesAt(valvesFeature)).isEmpty()
     }
 
     @Test

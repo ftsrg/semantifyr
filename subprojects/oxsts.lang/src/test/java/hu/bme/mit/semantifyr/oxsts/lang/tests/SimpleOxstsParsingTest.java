@@ -26,19 +26,19 @@ public class SimpleOxstsParsingTest {
                 class Element
                 class Holder {
                     features elements: Element[0..*]
-                    contains e1: Element[1] subsets elements
-                    contains e2: Element subsets elements
-                    contains e3: Element[1..1] subsets elements
+                    contains elementWithExactMultiplicity: Element[1] subsets elements
+                    contains elementWithDefaultMultiplicity: Element subsets elements
+                    contains elementWithRangeMultiplicity: Element[1..1] subsets elements
                     refers size: int = 3
                     refers twiceSize: int = size * 2
                 }
                 class Model {
-                    var x: int := 10
-                    prop p1(): bool { return false }
+                    var counter: int := 10
+                    prop alwaysFalse(): bool { return false }
                     init { }
-                    tran { x := 20 }
+                    tran { counter := 20 }
                     tran named() { }
-                    tran named(p: int) { x := p }
+                    tran named(value: int) { counter := value }
                 }
                 """);
         assertThat(model.getResourceErrors()).isEmpty();

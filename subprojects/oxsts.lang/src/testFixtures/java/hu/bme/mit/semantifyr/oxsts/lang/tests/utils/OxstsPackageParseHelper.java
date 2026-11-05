@@ -27,8 +27,8 @@ public class OxstsPackageParseHelper {
             var oxstsPackage = parseHelper.parse(text);
             EcoreUtil.resolveAll(oxstsPackage);
             return new WrappedOxstsPackage(oxstsPackage, null);
-        } catch (Exception e) {
-            throw new AssertionError("Unexpected exception while parsing Oxsts Package", e);
+        } catch (Exception exception) {
+            throw new AssertionError("Unexpected exception while parsing Oxsts Package", exception);
         }
     }
 
@@ -38,8 +38,8 @@ public class OxstsPackageParseHelper {
             EcoreUtil.resolveAll(oxstsPackage);
             var issues = resourceValidator.validate(oxstsPackage.eResource(), checkMode, CancelIndicator.NullImpl);
             return new WrappedOxstsPackage(oxstsPackage, issues);
-        } catch (Exception e) {
-            throw new AssertionError("Unexpected exception while parsing Oxsts Package", e);
+        } catch (Exception exception) {
+            throw new AssertionError("Unexpected exception while parsing Oxsts Package", exception);
         }
     }
 }

@@ -6,16 +6,9 @@
 
 package semantifyr::verification::lang::arrays
 
-// Fixed-size arrays: compiler flattens to per-index slot variables.
-// Tests cover literal initialization, independent indexing, and
-// that slots don't bleed into each other.
-
-// --- literal initializer, constant index read ---
-
-// Reachable: slots[0] starts at 10 (from the literal initializer).
 @VerificationCase
 @Tag("expect-pass")
-class ArrayLiteralInit0Reach {
+class ArrayLiteralInitializer0Reach {
     var values: int[3] := [10, 20, 30]
     var first: int := 0
 
@@ -28,10 +21,9 @@ class ArrayLiteralInit0Reach {
     }
 }
 
-// Reachable: slots[2] starts at 30.
 @VerificationCase
 @Tag("expect-pass")
-class ArrayLiteralInit2Reach {
+class ArrayLiteralInitializer2Reach {
     var values: int[3] := [10, 20, 30]
     var third: int := 0
 
@@ -44,11 +36,9 @@ class ArrayLiteralInit2Reach {
     }
 }
 
-// Dual: values are bounded by the declared initializers (no phantom
-// slot escapes).
 @VerificationCase
 @Tag("expect-pass")
-class ArrayLiteralInitBound {
+class ArrayLiteralInitializerBound {
     var values: int[3] := [10, 20, 30]
 
     redefine tran { }
@@ -58,12 +48,8 @@ class ArrayLiteralInitBound {
     }
 }
 
-// --- independent slot writes ---
-
-// Reachable: independent writes land each in their own slot.
 @VerificationCase
 @Tag("expect-pass")
-@Tag("engine-limit:spin")
 class ArraySlotIndependenceReach {
     var slots: int[3] := [0, 0, 0]
 
@@ -82,8 +68,6 @@ class ArraySlotIndependenceReach {
     }
 }
 
-// Dual: writing slot 0 does not disturb slots 1 or 2 (write
-// independence is the invariant we care about for flattening).
 @VerificationCase
 @Tag("expect-pass")
 class ArraySlot0DoesNotAffectOthers {
@@ -98,9 +82,6 @@ class ArraySlot0DoesNotAffectOthers {
     }
 }
 
-// --- read-after-write on the same slot ---
-
-// Reachable: the value stored in slots[1] is what we read back.
 @VerificationCase
 @Tag("expect-pass")
 class ArrayReadAfterWriteReach {
@@ -117,19 +98,16 @@ class ArrayReadAfterWriteReach {
     }
 }
 
-// --- runtime index ---
-
-// Reachable: a runtime index walks the slots one step at a time.
 @VerificationCase
 @Tag("expect-pass")
 class ArrayRuntimeIndexReach {
     var slots: int[3] := [0, 0, 0]
-    var i: int := 0
+    var index: int := 0
 
     redefine tran {
-        slots[i] := 5
-        if (i < 2) {
-            i := i + 1
+        slots[index] := 5
+        if (index < 2) {
+            index := index + 1
         }
     }
 
@@ -138,9 +116,6 @@ class ArrayRuntimeIndexReach {
     }
 }
 
-// --- ranged multiplicity ---
-
-// Reachable: an [lb..ub] array holds ub slots.
 @VerificationCase
 @Tag("expect-pass")
 class ArrayRangedMultiplicityReach {
@@ -156,9 +131,6 @@ class ArrayRangedMultiplicityReach {
     }
 }
 
-// --- whole-array assignment, comparison and havoc ---
-
-// Reachable: whole-array assignment and comparison work slot by slot.
 @VerificationCase
 @Tag("expect-pass")
 class ArrayWholeCopyReach {
@@ -181,7 +153,6 @@ class ArrayWholeCopyReach {
     }
 }
 
-// Violated: havoc of a whole array reaches values beyond 2.
 @VerificationCase
 @Tag("expect-fail")
 class ArrayWholeHavocBound {
@@ -197,7 +168,6 @@ class ArrayWholeHavocBound {
     }
 }
 
-// Reachable: a whole-array assignment reads every slot before it writes one, so a swap exchanges the values.
 @VerificationCase
 @Tag("expect-pass")
 class ArraySwapReach {
@@ -212,7 +182,6 @@ class ArraySwapReach {
     }
 }
 
-// Violated: the swap moves the first value into the second slot.
 @VerificationCase
 @Tag("expect-fail")
 class ArraySwapBound {
@@ -227,20 +196,17 @@ class ArraySwapBound {
     }
 }
 
-// --- local arrays ---
-
-// Reachable: a local array is initialized every step and read at a runtime index.
 @VerificationCase
 @Tag("expect-pass")
 class LocalArrayRuntimeIndexReach {
-    var i: int := 0
+    var index: int := 0
     var seen: int := 0
 
     redefine tran {
         var values: int[3] := [10, 20, 30]
-        seen := values[i]
-        if (i < 2) {
-            i := i + 1
+        seen := values[index]
+        if (index < 2) {
+            index := index + 1
         }
     }
 
@@ -249,19 +215,18 @@ class LocalArrayRuntimeIndexReach {
     }
 }
 
-// Violated: a runtime-index write into a local array reaches a constant-index read.
 @VerificationCase
 @Tag("expect-fail")
 class LocalArrayRuntimeWriteBound {
-    var i: int := 0
+    var index: int := 0
     var seen: int := 0
 
     redefine tran {
         var values: int[3] := [0, 0, 0]
-        values[i] := 5
+        values[index] := 5
         seen := values[2]
-        if (i < 2) {
-            i := i + 1
+        if (index < 2) {
+            index := index + 1
         }
     }
 
@@ -270,7 +235,6 @@ class LocalArrayRuntimeWriteBound {
     }
 }
 
-// Holds: a local array starts from its initializer every step.
 @VerificationCase
 @Tag("expect-pass")
 class LocalArrayNotPersistedBound {
@@ -287,7 +251,6 @@ class LocalArrayNotPersistedBound {
     }
 }
 
-// Reachable: an uninitialized local array is havoced at its declaration.
 @VerificationCase
 @Tag("expect-pass")
 class LocalArrayUninitializedReach {
@@ -304,7 +267,6 @@ class LocalArrayUninitializedReach {
     }
 }
 
-// Reachable: a local array initialized from a class array holds its values.
 @VerificationCase
 @Tag("expect-pass")
 class LocalArrayCopyReach {
@@ -326,8 +288,6 @@ class LocalArrayCopyReach {
     }
 }
 
-// --- class- and feature-typed arrays ---
-
 class Job {
     var done: bool := false
 
@@ -336,21 +296,20 @@ class Job {
     }
 }
 
-// Reachable: a class-typed array slot is written at a runtime index and compared by identity.
 @VerificationCase
 @Tag("expect-pass")
 class ClassTypedArrayReach {
     contains first: Job
     contains second: Job
     var queue: Job[2] := [first, first]
-    var i: int := 0
+    var index: int := 0
 
     redefine tran {
         choice {
-            queue[i] := second
+            queue[index] := second
         } or {
-            assume(i < 1)
-            i := i + 1
+            assume(index < 1)
+            index := index + 1
         }
     }
 
@@ -359,21 +318,20 @@ class ClassTypedArrayReach {
     }
 }
 
-// Violated: the first slot does not keep its initial instance.
 @VerificationCase
 @Tag("expect-fail")
 class ClassTypedArrayBound {
     contains first: Job
     contains second: Job
     var queue: Job[2] := [first, first]
-    var i: int := 0
+    var index: int := 0
 
     redefine tran {
         choice {
-            queue[i] := second
+            queue[index] := second
         } or {
-            assume(i < 1)
-            i := i + 1
+            assume(index < 1)
+            index := index + 1
         }
     }
 
@@ -382,21 +340,20 @@ class ClassTypedArrayBound {
     }
 }
 
-// Reachable: a call through an array slot dispatches to the instance the slot holds.
 @VerificationCase
 @Tag("expect-pass")
 class ClassTypedArrayDispatchReach {
     contains first: Job
     contains second: Job
     var queue: Job[2] := [first, second]
-    var i: int := 0
+    var index: int := 0
 
     redefine tran {
         choice {
-            inline queue[i].finish()
+            inline queue[index].finish()
         } or {
-            assume(i < 1)
-            i := i + 1
+            assume(index < 1)
+            index := index + 1
         }
     }
 
@@ -405,7 +362,6 @@ class ClassTypedArrayDispatchReach {
     }
 }
 
-// Holds: a havoced feature-typed array holds instances of the feature only.
 @VerificationCase
 @Tag("expect-pass")
 class FeatureTypedArrayHavocBound {
@@ -424,7 +380,6 @@ class FeatureTypedArrayHavocBound {
     }
 }
 
-// Violated: havoc reaches the other instance of the feature.
 @VerificationCase
 @Tag("expect-fail")
 class FeatureTypedArrayHavocChanges {

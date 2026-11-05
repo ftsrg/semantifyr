@@ -26,4 +26,4 @@
 
 -- no proof or counterexample found with bound 0
 -- no proof or counterexample found with bound 1
--- invariant !(x = 5)  is true
+-- invariant !(counter = 5)  is true

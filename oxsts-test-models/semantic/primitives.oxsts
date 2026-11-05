@@ -6,14 +6,6 @@
 
 package semantifyr::verification::lang::primitives
 
-// Each behavioural test comes in a reachability (EF) / safety (AG) pair so
-// that a change in compilation cannot silently widen the reachable-state
-// set. Classes that share structure are siblings by naming convention:
-// `*Reach` for the positive claim, `*Bound` for the negative one.
-
-// --- integer counter ---
-
-// Integer counter: 10 is reachable.
 @VerificationCase
 @Tag("expect-pass")
 class IntegerCounterReach {
@@ -29,8 +21,6 @@ class IntegerCounterReach {
     }
 }
 
-// Integer counter: x never falls below 0 or rises above 10. Pairs with
-// IntegerCounterReach to pin the reachable range.
 @VerificationCase
 @Tag("expect-pass")
 class IntegerCounterBound {
@@ -46,41 +36,34 @@ class IntegerCounterBound {
     }
 }
 
-// --- boolean havoc ---
-
-// Boolean havoc: true is reachable from the initial false.
 @VerificationCase
 @Tag("expect-pass")
 class BooleanHavocTrueReach {
-    var b: bool := false
+    var flag: bool := false
 
     redefine tran {
-        havoc(b)
+        havoc(flag)
     }
 
     prop {
-        return EF b == true
+        return EF flag == true
     }
 }
 
-// Boolean havoc: false is also reachable (both values must be seen).
 @VerificationCase
 @Tag("expect-pass")
 class BooleanHavocFalseReach {
-    var b: bool := true
+    var flag: bool := true
 
     redefine tran {
-        havoc(b)
+        havoc(flag)
     }
 
     prop {
-        return EF b == false
+        return EF flag == false
     }
 }
 
-// --- bounded decrement ---
-
-// Bounded decrement: 0 is reachable from 5.
 @VerificationCase
 @Tag("expect-pass")
 class BoundedDecrementReach {
@@ -96,8 +79,6 @@ class BoundedDecrementReach {
     }
 }
 
-// Bounded decrement: x stays in [0, 5] - never under-runs, never over-runs
-// the initial value.
 @VerificationCase
 @Tag("expect-pass")
 class BoundedDecrementBound {
@@ -114,5 +95,34 @@ class BoundedDecrementBound {
 
     prop {
         return AG (x >= 0 && x <= 5)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class IntegerCounterViolated {
+    var x: int := 0
+
+    redefine tran {
+        assume(x < 10)
+        x := x + 1
+    }
+
+    prop {
+        return AG x <= 9
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class BooleanHavocViolated {
+    var flag: bool := false
+
+    redefine tran {
+        havoc(flag)
+    }
+
+    prop {
+        return AG flag == false
     }
 }

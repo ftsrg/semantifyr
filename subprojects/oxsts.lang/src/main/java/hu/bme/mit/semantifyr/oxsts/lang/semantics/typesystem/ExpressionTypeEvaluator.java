@@ -225,8 +225,9 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
     protected TypeEvaluation visit(NavigationSuffixExpression expression) {
         var member = expression.getMember();
 
+        // the unresolved member carries its own linking diagnostic
         if (member.eIsProxy()) {
-            throw new IllegalStateException("NavigationSuffix.member could not be resolved!");
+            return InvalidTypeEvaluation.Instance;
         }
 
         return switch (member) {

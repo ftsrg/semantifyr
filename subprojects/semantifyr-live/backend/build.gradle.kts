@@ -220,3 +220,23 @@ tasks.register("prepareDockerBuild") {
     inputs.files(cloneTheta)
     inputs.files(tasks.installDist)
 }
+
+tasks.register<Tar>("liveImageContext") {
+    archiveFileName = "live-image-context.tar.gz"
+    compression = Compression.GZIP
+    // the image runs the start script and theta-xsts-cli, whose execute bits Gradle's archives drop by default
+    useFileSystemPermissions()
+    from(layout.projectDirectory.file("Dockerfile"))
+    from(tasks.installDist) {
+        into("build/install/${application.applicationName}")
+    }
+    from(cloneSemanticLibraries) {
+        into("build/staging/semantic-libraries")
+    }
+    from(cloneWebDistributions) {
+        into("build/staging/web")
+    }
+    from(cloneTheta) {
+        into("build/theta-xsts-cli")
+    }
+}

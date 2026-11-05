@@ -6,7 +6,9 @@
 
 package hu.bme.mit.semantifyr.backends.spin
 
+import hu.bme.mit.semantifyr.backends.spin.transformation.SpinCapabilityChecker
 import hu.bme.mit.semantifyr.backends.spin.verification.SpinBackend
+import hu.bme.mit.semantifyr.backends.spin.verification.SpinBackendModule
 import hu.bme.mit.semantifyr.backends.spin.verification.SpinConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.portfolios.Portfolios
@@ -42,7 +44,12 @@ class SpinWitnessTest {
 
         @JvmStatic
         fun `Witnesses Re-verify Through All Backends`(): List<Arguments> {
-            return helper.collectVerificationCasesAsArguments(context)
+            return helper.collectAcceptedCasesAsArguments(
+                context,
+                SpinBackendModule(),
+                SpinCapabilityChecker::class.java,
+                SemantifyrVerifierTestHelper.testArtifactRoot(SpinWitnessTest::class.java).resolve("capability-check"),
+            )
         }
     }
 

@@ -45,7 +45,7 @@ This runs the unit tests and the verification smoke tests, and assembles every a
 ./gradlew nightlyTest       # long-running cases and witness re-checks on all backends
 ```
 
-Pass `-Ptests.requiredBackends=theta,spin` to fail instead of skip when a listed backend is missing. A listed backend that returns Inconclusive or Not supported also fails the case; a Timeout skips. A case whose `@Tag("engine-limit:...")` names every engine of the portfolio must come back Not supported; any other verdict fails it.
+A suite whose backend is missing skips as a whole; CI checks its engines before the build, so a missing one fails the job instead. A case passes only with the expected verdict: Inconclusive, Not supported, Timeout and Errored fail it. Each backend's conformance suite runs the semantic cases that backend's capability checker accepts; a case the checker accepts but the backend does not decide within the suite's timeout is left out by name in the suite class, with its measured time or the backend's reported stop. The models carry only the expected verdict.
 
 ## Where to start
 
@@ -60,7 +60,8 @@ The repository is organized under `subprojects/`:
 | Backends | `subprojects/backends/` | Theta, nuXmv, Spin and Uppaal integrations |
 | Portfolios | `subprojects/portfolios/` | Backend configurations raced or combined per case |
 | Frontends | `subprojects/frontends/` | Gamma and SysML v2 frontends |
-| CLI | `subprojects/semantifyr-cli/` | The `semantifyr` command-line interface |
+| CLI | `subprojects/semantifyr-cli/`, `subprojects/cli-common/` | The `semantifyr` command-line interface and what the launchers share |
+| Frontend CLIs | `subprojects/frontends/sysml/sysml-cli/`, `subprojects/frontends/gamma/gamma-cli/` | The `semantifyr-sysml` and `semantifyr-gamma` launchers |
 | VS Code extension | `subprojects/semantifyr-vscode/` | Extension packaging and launch configs |
 | Live editor | `subprojects/semantifyr-live/` | The browser-based editor frontend and backend |
 | Website | `subprojects/website/` | This documentation site |

@@ -21,147 +21,147 @@ public class TypeValidationTest {
 
     @Test
     void assigningIntToIntPasses() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                redefine tran { x := 5 }
+            class Holder {
+                var value: int := 0
+                redefine tran { value := 5 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void assigningBoolToIntIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                redefine tran { x := true }
+            class Holder {
+                var value: int := 0
+                redefine tran { value := true }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "assign");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "assign");
     }
 
     @Test
     void assigningIntToBoolIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var b: bool := false
-                redefine tran { b := 5 }
+            class Holder {
+                var flag: bool := false
+                redefine tran { flag := 5 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "assign");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "assign");
     }
 
     @Test
     void ifGuardInt_isRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
+            class Holder {
+                var value: int := 0
                 redefine tran {
-                    if (x) { x := 1 } else { x := 0 }
+                    if (value) { value := 1 } else { value := 0 }
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "guard");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "guard");
     }
 
     @Test
     void ifGuardBool_passes() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var b: bool := false
-                var x: int := 0
+            class Holder {
+                var flag: bool := false
+                var value: int := 0
                 redefine tran {
-                    if (b) { x := 1 } else { x := 0 }
+                    if (flag) { value := 1 } else { value := 0 }
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void assumeWithIntExpression_isRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
+            class Holder {
+                var value: int := 0
                 redefine tran {
-                    assume(x)
-                    x := 1
+                    assume(value)
+                    value := 1
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "assume");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "assume");
     }
 
     @Test
     void addingBoolsIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                var b: bool := false
-                redefine tran { x := b + 1 }
+            class Holder {
+                var value: int := 0
+                var flag: bool := false
+                redefine tran { value := flag + 1 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "arithmetic");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "arithmetic");
     }
 
     @Test
     void andIngIntsIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                var b: bool := false
-                redefine tran { b := x && 1 }
+            class Holder {
+                var value: int := 0
+                var flag: bool := false
+                redefine tran { flag := value && 1 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "boolean");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "boolean");
     }
 
     @Test
     void negatingIntIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                var b: bool := false
-                redefine tran { b := !x }
+            class Holder {
+                var value: int := 0
+                var flag: bool := false
+                redefine tran { flag := !value }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "negation");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "negation");
     }
 
     @Test
     void comparingIncompatibleTypesIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var b: bool := false
-                var n: int := 0
+            class Holder {
+                var flag: bool := false
+                var number: int := 0
                 var result: bool := false
-                redefine tran { result := (b == n) }
+                redefine tran { result := (flag == number) }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "compare");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "compare");
     }
 
     private static final String GAMMA_PORTS = """
@@ -188,7 +188,7 @@ public class TypeValidationTest {
 
     @Test
     void comparingUnrelatedFeaturesOfTheSameClassPasses() {
-        var pkg = parseHelper.parse(GAMMA_PORTS + """
+        var parsedPackage = parseHelper.parse(GAMMA_PORTS + """
             class Component {
                 contains port: ProvidedPort {
                     redefine contains interface: PingPong
@@ -197,13 +197,13 @@ public class TypeValidationTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void comparingUnrelatedFeaturesOfDifferentClassesIsRejected() {
-        var pkg = parseHelper.parse(GAMMA_PORTS + """
+        var parsedPackage = parseHelper.parse(GAMMA_PORTS + """
             class Component {
                 contains port: ProvidedPort {
                     redefine contains interface: PingPong
@@ -213,283 +213,322 @@ public class TypeValidationTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "compare");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "compare");
     }
 
     @Test
     void assigningSubclassInstanceToBaseFieldPasses() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Base { }
             class Child : Base { }
             class Host {
                 contains children: Child[0..*]
                 contains child: Child[1] subsets children
-                var ref: children[0..1] := nothing
-                redefine tran { ref := child }
+                var selected: children[0..1] := nothing
+                redefine tran { selected := child }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void ifThenElseNonBooleanGuard_isRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var n: int := 0
+            class Holder {
+                var number: int := 0
                 redefine tran {
                     var result: int := 0
-                    result := if n then 1 else 0
+                    result := if number then 1 else 0
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "guard");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "guard");
     }
 
     @Test
     void ifThenElseIncompatibleBranches_areRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var b: bool := false
+            class Holder {
+                var flag: bool := false
                 redefine tran {
                     var result: int := 0
-                    result := if b then 1 else true
+                    result := if flag then 1 else true
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "incompatible");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "incompatible");
     }
 
     @Test
     void ifThenElseCompatibleBranchesOfSameType_pass() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var b: bool := false
+            class Holder {
+                var flag: bool := false
                 redefine tran {
                     var result: int := 0
-                    result := if b then 1 else 2
+                    result := if flag then 1 else 2
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void ifThenElseInPropertyBody_isAllowed() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             @VerificationCase
-            class C {
-                var n: int := 0
-                redefine tran { n := n + 1 }
-                prop { return EF (if n > 0 then true else false) }
+            class Holder {
+                var number: int := 0
+                redefine tran { number := number + 1 }
+                prop { return EF (if number > 0 then true else false) }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void callArgumentMatchingParameterType_passes() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Holder {
                 var total: int := 0
-                tran addBy(n: int) { total := total + n }
+                tran addBy(amount: int) { total := total + amount }
                 redefine tran { inline addBy(5) }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void callArgumentOfWrongType_isRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Holder {
                 var total: int := 0
-                tran addBy(n: int) { total := total + n }
+                tran addBy(amount: int) { total := total + amount }
                 redefine tran { inline addBy(true) }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "not assignable to parameter");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "not assignable to parameter");
+    }
+
+    @Test
+    void featureTypedVariableArgumentToOptionalClassParameter_passes() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Worker {
+                tran step() { }
+            }
+            class Holder {
+                contains workers: Worker[0..*]
+                contains lead: Worker[1] subsets workers
+                var current: workers[0..1] := nothing
+                tran run(worker: Worker[0..1]) { inline worker.step() }
+                redefine tran { inline run(current) }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
+    }
+
+    @Test
+    void optionalFeatureTypedVariableArgumentToRequiredParameter_isRejected() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Worker {
+                tran step() { }
+            }
+            class Holder {
+                contains workers: Worker[0..*]
+                contains lead: Worker[1] subsets workers
+                var current: workers[0..1] := nothing
+                tran run(worker: Worker) { inline worker.step() }
+                redefine tran { inline run(current) }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "not assignable to parameter 'worker'");
     }
 
     @Test
     void annotationArgumentOfWrongType_isRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            annotation Tag(n: int)
+            annotation Tag(priority: int)
             @Tag(true)
-            class C { }
+            class Holder { }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "not assignable to parameter");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "not assignable to parameter");
     }
 
     @Test
     void annotationArgumentMatchingParameter_passes() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            annotation Tag(n: int)
+            annotation Tag(priority: int)
             @Tag(42)
-            class C { }
+            class Holder { }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void propertyReturningWrongType_isRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var n: int := 0
-                redefine tran { n := 1 }
+            class Holder {
+                var number: int := 0
+                redefine tran { number := 1 }
                 prop signed(): int { return true }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "expected to return");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "expected to return");
     }
 
     @Test
     void propertyReturningDeclaredType_passes() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var n: int := 0
-                redefine tran { n := 1 }
-                prop signed(): int { return n + 1 }
+            class Holder {
+                var number: int := 0
+                redefine tran { number := 1 }
+                prop signed(): int { return number + 1 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void propertyDefaultBoolReturn_enforcesBool() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var n: int := 0
-                redefine tran { n := 1 }
-                prop { return n }
+            class Holder {
+                var number: int := 0
+                redefine tran { number := 1 }
+                prop { return number }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "expected to return");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "expected to return");
     }
 
     @Test
     void variableInitializerOfWrongType_isRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := true
+            class Holder {
+                var value: int := true
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "Initializer of type");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "Initializer of type");
     }
 
     @Test
     void variableInitializerMatchingDeclaredType_passes() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 5
+            class Holder {
+                var value: int := 5
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void featureBoundExpressionOfWrongType_isRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Holder {
                 refers size: int = true
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "Feature bound expression");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "Feature bound expression");
     }
 
     @Test
     void havocOnVariable_passes() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                redefine tran { havoc(x) }
+            class Holder {
+                var value: int := 0
+                redefine tran { havoc(value) }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void havocOnFeature_isRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Holder {
                 refers size: int = 3
                 redefine tran { havoc(size) }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.INCORRECT_ASSIGNMENT, "variable reference");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.INCORRECT_ASSIGNMENT, "variable reference");
     }
 
     @Test
     void forOverIntRange_passes() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Holder {
                 var total: int := 0
-                redefine tran { inline for (n in 1..5) { total := total + n } }
+                redefine tran { inline for (index in 1..5) { total := total + index } }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void forOverScalarInt_isRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Holder {
                 var total: int := 0
-                redefine tran { inline for (n in 5) { total := total + 1 } }
+                redefine tran { inline for (index in 5) { total := total + 1 } }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "`for` range");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "`for` range");
     }
 
     @Test
     void redefinedFeatureWithCompatibleType_passes() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Leaf { }
             class SpecialLeaf : Leaf { }
@@ -501,13 +540,13 @@ public class TypeValidationTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void redefinedFeatureWithIncompatibleType_isRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Leaf { }
             class Other { }
@@ -519,20 +558,20 @@ public class TypeValidationTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "Redefinition has type");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "Redefinition has type");
     }
 
     @Test
     void agBodyMustBeBoolean() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                redefine tran { x := 1 }
-                prop { return AG x }
+            class Holder {
+                var value: int := 0
+                redefine tran { value := 1 }
+                prop { return AG value }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "AG");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "AG");
     }
 }

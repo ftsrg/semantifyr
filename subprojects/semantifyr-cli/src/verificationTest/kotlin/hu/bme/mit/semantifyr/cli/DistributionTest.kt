@@ -6,80 +6,23 @@
 
 package hu.bme.mit.semantifyr.cli
 
-import hu.bme.mit.semantifyr.backends.theta.ThetaExecutorKey
-import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
+import hu.bme.mit.semantifyr.cli.common.DistributionTestBase
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.io.TempDir
-import java.io.File
-import java.nio.file.Path
-import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
-import kotlin.io.path.exists
 import kotlin.io.path.readText
 
-class DistributionTest {
+class DistributionTest : DistributionTestBase("semantifyr") {
 
-    companion object {
-        private val home = Path("build/install/semantifyr").toAbsolutePath()
-        private val testModels = Path("../../oxsts-test-models").toAbsolutePath().normalize()
-        private val windows = System.getProperty("os.name").startsWith("Windows")
-
-        @JvmStatic
-        @BeforeAll
-        fun assumeThetaAvailable() {
-            assumeBackendAvailable(ThetaExecutorKey)
-        }
-    }
-
-    @TempDir
-    lateinit var directory: Path
-
-    private class Run(val exitCode: Int, val stdout: String, val stderr: String)
-
-    // without Theta on PATH, a verdict proves that the launcher puts the bundled Theta there
-    private fun semantifyr(vararg arguments: String): Run {
-        val launcher = if (windows) {
-            listOf("cmd.exe", "/c", home.resolve("bin/semantifyr.bat").toString())
-        } else {
-            listOf(home.resolve("bin/semantifyr").toString())
-        }
-        val javaHome = System.getProperty("java.home")
-        val path = System.getenv("PATH").split(File.pathSeparator).filterNot {
-            runCatching { Path(it).resolve("theta-xsts-cli").exists() }.getOrDefault(false)
-        }
-        val stdout = directory.resolve("stdout.txt")
-        val stderr = directory.resolve("stderr.txt")
-        val process = ProcessBuilder(launcher + arguments)
-            .directory(directory.toFile())
-            .redirectOutput(stdout.toFile())
-            .redirectError(stderr.toFile())
-            .apply {
-                environment()["JAVA_HOME"] = javaHome
-                environment()["PATH"] = (listOf(Path(javaHome, "bin").toString()) + path).joinToString(File.pathSeparator)
-            }
-            .start()
-        check(process.waitFor(10, TimeUnit.MINUTES)) { "semantifyr ${arguments.joinToString(" ")} did not exit" }
-        return Run(process.exitValue(), stdout.readText(), stderr.readText())
-    }
-
-    @Test
-    fun `the launcher prints the version without JVM warnings`() {
-        val run = semantifyr("--version")
-
-        assertThat(run.exitCode).isZero()
-        assertThat(run.stdout.trim()).matches("semantifyr version \\d+\\.\\d+\\.\\d+.*")
-        assertThat(run.stderr).isEmpty()
-    }
+    private val testModels = Path("../../oxsts-test-models").toAbsolutePath().normalize()
 
     @Test
     fun `the bundled smoke model passes with the bundled Theta`() {
-        val run = semantifyr("verify", "-q", "--theta-executor", "shell", "--portfolio", "theta-cegar-expl-pred-combined", "-d", "artifacts", home.resolve("models/smoke").toString())
+        val run = run("verify", "-q", "--theta-executor", "shell", "--portfolio", "theta-cegar-expl-pred-combined", "-d", "artifacts", home.resolve("models/smoke").toString())
 
         assertThat(run.exitCode).describedAs(run.stderr).isZero()
         assertThat(run.stdout.trim()).isEqualTo("PASSED")
@@ -88,24 +31,37 @@ class DistributionTest {
 
     @Test
     fun `a violated property exits with the failed code and names its report`() {
-        val run = semantifyr(
+        val run = run(
             "verify", "--json", "--theta-executor", "shell", "--portfolio", "theta-cegar-expl-pred-combined", "-d", "artifacts",
-            "--case-name", "semantifyr::verification::lang::local_vars::LocalVarUninitializedBound",
+            "--case-name", "semantifyr::verification::lang::local_vars::LocalVariableUninitializedBound",
             testModels.resolve("semantic/local_vars.oxsts").toString(),
         )
 
         assertThat(run.exitCode).describedAs(run.stderr).isEqualTo(5)
         val line = Json.parseToJsonElement(run.stdout.trim()).jsonObject
         assertThat(line.getValue("exitCode").jsonPrimitive.int).isEqualTo(5)
-        val report = Path(line.getValue("report").jsonPrimitive.content)
+        val report = reportOf(run)
         val result = Json.parseToJsonElement(report.readText()).jsonObject.getValue("result").jsonObject
         assertThat(result.getValue("verdict").jsonPrimitive.content).isEqualTo("Failed")
         assertThat(report.resolveSibling("witness.json")).exists()
     }
 
     @Test
-    fun `the process exits with the usage and input codes`() {
-        assertThat(semantifyr("verify", "--portfolio", "no-such-portfolio", "models").exitCode).isEqualTo(2)
-        assertThat(semantifyr("list", directory.resolve("absent.oxsts").toString()).exitCode).isEqualTo(3)
+    fun `the process exits with the usage code`() {
+        assertThat(run("verify", "--portfolio", "no-such-portfolio", "models").exitCode).isEqualTo(2)
+    }
+
+    @Test
+    fun `the log level option sets the level of the log`() {
+        val smoke = home.resolve("models/smoke").toString()
+
+        val quiet = run("list", smoke)
+        val verbose = run("--log-level", "info", "list", smoke)
+
+        assertThat(quiet.exitCode).describedAs(quiet.stderr).isZero()
+        assertThat(quiet.stderr).doesNotContain("[INFO ]")
+        assertThat(verbose.exitCode).describedAs(verbose.stderr).isZero()
+        assertThat(verbose.stderr).contains("[INFO ]").contains("list model=")
+        assertThat(verbose.stdout).isEqualTo(quiet.stdout)
     }
 }

@@ -21,21 +21,25 @@ class RuntimeForDispatchTest : InliningTestBase() {
                 package inlining::tests::runtime_for_dispatch
                 class Worker {
                     var done: bool := false
-                    tran step() { done := true }
+                    tran step() {
+                        done := true
+                    }
                 }
                 @VerificationCase
                 class Host {
                     contains workers: Worker[0..*]
-                    contains a: Worker[1] subsets workers
-                    contains b: Worker[1] subsets workers
+                    contains first: Worker[1] subsets workers
+                    contains second: Worker[1] subsets workers
     
                     redefine tran {
-                        for (w in workers) {
-                            inline w.step()
+                        for (worker in workers) {
+                            inline worker.step()
                         }
                     }
     
-                    prop { return EF (a.done && b.done) }
+                    prop {
+                        return EF (first.done && second.done)
+                    }
                 }
             """.trimIndent(),
         ) {

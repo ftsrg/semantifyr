@@ -108,10 +108,10 @@ counter.value
 
 ### Optional Member Access (`?.`)
 
-`?.` navigates through an optional (`[0..1]`) reference. If the receiver is `nothing`, the entire expression evaluates to `nothing`.
+`?.` navigates through an optional (`[0..1]`) reference. An `inline` call whose receiver is absent is dropped, and the rest of the transition runs; reading a member through an absent receiver fails compilation.
 
 ```oxsts
-parent?.value
+inline parent?.notify()
 ```
 
 ## Indexing (`[]`)

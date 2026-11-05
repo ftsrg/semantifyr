@@ -18,10 +18,25 @@ import hu.bme.mit.semantifyr.backends.theta.ThetaXstsExecutor
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
 
+private const val DEFAULT_THETA_JAVA_OPTS = "-Xss512M -Xms1G -Xmx4G"
+
+// the same default and word splitting as Theta's launcher scripts
+fun thetaJavaOptions(value: String?): List<String> {
+    val options = value?.takeIf {
+        it.isNotEmpty()
+    } ?: DEFAULT_THETA_JAVA_OPTS
+    return options.split(Regex("\\s+")).filter {
+        it.isNotEmpty()
+    }
+}
+
 class DockerBasedThetaXstsExecutor(
     image: String = THETA_DEFAULT_IMAGE,
+    javaOptions: List<String> = thetaJavaOptions(System.getenv("THETA_JAVA_OPTS")),
 ) : DockerBasedBackendExecutor(image),
     ThetaXstsExecutor {
+
+    val entrypoint = listOf("java") + javaOptions + listOf("-jar", "/theta-xsts-cli.jar")
 
     override suspend fun execute(thetaExecutionSpecification: ThetaExecutionSpecification): ThetaExecutionResult {
         val container = createContainer(thetaExecutionSpecification)
@@ -44,7 +59,7 @@ class DockerBasedThetaXstsExecutor(
             .withHostConfig(hostConfig)
             .withWorkingDir("/host/working_directory")
             .withCmd(spec.command)
-            .withEntrypoint("java", "-jar", "/theta-xsts-cli.jar")
+            .withEntrypoint(entrypoint)
             .exec()
     }
 }

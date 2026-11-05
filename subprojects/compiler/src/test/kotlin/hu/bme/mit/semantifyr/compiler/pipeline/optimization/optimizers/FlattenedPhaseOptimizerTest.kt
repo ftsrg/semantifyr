@@ -32,8 +32,11 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
                     current := 1
                 }
             }
-            tran { }
-            prop { EF (current == 0 || current == 1) }
+            tran {
+            }
+            prop {
+                EF (current == 0 || current == 1)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
@@ -45,8 +48,11 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
                     current := 1
                 }
             }
-            tran { }
-            prop { EF (current == 0 || current == 1) }
+            tran {
+            }
+            prop {
+                EF (current == 0 || current == 1)
+            }
         """,
     )
 
@@ -73,7 +79,9 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
                     done_second := true
                 }
             }
-            prop { EF (done_first == true || done_second == true) }
+            prop {
+                EF (done_first == true || done_second == true)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
@@ -96,7 +104,9 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
                     done_second := true
                 }
             }
-            prop { EF (done_first == true || done_second == true) }
+            prop {
+                EF (done_first == true || done_second == true)
+            }
         """,
     )
 
@@ -105,20 +115,26 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
         source = """
             inlined oxsts of semantifyr::Anything
             var done_first : bool := false
-            init { }
+            init {
+            }
             tran {
                 done_first := true
             }
-            prop { EF (done_first == true) }
+            prop {
+                EF (done_first == true)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var done_first : bool := false
-            init { }
+            init {
+            }
             tran {
                 done_first := true
             }
-            prop { EF (done_first == true) }
+            prop {
+                EF (done_first == true)
+            }
         """,
     )
 
@@ -135,7 +151,9 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
                 assume (step == 1)
                 step := 2
             }
-            prop { AG (step != 2 || aux < 3) }
+            prop {
+                AG (step != 2 || aux < 3)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
@@ -147,7 +165,9 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
                 assume (step == 1)
                 step := 2
             }
-            prop { AG (true) }
+            prop {
+                AG (true)
+            }
         """,
     )
 
@@ -166,7 +186,9 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
                 assume (step == 1)
                 step := 2
             }
-            prop { AG (step != 2) }
+            prop {
+                AG (step != 2)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
@@ -180,7 +202,9 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
                 assume (step == 1)
                 step := 2
             }
-            prop { AG (step != 2) }
+            prop {
+                AG (step != 2)
+            }
         """,
     )
 
@@ -203,7 +227,9 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
             tran {
                 assume (current == 0 || current == 1 || current == 2)
             }
-            prop { AG (current != 99) }
+            prop {
+                AG (current != 99)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
@@ -220,7 +246,9 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
             tran {
                 assume (current == 0 || current == 1 || current == 2)
             }
-            prop { AG (current != 99) }
+            prop {
+                AG (current != 99)
+            }
         """,
     )
 
@@ -263,7 +291,9 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
                 assume (second_done == true)
                 step := 2
             }
-            prop { EF (step == 2 && (first_done == true || second_done == true)) }
+            prop {
+                EF (step == 2 && (first_done == true || second_done == true))
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
@@ -301,7 +331,9 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
                 assume (second_done == true)
                 step := 2
             }
-            prop { EF (step == 2 && (first_done == true || second_done == true)) }
+            prop {
+                EF (step == 2 && (first_done == true || second_done == true))
+            }
         """,
     )
 
@@ -311,17 +343,27 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             @NonOptimizable
             var tracer : bool := false
-            init { }
-            tran { tracer := true }
-            prop { AG true }
+            init {
+            }
+            tran {
+                tracer := true
+            }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             @NonOptimizable
             var tracer : bool := false
-            init { }
-            tran { tracer := true }
-            prop { AG true }
+            init {
+            }
+            tran {
+                tracer := true
+            }
+            prop {
+                AG true
+            }
         """,
     )
 

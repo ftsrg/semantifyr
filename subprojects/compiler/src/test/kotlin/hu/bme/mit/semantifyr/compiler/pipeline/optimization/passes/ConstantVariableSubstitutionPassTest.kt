@@ -14,17 +14,27 @@ class ConstantVariableSubstitutionPassTest : PassTestBase() {
     fun `variable whose initializer and only assignment agree is substituted`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 7
-            init { a := 7 }
-            tran { }
-            prop { AG (a == 7) }
+            var value : int := 7
+            init {
+                value := 7
+            }
+            tran {
+            }
+            prop {
+                AG (value == 7)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 7
-            init { a := 7 }
-            tran { }
-            prop { AG (7 == 7) }
+            var value : int := 7
+            init {
+                value := 7
+            }
+            tran {
+            }
+            prop {
+                AG (7 == 7)
+            }
         """,
         analysisClasses = listOf(ConstantValueAnalysis::class.java),
     ) {
@@ -35,23 +45,29 @@ class ConstantVariableSubstitutionPassTest : PassTestBase() {
     fun `havoced variable is not treated as constant`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran {
-                havoc(a)
-                a := 7
+            var value : int := 0
+            init {
             }
-            prop { AG (a == 7) }
+            tran {
+                havoc(value)
+                value := 7
+            }
+            prop {
+                AG (value == 7)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran {
-                havoc(a)
-                a := 7
+            var value : int := 0
+            init {
             }
-            prop { AG (a == 7) }
+            tran {
+                havoc(value)
+                value := 7
+            }
+            prop {
+                AG (value == 7)
+            }
         """,
         analysisClasses = listOf(ConstantValueAnalysis::class.java),
     ) {
@@ -62,21 +78,35 @@ class ConstantVariableSubstitutionPassTest : PassTestBase() {
     fun `variable with differing writes is not treated as constant`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran {
-                choice { a := 1 } or { a := 2 }
+            var value : int := 0
+            init {
             }
-            prop { AG (a != 3) }
+            tran {
+                choice {
+                    value := 1
+                } or {
+                    value := 2
+                }
+            }
+            prop {
+                AG (value != 3)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran {
-                choice { a := 1 } or { a := 2 }
+            var value : int := 0
+            init {
             }
-            prop { AG (a != 3) }
+            tran {
+                choice {
+                    value := 1
+                } or {
+                    value := 2
+                }
+            }
+            prop {
+                AG (value != 3)
+            }
         """,
         analysisClasses = listOf(ConstantValueAnalysis::class.java),
     ) {

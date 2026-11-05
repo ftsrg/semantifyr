@@ -21,7 +21,9 @@ class ReferenceArrayFlatteningTest : FlatteningTestBase() {
         package flattening::reference_arrays
         class Job {
             var done: bool := false
-            tran finish() { done := true }
+            tran finish() {
+                done := true
+            }
         }
     """
 
@@ -55,13 +57,15 @@ class ReferenceArrayFlatteningTest : FlatteningTestBase() {
                     contains first: Job
                     contains second: Job
                     var queue: Job[2] := [first, second]
-                    var i: int := 0
+                    var index: int := 0
                     redefine tran {
                         havoc(queue)
-                        queue[i] := second
-                        inline queue[i].finish()
+                        queue[index] := second
+                        inline queue[index].finish()
                     }
-                    prop { return EF queue[0] == second }
+                    prop {
+                        return EF queue[0] == second
+                    }
                 }
             """,
         )
@@ -85,7 +89,9 @@ class ReferenceArrayFlatteningTest : FlatteningTestBase() {
                         havoc(picks)
                         picks[1] := picks[0]
                     }
-                    prop { return AG picks[1] != other }
+                    prop {
+                        return AG picks[1] != other
+                    }
                 }
             """,
         )
@@ -106,7 +112,9 @@ class ReferenceArrayFlatteningTest : FlatteningTestBase() {
                     redefine tran {
                         queue := [queue[1], queue[0]]
                     }
-                    prop { return AG queue[0] != queue[1] }
+                    prop {
+                        return AG queue[0] != queue[1]
+                    }
                 }
             """,
         )

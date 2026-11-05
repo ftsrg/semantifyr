@@ -26,19 +26,24 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                init { a := 1 }
-                tran { }
-                prop { AG (a != 27) }
+                var value : int := 0
+                init {
+                    value := 1
+                }
+                tran {
+                }
+                prop {
+                    AG (value != 27)
+                }
             """,
         )
 
-        val a = inlined.varNamed("a")
-        val propertyRead = inlined.findPropertyReadOf(a)
-        val defs = result.definitionsOf[propertyRead]!!
+        val value = inlined.varNamed("value")
+        val propertyRead = inlined.findPropertyReadOf(value)
+        val definitions = result.definitionsOf[propertyRead]!!
 
-        val initWrite = inlined.assignmentsTo(a).single()
-        assertThat(defs).containsExactlyInAnyOrder(initWrite as EObject, a as EObject)
+        val initWrite = inlined.assignmentsTo(value).single()
+        assertThat(definitions).containsExactlyInAnyOrder(initWrite as EObject, value as EObject)
     }
 
     @Test
@@ -46,26 +51,30 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                init { a := 1 }
-                tran {
-                    a := 2
-                    a := 3
+                var value : int := 0
+                init {
+                    value := 1
                 }
-                prop { AG (a != 27) }
+                tran {
+                    value := 2
+                    value := 3
+                }
+                prop {
+                    AG (value != 27)
+                }
             """,
         )
 
-        val a = inlined.varNamed("a")
-        val propertyRead = inlined.findPropertyReadOf(a)
-        val defs = result.definitionsOf[propertyRead]!!
+        val value = inlined.varNamed("value")
+        val propertyRead = inlined.findPropertyReadOf(value)
+        val definitions = result.definitionsOf[propertyRead]!!
 
-        val writes = inlined.assignmentsTo(a)
+        val writes = inlined.assignmentsTo(value)
         assertThat(writes).hasSize(3)
         for (write in writes) {
-            assertThat(defs).contains(write as EObject)
+            assertThat(definitions).contains(write as EObject)
         }
-        assertThat(defs).contains(a as EObject)
+        assertThat(definitions).contains(value as EObject)
     }
 
     @Test
@@ -73,28 +82,31 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                var b : int := 0
-                init { }
-                tran {
-                    a := 5
-                    b := a
+                var source : int := 0
+                var copy : int := 0
+                init {
                 }
-                prop { AG true }
+                tran {
+                    source := 5
+                    copy := source
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
-        val a = inlined.varNamed("a")
-        val aWrite = inlined.assignmentsTo(a).single()
+        val source = inlined.varNamed("source")
+        val sourceWrite = inlined.assignmentsTo(source).single()
 
-        val bAssignment = inlined.assignmentsTo(inlined.varNamed("b")).single()
-        val aReadInBRhs = bAssignment.expression as ElementReference
-        assertThat(aReadInBRhs.element).isSameAs(a)
+        val copyAssignment = inlined.assignmentsTo(inlined.varNamed("copy")).single()
+        val sourceReadInCopy = copyAssignment.expression as ElementReference
+        assertThat(sourceReadInCopy.element).isSameAs(source)
 
-        val defs = result.definitionsOf[aReadInBRhs]
-            ?: error("RHS read of 'a' in 'b := a' not in defsOf map")
+        val definitions = result.definitionsOf[sourceReadInCopy]
+            ?: error("RHS read of 'source' in 'copy := source' not in defsOf map")
 
-        assertThat(defs).containsExactly(aWrite as EObject)
+        assertThat(definitions).containsExactly(sourceWrite as EObject)
     }
 
     @Test
@@ -114,16 +126,22 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
                 tran {
                     copy := current
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
 
         val current = inlined.varNamed("current")
-        val defs = result.definitionsOf[inlined.tranReadOf(current, "copy")]!!
+        val definitions = result.definitionsOf[inlined.tranReadOf(current, "copy")]!!
 
         val writes = inlined.assignmentsTo(current)
-        assertThat(defs).containsExactlyInAnyOrderElementsOf(writes.map { it as EObject })
-        assertThat(defs).doesNotContain(current as EObject)
+        assertThat(definitions).containsExactlyInAnyOrderElementsOf(
+            writes.map {
+                it as EObject
+            },
+        )
+        assertThat(definitions).doesNotContain(current as EObject)
     }
 
     @Test
@@ -136,42 +154,48 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
                 init {
                     choice {
                         current := 0
-                    } or { }
+                    } or {
+                    }
                 }
                 tran {
                     copy := current
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
 
         val current = inlined.varNamed("current")
-        val defs = result.definitionsOf[inlined.tranReadOf(current, "copy")]!!
+        val definitions = result.definitionsOf[inlined.tranReadOf(current, "copy")]!!
 
         val write = inlined.assignmentsTo(current).single()
-        assertThat(defs).containsExactlyInAnyOrder(write as EObject, current as EObject)
+        assertThat(definitions).containsExactlyInAnyOrder(write as EObject, current as EObject)
     }
 
     @Test
-    fun `property read of variable with no initializer sees the implicit havoc as a reaching def`() {
+    fun `property read of variable with no initializer sees the implicit havoc as a reaching definition`() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
                 var done : bool
-                init { }
+                init {
+                }
                 tran {
                     done := true
                 }
-                prop { AG (done == true) }
+                prop {
+                    AG (done == true)
+                }
             """,
         )
 
         val done = inlined.varNamed("done")
         val propertyRead = inlined.findPropertyReadOf(done)
-        val defs = result.definitionsOf[propertyRead]!!
+        val definitions = result.definitionsOf[propertyRead]!!
 
         val tranWrite = inlined.assignmentsTo(done).single()
-        assertThat(defs).containsExactlyInAnyOrder(tranWrite as EObject, done as EObject)
+        assertThat(definitions).containsExactlyInAnyOrder(tranWrite as EObject, done as EObject)
     }
 
     @Test
@@ -179,25 +203,27 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                var b : int := 0
+                var source : int := 0
+                var copy : int := 0
                 init {
                     if (true) {
-                        a := 1
+                        source := 1
                     }
                 }
                 tran {
-                    b := a
+                    copy := source
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
 
-        val a = inlined.varNamed("a")
-        val defs = result.definitionsOf[inlined.tranReadOf(a, "b")]!!
+        val source = inlined.varNamed("source")
+        val definitions = result.definitionsOf[inlined.tranReadOf(source, "copy")]!!
 
-        val initWrite = inlined.assignmentsTo(a).single()
-        assertThat(defs).containsExactlyInAnyOrder(initWrite as EObject, a as EObject)
+        val initWrite = inlined.assignmentsTo(source).single()
+        assertThat(definitions).containsExactlyInAnyOrder(initWrite as EObject, source as EObject)
     }
 
     @Test
@@ -205,28 +231,34 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                var b : int := 0
+                var source : int := 0
+                var copy : int := 0
                 init {
                     if (true) {
-                        a := 1
+                        source := 1
                     } else {
-                        a := 2
+                        source := 2
                     }
                 }
                 tran {
-                    b := a
+                    copy := source
                 }
-                prop { AG true }
+                prop {
+                    AG true
+                }
             """,
         )
 
-        val a = inlined.varNamed("a")
-        val defs = result.definitionsOf[inlined.tranReadOf(a, "b")]!!
+        val source = inlined.varNamed("source")
+        val definitions = result.definitionsOf[inlined.tranReadOf(source, "copy")]!!
 
-        val writes = inlined.assignmentsTo(a)
-        assertThat(defs).containsExactlyInAnyOrderElementsOf(writes.map { it as EObject })
-        assertThat(defs).doesNotContain(a as EObject)
+        val writes = inlined.assignmentsTo(source)
+        assertThat(definitions).containsExactlyInAnyOrderElementsOf(
+            writes.map {
+                it as EObject
+            },
+        )
+        assertThat(definitions).doesNotContain(source as EObject)
     }
 
     @Test
@@ -234,49 +266,55 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                init { }
-                tran {
-                    havoc(a)
+                var value : int := 0
+                init {
                 }
-                prop { AG (a != 27) }
+                tran {
+                    havoc(value)
+                }
+                prop {
+                    AG (value != 27)
+                }
             """,
         )
 
-        val a = inlined.varNamed("a")
-        val propertyRead = inlined.findPropertyReadOf(a)
-        val defs = result.definitionsOf[propertyRead]!!
+        val value = inlined.varNamed("value")
+        val propertyRead = inlined.findPropertyReadOf(value)
+        val definitions = result.definitionsOf[propertyRead]!!
 
-        val havoc = inlined.havocsOn(a).single()
-        assertThat(defs).containsExactlyInAnyOrder(havoc as EObject, a as EObject)
+        val havoc = inlined.havocsOn(value).single()
+        assertThat(definitions).containsExactlyInAnyOrder(havoc as EObject, value as EObject)
     }
 
     @Test
-    fun `guard read in assume sees reaching defs at that program point`() {
+    fun `guard read in assume sees reaching definitions at that program point`() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                var b : int := 0
-                init { }
-                tran {
-                    a := 5
-                    assume(a == 5)
-                    b := 1
+                var source : int := 0
+                var other : int := 0
+                init {
                 }
-                prop { AG true }
+                tran {
+                    source := 5
+                    assume(source == 5)
+                    other := 1
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
-        val a = inlined.varNamed("a")
-        val aWrite = inlined.assignmentsTo(a).single()
+        val source = inlined.varNamed("source")
+        val sourceWrite = inlined.assignmentsTo(source).single()
 
-        val assume = inlined.assumesReading(a).single()
-        val aReadInGuard = (assume.expression as ComparisonOperator).left as ElementReference
+        val assume = inlined.assumesReading(source).single()
+        val sourceReadInGuard = (assume.expression as ComparisonOperator).left as ElementReference
 
-        val defs = result.definitionsOf[aReadInGuard] ?: error("Read of 'a' inside assume guard not in defsOf map")
+        val definitions = result.definitionsOf[sourceReadInGuard] ?: error("Read of 'source' inside assume guard not in defsOf map")
 
-        assertThat(defs).containsExactly(aWrite as EObject)
+        assertThat(definitions).containsExactly(sourceWrite as EObject)
     }
 
     @Test
@@ -285,7 +323,9 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
             """
                 inlined oxsts of semantifyr::Anything
                 var activeState : int := -1
-                init { activeState := 0 }
+                init {
+                    activeState := 0
+                }
                 tran {
                     choice {
                         assume(activeState == 0)
@@ -293,18 +333,20 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
                         activeState := 25
                     }
                 }
-                prop { AG (activeState != 25) }
+                prop {
+                    AG (activeState != 25)
+                }
             """,
         )
 
         val activeState = inlined.varNamed("activeState")
         val propertyRead = inlined.findPropertyReadOf(activeState)
-        val defs = result.definitionsOf[propertyRead]!!
+        val definitions = result.definitionsOf[propertyRead]!!
 
         val writes = inlined.assignmentsTo(activeState)
         assertThat(writes).hasSize(3) // init + two inside the branch
         for (write in writes) {
-            assertThat(defs)
+            assertThat(definitions)
                 .`as`("property read should see write $write")
                 .contains(write as EObject)
         }
@@ -315,25 +357,28 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var c : bool := false
-                var a : int := 0
-                var b : int := 0
+                var condition : bool := false
+                var source : int := 0
+                var copy : int := 0
                 init {
-                    if (c) {
-                        a := 1
+                    if (condition) {
+                        source := 1
                     }
-                    b := a
+                    copy := source
                 }
-                tran { }
-                prop { AG true }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
-        val a = inlined.varNamed("a")
-        val defs = result.definitionsOf[inlined.tranReadOf(a, "b")]!!
+        val source = inlined.varNamed("source")
+        val definitions = result.definitionsOf[inlined.tranReadOf(source, "copy")]!!
 
-        val initWrite = inlined.assignmentsTo(a).single()
-        assertThat(defs).containsExactlyInAnyOrder(initWrite as EObject, a as EObject)
+        val initWrite = inlined.assignmentsTo(source).single()
+        assertThat(definitions).containsExactlyInAnyOrder(initWrite as EObject, source as EObject)
     }
 
     private fun InlinedOxsts.varNamed(name: String): VariableDeclaration {
@@ -344,15 +389,15 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
 
     private fun InlinedOxsts.assignmentsTo(variable: VariableDeclaration): List<AssignmentOperation> {
         return eAllOfType<AssignmentOperation>().filter {
-            val ref = it.reference
-            ref is ElementReference && ref.element === variable
+            val reference = it.reference
+            reference is ElementReference && reference.element === variable
         }.toList()
     }
 
     private fun InlinedOxsts.havocsOn(variable: VariableDeclaration): List<HavocOperation> {
         return eAllOfType<HavocOperation>().filter {
-            val ref = it.reference
-            ref is ElementReference && ref.element === variable
+            val reference = it.reference
+            reference is ElementReference && reference.element === variable
         }.toList()
     }
 

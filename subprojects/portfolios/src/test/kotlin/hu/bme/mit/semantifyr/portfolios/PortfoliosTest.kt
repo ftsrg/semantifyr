@@ -27,6 +27,8 @@ class PortfoliosTest {
             PortfolioLeg("nuxmv:bmc-invar", SoundnessDirection.Exact),
             PortfolioLeg("nuxmv:ic3-invar", SoundnessDirection.Exact),
             PortfolioLeg("spin:safe-dfs", SoundnessDirection.UnderApproximating),
+            PortfolioLeg("uppaal:default", SoundnessDirection.UnderApproximating),
+            PortfolioLeg("uppaal:over-approximation", SoundnessDirection.OverApproximating),
         )
     }
 

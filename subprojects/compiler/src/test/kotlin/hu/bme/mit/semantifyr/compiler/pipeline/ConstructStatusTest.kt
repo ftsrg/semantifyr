@@ -19,6 +19,7 @@ import org.eclipse.xtext.EcoreUtil2
 import org.eclipse.xtext.diagnostics.Severity
 import org.eclipse.xtext.resource.XtextSyntaxDiagnostic
 import org.eclipse.xtext.validation.CheckMode
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -49,7 +50,7 @@ class ConstructStatusTest {
     }
 
     @TempDir
-    lateinit var tempDir: Path
+    lateinit var temporaryDirectory: Path
 
     @Inject
     private lateinit var parseHelper: OxstsPackageParseHelper
@@ -67,6 +68,11 @@ class ConstructStatusTest {
         fixture: String,
         detail: String,
     ) {
+        if (!fixture.endsWith(".oxsts")) {
+            assertThat(outcome).isEqualTo("pass")
+            assertTestExists(fixture, detail)
+            return
+        }
         val source = testModels.resolve(fixture).readText()
         when (outcome) {
             "parse" -> assertRejectedByParser(source)
@@ -75,6 +81,20 @@ class ConstructStatusTest {
             "fail" -> assertCompilesAsTagged(source, detail, "expect-fail")
             else -> error("Unknown outcome '$outcome'")
         }
+    }
+
+    private fun assertTestExists(
+        className: String,
+        methodName: String,
+    ) {
+        val tests = Class.forName(className).declaredMethods.filter {
+            it.isAnnotationPresent(Test::class.java)
+        }.map {
+            it.name
+        }
+        assertThat(tests)
+            .`as`("$className should declare the test '$methodName'")
+            .contains(methodName)
     }
 
     private fun assertRejectedByParser(source: String) {
@@ -115,6 +135,6 @@ class ConstructStatusTest {
         assertThat(builtinAnnotationHandler.isTaggedWith(classDeclaration, tag))
             .`as`("$className should carry @Tag(\"$tag\"), which the semantic conformance suites verify")
             .isTrue()
-        SemantifyrCompiler(injector = injector, artifactConfig = ArtifactConfig.NONE).compile(classDeclaration, tempDir)
+        SemantifyrCompiler(injector = injector, artifactConfig = ArtifactConfig.NONE).compile(classDeclaration, temporaryDirectory)
     }
 }

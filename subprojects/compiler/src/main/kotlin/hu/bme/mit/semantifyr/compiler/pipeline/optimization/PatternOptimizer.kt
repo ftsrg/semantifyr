@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization
 
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.checkInterrupted
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import org.eclipse.emf.ecore.EObject
@@ -97,6 +98,7 @@ class PatternOptimizer(
         var pops = 0
         var applications = 0
         while (worklist.isNotEmpty()) {
+            checkInterrupted()
             val current = worklist.pop()
             pops++
             val candidates = patternsFor(current)

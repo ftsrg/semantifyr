@@ -69,6 +69,7 @@ include(
     "portfolios",
     "backend",
     "lang-ide-common",
+    "cli-common",
     "semantifyr-cli",
     "semantifyr-editor-common",
     "oxsts.model",

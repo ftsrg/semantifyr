@@ -1,0 +1,127 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::verification::lang::transitions
+
+@VerificationCase
+@Tag("expect-pass")
+class InitBranchesReach {
+    var x: int := 1
+
+    redefine init {
+        x := 1
+    } or {
+        x := 2
+    }
+
+    prop {
+        return EF x == 2
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class InitBranchesUnreachable {
+    var x: int := 1
+
+    redefine init {
+        x := 1
+    } or {
+        x := 2
+    }
+
+    prop {
+        return EF x == 3
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class TranBranchesReach {
+    var x: int := 1
+
+    redefine init {
+        x := 1
+    } or {
+        x := 2
+    }
+
+    redefine tran {
+        assume(x < 3)
+        x := x + 1
+    } or {
+        assume(x > 0)
+        x := x - 1
+    }
+
+    prop {
+        return EF x == 0
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class TranBranchesViolated {
+    var x: int := 1
+
+    redefine init {
+        x := 1
+    } or {
+        x := 2
+    }
+
+    redefine tran {
+        assume(x < 3)
+        x := x + 1
+    } or {
+        assume(x > 0)
+        x := x - 1
+    }
+
+    prop {
+        return AG x >= 1
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class InitRunsOnceBound {
+    var x: int := 0
+    var runs: int := 0
+
+    redefine init {
+        runs := runs + 1
+    }
+
+    redefine tran {
+        assume(x < 2)
+        x := x + 1
+    }
+
+    prop {
+        return AG runs <= 1
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class InitRunsOnceViolated {
+    var x: int := 0
+    var runs: int := 0
+
+    redefine init {
+        runs := runs + 1
+    }
+
+    redefine tran {
+        assume(x < 2)
+        x := x + 1
+    }
+
+    prop {
+        return AG runs == 0
+    }
+}

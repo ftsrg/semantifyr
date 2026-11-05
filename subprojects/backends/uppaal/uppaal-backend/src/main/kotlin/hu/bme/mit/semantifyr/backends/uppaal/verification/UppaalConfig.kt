@@ -12,14 +12,17 @@ import hu.bme.mit.semantifyr.backend.SoundnessDirection
 data class UppaalConfig(
     override val id: String,
     val parameters: String,
+    override val soundness: SoundnessDirection = SoundnessDirection.UnderApproximating,
 ) : BackendConfig {
-    override val soundness = SoundnessDirection.UnderApproximating
-
     companion object {
         private const val TRACE_FLAG = "-t 1"
 
         private fun withTraceFlag(parameters: String): String {
-            return if (parameters.isBlank()) TRACE_FLAG else "$TRACE_FLAG $parameters"
+            return if (parameters.isBlank()) {
+                TRACE_FLAG
+            } else {
+                "$TRACE_FLAG $parameters"
+            }
         }
 
         val Default = UppaalConfig(
@@ -42,6 +45,7 @@ data class UppaalConfig(
         val OverApproximation = UppaalConfig(
             id = "over-approximation",
             parameters = withTraceFlag("-A"),
+            soundness = SoundnessDirection.OverApproximating,
         )
         val UnderApproximation = UppaalConfig(
             id = "under-approximation",
@@ -54,17 +58,6 @@ data class UppaalConfig(
         val AggressiveInclusion = UppaalConfig(
             id = "aggressive-inclusion",
             parameters = withTraceFlag("-S 2"),
-        )
-
-        val Builtin: List<UppaalConfig> = listOf(
-            Default,
-            BreadthFirst,
-            DepthFirst,
-            RandomDepthFirst,
-            OverApproximation,
-            UnderApproximation,
-            UnderApproximationLarge,
-            AggressiveInclusion,
         )
     }
 }

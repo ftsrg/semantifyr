@@ -160,7 +160,7 @@ class SysMLv2Frontend private constructor(
 
         private var sourcePath: Path? = null
         private var variant = SysMLv2Variant.Default
-        private var libraryOverride: List<Path>? = null
+        private var additionalLibraryPaths = emptyList<Path>()
         private var oxstsInjector: Injector? = null
         private var loader: SemantifyrLoader? = null
         private var portfolio: VerificationPortfolio? = null
@@ -182,8 +182,8 @@ class SysMLv2Frontend private constructor(
             return this
         }
 
-        fun libraryPaths(paths: List<Path>): Builder {
-            this.libraryOverride = paths
+        fun additionalLibraryPaths(paths: List<Path>): Builder {
+            this.additionalLibraryPaths = paths
             return this
         }
 
@@ -260,7 +260,7 @@ class SysMLv2Frontend private constructor(
             val effectiveLoader = loader ?: effectiveOxstsInjector.getInstance(SemantifyrLoader::class.java)
             val discoverer = effectiveOxstsInjector.getInstance(VerificationCaseDiscoverer::class.java)
 
-            val resolvedLibraryPaths = libraryOverride ?: extractVariantLibrary()
+            val resolvedLibraryPaths = extractVariantLibrary() + additionalLibraryPaths
 
             val (compiledOxsts, transformationDuration) = measureTimedValue {
                 compiledOxstsOverride ?: run {

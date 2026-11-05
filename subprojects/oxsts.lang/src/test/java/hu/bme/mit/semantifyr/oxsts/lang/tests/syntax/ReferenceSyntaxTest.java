@@ -27,119 +27,128 @@ public class ReferenceSyntaxTest {
 
     @Test
     void elementReferenceResolvesToDeclaration() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                redefine tran { x := x + 1 }
+            class Counter {
+                var count: int := 0
+                redefine tran { count := count + 1 }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var xVar = pkg.classByName("C").variableByName("x").eObject();
-        var refs = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), ElementReference.class);
-        assertThat(refs).isNotEmpty();
-        assertThat(refs.stream().filter(r -> r.getElement() == xVar).toList())
-                .as("at least one reference resolves to variable x")
+        parsedPackage.assertNoResourceErrors();
+        var countVariable =
+                parsedPackage.classByName("Counter").variableByName("count").eObject();
+        var references = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Counter").anonymousMain().eObject(), ElementReference.class);
+        assertThat(references).isNotEmpty();
+        assertThat(references.stream()
+                        .filter(reference -> reference.getElement() == countVariable)
+                        .toList())
+                .as("at least one reference resolves to variable count")
                 .isNotEmpty();
     }
 
     @Test
     void selfReference() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                redefine tran { self.x := 1 }
+            class Counter {
+                var count: int := 0
+                redefine tran { self.count := 1 }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var selves = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), SelfReference.class);
+        parsedPackage.assertNoResourceErrors();
+        var selves = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Counter").anonymousMain().eObject(), SelfReference.class);
         assertThat(selves).hasSize(1);
     }
 
     @Test
     void navigationSuffixBasic() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Worker { var done: bool := false }
             class Host {
-                contains w: Worker[1]
-                redefine tran { w.done := true }
+                contains worker: Worker[1]
+                redefine tran { worker.done := true }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var navs = EcoreUtil2.eAllOfType(
-                pkg.classByName("Host").anonymousMain().eObject(), NavigationSuffixExpression.class);
-        assertThat(navs).hasSize(1);
-        var nav = navs.getFirst();
-        assertThat(nav.isOptional()).isFalse();
-        assertThat(nav.getMember())
-                .isSameAs(pkg.classByName("Worker").variableByName("done").eObject());
+        parsedPackage.assertNoResourceErrors();
+        var navigations = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Host").anonymousMain().eObject(), NavigationSuffixExpression.class);
+        assertThat(navigations).hasSize(1);
+        var navigation = navigations.getFirst();
+        assertThat(navigation.isOptional()).isFalse();
+        assertThat(navigation.getMember())
+                .isSameAs(parsedPackage
+                        .classByName("Worker")
+                        .variableByName("done")
+                        .eObject());
     }
 
     @Test
     void navigationSuffixOptional() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Worker { tran step() { } }
             class Host {
-                contains w: Worker[0..1]
-                redefine tran { inline w?.step() }
+                contains worker: Worker[0..1]
+                redefine tran { inline worker?.step() }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var navs = EcoreUtil2.eAllOfType(
-                pkg.classByName("Host").anonymousMain().eObject(), NavigationSuffixExpression.class);
-        assertThat(navs).hasSize(1);
-        assertThat(navs.getFirst().isOptional()).isTrue();
+        parsedPackage.assertNoResourceErrors();
+        var navigations = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Host").anonymousMain().eObject(), NavigationSuffixExpression.class);
+        assertThat(navigations).hasSize(1);
+        assertThat(navigations.getFirst().isOptional()).isTrue();
     }
 
     @Test
     void navigationSuffixChained() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class Leaf { var v: int := 0 }
-            class Mid { contains leaf: Leaf[1] }
+            class Leaf { var value: int := 0 }
+            class Middle { contains leaf: Leaf[1] }
             class Host {
-                contains mid: Mid[1]
-                redefine tran { mid.leaf.v := 5 }
+                contains middle: Middle[1]
+                redefine tran { middle.leaf.value := 5 }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var navs = EcoreUtil2.eAllOfType(
-                pkg.classByName("Host").anonymousMain().eObject(), NavigationSuffixExpression.class);
-        assertThat(navs).hasSize(2);
+        parsedPackage.assertNoResourceErrors();
+        var navigations = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Host").anonymousMain().eObject(), NavigationSuffixExpression.class);
+        assertThat(navigations).hasSize(2);
     }
 
     @Test
     void indexingSuffix() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Buffer {
                 var values: int[3] := [0, 0, 0]
                 redefine tran { values[1] := 5 }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var idxs =
-                EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), IndexingSuffixExpression.class);
-        assertThat(idxs).hasSize(1);
-        assertThat(idxs.getFirst().getPrimary()).isNotNull();
-        assertThat(idxs.getFirst().getIndex()).isNotNull();
+        parsedPackage.assertNoResourceErrors();
+        var indexings = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Buffer").anonymousMain().eObject(), IndexingSuffixExpression.class);
+        assertThat(indexings).hasSize(1);
+        assertThat(indexings.getFirst().getPrimary()).isNotNull();
+        assertThat(indexings.getFirst().getIndex()).isNotNull();
     }
 
     @Test
     void callSuffixWithPositionalArguments() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                tran addBy(n: int) { x := x + n }
+            class Counter {
+                var count: int := 0
+                tran addBy(amount: int) { count := count + amount }
                 redefine tran { inline addBy(5) }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var calls = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), CallSuffixExpression.class);
+        parsedPackage.assertNoResourceErrors();
+        var calls = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Counter").anonymousMain().eObject(), CallSuffixExpression.class);
         assertThat(calls).hasSize(1);
         var call = calls.getFirst();
         assertThat(call.getArguments()).hasSize(1);
@@ -148,47 +157,50 @@ public class ReferenceSyntaxTest {
 
     @Test
     void callSuffixWithNamedArgument() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
-                tran addBy(n: int) { x := x + n }
-                redefine tran { inline addBy(n = 5) }
+            class Counter {
+                var count: int := 0
+                tran addBy(amount: int) { count := count + amount }
+                redefine tran { inline addBy(amount = 5) }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var calls = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), CallSuffixExpression.class);
+        parsedPackage.assertNoResourceErrors();
+        var calls = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Counter").anonymousMain().eObject(), CallSuffixExpression.class);
         assertThat(calls).hasSize(1);
-        var arg = calls.getFirst().getArguments().getFirst();
-        assertThat(arg.getParameter()).isNotNull();
-        assertThat(arg.getParameter().getName()).isEqualTo("n");
+        var argument = calls.getFirst().getArguments().getFirst();
+        assertThat(argument.getParameter()).isNotNull();
+        assertThat(argument.getParameter().getName()).isEqualTo("amount");
     }
 
     @Test
     void callSuffixWithNoArguments() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
+            class Counter {
                 tran step() { }
                 redefine tran { inline step() }
             }
             """);
-        pkg.assertNoResourceErrors();
-        var calls = EcoreUtil2.eAllOfType(pkg.classByName("C").anonymousMain().eObject(), CallSuffixExpression.class);
+        parsedPackage.assertNoResourceErrors();
+        var calls = EcoreUtil2.eAllOfType(
+                parsedPackage.classByName("Counter").anonymousMain().eObject(), CallSuffixExpression.class);
         assertThat(calls).hasSize(1);
         assertThat(calls.getFirst().getArguments()).isEmpty();
     }
 
     @Test
     void enumLiteralReferenceUsesQualifiedSeparator() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             enum Color { Red, Green }
-            class C { var c: Color := Color::Red }
+            class Lamp { var color: Color := Color::Red }
             """);
-        pkg.assertNoResourceErrors();
-        var red = pkg.enumByName("Color").literalByName("Red");
-        var init = (ElementReference) pkg.classByName("C").variableByName("c").initializer();
-        assertThat(init.getElement()).isSameAs(red);
+        parsedPackage.assertNoResourceErrors();
+        var red = parsedPackage.enumByName("Color").literalByName("Red");
+        var initializer = (ElementReference)
+                parsedPackage.classByName("Lamp").variableByName("color").initializer();
+        assertThat(initializer.getElement()).isSameAs(red);
     }
 }

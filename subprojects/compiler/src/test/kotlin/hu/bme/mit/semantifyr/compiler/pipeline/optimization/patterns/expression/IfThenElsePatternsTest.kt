@@ -15,17 +15,25 @@ class IfThenElsePatternsTest : PatternTestBase() {
         pattern = IfThenElseConstantGuardPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran { }
-            prop { AG (if true then a else 0) == 0 }
+            var value : int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (if true then value else 0) == 0
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran { }
-            prop { AG a == 0 }
+            var value : int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG value == 0
+            }
         """,
     )
 
@@ -34,17 +42,25 @@ class IfThenElsePatternsTest : PatternTestBase() {
         pattern = IfThenElseConstantGuardPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran { }
-            prop { AG (if false then a else 0) == 0 }
+            var value : int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (if false then value else 0) == 0
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran { }
-            prop { AG 0 == 0 }
+            var value : int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG 0 == 0
+            }
         """,
     )
 
@@ -53,17 +69,25 @@ class IfThenElsePatternsTest : PatternTestBase() {
         pattern = IfThenElseIdenticalBranchesPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran { }
-            prop { AG (if a == 0 then 5 else 5) == 5 }
+            var value : int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (if value == 0 then 5 else 5) == 5
+            }
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran { }
-            prop { AG 5 == 5 }
+            var value : int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG 5 == 5
+            }
         """,
     )
 
@@ -72,10 +96,14 @@ class IfThenElsePatternsTest : PatternTestBase() {
         pattern = IfThenElseConstantGuardPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran { }
-            prop { AG (if a == 0 then 1 else 2) >= 0 }
+            var value : int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (if value == 0 then 1 else 2) >= 0
+            }
         """,
     )
 
@@ -84,10 +112,14 @@ class IfThenElsePatternsTest : PatternTestBase() {
         pattern = IfThenElseIdenticalBranchesPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran { }
-            prop { AG (if a == 0 then 1 else 2) >= 0 }
+            var value : int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (if value == 0 then 1 else 2) >= 0
+            }
         """,
     )
 }

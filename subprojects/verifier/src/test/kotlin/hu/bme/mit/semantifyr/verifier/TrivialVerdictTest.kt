@@ -36,7 +36,9 @@ class TrivialVerdictTest {
                 package trivial::tests
                 @VerificationCase
                 class TrivialPass {
-                    prop { return AG true }
+                    prop {
+                        return AG true
+                    }
                 }
             """.trimIndent(),
             expected = VerificationVerdict.Passed,
@@ -51,7 +53,9 @@ class TrivialVerdictTest {
                 package trivial::tests
                 @VerificationCase
                 class TrivialFailAG {
-                    prop { return AG false }
+                    prop {
+                        return AG false
+                    }
                 }
             """.trimIndent(),
             expected = VerificationVerdict.Failed,
@@ -66,7 +70,9 @@ class TrivialVerdictTest {
                 package trivial::tests
                 @VerificationCase
                 class TrivialPassEF {
-                    prop { return EF true }
+                    prop {
+                        return EF true
+                    }
                 }
             """.trimIndent(),
             expected = VerificationVerdict.Passed,
@@ -81,7 +87,9 @@ class TrivialVerdictTest {
                 package trivial::tests
                 @VerificationCase
                 class TrivialFailEF {
-                    prop { return EF false }
+                    prop {
+                        return EF false
+                    }
                 }
             """.trimIndent(),
             expected = VerificationVerdict.Failed,
@@ -97,7 +105,9 @@ class TrivialVerdictTest {
                 @VerificationCase
                 class DispatchOnVar {
                     var x: int := 0
-                    prop { return AG (x >= 0) }
+                    prop {
+                        return AG (x >= 0)
+                    }
                 }
             """.trimIndent(),
         )
@@ -112,8 +122,12 @@ class TrivialVerdictTest {
                 @VerificationCase
                 class DispatchOnInit {
                     var x: int := 0
-                    redefine init { x := 1 }
-                    prop { return AG (x >= 0) }
+                    redefine init {
+                        x := 1
+                    }
+                    prop {
+                        return AG (x >= 0)
+                    }
                 }
             """.trimIndent(),
         )
@@ -128,8 +142,12 @@ class TrivialVerdictTest {
                 @VerificationCase
                 class DispatchOnTran {
                     var x: int := 0
-                    redefine tran { x := x + 1 }
-                    prop { return AG (x >= 0) }
+                    redefine tran {
+                        x := x + 1
+                    }
+                    prop {
+                        return AG (x >= 0)
+                    }
                 }
             """.trimIndent(),
         )

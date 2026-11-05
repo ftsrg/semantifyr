@@ -40,7 +40,9 @@ class ConcurrentSessionTest {
 
         @VerificationCase
         class CaseA {
-            prop { return true }
+            prop {
+                return true
+            }
         }
     """.trimIndent()
 

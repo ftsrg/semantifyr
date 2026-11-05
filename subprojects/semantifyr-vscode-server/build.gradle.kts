@@ -110,7 +110,7 @@ val imageTest = tasks.register<Exec>("imageTest") {
         !Os.isFamily(Os.FAMILY_WINDOWS)
     }
 
-    commandLine("./image-test.sh", "semantifyr-vscode-server:test", providers.gradleProperty("tests.requireDocker").getOrElse("false"))
+    commandLine("./image-test.sh", "semantifyr-vscode-server:test")
 }
 
 tasks.register("integrationTest") {

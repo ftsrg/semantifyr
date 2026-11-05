@@ -21,113 +21,113 @@ public class CastExpressionTest {
 
     @Test
     void castIntToAnyIsRejectedAsWidening() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var x: int := 0
+            class Holder {
+                var value: int := 0
                 redefine tran {
                     var result: any := 0
-                    result := x as any
+                    result := value as any
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.INVALID_CAST, "narrowing");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.INVALID_CAST, "narrowing");
     }
 
     @Test
     void castAnyToIntIsAcceptedAsNarrowingCast() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var a: any := 0
+            class Holder {
+                var anyValue: any := 0
                 redefine tran {
-                    var n: int := 0
-                    n := a as int
+                    var intValue: int := 0
+                    intValue := anyValue as int
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void castToUnrelatedPrimitiveTypeIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class C {
-                var b: bool := false
+            class Holder {
+                var flag: bool := false
                 redefine tran {
-                    var n: int := 0
-                    n := b as int
+                    var intValue: int := 0
+                    intValue := flag as int
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.INVALID_CAST, "narrowing");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.INVALID_CAST, "narrowing");
     }
 
     @Test
     void castBaseToChildIsAccepted() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Base { }
             class Child : Base { }
             class Host {
                 contains bases: Base[0..*]
                 contains child: Child[1] subsets bases
-                var ref: bases[0..1] := nothing
+                var selected: bases[0..1] := nothing
                 redefine tran {
-                    var c: Child[0..1] := nothing
-                    c := ref as Child
+                    var narrowed: Child[0..1] := nothing
+                    narrowed := selected as Child
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void castBetweenUnrelatedClassesIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
-            class A { }
-            class B { }
+            class Sensor { }
+            class Motor { }
             class Host {
-                contains a: A[1]
+                contains sensor: Sensor[1]
                 redefine tran {
-                    var b: B[0..1] := nothing
-                    b := a as B
+                    var motor: Motor[0..1] := nothing
+                    motor := sensor as Motor
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.INVALID_CAST, "narrowing");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.INVALID_CAST, "narrowing");
     }
 
     @Test
     void castChildToBaseIsRejectedAsWidening() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Base { }
             class Child : Base { }
             class Host {
                 contains child: Child[1]
                 redefine tran {
-                    var b: Base[0..1] := nothing
-                    b := child as Base
+                    var base: Base[0..1] := nothing
+                    base := child as Base
                 }
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.INVALID_CAST, "narrowing");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.INVALID_CAST, "narrowing");
     }
 
     @Test
     void narrowingMultiplicityAnyToOneIsAccepted() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Leaf { }
             class Host {
@@ -139,13 +139,13 @@ public class CastExpressionTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void narrowingMultiplicityOptionalToOneIsAccepted() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Leaf { }
             class Host {
@@ -157,13 +157,13 @@ public class CastExpressionTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void narrowingMultiplicityAnyToOptionalIsAccepted() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Leaf { }
             class Host {
@@ -175,13 +175,13 @@ public class CastExpressionTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
     void wideningMultiplicityOneToAnyIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Leaf { }
             class Host {
@@ -193,12 +193,12 @@ public class CastExpressionTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.INVALID_CAST, "narrowing");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.INVALID_CAST, "narrowing");
     }
 
     @Test
     void wideningMultiplicityOneToOptionalIsRejected() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Leaf { }
             class Host {
@@ -210,12 +210,12 @@ public class CastExpressionTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertHasValidationIssue(OxstsValidator.INVALID_CAST, "narrowing");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.INVALID_CAST, "narrowing");
     }
 
     @Test
     void sameMultiplicitySameDomainIsAccepted() {
-        var pkg = parseHelper.parse("""
+        var parsedPackage = parseHelper.parse("""
             package test
             class Leaf { }
             class Host {
@@ -227,7 +227,54 @@ public class CastExpressionTest {
             }
             """, CheckMode.ALL);
 
-        pkg.assertNoResourceErrors();
-        pkg.assertNoValidationErrors();
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
+    }
+
+    @Test
+    void narrowingCastInsideAPropertyIsAccepted() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Base { }
+            class Child : Base { }
+            class Host {
+                contains items: Base[0..*]
+                contains child: Child[1] subsets items
+                var selected: items[0..1] := nothing
+                prop { return AG (selected == nothing || (selected as Child) == child) }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
+    }
+
+    @Test
+    void wideningCastInsideAPropertyIsRejected() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Base { }
+            class Child : Base { }
+            class Host {
+                contains child: Child[1]
+                prop { return AG (child as Base) == child }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertHasValidationIssue(OxstsValidator.INVALID_CAST, "narrowing");
+    }
+
+    @Test
+    void castOfATemporalPropertyToBoolIsAccepted() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Host {
+                var value: int := 0
+                prop { return (AG value == 0) as bool }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 }

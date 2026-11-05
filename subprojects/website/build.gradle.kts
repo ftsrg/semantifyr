@@ -33,6 +33,8 @@ val apiDocsFiles = configurations.resolvable("apiDocsFiles") {
 dependencies {
     editorCommon(project(":semantifyr-editor-common"))
     cliDistribution(project(":semantifyr-cli"))
+    cliDistribution(project(":sysml-cli"))
+    cliDistribution(project(":gamma-cli"))
     if (providers.gradleProperty("website.apiDocs").getOrElse("false").toBoolean()) {
         apiDocs(project(":"))
     }
@@ -40,10 +42,18 @@ dependencies {
 
 val cliReferenceDir = layout.buildDirectory.dir("cli-reference")
 
-fun cliReferenceTask(name: String, vararg arguments: String) = tasks.register<JavaExec>("cliReference_$name") {
+class Launcher(val name: String, val mainClass: String)
+
+val semantifyr = Launcher("semantifyr", "hu.bme.mit.semantifyr.cli.SemantifyrCliKt")
+val semantifyrSysml = Launcher("semantifyr-sysml", "hu.bme.mit.semantifyr.frontends.sysml.cli.SemantifyrSysMLCliKt")
+val semantifyrGamma = Launcher("semantifyr-gamma", "hu.bme.mit.semantifyr.frontends.gamma.cli.SemantifyrGammaCliKt")
+
+fun cliReferenceTask(name: String, launcher: Launcher, vararg arguments: String) = tasks.register<JavaExec>("cliReference_$name") {
     val outputFile = cliReferenceDir.map { it.file("$name.txt") }
-    classpath = cliDistributionFiles.get().asFileTree.matching { include("*/lib/*.jar") }
-    mainClass = "hu.bme.mit.semantifyr.cli.SemantifyrCliKt"
+    classpath = cliDistributionFiles.get().asFileTree.matching {
+        include("${launcher.name}/lib/*.jar")
+    }
+    mainClass = launcher.mainClass
     jvmArgs("--enable-native-access=ALL-UNNAMED", "-Dguice_bytecode_gen_option=DISABLED")
     args(*arguments)
     outputs.file(outputFile)
@@ -59,13 +69,19 @@ fun cliReferenceTask(name: String, vararg arguments: String) = tasks.register<Ja
 }
 
 val cliReference = listOf(
-    cliReferenceTask("help", "--help"),
-    cliReferenceTask("verify", "verify", "--help"),
-    cliReferenceTask("compile", "compile", "--help"),
-    cliReferenceTask("list", "list", "--help"),
-    cliReferenceTask("metrics", "metrics", "--help"),
-    cliReferenceTask("portfolios-help", "portfolios", "--help"),
-    cliReferenceTask("portfolios", "portfolios"),
+    cliReferenceTask("help", semantifyr, "--help"),
+    cliReferenceTask("verify", semantifyr, "verify", "--help"),
+    cliReferenceTask("compile", semantifyr, "compile", "--help"),
+    cliReferenceTask("list", semantifyr, "list", "--help"),
+    cliReferenceTask("metrics", semantifyr, "metrics", "--help"),
+    cliReferenceTask("portfolios-help", semantifyr, "portfolios", "--help"),
+    cliReferenceTask("portfolios", semantifyr, "portfolios"),
+    cliReferenceTask("sysml-help", semantifyrSysml, "--help"),
+    cliReferenceTask("sysml-verify", semantifyrSysml, "verify", "--help"),
+    cliReferenceTask("sysml-compile", semantifyrSysml, "compile", "--help"),
+    cliReferenceTask("gamma-help", semantifyrGamma, "--help"),
+    cliReferenceTask("gamma-verify", semantifyrGamma, "verify", "--help"),
+    cliReferenceTask("gamma-compile", semantifyrGamma, "compile", "--help"),
 )
 
 tasks.npmInstall {

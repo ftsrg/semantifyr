@@ -6,13 +6,8 @@
 
 package semantifyr::verification::lang::boundedness
 
-// Spin and Uppaal compute in 32-bit integers that wrap: Spin needs a static bound within 32 bits on every integer the property depends on; Uppaal declares an integer without one with a 31-bit range and stops when a value leaves it; Theta and nuXmv decide every case here.
-
-// --- unbounded counters: Spin reports NotSupported before dispatch, Uppaal decides or stops at its range ---
-
 @VerificationCase
 @Tag("expect-pass")
-@Tag("engine-limit:spin")
 class UnboundedCounterReach {
     var x: int := 0
 
@@ -25,10 +20,8 @@ class UnboundedCounterReach {
     }
 }
 
-// Uppaal counts up to its 31-bit range before it stops, which takes longer than the suite's timeout.
 @VerificationCase
 @Tag("expect-pass")
-@Tag("engine-limit:spin")
 class UnboundedCounterBound {
     var x: int := 0
 
@@ -41,10 +34,8 @@ class UnboundedCounterBound {
     }
 }
 
-// Spin's 32-bit int wraps after 31 doublings, which made Spin report this Failed; Uppaal stops when a doubling leaves its 31-bit range.
 @VerificationCase
 @Tag("expect-pass")
-@Tag("engine-limit:spin,uppaal")
 class DoublingStaysPositive {
     var x: int := 1
 
@@ -57,10 +48,8 @@ class DoublingStaysPositive {
     }
 }
 
-// Spin's wrapped value made this reachable and Spin report it Passed; Uppaal stops when a doubling leaves its 31-bit range.
 @VerificationCase
 @Tag("expect-fail")
-@Tag("engine-limit:spin,uppaal")
 class DoublingReachesNegative {
     var x: int := 1
 
@@ -76,7 +65,6 @@ class DoublingReachesNegative {
 // An unbounded counter that only decides whether an assumption blocks is still in the cone of influence.
 @VerificationCase
 @Tag("expect-fail")
-@Tag("engine-limit:spin")
 class UnboundedGuardAroundAssumption {
     var x: int := 0
     var y: int := 0
@@ -96,8 +84,6 @@ class UnboundedGuardAroundAssumption {
         return AG y == 0
     }
 }
-
-// --- bounded integers: every engine decides ---
 
 @VerificationCase
 @Tag("expect-pass")
@@ -134,25 +120,25 @@ class SaturatingCounterBound {
 @VerificationCase
 @Tag("expect-pass")
 class TimerCountdownBound {
-    var t: int := 0
+    var timer: int := 0
 
     redefine init {
-        t := 3
+        timer := 3
     }
 
     redefine tran {
         choice {
-            if (t > 0) {
-                t := t - 1
+            if (timer > 0) {
+                timer := timer - 1
             }
         } or {
-            assume(t == 0)
-            t := 3
+            assume(timer == 0)
+            timer := 3
         }
     }
 
     prop {
-        return AG (t >= 0 && t <= 3)
+        return AG (timer >= 0 && timer <= 3)
     }
 }
 

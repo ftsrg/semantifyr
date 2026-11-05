@@ -6,13 +6,6 @@
 
 package semantifyr::verification::lang::control_flow
 
-// Control-flow feature matrix: choice, assume, if, havoc-narrowing. Each
-// case has a sibling that asserts the dual (reachability + safety bound).
-// Inline forms live in `inline_operations.oxsts`.
-
-// --- choice nondeterminism ---
-
-// Either branch of a choice is reachable (the "1" branch).
 @VerificationCase
 @Tag("expect-pass")
 class ChoiceBranch1Reach {
@@ -31,7 +24,6 @@ class ChoiceBranch1Reach {
     }
 }
 
-// Either branch of a choice is reachable (the "2" branch).
 @VerificationCase
 @Tag("expect-pass")
 class ChoiceBranch2Reach {
@@ -50,8 +42,6 @@ class ChoiceBranch2Reach {
     }
 }
 
-// Choice output is restricted to the enumerated branches; no other
-// value is reachable.
 @VerificationCase
 @Tag("expect-pass")
 class ChoiceBound {
@@ -70,9 +60,6 @@ class ChoiceBound {
     }
 }
 
-// --- assume guards ---
-
-// Guard allows progress up to the bound.
 @VerificationCase
 @Tag("expect-pass")
 class AssumeReach {
@@ -88,7 +75,6 @@ class AssumeReach {
     }
 }
 
-// Guard blocks any write past the bound.
 @VerificationCase
 @Tag("expect-pass")
 class AssumeBound {
@@ -104,10 +90,6 @@ class AssumeBound {
     }
 }
 
-// --- havoc + narrowing ---
-
-// Havoc followed by a narrowing assume: any value in the assumed
-// range is reachable (pick the high end).
 @VerificationCase
 @Tag("expect-pass")
 class HavocNarrowedReach {
@@ -123,8 +105,6 @@ class HavocNarrowedReach {
     }
 }
 
-// Havoc followed by a narrowing assume: no value outside the
-// assumed range is reachable.
 @VerificationCase
 @Tag("expect-pass")
 class HavocNarrowedBound {
@@ -140,9 +120,6 @@ class HavocNarrowedBound {
     }
 }
 
-// --- if operation (statement form) ---
-
-// Runtime if with a true guard takes the then-branch.
 @VerificationCase
 @Tag("expect-pass")
 class IfThenReach {
@@ -162,7 +139,6 @@ class IfThenReach {
     }
 }
 
-// Runtime if with a false guard takes the else-branch.
 @VerificationCase
 @Tag("expect-pass")
 class IfElseReach {
@@ -182,7 +158,6 @@ class IfElseReach {
     }
 }
 
-// Runtime if: taken is in {0, 1, 2} for any trigger value.
 @VerificationCase
 @Tag("expect-pass")
 class IfBound {
@@ -200,5 +175,143 @@ class IfBound {
 
     prop {
         return AG (taken == 0 || taken == 1 || taken == 2)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ChoiceUnreachable {
+    var x: int := 0
+
+    redefine tran {
+        choice {
+            x := 1
+        } or {
+            x := 2
+        }
+    }
+
+    prop {
+        return EF x == 3
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class AssumeViolated {
+    var x: int := 0
+
+    redefine tran {
+        assume(x < 3)
+        x := x + 1
+    }
+
+    prop {
+        return AG x <= 2
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class HavocNarrowedViolated {
+    var x: int := 0
+
+    redefine tran {
+        havoc(x)
+        assume(x >= 0 && x <= 5)
+    }
+
+    prop {
+        return AG x <= 4
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class IfViolated {
+    var taken: int := 0
+    var trigger: bool := false
+
+    redefine tran {
+        havoc(trigger)
+        if (trigger) {
+            taken := 1
+        } else {
+            taken := 2
+        }
+    }
+
+    prop {
+        return AG taken != 1
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class IfWithoutElseBound {
+    var taken: int := 0
+    var trigger: bool := false
+
+    redefine tran {
+        havoc(trigger)
+        if (trigger) {
+            taken := 1
+        }
+    }
+
+    prop {
+        return AG (taken == 0 || taken == 1)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class IfWithoutElseKeepsValueViolated {
+    var taken: int := 0
+    var trigger: bool := false
+
+    redefine tran {
+        havoc(trigger)
+        if (trigger) {
+            taken := 1
+        }
+    }
+
+    prop {
+        return AG taken == 0
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class AssumeAfterWriteBound {
+    var x: int := 0
+    var y: int := 0
+
+    redefine tran {
+        havoc(y)
+        x := 5
+        assume(y == 1)
+    }
+
+    prop {
+        return AG (x == 0 || y == 1)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class AssumeAfterWriteViolated {
+    var x: int := 0
+    var y: int := 0
+
+    redefine tran {
+        havoc(y)
+        x := 5
+        assume(y == 1)
+    }
+
+    prop {
+        return AG x == 0
     }
 }

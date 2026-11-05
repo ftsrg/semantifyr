@@ -75,10 +75,14 @@ class UppaalTraceParser {
 
     private fun splitAssignment(token: String): Pair<String, String>? {
         val idx = token.indexOf('=')
-        if (idx <= 0 || idx == token.length - 1) return null
+        if (idx <= 0 || idx == token.length - 1) {
+            return null
+        }
         val name = token.substring(0, idx).trim()
         val value = token.substring(idx + 1).trim()
-        if (name.isEmpty() || value.isEmpty()) return null
+        if (name.isEmpty() || value.isEmpty()) {
+            return null
+        }
         return name to value
     }
 }

@@ -14,17 +14,27 @@ class DeadStoreEliminationPassTest : PassTestBase() {
     fun `write that reaches the property read is kept`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran { a := 1 }
-            prop { AG (a == 1) }
+            var value : int := 0
+            init {
+            }
+            tran {
+                value := 1
+            }
+            prop {
+                AG (value == 1)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran { a := 1 }
-            prop { AG (a == 1) }
+            var value : int := 0
+            init {
+            }
+            tran {
+                value := 1
+            }
+            prop {
+                AG (value == 1)
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -35,23 +45,29 @@ class DeadStoreEliminationPassTest : PassTestBase() {
     fun `write followed by a guard reading the variable is kept`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran {
-                a := 1
-                assume(a == 1)
+            var value : int := 0
+            init {
             }
-            prop { AG true }
+            tran {
+                value := 1
+                assume(value == 1)
+            }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran {
-                a := 1
-                assume(a == 1)
+            var value : int := 0
+            init {
             }
-            prop { AG true }
+            tran {
+                value := 1
+                assume(value == 1)
+            }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -63,20 +79,40 @@ class DeadStoreEliminationPassTest : PassTestBase() {
         source = """
             inlined oxsts of semantifyr::Anything
             var state : int := -1
-            init { state := 0 }
-            tran {
-                choice { state := 1 } or { state := 2 } or { state := 3 }
+            init {
+                state := 0
             }
-            prop { AG (state != 42) }
+            tran {
+                choice {
+                    state := 1
+                } or {
+                    state := 2
+                } or {
+                    state := 3
+                }
+            }
+            prop {
+                AG (state != 42)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var state : int := -1
-            init { state := 0 }
-            tran {
-                choice { state := 1 } or { state := 2 } or { state := 3 }
+            init {
+                state := 0
             }
-            prop { AG (state != 42) }
+            tran {
+                choice {
+                    state := 1
+                } or {
+                    state := 2
+                } or {
+                    state := 3
+                }
+            }
+            prop {
+                AG (state != 42)
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -88,24 +124,32 @@ class DeadStoreEliminationPassTest : PassTestBase() {
         source = """
             inlined oxsts of semantifyr::Anything
             var state : int := -1
-            init { state := 0 }
+            init {
+                state := 0
+            }
             tran {
                 assume(state == 0)
                 state := -1
                 state := 25
             }
-            prop { AG (state != 25) }
+            prop {
+                AG (state != 25)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             var state : int := -1
-            init { state := 0 }
+            init {
+                state := 0
+            }
             tran {
                 assume(state == 0)
                 state := -1
                 state := 25
             }
-            prop { AG (state != 25) }
+            prop {
+                AG (state != 25)
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -116,23 +160,29 @@ class DeadStoreEliminationPassTest : PassTestBase() {
     fun `havoc followed by a deterministic write - both considered live`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran {
-                havoc(a)
-                a := 5
+            var value : int := 0
+            init {
             }
-            prop { AG (a == 5) }
+            tran {
+                havoc(value)
+                value := 5
+            }
+            prop {
+                AG (value == 5)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
-            init { }
-            tran {
-                havoc(a)
-                a := 5
+            var value : int := 0
+            init {
             }
-            prop { AG (a == 5) }
+            tran {
+                havoc(value)
+                value := 5
+            }
+            prop {
+                AG (value == 5)
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -143,24 +193,30 @@ class DeadStoreEliminationPassTest : PassTestBase() {
     fun `write to a completely unread variable is dead`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             var scratch : int := 0
-            init { }
+            init {
+            }
             tran {
                 scratch := 123
-                a := 5
+                value := 5
             }
-            prop { AG (a == 5) }
+            prop {
+                AG (value == 5)
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var a : int := 0
+            var value : int := 0
             var scratch : int := 0
-            init { }
-            tran {
-                a := 5
+            init {
             }
-            prop { AG (a == 5) }
+            tran {
+                value := 5
+            }
+            prop {
+                AG (value == 5)
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
@@ -173,17 +229,27 @@ class DeadStoreEliminationPassTest : PassTestBase() {
             inlined oxsts of semantifyr::Anything
             @NonOptimizable
             var tracer : bool := false
-            init { }
-            tran { tracer := true }
-            prop { AG true }
+            init {
+            }
+            tran {
+                tracer := true
+            }
+            prop {
+                AG true
+            }
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             @NonOptimizable
             var tracer : bool := false
-            init { }
-            tran { tracer := true }
-            prop { AG true }
+            init {
+            }
+            tran {
+                tracer := true
+            }
+            prop {
+                AG true
+            }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {

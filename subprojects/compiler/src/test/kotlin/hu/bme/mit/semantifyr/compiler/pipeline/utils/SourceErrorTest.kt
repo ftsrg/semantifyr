@@ -25,18 +25,24 @@ class SourceErrorTest {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                var b : int := 0
-                init { }
-                tran { }
-                prop { AG true }
+                var first : int := 0
+                var second : int := 0
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """.trimIndent(),
         )
 
-        val bVariable = inlined.eAllOfType<VariableDeclaration>().first { it.name == "b" }
+        val secondVariable = inlined.eAllOfType<VariableDeclaration>().first {
+            it.name == "second"
+        }
 
         assertThatThrownBy {
-            sourceError(bVariable, "boom")
+            sourceError(secondVariable, "boom")
         }.hasMessageContaining("boom")
             .hasMessageMatching(".*:\\d+:.*boom")
     }
@@ -46,22 +52,30 @@ class SourceErrorTest {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var a : int := 0
-                var b : int := 0
-                init { }
-                tran { }
-                prop { AG true }
+                var first : int := 0
+                var second : int := 0
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """.trimIndent(),
         )
 
-        val aVariable = inlined.eAllOfType<VariableDeclaration>().first { it.name == "a" }
-        val bVariable = inlined.eAllOfType<VariableDeclaration>().first { it.name == "b" }
+        val firstVariable = inlined.eAllOfType<VariableDeclaration>().first {
+            it.name == "first"
+        }
+        val secondVariable = inlined.eAllOfType<VariableDeclaration>().first {
+            it.name == "second"
+        }
 
-        val prefixA = SourceLocation.prefixFor(aVariable)
-        val prefixB = SourceLocation.prefixFor(bVariable)
+        val firstPrefix = SourceLocation.prefixFor(firstVariable)
+        val secondPrefix = SourceLocation.prefixFor(secondVariable)
 
-        assertThat(prefixA).matches(".*:\\d+: ")
-        assertThat(prefixB).matches(".*:\\d+: ")
-        assertThat(prefixA).isNotEqualTo(prefixB)
+        assertThat(firstPrefix).matches(".*:\\d+: ")
+        assertThat(secondPrefix).matches(".*:\\d+: ")
+        assertThat(firstPrefix).isNotEqualTo(secondPrefix)
     }
 }

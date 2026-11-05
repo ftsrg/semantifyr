@@ -17,7 +17,7 @@ class PortfoliosCommand : SuspendingCliktCommand("portfolios") {
     private val logger by loggerFactory()
 
     override fun help(context: Context): String {
-        return "List the backend portfolios including their legs, each leg's soundness direction and availability."
+        return "List the portfolios."
     }
 
     override suspend fun run() {
