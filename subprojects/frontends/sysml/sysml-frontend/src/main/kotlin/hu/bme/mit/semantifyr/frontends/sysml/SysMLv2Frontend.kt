@@ -54,7 +54,7 @@ class SysMLv2FrontendConfig(
 class SysMLv2Frontend private constructor(
     private val semantifyrLoader: SemantifyrLoader,
     private val verificationCaseDiscoverer: VerificationCaseDiscoverer,
-    private val sysmlConfig: SysMLv2FrontendConfig,
+    private val sysmlConfiguration: SysMLv2FrontendConfig,
     private val compiledOxstsPath: Path,
     val transformationDuration: Duration,
 ) {
@@ -62,21 +62,21 @@ class SysMLv2Frontend private constructor(
     private val logger by loggerFactory()
 
     val variant: SysMLv2Variant
-        get() = sysmlConfig.variant
+        get() = sysmlConfiguration.variant
 
     val portfolio: VerificationPortfolio
-        get() = sysmlConfig.portfolio
+        get() = sysmlConfiguration.portfolio
 
     val outputDirectory: Path
-        get() = sysmlConfig.outputDirectory
+        get() = sysmlConfiguration.outputDirectory
 
     val timeout: Duration?
-        get() = sysmlConfig.timeout
+        get() = sysmlConfiguration.timeout
 
     val modelContext: SemantifyrModelContext by lazy {
         logger.info { "Loading compiled SysMLv2 model context for '$compiledOxstsPath'" }
         semantifyrLoader.startContext()
-            .loadLibraryPaths(sysmlConfig.libraryPaths)
+            .loadLibraryPaths(sysmlConfiguration.libraryPaths)
             .loadModel(compiledOxstsPath)
             .buildAndResolve()
     }
@@ -89,7 +89,7 @@ class SysMLv2Frontend private constructor(
         case: VerificationCase,
         progress: ProgressContext = ProgressContext.NoOp,
     ): VerificationResult {
-        val verifier = buildVerifier(sysmlConfig.outputDirectory)
+        val verifier = buildVerifier(sysmlConfiguration.outputDirectory)
         logger.info { "Verifying SysMLv2 case '${case.qualifiedName}' (variant=${variant.name})" }
         val result = verifier.verify(case, progress)
         logger.info { "SysMLv2 case '${case.qualifiedName}' -> ${result.verdict}" }
@@ -106,7 +106,7 @@ class SysMLv2Frontend private constructor(
     }
 
     private fun caseDirectory(case: VerificationCase): Path {
-        return sysmlConfig.outputDirectory.resolve(caseDirectoryName(case))
+        return sysmlConfiguration.outputDirectory.resolve(caseDirectoryName(case))
     }
 
     // a witness the generator cannot express keeps its verdict, as an artifact the verifier fails to write does
@@ -114,7 +114,7 @@ class SysMLv2Frontend private constructor(
         val tracePath = sysmlTracePath(case)
         try {
             sharedSysMLv2Compiler.trace(
-                sourcePath = sysmlConfig.sourcePath,
+                sourcePath = sysmlConfiguration.sourcePath,
                 tracePath = caseDirectory(case).resolve("trace.json"),
                 caseName = case.qualifiedName.substringAfterLast("::"),
                 outputPath = tracePath,
@@ -136,19 +136,19 @@ class SysMLv2Frontend private constructor(
 
     private fun buildVerifier(outputPath: Path): SemantifyrVerifier {
         val verifierBuilder = SemantifyrVerifier.builder()
-            .injector(sysmlConfig.oxstsInjector)
-            .portfolio(sysmlConfig.portfolio)
-            .artifacts(sysmlConfig.artifacts)
+            .injector(sysmlConfiguration.oxstsInjector)
+            .portfolio(sysmlConfiguration.portfolio)
+            .artifacts(sysmlConfiguration.artifacts)
             .outputDirectory(outputPath)
-            .environment(sysmlConfig.environment)
+            .environment(sysmlConfiguration.environment)
 
-        sysmlConfig.timeout?.let {
+        sysmlConfiguration.timeout?.let {
             verifierBuilder.timeout(it)
         }
-        sysmlConfig.maxConcurrency?.let {
+        sysmlConfiguration.maxConcurrency?.let {
             verifierBuilder.maxConcurrency(it)
         }
-        sysmlConfig.optimization?.let {
+        sysmlConfiguration.optimization?.let {
             verifierBuilder.optimization(it)
         }
 
@@ -221,13 +221,13 @@ class SysMLv2Frontend private constructor(
             return this
         }
 
-        fun optimization(config: OptimizationConfig): Builder {
-            this.optimization = config
+        fun optimization(configuration: OptimizationConfig): Builder {
+            this.optimization = configuration
             return this
         }
 
-        fun artifacts(config: ArtifactConfig): Builder {
-            this.artifacts = config
+        fun artifacts(configuration: ArtifactConfig): Builder {
+            this.artifacts = configuration
             return this
         }
 
@@ -279,7 +279,7 @@ class SysMLv2Frontend private constructor(
                 "Building SysMLv2Frontend (variant=${variant.name}, source=$resolvedSource, compiled=$compiledOxsts, libraryPaths=$resolvedLibraryPaths)"
             }
 
-            val sysmlConfig = SysMLv2FrontendConfig(
+            val sysmlConfiguration = SysMLv2FrontendConfig(
                 sourcePath = resolvedSource,
                 variant = variant,
                 libraryPaths = resolvedLibraryPaths,
@@ -296,7 +296,7 @@ class SysMLv2Frontend private constructor(
             return SysMLv2Frontend(
                 semantifyrLoader = effectiveLoader,
                 verificationCaseDiscoverer = discoverer,
-                sysmlConfig = sysmlConfig,
+                sysmlConfiguration = sysmlConfiguration,
                 compiledOxstsPath = compiledOxsts,
                 transformationDuration = transformationDuration,
             )
