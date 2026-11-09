@@ -231,7 +231,7 @@ abstract class VerificationPortfolio {
      * If every trusted result agrees, returns that verdict and records the untrusted legs it overrules.
      * Trusted results that disagree are Errored, since one of those legs is unsound; decisive results none of which is trusted are Inconclusive.
      * Jobs that error, by throwing or by returning Errored, are surfaced as [PortfolioOutcome.AllErrored] when nothing else reported.
-     * Without a decisive result, a job that timed out or was still pending at [timeout] makes the outcome [PortfolioOutcome.TimedOut].
+     * Without a decisive result, the outcome is the undecided one that says most, naming every leg: [PortfolioOutcome.TimedOut] when a job timed out or was still pending at [timeout], else [PortfolioOutcome.NoDecision] unless every job errored or reported NotSupported.
      */
     protected suspend fun all(
         gate: ConcurrencyGate,
@@ -259,7 +259,7 @@ abstract class VerificationPortfolio {
             decisive.isEmpty() && collected.isEmpty() -> outcome
             decisive.isEmpty() && collected.all { it.verdict == VerificationVerdict.NotSupported } -> allNotSupported(collected)
             decisive.isEmpty() && (outcome is PortfolioOutcome.TimedOut || outcome is PortfolioOutcome.AllErrored) -> outcome
-            decisive.isEmpty() -> PortfolioOutcome.Decided(collected.first())
+            decisive.isEmpty() -> outcome
             trusted.isEmpty() -> outcome
             trusted.map { it.verdict }.distinct().size > 1 -> {
                 val breakdown = trusted.joinToString(", ") { "${it.metadata.backendId}=${it.verdict} (${it.soundness})" }
