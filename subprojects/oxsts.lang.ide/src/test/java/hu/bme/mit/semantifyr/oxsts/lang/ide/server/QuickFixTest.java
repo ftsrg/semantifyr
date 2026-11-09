@@ -154,13 +154,13 @@ class QuickFixTest extends OxstsLanguageServerTest {
                 }
                 """, "Redefine draw");
 
-        assertThat(withoutWhitespace(fixed)).isEqualTo(withoutWhitespace(SHAPES + """
+        assertThat(fixed).isEqualTo(SHAPES + """
 
                 class Square : Shape {
                     redefine tran draw() {
                     }
                 }
-                """));
+                """);
     }
 
     @Test
@@ -241,11 +241,6 @@ class QuickFixTest extends OxstsLanguageServerTest {
                 .findFirst()
                 .orElseThrow();
         return applyEdits(model.text(), codeAction.getEdit().getChanges().get(document.getUri()));
-    }
-
-    // The change serializer leaves the first line of an inserted member unindented.
-    private static String withoutWhitespace(String text) {
-        return text.replaceAll("\\s+", "");
     }
 
     private static boolean contains(Range range, Position position) {

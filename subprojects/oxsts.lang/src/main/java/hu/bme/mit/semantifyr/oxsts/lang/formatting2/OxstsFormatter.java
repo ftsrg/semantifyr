@@ -7,6 +7,8 @@
 package hu.bme.mit.semantifyr.oxsts.lang.formatting2;
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
+import java.util.ArrayList;
+import java.util.List;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.xtext.formatting2.AbstractJavaFormatter;
 import org.eclipse.xtext.formatting2.IFormattableDocument;
@@ -14,6 +16,7 @@ import org.eclipse.xtext.formatting2.IHiddenRegionFormatter;
 import org.eclipse.xtext.formatting2.IHiddenRegionFormatting;
 import org.eclipse.xtext.formatting2.ITextReplacer;
 import org.eclipse.xtext.formatting2.regionaccess.IHiddenRegion;
+import org.eclipse.xtext.formatting2.regionaccess.ITextReplacement;
 
 @SuppressWarnings("UnstableApiUsage")
 public class OxstsFormatter extends AbstractJavaFormatter {
@@ -21,6 +24,27 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     @Override
     public ITextReplacer createHiddenRegionReplacer(IHiddenRegion region, IHiddenRegionFormatting formatting) {
         return new BlockEndHiddenRegionReplacer(region, formatting);
+    }
+
+    // The change serializer drops edits that start before its inserted text, so kept whitespace is extended.
+    @Override
+    protected List<ITextReplacement> postProcess(IFormattableDocument document, List<ITextReplacement> replacements) {
+        var result = new ArrayList<ITextReplacement>();
+        for (var replacement : super.postProcess(document, replacements)) {
+            var text = replacement.getText();
+            var replacementText = replacement.getReplacementText();
+            if (!text.isEmpty()
+                    && replacementText.length() > text.length()
+                    && replacementText.startsWith(text)
+                    && replacementText.isBlank()) {
+                result.add(getTextRegionAccess()
+                        .getRewriter()
+                        .createReplacement(replacement.getEndOffset(), 0, replacementText.substring(text.length())));
+            } else {
+                result.add(replacement);
+            }
+        }
+        return result;
     }
 
     @Override
