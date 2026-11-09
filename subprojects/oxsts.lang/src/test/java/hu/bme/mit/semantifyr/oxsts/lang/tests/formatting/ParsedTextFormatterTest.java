@@ -82,12 +82,91 @@ public class ParsedTextFormatterTest {
     }
 
     @Test
-    void spaceBeforeDeclarationColonIsKeptAsTheSerializerWritesIt() {
+    void declarationColonAndParenthesesFollowTheNameDirectly() {
         assertFormatted("""
                 package test
 
+                annotation Marker (label : string)
+
                 class Node {
                     var x : int := 0
+
+                    tran step (amount : int) {
+                        assume (x > 0)
+                        havoc (x)
+                        inline step (1)
+                    }
+
+                    prop isPositive (value : int) : bool {
+                        return value > 0
+                    }
+                }
+
+                @Marker ("node")
+                class Marked {
+                }
+                """, """
+                package test
+
+                annotation Marker(label: string)
+
+                class Node {
+                    var x: int := 0
+
+                    tran step(amount: int) {
+                        assume(x > 0)
+                        havoc(x)
+                        inline step(1)
+                    }
+
+                    prop isPositive(value: int): bool {
+                        return value > 0
+                    }
+                }
+
+                @Marker("node")
+                class Marked {
+                }
+                """);
+    }
+
+    @Test
+    void literalsParenthesesAndReturnTypesAreWrittenCompactly() {
+        assertFormatted("""
+                package test
+
+                enum Color { Red, Green ,Blue }
+
+                class Node {
+                    var values: int[3] := [1 ,2,  3]
+
+                    prop first(): Node [ 0 .. 1 ] {
+                        return nothing
+                    }
+
+                    prop {
+                        return AG ( !( values[0] > 0 ) )
+                    }
+                }
+                """, """
+                package test
+
+                enum Color {
+                    Red,
+                    Green,
+                    Blue
+                }
+
+                class Node {
+                    var values: int[3] := [1, 2, 3]
+
+                    prop first(): Node[0..1] {
+                        return nothing
+                    }
+
+                    prop {
+                        return AG (!(values[0] > 0))
+                    }
                 }
                 """);
     }
@@ -242,7 +321,7 @@ public class ParsedTextFormatterTest {
                 class Node {
                     redefine tran {
                         choice {
-                            assume (true)
+                            assume(true)
                         } or {
                             // nothing happens
                         }

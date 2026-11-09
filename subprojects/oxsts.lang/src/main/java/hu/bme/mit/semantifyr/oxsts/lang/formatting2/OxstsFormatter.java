@@ -23,14 +23,30 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         return new BlockEndHiddenRegionReplacer(region, formatting);
     }
 
+    @Override
+    public void format(Object object, IFormattableDocument document) {
+        if (object instanceof Expression expression) {
+            regionFor(expression).keywords("(").forEach(open -> {
+                document.append(open, this::noSpace);
+            });
+            regionFor(expression).keywords(")").forEach(close -> {
+                document.prepend(close, this::noSpace);
+            });
+        }
+        super.format(object, document);
+    }
+
     protected void formatDeclaration(EObject declaration, IFormattableDocument document) {
         if (startsPackageSection(declaration)) {
             document.set(previousHiddenRegion(declaration), this::blankLine);
+        } else if (startsBlock(declaration)) {
+            document.set(previousHiddenRegion(declaration), this::newLine);
         } else {
             document.set(previousHiddenRegion(declaration), this::twoLines);
         }
         formatSemicolonedLine(declaration, document);
         formatCurlyBrackets(declaration, document);
+        document.prepend(regionFor(declaration).keyword("("), this::noSpace);
         formatCallBrackets(declaration, document);
     }
 
@@ -40,6 +56,14 @@ public class OxstsFormatter extends AbstractJavaFormatter {
             return siblings.indexOf(declaration) == 0;
         }
         return false;
+    }
+
+    protected boolean startsBlock(EObject declaration) {
+        var hiddenRegion = previousHiddenRegion(declaration);
+        if (hiddenRegion == null || hiddenRegion.getPreviousSemanticRegion() == null) {
+            return false;
+        }
+        return hiddenRegion.getPreviousSemanticRegion().getText().equals("{");
     }
 
     protected void formatOperation(Operation operation, IFormattableDocument document) {
@@ -61,6 +85,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     }
 
     protected void formatTypeColon(EObject declaration, IFormattableDocument document) {
+        document.prepend(regionFor(declaration).keyword(":"), this::noSpace);
         document.append(regionFor(declaration).keyword(":"), this::oneSpace);
     }
 
@@ -117,6 +142,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     }
 
     protected void format(Annotation annotation, IFormattableDocument document) {
+        document.prepend(regionFor(annotation).keyword("("), this::noSpace);
         formatCallBrackets(annotation, document);
         formatSemicolonedLine(annotation, document);
 
@@ -150,7 +176,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     }
 
     protected void format(EnumLiteral literal, IFormattableDocument document) {
-        document.prepend(regionFor(literal).feature(OxstsPackage.Literals.NAMED_ELEMENT__NAME), this::optionalNewLine);
+        document.prepend(regionFor(literal).feature(OxstsPackage.Literals.NAMED_ELEMENT__NAME), this::newLine);
         document.append(regionFor(literal).feature(OxstsPackage.Literals.NAMED_ELEMENT__NAME), this::noSpace);
     }
 
@@ -171,8 +197,10 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         document.append(regionFor(classDeclaration).keyword("class"), this::oneSpace);
         document.surround(regionFor(classDeclaration).keyword(":"), this::oneSpace);
 
-        document.prepend(allRegionsFor(classDeclaration).keyword(","), this::noSpace);
-        document.append(allRegionsFor(classDeclaration).keyword(","), this::oneSpace);
+        regionFor(classDeclaration).keywords(",").forEach(comma -> {
+            document.prepend(comma, this::noSpace);
+            document.append(comma, this::oneSpace);
+        });
 
         document.format(classDeclaration.getAnnotation());
 
@@ -219,6 +247,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         document.append(regionFor(propertyDeclaration).keyword(":"), this::oneSpace);
         document.append(regionFor(propertyDeclaration).keyword("{"), this::newLine);
 
+        document.format(propertyDeclaration.getReturnType());
         document.format(propertyDeclaration.getExpression());
         document.format(propertyDeclaration.getAnnotation());
 
@@ -268,7 +297,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     protected void format(HavocOperation havocOperation, IFormattableDocument document) {
         formatOperation(havocOperation, document);
 
-        document.append(regionFor(havocOperation).keyword("havoc"), this::oneSpace);
+        document.append(regionFor(havocOperation).keyword("havoc"), this::noSpace);
 
         document.format(havocOperation.getReference());
     }
@@ -276,7 +305,7 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     protected void format(AssumptionOperation assumptionOperation, IFormattableDocument document) {
         formatOperation(assumptionOperation, document);
 
-        document.append(regionFor(assumptionOperation).keyword("assume"), this::oneSpace);
+        document.append(regionFor(assumptionOperation).keyword("assume"), this::noSpace);
 
         document.format(assumptionOperation.getExpression());
     }
@@ -488,6 +517,10 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     protected void format(ArrayLiteral arrayLiteral, IFormattableDocument document) {
         document.append(regionFor(arrayLiteral).keyword("["), this::noSpace);
         document.prepend(regionFor(arrayLiteral).keyword("]"), this::noSpace);
+        regionFor(arrayLiteral).keywords(",").forEach(comma -> {
+            document.prepend(comma, this::noSpace);
+            document.append(comma, this::oneSpace);
+        });
 
         arrayLiteral.getValues().forEach(document::format);
     }
