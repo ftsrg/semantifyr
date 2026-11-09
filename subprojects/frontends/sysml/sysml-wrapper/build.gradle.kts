@@ -150,7 +150,9 @@ val bundleWorker = tasks.register<PnpmTask>("bundleWorker") {
 val sysmlWorkerDir = layout.buildDirectory.dir("sysml-worker")
 
 val collectWorker = tasks.register<Sync>("collectWorker") {
-    from(bundleWorker)
+    from(bundleWorker) {
+        exclude("library/.project", "library/.settings/**")
+    }
     from(languageServerDir.file("syntaxes/sysml.tmLanguage.json"))
     into(sysmlWorkerDir)
 }
