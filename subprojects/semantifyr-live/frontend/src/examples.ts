@@ -22,6 +22,12 @@ const importedGammaCompiled = import.meta.glob('./snippets/imported/gamma/*.oxst
   eager: true,
 });
 
+const importedSysmlv2Sources = import.meta.glob('./snippets/imported/sysmlv2/*.sysml', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+});
+
 const importedSysmlv2Compiled = import.meta.glob('./snippets/imported/sysmlv2/*.oxsts', {
   query: '?raw',
   import: 'default',
@@ -41,7 +47,8 @@ export type LiveFlavorId =
   | 'oxsts'
   | 'oxsts-with-gamma-library'
   | 'oxsts-with-sysmlv2-library'
-  | 'gamma';
+  | 'gamma'
+  | 'sysml';
 
 export interface LiveExample {
   id: string;
@@ -172,6 +179,23 @@ function buildImportedSysmlv2LibraryExamples(): LiveExample[] {
   });
 }
 
+function buildImportedSysmlv2Examples(): LiveExample[] {
+  return SYSMLV2_IMPORTED.flatMap((descriptor) => {
+    const example = loadOrSkip(
+      importedSysmlv2Sources,
+      `./snippets/imported/sysmlv2/${descriptor.id}.sysml`,
+      (code) => ({
+        id: descriptor.id,
+        flavor: 'sysml' as const,
+        label: descriptor.label,
+        description: descriptor.description,
+        code,
+      }),
+    );
+    return example ? [example] : [];
+  });
+}
+
 function buildImportedGammaLibraryExamples(): LiveExample[] {
   return GAMMA_IMPORTED.flatMap((descriptor) => {
     const example = loadOrSkip(
@@ -218,11 +242,17 @@ const gammaExamples: LiveExample[] = [
   blank('gamma', null),
 ];
 
+const sysmlExamples: LiveExample[] = [
+  ...buildImportedSysmlv2Examples(),
+  blank('sysml', null),
+];
+
 export const LIVE_FLAVORS: readonly [LiveFlavor, ...LiveFlavor[]] = [
   { id: 'oxsts', displayName: 'Semantifyr', description: 'The core Semantifyr modelling language, no extra libraries.', languageId: 'oxsts', fileName: 'snippet.oxsts', peekCompiledOutput: false, examples: oxstsExamples },
   { id: 'oxsts-with-gamma-library', displayName: 'Semantifyr with Gamma library', description: 'Semantifyr with the Gamma statechart library available to import.', languageId: 'oxsts', fileName: 'snippet.oxsts', peekCompiledOutput: false, examples: oxstsWithGammaLibraryExamples },
   { id: 'oxsts-with-sysmlv2-library', displayName: 'Semantifyr with SysML v2 library', description: 'Semantifyr with the SysML v2 library available to import.', languageId: 'oxsts', fileName: 'snippet.oxsts', peekCompiledOutput: false, examples: oxstsWithSysmlv2LibraryExamples },
   { id: 'gamma', displayName: 'Gamma', description: 'Gamma statechart source, compiled to Semantifyr before verification.', languageId: 'gamma', fileName: 'snippet.gamma', peekCompiledOutput: true, examples: gammaExamples },
+  { id: 'sysml', displayName: 'SysML v2', description: 'A SysML v2 model, with the standard and verification libraries loaded in the background.', languageId: 'sysml', fileName: 'snippet.sysml', peekCompiledOutput: true, examples: sysmlExamples },
 ];
 
 export function findFlavor(id: string | null | undefined): LiveFlavor | undefined {

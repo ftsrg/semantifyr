@@ -42,6 +42,7 @@ import type { StatusBarInfoItem } from './shell/StatusBar';
 import RightPanel, { type RightPanelTab } from './shell/RightPanel';
 import RunningVerificationsTab from './verification/RunningVerificationsTab';
 import WitnessTab from './witness/WitnessTab';
+import MappedOxstsTab from './witness/MappedOxstsTab';
 import PaneSplitter from './shell/PaneSplitter';
 import ReopenRail from './shell/ReopenRail';
 import { VerificationPanel, type VerificationPanelHandle } from './verification';
@@ -395,6 +396,13 @@ export default function EditorPage({
         ),
       });
     }
+    if (flavor.id === 'sysml') {
+      tabs.push({
+        id: 'oxsts',
+        label: 'OXSTS',
+        content: <MappedOxstsTab editorHandle={editorHandleRef.current} />,
+      });
+    }
     if (witnessCaseState?.trace != null) {
       tabs.push({
         id: 'witness',
@@ -426,6 +434,7 @@ export default function EditorPage({
     flavorInfo?.validateWitnessCommand,
     handleRevalidateWitness,
     verificationPortfolioLabel,
+    flavor.id,
     flavor.languageId,
   ]);
 

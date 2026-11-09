@@ -15,6 +15,7 @@ export {
 export {
   applyColorTheme,
   connectLanguageClient,
+  connectWorkerLanguageClient,
   createEditor,
   createFileUri,
   createSecondaryEditor,

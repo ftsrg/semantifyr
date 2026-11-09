@@ -78,6 +78,8 @@ function editorHandle(sendRequest: LspClient['sendRequest']): LiveEditorHandle {
     getApi: () => null,
     getFileUri: () => 'file:///workspace/snippet.gamma',
     getCurrentCode: () => '',
+    getMappedOxsts: () => null,
+    addMappingListener: () => () => {},
     onEditorContentChange: () => () => {},
     addProgressListener: () => () => {},
     addNotificationListener: () => () => {},

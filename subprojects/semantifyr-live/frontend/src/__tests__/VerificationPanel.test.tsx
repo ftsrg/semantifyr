@@ -50,6 +50,8 @@ function createFakeHandle(): FakeHandle {
     getApi: () => null,
     getFileUri: () => 'inmemory:///snippet.oxsts',
     getCurrentCode: () => '',
+    getMappedOxsts: () => null,
+    addMappingListener: () => () => {},
     onEditorContentChange: () => () => {},
     addProgressListener: () => () => {},
     addNotificationListener: () => () => {},

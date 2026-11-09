@@ -33,6 +33,8 @@ export interface LiveEditorHandle {
   getApi: () => SemantifyrLiveApi | null
   getFileUri: () => string
   getCurrentCode: () => string | null
+  getMappedOxsts: () => string | null
+  addMappingListener: (listener: () => void) => () => void
   onEditorContentChange: (callback: () => void) => (() => void) | undefined
   addProgressListener: (listener: (params: unknown) => void) => () => void
   addNotificationListener: (method: string, listener: (params: unknown) => void) => () => void
@@ -121,6 +123,8 @@ const LiveEditor = forwardRef<LiveEditorHandle, Props>(function LiveEditor(
     getApi: () => sessionRef.current?.api ?? null,
     getFileUri: () => sessionRef.current?.getFileUri() ?? '',
     getCurrentCode: () => sessionRef.current?.getCurrentCode() ?? null,
+    getMappedOxsts: () => sessionRef.current?.getMappedOxsts() ?? null,
+    addMappingListener: (cb) => sessionRef.current?.addMappingListener(cb) ?? (() => {}),
     onEditorContentChange: (cb) => sessionRef.current?.onContentChange(cb),
     addProgressListener: (cb) => sessionRef.current?.addProgressListener(cb) ?? (() => {}),
     addNotificationListener: (method, cb) =>
