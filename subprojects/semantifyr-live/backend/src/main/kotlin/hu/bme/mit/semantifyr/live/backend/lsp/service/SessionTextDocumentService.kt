@@ -17,7 +17,14 @@ import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionContext
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScoped
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
+import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.resource.ResourceSet
+import org.eclipse.lsp4j.CallHierarchyIncomingCall
+import org.eclipse.lsp4j.CallHierarchyIncomingCallsParams
+import org.eclipse.lsp4j.CallHierarchyItem
+import org.eclipse.lsp4j.CallHierarchyOutgoingCall
+import org.eclipse.lsp4j.CallHierarchyOutgoingCallsParams
+import org.eclipse.lsp4j.CallHierarchyPrepareParams
 import org.eclipse.lsp4j.CodeAction
 import org.eclipse.lsp4j.CodeActionParams
 import org.eclipse.lsp4j.CodeLens
@@ -386,6 +393,64 @@ class SessionTextDocumentService @Inject constructor(
         return items.onEach {
             it.uri = sessionDocumentManager.toClientUri(it.uri)
         }.toMutableList()
+    }
+
+    override fun prepareCallHierarchy(
+        params: CallHierarchyPrepareParams,
+    ): CompletableFuture<MutableList<CallHierarchyItem>> {
+        val service = languageServices.callHierarchyService ?: return CompletableFuture.completedFuture(mutableListOf())
+        return readDocument(params.textDocument.uri, mutableListOf()) { file, cancelIndicator ->
+            service.prepareCallHierarchy(file.xtextDocument(), file.resource, params, cancelIndicator).map {
+                toClientItem(it)
+            }.toMutableList()
+        }
+    }
+
+    override fun callHierarchyIncomingCalls(
+        params: CallHierarchyIncomingCallsParams,
+    ): CompletableFuture<MutableList<CallHierarchyIncomingCall>> {
+        val service = languageServices.callHierarchyService ?: return CompletableFuture.completedFuture(mutableListOf())
+        return readResource(params.item.uri, mutableListOf()) { resource, cancelIndicator ->
+            service.incomingCalls(
+                resource,
+                params.item,
+                sessionDocumentManager.referenceResourceAccess(),
+                sessionDocumentManager.referenceIndex(),
+                cancelIndicator,
+            ).map {
+                CallHierarchyIncomingCall(toClientItem(it.from), it.fromRanges)
+            }.toMutableList()
+        }
+    }
+
+    override fun callHierarchyOutgoingCalls(
+        params: CallHierarchyOutgoingCallsParams,
+    ): CompletableFuture<MutableList<CallHierarchyOutgoingCall>> {
+        val service = languageServices.callHierarchyService ?: return CompletableFuture.completedFuture(mutableListOf())
+        return readResource(params.item.uri, mutableListOf()) { resource, cancelIndicator ->
+            service.outgoingCalls(resource, params.item, cancelIndicator).map {
+                CallHierarchyOutgoingCall(toClientItem(it.to), it.fromRanges)
+            }.toMutableList()
+        }
+    }
+
+    private inline fun <T> readResource(
+        clientUri: String,
+        empty: T,
+        crossinline block: (Resource, CancelIndicator) -> T,
+    ): CompletableFuture<T> {
+        return sessionRequestManager.runRead {
+            val resource = sessionDocumentManager.findResourceByClient(clientUri)
+            if (resource == null) {
+                return@runRead empty
+            }
+            block(resource, it)
+        }
+    }
+
+    private fun toClientItem(item: CallHierarchyItem): CallHierarchyItem {
+        item.uri = sessionDocumentManager.toClientUri(item.uri)
+        return item
     }
 
     private inline fun <T> readDocument(

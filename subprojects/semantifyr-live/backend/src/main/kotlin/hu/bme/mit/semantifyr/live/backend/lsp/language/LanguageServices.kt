@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.live.backend.lsp.language
 
 import com.google.inject.Inject
 import com.google.inject.Provider
+import hu.bme.mit.semantifyr.lang.ide.server.callhierarchy.CallHierarchyService
 import hu.bme.mit.semantifyr.lang.ide.server.hierarchy.TypeHierarchyService
 import hu.bme.mit.semantifyr.lang.ide.server.inlayhints.InlayHintService
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinLibrary
@@ -74,6 +75,9 @@ class LanguageServices @Inject constructor(
     @Inject(optional = true)
     var typeHierarchyService: TypeHierarchyService? = null
 
+    @Inject(optional = true)
+    var callHierarchyService: CallHierarchyService? = null
+
     fun serverCapabilities(commands: List<String>): ServerCapabilities {
         return ServerCapabilities().apply {
             textDocumentSync = Either.forLeft(TextDocumentSyncKind.Full)
@@ -103,6 +107,7 @@ class LanguageServices @Inject constructor(
             }
             inlayHintProvider = Either.forLeft(inlayHintService != null)
             typeHierarchyProvider = Either.forLeft(typeHierarchyService != null)
+            callHierarchyProvider = Either.forLeft(callHierarchyService != null)
             semanticTokensProvider = SemanticTokensWithRegistrationOptions(
                 SemanticTokensLegend(
                     semanticTokensService.tokenTypes,

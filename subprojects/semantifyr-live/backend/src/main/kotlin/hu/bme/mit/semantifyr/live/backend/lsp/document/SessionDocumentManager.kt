@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScoped
 import hu.bme.mit.semantifyr.logging.error
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
+import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.lsp4j.Diagnostic
 import org.eclipse.lsp4j.DiagnosticSeverity
@@ -174,6 +175,15 @@ class SessionDocumentManager @Inject constructor(
             provider.resourceDescriptionManager?.getResourceDescription(resource)
         }
         return ResourceDescriptionsData(descriptions)
+    }
+
+    fun findResourceByClient(clientUri: String): Resource? {
+        findByClient(clientUri)?.let {
+            return it.resource
+        }
+        return resourceSet.resources.firstOrNull {
+            toClientUri(it.uri.toString()) == clientUri
+        }
     }
 
     fun serverToClient(serverUri: String): String {
