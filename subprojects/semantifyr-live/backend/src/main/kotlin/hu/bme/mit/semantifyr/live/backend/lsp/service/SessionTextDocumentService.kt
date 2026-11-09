@@ -257,8 +257,26 @@ class SessionTextDocumentService @Inject constructor(
                 this.document = file.xtextDocument()
                 this.resource = file.resource
                 this.languageServerAccess = sessionLanguageServerAccessFactory.create(cancelIndicator)
+                this.uri = params.textDocument.uri
             }
-            service.getCodeActions(options).orEmpty().toMutableList()
+            val codeActions = service.getCodeActions(options).orEmpty()
+            codeActions.mapNotNull {
+                it.right?.edit
+            }.forEach {
+                toClientEdit(it)
+            }
+            codeActions.toMutableList()
+        }
+    }
+
+    private fun toClientEdit(edit: WorkspaceEdit) {
+        edit.changes = edit.changes?.mapKeys {
+            sessionDocumentManager.toClientUri(it.key)
+        }
+        edit.documentChanges?.mapNotNull {
+            it.left?.textDocument
+        }?.forEach {
+            it.uri = sessionDocumentManager.toClientUri(it.uri)
         }
     }
 

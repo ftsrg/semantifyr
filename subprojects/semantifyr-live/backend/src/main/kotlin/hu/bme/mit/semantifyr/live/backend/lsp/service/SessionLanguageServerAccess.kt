@@ -24,6 +24,8 @@ import org.eclipse.xtext.ide.server.ILanguageServerAccess.IBuildListener
 import org.eclipse.xtext.ide.server.ILanguageServerAccess.IndexContext
 import org.eclipse.xtext.resource.impl.ResourceDescriptionsData
 import org.eclipse.xtext.util.CancelIndicator
+import java.io.ByteArrayInputStream
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
 import org.eclipse.emf.common.util.URI as EmfURI
@@ -61,7 +63,17 @@ class SessionLanguageServerAccess(
     }
 
     override fun newLiveScopeResourceSet(uri: EmfURI?): ResourceSet {
-        return languageServices.newResourceSet()
+        val resourceSet = languageServices.newResourceSet()
+        val document = uri?.let {
+            sessionDocumentManager.find(it.toString())
+        }
+        if (document != null) {
+            // the on-disk copy can lag behind the editor, so the fresh resource is loaded from the session's text
+            ByteArrayInputStream(document.text().toByteArray(StandardCharsets.UTF_8)).use {
+                resourceSet.createResource(uri).load(it, emptyMap<Any, Any>())
+            }
+        }
+        return resourceSet
     }
 
     override fun getInitializeParams(): InitializeParams {

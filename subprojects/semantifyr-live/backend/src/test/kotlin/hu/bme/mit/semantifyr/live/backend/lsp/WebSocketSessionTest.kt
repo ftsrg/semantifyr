@@ -15,10 +15,12 @@ import hu.bme.mit.semantifyr.live.backend.data.SessionInfo
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SemantifyrLiveMethods
 import hu.bme.mit.semantifyr.live.backend.server.ProxyUserResolver
 import hu.bme.mit.semantifyr.live.backend.testing.LspWire
+import hu.bme.mit.semantifyr.live.backend.testing.awaitPublishDiagnostics
 import hu.bme.mit.semantifyr.live.backend.testing.awaitResponseFor
 import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrApp
 import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrLiveBackend
 import hu.bme.mit.semantifyr.live.backend.testing.jsonClient
+import hu.bme.mit.semantifyr.live.backend.testing.paramsAs
 import hu.bme.mit.semantifyr.live.backend.testing.resultAs
 import hu.bme.mit.semantifyr.live.backend.testing.testInjector
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
@@ -37,8 +39,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
+import org.eclipse.lsp4j.CodeAction
+import org.eclipse.lsp4j.CodeActionContext
+import org.eclipse.lsp4j.CodeActionParams
 import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.Position
+import org.eclipse.lsp4j.PublishDiagnosticsParams
 import org.eclipse.lsp4j.SemanticTokens
 import org.eclipse.lsp4j.SignatureHelp
 import org.eclipse.lsp4j.SignatureHelpParams
@@ -115,6 +121,49 @@ class WebSocketSessionTest {
             send(Frame.Text(LspWire.initializeRequest()))
             val response = awaitResponseFor(id = 1).resultAs(InitializeResult::class.java)
             assertThat(response.capabilities.codeActionProvider.left).isTrue
+        }
+    }
+
+    @Test
+    fun `code action over websocket adds redefine to a shadowing transition`(@TempDir tmp: Path) = testApplication {
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(testInjector(config(tmp)))
+        }
+        val uri = "file:///workspace/snippet.oxsts"
+        val model = """
+            package test
+
+            class Light {
+                tran toggle() {
+                }
+            }
+
+            class Special : Light {
+                tran toggle() {
+                }
+            }
+        """.trimIndent()
+        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
+            openWith(uri, model)
+            val diagnostics = awaitPublishDiagnostics(uri).paramsAs(PublishDiagnosticsParams::class.java).diagnostics
+            val shadowed = diagnostics.filter {
+                it.code?.left == "OXSTS.ELEMENT_SHADOWED"
+            }
+            assertThat(shadowed).hasSize(1)
+            val params = CodeActionParams(TextDocumentIdentifier(uri), shadowed[0].range, CodeActionContext(shadowed))
+            send(Frame.Text(LspWire.request(id = 2, method = "textDocument/codeAction", params = params)))
+            val codeActions = awaitResponseFor(id = 2).resultAs(Array<CodeAction>::class.java)
+            assertThat(
+                codeActions.map {
+                    it.title
+                },
+            ).containsExactly("Add redefine")
+            val edits = codeActions[0].edit.changes
+            assertThat(edits.keys).containsExactly(uri)
+            assertThat(edits.getValue(uri)).hasSize(1)
+            val edit = edits.getValue(uri)[0]
+            assertThat(edit.newText).isEqualTo("redefine ")
+            assertThat(edit.range.start).isEqualTo(Position(8, 4))
         }
     }
 

@@ -301,7 +301,10 @@ class SessionDocumentManager @Inject constructor(
             issue.message ?: "",
             issueSeverity(issue.severity),
             "semantifyr",
-        )
+            issue.code,
+        ).apply {
+            data = issue.data
+        }
     }
 
     private fun issueSeverity(severity: Severity): DiagnosticSeverity {
