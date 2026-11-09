@@ -744,7 +744,10 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (reference == null) {
             return;
         }
-        if (!(evaluateWriteTarget(reference) instanceof VariableDeclaration)) {
+        var written = evaluateWriteTarget(reference);
+        if (written instanceof ParameterDeclaration parameter) {
+            rejectParameterWrite(parameter, havocOperation, OxstsPackage.Literals.HAVOC_OPERATION__REFERENCE);
+        } else if (!(written instanceof VariableDeclaration)) {
             acceptError(
                     "havoc target must be a variable reference.",
                     havocOperation,
@@ -959,7 +962,10 @@ public class OxstsValidator extends AbstractOxstsValidator {
         // first. Same for navigation chains - we want the leaf reference's element.
         var reference = unwrapAssignmentTarget(assignmentOperation.getReference());
 
-        if (!(evaluateWriteTarget(reference) instanceof VariableDeclaration)) {
+        var written = evaluateWriteTarget(reference);
+        if (written instanceof ParameterDeclaration parameter) {
+            rejectParameterWrite(parameter, assignmentOperation, OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE);
+        } else if (!(written instanceof VariableDeclaration)) {
             acceptError(
                     "Only variables can be assigned to!",
                     assignmentOperation,
@@ -967,6 +973,16 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     0,
                     INCORRECT_ASSIGNMENT);
         }
+    }
+
+    // a runtime argument binds to a local before the body and a compile-time one is substituted, so the write is lost
+    private void rejectParameterWrite(ParameterDeclaration parameter, EObject host, EStructuralFeature feature) {
+        acceptError(
+                "Cannot write parameter '" + parameter.getName() + "': arguments are passed by value.",
+                host,
+                feature,
+                0,
+                INCORRECT_ASSIGNMENT);
     }
 
     // a literal or another value that names no declaration is not a write target

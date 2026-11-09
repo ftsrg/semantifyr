@@ -15,6 +15,8 @@ Inline operations are resolved at **compile time** during unfolding. They never 
 inline counter.increment()
 ```
 
+A body never writes a parameter: an assignment or a `havoc` whose target is a parameter is rejected (`OXSTS.INCORRECT_ASSIGNMENT`), since arguments are passed by value and the write could not reach the caller. Copy the parameter into a local variable to change it.
+
 ### One-step example
 
 ```oxsts
