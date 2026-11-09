@@ -60,6 +60,5 @@ final class FormattingModels {
             }
             """;
 
-    private FormattingModels() {
-    }
+    private FormattingModels() {}
 }

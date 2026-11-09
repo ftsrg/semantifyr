@@ -230,7 +230,9 @@ public class OxstsFormatter extends AbstractJavaFormatter {
 
         document.append(regionFor(transitionDeclaration).keyword("redefine"), this::oneSpace);
         document.append(regionFor(transitionDeclaration).keyword("abstract"), this::oneSpace);
-        document.append(regionFor(transitionDeclaration).feature(OxstsPackage.Literals.TRANSITION_DECLARATION__KIND), this::oneSpace);
+        document.append(
+                regionFor(transitionDeclaration).feature(OxstsPackage.Literals.TRANSITION_DECLARATION__KIND),
+                this::oneSpace);
         document.surround(regionFor(transitionDeclaration).keyword("or"), this::oneSpace);
 
         document.format(transitionDeclaration.getAnnotation());
@@ -245,7 +247,8 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         formatTypeColon(featureDeclaration, document);
 
         document.append(regionFor(featureDeclaration).keyword("redefine"), this::oneSpace);
-        document.append(regionFor(featureDeclaration).feature(OxstsPackage.Literals.FEATURE_DECLARATION__KIND), this::oneSpace);
+        document.append(
+                regionFor(featureDeclaration).feature(OxstsPackage.Literals.FEATURE_DECLARATION__KIND), this::oneSpace);
         document.surround(regionFor(featureDeclaration).keyword("subsets"), this::oneSpace);
         document.surround(regionFor(featureDeclaration).keyword("opposite"), this::oneSpace);
         document.surround(regionFor(featureDeclaration).keyword("redefines"), this::oneSpace);
@@ -423,21 +426,25 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     }
 
     protected void format(ComparisonOperator comparisonOperator, IFormattableDocument document) {
-        document.surround(regionFor(comparisonOperator).feature(OxstsPackage.Literals.COMPARISON_OPERATOR__OP), this::oneSpace);
+        document.surround(
+                regionFor(comparisonOperator).feature(OxstsPackage.Literals.COMPARISON_OPERATOR__OP), this::oneSpace);
 
         document.format(comparisonOperator.getLeft());
         document.format(comparisonOperator.getRight());
     }
 
     protected void format(ArithmeticBinaryOperator arithmeticBinaryOperator, IFormattableDocument document) {
-        document.surround(regionFor(arithmeticBinaryOperator).feature(OxstsPackage.Literals.ARITHMETIC_BINARY_OPERATOR__OP), this::oneSpace);
+        document.surround(
+                regionFor(arithmeticBinaryOperator).feature(OxstsPackage.Literals.ARITHMETIC_BINARY_OPERATOR__OP),
+                this::oneSpace);
 
         document.format(arithmeticBinaryOperator.getLeft());
         document.format(arithmeticBinaryOperator.getRight());
     }
 
     protected void format(BooleanOperator booleanOperator, IFormattableDocument document) {
-        document.surround(regionFor(booleanOperator).feature(OxstsPackage.Literals.BOOLEAN_OPERATOR__OP), this::oneSpace);
+        document.surround(
+                regionFor(booleanOperator).feature(OxstsPackage.Literals.BOOLEAN_OPERATOR__OP), this::oneSpace);
 
         document.format(booleanOperator.getLeft());
         document.format(booleanOperator.getRight());

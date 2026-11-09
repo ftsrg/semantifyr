@@ -29,7 +29,9 @@ class OxstsFormattingTest extends OxstsLanguageServerTest {
         var model = MarkedText.of(FormattingModels.UNFORMATTED);
         var document = openModel(model.text());
 
-        var edits = languageServer.formatting(new DocumentFormattingParams(document, OPTIONS)).get();
+        var edits = languageServer
+                .formatting(new DocumentFormattingParams(document, OPTIONS))
+                .get();
 
         assertThat(applyEdits(model.text(), edits)).isEqualTo(FormattingModels.FORMATTED);
     }
@@ -40,7 +42,9 @@ class OxstsFormattingTest extends OxstsLanguageServerTest {
         var document = openModel(model.text());
         var range = new Range(model.positions().getFirst(), model.positions().getLast());
 
-        var edits = languageServer.rangeFormatting(new DocumentRangeFormattingParams(document, OPTIONS, range)).get();
+        var edits = languageServer
+                .rangeFormatting(new DocumentRangeFormattingParams(document, OPTIONS, range))
+                .get();
 
         assertThat(applyEdits(model.text(), edits)).isEqualTo(FormattingModels.TRANSITION_FORMATTED);
     }
@@ -48,10 +52,15 @@ class OxstsFormattingTest extends OxstsLanguageServerTest {
     private static String applyEdits(String text, List<? extends TextEdit> edits) {
         var result = new StringBuilder(text);
         var lastFirst = edits.stream()
-                .sorted(Comparator.comparing((TextEdit edit) -> offset(text, edit.getRange().getStart())).reversed())
+                .sorted(Comparator.comparing(
+                                (TextEdit edit) -> offset(text, edit.getRange().getStart()))
+                        .reversed())
                 .toList();
         for (var edit : lastFirst) {
-            result.replace(offset(text, edit.getRange().getStart()), offset(text, edit.getRange().getEnd()), edit.getNewText());
+            result.replace(
+                    offset(text, edit.getRange().getStart()),
+                    offset(text, edit.getRange().getEnd()),
+                    edit.getNewText());
         }
         return result.toString();
     }

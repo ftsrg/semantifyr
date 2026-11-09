@@ -16,9 +16,13 @@ import org.eclipse.xtext.util.CancelIndicator;
 
 public class SemantifyrFormattingService extends FormattingService {
 
-    // Xtext formats only the whitespace wholly inside the range, and the whitespace before the first line starts on the line above.
+    // Xtext skips whitespace not wholly inside the range, such as the indentation of its first line.
     @Override
-    public List<? extends TextEdit> format(Document document, XtextResource resource, DocumentRangeFormattingParams params, CancelIndicator cancelIndicator) {
+    public List<? extends TextEdit> format(
+            Document document,
+            XtextResource resource,
+            DocumentRangeFormattingParams params,
+            CancelIndicator cancelIndicator) {
         var region = document.getTextRegion(params.getRange());
         var text = document.getContents();
         var start = region.getOffset();
