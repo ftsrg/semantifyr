@@ -17,7 +17,7 @@ import { EditorApp, type EditorAppConfig } from 'monaco-languageclient/editorApp
 import type { editor } from 'monaco-editor';
 import type { MessageTransports } from 'vscode-languageclient';
 
-import { normalizeBaseUrl } from '@semantifyr/editor-common';
+import { normalizeBaseUrl, type NavigateToParams } from '@semantifyr/editor-common';
 import type { ResolvedColorMode } from '../util/colorMode';
 import { observeSocketClose, type SocketClose } from './reconnectController';
 
@@ -251,17 +251,6 @@ export async function createSecondaryEditor(
       }
     },
   };
-}
-
-// TODO: extract a shared editor-common helper; currently duplicated in semantifyr-vscode.
-export interface NavigateToParams {
-  locations: {
-    uri: string;
-    range: {
-      start: { line: number; character: number };
-      end: { line: number; character: number };
-    };
-  }[];
 }
 
 async function handleNavigateTo(params: NavigateToParams): Promise<void> {

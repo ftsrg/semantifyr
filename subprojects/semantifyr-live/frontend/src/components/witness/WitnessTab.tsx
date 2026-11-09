@@ -6,6 +6,7 @@
 
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react'
+import { noWitnessMessage, witnessOpenFailureMessage } from '@semantifyr/editor-common'
 import Box from '@mui/material/Box'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
@@ -81,6 +82,7 @@ function RawWitnessEditor({
   language: string
 }): React.JSX.Element {
   const hostRef = useRef<HTMLDivElement>(null)
+  const [failure, setFailure] = useState<string | null>(null)
 
   useEffect(() => {
     if (!editorHandle || !hostRef.current) return
@@ -97,7 +99,9 @@ function RawWitnessEditor({
         dispose = handle.dispose
       })
       .catch((error: unknown) => {
-        console.warn('semantifyr-live: failed to attach witness editor', error)
+        if (!cancelled) {
+          setFailure(witnessOpenFailureMessage(witnessUri, error))
+        }
       })
     return () => {
       cancelled = true
@@ -110,15 +114,29 @@ function RawWitnessEditor({
   }, [editorHandle, witnessUri, language])
 
   return (
-    <Box
-      ref={hostRef}
-      sx={{
-        flex: '1 1 auto',
-        minHeight: 0,
-        minWidth: 0,
-        bgcolor: 'var(--page-bg)',
-      }}
-    />
+    <>
+      {failure && <WitnessPaneMessage text={failure} />}
+      <Box
+        ref={hostRef}
+        sx={{
+          display: failure ? 'none' : 'block',
+          flex: '1 1 auto',
+          minHeight: 0,
+          minWidth: 0,
+          bgcolor: 'var(--page-bg)',
+        }}
+      />
+    </>
+  )
+}
+
+function WitnessPaneMessage({ text }: { text: string }): React.JSX.Element {
+  return (
+    <Box sx={{ flex: '1 1 auto', p: 1.5 }}>
+      <Typography sx={{ fontSize: FONT_SIZE.md, color: 'text.secondary', fontStyle: 'italic' }}>
+        {text}
+      </Typography>
+    </Box>
   )
 }
 
@@ -190,16 +208,13 @@ export default function WitnessTab({
         {view === 'raw' && (
           trace.witnessUri ? (
             <RawWitnessEditor
+              key={trace.witnessUri}
               editorHandle={editorHandle}
               witnessUri={trace.witnessUri}
               language={witnessLanguageId}
             />
           ) : (
-            <Box sx={{ flex: '1 1 auto', p: 1.5 }}>
-              <Typography sx={{ fontSize: FONT_SIZE.md, color: 'text.secondary', fontStyle: 'italic' }}>
-                Witness source unavailable.
-              </Typography>
-            </Box>
+            <WitnessPaneMessage text={noWitnessMessage(caseInfo.label)} />
           )
         )}
       </Box>

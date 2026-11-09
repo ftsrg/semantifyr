@@ -19,6 +19,10 @@ export interface Location {
     range: Range;
 }
 
+export interface NavigateToParams {
+    locations: Location[];
+}
+
 export interface VerificationCaseSpecification {
     id: string;
     label: string;

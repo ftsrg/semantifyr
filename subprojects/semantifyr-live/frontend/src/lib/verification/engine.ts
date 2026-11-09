@@ -6,15 +6,18 @@
 
 import {
   discoverVerificationCases,
+  validateWitness as requestWitnessValidation,
   VerificationStatus,
-  WitnessValidationStatus,
   type Location,
   type VerificationCaseResult,
   type VerificationCaseSpecification,
   type VerificationMetrics,
   type VerificationTrace,
   type WitnessValidationResult,
+  type WitnessValidationStatus,
   verifyCase,
+  witnessValidationLocation,
+  witnessValidationStatusOf,
 } from '@semantifyr/editor-common'
 import {
   CancellationTokenSource as VscodeCancellationTokenSource,
@@ -137,20 +140,7 @@ function parseResultStatus(response: VerificationCaseResult | null): Verificatio
   }
 }
 
-function parseValidationStatus(response: WitnessValidationResult | null): WitnessValidationStatus {
-  switch (response?.status) {
-    case WitnessValidationStatus.Valid:
-    case WitnessValidationStatus.Invalid:
-    case WitnessValidationStatus.Inconclusive:
-    case WitnessValidationStatus.Timeout:
-    case WitnessValidationStatus.Cancelled:
-      return response.status
-    default:
-      return WitnessValidationStatus.Errored
-  }
-}
-
-export { discoverVerificationCases } from '@semantifyr/editor-common'
+export { discoverVerificationCases, witnessValidationLocation } from '@semantifyr/editor-common'
 
 function mergeDiscoveredCases(
   previous: readonly VerificationCaseState[],
@@ -275,7 +265,7 @@ function maybeDispatchAutoValidation(
   if (!validate) {
     return
   }
-  const location = witnessValidationLocation(caseInfo, witnessUri, validate.byCase ?? false)
+  const location = witnessValidationLocation(caseInfo.location, witnessUri, validate.byCase ?? false)
   dispatchAutoValidation(client, validate.command, caseInfo.id, location, setState, {
     validationPortfolioId: validate.portfolioId,
   })
@@ -532,29 +522,6 @@ export function verifySingleCase(
   return { cancel: cancelHandle }
 }
 
-export interface ValidateWitnessLocation {
-  uri: string
-  range: {
-    start: { line: number; character: number }
-    end: { line: number; character: number }
-  }
-}
-
-// gamma.witness.validate takes the case, oxsts.case.validateWitness the witness model
-export function witnessValidationLocation(
-  caseInfo: VerificationCaseSpecification,
-  witnessUri: string,
-  byCase: boolean,
-): ValidateWitnessLocation {
-  if (byCase) {
-    return caseInfo.location
-  }
-  return {
-    uri: witnessUri,
-    range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
-  }
-}
-
 export interface WitnessValidationOutcome {
   status: WitnessValidationStatus
   message?: string
@@ -566,20 +533,15 @@ export interface WitnessValidationOutcome {
 export async function validateWitness(
   client: LspClient,
   validateCommand: string,
-  location: ValidateWitnessLocation,
+  location: VerificationCaseLocation,
   options: RunVerificationOptions = {},
   token?: CancellationToken,
 ): Promise<WitnessValidationOutcome> {
-  const args: Record<string, unknown> = {
-    uri: location.uri,
-    range: location.range,
-  }
-  if (options.portfolioId) {
-    args.portfolio = options.portfolioId
-  }
   try {
-    const params = { command: validateCommand, arguments: [args] }
-    const response = (await client.sendRequest('workspace/executeCommand', params, token)) as WitnessValidationResult | null
+    const response = await requestWitnessValidation(client, validateCommand, location, {
+      ...(options.portfolioId ? { portfolio: options.portfolioId } : {}),
+      ...(token ? { token } : {}),
+    })
     return toValidationOutcome(response)
   } catch (error) {
     return {
@@ -591,7 +553,7 @@ export async function validateWitness(
 
 function toValidationOutcome(response: WitnessValidationResult | null): WitnessValidationOutcome {
   return {
-    status: parseValidationStatus(response),
+    status: witnessValidationStatusOf(response),
     ...(response?.message != null ? { message: response.message } : {}),
     ...(response?.metrics ? { metrics: response.metrics } : {}),
     ...(response?.backendId ? { backendId: response.backendId } : {}),
@@ -618,7 +580,7 @@ export function dispatchAutoValidation(
   client: LspClient,
   validateCommand: string,
   caseId: string,
-  location: ValidateWitnessLocation,
+  location: VerificationCaseLocation,
   setState: StateUpdater,
   options: { validationPortfolioId?: string | undefined } = {},
 ): void {

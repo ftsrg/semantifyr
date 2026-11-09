@@ -194,7 +194,7 @@ export async function validateResult(client: LspClient, running: RunningTracker,
   if (!witnessUri || !command) {
     return null
   }
-  const location = witnessValidationLocation(request.verificationCase, witnessUri, request.flavor.validateWitnessByCase)
+  const location = witnessValidationLocation(request.verificationCase.location, witnessUri, request.flavor.validateWitnessByCase)
   const key = activityKey('Validate', location)
   const tokenSource = new CancellationTokenSource()
   running.reset(key)
