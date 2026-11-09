@@ -24,5 +24,9 @@ fun caseDirectoryName(case: VerificationCase): String {
 }
 
 fun caseReportPath(outputDirectory: Path, case: VerificationCase): Path {
-    return outputDirectory.resolve(caseDirectoryName(case)).resolve("report.json")
+    return reportPath(outputDirectory.resolve(caseDirectoryName(case)))
+}
+
+internal fun reportPath(caseDirectory: Path): Path {
+    return caseDirectory.resolve("report.json")
 }

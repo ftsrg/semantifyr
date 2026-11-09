@@ -26,6 +26,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.verifier.ProgressContext
@@ -41,7 +42,10 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.EObject
+import org.eclipse.emf.ecore.util.EcoreUtil
+import org.eclipse.xtext.serializer.ISerializer
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
@@ -49,6 +53,7 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readText
+import kotlin.io.path.writeText
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -62,6 +67,9 @@ class SemantifyrVerifierImplTest {
 
     @Inject
     private lateinit var loader: SemantifyrLoader
+
+    @Inject
+    private lateinit var serializer: ISerializer
 
     private val modelPath = Path("../../oxsts-test-models/simple/simple.oxsts")
 
@@ -241,6 +249,27 @@ class SemantifyrVerifierImplTest {
         assertThat(result.isTrusted).isFalse
     }
 
+    @Test
+    suspend fun `re-verifying a witness keeps the verify's artifacts and leaves the witness model unchanged`(@TempDir output: Path) {
+        val portfolio = ScriptedPortfolio { _, _ -> decisiveResult(VerificationVerdict.Passed) }
+        val verifier = build(portfolio, output)
+        val case = loadFirstCase()
+        verifier.verify(case)
+        val caseDirectory = output.resolve("simple.Incrementing")
+        val witness = loadWitness(case, caseDirectory.resolve("witness.oxsts"))
+        val before = serializer.serialize(witness)
+
+        val first = verifier.verify(witness)
+        val second = verifier.verify(witness)
+
+        assertThat(first.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(second.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(serializer.serialize(witness)).isEqualTo(before)
+        assertThat(caseDirectory.resolve("report.json").exists()).isTrue
+        assertThat(caseDirectory.resolve("witness.oxsts").exists()).isTrue
+        assertThat(caseDirectory.resolve("validation").resolve("report.json").exists()).isTrue
+    }
+
     private fun build(
         portfolio: VerificationPortfolio,
         output: Path,
@@ -269,6 +298,40 @@ class SemantifyrVerifierImplTest {
             qualifiedName = "semantifyr::verification::simple::${classDeclaration.name}",
             classDeclaration = classDeclaration,
         )
+    }
+
+    private fun loadWitness(case: VerificationCase, witnessPath: Path): InlinedOxsts {
+        witnessPath.writeText(
+            """
+            witness of semantifyr::verification::simple::Incrementing
+
+            var step : int := 0
+
+            contains root : semantifyr::verification::simple::Incrementing
+
+            init {
+                assume (step == 0)
+                inline root.init()
+                assume (root.x == 1)
+                step := 1
+            }
+
+            tran {
+                assume (step == 1)
+                inline root.main()
+                assume (root.x == 2)
+                step := 2
+            }
+
+            prop {
+                root.prop()
+            }
+            """.trimIndent(),
+        )
+        val resourceSet = case.classDeclaration.eResource().resourceSet
+        val resource = resourceSet.getResource(URI.createFileURI(witnessPath.toAbsolutePath().toString()), true)
+        EcoreUtil.resolveAll(resourceSet)
+        return resource.contents.filterIsInstance<InlinedOxsts>().single()
     }
 
     private fun decisiveResult(

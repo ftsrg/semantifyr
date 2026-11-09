@@ -221,7 +221,7 @@ class GammaFrontend @Inject private constructor(
     ): WitnessValidationResult {
         val qualifiedName = gammaVerificationCase.qualifiedName
         val baseDirectory = caseDirectory(gammaVerificationCase)
-        val verifier = buildVerifier(baseDirectory.resolve("witness-validation"), portfolio)
+        val verifier = buildVerifier(baseDirectory.resolve("verification"), portfolio)
 
         logger.info { "Validating witness for Gamma case '$qualifiedName' from '$witnessPath'" }
 
