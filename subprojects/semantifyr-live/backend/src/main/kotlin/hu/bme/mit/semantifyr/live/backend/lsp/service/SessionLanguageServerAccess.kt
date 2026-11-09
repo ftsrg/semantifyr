@@ -12,9 +12,11 @@ import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServices
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionClient
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionContext
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScoped
+import hu.bme.mit.semantifyr.oxsts.lang.ide.client.NavigateToParams
 import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.lsp4j.InitializeParams
 import org.eclipse.lsp4j.InitializeResult
+import org.eclipse.lsp4j.Location
 import org.eclipse.lsp4j.services.LanguageClient
 import org.eclipse.xtext.ide.server.ILanguageServerAccess
 import org.eclipse.xtext.ide.server.ILanguageServerAccess.Context
@@ -52,7 +54,10 @@ class SessionLanguageServerAccess(
     }
 
     override fun getLanguageClient(): LanguageClient {
-        return client
+        if (client !is SessionLanguageClient) {
+            return client
+        }
+        return ClientUriLanguageClient(client, sessionDocumentManager)
     }
 
     override fun newLiveScopeResourceSet(uri: EmfURI?): ResourceSet {
@@ -72,6 +77,19 @@ class SessionLanguageServerAccess(
     private fun contextFor(uri: String): Context {
         val file = sessionDocumentManager.find(uri) ?: error("No resource registered for uri=$uri")
         return Context(file.resource, file.xtextDocument(), true, cancelIndicator)
+    }
+}
+
+private class ClientUriLanguageClient(
+    private val delegate: SessionLanguageClient,
+    private val sessionDocumentManager: SessionDocumentManager,
+) : SessionLanguageClient by delegate {
+
+    override fun navigateTo(params: NavigateToParams): CompletableFuture<Void>? {
+        val locations = params.locations().map {
+            Location(sessionDocumentManager.toClientUri(it.uri), it.range)
+        }
+        return delegate.navigateTo(NavigateToParams(locations))
     }
 }
 

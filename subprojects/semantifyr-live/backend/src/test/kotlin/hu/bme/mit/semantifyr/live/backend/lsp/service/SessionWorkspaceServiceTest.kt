@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandGson
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
+import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServices
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionContext
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionVerificationManager
 import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationExecutor
@@ -63,6 +64,7 @@ class SessionWorkspaceServiceTest {
             sessionRequestManager,
             sessionVerificationManager,
             verificationExecutor,
+            mock<LanguageServices>(),
         )
 
         fun runVerificationWorkInline() {

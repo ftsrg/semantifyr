@@ -100,6 +100,8 @@ class WebSocketSessionTest {
                 "oxsts.case.discover",
                 "oxsts.case.verify",
                 "oxsts.case.validateWitness",
+                "oxsts.redefinable.redefined.navigate",
+                "oxsts.redefinable.redefiners.navigate",
             )
         }
     }

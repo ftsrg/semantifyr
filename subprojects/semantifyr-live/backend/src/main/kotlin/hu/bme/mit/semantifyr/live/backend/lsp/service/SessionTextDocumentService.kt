@@ -18,6 +18,8 @@ import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import org.eclipse.lsp4j.CodeAction
 import org.eclipse.lsp4j.CodeActionParams
+import org.eclipse.lsp4j.CodeLens
+import org.eclipse.lsp4j.CodeLensParams
 import org.eclipse.lsp4j.Command
 import org.eclipse.lsp4j.CompletionItem
 import org.eclipse.lsp4j.CompletionList
@@ -287,6 +289,18 @@ class SessionTextDocumentService @Inject constructor(
                 this.cancelIndicator = cancelIndicator
             }
             languageServices.renameService.prepareRename(options)
+        }
+    }
+
+    override fun codeLens(params: CodeLensParams): CompletableFuture<MutableList<out CodeLens>> {
+        val service = languageServices.codeLensService ?: return CompletableFuture.completedFuture(mutableListOf())
+        return readDocument(params.textDocument.uri, mutableListOf()) { file, cancelIndicator ->
+            service.computeCodeLenses(file.xtextDocument(), file.resource, params, cancelIndicator)
+                .orEmpty()
+                .filter {
+                    it.command?.command in sessionContext.flavor.commands
+                }
+                .toMutableList()
         }
     }
 

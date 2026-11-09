@@ -33,6 +33,7 @@ data class Flavor(
     val validateWitnessByCase: Boolean = false,
     val discoveryCommand: String,
     val peekCompiledOutput: Boolean = false,
+    val navigationCommands: List<String> = emptyList(),
 ) {
     val commands: List<String>
         get() {
@@ -40,9 +41,14 @@ data class Flavor(
                 discoveryCommand,
                 verificationCommand,
                 validateWitnessCommand,
-            )
+            ) + navigationCommands
         }
 }
+
+private val oxstsNavigationCommands = listOf(
+    "oxsts.redefinable.redefined.navigate",
+    "oxsts.redefinable.redefiners.navigate",
+)
 
 object FlavorRegistry {
     val flavors = listOf(
@@ -56,6 +62,7 @@ object FlavorRegistry {
             verificationCommand = "oxsts.case.verify",
             validateWitnessCommand = "oxsts.case.validateWitness",
             discoveryCommand = "oxsts.case.discover",
+            navigationCommands = oxstsNavigationCommands,
         ),
         Flavor(
             id = "oxsts-with-gamma-library",
@@ -70,6 +77,7 @@ object FlavorRegistry {
             verificationCommand = "oxsts.case.verify",
             validateWitnessCommand = "oxsts.case.validateWitness",
             discoveryCommand = "oxsts.case.discover",
+            navigationCommands = oxstsNavigationCommands,
         ),
         Flavor(
             id = "oxsts-with-sysmlv2-library",
@@ -84,6 +92,7 @@ object FlavorRegistry {
             verificationCommand = "oxsts.case.verify",
             validateWitnessCommand = "oxsts.case.validateWitness",
             discoveryCommand = "oxsts.case.discover",
+            navigationCommands = oxstsNavigationCommands,
         ),
         Flavor(
             id = "gamma",
