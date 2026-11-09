@@ -9,47 +9,33 @@ Variables hold the **mutable state** of the system. Unlike [features](features.m
 
 ## Variable Declaration 
 
-A variable declaration consists of the `var` keyword, a name, and a type. Either the type or an initializer can be omitted.
-
-Explicit type and initializer:
+A variable declaration consists of the `var` keyword, a name, a type and an initializer. Both are required: the validator rejects a variable without a type (`OXSTS.VARIABLE_WITH_IMPLICIT_TYPE`) and one without an initializer (`OXSTS.MISSING_INITIALIZER`). The loop variable of a `for` and the parameters of a transition or property take their values from the range and the arguments and have no initializer.
 
 ```oxsts
 var value: int := 0
 ```
 
-Initializer only. The type is inferred from the initializer.
+## Initial States
 
-```oxsts
-var value := 0
-```
+The initializers give the declaration valuation, in which every variable holds the value of its initializer. The declaration valuation is not a state of the system: the initial states are the states the [`init`](transitions.md) transition reaches from it, and the property is checked on the initial states and on every state reachable from them. A variable that `init` assigns is observed only with the value `init` gives it.
 
-Type only. The variable is uninitialized at the point of declaration.
-
-```oxsts
-var value: int
-```
-
-## Uninitialized Variables Are Havoced
-
-A variable declared **without** an initializer is unbound at declaration time. Before the [`init`](transitions.md) transition runs, the verifier `havoc`s every uninitialized variable, picking an arbitrary value of its type. This causes the model checker to explore all possible starting values.
-
-To start from a known value, supply an initializer or assign the variable inside the [`init`](transitions.md) transition:
+An arbitrary initial value is a [`havoc`](operations.md#havoc) in `init`. Here `value` starts from any integer, and the declared 0 is never observed:
 
 ```oxsts
 class Counter {
-  var value: int
+  var value: int := 0
 
   redefine init {
-    value := 0
+    havoc(value)
   }
 }
 ```
 
-The property is also checked in the state before `init` runs, where only an initializer fixes the value, so an `AG` property over a variable assigned only in `init` must also hold for its arbitrary initial value.
+When no execution of `init` is enabled, as with `init { assume(false) }`, the system has no states: every `AG` property holds and no `EF` target is reached. Nothing reports such an `init`.
 
 ## Multiplicity on the Type
 
-A variable type may include a multiplicity bracket. This is how optional values are declared. A bounded multiplicity above one declares a fixed-size array, such as `var slots: int[3]`. An array of class or feature type, such as `var queue: Job[2] := [first, second]`, holds one instance per slot, and a call through a slot, such as `inline queue[i].finish()`, runs on the instance the slot holds. An array is read and written slot by slot (`slots[i]`), or as a whole: `slots := other`, `slots := [0, 0, 0]`, `havoc(slots)` and `slots == other` act on every slot.
+A variable type may include a multiplicity bracket. This is how optional values are declared. A bounded multiplicity above one declares a fixed-size array, such as `var slots: int[3] := [0, 0, 0]`, whose initializer gives every slot. An array of class or feature type, such as `var queue: Job[2] := [first, second]`, holds one instance per slot, and a call through a slot, such as `inline queue[i].finish()`, runs on the instance the slot holds. An array is read and written slot by slot (`slots[i]`), or as a whole: `slots := other`, `slots := [0, 0, 0]`, `havoc(slots)` and `slots == other` act on every slot.
 
 ```oxsts
 var occupant: Item[0..1] := nothing

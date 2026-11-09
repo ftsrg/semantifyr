@@ -78,7 +78,7 @@ Calls to `@Trace`-annotated transitions are recorded in the verification witness
 annotation Clock
 ```
 
-Marks a variable as a clock.
+Marks a variable as a clock. Like every variable, a clock carries an initializer.
 
 ### `@NonOptimizable`
 

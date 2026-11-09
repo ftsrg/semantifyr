@@ -40,7 +40,7 @@ if (current == Color::Red) {
 
 ## Records
 
-A `record` declares a value type that groups named fields. Records have no identity: assignment copies every field, and two records are equal when all their fields are equal. Records have no inheritance and no behavior; they only carry data. A field is a primitive, an enumeration or another record, and its initializer is the default value of the field.
+A `record` declares a value type that groups named fields. Records have no identity: assignment copies every field, and two records are equal when all their fields are equal. Records have no inheritance and no behavior; they only carry data. A field is a primitive, an enumeration or another record, and every field carries an initializer, the default value of the field.
 
 ```oxsts
 record Point {
@@ -49,17 +49,17 @@ record Point {
 }
 
 record Segment {
-  var from: Point
-  var to: Point
+  var from: Point := Point { x = 0 }
+  var to: Point := Point { x = 1 }
 }
 ```
 
-A variable of record type holds one record. Fields are read and written with `.`, a whole record is assigned with `:=` and compared with `==` and `!=`, and `havoc` picks an arbitrary value for every field. A record variable without an initializer starts from the field defaults; a field without a default is havoced, like an uninitialized variable.
+A variable of record type holds one record. Fields are read and written with `.`, a whole record is assigned with `:=` and compared with `==` and `!=`, and `havoc` picks an arbitrary value for every field.
 
 ```oxsts
 class Plotter {
-  var pen: Point
-  var mark: Point
+  var pen: Point := Point { x = 0 }
+  var mark: Point := Point { x = 0 }
 
   redefine tran {
     choice {
@@ -75,7 +75,7 @@ class Plotter {
 }
 ```
 
-A record literal names the record and gives fields by name. An omitted field takes its default, so a literal must give every field that has none (`OXSTS.INCOMPLETE_RECORD_LITERAL` otherwise) and names at least one field: `Point {}` is not a literal. The values may read the state, literals nest, and the whole value is read before the target is written, so a literal can swap fields. A literal can be assigned, initialize a variable, be compared with `==` and `!=`, and be passed as an argument; it cannot be written or havoced.
+A record literal names the record and gives fields by name. An omitted field takes its default, and a literal names at least one field: `Point {}` is not a literal. The values may read the state, literals nest, and the whole value is read before the target is written, so a literal can swap fields. A literal can be assigned, initialize a variable, be compared with `==` and `!=`, and be passed as an argument; it cannot be written or havoced.
 
 ```oxsts
 var origin: Point := Point { x = 0, y = 0 }

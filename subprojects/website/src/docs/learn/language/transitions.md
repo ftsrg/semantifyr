@@ -11,10 +11,12 @@ Transitions define **behavior**: how the system changes state. A transition body
 
 | Keyword | Role |
 |---------|------|
-| `init` | Initialization transition; runs once at startup. |
+| `init` | Initialization transition; the states it reaches from the declaration valuation are the initial states. |
 | `tran` | Step transition; runs on every step. |
 
 The implicit base class [`Anything`](standard-library.md) provides empty `init` and `tran` transitions, so any class that does not declare its own inherits these no-ops.
+
+The declaration valuation, every variable at its initializer, is not a state: the system starts in the states `init` reaches from it, and an `init` with no enabled execution leaves the system without states ([Initial States](variables.md#initial-states)).
 
 ## Declaring a Transition
 
