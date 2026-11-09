@@ -29,6 +29,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
@@ -66,52 +68,71 @@ class SessionVerificationManager @Inject constructor(
 
     private val logger by loggerFactory()
 
-    private data class Entry(
+    private class Entry(
         val verificationId: String,
         val kind: VerificationKind,
         val location: Location,
         val portfolioId: String,
         val startedAt: TimeSource.Monotonic.ValueTimeMark,
-        val job: Job,
+        val permitRequest: PermitRequest,
+    ) {
+        var job: Job? = null
+        var cancelled = false
+
         @Volatile
-        var state: VerificationState = VerificationState.Queued,
+        var cancellationMessage = "Verification cancelled"
+
         @Volatile
-        var runningSince: TimeSource.Monotonic.ValueTimeMark? = null,
+        var state = VerificationState.Queued
+
+        @Volatile
+        var runningSince: TimeSource.Monotonic.ValueTimeMark? = null
+    }
+
+    private data class Registration(
+        val entry: Entry,
+        val superseded: List<Entry>,
     )
 
-    private val verifications = ConcurrentHashMap<String, Entry>()
+    private val lock = Any()
+
+    private val verifications = LinkedHashMap<String, Entry>()
+
+    private val caseLocationsByWitnessUri = ConcurrentHashMap<String, Location>()
 
     fun launch(
         request: VerificationCaseRequest,
         kind: VerificationKind,
         work: suspend () -> Any?,
     ): CompletableFuture<Any?> {
-        val verificationId = UUID.randomUUID().toString()
-        val location = request.toLocation()
         val portfolioId = request.portfolio()
-        val startedAt = TimeSource.Monotonic.markNow()
+        val entry = register(request.toLocation(), kind, portfolioId)
+        val verificationId = entry.verificationId
+        notifyActiveChanged()
         val launchContext = currentMdcContextBlocking() + currentSessionScopeElement()
 
-        return sessionRunContext.coroutineScope.future(launchContext) {
+        val future = sessionRunContext.coroutineScope.future(launchContext) {
             val mdcContext = withVerificationIdMdc(verificationId)
             withContext(mdcContext) {
                 // A cancelled coroutine drops its return value, so the cancellable work runs under its own job
                 val workJob = SupervisorJob(coroutineContext.job)
-                val entry = Entry(
-                    verificationId = verificationId,
-                    kind = kind,
-                    location = location,
-                    portfolioId = portfolioId,
-                    startedAt = startedAt,
-                    job = workJob,
-                )
-                verifications[verificationId] = entry
-                notifyActiveChanged()
+                val cancelledBeforeStart = synchronized(lock) {
+                    entry.job = workJob
+                    entry.cancelled
+                }
+                if (cancelledBeforeStart) {
+                    workJob.cancel()
+                }
                 try {
                     val result = withContext(workJob) {
-                        verificationManager.withPermit {
-                            entry.state = VerificationState.Running
-                            entry.runningSince = TimeSource.Monotonic.markNow()
+                        verificationManager.withPermit(entry.permitRequest) {
+                            synchronized(lock) {
+                                if (!entry.cancelled) {
+                                    entry.state = VerificationState.Running
+                                    entry.runningSince = TimeSource.Monotonic.markNow()
+                                }
+                            }
+                            currentCoroutineContext().ensureActive()
                             recordQueueWait(entry)
                             notifyActiveChanged()
                             withTimeout(backendConfig.verification.timeout) {
@@ -119,6 +140,7 @@ class SessionVerificationManager @Inject constructor(
                             }
                         }
                     }
+                    recordWitness(entry, result)
                     recordFinished(entry, result)
                     result
                 } catch (e: TimeoutCancellationException) {
@@ -128,9 +150,9 @@ class SessionVerificationManager @Inject constructor(
                         recordFinished(entry, it)
                     }
                 } catch (e: CancellationException) {
-                    logger.info(e) { "Verification cancelled" }
+                    logger.info(e) { entry.cancellationMessage }
                     recordCancelled(entry)
-                    cancelledResult(kind, portfolioId)
+                    cancelledResult(kind, portfolioId, entry.cancellationMessage)
                 } catch (e: Throwable) {
                     val message = "Verification failed: ${e.message ?: e::class.simpleName}"
                     logger.error(e) { message }
@@ -139,32 +161,123 @@ class SessionVerificationManager @Inject constructor(
                     }
                 } finally {
                     workJob.complete()
-                    verifications.remove(verificationId)
+                    synchronized(lock) {
+                        verifications.remove(verificationId)
+                    }
                     notifyActiveChanged()
                 }
             }
         }
+        // The body never runs when the session closed before dispatch
+        future.whenComplete { _, _ ->
+            verificationManager.abandon(entry.permitRequest)
+            synchronized(lock) {
+                verifications.remove(verificationId)
+            }
+        }
+        return future
     }
 
     fun active(): List<RunningVerification> {
-        return verifications.values.map {
+        val snapshot = synchronized(lock) {
+            verifications.values.toList()
+        }
+        return snapshot.map {
             it.toRunningVerification()
         }
     }
 
     fun cancel(verificationId: String): Boolean {
-        val entry = verifications.remove(verificationId) ?: return false
-        entry.job.cancel()
+        val entry = synchronized(lock) {
+            val entry = verifications.remove(verificationId) ?: return false
+            entry.cancelled = true
+            entry
+        }
+        cancelEntry(entry)
         return true
     }
 
     fun cancelAll(): Int {
-        val snapshot = verifications.values.toList()
+        val snapshot = synchronized(lock) {
+            val snapshot = verifications.values.toList()
+            verifications.clear()
+            for (entry in snapshot) {
+                entry.cancelled = true
+            }
+            snapshot
+        }
         for (entry in snapshot) {
-            verifications.remove(entry.verificationId)
-            entry.job.cancel()
+            cancelEntry(entry)
         }
         return snapshot.size
+    }
+
+    private fun register(
+        location: Location,
+        kind: VerificationKind,
+        portfolioId: String,
+    ): Entry {
+        val (entry, superseded) = synchronized(lock) {
+            val superseded = verifications.values.filter {
+                it.state == VerificationState.Queued && supersedes(location, kind, it)
+            }
+            for (old in superseded) {
+                verifications.remove(old.verificationId)
+                old.cancellationMessage = supersededMessage(old.kind)
+                old.cancelled = true
+            }
+            val entry = Entry(
+                verificationId = UUID.randomUUID().toString(),
+                kind = kind,
+                location = location,
+                portfolioId = portfolioId,
+                startedAt = TimeSource.Monotonic.markNow(),
+                permitRequest = verificationManager.enqueue(sessionContext.sessionId),
+            )
+            verifications[entry.verificationId] = entry
+            Registration(entry, superseded)
+        }
+        for (old in superseded) {
+            cancelEntry(old)
+        }
+        return entry
+    }
+
+    private fun supersedes(
+        location: Location,
+        kind: VerificationKind,
+        older: Entry,
+    ): Boolean {
+        if (kind == older.kind) {
+            return location == older.location
+        }
+        if (kind != VerificationKind.Verify) {
+            return false
+        }
+        return older.location == location || caseLocationsByWitnessUri[older.location.uri] == location
+    }
+
+    private fun supersededMessage(kind: VerificationKind): String {
+        return when (kind) {
+            VerificationKind.Verify -> "Verification superseded by a newer verification of the case"
+            VerificationKind.Validate -> "Validation superseded by a newer request for the case"
+        }
+    }
+
+    private fun cancelEntry(entry: Entry) {
+        verificationManager.abandon(entry.permitRequest)
+        val job = synchronized(lock) {
+            entry.job
+        }
+        job?.cancel()
+    }
+
+    private fun recordWitness(entry: Entry, result: Any?) {
+        if (entry.kind != VerificationKind.Verify || result !is VerificationCaseResult) {
+            return
+        }
+        val witnessUri = result.trace()?.witnessUri() ?: return
+        caseLocationsByWitnessUri[witnessUri] = entry.location
     }
 
     private fun Entry.toRunningVerification(): RunningVerification {
@@ -220,8 +333,11 @@ class SessionVerificationManager @Inject constructor(
         }
     }
 
-    private fun cancelledResult(kind: VerificationKind, portfolioId: String): Any {
-        val message = "Verification cancelled"
+    private fun cancelledResult(
+        kind: VerificationKind,
+        portfolioId: String,
+        message: String,
+    ): Any {
         return when (kind) {
             VerificationKind.Verify -> VerificationCaseResult.cancelled(message, portfolioId)
             VerificationKind.Validate -> WitnessValidationResult.cancelled(message, portfolioId)
