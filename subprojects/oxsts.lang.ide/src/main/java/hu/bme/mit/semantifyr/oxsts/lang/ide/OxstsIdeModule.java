@@ -16,6 +16,9 @@ import hu.bme.mit.semantifyr.oxsts.lang.ide.server.codelens.OxstsCodeLensProvide
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands.OxstsCommandService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.contentassist.OxstsContentAssistService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.hover.OxstsHoverService;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.occurrences.OxstsDocumentHighlightService;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.references.OxstsDocumentSymbolService;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.rename.OxstsRenameService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.signatureHelp.OxstsSignatureHelpService;
 import org.eclipse.xtext.ide.editor.contentassist.IPrefixMatcher;
 import org.eclipse.xtext.ide.editor.contentassist.IdeContentProposalProvider;
@@ -30,7 +33,10 @@ import org.eclipse.xtext.ide.server.commands.IExecutableCommandService;
 import org.eclipse.xtext.ide.server.contentassist.ContentAssistService;
 import org.eclipse.xtext.ide.server.formatting.FormattingService;
 import org.eclipse.xtext.ide.server.hover.IHoverService;
+import org.eclipse.xtext.ide.server.occurrences.IDocumentHighlightService;
+import org.eclipse.xtext.ide.server.rename.IRenameService2;
 import org.eclipse.xtext.ide.server.signatureHelp.ISignatureHelpService;
+import org.eclipse.xtext.ide.server.symbol.DocumentSymbolService;
 
 /** Use this class to register ide components. */
 public class OxstsIdeModule extends AbstractOxstsIdeModule {
@@ -98,5 +104,20 @@ public class OxstsIdeModule extends AbstractOxstsIdeModule {
     @SuppressWarnings("unused")
     public Class<? extends ISignatureHelpService> bindISignatureHelpService() {
         return OxstsSignatureHelpService.class;
+    }
+
+    @Override
+    public Class<? extends IRenameService2> bindIRenameService2() {
+        return OxstsRenameService.class;
+    }
+
+    @SuppressWarnings("unused")
+    public Class<? extends DocumentSymbolService> bindDocumentSymbolService() {
+        return OxstsDocumentSymbolService.class;
+    }
+
+    @SuppressWarnings("unused")
+    public Class<? extends IDocumentHighlightService> bindIDocumentHighlightService() {
+        return OxstsDocumentHighlightService.class;
     }
 }
