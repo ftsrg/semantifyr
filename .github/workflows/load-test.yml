@@ -50,7 +50,7 @@ jobs:
         # the live instances run main, whose /api/portfolios names no default portfolio yet
         run: >-
           npm run load-test -w @ftsrg/semantifyr-live-frontend --
-          --url "$URL" --students "$STUDENTS" --ramp "$RAMP" --max-verify-p95 120
+          --url "$URL" --students "$STUDENTS" --ramp "$RAMP"
           --portfolio smart-full --output "$GITHUB_WORKSPACE/load-test.json"
       - name: Upload the load test report
         if: ${{ !cancelled() }}

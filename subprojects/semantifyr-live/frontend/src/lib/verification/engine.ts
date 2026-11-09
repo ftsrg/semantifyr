@@ -41,6 +41,8 @@ export type {
   WitnessValidationStatus,
 } from '@semantifyr/editor-common'
 
+export const DEFAULT_VALIDATION_PORTFOLIO_ID = 'smart-full'
+
 export type VerificationCaseStatus =
   | 'stale'
   | 'queued'

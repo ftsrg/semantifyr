@@ -19,7 +19,7 @@ import {
 import { decodeCompressedBase64Url, liveEditorUrl, parseLiveEditorUrl } from '@semantifyr/editor-common';
 import type { ColorModePreference, ResolvedColorMode } from '../lib/util/colorMode';
 import { createApi, type FlavorInfo, type PortfolioInfo } from '../lib/api';
-import type { VerificationCaseState, WitnessValidationStatus } from '../lib/verification';
+import { DEFAULT_VALIDATION_PORTFOLIO_ID, type VerificationCaseState, type WitnessValidationStatus } from '../lib/verification';
 import { casesToMarkers } from '../lib/session/caseMarkers';
 import { findPortfolioLabel } from '../lib/verification/portfolioLabel';
 import {
@@ -55,7 +55,6 @@ const MIN_LEFT_WIDTH = 320;
 const MIN_RIGHT_WIDTH = 280;
 const VALIDATION_PORTFOLIO_KEY = 'semantifyr-validation-portfolio';
 const AUTO_VALIDATE_KEY = 'semantifyr-auto-validate';
-const DEFAULT_VALIDATION_PORTFOLIO_ID = 'smart-full';
 
 const VERIFICATION_PANEL_HEIGHT_KEY = 'semantifyr-verification-panel-height';
 const VERIFICATION_PANEL_OPEN_KEY = 'semantifyr-verification-panel-open';
