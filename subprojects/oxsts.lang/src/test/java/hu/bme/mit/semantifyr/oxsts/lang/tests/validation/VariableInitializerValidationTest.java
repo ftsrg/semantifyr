@@ -139,6 +139,19 @@ public class VariableInitializerValidationTest {
     }
 
     @Test
+    void arrayLiteralShorterThanARangedArrayIsRejected() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Holder {
+                var slots: int[1..3] := [1, 2]
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        assertOnlyMissingInitializers(parsedPackage.getIssues(), "gives 2 of the 3 slots");
+    }
+
+    @Test
     void arrayLiteralFillingEverySlotIsAccepted() {
         var parsedPackage = parseHelper.parse("""
             package test

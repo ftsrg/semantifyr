@@ -1365,7 +1365,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (OxstsUtils.isLoopVariable(variableDeclaration)) {
             return;
         }
-        if (variableDeclaration.getExpression() == null) {
+        var initializer = variableDeclaration.getExpression();
+        if (initializer == null) {
             acceptError(
                     "Variable '"
                             + variableDeclaration.getName()
@@ -1373,6 +1374,28 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     variableDeclaration,
                     OxstsPackage.Literals.NAMED_ELEMENT__NAME,
                     0,
+                    MISSING_INITIALIZER);
+            return;
+        }
+        var typeSpecification = variableDeclaration.getTypeSpecification();
+        if (!(initializer instanceof ArrayLiteral arrayLiteral)
+                || typeSpecification == null
+                || !isFixedSizeArray(typeSpecification)) {
+            return;
+        }
+        var range = multiplicityRangeEvaluator.evaluate(typeSpecification);
+        var valueCount = arrayLiteral.getValues().size();
+        // a literal outside the multiplicity is already a type mismatch
+        if (valueCount >= range.getLowerBound() && valueCount < range.getUpperBound()) {
+            acceptError(
+                    "Array literal gives "
+                            + valueCount
+                            + " of the "
+                            + range.getUpperBound()
+                            + " slots of '"
+                            + variableDeclaration.getName()
+                            + "'.",
+                    arrayLiteral,
                     MISSING_INITIALIZER);
         }
     }
