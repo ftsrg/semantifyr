@@ -25,6 +25,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.ExpressionModalityEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.Modality;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ImmutableTypeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.InvalidTypeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.NothingTypeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.TypeCompatibility;
@@ -219,19 +220,21 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     .toList();
 
             if (!abstractInheritedMembers.isEmpty()) {
+                var memberNames = abstractInheritedMembers.stream()
+                        .map(NamingUtil::getName)
+                        .toList();
                 var message = "Class '"
                         + NamingUtil.getName(classDeclaration)
                         + "' must either be declared abstract or redefine abstract members: "
-                        + abstractInheritedMembers.stream()
-                                .map(m -> "'" + NamingUtil.getName(m) + "'")
-                                .collect(Collectors.joining(", "));
+                        + memberNames.stream().map(name -> "'" + name + "'").collect(Collectors.joining(", "));
 
                 acceptError(
                         message,
                         classDeclaration,
                         OxstsPackage.Literals.NAMED_ELEMENT__NAME,
                         0,
-                        ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED);
+                        ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED,
+                        memberNames.toArray(String[]::new));
             }
         }
     }
@@ -632,15 +635,18 @@ public class OxstsValidator extends AbstractOxstsValidator {
         var minimumRequired =
                 parameters.stream().filter(p -> !isParameterOptional(p)).count();
         if (arguments.size() < minimumRequired) {
-            var unbound = parameters.stream()
-                    .filter(p -> !isParameterOptional(p))
-                    .skip(arguments.size())
-                    .map(NamedElement::getName)
-                    .collect(Collectors.joining(", "));
+            var unbound = new ArrayList<String>();
+            for (int i = 0; i < parameters.size(); i++) {
+                var parameter = parameters.get(i);
+                if (!isParameterOptional(parameter) && OxstsUtils.getArgumentFor(arguments, parameter, i) == null) {
+                    unbound.add(parameter.getName());
+                }
+            }
             acceptError(
-                    "Missing argument(s) for non-optional parameter(s): " + unbound + ".",
+                    "Missing argument(s) for non-optional parameter(s): " + String.join(", ", unbound) + ".",
                     callSuffixExpression,
-                    INVALID_CALL_ARGUMENTS_COUND);
+                    INVALID_CALL_ARGUMENTS_COUND,
+                    unbound.toArray(String[]::new));
         }
     }
 
@@ -775,8 +781,23 @@ public class OxstsValidator extends AbstractOxstsValidator {
                             + formatType(parameterType)
                             + ".",
                     argument,
-                    TYPE_MISMATCH);
+                    TYPE_MISMATCH,
+                    narrowingCastData(parameterType, expressionType, argument));
         }
+    }
+
+    // The class of the single narrowing cast that checkCastCompatibility accepts and that makes the value fit.
+    private String[] narrowingCastData(TypeEvaluation expected, TypeEvaluation actual, EObject context) {
+        if (!(actual instanceof ImmutableTypeEvaluation)
+                || !(typeCompatibility.unwrappedDomain(expected) instanceof ClassDeclaration castClass)) {
+            return new String[0];
+        }
+        var castType = new ImmutableTypeEvaluation(castClass);
+        if (!typeCompatibility.isAssignable(actual, castType, context)
+                || !typeCompatibility.isAssignable(expected, castType, context)) {
+            return new String[0];
+        }
+        return new String[] {castClass.getName()};
     }
 
     @Check
@@ -823,7 +844,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     propertyDeclaration,
                     OxstsPackage.Literals.PROPERTY_DECLARATION__EXPRESSION,
                     0,
-                    TYPE_MISMATCH);
+                    TYPE_MISMATCH,
+                    narrowingCastData(expected, actual, expression));
         }
     }
 
@@ -855,7 +877,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     variableDeclaration,
                     OxstsPackage.Literals.VARIABLE_DECLARATION__EXPRESSION,
                     0,
-                    TYPE_MISMATCH);
+                    TYPE_MISMATCH,
+                    narrowingCastData(declared, actual, variableDeclaration));
         }
     }
 
@@ -884,7 +907,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     featureDeclaration,
                     OxstsPackage.Literals.FEATURE_DECLARATION__EXPRESSION,
                     0,
-                    TYPE_MISMATCH);
+                    TYPE_MISMATCH,
+                    narrowingCastData(declared, actual, featureDeclaration));
         }
     }
 
@@ -1224,7 +1248,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
                             + formatType(lhsType)
                             + ".",
                     assignmentOperation,
-                    TYPE_MISMATCH);
+                    TYPE_MISMATCH,
+                    narrowingCastData(lhsType, rhsType, assignmentOperation));
         }
     }
 
