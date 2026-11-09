@@ -102,7 +102,7 @@
         },
         {
           "command": "semantifyr.witness.validate",
-          "when": "controllerId == gamma.verification"
+          "when": "controllerId == oxsts.verification || controllerId == gamma.verification"
         }
       ],
       "testing/message/content": [
@@ -213,6 +213,16 @@
           "default": 300,
           "minimum": 1,
           "markdownDescription": "Wall-clock timeout per case, in seconds. It covers the case's compilation, every backend run of the portfolio and the back-annotation of the witness."
+        },
+        "semantifyr.verification.autoValidate": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Validate the witness of every result that carries one, right after the verification: the witness is verified again on `semantifyr.verification.validationPortfolio`, and the result goes into the test message and the trace."
+        },
+        "semantifyr.verification.validationPortfolio": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Portfolio a witness validation runs on, by id as `semantifyr.portfolio` takes it. Empty: the verification portfolio, `semantifyr.portfolio`."
         },
         "semantifyr.theta.executor": {
           "type": "string",

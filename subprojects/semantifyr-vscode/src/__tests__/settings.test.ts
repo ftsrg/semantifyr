@@ -7,7 +7,7 @@
 import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createLspClient, registerSemantifyrSettingsSync } from '../clients/client-utils.js';
-import { readSemantifyrSettings } from '../clients/settings.js';
+import { readSemantifyrSettings, readVerificationSettings } from '../clients/settings.js';
 import { resetVscode, state } from './stubs/vscode.js';
 import { LanguageClient } from './stubs/vscode-languageclient-node.js';
 
@@ -48,6 +48,8 @@ describe('readSemantifyrSettings', () => {
             'semantifyr.theta.dockerImage',
             'semantifyr.theta.executor',
             'semantifyr.timeoutSeconds',
+            'semantifyr.verification.autoValidate',
+            'semantifyr.verification.validationPortfolio',
         ]);
     });
 
@@ -65,6 +67,22 @@ describe('readSemantifyrSettings', () => {
             portfolio: 'theta-full',
             theta: { executor: 'docker', dockerImage: 'example/theta:1.0' },
         });
+    });
+});
+
+describe('readVerificationSettings', () => {
+    it('auto-validates on the verification portfolio by default', () => {
+        expect(contributed['semantifyr.verification.autoValidate']!.default).toBe(true);
+        expect(contributed['semantifyr.verification.validationPortfolio']!.default).toBe('');
+        expect(readVerificationSettings()).toEqual({ autoValidate: true, validationPortfolio: undefined });
+    });
+
+    it('reads the configured values and keeps them out of the server settings', () => {
+        state.configuration.set('semantifyr.verification.autoValidate', false);
+        state.configuration.set('semantifyr.verification.validationPortfolio', 'all-agree-full');
+
+        expect(readVerificationSettings()).toEqual({ autoValidate: false, validationPortfolio: 'all-agree-full' });
+        expect(readSemantifyrSettings()).toEqual(contributedDefaults());
     });
 });
 

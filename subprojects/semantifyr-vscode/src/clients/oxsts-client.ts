@@ -57,6 +57,7 @@ export async function startOxstsClient(context: ExtensionContext, witnesses: Wit
         controllerLabel: 'Semantifyr Verification Cases',
         discoverCommand: 'oxsts.case.discover',
         verifyCommand: 'oxsts.case.verify',
+        validateWitnessCommand: 'oxsts.case.validateWitness',
     }, witnesses);
     oxstsTestController.registerTestProvider(context);
     await oxstsTestController.refreshWorkspaceTests();

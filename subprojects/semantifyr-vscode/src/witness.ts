@@ -121,17 +121,11 @@ export class WitnessView implements TextDocumentContentProvider {
             title: `Validating the witness of ${testItem.label}`,
             cancellable: true,
         }, async (_progress, token) => {
-            try {
-                return await validator(token);
-            } catch (error: unknown) {
-                return token.isCancellationRequested ? undefined : erroredValidation(error);
-            }
+            return await this.runValidation(testItem, witness, validator, token);
         });
-        if (validation === undefined || this.witnesses.get(testItem) !== witness) {
+        if (validation === undefined) {
             return;
         }
-        witness.validation = validation;
-        this.render(testItem.label, witness);
         const status = witnessValidationStatusOf(validation);
         const text = `${testItem.label}: ${renderValidation(validation)}`;
         if (status === WitnessValidationStatus.Valid) {
@@ -143,6 +137,33 @@ export class WitnessView implements TextDocumentContentProvider {
             void window.showWarningMessage(text);
             writeToOutputChannel(`${text}\n`, false);
         }
+    }
+
+    async autoValidate(testItem: TestItem, token: CancellationToken): Promise<WitnessValidationResult | null | undefined> {
+        const witness = this.witnesses.get(testItem);
+        const validator = witness?.validator;
+        if (witness === undefined || validator === undefined) {
+            return undefined;
+        }
+        return await this.runValidation(testItem, witness, validator, token);
+    }
+
+    private async runValidation(testItem: TestItem, witness: RecordedWitness, validator: WitnessValidator, token: CancellationToken): Promise<WitnessValidationResult | null | undefined> {
+        let validation: WitnessValidationResult | null;
+        try {
+            validation = await validator(token);
+        } catch (error: unknown) {
+            if (token.isCancellationRequested) {
+                return undefined;
+            }
+            validation = erroredValidation(error);
+        }
+        if (this.witnesses.get(testItem) !== witness) {
+            return undefined;
+        }
+        witness.validation = validation;
+        this.render(testItem.label, witness);
+        return validation;
     }
 }
 
@@ -164,7 +185,7 @@ function erroredValidation(error: unknown): WitnessValidationResult {
     };
 }
 
-function renderValidation(validation: WitnessValidationResult | null): string {
+export function renderValidation(validation: WitnessValidationResult | null): string {
     const label = witnessValidationLabel(witnessValidationStatusOf(validation));
     if (validation === null) {
         return label;

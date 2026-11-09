@@ -32,6 +32,20 @@ export function readSemantifyrSettings(): ServerSettings {
     };
 }
 
+export interface VerificationSettings {
+    autoValidate: boolean;
+    validationPortfolio: string | undefined;
+}
+
+export function readVerificationSettings(): VerificationSettings {
+    const config = workspace.getConfiguration("semantifyr");
+    const validationPortfolio = config.get<string>("verification.validationPortfolio", "");
+    return {
+        autoValidate: config.get<boolean>("verification.autoValidate", true),
+        validationPortfolio: validationPortfolio === "" ? undefined : validationPortfolio,
+    };
+}
+
 export function readSemantifyrPayload(): { semantifyr: ServerSettings } {
     return { semantifyr: readSemantifyrSettings() };
 }

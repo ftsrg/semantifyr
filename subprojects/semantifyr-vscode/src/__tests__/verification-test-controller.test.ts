@@ -338,6 +338,16 @@ describe('witness validation', () => {
         return state.commands.get('semantifyr.witness.validate')!(item);
     }
 
+    function validations() {
+        return requests.filter((request) => {
+            return (request.parameters as ExecuteCommandParams).command.endsWith('alidateWitness') || (request.parameters as ExecuteCommandParams).command === 'gamma.witness.validate';
+        });
+    }
+
+    beforeEach(() => {
+        state.configuration.set('semantifyr.verification.autoValidate', false);
+    });
+
     it('offers a validation on a failed verdict when the language validates witnesses', async () => {
         await setUp(byCase);
         verify = () => result('failed', counterexample, 'property violated');
@@ -394,6 +404,69 @@ describe('witness validation', () => {
         expect(serverCancelled).toBe(true);
         expect(window.showErrorMessage).not.toHaveBeenCalled();
         expect(window.showInformationMessage).not.toHaveBeenCalled();
+    });
+
+    it('validates the witness after the verdict and adds the result to the failure message', async () => {
+        state.configuration.set('semantifyr.verification.autoValidate', true);
+        await setUp(byCase);
+        verify = () => result('failed', counterexample, 'property violated');
+        validate = () => valid;
+
+        const testRun = await run([caseItem('lamp::Safe')]);
+
+        expect(validations()).toHaveLength(1);
+        const event = testRun.events.at(-1) as { kind: string; message: { message: string } };
+        expect(event.kind).toBe('failed');
+        expect(event.message.message).toBe('property violated\nValidation: Witness valid (backend theta-bmc, portfolio smart-full)');
+    });
+
+    it('validates the witness of an OXSTS case at the witness model, which may lie outside the workspace', async () => {
+        state.configuration.set('semantifyr.verification.autoValidate', true);
+        await setUp({ validateWitnessCommand: 'oxsts.case.validateWitness' });
+        verify = () => result('failed', counterexample);
+        validate = () => valid;
+
+        await run([caseItem('lamp::Safe')]);
+
+        expect(validations().map((request) => request.parameters)).toEqual([{
+            command: 'oxsts.case.validateWitness',
+            arguments: [{ uri: 'file:/tmp/semantifyr/lamp.Safe/witness.oxsts', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } }],
+        }]);
+    });
+
+    it('validates on the validation portfolio when one is set', async () => {
+        state.configuration.set('semantifyr.verification.autoValidate', true);
+        state.configuration.set('semantifyr.verification.validationPortfolio', 'all-agree-full');
+        await setUp(byCase);
+        verify = () => result('failed', counterexample);
+        validate = () => valid;
+
+        await run([caseItem('lamp::Safe')]);
+
+        expect((validations()[0]!.parameters as ExecuteCommandParams).arguments).toEqual([{ uri: modelUri, range: safeCase.location.range, portfolio: 'all-agree-full' }]);
+    });
+
+    it('adds the validation of a passed verdict with a witness to the output at the case', async () => {
+        state.configuration.set('semantifyr.verification.autoValidate', true);
+        await setUp(byCase);
+        verify = () => result('passed', counterexample);
+        validate = () => ({ ...valid, status: 'invalid', message: 'spurious' });
+
+        const testRun = await run([caseItem('lamp::Reachable')]);
+
+        expect(testRun.outcome(caseItem('lamp::Reachable'))).toBe('passed');
+        expect(testRun.output.map((output) => output.text)).toEqual(['Validation: Witness invalid (backend theta-bmc, portfolio smart-full) - spurious\r\n']);
+    });
+
+    it('validates nothing when auto-validation is off or the result has no witness', async () => {
+        await setUp(byCase);
+        verify = () => result('failed', counterexample);
+        await run([caseItem('lamp::Safe')]);
+        state.configuration.set('semantifyr.verification.autoValidate', true);
+        verify = () => result('failed');
+        await run([caseItem('lamp::Safe')]);
+
+        expect(validations()).toEqual([]);
     });
 
     it('offers no validation without a validation command', async () => {

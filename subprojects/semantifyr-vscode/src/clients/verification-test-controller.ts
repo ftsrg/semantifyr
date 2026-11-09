@@ -16,7 +16,8 @@ import {
     type VerificationCaseSpecification,
     witnessValidationLocation,
 } from "@semantifyr/editor-common";
-import { validatableWitnessMessageContext, witnessMessageContext, type WitnessValidator, type WitnessView } from "../witness.js";
+import { renderValidation, validatableWitnessMessageContext, witnessMessageContext, type WitnessValidator, type WitnessView } from "../witness.js";
+import { readVerificationSettings } from "./settings.js";
 
 export interface VerificationTestControllerConfig {
     languageId: string;
@@ -297,16 +298,20 @@ export class VerificationTestController {
 
             const validator = this.witnessValidator(location, result);
             this.witnesses.record(testItem, result, validator);
+            const validation = validator && readVerificationSettings().autoValidate ? await this.witnesses.autoValidate(testItem, token) : undefined;
+            const validationLine = validation === undefined ? undefined : `Validation: ${renderValidation(validation)}`;
 
             switch (result.status) {
                 case VerificationStatus.Passed:
-                    if (result.message) {
-                        run.appendOutput(`${result.message}\r\n`, new Location(testItem.uri, range), testItem);
+                    for (const line of [result.message, validationLine]) {
+                        if (line) {
+                            run.appendOutput(`${line}\r\n`, new Location(testItem.uri, range), testItem);
+                        }
                     }
                     run.passed(testItem);
                     break;
                 case VerificationStatus.Failed: {
-                    const message = new TestMessage(result.message ?? 'Failed');
+                    const message = new TestMessage([result.message ?? 'Failed', validationLine].filter((line) => line !== undefined).join('\n'));
                     message.location = new Location(testItem.uri, range);
                     if (result.trace) {
                         message.contextValue = validator ? validatableWitnessMessageContext : witnessMessageContext;
@@ -348,7 +353,8 @@ export class VerificationTestController {
         }
         const location = witnessValidationLocation(caseLocation, witnessUri, this.config.validateWitnessByCase ?? false);
         return async (token) => {
-            return await validateWitness(this.client, command, location, { token });
+            const portfolio = readVerificationSettings().validationPortfolio;
+            return await validateWitness(this.client, command, location, { token, ...(portfolio === undefined ? {} : { portfolio }) });
         };
     }
 }
