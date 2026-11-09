@@ -29,7 +29,6 @@ import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.eclipse.emf.ecore.EObject;
@@ -265,6 +264,10 @@ public class OxstsValidator extends AbstractOxstsValidator {
                 && redefinableDeclaration.isRedefine()) {
             return;
         }
+        // an anonymous transition redefines the inherited one, and the anonymous property is found by name
+        if (namedElement.getName() == null) {
+            return;
+        }
 
         var parentDomain = EcoreUtil2.getContainerOfType(namedElement.eContainer(), DomainDeclaration.class);
         if (parentDomain == null) {
@@ -273,7 +276,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
         var declarations =
                 domainMemberCollectionProvider.getParentCollection(parentDomain).getDeclarations();
 
-        if (declarations.stream().anyMatch(d -> Objects.equals(NamingUtil.getName(d), namedElement.getName()))) {
+        if (declarations.stream().anyMatch(d -> namedElement.getName().equals(NamingUtil.getName(d)))) {
             acceptWarning(
                     "Name shadows another element.",
                     namedElement,

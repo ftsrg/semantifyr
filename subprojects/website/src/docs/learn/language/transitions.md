@@ -97,7 +97,7 @@ redefine tran increment() {
 }
 ```
 
-The same applies to the implicit transitions inherited from `Anything`: overriding them requires `redefine`.
+The implicit transitions inherited from `Anything` are overridden by declaring them, with or without `redefine`: a class has one `main` and one `init`, and a second anonymous transition of a kind in the same class is a duplicate name (`OXSTS.DUPLICATE_NAME`).
 
 ```oxsts
 redefine init {

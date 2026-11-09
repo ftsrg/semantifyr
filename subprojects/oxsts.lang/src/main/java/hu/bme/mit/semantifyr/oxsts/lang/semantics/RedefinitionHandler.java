@@ -12,7 +12,9 @@ import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionPro
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RedefinableDeclaration;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration;
 import org.eclipse.xtext.naming.QualifiedName;
+import org.eclipse.xtext.util.Strings;
 import org.eclipse.xtext.util.Tuples;
 
 public class RedefinitionHandler {
@@ -43,7 +45,7 @@ public class RedefinitionHandler {
         }
 
         var name = NamingUtil.getName(declaration);
-        if (declaration.isRedefine() && name != null) {
+        if ((declaration.isRedefine() || isAnonymousTransition(declaration)) && name != null) {
             // find the other RedefinableDeclaration in the parent domain with the same name
             var surroundingFeature = (DomainDeclaration) declaration.eContainer();
             var parentDomain = domainMemberCollectionProvider.getParentCollection(surroundingFeature);
@@ -63,5 +65,10 @@ public class RedefinitionHandler {
         }
 
         return null;
+    }
+
+    // a class has one main and one init transition, so an anonymous one is always the class's own
+    protected boolean isAnonymousTransition(RedefinableDeclaration declaration) {
+        return declaration instanceof TransitionDeclaration && Strings.isEmpty(declaration.getName());
     }
 }

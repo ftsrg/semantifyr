@@ -18,7 +18,7 @@ class Anything {
 }
 ```
 
-Because these transitions are inherited, declaring your own [`init`](transitions.md) or [implicit `tran`](transitions.md#the-implicit-main-and-init) (named `main`) requires `redefine`. See [Redefining members](#redefining-members).
+A class has one [`init`](transitions.md) and one [implicit `tran`](transitions.md#the-implicit-main-and-init) (named `main`), so declaring your own overrides the inherited one, with or without `redefine`; a second one of a kind in the same class is a duplicate name (`OXSTS.DUPLICATE_NAME`). See [Redefining members](#redefining-members).
 
 ## Class Declaration
 
