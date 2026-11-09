@@ -250,6 +250,48 @@ public class DeclarationValidationTest {
     }
 
     @Test
+    void anonymousPropertyWithoutRedefineRealizesTheInheritedAbstractOne() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            abstract class Base {
+                var count: int := 0
+                abstract prop
+            }
+            class Child : Base {
+                prop {
+                    return AG count == 0
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationIssues();
+    }
+
+    @Test
+    void twoAnonymousPropertiesAreRejected() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Machine {
+                var count: int := 0
+                prop {
+                    return AG count == 0
+                }
+                prop {
+                    return EF count == 1
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.getIssues())
+                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .extracting(issue -> issue.getCode() + "@" + issue.getLineNumber())
+                .containsExactlyInAnyOrder(
+                        OxstsValidator.DUPLICATE_NAME_ISSUE + "@4", OxstsValidator.DUPLICATE_NAME_ISSUE + "@7");
+    }
+
+    @Test
     void duplicateTopLevelNamesAreRejected() {
         var parsedPackage = parseHelper.parse("""
             package test

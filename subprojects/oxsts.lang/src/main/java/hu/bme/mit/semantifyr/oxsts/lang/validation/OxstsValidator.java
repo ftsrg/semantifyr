@@ -264,7 +264,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
                 && redefinableDeclaration.isRedefine()) {
             return;
         }
-        // an anonymous transition redefines the inherited one, and the anonymous property is found by name
+        // an anonymous transition or property redefines the inherited one
         if (namedElement.getName() == null) {
             return;
         }
