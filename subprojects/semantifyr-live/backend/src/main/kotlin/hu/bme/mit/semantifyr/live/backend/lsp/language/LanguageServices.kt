@@ -11,6 +11,7 @@ import com.google.inject.Provider
 import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.lsp4j.CompletionOptions
 import org.eclipse.lsp4j.ExecuteCommandOptions
+import org.eclipse.lsp4j.RenameOptions
 import org.eclipse.lsp4j.SemanticTokensLegend
 import org.eclipse.lsp4j.SemanticTokensWithRegistrationOptions
 import org.eclipse.lsp4j.ServerCapabilities
@@ -24,6 +25,8 @@ import org.eclipse.xtext.ide.server.folding.FoldingRangeService
 import org.eclipse.xtext.ide.server.formatting.FormattingService
 import org.eclipse.xtext.ide.server.hover.IHoverService
 import org.eclipse.xtext.ide.server.occurrences.IDocumentHighlightService
+import org.eclipse.xtext.ide.server.rename.IRenameService2
+import org.eclipse.xtext.ide.server.rename.RenameService2
 import org.eclipse.xtext.ide.server.semantictokens.SemanticTokensService
 import org.eclipse.xtext.ide.server.signatureHelp.ISignatureHelpService
 import org.eclipse.xtext.ide.server.symbol.DocumentSymbolService
@@ -45,7 +48,11 @@ class LanguageServices @Inject constructor(
     val foldingRangeService: FoldingRangeService,
     val semanticTokensService: SemanticTokensService,
     val formattingService: FormattingService,
+    val renameService: IRenameService2,
 ) {
+
+    // Xtext's stock rename reads the file from disk into a fresh resource set, which a session does not keep current.
+    val supportsRename = renameService.javaClass != RenameService2::class.java
 
     @Inject(optional = true)
     var codeActionService: ICodeActionService2? = null
@@ -70,6 +77,9 @@ class LanguageServices @Inject constructor(
             documentRangeFormattingProvider = Either.forLeft(true)
             codeActionProvider = Either.forLeft(codeActionService != null)
             foldingRangeProvider = Either.forLeft(true)
+            if (supportsRename) {
+                renameProvider = Either.forRight(RenameOptions(true))
+            }
             semanticTokensProvider = SemanticTokensWithRegistrationOptions(
                 SemanticTokensLegend(
                     semanticTokensService.tokenTypes,

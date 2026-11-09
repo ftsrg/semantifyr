@@ -39,16 +39,24 @@ import org.eclipse.lsp4j.Hover
 import org.eclipse.lsp4j.HoverParams
 import org.eclipse.lsp4j.Location
 import org.eclipse.lsp4j.LocationLink
+import org.eclipse.lsp4j.PrepareRenameDefaultBehavior
+import org.eclipse.lsp4j.PrepareRenameParams
+import org.eclipse.lsp4j.PrepareRenameResult
+import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.ReferenceParams
+import org.eclipse.lsp4j.RenameParams
 import org.eclipse.lsp4j.SemanticTokens
 import org.eclipse.lsp4j.SemanticTokensParams
 import org.eclipse.lsp4j.SignatureHelp
 import org.eclipse.lsp4j.SignatureHelpParams
 import org.eclipse.lsp4j.SymbolInformation
 import org.eclipse.lsp4j.TextEdit
+import org.eclipse.lsp4j.WorkspaceEdit
 import org.eclipse.lsp4j.jsonrpc.messages.Either
+import org.eclipse.lsp4j.jsonrpc.messages.Either3
 import org.eclipse.lsp4j.services.TextDocumentService
 import org.eclipse.xtext.ide.server.codeActions.ICodeActionService2
+import org.eclipse.xtext.ide.server.rename.IRenameService2
 import org.eclipse.xtext.util.CancelIndicator
 import java.util.concurrent.CompletableFuture
 
@@ -252,6 +260,36 @@ class SessionTextDocumentService @Inject constructor(
         }
     }
 
+    override fun rename(params: RenameParams): CompletableFuture<WorkspaceEdit?> {
+        if (!languageServices.supportsRename) {
+            return CompletableFuture.completedFuture(null)
+        }
+        return readDocument(params.textDocument.uri, null) { _, cancelIndicator ->
+            val options = IRenameService2.Options().apply {
+                this.languageServerAccess = sessionLanguageServerAccessFactory.create(cancelIndicator)
+                this.renameParams = params
+                this.cancelIndicator = cancelIndicator
+            }
+            toClientWorkspaceEdit(languageServices.renameService.rename(options))
+        }
+    }
+
+    override fun prepareRename(
+        params: PrepareRenameParams,
+    ): CompletableFuture<Either3<Range, PrepareRenameResult, PrepareRenameDefaultBehavior>?> {
+        if (!languageServices.supportsRename) {
+            return CompletableFuture.completedFuture(null)
+        }
+        return readDocument(params.textDocument.uri, null) { _, cancelIndicator ->
+            val options = IRenameService2.PrepareRenameOptions().apply {
+                this.languageServerAccess = sessionLanguageServerAccessFactory.create(cancelIndicator)
+                this.params = params
+                this.cancelIndicator = cancelIndicator
+            }
+            languageServices.renameService.prepareRename(options)
+        }
+    }
+
     private inline fun <T> readDocument(
         clientUri: String,
         empty: T,
@@ -272,5 +310,12 @@ class SessionTextDocumentService @Inject constructor(
             return location
         }
         return Location(translated, location.range)
+    }
+
+    private fun toClientWorkspaceEdit(edit: WorkspaceEdit): WorkspaceEdit {
+        val changes = edit.changes.orEmpty().entries.associate { (uri, edits) ->
+            sessionDocumentManager.toClientUri(uri) to edits
+        }
+        return WorkspaceEdit(changes)
     }
 }
