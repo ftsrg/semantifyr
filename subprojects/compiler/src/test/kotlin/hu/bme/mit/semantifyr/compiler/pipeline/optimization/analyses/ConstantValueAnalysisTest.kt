@@ -18,7 +18,7 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var value : int := 7
+                var value: int := 7
                 init {
                     value := 7
                 }
@@ -39,7 +39,7 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var value : int := 0
+                var value: int := 0
                 init {
                 }
                 tran {
@@ -64,7 +64,7 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var value : int := 7
+                var value: int := 7
                 init {
                     value := 7
                 }
@@ -88,7 +88,7 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var value : int := 7
+                var value: int := 7
                 init {
                 }
                 tran {
@@ -108,7 +108,7 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var overwritten : int := 0
+                var overwritten: int := 0
                 init {
                     overwritten := 3
                 }
@@ -130,8 +130,8 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var overwritten : int := 0
-                var copy : int := 3
+                var overwritten: int := 0
+                var copy: int := 3
                 init {
                     choice {
                         overwritten := 3
@@ -155,8 +155,8 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var overwritten : int := 0
-                var copy : int := 3
+                var overwritten: int := 0
+                var copy: int := 3
                 init {
                 }
                 tran {
@@ -177,8 +177,8 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var overwritten : int := 0
-                var copy : int := 3
+                var overwritten: int := 0
+                var copy: int := 3
                 init {
                     copy := overwritten
                     overwritten := 3
@@ -199,8 +199,8 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var overwritten : int := 0
-                var copy : int := 3
+                var overwritten: int := 0
+                var copy: int := 3
                 init {
                     choice {
                         overwritten := 3

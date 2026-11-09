@@ -14,7 +14,7 @@ class RedundancyPatternsTest : PatternTestBase() {
         pattern = ConstantGuardIfPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -30,7 +30,7 @@ class RedundancyPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -49,7 +49,7 @@ class RedundancyPatternsTest : PatternTestBase() {
         pattern = ConstantGuardIfPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -64,7 +64,7 @@ class RedundancyPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -81,7 +81,7 @@ class RedundancyPatternsTest : PatternTestBase() {
         pattern = RemoveConstantTrueAssumptionPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -94,7 +94,7 @@ class RedundancyPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -111,7 +111,7 @@ class RedundancyPatternsTest : PatternTestBase() {
         pattern = RemoveEmptyIfBodyPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -125,7 +125,7 @@ class RedundancyPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -142,7 +142,7 @@ class RedundancyPatternsTest : PatternTestBase() {
         pattern = RemoveEmptyIfElsePattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -157,7 +157,7 @@ class RedundancyPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -176,7 +176,7 @@ class RedundancyPatternsTest : PatternTestBase() {
         pattern = RemoveEmptyForPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -190,7 +190,7 @@ class RedundancyPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -207,7 +207,7 @@ class RedundancyPatternsTest : PatternTestBase() {
         pattern = RemoveRedundantEmptyChoiceBranchPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -223,7 +223,7 @@ class RedundancyPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {

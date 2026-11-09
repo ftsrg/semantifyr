@@ -14,8 +14,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
     fun `assignment to a variable not read by the property is removed`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var observed : int := 0
-            var unread : int := 0
+            var observed: int := 0
+            var unread: int := 0
             init {
             }
             tran {
@@ -28,8 +28,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var observed : int := 0
-            var unread : int := 0
+            var observed: int := 0
+            var unread: int := 0
             init {
             }
             tran {
@@ -48,8 +48,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
     fun `transitive dependency keeps the feeder assignment alive`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var observed : int := 0
-            var feeder : int := 0
+            var observed: int := 0
+            var feeder: int := 0
             init {
             }
             tran {
@@ -62,8 +62,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var observed : int := 0
-            var feeder : int := 0
+            var observed: int := 0
+            var feeder: int := 0
             init {
             }
             tran {
@@ -83,8 +83,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
     fun `sibling assume guard keeps the gated write alive`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var observed : int := 0
-            var guard : int := 0
+            var observed: int := 0
+            var guard: int := 0
             init {
             }
             tran {
@@ -102,8 +102,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var observed : int := 0
-            var guard : int := 0
+            var observed: int := 0
+            var guard: int := 0
             init {
             }
             tran {
@@ -128,8 +128,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
     fun `if-guarded write has its guard variable kept relevant`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var observed : int := 0
-            var guard : int := 0
+            var observed: int := 0
+            var guard: int := 0
             init {
             }
             tran {
@@ -145,8 +145,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var observed : int := 0
-            var guard : int := 0
+            var observed: int := 0
+            var guard: int := 0
             init {
             }
             tran {
@@ -169,7 +169,7 @@ class DeadCodeRemovalPassTest : PassTestBase() {
     fun `variable with both assignment and havoc keeps both when relevant`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var observed : int := 0
+            var observed: int := 0
             init {
             }
             tran {
@@ -182,7 +182,7 @@ class DeadCodeRemovalPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var observed : int := 0
+            var observed: int := 0
             init {
             }
             tran {
@@ -202,8 +202,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
     fun `state machine - single region with event-driven transitions`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var activeState : int := -1
-            var inputEvent : int := 0
+            var activeState: int := -1
+            var inputEvent: int := 0
             init {
                 activeState := 0
             }
@@ -223,8 +223,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var activeState : int := -1
-            var inputEvent : int := 0
+            var activeState: int := -1
+            var inputEvent: int := 0
             init {
                 activeState := 0
             }
@@ -251,9 +251,9 @@ class DeadCodeRemovalPassTest : PassTestBase() {
     fun `two independent state machines - writes to the unobserved region are pruned`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var stateA : int := 0
-            var stateB : int := 0
-            var event : int := 0
+            var stateA: int := 0
+            var stateB: int := 0
+            var event: int := 0
             init {
             }
             tran {
@@ -272,9 +272,9 @@ class DeadCodeRemovalPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var stateA : int := 0
-            var stateB : int := 0
-            var event : int := 0
+            var stateA: int := 0
+            var stateB: int := 0
+            var event: int := 0
             init {
             }
             tran {
@@ -299,9 +299,9 @@ class DeadCodeRemovalPassTest : PassTestBase() {
     fun `transitive relevance through a helper variable chain`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var observed : int := 0
-            var middle : int := 0
-            var feeder : int := 0
+            var observed: int := 0
+            var middle: int := 0
+            var feeder: int := 0
             init {
             }
             tran {
@@ -315,9 +315,9 @@ class DeadCodeRemovalPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var observed : int := 0
-            var middle : int := 0
-            var feeder : int := 0
+            var observed: int := 0
+            var middle: int := 0
+            var feeder: int := 0
             init {
             }
             tran {
@@ -338,10 +338,10 @@ class DeadCodeRemovalPassTest : PassTestBase() {
     fun `deeply nested guards - all guard variables enter the cone`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var state : int := 0
-            var outerGuard : int := 0
-            var middleGuard : int := 0
-            var innerGuard : int := 0
+            var state: int := 0
+            var outerGuard: int := 0
+            var middleGuard: int := 0
+            var innerGuard: int := 0
             init {
             }
             tran {
@@ -359,10 +359,10 @@ class DeadCodeRemovalPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var state : int := 0
-            var outerGuard : int := 0
-            var middleGuard : int := 0
-            var innerGuard : int := 0
+            var state: int := 0
+            var outerGuard: int := 0
+            var middleGuard: int := 0
+            var innerGuard: int := 0
             init {
             }
             tran {
@@ -387,7 +387,7 @@ class DeadCodeRemovalPassTest : PassTestBase() {
     fun `havoc on a property-relevant variable is kept`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var observed : int := 0
+            var observed: int := 0
             init {
             }
             tran {
@@ -399,7 +399,7 @@ class DeadCodeRemovalPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var observed : int := 0
+            var observed: int := 0
             init {
             }
             tran {
@@ -418,8 +418,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
     fun `havoc on an unread variable is dropped`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var observed : int := 0
-            var unread : int := 0
+            var observed: int := 0
+            var unread: int := 0
             init {
             }
             tran {
@@ -432,8 +432,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var observed : int := 0
-            var unread : int := 0
+            var observed: int := 0
+            var unread: int := 0
             init {
             }
             tran {
@@ -452,7 +452,7 @@ class DeadCodeRemovalPassTest : PassTestBase() {
     fun `kill-old-set-new pattern - both consecutive writes stay`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var state : int := -1
+            var state: int := -1
             init {
                 state := 0
             }
@@ -467,7 +467,7 @@ class DeadCodeRemovalPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var state : int := -1
+            var state: int := -1
             init {
                 state := 0
             }
@@ -490,7 +490,7 @@ class DeadCodeRemovalPassTest : PassTestBase() {
         source = """
             inlined oxsts of semantifyr::Anything
             @NonOptimizable
-            var tracer : bool := false
+            var tracer: bool := false
             init {
             }
             tran {
@@ -503,7 +503,7 @@ class DeadCodeRemovalPassTest : PassTestBase() {
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             @NonOptimizable
-            var tracer : bool := false
+            var tracer: bool := false
             init {
             }
             tran {
@@ -522,11 +522,11 @@ class DeadCodeRemovalPassTest : PassTestBase() {
     fun `region marker local variable keeps its writes and activates the guarded branches`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var state : int := 0
+            var state: int := 0
             init {
             }
             tran {
-                var anyRegionExecuted : bool := false
+                var anyRegionExecuted: bool := false
                 choice {
                     assume(state == 0)
                     state := 1
@@ -544,11 +544,11 @@ class DeadCodeRemovalPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var state : int := 0
+            var state: int := 0
             init {
             }
             tran {
-                var anyRegionExecuted : bool := false
+                var anyRegionExecuted: bool := false
                 choice {
                     assume(state == 0)
                     state := 1

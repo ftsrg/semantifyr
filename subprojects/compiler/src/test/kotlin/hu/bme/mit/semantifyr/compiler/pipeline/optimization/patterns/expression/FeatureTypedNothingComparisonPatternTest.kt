@@ -32,8 +32,8 @@ class FeatureTypedNothingComparisonPatternTest : InliningTestBase() {
                 }
                 @VerificationCase
                 class Host {
-                    contains leaf : Leaf[1]
-                    var slot : leaf[1] := nothing
+                    contains leaf: Leaf[1]
+                    var slot: leaf[1] := nothing
                     prop {
                         return EF slot == nothing
                     }
@@ -55,8 +55,8 @@ class FeatureTypedNothingComparisonPatternTest : InliningTestBase() {
                 }
                 @VerificationCase
                 class Host {
-                    contains leaf : Leaf[1]
-                    var slot : leaf[1] := nothing
+                    contains leaf: Leaf[1]
+                    var slot: leaf[1] := nothing
                     prop {
                         return EF slot != nothing
                     }
@@ -78,8 +78,8 @@ class FeatureTypedNothingComparisonPatternTest : InliningTestBase() {
                 }
                 @VerificationCase
                 class Host {
-                    contains leaf : Leaf[0..1]
-                    var slot : leaf[0..1] := nothing
+                    contains leaf: Leaf[0..1]
+                    var slot: leaf[0..1] := nothing
                     prop {
                         return EF slot == nothing
                     }
@@ -102,8 +102,8 @@ class FeatureTypedNothingComparisonPatternTest : InliningTestBase() {
                 }
                 @VerificationCase
                 class Host {
-                    contains leaf : Leaf[1]
-                    var slot : leaf[1] := nothing
+                    contains leaf: Leaf[1]
+                    var slot: leaf[1] := nothing
                     prop {
                         return EF nothing == slot
                     }

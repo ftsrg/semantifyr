@@ -37,8 +37,8 @@ class ArgumentByValueInliningTest : InliningTestBase() {
                 }
 
                 tran {
-                    var 'first$$$local0' : int := root.x
-                    var 'second$$$local1' : int := root.y
+                    var 'first$$$local0': int := root.x
+                    var 'second$$$local1': int := root.y
                     root.x := 'second$$$local1'
                     root.y := 'first$$$local0'
                 }
@@ -77,7 +77,7 @@ class ArgumentByValueInliningTest : InliningTestBase() {
                 }
 
                 tran {
-                    var 'old$$$local0' : int := root.counter
+                    var 'old$$$local0': int := root.counter
                     root.counter := root.counter + 1
                     root.previous := 'old$$$local0'
                 }

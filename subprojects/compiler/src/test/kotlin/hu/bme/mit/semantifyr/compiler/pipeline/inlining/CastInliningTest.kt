@@ -106,7 +106,7 @@ class CastInliningTest : InliningTestBase() {
                 }
 
                 tran {
-                    var 'narrowed$$$local0' : inlining::tests::instance_cast::Child[0..1] := nothing
+                    var 'narrowed$$$local0': inlining::tests::instance_cast::Child[0..1] := nothing
                     'narrowed$$$local0' := root.reference
                 }
 

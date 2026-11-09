@@ -15,7 +15,7 @@ class RedundantBooleanPatternsTest : PatternTestBase() {
         pattern = RedundantAndPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var operand : bool := false
+            var operand: bool := false
             init {
             }
             tran {
@@ -26,7 +26,7 @@ class RedundantBooleanPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var operand : bool := false
+            var operand: bool := false
             init {
             }
             tran {
@@ -42,7 +42,7 @@ class RedundantBooleanPatternsTest : PatternTestBase() {
         pattern = RedundantAndPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var operand : bool := false
+            var operand: bool := false
             init {
             }
             tran {
@@ -53,7 +53,7 @@ class RedundantBooleanPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var operand : bool := false
+            var operand: bool := false
             init {
             }
             tran {
@@ -69,7 +69,7 @@ class RedundantBooleanPatternsTest : PatternTestBase() {
         pattern = RedundantOrPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var operand : bool := false
+            var operand: bool := false
             init {
             }
             tran {
@@ -80,7 +80,7 @@ class RedundantBooleanPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var operand : bool := false
+            var operand: bool := false
             init {
             }
             tran {
@@ -96,7 +96,7 @@ class RedundantBooleanPatternsTest : PatternTestBase() {
         pattern = ConstantFalseAndPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var operand : bool := false
+            var operand: bool := false
             init {
             }
             tran {
@@ -107,7 +107,7 @@ class RedundantBooleanPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var operand : bool := false
+            var operand: bool := false
             init {
             }
             tran {
@@ -123,7 +123,7 @@ class RedundantBooleanPatternsTest : PatternTestBase() {
         pattern = ConstantTrueOrPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var operand : bool := false
+            var operand: bool := false
             init {
             }
             tran {
@@ -134,7 +134,7 @@ class RedundantBooleanPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var operand : bool := false
+            var operand: bool := false
             init {
             }
             tran {
@@ -150,7 +150,7 @@ class RedundantBooleanPatternsTest : PatternTestBase() {
         pattern = IdempotentBooleanPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var operand : bool := false
+            var operand: bool := false
             init {
             }
             tran {
@@ -161,7 +161,7 @@ class RedundantBooleanPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var operand : bool := false
+            var operand: bool := false
             init {
             }
             tran {
@@ -177,8 +177,8 @@ class RedundantBooleanPatternsTest : PatternTestBase() {
         pattern = RedundantAndPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var left : bool := false
-            var right : bool := false
+            var left: bool := false
+            var right: bool := false
             init {
             }
             tran {

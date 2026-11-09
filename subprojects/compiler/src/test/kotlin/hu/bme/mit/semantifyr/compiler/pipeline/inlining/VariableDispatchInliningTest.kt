@@ -50,10 +50,10 @@ class VariableDispatchInliningTest : InliningTestBase() {
 
                 tran {
                     choice {
-                        assume (root.current == root.first)
+                        assume(root.current == root.first)
                         root.first.done := true
                     } or {
-                        assume (root.current == root.second)
+                        assume(root.current == root.second)
                         root.second.done := true
                     }
                 }
@@ -108,10 +108,10 @@ class VariableDispatchInliningTest : InliningTestBase() {
 
                 tran {
                     choice {
-                        assume (root.current == root.first)
+                        assume(root.current == root.first)
                         root.first.done := true
                     } or {
-                        assume (root.current == root.second)
+                        assume(root.current == root.second)
                         root.second.done := true
                     }
                 }
@@ -154,12 +154,12 @@ class VariableDispatchInliningTest : InliningTestBase() {
                 }
 
                 tran {
-                    var 'worker$$$local0' : inlining::tests::Worker[0..1] := root.current
+                    var 'worker$$$local0': inlining::tests::Worker[0..1] := root.current
                     choice {
-                        assume ('worker$$$local0' == root.first)
+                        assume('worker$$$local0' == root.first)
                         root.first.done := true
                     } or {
-                        assume ('worker$$$local0' == root.second)
+                        assume('worker$$$local0' == root.second)
                         root.second.done := true
                     }
                 }

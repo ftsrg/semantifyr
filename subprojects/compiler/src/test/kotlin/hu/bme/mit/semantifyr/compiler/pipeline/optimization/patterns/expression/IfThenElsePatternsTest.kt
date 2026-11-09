@@ -15,7 +15,7 @@ class IfThenElsePatternsTest : PatternTestBase() {
         pattern = IfThenElseConstantGuardPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -26,7 +26,7 @@ class IfThenElsePatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -42,7 +42,7 @@ class IfThenElsePatternsTest : PatternTestBase() {
         pattern = IfThenElseConstantGuardPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -53,7 +53,7 @@ class IfThenElsePatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -69,7 +69,7 @@ class IfThenElsePatternsTest : PatternTestBase() {
         pattern = IfThenElseIdenticalBranchesPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -80,7 +80,7 @@ class IfThenElsePatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -96,7 +96,7 @@ class IfThenElsePatternsTest : PatternTestBase() {
         pattern = IfThenElseConstantGuardPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -112,7 +112,7 @@ class IfThenElsePatternsTest : PatternTestBase() {
         pattern = IfThenElseIdenticalBranchesPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {

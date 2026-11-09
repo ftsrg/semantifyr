@@ -14,7 +14,7 @@ class FlatteningPatternsTest : PatternTestBase() {
         pattern = FlattenSingleBranchChoicePattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var first : int := 0
+            var first: int := 0
             init {
             }
             tran {
@@ -28,7 +28,7 @@ class FlatteningPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var first : int := 0
+            var first: int := 0
             init {
             }
             tran {
@@ -47,8 +47,8 @@ class FlatteningPatternsTest : PatternTestBase() {
         pattern = FlattenNestedSequencePattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var first : int := 0
-            var second : int := 0
+            var first: int := 0
+            var second: int := 0
             init {
             }
             tran {
@@ -65,8 +65,8 @@ class FlatteningPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var first : int := 0
-            var second : int := 0
+            var first: int := 0
+            var second: int := 0
             init {
             }
             tran {
@@ -86,7 +86,7 @@ class FlatteningPatternsTest : PatternTestBase() {
         pattern = FlattenNestedChoicePattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var first : int := 0
+            var first: int := 0
             init {
             }
             tran {
@@ -106,7 +106,7 @@ class FlatteningPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var first : int := 0
+            var first: int := 0
             init {
             }
             tran {

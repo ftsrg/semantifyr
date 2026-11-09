@@ -22,7 +22,7 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var counter : int := 0
+                var counter: int := 0
                 init {
                 }
                 tran {
@@ -42,7 +42,7 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var counter : int := 0
+                var counter: int := 0
                 init {
                 }
                 tran {
@@ -64,7 +64,7 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var counter : int := 0
+                var counter: int := 0
                 init {
                 }
                 tran {
@@ -85,7 +85,7 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var timer : int := 0
+                var timer: int := 0
                 init {
                     timer := 3
                 }
@@ -112,7 +112,7 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var counter : int := 0
+                var counter: int := 0
                 init {
                 }
                 tran {
@@ -136,7 +136,7 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var counter : int := 0
+                var counter: int := 0
                 init {
                 }
                 tran {
@@ -160,8 +160,8 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var bound : int := 0
-                var last : int := 0
+                var bound: int := 0
+                var last: int := 0
                 init {
                 }
                 tran {
@@ -190,7 +190,7 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var current : int := -1
+                var current: int := -1
                 init {
                 }
                 tran {
@@ -216,7 +216,7 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var flag : bool := false
+                var flag: bool := false
                 init {
                 }
                 tran {
@@ -235,8 +235,8 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
     fun `a havoc is unbounded unless a havoc range is given`() {
         val source = """
             inlined oxsts of semantifyr::Anything
-            var chosen : int := 0
-            var copy : int := 0
+            var chosen: int := 0
+            var copy: int := 0
             init {
             }
             tran {
@@ -264,8 +264,8 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var counter : int := 0
-                var half : int := 0
+                var counter: int := 0
+                var half: int := 0
                 init {
                 }
                 tran {
@@ -294,7 +294,7 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var counter : int := 9
+                var counter: int := 9
                 init {
                     counter := 0
                 }
@@ -318,7 +318,7 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var counter : int := 9
+                var counter: int := 9
                 init {
                     assume(counter < 0)
                 }
@@ -339,11 +339,11 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var counter : int := 0
+                var counter: int := 0
                 init {
                 }
                 tran {
-                    var step : int := 2
+                    var step: int := 2
                     if (counter < 6) {
                         counter := counter + step
                     }
@@ -363,8 +363,8 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var counter : int := 0
-                var scaled : int := 0
+                var counter: int := 0
+                var scaled: int := 0
                 init {
                 }
                 tran {
@@ -391,8 +391,8 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var divisor : int := 0
-                var quotient : int := 0
+                var divisor: int := 0
+                var quotient: int := 0
                 init {
                 }
                 tran {
@@ -417,7 +417,7 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var counter : int := 0
+                var counter: int := 0
                 init {
                 }
                 tran {
@@ -439,8 +439,8 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var counter : int := 0
-                var doubled : int := 0
+                var counter: int := 0
+                var doubled: int := 0
                 init {
                 }
                 tran {

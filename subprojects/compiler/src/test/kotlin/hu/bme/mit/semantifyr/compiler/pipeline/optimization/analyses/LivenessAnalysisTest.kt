@@ -18,7 +18,7 @@ class LivenessAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runLiveness(
             """
                 inlined oxsts of semantifyr::Anything
-                var observed : int := 0
+                var observed: int := 0
                 init {
                 }
                 tran {
@@ -38,8 +38,8 @@ class LivenessAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runLiveness(
             """
                 inlined oxsts of semantifyr::Anything
-                var observed : int := 0
-                var written : int := 0
+                var observed: int := 0
+                var written: int := 0
                 init {
                 }
                 tran {
@@ -61,7 +61,7 @@ class LivenessAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runLiveness(
             """
                 inlined oxsts of semantifyr::Anything
-                var value : int := 0
+                var value: int := 0
                 init {
                 }
                 tran {
@@ -85,8 +85,8 @@ class LivenessAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runLiveness(
             """
                 inlined oxsts of semantifyr::Anything
-                var guard : int := 0
-                var written : int := 0
+                var guard: int := 0
+                var written: int := 0
                 init {
                 }
                 tran {

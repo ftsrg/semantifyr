@@ -122,6 +122,6 @@ class ReferenceArrayFlatteningTest : FlatteningTestBase() {
         val slot0 = Regex.escape("'${rootMember("queue_0")}'")
         val slot1 = Regex.escape("'${rootMember("queue_1")}'")
         val saved = "'${Regex.escape(rootMember("queue_1") + LocalVarNames.LOCAL_VAR_SUFFIX)}\\d+'"
-        assertThat(serialize(flattened.inlinedOxsts.mainTransition)).containsPattern("var $saved : int := $slot0\\s+$slot0 := $slot1\\s+$slot1 := $saved")
+        assertThat(serialize(flattened.inlinedOxsts.mainTransition)).containsPattern("var $saved: int := $slot0\\s+$slot0 := $slot1\\s+$slot1 := $saved")
     }
 }

@@ -13,29 +13,29 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
     private val workers = """
         package flattening::local_instances
         class Worker {
-            var done : bool := false
+            var done: bool := false
             tran finish() {
                 done := true
             }
         }
         class Other {
-            var done : bool := false
+            var done: bool := false
             tran finish() {
                 done := true
             }
         }
         class Pool {
-            contains workers : Worker[0..*]
-            contains first : Worker subsets workers
-            contains second : Worker subsets workers
-            contains spare : Worker
+            contains workers: Worker[0..*]
+            contains first: Worker subsets workers
+            contains second: Worker subsets workers
+            contains spare: Worker
             tran pickOne() {
-                var picked : workers := first
+                var picked: workers := first
                 havoc(picked)
                 inline picked.finish()
             }
             tran pickTwo() {
-                var picks : workers[2] := [first, first]
+                var picks: workers[2] := [first, first]
                 havoc(picks)
                 inline picks[0].finish()
                 inline picks[1].finish()
@@ -50,12 +50,12 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
             workers + """
                 @VerificationCase
                 class Host {
-                    contains first : Worker
-                    contains second : Worker
-                    contains other : Other
-                    var outside : bool := false
+                    contains first: Worker
+                    contains second: Worker
+                    contains other: Other
+                    var outside: bool := false
                     redefine tran {
-                        var picked : Worker := first
+                        var picked: Worker := first
                         havoc(picked)
                         if (picked != first && picked != second) {
                             outside := true
@@ -71,7 +71,7 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                 }
 
                 tran {
-                    var 'picked$$$local0' : int := 0
+                    var 'picked$$$local0': int := 0
                     choice {
                         'picked$$$local0' := 0
                     } or {
@@ -96,12 +96,12 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
             workers + """
                 @VerificationCase
                 class Host {
-                    contains first : Worker
-                    var empty : bool := false
+                    contains first: Worker
+                    var empty: bool := false
                     redefine tran {
-                        var optional : Worker[0..1] := first
+                        var optional: Worker[0..1] := first
                         havoc(optional)
-                        var required : Worker := first
+                        var required: Worker := first
                         havoc(required)
                         if (optional == nothing || required == nothing) {
                             empty := true
@@ -117,13 +117,13 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                 }
 
                 tran {
-                    var 'optional$$$local0' : int := 0
+                    var 'optional$$$local0': int := 0
                     choice {
                         'optional$$$local0' := -1
                     } or {
                         'optional$$$local0' := 0
                     }
-                    var 'required$$$local1' : int := 0
+                    var 'required$$$local1': int := 0
                     choice {
                         'required$$$local1' := 0
                     }
@@ -146,11 +146,11 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
             workers + """
                 @VerificationCase
                 class Host {
-                    contains first : Worker
-                    contains second : Worker
-                    var flip : bool := false
+                    contains first: Worker
+                    contains second: Worker
+                    var flip: bool := false
                     redefine tran {
-                        var picked : Worker := first
+                        var picked: Worker := first
                         if (flip) {
                             picked := second
                         }
@@ -167,16 +167,16 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                 }
 
                 tran {
-                    var 'picked$$$local0' : int := 0
+                    var 'picked$$$local0': int := 0
                     if ('$$root$$flip') {
                         'picked$$$local0' := 1
                     }
                     '$$root$$flip' := true
                     choice {
-                        assume ('picked$$$local0' == 0)
+                        assume('picked$$$local0' == 0)
                         '$$root$$first$$done' := true
                     } or {
-                        assume ('picked$$$local0' == 1)
+                        assume('picked$$$local0' == 1)
                         '$$root$$second$$done' := true
                     }
                 }
@@ -195,7 +195,7 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
             workers + """
                 @VerificationCase
                 class Host {
-                    contains pool : Pool
+                    contains pool: Pool
                     redefine tran {
                         inline pool.pickOne()
                     }
@@ -209,17 +209,17 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                 }
 
                 tran {
-                    var 'picked$$$local0' : int := 0
+                    var 'picked$$$local0': int := 0
                     choice {
                         'picked$$$local0' := 0
                     } or {
                         'picked$$$local0' := 1
                     }
                     choice {
-                        assume ('picked$$$local0' == 0)
+                        assume('picked$$$local0' == 0)
                         '$$root$$pool$$first$$done' := true
                     } or {
-                        assume ('picked$$$local0' == 1)
+                        assume('picked$$$local0' == 1)
                         '$$root$$pool$$second$$done' := true
                     }
                 }
@@ -238,10 +238,10 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
             workers + """
                 @VerificationCase
                 class Host {
-                    contains first : Worker
-                    contains second : Worker
+                    contains first: Worker
+                    contains second: Worker
                     redefine tran {
-                        var queue : Worker[2] := [first, second]
+                        var queue: Worker[2] := [first, second]
                         inline queue[1].finish()
                     }
                     prop {
@@ -254,13 +254,13 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                 }
 
                 tran {
-                    var 'queue$$$local0_0' : int := 0
-                    var 'queue$$$local0_1' : int := 1
+                    var 'queue$$$local0_0': int := 0
+                    var 'queue$$$local0_1': int := 1
                     choice {
-                        assume ('queue$$$local0_1' == 0)
+                        assume('queue$$$local0_1' == 0)
                         '$$root$$first$$done' := true
                     } or {
-                        assume ('queue$$$local0_1' == 1)
+                        assume('queue$$$local0_1' == 1)
                         '$$root$$second$$done' := true
                     }
                 }
@@ -279,7 +279,7 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
             workers + """
                 @VerificationCase
                 class Host {
-                    contains pool : Pool
+                    contains pool: Pool
                     redefine tran {
                         inline pool.pickTwo()
                     }
@@ -293,8 +293,8 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                 }
 
                 tran {
-                    var 'picks$$$local0_0' : int := 0
-                    var 'picks$$$local0_1' : int := 0
+                    var 'picks$$$local0_0': int := 0
+                    var 'picks$$$local0_1': int := 0
                     choice {
                         'picks$$$local0_0' := 0
                     } or {
@@ -306,17 +306,17 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                         'picks$$$local0_1' := 1
                     }
                     choice {
-                        assume ('picks$$$local0_0' == 0)
+                        assume('picks$$$local0_0' == 0)
                         '$$root$$pool$$first$$done' := true
                     } or {
-                        assume ('picks$$$local0_0' == 1)
+                        assume('picks$$$local0_0' == 1)
                         '$$root$$pool$$second$$done' := true
                     }
                     choice {
-                        assume ('picks$$$local0_1' == 0)
+                        assume('picks$$$local0_1' == 0)
                         '$$root$$pool$$first$$done' := true
                     } or {
-                        assume ('picks$$$local0_1' == 1)
+                        assume('picks$$$local0_1' == 1)
                         '$$root$$pool$$second$$done' := true
                     }
                 }

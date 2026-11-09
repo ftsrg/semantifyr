@@ -19,7 +19,7 @@ class AssumeFalsePropagationPatternsTest : PatternTestBase() {
         pattern = PropagateConstantFalseInSequencePattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -33,7 +33,7 @@ class AssumeFalsePropagationPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -50,7 +50,7 @@ class AssumeFalsePropagationPatternsTest : PatternTestBase() {
         pattern = PropagateBothBranchesConstantFalsePattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -66,7 +66,7 @@ class AssumeFalsePropagationPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -85,7 +85,7 @@ class AssumeFalsePropagationPatternsTest : PatternTestBase() {
         pattern = PropagateSingleBranchConstantFalsePattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -99,7 +99,7 @@ class AssumeFalsePropagationPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -116,7 +116,7 @@ class AssumeFalsePropagationPatternsTest : PatternTestBase() {
         pattern = RemoveConstantFalseChoiceBranchPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -132,7 +132,7 @@ class AssumeFalsePropagationPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {

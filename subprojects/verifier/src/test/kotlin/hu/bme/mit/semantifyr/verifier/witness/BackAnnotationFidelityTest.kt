@@ -224,13 +224,13 @@ class BackAnnotationFidelityTest {
             WitnessStateValue("root.hall.lamp.on", "false"),
         )
         assertThat(readWitnessModel(output, case))
-            .contains("var step : int := 0")
+            .contains("var step: int := 0")
             .doesNotContain("step == -1")
             .containsSubsequence(
                 "init {",
-                "assume (step == 0)",
+                "assume(step == 0)",
                 "inline root.init()",
-                "assume (root.kitchen.lamp.on == false)",
+                "assume(root.kitchen.lamp.on == false)",
                 "step := 1",
                 "}",
             )

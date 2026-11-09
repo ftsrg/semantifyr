@@ -26,7 +26,7 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var value : int := 0
+                var value: int := 0
                 init {
                     value := 1
                 }
@@ -48,7 +48,7 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var value : int := 0
+                var value: int := 0
                 init {
                 }
                 tran {
@@ -71,8 +71,8 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var source : int := 0
-                var target : int := 0
+                var source: int := 0
+                var target: int := 0
                 init {
                 }
                 tran {
@@ -98,7 +98,7 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var value : int := 7
+                var value: int := 7
                 init {
                     value := 7
                 }
@@ -120,8 +120,8 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var source : int := 0
-                var target : int := 0
+                var source: int := 0
+                var target: int := 0
                 init {
                 }
                 tran {
@@ -147,7 +147,7 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var value : int := 0
+                var value: int := 0
                 init {
                 }
                 tran {
@@ -170,8 +170,8 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var source : int := 0
-                var target : int := 0
+                var source: int := 0
+                var target: int := 0
                 init {
                 }
                 tran {
@@ -207,8 +207,8 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var source : int := 0
-                var target : int := 0
+                var source: int := 0
+                var target: int := 0
                 init {
                 }
                 tran {
@@ -240,8 +240,8 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var copy : int := 0
-                var source : int := 0
+                var copy: int := 0
+                var source: int := 0
                 init {
                     copy := source
                 }
@@ -267,8 +267,8 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var source : int := 0
-                var target : int := 0
+                var source: int := 0
+                var target: int := 0
                 init {
                 }
                 tran {
@@ -295,8 +295,8 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var observed : int := 0
-                var unread : int := 0
+                var observed: int := 0
+                var unread: int := 0
                 init {
                 }
                 tran {
@@ -318,9 +318,9 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var value : int := 0
-                var outerGuard : int := 0
-                var innerGuard : int := 0
+                var value: int := 0
+                var outerGuard: int := 0
+                var innerGuard: int := 0
                 init {
                 }
                 tran {
@@ -352,7 +352,7 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var value : int := 0
+                var value: int := 0
                 init {
                 }
                 tran {

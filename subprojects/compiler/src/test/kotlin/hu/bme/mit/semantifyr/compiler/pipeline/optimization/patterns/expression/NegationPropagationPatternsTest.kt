@@ -15,7 +15,7 @@ class NegationPropagationPatternsTest : PatternTestBase() {
         pattern = DoubleNegationPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var operand : bool := false
+            var operand: bool := false
             init {
             }
             tran {
@@ -26,7 +26,7 @@ class NegationPropagationPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var operand : bool := false
+            var operand: bool := false
             init {
             }
             tran {
@@ -42,7 +42,7 @@ class NegationPropagationPatternsTest : PatternTestBase() {
         pattern = NegatedComparisonPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var operand : int := 0
+            var operand: int := 0
             init {
             }
             tran {
@@ -53,7 +53,7 @@ class NegationPropagationPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var operand : int := 0
+            var operand: int := 0
             init {
             }
             tran {
@@ -69,7 +69,7 @@ class NegationPropagationPatternsTest : PatternTestBase() {
         pattern = NegatedComparisonPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var operand : int := 0
+            var operand: int := 0
             init {
             }
             tran {
@@ -80,7 +80,7 @@ class NegationPropagationPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var operand : int := 0
+            var operand: int := 0
             init {
             }
             tran {
@@ -96,8 +96,8 @@ class NegationPropagationPatternsTest : PatternTestBase() {
         pattern = DeMorganPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var left : bool := false
-            var right : bool := false
+            var left: bool := false
+            var right: bool := false
             init {
             }
             tran {
@@ -108,8 +108,8 @@ class NegationPropagationPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var left : bool := false
-            var right : bool := false
+            var left: bool := false
+            var right: bool := false
             init {
             }
             tran {
@@ -125,8 +125,8 @@ class NegationPropagationPatternsTest : PatternTestBase() {
         pattern = DeMorganPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var left : bool := false
-            var right : bool := false
+            var left: bool := false
+            var right: bool := false
             init {
             }
             tran {
@@ -137,8 +137,8 @@ class NegationPropagationPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var left : bool := false
-            var right : bool := false
+            var left: bool := false
+            var right: bool := false
             init {
             }
             tran {

@@ -78,7 +78,7 @@ class UncalledTracerRemovalTest : InliningTestBase() {
 
                 @Trace
                 tran fire() {
-                    assume (from.isActive())
+                    assume(from.isActive())
                     inline port.send(1)
                 }
             }

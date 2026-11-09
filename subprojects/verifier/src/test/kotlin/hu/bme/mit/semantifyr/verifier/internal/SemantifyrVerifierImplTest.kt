@@ -330,21 +330,21 @@ class SemantifyrVerifierImplTest {
             """
             witness of semantifyr::verification::simple::Incrementing
 
-            var step : int := 0
+            var step: int := 0
 
-            contains root : semantifyr::verification::simple::Incrementing
+            contains root: semantifyr::verification::simple::Incrementing
 
             init {
-                assume (step == 0)
+                assume(step == 0)
                 inline root.init()
-                assume (root.x == 1)
+                assume(root.x == 1)
                 step := 1
             }
 
             tran {
-                assume (step == 1)
+                assume(step == 1)
                 inline root.main()
-                assume (root.x == 2)
+                assume(root.x == 2)
                 step := 2
             }
 

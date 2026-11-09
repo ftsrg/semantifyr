@@ -41,7 +41,7 @@ class OxstsFactoryTest {
         val model = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var value : int := 0
+                var value: int := 0
                 init {
                 }
                 tran {

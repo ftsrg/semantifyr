@@ -75,7 +75,7 @@ class OptionalInliningTest : InliningTestBase() {
                 }
 
                 tran {
-                    assume (root.count < 1)
+                    assume(root.count < 1)
                     root.count := root.count + 1
                 }
 
