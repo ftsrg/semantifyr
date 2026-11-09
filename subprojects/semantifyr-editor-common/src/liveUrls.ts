@@ -101,8 +101,8 @@ function singleChunkStream(bytes: Uint8Array): ReadableStream<Uint8Array> {
     });
 }
 
-async function transform(bytes: Uint8Array, transformer: CompressionStream | DecompressionStream): Promise<Uint8Array> {
-    const stream = singleChunkStream(bytes).pipeThrough(transformer as unknown as ReadableWritablePair<Uint8Array, Uint8Array>);
+async function transform(bytes: Uint8Array, transformer: TransformStream<Uint8Array, Uint8Array>): Promise<Uint8Array> {
+    const stream = singleChunkStream(bytes).pipeThrough(transformer);
     const chunks: Uint8Array[] = [];
     let total = 0;
     const reader = stream.getReader();
@@ -124,12 +124,12 @@ async function transform(bytes: Uint8Array, transformer: CompressionStream | Dec
 }
 
 export async function encodeCompressedBase64Url(text: string): Promise<string> {
-    return bytesToBase64Url(await transform(new TextEncoder().encode(text), new CompressionStream("gzip")));
+    return bytesToBase64Url(await transform(new TextEncoder().encode(text), new CompressionStream("gzip") as TransformStream<Uint8Array, Uint8Array>));
 }
 
 export async function decodeCompressedBase64Url(encoded: string): Promise<string | null> {
     try {
-        return new TextDecoder().decode(await transform(base64UrlToBytes(encoded), new DecompressionStream("gzip")));
+        return new TextDecoder().decode(await transform(base64UrlToBytes(encoded), new DecompressionStream("gzip") as TransformStream<Uint8Array, Uint8Array>));
     } catch {
         return null;
     }
