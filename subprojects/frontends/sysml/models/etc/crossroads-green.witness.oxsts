@@ -1,35 +1,10 @@
 witness of semantifyr::sysml::model::TrafficLightABehaviorNormalGreenUnreachableViolated
 
-var step : int := -1
+var step : int := 0
 
 contains root : semantifyr::sysml::model::TrafficLightABehaviorNormalGreenUnreachableViolated
 
 init {
-	assume (step == -1)
-	assume (root.system.controller.Behaviour.activeState == nothing)
-	assume (root.system.controller.control.incomingItem == nothing)
-	assume (root.system.controller.controlA.outgoingItem == nothing)
-	assume (root.system.controller.controlB.outgoingItem == nothing)
-	assume (root.system.trafficLightA.Behaviour.activeState == nothing)
-	assume (root.system.trafficLightA.control.incomingItem == nothing)
-	assume (root.system.trafficLightB.Behaviour.activeState == nothing)
-	assume (root.system.trafficLightB.control.incomingItem == nothing)
-	assume (root.system.controller.Behaviour.Operating.activeState == nothing)
-	assume (root.system.trafficLightA.Behaviour.Normal.activeState == nothing)
-	assume (root.system.trafficLightA.Behaviour.Interrupted.activeState == nothing)
-	assume (root.system.trafficLightB.Behaviour.Normal.activeState == nothing)
-	assume (root.system.trafficLightB.Behaviour.Interrupted.activeState == nothing)
-	assume (root.system.controller.Behaviour.Operating.UnnamedTransitionUsage2.acceptAction.remainingTime == 0)
-	assume (root.system.controller.Behaviour.Operating.UnnamedTransitionUsage3.acceptAction.remainingTime == 0)
-	assume (root.system.controller.Behaviour.Operating.UnnamedTransitionUsage4.acceptAction.remainingTime == 0)
-	assume (root.system.controller.Behaviour.Operating.UnnamedTransitionUsage5.acceptAction.remainingTime == 0)
-	assume (root.system.controller.Behaviour.Operating.UnnamedTransitionUsage6.acceptAction.remainingTime == 0)
-	assume (root.system.controller.Behaviour.Operating.UnnamedTransitionUsage7.acceptAction.remainingTime == 0)
-	assume (root.system.trafficLightA.Behaviour.Interrupted.UnnamedTransitionUsage18.acceptAction.remainingTime == 0)
-	assume (root.system.trafficLightA.Behaviour.Interrupted.UnnamedTransitionUsage19.acceptAction.remainingTime == 0)
-	assume (root.system.trafficLightB.Behaviour.Interrupted.UnnamedTransitionUsage18.acceptAction.remainingTime == 0)
-	assume (root.system.trafficLightB.Behaviour.Interrupted.UnnamedTransitionUsage19.acceptAction.remainingTime == 0)
-	step := 0
 	assume (step == 0)
 	inline root.init()
 	assume (root.system.controller.Behaviour.activeState == root.system.controller.Behaviour.Operating)
