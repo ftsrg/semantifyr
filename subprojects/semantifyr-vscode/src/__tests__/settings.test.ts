@@ -24,7 +24,6 @@ function contributedDefaults() {
     return {
         portfolio: value('portfolio'),
         timeoutSeconds: value('timeoutSeconds'),
-        maxConcurrency: value('maxConcurrency'),
         theta: { executor: value('theta.executor'), dockerImage: value('theta.dockerImage') },
         artifacts: { location: value('artifacts.location'), preset: value('artifacts.preset') },
         optimization: { level: value('optimization.level') },
@@ -44,7 +43,6 @@ describe('readSemantifyrSettings', () => {
         expect(Object.keys(contributed).sort()).toEqual([
             'semantifyr.artifacts.location',
             'semantifyr.artifacts.preset',
-            'semantifyr.maxConcurrency',
             'semantifyr.optimization.level',
             'semantifyr.portfolio',
             'semantifyr.theta.dockerImage',

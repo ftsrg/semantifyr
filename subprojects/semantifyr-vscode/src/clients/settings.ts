@@ -18,7 +18,6 @@ export function readSemantifyrSettings(): ServerSettings {
     return {
         portfolio: config.get<string>("portfolio", "smart-full"),
         timeoutSeconds: config.get<number>("timeoutSeconds", 300),
-        maxConcurrency: config.get<number>("maxConcurrency", 0),
         theta: {
             executor: config.get<ThetaExecutor>("theta.executor", "auto"),
             dockerImage: config.get<string>("theta.dockerImage", "ftsrg/theta-xsts-cli:8.6.0"),

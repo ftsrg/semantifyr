@@ -193,12 +193,6 @@
           "minimum": 1,
           "markdownDescription": "Wall-clock timeout per case, in seconds. It covers the case's compilation, every backend run of the portfolio and the back-annotation of the witness."
         },
-        "semantifyr.maxConcurrency": {
-          "type": "number",
-          "default": 0,
-          "minimum": 0,
-          "markdownDescription": "Maximum number of concurrent backend runs. `0` lets the server decide (defaults to available processor count)."
-        },
         "semantifyr.theta.executor": {
           "type": "string",
           "default": "auto",

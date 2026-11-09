@@ -22,7 +22,7 @@ The verification cases of the open workspace appear in the *Testing* view. When 
 
 ## Extension settings
 
-The `semantifyr.*` settings choose the portfolio, the timeout, the concurrency, the Theta executor and image, the artifacts and the optimization level. The default portfolio, `smart-full`, races every installed backend, so one of Theta, nuXmv, Spin or Uppaal is enough.
+The `semantifyr.*` settings choose the portfolio, the timeout, the Theta executor and image, the artifacts and the optimization level. The default portfolio, `smart-full`, races every installed backend, so one of Theta, nuXmv, Spin or Uppaal is enough.
 
 ## Known issues
 
