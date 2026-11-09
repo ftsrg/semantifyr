@@ -83,6 +83,26 @@ class OxstsInlayHintServiceTest extends OxstsLanguageServerTest {
     }
 
     @Test
+    void argumentReferencingANameEqualToTheParameterGetsNoHint() throws Exception {
+        var model = LampModels.withGarage("""
+                class Garage {
+                    contains lamp: Lamp[1]
+
+                    tran dim(level: int) {
+                        inline lamp.set(level, <|>1)
+                    }
+                }
+                """);
+
+        var hints = hintsOfKind(model, InlayHintKind.Parameter);
+
+        assertThat(hints).singleElement().satisfies(hint -> {
+            assertThat(hint.getPosition()).isEqualTo(model.position());
+            assertThat(labelOf(hint)).isEqualTo("step:");
+        });
+    }
+
+    @Test
     void loopVariableShowsTheElementTypeOfItsRange() throws Exception {
         var model = LampModels.withGarage("""
                 class Garage {

@@ -40,6 +40,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParametricDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RangeExpression;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
@@ -120,6 +121,9 @@ public class OxstsInlayHintService implements InlayHintService {
                 continue;
             }
             var parameter = parameters.get(position);
+            if (isNamedLike(argument.getExpression(), parameter)) {
+                continue;
+            }
             var label = new InlayHintLabelPart(parameter.getName() + ":");
             label.setLocation(documentExtensions.newLocation(parameter));
             var hint = new InlayHint();
@@ -129,6 +133,12 @@ public class OxstsInlayHintService implements InlayHintService {
             hint.setPaddingRight(true);
             hints.add(hint);
         }
+    }
+
+    private boolean isNamedLike(Expression expression, NamedElement parameter) {
+        return expression instanceof ElementReference reference
+                && !reference.getElement().eIsProxy()
+                && Objects.equals(reference.getElement().getName(), parameter.getName());
     }
 
     private void addLoopVariableTypeHint(Document document, AbstractForOperation forOperation, List<InlayHint> hints) {
