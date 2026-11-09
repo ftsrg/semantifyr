@@ -35,6 +35,7 @@ import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.VerificationReport
+import hu.bme.mit.semantifyr.verifier.caseDirectoryName
 import hu.bme.mit.semantifyr.verifier.caseReportPath
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
@@ -279,7 +280,7 @@ class SemantifyrVerifierImplTest {
         val verifier = build(portfolio, output)
         val case = loadFirstCase()
         verifier.verify(case)
-        val caseDirectory = output.resolve("simple.Incrementing")
+        val caseDirectory = output.resolve(caseDirectoryName(case))
         val witness = loadWitness(case, caseDirectory.resolve("witness.oxsts"))
         val before = serializer.serialize(witness)
 
