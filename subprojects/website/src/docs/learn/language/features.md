@@ -19,7 +19,7 @@ Features define the **structural relationships** between classes. Unlike [variab
 
 ## `contains`
 
-A `contains` feature declares ownership: each instance of the enclosing class owns its own instance of the target type. Children are instantiated together with their parent.
+A `contains` feature declares ownership: each instance of the enclosing class owns its own instance of the target type. A `[1]` containment is instantiated together with its holder, one instance per holder instance; a containment of any other multiplicity holds only the instances of the features that [subset](#subsets) it, so `n` children are written as `n` `[1]` subsetters.
 
 ```oxsts fragment
 class Pair {
@@ -87,13 +87,13 @@ A feature's multiplicity specifies how many target values are permitted. The mul
 | Syntax | Meaning |
 |--------|---------|
 | `[1]` | Exactly one (default) |
-| `[0..1]` | Optional; may be `nothing` |
+| `[0..1]` | Optional; may be `nothing`, and a parameter with lower bound 0 may be left out of a call |
 | `[0..*]` | Any number |
 | `[n]` | Exactly `n` (`n` is a compile-time expression) |
 | `[lb..ub]` | Between `lb` and `ub` |
-| `[]` | Unbounded shorthand |
+| `[]` | No bound given; unlike `[0..*]`, a `[]` parameter is required and a `[]` value cannot be `nothing` |
 
-The infinity literal `*` is allowed in ranges (`0..*`).
+The infinity literal `*` is allowed in ranges (`0..*`); a bare `[*]` is rejected (`OXSTS.TYPE_MISMATCH`).
 
 ## `opposite`
 
