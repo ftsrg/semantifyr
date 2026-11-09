@@ -163,3 +163,5 @@ inline for choice (counter in counters) {
 | Decision depends on | Model structure (which features exist, how many children) | Variable values |
 | Evaluated when | Compile time, during unfolding | Runtime, by the model checker |
 | Constructs | `inline if`, `inline for`, `inline for choice`, `inline call` | [`if`](operations.md#if), [`for`](operations.md#for) |
+
+The validator hints at an `if` whose guard, or a `for` whose range, is evaluable at compile time, and the editor offers a "Make inline" quick fix that turns it into its `inline` form.
