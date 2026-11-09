@@ -164,6 +164,7 @@ class AdminHandlerTest {
         val config = response.body<AdminConfigResponse>()
         assertThat(config.sessionManager.maxSessionsGlobal).isEqualTo(256)
         assertThat(config.verification.concurrency).isEqualTo(4)
+        assertThat(config.verification.maxPerSession).isEqualTo(42)
         assertThat(config.server.port).isEqualTo(8080)
     }
 

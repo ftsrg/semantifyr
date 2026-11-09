@@ -143,4 +143,5 @@ data class AdminSessionManagerConfigResponse(
 data class AdminVerificationConfigResponse(
     val concurrency: Int,
     val timeout: Duration,
+    val maxPerSession: Int,
 )

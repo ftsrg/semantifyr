@@ -109,9 +109,11 @@ data class SessionManagerConfig(
 data class VerificationConfig(
     val concurrency: Int = 4,
     val timeout: Duration = 5.minutes,
+    val maxPerSession: Int = 42,
 ) {
     fun withEnv(env: Map<String, String?>) = copy(
         concurrency = env["SEMANTIFYR_LIVE_VERIFY_CONCURRENCY"]?.toIntOrNull() ?: concurrency,
         timeout = env["SEMANTIFYR_LIVE_VERIFY_TIMEOUT_SECONDS"]?.toLongOrNull()?.seconds ?: timeout,
+        maxPerSession = env["SEMANTIFYR_LIVE_VERIFY_MAX_PER_SESSION"]?.toIntOrNull() ?: maxPerSession,
     )
 }

@@ -90,6 +90,9 @@ object BackendConfigValidator {
         if (config.verification.concurrency < 1) {
             problems += "verification.concurrency must be >= 1 (got ${config.verification.concurrency})"
         }
+        if (config.verification.maxPerSession < 1) {
+            problems += "verification.maxPerSession must be >= 1 (got ${config.verification.maxPerSession})"
+        }
         if (config.sessionManager.maxSessionsGlobal < 1) {
             problems += "sessionManager.maxSessionsGlobal must be >= 1 (got ${config.sessionManager.maxSessionsGlobal})"
         }

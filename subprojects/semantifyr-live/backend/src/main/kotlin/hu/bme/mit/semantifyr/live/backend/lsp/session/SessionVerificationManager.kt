@@ -27,13 +27,17 @@ import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Timer
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.future.future
-import kotlinx.coroutines.job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.eclipse.lsp4j.Location
+import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseError
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode
 import java.time.Duration
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
@@ -92,18 +96,10 @@ class SessionVerificationManager @Inject constructor(
         val startedAt = TimeSource.Monotonic.markNow()
         val launchContext = currentMdcContextBlocking() + currentSessionScopeElement()
 
-        return sessionRunContext.coroutineScope.future(launchContext) {
+        lateinit var entry: Entry
+        val verification = sessionRunContext.coroutineScope.async(launchContext, start = CoroutineStart.LAZY) {
             val mdcContext = withVerificationIdMdc(verificationId)
             withContext(mdcContext) {
-                val entry = Entry(
-                    verificationId = verificationId,
-                    kind = kind,
-                    location = location,
-                    portfolioId = portfolioId,
-                    startedAt = startedAt,
-                    job = coroutineContext.job,
-                )
-                verifications[verificationId] = entry
                 notifyActiveChanged()
                 try {
                     val result = verificationManager.withPermit {
@@ -139,6 +135,35 @@ class SessionVerificationManager @Inject constructor(
                 }
             }
         }
+        entry = Entry(
+            verificationId = verificationId,
+            kind = kind,
+            location = location,
+            portfolioId = portfolioId,
+            startedAt = startedAt,
+            job = verification,
+        )
+        val maxPerSession = backendConfig.verification.maxPerSession
+        val admitted = synchronized(verifications) {
+            if (verifications.size >= maxPerSession) {
+                false
+            } else {
+                verifications[verificationId] = entry
+                true
+            }
+        }
+        if (!admitted) {
+            verification.cancel()
+            recordRejected(kind)
+            logger.warn { "Verification rejected, the session has $maxPerSession pending verifications" }
+            return CompletableFuture.failedFuture(
+                ResponseErrorException(
+                    ResponseError(ResponseErrorCode.RequestFailed, "The session has too many pending verifications (limit $maxPerSession)", null),
+                ),
+            )
+        }
+        verification.start()
+        return verification.asCompletableFuture()
     }
 
     fun active(): List<RunningVerification> {
@@ -194,6 +219,13 @@ class SessionVerificationManager @Inject constructor(
             .serviceLevelObjectives(*durationBuckets)
             .register(registry)
             .record((entry.runningSince ?: entry.startedAt).elapsedNow().toJavaDuration())
+    }
+
+    private fun recordRejected(kind: VerificationKind) {
+        Counter.builder("semantifyr.live.verifications.rejected")
+            .tag("kind", kind.name.lowercase())
+            .register(registry)
+            .increment()
     }
 
     private fun recordCancelled(entry: Entry) {

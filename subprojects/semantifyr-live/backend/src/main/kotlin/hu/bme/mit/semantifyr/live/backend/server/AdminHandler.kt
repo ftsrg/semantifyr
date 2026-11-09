@@ -117,6 +117,7 @@ class AdminHandler @Inject constructor(
             verification = AdminVerificationConfigResponse(
                 concurrency = config.verification.concurrency,
                 timeout = config.verification.timeout,
+                maxPerSession = config.verification.maxPerSession,
             ),
         )
     }

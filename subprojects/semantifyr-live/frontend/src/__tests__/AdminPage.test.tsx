@@ -61,6 +61,7 @@ const baseConfig = {
   verification: {
     concurrency: 8,
     timeout: 'PT30S',
+    maxPerSession: 42,
   },
 };
 

@@ -67,6 +67,7 @@ export interface AdminSessionManagerConfigResponse {
 export interface AdminVerificationConfigResponse {
   concurrency: number
   timeout: string
+  maxPerSession: number
 }
 
 export interface AdminWhoamiResponse {

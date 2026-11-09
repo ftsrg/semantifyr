@@ -163,6 +163,7 @@ export default function ConfigTab({
           <Row label="Max sessions" value={String(config.sessionManager.maxSessionsGlobal)} />
           <Row label="Verifier concurrency" value={String(config.verification.concurrency)} />
           <Row label="Verifier timeout" value={formatIsoDuration(config.verification.timeout)} />
+          <Row label="Pending verifications / session" value={String(config.verification.maxPerSession)} />
           <Row label="Work root" value={config.sessionManager.rootWorkDirectory} mono />
           <Row
             label="Semantic libraries"

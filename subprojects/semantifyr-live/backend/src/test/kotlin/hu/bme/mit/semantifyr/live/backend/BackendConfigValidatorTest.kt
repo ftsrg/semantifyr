@@ -97,13 +97,14 @@ class BackendConfigValidatorTest {
     @Test
     fun `non-positive limits are rejected`(@TempDir tmp: Path) {
         val config = baseConfig(tmp).copy(
-            verification = VerificationConfig(concurrency = 0),
+            verification = VerificationConfig(concurrency = 0, maxPerSession = 0),
             sessionManager = SessionManagerConfig(rootWorkDirectory = tmp.toString(), maxSessionsGlobal = 0),
         )
         assertThatThrownBy {
             BackendConfigValidator.validate(config, flavors = emptyList())
         }.isInstanceOf(InvalidConfigurationException::class.java)
             .hasMessageContaining("concurrency")
+            .hasMessageContaining("maxPerSession")
             .hasMessageContaining("maxSessionsGlobal")
     }
 

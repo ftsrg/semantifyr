@@ -39,6 +39,7 @@ class BackendConfigTest {
                 "SEMANTIFYR_LIVE_ROOT_WORK_DIR" to "/tmp/sessions",
                 "SEMANTIFYR_LIVE_VERIFY_CONCURRENCY" to "2",
                 "SEMANTIFYR_LIVE_VERIFY_TIMEOUT_SECONDS" to "180",
+                "SEMANTIFYR_LIVE_VERIFY_MAX_PER_SESSION" to "5",
             ),
         )
         assertThat(config.server.port).isEqualTo(9090)
@@ -47,6 +48,7 @@ class BackendConfigTest {
         assertThat(config.sessionManager.rootWorkDirectory).isEqualTo("/tmp/sessions")
         assertThat(config.verification.concurrency).isEqualTo(2)
         assertThat(config.verification.timeout).isEqualTo(180.seconds)
+        assertThat(config.verification.maxPerSession).isEqualTo(5)
     }
 
     @Test

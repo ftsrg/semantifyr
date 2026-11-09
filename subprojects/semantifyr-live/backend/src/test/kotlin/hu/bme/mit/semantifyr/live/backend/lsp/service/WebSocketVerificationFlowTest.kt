@@ -364,6 +364,38 @@ class WebSocketVerificationFlowTest {
         assertThat(registry.find("semantifyr.live.verification").timer()).isNull()
     }
 
+    @Test
+    fun `a verification beyond the session's cap is answered with an error and counted`(@TempDir tmp: Path) = testApplication {
+        val running = CompletableDeferred<Unit>()
+        val executor = FakeVerificationExecutor {
+            running.complete(Unit)
+            awaitCancellation()
+        }
+        val injector = testInjector(config(tmp).copy(verification = VerificationConfig(maxPerSession = 1))) {
+            bind(VerificationExecutor::class.java).toInstance(executor)
+        }
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(injector)
+        }
+
+        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
+            send(Frame.Text(LspWire.initializeRequest()))
+            awaitResponseFor(id = 1)
+            send(Frame.Text(verifyCommand(id = 2)))
+            running.await()
+            send(Frame.Text(verifyCommand(id = 3, command = "oxsts.case.validateWitness")))
+            val error = awaitResponseFor(id = 3).errorAs(ResponseError::class.java)
+            assertThat(error.code).isEqualTo(ResponseErrorCode.RequestFailed.value)
+            assertThat(error.message).contains("too many pending verifications")
+            send(Frame.Text(LspWire.request(id = 4, method = SemantifyrLiveMethods.CANCEL_ALL_VERIFICATIONS)))
+            awaitResponseFor(id = 2)
+        }
+
+        assertThat(executor.calls).hasSize(1)
+        val registry = injector.getInstance(MeterRegistry::class.java)
+        assertThat(registry.get("semantifyr.live.verifications.rejected").tag("kind", "validate").counter().count()).isEqualTo(1.0)
+    }
+
     private fun verificationCount(
         registry: MeterRegistry,
         kind: String,
