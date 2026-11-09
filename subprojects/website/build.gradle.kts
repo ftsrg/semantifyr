@@ -149,6 +149,7 @@ fun NpmTask.configureSharedInputs() {
     inputs.dir(rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial"))
     inputs.file(rootProject.layout.projectDirectory.file("oxsts-test-models/constructs/constructs.tsv"))
     inputs.dir(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/tutorial"))
+    inputs.file(rootProject.layout.projectDirectory.file("subprojects/semantifyr-vscode/syntaxes/oxsts.tmLanguage.json"))
     inputs.files(tasks.npmInstall)
     inputs.files(cloneBrandingAssets)
     inputs.files(editorCommonFiles)
