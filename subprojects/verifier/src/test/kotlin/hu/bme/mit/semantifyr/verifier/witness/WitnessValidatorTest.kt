@@ -26,13 +26,11 @@ class WitnessValidatorTest {
         return Trace(
             backAnnotatedModel = inlined,
             witnessState = WitnessState(
-                initialStep = WitnessStateStep(emptyList()),
-                initializedStep = null,
+                initializedStep = WitnessStateStep(emptyList()),
                 steps = emptyList(),
             ),
             callTrace = CallTrace(
-                initialStep = CallTraceStep(emptyList()),
-                initializedStep = null,
+                initializedStep = CallTraceStep(emptyList()),
                 steps = emptyList(),
             ),
         )

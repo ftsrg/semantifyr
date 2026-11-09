@@ -74,19 +74,19 @@ class BackAnnotationFidelityTest {
         val case = loadCase("tracing.oxsts", tracingCase)
 
         verifyWithWitness(case, output) { model ->
-            thetaShapedWitness(
+            linearInlinedWitness(
                 model,
-                model.state(kitchenOn to false, hallOn to false, kitchenTracer to false, hallTracer to false),
-                model.state(kitchenOn to false, hallOn to false, kitchenTracer to false, hallTracer to false),
-                model.state(kitchenOn to false, hallOn to true, kitchenTracer to false, hallTracer to true),
-                model.state(kitchenOn to true, hallOn to true, kitchenTracer to true, hallTracer to false),
-                model.state(kitchenOn to true, hallOn to false, kitchenTracer to false, hallTracer to true),
+                listOf(
+                    model.state(kitchenOn to false, hallOn to false, kitchenTracer to false, hallTracer to false),
+                    model.state(kitchenOn to false, hallOn to true, kitchenTracer to false, hallTracer to true),
+                    model.state(kitchenOn to true, hallOn to true, kitchenTracer to true, hallTracer to false),
+                    model.state(kitchenOn to true, hallOn to false, kitchenTracer to false, hallTracer to true),
+                ),
             )
         }
 
         val callTrace = readCallTrace(output, case)
-        assertThat(callTrace.initialStep.traces).isEmpty()
-        assertThat(callTrace.initializedStep?.traces).isEmpty()
+        assertThat(callTrace.initializedStep.traces).isEmpty()
         assertThat(
             callTrace.steps.map { step ->
                 step.traces.map { it.self }
@@ -103,11 +103,12 @@ class BackAnnotationFidelityTest {
         val case = loadCase("tracing.oxsts", tracingCase)
 
         verifyWithWitness(case, output) { model ->
-            thetaShapedWitness(
+            linearInlinedWitness(
                 model,
-                model.state(kitchenOn to false, hallOn to false, kitchenTracer to false, hallTracer to false),
-                model.state(kitchenOn to false, hallOn to false, kitchenTracer to false, hallTracer to false),
-                model.state(kitchenOn to true, hallOn to false, kitchenTracer to true, hallTracer to false),
+                listOf(
+                    model.state(kitchenOn to false, hallOn to false, kitchenTracer to false, hallTracer to false),
+                    model.state(kitchenOn to true, hallOn to false, kitchenTracer to true, hallTracer to false),
+                ),
             )
         }
 
@@ -134,18 +135,19 @@ class BackAnnotationFidelityTest {
         }
 
         verifyWithWitness(case, output) { model ->
-            thetaShapedWitness(
+            linearInlinedWitness(
                 model,
-                model.state(slots[0] to 0, slots[1] to 0, slots[2] to 0),
-                model.state(slots[0] to 0, slots[1] to 0, slots[2] to 0),
-                model.state(slots[0] to 1, slots[1] to 0, slots[2] to 0),
-                model.state(slots[0] to 1, slots[1] to 1, slots[2] to 0),
-                model.state(slots[0] to 1, slots[1] to 1, slots[2] to 1),
+                listOf(
+                    model.state(slots[0] to 0, slots[1] to 0, slots[2] to 0),
+                    model.state(slots[0] to 1, slots[1] to 0, slots[2] to 0),
+                    model.state(slots[0] to 1, slots[1] to 1, slots[2] to 0),
+                    model.state(slots[0] to 1, slots[1] to 1, slots[2] to 1),
+                ),
             )
         }
 
         val witnessState = readWitnessState(output, case)
-        assertThat(witnessState.initialStep.values).containsExactly(
+        assertThat(witnessState.initializedStep.values).containsExactly(
             WitnessStateValue("root.slots[0]", "0"),
             WitnessStateValue("root.slots[1]", "0"),
             WitnessStateValue("root.slots[2]", "0"),
@@ -164,11 +166,12 @@ class BackAnnotationFidelityTest {
         val positionX = flattenedName("root", "robot", "position") + "${RecordFlatteningPass.FIELD_SEPARATOR}x"
 
         verifyWithWitness(case, output) { model ->
-            thetaShapedWitness(
+            linearInlinedWitness(
                 model,
-                model.state(positionX to 0),
-                model.state(positionX to 0),
-                model.state(positionX to 1),
+                listOf(
+                    model.state(positionX to 0),
+                    model.state(positionX to 1),
+                ),
             )
         }
 
@@ -187,14 +190,15 @@ class BackAnnotationFidelityTest {
 
         verifyWithWitness(case, output) { model ->
             val secondId = (model.variables.single { it.name == slots[1] }.expression as LiteralInteger).value
-            thetaShapedWitness(
+            linearInlinedWitness(
                 model,
-                model.state(slots[0] to secondId, slots[1] to secondId),
-                model.state(slots[0] to secondId, slots[1] to secondId),
+                listOf(
+                    model.state(slots[0] to secondId, slots[1] to secondId),
+                ),
             )
         }
 
-        assertThat(readWitnessState(output, case).initialStep.values).contains(
+        assertThat(readWitnessState(output, case).initializedStep.values).contains(
             WitnessStateValue("root.queue[0]", "root.second"),
             WitnessStateValue("root.queue[1]", "root.second"),
         )
@@ -202,7 +206,7 @@ class BackAnnotationFidelityTest {
     }
 
     @Test
-    suspend fun `state after init is the initialized step for a witness without a pre-init state`(@TempDir output: Path) {
+    suspend fun `the witness starts at the initialized step with the call of init`(@TempDir output: Path) {
         val case = loadCase("tracing.oxsts", tracingCase)
 
         verifyWithWitness(case, output) { model ->
@@ -215,15 +219,21 @@ class BackAnnotationFidelityTest {
             )
         }
 
-        val witnessState = readWitnessState(output, case)
-        assertThat(witnessState.initialStep.values).isEmpty()
-        assertThat(witnessState.initializedStep?.values).contains(
+        assertThat(readWitnessState(output, case).initializedStep.values).contains(
             WitnessStateValue("root.kitchen.lamp.on", "false"),
             WitnessStateValue("root.hall.lamp.on", "false"),
         )
-        val callTrace = readCallTrace(output, case)
-        assertThat(callTrace.initializedStep?.traces).isEmpty()
-        assertThat(callTrace.steps.single().traces.map { it.self }).containsExactly("root.kitchen.lamp")
+        assertThat(readWitnessModel(output, case))
+            .contains("var step : int := 0")
+            .doesNotContain("step == -1")
+            .containsSubsequence(
+                "init {",
+                "assume (step == 0)",
+                "inline root.init()",
+                "assume (root.kitchen.lamp.on == false)",
+                "step := 1",
+                "}",
+            )
     }
 
     private fun flattenedName(vararg path: String): String {
@@ -244,24 +254,6 @@ class BackAnnotationFidelityTest {
                 }
                 InlinedWitnessStateValue(variable, literal)
             },
-        )
-    }
-
-    private fun thetaShapedWitness(
-        model: InlinedOxsts,
-        initialState: InlinedWitnessState,
-        initializedState: InlinedWitnessState,
-        vararg transitionStates: InlinedWitnessState,
-    ): InlinedWitness {
-        val sequence = listOf(initialState, initializedState) + transitionStates
-        return InlinedWitness(
-            initialState = initialState,
-            initializedState = initializedState,
-            transitionStates = transitionStates.toList(),
-            nextStateMap = sequence.zipWithNext().associate { (from, to) ->
-                from to listOf(to)
-            },
-            inlinedOxsts = model,
         )
     }
 

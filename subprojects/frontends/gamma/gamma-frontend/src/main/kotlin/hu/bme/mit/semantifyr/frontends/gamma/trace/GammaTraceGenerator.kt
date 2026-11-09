@@ -83,18 +83,14 @@ class GammaTraceGenerator @Inject constructor(
     }
 
     private fun createInitializationStep(
-        callTraceStep: CallTraceStep?,
-        witnessStateStep: WitnessStateStep?,
+        callTraceStep: CallTraceStep,
+        witnessStateStep: WitnessStateStep,
         paths: InstancePaths,
     ): Step {
         return factory.createStep().also {
             it.acts += factory.createResetAct()
-            if (callTraceStep != null) {
-                it.asserts += createTraceAssertions(callTraceStep, paths)
-            }
-            if (witnessStateStep != null) {
-                it.asserts += createStateAssertions(witnessStateStep, paths)
-            }
+            it.asserts += createTraceAssertions(callTraceStep, paths)
+            it.asserts += createStateAssertions(witnessStateStep, paths)
         }
     }
 

@@ -20,8 +20,7 @@ class WitnessState(
 )
 
 class InlinedWitness(
-    val initialState: WitnessState,
-    val initializedState: WitnessState?,
+    val initializedState: WitnessState,
     val transitionStates: List<WitnessState>,
     val nextStateMap: Map<WitnessState, List<WitnessState>>,
     val inlinedOxsts: InlinedOxsts,
@@ -37,7 +36,6 @@ fun linearInlinedWitness(
 ): InlinedWitness {
     require(states.isNotEmpty()) { "Cannot build witness from empty state list" }
 
-    val initialState = WitnessState(values = emptyList())
     val initializedState = states.first()
     val transitionStates = states.drop(1)
 
@@ -50,7 +48,6 @@ fun linearInlinedWitness(
     }
 
     return InlinedWitness(
-        initialState = initialState,
         initializedState = initializedState,
         transitionStates = transitionStates,
         nextStateMap = nextStateMap,

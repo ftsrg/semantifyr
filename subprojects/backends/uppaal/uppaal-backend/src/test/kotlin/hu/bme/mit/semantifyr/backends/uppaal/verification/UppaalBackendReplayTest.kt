@@ -82,7 +82,7 @@ class UppaalBackendReplayTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
-        val states = listOfNotNull(witness.initializedState) + witness.transitionStates
+        val states = listOf(witness.initializedState) + witness.transitionStates
         assertThat(
             states.map {
                 it.integer("counter")
@@ -103,7 +103,7 @@ class UppaalBackendReplayTest {
         val result = verifyFixture("initial_values", "UninitializedIntegerBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
-        assertThat(result.inlinedWitness!!.initializedState!!.integer("\$\$root\$\$x")).isNotEqualTo(0)
+        assertThat(result.inlinedWitness!!.initializedState.integer("\$\$root\$\$x")).isNotEqualTo(0)
     }
 
     @Test
@@ -111,7 +111,7 @@ class UppaalBackendReplayTest {
         val result = verifyFixture("initial_values", "UninitializedEnumBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
-        assertThat(result.inlinedWitness!!.initializedState!!.enumeration("\$\$root\$\$light")).isEqualTo("On")
+        assertThat(result.inlinedWitness!!.initializedState.enumeration("\$\$root\$\$light")).isEqualTo("On")
     }
 
     @Test

@@ -235,9 +235,15 @@ class WitnessValueTransformationTest {
     @Test
     fun `counterexample values are read whole`(@TempDir directory: Path) {
         val cexFile = directory.resolve("out.cex")
-        cexFile.writeText("(XstsStateSequence (XstsState pre_init last_env (ExplState (number -2147483648) (y 3000000000))))")
+        cexFile.writeText(
+            """
+                (XstsStateSequence
+                  (XstsState pre_init last_env (ExplState (number 0) (y 0)))
+                  (XstsState post_init last_internal (ExplState (number -2147483648) (y 3000000000))))
+            """.trimIndent(),
+        )
 
-        val values = CexWitnessTransformer().transform(CexReader().loadCexModel(cexFile)).initialState.variableValues
+        val values = CexWitnessTransformer().transform(CexReader().loadCexModel(cexFile)).initializedState.variableValues
         val transformer = CexExpressionToXstsExpressionTransformer(XstsFactory.createXstsModel())
 
         val least = transformer.transform(values[0].value) as XstsLiteralInteger

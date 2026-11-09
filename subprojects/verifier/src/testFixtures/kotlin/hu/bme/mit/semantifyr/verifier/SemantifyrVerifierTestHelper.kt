@@ -140,7 +140,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
                 .describedAs("back-annotated InlinedOxsts for ${case.qualifiedName} must be flagged as a witness")
                 .isTrue()
 
-            assertThat(listOfNotNull(trace.witnessState.initialStep, trace.witnessState.initializedStep) + trace.witnessState.steps)
+            assertThat(listOf(trace.witnessState.initializedStep) + trace.witnessState.steps)
                 .describedAs("witness for ${case.qualifiedName} must carry state values, or it re-verifies vacuously")
                 .anySatisfy {
                     assertThat(it.values).isNotEmpty()

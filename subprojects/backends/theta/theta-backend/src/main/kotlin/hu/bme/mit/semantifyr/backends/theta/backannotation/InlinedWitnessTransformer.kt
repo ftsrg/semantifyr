@@ -54,12 +54,7 @@ class InlinedWitnessTransformer @Inject constructor(
     fun transform(inlinedOxsts: InlinedOxsts, xstsAssumptionWitness: XstsWitness): InlinedWitness {
         val context = TransformerContext(inlinedOxsts)
 
-        val initialState = context.transform(xstsAssumptionWitness.initialState)
-        val initializedState = if (xstsAssumptionWitness.initializedState != null) {
-            context.transform(xstsAssumptionWitness.initializedState)
-        } else {
-            null
-        }
+        val initializedState = context.transform(xstsAssumptionWitness.initializedState)
         val transitionStates = xstsAssumptionWitness.transitionStates.map {
             context.transform(it)
         }
@@ -68,7 +63,6 @@ class InlinedWitnessTransformer @Inject constructor(
         }.toMap()
 
         return InlinedWitness(
-            initialState,
             initializedState,
             transitionStates,
             nextStateMap,

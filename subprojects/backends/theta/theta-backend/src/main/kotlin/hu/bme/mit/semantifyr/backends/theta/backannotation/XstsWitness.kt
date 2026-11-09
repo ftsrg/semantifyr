@@ -22,8 +22,7 @@ class XstsWitnessState(
 )
 
 class XstsWitness(
-    val initialState: XstsWitnessState,
-    val initializedState: XstsWitnessState?,
+    val initializedState: XstsWitnessState,
     val transitionStates: List<XstsWitnessState>,
     val nextStateMap: Map<XstsWitnessState, List<XstsWitnessState>>,
     val xstsModel: XstsModel,
@@ -74,12 +73,7 @@ class XstsWitnessTransformer {
     fun transform(xstsModel: XstsModel, cexAssumptionWitness: CexWitness): XstsWitness {
         val context = TransformerContext(xstsModel)
 
-        val initialState = context.transform(cexAssumptionWitness.initialState)
-        val initializedState = if (cexAssumptionWitness.initializedState != null) {
-            context.transform(cexAssumptionWitness.initializedState)
-        } else {
-            null
-        }
+        val initializedState = context.transform(cexAssumptionWitness.initializedState)
         val transitionStates = cexAssumptionWitness.transitionStates.map {
             context.transform(it)
         }
@@ -88,7 +82,6 @@ class XstsWitnessTransformer {
         }.toMap()
 
         return XstsWitness(
-            initialState,
             initializedState,
             transitionStates,
             nextStateMap,

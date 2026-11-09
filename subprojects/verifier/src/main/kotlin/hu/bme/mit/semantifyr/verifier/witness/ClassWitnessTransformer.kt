@@ -114,10 +114,7 @@ class ClassWitnessTransformer @Inject constructor(
     ): ClassWitness {
         val context = TransformerContext(compilation)
 
-        val initialState = context.transform(inlinedWitness.initialState)
-        val initializedState = inlinedWitness.initializedState?.let {
-            context.transform(it)
-        }
+        val initializedState = context.transform(inlinedWitness.initializedState)
         val transitionStates = inlinedWitness.transitionStates.map {
             context.transform(it)
         }
@@ -126,7 +123,6 @@ class ClassWitnessTransformer @Inject constructor(
         }.toMap()
 
         return ClassWitness(
-            initialState,
             initializedState,
             transitionStates,
             nextStateMap,

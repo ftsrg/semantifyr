@@ -42,7 +42,6 @@ class ThetaWitnessReparseTest {
         )
 
         val callTrace = requireNotNull(result.trace).callTrace
-        assertThat(callTrace.initialStep.traces).isEmpty()
         assertThat(callTrace.steps).isNotEmpty().allSatisfy {
             assertThat(it.traces).hasSize(1)
         }
