@@ -7,7 +7,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { renderTrace, WitnessView } from '../witness.js';
 import { registerOutputChannel } from '../outputChannel.js';
-import { counterexample, result, untrustedNote, witnessUri } from './fixtures.js';
+import { counterexample, resolutionNote, result, witnessUri } from './fixtures.js';
 import { createExtensionContext, resetVscode, state, TestItem, TestMessage, Uri, ViewColumn, commands, window, workspace } from './stubs/vscode.js';
 
 describe('renderTrace', () => {
@@ -59,9 +59,9 @@ describe('renderTrace', () => {
     });
 
     it('appends the message of a passed verdict to the verdict line', () => {
-        const document = renderTrace('Safe', result('passed', counterexample, untrustedNote), counterexample);
+        const document = renderTrace('Safe', result('passed', counterexample, resolutionNote), counterexample);
 
-        expect(document.split('\n')[2]).toBe(`Verdict: passed (backend theta-cegar-expl, portfolio theta-full) - ${untrustedNote}`);
+        expect(document.split('\n')[2]).toBe(`Verdict: passed (backend theta-cegar-expl, portfolio theta-full) - ${resolutionNote}`);
     });
 
     it.each([null, ''])('keeps the verdict line of a passed verdict with the message %j bare', (message) => {
