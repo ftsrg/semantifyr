@@ -32,16 +32,12 @@ var value: int := 0
 Annotation arguments bind like call arguments: a named argument (`name = value`) binds the parameter of that name, a positional argument the parameter at its position. Arguments must be constants: annotations are read without an instance, so the validator rejects a reference to a feature or variable (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`).
 
 ```oxsts
-package example
-
 @VerificationCase(summary = "Reaches the limit")
 class Reaches10 {
 }
 ```
 
 ```oxsts
-package example
-
 @Tag(category = "slow")
 class LargeTest {
 }
@@ -52,8 +48,6 @@ class LargeTest {
 Multiple annotations may be applied to a single declaration. Each starts on its own `@`.
 
 ```oxsts
-package example
-
 @VerificationCase
 @Tag(category = "slow")
 class LargeTest {
@@ -65,16 +59,12 @@ class LargeTest {
 Without parameters:
 
 ```oxsts
-package example
-
 annotation Important
 ```
 
 With parameters:
 
 ```oxsts
-package example
-
 annotation Description(text: string)
 ```
 

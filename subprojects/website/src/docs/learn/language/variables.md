@@ -22,8 +22,6 @@ The initializers give the declaration valuation, in which every variable holds t
 An arbitrary initial value is a [`havoc`](operations.md#havoc) in `init`. Here `value` starts from any integer, and the declared 0 is never observed:
 
 ```oxsts
-package example
-
 class Counter {
   var value: int := 0
 

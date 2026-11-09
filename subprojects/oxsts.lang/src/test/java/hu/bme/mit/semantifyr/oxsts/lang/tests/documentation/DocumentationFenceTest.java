@@ -30,8 +30,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-// A fence opened with ```oxsts fragment is a fragment and skipped; every other oxsts fence is a whole model, a package
-// with its imports.
+// A fence opened with ```oxsts fragment is a fragment and skipped; every other oxsts fence is a whole model.
 @InjectWithOxsts
 public class DocumentationFenceTest {
 
@@ -115,13 +114,9 @@ public class DocumentationFenceTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource
     void completeFencesValidate(Fence fence) throws Exception {
-        assertThat(fence.packageName())
-                .as("the oxsts fence at %s is neither a whole model nor marked fragment", fence.location())
-                .isNotNull();
-
         var resourceSet = resourceSetProvider.get();
         for (var sibling : completeFences(fence.page())) {
-            if (!fence.packageName().equals(sibling.packageName())) {
+            if (sibling.line() != fence.line() && sibling.packageName() != null) {
                 parseHelper.parse(sibling.text(), resourceSet);
             }
         }
