@@ -80,7 +80,7 @@ Transitions can also structure code by extracting it into reusable parts. Extrac
 
 `assumeColor` is a parameterized transition that assumes the current color matches the given argument. The `color` parameter shadows the `color` variable, so the body uses `self.color` to refer to the variable; the `self` keyword always refers to the current instance. `setColor` assigns the parameter to the variable, with the same `self.color` qualifier for the same reason.
 
-The main transition now `inline`s these helpers in each branch of the `choice`. An `inline` call substitutes the body of the called transition at the call site, with each parameter replaced by the corresponding argument.
+The main transition now `inline`s these helpers in each branch of the `choice`. An `inline` call substitutes the body of the called transition at the call site, with each parameter bound to the value of its argument.
 
 **Task:** Open the step and verify `TrafficLight` again.
 
