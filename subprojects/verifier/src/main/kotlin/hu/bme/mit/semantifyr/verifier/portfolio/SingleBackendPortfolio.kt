@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationBackend
+import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
@@ -45,10 +46,11 @@ class SingleBackendPortfolio<T : BackendConfig>(
         val backendResult = gate.withPermit {
             backend.verify(parentInjector, configuration, request, environment)
         }
-        return PortfolioOutcome.Decided(noteUntrusted(backendResult, request)).toBackendVerificationResult(startedAt)
+        return PortfolioOutcome.Decided(withholdUntrusted(backendResult, request)).toBackendVerificationResult(startedAt)
     }
 
-    private fun noteUntrusted(result: BackendVerificationResult, request: BackendVerificationRequest): BackendVerificationResult {
+    // an untrusted Failed may carry a spurious counterexample, so the witness goes with the verdict
+    private fun withholdUntrusted(result: BackendVerificationResult, request: BackendVerificationRequest): BackendVerificationResult {
         if (!result.isDecisive || result.isTrusted) {
             return result
         }
@@ -62,6 +64,11 @@ class SingleBackendPortfolio<T : BackendConfig>(
             SoundnessDirection.OverApproximating -> "over-approximating"
             SoundnessDirection.UnderApproximating -> "under-approximating"
         }
-        return result.copy(message = "${backend.id}'s ${result.verdict} on an $property property is not trusted: the leg is $direction")
+        return result.copy(
+            verdict = VerificationVerdict.Inconclusive,
+            isTrusted = false,
+            inlinedWitness = null,
+            message = "${backend.id}'s ${result.verdict} on an $property property is not trusted: the leg is $direction",
+        )
     }
 }

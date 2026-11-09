@@ -5,7 +5,7 @@ sidebar_position: 2
 
 # Spin
 
-[Spin](https://spinroot.com/) verifies the Promela translation of a case. It computes with 32-bit integers and havocs an integer only among candidate values, so it is under-approximating: a trace it finds is trusted, a proof is not. It treats a `@Clock` variable as an ordinary variable. Before it runs, it reports a case Not supported when the case holds a construct listed below, naming each construct, or the variable it concerns, and its source line.
+[Spin](https://spinroot.com/) verifies the Promela translation of a case. It computes with 32-bit integers and havocs an integer only among candidate values, so it is under-approximating: a trace it finds is trusted, a proof is not, and a Spin portfolio reports a proof as Inconclusive. It needs `spin` and `gcc` on `PATH`, since Spin compiles every search with `gcc`. It treats a `@Clock` variable as an ordinary variable. Before it runs, it reports a case Not supported when the case holds a construct listed below, naming each construct, or the variable it concerns, and its source line.
 
 ## What the backend refuses
 

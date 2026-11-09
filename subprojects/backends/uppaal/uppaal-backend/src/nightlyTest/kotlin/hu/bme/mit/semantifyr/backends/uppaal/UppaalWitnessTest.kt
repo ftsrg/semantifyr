@@ -12,11 +12,11 @@ import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalBackendModule
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.portfolios.Portfolios
+import hu.bme.mit.semantifyr.verifier.EngineVerdictPortfolio
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
 import hu.bme.mit.semantifyr.verifier.discovery.CaseFilter
-import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -63,7 +63,7 @@ class UppaalWitnessTest {
         helper.checkTestModel(
             context,
             verificationCase,
-            verificationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.Default),
+            verificationPortfolio = EngineVerdictPortfolio(UppaalBackend(), UppaalConfig.Default),
             outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(UppaalWitnessTest::class.java),
             validationPortfolio = Portfolios.AllAgree,
         )

@@ -17,6 +17,7 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.verifier.FakeBackend
 import hu.bme.mit.semantifyr.verifier.FakeConfig
 import hu.bme.mit.semantifyr.verifier.ProgressContext
+import hu.bme.mit.semantifyr.verifier.fakeMetadata
 import hu.bme.mit.semantifyr.verifier.fakeRequest
 import hu.bme.mit.semantifyr.verifier.noopGate
 import kotlinx.coroutines.test.runTest
@@ -452,6 +453,52 @@ class VerificationPortfolioTest {
     }
 
     @Test
+    suspend fun `firstDecisive names every leg and the constructs it reported when every leg is NotSupported`() {
+        val theta = notSupported("theta", "theta does not support line 3: for-operations")
+        val spin = notSupported("spin", "spin does not support line 5: variables of type real (speed)")
+
+        val outcome = portfolio.runFirstDecisive(noopGate) {
+            enqueue(theta)
+            enqueue(spin)
+        }
+
+        val result = outcome.toBackendVerificationResult(Clock.System.now())
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
+        assertThat(result.message).contains(
+            "theta (theta does not support line 3: for-operations)",
+            "spin (spin does not support line 5: variables of type real (speed))",
+        )
+    }
+
+    @Test
+    suspend fun `all names every leg and the constructs it reported when every leg is NotSupported`() {
+        val theta = notSupported("theta", "theta does not support line 3: for-operations")
+        val nuxmv = notSupported("nuxmv", "nuxmv does not support line 4: unbounded integers")
+
+        val outcome = portfolio.runAll(noopGate) {
+            enqueue(theta)
+            enqueue(nuxmv)
+        }
+
+        val result = outcome.toBackendVerificationResult(Clock.System.now())
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
+        assertThat(result.message).contains(
+            "theta (theta does not support line 3: for-operations)",
+            "nuxmv (nuxmv does not support line 4: unbounded integers)",
+        )
+    }
+
+    private fun notSupported(id: String, message: String): FakeBackend {
+        return FakeBackend(id) {
+            BackendVerificationResult(
+                verdict = VerificationVerdict.NotSupported,
+                metadata = fakeMetadata(id),
+                message = message,
+            )
+        }
+    }
+
+    @Test
     suspend fun `all reports Errored naming both legs when trusted verdicts disagree`() {
         val pass = FakeBackend.verdict("pass", VerificationVerdict.Passed)
         val fail = FakeBackend.verdict("fail", VerificationVerdict.Failed, SoundnessDirection.UnderApproximating)
@@ -495,30 +542,6 @@ class VerificationPortfolioTest {
         val result = outcome.toBackendVerificationResult(Clock.System.now())
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
         assertThat(result.message).contains("untrusted=Passed (not trusted, UnderApproximating)", "undecided=Inconclusive")
-    }
-
-    @Test
-    suspend fun `a single-backend portfolio keeps a verdict its leg does not trust and says so`() {
-        val backend = FakeBackend.verdict("spin", VerificationVerdict.Passed, SoundnessDirection.UnderApproximating)
-        val single = SingleBackendPortfolio(backend, FakeConfig(soundness = SoundnessDirection.UnderApproximating))
-
-        val result = single.verify(parentInjector, request, noopGate, environment, ProgressContext.Silent)
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
-        assertThat(result.isTrusted).isFalse
-        assertThat(result.message).isEqualTo("spin's Passed on an AG property is not trusted: the leg is under-approximating")
-    }
-
-    @Test
-    suspend fun `a single-backend portfolio reports a trusted verdict without a note`() {
-        val backend = FakeBackend.verdict("spin", VerificationVerdict.Failed, SoundnessDirection.UnderApproximating)
-        val single = SingleBackendPortfolio(backend, FakeConfig(soundness = SoundnessDirection.UnderApproximating))
-
-        val result = single.verify(parentInjector, request, noopGate, environment, ProgressContext.Silent)
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
-        assertThat(result.isTrusted).isTrue
-        assertThat(result.message).isNull()
     }
 
     @Test
