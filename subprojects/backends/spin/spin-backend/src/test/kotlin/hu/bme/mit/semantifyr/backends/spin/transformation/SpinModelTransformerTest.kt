@@ -21,9 +21,17 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         }
     """
 
+    private val paints = """
+        package test::paints
+        enum Color {
+            Red,
+            Blue,
+        }
+    """
+
     private suspend fun transform(body: String): SpinArtifacts {
         return withTransformer {
-            it.transform(parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors))
+            it.transform(parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors, paints))
         }
     }
 
@@ -131,8 +139,8 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
             ":: flag = true",
             "fi;",
             "if",
-            ":: color = Red",
-            ":: color = Green",
+            ":: color = test__colors__Color_eRed",
+            ":: color = test__colors__Color_eGreen",
             "fi;",
             "counter = (counter + 1);",
             "$SPIN_STABLE_FLAG = true;",
@@ -201,6 +209,55 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
     }
 
     @Test
+    suspend fun `enums of one name in two packages declare apart, literals included`() {
+        val lines = promelaLines(
+            """
+                var color : test::colors::Color := test::colors::Color::Red
+                var paint : test::paints::Color := test::paints::Color::Red
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG color == test::colors::Color::Red
+                }
+            """,
+        )
+
+        assertThat(lines).contains(
+            "mtype:test__colors__Color_t = { test__colors__Color_eRed, test__colors__Color_eGreen };",
+            "mtype:test__paints__Color_t = { test__paints__Color_eRed, test__paints__Color_eBlue };",
+            "mtype:test__colors__Color_t color = test__colors__Color_eRed;",
+            "mtype:test__paints__Color_t paint = test__paints__Color_eRed;",
+        )
+    }
+
+    @Test
+    suspend fun `an enum only a local uses is declared`() {
+        val lines = promelaLines(
+            """
+                var counter : int := 0
+                init {
+                }
+                tran {
+                    var shade : test::colors::Color := test::colors::Color::Green
+                    if (shade == test::colors::Color::Green) {
+                        counter := 1
+                    }
+                }
+                prop {
+                    AG counter < 3
+                }
+            """,
+        )
+
+        assertThat(lines).contains("mtype:test__colors__Color_t = { test__colors__Color_eRed, test__colors__Color_eGreen };")
+        assertThat(lines).anyMatch {
+            it.matches(Regex("mtype:test__colors__Color_t shade_l\\d+ = test__colors__Color_eGreen;"))
+        }
+    }
+
+    @Test
     suspend fun `an enum variable declares its mtype`() {
         val lines = promelaLines(
             """
@@ -215,8 +272,8 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
             """,
         )
 
-        assertThat(lines).contains("mtype:Color = { Red, Green };", "mtype:Color color = Green;")
-        assertThat(lines).contains("ltl p { [] (!$SPIN_STABLE_FLAG || ((color == Red))) }")
+        assertThat(lines).contains("mtype:test__colors__Color_t = { test__colors__Color_eRed, test__colors__Color_eGreen };", "mtype:test__colors__Color_t color = test__colors__Color_eGreen;")
+        assertThat(lines).contains("ltl p { [] (!$SPIN_STABLE_FLAG || ((color == test__colors__Color_eRed))) }")
     }
 
     @Test
@@ -342,7 +399,7 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
             """,
         )
 
-        assertThat(lines).containsSequence("if", ":: color = Red", ":: color = Green", "fi;")
+        assertThat(lines).containsSequence("if", ":: color = test__colors__Color_eRed", ":: color = test__colors__Color_eGreen", "fi;")
     }
 
     @Test
@@ -356,7 +413,7 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
             """,
         ).promela
 
-        val local = Regex("int (delta_\\d+) = 2;").find(promela)
+        val local = Regex("int (delta_l\\d+) = 2;").find(promela)
         assertThat(local).isNotNull()
         assertThat(promela).contains("counter = (counter + ${local!!.groupValues[1]});")
     }

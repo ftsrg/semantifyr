@@ -18,7 +18,6 @@ data class SpinArtifacts(
 )
 
 class SpinModelTransformer @Inject constructor(
-    private val spinVariableTransformer: SpinVariableTransformer,
     private val spinPropertyTransformer: SpinPropertyTransformer,
     private val spinDeclarationRenderer: SpinDeclarationRenderer,
     private val spinProctypeRenderer: SpinProctypeRenderer,
@@ -26,7 +25,7 @@ class SpinModelTransformer @Inject constructor(
 
     fun transform(inlinedOxsts: InlinedOxsts): SpinArtifacts {
         val globals = inlinedOxsts.variables
-        val enums = collectEnumDeclarations(globals)
+        val enums = collectEnumDeclarations(inlinedOxsts)
         val property = spinPropertyTransformer.transform(inlinedOxsts.property)
 
         val builder = IndentingStringBuilder()
@@ -40,13 +39,9 @@ class SpinModelTransformer @Inject constructor(
         return SpinArtifacts(builder.toString(), property)
     }
 
-    private fun collectEnumDeclarations(
-        globals: List<VariableDeclaration>,
-    ): List<EnumDeclaration> {
-        return globals.asSequence().map {
-            spinVariableTransformer.describe(it)
-        }.mapNotNull {
-            it.enumDeclaration
+    private fun collectEnumDeclarations(inlinedOxsts: InlinedOxsts): List<EnumDeclaration> {
+        return inlinedOxsts.eAllContents().asSequence().filterIsInstance<VariableDeclaration>().mapNotNull {
+            it.typeSpecification?.domain as? EnumDeclaration
         }.distinct().toList()
     }
 }

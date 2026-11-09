@@ -60,7 +60,11 @@ class NuxmvVariableTransformer @Inject constructor(
         }
     }
 
-    fun sanitizeEnumLiteral(literal: EnumLiteral): String {
-        return mangler.sanitize(literal.name)
+    fun nameOf(enumDeclaration: EnumDeclaration): String {
+        return mangler.nameOf(enumDeclaration)
+    }
+
+    fun nameOf(enumLiteral: EnumLiteral): String {
+        return mangler.nameOf(enumLiteral)
     }
 }

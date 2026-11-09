@@ -112,7 +112,7 @@ class SpinExpressionTransformer @Inject constructor(
     override fun visit(expression: ElementReference): String {
         return when (val element = expression.element) {
             is VariableDeclaration -> spinVariableTransformer.nameOf(element)
-            is EnumLiteral -> spinVariableTransformer.sanitizeEnumLiteral(element)
+            is EnumLiteral -> spinVariableTransformer.nameOf(element)
             else -> error("Unexpected kind of element: $element")
         }
     }

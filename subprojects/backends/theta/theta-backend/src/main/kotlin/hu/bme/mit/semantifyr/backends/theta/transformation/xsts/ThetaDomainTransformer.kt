@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
+import hu.bme.mit.semantifyr.backend.transformation.qualifiedEnumName
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DataTypeDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
@@ -30,7 +31,7 @@ class ThetaDomainTransformer @Inject constructor(
     fun transform(enumDeclaration: EnumDeclaration): XstsEnumDeclaration {
         return enumDeclarationMap.getOrPut(enumDeclaration) {
             XstsFactory.createEnumDeclaration().also {
-                it.name = enumDeclaration.name
+                it.name = qualifiedEnumName(enumDeclaration)
 
                 for (literal in enumDeclaration.literals) {
                     it.literals += transform(literal)

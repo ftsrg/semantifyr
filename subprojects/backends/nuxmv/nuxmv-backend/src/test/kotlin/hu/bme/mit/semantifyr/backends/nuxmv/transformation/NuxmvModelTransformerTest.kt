@@ -127,7 +127,7 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
             """,
         )
 
-        assertThat(lines).contains("flag : boolean;", "color : { Red, Green };", "(flag__init_b0_seed = TRUE)", "& (color__init_b0_seed = Green)")
+        assertThat(lines).contains("flag : boolean;", "color : { test__colors__Color_eRed, test__colors__Color_eGreen };", "(flag__init_b0_seed = TRUE)", "& (color__init_b0_seed = test__colors__Color_eGreen)")
     }
 
     @Test
@@ -298,7 +298,7 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
             """,
         ).smv
 
-        val local = Regex("\\((delta_\\d+)__tran_b0_1 = 2\\)").find(smv)
+        val local = Regex("\\((delta_l\\d+)__tran_b0_1 = 2\\)").find(smv)
         assertThat(local).isNotNull()
         assertThat(smv).contains("(counter__tran_b0_1 = (counter + ${local!!.groupValues[1]}__tran_b0_1))")
     }

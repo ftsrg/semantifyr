@@ -1,5 +1,7 @@
 (XstsStateSequence
   (XstsState pre_init last_env
-    (ExplState ($$root$$light Light.Off) (__semantifyr_initialized false)))
+    (ExplState ($$root$$light semantifyr$$verification$$lang$$initial_values$$Light.Off)
+               (__semantifyr_initialized false)))
   (XstsState post_init last_internal
-    (ExplState ($$root$$light Light.On) (__semantifyr_initialized true))))
+    (ExplState ($$root$$light semantifyr$$verification$$lang$$initial_values$$Light.On)
+               (__semantifyr_initialized true))))

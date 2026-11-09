@@ -26,17 +26,25 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
         }
     """
 
+    private val paints = """
+        package test::paints
+        enum Color {
+            Red,
+            Blue,
+        }
+    """
+
     private val startToRunning = UppaalEdge("start", "running")
 
     private suspend fun nta(body: String): UppaalNta {
         return withTransformer {
-            it.buildNta(parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors))
+            it.buildNta(parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors, paints))
         }
     }
 
     private suspend fun query(body: String): String {
         return withTransformer {
-            it.transform(parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors)).query
+            it.transform(parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors, paints)).query
         }
     }
 
@@ -73,6 +81,36 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     }
 
     @Test
+    suspend fun `literals of one name in two enums declare apart`() {
+        val declarations = nta(
+            """
+                var color : test::colors::Color := test::colors::Color::Red
+                var paint : test::paints::Color := test::paints::Color::Red
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG color == test::colors::Color::Red
+                }
+            """,
+        ).globalDeclarations
+
+        assertThat(declarations.typedefs).containsExactly(
+            "// enum test__colors__Color_t",
+            "const int test__colors__Color_eRed = 0;",
+            "const int test__colors__Color_eGreen = 1;",
+            "// enum test__paints__Color_t",
+            "const int test__paints__Color_eRed = 0;",
+            "const int test__paints__Color_eBlue = 1;",
+        )
+        assertThat(declarations.variables).contains(
+            UppaalVariableDecl("int", "color", "test__colors__Color_eRed"),
+            UppaalVariableDecl("int", "paint", "test__paints__Color_eRed"),
+        )
+    }
+
+    @Test
     suspend fun `variables are declared with their initializers`() {
         val declarations = nta(
             """
@@ -89,11 +127,11 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
             """,
         ).globalDeclarations
 
-        assertThat(declarations.typedefs).containsExactly("// enum Color", "const int Red = 0;", "const int Green = 1;")
+        assertThat(declarations.typedefs).containsExactly("// enum test__colors__Color_t", "const int test__colors__Color_eRed = 0;", "const int test__colors__Color_eGreen = 1;")
         assertThat(declarations.variables).containsExactly(
             UppaalVariableDecl("int[2,2]", "counter", "2"),
             UppaalVariableDecl("bool", "flag", "true"),
-            UppaalVariableDecl("int", "color", "Green"),
+            UppaalVariableDecl("int", "color", "test__colors__Color_eGreen"),
         )
     }
 
@@ -374,7 +412,7 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
         )
 
         val local = model.globalDeclarations.variables.last()
-        assertThat(local.name).matches("delta_\\d+")
+        assertThat(local.name).matches("delta_l\\d+")
         assertThat(local.initialValue).isNull()
         assertThat(model.templates.single().edges).containsExactly(
             startToRunning,
@@ -526,7 +564,7 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
             """,
         )
 
-        assertThat(query).isEqualTo("E<> (Model.Running and ((color == Green)))")
+        assertThat(query).isEqualTo("E<> (Model.Running and ((color == test__colors__Color_eGreen)))")
     }
 
     @Test

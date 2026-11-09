@@ -22,9 +22,17 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
         }
     """
 
+    private val paints = """
+        package test::paints
+        enum Color {
+            Red,
+            Blue,
+        }
+    """
+
     private suspend fun xsts(body: String): String {
         return withTransformer {
-            serialize(it.transform(parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors), testXstsUri))
+            serialize(it.transform(parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors, paints), testXstsUri))
         }
     }
 
@@ -105,6 +113,52 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
     }
 
     @Test
+    suspend fun `enums of one name in two packages declare apart and keep their literal names`() {
+        val lines = xstsLines(
+            """
+                var color : test::colors::Color := test::colors::Color::Red
+                var paint : test::paints::Color := test::paints::Color::Red
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG color == test::colors::Color::Red
+                }
+            """,
+        )
+
+        assertThat(lines).contains(
+            "type test\$\$colors\$\$Color : { Red, Green",
+            "type test\$\$paints\$\$Color : { Red, Blue",
+            "var color: test\$\$colors\$\$Color = test\$\$colors\$\$Color.Red",
+            "var paint: test\$\$paints\$\$Color = test\$\$paints\$\$Color.Red",
+        )
+    }
+
+    @Test
+    suspend fun `an enum only a local uses is declared`() {
+        val lines = xstsLines(
+            """
+                var counter : int := 0
+                init {
+                }
+                tran {
+                    var shade : test::colors::Color := test::colors::Color::Green
+                    if (shade == test::colors::Color::Green) {
+                        counter := 1
+                    }
+                }
+                prop {
+                    AG counter < 3
+                }
+            """,
+        )
+
+        assertThat(lines).contains("type test\$\$colors\$\$Color : { Red, Green")
+    }
+
+    @Test
     suspend fun `variables keep their types and initializers`() {
         val lines = xstsLines(
             """
@@ -121,7 +175,7 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
             """,
         )
 
-        assertThat(lines).containsSequence("type Color : { Red, Green", "}", "var counter: integer = 0", "var flag: boolean = true", "var color: Color = Color.Green")
+        assertThat(lines).containsSequence("type test\$\$colors\$\$Color : { Red, Green", "}", "var counter: integer = 0", "var flag: boolean = true", "var color: test\$\$colors\$\$Color = test\$\$colors\$\$Color.Green")
     }
 
     @Test
@@ -394,7 +448,7 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
             """,
         )
 
-        assertThat(lines).contains("prop { !__semantifyr_initialized || !( color == Color.Green )")
+        assertThat(lines).contains("prop { !__semantifyr_initialized || !( color == test\$\$colors\$\$Color.Green )")
     }
 
     @Test

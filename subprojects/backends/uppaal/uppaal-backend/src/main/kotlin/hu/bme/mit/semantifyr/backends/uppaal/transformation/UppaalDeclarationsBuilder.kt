@@ -81,9 +81,9 @@ class UppaalDeclarationsBuilder @Inject constructor(
     private fun buildEnumLiteralConstants(enums: List<EnumDeclaration>): List<String> {
         val lines = mutableListOf<String>()
         for (enum in enums) {
-            lines += "// enum ${enum.name}"
+            lines += "// enum ${uppaalVariableTransformer.nameOf(enum)}"
             enum.literals.forEachIndexed { index, literal ->
-                val name = uppaalVariableTransformer.sanitizeEnumLiteral(literal)
+                val name = uppaalVariableTransformer.nameOf(literal)
                 lines += "const int $name = $index;"
             }
         }
