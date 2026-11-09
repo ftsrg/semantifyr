@@ -157,6 +157,10 @@ public class ServerSettings {
         };
     }
 
+    public boolean keepsTemporaryArtifacts() {
+        return effective.get().artifacts().location() == ArtifactsLocation.TEMPORARY;
+    }
+
     public Path resolveArtifactOutputDirectory(ILanguageServerAccess access) {
         return switch (effective.get().artifacts().location()) {
             case WORKSPACE -> workspaceArtifactDirectory(access);

@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr.lang.ide.server;
 
+import java.util.Arrays;
+import java.util.Objects;
 import org.eclipse.emf.common.util.URI;
 
 public class UriUtils {
@@ -39,5 +41,13 @@ public class UriUtils {
         }
 
         return true;
+    }
+
+    // file:/a and file:///a name the same file, the second carries an empty authority
+    public static boolean isSameFile(URI uri, URI other) {
+        return uri.isFile()
+                && other.isFile()
+                && Objects.equals(uri.device(), other.device())
+                && Arrays.equals(uri.segments(), other.segments());
     }
 }
