@@ -19,6 +19,8 @@ enum class ExitCode(val code: Int) {
     Undecided(6),
     Timeout(7),
     Errored(8),
+    BackAnnotation(9),
+    Output(10),
     ;
 
     companion object {

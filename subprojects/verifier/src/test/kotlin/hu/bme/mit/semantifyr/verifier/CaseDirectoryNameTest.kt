@@ -24,8 +24,8 @@ class CaseDirectoryNameTest {
 
     @Test
     fun `cases sharing a qualified name in different models get different directories`() {
-        assertThat(caseDirectoryName(case("power_subsystems.oxsts", "semantifyr::sysml::model::OffReachable"))).isEqualTo("power_subsystems.OffReachable")
-        assertThat(caseDirectoryName(case("aircraft_engine.oxsts", "semantifyr::sysml::model::OffReachable"))).isEqualTo("aircraft_engine.OffReachable")
+        assertThat(caseDirectoryName(case("power_subsystems.oxsts", "semantifyr::sysml::model::OffReachable"))).isEqualTo("power_subsystems.semantifyr.sysml.model.OffReachable")
+        assertThat(caseDirectoryName(case("aircraft_engine.oxsts", "semantifyr::sysml::model::OffReachable"))).isEqualTo("aircraft_engine.semantifyr.sysml.model.OffReachable")
     }
 
     @Test
@@ -33,12 +33,18 @@ class CaseDirectoryNameTest {
         val reachable = caseDirectoryName(case("spacecraft.oxsts", "semantifyr::sysml::model::SpacecraftBehaviorCommunicationTransmittingConsumePowerConsumingReachable"))
         val unreachable = caseDirectoryName(case("spacecraft.oxsts", "semantifyr::sysml::model::SpacecraftBehaviorCommunicationTransmittingConsumePowerConsumingUnreachable"))
 
-        assertThat(reachable).hasSize(64).startsWith("spacecraft.SpacecraftBehavior")
+        assertThat(reachable).hasSize(64).startsWith("spacecraft.semantifyr.sysml.model.SpacecraftBehavior")
         assertThat(unreachable).hasSize(64).isNotEqualTo(reachable)
     }
 
     @Test
-    fun `a case outside a resource is named by its simple name`() {
-        assertThat(caseDirectoryName(case(null, "pkg::Foo"))).isEqualTo("Foo")
+    fun `cases of models sharing a file stem get different directories`() {
+        assertThat(caseDirectoryName(case("first/model.oxsts", "first::Reach"))).isEqualTo("model.first.Reach")
+        assertThat(caseDirectoryName(case("second/model.oxsts", "second::Reach"))).isEqualTo("model.second.Reach")
+    }
+
+    @Test
+    fun `a case outside a resource is named by its qualified name`() {
+        assertThat(caseDirectoryName(case(null, "pkg::Foo"))).isEqualTo("pkg.Foo")
     }
 }

@@ -25,6 +25,7 @@ import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.oxsts.lang.utils.SelfContainedResource
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.verifier.BackAnnotationException
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.Trace
@@ -252,6 +253,10 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
                 message = "Timeout (${semantifyrVerifierConfiguration.timeout}) exceeded while back-annotating the witness of ${backendResult.metadata.backendId}'s ${backendResult.verdict} verdict.",
             )
             BackAnnotationOutcome(timedOut, null, backAnnotationMark.elapsedNow())
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (exception: Exception) {
+            throw BackAnnotationException(exception.message ?: exception::class.simpleName, exception)
         }
 
         val totalDuration = (Clock.System.now() - startedAt)

@@ -19,7 +19,7 @@ The `semantifyr` command lists, compiles, measures and verifies the verification
 
 A model or library path is an `.oxsts` file or a directory, which is searched recursively for `.oxsts` files. `--log-level` before the command sets the level of the log on standard error, `WARN` by default.
 
-`--case-name` selects cases by qualified name and overrides the tag filters. Without it, a command takes the cases that carry one of the `--include-tag` tags, or every case when none is given, except those that carry an `--exclude-tag` tag. `--artifacts debug` also writes the model after every compiler pass, which is slow and meant for bisecting compiler regressions.
+`--case-name` selects cases by qualified name and overrides the tag filters. Without it, a command takes the cases that carry one of the `--include-tag` tags, or every case when none is given, except those that carry an `--exclude-tag` tag. `--artifacts debug`, or `--enable-artifact CompilationStep`, also writes the model after every compiler pass into `pipeline/steps`, which is slow and meant for bisecting compiler regressions. The artifacts of a case go to a directory named after the model file and the qualified name of the case, with `::` written as `.` and every character other than letters, digits, `.`, `_` and `-` as `_`, shortened with a hash when longer than 64 characters. An artifact directory that cannot be created or written stops the command before it compiles anything.
 
 ## `verify`
 
@@ -27,15 +27,15 @@ A model or library path is an `.oxsts` file or a directory, which is searched re
 
 `--timeout-seconds` bounds each case as a whole: its compilation, every backend run of the portfolio and the back-annotation of the witness. `--theta-executor` runs Theta from `PATH` (`shell`), in Docker (`docker`), or from `PATH` when it is there and in Docker otherwise (`auto`); `--theta-docker-image` is the image Docker runs, a `repository:tag` or `@digest` reference.
 
-For each case, `verify` prints `Verifying <case> ...`, then the verdict with the time it took, then the path of the `report.json` it wrote for the case. A case that does not compile gets `COMPILATION_ERROR` in place of the verdict and no report, and the compiler's message goes to standard error. With `--quiet` it prints only the verdict of each case, one per line: `PASSED`, `FAILED`, `INCONCLUSIVE`, `NOT_SUPPORTED`, `TIMEOUT`, `ERRORED` or `COMPILATION_ERROR`.
+For each case, `verify` prints `Verifying <case> ...`, then the verdict with the time it took, compilation included, then the path of the `report.json` it wrote for the case. A case that does not compile gets `COMPILATION_ERROR` in place of the verdict and no report, and the compiler's message goes to standard error; a case whose witness cannot be back-annotated gets `BACK_ANNOTATION_ERROR` the same way. With `--quiet` it prints only the verdict of each case, one per line: `PASSED`, `FAILED`, `INCONCLUSIVE`, `NOT_SUPPORTED`, `TIMEOUT`, `ERRORED`, `COMPILATION_ERROR` or `BACK_ANNOTATION_ERROR`.
 
 With `--json` it prints one JSON object per case and line, as each case finishes:
 
 ```json
-{"case":"semantifyr::verification::smoke::CounterReachesThree","exitCode":0,"report":"/tmp/semantifyr-123/smoke.CounterReachesThree/report.json"}
+{"case":"semantifyr::verification::smoke::CounterReachesThree","exitCode":0,"report":"/tmp/semantifyr-123/smoke.semantifyr.verification.smoke.CounterReachesThree/report.json","compilationDuration":"PT0.158S","verificationDuration":"PT1.204S"}
 ```
 
-`case` is the qualified name of the case, `exitCode` its [exit code](#exit-codes) and `report` the absolute path of its `report.json`. A case that does not compile has `error`, the compiler's message, instead of `report`. `report.json` holds the rest: `verificationCase`, `portfolioId`, `optimization`, `timeout` and `result`, whose `verdict` is `Passed`, `Failed`, `Inconclusive`, `NotSupported`, `Timeout` or `Errored`, with the `message` of the backend, `metadata.backendId`, the backend configuration that answered, and `metrics`: the durations of the run, of the backend and of the compiler's phases, the optimizer's statistics and the model sizes.
+`case` is the qualified name of the case, `exitCode` its [exit code](#exit-codes), `report` the absolute path of its `report.json`, `compilationDuration` the time the compilation took and `verificationDuration` the time from the compiled model to the verdict, both ISO 8601 durations. A case that does not compile or whose witness cannot be back-annotated has `error`, the message, instead of `report` and the durations. `report.json` holds the rest: `verificationCase`, `portfolioId`, `optimization`, `timeout` and `result`, whose `verdict` is `Passed`, `Failed`, `Inconclusive`, `NotSupported`, `Timeout` or `Errored`, with the `message` of the backend, `metadata.backendId`, the backend configuration that answered, and `metrics`: the durations of the run, of the backend and of the compiler's phases, the optimizer's statistics and the model sizes.
 
 ### Verdicts
 
@@ -45,7 +45,7 @@ A case is **Passed** when its property holds and **Failed** when it does not. Ot
 
 <CodeBlock language="text">{compile}</CodeBlock>
 
-For each case, `compile` prints `Compiling <case> to <file>`, writes the inlined model to the file, and prints the directory holding the artifacts of the case, a temporary directory unless `--artifact-directory` names one. With one selected case, `--output` is the file, `<model>.inlined.oxsts` next to the model by default; with several, it is a directory, `<model>.inlined` next to the model by default, holding `<case qualified name>.oxsts` for each case.
+For each case, `compile` prints `Compiling <case> to <file>`, writes the inlined model to the file, and prints the directory holding the artifacts of the case, a temporary directory unless `--artifact-directory` names one. With one selected case, `--output` is the file, `<model>.inlined.oxsts` next to the model by default; with several, it is a directory, `<model>.inlined` next to the model by default, holding a file for each case named as its artifact directory, with `.oxsts` appended.
 
 ## `list`
 
@@ -82,5 +82,7 @@ The portfolio ids are listed under [Portfolios](portfolios.mdx).
 | 6 | Inconclusive or NotSupported: a backend could not decide a case. |
 | 7 | Timeout. |
 | 8 | Errored: a backend failed, or the portfolio has no available backend. |
+| 9 | Back-annotation error: a backend returned a witness that could not be back-annotated. |
+| 10 | Output error: the artifact directory cannot be created or written. |
 
-Codes 2 to 4 and an unavailable portfolio stop the command before it verifies anything, or, in `compile` and `metrics`, at the case that does not compile. Every launcher's `verify` runs every case, including those after a case that does not compile, and exits with the highest of their codes: 0 means every case passed, 4 that some case did not compile and the rest passed, 5 that some case failed and the rest passed, failed or did not compile.
+Codes 2 to 4, code 10 and an unavailable portfolio stop the command before it verifies anything, or, in `compile` and `metrics`, at the case that does not compile. Every launcher's `verify` runs every case, including those after a case that does not compile, and exits with the highest of their codes: 0 means every case passed, 4 that some case did not compile and the rest passed, 5 that some case failed and the rest passed, failed or did not compile.

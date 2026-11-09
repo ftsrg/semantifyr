@@ -78,6 +78,7 @@ class SysMLVerifyCommand @Inject constructor(
         for (library in libraries) {
             checkInputPath("Library", library, OxstsLibrary.FILE_NAME_SUFFIX)
         }
+        artifactOptions.checkOutputDirectory()
         backendOptions.checkAvailable()
 
         val (frontend, context) = try {

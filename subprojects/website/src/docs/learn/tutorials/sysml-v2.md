@@ -127,7 +127,7 @@ For each case, the command prints its name, `PASSED` or `FAILED` with the time i
 
 ### The Artifacts
 
-`--artifact-directory ../room-artifacts` keeps the translated model in `compiled/default/room.oxsts` and the artifacts of every case in a directory named after the model file and the case, shortened with a hash when longer than 64 characters. Next to the backend's working files, the compiler's intermediate models (`pipeline/`) and the run's measurements (`report.json`), a case with a witness has four files:
+`--artifact-directory ../room-artifacts` keeps the translated model in `compiled/default/room.oxsts` and the artifacts of every case in a directory named after the model file and the qualified name of the case, shortened with a hash when longer than 64 characters. Next to the backend's working files, the compiler's intermediate models (`pipeline/`) and the run's measurements (`report.json`), a case with a witness has four files:
 
 - `witness.json`: the values of the model's state in every step of the witness: `initializedStep`, the initial state that initialization produces, then one entry per step. State names are paths from the verified instance, `root`.
 - `trace.json`: per step, the traced calls of the semantic library: the transitions that fired and the items that were sent.

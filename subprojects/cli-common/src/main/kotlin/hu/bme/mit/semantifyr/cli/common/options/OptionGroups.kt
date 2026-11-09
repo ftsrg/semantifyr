@@ -26,6 +26,7 @@ import hu.bme.mit.semantifyr.cli.common.CommandExit
 import hu.bme.mit.semantifyr.cli.common.ExitCode
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactKind
+import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationStepsConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPass
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
@@ -34,7 +35,10 @@ import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.discovery.CaseFilter
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
+import java.io.IOException
 import java.nio.file.Files
+import kotlin.io.path.createDirectories
+import kotlin.io.path.isWritable
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -108,7 +112,24 @@ class ArtifactOptionGroup : OptionGroup("Artifact options") {
             ArtifactPreset.Debug -> ArtifactConfig.DEBUG
         }
         val resolved = base.enabled + enableArtifacts.toSet() - disableArtifacts.toSet()
-        base.copy(enabled = resolved)
+        val compilationSteps = if (ArtifactKind.CompilationStep in resolved) {
+            CompilationStepsConfig.All
+        } else {
+            CompilationStepsConfig.Off
+        }
+        ArtifactConfig(enabled = resolved, enabledCompilationSteps = compilationSteps)
+    }
+
+    fun checkOutputDirectory() {
+        val directory = resolvedOutputDirectory
+        try {
+            directory.createDirectories()
+        } catch (exception: IOException) {
+            throw CommandExit(ExitCode.Output, "Artifact directory '$directory' cannot be written: ${exception.message}")
+        }
+        if (!directory.isWritable()) {
+            throw CommandExit(ExitCode.Output, "Artifact directory '$directory' cannot be written.")
+        }
     }
 }
 

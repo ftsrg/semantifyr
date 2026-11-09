@@ -69,6 +69,7 @@ class GammaVerifyCommand(
         }
 
         checkInputFile("Model", model, GAMMA_FILE_SUFFIX)
+        artifactOptions.checkOutputDirectory()
         backendOptions.checkAvailable()
 
         val gammaModel = readGammaModel(gammaInjector, model)

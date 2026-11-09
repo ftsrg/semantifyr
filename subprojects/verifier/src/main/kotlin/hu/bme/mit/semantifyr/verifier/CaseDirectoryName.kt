@@ -12,10 +12,10 @@ private val NON_FS_SAFE = Regex("[^A-Za-z0-9._-]")
 
 private const val MAX_CASE_DIRECTORY_LENGTH = 64
 
-// the model file tells apart cases whose qualified names repeat across models, and the bound keeps backend working directories under Windows' 260 characters
+// the model file tells apart cases whose qualified names repeat across models, the qualified name models that share a file stem, and the bound keeps backend working directories under Windows' 260 characters
 fun caseDirectoryName(case: VerificationCase): String {
     val model = case.classDeclaration.eResource()?.uri?.trimFileExtension()?.lastSegment()
-    val name = listOfNotNull(model, case.qualifiedName.substringAfterLast("::")).joinToString(".").replace(NON_FS_SAFE, "_")
+    val name = listOfNotNull(model, case.qualifiedName.replace("::", ".")).joinToString(".").replace(NON_FS_SAFE, "_")
     if (name.length <= MAX_CASE_DIRECTORY_LENGTH) {
         return name
     }

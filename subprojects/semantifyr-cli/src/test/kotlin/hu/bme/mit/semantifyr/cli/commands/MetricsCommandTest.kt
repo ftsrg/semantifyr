@@ -25,6 +25,7 @@ import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.readText
+import kotlin.io.path.writeText
 
 class MetricsCommandTest {
 
@@ -64,5 +65,31 @@ class MetricsCommandTest {
 
         assertThat(result.statusCode).describedAs(result.output).isZero()
         assertThat(jsonLines<MetricsLine>(result.stdout)).isNotEmpty()
+    }
+
+    @Test
+    suspend fun `the json line carries every size field even when it is zero`(@TempDir directory: Path) {
+        val model = directory.resolve("stateless.oxsts")
+        model.writeText(
+            """
+            package stateless
+
+            @VerificationCase
+            class Stateless {
+                prop {
+                    return AG true
+                }
+            }
+            """.trimIndent(),
+        )
+
+        val result = runCli("metrics", "--json", model.toString())
+
+        assertThat(result.statusCode).describedAs(result.output).isZero()
+        val line = result.stdout.trim()
+        assertThat(line).contains("\"variables\":0")
+        for (level in listOf("inputSize", "inlinedSize", "flattenedSize")) {
+            assertThat(line).containsPattern("\"$level\":\\{\"variables\":\\d+,\"operations\":\\d+,\"expressions\":\\d+}")
+        }
     }
 }

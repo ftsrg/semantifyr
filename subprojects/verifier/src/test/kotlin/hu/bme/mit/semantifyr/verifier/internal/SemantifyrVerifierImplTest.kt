@@ -21,6 +21,7 @@ import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
+import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
@@ -29,6 +30,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
+import hu.bme.mit.semantifyr.verifier.BackAnnotationException
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
@@ -48,6 +50,8 @@ import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtext.serializer.ISerializer
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import org.mockito.kotlin.doThrow
+import org.mockito.kotlin.mock
 import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.Path
@@ -208,15 +212,35 @@ class SemantifyrVerifierImplTest {
     }
 
     @Test
-    suspend fun `report json is written to a directory named after the model file and the case`(@TempDir output: Path) {
+    suspend fun `report json is written to a directory named after the model file and the qualified name of the case`(@TempDir output: Path) {
         val portfolio = ScriptedPortfolio { _, _ -> decisiveResult(VerificationVerdict.Passed) }
         val case = loadFirstCase()
 
         build(portfolio, output, artifacts = ArtifactConfig.ALL).verify(case)
 
-        val caseDirectory = output.resolve("simple.${case.classDeclaration.name}")
+        val caseDirectory = output.resolve("simple.${case.qualifiedName.replace("::", ".")}")
         val reportFile = caseDirectory.resolve("report.json")
         assertThat(reportFile.exists()).isTrue
+    }
+
+    @Test
+    fun `a witness that fails to back-annotate throws a back-annotation exception`(@TempDir output: Path) {
+        val witness = mock<InlinedWitness> {
+            on {
+                initializedState
+            } doThrow IllegalStateException("broken witness")
+        }
+        val portfolio = ScriptedPortfolio { _, _ ->
+            decisiveResult(VerificationVerdict.Failed).copy(inlinedWitness = witness)
+        }
+        val verifier = build(portfolio, output)
+        val case = loadFirstCase()
+
+        assertThatThrownBy {
+            kotlinx.coroutines.runBlocking {
+                verifier.verify(case)
+            }
+        }.isInstanceOf(BackAnnotationException::class.java).hasMessage("broken witness")
     }
 
     @Test
