@@ -101,6 +101,18 @@ class WebSocketSessionTest {
     }
 
     @Test
+    fun `initialize advertises code actions for the oxsts flavor`(@TempDir tmp: Path) = testApplication {
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(testInjector(config(tmp)))
+        }
+        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
+            send(Frame.Text(LspWire.initializeRequest()))
+            val response = awaitResponseFor(id = 1).resultAs(InitializeResult::class.java)
+            assertThat(response.capabilities.codeActionProvider.left).isTrue
+        }
+    }
+
+    @Test
     fun `session info request is intercepted and returns metadata`(@TempDir tmp: Path) = testApplication {
         installSemantifyrApp(webSockets = true) {
             installSemantifyrLiveBackend(testInjector(config(tmp)))

@@ -59,7 +59,7 @@ class LanguageServices @Inject constructor(
             documentHighlightProvider = Either.forLeft(true)
             documentFormattingProvider = Either.forLeft(true)
             documentRangeFormattingProvider = Either.forLeft(true)
-            codeActionProvider = Either.forLeft(false)
+            codeActionProvider = Either.forLeft(codeActionService != null)
             foldingRangeProvider = Either.forLeft(true)
             semanticTokensProvider = SemanticTokensWithRegistrationOptions(
                 SemanticTokensLegend(
