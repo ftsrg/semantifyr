@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.live.backend.lsp.service
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.lang.ide.server.hierarchy.TypeHierarchyService
 import hu.bme.mit.semantifyr.live.backend.exceptions.WorkspaceUriException
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocument
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
@@ -16,6 +17,7 @@ import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionContext
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScoped
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
+import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.lsp4j.CodeAction
 import org.eclipse.lsp4j.CodeActionParams
 import org.eclipse.lsp4j.CodeLens
@@ -55,6 +57,10 @@ import org.eclipse.lsp4j.SignatureHelp
 import org.eclipse.lsp4j.SignatureHelpParams
 import org.eclipse.lsp4j.SymbolInformation
 import org.eclipse.lsp4j.TextEdit
+import org.eclipse.lsp4j.TypeHierarchyItem
+import org.eclipse.lsp4j.TypeHierarchyPrepareParams
+import org.eclipse.lsp4j.TypeHierarchySubtypesParams
+import org.eclipse.lsp4j.TypeHierarchySupertypesParams
 import org.eclipse.lsp4j.WorkspaceEdit
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.jsonrpc.messages.Either3
@@ -63,6 +69,7 @@ import org.eclipse.xtext.ide.server.codeActions.ICodeActionService2
 import org.eclipse.xtext.ide.server.rename.IRenameService2
 import org.eclipse.xtext.util.CancelIndicator
 import java.util.concurrent.CompletableFuture
+import org.eclipse.emf.common.util.URI as EmfURI
 
 @SessionScoped
 class SessionTextDocumentService @Inject constructor(
@@ -337,6 +344,48 @@ class SessionTextDocumentService @Inject constructor(
             }
             hints.toMutableList()
         }
+    }
+
+    override fun prepareTypeHierarchy(
+        params: TypeHierarchyPrepareParams,
+    ): CompletableFuture<MutableList<TypeHierarchyItem>> {
+        val service = languageServices.typeHierarchyService
+            ?: return CompletableFuture.completedFuture(mutableListOf())
+        return readDocument(params.textDocument.uri, mutableListOf()) { file, _ ->
+            toClientItems(service.prepare(file.resource, file.xtextDocument(), params))
+        }
+    }
+
+    override fun typeHierarchySupertypes(
+        params: TypeHierarchySupertypesParams,
+    ): CompletableFuture<MutableList<TypeHierarchyItem>> {
+        return relatedTypes(params.item, TypeHierarchyService::supertypes)
+    }
+
+    override fun typeHierarchySubtypes(
+        params: TypeHierarchySubtypesParams,
+    ): CompletableFuture<MutableList<TypeHierarchyItem>> {
+        return relatedTypes(params.item, TypeHierarchyService::subtypes)
+    }
+
+    private fun relatedTypes(
+        item: TypeHierarchyItem,
+        query: (TypeHierarchyService, ResourceSet, TypeHierarchyItem) -> List<TypeHierarchyItem>,
+    ): CompletableFuture<MutableList<TypeHierarchyItem>> {
+        val service = languageServices.typeHierarchyService
+            ?: return CompletableFuture.completedFuture(mutableListOf())
+        return sessionRequestManager.runRead {
+            val items = sessionDocumentManager.referenceResourceAccess().readOnly(EmfURI.createURI(item.uri)) {
+                query(service, it, item)
+            }
+            toClientItems(items)
+        }
+    }
+
+    private fun toClientItems(items: List<TypeHierarchyItem>): MutableList<TypeHierarchyItem> {
+        return items.onEach {
+            it.uri = sessionDocumentManager.toClientUri(it.uri)
+        }.toMutableList()
     }
 
     private inline fun <T> readDocument(

@@ -51,6 +51,9 @@ import org.eclipse.lsp4j.SemanticTokens
 import org.eclipse.lsp4j.SignatureHelp
 import org.eclipse.lsp4j.SignatureHelpParams
 import org.eclipse.lsp4j.TextDocumentIdentifier
+import org.eclipse.lsp4j.TypeHierarchyItem
+import org.eclipse.lsp4j.TypeHierarchyPrepareParams
+import org.eclipse.lsp4j.TypeHierarchySupertypesParams
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.mockito.kotlin.any
@@ -349,6 +352,44 @@ class WebSocketSessionTest {
             val label = hints[0].label.right.single()
             assertThat(label.value).isEqualTo("level:")
             assertThat(label.location.uri).isEqualTo(uri)
+        }
+    }
+
+    @Test
+    fun `type hierarchy items carry client uris`(@TempDir tmp: Path) = testApplication {
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(testInjector(config(tmp)))
+        }
+        val uri = "file:///workspace/snippet.oxsts"
+        val model = """
+            package test
+
+            class Lamp {
+                var on: bool := false
+            }
+
+            class DimmableLamp : Lamp {
+                var dimmed: bool := false
+            }
+        """.trimIndent()
+        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
+            send(Frame.Text(LspWire.initializeRequest()))
+            val capabilities = awaitResponseFor(id = 1).resultAs(InitializeResult::class.java).capabilities
+            assertThat(capabilities.typeHierarchyProvider.left).isTrue
+            send(Frame.Text(LspWire.initializedNotification()))
+            send(Frame.Text(LspWire.didOpenNotification(uri = uri, languageId = "oxsts", text = model)))
+
+            val prepareParams = TypeHierarchyPrepareParams(TextDocumentIdentifier(uri), Position(6, 8))
+            send(Frame.Text(LspWire.request(id = 2, method = "textDocument/prepareTypeHierarchy", params = prepareParams)))
+            val dimmableLamp = awaitResponseFor(id = 2).resultAs(Array<TypeHierarchyItem>::class.java).single()
+            assertThat(dimmableLamp.name).isEqualTo("DimmableLamp")
+            assertThat(dimmableLamp.uri).isEqualTo(uri)
+
+            val supertypesParams = TypeHierarchySupertypesParams(dimmableLamp)
+            send(Frame.Text(LspWire.request(id = 3, method = "typeHierarchy/supertypes", params = supertypesParams)))
+            val lamp = awaitResponseFor(id = 3).resultAs(Array<TypeHierarchyItem>::class.java).single()
+            assertThat(lamp.name).isEqualTo("Lamp")
+            assertThat(lamp.uri).isEqualTo(uri)
         }
     }
 
