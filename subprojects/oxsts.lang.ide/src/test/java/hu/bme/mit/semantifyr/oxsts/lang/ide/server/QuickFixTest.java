@@ -73,13 +73,13 @@ class QuickFixTest extends OxstsLanguageServerTest {
                 }
                 """, "Change to setColor");
 
-        assertThat(withoutWhitespace(fixed)).isEqualTo(withoutWhitespace(TRAFFIC_LIGHT + """
+        assertThat(fixed).isEqualTo(TRAFFIC_LIGHT + """
 
                 class Special : TrafficLight {
                     redefine tran setColor(color: LightColor) {
                     }
                 }
-                """));
+                """);
     }
 
     @Test
@@ -187,12 +187,12 @@ class QuickFixTest extends OxstsLanguageServerTest {
                 }
                 """, "Initialize with 0");
 
-        assertThat(withoutWhitespace(fixed)).isEqualTo(withoutWhitespace(TRAFFIC_LIGHT + """
+        assertThat(fixed).isEqualTo(TRAFFIC_LIGHT + """
 
                 class Counter {
                     var count: int := 0
                 }
-                """));
+                """);
     }
 
     @Test
@@ -243,7 +243,7 @@ class QuickFixTest extends OxstsLanguageServerTest {
         return applyEdits(model.text(), codeAction.getEdit().getChanges().get(document.getUri()));
     }
 
-    // The change serializer's whitespace is the formatter's defect, so these fixes are checked by their tokens.
+    // The change serializer leaves the first line of an inserted member unindented.
     private static String withoutWhitespace(String text) {
         return text.replaceAll("\\s+", "");
     }
