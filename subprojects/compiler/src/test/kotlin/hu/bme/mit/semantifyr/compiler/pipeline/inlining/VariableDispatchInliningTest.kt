@@ -148,17 +148,18 @@ class VariableDispatchInliningTest : InliningTestBase() {
                     }
                 }
             """,
-            """
+            $$$$"""
                 init {
                     root.current := root.first
                 }
 
                 tran {
+                    var 'worker$$$local0' : inlining::tests::Worker[0..1] := root.current
                     choice {
-                        assume (root.current == root.first)
+                        assume ('worker$$$local0' == root.first)
                         root.first.done := true
                     } or {
-                        assume (root.current == root.second)
+                        assume ('worker$$$local0' == root.second)
                         root.second.done := true
                     }
                 }

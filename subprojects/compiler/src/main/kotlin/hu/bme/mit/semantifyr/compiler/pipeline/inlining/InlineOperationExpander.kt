@@ -20,6 +20,8 @@ import hu.bme.mit.semantifyr.compiler.pipeline.utils.parentSequence
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.ExpressionModalityEvaluatorProvider
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.Modality
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
@@ -35,6 +37,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineSeqFor
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParameterDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 
 class InlineOperationExpander @Inject constructor(
@@ -47,6 +50,7 @@ class InlineOperationExpander @Inject constructor(
     private val callTargetResolver: CallTargetResolver,
     private val localVariableManager: LocalVariableManager,
     private val instanceCollector: InstanceCollector,
+    private val expressionModalityEvaluatorProvider: ExpressionModalityEvaluatorProvider,
 ) {
 
     fun expand(
@@ -151,24 +155,35 @@ class InlineOperationExpander @Inject constructor(
             sourceError(transitionDeclaration, "Abstract transition can not be inlined!")
         }
 
+        val arguments = bindArguments(actualTransition, callExpression)
+
         val inlined = OxstsFactory.createChoiceOperation().also {
             for (currentOperation in actualTransition.branches) {
                 val inlinedOperation = currentOperation.copy()
 
                 expressionRewriter.rewriteExpressionsToContext(inlinedOperation, containerInstanceReference)
-                expressionRewriter.rewriteExpressionsToCall(inlinedOperation, actualTransition, callExpression)
+                expressionRewriter.rewriteExpressionsToBindings(inlinedOperation, arguments.bindings)
 
                 it.branches += inlinedOperation
             }
         }
 
-        rewriteLocalVariables(inlined, containerInstance)
-
-        val body = if (inlined.branches.size == 1) {
+        val inlinedBranches = if (inlined.branches.size == 1) {
             inlined.branches.single()
         } else {
             inlined
         }
+
+        val body = if (arguments.temporaries.isEmpty()) {
+            inlinedBranches
+        } else {
+            OxstsFactory.createSequenceOperation().also {
+                it.steps += arguments.temporaries
+                it.steps += inlinedBranches
+            }
+        }
+
+        rewriteLocalVariables(body, containerInstance)
 
         if (!builtinAnnotationHandler.isTransitionTraced(actualTransition)) {
             return body
@@ -186,6 +201,41 @@ class InlineOperationExpander @Inject constructor(
             it.steps += tracerAssignment
             it.steps += body
         }
+    }
+
+    private class ArgumentBinding(
+        val temporaries: List<LocalVarDeclarationOperation>,
+        val bindings: Map<ParameterDeclaration, Expression>,
+    )
+
+    // a runtime argument is evaluated once, before the body, so a write in the body does not change what the parameter reads
+    private fun bindArguments(
+        transitionDeclaration: TransitionDeclaration,
+        callExpression: CallSuffixExpression,
+    ): ArgumentBinding {
+        val temporaries = sortedMapOf<Int, LocalVarDeclarationOperation>()
+        val bindings = mutableMapOf<ParameterDeclaration, Expression>()
+
+        for ((index, parameter) in transitionDeclaration.parameters.withIndex()) {
+            val argument = OxstsUtils.getArgumentFor(callExpression.arguments, parameter, index)
+            if (argument == null) {
+                bindings[parameter] = expressionRewriter.omittedArgument(parameter, callExpression)
+                continue
+            }
+            if (expressionModalityEvaluatorProvider.evaluate(argument.expression) != Modality.RUNTIME) {
+                bindings[parameter] = argument.expression
+                continue
+            }
+            val temporary = OxstsFactory.createLocalVarDeclarationOperation().also {
+                it.name = parameter.name
+                it.typeSpecification = parameter.typeSpecification.copy()
+                it.expression = argument.expression.copy()
+            }
+            temporaries[callExpression.arguments.indexOf(argument)] = temporary
+            bindings[parameter] = OxstsFactory.createElementReference(temporary)
+        }
+
+        return ArgumentBinding(temporaries.values.toList(), bindings)
     }
 
     private fun rewriteLocalVariables(operation: Operation, containerInstance: Instance) {

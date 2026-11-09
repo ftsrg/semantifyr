@@ -208,12 +208,14 @@ class RecordFlatteningTest : FlatteningTestBase() {
             """,
         )
 
-        val flag = quoted(field("flag"))
+        val flag = Regex.escape(quoted(field("flag")))
         val main = serialize(flattened.inlinedOxsts.mainTransition)
         for (name in listOf("x", "y")) {
-            val position = quoted(field("position", name))
-            val previous = quoted(field("previous", name))
-            assertThat(main).contains("$position := if $flag then $previous else $position")
+            val position = Regex.escape(quoted(field("position", name)))
+            val previous = Regex.escape(quoted(field("previous", name)))
+            val target = localField("target", name)
+            assertThat(main).containsPattern("var $target : int := $previous")
+            assertThat(main).containsPattern("$position := if $flag then $target else $position")
         }
     }
 
@@ -352,7 +354,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
     }
 
     @Test
-    fun `a record literal argument is passed by value and its fields are read directly`() {
+    fun `a record literal argument is passed by value`() {
         val flattened = flatten(
             "Host",
             records + """
@@ -374,11 +376,17 @@ class RecordFlatteningTest : FlatteningTestBase() {
             """,
         )
 
-        val positionX = quoted(field("position", "x"))
-        val positionY = quoted(field("position", "y"))
-        val last = quoted(field("last"))
+        val positionX = Regex.escape(quoted(field("position", "x")))
+        val positionY = Regex.escape(quoted(field("position", "y")))
+        val last = Regex.escape(quoted(field("last")))
         val main = serialize(flattened.inlinedOxsts.mainTransition)
-        assertThat(main).contains("$positionX := $last + 1", "$positionY := 7", "$last := $last + 1")
+        val targetX = localField("target", "x")
+        val targetY = localField("target", "y")
+        assertThat(main).containsPattern("var $targetX : int := $last \\+ 1")
+        assertThat(main).containsPattern("var $targetY : int := 7")
+        assertThat(main).containsPattern("$positionX := $targetX")
+        assertThat(main).containsPattern("$positionY := $targetY")
+        assertThat(main).containsPattern("$last := $targetX")
     }
 
     @Test
