@@ -187,6 +187,7 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
   let lastClose: SocketClose | null = null
   let cancelled = false
   let started = false
+  let startCompleted = false
   let disposed = false
 
   let metricsClient: (LspClient & MetricsTracker) | null = null
@@ -339,13 +340,49 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
     )
   }
 
+  const completeStart = (): void => {
+    if (startCompleted) {
+      return
+    }
+    startCompleted = true
+
+    if (sysmlBridge) {
+      contentSubscription = editorApp?.getEditor()?.onDidChangeModelContent(scheduleMappingRefresh) ?? null
+      void refreshMapping()
+    }
+
+    const api = createApi(options.backendUrl)
+    const flavorLookup = sysmlBridge ? Promise.resolve(SYSML_FLAVOR_INFO) : api.fetchFlavor(options.flavorId)
+    flavorLookup
+      .then((found) => {
+        if (cancelled) {
+          return
+        }
+        lastFlavor = found
+        notifyListeners(flavorListeners, (cb) => { cb(found); }, 'flavor')
+      })
+      .catch(() => { /* non-fatal */ })
+  }
+
+  // A first connect that failed is completed by whichever later connect succeeds
+  const reportConnected = (): void => {
+    reportStatus('connected')
+    completeStart()
+  }
+
   const reconnectController: ReconnectController = createReconnectController({
     maxAttempts: MAX_RECONNECT_ATTEMPTS,
     backoffMs: RECONNECT_BACKOFF_MS,
     connect: doConnect,
     isCancelled: () => cancelled,
     lastClose: () => lastClose,
-    onStatus: reportStatus,
+    onStatus: (status, info) => {
+      if (status === 'connected') {
+        reportConnected()
+      } else {
+        reportStatus(status, info)
+      }
+    },
   })
 
   const start = async (host: HTMLElement): Promise<void> => {
@@ -408,24 +445,7 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
         return
       }
       reconnectController.resetAttempts()
-      reportStatus('connected')
-
-      if (sysmlBridge) {
-        contentSubscription = editorApp.getEditor()?.onDidChangeModelContent(scheduleMappingRefresh) ?? null
-        void refreshMapping()
-      }
-
-      const api = createApi(options.backendUrl)
-      const flavorLookup = sysmlBridge ? Promise.resolve(SYSML_FLAVOR_INFO) : api.fetchFlavor(options.flavorId)
-      flavorLookup
-        .then((found) => {
-          if (cancelled) {
-            return
-          }
-          lastFlavor = found
-          notifyListeners(flavorListeners, (cb) => { cb(found); }, 'flavor')
-        })
-        .catch(() => { /* non-fatal */ })
+      reportConnected()
     } catch {
       if (!cancelled) {
         reportStatus('errored', 'Editor failed to start')
@@ -503,7 +523,7 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
         if (cancelled) {
           return
         }
-        reportStatus('connected')
+        reportConnected()
       })
       .catch(() => {
         reconnectController.schedule()

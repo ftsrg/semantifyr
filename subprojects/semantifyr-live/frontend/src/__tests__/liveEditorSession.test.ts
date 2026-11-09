@@ -11,6 +11,8 @@ import { CloseCode } from '../lib/session/reconnectController'
 const connections = vi.hoisted(() => {
   return {
     callbacks: [] as LanguageClientCallbacks[],
+    failures: 0,
+    flavorLookups: 0,
   }
 })
 
@@ -52,6 +54,10 @@ vi.mock('../lib/session/monaco', () => {
       callbacks: LanguageClientCallbacks,
     ) => {
       connections.callbacks.push(callbacks)
+      if (connections.failures > 0) {
+        connections.failures--
+        throw new Error('connection refused')
+      }
       return {
         getLanguageClient: () => undefined,
         dispose: async () => {},
@@ -64,7 +70,10 @@ vi.mock('../lib/api/rest', () => {
   return {
     createApi: () => {
       return {
-        fetchFlavor: async () => null,
+        fetchFlavor: async () => {
+          connections.flavorLookups++
+          return { id: 'oxsts' }
+        },
       }
     },
   }
@@ -102,6 +111,8 @@ describe('liveEditorSession', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     connections.callbacks.length = 0
+    connections.failures = 0
+    connections.flavorLookups = 0
   })
 
   afterEach(() => {
@@ -155,6 +166,36 @@ describe('liveEditorSession', () => {
     closeCurrentSocket(1006, '')
 
     expect(statuses.at(-1)?.status).toBe('reconnecting')
+    await session.dispose()
+  })
+
+  it('completes the start sequence when a retry connects after a failed first connect', async () => {
+    connections.failures = 1
+    const { session, statuses } = await startSession()
+    const flavors: unknown[] = []
+    session.onFlavorReady((flavor) => {
+      flavors.push(flavor)
+    })
+    expect(statuses.at(-1)).toEqual({ status: 'errored', info: 'Failed to connect to LSP server' })
+    expect(connections.flavorLookups).toBe(0)
+
+    session.reconnect()
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(statuses.at(-1)?.status).toBe('connected')
+    expect(connections.flavorLookups).toBe(1)
+    expect(flavors).toEqual([{ id: 'oxsts' }])
+    await session.dispose()
+  })
+
+  it('looks the flavor up once across reconnects', async () => {
+    const { session } = await startSession()
+
+    closeCurrentSocket(1006, '')
+    await vi.advanceTimersByTimeAsync(1_000)
+
+    expect(connections.callbacks).toHaveLength(2)
+    expect(connections.flavorLookups).toBe(1)
     await session.dispose()
   })
 })
