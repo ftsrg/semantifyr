@@ -32,7 +32,6 @@ import org.eclipse.lsp4j.DiagnosticSeverity
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.PublishDiagnosticsParams
 import org.eclipse.lsp4j.TextDocumentIdentifier
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
@@ -67,7 +66,6 @@ class InlineHintCodeActionTest {
         }
     }
 
-    @Disabled("live publishes issue codes and answers semantic code actions only with the live fixes of lsp-quickfixes")
     @Test
     fun `the code action of the hint makes the if inline`(@TempDir temporaryDirectory: Path) = testApplication {
         installLiveBackend(temporaryDirectory)
