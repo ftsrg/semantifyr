@@ -60,11 +60,7 @@ export function createApi(rawBackendUrl: string): LiveServerApi {
 
     async fetchFlavors() {
       const response = await get('/api/flavors')
-      if (!response.ok) {
-        return []
-      }
-      const data = (await response.json()) as FlavorsResponse
-      return data.flavors
+      return (await expectOk<FlavorsResponse>(response)).flavors
     },
 
     async fetchFlavor(id) {

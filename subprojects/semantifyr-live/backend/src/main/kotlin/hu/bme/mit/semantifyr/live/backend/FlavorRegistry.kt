@@ -24,6 +24,7 @@ enum class Language(val id: String) {
 data class Flavor(
     val id: String,
     val displayName: String,
+    val description: String,
     val fileName: String,
     val language: Language,
     val workspaceLayout: WorkspaceLayout,
@@ -48,6 +49,7 @@ object FlavorRegistry {
         Flavor(
             id = "oxsts",
             displayName = "Semantifyr",
+            description = "The core Semantifyr modelling language, no extra libraries.",
             fileName = "snippet.oxsts",
             language = Language.Oxsts,
             workspaceLayout = WorkspaceLayout.SingleFile,
@@ -58,6 +60,7 @@ object FlavorRegistry {
         Flavor(
             id = "oxsts-with-gamma-library",
             displayName = "Semantifyr with Gamma library",
+            description = "Semantifyr with the Gamma statechart library available to import.",
             fileName = "snippet.oxsts",
             language = Language.Oxsts,
             workspaceLayout = WorkspaceLayout.WithLibrary(
@@ -71,6 +74,7 @@ object FlavorRegistry {
         Flavor(
             id = "oxsts-with-sysmlv2-library",
             displayName = "Semantifyr with SysML v2 library",
+            description = "Semantifyr with the SysML v2 library available to import.",
             fileName = "snippet.oxsts",
             language = Language.Oxsts,
             workspaceLayout = WorkspaceLayout.WithLibrary(
@@ -84,6 +88,7 @@ object FlavorRegistry {
         Flavor(
             id = "gamma",
             displayName = "Gamma",
+            description = "Gamma statechart source, compiled to Semantifyr before verification.",
             fileName = "snippet.gamma",
             language = Language.Gamma,
             workspaceLayout = WorkspaceLayout.WithLibrary(

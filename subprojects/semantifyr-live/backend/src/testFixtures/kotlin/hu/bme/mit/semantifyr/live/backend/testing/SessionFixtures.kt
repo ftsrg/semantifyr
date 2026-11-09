@@ -31,6 +31,7 @@ fun testFlavor(
     return Flavor(
         id = id,
         displayName = "Semantifyr",
+        description = "The core Semantifyr modelling language, no extra libraries.",
         fileName = fileName,
         language = language,
         workspaceLayout = workspaceLayout,

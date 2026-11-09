@@ -31,6 +31,7 @@ data class InfoResponse(
 data class FlavorResponse(
     val id: String,
     val displayName: String,
+    val description: String,
     val languageId: String,
     val fileName: String,
     val verificationCommand: String,
@@ -43,6 +44,7 @@ data class FlavorResponse(
         fun fromFlavor(flavor: Flavor) = FlavorResponse(
             id = flavor.id,
             displayName = flavor.displayName,
+            description = flavor.description,
             languageId = flavor.language.id,
             fileName = flavor.fileName,
             verificationCommand = flavor.verificationCommand,

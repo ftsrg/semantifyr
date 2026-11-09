@@ -10,9 +10,9 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 import {
-  LIVE_FLAVORS,
   findExample,
   findFlavor,
+  liveFlavors,
   type LiveExample,
   type LiveFlavor,
 } from '../examples';
@@ -49,14 +49,6 @@ import { FONT_SIZE } from '../lib/util/theme';
 
 const LiveEditor = lazy(() => import('./editor/LiveEditor'));
 
-const DEFAULT_FLAVOR = LIVE_FLAVORS[0];
-const DEFAULT_EXAMPLE: LiveExample = (() => {
-  const first = DEFAULT_FLAVOR.examples[0];
-  if (!first) {
-    throw new Error(`flavor ${DEFAULT_FLAVOR.id} has no examples`);
-  }
-  return first;
-})();
 const RIGHT_PANE_WIDTH_KEY = 'semantifyr-right-pane-width';
 const DEFAULT_RIGHT_PANE_WIDTH = 480;
 const MIN_LEFT_WIDTH = 320;
@@ -73,6 +65,7 @@ const MIN_VERIFICATION_PANEL_HEIGHT = 80;
 const MIN_EDITOR_AREA_HEIGHT = 120;
 
 const COPY_CONFIRMATION_MS = 2000;
+const FLAVORS_RETRY_MS = 5000;
 
 
 interface Props {
@@ -91,9 +84,14 @@ interface UrlState {
   shared: boolean;
 }
 
-async function resolveInitialState(search: string): Promise<UrlState> {
+interface LoadedPage {
+  flavors: readonly [LiveFlavor, ...LiveFlavor[]];
+  initial: UrlState;
+}
+
+async function resolveInitialState(search: string, flavors: readonly [LiveFlavor, ...LiveFlavor[]]): Promise<UrlState> {
   const parameters = parseLiveEditorUrl(search);
-  const flavor = (parameters.flavor ? findFlavor(parameters.flavor) : undefined) ?? DEFAULT_FLAVOR;
+  const flavor = findFlavor(flavors, parameters.flavor) ?? flavors[0];
   const decodedCode = parameters.compressedCode ? await decodeCompressedBase64Url(parameters.compressedCode) : null;
 
   const fallback = flavor.examples[0];
@@ -119,17 +117,66 @@ function deriveConnectionMessage(status: LiveEditorStatus, statusInfo: string | 
   }
 }
 
-export default function EditorPage({
+export default function EditorPage(props: Props): React.JSX.Element {
+  const { backendUrl } = props;
+  const [loaded, setLoaded] = useState<LoadedPage | null>(null);
+  const [waiting, setWaiting] = useState(false);
+
+  useEffect(() => {
+    const api = createApi(backendUrl);
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    const load = async (): Promise<void> => {
+      try {
+        const flavors = liveFlavors(await api.fetchFlavors());
+        const initial = await resolveInitialState(typeof window === 'undefined' ? '' : window.location.search, flavors);
+        if (!cancelled) {
+          setLoaded({ flavors, initial });
+        }
+      } catch {
+        if (!cancelled) {
+          setWaiting(true);
+          retryTimer = setTimeout(() => {
+            void load();
+          }, FLAVORS_RETRY_MS);
+        }
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+      if (retryTimer !== null) {
+        clearTimeout(retryTimer);
+      }
+    };
+  }, [backendUrl]);
+
+  if (loaded === null) {
+    return (
+      <Box sx={{ height: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, bgcolor: 'var(--page-bg)' }}>
+        <CircularProgress size={32} sx={{ color: 'text.secondary' }} />
+        <Typography sx={{ color: 'text.secondary', fontSize: FONT_SIZE.md }}>
+          {waiting ? 'Waiting for the Semantifyr server...' : 'Loading editor...'}
+        </Typography>
+      </Box>
+    );
+  }
+  return <EditorWorkspace {...props} flavors={loaded.flavors} initial={loaded.initial} />;
+}
+
+function EditorWorkspace({
   backendUrl,
   colorMode,
   colorModePreference,
   onToggleColorMode,
   embedded = false,
-}: Props): React.JSX.Element {
-  const [flavor, setFlavor] = useState<LiveFlavor>(DEFAULT_FLAVOR);
-  const [example, setExample] = useState<LiveExample>(DEFAULT_EXAMPLE);
-  const [code, setCode] = useState<string>(DEFAULT_EXAMPLE.code);
-  const [shared, setShared] = useState(false);
+  flavors,
+  initial,
+}: Props & LoadedPage): React.JSX.Element {
+  const [flavor, setFlavor] = useState<LiveFlavor>(initial.flavor);
+  const [example, setExample] = useState<LiveExample>(initial.example);
+  const [code, setCode] = useState<string>(initial.code);
+  const [shared, setShared] = useState(initial.shared);
   const [copyConfirmation, setCopyConfirmation] = useState<string | null>(null);
   const [pendingSwitch, setPendingSwitch] = useState<(() => void) | null>(null);
 
@@ -183,21 +230,6 @@ export default function EditorPage({
   const copyConfirmationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    let cancelled = false;
-    void resolveInitialState(window.location.search).then((initial) => {
-      if (cancelled) return;
-      setFlavor(initial.flavor);
-      setExample(initial.example);
-      setCode(initial.code);
-      setShared(initial.shared);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
     const api = createApi(backendUrl);
     let cancelled = false;
     void api.fetchPortfolios()
@@ -226,7 +258,7 @@ export default function EditorPage({
   }, [currentEditorContent, example.code]);
 
   const handleSelectModel = useCallback((flavorId: string, exampleId: string) => {
-    const nextFlavor = findFlavor(flavorId);
+    const nextFlavor = findFlavor(flavors, flavorId);
     if (!nextFlavor) return;
     const fallbackExample = nextFlavor.examples[0];
     if (!fallbackExample) return;
@@ -244,7 +276,7 @@ export default function EditorPage({
         });
       }
     });
-  }, [flavor.id, example.id, embedded, runOrConfirm]);
+  }, [flavors, flavor.id, example.id, embedded, runOrConfirm]);
 
   const flashCopyConfirmation = useCallback((message: string) => {
     setCopyConfirmation(message);
@@ -608,7 +640,7 @@ export default function EditorPage({
       {embedded ? body : (
         <EditorShell
           logoSrc={logoSrc}
-          flavors={LIVE_FLAVORS}
+          flavors={flavors}
           currentFlavorId={flavor.id}
           currentExampleId={example.id}
           onSelectModel={handleSelectModel}

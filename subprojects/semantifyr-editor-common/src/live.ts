@@ -19,6 +19,7 @@ export interface PortfoliosResponse {
 export interface FlavorInfo {
     id: string;
     displayName: string;
+    description: string;
     languageId: string;
     fileName: string;
     verificationCommand: string;
