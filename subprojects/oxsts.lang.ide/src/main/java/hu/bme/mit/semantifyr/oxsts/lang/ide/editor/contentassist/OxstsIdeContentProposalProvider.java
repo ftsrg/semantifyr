@@ -412,19 +412,30 @@ public class OxstsIdeContentProposalProvider extends IdeContentProposalProvider 
     private void createRedefinitionProposals(
             DomainDeclaration domain, ContentAssistContext context, IIdeContentProposalAcceptor acceptor) {
         for (var declaration : redefinableMembers(domain, null)) {
-            var header = "redefine " + keyword(declaration)
-                    + (hasExplicitName(declaration) ? " " + header(declaration) : "");
-            var body = body(declaration);
-            var entry = getProposalCreator().createProposal(header + body, context, kind(declaration), (it) -> {
-                it.setLabel(header);
-                it.setDescription(NamingUtil.getName(declaration.eContainer()));
-                if (!body.isEmpty()) {
-                    it.setEscapePosition(
-                            context.getOffset() - context.getPrefix().length() + escapeIndex(header, body));
-                }
-            });
-            acceptor.accept(entry, getProposalPriorities().getDefaultPriority(entry));
+            for (var keyword : redefinitionKeywords(declaration)) {
+                var header = "redefine " + keyword + (hasExplicitName(declaration) ? " " + header(declaration) : "");
+                var body = body(declaration);
+                var entry = getProposalCreator().createProposal(header + body, context, kind(declaration), (it) -> {
+                    it.setLabel(header);
+                    it.setDescription(NamingUtil.getName(declaration.eContainer()));
+                    if (!body.isEmpty()) {
+                        it.setEscapePosition(
+                                context.getOffset() - context.getPrefix().length() + escapeIndex(header, body));
+                    }
+                });
+                acceptor.accept(entry, getProposalPriorities().getDefaultPriority(entry));
+            }
         }
+    }
+
+    // An abstract `features` member is made concrete by its redefinition.
+    private List<String> redefinitionKeywords(RedefinableDeclaration declaration) {
+        if (declaration instanceof FeatureDeclaration feature && feature.getKind() == FeatureKind.FEATURE) {
+            return List.of(
+                    DeclarationSignatures.keyword(FeatureKind.CONTAINMENT),
+                    DeclarationSignatures.keyword(FeatureKind.REFERENCE));
+        }
+        return List.of(keyword(declaration));
     }
 
     private List<RedefinableDeclaration> redefinableMembers(DomainDeclaration domain, Declaration editedDeclaration) {

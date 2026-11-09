@@ -215,6 +215,28 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
     }
 
     @Test
+    void classBodyOffersAnAbstractFeatureAsContainsAndRefersRedefinitions() throws Exception {
+        var items = complete(MarkedText.of(basicsWith("""
+                abstract class LightHolder {
+                    features light: TrafficLight
+                }
+
+                class ConcreteLightHolder : LightHolder {
+                    <|>
+                }
+                """)));
+
+        assertThat(labels(items))
+                .contains("redefine contains light: TrafficLight", "redefine refers light: TrafficLight")
+                .doesNotContain("redefine features light: TrafficLight");
+        assertThat(item(items, "redefine refers light: TrafficLight")).satisfies(item -> {
+            assertThat(item.getKind()).isEqualTo(CompletionItemKind.Property);
+            assertThat(item.getDetail()).isEqualTo("LightHolder");
+            assertThat(item.getTextEdit().getLeft().getNewText()).isEqualTo("redefine refers light: TrafficLight");
+        });
+    }
+
+    @Test
     void classBodyAfterAFeatureOffersTheRedefinitionsOfTheClassNotOfTheFeatureType() throws Exception {
         var items = complete(MarkedText.of(basicsWith("""
                 class Case {
