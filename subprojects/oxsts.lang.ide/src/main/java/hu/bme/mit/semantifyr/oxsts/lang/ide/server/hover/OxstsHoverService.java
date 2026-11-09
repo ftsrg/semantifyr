@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.hover;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
+import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RedefinableDeclaration;
 import java.util.ArrayList;
@@ -29,6 +30,9 @@ public class OxstsHoverService extends HoverService {
     @Inject
     private IEObjectDocumentationProvider documentationProvider;
 
+    @Inject
+    private OxstsQualifiedNameProvider qualifiedNameProvider;
+
     @Override
     public String getContents(EObject element) {
         if (element == null) {
@@ -40,12 +44,16 @@ public class OxstsHoverService extends HoverService {
         }
 
         var sections = new ArrayList<String>();
+        var owner = getOwnerName(element);
+        if (owner != null) {
+            sections.add("`" + owner + "`");
+        }
         sections.add("```oxsts\n" + declaration + "\n```");
 
         var redefined = getRedefined(element);
         if (redefined != null) {
-            var owner = NamingUtil.getName(redefined.eContainer());
-            sections.add("Redefines `" + declarationRenderer.render(redefined) + "` in `" + owner + "`.");
+            var redefinedOwner = NamingUtil.getName(redefined.eContainer());
+            sections.add("Redefines `" + declarationRenderer.render(redefined) + "` in `" + redefinedOwner + "`.");
         }
 
         var documentation = getDocumentation(element);
@@ -54,6 +62,17 @@ public class OxstsHoverService extends HoverService {
         }
 
         return String.join("\n\n", sections);
+    }
+
+    protected String getOwnerName(EObject element) {
+        var owner = element.eContainer();
+        while (owner != null) {
+            if (qualifiedNameProvider.getFullyQualifiedName(owner) != null) {
+                return qualifiedNameProvider.getFullyQualifiedNameString(owner);
+            }
+            owner = owner.eContainer();
+        }
+        return null;
     }
 
     protected RedefinableDeclaration getRedefined(EObject element) {

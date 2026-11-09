@@ -39,6 +39,8 @@ class OxstsHoverTest extends OxstsLanguageServerTest {
                 """);
 
         assertThat(contents).isEqualTo("""
+                `example::lights::TrafficLight`
+
                 ```oxsts
                 tran setColor(color: LightColor)
                 ```
@@ -66,6 +68,8 @@ class OxstsHoverTest extends OxstsLanguageServerTest {
                 .get();
 
         assertThat(hover.getContents().getRight().getValue()).isEqualTo("""
+                `example::crossing::SlowLight`
+
                 ```oxsts
                 redefine tran setColor(color: LightColor)
                 ```
@@ -84,6 +88,8 @@ class OxstsHoverTest extends OxstsLanguageServerTest {
                 """);
 
         assertThat(contents).isEqualTo("""
+                `example::crossing::Crossing`
+
                 ```oxsts
                 contains light: TrafficLight[1]
                 ```""");
@@ -98,6 +104,8 @@ class OxstsHoverTest extends OxstsLanguageServerTest {
                 """);
 
         assertThat(contents).isEqualTo("""
+                `example::crossing::Crossing::switchTo`
+
                 ```oxsts
                 parameter target: LightColor
                 ```""");
@@ -112,8 +120,30 @@ class OxstsHoverTest extends OxstsLanguageServerTest {
                 """);
 
         assertThat(contents).isEqualTo("""
+                `example::lights::LightColor`
+
                 ```oxsts
                 enum literal LightColor::Green
                 ```""");
+    }
+
+    @Test
+    void hoverOnACallOfAnUnnamedTransitionNamesTheClassOfTheResolvedRedefinition() throws Exception {
+        var contents = hover("""
+                tran step() {
+                    inline light.ma<|>in()
+                }
+                """);
+
+        assertThat(contents).isEqualTo("""
+                `example::lights::TrafficLight`
+
+                ```oxsts
+                redefine tran
+                ```
+
+                Redefines `tran` in `Anything`.
+
+                The base main transition.""");
     }
 }

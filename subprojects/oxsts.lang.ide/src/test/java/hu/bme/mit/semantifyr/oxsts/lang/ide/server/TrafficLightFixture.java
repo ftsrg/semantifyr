@@ -36,6 +36,10 @@ final class TrafficLightFixture {
                     inline setColor(color)
                 }
 
+                redefine tran {
+                    inline setColor(LightColor::Green)
+                }
+
                 prop isColor(color: LightColor): bool {
                     return self.color == color
                 }
