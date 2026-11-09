@@ -10,7 +10,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 enum class ArtifactKind {
-    OutputModel,
     InstantiatedModel,
     InlinedModel,
     FlattenedModel,
