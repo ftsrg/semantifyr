@@ -3,22 +3,19 @@
   "name": "Oxsts",
   "patterns": [
     {
+      "include": "#comments"
+    },
+    {
+      "include": "#string"
+    },
+    {
       "include": "#keywords"
     },
     {
       "include": "#operators"
     },
     {
-      "include": "#types"
-    },
-    {
       "include": "#literals"
-    },
-    {
-      "include": "#string"
-    },
-    {
-      "include": "#comments"
     }
   ],
   "repository": {
@@ -26,7 +23,7 @@
       "patterns": [
         {
           "name": "keyword.control.oxsts",
-          "match": "\\b(return|inlined|oxsts|of|annotation|import|prop|package|extern|datatype|enum|record|var|abstract|class|redefine|redefines|tran|init|main|havoc|or|refers|in|contains|container|derived|features|subsets|opposite|havoc|choice|else|assume|if|inline|trace|for|global|containment|feature|reference|witness|as)\\b"
+          "match": "\\b(AG|EF|abstract|annotation|as|assume|choice|class|container|contains|datatype|derived\\s+refers|else|enum|extern|features|for|global\\s+containment|global\\s+reference|havoc|if|import|in|init|inline|inlined|of|opposite|or|oxsts|package|prop|record|redefine|redefines|refers|return|seq|subsets|then|tran|var|witness)\\b"
         }
       ]
     },
@@ -34,15 +31,11 @@
       "patterns": [
         {
           "name": "keyword.operator.oxsts",
-          "match": "(==|!=|<=|>=|<|>|\\+|-|&&|\\|\\|)"
+          "match": "(==|!=|<=|>=|&&|\\|\\||\\^\\^|\\.\\.<|\\.\\.|\\?\\.|<|>|\\+|-|\\*|/|!)"
         },
         {
           "name": "keyword.operator.assignment.oxsts",
           "match": ":="
-        },
-        {
-          "name": "keyword.operator.transitive.oxsts",
-          "match": "(\\+|\\*)"
         }
       ]
     },
@@ -50,11 +43,7 @@
       "patterns": [
         {
           "name": "constant.numeric.oxsts",
-          "match": "\\b((\\d+)|(\\d+\\.\\d+)|\\*)\\b"
-        },
-        {
-          "name": "constant.string.oxsts",
-          "match": "\\b\".*\"\\b"
+          "match": "\\b(\\d+\\.\\d+|\\d+)\\b"
         },
         {
           "name": "constant.language.boolean.oxsts",

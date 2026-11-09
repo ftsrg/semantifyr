@@ -29,6 +29,10 @@ tasks.named("test") {
         .withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
+tasks.withType<Test>().configureEach {
+    inputs.file(layout.projectDirectory.file("../semantifyr-vscode/syntaxes/oxsts.tmLanguage.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
 application {
     mainClass = "hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsIdeSetup"
 }
