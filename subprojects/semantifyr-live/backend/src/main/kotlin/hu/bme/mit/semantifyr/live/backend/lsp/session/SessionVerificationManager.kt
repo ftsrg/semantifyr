@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.live.backend.lsp.session
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
-import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationStatus
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
@@ -28,6 +27,7 @@ import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Timer
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.job
@@ -95,24 +95,28 @@ class SessionVerificationManager @Inject constructor(
         return sessionRunContext.coroutineScope.future(launchContext) {
             val mdcContext = withVerificationIdMdc(verificationId)
             withContext(mdcContext) {
+                // A cancelled coroutine drops its return value, so the cancellable work runs under its own job
+                val workJob = SupervisorJob(coroutineContext.job)
                 val entry = Entry(
                     verificationId = verificationId,
                     kind = kind,
                     location = location,
                     portfolioId = portfolioId,
                     startedAt = startedAt,
-                    job = coroutineContext.job,
+                    job = workJob,
                 )
                 verifications[verificationId] = entry
                 notifyActiveChanged()
                 try {
-                    val result = verificationManager.withPermit {
-                        entry.state = VerificationState.Running
-                        entry.runningSince = TimeSource.Monotonic.markNow()
-                        recordQueueWait(entry)
-                        notifyActiveChanged()
-                        withTimeout(backendConfig.verification.timeout) {
-                            work()
+                    val result = withContext(workJob) {
+                        verificationManager.withPermit {
+                            entry.state = VerificationState.Running
+                            entry.runningSince = TimeSource.Monotonic.markNow()
+                            recordQueueWait(entry)
+                            notifyActiveChanged()
+                            withTimeout(backendConfig.verification.timeout) {
+                                work()
+                            }
                         }
                     }
                     recordFinished(entry, result)
@@ -120,20 +124,21 @@ class SessionVerificationManager @Inject constructor(
                 } catch (e: TimeoutCancellationException) {
                     val message = "Verification timed out after ${backendConfig.verification.timeout}"
                     logger.warn(e) { message }
-                    VerificationCaseResult(VerificationStatus.TIMEOUT, message, null, portfolioId, null, null).also {
+                    timedOutResult(kind, portfolioId, message).also {
                         recordFinished(entry, it)
                     }
                 } catch (e: CancellationException) {
                     logger.info(e) { "Verification cancelled" }
                     recordCancelled(entry)
-                    null
+                    cancelledResult(kind, portfolioId)
                 } catch (e: Throwable) {
                     val message = "Verification failed: ${e.message ?: e::class.simpleName}"
                     logger.error(e) { message }
-                    erroredResult(portfolioId, message).also {
+                    erroredResult(kind, portfolioId, message).also {
                         recordFinished(entry, it)
                     }
                 } finally {
+                    workJob.complete()
                     verifications.remove(verificationId)
                     notifyActiveChanged()
                 }
@@ -204,8 +209,34 @@ class SessionVerificationManager @Inject constructor(
             .increment()
     }
 
-    private fun erroredResult(portfolioId: String, message: String): VerificationCaseResult {
-        return VerificationCaseResult(VerificationStatus.ERRORED, message, null, portfolioId, null, null)
+    private fun timedOutResult(
+        kind: VerificationKind,
+        portfolioId: String,
+        message: String,
+    ): Any {
+        return when (kind) {
+            VerificationKind.Verify -> VerificationCaseResult.timedOut(message, portfolioId)
+            VerificationKind.Validate -> WitnessValidationResult.timedOut(message, portfolioId)
+        }
+    }
+
+    private fun cancelledResult(kind: VerificationKind, portfolioId: String): Any {
+        val message = "Verification cancelled"
+        return when (kind) {
+            VerificationKind.Verify -> VerificationCaseResult.cancelled(message, portfolioId)
+            VerificationKind.Validate -> WitnessValidationResult.cancelled(message, portfolioId)
+        }
+    }
+
+    private fun erroredResult(
+        kind: VerificationKind,
+        portfolioId: String,
+        message: String,
+    ): Any {
+        return when (kind) {
+            VerificationKind.Verify -> VerificationCaseResult.errored(message, portfolioId)
+            VerificationKind.Validate -> WitnessValidationResult.errored(message, portfolioId)
+        }
     }
 
     private fun notifyActiveChanged() {

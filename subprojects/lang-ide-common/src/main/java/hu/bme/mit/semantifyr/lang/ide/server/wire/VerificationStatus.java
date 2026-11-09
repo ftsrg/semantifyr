@@ -16,6 +16,7 @@ public final class VerificationStatus {
     public static final String TIMEOUT = "timeout";
     public static final String NOT_SUPPORTED = "not_supported";
     public static final String ERRORED = "errored";
+    public static final String CANCELLED = "cancelled";
 
     private VerificationStatus() {}
 
