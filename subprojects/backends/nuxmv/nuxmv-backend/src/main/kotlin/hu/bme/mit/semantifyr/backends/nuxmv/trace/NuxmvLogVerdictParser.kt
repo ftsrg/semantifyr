@@ -6,7 +6,7 @@
 
 package hu.bme.mit.semantifyr.backends.nuxmv.trace
 
-private val SOURCE_ERROR = Regex("^file .+: line \\d+: ")
+private val SOURCE_ERROR = Regex("^(TYPE ERROR )?file .+: line \\d+ ?: ")
 
 class NuxmvLogVerdictParser {
 
@@ -44,8 +44,7 @@ class NuxmvLogVerdictParser {
 
     private fun isRejectionLine(line: String): Boolean {
         return SOURCE_ERROR.containsMatchIn(line) ||
-            line.startsWith("Parsing error", ignoreCase = true) ||
-            line.startsWith("Error:", ignoreCase = true)
+            line.startsWith("ERROR: ")
     }
 
     private fun opensBlock(lowerLine: String): Boolean {

@@ -79,18 +79,33 @@ class NuxmvLogVerdictParserTest {
     fun `a model nuXmv rejects names nuXmv's message`() {
         val rejection = parser.rejection(
             sequenceOf(
-                "*** This is nuXmv 2.1.0 (compiled on Fri Nov 29 13:41:31 2024)",
-                "file /work/model.smv: line 3: at token \"color\": syntax error",
+                "",
+                "file /work/model.smv: line 6: at token \"TRANS\": syntax error",
+                "aborting 'source commands.cmd'",
             ),
         )
 
-        assertThat(rejection).contains("at token \"color\": syntax error")
+        assertThat(rejection).isEqualTo("file /work/model.smv: line 6: at token \"TRANS\": syntax error")
     }
 
     @Test
-    fun `a command nuXmv refuses names nuXmv's message`() {
-        assertThat(parser.rejection(sequenceOf("Error: the model contains infinite domain variables"))).contains("infinite domain")
-        assertThat(parser.rejection(sequenceOf("Parsing error: expected an invariant"))).contains("expected an invariant")
+    fun `a property nuXmv refuses names nuXmv's message`() {
+        val rejection = parser.rejection(
+            sequenceOf(
+                "TYPE ERROR file /work/model.smv: line 6 : undefined identifier 'z'",
+                "ERROR: Property \"z < 3 \" is not correct or not well typed.",
+                "aborting 'source commands.cmd'",
+            ),
+        )
+
+        assertThat(rejection).contains("undefined identifier 'z'", "is not correct or not well typed")
+    }
+
+    @Test
+    fun `a BDD check of an unbounded integer names nuXmv's message`() {
+        val rejection = parser.rejection(sequenceOf("file /work/model.smv: line 6: Impossible to build a BDD FSM with infinite precision variables"))
+
+        assertThat(rejection).contains("Impossible to build a BDD FSM with infinite precision variables")
     }
 
     @Test

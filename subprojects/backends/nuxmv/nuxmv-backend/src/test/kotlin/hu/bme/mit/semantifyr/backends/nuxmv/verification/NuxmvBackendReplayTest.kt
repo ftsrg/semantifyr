@@ -135,6 +135,14 @@ class NuxmvBackendReplayTest {
     }
 
     @Test
+    suspend fun `a model nuXmv rejects is Errored with nuXmv's message`() {
+        val result = verify("RejectedModel", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(result.message).contains("\"y\" undefined")
+    }
+
+    @Test
     suspend fun `a violated invariant fails with a witness through the violating states`() {
         val result = verify("CounterExceedsBound", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
 

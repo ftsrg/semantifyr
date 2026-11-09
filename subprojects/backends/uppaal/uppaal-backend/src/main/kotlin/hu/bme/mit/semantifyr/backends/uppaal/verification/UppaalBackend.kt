@@ -146,9 +146,6 @@ class UppaalVerificationContext @AssistedInject constructor(
                 uppaalLogVerdictParser.rejection(it)
             }
         } ?: return
-        if (rejection.contains("support", ignoreCase = true)) {
-            throw BackendUnsupportedException("$backendId does not support the model: $rejection")
-        }
         error("verifyta rejected the model: $rejection")
     }
 

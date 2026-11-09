@@ -11,7 +11,6 @@ import com.google.inject.Injector
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
 import com.google.inject.assistedinject.FactoryModuleBuilder
-import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationBackend
@@ -158,9 +157,6 @@ class SpinVerificationContext @AssistedInject constructor(
                 spinLogVerdictParser.rejection(it)
             }
         } ?: return
-        if (rejection.contains("support", ignoreCase = true)) {
-            throw BackendUnsupportedException("$backendId does not support the model: $rejection")
-        }
         error("Spin rejected the model: $rejection")
     }
 

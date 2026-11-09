@@ -30,4 +30,5 @@ Trace Description: IC3 smt counterexample
 Trace Type: Counterexample 
   -> State: 1.1 <-
     __root__light = semantifyr__verification__lang__initial_uvalues__Light_eOn
-    __root__light__init_b0_seed = semantifyr__verification__lang__initial_uvalues__Light_eOn
+    __root__light__init_b0_seed = semantifyr__verification__lang__initial_uvalues__Light_eOff
+    __root__light__init_b0_2 = semantifyr__verification__lang__initial_uvalues__Light_eOn
