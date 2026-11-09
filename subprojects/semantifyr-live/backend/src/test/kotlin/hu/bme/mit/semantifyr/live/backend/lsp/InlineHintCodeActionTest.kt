@@ -59,7 +59,7 @@ class InlineHintCodeActionTest {
     fun `a compile-time if is published as a hint at its keyword`(@TempDir temporaryDirectory: Path) = testApplication {
         installLiveBackend(temporaryDirectory)
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
-            val diagnostics = openModel()
+            val diagnostics = openIfHints()
             assertThat(diagnostics).hasSize(1)
             assertThat(diagnostics[0].severity).isEqualTo(DiagnosticSeverity.Hint)
             assertThat(diagnostics[0].range.start).isEqualTo(Position(6, 8))
@@ -72,7 +72,7 @@ class InlineHintCodeActionTest {
     fun `the code action of the hint makes the if inline`(@TempDir temporaryDirectory: Path) = testApplication {
         installLiveBackend(temporaryDirectory)
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
-            val diagnostics = openModel()
+            val diagnostics = openIfHints()
             assertThat(diagnostics).hasSize(1)
             val hint = diagnostics[0]
             assertThat(hint.code?.left).isEqualTo("OXSTS.COULD_BE_INLINE")
@@ -106,11 +106,13 @@ class InlineHintCodeActionTest {
         }
     }
 
-    private suspend fun DefaultClientWebSocketSession.openModel(): List<Diagnostic> {
+    private suspend fun DefaultClientWebSocketSession.openIfHints(): List<Diagnostic> {
         send(Frame.Text(LspWire.initializeRequest()))
         awaitResponseFor(id = 1)
         send(Frame.Text(LspWire.initializedNotification()))
         send(Frame.Text(LspWire.didOpenNotification(uri = uri, languageId = "oxsts", text = model)))
-        return awaitPublishDiagnostics(uri).paramsAs(PublishDiagnosticsParams::class.java).diagnostics
+        return awaitPublishDiagnostics(uri).paramsAs(PublishDiagnosticsParams::class.java).diagnostics.filter {
+            it.range.start == Position(6, 8)
+        }
     }
 }

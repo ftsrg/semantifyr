@@ -15,7 +15,17 @@ import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.PropertyTypeHandler;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ArrayEvaluation;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.BooleanEvaluation;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EnumLiteralEvaluation;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.InfinityEvaluation;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.IntegerEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluatorProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.NothingEvaluation;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RealEvaluation;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.StringEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils;
 import hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Annotation;
@@ -36,6 +46,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RedefinableDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TypeSpecification;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -48,6 +59,7 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.lsp4j.Diagnostic;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.xtext.CrossReference;
@@ -66,6 +78,7 @@ import org.eclipse.xtext.nodemodel.ILeafNode;
 import org.eclipse.xtext.nodemodel.INode;
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils;
 import org.eclipse.xtext.resource.EObjectAtOffsetHelper;
+import org.eclipse.xtext.resource.ILocationInFileProvider;
 import org.eclipse.xtext.resource.XtextResource;
 import org.eclipse.xtext.scoping.IScopeProvider;
 
@@ -82,7 +95,8 @@ public class OxstsQuickFixProvider implements IQuickFixProvider {
             OxstsValidator.ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED,
             OxstsValidator.MISSING_INITIALIZER,
             OxstsValidator.INVALID_CALL_ARGUMENTS_COUND,
-            OxstsValidator.COULD_BE_INLINE);
+            OxstsValidator.COULD_BE_INLINE,
+            OxstsValidator.CONSTANT_EXPRESSION);
 
     private static final int MAXIMUM_NEAR_MATCHES = 3;
 
@@ -113,6 +127,12 @@ public class OxstsQuickFixProvider implements IQuickFixProvider {
     @Inject
     private BuiltinAnnotationHandler builtinAnnotationHandler;
 
+    @Inject
+    private ConstantExpressionEvaluatorProvider constantExpressionEvaluatorProvider;
+
+    @Inject
+    private ILocationInFileProvider locationInFileProvider;
+
     @Override
     public boolean handlesDiagnostic(Diagnostic diagnostic) {
         return diagnostic.getCode() != null
@@ -135,6 +155,7 @@ public class OxstsQuickFixProvider implements IQuickFixProvider {
                 case OxstsValidator.MISSING_INITIALIZER -> addDefaultInitializer(site);
                 case OxstsValidator.INVALID_CALL_ARGUMENTS_COUND -> addMissingArguments(site);
                 case OxstsValidator.COULD_BE_INLINE -> makeInline(site);
+                case OxstsValidator.CONSTANT_EXPRESSION -> inlineAsConstant(site);
                 default -> {}
             }
         }
@@ -317,6 +338,88 @@ public class OxstsQuickFixProvider implements IQuickFixProvider {
                 }
             };
         });
+    }
+
+    private void inlineAsConstant(IssueSite site) {
+        site.acceptor().accept("Inline as constant", (ISemanticModification) (diagnostic, object) -> {
+            var expression = hintedExpression(diagnostic, object);
+            var literal = literalOf(constantExpressionEvaluatorProvider.evaluate(expression));
+            return element -> {
+                EcoreUtil2.replace(expression, literal);
+            };
+        });
+    }
+
+    private Expression hintedExpression(Diagnostic diagnostic, EObject object) {
+        var text = ((XtextResource) object.eResource())
+                .getParseResult()
+                .getRootNode()
+                .getText();
+        var start = offsetOf(text, diagnostic.getRange().getStart());
+        var end = offsetOf(text, diagnostic.getRange().getEnd());
+        for (var current = object; current instanceof Expression expression; current = current.eContainer()) {
+            var region = locationInFileProvider.getFullTextRegion(expression);
+            if (region.getOffset() == start && region.getOffset() + region.getLength() == end) {
+                return expression;
+            }
+        }
+        throw new IllegalStateException("No expression covers the constant expression hint");
+    }
+
+    private static int offsetOf(String text, Position position) {
+        var offset = 0;
+        for (int line = 0; line < position.getLine(); line++) {
+            offset = text.indexOf('\n', offset) + 1;
+        }
+        return offset + position.getCharacter();
+    }
+
+    private Expression literalOf(ExpressionEvaluation value) {
+        var factory = OxstsFactory.eINSTANCE;
+        return switch (value) {
+            case BooleanEvaluation booleanValue -> {
+                var literal = factory.createLiteralBoolean();
+                literal.setValue(booleanValue.value());
+                yield literal;
+            }
+            case IntegerEvaluation integerValue -> {
+                var literal = factory.createLiteralInteger();
+                literal.setValue(Math.abs(integerValue.value()));
+                yield integerValue.value() < 0 ? negated(literal) : literal;
+            }
+            case RealEvaluation realValue -> {
+                var literal = factory.createLiteralReal();
+                literal.setValue(Math.abs(realValue.value()));
+                yield realValue.value() < 0 ? negated(literal) : literal;
+            }
+            case StringEvaluation stringValue -> {
+                var literal = factory.createLiteralString();
+                literal.setValue(stringValue.value());
+                yield literal;
+            }
+            case EnumLiteralEvaluation enumValue -> {
+                var reference = factory.createElementReference();
+                reference.setElement(enumValue.literal());
+                yield reference;
+            }
+            case ArrayEvaluation arrayValue -> {
+                var literal = factory.createArrayLiteral();
+                for (var element : arrayValue.elements()) {
+                    literal.getValues().add(literalOf(element));
+                }
+                yield literal;
+            }
+            case NothingEvaluation nothing -> factory.createLiteralNothing();
+            case InfinityEvaluation infinity -> factory.createLiteralInfinity();
+            default -> throw new IllegalStateException("No literal for " + value);
+        };
+    }
+
+    private Expression negated(Expression body) {
+        var operator = OxstsFactory.eINSTANCE.createArithmeticUnaryOperator();
+        operator.setOp(UnaryOp.MINUS);
+        operator.setBody(body);
+        return operator;
     }
 
     private Declaration stub(Declaration member) {

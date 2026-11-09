@@ -20,5 +20,17 @@ final class InlineHintModels {
             }
             """;
 
+    static final String COUNTER = """
+            package example::counter
+
+            class Counter {
+                var count: int := 0
+
+                redefine tran {
+                    count := %s
+                }
+            }
+            """;
+
     private InlineHintModels() {}
 }

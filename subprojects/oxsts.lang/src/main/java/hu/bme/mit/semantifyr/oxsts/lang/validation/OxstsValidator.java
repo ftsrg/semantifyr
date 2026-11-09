@@ -19,6 +19,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.OppositeHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.PropertyTypeHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EvaluationFailureException;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation;
@@ -90,6 +91,9 @@ public class OxstsValidator extends AbstractOxstsValidator {
     private ExpressionModalityEvaluatorProvider modalityEvaluatorProvider;
 
     @Inject
+    private ConstantExpressionEvaluatorProvider constantExpressionEvaluatorProvider;
+
+    @Inject
     private ExpressionTypeEvaluatorProvider typeEvaluatorProvider;
 
     @Inject
@@ -143,6 +147,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String UNSUPPORTED_FEATURE = ISSUE_PREFIX + "UNSUPPORTED_FEATURE";
     public static final String EXPRESSION_MODALITY_TOO_HIGH = ISSUE_PREFIX + "EXPRESSION_MODALITY_TOO_HIGH";
     public static final String COULD_BE_INLINE = ISSUE_PREFIX + "COULD_BE_INLINE";
+    public static final String CONSTANT_EXPRESSION = ISSUE_PREFIX + "CONSTANT_EXPRESSION";
     public static final String TYPE_MISMATCH = ISSUE_PREFIX + "TYPE_MISMATCH";
     public static final String INVALID_CAST = ISSUE_PREFIX + "INVALID_CAST";
     public static final String MULTIPLE_INHERITANCE = ISSUE_PREFIX + "MULTIPLE_INHERITANCE";
@@ -1295,6 +1300,39 @@ public class OxstsValidator extends AbstractOxstsValidator {
                         COULD_BE_INLINE);
                 return;
             }
+        }
+    }
+
+    @Check
+    public void checkConstantExpression(Expression expression) {
+        if (!isFoldableConstant(expression)
+                || (expression.eContainer() instanceof Expression container && isFoldableConstant(container))
+                || EcoreUtil2.getContainerOfType(expression, InlinedOxsts.class) != null) {
+            return;
+        }
+        var region = locationInFileProvider.getFullTextRegion(expression);
+        acceptInfo(
+                "The expression is constant, it can be inlined as its value.",
+                expression,
+                region.getOffset(),
+                region.getLength(),
+                CONSTANT_EXPRESSION);
+    }
+
+    private boolean isFoldableConstant(Expression expression) {
+        if (expression instanceof LiteralExpression
+                || expression instanceof ElementReference
+                || expression instanceof RangeExpression
+                || (expression instanceof ArithmeticUnaryOperator unary
+                        && unary.getBody() instanceof LiteralExpression)) {
+            return false;
+        }
+        try {
+            return modalityEvaluatorProvider.evaluate(expression) == Modality.CONSTANT
+                    && !(typeEvaluatorProvider.evaluate(expression) instanceof InvalidTypeEvaluation)
+                    && !(constantExpressionEvaluatorProvider.evaluate(expression) instanceof RangeEvaluation);
+        } catch (RuntimeException e) {
+            return false;
         }
     }
 
