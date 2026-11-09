@@ -15,6 +15,8 @@ import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig;
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.ArtifactsLocation;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.ServerSettingsPayload;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import org.junit.jupiter.api.Test;
 
@@ -109,5 +111,17 @@ class ServerSettingsTest {
         // the second apply omits the portfolio / timeout, so they are back to the defaults
         assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("smart-full");
         assertThat(settings.resolveTimeout()).isEqualTo(Duration.ofSeconds(300));
+    }
+
+    @Test
+    void temporaryArtifactsShareOneDirectoryPerServer() {
+        ServerSettings settings = new ServerSettings();
+
+        Path first = settings.resolveArtifactOutputDirectory(null);
+        Path second = settings.resolveArtifactOutputDirectory(null);
+
+        assertThat(first).isEqualTo(second);
+        assertThat(Files.isDirectory(first)).isTrue();
+        assertThat(new ServerSettings().resolveArtifactOutputDirectory(null)).isNotEqualTo(first);
     }
 }

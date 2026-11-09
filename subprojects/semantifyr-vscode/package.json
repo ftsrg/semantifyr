@@ -215,7 +215,7 @@
             "temporary",
             "workspace"
           ],
-          "markdownDescription": "Where to retain compiled/generated artifacts. `temporary`: a short-lived temp directory cleaned on exit; `workspace`: write under `<workspace>/.artifacts/`."
+          "markdownDescription": "Where the language servers write the artifacts of a verification. `temporary`: one temporary directory per language server, deleted when it exits; `workspace`: `<workspace>/.artifacts/`, kept."
         },
         "semantifyr.artifacts.preset": {
           "type": "string",

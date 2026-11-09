@@ -30,6 +30,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicReference;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
@@ -56,6 +57,8 @@ public class ServerSettings {
             new ServerSettingsPayload.Optimization(OptimizationLevel.ALL));
 
     private final AtomicReference<ServerSettingsPayload> effective = new AtomicReference<>(DEFAULTS);
+
+    private Path temporaryArtifactDirectory;
 
     public void apply(JsonElement payload) {
         if (payload == null || payload.isJsonNull()) {
@@ -164,7 +167,7 @@ public class ServerSettings {
     public Path resolveArtifactOutputDirectory(ILanguageServerAccess access) {
         return switch (effective.get().artifacts().location()) {
             case WORKSPACE -> workspaceArtifactDirectory(access);
-            case TEMPORARY -> createTempDir();
+            case TEMPORARY -> temporaryArtifactDirectory();
         };
     }
 
@@ -172,7 +175,7 @@ public class ServerSettings {
         Path workspaceRoot = workspaceRootOrNull(access);
         if (workspaceRoot == null) {
             LOGGER.warn("artifacts.location=workspace but no workspace root is available, using a temporary directory");
-            return createTempDir();
+            return temporaryArtifactDirectory();
         }
         Path artifactDirectory = workspaceRoot.resolve(WORKSPACE_ARTIFACTS_SUBDIRECTORY);
         try {
@@ -200,11 +203,27 @@ public class ServerSettings {
         }
     }
 
-    private static Path createTempDir() {
-        try {
-            return Files.createTempDirectory("semantifyr-");
+    // one directory per server, so a later command finds what an earlier one wrote, as gamma.witness.validate does
+    private synchronized Path temporaryArtifactDirectory() {
+        if (temporaryArtifactDirectory == null) {
+            Path directory;
+            try {
+                directory = Files.createTempDirectory("semantifyr-");
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to create temporary directory for artifacts", e);
+            }
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> deleteRecursively(directory)));
+            temporaryArtifactDirectory = directory;
+        }
+        return temporaryArtifactDirectory;
+    }
+
+    private static void deleteRecursively(Path directory) {
+        try (var paths = Files.walk(directory)) {
+            paths.sorted(Comparator.reverseOrder())
+                    .forEach(path -> path.toFile().delete());
         } catch (IOException e) {
-            throw new RuntimeException("Failed to create temporary directory for artifacts", e);
+            LOGGER.warn("Failed to delete the temporary artifact directory {}", directory, e);
         }
     }
 
