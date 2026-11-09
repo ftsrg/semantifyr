@@ -10,6 +10,7 @@ import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
+import hu.bme.mit.semantifyr.oxsts.lang.resource.ResourceDescriptionProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.imports.ImportCollector;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.imports.PackageSelectableProvider;
@@ -120,6 +121,9 @@ public class OxstsValidator extends AbstractOxstsValidator {
     @Inject
     private IQualifiedNameProvider qualifiedNameProvider;
 
+    @Inject
+    private ResourceDescriptionProvider resourceDescriptionProvider;
+
     private static final String ISSUE_PREFIX = "OXSTS.";
     public static final String DUPLICATE_NAME_ISSUE = ISSUE_PREFIX + "DUPLICATE_NAME";
     public static final String DATA_TYPE_NOT_IN_BUILTIN_ISSUE = ISSUE_PREFIX + "DATA_TYPE_NOT_IN_BUILTIN";
@@ -146,6 +150,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String MISSING_INITIALIZER = ISSUE_PREFIX + "MISSING_INITIALIZER";
     public static final String ABSTRACT_VERIFICATION_CASE = ISSUE_PREFIX + "ABSTRACT_VERIFICATION_CASE";
     public static final String AMBIGUOUS_REFERENCE = ISSUE_PREFIX + "AMBIGUOUS_REFERENCE";
+    public static final String DECLARED_IN_ANOTHER_FILE = ISSUE_PREFIX + "DECLARED_IN_ANOTHER_FILE";
 
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
@@ -1776,6 +1781,46 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     issueIndex = INSIGNIFICANT_INDEX;
                 }
                 acceptError(message, element, reference, issueIndex, AMBIGUOUS_REFERENCE);
+            }
+        }
+    }
+
+    // outside its own file a name of the package resolves to the first file of the resource set declaring it
+    @Check
+    public void checkDeclaredInAnotherFileOfThePackage(OxstsModelPackage modelPackage) {
+        if (Strings.isEmpty(modelPackage.getName())) {
+            return;
+        }
+        var resource = modelPackage.eResource();
+        var resources = List.copyOf(resource.getResourceSet().getResources());
+        for (var declaration : modelPackage.getDeclarations()) {
+            var qualifiedName = qualifiedNameProvider.getFullyQualifiedName(declaration);
+            if (qualifiedName == null) {
+                continue;
+            }
+            for (var other : resources) {
+                if (other == resource) {
+                    break;
+                }
+                var description = resourceDescriptionProvider.getResourceDescription(other);
+                if (description == null
+                        || !description
+                                .getExportedObjects(OxstsPackage.Literals.DECLARATION, qualifiedName, false)
+                                .iterator()
+                                .hasNext()) {
+                    continue;
+                }
+                var message = "'%s' is also declared in %s, which other files of the package resolve it to."
+                        .formatted(
+                                qualifiedNameConverter.toString(qualifiedName),
+                                other.getURI().lastSegment());
+                acceptWarning(
+                        message,
+                        declaration,
+                        OxstsPackage.Literals.NAMED_ELEMENT__NAME,
+                        INSIGNIFICANT_INDEX,
+                        DECLARED_IN_ANOTHER_FILE);
+                break;
             }
         }
     }

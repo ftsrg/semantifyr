@@ -96,6 +96,47 @@ public class PackageScopingTest {
     }
 
     @Test
+    void nameDeclaredInTwoFilesOfThePackageWarnsAtTheDeclarationThatDoesNotWin() throws Exception {
+        var resourceSet = resourceSetProvider.get();
+        var first = parse(resourceSet, """
+            package example::house
+            class Lamp {
+                var on: bool := false
+            }
+            """);
+        var second = parse(resourceSet, """
+            package example::house
+            class Lamp {
+                var lit: bool := false
+            }
+            """);
+        var rooms = parse(resourceSet, """
+            package example::house
+            class Room {
+                contains lamp: Lamp
+            }
+            """);
+
+        var validatedFirst = validate(first);
+        var validatedSecond = validate(second);
+        var validatedRooms = validate(rooms);
+
+        assertThat(validatedFirst.getIssues()).isEmpty();
+        assertThat(validatedSecond.getIssues()).singleElement().satisfies(issue -> {
+            assertThat(issue.getSeverity()).isEqualTo(Severity.WARNING);
+            assertThat(issue.getCode()).isEqualTo(OxstsValidator.DECLARED_IN_ANOTHER_FILE);
+            assertThat(issue.getLineNumber()).isEqualTo(2);
+            assertThat(issue.getMessage())
+                    .isEqualTo("'example::house::Lamp' is also declared in "
+                            + first.getOxstsPackage().eResource().getURI().lastSegment()
+                            + ", which other files of the package resolve it to.");
+        });
+        assertThat(validatedRooms.getIssues()).isEmpty();
+        assertThat(validatedRooms.classByName("Room").featureByName("lamp").typeDomain())
+                .isSameAs(first.classByName("Lamp").eObject());
+    }
+
+    @Test
     void importOfAPackageReachesTheDeclarationsOfEveryFile() throws Exception {
         var resourceSet = resourceSetProvider.get();
         var lamps = parse(resourceSet, """

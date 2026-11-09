@@ -33,6 +33,8 @@ class Room {
 }
 ```
 
+A name declared in two files of one package is a warning at the declaration that does not win: within each file its own declaration wins, and every other file resolves the name to the first file declaring it.
+
 ## Files Without a Package
 
 A file without a `package` declaration lives in an unnamed package private to that file. Its declarations are visible within the file and are named by their simple names, but no other file can import or reference them, and two such files never see each other.
