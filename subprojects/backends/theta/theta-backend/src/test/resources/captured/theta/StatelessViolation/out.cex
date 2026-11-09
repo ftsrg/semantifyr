@@ -1,1 +1,4 @@
-(XstsStateSequence (XstsState pre_init last_env (ExplState)))
+(XstsStateSequence
+  (XstsState pre_init last_env (ExplState (__semantifyr_initialized false)))
+  (XstsState post_init last_internal
+    (ExplState (__semantifyr_initialized true))))

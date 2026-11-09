@@ -7,5 +7,5 @@ Iteration 1
 |  |  Checking trace...done, result: (ExprTraceStatus Feasible)
 Refining abstraction done, result: (RefinerResult Unsafe)
 ! Precision did NOT change in this iteration
-(SafetyResult Unsafe Trace length: 0)
-(SafetyResult Unsafe Trace length: 0)
+(SafetyResult Unsafe Trace length: 1)
+(SafetyResult Unsafe Trace length: 1)

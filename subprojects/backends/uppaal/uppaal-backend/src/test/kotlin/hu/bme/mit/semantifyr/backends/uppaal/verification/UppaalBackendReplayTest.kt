@@ -99,7 +99,7 @@ class UppaalBackendReplayTest {
     }
 
     @Test
-    suspend fun `an uninitialized variable can violate an invariant in the initial state`() {
+    suspend fun `a variable havoced in init can violate an invariant once initialized`() {
         val result = verifyFixture("initial_values", "UninitializedIntegerBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
@@ -107,7 +107,7 @@ class UppaalBackendReplayTest {
     }
 
     @Test
-    suspend fun `an uninitialized enum variable can violate an invariant in the initial state`() {
+    suspend fun `an enum variable havoced in init can violate an invariant once initialized`() {
         val result = verifyFixture("initial_values", "UninitializedEnumBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
