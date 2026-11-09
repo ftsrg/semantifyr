@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.lang.ide.server.concurrent.WorkManager
 import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServices
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionClient
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionContext
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScoped
 import org.eclipse.lsp4j.InitializeParams
 import org.eclipse.lsp4j.InitializeResult
@@ -26,6 +27,7 @@ import java.util.concurrent.CompletableFuture
 
 @SessionScoped
 class SessionLanguageServer @Inject constructor(
+    private val sessionContext: SessionContext,
     private val sessionClient: SessionClient,
     private val workManager: WorkManager,
     private val languageServices: LanguageServices,
@@ -55,7 +57,7 @@ class SessionLanguageServer @Inject constructor(
     }
 
     override fun initialize(params: InitializeParams): CompletableFuture<InitializeResult> {
-        return CompletableFuture.completedFuture(InitializeResult(languageServices.serverCapabilities))
+        return CompletableFuture.completedFuture(InitializeResult(languageServices.serverCapabilities(sessionContext.flavor.commands)))
     }
 
     override fun shutdown(): CompletableFuture<Any> {

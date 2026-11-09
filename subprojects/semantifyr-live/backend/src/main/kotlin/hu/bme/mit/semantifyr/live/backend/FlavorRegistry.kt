@@ -32,7 +32,16 @@ data class Flavor(
     val validateWitnessByCase: Boolean = false,
     val discoveryCommand: String,
     val peekCompiledOutput: Boolean = false,
-)
+) {
+    val commands: List<String>
+        get() {
+            return listOfNotNull(
+                discoveryCommand,
+                verificationCommand,
+                validateWitnessCommand,
+            )
+        }
+}
 
 object FlavorRegistry {
     val flavors = listOf(

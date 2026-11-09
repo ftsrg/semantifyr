@@ -48,6 +48,11 @@ class SessionWorkspaceService @Inject constructor(
     }
 
     override fun executeCommand(params: ExecuteCommandParams): CompletableFuture<Any?> {
+        if (params.command !in flavor.commands) {
+            throw ResponseErrorException(
+                ResponseError(ResponseErrorCode.MethodNotFound, "Command ${params.command} is not available in this session", null),
+            )
+        }
         sessionDocumentManager.flushAllToDisk()
         val kind = verificationKindOf(params.command)
         if (kind == null) {
