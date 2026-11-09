@@ -111,6 +111,21 @@ class SysMLv2Compiler(
         return outputPath
     }
 
+    fun validate(sourcePath: Path) {
+        require(Files.isRegularFile(sourcePath)) {
+            "SysMLv2 source does not exist or is not a regular file: $sourcePath"
+        }
+
+        logger.info { "Validating SysMLv2 source '$sourcePath' via bundled CLI '$cliPath'" }
+
+        runCli(
+            "SysMLv2 validation of '$sourcePath'",
+            "validate",
+            sourcePath.toString(),
+            sysmlLibraryPath.toString(),
+        )
+    }
+
     private fun compileIntoCache(sourcePath: Path, entry: Path) {
         logger.info { "Compiling SysMLv2 source '$sourcePath' via bundled CLI '$cliPath'" }
 

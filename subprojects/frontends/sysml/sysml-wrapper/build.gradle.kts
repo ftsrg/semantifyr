@@ -24,7 +24,7 @@ dependencies {
     testImplementation(testFixtures(project(":compiler")))
 }
 
-val sysmlCommit = "0dc0931b13d7a81813b3780995fc9c00c6aa3af5" // fix: a transition to the library's done state produces a diagnostic
+val sysmlCommit = "95c1913746755b203ae81e3bdf8f9790a99e5e27" // feat: added a validate command that checks a file in its directory's workspace
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 
