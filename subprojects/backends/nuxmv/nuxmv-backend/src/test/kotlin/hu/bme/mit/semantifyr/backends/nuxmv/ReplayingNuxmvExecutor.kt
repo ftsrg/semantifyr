@@ -21,7 +21,7 @@ class ReplayingNuxmvExecutor(
     }
 
     override suspend fun execute(nuxmvExecutionSpecification: NuxmvExecutionSpecification): NuxmvExecutionResult {
-        val outputs = listOfNotNull(nuxmvExecutionSpecification.logFile)
+        val outputs = listOfNotNull(nuxmvExecutionSpecification.logFile, nuxmvExecutionSpecification.errorFile)
         val exitCode = captured.replay("execute", nuxmvExecutionSpecification.workingDirectory, outputs) {
             shell.execute(nuxmvExecutionSpecification).exitCode
         }

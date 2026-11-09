@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr.backends.nuxmv.trace
 
+private val SOURCE_ERROR = Regex("^file .+: line \\d+: ")
+
 class NuxmvLogVerdictParser {
 
     fun parse(lines: Sequence<String>): NuxmvVerdict? {
@@ -26,6 +28,24 @@ class NuxmvLogVerdictParser {
             }
         }
         return null
+    }
+
+    fun rejection(lines: Sequence<String>): String? {
+        val messages = lines.map {
+            it.trim()
+        }.filter {
+            isRejectionLine(it)
+        }.toList()
+        if (messages.isEmpty()) {
+            return null
+        }
+        return messages.joinToString("; ")
+    }
+
+    private fun isRejectionLine(line: String): Boolean {
+        return SOURCE_ERROR.containsMatchIn(line) ||
+            line.startsWith("Parsing error", ignoreCase = true) ||
+            line.startsWith("Error:", ignoreCase = true)
     }
 
     private fun opensBlock(lowerLine: String): Boolean {

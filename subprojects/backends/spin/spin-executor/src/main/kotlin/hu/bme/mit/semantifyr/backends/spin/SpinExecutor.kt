@@ -33,6 +33,7 @@ class SpinExecutionSpecification(
     val errorFile: File? = null,
     val maxSearchDepth: Int? = null,
     val statementMerging: Boolean = true,
+    val vectorSize: Int? = null,
 )
 
 class SpinReplaySpecification(

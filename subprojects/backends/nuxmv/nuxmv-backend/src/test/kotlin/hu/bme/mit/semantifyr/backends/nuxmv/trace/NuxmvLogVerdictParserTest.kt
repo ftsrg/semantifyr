@@ -74,4 +74,35 @@ class NuxmvLogVerdictParserTest {
         assertThat(NuxmvVerdict.True.invert()).isEqualTo(NuxmvVerdict.False)
         assertThat(NuxmvVerdict.False.invert()).isEqualTo(NuxmvVerdict.True)
     }
+
+    @Test
+    fun `a model nuXmv rejects names nuXmv's message`() {
+        val rejection = parser.rejection(
+            sequenceOf(
+                "*** This is nuXmv 2.1.0 (compiled on Fri Nov 29 13:41:31 2024)",
+                "file /work/model.smv: line 3: at token \"color\": syntax error",
+            ),
+        )
+
+        assertThat(rejection).contains("at token \"color\": syntax error")
+    }
+
+    @Test
+    fun `a command nuXmv refuses names nuXmv's message`() {
+        assertThat(parser.rejection(sequenceOf("Error: the model contains infinite domain variables"))).contains("infinite domain")
+        assertThat(parser.rejection(sequenceOf("Parsing error: expected an invariant"))).contains("expected an invariant")
+    }
+
+    @Test
+    fun `a check that ran has no rejection`() {
+        val rejection = parser.rejection(
+            sequenceOf(
+                "*** Copyright (c) 2014-2024, Fondazione Bruno Kessler",
+                "-- no proof or counterexample found with bound 10",
+            ),
+        )
+
+        assertThat(rejection).isNull()
+    }
+
 }

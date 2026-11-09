@@ -44,7 +44,10 @@ class ShellBasedSpinExecutor(
         val depthArguments = specification.maxSearchDepth?.let {
             listOf("-m$it")
         } ?: emptyList()
-        return mergingArguments + listOf("-search") + depthArguments + specification.extraArguments + listOf(specification.modelFileName)
+        val vectorArguments = specification.vectorSize?.let {
+            listOf("-DVECTORSZ=$it")
+        } ?: emptyList()
+        return mergingArguments + listOf("-search") + depthArguments + vectorArguments + specification.extraArguments + listOf(specification.modelFileName)
     }
 
     override suspend fun replayTrail(specification: SpinReplaySpecification): SpinExecutionResult {

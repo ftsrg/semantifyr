@@ -11,6 +11,7 @@ import com.google.inject.Injector
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
 import com.google.inject.assistedinject.FactoryModuleBuilder
+import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationBackend
@@ -97,16 +98,17 @@ class SpinVerificationContext @AssistedInject constructor(
     }
 
     override suspend fun run(artifacts: SpinArtifacts): SpinVerdict? {
-        search(statementMerging = true, artifactManager.logFile)
+        search(artifacts, statementMerging = true, artifactManager.logFile)
         val logFile = if (exceedsMergeLimit(artifactManager.logFile) || exceedsMergeLimit(artifactManager.errorFile)) {
             logger.info {
                 "[$backendId] spin cannot merge the statements of a step (merge requires more than 256 bups), searching again without statement merging"
             }
-            search(statementMerging = false, artifactManager.unmergedLogFile)
+            search(artifacts, statementMerging = false, artifactManager.unmergedLogFile)
             artifactManager.unmergedLogFile
         } else {
             artifactManager.logFile
         }
+        checkRejection(logFile)
 
         val summary = logFile.takeIf {
             it.exists()
@@ -123,7 +125,11 @@ class SpinVerificationContext @AssistedInject constructor(
         return verdict
     }
 
-    private suspend fun search(statementMerging: Boolean, logFile: File) {
+    private suspend fun search(
+        artifacts: SpinArtifacts,
+        statementMerging: Boolean,
+        logFile: File,
+    ) {
         val spec = SpinExecutionSpecification(
             workingDirectory = artifactManager.modelFile.parentFile,
             modelFileName = artifactManager.modelFile.name,
@@ -132,14 +138,30 @@ class SpinVerificationContext @AssistedInject constructor(
             errorFile = artifactManager.errorFile,
             maxSearchDepth = config.maxSearchDepth,
             statementMerging = statementMerging,
+            vectorSize = artifacts.vectorSize,
         )
 
         val result = executor.execute(spec)
 
         // Spin returns 1 on counterexample; treat non-crash exits as valid and rely on output parsing.
         if (result.exitCode != 0 && result.exitCode != 1) {
+            checkRejection(logFile)
             error("spin execution failed with exit code ${result.exitCode}")
         }
+    }
+
+    private fun checkRejection(logFile: File) {
+        val rejection = listOf(logFile, artifactManager.errorFile).filter {
+            it.exists()
+        }.firstNotNullOfOrNull { file ->
+            file.useLines {
+                spinLogVerdictParser.rejection(it)
+            }
+        } ?: return
+        if (rejection.contains("support", ignoreCase = true)) {
+            throw BackendUnsupportedException("$backendId does not support the model: $rejection")
+        }
+        error("Spin rejected the model: $rejection")
     }
 
     private fun exceedsMergeLimit(file: File): Boolean {

@@ -258,6 +258,26 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
     }
 
     @Test
+    suspend fun `the state vector holds four hundred integers`() {
+        val declarations = (0..<400).joinToString("\n") {
+            "var counter$it : int := 0"
+        }
+        val behaviour = """
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG counter0 < 3
+            }
+        """.trimIndent()
+        val artifacts = transform("$declarations\n$behaviour")
+
+        // pan asked for more than 1612 bytes for four hundred integers and the stable flag
+        assertThat(artifacts.vectorSize).isGreaterThan(1612)
+    }
+
+    @Test
     suspend fun `an enum variable declares its mtype`() {
         val lines = promelaLines(
             """

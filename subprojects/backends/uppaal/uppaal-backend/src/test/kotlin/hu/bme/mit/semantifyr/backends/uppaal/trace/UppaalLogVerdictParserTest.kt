@@ -78,4 +78,36 @@ class UppaalLogVerdictParserTest {
         val verdict = parser.parse(sequenceOf("FORMULA IS SATISFIED"))
         assertThat(verdict).isEqualTo(UppaalVerdict.Satisfied)
     }
+
+    @Test
+    fun `a model verifyta rejects names verifyta's message`() {
+        val rejection = parser.rejection(sequenceOf("model.xml:/nta/declaration:2: [error] Duplicate definition of On."))
+
+        assertThat(rejection).contains("Duplicate definition of On.")
+    }
+
+    @Test
+    fun `a licence refusal names verifyta's message`() {
+        val rejection = parser.rejection(
+            sequenceOf(
+                "license key is not set",
+                "Please use --key option to specify a valid license key.",
+            ),
+        )
+
+        assertThat(rejection).contains("license key is not set")
+    }
+
+    @Test
+    fun `a verification that ran has no rejection`() {
+        val rejection = parser.rejection(
+            sequenceOf(
+                "Verifying formula 1 at model.q:1",
+                " -- Formula is NOT satisfied.",
+            ),
+        )
+
+        assertThat(rejection).isNull()
+    }
+
 }

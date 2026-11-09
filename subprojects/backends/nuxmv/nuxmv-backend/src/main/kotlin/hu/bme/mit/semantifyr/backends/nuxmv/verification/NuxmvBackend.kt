@@ -11,6 +11,7 @@ import com.google.inject.Injector
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
 import com.google.inject.assistedinject.FactoryModuleBuilder
+import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationBackend
@@ -124,15 +125,34 @@ class NuxmvVerificationContext @AssistedInject constructor(
 
         val result = executor.execute(specification)
 
-        if (result.exitCode != 0 && result.exitCode != 1) {
-            error("nuXmv execution failed with exit code ${result.exitCode}")
-        }
-
-        return artifactManager.logFile.takeIf {
+        val verdict = artifactManager.logFile.takeIf {
             it.exists()
         }?.useLines {
             nuxmvLogVerdictParser.parse(it)
         }
+        if (verdict == null) {
+            checkRejection()
+        }
+
+        if (result.exitCode != 0 && result.exitCode != 1) {
+            error("nuXmv execution failed with exit code ${result.exitCode}")
+        }
+
+        return verdict
+    }
+
+    private fun checkRejection() {
+        val rejection = listOf(artifactManager.errorFile, artifactManager.logFile).filter {
+            it.exists()
+        }.firstNotNullOfOrNull { file ->
+            file.useLines {
+                nuxmvLogVerdictParser.rejection(it)
+            }
+        } ?: return
+        if (rejection.contains("support", ignoreCase = true)) {
+            throw BackendUnsupportedException("$backendId does not support the model: $rejection")
+        }
+        error("nuXmv rejected the model: $rejection")
     }
 
     override fun interpret(rawVerdict: NuxmvVerdict?, artifacts: NuxmvArtifacts): VerificationVerdict {
