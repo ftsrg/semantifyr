@@ -786,7 +786,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
     }
 
-    // The class of the single narrowing cast that checkCastCompatibility accepts and that makes the value fit.
+    // Name and URI of the class whose narrowing cast checkCastCompatibility accepts and that makes the value fit.
     private String[] narrowingCastData(TypeEvaluation expected, TypeEvaluation actual, EObject context) {
         if (!(actual instanceof ImmutableTypeEvaluation)
                 || !(typeCompatibility.unwrappedDomain(expected) instanceof ClassDeclaration castClass)) {
@@ -797,7 +797,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
                 || !typeCompatibility.isAssignable(expected, castType, context)) {
             return new String[0];
         }
-        return new String[] {castClass.getName()};
+        return new String[] {castClass.getName(), EcoreUtil.getURI(castClass).toString()};
     }
 
     @Check

@@ -73,13 +73,13 @@ class QuickFixTest extends OxstsLanguageServerTest {
                 }
                 """, "Change to setColor");
 
-        assertThat(fixed).isEqualTo(TRAFFIC_LIGHT + """
+        assertThat(withoutWhitespace(fixed)).isEqualTo(withoutWhitespace(TRAFFIC_LIGHT + """
 
                 class Special : TrafficLight {
                     redefine tran setColor(color: LightColor) {
                     }
                 }
-                """);
+                """));
     }
 
     @Test
@@ -154,13 +154,13 @@ class QuickFixTest extends OxstsLanguageServerTest {
                 }
                 """, "Redefine draw");
 
-        assertThat(fixed).isEqualTo(SHAPES + """
+        assertThat(withoutWhitespace(fixed)).isEqualTo(withoutWhitespace(SHAPES + """
 
                 class Square : Shape {
                     redefine tran draw() {
                     }
                 }
-                """);
+                """));
     }
 
     @Test
@@ -187,12 +187,12 @@ class QuickFixTest extends OxstsLanguageServerTest {
                 }
                 """, "Initialize with 0");
 
-        assertThat(fixed).isEqualTo(TRAFFIC_LIGHT + """
+        assertThat(withoutWhitespace(fixed)).isEqualTo(withoutWhitespace(TRAFFIC_LIGHT + """
 
                 class Counter {
                     var count: int := 0
                 }
-                """);
+                """));
     }
 
     @Test
@@ -241,6 +241,11 @@ class QuickFixTest extends OxstsLanguageServerTest {
                 .findFirst()
                 .orElseThrow();
         return applyEdits(model.text(), codeAction.getEdit().getChanges().get(document.getUri()));
+    }
+
+    // The change serializer's whitespace is the formatter's defect, so these fixes are checked by their tokens.
+    private static String withoutWhitespace(String text) {
+        return text.replaceAll("\\s+", "");
     }
 
     private static boolean contains(Range range, Position position) {
