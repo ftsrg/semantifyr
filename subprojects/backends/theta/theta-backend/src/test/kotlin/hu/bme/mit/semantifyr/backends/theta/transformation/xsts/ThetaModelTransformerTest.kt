@@ -57,15 +57,17 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
             """
 
                 var counter: integer = 0
+                ctrl var __semantifyr_initialized: boolean = false
                 trans {
                 	counter := counter + 1;
                 }
                 init {
                 	counter := 1;
+                	__semantifyr_initialized := true;
                 }
                 env {
                 }
-                prop { counter < 3
+                prop { !__semantifyr_initialized || counter < 3
                 }
 
             """.trimIndent(),
@@ -106,7 +108,7 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
     suspend fun `variables keep their types and initializers`() {
         val lines = xstsLines(
             """
-                var counter : int
+                var counter : int := 0
                 var flag : bool := true
                 var color : test::colors::Color := test::colors::Color::Green
                 init {
@@ -119,7 +121,7 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
             """,
         )
 
-        assertThat(lines).containsSequence("type Color : { Red, Green", "}", "var counter: integer", "var flag: boolean = true", "var color: Color = Color.Green")
+        assertThat(lines).containsSequence("type Color : { Red, Green", "}", "var counter: integer = 0", "var flag: boolean = true", "var color: Color = Color.Green")
     }
 
     @Test
@@ -235,7 +237,7 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
                 }
                 tran {
                     var delta : int := 2
-                    var extra : int
+                    var extra : int := 3
                     counter := counter + delta + extra
                 }
                 prop {
@@ -244,7 +246,7 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
             """,
         )
 
-        assertThat(lines).containsSequence("local var delta : integer = 2;", "local var extra : integer;", "counter := counter + delta + extra;")
+        assertThat(lines).containsSequence("local var delta : integer = 2;", "local var extra : integer = 3;", "counter := counter + delta + extra;")
     }
 
     @Test
@@ -286,7 +288,7 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
             "assume counter < 1 && counter <= 2 && counter > - 3 && counter >= - 4 && counter == 0 && counter != 5;",
             "counter := if counter < 3 then counter + 1 else 0;",
         )
-        assertThat(lines).contains("prop { counter == - ( counter + 1 )")
+        assertThat(lines).contains("prop { !__semantifyr_initialized || counter == - ( counter + 1 )")
     }
 
     @Test
@@ -311,7 +313,36 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
     }
 
     @Test
-    suspend fun `an AG property is the invariant itself`() {
+    suspend fun `every init branch ends by setting the initialized flag`() {
+        val lines = xstsLines(
+            """
+                var counter : int := 0
+                init {
+                    counter := 1
+                } or {
+                    assume(counter > 0)
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
+            """,
+        )
+
+        assertThat(lines).containsSequence(
+            "init {",
+            "counter := 1;",
+            "__semantifyr_initialized := true;",
+            "} or {",
+            "assume counter > 0;",
+            "__semantifyr_initialized := true;",
+            "}",
+        )
+    }
+
+    @Test
+    suspend fun `an AG property is the invariant once initialized`() {
         val lines = xstsLines(
             """
                 var counter : int := 0
@@ -325,11 +356,11 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
             """,
         )
 
-        assertThat(lines).contains("prop { counter == 5")
+        assertThat(lines).contains("prop { !__semantifyr_initialized || counter == 5")
     }
 
     @Test
-    suspend fun `an EF property is the negated invariant`() {
+    suspend fun `an EF property is the negated invariant once initialized`() {
         val lines = xstsLines(
             """
                 var color : test::colors::Color := test::colors::Color::Red
@@ -343,7 +374,7 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
             """,
         )
 
-        assertThat(lines).contains("prop { !( color == Color.Green )")
+        assertThat(lines).contains("prop { !__semantifyr_initialized || !( color == Color.Green )")
     }
 
     @Test
