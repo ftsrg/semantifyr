@@ -65,8 +65,7 @@ public class HalfParsedValidationTest {
     public static class RethrowingValidator extends OxstsValidator {
         // registered beside OxstsValidator it would report every issue of the later tests twice
         @Override
-        public void register(EValidatorRegistrar registrar) {
-        }
+        public void register(EValidatorRegistrar registrar) {}
 
         @Override
         protected void handleExceptionDuringValidation(Throwable exception) {

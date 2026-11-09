@@ -204,12 +204,10 @@ public class VariableInitializerValidationTest {
 
         var issues = resourceValidator.validate(inlinedOxsts.eResource(), CheckMode.ALL, CancelIndicator.NullImpl);
 
-        assertThat(issues)
-                .singleElement()
-                .satisfies(issue -> {
-                    assertThat(issue.getCode()).isEqualTo(OxstsValidator.MISSING_INITIALIZER);
-                    assertThat(issue.getMessage()).contains("'count'");
-                });
+        assertThat(issues).singleElement().satisfies(issue -> {
+            assertThat(issue.getCode()).isEqualTo(OxstsValidator.MISSING_INITIALIZER);
+            assertThat(issue.getMessage()).contains("'count'");
+        });
     }
 
     private static void assertOnlyMissingInitializers(List<Issue> issues, String messageSubstring) {

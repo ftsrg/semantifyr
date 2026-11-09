@@ -83,7 +83,11 @@ class ThetaVariableTransformer @Inject constructor(
         }
     }
 
-    private fun transformInternals(variable: XstsVariableDeclaration, variableDeclaration: VariableDeclaration, initializer: Expression) {
+    private fun transformInternals(
+        variable: XstsVariableDeclaration,
+        variableDeclaration: VariableDeclaration,
+        initializer: Expression,
+    ) {
         variable.name = variableDeclaration.name
 
         val type = variableDeclaration.typeSpecification.domain
