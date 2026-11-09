@@ -18,12 +18,15 @@ interface NavigateToParams {
 
 let client: LanguageClient;
 
-const inlineCommand = 'oxsts.class.inline';
+const modelProducingCommands = [
+    'oxsts.class.inline',
+    'oxsts.inlined.compile',
+];
 
 const middleware: Middleware = {
     executeCommand: async (command, commandArguments, next) => {
         const result: unknown = await next(command, commandArguments);
-        if (command === inlineCommand && typeof result === 'string') {
+        if (modelProducingCommands.includes(command) && typeof result === 'string') {
             await window.showTextDocument(Uri.parse(result), { viewColumn: ViewColumn.Beside, preview: false });
             await commands.executeCommand('workbench.action.files.setActiveEditorReadonlyInSession');
         }
