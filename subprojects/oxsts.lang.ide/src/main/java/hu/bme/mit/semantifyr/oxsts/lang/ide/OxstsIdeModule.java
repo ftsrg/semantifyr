@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide;
 
 import hu.bme.mit.semantifyr.lang.ide.editor.contentassist.FuzzyMatcher;
 import hu.bme.mit.semantifyr.lang.ide.server.formatting.SemantifyrFormattingService;
+import hu.bme.mit.semantifyr.lang.ide.server.inlayhints.InlayHintService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.contentassist.OxstsIdeContentProposalProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.contentassist.OxstsIdeCrossrefProposalProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.quickfix.OxstsQuickFixProvider;
@@ -17,6 +18,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands.OxstsCommandService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.contentassist.OxstsContentAssistService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.folding.OxstsFoldingRangeService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.hover.OxstsHoverService;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.inlayhints.OxstsInlayHintService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.occurrences.OxstsDocumentHighlightService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.references.OxstsDocumentSymbolService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.rename.OxstsRenameService;
@@ -152,5 +154,10 @@ public class OxstsIdeModule extends AbstractOxstsIdeModule {
     @SuppressWarnings("unused")
     public Class<? extends FoldingRangeService> bindFoldingRangeService() {
         return OxstsFoldingRangeService.class;
+    }
+
+    @SuppressWarnings("unused")
+    public Class<? extends InlayHintService> bindInlayHintService() {
+        return OxstsInlayHintService.class;
     }
 }
