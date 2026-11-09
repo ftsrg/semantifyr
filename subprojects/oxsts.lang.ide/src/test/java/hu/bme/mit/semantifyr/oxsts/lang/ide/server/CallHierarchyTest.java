@@ -56,6 +56,21 @@ class CallHierarchyTest extends OxstsLanguageServerTest {
                             callRange(garage.positions().get(2), "toggle"),
                             callRange(garage.positions().get(3), "toggle"));
         });
+
+        var isOn = prepare(document, garage.positions().get(5));
+
+        assertThat(isOn.getKind()).isEqualTo(SymbolKind.Function);
+
+        var initializerCalls = languageServer
+                .callHierarchyIncomingCalls(new CallHierarchyIncomingCallsParams(isOn))
+                .get();
+
+        assertThat(initializerCalls).singleElement().satisfies(call -> {
+            assertThat(call.getFrom().getName()).isEqualTo("lit");
+            assertThat(call.getFrom().getKind()).isEqualTo(SymbolKind.Variable);
+            assertThat(call.getFromRanges())
+                    .containsExactly(callRange(garage.positions().get(5), "isOn"));
+        });
     }
 
     @Test

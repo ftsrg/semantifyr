@@ -20,10 +20,15 @@ final class CallHierarchyModels {
                 tran <|>toggle() {
                     self.on := true
                 }
+
+                prop isOn(): bool {
+                    return self.on
+                }
             }
             """;
 
-    // In source order, the markers start the call in reset, the case's main transition and each call in main.
+    // In source order, the markers start the call in reset, the case's main transition, each call in main and the call
+    // in lit's initializer.
     static final String GARAGE = """
             package example::garage
 
@@ -49,6 +54,8 @@ final class CallHierarchyModels {
                     inline garageLamp.<|>toggle()
                     inline <|>reset()
                 }
+
+                var lit: bool := lamp.<|>isOn()
 
                 prop {
                     return true
