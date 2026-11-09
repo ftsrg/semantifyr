@@ -111,7 +111,8 @@ class VariableBoundsComputation(
     private fun initialState(): MutableMap<VariableDeclaration, IntegerRange> {
         val state = HashMap<VariableDeclaration, IntegerRange>()
         for (variable in globals) {
-            write(state, variable, evaluate(variable.expression, state))
+            val initializer = variable.expression ?: error("Variable ${variable.name} has no initializer")
+            write(state, variable, evaluate(initializer, state))
         }
         return state
     }
@@ -177,7 +178,8 @@ class VariableBoundsComputation(
                 state
             }
             is LocalVarDeclarationOperation -> {
-                val value = evaluate(operation.expression, state)
+                val initializer = operation.expression ?: error("Local variable ${operation.name} has no initializer")
+                val value = evaluate(initializer, state)
                 if (isIntegerVariable(operation)) {
                     write(state, operation, value)
                 }
