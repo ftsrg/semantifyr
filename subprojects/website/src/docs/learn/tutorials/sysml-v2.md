@@ -9,7 +9,7 @@ import room from '@sysml-tutorial-models/room.sysml';
 
 # SysML v2 on the Command Line
 
-Semantifyr verifies SysML v2 models by translating them into OXSTS on top of a semantic library that defines what SysML v2 parts, ports, items and state machines do. This tutorial models a room with a switch and a lamp, verifies three requirements from the command line, and reads the counterexample of a requirement that does not hold. The live editor has no SysML v2 flavor yet, so this tutorial runs locally.
+Semantifyr verifies SysML v2 models by translating them into OXSTS on top of a semantic library that defines what SysML v2 parts, ports, items and state machines do. This tutorial models a room with a switch and a lamp, verifies three requirements from the command line, and reads the counterexample of a requirement that does not hold. This tutorial runs locally; the same file can also be edited and verified in the [live editor](https://live.semantifyr.org/?mode=sysml) by choosing its SysML v2 flavor.
 
 ## Requirements
 
