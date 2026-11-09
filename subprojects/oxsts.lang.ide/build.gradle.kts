@@ -20,19 +20,6 @@ dependencies {
     testRuntimeOnly(libs.slf4j.log4j)
 }
 
-tasks.named("test") {
-    inputs.dir(rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial"))
-        .withPropertyName("tutorialModels")
-        .withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.dir(rootProject.layout.projectDirectory.dir("subprojects/frontends/gamma/models/libraries/default"))
-        .withPropertyName("gammaLibrary")
-        .withPathSensitivity(PathSensitivity.RELATIVE)
-}
-
-tasks.withType<Test>().configureEach {
-    inputs.file(layout.projectDirectory.file("../semantifyr-vscode/syntaxes/oxsts.tmLanguage.json")).withPathSensitivity(PathSensitivity.RELATIVE)
-}
-
 application {
     mainClass = "hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsIdeSetup"
 }
@@ -48,4 +35,7 @@ tasks.named("test") {
             .withPropertyName(it)
             .withPathSensitivity(PathSensitivity.RELATIVE)
     }
+    inputs.file(layout.projectDirectory.file("../semantifyr-vscode/syntaxes/oxsts.tmLanguage.json"))
+        .withPropertyName("oxstsTextMateGrammar")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
 }
