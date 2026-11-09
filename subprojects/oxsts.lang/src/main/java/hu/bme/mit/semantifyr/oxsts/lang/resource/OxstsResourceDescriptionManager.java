@@ -31,7 +31,11 @@ public class OxstsResourceDescriptionManager extends DefaultResourceDescriptionM
 
         var packageName = getPackageName(delta.getOld());
         if (packageName == null) {
-            return false;
+            packageName = getPackageName(delta.getNew());
+        }
+        if (packageName == null) {
+            // a file without a package exports nothing, only the files referencing it (inlined models) see a change
+            return true;
         }
 
         if (packageName.equals(getPackageName(candidate))) {
