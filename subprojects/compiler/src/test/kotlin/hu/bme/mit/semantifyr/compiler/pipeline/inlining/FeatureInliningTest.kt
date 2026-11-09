@@ -294,6 +294,79 @@ class FeatureInliningTest : InliningTestBase() {
     }
 
     @Test
+    fun `an abstract feature filled only by subsetters evaluates to the subsetters`() {
+        val main = inlinedMain(
+            "Host",
+            """
+                package inlining::tests
+                class Item {
+                    var hits : int := 0
+                    tran act() {
+                        hits := hits + 1
+                    }
+                }
+                @VerificationCase
+                class Host {
+                    features items : Item[0..*]
+                    contains first : Item[1] subsets items
+                    contains second : Item[1] subsets items
+                    contains other : Item[1]
+                    redefine tran {
+                        inline for (item in items) {
+                            inline item.act()
+                        }
+                    }
+                    prop {
+                        return AG true
+                    }
+                }
+            """,
+        )
+
+        assertThat(main)
+            .contains("root.first.hits := root.first.hits + 1")
+            .contains("root.second.hits := root.second.hits + 1")
+            .doesNotContain("root.other.hits")
+    }
+
+    @Test
+    fun `a call through an abstract feature filled by one subsetter reaches it`() {
+        val main = inlinedMain(
+            "Host",
+            """
+                package inlining::tests
+                class Item {
+                    var hits : int := 0
+                    tran act() {
+                        hits := hits + 1
+                    }
+                }
+                abstract class Slot {
+                    features payload : Item[0..1]
+                    tran run() {
+                        inline payload.act()
+                    }
+                }
+                class FilledSlot : Slot {
+                    contains item : Item[1] subsets payload
+                }
+                @VerificationCase
+                class Host {
+                    contains slot : FilledSlot[1]
+                    redefine tran {
+                        inline slot.run()
+                    }
+                    prop {
+                        return AG true
+                    }
+                }
+            """,
+        )
+
+        assertThat(main).contains("root.slot.item.hits := root.slot.item.hits + 1")
+    }
+
+    @Test
     fun `a global reference resolves to the instance it is bound to`() {
         val main = inlinedMain(
             "Host",

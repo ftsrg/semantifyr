@@ -15,7 +15,7 @@ Features define the **structural relationships** between classes. Unlike [variab
 | `refers` | A cross-reference to instances owned elsewhere. |
 | `container` | The reverse of `contains`; must be paired via `opposite`. |
 | `derived refers` | A reference whose value is derived from the model structure. |
-| `features` | An **abstract** feature that subclasses must redefine as `contains` or `refers`. |
+| `features` | An **abstract** feature that subclasses redefine as `contains` or `refers`, or fill through subsetters. |
 
 ## `contains`
 
@@ -62,7 +62,7 @@ class StateNode {
 
 ## `features`
 
-The `features` keyword declares an **abstract** feature whose kind is left to subclasses. A subclass must redefine it as a concrete `contains` or `refers`.
+The `features` keyword declares an **abstract** feature whose kind is left to subclasses. A subclass redefines it as a concrete `contains` or `refers`, or fills it through features that [subset](#subsets) it: one that is not redefined holds the instances of its subsetters.
 
 ```oxsts
 abstract class Container {
