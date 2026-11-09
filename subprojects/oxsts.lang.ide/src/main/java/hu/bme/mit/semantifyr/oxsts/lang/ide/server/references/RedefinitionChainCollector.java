@@ -7,8 +7,10 @@
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.references;
 
 import com.google.inject.Inject;
+import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinersFinder;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RedefinableDeclaration;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -31,8 +33,11 @@ public class RedefinitionChainCollector {
     @Inject
     private IResourceDescriptionsProvider resourceDescriptionsProvider;
 
+    @Inject
+    private BuiltinSymbolResolver builtinSymbolResolver;
+
     public Set<EObject> collect(EObject element) {
-        if (!(element instanceof RedefinableDeclaration declaration)) {
+        if (!(element instanceof RedefinableDeclaration declaration) || isAnythingMember(element)) {
             return Set.of(element);
         }
 
@@ -43,7 +48,8 @@ public class RedefinitionChainCollector {
         var visited = new HashSet<RedefinableDeclaration>();
         visited.add(root);
         var redefined = redefinitionHandler.getRedefinedDeclaration(root);
-        while (redefined != null && visited.add(redefined)) {
+        // Every class redefines main and init of Anything, so the chain stops below it.
+        while (redefined != null && !isAnythingMember(redefined) && visited.add(redefined)) {
             root = redefined;
             redefined = redefinitionHandler.getRedefinedDeclaration(root);
         }
@@ -58,6 +64,11 @@ public class RedefinitionChainCollector {
             }
         }
         return chain;
+    }
+
+    private boolean isAnythingMember(EObject element) {
+        return element.eContainer() instanceof ClassDeclaration classDeclaration
+                && builtinSymbolResolver.isAnythingClass(classDeclaration);
     }
 
     private void loadIndexedResources(ResourceSet resourceSet) {

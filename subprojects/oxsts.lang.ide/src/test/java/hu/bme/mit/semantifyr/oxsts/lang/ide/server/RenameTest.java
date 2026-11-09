@@ -134,6 +134,17 @@ class RenameTest extends OxstsLanguageServerTest {
                 .hasMessage("Gadget in snippet.oxsts already refers to example::b::Gadget");
     }
 
+    @Test
+    void renameOfAnUnnamedTransitionIsRefused() {
+        var model = MarkedText.of(RedefinitionModels.LIGHT_SWITCH);
+        var document = openModel(model.text());
+
+        assertThatThrownBy(() -> rename(document, model.positions().get(2), "toggle"))
+                .cause()
+                .isInstanceOf(ResponseErrorException.class)
+                .hasMessage("main has no name of its own to rename");
+    }
+
     private WorkspaceEdit rename(TextDocumentIdentifier document, Position position, String newName)
             throws InterruptedException, ExecutionException {
         return languageServer

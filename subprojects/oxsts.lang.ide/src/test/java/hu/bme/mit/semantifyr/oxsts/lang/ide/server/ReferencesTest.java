@@ -36,4 +36,24 @@ class ReferencesTest extends OxstsLanguageServerTest {
                 })
                 .containsExactlyInAnyOrderElementsOf(model.positions());
     }
+
+    @Test
+    void referencesOnAnUnnamedTransitionStopBelowTheBuiltinAnything() throws Exception {
+        var model = MarkedText.of(RedefinitionModels.LIGHT_SWITCH);
+        var document = openModel(model.text());
+
+        var references = languageServer
+                .references(new ReferenceParams(document, model.positions().get(2), new ReferenceContext(true)))
+                .get();
+
+        assertThat(references)
+                .allSatisfy(location -> {
+                    assertThat(location.getUri()).isEqualTo(document.getUri());
+                })
+                .extracting(Location::getRange)
+                .extracting(range -> {
+                    return range.getStart();
+                })
+                .containsExactlyInAnyOrderElementsOf(model.positions());
+    }
 }

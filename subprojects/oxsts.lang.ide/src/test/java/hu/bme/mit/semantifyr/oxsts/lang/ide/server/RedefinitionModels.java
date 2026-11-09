@@ -49,6 +49,35 @@ final class RedefinitionModels {
             }
             """;
 
+    // Every marker starts an unnamed transition of the Light hierarchy or a call to it; Switch's own is unrelated.
+    static final String LIGHT_SWITCH = """
+            package example::lights
+
+            class Light {
+                var on: bool := false
+
+                <|>redefine tran {
+                    self.on := true
+                }
+            }
+
+            class DimmedLight : Light {
+                <|>redefine tran {
+                    self.on := false
+                }
+            }
+
+            class Switch {
+                contains light: Light[1]
+                contains dimmed: DimmedLight[1]
+
+                redefine tran {
+                    inline light.<|>main()
+                    inline dimmed.<|>main()
+                }
+            }
+            """;
+
     private RedefinitionModels() {
         throw new IllegalStateException("This is a static utility class and should not be instantiated directly");
     }
