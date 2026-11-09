@@ -55,6 +55,10 @@
     "LICENSE"
   ],
   "main": "./dist/extension.cjs",
+  "activationEvents": [
+    "workspaceContains:**/*.oxsts",
+    "workspaceContains:**/*.gamma"
+  ],
   "contributes": {
     "commands": [
       {
