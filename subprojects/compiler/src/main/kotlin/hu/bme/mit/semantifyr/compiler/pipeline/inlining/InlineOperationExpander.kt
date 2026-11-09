@@ -23,6 +23,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.ExpressionModalityEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.Modality
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
+import hu.bme.mit.semantifyr.oxsts.lang.utils.SourceLocation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
@@ -231,8 +232,11 @@ class InlineOperationExpander @Inject constructor(
                 it.typeSpecification = parameter.typeSpecification.copy()
                 it.expression = argument.expression.copy()
             }
+            SourceLocation.recordOrigin(argument.expression, temporary)
             temporaries[callExpression.arguments.indexOf(argument)] = temporary
-            bindings[parameter] = OxstsFactory.createElementReference(temporary)
+            bindings[parameter] = OxstsFactory.createElementReference(temporary).also {
+                SourceLocation.recordOrigin(argument.expression, it)
+            }
         }
 
         return ArgumentBinding(temporaries.values.toList(), bindings)
