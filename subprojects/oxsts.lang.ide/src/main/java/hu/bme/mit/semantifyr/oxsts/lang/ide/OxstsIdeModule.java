@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.oxsts.lang.ide;
 
 import hu.bme.mit.semantifyr.lang.ide.editor.contentassist.FuzzyMatcher;
+import hu.bme.mit.semantifyr.lang.ide.server.callhierarchy.CallHierarchyService;
 import hu.bme.mit.semantifyr.lang.ide.server.formatting.SemantifyrFormattingService;
 import hu.bme.mit.semantifyr.lang.ide.server.hierarchy.TypeHierarchyService;
 import hu.bme.mit.semantifyr.lang.ide.server.inlayhints.InlayHintService;
@@ -14,6 +15,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.contentassist.OxstsIdeContent
 import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.contentassist.OxstsIdeCrossrefProposalProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.quickfix.OxstsQuickFixProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.syntaxcoloring.OxstsSemanticHighlightingCalculator;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.callhierarchy.OxstsCallHierarchyService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.codelens.OxstsCodeLensProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands.OxstsCommandService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.contentassist.OxstsContentAssistService;
@@ -166,5 +168,10 @@ public class OxstsIdeModule extends AbstractOxstsIdeModule {
     @SuppressWarnings("unused")
     public Class<? extends TypeHierarchyService> bindTypeHierarchyService() {
         return OxstsTypeHierarchyService.class;
+    }
+
+    @SuppressWarnings("unused")
+    public Class<? extends CallHierarchyService> bindCallHierarchyService() {
+        return OxstsCallHierarchyService.class;
     }
 }

@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.lang.ide.server;
 
 import com.google.gson.JsonElement;
 import com.google.inject.Inject;
+import hu.bme.mit.semantifyr.lang.ide.server.callhierarchy.CallHierarchyService;
 import hu.bme.mit.semantifyr.lang.ide.server.concurrent.WorkManager;
 import hu.bme.mit.semantifyr.lang.ide.server.hierarchy.TypeHierarchyItemData;
 import hu.bme.mit.semantifyr.lang.ide.server.hierarchy.TypeHierarchyService;
@@ -16,6 +17,12 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.lsp4j.CallHierarchyIncomingCall;
+import org.eclipse.lsp4j.CallHierarchyIncomingCallsParams;
+import org.eclipse.lsp4j.CallHierarchyItem;
+import org.eclipse.lsp4j.CallHierarchyOutgoingCall;
+import org.eclipse.lsp4j.CallHierarchyOutgoingCallsParams;
+import org.eclipse.lsp4j.CallHierarchyPrepareParams;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
 import org.eclipse.lsp4j.InitializeParams;
@@ -31,6 +38,7 @@ import org.eclipse.lsp4j.TypeHierarchySupertypesParams;
 import org.eclipse.lsp4j.WorkDoneProgressCancelParams;
 import org.eclipse.xtext.diagnostics.Severity;
 import org.eclipse.xtext.ide.server.LanguageServerImpl;
+import org.eclipse.xtext.resource.IResourceServiceProvider;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.eclipse.xtext.xbase.lib.Functions.Function3;
 import org.slf4j.Logger;
@@ -72,6 +80,7 @@ public class ExtendedLanguageServer extends LanguageServerImpl {
         var capabilities = super.createServerCapabilities(params);
         addInlayHintCapability(capabilities);
         addTypeHierarchyCapability(capabilities);
+        addCallHierarchyCapability(capabilities);
         return capabilities;
     }
 
@@ -151,6 +160,71 @@ public class ExtendedLanguageServer extends LanguageServerImpl {
                     return List.of();
                 }
                 return query.apply(service, resource.getResourceSet(), item);
+            });
+        });
+    }
+
+    private void addCallHierarchyCapability(ServerCapabilities capabilities) {
+        var supported = getLanguagesRegistry().getExtensionToFactoryMap().values().stream()
+                .anyMatch(provider -> provider instanceof IResourceServiceProvider serviceProvider
+                        && serviceProvider.get(CallHierarchyService.class) != null);
+        capabilities.setCallHierarchyProvider(supported);
+    }
+
+    @Override
+    public CompletableFuture<List<CallHierarchyItem>> prepareCallHierarchy(CallHierarchyPrepareParams params) {
+        return getRequestManager().runRead(cancelIndicator -> {
+            var uri = getURI(params.getTextDocument());
+            var service = getService(uri, CallHierarchyService.class);
+            if (service == null) {
+                return List.of();
+            }
+            return getWorkspaceManager().doRead(uri, (document, resource) -> {
+                if (resource == null) {
+                    return List.<CallHierarchyItem>of();
+                }
+                return service.prepareCallHierarchy(document, resource, params, cancelIndicator);
+            });
+        });
+    }
+
+    @Override
+    public CompletableFuture<List<CallHierarchyIncomingCall>> callHierarchyIncomingCalls(
+            CallHierarchyIncomingCallsParams params) {
+        return getRequestManager().runRead(cancelIndicator -> {
+            var uri = getURI(new TextDocumentIdentifier(params.getItem().getUri()));
+            var service = getService(uri, CallHierarchyService.class);
+            if (service == null) {
+                return List.of();
+            }
+            return getWorkspaceManager().doRead(uri, (document, resource) -> {
+                if (resource == null) {
+                    return List.<CallHierarchyIncomingCall>of();
+                }
+                return service.incomingCalls(
+                        resource,
+                        params.getItem(),
+                        getWorkspaceResourceAccess(),
+                        getWorkspaceManager().getIndex(),
+                        cancelIndicator);
+            });
+        });
+    }
+
+    @Override
+    public CompletableFuture<List<CallHierarchyOutgoingCall>> callHierarchyOutgoingCalls(
+            CallHierarchyOutgoingCallsParams params) {
+        return getRequestManager().runRead(cancelIndicator -> {
+            var uri = getURI(new TextDocumentIdentifier(params.getItem().getUri()));
+            var service = getService(uri, CallHierarchyService.class);
+            if (service == null) {
+                return List.of();
+            }
+            return getWorkspaceManager().doRead(uri, (document, resource) -> {
+                if (resource == null) {
+                    return List.<CallHierarchyOutgoingCall>of();
+                }
+                return service.outgoingCalls(resource, params.getItem(), cancelIndicator);
             });
         });
     }
