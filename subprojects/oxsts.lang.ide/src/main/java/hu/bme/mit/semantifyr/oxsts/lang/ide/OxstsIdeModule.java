@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.oxsts.lang.ide;
 
 import hu.bme.mit.semantifyr.lang.ide.editor.contentassist.FuzzyMatcher;
+import hu.bme.mit.semantifyr.lang.ide.server.formatting.SemantifyrFormattingService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.contentassist.OxstsIdeContentProposalProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.quickfix.OxstsQuickFixProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.syntaxcoloring.OxstsSemanticHighlightingCalculator;
@@ -21,6 +22,7 @@ import org.eclipse.xtext.ide.server.codeActions.QuickFixCodeActionService;
 import org.eclipse.xtext.ide.server.codelens.ICodeLensResolver;
 import org.eclipse.xtext.ide.server.codelens.ICodeLensService;
 import org.eclipse.xtext.ide.server.commands.IExecutableCommandService;
+import org.eclipse.xtext.ide.server.formatting.FormattingService;
 
 /** Use this class to register ide components. */
 public class OxstsIdeModule extends AbstractOxstsIdeModule {
@@ -63,5 +65,10 @@ public class OxstsIdeModule extends AbstractOxstsIdeModule {
     @SuppressWarnings("unused")
     public Class<? extends ICodeActionService2> bindICodeActionService2() {
         return QuickFixCodeActionService.class;
+    }
+
+    @SuppressWarnings("unused")
+    public Class<? extends FormattingService> bindFormattingService() {
+        return SemantifyrFormattingService.class;
     }
 }
