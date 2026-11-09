@@ -45,7 +45,7 @@ class TransitionScheduler {
                 inline region.assumeNoTransitionEnabled()
             }
         }
-        assume (anyRegionExecuted) // at least one inner "parallel" region must be executed
+        assume(anyRegionExecuted) // at least one inner "parallel" region must be executed
     }
 
     tran fireTransitionsBottomUp() {
@@ -64,7 +64,7 @@ class TransitionScheduler {
                 inline region.assumeNoTransitionEnabled()
             }
         }
-        assume (anyRegionExecuted) // at least one inner "parallel" region must be executed
+        assume(anyRegionExecuted) // at least one inner "parallel" region must be executed
     }
 }
 
@@ -130,7 +130,7 @@ class Region {
         inline for choice (transition in transitions) {
             inline transition.main()
         } else {
-            assume (false)
+            assume(false)
         }
     }
 
@@ -138,13 +138,13 @@ class Region {
         inline for choice (state in states) {
             inline state.fireTransitions(regionSchedule)
         } else {
-            assume (false)
+            assume(false)
         }
     }
 
     tran assumeNoLocalTransitionEnabled() {
         inline for (transition in transitions) {
-            assume (!transition.isEnabled())
+            assume(!transition.isEnabled())
         }
     }
 
@@ -208,7 +208,7 @@ class State {
             inline region.deactivateRecursive()
         }
     }
-    tran enterRecursive(commonRegion : Region) {
+    tran enterRecursive(commonRegion: Region) {
         inline if (commonRegion != parentRegion) {
             inline if (parentState != nothing) {
                 inline parentState.enterRecursive(commonRegion)
@@ -230,7 +230,7 @@ class State {
     }
     tran fireTransitions(regionSchedule: RegionSchedule) {
         inline if (regions == nothing) {
-            assume (false)
+            assume(false)
         } else {
             inline transitionScheduler.fireTransitions(regionSchedule)
         }
@@ -263,7 +263,7 @@ abstract class AbstractTransition {
     }
 
     redefine tran {
-        assume (isEnabled())
+        assume(isEnabled())
         inline fire()
     }
 }

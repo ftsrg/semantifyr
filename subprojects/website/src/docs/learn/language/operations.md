@@ -30,7 +30,7 @@ Assignments always execute.
 `havoc(reference);` non-deterministically picks a value of the reference's type. Used to model unknown environment inputs, and in `init` to give a variable an arbitrary initial value.
 
 ```oxsts fragment
-havoc (input)
+havoc(input)
 ```
 
 Havocs are special assignments, and always execute.
@@ -40,7 +40,7 @@ Havocs are special assignments, and always execute.
 `assume(expr);` assumption states that the given `expr` expression **MUST** evaluate to true **IF** the operation is executed.
 
 ```oxsts fragment
-assume (value > 0)
+assume(value > 0)
 ```
 
 Is only executed if `expr` evaluates to _true_.
@@ -113,6 +113,6 @@ choice {
 } or {
     choiceTaken := false
 }
-assume (choiceTaken)
+assume(choiceTaken)
 ```
 

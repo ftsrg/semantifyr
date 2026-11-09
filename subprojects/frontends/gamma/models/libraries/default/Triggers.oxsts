@@ -13,7 +13,7 @@ abstract class Trigger {
     abstract prop isTriggered(): bool
 
     tran assumeIsTriggered() {
-        assume (isTriggered())
+        assume(isTriggered())
     }
 }
 

@@ -24,6 +24,6 @@ class Timeout {
     }
 
     tran assumeIsUp() {
-        assume (remainingTime <= 0)
+        assume(remainingTime <= 0)
     }
 }

@@ -58,7 +58,7 @@ class Transition {
     }
 
     redefine tran {
-        assume (isEnabled())
+        assume(isEnabled())
         inline to.activate()
     }
 }
@@ -184,10 +184,10 @@ class Intersection {
             inline east.operating.activate()
         } else {
             choice {
-                assume (!east.operating.green.isActive())
+                assume(!east.operating.green.isActive())
                 inline north.main()
             } or {
-                assume (!north.operating.green.isActive())
+                assume(!north.operating.green.isActive())
                 inline east.main()
             }
         }
@@ -204,7 +204,7 @@ class GreenColorIsReachable {
     }
 
     redefine tran {
-        havoc (light.event)
+        havoc(light.event)
         inline light.main()
     }
 
@@ -223,8 +223,8 @@ class IntersectionNeverBothGreen {
     }
 
     redefine tran {
-        havoc (intersection.north.event)
-        havoc (intersection.east.event)
+        havoc(intersection.north.event)
+        havoc(intersection.east.event)
         inline intersection.main()
     }
 
@@ -243,7 +243,7 @@ class NeverGreenInStandby {
     }
 
     redefine tran {
-        havoc (light.event)
+        havoc(light.event)
         inline light.main()
     }
 
@@ -262,7 +262,7 @@ class GreenLampOnlyInGreen {
     }
 
     redefine tran {
-        havoc (light.event)
+        havoc(light.event)
         inline light.main()
     }
 
@@ -281,8 +281,8 @@ class NoStandbyWithoutPause {
     }
 
     redefine tran {
-        havoc (light.event)
-        assume (light.event != light.pause)
+        havoc(light.event)
+        assume(light.event != light.pause)
         inline light.main()
     }
 
@@ -301,9 +301,9 @@ class EmergencyStopsTraffic {
     }
 
     redefine tran {
-        havoc (emergency.active)
-        havoc (intersection.north.event)
-        havoc (intersection.east.event)
+        havoc(emergency.active)
+        havoc(intersection.north.event)
+        havoc(intersection.east.event)
         inline intersection.main()
     }
 

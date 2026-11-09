@@ -152,7 +152,7 @@ The `else` branch of an `inline for` is taken when the range expression evaluate
 inline for choice (counter in counters) {
   inline counter.increment()
 } else {
-  assume (false)
+  assume(false)
 }
 ```
 

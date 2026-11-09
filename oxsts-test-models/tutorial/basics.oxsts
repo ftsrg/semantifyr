@@ -16,7 +16,7 @@ class TrafficLight {
     var color: LightColor := LightColor::Red
 
     tran assumeColor(color: LightColor) {
-        assume (self.color == color)
+        assume(self.color == color)
     }
 
     tran setColor(color: LightColor) {
@@ -47,10 +47,10 @@ class Intersection {
 
     redefine tran {
         choice {
-            assume (!east.isColor(LightColor::Green))
+            assume(!east.isColor(LightColor::Green))
             inline north.main()
         } or {
-            assume (!north.isColor(LightColor::Green))
+            assume(!north.isColor(LightColor::Green))
             inline east.main()
         }
     }

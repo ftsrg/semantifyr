@@ -16,7 +16,7 @@ class TrafficLight {
     var color: LightColor := LightColor::Red
 
     tran assumeColor(color: LightColor) {
-        assume (self.color == color)
+        assume(self.color == color)
     }
 
     tran setColor(color: LightColor) {

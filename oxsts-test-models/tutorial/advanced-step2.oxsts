@@ -31,7 +31,7 @@ class Transition {
     }
 
     redefine tran {
-        assume (isEnabled())
+        assume(isEnabled())
         inline to.activate()
     }
 }
@@ -101,10 +101,10 @@ class Intersection {
 
     redefine tran {
         choice {
-            assume (!east.operating.green.isActive())
+            assume(!east.operating.green.isActive())
             inline north.main()
         } or {
-            assume (!north.operating.green.isActive())
+            assume(!north.operating.green.isActive())
             inline east.main()
         }
     }
