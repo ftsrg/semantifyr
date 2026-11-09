@@ -38,7 +38,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.lsp4j.InitializeResult
+import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.SemanticTokens
+import org.eclipse.lsp4j.SignatureHelp
+import org.eclipse.lsp4j.SignatureHelpParams
+import org.eclipse.lsp4j.TextDocumentIdentifier
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.mockito.kotlin.any
@@ -179,6 +183,45 @@ class WebSocketSessionTest {
             send(Frame.Text(LspWire.semanticTokensFullRequest(id = 2, uri = "file:///workspace/snippet.oxsts")))
             val tokens = awaitResponseFor(id = 2).resultAs(SemanticTokens::class.java)
             assertThat(tokens.data).isNotEmpty
+        }
+    }
+
+    @Test
+    fun `signature help over websocket shows the callee and the active parameter`(@TempDir tmp: Path) = testApplication {
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(testInjector(config(tmp)))
+        }
+        val model = """
+            package test
+
+            class Light {
+                var level: int := 0
+
+                tran dim(from: int, to: int) {
+                    level := to
+                }
+
+                tran {
+                    inline dim(1, 0)
+                }
+            }
+        """.trimIndent()
+        val uri = "file:///workspace/snippet.oxsts"
+        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
+            send(Frame.Text(LspWire.initializeRequest()))
+            val capabilities = awaitResponseFor(id = 1).resultAs(InitializeResult::class.java).capabilities
+            assertThat(capabilities.signatureHelpProvider.triggerCharacters).containsExactly("(", ",")
+            send(Frame.Text(LspWire.initializedNotification()))
+            send(Frame.Text(LspWire.didOpenNotification(uri = uri, languageId = "oxsts", text = model)))
+            val params = SignatureHelpParams(TextDocumentIdentifier(uri), Position(10, 22))
+            send(Frame.Text(LspWire.request(id = 2, method = "textDocument/signatureHelp", params = params)))
+            val signatureHelp = awaitResponseFor(id = 2).resultAs(SignatureHelp::class.java)
+            assertThat(
+                signatureHelp.signatures.map {
+                    it.label
+                },
+            ).containsExactly("dim(from: int, to: int)")
+            assertThat(signatureHelp.activeParameter).isEqualTo(1)
         }
     }
 

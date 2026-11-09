@@ -42,6 +42,8 @@ import org.eclipse.lsp4j.LocationLink
 import org.eclipse.lsp4j.ReferenceParams
 import org.eclipse.lsp4j.SemanticTokens
 import org.eclipse.lsp4j.SemanticTokensParams
+import org.eclipse.lsp4j.SignatureHelp
+import org.eclipse.lsp4j.SignatureHelpParams
 import org.eclipse.lsp4j.SymbolInformation
 import org.eclipse.lsp4j.TextEdit
 import org.eclipse.lsp4j.jsonrpc.messages.Either
@@ -119,6 +121,17 @@ class SessionTextDocumentService @Inject constructor(
     override fun hover(params: HoverParams): CompletableFuture<Hover?> {
         return readDocument(params.textDocument.uri, null) { file, cancelIndicator ->
             languageServices.hoverService.hover(file.xtextDocument(), file.resource, params, cancelIndicator)
+        }
+    }
+
+    override fun signatureHelp(params: SignatureHelpParams): CompletableFuture<SignatureHelp?> {
+        return readDocument(params.textDocument.uri, null) { file, cancelIndicator ->
+            languageServices.signatureHelpService.getSignatureHelp(
+                file.xtextDocument(),
+                file.resource,
+                params,
+                cancelIndicator,
+            )
         }
     }
 

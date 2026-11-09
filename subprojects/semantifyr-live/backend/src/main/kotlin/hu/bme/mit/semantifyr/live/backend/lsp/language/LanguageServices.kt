@@ -14,6 +14,7 @@ import org.eclipse.lsp4j.ExecuteCommandOptions
 import org.eclipse.lsp4j.SemanticTokensLegend
 import org.eclipse.lsp4j.SemanticTokensWithRegistrationOptions
 import org.eclipse.lsp4j.ServerCapabilities
+import org.eclipse.lsp4j.SignatureHelpOptions
 import org.eclipse.lsp4j.TextDocumentSyncKind
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.xtext.ide.server.codeActions.ICodeActionService2
@@ -24,6 +25,7 @@ import org.eclipse.xtext.ide.server.formatting.FormattingService
 import org.eclipse.xtext.ide.server.hover.IHoverService
 import org.eclipse.xtext.ide.server.occurrences.IDocumentHighlightService
 import org.eclipse.xtext.ide.server.semantictokens.SemanticTokensService
+import org.eclipse.xtext.ide.server.signatureHelp.ISignatureHelpService
 import org.eclipse.xtext.ide.server.symbol.DocumentSymbolService
 import org.eclipse.xtext.ide.server.symbol.IDocumentSymbolService
 import org.eclipse.xtext.resource.IResourceServiceProvider
@@ -36,6 +38,7 @@ class LanguageServices @Inject constructor(
     val resourceServiceProviderRegistry: IResourceServiceProvider.Registry,
     val contentAssistService: ContentAssistService,
     val hoverService: IHoverService,
+    val signatureHelpService: ISignatureHelpService,
     val documentSymbolService: IDocumentSymbolService,
     val richDocumentSymbolService: DocumentSymbolService,
     val documentHighlightService: IDocumentHighlightService,
@@ -53,6 +56,12 @@ class LanguageServices @Inject constructor(
             executeCommandProvider = ExecuteCommandOptions(commands)
             completionProvider = CompletionOptions(false, listOf("."))
             hoverProvider = Either.forLeft(true)
+            signatureHelpProvider = SignatureHelpOptions(
+                listOf(
+                    "(",
+                    ",",
+                ),
+            )
             definitionProvider = Either.forLeft(true)
             referencesProvider = Either.forLeft(true)
             documentSymbolProvider = Either.forLeft(true)
