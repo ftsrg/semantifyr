@@ -240,16 +240,12 @@ export default function EditorPage({
     if (!fallbackExample) return;
     const nextExample = findExample(nextFlavor, exampleId) ?? fallbackExample;
     if (nextFlavor.id === flavor.id && nextExample.id === example.id) return;
-    const flavorChanged = nextFlavor.id !== flavor.id;
     runOrConfirm(() => {
       setFlavor(nextFlavor);
       setExample(nextExample);
       setCode(nextExample.code);
       setShared(false);
       setSelectedWitnessCaseId(null);
-      if (flavorChanged) {
-        setVerificationCases([]);
-      }
       if (typeof window !== 'undefined') {
         const url = new URL(window.location.href);
         url.searchParams.set('mode', nextFlavor.id);
@@ -579,6 +575,7 @@ export default function EditorPage({
           // Hidden, not unmounted, so verification state survives a close/reopen.
           <Box sx={{ display: verificationPanelOpen ? 'flex' : 'none', flexDirection: 'column', flex: '0 0 auto' }}>
             <VerificationPanel
+              key={`${flavor.id}:${example.id}`}
               ref={verificationPanelRef}
               editorHandle={editorHandleRef.current}
               verificationCommand={flavorInfo.verificationCommand}
