@@ -61,6 +61,18 @@ Without an `import`, symbols from another package can still be referenced by the
 A simple name declared by two imported packages, or by an imported package and the current one, is ambiguous: the reference is an error that names both declarations. Write the qualified name of the one you mean. In a file without a package, the file's own declarations take precedence over imported ones.
 
 ```oxsts
+package example::lights
+
+class Lamp { }
+```
+
+```oxsts
+package example::signals
+
+class Lamp { }
+```
+
+```oxsts
 package example::street
 
 import example::lights
