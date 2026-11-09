@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import vscode, { type CancellationToken, type ExtensionContext, Location, Position, Range, RelativePattern, type TestController, type TestItem, TestMessage, TestRunProfileKind, type TestRun, type TestRunRequest, type TextDocument, type Uri, type WorkspaceFolder, type WorkspaceFoldersChangeEvent } from "vscode";
+import vscode, { type CancellationToken, type ExtensionContext, Location, Position, Range, RelativePattern, type TestController, type TestItem, TestMessage, TestRunProfileKind, type TestRun, type TestRunRequest, type TextDocument, type TextDocumentChangeEvent, type Uri, type WorkspaceFolder, type WorkspaceFoldersChangeEvent } from "vscode";
 import type { LanguageClient } from "vscode-languageclient/node";
 import {
     discoverVerificationCases,
@@ -23,12 +23,18 @@ export interface VerificationTestControllerConfig {
     verifyCommand: string;
 }
 
+const rediscoveryDelayMs = 500;
+
+const artifactsDirectoryName = '.artifacts';
+
 export class VerificationTestController {
 
     protected readonly client: LanguageClient;
     protected readonly config: VerificationTestControllerConfig;
     protected readonly witnesses: WitnessView;
     protected controller!: TestController;
+    protected readonly scheduledDiscoveries = new Map<string, { uri: Uri; timer: ReturnType<typeof setTimeout> }>();
+    protected readonly runningDiscoveries = new Set<Promise<void>>();
 
     constructor(client: LanguageClient, config: VerificationTestControllerConfig, witnesses: WitnessView) {
         this.client = client;
@@ -68,13 +74,62 @@ export class VerificationTestController {
         context.subscriptions.push(
             vscode.workspace.onDidChangeWorkspaceFolders(async (event) => { await this.updateWorkspaceTests(event); }),
             vscode.workspace.onDidOpenTextDocument(async (document) => { await this.refreshDocumentTests(document); }),
+            vscode.workspace.onDidChangeTextDocument((event) => { this.scheduleDocumentTests(event); }),
             vscode.workspace.onDidRenameFiles(async (event) => {
                 for (const file of event.files) {
                     this.controller.items.delete(file.oldUri.toString());
                     await this.refreshDocumentUriTests(file.newUri);
                 }
             }),
+            { dispose: () => { this.cancelScheduledDiscoveries(); } },
         );
+    }
+
+    protected scheduleDocumentTests(event: TextDocumentChangeEvent) {
+        const document = event.document;
+        if (document.languageId !== this.config.languageId || isGeneratedArtifact(document.uri)) {
+            return;
+        }
+        const key = document.uri.toString();
+        clearTimeout(this.scheduledDiscoveries.get(key)?.timer);
+        const timer = setTimeout(() => {
+            this.scheduledDiscoveries.delete(key);
+            this.trackDiscovery(document.uri);
+        }, rediscoveryDelayMs);
+        this.scheduledDiscoveries.set(key, { uri: document.uri, timer });
+    }
+
+    protected trackDiscovery(uri: Uri) {
+        const discovery = this.refreshDocumentUriTests(uri).finally(() => {
+            this.runningDiscoveries.delete(discovery);
+        });
+        this.runningDiscoveries.add(discovery);
+    }
+
+    protected cancelScheduledDiscoveries() {
+        for (const scheduled of this.scheduledDiscoveries.values()) {
+            clearTimeout(scheduled.timer);
+        }
+        this.scheduledDiscoveries.clear();
+    }
+
+    protected async flushDiscoveries() {
+        const uris = [...this.scheduledDiscoveries.values()].map((scheduled) => {
+            return scheduled.uri;
+        });
+        this.cancelScheduledDiscoveries();
+        for (const uri of uris) {
+            this.trackDiscovery(uri);
+        }
+        await Promise.allSettled(this.runningDiscoveries);
+    }
+
+    protected isDiscovered(testItem: TestItem): boolean {
+        if (!testItem.uri) {
+            return false;
+        }
+        const documentTestItem = this.controller.items.get(testItem.uri.toString());
+        return documentTestItem === testItem || documentTestItem?.children.get(testItem.id) === testItem;
     }
 
     public async refreshWorkspaceTests() {
@@ -121,6 +176,10 @@ export class VerificationTestController {
     }
 
     protected async refreshDocumentUriTests(uri: Uri) {
+        if (isGeneratedArtifact(uri)) {
+            this.controller.items.delete(uri.toString());
+            return;
+        }
         const documentTestItem = this.getDocumentTestItem(uri);
 
         const verificationCases = await discoverVerificationCases(this.client, this.config.discoverCommand, uri.toString());
@@ -168,11 +227,17 @@ export class VerificationTestController {
     }
 
     protected async runTests(request: TestRunRequest, token: CancellationToken) {
+        await this.flushDiscoveries();
+
         const run = this.controller.createTestRun(request);
         const testItems: TestItem[] = [];
 
         const add = (testItem: TestItem) => {
             if (request.exclude?.includes(testItem)) {
+                return;
+            }
+            if (!this.isDiscovered(testItem)) {
+                run.skipped(testItem);
                 return;
             }
             if (testItem.children.size === 0) {
@@ -266,4 +331,8 @@ export class VerificationTestController {
             }
         }
     }
+}
+
+function isGeneratedArtifact(uri: Uri): boolean {
+    return uri.path.split('/').includes(artifactsDirectoryName);
 }
