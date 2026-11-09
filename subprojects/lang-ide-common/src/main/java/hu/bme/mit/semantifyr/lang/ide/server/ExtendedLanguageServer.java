@@ -9,10 +9,13 @@ package hu.bme.mit.semantifyr.lang.ide.server;
 import com.google.gson.JsonElement;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.lang.ide.server.concurrent.WorkManager;
+import hu.bme.mit.semantifyr.lang.ide.server.hierarchy.TypeHierarchyItemData;
+import hu.bme.mit.semantifyr.lang.ide.server.hierarchy.TypeHierarchyService;
 import hu.bme.mit.semantifyr.lang.ide.server.inlayhints.InlayHintService;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
 import org.eclipse.lsp4j.InitializeParams;
@@ -20,10 +23,16 @@ import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.InlayHint;
 import org.eclipse.lsp4j.InlayHintParams;
 import org.eclipse.lsp4j.ServerCapabilities;
+import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.lsp4j.TypeHierarchyItem;
+import org.eclipse.lsp4j.TypeHierarchyPrepareParams;
+import org.eclipse.lsp4j.TypeHierarchySubtypesParams;
+import org.eclipse.lsp4j.TypeHierarchySupertypesParams;
 import org.eclipse.lsp4j.WorkDoneProgressCancelParams;
 import org.eclipse.xtext.diagnostics.Severity;
 import org.eclipse.xtext.ide.server.LanguageServerImpl;
 import org.eclipse.xtext.util.CancelIndicator;
+import org.eclipse.xtext.xbase.lib.Functions.Function3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,12 +70,17 @@ public class ExtendedLanguageServer extends LanguageServerImpl {
     @Override
     protected ServerCapabilities createServerCapabilities(InitializeParams params) {
         var capabilities = super.createServerCapabilities(params);
+        addInlayHintCapability(capabilities);
+        addTypeHierarchyCapability(capabilities);
+        return capabilities;
+    }
+
+    private void addInlayHintCapability(ServerCapabilities capabilities) {
         var registry = getLanguagesRegistry();
         var providesInlayHints = registry.getExtensionToFactoryMap().keySet().stream()
                 .map(extension -> registry.getResourceServiceProvider(URI.createURI("synth:///file." + extension)))
                 .anyMatch(provider -> getService(provider, InlayHintService.class) != null);
         capabilities.setInlayHintProvider(providesInlayHints);
-        return capabilities;
     }
 
     @Override
@@ -85,6 +99,60 @@ public class ExtendedLanguageServer extends LanguageServerImpl {
                         uri,
                         (document, resource) ->
                                 inlayHintService.computeInlayHints(document, resource, params, cancelIndicator));
+    }
+
+    private void addTypeHierarchyCapability(ServerCapabilities capabilities) {
+        var registry = getLanguagesRegistry();
+        var typeHierarchyProvider = registry.getExtensionToFactoryMap().keySet().stream()
+                .map(extension -> registry.getResourceServiceProvider(URI.createURI("synth:///file." + extension)))
+                .anyMatch(provider -> getService(provider, TypeHierarchyService.class) != null);
+        capabilities.setTypeHierarchyProvider(typeHierarchyProvider);
+    }
+
+    @Override
+    public CompletableFuture<List<TypeHierarchyItem>> prepareTypeHierarchy(TypeHierarchyPrepareParams params) {
+        return getRequestManager().runRead(cancelIndicator -> {
+            var uri = getURI(params);
+            var service = getService(uri, TypeHierarchyService.class);
+            if (service == null) {
+                return List.of();
+            }
+            return getWorkspaceManager().doRead(uri, (document, resource) -> {
+                if (resource == null) {
+                    return List.of();
+                }
+                return service.prepare(resource, document, params);
+            });
+        });
+    }
+
+    @Override
+    public CompletableFuture<List<TypeHierarchyItem>> typeHierarchySupertypes(TypeHierarchySupertypesParams params) {
+        return relatedTypes(params.getItem(), TypeHierarchyService::supertypes);
+    }
+
+    @Override
+    public CompletableFuture<List<TypeHierarchyItem>> typeHierarchySubtypes(TypeHierarchySubtypesParams params) {
+        return relatedTypes(params.getItem(), TypeHierarchyService::subtypes);
+    }
+
+    private CompletableFuture<List<TypeHierarchyItem>> relatedTypes(
+            TypeHierarchyItem item,
+            Function3<TypeHierarchyService, ResourceSet, TypeHierarchyItem, List<TypeHierarchyItem>> query) {
+        return getRequestManager().runRead(cancelIndicator -> {
+            var uri = getURI(
+                    new TextDocumentIdentifier(TypeHierarchyItemData.of(item).documentUri()));
+            var service = getService(uri, TypeHierarchyService.class);
+            if (service == null) {
+                return List.of();
+            }
+            return getWorkspaceManager().doRead(uri, (document, resource) -> {
+                if (resource == null) {
+                    return List.of();
+                }
+                return query.apply(service, resource.getResourceSet(), item);
+            });
+        });
     }
 
     @Override

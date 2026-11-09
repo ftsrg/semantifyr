@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide;
 
 import hu.bme.mit.semantifyr.lang.ide.editor.contentassist.FuzzyMatcher;
 import hu.bme.mit.semantifyr.lang.ide.server.formatting.SemantifyrFormattingService;
+import hu.bme.mit.semantifyr.lang.ide.server.hierarchy.TypeHierarchyService;
 import hu.bme.mit.semantifyr.lang.ide.server.inlayhints.InlayHintService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.contentassist.OxstsIdeContentProposalProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.contentassist.OxstsIdeCrossrefProposalProvider;
@@ -17,6 +18,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.ide.server.codelens.OxstsCodeLensProvide
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands.OxstsCommandService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.contentassist.OxstsContentAssistService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.folding.OxstsFoldingRangeService;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.hierarchy.OxstsTypeHierarchyService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.hover.OxstsHoverService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.inlayhints.OxstsInlayHintService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.occurrences.OxstsDocumentHighlightService;
@@ -159,5 +161,10 @@ public class OxstsIdeModule extends AbstractOxstsIdeModule {
     @SuppressWarnings("unused")
     public Class<? extends InlayHintService> bindInlayHintService() {
         return OxstsInlayHintService.class;
+    }
+
+    @SuppressWarnings("unused")
+    public Class<? extends TypeHierarchyService> bindTypeHierarchyService() {
+        return OxstsTypeHierarchyService.class;
     }
 }
