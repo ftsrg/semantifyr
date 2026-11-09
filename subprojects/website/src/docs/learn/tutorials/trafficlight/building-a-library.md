@@ -101,7 +101,7 @@ The `redefine init` of the verification case inlines the light's `init`. This is
 
 **Task:** Open the step and verify `GreenColorIsReachable` again.
 
-**Check:** It passes. In the *State* view of the witness, `root.light.activeState` starts as `nothing`, holds `root.light.red` after `init` and `root.light.green` after the first step.
+**Check:** It passes. In the *State* view of the witness, `root.light.activeState` holds `root.light.red` in the *Init* step, the initial state `init` produces, and `root.light.green` after the first step.
 
 ## The Intersection
 

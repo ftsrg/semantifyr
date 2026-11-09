@@ -79,7 +79,7 @@ The Gamma semantic library marks four transitions with `@Trace`: `Transition::fi
 
 Input events are traced because the library resets them within the step, so no state between steps shows them. Output events are traced because the optimizer removes outputs that nothing reads, and two raises on one port in a step would show as one. The Gamma language's serializer and formatter write the trace.
 
-Not in the trace: transitions with the same source, target and trigger (the validator reports them as ambiguous), timers and port variables, and the state before initialization. The time step is fixed at one second, and the trace is not written in the `.get` format of the Gamma framework.
+Not in the trace: transitions with the same source, target and trigger (the validator reports them as ambiguous), and timers and port variables. The time step is fixed at one second, and the trace is not written in the `.get` format of the Gamma framework.
 
 ## Validation
 
