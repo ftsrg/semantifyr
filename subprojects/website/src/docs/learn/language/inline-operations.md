@@ -158,6 +158,6 @@ inline for choice (counter in counters) {
 | Evaluated when | Compile time, during unfolding | Runtime, by the model checker |
 | Constructs | `inline if`, `inline for`, `inline for choice`, `inline call` | [`if`](operations.md#if), [`for`](operations.md#for) |
 
-The validator hints at an `if` whose guard, or a `for` whose range, is evaluable at compile time, and the editor offers a "Make inline" quick fix that turns it into its `inline` form.
+The validator hints at an `if` whose guard, or a `for` whose range, is evaluable at compile time, and the editor offers a "Make inline" quick fix that turns it into its `inline` form. It also hints at a constant expression that is not already a literal or a reference, such as `2 * 3 + 1`, and offers "Inline as constant", which replaces the expression by its value.
 
 The loop variable of a `for` or an `inline for` takes its values from the range and cannot be written: the validator rejects an assignment or a `havoc` whose target is a loop variable (`OXSTS.INCORRECT_ASSIGNMENT`).

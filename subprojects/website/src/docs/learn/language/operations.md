@@ -13,7 +13,7 @@ Operations (and whole transitions) are atomic in nature, which means either the 
 
 ### Assignment
 
-`lhs := rhs;` updates a variable's value. The left-hand side may be a navigation expression. Only runtime variables can be written: the validator rejects an assignment or havoc whose target is substituted at compile time, such as the loop variable of an [`inline for`](inline-operations.md) (`OXSTS.INCORRECT_ASSIGNMENT`).
+`lhs := rhs;` updates a variable's value. The left-hand side may be a navigation expression. Only runtime variables can be written, and no loop variable: the validator rejects an assignment or havoc whose target is substituted at compile time, or is the loop variable of a [`for`](#for) or an [`inline for`](inline-operations.md) (`OXSTS.INCORRECT_ASSIGNMENT`).
 
 ```oxsts fragment
 value := value + 1
@@ -94,7 +94,7 @@ if (value < maximum()) {
 
 ### `for`
 
-A runtime loop over a range. The loop variable takes each value in the range in turn. The expression can be any runtime expression.
+A runtime loop over a range. The loop variable takes each value in the range in turn and cannot be written. The expression can be any runtime expression.
 
 ```oxsts fragment
 for (i in 1..10) {

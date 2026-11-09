@@ -50,7 +50,7 @@ class LampCase {
 
 ## Imports
 
-`import` brings the symbols of another package into scope. Imports may appear after the package declaration.
+`import` brings the symbols of another package into scope. Imports come after the package declaration, if there is one, and before every other declaration.
 
 ```oxsts
 package example::application
