@@ -30,6 +30,7 @@ import hu.bme.mit.semantifyr.backends.nuxmv.trace.NuxmvLogVerdictParser
 import hu.bme.mit.semantifyr.backends.nuxmv.trace.NuxmvTraceParser
 import hu.bme.mit.semantifyr.backends.nuxmv.trace.NuxmvVerdict
 import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvArtifacts
+import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvBddCapabilityChecker
 import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvCapabilityChecker
 import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvExpressionVisitor
 import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvModelTransformer
@@ -74,7 +75,8 @@ class NuxmvVerificationContext @AssistedInject constructor(
     @param:Assisted private val config: NuxmvConfig,
     @param:Assisted override val executor: NuxmvExecutor,
     @Assisted request: BackendVerificationRequest,
-    override val capabilityChecker: NuxmvCapabilityChecker,
+    nuxmvCapabilityChecker: NuxmvCapabilityChecker,
+    nuxmvBddCapabilityChecker: NuxmvBddCapabilityChecker,
     private val nuxmvModelTransformer: NuxmvModelTransformer,
     private val nuxmvTraceParser: NuxmvTraceParser,
     private val nuxmvLogVerdictParser: NuxmvLogVerdictParser,
@@ -84,6 +86,13 @@ class NuxmvVerificationContext @AssistedInject constructor(
     soundness = config.soundness,
     request = request,
 ) {
+
+    // go builds the BDD FSM, go_msat the SMT encoding
+    override val capabilityChecker = if (config.setupCommand == "go") {
+        nuxmvBddCapabilityChecker
+    } else {
+        nuxmvCapabilityChecker
+    }
 
     private val artifactManager = NuxmvArtifactManager(request.artifactOutputPath)
 

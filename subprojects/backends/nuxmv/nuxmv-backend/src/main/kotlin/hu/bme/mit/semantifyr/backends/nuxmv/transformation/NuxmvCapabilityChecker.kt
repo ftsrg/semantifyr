@@ -17,8 +17,8 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.emf.ecore.EObject
 
-class NuxmvCapabilityChecker @Inject constructor(
-    private val builtinSymbolResolver: BuiltinSymbolResolver,
+open class NuxmvCapabilityChecker @Inject constructor(
+    protected val builtinSymbolResolver: BuiltinSymbolResolver,
 ) : BackendCapabilityChecker() {
 
     override fun describeUnsupported(element: EObject): String? {
