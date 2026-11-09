@@ -43,7 +43,8 @@ public class OxstsDeclarationRenderer {
             case OxstsModelPackage modelPackage -> "package " + modelPackage.getName();
             case ClassDeclaration classDeclaration -> renderClass(classDeclaration);
             case EnumDeclaration enumDeclaration -> "enum " + enumDeclaration.getName();
-            case EnumLiteral literal -> "enum literal " + NamingUtil.getName(literal.eContainer()) + "::" + literal.getName();
+            case EnumLiteral literal ->
+                "enum literal " + NamingUtil.getName(literal.eContainer()) + "::" + literal.getName();
             case RecordDeclaration record -> "record " + record.getName();
             case DataTypeDeclaration dataType -> "extern datatype " + dataType.getName();
             case AnnotationDeclaration annotation -> renderAnnotation(annotation);

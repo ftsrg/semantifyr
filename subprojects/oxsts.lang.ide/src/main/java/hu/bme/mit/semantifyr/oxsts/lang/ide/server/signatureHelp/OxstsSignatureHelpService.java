@@ -97,14 +97,11 @@ public class OxstsSignatureHelpService implements ISignatureHelpService {
             case CallSuffixExpression call -> {
                 var callee = metaConstantExpressionEvaluatorProvider.evaluate(call.getPrimary());
                 yield getSignatureHelp(
-                        element,
-                        NodeModelUtils.getNode(call.getPrimary()),
-                        call.getArguments(),
-                        callee,
-                        offset);
+                        element, NodeModelUtils.getNode(call.getPrimary()), call.getArguments(), callee, offset);
             }
             case Annotation annotation -> {
-                var nameNodes = NodeModelUtils.findNodesForFeature(annotation, OxstsPackage.Literals.ANNOTATION__DECLARATION);
+                var nameNodes =
+                        NodeModelUtils.findNodesForFeature(annotation, OxstsPackage.Literals.ANNOTATION__DECLARATION);
                 yield getSignatureHelp(
                         element,
                         nameNodes.isEmpty() ? null : nameNodes.getLast(),
@@ -195,7 +192,6 @@ public class OxstsSignatureHelpService implements ISignatureHelpService {
         return signature;
     }
 
-    // A named argument activates its parameter wherever it stands; a positional one the parameter at its position.
     protected int getActiveParameter(ParametricDeclaration declaration, List<Argument> arguments, int argumentIndex) {
         if (argumentIndex < arguments.size()) {
             var named = arguments.get(argumentIndex).getParameter();
