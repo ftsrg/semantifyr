@@ -104,8 +104,7 @@ export interface CallTraceStep {
 }
 
 export interface CallTrace {
-    initialStep: CallTraceStep;
-    initializedStep: CallTraceStep | null;
+    initializedStep: CallTraceStep;
     steps: CallTraceStep[];
 }
 
@@ -119,8 +118,7 @@ export interface WitnessStateStep {
 }
 
 export interface WitnessState {
-    initialStep: WitnessStateStep;
-    initializedStep: WitnessStateStep | null;
+    initializedStep: WitnessStateStep;
     steps: WitnessStateStep[];
 }
 

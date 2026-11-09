@@ -19,9 +19,11 @@ describe('renderTrace', () => {
             '',
             `Witness: ${witnessUri}`,
             '',
-            '## Initial',
+            '## Init',
             '',
-            'No calls.',
+            'Calls:',
+            '',
+            '- `root.init()`',
             '',
             'State:',
             '',
@@ -29,14 +31,6 @@ describe('renderTrace', () => {
             '| --- | --- |',
             '| `root.lamp.on` | `false` |',
             '| `root.lamp.brightness` | `0` |',
-            '',
-            '## After init',
-            '',
-            'Calls:',
-            '',
-            '- `root.init()`',
-            '',
-            'No changes.',
             '',
             '## Step 1',
             '',
@@ -76,10 +70,10 @@ describe('renderTrace', () => {
         expect(document.split('\n')[2]).toBe('Verdict: passed (backend theta-cegar-expl, portfolio theta-full)');
     });
 
-    it('leaves out a missing init step, witness and origin', () => {
+    it('leaves out a missing witness and origin', () => {
         const trace = {
-            callTrace: { initialStep: { traces: [] }, initializedStep: null, steps: [{ traces: [] }] },
-            witnessState: { initialStep: { values: [] }, initializedStep: null, steps: [{ values: [{ variable: 'root.mode', value: 'A | B' }] }] },
+            callTrace: { initializedStep: { traces: [] }, steps: [{ traces: [] }] },
+            witnessState: { initializedStep: { values: [] }, steps: [{ values: [{ variable: 'root.mode', value: 'A | B' }] }] },
             witnessUri: null,
         };
 
@@ -90,7 +84,7 @@ describe('renderTrace', () => {
             '',
             'Verdict: passed',
             '',
-            '## Initial',
+            '## Init',
             '',
             'No calls.',
             '',

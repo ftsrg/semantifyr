@@ -124,22 +124,12 @@ export default function CallTraceView({ trace }: Props): React.JSX.Element {
   const rows: React.JSX.Element[] = [];
   rows.push(
     <CallStepRow
-      key="initial"
-      step={trace.initialStep}
-      label="Initial"
+      key="initialized"
+      step={trace.initializedStep}
+      label="Init"
       defaultOpen
     />,
   );
-  if (trace.initializedStep) {
-    rows.push(
-      <CallStepRow
-        key="initialized"
-        step={trace.initializedStep}
-        label="After init"
-        defaultOpen
-      />,
-    );
-  }
   trace.steps.forEach((step, i) => {
     rows.push(
       <CallStepRow
