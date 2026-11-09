@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { FlavorsResponse } from '@semantifyr/editor-common'
-import { normalizeBaseUrl } from './urls'
+import { normalizeBaseUrl, type FlavorsResponse } from '@semantifyr/editor-common'
 import type {
   AdminConfigResponse,
   AdminStatusResponse,

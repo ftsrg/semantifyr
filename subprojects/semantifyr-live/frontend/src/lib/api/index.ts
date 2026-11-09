@@ -28,10 +28,3 @@ export {
   type NotificationListenerRegistrar,
   type VerificationsChangedParams,
 } from './lspExtensions'
-
-export {
-  decodeCompressedBase64Url,
-  encodeCompressedBase64Url,
-  normalizeBaseUrl,
-  type LiveServerUrls,
-} from './urls'

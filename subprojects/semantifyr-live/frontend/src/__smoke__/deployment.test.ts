@@ -9,7 +9,8 @@ import { describe, expect, it } from 'vitest';
 import { createMessageConnection } from 'vscode-jsonrpc/node';
 import { ConsoleLogger, toSocket, WebSocketMessageReader, WebSocketMessageWriter } from 'vscode-ws-jsonrpc';
 import { discoverVerificationCases, verifyCase } from '@semantifyr/editor-common';
-import { createApi, normalizeBaseUrl } from '../lib/api';
+import { normalizeBaseUrl } from '@semantifyr/editor-common';
+import { createApi } from '../lib/api';
 
 const url = process.env.SEMANTIFYR_LIVE_URL;
 if (!url) {

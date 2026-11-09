@@ -16,8 +16,7 @@ import {
   type LiveExample,
   type LiveFlavor,
 } from '../examples';
-import { decodeCompressedBase64Url } from '../lib/api/urls';
-import { buildShareableUrl } from '../lib/util/sharing';
+import { decodeCompressedBase64Url, liveEditorUrl, parseLiveEditorUrl } from '@semantifyr/editor-common';
 import type { ColorModePreference, ResolvedColorMode } from '../lib/util/colorMode';
 import { createApi, type FlavorInfo, type PortfolioInfo } from '../lib/api';
 import type { VerificationCaseState, WitnessValidationStatus } from '../lib/verification';
@@ -75,11 +74,6 @@ const MIN_EDITOR_AREA_HEIGHT = 120;
 
 const COPY_CONFIRMATION_MS = 2000;
 
-function resolveInitialFlavor(search: string): LiveFlavor {
-  const params = new URLSearchParams(search);
-  const modeParam = params.get('mode');
-  return (modeParam ? findFlavor(modeParam) : undefined) ?? DEFAULT_FLAVOR;
-}
 
 interface Props {
   backendUrl: string;
@@ -98,19 +92,16 @@ interface UrlState {
 }
 
 async function resolveInitialState(search: string): Promise<UrlState> {
-  const flavor = resolveInitialFlavor(search);
-  const params = new URLSearchParams(search);
-  const exampleParam = params.get('example');
-  const codeParam = params.get('code');
-
-  const decodedCode = codeParam ? await decodeCompressedBase64Url(codeParam) : null;
+  const parameters = parseLiveEditorUrl(search);
+  const flavor = (parameters.flavor ? findFlavor(parameters.flavor) : undefined) ?? DEFAULT_FLAVOR;
+  const decodedCode = parameters.compressedCode ? await decodeCompressedBase64Url(parameters.compressedCode) : null;
 
   const fallback = flavor.examples[0];
   if (!fallback) {
     throw new Error(`flavor ${flavor.id} has no examples`);
   }
-  if (exampleParam) {
-    const example = findExample(flavor, exampleParam) ?? fallback;
+  if (parameters.example) {
+    const example = findExample(flavor, parameters.example) ?? fallback;
     return { flavor, example, code: decodedCode ?? example.code, shared: false };
   }
 
@@ -248,14 +239,12 @@ export default function EditorPage({
       setShared(false);
       setSelectedWitnessCaseId(null);
       if (typeof window !== 'undefined') {
-        const url = new URL(window.location.href);
-        url.searchParams.set('mode', nextFlavor.id);
-        url.searchParams.set('example', nextExample.id);
-        url.searchParams.delete('code');
-        window.history.replaceState(null, '', url.toString());
+        void liveEditorUrl(window.location.href, { flavor: nextFlavor.id, example: nextExample.id, embed: embedded }).then((url) => {
+          window.history.replaceState(null, '', url);
+        });
       }
     });
-  }, [flavor.id, example.id, runOrConfirm]);
+  }, [flavor.id, example.id, embedded, runOrConfirm]);
 
   const flashCopyConfirmation = useCallback((message: string) => {
     setCopyConfirmation(message);
@@ -279,17 +268,12 @@ export default function EditorPage({
 
   const handleCopyLink = useCallback(async () => {
     if (typeof window === 'undefined') return;
-    const url = await buildShareableUrl(
-      `${window.location.origin}${window.location.pathname}`,
-      shared
-        ? { flavorId: flavor.id, code: currentEditorContent() }
-        : {
-            flavorId: flavor.id,
-            exampleId: example.id,
-            code: currentEditorContent(),
-            exampleCode: example.code,
-          },
-    );
+    const content = currentEditorContent();
+    const url = await liveEditorUrl(`${window.location.origin}${window.location.pathname}`, {
+      flavor: flavor.id,
+      example: shared ? undefined : example.id,
+      code: shared || content !== example.code ? content : undefined,
+    });
     try {
       await navigator.clipboard.writeText(url);
       flashCopyConfirmation('Link copied!');

@@ -17,7 +17,7 @@ import { EditorApp, type EditorAppConfig } from 'monaco-languageclient/editorApp
 import type { editor } from 'monaco-editor';
 import type { MessageTransports } from 'vscode-languageclient';
 
-import { normalizeBaseUrl } from '../api/urls';
+import { normalizeBaseUrl } from '@semantifyr/editor-common';
 import type { ResolvedColorMode } from '../util/colorMode';
 import { observeSocketClose, type SocketClose } from './reconnectController';
 

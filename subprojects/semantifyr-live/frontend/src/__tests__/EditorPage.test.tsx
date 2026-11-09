@@ -30,7 +30,7 @@ vi.mock('../components/editor/LiveEditor', () => ({
 
 import EditorPage from '../components/EditorPage';
 import { LIVE_FLAVORS } from '../examples';
-import { encodeCompressedBase64Url } from '../lib/api/urls';
+import { encodeCompressedBase64Url } from '@semantifyr/editor-common';
 import { setLocation } from './helpers/location';
 
 describe('EditorPage', () => {
@@ -130,6 +130,19 @@ describe('EditorPage', () => {
     const copied = new URL(await navigator.clipboard.readText());
     expect(copied.searchParams.has('example')).toBe(false);
     expect(copied.searchParams.get('code')).not.toBeNull();
+  });
+
+  it('copies a link to an unchanged example without its code', async () => {
+    setLocation('https://test.example/?example=basics');
+    renderPage();
+    await waitForEditor();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Copy link' }));
+
+    await screen.findByText('Link copied!');
+    const copied = new URL(await navigator.clipboard.readText());
+    expect(copied.searchParams.get('example')).toBe('basics');
+    expect(copied.searchParams.has('code')).toBe(false);
   });
 
   it('falls back to the default example when ?example points at an unknown id', async () => {

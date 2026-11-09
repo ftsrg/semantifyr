@@ -6,6 +6,7 @@
 
 import React from 'react';
 import { ThemeProvider } from '@mui/material/styles';
+import { parseLiveEditorUrl } from '@semantifyr/editor-common';
 import EditorPage from './components/EditorPage';
 import AdminPage from './components/AdminPage';
 import ReloadPrompt from './components/pwa/ReloadPrompt';
@@ -20,7 +21,7 @@ function isEmbedded(): boolean {
   if (typeof window === 'undefined') {
     return false;
   }
-  return new URLSearchParams(window.location.search).get('embed') === '1';
+  return parseLiveEditorUrl(window.location.search).embed;
 }
 
 export default function App(): React.JSX.Element {
