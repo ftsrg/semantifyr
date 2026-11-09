@@ -33,7 +33,7 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
         val unsupported = unsupported(
             """
                 var counter : int := 0
-                var flag : bool
+                var flag : bool := false
                 var color : test::colors::Color := test::colors::Color::Red
                 init {
                     havoc(flag)
@@ -63,7 +63,7 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
             """
                 var ratio : real := 0.5
                 var anything : any := 0
-                var text : string
+                var text : string := "text"
                 var counter : int := 0
                 init {
                 }
@@ -83,6 +83,7 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
             "variables of type any",
             "real literals",
             "variables of type string",
+            "string literals",
             "for-operations",
             "non-boolean if-then-else inside a property",
             "unbounded integer variables",
@@ -185,7 +186,7 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
     fun `an integer chosen among havoc candidates is bounded by them`() {
         val unsupported = unsupported(
             """
-                var counter : int
+                var counter : int := 0
                 init {
                 }
                 tran {

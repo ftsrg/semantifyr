@@ -45,10 +45,8 @@ class SpinDeclarationRenderer @Inject constructor(
     private fun renderGlobal(variable: VariableDeclaration): String {
         val described = spinVariableTransformer.describe(variable)
         val type = renderGlobalType(described)
-        val initializer = variable.expression?.let {
-            " = ${spinExpressionTransformer.transform(it)}"
-        } ?: ""
-        return "$type ${described.name}$initializer;"
+        val initializer = variable.expression ?: error("Variable ${variable.name} has no initializer")
+        return "$type ${described.name} = ${spinExpressionTransformer.transform(initializer)};"
     }
 
     private fun renderGlobalType(variable: SpinVariable): String {
