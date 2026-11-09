@@ -12,7 +12,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.utils.text.IndentingStringBuilder
 
-// pan reserves 1024 bytes for the state vector by default, and no variable takes more than four
+// pan reserves 1024 bytes for the state vector by default, and no variable takes more than four bytes of it
 private const val DEFAULT_VECTOR_SIZE = 1024
 private const val VARIABLE_SIZE_BOUND = 4
 

@@ -28,7 +28,11 @@ class BackendNameManglerTest {
         }
     }
 
-    private fun enum(packageName: String, name: String, vararg literals: String): EnumDeclaration {
+    private fun enum(
+        packageName: String,
+        name: String,
+        vararg literals: String,
+    ): EnumDeclaration {
         val enumDeclaration = OxstsFactory.createEnumDeclaration().also {
             it.name = name
         }
