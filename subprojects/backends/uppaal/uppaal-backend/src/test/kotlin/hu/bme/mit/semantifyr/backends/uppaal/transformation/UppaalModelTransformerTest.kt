@@ -134,13 +134,16 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     }
 
     @Test
-    suspend fun `variables without an initializer start at any value of their type`() {
+    suspend fun `variables havoced in init start at any value of their type`() {
         val template = nta(
             """
-                var counter : int
-                var flag : bool
-                var color : test::colors::Color
+                var counter : int := 0
+                var flag : bool := false
+                var color : test::colors::Color := test::colors::Color::Red
                 init {
+                    havoc(counter)
+                    havoc(flag)
+                    havoc(color)
                     counter := counter + 1
                 }
                 tran {
@@ -151,62 +154,59 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
             """,
         ).templates.single()
 
-        assertThat(template.initialLocationId).isEqualTo("initial")
-        assertThat(template.locations).contains(UppaalLocation("initial", "Initial", UppaalLocationKind.Committed))
+        assertThat(template.initialLocationId).isEqualTo("start")
         assertThat(template.edges).containsExactly(
-            UppaalEdge("initial", "loc_0", assignment = "counter = 1"),
-            UppaalEdge("initial", "loc_0", assignment = "counter = 4"),
-            UppaalEdge("initial", "loc_0", assignment = "counter = 5"),
+            UppaalEdge("start", "loc_0", assignment = "counter = 0"),
+            UppaalEdge("start", "loc_0", assignment = "counter = 1"),
+            UppaalEdge("start", "loc_0", assignment = "counter = 4"),
+            UppaalEdge("start", "loc_0", assignment = "counter = 5"),
             UppaalEdge("loc_0", "loc_1", select = "havoc_flag_0 : int[0, 1]", assignment = "flag = havoc_flag_0"),
-            UppaalEdge("loc_1", "start", select = "havoc_color_1 : int[0, 1]", assignment = "color = havoc_color_1"),
-            UppaalEdge("start", "running", assignment = "counter = (counter + 1)"),
+            UppaalEdge("loc_1", "loc_2", select = "havoc_color_1 : int[0, 1]", assignment = "color = havoc_color_1"),
+            UppaalEdge("loc_2", "running", assignment = "counter = (counter + 1)"),
             UppaalEdge("running", "running"),
         )
     }
 
     @Test
-    suspend fun `a model whose variables are initialized starts at start`() {
-        val template = nta(
-            """
-                var counter : int := 0
-                init {
-                }
-                tran {
-                }
-                prop {
-                    AG counter < 5
-                }
-            """,
-        ).templates.single()
+    suspend fun `a variable without an initializer is rejected`() {
+        val exception = assertThrows<IllegalStateException> {
+            nta(
+                """
+                    var counter : int
+                    init {
+                    }
+                    tran {
+                    }
+                    prop {
+                        AG counter < 5
+                    }
+                """,
+            )
+        }
 
-        assertThat(template.initialLocationId).isEqualTo("start")
-        assertThat(template.locations.map { it.id }).containsExactly("start", "running")
+        assertThat(exception.message).isEqualTo("Variable counter has no initializer")
     }
 
     @Test
-    suspend fun `a local variable without an initializer starts at any value in every step`() {
-        val model = nta(
-            """
-                var counter : int := 0
-                init {
-                }
-                tran {
-                    var delta : int
-                    counter := delta
-                }
-                prop {
-                    AG counter < 3
-                }
-            """,
-        )
+    suspend fun `a local variable without an initializer is rejected`() {
+        val exception = assertThrows<IllegalStateException> {
+            nta(
+                """
+                    var counter : int := 0
+                    init {
+                    }
+                    tran {
+                        var delta : int
+                        counter := delta
+                    }
+                    prop {
+                        AG counter < 3
+                    }
+                """,
+            )
+        }
 
-        val local = model.globalDeclarations.variables.last().name
-        assertThat(model.templates.single().edges).containsExactly(
-            startToRunning,
-            UppaalEdge("running", "loc_0", assignment = "$local = 0"),
-            UppaalEdge("running", "loc_0", assignment = "$local = 3"),
-            UppaalEdge("loc_0", "running", assignment = "counter = $local"),
-        )
+        assertThat(exception.message).isEqualTo("Local variable delta has no initializer")
     }
 
     @Test
@@ -451,7 +451,7 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `only the running location lets time pass between whole steps`() {
         val template = nta(
             """
-                var counter : int
+                var counter : int := 0
                 var flag : bool := false
                 init {
                     choice {

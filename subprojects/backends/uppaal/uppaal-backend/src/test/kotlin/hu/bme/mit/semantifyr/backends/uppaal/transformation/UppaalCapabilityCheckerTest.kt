@@ -50,9 +50,10 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
                 AG copy < 5
             }
         """
-        val uninitialized = """
-            var counter : int
+        val initial = """
+            var counter : int := 0
             init {
+                havoc(counter)
             }
             tran {
             }
@@ -65,7 +66,8 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
             init {
             }
             tran {
-                var temporary : int
+                var temporary : int := 0
+                havoc(temporary)
                 copy := temporary
             }
             prop {
@@ -74,7 +76,7 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
         """
 
         assertThat(overApproximationUnsupported(havoc)).containsExactly("havoced integers read other than in comparisons with literals")
-        assertThat(overApproximationUnsupported(uninitialized)).contains("havoced integers read other than in comparisons with literals")
+        assertThat(overApproximationUnsupported(initial)).contains("havoced integers read other than in comparisons with literals")
         assertThat(overApproximationUnsupported(local)).containsExactly("havoced integers read other than in comparisons with literals")
         assertThat(unsupported(havoc)).isEmpty()
     }
@@ -83,8 +85,8 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
     fun `the over-approximation accepts havoced integers compared only with literals and havoced booleans`() {
         val unsupported = overApproximationUnsupported(
             """
-                var counter : int
-                var flag : bool
+                var counter : int := 0
+                var flag : bool := false
                 init {
                 }
                 tran {
@@ -105,7 +107,7 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
         val unsupported = unsupported(
             """
                 var counter : int := 0
-                var flag : bool
+                var flag : bool := false
                 var color : test::colors::Color := test::colors::Color::Red
                 init {
                     havoc(flag)
