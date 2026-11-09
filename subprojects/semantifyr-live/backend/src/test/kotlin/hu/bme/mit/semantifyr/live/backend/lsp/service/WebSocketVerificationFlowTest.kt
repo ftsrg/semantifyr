@@ -202,6 +202,31 @@ class WebSocketVerificationFlowTest {
     }
 
     @Test
+    fun `a command outside the flavor's commands is answered with MethodNotFound and skips the executor`(
+        @TempDir tmp: Path,
+    ) = testApplication {
+        val executor = FakeVerificationExecutor { cannedResult }
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(
+                testInjector(config(tmp)) {
+                    bind(VerificationExecutor::class.java).toInstance(executor)
+                },
+            )
+        }
+
+        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
+            send(Frame.Text(LspWire.initializeRequest()))
+            awaitResponseFor(id = 1)
+            send(Frame.Text(verifyCommand(id = 2, command = "oxsts.class.inline")))
+            val error = awaitResponseFor(id = 2).errorAs(ResponseError::class.java)
+            assertThat(error.code).isEqualTo(ResponseErrorCode.MethodNotFound.value)
+            assertThat(error.message).contains("oxsts.class.inline")
+        }
+
+        assertThat(executor.calls).isEmpty()
+    }
+
+    @Test
     fun `verify brackets the run with verificationsChanged notifications carrying the case`(@TempDir tmp: Path) = testApplication {
         val executor = FakeVerificationExecutor { cannedResult }
         installSemantifyrApp(webSockets = true) {
