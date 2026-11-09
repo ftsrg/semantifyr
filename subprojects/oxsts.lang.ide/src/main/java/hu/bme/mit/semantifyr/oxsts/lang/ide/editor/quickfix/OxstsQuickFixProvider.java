@@ -28,6 +28,8 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsFactory;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParametricDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration;
@@ -79,7 +81,8 @@ public class OxstsQuickFixProvider implements IQuickFixProvider {
             OxstsValidator.TYPE_MISMATCH,
             OxstsValidator.ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED,
             OxstsValidator.MISSING_INITIALIZER,
-            OxstsValidator.INVALID_CALL_ARGUMENTS_COUND);
+            OxstsValidator.INVALID_CALL_ARGUMENTS_COUND,
+            OxstsValidator.COULD_BE_INLINE);
 
     private static final int MAXIMUM_NEAR_MATCHES = 3;
 
@@ -131,6 +134,7 @@ public class OxstsQuickFixProvider implements IQuickFixProvider {
                 case OxstsValidator.ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED -> realizeAbstractMembers(site);
                 case OxstsValidator.MISSING_INITIALIZER -> addDefaultInitializer(site);
                 case OxstsValidator.INVALID_CALL_ARGUMENTS_COUND -> addMissingArguments(site);
+                case OxstsValidator.COULD_BE_INLINE -> makeInline(site);
                 default -> {}
             }
         }
@@ -292,6 +296,26 @@ public class OxstsQuickFixProvider implements IQuickFixProvider {
                 argument.setExpression(placeholderExpression(parameter.getTypeSpecification()));
                 completed.getArguments().add(argument);
             }
+        });
+    }
+
+    private void makeInline(IssueSite site) {
+        site.acceptor().accept("Make inline", (ISemanticModification) (diagnostic, object) -> {
+            return operation -> {
+                if (operation instanceof IfOperation ifOperation) {
+                    var inlineIfOperation = OxstsFactory.eINSTANCE.createInlineIfOperation();
+                    inlineIfOperation.setGuard(ifOperation.getGuard());
+                    inlineIfOperation.setBody(ifOperation.getBody());
+                    inlineIfOperation.setElse(ifOperation.getElse());
+                    EcoreUtil2.replace(ifOperation, inlineIfOperation);
+                } else if (operation instanceof ForOperation forOperation) {
+                    var inlineSeqFor = OxstsFactory.eINSTANCE.createInlineSeqFor();
+                    inlineSeqFor.setLoopVariable(forOperation.getLoopVariable());
+                    inlineSeqFor.setRangeExpression(forOperation.getRangeExpression());
+                    inlineSeqFor.setBody(forOperation.getBody());
+                    EcoreUtil2.replace(forOperation, inlineSeqFor);
+                }
+            };
         });
     }
 
