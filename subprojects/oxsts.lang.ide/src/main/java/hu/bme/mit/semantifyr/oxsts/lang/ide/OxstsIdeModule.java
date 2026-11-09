@@ -15,6 +15,8 @@ import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.syntaxcoloring.OxstsSemanticH
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.codelens.OxstsCodeLensProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands.OxstsCommandService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.contentassist.OxstsContentAssistService;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.hover.OxstsHoverService;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.signatureHelp.OxstsSignatureHelpService;
 import org.eclipse.xtext.ide.editor.contentassist.IPrefixMatcher;
 import org.eclipse.xtext.ide.editor.contentassist.IdeContentProposalProvider;
 import org.eclipse.xtext.ide.editor.contentassist.IdeCrossrefProposalProvider;
@@ -27,6 +29,8 @@ import org.eclipse.xtext.ide.server.codelens.ICodeLensService;
 import org.eclipse.xtext.ide.server.commands.IExecutableCommandService;
 import org.eclipse.xtext.ide.server.contentassist.ContentAssistService;
 import org.eclipse.xtext.ide.server.formatting.FormattingService;
+import org.eclipse.xtext.ide.server.hover.IHoverService;
+import org.eclipse.xtext.ide.server.signatureHelp.ISignatureHelpService;
 
 /** Use this class to register ide components. */
 public class OxstsIdeModule extends AbstractOxstsIdeModule {
@@ -84,5 +88,15 @@ public class OxstsIdeModule extends AbstractOxstsIdeModule {
     @SuppressWarnings("unused")
     public Class<? extends FormattingService> bindFormattingService() {
         return SemantifyrFormattingService.class;
+    }
+
+    @SuppressWarnings("unused")
+    public Class<? extends IHoverService> bindIHoverService() {
+        return OxstsHoverService.class;
+    }
+
+    @SuppressWarnings("unused")
+    public Class<? extends ISignatureHelpService> bindISignatureHelpService() {
+        return OxstsSignatureHelpService.class;
     }
 }
