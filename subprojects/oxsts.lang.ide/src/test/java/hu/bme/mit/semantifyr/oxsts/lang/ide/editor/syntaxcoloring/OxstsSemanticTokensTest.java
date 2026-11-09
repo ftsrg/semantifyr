@@ -102,12 +102,17 @@ class OxstsSemanticTokensTest extends OxstsLanguageServerTest {
     }
 
     @Test
-    void aReferenceFeatureIsReadonlyAndAVariableIsNot() throws Exception {
+    void referenceAndContainerFeaturesAreReadonlyAndAVariableIsNot() throws Exception {
         var model = highlight(SemanticTokensModels.VEHICLES_WITH_MODIFIERS);
 
         assertThat(model.tokenAt("refers <|>vehicle"))
                 .isEqualTo(new Token(
                         7,
+                        SemanticTokenTypes.Property,
+                        Set.of(SemanticTokenModifiers.Declaration, SemanticTokenModifiers.Readonly)));
+        assertThat(model.tokenAt("container <|>garage"))
+                .isEqualTo(new Token(
+                        6,
                         SemanticTokenTypes.Property,
                         Set.of(SemanticTokenModifiers.Declaration, SemanticTokenModifiers.Readonly)));
         assertThat(model.tokenAt("var <|>open"))

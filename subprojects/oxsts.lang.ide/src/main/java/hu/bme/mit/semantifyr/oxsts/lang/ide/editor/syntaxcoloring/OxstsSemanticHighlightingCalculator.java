@@ -181,7 +181,9 @@ public class OxstsSemanticHighlightingCalculator extends DefaultSemanticHighligh
 
     protected boolean isReadonly(EObject element) {
         if (element instanceof FeatureDeclaration feature) {
-            return feature.getKind() == FeatureKind.REFERENCE || feature.getKind() == FeatureKind.DERIVED;
+            return feature.getKind() == FeatureKind.REFERENCE
+                    || feature.getKind() == FeatureKind.DERIVED
+                    || feature.getKind() == FeatureKind.CONTAINER;
         }
         return false;
     }

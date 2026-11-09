@@ -36,6 +36,7 @@ final class SemanticTokensModels {
             package example::vehicles
 
             abstract class Vehicle {
+                container garage: Garage
                 abstract tran drive()
             }
 
