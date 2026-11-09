@@ -14,8 +14,10 @@ import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.compiler.scopes.CompilationScoped
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EvaluationFailureException
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
@@ -71,9 +73,14 @@ class TransitionCallTraceTransformer @Inject constructor(
             transitionDeclaration = transitionDeclaration,
             arguments = transitionDeclaration.parameters.mapIndexedNotNull { index, parameter ->
                 OxstsUtils.getArgumentFor(callExpression.arguments, parameter, index)?.let {
+                    val evaluation = try {
+                        evaluator.evaluateTyped(ExpressionEvaluation::class.java, it.expression)
+                    } catch (_: EvaluationFailureException) {
+                        sourceError(it.expression, "The argument of traced transition '${transitionDeclaration.name}' is not evaluable at compile time")
+                    }
                     ArgumentTrace(
                         parameter,
-                        evaluator.evaluateTyped(ExpressionEvaluation::class.java, it.expression),
+                        evaluation,
                     )
                 }
             },

@@ -691,6 +691,25 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
     }
 
+    @Check
+    public void checkTracedCallArgumentModality(CallSuffixExpression callSuffixExpression) {
+        var primary = metaConstantExpressionEvaluatorProvider.evaluate(callSuffixExpression.getPrimary());
+        if (!(primary instanceof TransitionDeclaration transitionDeclaration)
+                || !builtinAnnotationHandler.isTransitionTraced(transitionDeclaration)) {
+            return;
+        }
+        for (var argument : callSuffixExpression.getArguments()) {
+            if (argument.getExpression() != null) {
+                checkModalityAtMost(
+                        argument.getExpression(),
+                        Modality.COMPILE_TIME,
+                        "Argument of a call to the traced transition '"
+                                + NamingUtil.getName(transitionDeclaration)
+                                + "' must be evaluable at compile time, the witness records its value");
+            }
+        }
+    }
+
     private void checkArgumentAssignableToParameter(Argument argument, ParameterDeclaration parameter) {
         if (parameter == null || parameter.eIsProxy() || parameter.getTypeSpecification() == null) {
             return;
