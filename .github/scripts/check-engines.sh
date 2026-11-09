@@ -24,7 +24,14 @@ probe() {
 
 for engine in "$@"; do
     case "$engine" in
-        spin) probe spin 0 spin -V ;;
+        spin)
+            probe spin 0 spin -V
+            # spin -V answers without gcc, which Spin preprocesses and compiles every search with
+            model=$(mktemp -d)
+            printf 'active proctype P() { skip }\n' > "$model/model.pml"
+            probe 'spin pan' 0 sh -c 'cd "$1" && spin -a model.pml && gcc -o pan pan.c' sh "$model"
+            rm -rf "$model"
+            ;;
         nuxmv) probe nuxmv 2 nuXmv -h ;;
         uppaal) probe uppaal 0 verifyta -v ;;
         docker)

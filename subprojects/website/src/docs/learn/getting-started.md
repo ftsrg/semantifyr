@@ -31,7 +31,7 @@ The Semantifyr VS Code extension bundles the language servers and the compiler. 
 
 - [Visual Studio Code](https://code.visualstudio.com/) 1.109 or newer
 - A Java 25 runtime, found through `JAVA_HOME` or `PATH` (the extension uses it to run the bundled language servers)
-- At least one verification backend: Theta (`theta-xsts-cli` on `PATH`, or Docker), Spin (`spin` and a C compiler on `PATH`), nuXmv (`nuXmv` on `PATH`) or Uppaal (`verifyta` on `PATH`)
+- At least one verification backend: Theta (`theta-xsts-cli` on `PATH`, or Docker), Spin (`spin` and `gcc` on `PATH`), nuXmv (`nuXmv` on `PATH`) or Uppaal (`verifyta` on `PATH`)
 
 **Install**
 

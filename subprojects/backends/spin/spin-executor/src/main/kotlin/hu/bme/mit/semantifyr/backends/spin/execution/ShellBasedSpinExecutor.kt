@@ -12,10 +12,16 @@ import hu.bme.mit.semantifyr.backends.spin.SpinExecutionSpecification
 import hu.bme.mit.semantifyr.backends.spin.SpinExecutor
 import hu.bme.mit.semantifyr.backends.spin.SpinReplaySpecification
 
-class ShellBasedSpinExecutor :
-    ShellBasedBackendExecutor(),
+class ShellBasedSpinExecutor(
+    private val compilerName: String = "gcc",
+) : ShellBasedBackendExecutor(),
     SpinExecutor {
     override val binaryName = "spin"
+
+    // spin preprocesses the model and compiles every search with gcc, so spin alone answers -V yet cannot verify
+    override fun isAvailable(): Boolean {
+        return probeAvailability(listOf("-V")) && probeAvailability(listOf("--version"), binary = compilerName)
+    }
 
     override suspend fun execute(specification: SpinExecutionSpecification): SpinExecutionResult {
         val arguments = searchArguments(specification)

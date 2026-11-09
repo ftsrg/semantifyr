@@ -20,3 +20,4 @@ curl -fsS http://localhost:8080/sysml-worker/syside-worker.cjs > /dev/null
 curl -fsS http://localhost:8080/sysml-worker/library/Verification.sysml > /dev/null
 test "$(curl -s -o /dev/null -w '%{http_code}' -H 'X-Auth-Request-User: smoke' http://localhost:8080/api/admin/status)" = 403
 docker exec "$container" theta-xsts-cli --version
+docker exec -i "$container" sh -s spin < .github/scripts/check-engines.sh
