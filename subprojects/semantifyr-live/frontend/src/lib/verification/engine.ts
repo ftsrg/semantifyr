@@ -5,14 +5,15 @@
  */
 
 import {
+  discoverVerificationCases,
   VerificationStatus,
+  WitnessValidationStatus,
   type Location,
   type VerificationCaseResult,
   type VerificationCaseSpecification,
   type VerificationMetrics,
   type VerificationTrace,
   type WitnessValidationResult,
-  type WitnessValidationStatus,
 } from '@semantifyr/editor-common'
 import {
   CancellationTokenSource as VscodeCancellationTokenSource,
@@ -46,8 +47,10 @@ export type VerificationCaseStatus =
   | 'passed'
   | 'failed'
   | 'inconclusive'
+  | 'timeout'
   | 'not_supported'
   | 'errored'
+  | 'cancelled'
 
 export interface VerificationCaseState {
   caseInfo: VerificationCaseSpecification
@@ -68,8 +71,11 @@ export interface VerificationCaseState {
 
 export type VerificationPhase = 'idle' | 'running' | 'done' | 'error' | 'cancelled'
 
+export type DiscoveryPhase = 'idle' | 'discovering' | 'discovered'
+
 export interface VerificationState {
   phase: VerificationPhase
+  discovery: DiscoveryPhase
   message?: string
   progress?: string
   cases: VerificationCaseState[]
@@ -119,10 +125,10 @@ function parseResultStatus(response: VerificationCaseResult | null): Verificatio
     case VerificationStatus.Passed:
     case VerificationStatus.Failed:
     case VerificationStatus.Inconclusive:
-    case VerificationStatus.NotSupported:
-      return response.status
     case VerificationStatus.Timeout:
-      return 'inconclusive'
+    case VerificationStatus.NotSupported:
+    case VerificationStatus.Cancelled:
+      return response.status
     default:
       return 'errored'
   }
@@ -130,16 +136,54 @@ function parseResultStatus(response: VerificationCaseResult | null): Verificatio
 
 function parseValidationStatus(response: WitnessValidationResult | null): WitnessValidationStatus {
   switch (response?.status) {
-    case 'valid':
-    case 'invalid':
-    case 'inconclusive':
+    case WitnessValidationStatus.Valid:
+    case WitnessValidationStatus.Invalid:
+    case WitnessValidationStatus.Inconclusive:
+    case WitnessValidationStatus.Timeout:
+    case WitnessValidationStatus.Cancelled:
       return response.status
     default:
-      return 'errored'
+      return WitnessValidationStatus.Errored
   }
 }
 
 export { discoverVerificationCases } from '@semantifyr/editor-common'
+
+function mergeDiscoveredCases(
+  previous: readonly VerificationCaseState[],
+  discovered: readonly VerificationCaseSpecification[],
+): VerificationCaseState[] {
+  const existingById = new Map(previous.map((caseState) => [caseState.caseInfo.id, caseState]))
+  return discovered.map((caseInfo) => {
+    const existing = existingById.get(caseInfo.id)
+    if (existing) {
+      return { ...existing, caseInfo }
+    }
+    return { caseInfo, status: 'stale' as const }
+  })
+}
+
+export async function discoverCases(
+  client: LspClient,
+  discoveryCommand: string,
+  fileUri: string,
+  setState: StateUpdater,
+): Promise<void> {
+  setState((prev) => ({ ...prev, discovery: 'discovering' }))
+  let discovered: VerificationCaseSpecification[]
+  try {
+    discovered = await discoverVerificationCases(client, discoveryCommand, fileUri)
+  } catch {
+    setState((prev) => ({ ...prev, discovery: 'idle' }))
+    return
+  }
+  setState((prev) => {
+    if (prev.phase === 'running') {
+      return { ...prev, discovery: 'discovered' }
+    }
+    return { ...prev, discovery: 'discovered', cases: mergeDiscoveredCases(prev.cases, discovered) }
+  })
+}
 
 export interface RunVerificationHandle {
   cancel: () => void
@@ -250,16 +294,16 @@ function maybeDispatchAutoValidation(
 
 function deriveBatchMessage(cases: readonly VerificationCaseState[]): string {
   const hasFailures = cases.some((cs) => cs.status === 'failed')
-  const hasErrors = cases.some((cs) => cs.status === 'errored')
+  const hasErrors = cases.some((cs) => cs.status === 'errored' || cs.status === 'timeout')
   const allPassed = cases.every((cs) => cs.status === 'passed')
   if (allPassed) {
     return 'All cases passed'
   }
   if (hasErrors && hasFailures) {
-    return 'Some cases failed or errored'
+    return 'Some cases failed, errored or timed out'
   }
   if (hasErrors) {
-    return 'Some cases errored'
+    return 'Some cases errored or timed out'
   }
   return 'Some cases failed'
 }
@@ -345,11 +389,12 @@ export function runAllVerifications(
 
   const removeListener = onProgress(progress.handle)
 
-  setState({
+  setState((prev) => ({
     phase: 'running',
+    discovery: prev.discovery,
     message: 'Starting verification...',
     cases: cases.map((c) => ({ caseInfo: c, status: 'queued' as const })),
-  })
+  }))
 
   const runOne = async (index: number): Promise<void> => {
     const currentCase = cases[index]

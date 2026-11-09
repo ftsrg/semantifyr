@@ -52,7 +52,7 @@ describe('LSP cancellation plumbing', () => {
       'file:///x',
       sampleCase('b'),
       (next) => {
-        if (typeof next === 'function') next({ phase: 'idle', cases: [] });
+        if (typeof next === 'function') next({ phase: 'idle', discovery: 'idle', cases: [] });
       },
       (_) => () => {},
     );

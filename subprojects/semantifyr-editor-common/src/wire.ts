@@ -38,6 +38,7 @@ export const VerificationStatus = {
     Timeout: "timeout",
     NotSupported: "not_supported",
     Errored: "errored",
+    Cancelled: "cancelled",
 } as const;
 
 export type VerificationStatus = (typeof VerificationStatus)[keyof typeof VerificationStatus];
@@ -137,7 +138,16 @@ export interface VerificationCaseResult {
     trace: VerificationTrace | null;
 }
 
-export type WitnessValidationStatus = "valid" | "invalid" | "inconclusive" | "errored";
+export const WitnessValidationStatus = {
+    Valid: "valid",
+    Invalid: "invalid",
+    Inconclusive: "inconclusive",
+    Errored: "errored",
+    Timeout: "timeout",
+    Cancelled: "cancelled",
+} as const;
+
+export type WitnessValidationStatus = (typeof WitnessValidationStatus)[keyof typeof WitnessValidationStatus];
 
 export interface WitnessValidationResult {
     status: WitnessValidationStatus;

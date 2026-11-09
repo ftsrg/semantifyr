@@ -36,6 +36,7 @@ describe('caseStatusToSeverity', () => {
     expect(caseStatusToSeverity('failed')).toBe('error')
     expect(caseStatusToSeverity('errored')).toBe('error')
     expect(caseStatusToSeverity('inconclusive')).toBe('warning')
+    expect(caseStatusToSeverity('timeout')).toBe('warning')
     expect(caseStatusToSeverity('not_supported')).toBe('warning')
   })
 
@@ -44,6 +45,7 @@ describe('caseStatusToSeverity', () => {
     expect(caseStatusToSeverity('running')).toBeNull()
     expect(caseStatusToSeverity('stale')).toBeNull()
     expect(caseStatusToSeverity('passed')).toBeNull()
+    expect(caseStatusToSeverity('cancelled')).toBeNull()
   })
 })
 

@@ -29,6 +29,19 @@ describe('witnessIconDescriptor', () => {
     expect(descriptor.badgeColor).toBe('warning')
   })
 
+  it('names a timed out validation', () => {
+    const descriptor = witnessIconDescriptor('timeout')
+    expect(descriptor.kind).toBe('inconclusive')
+    expect(descriptor.ariaLabel).toMatch(/timed out/)
+  })
+
+  it('shows no badge for a cancelled validation', () => {
+    const descriptor = witnessIconDescriptor('cancelled')
+    expect(descriptor.kind).toBe('simple')
+    expect(descriptor.badgeVisible).toBe(false)
+    expect(descriptor.ariaLabel).toMatch(/cancelled/)
+  })
+
   it('returns the danger failed state on invalid', () => {
     const descriptor = witnessIconDescriptor('invalid')
     expect(descriptor.kind).toBe('failed')

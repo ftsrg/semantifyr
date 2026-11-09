@@ -16,6 +16,7 @@ export function caseStatusToSeverity(
     case 'errored':
       return 'error'
     case 'inconclusive':
+    case 'timeout':
     case 'not_supported':
       return 'warning'
     default:
@@ -34,6 +35,8 @@ export function defaultMessageForStatus(
       return `${label}: verification raised an error. Check the verification panel for details.`
     case 'inconclusive':
       return `${label}: the verifier could not produce a decisive verdict. Try a different portfolio.`
+    case 'timeout':
+      return `${label}: the verifier ran out of time. Try a different portfolio.`
     case 'not_supported':
       return `${label}: the chosen portfolio cannot transform this case. Pick another.`
     default:

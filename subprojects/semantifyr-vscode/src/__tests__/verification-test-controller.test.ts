@@ -134,6 +134,7 @@ describe('verification', () => {
         ['timeout', 'errored', 'Timed out: bound reached'],
         ['not_supported', 'errored', 'Not supported by the chosen portfolio: bound reached'],
         ['errored', 'errored', 'bound reached'],
+        ['cancelled', 'skipped', undefined],
     ] as const)('reports a %s verdict as %s', async (status, outcome, message) => {
         await setUp();
         verify = () => result(status, null, 'bound reached');
