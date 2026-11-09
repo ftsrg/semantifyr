@@ -230,10 +230,10 @@ class CopyPropagationPassTest : PassTestBase() {
     fun `read in init before its write does not see the later write as a reaching definition`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var step : int := -1
+            var step : int := 0
             init {
-                assume (step == -1)
-                step := 0
+                assume (step == 0)
+                step := 1
             }
             tran {
             }
@@ -243,10 +243,10 @@ class CopyPropagationPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var step : int := -1
+            var step : int := 0
             init {
-                assume (step == -1)
-                step := 0
+                assume (step == 0)
+                step := 1
             }
             tran {
             }

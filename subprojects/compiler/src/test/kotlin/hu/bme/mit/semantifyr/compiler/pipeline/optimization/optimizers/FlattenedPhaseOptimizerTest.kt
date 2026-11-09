@@ -175,10 +175,8 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
     fun `step counter style witness model - init writes must survive`() = assertOptimizerTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var step : int := -1
+            var step : int := 0
             init {
-                assume (step == -1)
-                step := 0
                 assume (step == 0)
                 step := 1
             }
@@ -192,10 +190,9 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var step : int := -1
+            var step : int := 0
             init {
-                assume (step == -1)
-                step := 0
+                assume (step == 0)
                 step := 1
             }
             tran {
@@ -256,16 +253,11 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
     fun `witness shape with step counter and dispatch must be preserved`() = assertOptimizerTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var step : int := -1
+            var step : int := 0
             var current : int := -1
             var first_done : bool := false
             var second_done : bool := false
             init {
-                assume (step == -1)
-                assume (current == -1)
-                assume (first_done == false)
-                assume (second_done == false)
-                step := 0
                 assume (step == 0)
                 choice {
                     current := 0
@@ -297,16 +289,12 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var step : int := -1
+            var step : int := 0
             var current : int := -1
             var first_done : bool := false
             var second_done : bool := false
             init {
-                assume (step == -1)
-                assume (current == -1)
-                assume (first_done == false)
-                assume (second_done == false)
-                step := 0
+                assume (step == 0)
                 choice {
                     current := 0
                 } or {
