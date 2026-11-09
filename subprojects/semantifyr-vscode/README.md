@@ -18,7 +18,7 @@ This extension brings the Semantifyr toolchain into VS Code, including a languag
 
 ## Verification
 
-The verification cases of the open workspace appear in the *Testing* view. When a verdict comes with a witness, **Show Witness** on the failure message or in the case's context menu opens the back-annotated witness (for a Gamma case, the witness as a Gamma execution trace) read-only beside the model, and next to it the trace with the calls and the state changes of each step.
+The verification cases of the open workspace appear in the *Testing* view. When a verdict comes with a witness, **Show Witness** on the failure message or in the case's context menu opens the back-annotated witness (for a Gamma case, the witness as a Gamma execution trace) read-only beside the model, and next to it the trace with the calls and the state changes of each step. For a Gamma case, **Validate Witness** in the same places re-verifies the witness and adds the result to the trace.
 
 ## Extension settings
 

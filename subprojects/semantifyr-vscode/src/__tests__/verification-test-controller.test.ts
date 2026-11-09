@@ -7,9 +7,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type CancellationToken, ResponseError } from 'vscode-jsonrpc';
 import { LSPErrorCodes } from 'vscode-languageserver-protocol';
-import type { VerificationCaseResult, VerificationCaseSpecification } from '@semantifyr/editor-common';
-import { VerificationTestController } from '../clients/verification-test-controller.js';
+import type { VerificationCaseResult, VerificationCaseSpecification, WitnessValidationResult } from '@semantifyr/editor-common';
+import { VerificationTestController, type VerificationTestControllerConfig } from '../clients/verification-test-controller.js';
 import { WitnessView } from '../witness.js';
+import { registerOutputChannel } from '../outputChannel.js';
 import { counterexample, modelUri, reachableCase, resolutionNote, result, safeCase } from './fixtures.js';
 import { CancellationTokenSource, createExtensionContext, openDocument, resetVscode, state, type TestController, type TestItem, Uri, window } from './stubs/vscode.js';
 import { LanguageClient } from './stubs/vscode-languageclient-node.js';
@@ -23,11 +24,12 @@ type VerifyHandler = (parameters: unknown, token: CancellationToken) => Promise<
 
 let cases: VerificationCaseSpecification[] | null;
 let verify: VerifyHandler;
+let validate: (parameters: unknown, token: CancellationToken) => Promise<WitnessValidationResult | null> | WitnessValidationResult | null;
 let requests: { method: string; parameters: unknown }[];
 let controller: TestController;
 let witnesses: WitnessView;
 
-async function setUp() {
+async function setUp(validation: Partial<VerificationTestControllerConfig> = {}) {
     const client = new LanguageClient('oxstsLSP', 'OXSTS Language Server', undefined, {});
     client.server.onRequest((method, parameters, token) => {
         requests.push({ method, parameters });
@@ -35,9 +37,13 @@ async function setUp() {
         if (command === 'oxsts.case.discover') {
             return cases;
         }
+        if (command === validation.validateWitnessCommand) {
+            return validate((parameters as ExecuteCommandParams).arguments[0], token);
+        }
         return verify((parameters as ExecuteCommandParams).arguments[0], token);
     });
     const context = createExtensionContext('/extension');
+    registerOutputChannel(context as never);
     witnesses = new WitnessView();
     witnesses.register(context as never);
     const testController = new VerificationTestController(client as never, {
@@ -47,6 +53,7 @@ async function setUp() {
         controllerLabel: 'Semantifyr Verification Cases',
         discoverCommand: 'oxsts.case.discover',
         verifyCommand: 'oxsts.case.verify',
+        ...validation,
     }, witnesses);
     testController.registerTestProvider(context as never);
     await testController.refreshWorkspaceTests();
@@ -75,6 +82,7 @@ beforeEach(() => {
     state.files = [Uri.parse(modelUri)];
     cases = [safeCase, reachableCase];
     verify = () => result('passed');
+    validate = () => null;
     requests = [];
 });
 
@@ -318,7 +326,85 @@ describe('verification', () => {
         verify = () => result('passed');
         await run([caseItem('lamp::Reachable')]);
         await showWitness(caseItem('lamp::Reachable'));
-        expect(window.showInformationMessage).toHaveBeenLastCalledWith('No witness recorded for Reachable.');
+        expect(window.showInformationMessage).toHaveBeenLastCalledWith('No witness for Reachable.');
+    });
+});
+
+describe('witness validation', () => {
+    const byCase = { validateWitnessCommand: 'gamma.witness.validate', validateWitnessByCase: true };
+    const valid: WitnessValidationResult = { status: 'valid', verdict: 'failed', message: null, backendId: 'theta-bmc', portfolioId: 'smart-full', metrics: null };
+
+    function validateWitnessOf(item: TestItem) {
+        return state.commands.get('semantifyr.witness.validate')!(item);
+    }
+
+    it('offers a validation on a failed verdict when the language validates witnesses', async () => {
+        await setUp(byCase);
+        verify = () => result('failed', counterexample, 'property violated');
+
+        const testRun = await run([caseItem('lamp::Safe')]);
+
+        const event = testRun.events.at(-1) as { message: { contextValue?: string } };
+        expect(event.message.contextValue).toBe('semantifyr.witness.validatable');
+    });
+
+    it('sends the case location for a validation by case', async () => {
+        await setUp(byCase);
+        verify = () => result('failed', counterexample);
+        validate = () => valid;
+        await run([caseItem('lamp::Safe')]);
+
+        await validateWitnessOf(caseItem('lamp::Safe'));
+
+        expect(requests.at(-1)).toEqual({
+            method: 'workspace/executeCommand',
+            parameters: { command: 'gamma.witness.validate', arguments: [{ uri: modelUri, range: safeCase.location.range }] },
+        });
+        expect(window.showInformationMessage).toHaveBeenLastCalledWith('Safe: Witness valid (backend theta-bmc, portfolio smart-full)');
+    });
+
+    it('sends the witness location for a validation by witness', async () => {
+        await setUp({ validateWitnessCommand: 'oxsts.case.validateWitness' });
+        verify = () => result('failed', counterexample);
+        validate = () => valid;
+        await run([caseItem('lamp::Safe')]);
+
+        await validateWitnessOf(caseItem('lamp::Safe'));
+
+        expect((requests.at(-1)!.parameters as ExecuteCommandParams).arguments).toEqual([
+            { uri: counterexample.witnessUri, range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } },
+        ]);
+    });
+
+    it('cancels the validation on the server when the progress is cancelled and reports nothing', async () => {
+        await setUp(byCase);
+        verify = () => result('failed', counterexample);
+        let serverCancelled = false;
+        validate = (_parameters, token) => new Promise((resolve) => {
+            token.onCancellationRequested(() => {
+                serverCancelled = true;
+                resolve(new ResponseError(LSPErrorCodes.RequestCancelled, 'cancelled') as never);
+            });
+            window.progressTokens.at(-1)!.cancel();
+        });
+        await run([caseItem('lamp::Safe')]);
+
+        await validateWitnessOf(caseItem('lamp::Safe'));
+
+        expect(serverCancelled).toBe(true);
+        expect(window.showErrorMessage).not.toHaveBeenCalled();
+        expect(window.showInformationMessage).not.toHaveBeenCalled();
+    });
+
+    it('offers no validation without a validation command', async () => {
+        await setUp();
+        verify = () => result('failed', counterexample);
+        await run([caseItem('lamp::Safe')]);
+
+        await validateWitnessOf(caseItem('lamp::Safe'));
+
+        expect(requests.map((request) => (request.parameters as ExecuteCommandParams).command)).not.toContain('gamma.witness.validate');
+        expect(window.showInformationMessage).toHaveBeenLastCalledWith('No witness for Safe.');
     });
 });
 

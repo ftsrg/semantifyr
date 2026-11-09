@@ -66,7 +66,11 @@ describe('activate', () => {
             ['gamma.verification', 'Gamma Verification Cases'],
         ]);
         expect(state.controllers.map((controller) => controller.profiles.map((profile) => [profile.label, profile.isDefault]))).toEqual([[['Run', true]], [['Run', true]]]);
-        expect([...state.commands.keys()].sort()).toEqual(['semantifyr.gamma.compile', 'semantifyr.witness.show']);
+        expect([...state.commands.keys()].sort()).toEqual([
+            'semantifyr.gamma.compile',
+            'semantifyr.witness.show',
+            'semantifyr.witness.validate',
+        ]);
         expect(state.contentProviders.has('semantifyr-trace')).toBe(true);
         expect(context.subscriptions.length).toBeGreaterThan(0);
     });

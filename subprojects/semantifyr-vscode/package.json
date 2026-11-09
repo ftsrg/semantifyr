@@ -70,6 +70,11 @@
         "command": "semantifyr.witness.show",
         "title": "Show Witness",
         "category": "Semantifyr"
+      },
+      {
+        "command": "semantifyr.witness.validate",
+        "title": "Validate Witness",
+        "category": "Semantifyr"
       }
     ],
     "menus": {
@@ -84,24 +89,40 @@
         {
           "command": "semantifyr.witness.show",
           "when": "false"
+        },
+        {
+          "command": "semantifyr.witness.validate",
+          "when": "false"
         }
       ],
       "testing/item/context": [
         {
           "command": "semantifyr.witness.show",
           "when": "controllerId == oxsts.verification || controllerId == gamma.verification"
+        },
+        {
+          "command": "semantifyr.witness.validate",
+          "when": "controllerId == gamma.verification"
         }
       ],
       "testing/message/content": [
         {
           "command": "semantifyr.witness.show",
-          "when": "testMessage == semantifyr.witness"
+          "when": "testMessage =~ /^semantifyr\\.witness/"
+        },
+        {
+          "command": "semantifyr.witness.validate",
+          "when": "testMessage == semantifyr.witness.validatable"
         }
       ],
       "testing/message/context": [
         {
           "command": "semantifyr.witness.show",
-          "when": "testMessage == semantifyr.witness"
+          "when": "testMessage =~ /^semantifyr\\.witness/"
+        },
+        {
+          "command": "semantifyr.witness.validate",
+          "when": "testMessage == semantifyr.witness.validatable"
         }
       ]
     },

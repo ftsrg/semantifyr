@@ -139,6 +139,8 @@ export const TestRunProfileKind = { Run: 1, Debug: 2, Coverage: 3 } as const;
 
 export const ViewColumn = { Active: -1, Beside: -2, One: 1, Two: 2, Three: 3 } as const;
 
+export const ProgressLocation = { SourceControl: 1, Window: 10, Notification: 15 } as const;
+
 class TestItemCollection implements Iterable<[string, TestItem]> {
     private readonly items = new Map<string, TestItem>();
 
@@ -331,6 +333,13 @@ export const window = {
     createOutputChannel: vi.fn((name: string) => ({ name, append: vi.fn(), appendLine: vi.fn(), show: vi.fn(), dispose: vi.fn() })),
     showInformationMessage: vi.fn(async (_message: string) => undefined),
     showErrorMessage: vi.fn(async (_message: string) => undefined),
+    showWarningMessage: vi.fn(async (_message: string) => undefined),
+    progressTokens: [] as CancellationTokenSource[],
+    withProgress: vi.fn(async <T>(_options: unknown, task: (progress: { report(value: unknown): void }, token: unknown) => Promise<T>) => {
+        const source = new CancellationTokenSource();
+        window.progressTokens.push(source);
+        return await task({ report: () => {} }, source.token);
+    }),
     showTextDocument: vi.fn(async (target: TextDocument | Uri, options?: { viewColumn?: number }) => {
         const document = target instanceof Uri ? openDocument(target) : target;
         const viewColumn = options?.viewColumn === ViewColumn.Beside ? ViewColumn.Two : options?.viewColumn ?? ViewColumn.One;
@@ -397,6 +406,7 @@ export function resetVscode() {
         emitter.dispose();
     }
     window.activeTextEditor = undefined;
+    window.progressTokens = [];
 }
 
 export function createExtensionContext(extensionPath: string) {
@@ -408,6 +418,7 @@ export default {
     EventEmitter,
     Location,
     Position,
+    ProgressLocation,
     Range,
     RelativePattern,
     TestMessage,
