@@ -21,7 +21,7 @@ Features define the **structural relationships** between classes. Unlike [variab
 
 A `contains` feature declares ownership: each instance of the enclosing class owns its own instance of the target type. Children are instantiated together with their parent.
 
-```oxsts
+```oxsts fragment
 class Pair {
   contains a: Counter
   contains b: Counter
@@ -32,7 +32,7 @@ class Pair {
 
 A `refers` feature is a cross-reference. It points to an instance that lives elsewhere; there is no ownership.
 
-```oxsts
+```oxsts fragment
 class Display {
   refers source: Counter
 }
@@ -43,6 +43,8 @@ class Display {
 A `container` feature is the **reverse** of a `contains` feature: the child pointing back to its owning parent. A `container` must always be paired with the corresponding `contains` via `opposite`. A validation rule enforces this pairing.
 
 ```oxsts
+package example
+
 class Tree {
   contains children: Tree[0..*] opposite parent
   container parent: Tree[0..1] opposite children
@@ -53,7 +55,7 @@ class Tree {
 
 A `derived refers` feature is computed automatically from the model structure. Derived refers features with `opposite` may be derived from their opposite declaration.
 
-```oxsts
+```oxsts fragment
 class StateNode {
   derived refers inTrans: Transition[0..*] opposite to
   derived refers outTrans: Transition[0..*] opposite from
@@ -65,12 +67,14 @@ class StateNode {
 The `features` keyword declares an **abstract** feature whose kind is left to subclasses. A subclass redefines it as a concrete `contains` or `refers`, or fills it through features that [subset](#subsets) it: one that is not redefined holds the instances of its subsetters.
 
 ```oxsts
+package example
+
 abstract class Container {
   features payload: any
 }
 ```
 
-```oxsts
+```oxsts fragment
 class IntContainer : Container {
   redefine contains payload: int
 }
@@ -96,6 +100,8 @@ The infinity literal `*` is allowed in ranges (`0..*`).
 `opposite` declares a bidirectional relationship: navigating in one direction automatically populates the other. A validation rule enforces that opposite features point to each other and that `container`/`contains` pairs match.
 
 ```oxsts
+package example
+
 class Tree {
   contains children: Tree[0..*] opposite parent
   container parent: Tree[0..1] opposite children
@@ -106,7 +112,7 @@ class Tree {
 
 `subsets` declares that the values of one feature are also included in another, more general feature.
 
-```oxsts
+```oxsts fragment
 class Wrapper {
   contains all: Item[0..*]
   contains primary: Item subsets all
@@ -119,7 +125,7 @@ This is the primary way semantic libraries declaratively add instances to a coll
 
 `redefine` overrides an inherited feature of the **same name**, typically with a more specific type or a more constrained body. 
 
-```oxsts
+```oxsts fragment
 class Counter10Pair : CounterPair {
   redefine contains a: Counter10
   redefine contains b: Counter10
@@ -128,7 +134,7 @@ class Counter10Pair : CounterPair {
 
 `redefines` replaces an inherited feature under a new name: the old name no longer resolves on the subclass, and inherited members that use it reach the new feature.
 
-```oxsts
+```oxsts fragment
 class Counter10Pair : CounterPair {
   contains newA: Counter10 redefines a
   contains newB: Counter10 redefines b
@@ -139,7 +145,7 @@ class Counter10Pair : CounterPair {
 
 A feature declaration may include a block of nested feature declarations to redefine inner structure.
 
-```oxsts
+```oxsts fragment
 contains state: State {
   redefine contains entryAction: SetValueAction
 }
@@ -149,7 +155,7 @@ contains state: State {
 
 A feature can be bound to a compile-time expression with `=`. The bound value cannot depend on runtime state.
 
-```oxsts
+```oxsts fragment
 refers maximum: int = 10
 ```
 
@@ -162,12 +168,12 @@ Top-level features are declared **outside** any class. They represent shared ins
 | `global containment` | A top-level owned instance. |
 | `global reference` | A top-level reference. |
 
-```oxsts
+```oxsts fragment
 global containment globalEvent: Event[1]
 ```
 
 Top-level features currently support only the `subsets` modifier. This restriction may be relaxed in future versions.
 
-```oxsts
+```oxsts fragment
 global containment sharedEvent: Event subsets sharedEvents
 ```

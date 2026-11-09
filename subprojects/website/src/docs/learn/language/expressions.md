@@ -29,7 +29,7 @@ See [Datatypes](datatypes.md) for the corresponding types.
 
 Inside a class body, `self` refers to the current class or feature instance.
 
-```oxsts
+```oxsts fragment
 class Counter {
   refers display: Display
 
@@ -102,7 +102,7 @@ Until November 2026 the three boolean operators shared one level and read left t
 
 The `.` operator names a member of an instance.
 
-```oxsts
+```oxsts fragment
 counter.value
 ```
 
@@ -110,7 +110,7 @@ counter.value
 
 `?.` navigates through an optional (`[0..1]`) reference. An `inline` call whose receiver is absent is dropped, and the rest of the transition runs; reading a member through an absent receiver fails compilation.
 
-```oxsts
+```oxsts fragment
 inline parent?.notify()
 ```
 
@@ -118,7 +118,7 @@ inline parent?.notify()
 
 Accesses an array element by index.
 
-```oxsts
+```oxsts fragment
 items[0]
 ```
 
@@ -126,7 +126,7 @@ items[0]
 
 A [property](properties.md) is invoked using the `()` invocation expression.
 
-```oxsts
+```oxsts fragment
 prop atLimit(): bool {
   return value == maximum()
 }
@@ -145,7 +145,7 @@ Temporal operators denote logical formulae over the possible executions of the s
 | `AG expr` | Always globally. `expr` holds in **every** reachable state. Use for safety properties. |
 | `EF expr` | Exists finally. `expr` holds in **some** reachable state. Use for reachability checks. |
 
-```oxsts
+```oxsts fragment
 prop {
   return AG counter.value < 100
 }
@@ -155,7 +155,7 @@ prop {
 
 More temporal operators are planned: `AF expr` (`expr` eventually holds on every execution), `EG expr` (`expr` always holds on some execution), `AX expr` and `EX expr` (`expr` holds in every or in some next state). The parser rejects them today; only `AG` and `EF` parse.
 
-```oxsts
+```oxsts fragment
 prop {
   return AF counter.value == 100
 }

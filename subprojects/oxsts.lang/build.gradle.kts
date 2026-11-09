@@ -38,3 +38,9 @@ val syncModel = tasks.register<Sync>("syncModel") {
 tasks.named("generateXtextLanguage") {
     inputs.files(syncModel).withPathSensitivity(PathSensitivity.RELATIVE)
 }
+
+tasks.named("test") {
+    inputs.dir(rootProject.layout.projectDirectory.dir("subprojects/website/src/docs"))
+        .withPropertyName("documentation")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}

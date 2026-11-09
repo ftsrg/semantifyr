@@ -31,7 +31,7 @@ class Swapper {
 
 After the main transition runs, `x` is `2` and `y` is `1`: `first` reads the value `x` had at the call, not the value the body wrote.
 
-```oxsts
+```oxsts fragment
 inline counter.increment()
 ```
 
@@ -40,6 +40,8 @@ A body never writes a parameter: an assignment or a `havoc` whose target is a pa
 ### One-step example
 
 ```oxsts
+package example
+
 class Counter {
   var value: int := 0
 
@@ -49,7 +51,7 @@ class Counter {
 }
 ```
 
-```oxsts
+```oxsts fragment
 class Pair {
   contains a: Counter
   contains b: Counter
@@ -63,7 +65,7 @@ class Pair {
 
 After one inlining step the body of `Pair`'s implicit `main` becomes:
 
-```oxsts
+```oxsts fragment
 redefine tran {
   a.value := a.value + 1
   b.value := b.value + 1
@@ -75,24 +77,37 @@ redefine tran {
 `inline if (guard) { ... } else { ... }` evaluates the guard at compile time and keeps the surviving branch. The other branch is discarded.
 
 ```oxsts
-inline if (maximum() > 0) {
-  inline increment()
+package example
+
+class Counter {
+  refers maximum: int = 10
+  var value: int := 0
+
+  tran increment() {
+    value := value + 1
+  }
+
+  redefine tran {
+    inline if (maximum > 0) {
+      inline increment()
+    }
+  }
 }
 ```
 
-If `maximum()` evaluates to `10` at compile time, the snippet unfolds to:
+Since `maximum` is bound to `10`, the `inline if` unfolds to:
 
-```oxsts
+```oxsts fragment
 inline increment()
 ```
 
-If `maximum()` had evaluated to `0` instead, the entire `inline if` would be removed (replaced with the empty `else` branch).
+If `maximum` were bound to `0` instead, the entire `inline if` would be removed (replaced with the empty `else` branch).
 
 ## `inline for` (sequence)
 
 `inline for [seq] (x in expr) { ... }` unrolls into a **sequence** of body copies, one per value in `expr`. The `seq` keyword is optional: `inline for (x in r)` and `inline for seq (x in r)` are equivalent.
 
-```oxsts
+```oxsts fragment
 inline for (counter in counters) {
   inline counter.increment()
 }
@@ -100,7 +115,7 @@ inline for (counter in counters) {
 
 If `counters` instantiates two children at compile time, the snippet unfolds to:
 
-```oxsts
+```oxsts fragment
 {
   inline counters_0.increment()
   inline counters_1.increment()
@@ -111,7 +126,7 @@ If `counters` instantiates two children at compile time, the snippet unfolds to:
 
 `inline for choice (x in expr) { ... }` unrolls into a non-deterministic **choice** rather than a sequence. The `choice` keyword is required.
 
-```oxsts
+```oxsts fragment
 inline for choice (counter in counters) {
   inline counter.increment()
 }
@@ -119,7 +134,7 @@ inline for choice (counter in counters) {
 
 With the same two children, the snippet unfolds to:
 
-```oxsts
+```oxsts fragment
 choice {
   inline counters_0.increment()
 } or {
@@ -131,7 +146,7 @@ choice {
 
 The `else` branch of an `inline for` is taken when the range expression evaluates to the **empty set** at compile time. The same `else` is available for `inline for [seq]`, `inline for choice`, and `inline if`.
 
-```oxsts
+```oxsts fragment
 inline for choice (counter in counters) {
   inline counter.increment()
 } else {

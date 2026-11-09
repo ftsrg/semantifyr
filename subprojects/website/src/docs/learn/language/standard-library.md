@@ -21,7 +21,7 @@ The `semantifyr` package is implicitly available in every Semantifyr file. It de
 
 Implicit supertype of all classes. Provides empty base transitions:
 
-```oxsts
+```oxsts fragment
 class Anything {
   tran { }
   init { }
@@ -34,7 +34,7 @@ Every class you write inherits these. Override them with `redefine`.
 
 ### `@VerificationCase`
 
-```oxsts
+```oxsts fragment
 annotation VerificationCase(summary: string[0..1])
 ```
 
@@ -42,7 +42,7 @@ Marks a class as a verification target. The optional `summary` parameter describ
 
 ### `@Tag`
 
-```oxsts
+```oxsts fragment
 annotation Tag(category: string)
 ```
 
@@ -50,7 +50,7 @@ Categorizes verification cases. For example, `@Tag(category = "slow")` marks lon
 
 ### `@Control`
 
-```oxsts
+```oxsts fragment
 annotation Control
 ```
 
@@ -58,7 +58,7 @@ Signals that a variable is important to track during verification. May affect ho
 
 ### `@Shared`
 
-```oxsts
+```oxsts fragment
 annotation Shared
 ```
 
@@ -66,7 +66,7 @@ Instances contained in a `@Shared` containment feature are shared across all ins
 
 ### `@Trace`
 
-```oxsts
+```oxsts fragment
 annotation Trace
 ```
 
@@ -74,7 +74,7 @@ Calls to `@Trace`-annotated transitions are recorded in the verification witness
 
 ### `@Clock`
 
-```oxsts
+```oxsts fragment
 annotation Clock
 ```
 
@@ -82,7 +82,7 @@ Marks a variable as a clock. Like every variable, a clock carries an initializer
 
 ### `@NonOptimizable`
 
-```oxsts
+```oxsts fragment
 annotation NonOptimizable
 ```
 
