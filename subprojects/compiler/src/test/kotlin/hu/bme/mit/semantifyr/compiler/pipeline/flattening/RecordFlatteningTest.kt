@@ -21,12 +21,12 @@ class RecordFlatteningTest : FlatteningTestBase() {
             Green,
         }
         record Point {
-            var x: int
+            var x: int := 0
             var y: int := 7
         }
         record Segment {
-            var from: Point
-            var to: Point
+            var from: Point := Point { x = 0 }
+            var to: Point := Point { x = 0 }
             var color: Color := Color::Green
         }
     """
@@ -56,8 +56,8 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var position: Point
-                    var segment: Segment
+                    var position: Point := Point { x = 2 }
+                    var segment: Segment := Segment { color = Color::Green }
                     prop {
                         return AG position.x == segment.from.x
                     }
@@ -74,7 +74,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
             field("segment", "to", "y"),
             field("segment", "color"),
         )
-        assertThat(flattened.variableNamed(field("position", "x")).expression).isNull()
+        assertThat(serialize(flattened.variableNamed(field("position", "x")))).contains(":= 2")
         assertThat(serialize(flattened.variableNamed(field("position", "y")))).contains(":= 7")
         assertThat(serialize(flattened.variableNamed(field("segment", "color")))).contains("Color::Green")
         assertThat(serialize(flattened.inlinedOxsts.property)).contains("${quoted(field("position", "x"))} == ${quoted(field("segment", "from", "x"))}")
@@ -87,8 +87,8 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var position: Point
-                    var previous: Point
+                    var position: Point := Point { x = 0 }
+                    var previous: Point := Point { x = 0 }
                     redefine tran {
                         position.x := position.x + 1
                         previous := position
@@ -117,8 +117,8 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var segment: Segment
-                    var otherSegment: Segment
+                    var segment: Segment := Segment { color = Color::Green }
+                    var otherSegment: Segment := Segment { color = Color::Green }
                     prop {
                         return AG segment == otherSegment
                     }
@@ -139,7 +139,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var position: Point
+                    var position: Point := Point { x = 0 }
                     redefine tran {
                         var copy: Point := position
                         copy.x := copy.x + 1
@@ -161,15 +161,15 @@ class RecordFlatteningTest : FlatteningTestBase() {
     }
 
     @Test
-    fun `an uninitialized local record takes the field defaults and havocs the rest`() {
+    fun `a local record takes its literal and the field defaults without a havoc`() {
         val flattened = flatten(
             "Host",
             records + """
                 @VerificationCase
                 class Host {
-                    var position: Point
+                    var position: Point := Point { x = 0 }
                     redefine tran {
-                        var fresh: Point
+                        var fresh: Point := Point { x = 4 }
                         position := fresh
                     }
                     prop {
@@ -180,9 +180,9 @@ class RecordFlatteningTest : FlatteningTestBase() {
         )
 
         val main = serialize(flattened.inlinedOxsts.mainTransition)
-        assertThat(main).containsPattern("var ${localField("fresh", "x")} : int\\s+havoc \\(${localField("fresh", "x")}\\)")
+        assertThat(main).containsPattern("var ${localField("fresh", "x")} : int := 4")
         assertThat(main).containsPattern("var ${localField("fresh", "y")} : int := 7")
-        assertThat(main).doesNotContainPattern("havoc \\(${localField("fresh", "y")}\\)")
+        assertThat(main).doesNotContain("havoc")
     }
 
     @Test
@@ -192,8 +192,8 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var position: Point
-                    var previous: Point
+                    var position: Point := Point { x = 0 }
+                    var previous: Point := Point { x = 0 }
                     var flag: bool := false
                     tran move(target: Point) {
                         position := if flag then target else position
@@ -224,7 +224,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var segment: Segment
+                    var segment: Segment := Segment { color = Color::Green }
                     prop {
                         return AG segment.to.y == 7
                     }
@@ -246,7 +246,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var position: Point
+                    var position: Point := Point { x = 0 }
                     var offset: int := 0
                     redefine tran {
                         position := Point { x = offset + 1 }
@@ -300,8 +300,8 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var position: Point
-                    var segment: Segment
+                    var position: Point := Point { x = 0 }
+                    var segment: Segment := Segment { color = Color::Green }
                     prop {
                         return AG (position != Point { x = 1, y = 2 } || segment == Segment { from = position, to = Point { x = 3 } })
                     }
@@ -329,11 +329,11 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 record Line {
                     var from: Point := Point { x = 1, y = 1 }
-                    var to: Point
+                    var to: Point := Point { x = 2 }
                 }
                 @VerificationCase
                 class Host {
-                    var defaultLine: Line
+                    var defaultLine: Line := Line { from = Point { x = 1, y = 1 } }
                     var initializedLine: Line := Line { to = Point { x = 3 } }
                     prop {
                         return AG defaultLine.from.x == initializedLine.to.x
@@ -344,7 +344,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
 
         assertThat(serialize(flattened.variableNamed(field("defaultLine", "from", "x")))).contains(":= 1")
         assertThat(serialize(flattened.variableNamed(field("defaultLine", "from", "y")))).contains(":= 1")
-        assertThat(flattened.variableNamed(field("defaultLine", "to", "x")).expression).isNull()
+        assertThat(serialize(flattened.variableNamed(field("defaultLine", "to", "x")))).contains(":= 2")
         assertThat(serialize(flattened.variableNamed(field("defaultLine", "to", "y")))).contains(":= 7")
         assertThat(serialize(flattened.variableNamed(field("initializedLine", "from", "x")))).contains(":= 1")
         assertThat(serialize(flattened.variableNamed(field("initializedLine", "to", "x")))).contains(":= 3")
@@ -358,7 +358,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var position: Point
+                    var position: Point := Point { x = 0 }
                     var last: int := 0
                     tran moveTo(target: Point) {
                         position := target
@@ -388,7 +388,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var position: Point
+                    var position: Point := Point { x = 0 }
                     var flag: bool := false
                     redefine tran {
                         position := if flag then Point { x = 1 } else position
@@ -414,7 +414,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var position: Point
+                    var position: Point := Point { x = 0 }
                     prop next(): int {
                         return position.x + 1
                     }
@@ -441,8 +441,8 @@ class RecordFlatteningTest : FlatteningTestBase() {
             records + """
                 @VerificationCase
                 class Host {
-                    var position: Point
-                    var previous: Point
+                    var position: Point := Point { x = 0 }
+                    var previous: Point := Point { x = 0 }
                     redefine tran {
                         position := Point { x = position.y, y = position.x }
                         previous := if previous.x > 0 then position else previous

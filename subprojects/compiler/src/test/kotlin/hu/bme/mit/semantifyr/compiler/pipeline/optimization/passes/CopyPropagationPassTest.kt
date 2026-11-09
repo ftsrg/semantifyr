@@ -46,7 +46,7 @@ class CopyPropagationPassTest : PassTestBase() {
     }
 
     @Test
-    fun `a single init write does not fold the property read since the property holds before init too`() = assertPassTransforms(
+    fun `a single init write folds the property read since the declaration valuation is not a state`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
             var value : int := 0
@@ -68,7 +68,7 @@ class CopyPropagationPassTest : PassTestBase() {
             tran {
             }
             prop {
-                AG (value == 1)
+                AG (1 == 1)
             }
         """,
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),

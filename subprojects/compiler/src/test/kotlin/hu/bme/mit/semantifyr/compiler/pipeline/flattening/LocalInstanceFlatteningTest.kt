@@ -30,62 +30,18 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
             contains second : Worker subsets workers
             contains spare : Worker
             tran pickOne() {
-                var picked : workers
+                var picked : workers := first
+                havoc(picked)
                 inline picked.finish()
             }
             tran pickTwo() {
-                var picks : workers[2]
+                var picks : workers[2] := [first, first]
+                havoc(picks)
                 inline picks[0].finish()
                 inline picks[1].finish()
             }
         }
     """
-
-    @Test
-    fun `an uninitialized class-typed local holds one of the instances of its class`() {
-        assertFlattenedModel(
-            "Host",
-            workers + """
-                @VerificationCase
-                class Host {
-                    contains first : Worker
-                    contains second : Worker
-                    contains other : Other
-                    redefine tran {
-                        var picked : Worker
-                        inline picked.finish()
-                    }
-                    prop {
-                        return AG !other.done
-                    }
-                }
-            """,
-            $$$$"""
-                init {
-                }
-
-                tran {
-                    var 'picked$$$local0' : int
-                    choice {
-                        'picked$$$local0' := 0
-                    } or {
-                        'picked$$$local0' := 1
-                    }
-                    choice {
-                        assume ('picked$$$local0' == 0)
-                        '$$root$$first$$done' := true
-                    } or {
-                        assume ('picked$$$local0' == 1)
-                        '$$root$$second$$done' := true
-                    }
-                }
-
-                prop {
-                    AG !'$$root$$other$$done'
-                }
-            """,
-        )
-    }
 
     @Test
     fun `a havoc of a class-typed local chooses among the instances of its class`() {
@@ -143,8 +99,10 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                     contains first : Worker
                     var empty : bool := false
                     redefine tran {
-                        var optional : Worker[0..1]
-                        var required : Worker
+                        var optional : Worker[0..1] := first
+                        havoc(optional)
+                        var required : Worker := first
+                        havoc(required)
                         if (optional == nothing || required == nothing) {
                             empty := true
                         }
@@ -159,13 +117,13 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                 }
 
                 tran {
-                    var 'optional$$$local0' : int
+                    var 'optional$$$local0' : int := 0
                     choice {
                         'optional$$$local0' := -1
                     } or {
                         'optional$$$local0' := 0
                     }
-                    var 'required$$$local1' : int
+                    var 'required$$$local1' : int := 0
                     choice {
                         'required$$$local1' := 0
                     }
@@ -251,7 +209,7 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                 }
 
                 tran {
-                    var 'picked$$$local0' : int
+                    var 'picked$$$local0' : int := 0
                     choice {
                         'picked$$$local0' := 0
                     } or {
@@ -335,13 +293,13 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                 }
 
                 tran {
-                    var 'picks$$$local0_0' : int
+                    var 'picks$$$local0_0' : int := 0
+                    var 'picks$$$local0_1' : int := 0
                     choice {
                         'picks$$$local0_0' := 0
                     } or {
                         'picks$$$local0_0' := 1
                     }
-                    var 'picks$$$local0_1' : int
                     choice {
                         'picks$$$local0_1' := 0
                     } or {

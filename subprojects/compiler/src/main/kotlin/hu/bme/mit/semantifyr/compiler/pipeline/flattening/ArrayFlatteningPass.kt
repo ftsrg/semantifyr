@@ -230,7 +230,7 @@ class ArrayFlatteningPass @Inject constructor(
             slot.typeSpecification = OxstsFactory.createTypeSpecification().also { typeSpec ->
                 typeSpec.domain = elementDomain
             }
-            slot.expression = slotInitializers[it] as Expression?
+            slot.expression = slotInitializers[it]
             slot
         }
     }
@@ -239,29 +239,19 @@ class ArrayFlatteningPass @Inject constructor(
         arrayVariable: VariableDeclaration,
         initializer: EObject?,
         slotCount: Int,
-    ): List<EObject?> {
-        return when (initializer) {
-            null -> List(slotCount) { null }
-            is ArrayLiteral -> {
-                val values = initializer.values
-                if (values.size > slotCount) {
-                    sourceError(
-                        arrayVariable,
-                        "Array literal has ${values.size} values but the array holds only $slotCount slots.",
-                    )
-                }
-                List(slotCount) {
-                    if (it < values.size) {
-                        values[it].copy()
-                    } else {
-                        null
-                    }
-                }
-            }
-            else -> sourceError(
+    ): List<Expression> {
+        if (initializer !is ArrayLiteral) {
+            sourceError(arrayVariable, "Array initializer must be an array literal.")
+        }
+        val values = initializer.values
+        if (values.size != slotCount) {
+            sourceError(
                 arrayVariable,
-                "Array initializer must be an array literal (got ${initializer::class.simpleName}).",
+                "Array literal has ${values.size} values but the array holds $slotCount slots.",
             )
+        }
+        return values.map {
+            it.copy()
         }
     }
 

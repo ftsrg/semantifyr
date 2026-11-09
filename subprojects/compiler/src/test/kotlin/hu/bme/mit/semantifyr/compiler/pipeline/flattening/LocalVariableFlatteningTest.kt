@@ -7,17 +7,16 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.flattening
 
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class LocalVariableFlatteningTest : FlatteningTestBase() {
 
     @Test
-    fun `a local variable without an initializer is havoced at its declaration`() {
+    fun `a local variable keeps its initializer and is not havoced`() {
         val flattened = flatten(
             "Host",
             """
@@ -26,21 +25,22 @@ class LocalVariableFlatteningTest : FlatteningTestBase() {
                 class Host {
                     var counter: int := 0
                     redefine tran {
-                        var delta: int
-                        assume(delta > 0)
-                        counter := delta
+                        var delta: int := 2
+                        assume(counter < 3)
+                        counter := counter + delta
                     }
                     prop {
-                        return EF counter == 1
+                        return EF counter == 2
                     }
                 }
             """,
         )
 
-        val local = flattened.inlinedOxsts.mainTransition.eAllOfType<LocalVarDeclarationOperation>().single()
-        val steps = (local.eContainer() as SequenceOperation).steps
-        assertThat(steps[steps.indexOf(local) + 1]).isInstanceOfSatisfying(HavocOperation::class.java) { havoc ->
-            assertThat((havoc.reference as ElementReference).element).isSameAs(local)
+        val mainTransition = flattened.inlinedOxsts.mainTransition
+        val local = mainTransition.eAllOfType<LocalVarDeclarationOperation>().single()
+        assertThat(local.expression).isInstanceOfSatisfying(LiteralInteger::class.java) {
+            assertThat(it.value).isEqualTo(2)
         }
+        assertThat(mainTransition.eAllOfType<HavocOperation>().toList()).isEmpty()
     }
 }

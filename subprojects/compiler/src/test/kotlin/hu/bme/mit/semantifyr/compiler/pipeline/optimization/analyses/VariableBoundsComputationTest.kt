@@ -290,11 +290,11 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
     }
 
     @Test
-    fun `an uninitialized variable is unbounded before init writes it`() {
+    fun `the property is not evaluated on the declaration valuation`() {
         val (inlined, result) = runVariableBounds(
             """
                 inlined oxsts of semantifyr::Anything
-                var counter : int
+                var counter : int := 9
                 init {
                     counter := 0
                 }
@@ -304,12 +304,34 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
                     }
                 }
                 prop {
-                    AG (counter <= 2)
+                    AG (counter * 2 <= 4)
                 }
             """,
         )
 
-        assertThat(result.variableRanges[inlined.varNamed("counter")]).isEqualTo(IntegerRange.UNBOUNDED)
+        val doubled = inlined.property.eAllOfType<ArithmeticBinaryOperator>().single()
+        assertThat(result.arithmeticRanges[doubled]).isEqualTo(IntegerRange(0, 4))
+    }
+
+    @Test
+    fun `a blocking init leaves the property unevaluated`() {
+        val (inlined, result) = runVariableBounds(
+            """
+                inlined oxsts of semantifyr::Anything
+                var counter : int := 9
+                init {
+                    assume(counter < 0)
+                }
+                tran {
+                }
+                prop {
+                    AG (counter * 2 <= 4)
+                }
+            """,
+        )
+
+        val doubled = inlined.property.eAllOfType<ArithmeticBinaryOperator>().single()
+        assertThat(result.arithmeticRanges).doesNotContainKey(doubled)
     }
 
     @Test

@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test
 
 class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
     @Test
-    fun `property read after a single init write sees that write and the initializer`() {
+    fun `property read after a single init write sees only that write`() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
@@ -43,11 +43,11 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val definitions = result.definitionsOf[propertyRead]!!
 
         val initWrite = inlined.assignmentsTo(value).single()
-        assertThat(definitions).containsExactlyInAnyOrder(initWrite as EObject, value as EObject)
+        assertThat(definitions).containsExactly(initWrite as EObject)
     }
 
     @Test
-    fun `property read sees every write to a variable and the initializer`() {
+    fun `property read sees every write to a variable but not the initializer init overwrites`() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
@@ -74,7 +74,7 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         for (write in writes) {
             assertThat(definitions).contains(write as EObject)
         }
-        assertThat(definitions).contains(value as EObject)
+        assertThat(definitions).doesNotContain(value as EObject)
     }
 
     @Test
@@ -171,31 +171,6 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
 
         val write = inlined.assignmentsTo(current).single()
         assertThat(definitions).containsExactlyInAnyOrder(write as EObject, current as EObject)
-    }
-
-    @Test
-    fun `property read of variable with no initializer sees the implicit havoc as a reaching definition`() {
-        val (inlined, result) = runReachingDefinitions(
-            """
-                inlined oxsts of semantifyr::Anything
-                var done : bool
-                init {
-                }
-                tran {
-                    done := true
-                }
-                prop {
-                    AG (done == true)
-                }
-            """,
-        )
-
-        val done = inlined.varNamed("done")
-        val propertyRead = inlined.findPropertyReadOf(done)
-        val definitions = result.definitionsOf[propertyRead]!!
-
-        val tranWrite = inlined.assignmentsTo(done).single()
-        assertThat(definitions).containsExactlyInAnyOrder(tranWrite as EObject, done as EObject)
     }
 
     @Test

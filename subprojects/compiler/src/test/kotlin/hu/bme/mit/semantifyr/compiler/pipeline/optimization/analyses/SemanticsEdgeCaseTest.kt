@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test
 
 class SemanticsEdgeCaseTest : AnalysisTestBase() {
     @Test
-    fun `variable declaration is a reaching definition for property reads although init overwrites it`() {
+    fun `variable declaration is no reaching definition for property reads once init overwrites it`() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
@@ -39,15 +39,16 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
         )
         val value = inlined.varNamed("value")
         val propertyRead = inlined.findPropertyReadOf(value)
-        assertThat(result.definitionsOf[propertyRead]!!).contains(value as EObject)
+        val initWrite = inlined.assignmentsTo(value).single()
+        assertThat(result.definitionsOf[propertyRead]!!).containsExactly(initWrite as EObject)
     }
 
     @Test
-    fun `declaration without initializer counts the implicit havoc as a reaching definition`() {
+    fun `declaration reaches property reads when init does not write the variable`() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var value : int
+                var value : int := 0
                 init {
                 }
                 tran {

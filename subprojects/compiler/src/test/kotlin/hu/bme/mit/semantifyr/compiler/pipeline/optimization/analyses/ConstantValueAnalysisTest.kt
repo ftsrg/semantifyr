@@ -104,42 +104,42 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
     }
 
     @Test
-    fun `uninitialized variable read by the property is not constant although init writes it`() {
+    fun `a declaration that init overwrites is unobserved, so the property reads a constant`() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var uninitialized : int
+                var overwritten : int := 0
                 init {
-                    uninitialized := 3
+                    overwritten := 3
                 }
                 tran {
                 }
                 prop {
-                    AG (uninitialized == 3)
+                    AG (overwritten == 3)
                 }
             """,
         )
 
-        assertThat(result.isConstant(inlined.varNamed("uninitialized")))
-            .`as`("the property is checked in the pre-init state, where uninitialized is havoced")
-            .isFalse
+        assertThat(result.isConstant(inlined.varNamed("overwritten")))
+            .`as`("the declaration valuation is not a state, so the property never observes the declared 0")
+            .isTrue
     }
 
     @Test
-    fun `uninitialized variable written only conditionally in init is not constant`() {
+    fun `a declaration that init writes only conditionally keeps the variable from being constant`() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var uninitialized : int
+                var overwritten : int := 0
                 var copy : int := 3
                 init {
                     choice {
-                        uninitialized := 3
+                        overwritten := 3
                     } or {
                     }
                 }
                 tran {
-                    copy := uninitialized
+                    copy := overwritten
                 }
                 prop {
                     AG (copy == 3)
@@ -147,21 +147,21 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
             """,
         )
 
-        assertThat(result.isConstant(inlined.varNamed("uninitialized"))).isFalse
+        assertThat(result.isConstant(inlined.varNamed("overwritten"))).isFalse
     }
 
     @Test
-    fun `uninitialized variable written only in tran is not constant`() {
+    fun `a declaration that only tran overwrites keeps the variable from being constant`() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var uninitialized : int
+                var overwritten : int := 0
                 var copy : int := 3
                 init {
                 }
                 tran {
-                    copy := uninitialized
-                    uninitialized := 3
+                    copy := overwritten
+                    overwritten := 3
                 }
                 prop {
                     AG (copy == 3)
@@ -169,19 +169,19 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
             """,
         )
 
-        assertThat(result.isConstant(inlined.varNamed("uninitialized"))).isFalse
+        assertThat(result.isConstant(inlined.varNamed("overwritten"))).isFalse
     }
 
     @Test
-    fun `uninitialized variable read in init is not constant`() {
+    fun `a declaration that init reads before overwriting it keeps the variable from being constant`() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var uninitialized : int
+                var overwritten : int := 0
                 var copy : int := 3
                 init {
-                    copy := uninitialized
-                    uninitialized := 3
+                    copy := overwritten
+                    overwritten := 3
                 }
                 tran {
                 }
@@ -191,25 +191,25 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
             """,
         )
 
-        assertThat(result.isConstant(inlined.varNamed("uninitialized"))).isFalse
+        assertThat(result.isConstant(inlined.varNamed("overwritten"))).isFalse
     }
 
     @Test
-    fun `uninitialized variable that init must write and only tran reads is constant`() {
+    fun `a declaration that init must overwrite and only tran reads leaves the variable constant`() {
         val (inlined, result) = runConstantValue(
             """
                 inlined oxsts of semantifyr::Anything
-                var uninitialized : int
+                var overwritten : int := 0
                 var copy : int := 3
                 init {
                     choice {
-                        uninitialized := 3
+                        overwritten := 3
                     } or {
-                        uninitialized := 3
+                        overwritten := 3
                     }
                 }
                 tran {
-                    copy := uninitialized
+                    copy := overwritten
                 }
                 prop {
                     AG (copy == 3)
@@ -217,7 +217,7 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
             """,
         )
 
-        assertThat(result.isConstant(inlined.varNamed("uninitialized"))).isTrue
+        assertThat(result.isConstant(inlined.varNamed("overwritten"))).isTrue
     }
 
     private fun InlinedOxsts.varNamed(name: String): VariableDeclaration {

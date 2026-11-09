@@ -208,27 +208,10 @@ private class RecordRewriting(
             val value = literal.fields.firstOrNull {
                 it.field == field
             }?.expression ?: field.expression
-            val fieldRecord = field.typeSpecification.domain as? RecordDeclaration
-            when {
-                value == null && fieldRecord != null -> defaultValues(fieldRecord).map {
-                    it ?: sourceError(literal, "The record literal leaves a field of '${field.name}' without a value.")
-                }
-                value == null -> sourceError(literal, "The record literal leaves '${field.name}' without a value.")
-                fieldRecord != null -> fieldExpressions(value)
-                else -> listOf(value.copy())
-            }
-        }
-    }
-
-    // a field without a default is null, and the variable that holds it is havoced
-    private fun defaultValues(record: RecordDeclaration): List<Expression?> {
-        return recordFields(record).flatMap { field ->
-            val fieldRecord = field.typeSpecification.domain as? RecordDeclaration
-            val default = field.expression
-            when {
-                fieldRecord == null -> listOf(default?.copy())
-                default != null -> fieldExpressions(default)
-                else -> defaultValues(fieldRecord)
+            if (field.typeSpecification.domain is RecordDeclaration) {
+                fieldExpressions(value)
+            } else {
+                listOf(value.copy())
             }
         }
     }
@@ -306,9 +289,7 @@ private class RecordRewriting(
         recordVariable: VariableDeclaration,
         fields: Map<List<VariableDeclaration>, VariableDeclaration>,
     ): List<VariableDeclaration> {
-        val values = recordVariable.expression?.let {
-            fieldExpressions(it)
-        } ?: defaultValues(recordVariable.typeSpecification.domain as RecordDeclaration)
+        val values = fieldExpressions(recordVariable.expression)
         return fields.values.mapIndexed { index, fieldVariable ->
             fieldVariable.expression = values[index]
             fieldVariable

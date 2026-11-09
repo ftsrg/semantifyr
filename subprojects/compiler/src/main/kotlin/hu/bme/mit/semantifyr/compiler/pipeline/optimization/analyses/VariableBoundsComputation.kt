@@ -73,8 +73,8 @@ class VariableBoundsComputation(
         execute(inlinedOxsts.initTransition, initial)
         if (reachable != null) {
             execute(inlinedOxsts.mainTransition, reachable)
+            evaluate(inlinedOxsts.property.expression, reachable)
         }
-        evaluate(inlinedOxsts.property.expression, join(initial, reachable)!!)
 
         return VariableBoundsInfo(variableRanges, arithmeticRanges)
     }
@@ -111,13 +111,7 @@ class VariableBoundsComputation(
     private fun initialState(): MutableMap<VariableDeclaration, IntegerRange> {
         val state = HashMap<VariableDeclaration, IntegerRange>()
         for (variable in globals) {
-            val initializer = variable.expression
-            val range = if (initializer == null) {
-                havocRange(variable)
-            } else {
-                evaluate(initializer, state)
-            }
-            write(state, variable, range)
+            write(state, variable, evaluate(variable.expression, state))
         }
         return state
     }
@@ -183,18 +177,9 @@ class VariableBoundsComputation(
                 state
             }
             is LocalVarDeclarationOperation -> {
+                val value = evaluate(operation.expression, state)
                 if (isIntegerVariable(operation)) {
-                    val initializer = operation.expression
-                    val value = if (initializer == null) {
-                        havocRange(operation)
-                    } else {
-                        evaluate(initializer, state)
-                    }
                     write(state, operation, value)
-                } else {
-                    operation.expression?.let {
-                        evaluate(it, state)
-                    }
                 }
                 state
             }

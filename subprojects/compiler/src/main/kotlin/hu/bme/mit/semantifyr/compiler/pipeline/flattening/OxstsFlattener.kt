@@ -50,7 +50,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.xtext.EcoreUtil2
@@ -120,8 +119,6 @@ class OxstsFlattener @Inject constructor(
         val arraySlotVariables = arrayFlatteningPass.flattenArrays(inlinedOxsts)
         logger.debug { "Flattened ${arraySlotVariables.size} array variable(s)" }
         val arraySlots = registerArraySlots(arraySlotVariables, variableHolders, variableMappings, variableInstanceDomain)
-
-        havocUninitializedLocals(inlinedOxsts)
 
         logger.debug { "Rewriting feature-typed variables" }
         rewriteFeatureTypedVariables(inlinedOxsts, variableInstanceDomain)
@@ -241,21 +238,6 @@ class OxstsFlattener @Inject constructor(
             variableInstanceDomain[local] = localVariableManager.instanceDomainOf(local)
                 ?: sourceError(local, "No instance domain registered for local variable '${local.name}'.")
             local.typeSpecification.domain = builtinAnything
-        }
-    }
-
-    private fun havocUninitializedLocals(inlinedOxsts: InlinedOxsts) {
-        val uninitializedLocals = inlinedOxsts.eAllOfType<LocalVarDeclarationOperation>().filter {
-            it.expression == null
-        }.toList()
-        for (local in uninitializedLocals) {
-            val sequence = local.eContainer() as SequenceOperation
-            sequence.steps.add(
-                sequence.steps.indexOf(local) + 1,
-                OxstsFactory.createHavocOperation().also {
-                    it.reference = OxstsFactory.createElementReference(local)
-                },
-            )
         }
     }
 

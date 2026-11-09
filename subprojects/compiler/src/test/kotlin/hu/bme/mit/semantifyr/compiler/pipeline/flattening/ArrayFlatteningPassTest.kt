@@ -97,31 +97,6 @@ class ArrayFlatteningPassTest {
     }
 
     @Test
-    fun `array without initializer produces uninitialized slot variables`() {
-        val inlined = parseHelper.parse(
-            """
-                inlined oxsts of semantifyr::Anything
-                var values : int[2]
-                init {
-                }
-                tran {
-                }
-                prop {
-                    AG true
-                }
-            """.trimIndent(),
-        )
-
-        flattenArrays(inlined)
-
-        val slots = inlined.variables.filter {
-            it.name.startsWith("values_")
-        }
-        assertThat(slots).hasSize(2)
-        assertThat(slots.all { it.expression == null }).isTrue()
-    }
-
-    @Test
     fun `constant-index reads are rewritten to the matching slot variable`() {
         val inlined = parseHelper.parse(
             """
@@ -295,31 +270,6 @@ class ArrayFlatteningPassTest {
     }
 
     @Test
-    fun `local array without initializer produces uninitialized local slots`() {
-        val inlined = parseHelper.parse(
-            """
-                inlined oxsts of semantifyr::Anything
-                var result : int := 0
-                init {
-                }
-                tran {
-                    var values : int[2]
-                    result := values[1]
-                }
-                prop {
-                    AG true
-                }
-            """.trimIndent(),
-        )
-
-        flattenArrays(inlined)
-
-        val serialized = serialize(inlined)
-        assertThat(serialized).contains("var values_0 : int", "var values_1 : int", "result := values_1")
-        assertThat(serialized).doesNotContain(":= [")
-    }
-
-    @Test
     fun `whole-array assignment, havoc and comparison work slot by slot`() {
         val inlined = parseHelper.parse(
             """
@@ -397,7 +347,7 @@ class ArrayFlatteningPassTest {
     }
 
     @Test
-    fun `array-literal with fewer values than slots leaves the rest uninitialized`() {
+    fun `array-literal with fewer values than slots is rejected`() {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
@@ -412,16 +362,9 @@ class ArrayFlatteningPassTest {
             """.trimIndent(),
         )
 
-        flattenArrays(inlined)
-
-        val slots = inlined.variables.filter {
-            it.name.startsWith("values_")
-        }
-        assertThat(slots).hasSize(4)
-        assertThat(slots[0].expression).isNotNull
-        assertThat(slots[1].expression).isNotNull
-        assertThat(slots[2].expression).isNull()
-        assertThat(slots[3].expression).isNull()
+        assertThatThrownBy {
+            flattenArrays(inlined)
+        }.hasMessageContaining("slots")
     }
 
     @Test
