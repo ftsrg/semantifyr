@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ImmutableTypeEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
+import hu.bme.mit.semantifyr.oxsts.lang.utils.SourceLocation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
@@ -78,6 +79,7 @@ class ExpressionRewriter @Inject constructor(
                 it.primary = newContext.copy()
                 it.member = contextualReference.element
             }
+            SourceLocation.recordOrigin(contextualReference, newReference)
             EcoreUtil2.replace(contextualReference, newReference)
             fixRedefinitions(newReference)
         }
@@ -94,6 +96,7 @@ class ExpressionRewriter @Inject constructor(
 
         for (elementReference in elementReferences) {
             val context = newContext.copy()
+            SourceLocation.recordOrigin(elementReference, context)
             EcoreUtil2.replace(elementReference, context)
             fixRedefinitions(context)
         }
@@ -125,6 +128,7 @@ class ExpressionRewriter @Inject constructor(
 
         for (selfReference in selfReferences) {
             val context = newContext.copy()
+            SourceLocation.recordOrigin(selfReference, context)
             EcoreUtil2.replace(selfReference, context)
             fixRedefinitions(context)
         }

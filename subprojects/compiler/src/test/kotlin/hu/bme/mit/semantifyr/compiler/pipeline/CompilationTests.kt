@@ -1224,6 +1224,54 @@ class CompilationTests {
         )
     }
 
+    @Test
+    fun `a compile error on an inlined copy names the line of the user's source`() {
+        val parsed = parseHelper.parse(
+            """
+                package compilation::tests::copied_location
+                class Port {
+                    var item: int := 0
+                    @Trace
+                    tran send(value: int) {
+                        item := value
+                    }
+                }
+                class Relay {
+                    contains port: Port
+                    tran relay(value: int) {
+                        inline port.send(value)
+                    }
+                }
+                @VerificationCase
+                class Host {
+                    var count: int := 0
+                    contains relay: Relay
+                    redefine tran {
+                        inline relay.relay(count)
+                    }
+                    prop {
+                        return AG true
+                    }
+                }
+            """.trimIndent(),
+        )
+        val host = EcoreUtil2.eAllOfType(parsed.oxstsPackage, ClassDeclaration::class.java).single {
+            it.name == "Host"
+        }
+        val fileName = parsed.oxstsPackage.eResource().uri.lastSegment()
+        val compiler = SemantifyrCompiler(
+            injector = injector,
+            artifactConfig = ArtifactConfig.NONE,
+        )
+
+        val thrown = catchThrowable {
+            compiler.compile(host, temporaryDirectory)
+        }
+
+        assertThat(thrown).isNotNull
+        assertThat(thrown.message).startsWith("$fileName:20: ")
+    }
+
     private fun assertCompilationFails(
         classToCompile: String,
         source: String,
