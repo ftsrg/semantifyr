@@ -125,6 +125,26 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
     }
 
     @Test
+    suspend fun `a variable without an initializer is rejected`() {
+        val exception = assertThrows<IllegalStateException> {
+            xsts(
+                """
+                    var counter : int
+                    init {
+                    }
+                    tran {
+                    }
+                    prop {
+                        AG counter == 0
+                    }
+                """,
+            )
+        }
+
+        assertThat(exception.message).isEqualTo("Variable counter has no initializer")
+    }
+
+    @Test
     suspend fun `a variable annotated Control is a control variable`() {
         val lines = xstsLines(
             """

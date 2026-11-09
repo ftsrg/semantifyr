@@ -11,6 +11,7 @@ import com.google.inject.Provider
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.LocalVarNames
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
@@ -64,7 +65,8 @@ class ThetaVariableTransformer @Inject constructor(
                 variable.isControl = true
             }
 
-            transformInternals(variable, variableDeclaration)
+            val initializer = variableDeclaration.expression ?: error("Variable ${variableDeclaration.name} has no initializer")
+            transformInternals(variable, variableDeclaration, initializer)
 
             variable
         }
@@ -74,20 +76,19 @@ class ThetaVariableTransformer @Inject constructor(
         return localVariableMap.getOrPut(localVarDeclarationOperation) {
             val variable = XstsFactory.createLocalVarDeclOperation()
 
-            transformInternals(variable, localVarDeclarationOperation)
+            val initializer = localVarDeclarationOperation.expression ?: error("Local variable ${localVarDeclarationOperation.name} has no initializer")
+            transformInternals(variable, localVarDeclarationOperation, initializer)
 
             variable
         }
     }
 
-    private fun transformInternals(variable: XstsVariableDeclaration, variableDeclaration: VariableDeclaration) {
+    private fun transformInternals(variable: XstsVariableDeclaration, variableDeclaration: VariableDeclaration, initializer: Expression) {
         variable.name = variableDeclaration.name
 
         val type = variableDeclaration.typeSpecification.domain
         variable.type = thetaTypeReferenceTransformer.transform(type, variableDeclaration.typeSpecification?.multiplicity)
 
-        if (variableDeclaration.expression != null) {
-            variable.expression = thetaExpressionTransformer.transform(variableDeclaration.expression)
-        }
+        variable.expression = thetaExpressionTransformer.transform(initializer)
     }
 }
