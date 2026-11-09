@@ -34,6 +34,12 @@ val sysmlCompiledExamplesFiles = configurations.resolvable("sysmlCompiledExample
     attributes(semantifyrArtifact("compiled-examples"))
 }
 
+val sysmlWorker = configurations.dependencyScope("sysmlWorker")
+val sysmlWorkerFiles = configurations.resolvable("sysmlWorkerFiles") {
+    extendsFrom(sysmlWorker.get())
+    attributes(semantifyrArtifact("sysml-worker"))
+}
+
 dependencies {
     implementation(libs.bundles.ktor.server)
     implementation(libs.micrometer.registry.prometheus)
@@ -63,6 +69,7 @@ dependencies {
 
     gammaCompiledExamples(project(":gamma-frontend"))
     sysmlCompiledExamples(project(":sysml-wrapper"))
+    sysmlWorker(project(":sysml-wrapper"))
 }
 
 application {
@@ -127,6 +134,10 @@ val cloneSysmlLibraryModels = tasks.register<Sync>("cloneSysmlLibraryModels") {
 
 val cloneWebDistributions = tasks.register<Sync>("cloneWebDistributions") {
     from(frontendDistributionFiles)
+    from(sysmlWorkerFiles) {
+        exclude("sysml.tmLanguage.json")
+        into("sysml-worker")
+    }
     into(layout.buildDirectory.dir("staging/web"))
 }
 
