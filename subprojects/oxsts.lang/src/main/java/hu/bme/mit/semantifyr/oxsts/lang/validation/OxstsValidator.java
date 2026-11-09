@@ -1116,6 +1116,33 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
     }
 
+    @Check
+    public void checkNoLoopVariableWrite(Operation operation) {
+        Expression target;
+        EStructuralFeature feature;
+        if (operation instanceof AssignmentOperation assignmentOperation) {
+            target = assignmentOperation.getReference();
+            feature = OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE;
+        } else if (operation instanceof HavocOperation havocOperation) {
+            target = havocOperation.getReference();
+            feature = OxstsPackage.Literals.HAVOC_OPERATION__REFERENCE;
+        } else {
+            return;
+        }
+        if (target == null) {
+            return;
+        }
+        if (evaluateWriteTarget(unwrapAssignmentTarget(target)) instanceof VariableDeclaration variable
+                && OxstsUtils.isLoopVariable(variable)) {
+            acceptError(
+                    "Cannot write loop variable '" + variable.getName() + "': it takes its values from the range.",
+                    operation,
+                    feature,
+                    0,
+                    INCORRECT_ASSIGNMENT);
+        }
+    }
+
     // The right-hand side is at most RUNTIME, so it always fits a runtime target.
     private void checkWriteTargetIsRuntime(Expression target, EObject host, EStructuralFeature feature) {
         if (target == null) {
@@ -1129,7 +1156,9 @@ public class OxstsValidator extends AbstractOxstsValidator {
         } catch (RuntimeException e) {
             return;
         }
-        if (written instanceof VariableDeclaration variable && modality != Modality.RUNTIME) {
+        if (written instanceof VariableDeclaration variable
+                && modality != Modality.RUNTIME
+                && !OxstsUtils.isLoopVariable(variable)) {
             acceptError(
                     "Cannot write '"
                             + variable.getName()
