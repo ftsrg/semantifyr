@@ -11,7 +11,7 @@ There are three ways to start using Semantifyr today, and a fourth is planned. P
 
 ## Option A: Try in the browser (no installation)
 
-The fastest way to try Semantifyr. The **in-browser live editor** is a lightweight Monaco-based editor connected to the Semantifyr language server. It supports syntax highlighting, diagnostics, content assist, and an integrated verification panel where you can discover, run, and inspect verification cases individually.
+The fastest way to try Semantifyr. The **in-browser live editor** is a lightweight Monaco-based editor connected to the Semantifyr language server. It supports syntax highlighting, diagnostics, content assist, and an integrated verification panel where you can discover, run, and inspect verification cases individually. Its SysML v2 flavor edits one SysML v2 file with the standard and verification libraries loaded in the background; the language server runs in your browser, and a failing case shows its trace as a SysML v2 model.
 
 [Open the live editor](https://live.semantifyr.org)
 

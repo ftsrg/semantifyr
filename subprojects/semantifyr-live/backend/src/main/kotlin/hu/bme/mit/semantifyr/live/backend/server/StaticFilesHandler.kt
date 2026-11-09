@@ -11,6 +11,7 @@ import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
+import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
@@ -42,6 +43,14 @@ class StaticFilesHandler @Inject constructor(
         val index = webRoot.resolve("index.html").toFile()
         routing {
             staticFiles("/", webRoot.toFile()) {
+                // a worker script needs a JavaScript type, and Ktor knows no type for .cjs
+                contentType { file ->
+                    if (file.extension == "cjs") {
+                        ContentType.Application.JavaScript
+                    } else {
+                        null
+                    }
+                }
                 modify { file, call ->
                     val cacheControl = if (file.toPath().startsWith(hashedAssets)) {
                         IMMUTABLE

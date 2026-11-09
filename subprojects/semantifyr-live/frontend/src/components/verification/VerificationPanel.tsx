@@ -516,7 +516,8 @@ function VerificationPanelInner(
           )}
 
           {cases.length === 0 && connected && (
-            <Box sx={{ px: 1.5, py: 1 }}>
+            <Box sx={{ px: 1.5, py: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CircularProgress size={14} sx={{ color: 'text.secondary' }} />
               <Typography variant="body2" sx={{ fontSize: FONT_SIZE.md, color: 'text.secondary' }}>
                 Discovering cases...
               </Typography>

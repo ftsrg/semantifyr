@@ -31,10 +31,17 @@ val sysmlCompiledExamplesFiles = configurations.resolvable("sysmlCompiledExample
     attributes(semantifyrArtifact("compiled-examples"))
 }
 
+val sysmlWorker = configurations.dependencyScope("sysmlWorker")
+val sysmlWorkerFiles = configurations.resolvable("sysmlWorkerFiles") {
+    extendsFrom(sysmlWorker.get())
+    attributes(semantifyrArtifact("sysml-worker"))
+}
+
 dependencies {
     editorCommon(project(":semantifyr-editor-common"))
     gammaCompiledExamples(project(":gamma-frontend"))
     sysmlCompiledExamples(project(":sysml-wrapper"))
+    sysmlWorker(project(":sysml-wrapper"))
 }
 
 val importedSnippetsDir = project.layout.projectDirectory.dir("src/snippets/imported")
@@ -84,6 +91,10 @@ val cloneVscodeLanguageAssets = tasks.register<Sync>("cloneVscodeLanguageAssets"
     from(rootProject.layout.projectDirectory.dir("subprojects/semantifyr-vscode")) {
         include("language-configuration.json")
         include("syntaxes/*.tmLanguage.json")
+    }
+    from(sysmlWorkerFiles) {
+        include("sysml.tmLanguage.json")
+        into("syntaxes")
     }
     into(importedVscodeDir)
 }

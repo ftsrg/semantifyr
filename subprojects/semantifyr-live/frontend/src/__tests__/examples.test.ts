@@ -20,7 +20,19 @@ describe('LIVE_FLAVORS registry', () => {
       'oxsts-with-gamma-library',
       'oxsts-with-sysmlv2-library',
       'gamma',
+      'sysml',
     ]);
+  });
+
+  it('the sysml flavor offers the corpus examples as SysML source', () => {
+    const flavor = findFlavor('sysml');
+    const expectedIds = Object.values(importedSysmlv2Manifest).flatMap((manifest) =>
+      manifest.models.flatMap((model) => (model.example ? [model.file.replace(/\.sysml$/, '')] : [])),
+    );
+
+    expect(flavor?.languageId).toBe('sysml');
+    expect(flavor?.examples.map((example) => example.id)).toEqual([...expectedIds, 'blank']);
+    expect(flavor?.examples[0]?.code).toContain('verification def');
   });
 
   it('every flavor has at least one example with a valid id and label', () => {

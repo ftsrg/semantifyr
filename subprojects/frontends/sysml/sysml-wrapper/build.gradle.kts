@@ -24,7 +24,7 @@ dependencies {
     testImplementation(testFixtures(project(":compiler")))
 }
 
-val sysmlCommit = "8b6ec65997a928374f7476ae444b75673e0dfd8a" // feat: validated the generated trace in the trace command before writing it
+val sysmlCommit = "95c1913746755b203ae81e3bdf8f9790a99e5e27" // feat: added a validate command that checks a file in its directory's workspace
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 
@@ -121,6 +121,47 @@ val bundleCli = tasks.register<Sync>("bundleCli") {
         into("sysml.library")
     }
     into(project.layout.buildDirectory.dir("cli-bundle"))
+}
+
+val assembleFork = tasks.register<PnpmTask>("assembleFork") {
+    dependsOn(tasks.pnpmInstall)
+    mustRunAfter(buildCli, bundleExtension)
+    inputs.file(sysmlDir.file("package.json"))
+    inputs.file(sysmlDir.file("tsconfig.json"))
+    inputs.files(sysmlSourceFiles)
+    outputs.dir(sysmlDir.dir("packages/syside-languageserver/lib"))
+
+    pnpmCommand.set(listOf("-r", "assemble"))
+}
+
+val languageServerDir = sysmlDir.dir("packages/syside-languageserver")
+
+val bundleWorker = tasks.register<PnpmTask>("bundleWorker") {
+    dependsOn(tasks.pnpmInstall)
+    inputs.files(assembleFork)
+    mustRunAfter(assembleFork)
+    inputs.files(sysmlSourceFiles)
+    inputs.file(languageServerDir.file("library/Verification.sysml"))
+    outputs.dir(languageServerDir.dir("dist/worker"))
+
+    pnpmCommand.set(listOf("-F", "syside-languageserver", "bundle:worker"))
+}
+
+val sysmlWorkerDir = layout.buildDirectory.dir("sysml-worker")
+
+val collectWorker = tasks.register<Sync>("collectWorker") {
+    from(bundleWorker) {
+        exclude("library/.project", "library/.settings/**")
+    }
+    from(languageServerDir.file("syntaxes/sysml.tmLanguage.json"))
+    into(sysmlWorkerDir)
+}
+
+configurations.consumable("sysmlWorkerElements") {
+    attributes(semantifyrArtifact("sysml-worker"))
+    outgoing.artifact(sysmlWorkerDir) {
+        builtBy(collectWorker)
+    }
 }
 
 configurations.consumable("vscodeExtensionElements") {

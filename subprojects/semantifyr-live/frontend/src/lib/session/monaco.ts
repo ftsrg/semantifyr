@@ -12,7 +12,7 @@ import {
 } from '@codingame/monaco-vscode-files-service-override';
 import { configureDefaultWorkerFactory } from 'monaco-languageclient/workerFactory';
 import { MonacoVscodeApiWrapper, type MonacoVscodeApiConfig, type ExtensionConfig } from 'monaco-languageclient/vscodeApiWrapper';
-import { LanguageClientWrapper, LcWebSocket, type LanguageClientConfig } from 'monaco-languageclient/lcwrapper';
+import { LanguageClientWrapper, LcWebSocket, LcWorker, type LanguageClientConfig } from 'monaco-languageclient/lcwrapper';
 import { EditorApp, type EditorAppConfig } from 'monaco-languageclient/editorApp';
 import type { editor } from 'monaco-editor';
 
@@ -22,6 +22,7 @@ import type { ResolvedColorMode } from '../util/colorMode';
 // Synced from :semantifyr-vscode by the cloneVscodeLanguageAssets Gradle task.
 import oxstsGrammar from '../../vscode/imported/syntaxes/oxsts.tmLanguage.json';
 import gammaGrammar from '../../vscode/imported/syntaxes/gamma.tmLanguage.json';
+import sysmlGrammar from '../../vscode/imported/syntaxes/sysml.tmLanguage.json';
 import languageConfiguration from '../../vscode/imported/language-configuration.json';
 
 const EDITOR_USER_CONFIG = {
@@ -44,11 +45,13 @@ const EDITOR_OPTIONS: editor.IStandaloneEditorConstructionOptions = {
 const LANGUAGE_DEFS = [
   { id: 'oxsts', extensions: ['.oxsts'], aliases: ['OxSTS', 'oxsts'], scopeName: 'source.oxsts', grammarPath: './syntaxes/oxsts.tmLanguage.json' },
   { id: 'gamma', extensions: ['.gamma'], aliases: ['Gamma', 'gamma'], scopeName: 'source.gamma', grammarPath: './syntaxes/gamma.tmLanguage.json' },
+  { id: 'sysml', extensions: ['.sysml'], aliases: ['SysML v2', 'sysml'], scopeName: 'source.sysml', grammarPath: './syntaxes/sysml.tmLanguage.json' },
 ];
 
 const GRAMMAR_FILES: Record<string, unknown> = {
   'oxsts': oxstsGrammar,
   'gamma': gammaGrammar,
+  'sysml': sysmlGrammar,
 } as const;
 
 function themeIdFor(colorMode: ResolvedColorMode): string {
@@ -295,6 +298,48 @@ export interface LanguageClientCallbacks {
 }
 
 const LSP_STATE_STOPPED = 1;
+
+export async function connectWorkerLanguageClient(
+  languageId: string,
+  workerUrl: URL,
+  onStopped: () => void,
+): Promise<LanguageClientWrapper> {
+  const languageClient = new LanguageClientWrapper({
+    languageId,
+    connection: {
+      options: {
+        $family: 'Worker',
+        realization: () => new LcWorker(),
+        workerUrl,
+        workerName: languageId,
+        type: 'classic',
+      },
+    },
+    clientOptions: {
+      documentSelector: [languageId],
+      workspaceFolder: {
+        index: 0,
+        name: 'workspace',
+        uri: vscode.Uri.file('/workspace/'),
+      },
+    },
+  });
+  await languageClient.start();
+  const rawClient = languageClient.getLanguageClient() as {
+    onRequest?: (method: string, handler: () => null) => void;
+    onDidChangeState?: (cb: (e: { newState: number; oldState: number }) => void) => void;
+  } | undefined;
+  // SysIDE's editor command registration: live has no such commands
+  rawClient?.onRequest?.('sysml/registerTextEditorCommands', () => {
+    return null;
+  });
+  rawClient?.onDidChangeState?.((stateChange) => {
+    if (stateChange.newState === LSP_STATE_STOPPED) {
+      onStopped();
+    }
+  });
+  return languageClient;
+}
 
 export async function connectLanguageClient(
   backendUrl: string,

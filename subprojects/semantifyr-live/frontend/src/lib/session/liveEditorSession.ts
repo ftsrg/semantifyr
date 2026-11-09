@@ -14,6 +14,7 @@ import type { ResolvedColorMode } from '../util/colorMode'
 import {
   applyColorTheme,
   connectLanguageClient,
+  connectWorkerLanguageClient,
   createEditor,
   createFileUri,
   createSecondaryEditor,
@@ -24,6 +25,15 @@ import type { LspClient, VerificationCaseLocation } from '../verification/engine
 import { wrapClientWithMetrics, type LspMetrics, type MetricsTracker } from './lspMetrics'
 import { createReconnectController, type ReconnectController } from './reconnectController'
 import { SemantifyrLiveApi } from '../api/lspExtensions'
+import {
+  createSysmlBridge,
+  mapperProblems,
+  SYSML_FLAVOR_ID,
+  SYSML_FLAVOR_INFO,
+  SYSML_HIDDEN_LANGUAGE_ID,
+  SYSML_OXSTS_FLAVOR_ID,
+  type SysmlMapping,
+} from './sysmlBridge'
 
 export type LiveEditorStatus =
   | 'initializing'
@@ -63,6 +73,8 @@ export interface LiveEditorSession {
   getCurrentCode(): string | null
   getLspClient(): LspClient | undefined
   getLspMetrics(): LspMetrics | null
+  getMappedOxsts(): string | null
+  addMappingListener(cb: () => void): () => void
 
   readonly api: SemantifyrLiveApi
 
@@ -125,6 +137,20 @@ function severityFromString(s: ProblemEntry['severity']): vscode.DiagnosticSever
   }
 }
 
+function toVscodeDiagnostics(entries: readonly ProblemEntry[]): vscode.Diagnostic[] {
+  return entries.map((entry) => {
+    const range = new vscode.Range(
+      Math.max(0, entry.startLine),
+      Math.max(0, entry.startColumn),
+      Math.max(0, entry.endLine),
+      Math.max(0, entry.endColumn),
+    )
+    const diagnostic = new vscode.Diagnostic(range, entry.message, severityFromString(entry.severity))
+    diagnostic.source = entry.source
+    return diagnostic
+  })
+}
+
 function severityToString(s: vscode.DiagnosticSeverity): ProblemEntry['severity'] {
   switch (s) {
     case vscode.DiagnosticSeverity.Error:
@@ -143,6 +169,12 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
 
   let editorApp: EditorApp | null = null
   let languageClient: LanguageClientWrapper | null = null
+  let workerLanguageClient: LanguageClientWrapper | null = null
+  let mapperDiagnostics: vscode.DiagnosticCollection | null = null
+  let mappingTimer: ReturnType<typeof setTimeout> | null = null
+  let mappingGeneration = 0
+  let mappedOxsts: string | null = null
+  let contentSubscription: { dispose: () => void } | null = null
   let fsOverlay: { dispose: () => void } | null = null
   let cancelled = false
   let started = false
@@ -159,6 +191,7 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
   const progressListeners = new Set<(params: unknown) => void>()
   const problemsListeners = new Set<() => void>()
   const statusListeners = new Set<(status: LiveEditorStatus, info?: string) => void>()
+  const mappingListeners = new Set<() => void>()
   const flavorListeners = new Set<(flavor: FlavorInfo | null) => void>()
   const notificationHandlers = new Map<string, Set<(params: unknown) => void>>()
   let attachedNotificationDisposables: { dispose: () => void }[] = []
@@ -207,7 +240,8 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
     for (const [method, listeners] of notificationHandlers) {
       try {
         const disposable = raw.onNotification(method, (params) => {
-          notifyListeners(listeners, (cb) => { cb(params); }, `notification-${method}`)
+          const translated = sysmlBridge ? sysmlBridge.translateNotification(method, params) : params
+          notifyListeners(listeners, (cb) => { cb(translated); }, `notification-${method}`)
         })
         if (disposable) {
           attachedNotificationDisposables.push(disposable)
@@ -235,8 +269,8 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
     metricsRawClient = null
     const connected = await connectLanguageClient(
       options.backendUrl,
-      options.flavorId,
-      options.languageId,
+      sysmlBridge ? SYSML_OXSTS_FLAVOR_ID : options.flavorId,
+      sysmlBridge ? SYSML_HIDDEN_LANGUAGE_ID : options.languageId,
       {
         onProgress: (params: unknown) => {
           notifyListeners(progressListeners, (cb) => { cb(params); }, 'progress')
@@ -255,6 +289,9 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
     }
     languageClient = connected
     attachNotificationHandlers(connected)
+    if (sysmlBridge && !workerLanguageClient?.isStarted()) {
+      await connectWorker()
+    }
 
     // Force a repaint once semantic tokens have likely landed; Monaco won't repaint
     // already-painted lines on its own until they re-enter the viewport.
@@ -269,6 +306,21 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
         /* ignore */
       }
     }, 500)
+  }
+
+  const connectWorker = async (): Promise<void> => {
+    if (workerLanguageClient) {
+      await tearDownLanguageClient(workerLanguageClient)
+    }
+    workerLanguageClient = await connectWorkerLanguageClient(
+      options.languageId,
+      new URL('/sysml-worker/syside-worker.cjs?library=library', window.location.href),
+      () => {
+        if (!cancelled) {
+          reconnectController.schedule()
+        }
+      },
+    )
   }
 
   const reconnectController: ReconnectController = createReconnectController({
@@ -336,8 +388,14 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
       reconnectController.resetAttempts()
       reportStatus('connected')
 
+      if (sysmlBridge) {
+        contentSubscription = editorApp.getEditor()?.onDidChangeModelContent(scheduleMappingRefresh) ?? null
+        void refreshMapping()
+      }
+
       const api = createApi(options.backendUrl)
-      api.fetchFlavor(options.flavorId)
+      const flavorLookup = sysmlBridge ? Promise.resolve(SYSML_FLAVOR_INFO) : api.fetchFlavor(options.flavorId)
+      flavorLookup
         .then((found) => {
           if (cancelled) {
             return
@@ -360,6 +418,18 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
     disposed = true
     cancelled = true
     reconnectController.cancel()
+    if (mappingTimer) {
+      clearTimeout(mappingTimer)
+      mappingTimer = null
+    }
+    contentSubscription?.dispose()
+    contentSubscription = null
+    mapperDiagnostics?.dispose()
+    mapperDiagnostics = null
+    if (workerLanguageClient) {
+      await tearDownLanguageClient(workerLanguageClient)
+      workerLanguageClient = null
+    }
     if (tokenRenderTimer) {
       clearTimeout(tokenRenderTimer)
       tokenRenderTimer = null
@@ -430,6 +500,10 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
     metricsRawClient = null
     reportStatus('disconnected')
     await tearDownLanguageClient(wrapper)
+    if (workerLanguageClient) {
+      await tearDownLanguageClient(workerLanguageClient)
+      workerLanguageClient = null
+    }
   }
 
   const getLspClient = (): LspClient | undefined => {
@@ -440,7 +514,7 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
       return undefined
     }
     if (!metricsClient || metricsRawClient !== rawClient) {
-      metricsClient = wrapClientWithMetrics(rawClient)
+      metricsClient = wrapClientWithMetrics(sysmlBridge ? sysmlBridge.client : rawClient)
       metricsRawClient = rawClient
     }
     return metricsClient
@@ -474,6 +548,48 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
     }
   }
 
+  const sysmlBridge = options.flavorId === SYSML_FLAVOR_ID
+    ? createSysmlBridge({
+        fileUri: fileUri.toString(),
+        getWorkerClient: () => workerLanguageClient?.getLanguageClient(),
+        getOxstsClient: () => languageClient?.getLanguageClient(),
+      })
+    : null
+
+  const applyMapping = (mapping: SysmlMapping): void => {
+    mappedOxsts = mapping.oxsts ?? null
+    mapperDiagnostics ??= vscode.languages.createDiagnosticCollection('semantifyr-mapper')
+    mapperDiagnostics.set(fileUri, toVscodeDiagnostics(mapperProblems(mapping)))
+    notifyListeners(mappingListeners, (cb) => { cb(); }, 'mapping')
+  }
+
+  const refreshMapping = async (): Promise<void> => {
+    if (!sysmlBridge) {
+      return
+    }
+    const generation = ++mappingGeneration
+    let mapping: SysmlMapping
+    try {
+      mapping = await sysmlBridge.readMapping()
+    } catch (error) {
+      console.warn('semantifyr-live: SysML mapping failed', error)
+      return
+    }
+    if (generation === mappingGeneration && !disposed) {
+      applyMapping(mapping)
+    }
+  }
+
+  const scheduleMappingRefresh = (): void => {
+    if (mappingTimer) {
+      clearTimeout(mappingTimer)
+    }
+    mappingTimer = setTimeout(() => {
+      mappingTimer = null
+      void refreshMapping()
+    }, 300)
+  }
+
   const api = new SemantifyrLiveApi(getLspClient, addNotificationListenerImpl)
 
   return {
@@ -491,23 +607,21 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
 
     getLspMetrics: () => metricsClient?.getMetrics() ?? null,
 
+    getMappedOxsts: () => mappedOxsts,
+
+    addMappingListener: (cb) => {
+      mappingListeners.add(cb)
+      return () => {
+        mappingListeners.delete(cb)
+      }
+    },
+
     setVerifyCaseMarkers: (markers) => {
       const collection = ensureVerifyDiagnostics()
       if (!collection) {
         return
       }
-      const diagnostics = markers.map((m) => {
-        const range = new vscode.Range(
-          Math.max(0, m.startLine),
-          Math.max(0, m.startColumn),
-          Math.max(0, m.endLine),
-          Math.max(0, m.endColumn),
-        )
-        const diagnostic = new vscode.Diagnostic(range, m.message, severityFromString(m.severity))
-        diagnostic.source = m.source
-        return diagnostic
-      })
-      collection.set(fileUri, diagnostics)
+      collection.set(fileUri, toVscodeDiagnostics(markers))
     },
 
     getProblems: () => {

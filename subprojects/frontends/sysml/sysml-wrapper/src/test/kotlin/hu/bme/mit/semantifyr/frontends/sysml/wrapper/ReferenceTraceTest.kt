@@ -25,11 +25,10 @@ class ReferenceTraceTest {
     fun `the crossroads reference trace validates against the crossroads model`() {
         val workspace = temporaryDirectory.resolve("workspace").createDirectories()
         MODELS.resolve("examples").resolve(MODEL).copyTo(workspace.resolve(MODEL))
+        MODELS.resolve("examples").resolve(VERIFICATION).copyTo(workspace.resolve(VERIFICATION))
         val trace = MODELS.resolve("etc").resolve(TRACE).copyTo(workspace.resolve(TRACE))
 
-        val compiled = SysMLv2Compiler(temporaryDirectory.resolve("cache")).compile(trace, temporaryDirectory.resolve("trace.oxsts"))
-
-        assertThat(compiled.readText()).contains("class ${CASE}Trace")
+        SysMLv2Compiler(temporaryDirectory.resolve("cache")).validate(trace)
     }
 
     @Test

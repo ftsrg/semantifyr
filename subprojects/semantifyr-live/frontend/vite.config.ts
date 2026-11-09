@@ -87,6 +87,7 @@ export default defineConfig({
     proxy: {
       '/api': { target: backendProxyTarget, changeOrigin: true },
       '/ws/lsp': { target: backendProxyTarget, ws: true, changeOrigin: true },
+      '/sysml-worker': { target: backendProxyTarget, changeOrigin: true },
     },
   },
   build: {
