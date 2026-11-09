@@ -14,6 +14,7 @@ import {
   type VerificationMetrics,
   type VerificationTrace,
   type WitnessValidationResult,
+  verifyCase,
 } from '@semantifyr/editor-common'
 import {
   CancellationTokenSource as VscodeCancellationTokenSource,
@@ -201,23 +202,6 @@ export interface RunVerificationOptions {
   getAutoValidateRequest?: (() => AutoValidateRequest | null) | undefined
 }
 
-function buildVerifyArguments(
-  fileUri: string,
-  caseInfo: VerificationCaseSpecification,
-  options: RunVerificationOptions,
-): Record<string, unknown> {
-  const payload: Record<string, unknown> = {
-    uri: fileUri,
-    range: caseInfo.location.range,
-    // Echoed back via the live-server's active-verifications monitor; the LSP server ignores it.
-    caseLabel: caseInfo.label,
-  }
-  if (options.portfolioId) {
-    payload.portfolio = options.portfolioId
-  }
-  return payload
-}
-
 interface VerifyOutcome {
   status: VerificationCaseStatus
   message?: string
@@ -256,11 +240,15 @@ async function executeVerify(
   token: CancellationToken,
 ): Promise<VerifyOutcome> {
   try {
-    const response = (await client.sendRequest(
-      'workspace/executeCommand',
-      { command, arguments: [buildVerifyArguments(fileUri, caseInfo, options)] },
-      token,
-    )) as VerificationCaseResult | null
+    const response = await verifyCase(
+      client,
+      command,
+      { uri: fileUri, range: caseInfo.location.range },
+      {
+        ...(options.portfolioId ? { portfolio: options.portfolioId } : {}),
+        token,
+      },
+    )
     return toVerifyOutcome(response)
   } catch (error) {
     return {
@@ -288,7 +276,6 @@ function maybeDispatchAutoValidation(
   const location = witnessValidationLocation(caseInfo, witnessUri, validate.byCase ?? false)
   dispatchAutoValidation(client, validate.command, caseInfo.id, location, setState, {
     validationPortfolioId: validate.portfolioId,
-    caseLabel: caseInfo.label,
   })
 }
 
@@ -578,7 +565,7 @@ export async function validateWitness(
   client: LspClient,
   validateCommand: string,
   location: ValidateWitnessLocation,
-  options: RunVerificationOptions & { caseLabel?: string | undefined } = {},
+  options: RunVerificationOptions = {},
   token?: CancellationToken,
 ): Promise<WitnessValidationOutcome> {
   const args: Record<string, unknown> = {
@@ -587,9 +574,6 @@ export async function validateWitness(
   }
   if (options.portfolioId) {
     args.portfolio = options.portfolioId
-  }
-  if (options.caseLabel) {
-    args.caseLabel = options.caseLabel
   }
   try {
     const params = { command: validateCommand, arguments: [args] }
@@ -634,7 +618,7 @@ export function dispatchAutoValidation(
   caseId: string,
   location: ValidateWitnessLocation,
   setState: StateUpdater,
-  options: { validationPortfolioId?: string | undefined; caseLabel?: string | undefined } = {},
+  options: { validationPortfolioId?: string | undefined } = {},
 ): void {
   setState((prev) => ({
     ...prev,
@@ -648,7 +632,6 @@ export function dispatchAutoValidation(
     location,
     {
       ...(options.validationPortfolioId ? { portfolioId: options.validationPortfolioId } : {}),
-      ...(options.caseLabel ? { caseLabel: options.caseLabel } : {}),
     },
   ).then((outcome) => {
     setState((prev) => ({

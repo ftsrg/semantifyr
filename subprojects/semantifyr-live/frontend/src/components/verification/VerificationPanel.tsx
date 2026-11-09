@@ -270,7 +270,6 @@ function VerificationPanelInner(
       const location = witnessValidationLocation(target.caseInfo, witnessUri, validateWitnessByCase);
       dispatchAutoValidation(client, validateWitnessCommand, caseId, location, stateUpdater, {
         validationPortfolioId,
-        caseLabel: target.caseInfo.label,
       });
     },
   }), [editorHandle, validateWitnessCommand, validateWitnessByCase, stateUpdater, validationPortfolioId]);

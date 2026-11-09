@@ -61,7 +61,6 @@ interface WorkerCaseRequest {
   uri: string
   range: Range
   portfolio?: string
-  caseLabel: string
 }
 
 const SEVERITIES: readonly ProblemEntry['severity'][] = [
@@ -183,13 +182,13 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
   }
 
   const liftTrace = async (
-    request: WorkerCaseRequest,
+    caseName: string,
     result: VerificationCaseResult,
   ): Promise<VerificationCaseResult> => {
     if (!result.trace) {
       return result
     }
-    const traceUri = `file:///workspace/traces/${request.caseLabel}.trace.sysml`
+    const traceUri = `file:///workspace/traces/${caseName}.trace.sysml`
     if (result.trace.witnessUri) {
       witnessUris.set(traceUri, result.trace.witnessUri)
     }
@@ -200,7 +199,7 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
         traceUri,
         (await executeCommand(workerClient(), 'syside.semantifyr.sysml.trace', {
           uri: options.fileUri,
-          caseName: request.caseLabel,
+          caseName,
           trace: result.trace.callTrace,
         })) as string,
       )
@@ -216,14 +215,21 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
     if (mapping.oxsts === undefined) {
       return errored('The model has errors or constructs Semantifyr does not support, see the problems.')
     }
+    const requested = (await discover()).find((specification) => {
+      return rangeKey(specification.location.range) === rangeKey(request.range)
+    })
+    if (!requested) {
+      return errored('The model has no verification case at the requested location')
+    }
+    const caseName = requested.label
     const client = oxstsClient()
     syncOxsts(client, mapping.oxsts)
     const discovered = await discoverVerificationCases(client, 'oxsts.case.discover', SYSML_OXSTS_URI)
     const target = discovered.find((specification) => {
-      return caseNameOf(specification) === request.caseLabel
+      return caseNameOf(specification) === caseName
     })
     if (!target) {
-      return errored(`The OXSTS of the model has no case named ${request.caseLabel}`)
+      return errored(`The OXSTS of the model has no case named ${caseName}`)
     }
     verifiedCaseLocations.set(rangeKey(target.location.range), {
       uri: options.fileUri,
@@ -235,7 +241,7 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
       { ...request, uri: SYSML_OXSTS_URI, range: target.location.range },
       token,
     )) as VerificationCaseResult
-    return liftTrace(request, result)
+    return liftTrace(caseName, result)
   }
 
   const validate = async (

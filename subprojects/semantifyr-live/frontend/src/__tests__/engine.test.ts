@@ -67,6 +67,11 @@ describe('runAllVerifications', () => {
     expect(final.cases[1]!.trace).toBeDefined();
     expect(final.message).toMatch(/some cases failed/i);
 
+    expect(sendRequest.mock.calls[0]![1]).toEqual({
+      command: 'oxsts.case.verify',
+      arguments: [{ uri: 'file:///workspace/snippet.oxsts', range: sampleCase('a').location.range, portfolio: 'smart-full' }],
+    });
+
     // The first batch transition should mark all cases queued.
     expect(states[0]!.cases.every((verificationCase) => verificationCase.status === 'queued')).toBe(true);
   });
@@ -332,16 +337,15 @@ describe('validateWitness', () => {
       client,
       'oxsts.case.validateWitness',
       { uri: 'inmemory:///x', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } },
-      { portfolioId: 'smart-full', caseLabel: 'Case a' },
+      { portfolioId: 'smart-full' },
     );
     expect(outcome.status).toBe('invalid');
     expect(outcome.backendId).toBe('theta-bmc');
     expect(outcome.portfolioId).toBe('smart-full');
 
     const callArguments = sendRequest.mock.calls[0]!;
-    const parameters = callArguments[1] as { arguments: { portfolio?: string; caseLabel?: string }[] };
-    expect(parameters.arguments[0]!.portfolio).toBe('smart-full');
-    expect(parameters.arguments[0]!.caseLabel).toBe('Case a');
+    const parameters = callArguments[1] as { arguments: { portfolio?: string }[] };
+    expect(parameters.arguments[0]).toEqual({ uri: 'inmemory:///x', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } }, portfolio: 'smart-full' });
   });
 
   it('treats unknown response shapes as errored', async () => {
@@ -393,7 +397,7 @@ describe('dispatchAutoValidation', () => {
       'a',
       { uri: 'inmemory:///workspace/snippet.witness.oxsts', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } },
       setState,
-      { validationPortfolioId: 'smart-full', caseLabel: 'Case a' },
+      { validationPortfolioId: 'smart-full' },
     );
 
     // First synchronous transition flips validating=true; the second (after the resolved

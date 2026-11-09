@@ -157,7 +157,7 @@ describe('Gamma validation chip', { timeout: 20_000 }, () => {
     const validateCall = client.sendRequest.mock.calls.find(([, parameters]) => (parameters as { command?: string }).command === 'gamma.witness.validate');
     expect(validateCall?.[1]).toEqual({
       command: 'gamma.witness.validate',
-      arguments: [{ uri: gammaCase.location.uri, range: gammaCase.location.range, portfolio: 'smart-full', caseLabel: 'ACanBeGreen' }],
+      arguments: [{ uri: gammaCase.location.uri, range: gammaCase.location.range, portfolio: 'smart-full' }],
     });
 
     client.resolveValidation(validationResult('valid', 'Theta reports the property holds'));
