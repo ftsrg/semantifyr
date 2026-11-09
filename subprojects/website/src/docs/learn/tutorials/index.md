@@ -21,4 +21,4 @@ If you are new to Semantifyr, start with [Direct Modeling](trafficlight/direct-m
 
 | Tutorial | Description |
 |----------|-------------|
-| [SysML v2 on the Command Line](sysml-v2.md) | Model a switch and a lamp in SysML v2, verify requirements with the command-line interface, and read a counterexample. Needs a local install and Node.js. |
+| [Verifying SysML v2 Models](sysml-v2.md) | Model a switch and a lamp in SysML v2, verify requirements in the live editor, and read a counterexample. |

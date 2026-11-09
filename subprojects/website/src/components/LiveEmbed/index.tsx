@@ -91,7 +91,7 @@ export default function LiveEmbed({ code, flavor = 'oxsts', show }: Props): Reac
 
   return (
     <div className={styles.embed}>
-      <CodeBlock language={flavor} metastring={show ? '' : 'verify open'}>
+      <CodeBlock language={flavor === 'sysml' ? 'sysmlv2' : flavor} metastring={show || flavor === 'sysml' ? '' : 'verify open'}>
         {show ? selectDeclarations(source, show) : source}
       </CodeBlock>
       <div className={styles.toolbar}>
