@@ -31,7 +31,7 @@ class ThetaCapabilityCheckerTest : ThetaTransformationTestBase() {
         val unsupported = unsupported(
             """
                 var counter : int := 0
-                var flag : bool
+                var flag : bool := false
                 var color : test::colors::Color := test::colors::Color::Red
                 init {
                     havoc(flag)
@@ -61,7 +61,7 @@ class ThetaCapabilityCheckerTest : ThetaTransformationTestBase() {
             """
                 var ratio : real := 0.5
                 var anything : any := 0
-                var text : string
+                var text : string := "text"
                 var counter : int := 0
                 init {
                 }
@@ -81,6 +81,7 @@ class ThetaCapabilityCheckerTest : ThetaTransformationTestBase() {
             "variables of type any",
             "real literals",
             "variables of type string",
+            "string literals",
         )
     }
 }

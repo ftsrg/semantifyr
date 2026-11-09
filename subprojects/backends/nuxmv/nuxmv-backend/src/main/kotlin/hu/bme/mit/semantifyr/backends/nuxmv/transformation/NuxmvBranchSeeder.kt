@@ -27,9 +27,7 @@ class NuxmvBranchSeeder @Inject constructor(
             val primed = NuxmvPrimedDeclaration(name, variable)
             newPrimes += primed
             currentPrime[variable] = name
-            declaredInitial[variable]?.let {
-                constraints += "$name = $it"
-            }
+            constraints += "$name = ${declaredInitial.getValue(variable)}"
         }
         return NuxmvBranch(constraints, currentPrime, newPrimes)
     }

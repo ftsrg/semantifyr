@@ -73,11 +73,12 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
     }
 
     @Test
-    suspend fun `a variable without an initializer starts unconstrained`() {
+    suspend fun `a variable havoced in init starts unconstrained`() {
         val lines = smvLines(
             """
-                var counter : int
+                var counter : int := 0
                 init {
+                    havoc(counter)
                 }
                 tran {
                 }
@@ -87,7 +88,27 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
             """,
         )
 
-        assertThat(lines).containsSequence("INIT", "(", "(counter = counter__init_b0_seed)", ")")
+        assertThat(lines).containsSequence("INIT", "(", "(counter__init_b0_seed = 0)", "& (counter = counter__init_b0_2)", ")")
+    }
+
+    @Test
+    suspend fun `a variable without an initializer is rejected`() {
+        val exception = assertThrows<IllegalStateException> {
+            transform(
+                """
+                    var counter : int
+                    init {
+                    }
+                    tran {
+                    }
+                    prop {
+                        AG counter == 0
+                    }
+                """,
+            )
+        }
+
+        assertThat(exception.message).isEqualTo("Variable counter has no initializer")
     }
 
     @Test

@@ -55,10 +55,9 @@ class NuxmvModelTransformer @Inject constructor(
     }
 
     private fun collectInitializedVariables(variables: List<VariableDeclaration>): Map<VariableDeclaration, String> {
-        return variables.filter {
-            it.expression != null
-        }.associateWith {
-            nuxmvExpressionTransformer.transform(it.expression)
+        return variables.associateWith {
+            val expression = it.expression ?: error("Variable ${it.name} has no initializer")
+            nuxmvExpressionTransformer.transform(expression)
         }
     }
 
