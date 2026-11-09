@@ -11,6 +11,9 @@ import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.scoping.imports.ImportCollector;
+import hu.bme.mit.semantifyr.oxsts.lang.scoping.imports.PackageSelectableProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.scoping.selectables.TrimPrefixSelectable;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.OppositeHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.PropertyTypeHandler;
@@ -27,17 +30,31 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.TypeCompatibility;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.TypeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EStructuralFeature;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.xtext.EcoreUtil2;
 import org.eclipse.xtext.Keyword;
+import org.eclipse.xtext.linking.impl.LinkingHelper;
+import org.eclipse.xtext.naming.IQualifiedNameConverter;
+import org.eclipse.xtext.naming.IQualifiedNameProvider;
+import org.eclipse.xtext.naming.QualifiedName;
 import org.eclipse.xtext.nodemodel.ICompositeNode;
+import org.eclipse.xtext.nodemodel.INode;
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils;
 import org.eclipse.xtext.resource.ILocationInFileProvider;
+import org.eclipse.xtext.resource.ISelectable;
+import org.eclipse.xtext.scoping.IGlobalScopeProvider;
+import org.eclipse.xtext.scoping.impl.ScopeBasedSelectable;
+import org.eclipse.xtext.util.Strings;
 import org.eclipse.xtext.validation.Check;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,6 +102,24 @@ public class OxstsValidator extends AbstractOxstsValidator {
     @Inject
     private BuiltinAnnotationHandler builtinAnnotationHandler;
 
+    @Inject
+    private IGlobalScopeProvider globalScopeProvider;
+
+    @Inject
+    private ImportCollector importCollector;
+
+    @Inject
+    private PackageSelectableProvider packageSelectableProvider;
+
+    @Inject
+    private LinkingHelper linkingHelper;
+
+    @Inject
+    private IQualifiedNameConverter qualifiedNameConverter;
+
+    @Inject
+    private IQualifiedNameProvider qualifiedNameProvider;
+
     private static final String ISSUE_PREFIX = "OXSTS.";
     public static final String DUPLICATE_NAME_ISSUE = ISSUE_PREFIX + "DUPLICATE_NAME";
     public static final String DATA_TYPE_NOT_IN_BUILTIN_ISSUE = ISSUE_PREFIX + "DATA_TYPE_NOT_IN_BUILTIN";
@@ -110,6 +145,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String MIXED_BOOLEAN_OPERATORS = ISSUE_PREFIX + "MIXED_BOOLEAN_OPERATORS";
     public static final String MISSING_INITIALIZER = ISSUE_PREFIX + "MISSING_INITIALIZER";
     public static final String ABSTRACT_VERIFICATION_CASE = ISSUE_PREFIX + "ABSTRACT_VERIFICATION_CASE";
+    public static final String AMBIGUOUS_REFERENCE = ISSUE_PREFIX + "AMBIGUOUS_REFERENCE";
 
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
@@ -1687,6 +1723,87 @@ public class OxstsValidator extends AbstractOxstsValidator {
                 acceptError(message, namedElement, OxstsPackage.Literals.NAMED_ELEMENT__NAME, 0, DUPLICATE_NAME_ISSUE);
             }
         }
+    }
+
+    @Check
+    public void checkAmbiguousReference(EObject element) {
+        if (!(EcoreUtil2.getRootContainer(element) instanceof OxstsModelPackage modelPackage)) {
+            return;
+        }
+        for (var reference : element.eClass().getEAllReferences()) {
+            if (reference.isContainment() || reference.isContainer() || reference.isDerived()) {
+                continue;
+            }
+            var value = element.eGet(reference, false);
+            List<?> values;
+            if (reference.isMany()) {
+                values = (List<?>) value;
+            } else {
+                values = Collections.singletonList(value);
+            }
+            List<INode> nodes = null;
+            for (var index = 0; index < values.size(); index++) {
+                if (!(values.get(index) instanceof EObject target)
+                        || target.eIsProxy()
+                        || !(target.eContainer() instanceof OxstsModelPackage || target instanceof EnumLiteral)) {
+                    continue;
+                }
+                if (nodes == null) {
+                    nodes = NodeModelUtils.findNodesForFeature(element, reference);
+                }
+                if (index >= nodes.size()) {
+                    break;
+                }
+                var text = linkingHelper.getCrossRefNodeAsString(nodes.get(index), true);
+                if (Strings.isEmpty(text)) {
+                    continue;
+                }
+                var candidates = getPackageLevelCandidates(
+                        modelPackage, reference, qualifiedNameConverter.toQualifiedName(text));
+                if (candidates.size() < 2
+                        || !candidates.contains(qualifiedNameProvider.getFullyQualifiedName(target))) {
+                    continue;
+                }
+                var qualifiedNames = candidates.stream()
+                        .map(qualifiedNameConverter::toString)
+                        .toList();
+                var message = "Ambiguous reference '%s': it names both %s; write the qualified name %s."
+                        .formatted(text, String.join(" and ", qualifiedNames), String.join(" or ", qualifiedNames));
+                int issueIndex;
+                if (reference.isMany()) {
+                    issueIndex = index;
+                } else {
+                    issueIndex = INSIGNIFICANT_INDEX;
+                }
+                acceptError(message, element, reference, issueIndex, AMBIGUOUS_REFERENCE);
+            }
+        }
+    }
+
+    // a named package and every explicit import compete for a simple name, an unnamed package's own declarations win
+    protected Set<QualifiedName> getPackageLevelCandidates(
+            OxstsModelPackage modelPackage, EReference reference, QualifiedName name) {
+        var resource = modelPackage.eResource();
+        var index = new ScopeBasedSelectable(globalScopeProvider.getScope(resource, reference, null));
+        var packageName = qualifiedNameProvider.getFullyQualifiedName(modelPackage);
+        var selectables = new ArrayList<ISelectable>();
+        if (packageName != null) {
+            selectables.add(packageSelectableProvider.getFileSelectable(modelPackage));
+            selectables.add(new TrimPrefixSelectable(index, packageName));
+        }
+        for (var importEntry : importCollector.getDirectImports(resource)) {
+            if (!importEntry.isImplicit() && !importEntry.packageName().equals(packageName)) {
+                selectables.add(new TrimPrefixSelectable(index, importEntry.packageName()));
+            }
+        }
+        var candidates = new LinkedHashSet<QualifiedName>();
+        for (var selectable : selectables) {
+            for (var description : selectable.getExportedObjects(reference.getEReferenceType(), name, false)) {
+                var candidate = EcoreUtil.resolve(description.getEObjectOrProxy(), modelPackage);
+                candidates.add(qualifiedNameProvider.getFullyQualifiedName(candidate));
+            }
+        }
+        return candidates;
     }
 
     protected void acceptError(String message, EObject object, String code, String... issueData) {
