@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 class MemberCompletionTest extends OxstsLanguageServerTest {
 
     @Test
-    void completionAfterADotOffersTheMembersOfTheFeatureType() throws Exception {
+    void completionAfterADotInAnInlineCallOffersTheTransitionsOfTheFeatureType() throws Exception {
         var model = MarkedText.of("""
                 package example::trafficlight::basics
 
@@ -78,8 +78,8 @@ class MemberCompletionTest extends OxstsLanguageServerTest {
                 .get();
 
         assertThat(completion.getRight().getItems())
-                .filteredOn(item -> item.getKind() == CompletionItemKind.Reference)
+                .filteredOn(item -> item.getKind() == CompletionItemKind.Method)
                 .extracting(CompletionItem::getLabel)
-                .containsExactlyInAnyOrder("assumeColor", "color", "init", "isColor", "main", "setColor");
+                .containsExactlyInAnyOrder("assumeColor", "init", "main", "setColor");
     }
 }

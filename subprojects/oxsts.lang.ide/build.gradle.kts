@@ -20,6 +20,15 @@ dependencies {
     testRuntimeOnly(libs.slf4j.log4j)
 }
 
+tasks.named("test") {
+    inputs.dir(rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial"))
+        .withPropertyName("tutorialModels")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir(rootProject.layout.projectDirectory.dir("subprojects/frontends/gamma/models/libraries/default"))
+        .withPropertyName("gammaLibrary")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
 application {
     mainClass = "hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsIdeSetup"
 }

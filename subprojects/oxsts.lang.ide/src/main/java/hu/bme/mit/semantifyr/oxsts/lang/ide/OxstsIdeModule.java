@@ -9,12 +9,15 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide;
 import hu.bme.mit.semantifyr.lang.ide.editor.contentassist.FuzzyMatcher;
 import hu.bme.mit.semantifyr.lang.ide.server.formatting.SemantifyrFormattingService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.contentassist.OxstsIdeContentProposalProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.contentassist.OxstsIdeCrossrefProposalProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.quickfix.OxstsQuickFixProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.syntaxcoloring.OxstsSemanticHighlightingCalculator;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.codelens.OxstsCodeLensProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands.OxstsCommandService;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.contentassist.OxstsContentAssistService;
 import org.eclipse.xtext.ide.editor.contentassist.IPrefixMatcher;
 import org.eclipse.xtext.ide.editor.contentassist.IdeContentProposalProvider;
+import org.eclipse.xtext.ide.editor.contentassist.IdeCrossrefProposalProvider;
 import org.eclipse.xtext.ide.editor.quickfix.IQuickFixProvider;
 import org.eclipse.xtext.ide.editor.syntaxcoloring.ISemanticHighlightingCalculator;
 import org.eclipse.xtext.ide.server.codeActions.ICodeActionService2;
@@ -22,6 +25,7 @@ import org.eclipse.xtext.ide.server.codeActions.QuickFixCodeActionService;
 import org.eclipse.xtext.ide.server.codelens.ICodeLensResolver;
 import org.eclipse.xtext.ide.server.codelens.ICodeLensService;
 import org.eclipse.xtext.ide.server.commands.IExecutableCommandService;
+import org.eclipse.xtext.ide.server.contentassist.ContentAssistService;
 import org.eclipse.xtext.ide.server.formatting.FormattingService;
 
 /** Use this class to register ide components. */
@@ -60,6 +64,16 @@ public class OxstsIdeModule extends AbstractOxstsIdeModule {
     @SuppressWarnings("unused")
     public Class<? extends IdeContentProposalProvider> bindIdeContentProposalProvider() {
         return OxstsIdeContentProposalProvider.class;
+    }
+
+    @SuppressWarnings("unused")
+    public Class<? extends IdeCrossrefProposalProvider> bindIdeCrossrefProposalProvider() {
+        return OxstsIdeCrossrefProposalProvider.class;
+    }
+
+    @SuppressWarnings("unused")
+    public Class<? extends ContentAssistService> bindContentAssistService() {
+        return OxstsContentAssistService.class;
     }
 
     @SuppressWarnings("unused")
