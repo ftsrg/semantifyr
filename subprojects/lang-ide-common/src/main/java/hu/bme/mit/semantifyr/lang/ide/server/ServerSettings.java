@@ -51,7 +51,6 @@ public class ServerSettings {
     private static final ServerSettingsPayload DEFAULTS = new ServerSettingsPayload(
             DEFAULT_PORTFOLIO_ID,
             300L,
-            0,
             new ServerSettingsPayload.Theta(ThetaExecutor.AUTO, ThetaXstsExecutorKt.THETA_DEFAULT_IMAGE),
             new ServerSettingsPayload.Artifacts(ArtifactsLocation.TEMPORARY, ArtifactsPreset.ALL),
             new ServerSettingsPayload.Optimization(OptimizationLevel.ALL));
@@ -91,7 +90,6 @@ public class ServerSettings {
         return new ServerSettingsPayload(
                 requireNonNullElse(payload.portfolio(), DEFAULTS.portfolio()),
                 requireNonNullElse(payload.timeoutSeconds(), DEFAULTS.timeoutSeconds()),
-                requireNonNullElse(payload.maxConcurrency(), DEFAULTS.maxConcurrency()),
                 new ServerSettingsPayload.Theta(
                         requireNonNullElse(
                                 theta != null ? theta.executor() : null,
@@ -130,11 +128,6 @@ public class ServerSettings {
 
     public Duration resolveTimeout() {
         return Duration.ofSeconds(effective.get().timeoutSeconds());
-    }
-
-    public Integer resolveMaxConcurrencyOrNull() {
-        int value = effective.get().maxConcurrency();
-        return value > 0 ? value : null;
     }
 
     public ExecutionEnvironment resolveExecutionEnvironment() {

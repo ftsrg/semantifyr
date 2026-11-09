@@ -7,12 +7,7 @@
 package hu.bme.mit.semantifyr.lang.ide.server.wire;
 
 public record ServerSettingsPayload(
-        String portfolio,
-        Long timeoutSeconds,
-        Integer maxConcurrency,
-        Theta theta,
-        Artifacts artifacts,
-        Optimization optimization) {
+        String portfolio, Long timeoutSeconds, Theta theta, Artifacts artifacts, Optimization optimization) {
 
     public record Theta(ThetaExecutor executor, String dockerImage) {}
 
@@ -21,6 +16,6 @@ public record ServerSettingsPayload(
     public record Optimization(OptimizationLevel level) {}
 
     public static ServerSettingsPayload withArtifactsLocation(ArtifactsLocation location) {
-        return new ServerSettingsPayload(null, null, null, null, new Artifacts(location, null), null);
+        return new ServerSettingsPayload(null, null, null, new Artifacts(location, null), null);
     }
 }

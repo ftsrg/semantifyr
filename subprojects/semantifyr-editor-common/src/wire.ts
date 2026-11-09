@@ -173,7 +173,6 @@ export type OptimizationLevel = "none" | "all";
 export interface ServerSettings {
     portfolio?: string;
     timeoutSeconds?: number;
-    maxConcurrency?: number;
     theta?: {
         executor?: ThetaExecutor;
         dockerImage?: string;
