@@ -21,8 +21,8 @@ public class RecordLiteralFormatterTest {
     private static final String RECORDS = """
             package test
             record Point {
-                var x: int
-                var y: int
+                var x: int := 0
+                var y: int := 0
             }
             """;
 

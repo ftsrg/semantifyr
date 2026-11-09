@@ -29,7 +29,6 @@ import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -110,7 +109,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String REDEFINITION_SIGNATURE_MISMATCH = ISSUE_PREFIX + "REDEFINITION_SIGNATURE_MISMATCH";
     public static final String RECURSIVE_RECORD = ISSUE_PREFIX + "RECURSIVE_RECORD";
     public static final String MIXED_BOOLEAN_OPERATORS = ISSUE_PREFIX + "MIXED_BOOLEAN_OPERATORS";
-    public static final String INCOMPLETE_RECORD_LITERAL = ISSUE_PREFIX + "INCOMPLETE_RECORD_LITERAL";
+    public static final String MISSING_INITIALIZER = ISSUE_PREFIX + "MISSING_INITIALIZER";
     public static final String ABSTRACT_VERIFICATION_CASE = ISSUE_PREFIX + "ABSTRACT_VERIFICATION_CASE";
 
     @Inject
@@ -451,46 +450,6 @@ public class OxstsValidator extends AbstractOxstsValidator {
                         DUPLICATE_NAME_ISSUE);
             }
         }
-        var missing = recordFields(record).stream()
-                .filter(field -> !assigned.contains(field) && !hasDefault(field, new LinkedHashSet<>()))
-                .map(field -> "'" + field.getName() + "'")
-                .toList();
-        if (!missing.isEmpty()) {
-            acceptError(
-                    "Record literal of '"
-                            + record.getName()
-                            + "' leaves "
-                            + String.join(", ", missing)
-                            + " without a value; assign the field or give it a default in the record.",
-                    recordLiteral,
-                    OxstsPackage.Literals.RECORD_LITERAL__RECORD,
-                    0,
-                    INCOMPLETE_RECORD_LITERAL);
-        }
-    }
-
-    private static List<VariableDeclaration> recordFields(RecordDeclaration record) {
-        return record.getMembers().stream()
-                .filter(VariableDeclaration.class::isInstance)
-                .map(VariableDeclaration.class::cast)
-                .toList();
-    }
-
-    // a record-typed field without an initializer is covered when every field of its record is
-    private static boolean hasDefault(VariableDeclaration field, Set<RecordDeclaration> visited) {
-        if (field.getExpression() != null) {
-            return true;
-        }
-        var typeSpecification = field.getTypeSpecification();
-        if (typeSpecification == null || !(typeSpecification.getDomain() instanceof RecordDeclaration fieldRecord)) {
-            return false;
-        }
-        if (!visited.add(fieldRecord)) {
-            return false;
-        }
-        var covered = recordFields(fieldRecord).stream().allMatch(f -> hasDefault(f, visited));
-        visited.remove(fieldRecord);
-        return covered;
     }
 
     @Check
@@ -1398,6 +1357,23 @@ public class OxstsValidator extends AbstractOxstsValidator {
                         TYPE_MISMATCH);
                 return;
             }
+        }
+    }
+
+    @Check
+    public void checkVariableInitialized(VariableDeclaration variableDeclaration) {
+        if (OxstsUtils.isLoopVariable(variableDeclaration)) {
+            return;
+        }
+        if (variableDeclaration.getExpression() == null) {
+            acceptError(
+                    "Variable '"
+                            + variableDeclaration.getName()
+                            + "' has no initializer; an arbitrary initial value is a havoc in init.",
+                    variableDeclaration,
+                    OxstsPackage.Literals.NAMED_ELEMENT__NAME,
+                    0,
+                    MISSING_INITIALIZER);
         }
     }
 

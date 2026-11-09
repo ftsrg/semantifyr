@@ -66,7 +66,7 @@ public class ExpressionModalityEvaluatorTest {
     void recordLiteralOfConstants_isConstant() {
         var expression = firstInitializerOf("""
             package test
-            record Point { var x: int var y: int }
+            record Point { var x: int := 0 var y: int := 0 }
             class Holder { var position: Point := Point { x = 1, y = -1 } }
             """, "Holder", "position");
 
@@ -77,7 +77,7 @@ public class ExpressionModalityEvaluatorTest {
     void recordLiteralReadingAVariable_isRuntime() {
         var expression = firstInitializerOf("""
             package test
-            record Point { var x: int var y: int }
+            record Point { var x: int := 0 var y: int := 0 }
             class Holder {
                 var level: int := 0
                 var position: Point := Point { x = 1, y = level }

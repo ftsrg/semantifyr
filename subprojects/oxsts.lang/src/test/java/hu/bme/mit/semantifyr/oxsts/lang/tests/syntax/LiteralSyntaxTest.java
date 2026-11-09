@@ -193,12 +193,12 @@ public class LiteralSyntaxTest {
     private static final String RECORDS = """
             package test
             record Point {
-                var x: int
+                var x: int := 0
                 var y: int := 0
             }
             record Line {
-                var from: Point
-                var to: Point
+                var from: Point := Point { x = 0 }
+                var to: Point := Point { x = 0 }
             }
             """;
 
@@ -254,8 +254,8 @@ public class LiteralSyntaxTest {
     void assignmentFollowedBySequenceIsNoRecordLiteral() {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Host {
-                var point: Point
-                var other: Point
+                var point: Point := Point { x = 0 }
+                var other: Point := Point { x = 0 }
                 var number: int := 0
                 redefine tran { point := other { number := 1 } }
             }
@@ -276,7 +276,7 @@ public class LiteralSyntaxTest {
     void recordNameWithEmptyBracesIsNoRecordLiteral() {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Host {
-                var point: Point
+                var point: Point := Point { x = 0 }
                 redefine tran { point := Point {} }
             }
             """);
