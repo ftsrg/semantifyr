@@ -10,10 +10,12 @@ import com.google.gson.JsonElement;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.lang.ide.server.concurrent.WorkManager;
 import java.util.concurrent.CompletableFuture;
+import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.WorkDoneProgressCancelParams;
+import org.eclipse.xtext.diagnostics.Severity;
 import org.eclipse.xtext.ide.server.LanguageServerImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +40,15 @@ public class ExtendedLanguageServer extends LanguageServerImpl {
         workManager.initialize(getLanguageClient());
         applyInitializationOptions(params);
         return super.initialize(params);
+    }
+
+    // Info is the lowest severity a validator can report, published as a hint so editors show no squiggle.
+    @Override
+    protected DiagnosticSeverity toDiagnosticSeverity(Severity severity) {
+        if (severity == Severity.INFO) {
+            return DiagnosticSeverity.Hint;
+        }
+        return super.toDiagnosticSeverity(severity);
     }
 
     @Override

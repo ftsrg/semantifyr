@@ -142,6 +142,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String VARIABLE_WITH_IMPLICIT_TYPE = ISSUE_PREFIX + "VARIABLE_WITH_IMPLICIT_TYPE";
     public static final String UNSUPPORTED_FEATURE = ISSUE_PREFIX + "UNSUPPORTED_FEATURE";
     public static final String EXPRESSION_MODALITY_TOO_HIGH = ISSUE_PREFIX + "EXPRESSION_MODALITY_TOO_HIGH";
+    public static final String COULD_BE_INLINE = ISSUE_PREFIX + "COULD_BE_INLINE";
     public static final String TYPE_MISMATCH = ISSUE_PREFIX + "TYPE_MISMATCH";
     public static final String INVALID_CAST = ISSUE_PREFIX + "INVALID_CAST";
     public static final String MULTIPLE_INHERITANCE = ISSUE_PREFIX + "MULTIPLE_INHERITANCE";
@@ -1226,6 +1227,46 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
         checkModalityAtMost(
                 range, Modality.COMPILE_TIME, "`inline for` range expression must be evaluable at compile time");
+    }
+
+    @Check
+    public void checkRuntimeOperationCouldBeInline(Operation operation) {
+        Expression compileTimeCandidate;
+        String candidateName;
+        if (operation instanceof IfOperation ifOperation) {
+            compileTimeCandidate = ifOperation.getGuard();
+            candidateName = "guard";
+        } else if (operation instanceof ForOperation forOperation) {
+            compileTimeCandidate = forOperation.getRangeExpression();
+            candidateName = "range";
+        } else {
+            return;
+        }
+        if (compileTimeCandidate == null || EcoreUtil2.getContainerOfType(operation, InlinedOxsts.class) != null) {
+            return;
+        }
+        Modality modality;
+        try {
+            modality = modalityEvaluatorProvider.evaluate(compileTimeCandidate);
+        } catch (RuntimeException e) {
+            return;
+        }
+        if (!modality.isAtMost(Modality.COMPILE_TIME)) {
+            return;
+        }
+        for (var leaf : NodeModelUtils.findActualNodeFor(operation).getLeafNodes()) {
+            if (!leaf.isHidden()) {
+                var keyword = leaf.getText();
+                acceptInfo(
+                        "`%s` could be `inline %s`: its %s is evaluable at compile time."
+                                .formatted(keyword, keyword, candidateName),
+                        operation,
+                        leaf.getOffset(),
+                        leaf.getLength(),
+                        COULD_BE_INLINE);
+                return;
+            }
+        }
     }
 
     @Check

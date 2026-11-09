@@ -311,7 +311,6 @@ class SessionDocumentManager @Inject constructor(
         return when (severity) {
             Severity.ERROR -> DiagnosticSeverity.Error
             Severity.WARNING -> DiagnosticSeverity.Warning
-            Severity.INFO -> DiagnosticSeverity.Information
             else -> DiagnosticSeverity.Hint
         }
     }
