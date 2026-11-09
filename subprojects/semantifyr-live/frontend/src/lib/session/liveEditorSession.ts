@@ -196,8 +196,6 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
   let verifyDiagnostics: vscode.DiagnosticCollection | null = null
   let verifyDiagnosticsSubs: vscode.Disposable[] = []
 
-  let tokenRenderTimer: ReturnType<typeof setTimeout> | null = null
-
   const progressListeners = new Set<(params: unknown) => void>()
   const problemsListeners = new Set<() => void>()
   const statusListeners = new Set<(status: LiveEditorStatus, info?: string) => void>()
@@ -309,20 +307,6 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
     if (sysmlBridge && !workerLanguageClient?.isStarted()) {
       await connectWorker()
     }
-
-    // Force a repaint once semantic tokens have likely landed; Monaco won't repaint
-    // already-painted lines on its own until they re-enter the viewport.
-    if (tokenRenderTimer) {
-      clearTimeout(tokenRenderTimer)
-    }
-    tokenRenderTimer = setTimeout(() => {
-      tokenRenderTimer = null
-      try {
-        editorApp?.getEditor()?.render(true)
-      } catch {
-        /* ignore */
-      }
-    }, 500)
   }
 
   const connectWorker = async (): Promise<void> => {
@@ -471,10 +455,6 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
     if (workerLanguageClient) {
       await tearDownLanguageClient(workerLanguageClient)
       workerLanguageClient = null
-    }
-    if (tokenRenderTimer) {
-      clearTimeout(tokenRenderTimer)
-      tokenRenderTimer = null
     }
     for (const sub of verifyDiagnosticsSubs) {
       try {
