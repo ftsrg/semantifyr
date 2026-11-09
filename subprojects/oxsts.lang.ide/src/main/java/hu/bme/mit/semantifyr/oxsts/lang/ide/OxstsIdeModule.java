@@ -15,11 +15,16 @@ import hu.bme.mit.semantifyr.oxsts.lang.ide.editor.syntaxcoloring.OxstsSemanticH
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.codelens.OxstsCodeLensProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands.OxstsCommandService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.contentassist.OxstsContentAssistService;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.folding.OxstsFoldingRangeService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.hover.OxstsHoverService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.occurrences.OxstsDocumentHighlightService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.references.OxstsDocumentSymbolService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.rename.OxstsRenameService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.signatureHelp.OxstsSignatureHelpService;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.symbol.OxstsDocumentSymbolDetailsProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.symbol.OxstsDocumentSymbolKindProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.symbol.OxstsDocumentSymbolNameProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.server.symbol.OxstsWorkspaceSymbolService;
 import org.eclipse.xtext.ide.editor.contentassist.IPrefixMatcher;
 import org.eclipse.xtext.ide.editor.contentassist.IdeContentProposalProvider;
 import org.eclipse.xtext.ide.editor.contentassist.IdeCrossrefProposalProvider;
@@ -31,12 +36,15 @@ import org.eclipse.xtext.ide.server.codelens.ICodeLensResolver;
 import org.eclipse.xtext.ide.server.codelens.ICodeLensService;
 import org.eclipse.xtext.ide.server.commands.IExecutableCommandService;
 import org.eclipse.xtext.ide.server.contentassist.ContentAssistService;
+import org.eclipse.xtext.ide.server.folding.FoldingRangeService;
 import org.eclipse.xtext.ide.server.formatting.FormattingService;
 import org.eclipse.xtext.ide.server.hover.IHoverService;
 import org.eclipse.xtext.ide.server.occurrences.IDocumentHighlightService;
 import org.eclipse.xtext.ide.server.rename.IRenameService2;
 import org.eclipse.xtext.ide.server.signatureHelp.ISignatureHelpService;
+import org.eclipse.xtext.ide.server.symbol.DocumentSymbolMapper;
 import org.eclipse.xtext.ide.server.symbol.DocumentSymbolService;
+import org.eclipse.xtext.ide.server.symbol.WorkspaceSymbolService;
 
 /** Use this class to register ide components. */
 public class OxstsIdeModule extends AbstractOxstsIdeModule {
@@ -119,5 +127,30 @@ public class OxstsIdeModule extends AbstractOxstsIdeModule {
     @SuppressWarnings("unused")
     public Class<? extends IDocumentHighlightService> bindIDocumentHighlightService() {
         return OxstsDocumentHighlightService.class;
+    }
+
+    @SuppressWarnings("unused")
+    public Class<? extends DocumentSymbolMapper.DocumentSymbolKindProvider> bindDocumentSymbolKindProvider() {
+        return OxstsDocumentSymbolKindProvider.class;
+    }
+
+    @SuppressWarnings("unused")
+    public Class<? extends DocumentSymbolMapper.DocumentSymbolNameProvider> bindDocumentSymbolNameProvider() {
+        return OxstsDocumentSymbolNameProvider.class;
+    }
+
+    @SuppressWarnings("unused")
+    public Class<? extends DocumentSymbolMapper.DocumentSymbolDetailsProvider> bindDocumentSymbolDetailsProvider() {
+        return OxstsDocumentSymbolDetailsProvider.class;
+    }
+
+    @SuppressWarnings("unused")
+    public Class<? extends WorkspaceSymbolService> bindWorkspaceSymbolService() {
+        return OxstsWorkspaceSymbolService.class;
+    }
+
+    @SuppressWarnings("unused")
+    public Class<? extends FoldingRangeService> bindFoldingRangeService() {
+        return OxstsFoldingRangeService.class;
     }
 }
