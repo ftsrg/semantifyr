@@ -257,7 +257,8 @@ class LocalArrayUninitializedReach {
     var seen: int := 0
 
     redefine tran {
-        var values: int[2]
+        var values: int[2] := [0, 0]
+        havoc(values)
         assume(values[0] >= 0 && values[0] <= 4 && values[1] == values[0])
         seen := values[1]
     }

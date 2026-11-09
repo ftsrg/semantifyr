@@ -7,13 +7,13 @@
 package semantifyr::constructs::record_array
 
 record Point {
-    var x: int
+    var x: int := 0
 }
 
 record Samples {
-    var values: int[3]
+    var values: int[3] := [0, 0, 0]
 }
 
 class Host {
-    var points: Point[2]
+    var points: Point[2] := [Point { x = 0 }, Point { x = 0 }]
 }

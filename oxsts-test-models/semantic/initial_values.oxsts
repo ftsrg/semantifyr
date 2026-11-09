@@ -14,7 +14,11 @@ enum Light {
 @VerificationCase
 @Tag("expect-fail")
 class UninitializedIntegerBound {
-    var x: int
+    var x: int := 0
+
+    redefine init {
+        havoc(x)
+    }
 
     prop {
         return AG x == 0
@@ -24,7 +28,11 @@ class UninitializedIntegerBound {
 @VerificationCase
 @Tag("expect-pass")
 class UninitializedIntegerReach {
-    var x: int
+    var x: int := 0
+
+    redefine init {
+        havoc(x)
+    }
 
     prop {
         return EF x == 7
@@ -34,7 +42,11 @@ class UninitializedIntegerReach {
 @VerificationCase
 @Tag("expect-fail")
 class UninitializedBooleanBound {
-    var flag: bool
+    var flag: bool := false
+
+    redefine init {
+        havoc(flag)
+    }
 
     prop {
         return AG flag == false
@@ -44,7 +56,11 @@ class UninitializedBooleanBound {
 @VerificationCase
 @Tag("expect-pass")
 class UninitializedBooleanReach {
-    var flag: bool
+    var flag: bool := false
+
+    redefine init {
+        havoc(flag)
+    }
 
     prop {
         return EF flag == true
@@ -54,7 +70,11 @@ class UninitializedBooleanReach {
 @VerificationCase
 @Tag("expect-fail")
 class UninitializedEnumBound {
-    var light: Light
+    var light: Light := Light::Off
+
+    redefine init {
+        havoc(light)
+    }
 
     prop {
         return AG light == Light::Off
@@ -64,45 +84,151 @@ class UninitializedEnumBound {
 @VerificationCase
 @Tag("expect-pass")
 class UninitializedEnumReach {
-    var light: Light
+    var light: Light := Light::Off
+
+    redefine init {
+        havoc(light)
+    }
 
     prop {
         return EF light == Light::On
     }
 }
 
-// Theta's CEGAR configurations also check the state before init, which the guard covers.
 @VerificationCase
 @Tag("expect-pass")
 class InitOverwritesUninitialized {
-    var x: int
-    var initialized: bool := false
+    var x: int := 0
 
     redefine init {
+        havoc(x)
         x := 3
-        initialized := true
     }
 
     prop {
-        return AG (!initialized || x == 3)
+        return AG x == 3
     }
 }
 
 @VerificationCase
 @Tag("expect-fail")
 class ConditionalInitKeepsUninitialized {
-    var x: int
-    var initialized: bool := false
+    var x: int := 0
 
     redefine init {
+        havoc(x)
         choice {
             x := 3
         } or {
         }
-        initialized := true
     }
 
     prop {
-        return AG (!initialized || x == 3)
+        return AG x == 3
+    }
+}
+
+// the declaration valuation is not a state: the invariant fails only on it
+@VerificationCase
+@Tag("expect-pass")
+class InitOverwritesDeclaration {
+    var x: int := 0
+
+    redefine init {
+        x := 3
+    }
+
+    redefine tran {
+        x := x
+    }
+
+    prop {
+        return AG x == 3
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class InitOverwritesDeclarationViolated {
+    var x: int := 0
+
+    redefine init {
+        x := 3
+    }
+
+    redefine tran {
+        x := 4
+    }
+
+    prop {
+        return AG x == 3
+    }
+}
+
+// the declaration valuation is not a state: the target holds only on it
+@VerificationCase
+@Tag("expect-pass")
+class InitOverwritesDeclarationReach {
+    var x: int := 2
+
+    redefine init {
+        x := 1
+    }
+
+    redefine tran {
+        assume(x < 1)
+        x := x + 1
+    }
+
+    prop {
+        return EF x == 1
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class InitOverwritesDeclarationUnreachable {
+    var x: int := 2
+
+    redefine init {
+        x := 1
+    }
+
+    redefine tran {
+        assume(x < 1)
+        x := x + 1
+    }
+
+    prop {
+        return EF x == 2
+    }
+}
+
+// a blocking init yields no states: every invariant holds and no target is reached
+@VerificationCase
+@Tag("expect-pass")
+class BlockingInitInvariant {
+    var x: int := 0
+
+    redefine init {
+        assume(false)
+    }
+
+    prop {
+        return AG x == 1
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class BlockingInitUnreachable {
+    var x: int := 0
+
+    redefine init {
+        assume(false)
+    }
+
+    prop {
+        return EF x == 0
     }
 }
