@@ -15,6 +15,9 @@ dependencies {
     implementation(project(":portfolios"))
 
     ideGenerated(project(":oxsts.lang"))
+
+    testImplementation(libs.xtext.testing)
+    testRuntimeOnly(libs.slf4j.log4j)
 }
 
 application {
