@@ -7,7 +7,7 @@ sidebar_position: 1
 
 ## Package Declaration
 
-Every Semantifyr file begins with a `package` declaration. Fully qualified names use `::` as a separator.
+A Semantifyr file may begin with a `package` declaration. Fully qualified names use `::` as a separator.
 
 ```oxsts
 package example::library
@@ -15,6 +15,35 @@ package example::library
 
 ```oxsts
 package example::deep::namespace
+```
+
+A package is a namespace, not a file. Every file that declares the same package contributes to it: a declaration of one file is visible by its simple name in every other file of the package, and is reached from outside by the package's qualified name, whichever file holds it.
+
+```oxsts
+package example::house
+
+class Lamp { }
+```
+
+```oxsts
+package example::house
+
+class Room {
+    contains lamp: Lamp
+}
+```
+
+## Files Without a Package
+
+A file without a `package` declaration lives in an unnamed package private to that file. Its declarations are visible within the file and are named by their simple names, but no other file can import or reference them, and two such files never see each other.
+
+```oxsts
+class Lamp { }
+
+@VerificationCase
+class LampCase {
+    contains lamp: Lamp
+}
 ```
 
 ## Imports
@@ -29,18 +58,25 @@ import example::library
 
 Without an `import`, symbols from another package can still be referenced by their fully qualified name (for example, `example::library::Foo`).
 
+A simple name declared by two imported packages, or by an imported package and the current one, is ambiguous: the reference is an error that names both declarations. Write the qualified name of the one you mean. In a file without a package, the file's own declarations take precedence over imported ones.
+
+```oxsts
+package example::street
+
+import example::lights
+import example::signals
+
+class Street {
+    contains lamp: example::lights::Lamp
+}
+```
+
 ## Implicit Imports
 
-The [`semantifyr` standard library](standard-library.md) is always in scope.
+The [`semantifyr` standard library](standard-library.md) is always in scope, with lower precedence than the current package and the explicit imports.
 
 ```oxsts
 package example::application
 
 import semantifyr // implicit
 ```
-
-{/* TODO: this is not yet true, but should be
-## Multiple Files per Package
-
-Multiple files may contribute to the same package. Declaring the same `package` in two files merges their declarations into a single namespace.
-*/}
