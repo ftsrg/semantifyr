@@ -122,6 +122,7 @@ function deriveConnectionMessage(status: LiveEditorStatus, statusInfo: string | 
     case 'initializing': return statusInfo ?? 'Initializing...';
     case 'reconnecting': return statusInfo ?? 'Reconnecting...';
     case 'errored': return statusInfo ?? 'Connection error';
+    case 'terminated': return statusInfo ?? 'Session ended';
     case 'disconnected': return 'Disconnected';
     case 'connected': return 'Ready';
   }

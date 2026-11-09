@@ -57,6 +57,16 @@ describe('ConnectionBanner', () => {
     expect(screen.getByRole('button', { name: 'Reconnect' })).toBeInTheDocument();
   });
 
+  it('shows the server reason and offers a reload, not a retry, for a terminated session', async () => {
+    const onReconnect = vi.fn();
+    render(<ConnectionBanner status="terminated" statusInfo="Session terminated" onReconnect={onReconnect} />);
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.getByText('Session ended')).toBeInTheDocument();
+    expect(screen.getByText('Session terminated')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reload' })).toBeInTheDocument();
+  });
+
   it('invokes onReconnect when the action button is clicked', async () => {
     const onReconnect = vi.fn();
     render(<ConnectionBanner status="errored" statusInfo={null} onReconnect={onReconnect} />);

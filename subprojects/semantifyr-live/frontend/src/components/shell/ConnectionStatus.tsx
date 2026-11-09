@@ -51,6 +51,16 @@ export default function ConnectionStatus({ status, onReconnect, onDisconnect }: 
     );
   }
 
+  if (status === 'terminated') {
+    return (
+      <Tooltip title="Session ended - click to reload the page">
+        <IconButton size="small" onClick={() => { window.location.reload(); }} sx={{ color: 'var(--danger)' }}>
+          <CloudOffOutlinedIcon sx={{ fontSize: ICON_SIZE.xl }} />
+        </IconButton>
+      </Tooltip>
+    );
+  }
+
   if (status === 'errored') {
     return (
       <Tooltip title="Connection error - click to reconnect">

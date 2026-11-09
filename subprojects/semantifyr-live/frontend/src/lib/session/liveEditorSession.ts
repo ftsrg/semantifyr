@@ -23,7 +23,13 @@ import {
 } from './monaco'
 import type { LspClient, VerificationCaseLocation } from '../verification/engine'
 import { wrapClientWithMetrics, type LspMetrics, type MetricsTracker } from './lspMetrics'
-import { createReconnectController, type ReconnectController } from './reconnectController'
+import {
+  createReconnectController,
+  isTerminalClose,
+  sessionLimitReason,
+  type ReconnectController,
+  type SocketClose,
+} from './reconnectController'
 import { SemantifyrLiveApi } from '../api/lspExtensions'
 import {
   createSysmlBridge,
@@ -41,6 +47,7 @@ export type LiveEditorStatus =
   | 'disconnected'
   | 'reconnecting'
   | 'errored'
+  | 'terminated'
 
 export interface ProblemEntry {
   severity: 'error' | 'warning' | 'info' | 'hint'
@@ -176,6 +183,8 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
   let mappedOxsts: string | null = null
   let contentSubscription: { dispose: () => void } | null = null
   let fsOverlay: { dispose: () => void } | null = null
+  let connectionGeneration = 0
+  let lastClose: SocketClose | null = null
   let cancelled = false
   let started = false
   let disposed = false
@@ -261,6 +270,8 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
   }
 
   const doConnect = async (): Promise<void> => {
+    const generation = ++connectionGeneration
+    lastClose = null
     if (languageClient) {
       await tearDownLanguageClient(languageClient)
       languageClient = null
@@ -280,6 +291,11 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
             return
           }
           reconnectController.schedule()
+        },
+        onClose: (close) => {
+          if (generation === connectionGeneration) {
+            lastClose = close
+          }
         },
       },
     )
@@ -328,6 +344,7 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
     backoffMs: RECONNECT_BACKOFF_MS,
     connect: doConnect,
     isCancelled: () => cancelled,
+    lastClose: () => lastClose,
     onStatus: reportStatus,
   })
 
@@ -375,8 +392,13 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
         await doConnect()
       } catch {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- cancelled may flip during await
-        if (!cancelled) {
-          reportStatus('errored', 'Failed to connect to LSP server')
+        if (cancelled) {
+          return
+        }
+        if (isTerminalClose(lastClose)) {
+          reconnectController.schedule()
+        } else {
+          reportStatus('errored', sessionLimitReason(lastClose) ?? 'Failed to connect to LSP server')
         }
         return
       }
@@ -469,7 +491,7 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
   }
 
   const reconnect = (): void => {
-    if (disposed) {
+    if (disposed || reconnectController.terminated()) {
       return
     }
     cancelled = false
