@@ -24,7 +24,7 @@ dependencies {
     testImplementation(testFixtures(project(":compiler")))
 }
 
-val sysmlCommit = "8b6ec65997a928374f7476ae444b75673e0dfd8a" // feat: validated the generated trace in the trace command before writing it
+val sysmlCommit = "fc37248f1ba9622a982435a66b341b7231908f93" // feat: the Semantifyr trace starts at a mandatory initialized step
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 
