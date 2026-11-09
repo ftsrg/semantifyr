@@ -43,6 +43,8 @@ import org.eclipse.lsp4j.CodeAction
 import org.eclipse.lsp4j.CodeActionContext
 import org.eclipse.lsp4j.CodeActionParams
 import org.eclipse.lsp4j.InitializeResult
+import org.eclipse.lsp4j.InlayHint
+import org.eclipse.lsp4j.InlayHintKind
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.PublishDiagnosticsParams
 import org.eclipse.lsp4j.SemanticTokens
@@ -310,6 +312,43 @@ class WebSocketSessionTest {
             assertThat(afterOverwrite.data)
                 .withFailMessage("semantic tokens collapsed to empty after a duplicate OxstsStandaloneSetup ran")
                 .isNotEmpty
+        }
+    }
+
+    @Test
+    fun `inlay hints name a positional argument and resolve it to the parameter`(@TempDir tmp: Path) = testApplication {
+        val uri = "file:///workspace/snippet.oxsts"
+        val model = """
+            package test
+
+            class Lamp {
+                var level: int := 0
+
+                tran set(level: int) {
+                    self.level := level
+                }
+            }
+
+            class Garage {
+                contains lamp: Lamp[1]
+
+                redefine tran {
+                    inline lamp.set(1)
+                }
+            }
+        """.trimIndent()
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(testInjector(config(tmp)))
+        }
+        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
+            openWith(uri, model)
+            send(Frame.Text(LspWire.inlayHintRequest(id = 2, uri = uri, range = LspWire.range(endLine = 20))))
+            val hints = awaitResponseFor(id = 2).resultAs(Array<InlayHint>::class.java)
+            assertThat(hints).hasSize(1)
+            assertThat(hints[0].kind).isEqualTo(InlayHintKind.Parameter)
+            val label = hints[0].label.right.single()
+            assertThat(label.value).isEqualTo("level:")
+            assertThat(label.location.uri).isEqualTo(uri)
         }
     }
 

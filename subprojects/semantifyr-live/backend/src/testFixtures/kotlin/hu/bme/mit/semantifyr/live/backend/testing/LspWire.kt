@@ -21,6 +21,7 @@ import org.eclipse.lsp4j.ExecuteCommandCapabilities
 import org.eclipse.lsp4j.ExecuteCommandParams
 import org.eclipse.lsp4j.InitializeParams
 import org.eclipse.lsp4j.InitializedParams
+import org.eclipse.lsp4j.InlayHintParams
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.SemanticTokensParams
@@ -128,6 +129,14 @@ object LspWire {
 
     fun semanticTokensFullRequest(id: Int, uri: String): String {
         return request(id, "textDocument/semanticTokens/full", SemanticTokensParams(TextDocumentIdentifier(uri)))
+    }
+
+    fun inlayHintRequest(
+        id: Int,
+        uri: String,
+        range: Range,
+    ): String {
+        return request(id, "textDocument/inlayHint", InlayHintParams(TextDocumentIdentifier(uri), range))
     }
 
     fun range(

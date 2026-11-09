@@ -39,6 +39,8 @@ import org.eclipse.lsp4j.FoldingRange
 import org.eclipse.lsp4j.FoldingRangeRequestParams
 import org.eclipse.lsp4j.Hover
 import org.eclipse.lsp4j.HoverParams
+import org.eclipse.lsp4j.InlayHint
+import org.eclipse.lsp4j.InlayHintParams
 import org.eclipse.lsp4j.Location
 import org.eclipse.lsp4j.LocationLink
 import org.eclipse.lsp4j.PrepareRenameDefaultBehavior
@@ -319,6 +321,21 @@ class SessionTextDocumentService @Inject constructor(
                     it.command?.command in sessionContext.flavor.commands
                 }
                 .toMutableList()
+        }
+    }
+
+    override fun inlayHint(params: InlayHintParams): CompletableFuture<MutableList<InlayHint>> {
+        val service = languageServices.inlayHintService ?: return CompletableFuture.completedFuture(mutableListOf())
+        return readDocument(params.textDocument.uri, mutableListOf()) { file, cancelIndicator ->
+            val hints = service.computeInlayHints(file.xtextDocument(), file.resource, params, cancelIndicator)
+            hints.flatMap {
+                it.label.right.orEmpty()
+            }.forEach { part ->
+                part.location = part.location?.let {
+                    toClientLocation(it)
+                }
+            }
+            hints.toMutableList()
         }
     }
 
