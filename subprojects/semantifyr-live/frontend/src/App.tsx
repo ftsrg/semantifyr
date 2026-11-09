@@ -10,7 +10,6 @@ import EditorPage from './components/EditorPage';
 import AdminPage from './components/AdminPage';
 import ReloadPrompt from './components/pwa/ReloadPrompt';
 import { useColorMode } from './lib/hooks/useColorMode';
-import { resolveBackendUrl } from './lib/util/backendUrl';
 import { createSemantifyrTheme } from './lib/util/theme';
 
 function isAdminRoute(): boolean {
@@ -26,7 +25,6 @@ function isEmbedded(): boolean {
 
 export default function App(): React.JSX.Element {
   const { preference, colorMode, cycle } = useColorMode();
-  const backendUrl = React.useMemo(() => resolveBackendUrl(), []);
   const theme = React.useMemo(() => createSemantifyrTheme(colorMode), [colorMode]);
 
   const surface = isAdminRoute() ? (
@@ -40,7 +38,7 @@ export default function App(): React.JSX.Element {
       colorMode={colorMode}
       colorModePreference={preference}
       onToggleColorMode={cycle}
-      backendUrl={backendUrl}
+      backendUrl={window.location.origin}
       embedded={isEmbedded()}
     />
   );

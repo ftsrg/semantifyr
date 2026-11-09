@@ -6,7 +6,6 @@
 
 export type { ColorModePreference, ResolvedColorMode } from './colorMode'
 export { createSemantifyrTheme } from './theme'
-export { resolveBackendUrl } from './backendUrl'
 export {
   formatDuration,
   formatIsoDuration,
