@@ -11,6 +11,7 @@ import com.google.inject.Injector;
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler;
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig;
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader;
+import hu.bme.mit.semantifyr.lang.ide.server.OpenDocumentTexts;
 import hu.bme.mit.semantifyr.lang.ide.server.ServerSettings;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
@@ -39,6 +40,9 @@ public class InlineClassCommandHandler
 
     @Inject
     protected SemantifyrLoader semantifyrLoader;
+
+    @Inject
+    protected OpenDocumentTexts openDocumentTexts;
 
     @Inject
     protected VerificationCaseDiscoverer verificationCaseDiscoverer;
@@ -92,8 +96,9 @@ public class InlineClassCommandHandler
                 targetQualifiedName,
                 arguments.serializeSteps());
 
-        var context =
-                semantifyrLoader.fromResourceSet(classDeclaration.eResource().getResourceSet());
+        var context = semantifyrLoader.fromResourceSet(
+                classDeclaration.eResource().getResourceSet(),
+                openDocumentTexts.of(classDeclaration.eResource().getResourceSet()));
         var artifactConfig = arguments.serializeSteps() ? ArtifactConfig.DEBUG : serverSettings.resolveArtifactConfig();
         var compiler = new SemantifyrCompiler(injector, artifactConfig, serverSettings.resolveOptimizationConfig());
         var outputDirectory = serverSettings.resolveArtifactOutputDirectory(access);

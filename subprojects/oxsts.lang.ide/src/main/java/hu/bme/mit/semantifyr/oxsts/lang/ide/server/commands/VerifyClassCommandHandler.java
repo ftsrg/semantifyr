@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader;
+import hu.bme.mit.semantifyr.lang.ide.server.OpenDocumentTexts;
 import hu.bme.mit.semantifyr.lang.ide.server.ServerSettings;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
@@ -34,6 +35,9 @@ public class VerifyClassCommandHandler
 
     @Inject
     protected SemantifyrLoader semantifyrLoader;
+
+    @Inject
+    protected OpenDocumentTexts openDocumentTexts;
 
     @Inject
     protected VerificationCaseDiscoverer verificationCaseDiscoverer;
@@ -80,8 +84,9 @@ public class VerifyClassCommandHandler
 
         var targetQualifiedName = oxstsQualifiedNameProvider.getFullyQualifiedNameString(classDeclaration);
         LOGGER.info("LSP verify request for case '{}'", targetQualifiedName);
-        var context =
-                semantifyrLoader.fromResourceSet(classDeclaration.eResource().getResourceSet());
+        var context = semantifyrLoader.fromResourceSet(
+                classDeclaration.eResource().getResourceSet(),
+                openDocumentTexts.of(classDeclaration.eResource().getResourceSet()));
 
         var portfolio = serverSettings.resolvePortfolio(arguments.portfolioId());
         var outputDirectory = serverSettings.resolveArtifactOutputDirectory(access);

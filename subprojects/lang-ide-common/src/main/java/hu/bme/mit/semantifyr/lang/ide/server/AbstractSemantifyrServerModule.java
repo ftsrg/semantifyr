@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.lang.ide.server;
 
+import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.lang.ide.server.concurrent.LockingRequestManager;
 import java.util.concurrent.ExecutorService;
 import org.eclipse.lsp4j.services.LanguageServer;
@@ -36,7 +37,10 @@ public abstract class AbstractSemantifyrServerModule extends ServerModule {
         bind(IProjectDescriptionFactory.class).to(DefaultProjectDescriptionFactory.class);
         bind(IContainer.Manager.class).to(ProjectDescriptionBasedContainerManager.class);
         bind(IRequestManager.class).to(LockingRequestManager.class);
-        bind(WorkspaceManager.class).to(DirectoryDeleteAwareWorkspaceManager.class);
+        // the command handlers read the open documents of the language server's own workspace manager
+        bind(WorkspaceManager.class)
+                .to(DirectoryDeleteAwareWorkspaceManager.class)
+                .in(Singleton.class);
     }
 
     protected Class<? extends LanguageServerImpl> resolveLanguageServerClass() {

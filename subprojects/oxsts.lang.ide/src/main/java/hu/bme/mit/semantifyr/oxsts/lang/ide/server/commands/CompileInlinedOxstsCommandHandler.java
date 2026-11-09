@@ -10,6 +10,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler;
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader;
+import hu.bme.mit.semantifyr.lang.ide.server.OpenDocumentTexts;
 import hu.bme.mit.semantifyr.lang.ide.server.ServerSettings;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
@@ -41,6 +42,9 @@ public class CompileInlinedOxstsCommandHandler extends AbstractCommandHandler<Lo
 
     @Inject
     protected SemantifyrLoader semantifyrLoader;
+
+    @Inject
+    protected OpenDocumentTexts openDocumentTexts;
 
     @Inject
     protected OxstsQualifiedNameProvider oxstsQualifiedNameProvider;
@@ -87,7 +91,9 @@ public class CompileInlinedOxstsCommandHandler extends AbstractCommandHandler<Lo
 
         var sourceUri = arguments.eResource().getURI();
         var sourceText = NodeModelUtils.getNode(arguments).getRootNode().getText();
-        var context = semantifyrLoader.fromResourceSet(arguments.eResource().getResourceSet());
+        var context = semantifyrLoader.fromResourceSet(
+                arguments.eResource().getResourceSet(),
+                openDocumentTexts.of(arguments.eResource().getResourceSet()));
         var compiler = new SemantifyrCompiler(
                 injector, serverSettings.resolveArtifactConfig(), serverSettings.resolveOptimizationConfig());
         var outputDirectory = serverSettings.resolveArtifactOutputDirectory(access);
