@@ -191,23 +191,23 @@ public class VariableInitializerValidationTest {
     @Test
     void inlinedModelVariableWithoutInitializerIsRejected() throws Exception {
         var inlinedOxsts = inlinedParseHelper.parse("""
-            inlined oxsts of Counter
+            inlined oxsts of semantifyr::Anything
             var count: int
             init {
             }
             tran {
             }
             prop {
-                return AG true
+                AG true
             }
             """);
 
         var issues = resourceValidator.validate(inlinedOxsts.eResource(), CheckMode.ALL, CancelIndicator.NullImpl);
 
         assertThat(issues)
-                .filteredOn(issue -> OxstsValidator.MISSING_INITIALIZER.equals(issue.getCode()))
-                .isNotEmpty()
-                .allSatisfy(issue -> {
+                .singleElement()
+                .satisfies(issue -> {
+                    assertThat(issue.getCode()).isEqualTo(OxstsValidator.MISSING_INITIALIZER);
                     assertThat(issue.getMessage()).contains("'count'");
                 });
     }
