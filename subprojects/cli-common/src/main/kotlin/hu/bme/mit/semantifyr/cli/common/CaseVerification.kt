@@ -59,7 +59,7 @@ suspend fun SuspendingCliktCommand.verifyCase(
                 echo("BACK_ANNOTATION_ERROR")
             }
             VerifyOutput.Json -> {
-                echo(jsonLineFormat.encodeToString(BackAnnotationFailureLine(caseName, ExitCode.BackAnnotation.code, message)))
+                echo(jsonLineFormat.encodeToString(CaseFailureLine(caseName, ExitCode.BackAnnotation.code, CasePhase.BackAnnotation, message)))
             }
         }
         echo("Back-annotating the witness of $caseName failed: $message", err = true)
@@ -74,7 +74,7 @@ suspend fun SuspendingCliktCommand.verifyCase(
                 echo("COMPILATION_ERROR")
             }
             VerifyOutput.Json -> {
-                echo(jsonLineFormat.encodeToString(CompilationFailureLine(caseName, ExitCode.Compilation.code, message)))
+                echo(jsonLineFormat.encodeToString(CaseFailureLine(caseName, ExitCode.Compilation.code, CasePhase.Compilation, message)))
             }
         }
         echo("Compiling $caseName failed: $message", err = true)

@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.cli.common
 
 import hu.bme.mit.semantifyr.compiler.pipeline.context.ModelSize
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration
@@ -25,16 +26,19 @@ data class VerifyOutcomeLine(
 )
 
 @Serializable
-data class CompilationFailureLine(
-    val case: String,
-    val exitCode: Int,
-    val error: String?,
-)
+enum class CasePhase {
+    @SerialName("compilation")
+    Compilation,
+
+    @SerialName("back-annotation")
+    BackAnnotation,
+}
 
 @Serializable
-data class BackAnnotationFailureLine(
+data class CaseFailureLine(
     val case: String,
     val exitCode: Int,
+    val phase: CasePhase,
     val error: String?,
 )
 

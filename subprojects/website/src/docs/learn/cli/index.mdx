@@ -35,7 +35,13 @@ With `--json` it prints one JSON object per case and line, as each case finishes
 {"case":"semantifyr::verification::smoke::CounterReachesThree","exitCode":0,"report":"/tmp/semantifyr-123/smoke.semantifyr.verification.smoke.CounterReachesThree/report.json","compilationDuration":"PT0.158S","verificationDuration":"PT1.204S"}
 ```
 
-`case` is the qualified name of the case, `exitCode` its [exit code](#exit-codes), `report` the absolute path of its `report.json`, `compilationDuration` the time the compilation took and `verificationDuration` the time from the compiled model to the verdict, both ISO 8601 durations. A case that does not compile or whose witness cannot be back-annotated has `error`, the message, instead of `report` and the durations. `report.json` holds the rest: `verificationCase`, `portfolioId`, `optimization`, `timeout` and `result`, whose `verdict` is `Passed`, `Failed`, `Inconclusive`, `NotSupported`, `Timeout` or `Errored`, with the `message` of the backend, `metadata.backendId`, the backend configuration that answered, and `metrics`: the durations of the run, of the backend and of the compiler's phases, the optimizer's statistics and the model sizes.
+`case` is the qualified name of the case, `exitCode` its [exit code](#exit-codes), `report` the absolute path of its `report.json`, `compilationDuration` the time the compilation took and `verificationDuration` the time from the compiled model to the verdict, both ISO 8601 durations. A case that does not compile or whose witness cannot be back-annotated has `phase`, `compilation` or `back-annotation`, and `error`, the message, instead of `report` and the durations:
+
+```json
+{"case":"semantifyr::verification::smoke::CounterReachesThree","exitCode":4,"phase":"compilation","error":"Property body must have a temporal operator (`AG` or `EF`) at the top level."}
+```
+
+`report.json` holds the rest: `verificationCase`, `portfolioId`, `optimization`, `timeout` and `result`, whose `verdict` is `Passed`, `Failed`, `Inconclusive`, `NotSupported`, `Timeout` or `Errored`, with the `message` of the backend, `metadata.backendId`, the backend configuration that answered, and `metrics`: the durations of the run, of the backend and of the compiler's phases, the optimizer's statistics and the model sizes.
 
 ### Verdicts
 

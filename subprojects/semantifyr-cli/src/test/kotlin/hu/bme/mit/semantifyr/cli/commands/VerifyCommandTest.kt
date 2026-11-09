@@ -15,8 +15,8 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.cli.SMOKE_CASE
-import hu.bme.mit.semantifyr.cli.common.BackAnnotationFailureLine
-import hu.bme.mit.semantifyr.cli.common.CompilationFailureLine
+import hu.bme.mit.semantifyr.cli.common.CaseFailureLine
+import hu.bme.mit.semantifyr.cli.common.CasePhase
 import hu.bme.mit.semantifyr.cli.common.VerifyOutcomeLine
 import hu.bme.mit.semantifyr.cli.common.fakePortfolio
 import hu.bme.mit.semantifyr.cli.common.jsonLineFormat
@@ -198,10 +198,11 @@ class VerifyCommandTest {
             it.isNotBlank()
         }
         assertThat(lines).hasSize(2)
-        val failing = jsonLineFormat.decodeFromString<CompilationFailureLine>(lines[0])
+        val failing = jsonLineFormat.decodeFromString<CaseFailureLine>(lines[0])
         val passing = jsonLineFormat.decodeFromString<VerifyOutcomeLine>(lines[1])
         assertThat(failing.case).isEqualTo("untemporal::Untemporal")
         assertThat(failing.exitCode).isEqualTo(4)
+        assertThat(failing.phase).isEqualTo(CasePhase.Compilation)
         assertThat(failing.error).contains("temporal operator")
         assertThat(passing.case).isEqualTo("untemporal::Temporal")
         assertThat(passing.exitCode).isZero()
@@ -348,9 +349,10 @@ class VerifyCommandTest {
         val result = runCli("verify", "--json", "--portfolio", portfolio.id, "-d", artifacts.toString(), smokeModel.toString(), portfolios = listOf(portfolio))
 
         assertThat(result.statusCode).describedAs(result.output).isEqualTo(9)
-        val line = jsonLines<BackAnnotationFailureLine>(result.stdout).single()
+        val line = jsonLines<CaseFailureLine>(result.stdout).single()
         assertThat(line.case).isEqualTo(SMOKE_CASE)
         assertThat(line.exitCode).isEqualTo(9)
+        assertThat(line.phase).isEqualTo(CasePhase.BackAnnotation)
         assertThat(line.error).contains("broken witness")
         assertThat(result.stderr).contains("Back-annotating the witness of $SMOKE_CASE failed").doesNotContain("Compiling")
     }
