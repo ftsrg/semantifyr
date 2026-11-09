@@ -79,7 +79,7 @@ class SpinTraceParser {
             line.startsWith("spin:")
     }
 
-    private fun splitAssignment(line: String): Pair<String, String>? {
+    private fun splitAssignment(line: String): Assignment? {
         val index = line.indexOf(" = ")
         if (index < 0) {
             return null
@@ -89,6 +89,11 @@ class SpinTraceParser {
         if (name.isEmpty() || value.isEmpty()) {
             return null
         }
-        return name to value
+        return Assignment(name, value)
     }
+
+    private data class Assignment(
+        val name: String,
+        val value: String,
+    )
 }

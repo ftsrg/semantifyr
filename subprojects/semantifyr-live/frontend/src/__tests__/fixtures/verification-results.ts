@@ -18,8 +18,8 @@ export const sampleMetrics: VerificationMetrics = {
 };
 
 export const sampleTrace: VerificationTrace = {
-  callTrace: { initialStep: { traces: [] }, initializedStep: null, steps: [] },
-  witnessState: { initialStep: { values: [] }, initializedStep: null, steps: [] },
+  callTrace: { initializedStep: { traces: [] }, steps: [] },
+  witnessState: { initializedStep: { values: [] }, steps: [] },
   witnessUri: 'inmemory:///workspace/snippet.witness.oxsts',
 };
 

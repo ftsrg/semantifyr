@@ -8,9 +8,6 @@ package hu.bme.mit.semantifyr.cli.common
 
 import hu.bme.mit.semantifyr.backends.theta.ThetaExecutorKey
 import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -84,8 +81,7 @@ abstract class DistributionTestBase(
     }
 
     protected fun reportOf(run: LauncherRun): Path {
-        val line = Json.parseToJsonElement(run.stdout.trim()).jsonObject
-        return Path(line.getValue("report").jsonPrimitive.content)
+        return Path(jsonLineFormat.decodeFromString<VerifyOutcomeLine>(run.stdout.trim()).report)
     }
 
     @Test

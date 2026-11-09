@@ -74,7 +74,7 @@ class UppaalDeclarationsBuilder @Inject constructor(
         if (variable is LocalVarDeclarationOperation) {
             return null
         }
-        val expression = variable.expression ?: return null
+        val expression = variable.expression ?: error("Variable ${variable.name} has no initializer")
         return uppaalExpressionTransformer.transform(expression)
     }
 

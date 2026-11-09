@@ -87,13 +87,10 @@ export function renderTrace(label: string, result: VerificationCaseResult, trace
         lines.push("", `${witnessLabel(trace.witnessUri)}: ${trace.witnessUri}`);
     }
 
-    const callSteps = [trace.callTrace.initialStep, trace.callTrace.initializedStep, ...trace.callTrace.steps];
+    const callSteps = [trace.callTrace.initializedStep, ...trace.callTrace.steps];
     const stateChanges = witnessStateChanges(trace.witnessState);
     for (let index = 0; index < Math.max(callSteps.length, stateChanges.length); index++) {
         const calls = callSteps[index];
-        if (index === 1 && !calls && !trace.witnessState.initializedStep) {
-            continue;
-        }
         lines.push("", `## ${stepLabel(index)}`, "", ...renderCalls(calls), "", ...renderChanges(index === 0, stateChanges[index] ?? []));
     }
     return `${lines.join("\n")}\n`;
@@ -113,12 +110,9 @@ function renderOrigin(result: VerificationCaseResult): string {
 
 function stepLabel(index: number): string {
     if (index === 0) {
-        return "Initial";
+        return "Init";
     }
-    if (index === 1) {
-        return "After init";
-    }
-    return `Step ${index - 1}`;
+    return `Step ${index}`;
 }
 
 function renderCalls(step: CallTraceStep | null | undefined): string[] {

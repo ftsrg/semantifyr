@@ -86,8 +86,8 @@ describe('settings reaching the server', () => {
     it('sends the settings on start and on each change of a Semantifyr setting', async () => {
         const client = createLspClient('/extension/bin/oxsts.lang.ide', 'oxsts') as unknown as LanguageClient;
         const received: unknown[] = [];
-        client.server.onNotification('workspace/didChangeConfiguration', (params: { settings: { semantifyr: { portfolio: string } } }) => {
-            received.push(params.settings.semantifyr.portfolio);
+        client.server.onNotification('workspace/didChangeConfiguration', (parameters: { settings: { semantifyr: { portfolio: string } } }) => {
+            received.push(parameters.settings.semantifyr.portfolio);
         });
 
         const subscription = registerSemantifyrSettingsSync(client as never);

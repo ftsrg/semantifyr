@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.verifier.internal
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
+import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.verifier.Trace
 import hu.bme.mit.semantifyr.verifier.VerificationReport
 import kotlinx.serialization.json.Json
@@ -63,8 +64,8 @@ class VerificationArtifactWriter @Inject constructor(
                 serializer.serialize(witness, it, SaveOptions.defaultOptions())
             }
             logger.info { "[$qualifiedName] wrote witness artifact to $witnessPath" }
-        } catch (e: Exception) {
-            logger.warn("[$qualifiedName] failed to write witness artifact at $witnessPath: ${e.message ?: e::class.simpleName}", e)
+        } catch (exception: Exception) {
+            logger.warn(exception) { "[$qualifiedName] failed to write witness artifact at $witnessPath" }
         }
     }
 
@@ -78,8 +79,8 @@ class VerificationArtifactWriter @Inject constructor(
             statePath.parent?.createDirectories()
             statePath.writeText(json.encodeToString(trace.witnessState))
             logger.info { "[$qualifiedName] wrote witness state artifact to $statePath" }
-        } catch (e: Exception) {
-            logger.warn("[$qualifiedName] failed to write witness state artifact at $statePath: ${e.message ?: e::class.simpleName}", e)
+        } catch (exception: Exception) {
+            logger.warn(exception) { "[$qualifiedName] failed to write witness state artifact at $statePath" }
         }
     }
 
@@ -93,8 +94,8 @@ class VerificationArtifactWriter @Inject constructor(
             tracePath.parent?.createDirectories()
             tracePath.writeText(json.encodeToString(trace.callTrace))
             logger.info { "[$qualifiedName] wrote call trace artifact to $tracePath" }
-        } catch (e: Exception) {
-            logger.warn("[$qualifiedName] failed to write trace artifact at $tracePath: ${e.message ?: e::class.simpleName}", e)
+        } catch (exception: Exception) {
+            logger.warn(exception) { "[$qualifiedName] failed to write trace artifact at $tracePath" }
         }
     }
 

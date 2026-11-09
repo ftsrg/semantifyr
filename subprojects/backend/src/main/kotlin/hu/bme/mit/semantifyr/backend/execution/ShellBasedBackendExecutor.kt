@@ -52,13 +52,13 @@ abstract class ShellBasedBackendExecutor : BackendExecutor {
     }
 
     protected suspend fun runProcess(
-        args: List<String>,
+        arguments: List<String>,
         workingDirectory: File,
         logFile: File? = null,
         errorFile: File? = null,
     ): Int = coroutineScope {
         logger.info { "Starting $binaryName in ${workingDirectory.absolutePath}" }
-        logger.debug { "$binaryName command: ${args.joinToString(" ")}" }
+        logger.debug { "$binaryName command: ${arguments.joinToString(" ")}" }
 
         prepareOutputFiles(logFile, errorFile)
 
@@ -70,7 +70,7 @@ abstract class ShellBasedBackendExecutor : BackendExecutor {
             ProcessBuilder.Redirect.appendTo(it)
         } ?: ProcessBuilder.Redirect.DISCARD
 
-        val process = buildProcess(args)
+        val process = buildProcess(arguments)
             .directory(workingDirectory)
             .redirectOutput(logRedirect)
             .redirectError(errorRedirect)
@@ -96,13 +96,13 @@ abstract class ShellBasedBackendExecutor : BackendExecutor {
         exitCode
     }
 
-    private fun buildProcess(args: List<String>): ProcessBuilder {
-        val cmd = if (isWindows) {
-            listOf("cmd", "/c", binaryName) + args
+    private fun buildProcess(arguments: List<String>): ProcessBuilder {
+        val command = if (isWindows) {
+            listOf("cmd", "/c", binaryName) + arguments
         } else {
-            listOf(binaryName) + args
+            listOf(binaryName) + arguments
         }
-        return ProcessBuilder(cmd)
+        return ProcessBuilder(command)
     }
 
 }

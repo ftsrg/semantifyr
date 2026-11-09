@@ -17,24 +17,24 @@ record Point {
 }
 
 record Reading {
-    var value: int
+    var value: int := 0
     var valid: bool := false
 }
 
 record Cell {
-    var position: Point
+    var position: Point := Point { x = 0 }
     var light: Light := Light::Off
 }
 
 record Line {
     var from: Point := Point { x = 1, y = 1 }
-    var to: Point
+    var to: Point := Point { x = 0 }
 }
 
 @VerificationCase
 @Tag("expect-pass")
 class RecordFieldWriteReach {
-    var point: Point
+    var point: Point := Point { x = 0 }
 
     redefine tran {
         choice {
@@ -54,7 +54,7 @@ class RecordFieldWriteReach {
 @VerificationCase
 @Tag("expect-fail")
 class RecordFieldWriteBound {
-    var point: Point
+    var point: Point := Point { x = 0 }
 
     redefine tran {
         choice {
@@ -74,8 +74,8 @@ class RecordFieldWriteBound {
 @VerificationCase
 @Tag("expect-pass")
 class RecordCopyEqualityBound {
-    var point: Point
-    var copy: Point
+    var point: Point := Point { x = 0 }
+    var copy: Point := Point { x = 0 }
 
     redefine tran {
         choice {
@@ -96,8 +96,8 @@ class RecordCopyEqualityBound {
 @VerificationCase
 @Tag("expect-fail")
 class RecordCopyIsNoAlias {
-    var point: Point
-    var copy: Point
+    var point: Point := Point { x = 0 }
+    var copy: Point := Point { x = 0 }
     var copied: bool := false
 
     redefine tran {
@@ -118,8 +118,8 @@ class RecordCopyIsNoAlias {
 @VerificationCase
 @Tag("expect-pass")
 class NestedRecordReach {
-    var original: Cell
-    var copy: Cell
+    var original: Cell := Cell { light = Light::Off }
+    var copy: Cell := Cell { light = Light::Off }
 
     redefine tran {
         choice {
@@ -140,8 +140,8 @@ class NestedRecordReach {
 @VerificationCase
 @Tag("expect-fail")
 class NestedRecordBound {
-    var original: Cell
-    var copy: Cell
+    var original: Cell := Cell { light = Light::Off }
+    var copy: Cell := Cell { light = Light::Off }
 
     redefine tran {
         choice {
@@ -160,10 +160,10 @@ class NestedRecordBound {
 @VerificationCase
 @Tag("expect-pass")
 class LocalRecordHavocReach {
-    var point: Point
+    var point: Point := Point { x = 0 }
 
     redefine tran {
-        var next: Point
+        var next: Point := Point { x = 0 }
         havoc(next)
         assume(next.x >= 0 && next.x <= 3 && next.y == next.x)
         point := next
@@ -177,10 +177,10 @@ class LocalRecordHavocReach {
 @VerificationCase
 @Tag("expect-fail")
 class LocalRecordHavocBound {
-    var point: Point
+    var point: Point := Point { x = 0 }
 
     redefine tran {
-        var next: Point
+        var next: Point := Point { x = 0 }
         havoc(next)
         assume(next.x >= 0 && next.x <= 3 && next.y == next.x)
         point := next
@@ -194,11 +194,12 @@ class LocalRecordHavocBound {
 @VerificationCase
 @Tag("expect-pass")
 class LocalRecordDefaultsBound {
-    var last: Reading
+    var last: Reading := Reading { value = 0 }
 
     redefine tran {
         choice {
-            var next: Reading
+            var next: Reading := Reading { value = 0 }
+            havoc(next.value)
             assume(next.value == 3)
             last := next
         } or {
@@ -215,8 +216,8 @@ class LocalRecordDefaultsBound {
 @VerificationCase
 @Tag("expect-pass")
 class RecordParameterBound {
-    var point: Point
-    var origin: Point
+    var point: Point := Point { x = 0 }
+    var origin: Point := Point { x = 0 }
 
     tran moveTo(target: Point) {
         point := target
@@ -236,7 +237,7 @@ class RecordParameterBound {
 }
 
 class Robot {
-    var position: Point
+    var position: Point := Point { x = 0 }
 
     tran step() {
         assume(position.x < 3)
@@ -261,7 +262,7 @@ class ContainedRecordReach {
 @VerificationCase
 @Tag("expect-pass")
 class RecordLiteralAssignReach {
-    var point: Point
+    var point: Point := Point { x = 0 }
 
     redefine tran {
         choice {
@@ -280,7 +281,7 @@ class RecordLiteralAssignReach {
 @VerificationCase
 @Tag("expect-fail")
 class RecordLiteralAssignBound {
-    var point: Point
+    var point: Point := Point { x = 0 }
 
     redefine tran {
         choice {
@@ -329,7 +330,7 @@ class RecordLiteralDefaultViolated {
 @VerificationCase
 @Tag("expect-pass")
 class LocalRecordLiteralReach {
-    var point: Point
+    var point: Point := Point { x = 0 }
     var hits: int := 0
 
     redefine tran {
@@ -349,7 +350,7 @@ class LocalRecordLiteralReach {
 @VerificationCase
 @Tag("expect-pass")
 class RecordLiteralArgumentBound {
-    var point: Point
+    var point: Point := Point { x = 0 }
     var lastX: int := 0
 
     tran moveTo(target: Point) {
@@ -370,7 +371,7 @@ class RecordLiteralArgumentBound {
 @VerificationCase
 @Tag("expect-pass")
 class RecordLiteralArgumentReach {
-    var point: Point
+    var point: Point := Point { x = 0 }
 
     prop isAt(target: Point): bool {
         return point == target
@@ -389,7 +390,7 @@ class RecordLiteralArgumentReach {
 @VerificationCase
 @Tag("expect-fail")
 class RecordLiteralArgumentViolated {
-    var point: Point
+    var point: Point := Point { x = 0 }
 
     tran moveTo(target: Point) {
         point := target
@@ -408,7 +409,7 @@ class RecordLiteralArgumentViolated {
 @VerificationCase
 @Tag("expect-pass")
 class RecordFieldLiteralDefaultBound {
-    var line: Line
+    var line: Line := Line { to = Point { x = 0 } }
 
     redefine tran {
         assume(line.to.x < 2)
@@ -423,7 +424,7 @@ class RecordFieldLiteralDefaultBound {
 @VerificationCase
 @Tag("expect-pass")
 class NestedRecordLiteralReach {
-    var line: Line
+    var line: Line := Line { to = Point { x = 0 } }
 
     redefine tran {
         choice {
@@ -442,7 +443,7 @@ class NestedRecordLiteralReach {
 @VerificationCase
 @Tag("expect-fail")
 class NestedRecordLiteralViolated {
-    var line: Line
+    var line: Line := Line { to = Point { x = 0 } }
 
     redefine tran {
         choice {
@@ -461,7 +462,7 @@ class NestedRecordLiteralViolated {
 @VerificationCase
 @Tag("expect-fail")
 class RecordParameterViolated {
-    var point: Point
+    var point: Point := Point { x = 0 }
     var origin: Point := Point { x = 5 }
 
     tran moveTo(target: Point) {

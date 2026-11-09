@@ -18,6 +18,7 @@ import java.util.Map;
 import org.eclipse.emf.common.util.BasicDiagnostic;
 import org.eclipse.xtext.testing.util.ParseHelper;
 import org.eclipse.xtext.validation.CheckMode;
+import org.eclipse.xtext.validation.EValidatorRegistrar;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -62,6 +63,10 @@ public class HalfParsedValidationTest {
     }
 
     public static class RethrowingValidator extends OxstsValidator {
+        // registered beside OxstsValidator it would report every issue of the later tests twice
+        @Override
+        public void register(EValidatorRegistrar registrar) {}
+
         @Override
         protected void handleExceptionDuringValidation(Throwable exception) {
             throw new AssertionError("A check threw on the half-parsed model", exception);

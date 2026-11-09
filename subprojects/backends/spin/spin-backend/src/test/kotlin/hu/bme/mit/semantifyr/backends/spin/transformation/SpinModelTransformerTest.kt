@@ -96,13 +96,16 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
     }
 
     @Test
-    suspend fun `variables without an initializer start at any value of their type`() {
+    suspend fun `variables havoced in init start at any value of their type`() {
         val lines = promelaLines(
             """
-                var counter : int
-                var flag : bool
-                var color : test::colors::Color
+                var counter : int := 0
+                var flag : bool := false
+                var color : test::colors::Color := test::colors::Color::Red
                 init {
+                    havoc(counter)
+                    havoc(flag)
+                    havoc(color)
                     counter := counter + 1
                 }
                 tran {
@@ -116,7 +119,9 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         assertThat(lines).containsSequence(
             "init {",
             "atomic {",
+            "$SPIN_STABLE_FLAG = false;",
             "if",
+            ":: counter = 0",
             ":: counter = 1",
             ":: counter = 4",
             ":: counter = 5",
@@ -129,13 +134,30 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
             ":: color = Red",
             ":: color = Green",
             "fi;",
-            "}",
-            "atomic {",
-            "$SPIN_STABLE_FLAG = false;",
             "counter = (counter + 1);",
             "$SPIN_STABLE_FLAG = true;",
             "}",
         )
+    }
+
+    @Test
+    suspend fun `a variable without an initializer is rejected`() {
+        val exception = assertThrows<IllegalStateException> {
+            transform(
+                """
+                    var counter : int
+                    init {
+                    }
+                    tran {
+                    }
+                    prop {
+                        AG counter < 5
+                    }
+                """,
+            )
+        }
+
+        assertThat(exception.message).isEqualTo("Variable counter has no initializer")
     }
 
     @Test
@@ -157,31 +179,25 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
     }
 
     @Test
-    suspend fun `a local variable without an initializer starts at any value in every step`() {
-        val promela = transform(
-            """
-                var counter : int := 0
-                init {
-                }
-                tran {
-                    var delta : int
-                    counter := delta
-                }
-                prop {
-                    AG counter < 3
-                }
-            """,
-        ).promela
+    suspend fun `a local variable without an initializer is rejected`() {
+        val exception = assertThrows<IllegalStateException> {
+            transform(
+                """
+                    var counter : int := 0
+                    init {
+                    }
+                    tran {
+                        var delta : int
+                        counter := delta
+                    }
+                    prop {
+                        AG counter < 3
+                    }
+                """,
+            )
+        }
 
-        val local = Regex("int (delta_\\d+);").find(promela)!!.groupValues[1]
-        assertThat(promela.lines().map { it.trim() }).containsSequence(
-            "int $local;",
-            "if",
-            ":: $local = 0",
-            ":: $local = 3",
-            "fi;",
-            "counter = $local;",
-        )
+        assertThat(exception.message).isEqualTo("Local variable delta has no initializer")
     }
 
     @Test
@@ -494,7 +510,7 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
     suspend fun `the stable flag is written only at the boundaries of whole steps`() {
         val promela = transform(
             """
-                var counter : int
+                var counter : int := 0
                 var flag : bool := false
                 init { choice { counter := 1 } or { havoc(flag) } } or { counter := 2 }
                 tran {

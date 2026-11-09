@@ -7,5 +7,5 @@
 package semantifyr::constructs::unbounded_variable
 
 class Host {
-    var values: int[0..*]
+    var values: int[0..*] := [0]
 }

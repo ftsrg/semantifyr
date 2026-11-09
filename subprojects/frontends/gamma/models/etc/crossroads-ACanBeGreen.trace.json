@@ -1,7 +1,4 @@
 {
-    "initialStep": {
-        "traces": []
-    },
     "initializedStep": {
         "traces": [
             {
@@ -81,6 +78,17 @@
         {
             "traces": [
                 {
+                    "self": "root.system.controller.control",
+                    "calledTransition": "semantifyr::gamma::ports::Port::raiseInputEvent",
+                    "arguments": [
+                        {
+                            "parameter": "event",
+                            "value": "root.system.controller.control.interface.toggle"
+                        }
+                    ],
+                    "innerTraces": null
+                },
+                {
                     "self": "root.system.trafficLightA.Main.Normal.NormalRegion.transition12",
                     "calledTransition": "semantifyr::gamma::statecharts::Transition::fire",
                     "arguments": [],
@@ -126,6 +134,17 @@
         },
         {
             "traces": [
+                {
+                    "self": "root.system.controller.control",
+                    "calledTransition": "semantifyr::gamma::ports::Port::raiseInputEvent",
+                    "arguments": [
+                        {
+                            "parameter": "event",
+                            "value": "root.system.controller.control.interface.toggle"
+                        }
+                    ],
+                    "innerTraces": null
+                },
                 {
                     "self": "root.system.controller.Main.Operating.OperatingRegion.transition3",
                     "calledTransition": "semantifyr::gamma::statecharts::Transition::fire",

@@ -8,14 +8,15 @@ package hu.bme.mit.semantifyr.cli.commands
 
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.cli.SMOKE_CASE
+import hu.bme.mit.semantifyr.cli.common.MetricsLine
+import hu.bme.mit.semantifyr.cli.common.VerifyOutcomeLine
 import hu.bme.mit.semantifyr.cli.common.fakePortfolio
 import hu.bme.mit.semantifyr.cli.common.jsonLines
 import hu.bme.mit.semantifyr.cli.runCli
 import hu.bme.mit.semantifyr.cli.smokeModel
 import hu.bme.mit.semantifyr.cli.testModels
+import hu.bme.mit.semantifyr.verifier.VerificationReport
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -44,21 +45,17 @@ class MetricsCommandTest {
     suspend fun `the json sizes are the ones report json records`(optimization: String, @TempDir artifacts: Path) {
         val portfolio = fakePortfolio("fixed", VerificationVerdict.Passed)
         val verify = runCli("verify", "--json", "--optimization", optimization, "--portfolio", portfolio.id, "-d", artifacts.toString(), smokeModel.toString(), portfolios = listOf(portfolio))
-        val report = Path(jsonLines(verify.stdout).single().getValue("report").jsonPrimitive.content)
-        val compilation = Json.parseToJsonElement(report.readText()).jsonObject
-            .getValue("result").jsonObject
-            .getValue("metrics").jsonObject
-            .getValue("verifier").jsonObject
-            .getValue("compilation").jsonObject
+        val report = Path(jsonLines<VerifyOutcomeLine>(verify.stdout).single().report)
+        val compilation = Json.decodeFromString<VerificationReport>(report.readText()).result.metrics.verifier.compilation
 
         val result = runCli("metrics", "--json", "--optimization", optimization, smokeModel.toString())
 
         assertThat(result.statusCode).describedAs(result.output).isZero()
-        val line = jsonLines(result.stdout).single()
-        assertThat(line.getValue("case").jsonPrimitive.content).isEqualTo(SMOKE_CASE)
-        for (level in listOf("inputSize", "inlinedSize", "flattenedSize")) {
-            assertThat(line.getValue(level)).describedAs(level).isEqualTo(compilation.getValue(level))
-        }
+        val line = jsonLines<MetricsLine>(result.stdout).single()
+        assertThat(line.case).isEqualTo(SMOKE_CASE)
+        assertThat(line.inputSize).isEqualTo(compilation.inputSize)
+        assertThat(line.inlinedSize).isEqualTo(compilation.inlinedSize)
+        assertThat(line.flattenedSize).isEqualTo(compilation.flattenedSize)
     }
 
     @Test
@@ -66,8 +63,6 @@ class MetricsCommandTest {
         val result = runCli("metrics", "--json", "--include-tag", "expect-fail", testModels.resolve("semantic/local_vars.oxsts").toString())
 
         assertThat(result.statusCode).describedAs(result.output).isZero()
-        assertThat(jsonLines(result.stdout)).isNotEmpty().allSatisfy {
-            assertThat(it.keys).containsExactly("case", "inputSize", "inlinedSize", "flattenedSize")
-        }
+        assertThat(jsonLines<MetricsLine>(result.stdout)).isNotEmpty()
     }
 }

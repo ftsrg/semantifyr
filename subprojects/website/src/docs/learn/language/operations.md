@@ -27,7 +27,7 @@ Assignments always execute.
 
 ### Havoc
 
-`havoc(reference);` non-deterministically picks a value of the reference's type. Used to model unknown environment inputs.
+`havoc(reference);` non-deterministically picks a value of the reference's type. Used to model unknown environment inputs, and in `init` to give a variable an arbitrary initial value.
 
 ```oxsts
 havoc (input)
@@ -94,7 +94,7 @@ if (value < maximum()) {
 
 ### `for`
 
-A runtime loop over a range. The loop variable takes each value in the range in turn. The expression can be any runtime expression. Only the Theta backend supports runtime `for`, and only over a range; the other backends report the case as not supported.
+A runtime loop over a range. The loop variable takes each value in the range in turn. The expression can be any runtime expression.
 
 ```oxsts
 for (i in 1..10) {
@@ -104,7 +104,7 @@ for (i in 1..10) {
 
 ### Local Variable
 
-Local variables allow the definition of temporary locals in the operation structure. A local variable may be a fixed-size array, such as `var values: int[3] := [1, 2, 3]`, indexed like a class array. A local variable of class or feature type, such as `var picked: Worker` or `var picked: workers`, holds one instance like a class variable, and a call through it, such as `inline picked.finish()`, runs on the instance it holds; a feature-typed local holds the instances of the feature on the instance whose transition declares it. A local variable without an initializer is havoced each time its declaration runs, among the instances of its type when it has a class or feature type.
+Local variables allow the definition of temporary locals in the operation structure. A local variable may be a fixed-size array, such as `var values: int[3] := [1, 2, 3]`, indexed like a class array. A local variable carries an initializer like every variable. A local variable of class or feature type, such as `var picked: Worker := first` or `var picked: workers := first`, holds one instance like a class variable, and a call through it, such as `inline picked.finish()`, runs on the instance it holds; a feature-typed local holds the instances of the feature on the instance whose transition declares it, and `havoc(picked)` chooses among the instances of its type.
 
 ```oxsts
 var choiceTaken: bool := false

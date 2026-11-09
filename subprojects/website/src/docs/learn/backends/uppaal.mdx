@@ -5,7 +5,7 @@ sidebar_position: 3
 
 # Uppaal
 
-[Uppaal](https://uppaal.org/) verifies the timed-automaton translation of a case and is the only backend that honours `@Clock`. It havocs an integer only among candidate values, so its configurations are under-approximating, except `over-approximation`, which over-approximates the clock zones. It declares every integer with its static bound, or with a 31-bit range when it has none within 32 bits, and stops a run as Not supported, naming the variable, when a value leaves the declared range; a proof over a counter without a guard counts through that whole range and does not finish in practice. Before it runs, it reports a case Not supported when the case holds a construct listed below, naming each construct, or the variable it concerns, and its source line.
+[Uppaal](https://uppaal.org/) verifies the timed-automaton translation of a case and is the only backend that honours `@Clock`, which the other backends treat as an ordinary variable. It havocs an integer only among candidate values, so its configurations are under-approximating, except `over-approximation`, which over-approximates the clock zones. It declares every integer with its static bound, or with a 31-bit range when it has none within 32 bits, and stops a run as Not supported, naming the variable, when a value leaves the declared range; a proof over a counter without a guard such as `if (counter < 10) { counter := counter + 1 }` counts through that whole range and does not finish in practice. Before it runs, it reports a case Not supported when the case holds a construct listed below, naming each construct, or the variable it concerns, and its source line.
 
 ## What the backend refuses
 

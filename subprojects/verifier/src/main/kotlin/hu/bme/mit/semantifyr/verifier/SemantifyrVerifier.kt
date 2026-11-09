@@ -27,8 +27,8 @@ import kotlin.time.toKotlinDuration
  */
 interface SemantifyrVerifier {
 
-    suspend fun verify(verificationCase: VerificationCase, progressContext: ProgressContext = ProgressContext.NoOp): VerificationResult
-    suspend fun verify(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext = ProgressContext.NoOp): VerificationResult
+    suspend fun verify(verificationCase: VerificationCase, progressContext: ProgressContext = ProgressContext.Silent): VerificationResult
+    suspend fun verify(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext = ProgressContext.Silent): VerificationResult
 
     fun verifyBlocking(verificationCase: VerificationCase) = runBlocking {
         verify(verificationCase).toJavaDto()
@@ -63,8 +63,8 @@ interface SemantifyrVerifier {
             return this
         }
 
-        fun artifacts(config: ArtifactConfig): Builder {
-            this.artifacts = config
+        fun artifacts(configuration: ArtifactConfig): Builder {
+            this.artifacts = configuration
             return this
         }
 
@@ -94,8 +94,8 @@ interface SemantifyrVerifier {
             return this
         }
 
-        fun optimization(config: OptimizationConfig): Builder {
-            this.optimization = config
+        fun optimization(configuration: OptimizationConfig): Builder {
+            this.optimization = configuration
             return this
         }
 
@@ -118,17 +118,17 @@ interface SemantifyrVerifier {
             val configuration = SemantifyrVerifierConfiguration(
                 injector = verifierInjector,
                 portfolio = resolvedPortfolio,
-                artifactConfig = resolvedArtifacts,
+                artifactConfiguration = resolvedArtifacts,
                 outputDirectory = resolvedOutputDirectory,
                 environment = environment,
                 timeout = timeout,
                 maxConcurrency = maxConcurrency,
-                optimizationConfig = optimization,
+                optimizationConfiguration = optimization,
             )
 
-            val semantifyrVerifierImplFactory = verifierInjector.getInstance(SemantifyrVerifierImpl.Factory::class.java)
+            val verifierFactory = verifierInjector.getInstance(SemantifyrVerifierImpl.Factory::class.java)
 
-            return semantifyrVerifierImplFactory.create(configuration)
+            return verifierFactory.create(configuration)
         }
     }
 

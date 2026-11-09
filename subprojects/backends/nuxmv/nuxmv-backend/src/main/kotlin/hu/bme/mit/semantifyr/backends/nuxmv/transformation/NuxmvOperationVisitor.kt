@@ -75,14 +75,7 @@ class NuxmvOperationVisitor @AssistedInject constructor(
     }
 
     override fun visit(operation: LocalVarDeclarationOperation): NuxmvBranch {
-        val initExpression = operation.expression
-        if (initExpression == null) {
-            val primed = freshPrime(operation)
-            return accumulated.copy(
-                currentPrime = accumulated.currentPrime + (operation to primed.name),
-                newPrimes = accumulated.newPrimes + primed,
-            )
-        }
+        val initExpression = operation.expression ?: error("Local variable ${operation.name} has no initializer")
         val rightHandSide = nuxmvExpressionTransformer.transform(initExpression, accumulated.currentPrime)
         val primed = freshPrime(operation)
         return accumulated.copy(

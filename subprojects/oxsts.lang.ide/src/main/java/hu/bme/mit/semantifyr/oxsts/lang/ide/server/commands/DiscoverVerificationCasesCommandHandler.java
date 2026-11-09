@@ -10,8 +10,8 @@ import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseSpecification;
-import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltInLibraryUtils;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler;
+import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.VerificationCaseFinder;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
@@ -27,7 +27,7 @@ public class DiscoverVerificationCasesCommandHandler extends AbstractCommandHand
     private BuiltinAnnotationHandler builtinAnnotationHandler;
 
     @Inject
-    private BuiltInLibraryUtils builtInLibraryUtils;
+    private VerificationCaseFinder verificationCaseFinder;
 
     @Inject
     private OxstsQualifiedNameProvider oxstsQualifiedNameProvider;
@@ -68,7 +68,7 @@ public class DiscoverVerificationCasesCommandHandler extends AbstractCommandHand
         }
 
         var verificationCases = new ArrayList<VerificationCaseSpecification>();
-        builtInLibraryUtils
+        verificationCaseFinder
                 .streamTestCases(oxstsModel)
                 .forEach(testCase -> verificationCases.add(createCase(testCase)));
 

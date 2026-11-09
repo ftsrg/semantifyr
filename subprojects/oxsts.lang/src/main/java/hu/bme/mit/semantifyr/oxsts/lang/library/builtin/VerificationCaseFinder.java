@@ -11,15 +11,15 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
 import java.util.stream.Stream;
 
-public class BuiltInLibraryUtils {
+public class VerificationCaseFinder {
 
     @Inject
     private BuiltinAnnotationHandler builtinAnnotationHandler;
 
     public Stream<ClassDeclaration> streamTestCases(OxstsModelPackage oxstsModelPackage) {
         return oxstsModelPackage.getDeclarations().stream()
-                .filter(d -> d instanceof ClassDeclaration)
-                .map(d -> (ClassDeclaration) d)
+                .filter(declaration -> declaration instanceof ClassDeclaration)
+                .map(declaration -> (ClassDeclaration) declaration)
                 .filter(classDeclaration -> builtinAnnotationHandler.isVerificationCase(classDeclaration));
     }
 }

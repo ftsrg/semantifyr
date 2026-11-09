@@ -127,20 +127,20 @@ class GammaFrontend @Inject private constructor(
     private val gammaSerializer: ISerializer,
     private val semantifyrLoader: SemantifyrLoader,
     private val verificationCaseDiscoverer: VerificationCaseDiscoverer,
-    private val gammaFrontendConfig: GammaFrontendConfig,
+    private val gammaFrontendConfiguration: GammaFrontendConfig,
 ) {
 
     private val logger by loggerFactory()
 
     val outputDirectory: Path
-        get() = gammaFrontendConfig.outputDirectory
+        get() = gammaFrontendConfiguration.outputDirectory
 
     val timeout: Duration?
-        get() = gammaFrontendConfig.timeout
+        get() = gammaFrontendConfiguration.timeout
 
     suspend fun verify(
         gammaVerificationCase: GammaVerificationCase,
-        progress: ProgressContext = ProgressContext.NoOp,
+        progress: ProgressContext = ProgressContext.Silent,
     ): GammaVerificationResult {
         val qualifiedName = gammaVerificationCase.qualifiedName
         val baseDirectory = caseDirectory(gammaVerificationCase)
@@ -152,7 +152,7 @@ class GammaFrontend @Inject private constructor(
         val nameStore = gammaCompiler.compile(gammaModel, outputPath)
 
         val context = semantifyrLoader.startContext()
-            .loadLibraryPaths(gammaFrontendConfig.libraryPaths)
+            .loadLibraryPaths(gammaFrontendConfiguration.libraryPaths)
             .loadModel(outputPath)
             .buildAndResolve()
 
@@ -193,7 +193,7 @@ class GammaFrontend @Inject private constructor(
 
     fun verifyBlocking(
         case: GammaVerificationCase,
-        progress: ProgressContext = ProgressContext.NoOp,
+        progress: ProgressContext = ProgressContext.Silent,
     ): GammaVerificationResultDto {
         return runBlocking {
             verify(case, progress).toJavaDto()
@@ -216,8 +216,8 @@ class GammaFrontend @Inject private constructor(
     suspend fun validateWitness(
         gammaVerificationCase: GammaVerificationCase,
         witnessPath: Path,
-        portfolio: VerificationPortfolio = gammaFrontendConfig.portfolio,
-        progress: ProgressContext = ProgressContext.NoOp,
+        portfolio: VerificationPortfolio = gammaFrontendConfiguration.portfolio,
+        progress: ProgressContext = ProgressContext.Silent,
     ): WitnessValidationResult {
         val qualifiedName = gammaVerificationCase.qualifiedName
         val baseDirectory = caseDirectory(gammaVerificationCase)
@@ -242,7 +242,7 @@ class GammaFrontend @Inject private constructor(
         }
 
         val context = semantifyrLoader.startContext()
-            .loadLibraryPaths(gammaFrontendConfig.libraryPaths)
+            .loadLibraryPaths(gammaFrontendConfiguration.libraryPaths)
             .loadModel(compiledModelPath)
             .loadModel(witnessPath)
             .buildAndResolve()
@@ -258,7 +258,7 @@ class GammaFrontend @Inject private constructor(
     fun validateWitnessBlocking(
         gammaVerificationCase: GammaVerificationCase,
         witnessPath: Path,
-        progress: ProgressContext = ProgressContext.NoOp,
+        progress: ProgressContext = ProgressContext.Silent,
     ): WitnessValidationResultDto {
         return runBlocking {
             validateWitness(gammaVerificationCase, witnessPath, progress = progress).toJavaDto()
@@ -266,27 +266,27 @@ class GammaFrontend @Inject private constructor(
     }
 
     private fun caseDirectory(gammaVerificationCase: GammaVerificationCase): Path {
-        return gammaFrontendConfig.outputDirectory.resolve(gammaVerificationCase.qualifiedName)
+        return gammaFrontendConfiguration.outputDirectory.resolve(gammaVerificationCase.qualifiedName)
     }
 
     private fun buildVerifier(
         outputPath: Path,
-        portfolioOverride: VerificationPortfolio = gammaFrontendConfig.portfolio,
+        portfolioOverride: VerificationPortfolio = gammaFrontendConfiguration.portfolio,
     ): SemantifyrVerifier {
         val verifierBuilder = SemantifyrVerifier.builder()
-            .injector(gammaFrontendConfig.oxstsInjector)
+            .injector(gammaFrontendConfiguration.oxstsInjector)
             .portfolio(portfolioOverride)
-            .artifacts(gammaFrontendConfig.artifacts)
+            .artifacts(gammaFrontendConfiguration.artifacts)
             .outputDirectory(outputPath)
-            .environment(gammaFrontendConfig.environment)
+            .environment(gammaFrontendConfiguration.environment)
 
-        gammaFrontendConfig.timeout?.let {
+        gammaFrontendConfiguration.timeout?.let {
             verifierBuilder.timeout(it)
         }
-        gammaFrontendConfig.maxConcurrency?.let {
+        gammaFrontendConfiguration.maxConcurrency?.let {
             verifierBuilder.maxConcurrency(it)
         }
-        gammaFrontendConfig.optimization?.let {
+        gammaFrontendConfiguration.optimization?.let {
             verifierBuilder.optimization(it)
         }
 
@@ -352,13 +352,13 @@ class GammaFrontend @Inject private constructor(
             return this
         }
 
-        fun optimization(config: OptimizationConfig): Builder {
-            this.optimization = config
+        fun optimization(configuration: OptimizationConfig): Builder {
+            this.optimization = configuration
             return this
         }
 
-        fun artifacts(config: ArtifactConfig): Builder {
-            this.artifacts = config
+        fun artifacts(configuration: ArtifactConfig): Builder {
+            this.artifacts = configuration
             return this
         }
 
@@ -393,7 +393,7 @@ class GammaFrontend @Inject private constructor(
             val resolvedLibraryPaths = libraryOverride ?: extractVariantLibrary()
             logger.info { "Building GammaFrontend (variant=${variant.name}, libraryPaths=$resolvedLibraryPaths)" }
 
-            val gammaFrontendConfig = GammaFrontendConfig(
+            val gammaFrontendConfiguration = GammaFrontendConfig(
                 libraryPaths = resolvedLibraryPaths,
                 oxstsInjector = effectiveOxstsInjector,
                 portfolio = resolvedPortfolio,
@@ -411,7 +411,7 @@ class GammaFrontend @Inject private constructor(
                 gammaSerializer = gammaSerializer,
                 semantifyrLoader = loader,
                 verificationCaseDiscoverer = discoverer,
-                gammaFrontendConfig = gammaFrontendConfig,
+                gammaFrontendConfiguration = gammaFrontendConfiguration,
             )
         }
 

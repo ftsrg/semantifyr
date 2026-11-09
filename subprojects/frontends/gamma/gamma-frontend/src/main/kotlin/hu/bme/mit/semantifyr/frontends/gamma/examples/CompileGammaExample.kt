@@ -14,13 +14,13 @@ import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.system.exitProcess
 
-fun main(args: Array<String>) {
-    if (args.size != 2) {
+fun main(arguments: Array<String>) {
+    if (arguments.size != 2) {
         System.err.println("usage: CompileGammaExample <sourceFile> <targetFile>")
         exitProcess(2)
     }
-    val source = Path.of(args[0])
-    val target = Path.of(args[1])
+    val source = Path.of(arguments[0])
+    val target = Path.of(arguments[1])
     require(Files.isRegularFile(source)) { "sourceFile must be a regular file: $source" }
     target.parent?.createDirectories()
 

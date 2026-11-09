@@ -16,7 +16,7 @@ interface ProgressContext {
         return PrefixedProgressContext(name, this)
     }
 
-    object NoOp : ProgressContext {
+    object Silent : ProgressContext {
         override fun checkIsCancelled() {
             // NO-OP
         }

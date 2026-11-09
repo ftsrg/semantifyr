@@ -7,11 +7,14 @@
 package hu.bme.mit.semantifyr.frontends.sysml.cli
 
 import org.junit.jupiter.api.Assumptions.assumeTrue
+import java.io.IOException
 
 // the bundled SysIDE CLI that translates a model runs on Node.js
 fun assumeNodeOnPath() {
-    val available = runCatching {
+    val available = try {
         ProcessBuilder("node", "--version").redirectErrorStream(true).start().waitFor() == 0
-    }.getOrDefault(false)
+    } catch (_: IOException) {
+        false
+    }
     assumeTrue(available, "translating SysML v2 needs node on PATH")
 }

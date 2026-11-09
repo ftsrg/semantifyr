@@ -305,7 +305,7 @@ interface TextDocumentContentProvider {
 export const state = {
     configuration: new Map<string, unknown>(),
     files: [] as Uri[],
-    commands: new Map<string, (...args: unknown[]) => unknown>(),
+    commands: new Map<string, (...commandArguments: unknown[]) => unknown>(),
     controllers: [] as TestController[],
     watchers: [] as FileSystemWatcher[],
     contentProviders: new Map<string, TextDocumentContentProvider>(),
@@ -368,11 +368,11 @@ export const workspace = {
 };
 
 export const commands = {
-    registerCommand: vi.fn((id: string, handler: (...args: unknown[]) => unknown) => {
+    registerCommand: vi.fn((id: string, handler: (...commandArguments: unknown[]) => unknown) => {
         state.commands.set(id, handler);
         return { dispose: () => state.commands.delete(id) };
     }),
-    executeCommand: vi.fn(async (id: string, ...args: unknown[]) => state.commands.get(id)?.(...args)),
+    executeCommand: vi.fn(async (id: string, ...commandArguments: unknown[]) => state.commands.get(id)?.(...commandArguments)),
 };
 
 export const tests = {

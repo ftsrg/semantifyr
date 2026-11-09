@@ -8,8 +8,8 @@ package hu.bme.mit.semantifyr.verifier.discovery
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
-import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltInLibraryUtils
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
+import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.VerificationCaseFinder
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
@@ -22,7 +22,7 @@ import kotlin.streams.asSequence
  * Discovers [VerificationCase]s in a loaded [SemantifyrModelContext].
  */
 class VerificationCaseDiscoverer @Inject constructor(
-    private val builtInLibraryUtils: BuiltInLibraryUtils,
+    private val verificationCaseFinder: VerificationCaseFinder,
     private val builtinSymbolResolver: BuiltinSymbolResolver,
     private val oxstsQualifiedNameProvider: OxstsQualifiedNameProvider,
 ) {
@@ -33,7 +33,7 @@ class VerificationCaseDiscoverer @Inject constructor(
         }.filterIsInstance<OxstsModelPackage>()
 
         return packages.flatMap {
-            builtInLibraryUtils.streamTestCases(it).asSequence()
+            verificationCaseFinder.streamTestCases(it).asSequence()
         }.map {
             val qualifiedName = oxstsQualifiedNameProvider.getFullyQualifiedNameString(it)
             VerificationCase(

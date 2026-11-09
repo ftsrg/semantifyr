@@ -57,8 +57,12 @@ class ConstantValueComputation(
     private val constantExpressionEvaluatorProvider: ConstantExpressionEvaluatorProvider,
 ) {
 
-    private val propertyAndInitReads by lazy {
-        listOfNotNull(inlinedOxsts.property, inlinedOxsts.initTransition).flatMap {
+    private val topLevelVariables by lazy {
+        inlinedOxsts.variables.toSet()
+    }
+
+    private val initReads by lazy {
+        listOfNotNull(inlinedOxsts.initTransition).flatMap {
             it.variableReadExpressions(evaluator)
         }.mapNotNull {
             evaluator.tryEvaluateTypedOrNull(VariableDeclaration::class.java, it)
@@ -82,8 +86,8 @@ class ConstantValueComputation(
             }
 
             val writtenExpressions = buildList {
-                variable.expression?.let {
-                    add(it)
+                if (isDeclarationObservable(variable)) {
+                    add(variable.expression)
                 }
                 assignments.forEach {
                     add(it.expression)
@@ -101,15 +105,18 @@ class ConstantValueComputation(
                 continue
             }
 
-            // the property is checked in the pre-init state, where an uninitialized variable is havoced
-            if (variable.expression == null && (variable in propertyAndInitReads || !inlinedOxsts.initMustWrite(variable, evaluator))) {
-                continue
-            }
-
             constants[variable] = writtenExpressions.first()
         }
 
         return ConstantValueInfo(constants)
+    }
+
+    // the declaration valuation is not a state, so a declaration that init must overwrite before reading it is never observed
+    private fun isDeclarationObservable(variable: VariableDeclaration): Boolean {
+        if (variable !in topLevelVariables) {
+            return true
+        }
+        return variable in initReads || !inlinedOxsts.initMustWrite(variable, evaluator)
     }
 
     private fun evaluateOrNull(expression: Expression): ExpressionEvaluation? {

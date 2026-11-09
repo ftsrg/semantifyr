@@ -27,8 +27,9 @@ class HavocValueCollectorTest {
     fun `an equality has a candidate on both sides of its literal`() {
         val havoced = variable(
             """
-                var havoced : int
+                var havoced : int := 0
                 init {
+                    havoc(havoced)
                 }
                 tran {
                 }
@@ -42,11 +43,31 @@ class HavocValueCollectorTest {
     }
 
     @Test
+    fun `the declared value is a candidate`() {
+        val havoced = variable(
+            """
+                var havoced : int := 9
+                init {
+                    havoc(havoced)
+                }
+                tran {
+                }
+                prop {
+                    AG havoced < 3
+                }
+            """,
+        )
+
+        assertThat(HavocValueCollector().valuesFor(havoced)).containsExactly(2, 3, 9)
+    }
+
+    @Test
     fun `candidates are complete for an integer read only in comparisons with literals`() {
         val havoced = variable(
             """
-                var havoced : int
+                var havoced : int := 0
                 init {
+                    havoc(havoced)
                 }
                 tran {
                     havoc(havoced)
@@ -65,8 +86,9 @@ class HavocValueCollectorTest {
     fun `candidates are not complete for an integer read in arithmetic or compared with a variable`() {
         val arithmetic = variable(
             """
-                var havoced : int
+                var havoced : int := 0
                 init {
+                    havoc(havoced)
                 }
                 tran {
                 }
@@ -77,9 +99,10 @@ class HavocValueCollectorTest {
         )
         val copied = variable(
             """
-                var havoced : int
+                var havoced : int := 0
                 var copy : int := 0
                 init {
+                    havoc(havoced)
                 }
                 tran {
                     copy := havoced
@@ -91,9 +114,10 @@ class HavocValueCollectorTest {
         )
         val compared = variable(
             """
-                var havoced : int
+                var havoced : int := 0
                 var bound : int := 0
                 init {
+                    havoc(havoced)
                 }
                 tran {
                 }

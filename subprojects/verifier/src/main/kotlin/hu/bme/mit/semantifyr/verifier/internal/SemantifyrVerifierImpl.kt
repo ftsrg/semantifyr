@@ -63,12 +63,12 @@ private val CANCEL_POLL_INTERVAL = 250.milliseconds
 class SemantifyrVerifierConfiguration(
     val injector: Injector,
     val portfolio: VerificationPortfolio,
-    val artifactConfig: ArtifactConfig,
+    val artifactConfiguration: ArtifactConfig,
     val outputDirectory: Path,
     val environment: ExecutionEnvironment,
     val timeout: Duration,
     val maxConcurrency: Int,
-    val optimizationConfig: OptimizationConfig,
+    val optimizationConfiguration: OptimizationConfig,
 )
 
 class SemantifyrVerifierImpl @AssistedInject constructor(
@@ -82,8 +82,8 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
 
     private val compiler = SemantifyrCompiler(
         semantifyrVerifierConfiguration.injector,
-        semantifyrVerifierConfiguration.artifactConfig,
-        semantifyrVerifierConfiguration.optimizationConfig,
+        semantifyrVerifierConfiguration.artifactConfiguration,
+        semantifyrVerifierConfiguration.optimizationConfiguration,
     )
 
     private val logger by loggerFactory()
@@ -208,14 +208,16 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         val (outcome, trace, verifierBackAnnotationDuration) = try {
             val witness = backendResult.inlinedWitness
             if (witness == null) {
-                Triple(backendResult, null, Duration.ZERO)
+                BackAnnotationOutcome(backendResult, null, Duration.ZERO)
             } else {
-                val (trace, duration) = runInTimeout(progress, deadline) {
+                val trace = runInTimeout(progress, deadline) {
                     runInterruptible {
                         backAnnotateWitness(witness, backendResult, compilation, qualifiedName)
                     }
                 }
-                Triple(backendResult, trace, duration)
+                val duration = backAnnotationMark.elapsedNow()
+                logger.info { "[$qualifiedName] back-annotation completed in $duration" }
+                BackAnnotationOutcome(backendResult, trace, duration)
             }
         } catch (_: TimeoutCancellationException) {
             logger.info {
@@ -227,7 +229,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
                 inlinedWitness = null,
                 message = "Timeout (${semantifyrVerifierConfiguration.timeout}) exceeded while back-annotating the witness of ${backendResult.metadata.backendId}'s ${backendResult.verdict} verdict.",
             )
-            Triple(timedOut, null, backAnnotationMark.elapsedNow())
+            BackAnnotationOutcome(timedOut, null, backAnnotationMark.elapsedNow())
         }
 
         val totalDuration = (Clock.System.now() - startedAt)
@@ -265,7 +267,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         val report = VerificationReport(
             verificationCase = case.qualifiedName,
             portfolioId = semantifyrVerifierConfiguration.portfolio.id,
-            optimization = semantifyrVerifierConfiguration.optimizationConfig,
+            optimization = semantifyrVerifierConfiguration.optimizationConfiguration,
             timeout = semantifyrVerifierConfiguration.timeout,
             result = result,
         )
@@ -292,7 +294,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
             inlinedOxsts = inlinedOxsts,
             artifactOutputPath = caseDirectoryFor(case),
             flatteningInfo = compilation.flatteningInfo,
-            timeout = -deadline.elapsedNow(),
+            timeout = deadline - markNow(),
         )
 
         val (result, duration) = measureTimedValue {
@@ -306,20 +308,16 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         backendResult: BackendVerificationResult,
         compilation: FlattenedCompilationContext,
         qualifiedName: String,
-    ): Pair<Trace, Duration> {
+    ): Trace {
         logger.info { "[$qualifiedName] back-annotating witness from ${backendResult.metadata.backendId ?: "?"}" }
-        val (trace, duration) = measureTimedValue {
-            val classWitness = classWitnessTransformer.transform(witness, compilation)
-            val backAnnotatedModel = classWitnessBackAnnotator.createWitnessInlinedOxsts(
-                classWitness,
-                backendResult.verdict,
-            )
-            val witnessState = callTraceTransformer.transformWitnessState(classWitness)
-            val callTrace = callTraceTransformer.transformCallTrace(classWitness, compilation.transitionCallTraces)
-            Trace(backAnnotatedModel, witnessState, callTrace)
-        }
-        logger.info { "[$qualifiedName] back-annotation completed in $duration" }
-        return trace to duration
+        val classWitness = classWitnessTransformer.transform(witness, compilation)
+        val backAnnotatedModel = classWitnessBackAnnotator.createWitnessInlinedOxsts(
+            classWitness,
+            backendResult.verdict,
+        )
+        val witnessState = callTraceTransformer.transformWitnessState(classWitness)
+        val callTrace = callTraceTransformer.transformCallTrace(classWitness, compilation.transitionCallTraces)
+        return Trace(backAnnotatedModel, witnessState, callTrace)
     }
 
     private suspend inline fun <T> runInTimeout(
@@ -328,7 +326,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         crossinline block: suspend () -> T,
     ): T = coroutineScope {
         val mainWork = async {
-            withTimeout(-deadline.elapsedNow()) {
+            withTimeout(deadline - markNow()) {
                 block()
             }
         }
@@ -337,8 +335,8 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
                 delay(CANCEL_POLL_INTERVAL)
                 try {
                     progress.checkIsCancelled()
-                } catch (c: CancellationException) {
-                    mainWork.cancel(c)
+                } catch (cancellation: CancellationException) {
+                    mainWork.cancel(cancellation)
                     return@launch
                 }
             }
@@ -366,6 +364,12 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
     private data class BackendOutcomeWithDuration(
         val result: BackendVerificationResult,
         val portfolioDuration: Duration,
+    )
+
+    private data class BackAnnotationOutcome(
+        val result: BackendVerificationResult,
+        val trace: Trace?,
+        val backAnnotationDuration: Duration,
     )
 
     interface Factory {

@@ -94,7 +94,7 @@ For each case, the command prints its name, `PASSED` or `FAILED` with the time i
 
 `--artifact-directory ../room-artifacts` keeps the translated model in `compiled/default/room.oxsts` and the artifacts of every case in a directory named after the model file and the case, shortened with a hash when longer than 64 characters. Next to the backend's working files, the compiler's intermediate models (`pipeline/`) and the run's measurements (`report.json`), a case with a witness has four files:
 
-- `witness.json`: the values of the model's state in every step of the witness: `initialStep` before initialization, `initializedStep` after it, then one entry per step. State names are paths from the verified instance, `root`.
+- `witness.json`: the values of the model's state in every step of the witness: `initializedStep`, the initial state that initialization produces, then one entry per step. State names are paths from the verified instance, `root`.
 - `trace.json`: per step, the traced calls of the semantic library: the transitions that fired and the items that were sent.
 - `witness.oxsts`: the witness as an OXSTS model that replays exactly this execution.
 - `trace.sysml`: the witness as a SysML v2 model, a part definition `<case>Trace` that specializes the verified part definition and declares the states, transitions and sends of this execution in time order ([SysML v2 traces](../../develop/sysml-trace.md)). SysIDE validates it against `room.sysml` before it is written; a witness the generator cannot express gets no `trace.sysml` and a warning in the log.

@@ -36,7 +36,7 @@ class SmartFullPortfolioTest {
             spin = PassingBackend("spin"),
         )
 
-        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
     }
@@ -52,7 +52,7 @@ class SmartFullPortfolioTest {
             spin = FailingBackend("spin"),
         )
 
-        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
     }
@@ -68,7 +68,7 @@ class SmartFullPortfolioTest {
             spin = PassingBackend("spin"),
         )
 
-        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(result.metadata.backendId).isEqualTo("theta")
@@ -85,7 +85,7 @@ class SmartFullPortfolioTest {
             spin = NotSupportedBackend("spin"),
         )
 
-        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(result.metadata.backendId).isEqualTo("nuxmv")
@@ -102,7 +102,7 @@ class SmartFullPortfolioTest {
             spin = PassingBackend("spin"),
         )
 
-        val result = portfolio.verify(parentInjector, stubRequest(output, OxstsFactory.createEF()), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+        val result = portfolio.verify(parentInjector, stubRequest(output, OxstsFactory.createEF()), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(result.metadata.backendId).isEqualTo("spin")
@@ -119,7 +119,7 @@ class SmartFullPortfolioTest {
             spin = PassingBackend("spin"),
         )
 
-        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
         assertThat(result.message).contains("spin=Passed (not trusted, UnderApproximating)", "uppaal=NotSupported", "theta=NotSupported")
@@ -136,7 +136,7 @@ class SmartFullPortfolioTest {
             spin = PassingBackend("spin"),
         )
 
-        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(result.soundness).isEqualTo(SoundnessDirection.OverApproximating)
@@ -153,7 +153,7 @@ class SmartFullPortfolioTest {
             spin = PassingBackend("spin", UnavailableKey),
         )
 
-        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
         assertThat(result.message).contains("no available backends")
@@ -170,7 +170,7 @@ class SmartFullPortfolioTest {
             spin = ErroringBackend("spin"),
         )
 
-        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
         assertThat(result.message).contains("All portfolio jobs errored")
@@ -187,7 +187,7 @@ class SmartFullPortfolioTest {
             spin = NotSupportedBackend("spin"),
         )
 
-        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.NoOp)
+        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
     }
@@ -202,7 +202,7 @@ class SmartFullPortfolioTest {
             spin = PassingBackend("spin"),
         )
 
-        val result = portfolio.verify(parentInjector, stubRequest(output), LimitedConcurrencyGate(maxConcurrency = 8), ExecutionEnvironment.Empty, ProgressContext.NoOp)
+        val result = portfolio.verify(parentInjector, stubRequest(output), LimitedConcurrencyGate(maxConcurrency = 8), ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(slowUppaal.invocations.get()).isEqualTo(2)

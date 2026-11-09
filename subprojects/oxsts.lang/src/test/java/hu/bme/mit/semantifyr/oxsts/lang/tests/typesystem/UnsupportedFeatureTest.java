@@ -46,7 +46,7 @@ public class UnsupportedFeatureTest {
                 var position: int := 0
                 redefine tran {
                     var values: int[2] := [1, value]
-                    var scratch: int[3]
+                    var scratch: int[3] := [0, 0, 0]
                     scratch[position] := values[1]
                     value := scratch[position]
                 }
@@ -64,7 +64,7 @@ public class UnsupportedFeatureTest {
                 contains workers: Worker[0..*]
                 contains lead: Worker subsets workers
                 redefine tran {
-                    var slots: workers[2]
+                    var slots: workers[2] := [lead, lead]
                 }
             }
             """, CheckMode.ALL);

@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.backends.theta.backannotation
 
+import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaModelTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.LocalVarNames
 import hu.bme.mit.semantifyr.xsts.lang.xsts.Expression
 import hu.bme.mit.semantifyr.xsts.lang.xsts.VariableDeclaration
@@ -21,8 +22,7 @@ class XstsWitnessState(
 )
 
 class XstsWitness(
-    val initialState: XstsWitnessState,
-    val initializedState: XstsWitnessState?,
+    val initializedState: XstsWitnessState,
     val transitionStates: List<XstsWitnessState>,
     val nextStateMap: Map<XstsWitnessState, List<XstsWitnessState>>,
     val xstsModel: XstsModel,
@@ -47,7 +47,7 @@ class XstsWitnessTransformer {
         fun transform(cexAssumptionWitnessState: CexWitnessState) = mappings.getOrPut(cexAssumptionWitnessState) {
             XstsWitnessState(
                 cexAssumptionWitnessState.variableValues.filterNot {
-                    LocalVarNames.isLocalVar(it.variableName)
+                    LocalVarNames.isLocalVar(it.variableName) || it.variableName == ThetaModelTransformer.INITIALIZED_FLAG_NAME
                 }.sortedBy {
                     declarationOrder[it.variableName]
                 }.map {
@@ -73,12 +73,7 @@ class XstsWitnessTransformer {
     fun transform(xstsModel: XstsModel, cexAssumptionWitness: CexWitness): XstsWitness {
         val context = TransformerContext(xstsModel)
 
-        val initialState = context.transform(cexAssumptionWitness.initialState)
-        val initializedState = if (cexAssumptionWitness.initializedState != null) {
-            context.transform(cexAssumptionWitness.initializedState)
-        } else {
-            null
-        }
+        val initializedState = context.transform(cexAssumptionWitness.initializedState)
         val transitionStates = cexAssumptionWitness.transitionStates.map {
             context.transform(it)
         }
@@ -87,7 +82,6 @@ class XstsWitnessTransformer {
         }.toMap()
 
         return XstsWitness(
-            initialState,
             initializedState,
             transitionStates,
             nextStateMap,

@@ -28,10 +28,10 @@ class SemantifyrSysMLCommand @Inject constructor(
     ),
 )
 
-suspend fun main(args: Array<String>) {
+suspend fun main(arguments: Array<String>) {
     val injector = OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
     val command = injector.getInstance(SemantifyrSysMLCommand::class.java)
     CommandLineParser.main(command) {
-        command.execute(args.asList())
+        command.execute(arguments.asList())
     }
 }

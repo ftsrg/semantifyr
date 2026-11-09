@@ -389,8 +389,8 @@ class GammaToOxstsSerializer {
         else -> error("Unknown type of expression: $expression")
     }
 
-    private fun getOpName(op: ArithmeticOp): String {
-        return when (op) {
+    private fun getOperatorName(operator: ArithmeticOp): String {
+        return when (operator) {
             ArithmeticOp.ADD -> "PlusOperatorExpression"
             ArithmeticOp.SUB -> "MinusOperatorExpression"
             ArithmeticOp.MUL -> "MultiplyOperatorExpression"
@@ -398,22 +398,22 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun getOpName(op: UnaryOp): String {
-        return when (op) {
+    private fun getOperatorName(operator: UnaryOp): String {
+        return when (operator) {
             UnaryOp.PLUS -> "UnaryPlusExpression"
             UnaryOp.MINUS -> "UnaryMinusExpression"
         }
     }
 
-    private fun getOpName(op: BooleanOp): String {
-        return when (op) {
+    private fun getOperatorName(operator: BooleanOp): String {
+        return when (operator) {
             BooleanOp.AND -> "AndOperatorExpression"
             BooleanOp.OR -> "OrOperatorExpression"
         }
     }
 
-    private fun getOpName(op: ComparisonOp): String {
-        return when (op) {
+    private fun getOperatorName(operator: ComparisonOp): String {
+        return when (operator) {
             ComparisonOp.LESS -> "LessThanOperatorExpression"
             ComparisonOp.LESS_EQ -> "LessThanOrEqualsOperatorExpression"
             ComparisonOp.GREATER -> "GreaterThanOperatorExpression"
@@ -427,21 +427,21 @@ class GammaToOxstsSerializer {
         expression: ArithmeticBinaryOperator,
         redefines: String,
     ) {
-        serializeOperator(expression.left, expression.right, getOpName(expression.op), redefines)
+        serializeOperator(expression.left, expression.right, getOperatorName(expression.op), redefines)
     }
 
     private fun IndentingStringBuilder.serialize(
         expression: ArithmeticUnaryOperator,
         redefines: String,
     ) {
-        serializeOperator(expression.body, getOpName(expression.op), redefines)
+        serializeOperator(expression.body, getOperatorName(expression.op), redefines)
     }
 
     private fun IndentingStringBuilder.serialize(
         expression: BooleanOperator,
         redefines: String,
     ) {
-        serializeOperator(expression.left, expression.right, getOpName(expression.op), redefines)
+        serializeOperator(expression.left, expression.right, getOperatorName(expression.op), redefines)
     }
 
     private fun IndentingStringBuilder.serialize(
@@ -473,7 +473,7 @@ class GammaToOxstsSerializer {
         expression: ComparisonOperator,
         redefines: String,
     ) {
-        serializeOperator(expression.left, expression.right, getOpName(expression.op), redefines)
+        serializeOperator(expression.left, expression.right, getOperatorName(expression.op), redefines)
     }
 
     private fun IndentingStringBuilder.serializeOperator(

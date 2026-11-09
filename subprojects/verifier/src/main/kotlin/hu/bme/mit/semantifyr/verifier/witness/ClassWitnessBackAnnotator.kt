@@ -39,7 +39,7 @@ class ClassWitnessBackAnnotator @Inject constructor(
         val verdict: VerificationVerdict,
     ) {
         val stepValues = mutableMapOf<ClassWitnessState, Int>()
-        private var lastStepValue = -1
+        private var lastStepValue = 0
         private val ClassWitnessState.stepValue
             get() = stepValues.getOrPut(this) {
                 lastStepValue++
@@ -62,7 +62,7 @@ class ClassWitnessBackAnnotator @Inject constructor(
                 it.typeSpecification = OxstsFactory.createTypeSpecification().also {
                     it.domain = builtinSymbolResolver.intDatatype(classWitness.inlinedOxsts.classDeclaration)
                 }
-                it.expression = OxstsFactory.createLiteralInteger(-1)
+                it.expression = OxstsFactory.createLiteralInteger(0)
             }
         }
 
@@ -88,20 +88,7 @@ class ClassWitnessBackAnnotator @Inject constructor(
 
             return OxstsFactory.createTransitionDeclaration().also {
                 it.kind = TransitionKind.INIT
-                it.branches += OxstsFactory.createSequenceOperation().also {
-                    it.steps += createInitialStateOperation(classWitness.initialState).steps
-                    if (classWitness.initializedState != null) {
-                        it.steps += createStateOperation(classWitness.initializedState, transition).steps
-                    }
-                }
-            }
-        }
-
-        private fun createInitialStateOperation(state: ClassWitnessState): SequenceOperation {
-            return OxstsFactory.createSequenceOperation().also {
-                it.steps += createStateVariableAssumption(state.stepValue)
-                it.steps += state.toAssumptionOperations()
-                it.steps += createStateVariableAssignment(state.stepValue + 1)
+                it.branches += createStateOperation(classWitness.initializedState, transition)
             }
         }
 

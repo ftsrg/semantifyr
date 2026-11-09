@@ -37,6 +37,10 @@ With `--json` it prints one JSON object per case and line, as each case finishes
 
 `case` is the qualified name of the case, `exitCode` its [exit code](#exit-codes) and `report` the absolute path of its `report.json`. A case that does not compile has `error`, the compiler's message, instead of `report`. `report.json` holds the rest: `verificationCase`, `portfolioId`, `optimization`, `timeout` and `result`, whose `verdict` is `Passed`, `Failed`, `Inconclusive`, `NotSupported`, `Timeout` or `Errored`, with the `message` of the backend, `metadata.backendId`, the backend configuration that answered, and `metrics`: the durations of the run, of the backend and of the compiler's phases, the optimizer's statistics and the model sizes.
 
+### Verdicts
+
+A case is **Passed** when its property holds and **Failed** when it does not. Otherwise it is **Inconclusive** when the backends finished without a verdict the portfolio trusts (see [soundness directions](portfolios.mdx#soundness-directions)), **Timeout** when the time limit ran out before a backend decided, **NotSupported** when the chosen backend refuses a construct of the model (the pages of [Theta](../backends/theta.mdx), [nuXmv](../backends/nuxmv.mdx), [Spin](../backends/spin.mdx) and [Uppaal](../backends/uppaal.mdx) list what each refuses and why) or a value leaves the range Uppaal declared for its variable (the message names each construct or variable and its source line), or **Errored** when a backend run failed or trusted backends disagreed.
+
 ## `compile`
 
 <CodeBlock language="text">{compile}</CodeBlock>

@@ -41,8 +41,7 @@ private fun XstsState.toCexState(): CexWitnessState {
 }
 
 class CexWitness(
-    val initialState: CexWitnessState,
-    val initializedState: CexWitnessState?,
+    val initializedState: CexWitnessState,
     val transitionStates: List<CexWitnessState>,
     val nextStateMap: Map<CexWitnessState, List<CexWitnessState>>,
 )
@@ -64,30 +63,29 @@ class CexWitnessTransformer {
         }
 
         require(initialState.isInitial)
-        require(initializedState?.isInitialized != false)
+        requireNotNull(initializedState) {
+            "Counterexample has no initialized state"
+        }
+        require(initializedState.isInitialized)
 
-        val initialCexState = initialState.toCexState()
-        val initializedCexState = initializedState?.toCexState()
-        val cexStates = states.map { it.toCexState() }
+        val initializedCexState = initializedState.toCexState()
+        val cexStates = states.map {
+            it.toCexState()
+        }
 
         val nextStateMap = buildMap {
-            if (initializedCexState != null) {
-                put(initialCexState, listOf(initializedCexState))
+            if (cexStates.isEmpty()) {
+                put(initializedCexState, emptyList())
+            } else {
+                put(initializedCexState, listOf(cexStates.first()))
 
-                if (cexStates.isEmpty()) {
-                    put(initializedCexState, emptyList())
-                } else {
-                    put(initializedCexState, listOf(cexStates.first()))
-
-                    for (index in cexStates.indices.drop(1)) {
-                        put(cexStates[index - 1], listOf(cexStates[index]))
-                    }
+                for (index in cexStates.indices.drop(1)) {
+                    put(cexStates[index - 1], listOf(cexStates[index]))
                 }
             }
         }
 
         return CexWitness(
-            initialCexState,
             initializedCexState,
             cexStates,
             nextStateMap,

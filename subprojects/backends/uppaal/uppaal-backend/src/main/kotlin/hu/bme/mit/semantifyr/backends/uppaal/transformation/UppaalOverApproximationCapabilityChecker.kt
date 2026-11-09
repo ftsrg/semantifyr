@@ -16,7 +16,6 @@ import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
 // a run is exact, over- or under-approximating, never both, and Uppaal havocs an integer among candidate values
@@ -29,11 +28,7 @@ class UppaalOverApproximationCapabilityChecker @Inject constructor(
 ) : UppaalCapabilityChecker(builtinSymbolResolver, builtinAnnotationHandler, integerRangeChecker, uppaalDeclarationsBuilder) {
 
     override fun checkModel(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {
-        val havoced = inlinedOxsts.variables.filter {
-            it.expression == null
-        } + inlinedOxsts.eAllOfType<LocalVarDeclarationOperation>().filter {
-            it.expression == null
-        } + inlinedOxsts.eAllOfType<HavocOperation>().map {
+        val havoced = inlinedOxsts.eAllOfType<HavocOperation>().map {
             OxstsUtils.requireVariableReference(it.reference)
         }
         val underApproximated = havoced.distinct().filter {

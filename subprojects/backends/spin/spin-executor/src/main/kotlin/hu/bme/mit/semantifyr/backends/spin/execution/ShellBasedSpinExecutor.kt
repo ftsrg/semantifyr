@@ -18,9 +18,9 @@ class ShellBasedSpinExecutor :
     override val binaryName = "spin"
 
     override suspend fun execute(specification: SpinExecutionSpecification): SpinExecutionResult {
-        val args = searchArguments(specification)
+        val arguments = searchArguments(specification)
         val exitCode = runProcess(
-            args = args,
+            arguments = arguments,
             workingDirectory = specification.workingDirectory,
             logFile = specification.logFile,
             errorFile = specification.errorFile,
@@ -42,9 +42,9 @@ class ShellBasedSpinExecutor :
     }
 
     override suspend fun replayTrail(specification: SpinReplaySpecification): SpinExecutionResult {
-        val args = listOf("-t", "-p", "-g", specification.modelFileName)
+        val arguments = listOf("-t", "-p", "-g", specification.modelFileName)
         val exitCode = runProcess(
-            args = args,
+            arguments = arguments,
             workingDirectory = specification.workingDirectory,
             logFile = specification.logFile,
             errorFile = specification.errorFile,

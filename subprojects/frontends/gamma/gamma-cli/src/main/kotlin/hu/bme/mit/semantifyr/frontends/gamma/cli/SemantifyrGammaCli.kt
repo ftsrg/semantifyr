@@ -43,11 +43,11 @@ internal fun readGammaModel(
     }
 }
 
-suspend fun main(args: Array<String>) {
+suspend fun main(arguments: Array<String>) {
     val gammaInjector = GammaStandaloneSetup().createInjectorAndDoEMFRegistration()
     val oxstsInjector = OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
     val command = SemantifyrGammaCommand(gammaInjector, oxstsInjector)
     CommandLineParser.main(command) {
-        command.execute(args.asList())
+        command.execute(arguments.asList())
     }
 }

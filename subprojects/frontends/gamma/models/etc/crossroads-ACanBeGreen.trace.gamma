@@ -46,6 +46,7 @@ trace ACanBeGreenTrace of ACanBeGreen {
     }
     step {
         act {
+            raise system.controller.control.toggle
             schedule component
             elapse 1 s
         }
@@ -61,6 +62,7 @@ trace ACanBeGreenTrace of ACanBeGreen {
     }
     step {
         act {
+            raise system.controller.control.toggle
             schedule component
             elapse 1 s
         }

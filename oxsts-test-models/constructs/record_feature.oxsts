@@ -7,7 +7,7 @@
 package semantifyr::constructs::record_feature
 
 record Point {
-    var x: int
+    var x: int := 0
 }
 
 class Host {

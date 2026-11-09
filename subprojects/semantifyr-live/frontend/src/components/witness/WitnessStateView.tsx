@@ -105,30 +105,17 @@ interface Props {
 
 export default function WitnessStateView({ trace }: Props): React.JSX.Element {
   const rows: React.JSX.Element[] = [];
-  const [initialChanged = [], initializedChanged = [], ...stepsChanged] = witnessStateChanges(trace);
+  const [initializedChanged = [], ...stepsChanged] = witnessStateChanges(trace);
 
   rows.push(
     <StateStepRow
-      key="initial"
-      label="Initial"
+      key="initialized"
+      label="Init"
       initial
-      changed={initialChanged}
-      allValues={trace.initialStep.values}
+      changed={initializedChanged}
+      allValues={trace.initializedStep.values}
     />,
   );
-
-  const initialized = trace.initializedStep;
-  if (initialized) {
-    rows.push(
-      <StateStepRow
-        key="initialized"
-        label="After init"
-        initial={false}
-        changed={initializedChanged}
-        allValues={initialized.values}
-      />,
-    );
-  }
 
   trace.steps.forEach((step, i) => {
     rows.push(

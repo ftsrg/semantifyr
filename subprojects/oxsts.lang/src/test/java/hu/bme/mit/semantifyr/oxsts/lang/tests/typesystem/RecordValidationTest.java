@@ -25,12 +25,12 @@ public class RecordValidationTest {
             package test
             enum Color { Red, Green }
             record Point {
-                var x: int
+                var x: int := 0
                 var y: int := 0
             }
             record Segment {
-                var from: Point
-                var to: Point
+                var from: Point := Point { x = 0 }
+                var to: Point := Point { x = 0 }
                 var color: Color := Color::Red
             }
             """;
@@ -42,9 +42,9 @@ public class RecordValidationTest {
     void recordFieldsAreReadWrittenComparedAndHavoced() {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Holder {
-                var position: Point
-                var previous: Point
-                var segment: Segment
+                var position: Point := Point { x = 0 }
+                var previous: Point := Point { x = 0 }
+                var segment: Segment := Segment { color = Color::Red }
                 tran move(target: Point) {
                     position := target
                 }
@@ -130,7 +130,7 @@ public class RecordValidationTest {
         var parsedPackage = parseHelper.parse("""
             package test
             record Node {
-                var value: int
+                var value: int := 0
                 var next: Node
             }
             """, CheckMode.ALL);
@@ -161,8 +161,8 @@ public class RecordValidationTest {
     void orderingComparisonOfRecordsIsRejected() {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Holder {
-                var position: Point
-                var previous: Point
+                var position: Point := Point { x = 0 }
+                var previous: Point := Point { x = 0 }
                 prop { return EF position < previous }
             }
             """, CheckMode.ALL);
@@ -174,7 +174,7 @@ public class RecordValidationTest {
     void recordComparedWithNothingIsRejected() {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Holder {
-                var position: Point
+                var position: Point := Point { x = 0 }
                 prop { return EF position != nothing }
             }
             """, CheckMode.ALL);
@@ -186,7 +186,7 @@ public class RecordValidationTest {
     void recordComparedWithIntegerIsRejected() {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Holder {
-                var position: Point
+                var position: Point := Point { x = 0 }
                 prop { return EF position == 1 }
             }
             """, CheckMode.ALL);
@@ -198,8 +198,8 @@ public class RecordValidationTest {
     void recordAssignedFromOtherRecordTypeIsRejected() {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Holder {
-                var position: Point
-                var segment: Segment
+                var position: Point := Point { x = 0 }
+                var segment: Segment := Segment { color = Color::Red }
                 redefine tran { position := segment }
             }
             """, CheckMode.ALL);
@@ -211,7 +211,7 @@ public class RecordValidationTest {
     void classLevelRecordInitializedFromVariableIsRejected() {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Holder {
-                var position: Point
+                var position: Point := Point { x = 0 }
                 var previous: Point := position
             }
             """, CheckMode.ALL);
@@ -223,7 +223,7 @@ public class RecordValidationTest {
     void recordConstructedByCallIsRejected() {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Holder {
-                var position: Point
+                var position: Point := Point { x = 0 }
                 redefine tran { position := Point(1, 2) }
             }
             """, CheckMode.ALL);
@@ -235,7 +235,7 @@ public class RecordValidationTest {
     void arrayOfRecordsIsRejected() {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Holder {
-                var points: Point[2]
+                var points: Point[2] := [Point { x = 0 }, Point { x = 0 }]
             }
             """, CheckMode.ALL);
 
@@ -247,7 +247,7 @@ public class RecordValidationTest {
     void optionalRecordIsRejected() {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Holder {
-                var position: Point[0..1]
+                var position: Point[0..1] := Point { x = 0 }
             }
             """, CheckMode.ALL);
 
@@ -260,7 +260,7 @@ public class RecordValidationTest {
         var parsedPackage = parseHelper.parse("""
             package test
             record Samples {
-                var values: int[3]
+                var values: int[3] := [0, 0, 0]
             }
             """, CheckMode.ALL);
 
@@ -279,7 +279,7 @@ public class RecordValidationTest {
             """, CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
-        assertOnlyErrorsAreUnsupported(parsedPackage, "data, enum or record type");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "data, enum or record type");
     }
 
     @Test
@@ -304,7 +304,7 @@ public class RecordValidationTest {
             class Holder {
                 var position: Point := Point { x = 1 }
                 var segment: Segment := Segment { from = Point { x = 0, y = 1 }, to = Point { x = 2 } }
-                var box: Box
+                var box: Box := Box { size = 1 }
                 tran move(target: Point) {
                     position := target
                 }
@@ -342,30 +342,6 @@ public class RecordValidationTest {
     }
 
     @Test
-    void omittedFieldWithoutDefaultIsRejected() {
-        var parsedPackage = parseHelper.parse(RECORDS + """
-            class Holder {
-                var position: Point := Point { y = 1 }
-            }
-            """, CheckMode.ALL);
-
-        parsedPackage.assertNoResourceErrors();
-        assertOnlyErrorsAre(parsedPackage, OxstsValidator.INCOMPLETE_RECORD_LITERAL, "leaves 'x' without a value");
-    }
-
-    @Test
-    void omittedRecordFieldWhoseRecordLacksADefaultIsRejected() {
-        var parsedPackage = parseHelper.parse(RECORDS + """
-            class Holder {
-                var segment: Segment := Segment { from = Point { x = 1 } }
-            }
-            """, CheckMode.ALL);
-
-        parsedPackage.assertNoResourceErrors();
-        assertOnlyErrorsAre(parsedPackage, OxstsValidator.INCOMPLETE_RECORD_LITERAL, "leaves 'to' without a value");
-    }
-
-    @Test
     void fieldOfAnotherRecordDoesNotResolve() {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Holder {
@@ -382,7 +358,7 @@ public class RecordValidationTest {
     void literalOfAClassDoesNotResolve() {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Worker {
-                var x: int
+                var x: int := 0
             }
             class Holder {
                 var position: Point := Worker { x = 1 }
@@ -408,7 +384,7 @@ public class RecordValidationTest {
     void literalOfAnotherRecordIsRejected() {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Holder {
-                var position: Point
+                var position: Point := Point { x = 0 }
                 redefine tran { position := Segment { from = position, to = position } }
             }
             """, CheckMode.ALL);
@@ -434,7 +410,7 @@ public class RecordValidationTest {
     void literalIsNoWriteTarget() {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Holder {
-                var position: Point
+                var position: Point := Point { x = 0 }
                 redefine tran {
                     havoc(Point { x = 1 })
                     Point { x = 1 } := position
@@ -474,7 +450,7 @@ public class RecordValidationTest {
     void orderingComparisonWithLiteralIsRejected() {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Holder {
-                var position: Point
+                var position: Point := Point { x = 0 }
                 prop { return EF position < Point { x = 1 } }
             }
             """, CheckMode.ALL);
@@ -486,7 +462,7 @@ public class RecordValidationTest {
     void recordNameIsNoValue() {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Holder {
-                var position: Point
+                var position: Point := Point { x = 0 }
                 redefine tran { position := Point {} }
             }
             """, CheckMode.ALL);

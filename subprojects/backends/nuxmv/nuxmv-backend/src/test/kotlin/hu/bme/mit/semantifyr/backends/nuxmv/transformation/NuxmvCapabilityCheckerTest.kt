@@ -31,7 +31,7 @@ class NuxmvCapabilityCheckerTest : NuxmvTransformationTestBase() {
         val unsupported = unsupported(
             """
                 var counter : int := 0
-                var flag : bool
+                var flag : bool := false
                 var color : test::colors::Color := test::colors::Color::Red
                 init {
                     havoc(flag)
@@ -61,7 +61,7 @@ class NuxmvCapabilityCheckerTest : NuxmvTransformationTestBase() {
             """
                 var ratio : real := 0.5
                 var anything : any := 0
-                var text : string
+                var text : string := "text"
                 var counter : int := 0
                 init {
                 }
@@ -80,6 +80,7 @@ class NuxmvCapabilityCheckerTest : NuxmvTransformationTestBase() {
             "variables of type real",
             "variables of type any",
             "variables of type string",
+            "string literals",
             "for-operations",
         )
     }

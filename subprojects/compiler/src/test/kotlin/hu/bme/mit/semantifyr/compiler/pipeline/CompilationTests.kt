@@ -110,28 +110,6 @@ class CompilationTests {
     }
 
     @Test
-    fun `local variable without an initializer`() {
-        assertCompiles(
-            classToCompile = "UninitializedLocal",
-            source = """
-                package compilation::tests::uninitialized_local
-                @VerificationCase
-                class UninitializedLocal {
-                    var counter: int := 0
-                    redefine tran {
-                        var delta: int
-                        assume(delta >= 1 && delta <= 3)
-                        counter := delta
-                    }
-                    prop {
-                        return EF counter == 3
-                    }
-                }
-            """,
-        )
-    }
-
-    @Test
     fun `if operation inside transition`() {
         assertCompiles(
             classToCompile = "IfStep",
@@ -645,26 +623,6 @@ class CompilationTests {
                 }
             """,
             messageContains = "temporal operator",
-        )
-    }
-
-    @Test
-    fun `variable without explicit initializer uses default`() {
-        assertCompiles(
-            classToCompile = "NoInit",
-            source = """
-                package compilation::tests::no_init
-                @VerificationCase
-                class NoInit {
-                    var counter: int
-                    redefine tran {
-                        counter := counter + 1
-                    }
-                    prop {
-                        return EF counter > 0
-                    }
-                }
-            """,
         )
     }
 

@@ -26,7 +26,6 @@ export const reachableCase: VerificationCaseSpecification = {
 
 export const counterexample: VerificationTrace = {
     callTrace: {
-        initialStep: { traces: [] },
         initializedStep: { traces: [{ self: 'root', calledTransition: 'init', arguments: [], innerTraces: null }] },
         steps: [
             {
@@ -40,7 +39,6 @@ export const counterexample: VerificationTrace = {
         ],
     },
     witnessState: {
-        initialStep: { values: [{ variable: 'root.lamp.on', value: 'false' }, { variable: 'root.lamp.brightness', value: '0' }] },
         initializedStep: { values: [{ variable: 'root.lamp.on', value: 'false' }, { variable: 'root.lamp.brightness', value: '0' }] },
         steps: [{ values: [{ variable: 'root.lamp.on', value: 'true' }, { variable: 'root.lamp.brightness', value: '2' }] }],
     },

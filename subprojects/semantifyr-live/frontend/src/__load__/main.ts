@@ -111,7 +111,7 @@ async function main(): Promise<number> {
   const startedAt = new Date()
   const output = resolve(values.output ?? `build/load-test/${startedAt.toISOString().replace(/[:.]/g, '-')}.json`)
 
-  const { http: httpBase, ws: wsBase } = normalizeBaseUrl(values.url)
+  const { http: httpBase, ws: webSocketBase } = normalizeBaseUrl(values.url)
   const flavor = (await getJson<FlavorsResponse>(`${httpBase}/api/flavors`)).flavors.find((candidate) => candidate.id === 'oxsts')
   if (!flavor) {
     throw new Error(`${httpBase} serves no oxsts flavor`)
@@ -157,7 +157,7 @@ async function main(): Promise<number> {
       if (!model) {
         break
       }
-      const run = await runStudent(student, round, { wsBase, flavor, portfolio, model, edit: values.edit, timeoutMs, signal: abort.signal })
+      const run = await runStudent(student, round, { webSocketBase, flavor, portfolio, model, edit: values.edit, timeoutMs, signal: abort.signal })
       const wrong = run.cases.filter((verification) => !verification.ok).map((verification) => `${verification.name} ${verification.status ?? 'no result'}${verification.message ? ` (${verification.message})` : ''}`)
       const outcome = run.error ? `${run.error.phase} failed: ${run.error.message}` : `${run.cases.length} verifications${wrong.length > 0 ? `, unexpected: ${wrong.join('; ')}` : ''}`
       console.log(`${elapsed()}  student ${student + 1} round ${round + 1} ${model.name}: ${outcome}`)

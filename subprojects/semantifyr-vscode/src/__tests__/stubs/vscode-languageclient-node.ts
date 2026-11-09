@@ -10,7 +10,7 @@ import { createMessageConnection, type MessageConnection, type MessageSignature,
 
 export * from './vscode-languageclient.js';
 
-type Responder = (client: LanguageClient, method: string, params: unknown) => unknown;
+type Responder = (client: LanguageClient, method: string, parameters: unknown) => unknown;
 
 export class LanguageClient {
     static readonly instances: LanguageClient[] = [];
@@ -22,7 +22,7 @@ export class LanguageClient {
     readonly clientOptions: Record<string, unknown>;
     readonly connection: MessageConnection;
     readonly server: MessageConnection;
-    readonly notificationHandlers = new Map<string, (params: never) => unknown>();
+    readonly notificationHandlers = new Map<string, (parameters: never) => unknown>();
     readonly start = vi.fn(async () => {});
     readonly stop = vi.fn(async () => {});
 
@@ -35,23 +35,23 @@ export class LanguageClient {
         const toClient = new PassThrough();
         this.connection = createMessageConnection(new StreamMessageReader(toClient), new StreamMessageWriter(toServer));
         this.server = createMessageConnection(new StreamMessageReader(toServer), new StreamMessageWriter(toClient));
-        this.server.onRequest((method, params) => LanguageClient.respond(this, method, params));
+        this.server.onRequest((method, parameters) => LanguageClient.respond(this, method, parameters));
         this.connection.listen();
         this.server.listen();
         LanguageClient.instances.push(this);
     }
 
-    onNotification(method: string, handler: (params: never) => unknown) {
+    onNotification(method: string, handler: (parameters: never) => unknown) {
         this.notificationHandlers.set(method, handler);
         return { dispose: () => this.notificationHandlers.delete(method) };
     }
 
-    sendRequest(type: string | MessageSignature, ...params: unknown[]): Promise<unknown> {
-        return this.connection.sendRequest(type as string, ...params);
+    sendRequest(type: string | MessageSignature, ...parameters: unknown[]): Promise<unknown> {
+        return this.connection.sendRequest(type as string, ...parameters);
     }
 
-    sendNotification(type: string | MessageSignature, params?: unknown): Promise<void> {
-        return this.connection.sendNotification(type as string, params);
+    sendNotification(type: string | MessageSignature, parameters?: unknown): Promise<void> {
+        return this.connection.sendNotification(type as string, parameters);
     }
 
     static disposeAll() {

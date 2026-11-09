@@ -43,7 +43,7 @@ class WitnessValidator {
     suspend fun validate(
         verifier: SemantifyrVerifier,
         trace: Trace,
-        progress: ProgressContext = ProgressContext.NoOp,
+        progress: ProgressContext = ProgressContext.Silent,
     ): WitnessValidationResult {
         return validate(verifier, trace.backAnnotatedModel, progress)
     }
@@ -51,7 +51,7 @@ class WitnessValidator {
     suspend fun validate(
         verifier: SemantifyrVerifier,
         backAnnotatedModel: InlinedOxsts,
-        progress: ProgressContext = ProgressContext.NoOp,
+        progress: ProgressContext = ProgressContext.Silent,
     ): WitnessValidationResult {
         val verification = verifier.verify(backAnnotatedModel, progress)
         return WitnessValidationResult.from(verification)
@@ -61,7 +61,7 @@ class WitnessValidator {
     fun validateBlocking(
         verifier: SemantifyrVerifier,
         trace: Trace,
-        progress: ProgressContext = ProgressContext.NoOp,
+        progress: ProgressContext = ProgressContext.Silent,
     ): WitnessValidationResult {
         return runBlocking {
             validate(verifier, trace, progress)
@@ -72,7 +72,7 @@ class WitnessValidator {
     fun validateBlocking(
         verifier: SemantifyrVerifier,
         backAnnotatedModel: InlinedOxsts,
-        progress: ProgressContext = ProgressContext.NoOp,
+        progress: ProgressContext = ProgressContext.Silent,
     ): WitnessValidationResult {
         return runBlocking {
             validate(verifier, backAnnotatedModel, progress)

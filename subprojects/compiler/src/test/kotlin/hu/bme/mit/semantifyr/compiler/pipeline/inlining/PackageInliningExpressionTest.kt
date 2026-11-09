@@ -283,12 +283,12 @@ class PackageInliningExpressionTest : InliningTestBase() {
             """
                 package inlining::tests::record_literal
                 record Point {
-                    var x: int
+                    var x: int := 0
                     var y: int := 0
                 }
                 @VerificationCase
                 class Host {
-                    var position: Point
+                    var position: Point := Point { x = 0 }
                     prop next(): int {
                         return position.x + 1
                     }

@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
+import hu.bme.mit.semantifyr.backend.witness.linearInlinedWitness
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalVariableKind
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalVariableTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
@@ -35,16 +36,20 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
         val running = mutableMapOf<VariableDeclaration, Expression>()
         val updated = mutableSetOf<VariableDeclaration>()
 
-        val states = boundaryStates.map {
+        val states = boundaryStates.mapNotNull {
             updateRunningValues(it, nameToVariable, running, updated)
-            buildWitnessState(inlinedOxsts.variables, running, updated)
+            if (it.isStable()) {
+                buildWitnessState(inlinedOxsts.variables, running, updated)
+            } else {
+                null
+            }
         }
 
         require(states.isNotEmpty()) {
-            "Cannot build witness from an empty Uppaal trace"
+            "Cannot build witness from an Uppaal trace without an initialized state"
         }
 
-        return assembleWitness(states, inlinedOxsts)
+        return linearInlinedWitness(inlinedOxsts, states)
     }
 
     private fun updateRunningValues(
@@ -77,35 +82,15 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
         return WitnessState(values)
     }
 
-    private fun assembleWitness(states: List<WitnessState>, inlinedOxsts: InlinedOxsts): InlinedWitness {
-        val initial = states[0]
-        val initialized = states.getOrNull(1)
-        val transitions = if (initialized != null) {
-            states.drop(2)
-        } else {
-            emptyList()
-        }
-        val nextStateMap = buildNextStateMap(initialized, transitions)
-        return InlinedWitness(initial, initialized, transitions, nextStateMap, inlinedOxsts)
-    }
-
-    private fun buildNextStateMap(
-        initialized: WitnessState?,
-        transitions: List<WitnessState>,
-    ): Map<WitnessState, List<WitnessState>> {
-        val map = mutableMapOf<WitnessState, List<WitnessState>>()
-        if (initialized != null && transitions.isNotEmpty()) {
-            map[initialized] = listOf(transitions.first())
-        }
-        for (i in 1 until transitions.size) {
-            map[transitions[i - 1]] = listOf(transitions[i])
-        }
-        return map
-    }
-
     private fun UppaalTraceState.isOxstsBoundary(): Boolean {
         return locations.any {
             it.endsWith(".Start") || it.endsWith(".Running")
+        }
+    }
+
+    private fun UppaalTraceState.isStable(): Boolean {
+        return locations.any {
+            it.endsWith(".Running")
         }
     }
 

@@ -59,7 +59,7 @@ connection : HappensDuring[1] connect dwell1 to controller.Behaviour.operating1.
 ```
 
 - A step of the counterexample is a reaction followed by one time advance. The reaction is a snapshot `stepN`, the advance a time slice `dwellN`, both portions of the trace instance (SysML 7.9.3 Time Slices and Snapshots, 8.4.5.2 Occurrence Usages). A snapshot takes no time, a time slice may (KerML 9.2.4.2.13 Occurrence). A step without a fired transition has no snapshot.
-- `step0` is initialization and coincides with the start of the trace instance, `self.startShot` (KerML 9.2.4.2.13).
+- `step0` is initialization, the trace's first step: the witness has no step before it, and its state is the initial state. It coincides with the start of the trace instance, `self.startShot` (KerML 9.2.4.2.13).
 - Each dwell lasts one time step, asserted with `DurationOf` (SysML 7.20.3 Assert Constraint Usages, 9.8.8.2.4 DurationOf).
 - Snapshots and time slices alternate with `HappensJustBefore` successions: nothing happens between the two ends (SysML 7.13.5 Successions as Usages, KerML 9.2.4.2.4 HappensJustBefore). The library relates an occurrence's start snapshot, middle time slice and end snapshot the same way.
 - A transition occurrence coincides with the snapshot of its step, `HappensWhile`, so a firing takes no time (KerML 9.2.4.2.6 HappensWhile).

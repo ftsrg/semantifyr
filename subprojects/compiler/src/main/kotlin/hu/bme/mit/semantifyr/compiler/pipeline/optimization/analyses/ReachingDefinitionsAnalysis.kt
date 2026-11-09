@@ -126,8 +126,7 @@ class ReachingDefinitionsComputation(
                 continue
             }
             val variable = evaluateVariable(read) ?: continue
-            // the property is checked in the pre-init state too, where the declaration holds
-            definitionsOf[read] = initialIn[variable].orEmpty() + variable
+            definitionsOf[read] = initialIn[variable].orEmpty()
         }
     }
 

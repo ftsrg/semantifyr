@@ -73,8 +73,8 @@ class VariableBoundsComputation(
         execute(inlinedOxsts.initTransition, initial)
         if (reachable != null) {
             execute(inlinedOxsts.mainTransition, reachable)
+            evaluate(inlinedOxsts.property.expression, reachable)
         }
-        evaluate(inlinedOxsts.property.expression, join(initial, reachable)!!)
 
         return VariableBoundsInfo(variableRanges, arithmeticRanges)
     }
@@ -111,13 +111,8 @@ class VariableBoundsComputation(
     private fun initialState(): MutableMap<VariableDeclaration, IntegerRange> {
         val state = HashMap<VariableDeclaration, IntegerRange>()
         for (variable in globals) {
-            val initializer = variable.expression
-            val range = if (initializer == null) {
-                havocRange(variable)
-            } else {
-                evaluate(initializer, state)
-            }
-            write(state, variable, range)
+            val initializer = variable.expression ?: error("Variable ${variable.name} has no initializer")
+            write(state, variable, evaluate(initializer, state))
         }
         return state
     }
@@ -183,18 +178,10 @@ class VariableBoundsComputation(
                 state
             }
             is LocalVarDeclarationOperation -> {
+                val initializer = operation.expression ?: error("Local variable ${operation.name} has no initializer")
+                val value = evaluate(initializer, state)
                 if (isIntegerVariable(operation)) {
-                    val initializer = operation.expression
-                    val value = if (initializer == null) {
-                        havocRange(operation)
-                    } else {
-                        evaluate(initializer, state)
-                    }
                     write(state, operation, value)
-                } else {
-                    operation.expression?.let {
-                        evaluate(it, state)
-                    }
                 }
                 state
             }
@@ -303,32 +290,32 @@ class VariableBoundsComputation(
         comparison: ComparisonOperator,
         polarity: Boolean,
     ): MutableMap<VariableDeclaration, IntegerRange>? {
-        val op = if (polarity) {
+        val operator = if (polarity) {
             comparison.op
         } else {
             negate(comparison.op)
         }
         val left = evaluate(comparison.left, state)
         val right = evaluate(comparison.right, state)
-        if (!isSatisfiable(left, op, right)) {
+        if (!isSatisfiable(left, operator, right)) {
             return null
         }
         integerVariableOf(comparison.left)?.let {
-            state[it] = constrain(left, op, right) ?: return null
+            state[it] = constrain(left, operator, right) ?: return null
         }
         integerVariableOf(comparison.right)?.let {
-            state[it] = constrain(right, flip(op), left) ?: return null
+            state[it] = constrain(right, flip(operator), left) ?: return null
         }
         return state
     }
 
-    // the values of range that stand in relation op to some value of bound
+    // the values of range that stand in relation operator to some value of bound
     private fun constrain(
         range: IntegerRange,
-        op: ComparisonOp,
+        operator: ComparisonOp,
         bound: IntegerRange,
     ): IntegerRange? {
-        val constraint = when (op) {
+        val constraint = when (operator) {
             ComparisonOp.LESS -> IntegerRange(null, bound.upper?.let { it - 1 })
             ComparisonOp.LESS_EQ -> IntegerRange(null, bound.upper)
             ComparisonOp.GREATER -> IntegerRange(bound.lower?.let { it + 1 }, null)
@@ -348,10 +335,10 @@ class VariableBoundsComputation(
 
     private fun isSatisfiable(
         left: IntegerRange,
-        op: ComparisonOp,
+        operator: ComparisonOp,
         right: IntegerRange,
     ): Boolean {
-        return when (op) {
+        return when (operator) {
             ComparisonOp.LESS -> left.lower == null || right.upper == null || left.lower < right.upper
             ComparisonOp.LESS_EQ -> left.lower == null || right.upper == null || left.lower <= right.upper
             ComparisonOp.GREATER -> left.upper == null || right.lower == null || left.upper > right.lower
@@ -361,8 +348,8 @@ class VariableBoundsComputation(
         }
     }
 
-    private fun negate(op: ComparisonOp): ComparisonOp {
-        return when (op) {
+    private fun negate(operator: ComparisonOp): ComparisonOp {
+        return when (operator) {
             ComparisonOp.LESS -> ComparisonOp.GREATER_EQ
             ComparisonOp.LESS_EQ -> ComparisonOp.GREATER
             ComparisonOp.GREATER -> ComparisonOp.LESS_EQ
@@ -372,8 +359,8 @@ class VariableBoundsComputation(
         }
     }
 
-    private fun flip(op: ComparisonOp): ComparisonOp {
-        return when (op) {
+    private fun flip(operator: ComparisonOp): ComparisonOp {
+        return when (operator) {
             ComparisonOp.LESS -> ComparisonOp.GREATER
             ComparisonOp.LESS_EQ -> ComparisonOp.GREATER_EQ
             ComparisonOp.GREATER -> ComparisonOp.LESS

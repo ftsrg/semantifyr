@@ -50,8 +50,8 @@ function createGammaClient(): {
   resolveValidation: (result: WitnessValidationResult) => void;
 } {
   let resolveValidation: (result: WitnessValidationResult) => void = () => {};
-  const sendRequest = vi.fn<LspClient['sendRequest']>(async (_method, params) => {
-    const command = (params as { command?: string }).command;
+  const sendRequest = vi.fn<LspClient['sendRequest']>(async (_method, parameters) => {
+    const command = (parameters as { command?: string }).command;
     if (command === 'gamma.case.discover') {
       return [gammaCase];
     }
@@ -91,13 +91,13 @@ function editorHandle(sendRequest: LspClient['sendRequest']): LiveEditorHandle {
 
 // wires the panel and the witness pane as EditorPage does for the Gamma flavor
 function GammaWitnessPane({ handle }: { handle: LiveEditorHandle }): React.JSX.Element {
-  const panelRef = useRef<VerificationPanelHandle>(null);
+  const panel = useRef<VerificationPanelHandle>(null);
   const [cases, setCases] = useState<readonly VerificationCaseState[]>([]);
-  const shown = cases.find((cs) => cs.trace !== undefined);
+  const shown = cases.find((caseState) => caseState.trace !== undefined);
   return (
     <>
       <VerificationPanel
-        ref={panelRef}
+        ref={panel}
         editorHandle={handle}
         verificationCommand="gamma.case.verify"
         discoveryCommand="gamma.case.discover"
@@ -120,7 +120,7 @@ function GammaWitnessPane({ handle }: { handle: LiveEditorHandle }): React.JSX.E
           validationMessage={shown.validationMessage}
           validating={shown.validating ?? false}
           canRevalidate
-          onRevalidate={() => { panelRef.current?.revalidate(shown.caseInfo.id); }}
+          onRevalidate={() => { panel.current?.revalidate(shown.caseInfo.id); }}
           editorHandle={null}
           witnessLanguageId="gamma"
         />
@@ -152,7 +152,7 @@ describe('Gamma validation chip', { timeout: 20_000 }, () => {
     const client = createGammaClient();
     const user = await verifyAndValidate(client);
 
-    const validateCall = client.sendRequest.mock.calls.find(([, params]) => (params as { command?: string }).command === 'gamma.witness.validate');
+    const validateCall = client.sendRequest.mock.calls.find(([, parameters]) => (parameters as { command?: string }).command === 'gamma.witness.validate');
     expect(validateCall?.[1]).toEqual({
       command: 'gamma.witness.validate',
       arguments: [{ uri: gammaCase.location.uri, range: gammaCase.location.range, portfolio: 'smart-full', caseLabel: 'ACanBeGreen' }],

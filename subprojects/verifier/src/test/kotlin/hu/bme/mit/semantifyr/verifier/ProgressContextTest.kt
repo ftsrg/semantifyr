@@ -29,10 +29,10 @@ private class RecordingProgressContext : ProgressContext {
 class ProgressContextTest {
 
     @Test
-    fun `NoOp accepts reports and returns itself as child`() {
-        ProgressContext.NoOp.reportProgress("ignored")
-        ProgressContext.NoOp.checkIsCancelled()
-        assertThat(ProgressContext.NoOp.child("any")).isSameAs(ProgressContext.NoOp)
+    fun `Silent accepts reports and returns itself as child`() {
+        ProgressContext.Silent.reportProgress("ignored")
+        ProgressContext.Silent.checkIsCancelled()
+        assertThat(ProgressContext.Silent.child("any")).isSameAs(ProgressContext.Silent)
     }
 
     @Test

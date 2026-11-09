@@ -55,33 +55,33 @@ data class BackendMetricsDto(
     }
 }
 
-data class PassStatsDto(
+data class PassStatisticsDto(
     val name: String,
     val duration: Duration,
     val runs: Int,
     val firings: Int,
 )
 
-data class AnalysisStatsDto(
+data class AnalysisStatisticsDto(
     val name: String,
     val duration: Duration,
     val computations: Int,
 )
 
-data class OptimizationStatsDto(
+data class OptimizationStatisticsDto(
     val duration: Duration,
-    val passes: List<PassStatsDto>,
-    val analyses: List<AnalysisStatsDto>,
+    val passes: List<PassStatisticsDto>,
+    val analyses: List<AnalysisStatisticsDto>,
 ) {
     companion object {
-        fun fromStats(stats: OptimizationStats): OptimizationStatsDto {
-            return OptimizationStatsDto(
-                duration = stats.duration.toJavaDuration(),
-                passes = stats.passes.map {
-                    PassStatsDto(it.name, it.duration.toJavaDuration(), it.runs, it.firings)
+        fun fromStatistics(statistics: OptimizationStats): OptimizationStatisticsDto {
+            return OptimizationStatisticsDto(
+                duration = statistics.duration.toJavaDuration(),
+                passes = statistics.passes.map {
+                    PassStatisticsDto(it.name, it.duration.toJavaDuration(), it.runs, it.firings)
                 },
-                analyses = stats.analyses.map {
-                    AnalysisStatsDto(it.name, it.duration.toJavaDuration(), it.computations)
+                analyses = statistics.analyses.map {
+                    AnalysisStatisticsDto(it.name, it.duration.toJavaDuration(), it.computations)
                 },
             )
         }
@@ -93,8 +93,8 @@ data class CompilationMetricsDto(
     val instantiationDuration: Duration,
     val inliningDuration: Duration,
     val flatteningDuration: Duration,
-    val inliningOptimization: OptimizationStatsDto,
-    val flatteningOptimization: OptimizationStatsDto,
+    val inliningOptimization: OptimizationStatisticsDto,
+    val flatteningOptimization: OptimizationStatisticsDto,
     val inputSize: ModelSize,
     val inlinedSize: ModelSize,
     val flattenedSize: ModelSize,
@@ -106,8 +106,8 @@ data class CompilationMetricsDto(
                 instantiationDuration = metrics.instantiationDuration.toJavaDuration(),
                 inliningDuration = metrics.inliningDuration.toJavaDuration(),
                 flatteningDuration = metrics.flatteningDuration.toJavaDuration(),
-                inliningOptimization = OptimizationStatsDto.fromStats(metrics.inliningOptimization),
-                flatteningOptimization = OptimizationStatsDto.fromStats(metrics.flatteningOptimization),
+                inliningOptimization = OptimizationStatisticsDto.fromStatistics(metrics.inliningOptimization),
+                flatteningOptimization = OptimizationStatisticsDto.fromStatistics(metrics.flatteningOptimization),
                 inputSize = metrics.inputSize,
                 inlinedSize = metrics.inlinedSize,
                 flattenedSize = metrics.flattenedSize,
@@ -195,15 +195,13 @@ data class CallTraceStepDto(
 }
 
 data class CallTraceDto(
-    val initialStep: CallTraceStepDto,
-    val initializedStep: CallTraceStepDto?,
+    val initializedStep: CallTraceStepDto,
     val steps: List<CallTraceStepDto>,
 ) {
     companion object {
         fun fromCallTrace(callTrace: CallTrace): CallTraceDto {
             return CallTraceDto(
-                initialStep = CallTraceStepDto.fromCallTraceStep(callTrace.initialStep),
-                initializedStep = callTrace.initializedStep?.let { CallTraceStepDto.fromCallTraceStep(it) },
+                initializedStep = CallTraceStepDto.fromCallTraceStep(callTrace.initializedStep),
                 steps = callTrace.steps.map { CallTraceStepDto.fromCallTraceStep(it) },
             )
         }
@@ -237,15 +235,13 @@ data class WitnessStateStepDto(
 }
 
 data class WitnessStateDto(
-    val initialStep: WitnessStateStepDto,
-    val initializedStep: WitnessStateStepDto?,
+    val initializedStep: WitnessStateStepDto,
     val steps: List<WitnessStateStepDto>,
 ) {
     companion object {
         fun fromWitnessState(state: WitnessState): WitnessStateDto {
             return WitnessStateDto(
-                initialStep = WitnessStateStepDto.fromWitnessStateStep(state.initialStep),
-                initializedStep = state.initializedStep?.let { WitnessStateStepDto.fromWitnessStateStep(it) },
+                initializedStep = WitnessStateStepDto.fromWitnessStateStep(state.initializedStep),
                 steps = state.steps.map { WitnessStateStepDto.fromWitnessStateStep(it) },
             )
         }

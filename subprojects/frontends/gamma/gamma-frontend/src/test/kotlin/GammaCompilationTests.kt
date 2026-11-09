@@ -32,16 +32,16 @@ class GammaCompilationTests {
     private val simpleGammaPath = Path("build", "test-models", "Simple.gamma")
 
     @Test
-    fun `compile produces an oxsts file with the expected package header`(@TempDir tmp: Path) {
-        val compiled = compileSimple(tmp)
+    fun `compile produces an oxsts file with the expected package header`(@TempDir temporaryDirectory: Path) {
+        val compiled = compileSimple(temporaryDirectory)
 
         val text = compiled.readText()
         assertThat(text).startsWith("package Simple")
     }
 
     @Test
-    fun `compile imports the gamma semantic library`(@TempDir tmp: Path) {
-        val text = compileSimple(tmp).readText()
+    fun `compile imports the gamma semantic library`(@TempDir temporaryDirectory: Path) {
+        val text = compileSimple(temporaryDirectory).readText()
 
         assertThat(text).contains(
             "import semantifyr::gamma::expressions",
@@ -57,16 +57,16 @@ class GammaCompilationTests {
     }
 
     @Test
-    fun `compile emits each statechart as an OXSTS Statechart class`(@TempDir tmp: Path) {
-        val text = compileSimple(tmp).readText()
+    fun `compile emits each statechart as an OXSTS Statechart class`(@TempDir temporaryDirectory: Path) {
+        val text = compileSimple(temporaryDirectory).readText()
 
         assertThat(text).contains("class LeaderStatechart : Statechart")
         assertThat(text).contains("class WorkerStatechart : Statechart")
     }
 
     @Test
-    fun `compile emits the sync component with channels and bindings`(@TempDir tmp: Path) {
-        val text = compileSimple(tmp).readText()
+    fun `compile emits the sync component with channels and bindings`(@TempDir temporaryDirectory: Path) {
+        val text = compileSimple(temporaryDirectory).readText()
 
         assertThat(text).contains("class System : SyncComponent")
         assertThat(text).contains("contains leader: LeaderStatechart subsets components")
@@ -75,8 +75,8 @@ class GammaCompilationTests {
     }
 
     @Test
-    fun `compile emits each verification case with the VerificationCase annotation`(@TempDir tmp: Path) {
-        val text = compileSimple(tmp).readText()
+    fun `compile emits each verification case with the VerificationCase annotation`(@TempDir temporaryDirectory: Path) {
+        val text = compileSimple(temporaryDirectory).readText()
 
         val caseNames = listOf(
             "LeaderStatechartIdleReachable",
@@ -95,9 +95,9 @@ class GammaCompilationTests {
     }
 
     @Test
-    fun `compile creates parent directories when the target does not exist`(@TempDir tmp: Path) {
+    fun `compile creates parent directories when the target does not exist`(@TempDir temporaryDirectory: Path) {
         val gammaModel = gammaReader.readGammaFile(simpleGammaPath.toFile())
-        val nested = tmp.resolve("nested").resolve("dirs").resolve("model.oxsts")
+        val nested = temporaryDirectory.resolve("nested").resolve("dirs").resolve("model.oxsts")
 
         assertThat(Files.exists(nested.parent)).isFalse()
 
@@ -126,9 +126,9 @@ class GammaCompilationTests {
             )
     }
 
-    private fun compileSimple(tmp: Path): Path {
+    private fun compileSimple(temporaryDirectory: Path): Path {
         val gammaModel = gammaReader.readGammaFile(simpleGammaPath.toFile())
-        val target = tmp.resolve("model.oxsts")
+        val target = temporaryDirectory.resolve("model.oxsts")
         gammaCompiler.compile(gammaModel, target)
         return target
     }

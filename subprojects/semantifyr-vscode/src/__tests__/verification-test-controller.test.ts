@@ -19,23 +19,23 @@ interface ExecuteCommandParams {
     arguments: unknown[];
 }
 
-type VerifyHandler = (params: unknown, token: CancellationToken) => Promise<VerificationCaseResult | ResponseError | null> | VerificationCaseResult | ResponseError | null;
+type VerifyHandler = (parameters: unknown, token: CancellationToken) => Promise<VerificationCaseResult | ResponseError | null> | VerificationCaseResult | ResponseError | null;
 
 let cases: VerificationCaseSpecification[] | null;
 let verify: VerifyHandler;
-let requests: { method: string; params: unknown }[];
+let requests: { method: string; parameters: unknown }[];
 let controller: TestController;
 let witnesses: WitnessView;
 
 async function setUp() {
     const client = new LanguageClient('oxstsLSP', 'OXSTS Language Server', undefined, {});
-    client.server.onRequest((method, params, token) => {
-        requests.push({ method, params });
-        const command = (params as ExecuteCommandParams).command;
+    client.server.onRequest((method, parameters, token) => {
+        requests.push({ method, parameters });
+        const command = (parameters as ExecuteCommandParams).command;
         if (command === 'oxsts.case.discover') {
             return cases;
         }
-        return verify((params as ExecuteCommandParams).arguments[0], token);
+        return verify((parameters as ExecuteCommandParams).arguments[0], token);
     });
     const context = createExtensionContext('/extension');
     witnesses = new WitnessView();
@@ -78,7 +78,7 @@ describe('discovery', () => {
     it('asks the server for the cases of each workspace file', async () => {
         await setUp();
 
-        expect(requests).toEqual([{ method: 'workspace/executeCommand', params: { command: 'oxsts.case.discover', arguments: [modelUri] } }]);
+        expect(requests).toEqual([{ method: 'workspace/executeCommand', parameters: { command: 'oxsts.case.discover', arguments: [modelUri] } }]);
         const fileItem = controller.items.get(modelUri)!;
         expect(fileItem.label).toBe('lamp.oxsts');
         expect([...fileItem.children].map(([id]) => id)).toEqual(['lamp::Safe', 'lamp::Reachable']);
@@ -114,7 +114,7 @@ describe('verification', () => {
 
         expect(requests.at(-1)).toEqual({
             method: 'workspace/executeCommand',
-            params: { command: 'oxsts.case.verify', arguments: [{ uri: modelUri, range: safeCase.location.range }] },
+            parameters: { command: 'oxsts.case.verify', arguments: [{ uri: modelUri, range: safeCase.location.range }] },
         });
     });
 
@@ -240,7 +240,7 @@ describe('cancellation', () => {
 
         expect(testRun.outcome(caseItem('lamp::Safe'))).toBe('skipped');
         expect(testRun.outcome(caseItem('lamp::Reachable'))).toBe('skipped');
-        expect(requests.filter((request) => (request.params as ExecuteCommandParams).command === 'oxsts.case.verify')).toEqual([]);
+        expect(requests.filter((request) => (request.parameters as ExecuteCommandParams).command === 'oxsts.case.verify')).toEqual([]);
         expect(testRun.ended).toBe(true);
     });
 
@@ -248,7 +248,7 @@ describe('cancellation', () => {
         await setUp();
         const source = new CancellationTokenSource();
         let serverCancelled = false;
-        verify = (_params, token) => new Promise((resolve) => {
+        verify = (_parameters, token) => new Promise((resolve) => {
             token.onCancellationRequested(() => {
                 serverCancelled = true;
                 resolve(new ResponseError(LSPErrorCodes.RequestCancelled, 'cancelled'));
@@ -261,7 +261,7 @@ describe('cancellation', () => {
         expect(serverCancelled).toBe(true);
         expect(testRun.outcome(caseItem('lamp::Safe'))).toBe('skipped');
         expect(testRun.outcome(caseItem('lamp::Reachable'))).toBe('skipped');
-        expect(requests.filter((request) => (request.params as ExecuteCommandParams).command === 'oxsts.case.verify')).toHaveLength(1);
+        expect(requests.filter((request) => (request.parameters as ExecuteCommandParams).command === 'oxsts.case.verify')).toHaveLength(1);
         expect(testRun.ended).toBe(true);
     });
 });

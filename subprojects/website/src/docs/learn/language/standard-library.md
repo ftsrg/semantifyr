@@ -17,10 +17,6 @@ The `semantifyr` package is implicitly available in every Semantifyr file. It de
 | `bool` | Boolean values |
 | `string` | Text values |
 
-## Backend Support
-
-All four backends (Theta, nuXmv, Spin and Uppaal) support variables of type `int`, `bool` and enumerations; the `any` type is a structural feature of the language and works regardless of backend. A backend reports a model it cannot translate as not supported before it runs, naming each construct and its source line; the pages of [Theta](../backends/theta.mdx), [nuXmv](../backends/nuxmv.mdx), [Spin](../backends/spin.mdx) and [Uppaal](../backends/uppaal.mdx) list what each refuses and why. Theta and nuXmv use unbounded integers, Spin and Uppaal 32-bit ones, so on those two a counter needs a guard such as `if (x < 10) { x := x + 1 }`.
-
 ## The `Anything` Class
 
 Implicit supertype of all classes. Provides empty base transitions:
@@ -74,7 +70,7 @@ Instances contained in a `@Shared` containment feature are shared across all ins
 annotation Trace
 ```
 
-Calls to `@Trace`-annotated transitions are recorded in the verification witness, including parameter bindings at each call site. Only the calls that fired are listed, each with the receiver's feature path from the root instance (`root.kitchen.lamp`). The witness files `trace.json` and `witness.json` hold `initialStep` (the state before `init`), `initializedStep` (the state after `init`, with the calls traced during it) and `steps`, one per step of the main transition. The SysML v2 library traces a minimal set: transition firing, item sending, and the time advance at the root. The Gamma library traces transition firing, events raised on ports in either direction, and the time advance at the root, and the Gamma frontend writes the trace back as a Gamma execution trace, `trace.gamma` next to the witness: one `step` per witness step whose `act` block raises the input events, schedules the component and lets one second elapse, and whose `assert` block lists the fired transitions (by source and target state, with the trigger when that is ambiguous), the raised events, the active leaf states and the variable values, each referenced by its path from the verification case's component instance (`system.controller.Main.Operating`).
+Calls to `@Trace`-annotated transitions are recorded in the verification witness, including parameter bindings at each call site. Only the calls that fired are listed, each with the receiver's feature path from the root instance (`root.kitchen.lamp`). The witness files `trace.json` and `witness.json` hold `initializedStep` (the initial state, the one `init` produces, with the calls traced during it) and `steps`, one per step of the main transition. The SysML v2 library traces a minimal set: transition firing, item sending, and the time advance at the root. The Gamma library traces transition firing, events raised on ports in either direction, and the time advance at the root, and the Gamma frontend writes the trace back as a Gamma execution trace, `trace.gamma` next to the witness: one `step` per witness step whose `act` block raises the input events, schedules the component and lets one second elapse, and whose `assert` block lists the fired transitions (by source and target state, with the trigger when that is ambiguous), the raised events, the active leaf states and the variable values, each referenced by its path from the verification case's component instance (`system.controller.Main.Operating`).
 
 ### `@Clock`
 
@@ -82,7 +78,7 @@ Calls to `@Trace`-annotated transitions are recorded in the verification witness
 annotation Clock
 ```
 
-Marks a variable as a clock. Uppaal models it as a clock; the other backends treat it as an ordinary variable. Uppaal accepts `@Clock` only on data-typed variables, resets a clock only to `0` and cannot havoc it; it reports anything else as not supported.
+Marks a variable as a clock. Like every variable, a clock carries an initializer.
 
 ### `@NonOptimizable`
 

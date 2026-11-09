@@ -26,13 +26,11 @@ class WitnessValidatorTest {
         return Trace(
             backAnnotatedModel = inlined,
             witnessState = WitnessState(
-                initialStep = WitnessStateStep(emptyList()),
-                initializedStep = null,
+                initializedStep = WitnessStateStep(emptyList()),
                 steps = emptyList(),
             ),
             callTrace = CallTrace(
-                initialStep = CallTraceStep(emptyList()),
-                initializedStep = null,
+                initializedStep = CallTraceStep(emptyList()),
                 steps = emptyList(),
             ),
         )
@@ -44,12 +42,12 @@ class WitnessValidatorTest {
         val trace = fakeTrace(inlined)
         val verification = fakeVerificationResult(verdict = VerificationVerdict.Passed)
         val verifier = mock<SemantifyrVerifier> {
-            onBlocking { verify(inlined, ProgressContext.NoOp) } doReturn verification
+            onBlocking { verify(inlined, ProgressContext.Silent) } doReturn verification
         }
 
         val result = WitnessValidator().validate(verifier, trace)
 
-        verify(verifier).verify(same(inlined), eq(ProgressContext.NoOp))
+        verify(verifier).verify(same(inlined), eq(ProgressContext.Silent))
         assertThat(result).isInstanceOf(WitnessValidationResult.Valid::class.java)
         assertThat(result.verification).isSameAs(verification)
     }
@@ -59,7 +57,7 @@ class WitnessValidatorTest {
         val inlined = mock<InlinedOxsts>()
         val trace = fakeTrace(inlined)
         val verifier = mock<SemantifyrVerifier> {
-            onBlocking { verify(inlined, ProgressContext.NoOp) } doReturn fakeVerificationResult(verdict = VerificationVerdict.Failed)
+            onBlocking { verify(inlined, ProgressContext.Silent) } doReturn fakeVerificationResult(verdict = VerificationVerdict.Failed)
         }
 
         val result = WitnessValidator().validate(verifier, trace)
@@ -71,7 +69,7 @@ class WitnessValidatorTest {
     suspend fun `validate forwards a non-default progress context`() {
         val inlined = mock<InlinedOxsts>()
         val trace = fakeTrace(inlined)
-        val progress = ProgressContext.NoOp.child("ctx")
+        val progress = ProgressContext.Silent.child("ctx")
         val verification = fakeVerificationResult(verdict = VerificationVerdict.Inconclusive)
         val verifier = mock<SemantifyrVerifier> {
             onBlocking { verify(inlined, progress) } doReturn verification

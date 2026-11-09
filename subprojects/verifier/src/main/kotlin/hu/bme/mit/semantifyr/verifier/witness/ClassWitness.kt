@@ -21,8 +21,7 @@ class ClassWitnessState(
 )
 
 class ClassWitness(
-    val initialState: ClassWitnessState,
-    val initializedState: ClassWitnessState?,
+    val initializedState: ClassWitnessState,
     val transitionStates: List<ClassWitnessState>,
     val nextStateMap: Map<ClassWitnessState, List<ClassWitnessState>>,
     val inlinedOxsts: InlinedOxsts,

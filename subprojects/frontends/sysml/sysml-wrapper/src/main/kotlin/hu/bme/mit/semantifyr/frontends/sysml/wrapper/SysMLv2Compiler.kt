@@ -26,9 +26,15 @@ class SysMLv2Compiler(
 
     private val logger by loggerFactory()
 
-    private val bundleDir: Path by lazy { extractBundle() }
-    private val cliPath: Path by lazy { bundleDir.resolve("cli.cjs") }
-    private val sysmlLibraryPath: Path by lazy { bundleDir.resolve("sysml.library") }
+    private val bundleDirectory: Path by lazy {
+        extractBundle()
+    }
+    private val cliPath: Path by lazy {
+        bundleDirectory.resolve("cli.cjs")
+    }
+    private val sysmlLibraryPath: Path by lazy {
+        bundleDirectory.resolve("sysml.library")
+    }
 
     fun compile(sourcePath: Path, outputPath: Path): Path {
         require(Files.isRegularFile(sourcePath)) {
@@ -65,7 +71,7 @@ class SysMLv2Compiler(
             }
         }
         return cacheDirectory
-            .resolve(bundleDir.fileName.toString())
+            .resolve(bundleDirectory.fileName.toString())
             .resolve("${sourcePath.fileName}-${sha256Hex(files)}.oxsts")
     }
 
@@ -130,10 +136,10 @@ class SysMLv2Compiler(
 
         val process = try {
             builder.start()
-        } catch (ex: IOException) {
+        } catch (exception: IOException) {
             throw IllegalStateException(
                 "Failed to launch the SysMLv2 node CLI ($cliPath). Ensure `node` is installed and on PATH.",
-                ex,
+                exception,
             )
         }
 

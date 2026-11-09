@@ -185,7 +185,7 @@ public class ArrayTypeTest {
                 contains first: Worker subsets workers
                 contains second: Worker subsets workers
                 var queue: Worker[2] := [first, second]
-                var picks: workers[1..2]
+                var picks: workers[1..2] := [first, second]
                 var index: int := 0
                 redefine tran {
                     queue[index] := second
@@ -228,7 +228,7 @@ public class ArrayTypeTest {
             class Team {
                 contains worker: Worker
                 redefine tran {
-                    var slots: Worker[2]
+                    var slots: Worker[2] := [worker, worker]
                 }
             }
             """, CheckMode.ALL);

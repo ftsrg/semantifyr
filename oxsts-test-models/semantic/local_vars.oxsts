@@ -100,7 +100,8 @@ class LocalVariableUninitializedReach {
     var x: int := 0
 
     redefine tran {
-        var delta: int
+        var delta: int := 0
+        havoc(delta)
         assume(delta >= 1 && delta <= 3)
         x := delta
     }
@@ -116,7 +117,8 @@ class LocalVariableUninitializedBound {
     var x: int := 0
 
     redefine tran {
-        var delta: int
+        var delta: int := 0
+        havoc(delta)
         assume(delta >= 1 && delta <= 3)
         x := delta
     }

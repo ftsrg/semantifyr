@@ -148,11 +148,7 @@ class UppaalOperationVisitor @AssistedInject constructor(
     }
 
     override fun visit(operation: LocalVarDeclarationOperation) {
-        val initExpression = operation.expression
-        if (initExpression == null) {
-            havoc(operation)
-            return
-        }
+        val initExpression = operation.expression ?: error("Local variable ${operation.name} has no initializer")
         val name = uppaalVariableTransformer.nameOf(operation)
         val assignment = "$name = ${uppaalExpressionTransformer.transform(initExpression)}"
         context.edges += UppaalEdge(sourceId, targetId, assignment = assignment)
@@ -162,7 +158,7 @@ class UppaalOperationVisitor @AssistedInject constructor(
         havoc(OxstsUtils.requireVariableReference(operation.reference))
     }
 
-    fun havoc(variable: VariableDeclaration) {
+    private fun havoc(variable: VariableDeclaration) {
         val name = uppaalVariableTransformer.nameOf(variable)
         if (uppaalVariableTransformer.isClock(variable)) {
             throw BackendUnsupportedException("Uppaal does not support havoc on clock $name")

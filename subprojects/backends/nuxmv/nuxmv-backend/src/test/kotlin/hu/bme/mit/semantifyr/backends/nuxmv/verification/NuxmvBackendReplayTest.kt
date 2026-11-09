@@ -140,7 +140,7 @@ class NuxmvBackendReplayTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
-        val states = listOfNotNull(witness.initializedState) + witness.transitionStates
+        val states = listOf(witness.initializedState) + witness.transitionStates
         assertThat(
             states.map {
                 it.integer("counter")
@@ -157,19 +157,19 @@ class NuxmvBackendReplayTest {
     }
 
     @Test
-    suspend fun `an uninitialized variable can violate an invariant in the initial state`() {
+    suspend fun `a variable havoced in init can violate an invariant once initialized`() {
         val result = verifyFixture("initial_values", "UninitializedIntegerBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
-        assertThat(result.inlinedWitness!!.initializedState!!.integer("\$\$root\$\$x")).isNotEqualTo(0)
+        assertThat(result.inlinedWitness!!.initializedState.integer("\$\$root\$\$x")).isNotEqualTo(0)
     }
 
     @Test
-    suspend fun `an uninitialized enum variable can violate an invariant in the initial state`() {
+    suspend fun `an enum variable havoced in init can violate an invariant once initialized`() {
         val result = verifyFixture("initial_values", "UninitializedEnumBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
-        assertThat(result.inlinedWitness!!.initializedState!!.enumeration("\$\$root\$\$light")).isEqualTo("On")
+        assertThat(result.inlinedWitness!!.initializedState.enumeration("\$\$root\$\$light")).isEqualTo("On")
     }
 
     @Test

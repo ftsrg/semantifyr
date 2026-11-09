@@ -7,12 +7,11 @@
 package hu.bme.mit.semantifyr.frontends.gamma.cli
 
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.cli.common.VerifyOutcomeLine
 import hu.bme.mit.semantifyr.cli.common.fakePortfolio
 import hu.bme.mit.semantifyr.cli.common.jsonLines
+import hu.bme.mit.semantifyr.verifier.VerificationReport
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.int
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -34,18 +33,18 @@ class GammaVerifyCommandTest {
         val result = runGammaCli("verify", "--json", "--portfolio", portfolio.id, "-d", artifacts.toString(), simpleModel.toString(), portfolios = listOf(portfolio))
 
         assertThat(result.statusCode).describedAs(result.output).isEqualTo(5)
-        val lines = jsonLines(result.stdout)
+        val lines = jsonLines<VerifyOutcomeLine>(result.stdout)
         assertThat(lines).hasSize(8)
         assertThat(
             lines.map {
-                it.getValue("case").jsonPrimitive.content
+                it.case
             },
         ).contains(SIMPLE_CASE).allMatch {
             it.startsWith("Simple.")
         }
         assertThat(
             lines.map {
-                it.getValue("exitCode").jsonPrimitive.int
+                it.exitCode
             },
         ).containsOnly(0, 5)
     }
@@ -62,12 +61,11 @@ class GammaVerifyCommandTest {
         )
 
         assertThat(result.statusCode).describedAs(result.output).isZero()
-        val line = jsonLines(result.stdout).single()
-        assertThat(line.getValue("case").jsonPrimitive.content).isEqualTo(SIMPLE_CASE)
-        val report = Path(line.getValue("report").jsonPrimitive.content)
+        val line = jsonLines<VerifyOutcomeLine>(result.stdout).single()
+        assertThat(line.case).isEqualTo(SIMPLE_CASE)
+        val report = Path(line.report)
         assertThat(report).isAbsolute().startsWith(artifacts.toAbsolutePath())
-        val reportResult = Json.parseToJsonElement(report.readText()).jsonObject.getValue("result").jsonObject
-        assertThat(reportResult.getValue("verdict").jsonPrimitive.content).isEqualTo("Passed")
+        assertThat(Json.decodeFromString<VerificationReport>(report.readText()).result.verdict).isEqualTo(VerificationVerdict.Passed)
     }
 
     @Test
