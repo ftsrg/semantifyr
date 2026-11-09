@@ -24,7 +24,6 @@ class EventTrigger : Trigger {
     redefine prop isTriggered(): bool {
         return port.hasInputEvent(event)
     }
-
 }
 
 class TimeoutTrigger : Trigger {
@@ -33,5 +32,4 @@ class TimeoutTrigger : Trigger {
     redefine prop isTriggered(): bool {
         return timeout.isUp()
     }
-
 }

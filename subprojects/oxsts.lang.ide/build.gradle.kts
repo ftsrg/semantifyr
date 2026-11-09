@@ -23,3 +23,16 @@ dependencies {
 application {
     mainClass = "hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsIdeSetup"
 }
+
+tasks.named("test") {
+    listOf(
+        "oxsts-test-models/tutorial",
+        "subprojects/oxsts.lang/src/main/resources/hu/bme/mit/semantifyr/oxsts/lang/library",
+        "subprojects/frontends/gamma/models/libraries",
+        "subprojects/frontends/sysml/models/libraries",
+    ).forEach {
+        inputs.dir(rootProject.layout.projectDirectory.dir(it))
+            .withPropertyName(it)
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+    }
+}

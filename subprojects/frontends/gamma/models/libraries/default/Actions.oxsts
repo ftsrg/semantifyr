@@ -12,7 +12,8 @@ import semantifyr::gamma::events
 import semantifyr::gamma::ports
 
 abstract class Action {
-    redefine tran { }
+    redefine tran {
+    }
 }
 
 class RaiseEventAction : Action {
