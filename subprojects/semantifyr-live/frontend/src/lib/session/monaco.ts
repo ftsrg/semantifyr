@@ -27,7 +27,7 @@ import type { ResolvedColorMode } from '../util/colorMode';
 import { observeSocketClose, type SocketClose } from './reconnectController';
 import type { ModelDocuments } from './modelDocuments';
 import type { SemantifyrLiveApi } from '../api/lspExtensions';
-import { DERIVED_SCHEME, fileUriOfLibrary, isLibraryFileUri, LIBRARY_SCHEME, libraryUriOf } from './readOnlyDocuments';
+import { DERIVED_SCHEME, fileUriOfLibrary, isLibraryFileUri, LIBRARY_SCHEME, libraryUriOf, TRACE_SCHEME } from './readOnlyDocuments';
 
 // Synced from :semantifyr-vscode by the cloneVscodeLanguageAssets Gradle task.
 import oxstsGrammar from '../../vscode/imported/syntaxes/oxsts.tmLanguage.json';
@@ -249,6 +249,31 @@ const LIBRARY_NAVIGATION: Middleware = {
   },
 };
 
+const WORKSPACE_PATH = '/workspace/';
+// the servers take a document only under a workspace file address, so a trace document goes under one no file of the session has
+const TRACE_SERVER_PATH = '/workspace/.live-trace/';
+
+const TRACE_ADDRESSES = {
+  code2Protocol: (uri: vscode.Uri): string => {
+    return uri.scheme === TRACE_SCHEME && uri.path.startsWith(WORKSPACE_PATH)
+      ? vscode.Uri.file(`${TRACE_SERVER_PATH}${uri.path.slice(WORKSPACE_PATH.length)}`).toString()
+      : uri.toString();
+  },
+  protocol2Code: (value: string): vscode.Uri => {
+    const uri = vscode.Uri.parse(value);
+    return uri.scheme === 'file' && uri.path.startsWith(TRACE_SERVER_PATH)
+      ? uri.with({ scheme: TRACE_SCHEME, path: `${WORKSPACE_PATH}${uri.path.slice(TRACE_SERVER_PATH.length)}` })
+      : uri;
+  },
+};
+
+function documentSelectorOf(languageId: string): { language: string; scheme: string }[] {
+  return [
+    { language: languageId, scheme: 'file' },
+    { language: languageId, scheme: TRACE_SCHEME },
+  ];
+}
+
 let apiWrapperPromise: Promise<MonacoVscodeApiWrapper> | null = null;
 let markMonacoReady: () => void = () => {};
 // Monaco's editor API is touched only once the VS Code services are up, or it starts the standalone ones
@@ -282,15 +307,21 @@ export async function initializeMonaco(initialColorMode: ResolvedColorMode): Pro
     registerCustomProvider(LIBRARY_SCHEME, new LibraryFileSystemProvider());
     const wrapper = new MonacoVscodeApiWrapper(vscodeApiConfig);
     await wrapper.start();
-    vscode.workspace.registerTextDocumentContentProvider(DERIVED_SCHEME, {
+    const derivedContent: vscode.TextDocumentContentProvider = {
       provideTextDocumentContent: (uri) => {
         return derivedTexts.get(uri.toString()) ?? '';
       },
-    });
+    };
+    vscode.workspace.registerTextDocumentContentProvider(DERIVED_SCHEME, derivedContent);
+    vscode.workspace.registerTextDocumentContentProvider(TRACE_SCHEME, derivedContent);
     markMonacoReady();
     return wrapper;
   })();
   return apiWrapperPromise;
+}
+
+export function whenMonacoReady(): Promise<void> {
+  return monacoReady;
 }
 
 export async function applyColorTheme(colorMode: ResolvedColorMode): Promise<void> {
@@ -599,8 +630,9 @@ export async function connectWorkerLanguageClient(
       },
     },
     clientOptions: {
-      documentSelector: [{ language: languageId, scheme: 'file' }],
+      documentSelector: documentSelectorOf(languageId),
       middleware: LIBRARY_NAVIGATION,
+      uriConverters: TRACE_ADDRESSES,
       workspaceFolder: {
         index: 0,
         name: 'workspace',
@@ -644,8 +676,9 @@ export async function connectLanguageClient(
       },
     },
     clientOptions: {
-      documentSelector: [{ language: languageId, scheme: 'file' }],
+      documentSelector: documentSelectorOf(languageId),
       middleware: LIBRARY_NAVIGATION,
+      uriConverters: TRACE_ADDRESSES,
       workspaceFolder: {
         index: 0,
         name: 'workspace',

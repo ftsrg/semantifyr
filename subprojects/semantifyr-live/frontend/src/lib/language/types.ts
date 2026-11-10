@@ -58,6 +58,8 @@ export interface LanguageRuntime {
   readonly api: SemantifyrLiveApi
   // reads a library file by its file URI
   readLibrary: (uri: string) => Promise<string | null>
+  // the OXSTS witness of a trace whose witness URI names the language's own trace
+  witnessUriOf?: (witnessUri: string) => string | undefined
   client: () => LspClient | undefined
   metrics: () => LspMetrics | null
   addProgressListener: (listener: (params: unknown) => void) => () => void

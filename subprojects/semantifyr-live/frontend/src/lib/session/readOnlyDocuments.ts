@@ -12,6 +12,9 @@ export const LIBRARY_SCHEME = 'live-library'
 // Documents the page derives, such as the OXSTS of the model, live under this scheme
 export const DERIVED_SCHEME = 'live-derived'
 
+// A case's trace text and the OXSTS of its trace, named by the path of the file the verification wrote
+export const TRACE_SCHEME = 'live-trace'
+
 const LIBRARY_PREFIXES = [
   'file:///workspace/.semantifyr/',
   'file:///workspace/Library/',
@@ -45,6 +48,10 @@ export function fileUriOfLibrary(libraryUri: string): string {
 
 export function derivedUriOf(id: string, fileName: string): string {
   return `${DERIVED_SCHEME}:/${id}/${fileName}`
+}
+
+export function traceUriOf(fileUri: string): string {
+  return `${TRACE_SCHEME}:${fileUri.slice('file://'.length)}`
 }
 
 export function fileNameOf(uri: string): string {

@@ -129,6 +129,7 @@ export interface SysmlBridge {
   client: LspClient
   readMapping: () => Promise<SysmlMapping>
   translateNotification: (method: string, params: unknown) => unknown
+  witnessUriOf: (traceUri: string) => string | undefined
 }
 
 export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
@@ -342,6 +343,9 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
       return method === SemantifyrLiveMethods.VERIFICATIONS_CHANGED
         ? translateActive(params as VerificationsChangedParams | null)
         : params
+    },
+    witnessUriOf: (traceUri) => {
+      return witnessUris.get(traceUri)
     },
   }
 }
