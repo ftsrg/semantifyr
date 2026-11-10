@@ -28,6 +28,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfThenElse
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
@@ -69,9 +70,27 @@ class ArrayFlatteningPass @Inject constructor(
             }
         }
 
+        fun slotCountOf(expression: Expression?): Int? {
+            return when (expression) {
+                is IfThenElse -> slotCountOf(expression.then) ?: slotCountOf(expression.`else`)
+                is ArrayLiteral -> expression.values.size.takeIf {
+                    it > 1
+                }
+                else -> arrayOf(expression)?.let {
+                    slotCounts.getValue(it)
+                }
+            }
+        }
+
+        for (indexing in inlinedOxsts.eAllOfType<IndexingSuffixExpression>().toList().asReversed()) {
+            val primary = indexing.primary
+            if (primary is IfThenElse && slotCountOf(primary) != null) {
+                EcoreUtil2.replace(indexing, indexInto(primary, indexing.index))
+            }
+        }
         for (comparison in inlinedOxsts.eAllOfType<ComparisonOperator>().toList()) {
-            val array = arrayOf(comparison.left) ?: arrayOf(comparison.right) ?: continue
-            val slotComparisons = (0 until slotCounts.getValue(array)).map { index ->
+            val slotCount = slotCountOf(comparison.left) ?: slotCountOf(comparison.right) ?: continue
+            val slotComparisons = (0 until slotCount).map { index ->
                 OxstsFactory.createComparisonOperator().also {
                     it.op = comparison.op
                     it.left = slotOf(comparison.left, index)
@@ -106,7 +125,7 @@ class ArrayFlatteningPass @Inject constructor(
         }
         for ((arrayVariable, slotCount) in slotCounts) {
             val initializer = arrayVariable.expression
-            if (arrayOf(initializer) != null) {
+            if (initializer !is ArrayLiteral && slotCountOf(initializer) != null) {
                 arrayVariable.expression = OxstsFactory.createArrayLiteral().also { literal ->
                     (0 until slotCount).mapTo(literal.values) {
                         slotOf(initializer, it)
@@ -173,9 +192,25 @@ class ArrayFlatteningPass @Inject constructor(
             return arrayExpression.values.getOrNull(index)?.copy()
                 ?: sourceError(arrayExpression, "Array literal has no value at index $index.")
         }
+        return indexInto(arrayExpression, OxstsFactory.createLiteralInteger(index))
+    }
+
+    // an array-valued if-then-else is indexed in each branch, so only indexings of array variables and literals remain
+    private fun indexInto(arrayExpression: Expression, index: Expression): Expression {
+        if (arrayExpression is IfThenElse) {
+            return OxstsFactory.createIfThenElse().also {
+                it.guard = arrayExpression.guard.copy()
+                it.then = indexInto(arrayExpression.then, index)
+                it.`else` = indexInto(arrayExpression.`else`, index)
+            }
+        }
+        val constantIndex = evaluateConstantInteger(index)
+        if (arrayExpression is ArrayLiteral && constantIndex != null) {
+            return slotOf(arrayExpression, constantIndex)
+        }
         return OxstsFactory.createIndexingSuffixExpression().also {
             it.primary = arrayExpression.copy()
-            it.index = OxstsFactory.createLiteralInteger(index)
+            it.index = index.copy()
         }
     }
 
@@ -266,7 +301,8 @@ class ArrayFlatteningPass @Inject constructor(
         val (writes, reads) = allIndexings.partition {
             isWriteSite(it)
         }
-        for (indexing in reads) {
+        // an index that reads the array is rewritten before the indexing it selects for, which copies it
+        for (indexing in reads.asReversed()) {
             rewriteIndexing(indexing, arrayVariable, slotVariables)
         }
         for (indexing in writes) {

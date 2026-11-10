@@ -124,3 +124,35 @@ class InclusiveRangeViolated {
         return AG x <= 2
     }
 }
+
+@VerificationCase
+@Tag("expect-pass")
+class EmptyExclusiveRangeBound {
+    var x: int := 0
+
+    redefine tran {
+        for (index in 0..<0) {
+            x := x + 1
+        }
+    }
+
+    prop {
+        return AG x == 0
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class EmptyExclusiveRangeUnreachable {
+    var x: int := 0
+
+    redefine tran {
+        for (index in 0..<0) {
+            x := x + 1
+        }
+    }
+
+    prop {
+        return EF x == 1
+    }
+}
