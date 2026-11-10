@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { VerificationCaseSpecification, VerificationTrace } from '@semantifyr/editor-common'
+import type { PortfolioInfo, VerificationCaseSpecification, VerificationTrace } from '@semantifyr/editor-common'
 
 import { findExample, liveFlavors, type LiveFlavor } from '../examples'
 import { SemantifyrLiveApi } from '../lib/api/lspExtensions'
@@ -44,6 +44,9 @@ export interface Seed {
   verifyBlocked?: boolean
   unsaved?: boolean
   sharedResults?: SharedResults | null
+  // the model's text in place of the example's
+  text?: string
+  portfolios?: PortfolioInfo[]
 }
 
 export interface Seeded {
@@ -117,7 +120,8 @@ export function seedLive(seed: Seed): Seeded {
   const steps = initialization(flavor.languageId, seed.initializingAt ?? null)
   const runtime = runtimeOf(flavor, connection, steps, seed.modelOxsts)
   const key = documentKey(flavor.id, example.id, false)
-  const record: DocumentRecord = { key, flavorId: flavor.id, example, shared: false, uri: documentUri(flavor), text: example.code, savedText: example.code, file: null }
+  const text = seed.text ?? example.code
+  const record: DocumentRecord = { key, flavorId: flavor.id, example, shared: false, uri: documentUri(flavor), text, savedText: text, file: null }
   const settings = createSettingsStore()
   settings.update((previous) => {
     return { ...previous, resultsColumnWidth: 0, caseListHeight: 0, resultsColumnCollapsed: false, ...seed.settings }
@@ -134,7 +138,7 @@ export function seedLive(seed: Seed): Seeded {
   shell.verifyBlocked.set(seed.verifyBlocked ?? false)
   const live: Live = {
     settings,
-    catalog: constantStore<Catalog>({ status: seed.catalog ?? 'ready', registry: ready ? registry : null, portfolios: [], defaultPortfolioId: 'smart-full' }),
+    catalog: constantStore<Catalog>({ status: seed.catalog ?? 'ready', registry: ready ? registry : null, portfolios: seed.portfolios ?? [], defaultPortfolioId: 'smart-full' }),
     workspace: constantStore(ready ? { flavor, documentKey: key, runtime } : { flavor: null, documentKey: null, runtime: null }),
     documents: constantStore(new Map(ready ? [[key, record]] : [])),
     connection: constantStore(connection),
@@ -161,7 +165,7 @@ export function seedLive(seed: Seed): Seeded {
       return seed.unsaved ?? false
     },
     currentText: () => {
-      return example.code
+      return text
     },
     revealRange: () => {},
     reconnect: () => {},
