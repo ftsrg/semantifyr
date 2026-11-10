@@ -5,40 +5,30 @@
  */
 
 import type React from 'react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import type { LiveEditorHandle } from '../editor/LiveEditor'
-import { SYSML_OXSTS_URI } from '../../lib/session/sysmlBridge'
+import type { DerivedDocument } from '../../lib/language/types'
+import type { ReadonlyEditorOpener } from '../../lib/session/monaco'
 import { FONT_SIZE } from '../../lib/util/theme'
 
 interface Props {
-  editorHandle: LiveEditorHandle | null
+  document: DerivedDocument
+  openReadonlyEditor: ReadonlyEditorOpener | null
 }
 
-export default function MappedOxstsTab({ editorHandle }: Props): React.JSX.Element {
+export default function MappedOxstsTab({ document, openReadonlyEditor }: Props): React.JSX.Element {
   const hostRef = useRef<HTMLDivElement>(null)
-  const [oxsts, setOxsts] = useState<string | null>(() => editorHandle?.getMappedOxsts() ?? null)
+  const oxsts = document.text
 
   useEffect(() => {
-    if (!editorHandle) {
-      return
-    }
-    setOxsts(editorHandle.getMappedOxsts())
-    return editorHandle.addMappingListener(() => {
-      setOxsts(editorHandle.getMappedOxsts())
-    })
-  }, [editorHandle])
-
-  useEffect(() => {
-    if (!editorHandle || !hostRef.current || oxsts === null) {
+    if (!openReadonlyEditor || !hostRef.current || oxsts === null) {
       return
     }
     const host = hostRef.current
     let cancelled = false
     let dispose: (() => void) | null = null
-    void editorHandle
-      .attachReadonlyEditor(host, SYSML_OXSTS_URI, 'oxsts')
+    void openReadonlyEditor(host, document.uri, document.languageId)
       .then((handle) => {
         if (cancelled) {
           handle.dispose()
@@ -54,7 +44,7 @@ export default function MappedOxstsTab({ editorHandle }: Props): React.JSX.Eleme
       dispose?.()
       host.replaceChildren()
     }
-  }, [editorHandle, oxsts])
+  }, [openReadonlyEditor, oxsts, document.uri, document.languageId])
 
   if (oxsts === null) {
     return (

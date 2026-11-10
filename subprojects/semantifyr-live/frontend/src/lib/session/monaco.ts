@@ -14,12 +14,14 @@ import { configureDefaultWorkerFactory } from 'monaco-languageclient/workerFacto
 import { MonacoVscodeApiWrapper, type MonacoVscodeApiConfig, type ExtensionConfig } from 'monaco-languageclient/vscodeApiWrapper';
 import { LanguageClientWrapper, LcWebSocket, LcWorker, type LanguageClientConfig } from 'monaco-languageclient/lcwrapper';
 import { EditorApp, type EditorAppConfig } from 'monaco-languageclient/editorApp';
-import type { editor } from 'monaco-editor';
+import { editor, Uri, type IDisposable } from 'monaco-editor';
 import type { MessageTransports } from 'vscode-languageclient';
 
 import { normalizeBaseUrl, type NavigateToParams } from '@semantifyr/editor-common';
 import type { ResolvedColorMode } from '../util/colorMode';
 import { observeSocketClose, type SocketClose } from './reconnectController';
+import type { ModelDocuments } from './modelDocuments';
+import type { SemantifyrLiveApi } from '../api/lspExtensions';
 
 // Synced from :semantifyr-vscode by the cloneVscodeLanguageAssets Gradle task.
 import oxstsGrammar from '../../vscode/imported/syntaxes/oxsts.tmLanguage.json';
@@ -128,8 +130,13 @@ function buildSemantifyrExtension(): ExtensionConfig {
 }
 
 let apiWrapperPromise: Promise<MonacoVscodeApiWrapper> | null = null;
+let markMonacoReady: () => void = () => {};
+// Monaco's editor API is touched only once the VS Code services are up, or it starts the standalone ones
+const monacoReady = new Promise<void>((resolve) => {
+  markMonacoReady = resolve;
+});
 
-async function ensureVscodeApi(initialColorMode: ResolvedColorMode): Promise<MonacoVscodeApiWrapper> {
+export async function initializeMonaco(initialColorMode: ResolvedColorMode): Promise<MonacoVscodeApiWrapper> {
   if (apiWrapperPromise) return apiWrapperPromise;
   const vscodeApiConfig: MonacoVscodeApiConfig = {
     $type: 'extended',
@@ -148,6 +155,7 @@ async function ensureVscodeApi(initialColorMode: ResolvedColorMode): Promise<Mon
   apiWrapperPromise = (async () => {
     const wrapper = new MonacoVscodeApiWrapper(vscodeApiConfig);
     await wrapper.start();
+    markMonacoReady();
     return wrapper;
   })();
   return apiWrapperPromise;
@@ -183,7 +191,7 @@ export async function createEditor(
   language: string,
   initialCode: string,
 ): Promise<EditorInstance> {
-  await ensureVscodeApi(colorMode);
+  await initializeMonaco(colorMode);
 
   const fileSystemProvider = new RegisteredFileSystemProvider(false);
   fileSystemProvider.registerFile(new RegisteredMemoryFile(fileUri, initialCode));
@@ -210,6 +218,8 @@ export async function createEditor(
 export interface SecondaryEditorHandle {
   dispose: () => void;
 }
+
+export type ReadonlyEditorOpener = (host: HTMLElement, uri: string, language: string) => Promise<SecondaryEditorHandle>;
 
 export async function createSecondaryEditor(
   host: HTMLElement,
@@ -249,6 +259,106 @@ export async function createSecondaryEditor(
       } catch {
         /* ignore */
       }
+    },
+  };
+}
+
+export async function attachReadonlyEditor(
+  host: HTMLElement,
+  api: SemantifyrLiveApi,
+  uri: string,
+  language: string,
+): Promise<SecondaryEditorHandle> {
+  const content = (await api.readDocument(uri)) ?? '// Witness source unavailable.';
+  return createSecondaryEditor(host, vscode.Uri.parse(uri), language, content, { readOnly: true });
+}
+
+export function createModelDocuments(): ModelDocuments {
+  const replacing = new Set<string>();
+  let ready = false;
+
+  const modelOf = (uri: string): editor.ITextModel | null => {
+    return ready ? editor.getModel(Uri.parse(uri)) : null;
+  };
+
+  const afterInitialization = (action: () => void): void => {
+    if (ready) {
+      action();
+      return;
+    }
+    void monacoReady.then(() => {
+      ready = true;
+      action();
+    });
+  };
+
+  const onDidCreate = (uri: string, listener: (model: editor.ITextModel) => void): IDisposable => {
+    return editor.onDidCreateModel((model) => {
+      if (model.uri.toString() === uri) {
+        listener(model);
+      }
+    });
+  };
+
+  return {
+    isOpen: (uri) => {
+      return modelOf(uri) !== null;
+    },
+    read: (uri) => {
+      return modelOf(uri)?.getValue() ?? null;
+    },
+    replace: (uri, text) => {
+      const model = modelOf(uri);
+      if (!model || model.getValue() === text) {
+        return;
+      }
+      replacing.add(uri);
+      try {
+        model.setValue(text);
+      } finally {
+        replacing.delete(uri);
+      }
+    },
+    onDidOpen: (uri, listener) => {
+      let disposed = false;
+      let subscription: IDisposable | null = null;
+      afterInitialization(() => {
+        if (!disposed) {
+          subscription = onDidCreate(uri, () => {
+            listener();
+          });
+        }
+      });
+      return () => {
+        disposed = true;
+        subscription?.dispose();
+      };
+    },
+    onDidChange: (uri, listener) => {
+      let disposed = false;
+      let created: IDisposable | null = null;
+      let changed: IDisposable | null = null;
+      const attach = (model: editor.ITextModel): void => {
+        changed?.dispose();
+        changed = model.onDidChangeContent(() => {
+          listener({ replaced: replacing.has(uri) });
+        });
+      };
+      afterInitialization(() => {
+        if (disposed) {
+          return;
+        }
+        const current = modelOf(uri);
+        if (current) {
+          attach(current);
+        }
+        created = onDidCreate(uri, attach);
+      });
+      return () => {
+        disposed = true;
+        created?.dispose();
+        changed?.dispose();
+      };
     },
   };
 }

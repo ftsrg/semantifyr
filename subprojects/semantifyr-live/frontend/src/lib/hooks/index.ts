@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-export { useColorMode } from './useColorMode'
+export { useColorMode, type ColorMode } from './useColorMode'
 export { useOnlineStatus } from './useOnlineStatus'
-export {
-  boolCodec,
-  sizeCodec,
-  stringCodec,
-  usePersistedState,
-  type PersistedCodec,
-} from './usePersistedState'
 export { useActiveVerifications, type ActiveVerificationsController } from './useActiveVerifications'

@@ -16,7 +16,7 @@ import type {
   VerificationTrace,
   WitnessValidationStatus,
 } from '../../lib/verification'
-import type { LiveEditorHandle } from '../editor/LiveEditor'
+import type { ReadonlyEditorOpener } from '../../lib/session/monaco'
 import CallTraceView from './CallTraceView'
 import WitnessStateView from './WitnessStateView'
 import ValidationChip from './ValidationChip'
@@ -31,7 +31,7 @@ interface Props {
   canRevalidate: boolean
   onRevalidate: () => void
   verificationPortfolioLabel?: string | undefined
-  editorHandle: LiveEditorHandle | null
+  openReadonlyEditor: ReadonlyEditorOpener | null
   witnessLanguageId: string
 }
 
@@ -73,11 +73,11 @@ const TOGGLE_GROUP_SX = {
 } as const
 
 function RawWitnessEditor({
-  editorHandle,
+  openReadonlyEditor,
   witnessUri,
   language,
 }: {
-  editorHandle: LiveEditorHandle | null
+  openReadonlyEditor: ReadonlyEditorOpener | null
   witnessUri: string
   language: string
 }): React.JSX.Element {
@@ -85,12 +85,11 @@ function RawWitnessEditor({
   const [failure, setFailure] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!editorHandle || !hostRef.current) return
+    if (!openReadonlyEditor || !hostRef.current) return
     const host = hostRef.current
     let cancelled = false
     let dispose: (() => void) | null = null
-    void editorHandle
-      .attachReadonlyEditor(host, witnessUri, language)
+    void openReadonlyEditor(host, witnessUri, language)
       .then((handle) => {
         if (cancelled) {
           handle.dispose()
@@ -111,7 +110,7 @@ function RawWitnessEditor({
         /* ignore */
       }
     }
-  }, [editorHandle, witnessUri, language])
+  }, [openReadonlyEditor, witnessUri, language])
 
   return (
     <>
@@ -149,7 +148,7 @@ export default function WitnessTab({
   canRevalidate,
   onRevalidate,
   verificationPortfolioLabel,
-  editorHandle,
+  openReadonlyEditor,
   witnessLanguageId,
 }: Props): React.JSX.Element {
   const [view, setView] = useState<ViewMode>('trace')
@@ -209,7 +208,7 @@ export default function WitnessTab({
           trace.witnessUri ? (
             <RawWitnessEditor
               key={trace.witnessUri}
-              editorHandle={editorHandle}
+              openReadonlyEditor={openReadonlyEditor}
               witnessUri={trace.witnessUri}
               language={witnessLanguageId}
             />

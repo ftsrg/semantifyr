@@ -14,7 +14,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import CloudOffOutlinedIcon from '@mui/icons-material/CloudOffOutlined';
 import WifiOffOutlinedIcon from '@mui/icons-material/WifiOffOutlined';
 
-import type { LiveEditorStatus } from '../editor/LiveEditor';
+import type { LiveEditorStatus } from './editorStatus';
 import { useOnlineStatus } from '../../lib/hooks';
 import { FONT_SIZE, ICON_SIZE } from '../../lib/util/theme';
 

@@ -11,7 +11,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 import CloudIcon from '@mui/icons-material/Cloud';
 import CloudOffOutlinedIcon from '@mui/icons-material/CloudOffOutlined';
-import type { LiveEditorStatus } from '../editor/LiveEditor';
+import type { LiveEditorStatus } from './editorStatus';
 import { ICON_SIZE } from '../../lib/util/theme';
 
 interface Props {

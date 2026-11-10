@@ -5,7 +5,6 @@
  */
 
 export { default as VerificationPanel } from './VerificationPanel';
-export type { VerificationPanelHandle } from './VerificationPanel';
 export { default as VerifyButton } from './VerifyButton';
 export { default as RefreshButton } from './RefreshButton';
 export { default as ProblemsPill } from './ProblemsPill';

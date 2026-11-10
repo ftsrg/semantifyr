@@ -12,10 +12,11 @@ import StatusBar, { type StatusBarInfoItem } from './StatusBar'
 import DevInfoPanel from '../dev/DevInfoPanel'
 import ActiveVerificationsMonitor from '../verification/ActiveVerificationsMonitor'
 import PortfolioSettings from '../verification/PortfolioSettings'
-import type { LiveEditorHandle, LiveEditorStatus } from '../editor/LiveEditor'
+import type { LiveEditorStatus } from './editorStatus'
+import type { LanguageRuntime } from '../../lib/language/types'
 import type { ColorModePreference } from '../../lib/util/colorMode'
 import type { LiveFlavor } from '../../examples'
-import type { FlavorInfo, PortfolioInfo } from '../../lib/api'
+import type { PortfolioInfo } from '../../lib/api'
 
 interface Props {
   logoSrc: string
@@ -38,7 +39,7 @@ interface Props {
   onPortfolioChange: (id: string) => void
   validationPortfolioId: string
   onValidationPortfolioChange: (id: string) => void
-  flavorInfo: FlavorInfo | null
+  validates: boolean
   colorModePreference: ColorModePreference
   onToggleColorMode: () => void
   devPanelOpen: boolean
@@ -46,7 +47,7 @@ interface Props {
   language: string
   connectedSince: number | null
   reconnectCount: number
-  editorHandle: LiveEditorHandle | null
+  runtime: LanguageRuntime | null
   backendUrl: string
   children: React.ReactNode
 }
@@ -77,7 +78,7 @@ export default function EditorShell(props: Props): React.JSX.Element {
         trailing={
           <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.25 }}>
             <ActiveVerificationsMonitor
-              api={props.editorHandle?.getApi() ?? null}
+              api={props.runtime?.api ?? null}
               connected={props.connectionStatus === 'connected'}
               onActivate={props.onOpenVerificationsTab}
             />
@@ -87,7 +88,7 @@ export default function EditorShell(props: Props): React.JSX.Element {
                 verifyPortfolioId={props.portfolioId}
                 onVerifyPortfolioChange={props.onPortfolioChange}
                 validationPortfolioId={
-                  props.flavorInfo?.validateWitnessCommand ? props.validationPortfolioId : null
+                  props.validates ? props.validationPortfolioId : null
                 }
                 onValidationPortfolioChange={props.onValidationPortfolioChange}
               />
@@ -102,7 +103,7 @@ export default function EditorShell(props: Props): React.JSX.Element {
         language={props.language}
         connectedSince={props.connectedSince}
         reconnectCount={props.reconnectCount}
-        editorHandle={props.editorHandle}
+        runtime={props.runtime}
         backendUrl={props.backendUrl}
       />
     </>

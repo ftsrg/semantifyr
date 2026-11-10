@@ -15,7 +15,8 @@ import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
-import type { LiveEditorHandle, LiveEditorStatus } from '../editor/LiveEditor';
+import type { LiveEditorStatus } from '../shell/editorStatus';
+import type { LanguageRuntime } from '../../lib/language/types';
 import type { LspMetrics } from '../../lib/session/lspMetrics';
 import { createApi, type InfoResponse, type SessionInfo } from '../../lib/api';
 import { formatDuration, formatIsoDuration } from '../../lib/util/duration';
@@ -28,7 +29,7 @@ interface Props {
   language: string;
   connectedSince: number | null;
   reconnectCount: number;
-  editorHandle: LiveEditorHandle | null;
+  runtime: LanguageRuntime | null;
   backendUrl: string;
 }
 
@@ -98,7 +99,7 @@ export default function DevInfoPanel({
   language,
   connectedSince,
   reconnectCount,
-  editorHandle,
+  runtime,
   backendUrl,
 }: Props): React.JSX.Element {
   const [sessionUptime, setSessionUptime] = useState<string>('-');
@@ -113,9 +114,9 @@ export default function DevInfoPanel({
     const update = (): void => {
       setPageUptime(formatElapsedMs(Date.now() - PAGE_START));
       setSessionUptime(connectedSince !== null ? formatElapsedMs(Date.now() - connectedSince) : '-');
-      setLspMetrics(editorHandle?.getLspMetrics() ?? null);
+      setLspMetrics(runtime?.metrics() ?? null);
 
-      const api = editorHandle?.getApi() ?? null;
+      const api = runtime?.api ?? null;
       if (api) {
         api.getSessionInfo()
           .then((info) => { setSessionInfo(info); })
@@ -127,7 +128,7 @@ export default function DevInfoPanel({
     update();
     const interval = setInterval(update, 2000);
     return () => { clearInterval(interval); };
-  }, [open, connectedSince, editorHandle]);
+  }, [open, connectedSince, runtime]);
 
   useEffect(() => {
     if (!open) return;

@@ -7,6 +7,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { useColorMode } from '../lib/hooks/useColorMode';
+import { changeSettings, createSettingsStore, createSystemColorModeStore } from '../lib/stores/settings';
+
+function renderColorMode() {
+  const settings = createSettingsStore();
+  const system = createSystemColorModeStore();
+  return { settings, ...renderHook(() => {
+    return useColorMode(settings, system);
+  }) };
+}
 
 const STORAGE_KEY = 'semantifyr-live-color-mode';
 
@@ -42,7 +51,7 @@ describe('useColorMode', () => {
 
   it('defaults to system preference and resolves it from matchMedia', () => {
     installMatchMedia(true);
-    const { result } = renderHook(() => useColorMode());
+    const { result } = renderColorMode();
     expect(result.current.preference).toBe('system');
     expect(result.current.colorMode).toBe('light');
     expect(document.documentElement.dataset.theme).toBe('light');
@@ -51,7 +60,7 @@ describe('useColorMode', () => {
 
   it('cycles system -> light -> dark -> system and persists each step', () => {
     installMatchMedia(true);
-    const { result } = renderHook(() => useColorMode());
+    const { result } = renderColorMode();
     act(() => { result.current.cycle(); });
     expect(result.current.preference).toBe('light');
     expect(window.localStorage.getItem(STORAGE_KEY)).toBe('light');
@@ -68,14 +77,14 @@ describe('useColorMode', () => {
   it('hydrates from a stored explicit preference and ignores matchMedia in that mode', () => {
     installMatchMedia(true);
     window.localStorage.setItem(STORAGE_KEY, 'dark');
-    const { result } = renderHook(() => useColorMode());
+    const { result } = renderColorMode();
     expect(result.current.preference).toBe('dark');
     expect(result.current.colorMode).toBe('dark');
   });
 
   it('updates the resolved theme when the OS preference flips while in system mode', () => {
     const mql = installMatchMedia(false);
-    const { result } = renderHook(() => useColorMode());
+    const { result } = renderColorMode();
     expect(result.current.colorMode).toBe('dark');
 
     act(() => {
@@ -90,8 +99,10 @@ describe('useColorMode', () => {
 
   it('explicit light/dark overrides the OS preference', () => {
     const mql = installMatchMedia(false);
-    const { result } = renderHook(() => useColorMode());
-    act(() => { result.current.setPreference('light'); });
+    const { result, settings } = renderColorMode();
+    act(() => {
+      changeSettings(settings, { theme: 'light' });
+    });
     // OS flipping does not change the explicit override.
     act(() => {
       mql.matches = false;

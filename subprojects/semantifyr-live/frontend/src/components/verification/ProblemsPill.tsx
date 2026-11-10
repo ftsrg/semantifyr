@@ -5,7 +5,7 @@
  */
 
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Popover from '@mui/material/Popover';
@@ -13,24 +13,14 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlineOutlined';
 import WarningAmberIcon from '@mui/icons-material/WarningAmberOutlined';
-import type { LiveEditorHandle, ProblemEntry } from '../editor/LiveEditor';
 import { FONT_SIZE, ICON_SIZE } from '../../lib/util/theme';
+import { useStore } from '../../lib/stores/useStore';
+import { useLive } from '../../lib/workspace/liveContext';
 
-interface Props {
-  editorHandle: LiveEditorHandle | null;
-}
-
-export default function ProblemsPill({ editorHandle }: Props): React.JSX.Element {
-  const [problems, setProblems] = useState<ProblemEntry[]>([]);
+export default function ProblemsPill(): React.JSX.Element {
+  const live = useLive();
+  const problems = useStore(live.problems);
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
-
-  useEffect(() => {
-    if (!editorHandle) return;
-    const refresh = () => { setProblems(editorHandle.getProblems()); };
-    refresh();
-    const dispose = editorHandle.addProblemsListener(refresh);
-    return () => { dispose(); };
-  }, [editorHandle]);
 
   const errors = problems.filter((p) => p.severity === 'error').length;
   const warnings = problems.filter((p) => p.severity === 'warning').length;
@@ -90,7 +80,10 @@ export default function ProblemsPill({ editorHandle }: Props): React.JSX.Element
             key={`${p.startLine}-${p.startColumn}-${p.message}-${idx}`}
             onClick={() => {
               setAnchor(null);
-              editorHandle?.revealProblem(p);
+              live.revealRange({
+                start: { line: p.startLine, character: p.startColumn },
+                end: { line: p.endLine, character: p.endColumn },
+              });
             }}
             sx={{
               display: 'flex',

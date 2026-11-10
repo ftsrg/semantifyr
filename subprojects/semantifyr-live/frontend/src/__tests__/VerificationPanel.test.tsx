@@ -4,23 +4,33 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { FlavorInfo } from '@semantifyr/editor-common';
 import VerificationPanel from '../components/verification/VerificationPanel';
-import type { LiveEditorHandle } from '../components/editor/LiveEditor';
 import type { VerificationCaseSpecification } from '@semantifyr/editor-common';
-import type { LspClient, VerificationCaseState } from '../lib/verification';
+import type { LspClient } from '../lib/verification';
+import { LiveContext } from '../lib/workspace/liveContext';
 import { sampleCase } from './fixtures/cases';
+import { servedFlavors } from './fixtures/flavors';
 import { failedResult, passedResult } from './fixtures/verification-results';
+import { createTestLive, type TestLive } from './helpers/live';
 
-interface FakeHandle {
-  handle: LiveEditorHandle;
+vi.mock('vscode', () => {
+  return {};
+});
+vi.mock('../lib/session/monaco', () => {
+  return {};
+});
+
+interface FakeClient {
+  client: LspClient;
   resolveDiscovery: (cases: VerificationCaseSpecification[]) => void;
   sendRequest: ReturnType<typeof vi.fn<LspClient['sendRequest']>>;
 }
 
-function createFakeHandle(): FakeHandle {
+function createFakeClient(): FakeClient {
   let resolveDiscovery: (cases: VerificationCaseSpecification[]) => void = () => {};
   // discoverVerificationCases (in @semantifyr/editor-common) sends workspace/executeCommand
   // with the discovery command in params.command; verifyCase does the same with the verify
@@ -40,82 +50,56 @@ function createFakeHandle(): FakeHandle {
     }
     return null;
   });
-
-  const handle: LiveEditorHandle = {
-    reconnect: () => {},
-    disconnect: () => {},
-    goToCase: () => {},
-    getLspClient: () => ({ sendRequest: sendRequestRouted, sendNotification: () => {} }),
-    getLspMetrics: () => null,
-    getApi: () => null,
-    getFileUri: () => 'inmemory:///snippet.oxsts',
-    getCurrentCode: () => '',
-    getMappedOxsts: () => null,
-    addMappingListener: () => () => {},
-    onEditorContentChange: () => () => {},
-    addProgressListener: () => () => {},
-    addNotificationListener: () => () => {},
-    setVerifyCaseMarkers: () => {},
-    getProblems: () => [],
-    addProblemsListener: () => () => {},
-    revealProblem: () => {},
-    attachReadonlyEditor: async () => ({ dispose: () => {} }),
-  };
   return {
-    handle,
+    client: { sendRequest: sendRequestRouted, sendNotification: () => {} },
     resolveDiscovery: (discovered) => { resolveDiscovery(discovered); },
     sendRequest: sendRequestRouted,
   };
 }
 
-
-function renderPanel(options: {
-  fake: FakeHandle;
-  validateWitnessCommand?: string;
-  onCasesChange?: (cases: readonly VerificationCaseState[]) => void;
+async function renderPanel(options: {
+  fake: FakeClient;
+  served?: FlavorInfo[];
   onShowWitness?: (caseId: string) => void;
-  onAutoValidateChange?: (enabled: boolean) => void;
-  autoValidate?: boolean;
-}) {
-  const onStatusMessage = vi.fn();
-  // exactOptionalPropertyTypes forbids passing `undefined` to optional props, so spread the
-  // optional callbacks conditionally instead of writing `prop={maybeUndef}` literally.
-  const optional: Partial<{
-    validateWitnessCommand: string;
-    onCasesChange: (cases: readonly VerificationCaseState[]) => void;
-    onShowWitness: (caseId: string) => void;
-    onAutoValidateChange: (enabled: boolean) => void;
-  }> = {};
-  if (options.validateWitnessCommand !== undefined) optional.validateWitnessCommand = options.validateWitnessCommand;
-  if (options.onCasesChange !== undefined) optional.onCasesChange = options.onCasesChange;
-  if (options.onShowWitness !== undefined) optional.onShowWitness = options.onShowWitness;
-  if (options.onAutoValidateChange !== undefined) optional.onAutoValidateChange = options.onAutoValidateChange;
-  return {
-    onStatusMessage,
-    ...render(
+}): Promise<TestLive & ReturnType<typeof render>> {
+  const test = createTestLive(options.fake.client, options.served ?? servedFlavors);
+  test.live.start('');
+  await waitFor(() => {
+    expect(test.live.workspace.get().runtime).not.toBeNull();
+  });
+  const rendered = render(
+    <LiveContext.Provider value={test.live}>
       <VerificationPanel
-        editorHandle={options.fake.handle}
-        verificationCommand="oxsts.case.verify"
-        discoveryCommand="oxsts.case.discover"
-        connected
-        portfolioId="smart-full"
-        validationPortfolioId="smart-full"
-        autoValidate={options.autoValidate ?? false}
         panelHeight={240}
         onClose={() => {}}
-        onStatusMessage={onStatusMessage}
-        {...optional}
-      />,
-    ),
-  };
+        {...(options.onShowWitness ? { onShowWitness: options.onShowWitness } : {})}
+      />
+    </LiveContext.Provider>,
+  );
+  const uri = 'file:///workspace/snippet.oxsts';
+  test.models.open(uri, 'model');
+  act(() => {
+    test.runtime().connect();
+  });
+  return { ...test, ...rendered };
+}
+
+function currentVerification(test: TestLive) {
+  return test.live.verification.get().get(test.live.workspace.get().documentKey!)!;
 }
 
 describe('VerificationPanel', () => {
-  it('discovers cases on mount and renders one row per case', async () => {
-    const fake = createFakeHandle();
-    renderPanel({ fake });
+  afterEach(() => {
+    window.localStorage.clear();
+  });
 
-    // The panel kicks off discovery on mount. Resolve with two cases.
+  it('discovers cases once connected and renders one row per case', async () => {
+    const fake = createFakeClient();
+    await renderPanel({ fake });
+
+    await waitFor(() => {
+      expect(fake.sendRequest).toHaveBeenCalled();
+    });
     fake.resolveDiscovery([sampleCase('a'), sampleCase('b')]);
 
     expect(await screen.findByText('Case a')).toBeInTheDocument();
@@ -123,8 +107,8 @@ describe('VerificationPanel', () => {
   });
 
   it('shows the discovering text only while discovery is pending', async () => {
-    const fake = createFakeHandle();
-    renderPanel({ fake });
+    const fake = createFakeClient();
+    await renderPanel({ fake });
 
     expect(await screen.findByText('Discovering cases...')).toBeInTheDocument();
 
@@ -135,19 +119,21 @@ describe('VerificationPanel', () => {
   });
 
   it('says there are no verification cases after a discovery that finds none', async () => {
-    const fake = createFakeHandle();
-    renderPanel({ fake });
+    const fake = createFakeClient();
+    await renderPanel({ fake });
 
+    await screen.findByText('Discovering cases...');
     fake.resolveDiscovery([]);
 
     expect(await screen.findByText('No verification cases')).toBeInTheDocument();
     expect(screen.queryByText('Discovering cases...')).not.toBeInTheDocument();
   });
 
-  it('reports status messages: "Discovering..." (idle/null) -> running -> verdict', async () => {
-    const fake = createFakeHandle();
-    const { onStatusMessage } = renderPanel({ fake });
+  it('runs every case from the button and ends on the verdict message', async () => {
+    const fake = createFakeClient();
+    const test = await renderPanel({ fake });
 
+    await screen.findByText('Discovering cases...');
     fake.resolveDiscovery([sampleCase('a')]);
     await screen.findByText('Case a');
 
@@ -155,20 +141,13 @@ describe('VerificationPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Run verification' }));
 
     await waitFor(() => {
-      const calls = onStatusMessage.mock.calls;
-      // Final call is the terminal verdict (busy=false, message describing all-passed).
-      const last = calls[calls.length - 1]!;
-      expect(last[1]).toBe(false);
-      expect(last[0]).toMatch(/all cases passed/i);
+      expect(currentVerification(test).phase).toBe('done');
     });
-    // The intermediate "Verifying ..." status was reported with busy=true.
-    expect(onStatusMessage.mock.calls.some(([message, busy]) =>
-      typeof message === 'string' && /Verifying Case a/i.test(message) && busy === true,
-    )).toBe(true);
+    expect(currentVerification(test).message).toMatch(/all cases passed/i);
   });
 
-  it('cancel button collapses queued/running cases back to stale and ends in cancelled phase', async () => {
-    const fake = createFakeHandle();
+  it('cancel button ends the run in the cancelled phase', async () => {
+    const fake = createFakeClient();
     // Make verify never resolve so we can cancel mid-flight.
     fake.sendRequest.mockImplementation(async (method, parameters) => {
       if (method !== 'workspace/executeCommand') return null;
@@ -182,62 +161,59 @@ describe('VerificationPanel', () => {
       return null;
     });
 
-    const { onStatusMessage } = renderPanel({ fake });
+    const test = await renderPanel({ fake });
     await screen.findByText('Case a');
 
     const user = userEvent.setup();
     await user.click(screen.getByRole('button', { name: 'Run verification' }));
-    // Wait for the running state to surface.
     await waitFor(() => {
-      expect(onStatusMessage.mock.calls.some(([_message, busy]) => busy === true)).toBe(true);
+      expect(currentVerification(test).phase).toBe('running');
     });
 
     await user.click(screen.getByRole('button', { name: 'Cancel verification' }));
     await waitFor(() => {
-      const last = onStatusMessage.mock.calls.at(-1)!;
-      expect(last[1]).toBe(false);
-      expect(last[0]).toMatch(/cancelled/i);
+      expect(currentVerification(test).phase).toBe('cancelled');
     });
+    expect(currentVerification(test).cases.map((caseState) => {
+      return caseState.status;
+    })).toEqual(['stale', 'stale']);
   });
 
-  it('renders the auto-validate switch only when validateWitnessCommand is supplied', async () => {
-    const fakeWith = createFakeHandle();
-    const { unmount } = renderPanel({
-      fake: fakeWith,
-      validateWitnessCommand: 'oxsts.case.validateWitness',
-      onAutoValidateChange: () => {},
-    });
+  it('renders the auto-validate switch only when the flavor validates witnesses', async () => {
+    const fakeWith = createFakeClient();
+    const { unmount } = await renderPanel({ fake: fakeWith });
+    await screen.findByText('Discovering cases...');
     fakeWith.resolveDiscovery([sampleCase('a')]);
     await screen.findByText('Case a');
     expect(screen.getByText('auto-validate')).toBeInTheDocument();
     unmount();
 
-    const fakeWithout = createFakeHandle();
-    renderPanel({ fake: fakeWithout });
+    const fakeWithout = createFakeClient();
+    await renderPanel({ fake: fakeWithout, served: servedFlavors.map((flavor) => {
+      return { ...flavor, validateWitnessCommand: null };
+    }) });
+    await screen.findByText('Discovering cases...');
     fakeWithout.resolveDiscovery([sampleCase('a')]);
     await screen.findByText('Case a');
     expect(screen.queryByText('auto-validate')).not.toBeInTheDocument();
   });
 
-  it('forwards the user-flipped auto-validate value via onAutoValidateChange', async () => {
-    const fake = createFakeHandle();
-    const onAutoValidateChange = vi.fn();
-    renderPanel({
-      fake,
-      validateWitnessCommand: 'oxsts.case.validateWitness',
-      autoValidate: false,
-      onAutoValidateChange,
-    });
+  it('remembers the flipped auto-validate switch in the settings', async () => {
+    const fake = createFakeClient();
+    const test = await renderPanel({ fake });
+    await screen.findByText('Discovering cases...');
     fake.resolveDiscovery([sampleCase('a')]);
     await screen.findByText('Case a');
+    expect(test.live.settings.get().autoValidate).toBe(true);
 
     const user = userEvent.setup();
     await user.click(screen.getByRole('switch'));
-    expect(onAutoValidateChange).toHaveBeenCalledWith(true);
+
+    expect(test.live.settings.get().autoValidate).toBe(false);
   });
 
   it('show-witness button surfaces only when the case has a trace and forwards the case id', async () => {
-    const fake = createFakeHandle();
+    const fake = createFakeClient();
     fake.sendRequest.mockImplementation(async (method, parameters) => {
       if (method !== 'workspace/executeCommand') return null;
       const command = (parameters as { command?: string }).command;
@@ -247,8 +223,11 @@ describe('VerificationPanel', () => {
     });
 
     const onShowWitness = vi.fn();
-    renderPanel({ fake, onShowWitness });
+    const test = await renderPanel({ fake, onShowWitness });
     await screen.findByText('Case a');
+    test.live.settings.update((settings) => {
+      return { ...settings, autoValidate: false };
+    });
 
     const user = userEvent.setup();
     await user.click(screen.getByRole('button', { name: 'Run verification' }));

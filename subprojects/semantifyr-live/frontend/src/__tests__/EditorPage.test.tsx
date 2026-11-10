@@ -8,30 +8,44 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-vi.mock('../components/editor/LiveEditor', () => ({
-  default: (properties: {
-    flavorId: string;
-    languageId: string;
-    fileName: string;
-    initialCode: string;
-    backendUrl: string;
-  }) => (
-    <div
-      data-testid="live-editor"
-      data-flavor-id={properties.flavorId}
-      data-language={properties.languageId}
-      data-file-name={properties.fileName}
-      data-backend-url={properties.backendUrl}
-    >
-      <pre data-testid="initial-code">{properties.initialCode}</pre>
-    </div>
-  ),
-}));
+vi.mock('vscode', () => {
+  return {};
+});
+vi.mock('../lib/session/monaco', () => {
+  return {};
+});
+
+vi.mock('../components/editor/LiveEditor', async () => {
+  const { useLive } = await import('../lib/workspace/liveContext');
+  return {
+    default: function LiveEditorStandIn(properties: {
+      languageId: string;
+      documentUri: string;
+      initialCode: string;
+    }) {
+      const live = useLive();
+      return (
+        <div
+          data-testid="live-editor"
+          data-flavor-id={live.workspace.get().flavor?.id}
+          data-language={properties.languageId}
+          data-document-uri={properties.documentUri}
+        >
+          <pre data-testid="initial-code">{properties.initialCode}</pre>
+        </div>
+      );
+    },
+  };
+});
 
 import EditorPage from '../components/EditorPage';
 import { liveFlavors } from '../examples';
 import { encodeCompressedBase64Url } from '@semantifyr/editor-common';
+import { createSettingsStore } from '../lib/stores/settings';
+import { createLive, type Live } from '../lib/workspace/live';
+import { LiveContext } from '../lib/workspace/liveContext';
 import { setLocation } from './helpers/location';
+import { fakeModelDocuments, fakeRegistry, fakeRuntime } from './helpers/live';
 import { servedFlavors } from './fixtures/flavors';
 
 const defaultFlavor = liveFlavors(servedFlavors)[0];
@@ -62,14 +76,43 @@ describe('EditorPage', () => {
     });
   });
 
+  let live: Live | null = null;
+
+  afterEach(async () => {
+    await live?.dispose();
+    live = null;
+  });
+
   function renderPage(): ReturnType<typeof render> {
+    live = createLive({
+      backendUrl: 'https://test.example',
+      settings: createSettingsStore(),
+      colorMode: () => {
+        return 'dark';
+      },
+      modelDocuments: fakeModelDocuments(),
+      catalogRetryMs: 60_000,
+      createRegistry: (flavors) => {
+        return fakeRegistry(flavors, (flavor) => {
+          return fakeRuntime(flavor, {
+            sendRequest: async () => {
+              return null;
+            },
+            sendNotification: () => {},
+          });
+        });
+      },
+    });
+    live.start(window.location.search);
     return render(
-      <EditorPage
-        backendUrl="https://test.example"
-        colorMode="dark"
-        colorModePreference="dark"
-        onToggleColorMode={() => {}}
-      />,
+      <LiveContext.Provider value={live}>
+        <EditorPage
+          backendUrl="https://test.example"
+          colorMode="dark"
+          colorModePreference="dark"
+          onToggleColorMode={() => {}}
+        />
+      </LiveContext.Provider>,
     );
   }
 

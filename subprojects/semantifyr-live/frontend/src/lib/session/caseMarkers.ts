@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { ProblemEntry } from './liveEditorSession'
+import type { ProblemEntry } from './problems'
 import type { VerificationCaseState, VerificationCaseStatus } from '../verification/engine'
 
 // Returns null for non-terminal statuses so the editor stays clean during a run.

@@ -19,7 +19,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 import type { LiveFlavor } from '../../examples';
 import type { ColorModePreference } from '../../lib/util/colorMode';
-import type { LiveEditorStatus } from '../editor/LiveEditor';
+import type { LiveEditorStatus } from './editorStatus';
 import AppHeader from './AppHeader';
 import ConnectionStatus from './ConnectionStatus';
 import ModelPicker from './ModelPicker';

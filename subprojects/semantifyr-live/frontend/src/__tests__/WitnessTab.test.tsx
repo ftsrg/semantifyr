@@ -23,7 +23,7 @@ describe('WitnessTab', () => {
         validating={false}
         canRevalidate
         onRevalidate={() => {}}
-        editorHandle={null}
+        openReadonlyEditor={null}
         witnessLanguageId="oxsts"
       />,
     );
@@ -42,7 +42,7 @@ describe('WitnessTab', () => {
         canRevalidate={false}
         onRevalidate={() => {}}
         verificationPortfolioLabel="Theta"
-        editorHandle={null}
+        openReadonlyEditor={null}
         witnessLanguageId="oxsts"
       />,
     );
@@ -59,7 +59,7 @@ describe('WitnessTab', () => {
         validating={false}
         canRevalidate
         onRevalidate={onRevalidate}
-        editorHandle={null}
+        openReadonlyEditor={null}
         witnessLanguageId="oxsts"
       />,
     );
@@ -76,7 +76,7 @@ describe('WitnessTab', () => {
         validating={false}
         canRevalidate={false}
         onRevalidate={() => {}}
-        editorHandle={null}
+        openReadonlyEditor={null}
         witnessLanguageId="oxsts"
       />,
     );
@@ -92,7 +92,7 @@ describe('WitnessTab', () => {
         validating
         canRevalidate
         onRevalidate={() => {}}
-        editorHandle={null}
+        openReadonlyEditor={null}
         witnessLanguageId="oxsts"
       />,
     );
@@ -108,7 +108,7 @@ describe('WitnessTab', () => {
         validating={false}
         canRevalidate={false}
         onRevalidate={() => {}}
-        editorHandle={null}
+        openReadonlyEditor={null}
         witnessLanguageId="oxsts"
       />,
     );

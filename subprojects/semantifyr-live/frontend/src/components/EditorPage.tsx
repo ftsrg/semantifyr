@@ -9,34 +9,26 @@ import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } fro
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
-import {
-  findExample,
-  findFlavor,
-  liveFlavors,
-  type LiveExample,
-  type LiveFlavor,
-} from '../examples';
-import { decodeCompressedBase64Url, liveEditorUrl, parseLiveEditorUrl } from '@semantifyr/editor-common';
+import { FONT_SIZE } from '../lib/util/theme';
+import { liveEditorUrl } from '@semantifyr/editor-common';
 import type { ColorModePreference, ResolvedColorMode } from '../lib/util/colorMode';
-import { createApi, type FlavorInfo, type PortfolioInfo } from '../lib/api';
-import { DEFAULT_VALIDATION_PORTFOLIO_ID, type VerificationCaseState, type WitnessValidationStatus } from '../lib/verification';
-import { casesToMarkers } from '../lib/session/caseMarkers';
+import type { VerificationCaseState } from '../lib/verification';
 import { findPortfolioLabel } from '../lib/verification/portfolioLabel';
-import {
-  boolCodec,
-  sizeCodec,
-  stringCodec,
-  usePersistedState,
-} from '../lib/hooks/usePersistedState';
-import type {
-  LiveEditorHandle,
-  LiveEditorStatus,
-} from './editor/LiveEditor';
+import { attachReadonlyEditor, type ReadonlyEditorOpener } from '../lib/session/monaco';
+import type { DerivedDocument } from '../lib/language/types';
+import { changeSettings } from '../lib/stores/settings';
+import { constantStore } from '../lib/stores/store';
+import { useStore } from '../lib/stores/useStore';
+import { useCurrentVerification, useLive, useRuntime, useRuntimeStore } from '../lib/workspace/liveContext';
+import type { DocumentRecord } from '../lib/workspace/live';
+import { statusLine } from '../lib/workspace/statusLine';
+import type { LiveFlavor } from '../examples';
 import EditorShell from './shell/EditorShell';
 import ConnectionBanner from './shell/ConnectionBanner';
-import ConfirmDialog from './shell/ConfirmDialog';
 import ErrorBoundary from './shell/ErrorBoundary';
 import EditorLoadError from './editor/EditorLoadError';
+import EditorLoading from './editor/EditorLoading';
+import { editorStatusOf } from './shell/editorStatus';
 import type { StatusBarInfoItem } from './shell/StatusBar';
 import RightPanel, { type RightPanelTab } from './shell/RightPanel';
 import RunningVerificationsTab from './verification/RunningVerificationsTab';
@@ -44,28 +36,18 @@ import WitnessTab from './witness/WitnessTab';
 import MappedOxstsTab from './witness/MappedOxstsTab';
 import PaneSplitter from './shell/PaneSplitter';
 import ReopenRail from './shell/ReopenRail';
-import { VerificationPanel, type VerificationPanelHandle } from './verification';
-import { FONT_SIZE } from '../lib/util/theme';
+import { VerificationPanel } from './verification';
 
 const LiveEditor = lazy(() => import('./editor/LiveEditor'));
 
-const RIGHT_PANE_WIDTH_KEY = 'semantifyr-right-pane-width';
-const DEFAULT_RIGHT_PANE_WIDTH = 480;
 const MIN_LEFT_WIDTH = 320;
 const MIN_RIGHT_WIDTH = 280;
-const VALIDATION_PORTFOLIO_KEY = 'semantifyr-validation-portfolio';
-const AUTO_VALIDATE_KEY = 'semantifyr-auto-validate';
-
-const VERIFICATION_PANEL_HEIGHT_KEY = 'semantifyr-verification-panel-height';
-const VERIFICATION_PANEL_OPEN_KEY = 'semantifyr-verification-panel-open';
-const RIGHT_PANEL_OPEN_KEY = 'semantifyr-right-panel-open';
-const DEFAULT_VERIFICATION_PANEL_HEIGHT = 220;
 const MIN_VERIFICATION_PANEL_HEIGHT = 80;
 const MIN_EDITOR_AREA_HEIGHT = 120;
 
 const COPY_CONFIRMATION_MS = 2000;
-const FLAVORS_RETRY_MS = 5000;
 
+const NO_DERIVED_DOCUMENTS = constantStore<readonly DerivedDocument[]>([]);
 
 interface Props {
   backendUrl: string;
@@ -75,92 +57,25 @@ interface Props {
   embedded?: boolean;
 }
 
-interface UrlState {
-  flavor: LiveFlavor;
-  example: LiveExample;
-  code: string;
-  // code from a link that names no example
-  shared: boolean;
-}
-
-interface LoadedPage {
-  flavors: readonly [LiveFlavor, ...LiveFlavor[]];
-  initial: UrlState;
-}
-
-async function resolveInitialState(search: string, flavors: readonly [LiveFlavor, ...LiveFlavor[]]): Promise<UrlState> {
-  const parameters = parseLiveEditorUrl(search);
-  const flavor = findFlavor(flavors, parameters.flavor) ?? flavors[0];
-  const decodedCode = parameters.compressedCode ? await decodeCompressedBase64Url(parameters.compressedCode) : null;
-
-  const fallback = flavor.examples[0];
-  if (!fallback) {
-    throw new Error(`flavor ${flavor.id} has no examples`);
-  }
-  if (parameters.example) {
-    const example = findExample(flavor, parameters.example) ?? fallback;
-    return { flavor, example, code: decodedCode ?? example.code, shared: false };
-  }
-
-  return { flavor, example: fallback, code: decodedCode ?? fallback.code, shared: decodedCode !== null };
-}
-
-function deriveConnectionMessage(status: LiveEditorStatus, statusInfo: string | null): string {
-  switch (status) {
-    case 'initializing': return statusInfo ?? 'Initializing...';
-    case 'reconnecting': return statusInfo ?? 'Reconnecting...';
-    case 'errored': return statusInfo ?? 'Connection error';
-    case 'terminated': return statusInfo ?? 'Session ended';
-    case 'disconnected': return 'Disconnected';
-    case 'connected': return 'Ready';
-  }
-}
-
 export default function EditorPage(props: Props): React.JSX.Element {
-  const { backendUrl } = props;
-  const [loaded, setLoaded] = useState<LoadedPage | null>(null);
-  const [waiting, setWaiting] = useState(false);
+  const live = useLive();
+  const catalogStatus = useStore(live.catalog, (catalog) => {
+    return catalog.status;
+  });
+  const flavor = useStore(live.workspace, (workspace) => {
+    return workspace.flavor;
+  });
+  const documentKey = useStore(live.workspace, (workspace) => {
+    return workspace.documentKey;
+  });
+  const document = useStore(live.documents, (documents) => {
+    return documentKey === null ? undefined : documents.get(documentKey);
+  });
 
-  useEffect(() => {
-    const api = createApi(backendUrl);
-    let cancelled = false;
-    let retryTimer: ReturnType<typeof setTimeout> | null = null;
-    const load = async (): Promise<void> => {
-      try {
-        const flavors = liveFlavors(await api.fetchFlavors());
-        const initial = await resolveInitialState(typeof window === 'undefined' ? '' : window.location.search, flavors);
-        if (!cancelled) {
-          setLoaded({ flavors, initial });
-        }
-      } catch {
-        if (!cancelled) {
-          setWaiting(true);
-          retryTimer = setTimeout(() => {
-            void load();
-          }, FLAVORS_RETRY_MS);
-        }
-      }
-    };
-    void load();
-    return () => {
-      cancelled = true;
-      if (retryTimer !== null) {
-        clearTimeout(retryTimer);
-      }
-    };
-  }, [backendUrl]);
-
-  if (loaded === null) {
-    return (
-      <Box sx={{ height: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, bgcolor: 'var(--page-bg)' }}>
-        <CircularProgress size={32} sx={{ color: 'text.secondary' }} />
-        <Typography sx={{ color: 'text.secondary', fontSize: FONT_SIZE.md }}>
-          {waiting ? 'Waiting for the Semantifyr server...' : 'Loading editor...'}
-        </Typography>
-      </Box>
-    );
+  if (catalogStatus !== 'ready' || !flavor || !document) {
+    return <EditorLoading message={catalogStatus === 'waiting' ? 'Waiting for the Semantifyr server...' : 'Loading editor...'} />;
   }
-  return <EditorWorkspace {...props} flavors={loaded.flavors} initial={loaded.initial} />;
+  return <EditorWorkspace {...props} flavor={flavor} document={document} />;
 }
 
 function EditorWorkspace({
@@ -169,113 +84,53 @@ function EditorWorkspace({
   colorModePreference,
   onToggleColorMode,
   embedded = false,
-  flavors,
-  initial,
-}: Props & LoadedPage): React.JSX.Element {
-  const [flavor, setFlavor] = useState<LiveFlavor>(initial.flavor);
-  const [example, setExample] = useState<LiveExample>(initial.example);
-  const [code, setCode] = useState<string>(initial.code);
-  const [shared, setShared] = useState(initial.shared);
+  flavor,
+  document,
+}: Props & { flavor: LiveFlavor; document: DocumentRecord }): React.JSX.Element {
+  const live = useLive();
+  const example = document.example;
+  const shared = document.shared;
+  const registry = useStore(live.catalog, (catalog) => {
+    return catalog.registry;
+  });
+  const portfolios = useStore(live.catalog, (catalog) => {
+    return catalog.portfolios;
+  });
+  const settings = useStore(live.settings);
+  const connection = useStore(live.connection);
+  const initialization = useStore(live.initialization);
+  const verificationState = useCurrentVerification(live);
+  const selectedCaseId = useStore(live.selection);
+  const runtime = useRuntime(live);
+  const derivedDocuments = useRuntimeStore(live, (current) => {
+    return current.derivedDocuments;
+  }, NO_DERIVED_DOCUMENTS);
+
   const [copyConfirmation, setCopyConfirmation] = useState<string | null>(null);
-  const [pendingSwitch, setPendingSwitch] = useState<(() => void) | null>(null);
-
-  const [status, setStatus] = useState<LiveEditorStatus>('initializing');
-  const [statusInfo, setStatusInfo] = useState<string | null>(null);
-  const [flavorInfo, setFlavorInfo] = useState<FlavorInfo | null>(null);
-  const [verificationStatusMessage, setVerificationStatusMessage] = useState<string | null>(null);
-  const [verificationBusy, setVerificationBusy] = useState(false);
   const [devPanelOpen, setDevPanelOpen] = useState(false);
-  const [connectedSince, setConnectedSince] = useState<number | null>(null);
-  const [reconnectCount, setReconnectCount] = useState(0);
-  const [portfolios, setPortfolios] = useState<PortfolioInfo[]>([]);
-  const [portfolioId, setPortfolioId] = useState<string>('');
-  const [validationPortfolioId, handleValidationPortfolioChange] = usePersistedState(
-    VALIDATION_PORTFOLIO_KEY,
-    DEFAULT_VALIDATION_PORTFOLIO_ID,
-    stringCodec,
-  );
-  const [autoValidate, handleAutoValidateChange] = usePersistedState(
-    AUTO_VALIDATE_KEY,
-    true,
-    boolCodec,
-  );
-  const [verificationCases, setVerificationCases] = useState<readonly VerificationCaseState[]>([]);
-  const [selectedWitnessCaseId, setSelectedWitnessCaseId] = useState<string | null>(null);
-  const [rightPaneWidth, setRightPaneWidth] = usePersistedState(
-    RIGHT_PANE_WIDTH_KEY,
-    DEFAULT_RIGHT_PANE_WIDTH,
-    sizeCodec,
-  );
-  const [verificationPanelHeight, setVerificationPanelHeight] = usePersistedState(
-    VERIFICATION_PANEL_HEIGHT_KEY,
-    DEFAULT_VERIFICATION_PANEL_HEIGHT,
-    sizeCodec,
-  );
-  const [verificationPanelOpen, setVerificationPanelOpen] = usePersistedState(
-    VERIFICATION_PANEL_OPEN_KEY,
-    true,
-    boolCodec,
-  );
-  const [rightPanelOpen, setRightPanelOpen] = usePersistedState(
-    RIGHT_PANEL_OPEN_KEY,
-    false,
-    boolCodec,
-  );
 
-  const editorHandleRef = useRef<LiveEditorHandle | null>(null);
   const splitContainerRef = useRef<HTMLDivElement | null>(null);
   const pageContainerRef = useRef<HTMLDivElement | null>(null);
-  const verificationPanelRef = useRef<VerificationPanelHandle | null>(null);
   const copyConfirmationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    const api = createApi(backendUrl);
-    let cancelled = false;
-    void api.fetchPortfolios()
-      .then((response) => {
-        if (cancelled) return;
-        setPortfolios(response.portfolios);
-        setPortfolioId((current) => current || response.defaultPortfolio);
-      })
-      .catch(() => { /* non-fatal */ });
-    return () => {
-      cancelled = true;
-    };
-  }, [backendUrl]);
-
-  // Monaco's model is the source of truth; `code` is only the initial seed.
-  const currentEditorContent = useCallback((): string => {
-    return editorHandleRef.current?.getCurrentCode() ?? code;
-  }, [code]);
-
-  const runOrConfirm = useCallback((apply: () => void) => {
-    if (typeof window === 'undefined' || currentEditorContent() === example.code) {
-      apply();
-      return;
-    }
-    setPendingSwitch(() => apply);
-  }, [currentEditorContent, example.code]);
+  // both stores it derives from are subscribed above
+  const portfolioId = live.verificationPortfolioId() ?? '';
+  const status = editorStatusOf(connection);
+  const verificationCases = verificationState.cases;
+  const rightPaneWidth = settings.sidePanelWidth;
+  const verificationPanelHeight = settings.resultsPanelHeight;
+  const verificationPanelOpen = settings.resultsPanelOpen;
+  const rightPanelOpen = settings.sidePanelOpen;
+  const flavors = registry?.flavors ?? [flavor];
 
   const handleSelectModel = useCallback((flavorId: string, exampleId: string) => {
-    const nextFlavor = findFlavor(flavors, flavorId);
-    if (!nextFlavor) return;
-    const fallbackExample = nextFlavor.examples[0];
-    if (!fallbackExample) return;
-    const nextExample = findExample(nextFlavor, exampleId) ?? fallbackExample;
-    if (nextFlavor.id === flavor.id && nextExample.id === example.id) return;
-    runOrConfirm(() => {
-      setFlavor(nextFlavor);
-      setExample(nextExample);
-      setCode(nextExample.code);
-      setShared(false);
-      setSelectedWitnessCaseId(null);
-      if (typeof window !== 'undefined') {
-        void liveEditorUrl(window.location.href, { flavor: nextFlavor.id, example: nextExample.id, embed: embedded }).then((url) => {
-          window.history.replaceState(null, '', url);
-        });
-      }
-    });
-  }, [flavors, flavor.id, example.id, embedded, runOrConfirm]);
+    live.selectModel(flavorId, exampleId);
+    if (typeof window !== 'undefined') {
+      void liveEditorUrl(window.location.href, { flavor: flavorId, example: exampleId, embed: embedded }).then((url) => {
+        window.history.replaceState(null, '', url);
+      });
+    }
+  }, [live, embedded]);
 
   const flashCopyConfirmation = useCallback((message: string) => {
     setCopyConfirmation(message);
@@ -299,7 +154,7 @@ function EditorWorkspace({
 
   const handleCopyLink = useCallback(async () => {
     if (typeof window === 'undefined') return;
-    const content = currentEditorContent();
+    const content = live.currentText() ?? document.text;
     const url = await liveEditorUrl(`${window.location.origin}${window.location.pathname}`, {
       flavor: flavor.id,
       example: shared ? undefined : example.id,
@@ -311,24 +166,11 @@ function EditorWorkspace({
     } catch {
       flashCopyConfirmation('Copy failed');
     }
-  }, [shared, flavor.id, example.id, example.code, currentEditorContent, flashCopyConfirmation]);
+  }, [live, shared, flavor.id, example.id, example.code, document.text, flashCopyConfirmation]);
 
-  const editorKey = useMemo(() => `${flavor.id}:${example.id}`, [flavor.id, example.id]);
-
-  const flavorSupportsVerification =
-    !!flavorInfo?.verificationCommand && !!flavorInfo.discoveryCommand;
   const logoSrc = colorMode === 'dark' ? '/logo-full-dark.svg' : '/logo-full-light.svg';
 
-  const statusBarMessage = verificationStatusMessage ?? deriveConnectionMessage(status, statusInfo);
-  const statusBarShowProgress =
-    verificationBusy ||
-    status === 'initializing' ||
-    status === 'reconnecting';
-
-  const handleVerificationStatus = useCallback((message: string | null, busy: boolean) => {
-    setVerificationStatusMessage(message);
-    setVerificationBusy(busy);
-  }, []);
+  const { message: statusBarMessage, busy: statusBarShowProgress } = statusLine(verificationState, connection, initialization);
 
   const statusBarInfoItems = useMemo((): StatusBarInfoItem[] => [
     {
@@ -339,83 +181,61 @@ function EditorWorkspace({
   ], [flavor.displayName]);
 
   useEffect(() => {
-    if (embedded || typeof document === 'undefined') {
+    if (embedded || typeof window === 'undefined') {
       return;
     }
-    const previous = document.title;
-    document.title = `${shared ? 'Shared model' : example.label} - Semantifyr Live`;
+    const previous = window.document.title;
+    window.document.title = `${shared ? 'Shared model' : example.label} - Semantifyr Live`;
     return () => {
-      document.title = previous;
+      window.document.title = previous;
     };
   }, [embedded, shared, example.label]);
 
-  // Only auto-retry from `errored`; a manual disconnect must stay off.
-  useEffect(() => {
-    if (typeof window === 'undefined' || status !== 'errored') {
-      return;
-    }
-    const handleOnline = (): void => {
-      editorHandleRef.current?.reconnect();
-    };
-    window.addEventListener('online', handleOnline);
-    return () => {
-      window.removeEventListener('online', handleOnline);
-    };
-  }, [status]);
-
-  useEffect(() => {
-    editorHandleRef.current?.setVerifyCaseMarkers(casesToMarkers(verificationCases));
-  }, [verificationCases]);
-
   const witnessCaseState = useMemo<VerificationCaseState | null>(() => {
-    if (!selectedWitnessCaseId) return null;
-    const cs = verificationCases.find((c) => c.caseInfo.id === selectedWitnessCaseId);
-    return cs?.trace ? cs : null;
-  }, [verificationCases, selectedWitnessCaseId]);
+    if (!selectedCaseId) return null;
+    const selected = verificationCases.find((caseState) => {
+      return caseState.caseInfo.id === selectedCaseId;
+    });
+    return selected?.trace ? selected : null;
+  }, [verificationCases, selectedCaseId]);
 
-  useEffect(() => {
-    if (selectedWitnessCaseId) return;
-    const firstFailure = verificationCases.find((cs) => cs.status === 'failed' && cs.trace !== undefined);
-    if (firstFailure) setSelectedWitnessCaseId(firstFailure.caseInfo.id);
-  }, [verificationCases, selectedWitnessCaseId]);
+  const verificationPortfolioLabel: string | undefined = useMemo(() => {
+    return findPortfolioLabel(portfolios, witnessCaseState?.portfolioId ?? witnessCaseState?.backendId);
+  }, [witnessCaseState, portfolios]);
 
-  const witnessValidation: WitnessValidationStatus | undefined = witnessCaseState?.witnessValidation;
-
-  const verificationPortfolioLabel: string | undefined = useMemo(
-    () =>
-      findPortfolioLabel(portfolios, witnessCaseState?.portfolioId ?? witnessCaseState?.backendId),
-    [witnessCaseState, portfolios],
-  );
-
-  const handleRevalidateWitness = useCallback(() => {
-    if (!witnessCaseState) return;
-    verificationPanelRef.current?.revalidate(witnessCaseState.caseInfo.id);
-  }, [witnessCaseState]);
+  const openReadonlyEditor = useMemo<ReadonlyEditorOpener | null>(() => {
+    if (!runtime) {
+      return null;
+    }
+    return (host, uri, language) => {
+      return attachReadonlyEditor(host, runtime.api, uri, language);;
+    }
+  }, [runtime]);
 
   const rightTabs = useMemo<readonly RightPanelTab[]>(() => {
-    const tabs: RightPanelTab[] = [];
-    if (flavorSupportsVerification) {
-      tabs.push({
+    const tabs: RightPanelTab[] = [
+      {
         id: 'runs',
         label: 'Verifications',
         content: (
           <RunningVerificationsTab
-            api={editorHandleRef.current?.getApi() ?? null}
+            api={runtime?.api ?? null}
             connected={status === 'connected'}
             cases={verificationCases}
             portfolios={portfolios}
           />
         ),
-      });
-    }
-    if (flavor.id === 'sysml') {
+      },
+    ];
+    for (const derived of derivedDocuments) {
       tabs.push({
-        id: 'oxsts',
-        label: 'OXSTS',
-        content: <MappedOxstsTab editorHandle={editorHandleRef.current} />,
+        id: derived.id,
+        label: derived.label,
+        content: <MappedOxstsTab document={derived} openReadonlyEditor={openReadonlyEditor} />,
       });
     }
     if (witnessCaseState?.trace != null) {
+      const caseId = witnessCaseState.caseInfo.id;
       tabs.push({
         id: 'witness',
         label: 'Witness',
@@ -423,13 +243,15 @@ function EditorWorkspace({
           <WitnessTab
             caseInfo={witnessCaseState.caseInfo}
             trace={witnessCaseState.trace}
-            validation={witnessValidation}
+            validation={witnessCaseState.witnessValidation}
             validationMessage={witnessCaseState.validationMessage}
             validating={witnessCaseState.validating ?? false}
-            canRevalidate={status === 'connected' && !!flavorInfo?.validateWitnessCommand}
-            onRevalidate={handleRevalidateWitness}
+            canRevalidate={status === 'connected' && !!flavor.validateWitnessCommand}
+            onRevalidate={() => {
+              live.validateWitness(caseId);
+            }}
             verificationPortfolioLabel={verificationPortfolioLabel}
-            editorHandle={editorHandleRef.current}
+            openReadonlyEditor={openReadonlyEditor}
             witnessLanguageId={flavor.languageId}
           />
         ),
@@ -437,30 +259,34 @@ function EditorWorkspace({
     }
     return tabs;
   }, [
-    flavorSupportsVerification,
+    live,
+    runtime,
     status,
     verificationCases,
     portfolios,
+    derivedDocuments,
+    openReadonlyEditor,
     witnessCaseState,
-    witnessValidation,
-    flavorInfo?.validateWitnessCommand,
-    handleRevalidateWitness,
     verificationPortfolioLabel,
-    flavor.id,
+    flavor.validateWitnessCommand,
     flavor.languageId,
   ]);
 
   const [activeRightTabId, setActiveRightTabId] = useState<string | null>(null);
+
+  const setRightPanelOpen = useCallback((open: boolean) => {
+    changeSettings(live.settings, { sidePanelOpen: open });
+  }, [live]);
 
   const handleCloseRightPane = useCallback(() => {
     setRightPanelOpen(false);
   }, [setRightPanelOpen]);
 
   const handleShowWitness = useCallback((caseId: string) => {
-    setSelectedWitnessCaseId(caseId);
+    live.selectCase(caseId);
     setRightPanelOpen(true);
     setActiveRightTabId('witness');
-  }, [setRightPanelOpen]);
+  }, [live, setRightPanelOpen]);
 
   const handleOpenVerificationsTab = useCallback(() => {
     setRightPanelOpen(true);
@@ -492,8 +318,8 @@ function EditorWorkspace({
         >
           <ConnectionBanner
             status={status}
-            statusInfo={statusInfo}
-            onReconnect={() => editorHandleRef.current?.reconnect()}
+            statusInfo={connection.reason}
+            onReconnect={live.reconnect}
           />
           <ErrorBoundary label="editor" fallback={<EditorLoadError />}>
             <Suspense
@@ -507,28 +333,11 @@ function EditorWorkspace({
               }
             >
               <LiveEditor
-                ref={editorHandleRef}
-                key={editorKey}
-                flavorId={flavor.id}
+                key={flavor.id}
                 languageId={flavor.languageId}
-                fileName={flavor.fileName}
-                initialCode={code}
-                backendUrl={backendUrl}
+                documentUri={document.uri}
+                initialCode={document.text}
                 colorMode={colorMode}
-                fillParent
-                onStatusChange={(next, info) => {
-                  setStatus((prev) => {
-                    if (next === 'connected' && prev !== 'connected') {
-                      setConnectedSince(Date.now());
-                      if (prev === 'reconnecting') setReconnectCount((c) => c + 1);
-                    } else if (next !== 'connected') {
-                      setConnectedSince(null);
-                    }
-                    return next;
-                  });
-                  setStatusInfo(info ?? null);
-                }}
-                onFlavorReady={setFlavorInfo}
               />
             </Suspense>
           </ErrorBoundary>
@@ -539,7 +348,9 @@ function EditorWorkspace({
               <PaneSplitter
                 containerRef={splitContainerRef}
                 size={rightPaneWidth}
-                onChange={setRightPaneWidth}
+                onChange={(width) => {
+                  changeSettings(live.settings, { sidePanelWidth: width });
+                }}
                 minBefore={MIN_LEFT_WIDTH}
                 minAfter={MIN_RIGHT_WIDTH}
               />
@@ -576,49 +387,37 @@ function EditorWorkspace({
 
       <Box sx={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column' }}>
 
-        {flavorSupportsVerification && verificationPanelOpen && (
+        {verificationPanelOpen && (
           <PaneSplitter
             containerRef={pageContainerRef}
             size={verificationPanelHeight}
-            onChange={setVerificationPanelHeight}
+            onChange={(height) => {
+              changeSettings(live.settings, { resultsPanelHeight: height });
+            }}
             orientation="horizontal"
             minBefore={MIN_EDITOR_AREA_HEIGHT}
             minAfter={MIN_VERIFICATION_PANEL_HEIGHT}
           />
         )}
 
-        {flavorSupportsVerification && flavorInfo.verificationCommand && flavorInfo.discoveryCommand && (
-          // Hidden, not unmounted, so verification state survives a close/reopen.
-          <Box sx={{ display: verificationPanelOpen ? 'flex' : 'none', flexDirection: 'column', flex: '0 0 auto' }}>
-            <VerificationPanel
-              key={`${flavor.id}:${example.id}`}
-              ref={verificationPanelRef}
-              editorHandle={editorHandleRef.current}
-              verificationCommand={flavorInfo.verificationCommand}
-              discoveryCommand={flavorInfo.discoveryCommand}
-              validateWitnessCommand={flavorInfo.validateWitnessCommand ?? undefined}
-              validateWitnessByCase={flavorInfo.validateWitnessByCase}
-              connected={status === 'connected'}
-              portfolioId={portfolioId}
-              validationPortfolioId={validationPortfolioId}
-              autoValidate={autoValidate}
-              onAutoValidateChange={handleAutoValidateChange}
-              panelHeight={verificationPanelHeight}
-              onClose={() => { setVerificationPanelOpen(false); }}
-              onStatusMessage={handleVerificationStatus}
-              onCasesChange={setVerificationCases}
-              onShowWitness={handleShowWitness}
-              portfolios={portfolios}
-            />
-          </Box>
-        )}
+        <Box sx={{ display: verificationPanelOpen ? 'flex' : 'none', flexDirection: 'column', flex: '0 0 auto' }}>
+          <VerificationPanel
+            panelHeight={verificationPanelHeight}
+            onClose={() => {
+              changeSettings(live.settings, { resultsPanelOpen: false });
+            }}
+            onShowWitness={handleShowWitness}
+          />
+        </Box>
 
-        {flavorSupportsVerification && !verificationPanelOpen && (
+        {!verificationPanelOpen && (
           <ReopenRail
             orientation="horizontal"
             label="Show verification panel"
             ariaLabel="Show verification panel"
-            onClick={() => { setVerificationPanelOpen(true); }}
+            onClick={() => {
+              changeSettings(live.settings, { resultsPanelOpen: true });
+            }}
           />
         )}
       </Box>
@@ -646,8 +445,10 @@ function EditorWorkspace({
           onCopyLink={() => { void handleCopyLink(); }}
           copyConfirmation={copyConfirmation}
           connectionStatus={status}
-          onReconnect={() => editorHandleRef.current?.reconnect()}
-          onDisconnect={() => { void editorHandleRef.current?.disconnect(); }}
+          onReconnect={live.reconnect}
+          onDisconnect={() => {
+            void live.disconnect();
+          }}
           statusBarMessage={statusBarMessage}
           statusBarShowProgress={statusBarShowProgress}
           statusBarInfoItems={statusBarInfoItems}
@@ -655,36 +456,27 @@ function EditorWorkspace({
           onOpenVerificationsTab={handleOpenVerificationsTab}
           portfolios={portfolios}
           portfolioId={portfolioId}
-          onPortfolioChange={setPortfolioId}
-          validationPortfolioId={validationPortfolioId}
-          onValidationPortfolioChange={handleValidationPortfolioChange}
-          flavorInfo={flavorInfo}
+          onPortfolioChange={(id) => {
+            changeSettings(live.settings, { verificationPortfolioId: id });
+          }}
+          validationPortfolioId={settings.validationPortfolioId}
+          onValidationPortfolioChange={(id) => {
+            changeSettings(live.settings, { validationPortfolioId: id });
+          }}
+          validates={!!flavor.validateWitnessCommand}
           colorModePreference={colorModePreference}
           onToggleColorMode={onToggleColorMode}
           devPanelOpen={devPanelOpen}
           onCloseDevPanel={() => { setDevPanelOpen(false); }}
           language={flavor.displayName}
-          connectedSince={connectedSince}
-          reconnectCount={reconnectCount}
-          editorHandle={editorHandleRef.current}
+          connectedSince={connection.connectedSince}
+          reconnectCount={connection.reconnectCount}
+          runtime={runtime}
           backendUrl={backendUrl}
         >
           {body}
         </EditorShell>
       )}
-      <ConfirmDialog
-        open={pendingSwitch !== null}
-        title="Discard unsaved edits?"
-        message="You have unsaved edits in the editor. Switching discards them."
-        confirmLabel="Discard and switch"
-        onCancel={() => { setPendingSwitch(null); }}
-        onConfirm={() => {
-          pendingSwitch?.();
-          setPendingSwitch(null);
-        }}
-      />
     </Box>
   );
 }
-
-

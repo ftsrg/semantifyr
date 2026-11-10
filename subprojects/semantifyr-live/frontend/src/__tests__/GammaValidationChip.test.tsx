@@ -5,20 +5,28 @@
  */
 
 import type React from 'react';
-import { useRef, useState } from 'react';
-import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type {
   VerificationCaseResult,
   VerificationCaseSpecification,
   WitnessValidationResult,
 } from '@semantifyr/editor-common';
-import VerificationPanel, { type VerificationPanelHandle } from '../components/verification/VerificationPanel';
+import VerificationPanel from '../components/verification/VerificationPanel';
 import WitnessTab from '../components/witness/WitnessTab';
-import type { LiveEditorHandle } from '../components/editor/LiveEditor';
-import type { LspClient, VerificationCaseState } from '../lib/verification';
+import type { LspClient } from '../lib/verification';
+import { useStore } from '../lib/stores/useStore';
+import { LiveContext, useCurrentVerification, useLive } from '../lib/workspace/liveContext';
 import { passedResult, sampleTrace } from './fixtures/verification-results';
+import { createTestLive } from './helpers/live';
+
+vi.mock('vscode', () => {
+  return {};
+});
+vi.mock('../lib/session/monaco', () => {
+  return {};
+});
 
 const gammaCase: VerificationCaseSpecification = {
   id: 'Crossroads.ACanBeGreen',
@@ -68,52 +76,19 @@ function createGammaClient(): {
   return { sendRequest, resolveValidation: (result) => { resolveValidation(result); } };
 }
 
-function editorHandle(sendRequest: LspClient['sendRequest']): LiveEditorHandle {
-  return {
-    reconnect: () => {},
-    disconnect: () => {},
-    goToCase: () => {},
-    getLspClient: () => ({ sendRequest, sendNotification: () => {} }),
-    getLspMetrics: () => null,
-    getApi: () => null,
-    getFileUri: () => 'file:///workspace/snippet.gamma',
-    getCurrentCode: () => '',
-    getMappedOxsts: () => null,
-    addMappingListener: () => () => {},
-    onEditorContentChange: () => () => {},
-    addProgressListener: () => () => {},
-    addNotificationListener: () => () => {},
-    setVerifyCaseMarkers: () => {},
-    getProblems: () => [],
-    addProblemsListener: () => () => {},
-    revealProblem: () => {},
-    attachReadonlyEditor: async () => ({ dispose: () => {} }),
-  };
-}
-
-// wires the panel and the witness pane as EditorPage does for the Gamma flavor
-function GammaWitnessPane({ handle }: { handle: LiveEditorHandle }): React.JSX.Element {
-  const panel = useRef<VerificationPanelHandle>(null);
-  const [cases, setCases] = useState<readonly VerificationCaseState[]>([]);
-  const shown = cases.find((caseState) => caseState.trace !== undefined);
+// wires the panel and the witness pane over the stores as EditorPage does for the Gamma flavor
+function GammaWitnessPane(): React.JSX.Element {
+  const live = useLive();
+  const verification = useCurrentVerification(live);
+  const connected = useStore(live.connection, (connection) => {
+    return connection.status === 'connected';
+  });
+  const shown = verification.cases.find((caseState) => {
+    return caseState.trace !== undefined;
+  });
   return (
     <>
-      <VerificationPanel
-        ref={panel}
-        editorHandle={handle}
-        verificationCommand="gamma.case.verify"
-        discoveryCommand="gamma.case.discover"
-        validateWitnessCommand="gamma.witness.validate"
-        validateWitnessByCase
-        connected
-        portfolioId="smart-full"
-        validationPortfolioId="smart-full"
-        autoValidate={false}
-        panelHeight={240}
-        onClose={() => {}}
-        onStatusMessage={() => {}}
-        onCasesChange={setCases}
-      />
+      <VerificationPanel panelHeight={240} onClose={() => {}} />
       {shown?.trace && (
         <WitnessTab
           caseInfo={shown.caseInfo}
@@ -121,9 +96,11 @@ function GammaWitnessPane({ handle }: { handle: LiveEditorHandle }): React.JSX.E
           validation={shown.witnessValidation}
           validationMessage={shown.validationMessage}
           validating={shown.validating ?? false}
-          canRevalidate
-          onRevalidate={() => { panel.current?.revalidate(shown.caseInfo.id); }}
-          editorHandle={null}
+          canRevalidate={connected}
+          onRevalidate={() => {
+            live.validateWitness(shown.caseInfo.id);
+          }}
+          openReadonlyEditor={null}
           witnessLanguageId="gamma"
         />
       )}
@@ -132,7 +109,23 @@ function GammaWitnessPane({ handle }: { handle: LiveEditorHandle }): React.JSX.E
 }
 
 async function verifyAndValidate(client: ReturnType<typeof createGammaClient>): Promise<ReturnType<typeof userEvent.setup>> {
-  render(<GammaWitnessPane handle={editorHandle(client.sendRequest)} />);
+  const test = createTestLive({ sendRequest: client.sendRequest, sendNotification: () => {} });
+  test.live.start('?mode=gamma');
+  await waitFor(() => {
+    expect(test.live.workspace.get().runtime).not.toBeNull();
+  });
+  test.live.settings.update((settings) => {
+    return { ...settings, autoValidate: false };
+  });
+  render(
+    <LiveContext.Provider value={test.live}>
+      <GammaWitnessPane />
+    </LiveContext.Provider>,
+  );
+  test.models.open('file:///workspace/snippet.gamma', 'model');
+  act(() => {
+    test.runtime().connect();
+  });
   const user = userEvent.setup({ delay: null });
   await screen.findByText('ACanBeGreen');
   await user.click(screen.getByRole('button', { name: 'Run verification' }));
@@ -150,6 +143,10 @@ async function tooltipShowing(text: string): Promise<HTMLElement | null> {
 
 // the first render of the whole witness pane styles every MUI component it uses, seconds in jsdom
 describe('Gamma validation chip', { timeout: 20_000 }, () => {
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
   it('validates the shown case through gamma.witness.validate and shows the result with its message', async () => {
     const client = createGammaClient();
     const user = await verifyAndValidate(client);

@@ -4,14 +4,20 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import { parseLiveEditorUrl } from '@semantifyr/editor-common';
-import EditorPage from './components/EditorPage';
 import AdminPage from './components/AdminPage';
+import EditorLoading from './components/editor/EditorLoading';
 import ReloadPrompt from './components/pwa/ReloadPrompt';
 import { useColorMode } from './lib/hooks/useColorMode';
+import { createSettingsStore, createSystemColorModeStore } from './lib/stores/settings';
 import { createSemantifyrTheme } from './lib/util/theme';
+
+// The editor and its language machinery load as one chunk, after the first paint
+const EditorRoot = lazy(() => {
+  return import('./components/EditorRoot')
+});
 
 function isAdminRoute(): boolean {
   return typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
@@ -25,7 +31,9 @@ function isEmbedded(): boolean {
 }
 
 export default function App(): React.JSX.Element {
-  const { preference, colorMode, cycle } = useColorMode();
+  const [settings] = useState(createSettingsStore);
+  const [systemColorMode] = useState(createSystemColorModeStore);
+  const { preference, colorMode, cycle } = useColorMode(settings, systemColorMode);
   const theme = React.useMemo(() => createSemantifyrTheme(colorMode), [colorMode]);
 
   const surface = isAdminRoute() ? (
@@ -35,13 +43,17 @@ export default function App(): React.JSX.Element {
       onToggleColorMode={cycle}
     />
   ) : (
-    <EditorPage
-      colorMode={colorMode}
-      colorModePreference={preference}
-      onToggleColorMode={cycle}
-      backendUrl={window.location.origin}
-      embedded={isEmbedded()}
-    />
+    <Suspense fallback={<EditorLoading message="Loading editor..." />}>
+      <EditorRoot
+        settings={settings}
+        systemColorMode={systemColorMode}
+        colorMode={colorMode}
+        colorModePreference={preference}
+        onToggleColorMode={cycle}
+        backendUrl={window.location.origin}
+        embedded={isEmbedded()}
+      />
+    </Suspense>
   );
 
   return (
