@@ -14,6 +14,8 @@
 @media (max-width: 1099.98px) {
   .toolbar-group-end > .button-quiet { gap: 0; padding: 0 var(--space-3); font-size: 0; }
   .toolbar-group-end > .button-quiet .icon { width: 16px; height: 16px; }
+  .toolbar-group-end > .save-split > .button-quiet:first-child { gap: 0; padding: 0 var(--space-3); font-size: 0; }
+  .toolbar-group-end > .save-split > .button-quiet:first-child .icon { width: 16px; height: 16px; }
   .language-switch .segmented-option[aria-pressed="false"] { gap: 0; padding: 0 var(--space-4); font-size: 0; }
   .flavour-button { gap: 0; padding: 0 var(--space-3); font-size: 0; }
   .brand .connection > span:not(.connection-reason) { display: none; }

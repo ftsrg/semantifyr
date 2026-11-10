@@ -108,6 +108,9 @@ describe('the desktop shell on a tablet', () => {
             setTimeout(resolve, 600)
           })
           expect(count('[data-testid=desktop-shell]')).toBe(1)
+          for (const name of ['Open', 'Save']) {
+            expect(page.getByRole('button', { name, exact: true }).elements(), `${name} named in the toolbar`).toHaveLength(1)
+          }
           screen.expectState()
           const { scrollWidth, clientWidth } = document.documentElement
           expect(scrollWidth, 'horizontal overflow').toBeLessThanOrEqual(clientWidth)
