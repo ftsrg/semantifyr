@@ -61,9 +61,23 @@ class Controller {
     tran step(trackA: Track, trackB: Track) {
         lower := state == ControllerState::Idle && (trackA.trainApproaching || trackB.trainApproaching)
         lift := state == ControllerState::TrainPresent && (trackA.trainLeft || trackB.trainLeft)
-        if (lower || lift) {
-            state := if lower then ControllerState::TrainPresent else ControllerState::Idle
+        if (lower) {
+            inline sendLower()
+        } else {
+            if (lift) {
+                inline sendLift()
+            }
         }
+    }
+
+    @Trace
+    tran sendLower() {
+        state := ControllerState::TrainPresent
+    }
+
+    @Trace
+    tran sendLift() {
+        state := ControllerState::Idle
     }
 }
 
@@ -71,9 +85,23 @@ class Barrier {
     var state: BarrierState := BarrierState::Up
 
     tran step(lower: bool, lift: bool) {
-        if (lower || lift) {
-            state := if lower then BarrierState::Down else BarrierState::Up
+        if (lower) {
+            inline lowerBarrier()
+        } else {
+            if (lift) {
+                inline liftBarrier()
+            }
         }
+    }
+
+    @Trace
+    tran lowerBarrier() {
+        state := BarrierState::Down
+    }
+
+    @Trace
+    tran liftBarrier() {
+        state := BarrierState::Up
     }
 }
 
