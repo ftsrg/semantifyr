@@ -34,6 +34,11 @@ Annotation arguments bind like call arguments: a named argument (`name = value`)
 ```oxsts
 @VerificationCase(summary = "Reaches the limit")
 class Reaches10 {
+  var value: int := 0
+
+  prop {
+    return EF value == 10
+  }
 }
 ```
 
@@ -51,6 +56,11 @@ Multiple annotations may be applied to a single declaration. Each starts on its 
 @VerificationCase
 @Tag(category = "slow")
 class LargeTest {
+  var value: int := 0
+
+  prop {
+    return AG value >= 0
+  }
 }
 ```
 
@@ -79,7 +89,7 @@ tran increment() {
 
 ## Standard Annotations
 
-See the [Standard Library](standard-library.md) for full details.
+See the [Standard Library](standard-library.md) for full details. A standard annotation on a declaration it does not apply to is rejected (`OXSTS.INCORRECT_ANNOTATION_TARGET`): `@VerificationCase` and `@Tag` apply to classes, `@Shared` to containment features, `@Trace` to transitions, and `@Control`, `@Clock` and `@NonOptimizable` to variables.
 
 | Annotation | Purpose |
 |------------|---------|

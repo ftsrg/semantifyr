@@ -36,7 +36,7 @@ tran setBy(amount: int) {
 }
 ```
 
-Parameters are passed by value when the transition is invoked through an [inline call](inline-operations.md#inline-call). A parameter cannot be an array (`OXSTS.UNSUPPORTED_FEATURE`).
+Parameters are passed by value when the transition is invoked through an [inline call](inline-operations.md#inline-call). A parameter cannot be an array (`OXSTS.UNSUPPORTED_FEATURE`), and two parameters of one transition cannot share a name (`OXSTS.DUPLICATE_NAME`). A parameter may reuse the name of a member of the class, which the body then reaches as `self.name`.
 
 ## The Implicit `main` and `init`
 

@@ -25,7 +25,7 @@ prop isAtLeast(threshold: int): bool {
 }
 ```
 
-A parameter may hold an instance, and the body reads its members. An argument that is a variable reads the members of the instance the variable holds.
+A parameter may hold an instance, and the body reads its members. An argument that is a variable reads the members of the instance the variable holds. Two parameters of one property cannot share a name (`OXSTS.DUPLICATE_NAME`).
 
 ```oxsts fragment
 prop isDoneOf(worker: Worker[0..1]): bool {

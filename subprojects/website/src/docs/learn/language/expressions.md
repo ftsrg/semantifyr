@@ -27,7 +27,7 @@ See [Datatypes](datatypes.md) for the corresponding types.
 
 ## `self`
 
-Inside a class body, `self` refers to the current class or feature instance.
+Inside a class body, `self` refers to the current class or feature instance. Outside a class, in a global feature or a record, it is rejected (`OXSTS.SELF_OUTSIDE_CLASS`).
 
 ```oxsts fragment
 class Counter {

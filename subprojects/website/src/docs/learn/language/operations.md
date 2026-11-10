@@ -104,7 +104,7 @@ for (i in 1..10) {
 
 ### Local Variable
 
-Local variables allow the definition of temporary locals in the operation structure. A local variable may be a fixed-size array, such as `var values: int[3] := [1, 2, 3]`, indexed like a class array. A local variable carries an initializer like every variable. A local variable of class or feature type, such as `var picked: Worker := first` or `var picked: workers := first`, holds one instance like a class variable, and a call or a read through it, such as `inline picked.finish()` or `picked.done`, acts on the instance it holds; a feature-typed local holds the instances of the feature on the instance whose transition declares it, and `havoc(picked)` chooses among the instances of its type.
+Local variables allow the definition of temporary locals in the operation structure. A local variable may be a fixed-size array, such as `var values: int[3] := [1, 2, 3]`, indexed like a class array. A local variable carries an initializer like every variable. Two local variables of one sequence cannot share a name (`OXSTS.DUPLICATE_NAME`); a nested sequence may reuse an outer name, which it then shadows. A local variable of class or feature type, such as `var picked: Worker := first` or `var picked: workers := first`, holds one instance like a class variable, and a call or a read through it, such as `inline picked.finish()` or `picked.done`, acts on the instance it holds; a feature-typed local holds the instances of the feature on the instance whose transition declares it, and `havoc(picked)` chooses among the instances of its type.
 
 ```oxsts fragment
 var choiceTaken: bool := false

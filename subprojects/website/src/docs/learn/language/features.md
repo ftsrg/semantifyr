@@ -51,7 +51,7 @@ class Tree {
 
 ## `derived refers`
 
-A `derived refers` feature is computed automatically from the model structure. Derived refers features with `opposite` may be derived from their opposite declaration.
+A `derived refers` feature is computed automatically from the model structure: it holds the instances whose `opposite` feature refers to the holder. A `derived refers` without an `opposite`, declared or inherited, is rejected (`OXSTS.UNSUPPORTED_FEATURE`).
 
 ```oxsts fragment
 class StateNode {
@@ -62,7 +62,7 @@ class StateNode {
 
 ## `features`
 
-The `features` keyword declares an **abstract** feature whose kind is left to subclasses. A subclass redefines it as a concrete `contains` or `refers`, or fills it through features that [subset](#subsets) it: one that is not redefined holds the instances of its subsetters.
+The `features` keyword declares an **abstract** feature whose kind is left to subclasses. A subclass redefines it as a concrete `contains` or `refers`, or fills it through features that [subset](#subsets) it: one that is not redefined holds the instances of its subsetters. A concrete class with a `features` that it neither redefines nor subsets is rejected (`OXSTS.ABSTRACT_FEATURE_NOT_REALIZED`).
 
 ```oxsts
 abstract class Container {
@@ -113,7 +113,7 @@ class Wrapper {
 }
 ```
 
-This is the primary way semantic libraries declaratively add instances to a collection defined in a superclass. A redefinition that names no `subsets` keeps the superset of the feature it redefines.
+This is the primary way semantic libraries declaratively add instances to a collection defined in a superclass. A redefinition that names no `subsets` keeps the superset of the feature it redefines. A bound feature (`= expr`) and a `derived refers` hold the instances their expression or opposite gives them, so neither can be subset (`OXSTS.INCORRECT_SUBSETS`).
 
 ## `redefine` and `redefines`
 
@@ -126,7 +126,7 @@ class Counter10Pair : CounterPair {
 }
 ```
 
-`redefines` replaces an inherited feature under a new name: the old name no longer resolves on the subclass, and inherited members that use it reach the new feature.
+`redefines` replaces an inherited feature under a new name: the old name no longer resolves on the subclass, and inherited members that use it reach the new feature. A class redefines an inherited feature at most once, by `redefine` or by `redefines` (`OXSTS.DUPLICATE_REDEFINITION`).
 
 ```oxsts fragment
 class Counter10Pair : CounterPair {
