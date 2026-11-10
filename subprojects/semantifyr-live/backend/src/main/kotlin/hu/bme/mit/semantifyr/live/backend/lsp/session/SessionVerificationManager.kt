@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
 import hu.bme.mit.semantifyr.live.backend.data.VerificationState
+import hu.bme.mit.semantifyr.live.backend.exceptions.SyntaxErrorException
 import hu.bme.mit.semantifyr.live.backend.lsp.service.RunningVerification
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionLanguageClient
 import hu.bme.mit.semantifyr.live.backend.lsp.service.VerificationsChangedParams
@@ -153,6 +154,11 @@ class SessionVerificationManager @Inject constructor(
                     logger.info(e) { entry.cancellationMessage }
                     recordCancelled(entry)
                     cancelledResult(kind, portfolioId, entry.cancellationMessage)
+                } catch (e: SyntaxErrorException) {
+                    logger.info(e) { "Verification refused: ${e.message}" }
+                    erroredResult(kind, portfolioId, e.message.orEmpty()).also {
+                        recordFinished(entry, it)
+                    }
                 } catch (e: Throwable) {
                     val message = "Verification failed: ${e.message ?: e::class.simpleName}"
                     logger.error(e) { message }
