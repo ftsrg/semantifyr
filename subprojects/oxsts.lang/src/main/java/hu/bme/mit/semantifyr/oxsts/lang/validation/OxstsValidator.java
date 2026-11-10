@@ -618,6 +618,11 @@ public class OxstsValidator extends AbstractOxstsValidator {
 
     @Check
     public void checkCallExpressionArgumentCount(CallSuffixExpression callSuffixExpression) {
+        // a half-written navigation carries its own syntax or linking diagnostic
+        if (callSuffixExpression.getPrimary() instanceof NavigationSuffixExpression navigation
+                && (navigation.getMember() == null || navigation.getMember().eIsProxy())) {
+            return;
+        }
         var primary = metaConstantExpressionEvaluatorProvider.evaluate(callSuffixExpression.getPrimary());
 
         if (!(primary instanceof ParametricDeclaration parametricDeclaration)) {
@@ -699,6 +704,11 @@ public class OxstsValidator extends AbstractOxstsValidator {
 
     @Check
     public void checkCallExpressionArgumentTypes(CallSuffixExpression callSuffixExpression) {
+        // a half-written navigation carries its own syntax or linking diagnostic
+        if (callSuffixExpression.getPrimary() instanceof NavigationSuffixExpression navigation
+                && (navigation.getMember() == null || navigation.getMember().eIsProxy())) {
+            return;
+        }
         var primary = metaConstantExpressionEvaluatorProvider.evaluate(callSuffixExpression.getPrimary());
         if (!(primary instanceof ParametricDeclaration parametricDeclaration)) {
             return;
@@ -743,6 +753,11 @@ public class OxstsValidator extends AbstractOxstsValidator {
 
     @Check
     public void checkTracedCallArgumentModality(CallSuffixExpression callSuffixExpression) {
+        // a half-written navigation carries its own syntax or linking diagnostic
+        if (callSuffixExpression.getPrimary() instanceof NavigationSuffixExpression navigation
+                && (navigation.getMember() == null || navigation.getMember().eIsProxy())) {
+            return;
+        }
         var primary = metaConstantExpressionEvaluatorProvider.evaluate(callSuffixExpression.getPrimary());
         if (!(primary instanceof TransitionDeclaration transitionDeclaration)
                 || !builtinAnnotationHandler.isTransitionTraced(transitionDeclaration)) {
@@ -1186,6 +1201,11 @@ public class OxstsValidator extends AbstractOxstsValidator {
 
     @Check
     public void checkValidCalledElements(CallSuffixExpression callSuffixExpression) {
+        // a half-written navigation carries its own syntax or linking diagnostic
+        if (callSuffixExpression.getPrimary() instanceof NavigationSuffixExpression navigation
+                && (navigation.getMember() == null || navigation.getMember().eIsProxy())) {
+            return;
+        }
         var called = metaConstantExpressionEvaluatorProvider.evaluate(callSuffixExpression.getPrimary());
 
         if (!OxstsUtils.isCallable(called)) {

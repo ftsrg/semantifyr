@@ -17,11 +17,15 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.emf.common.util.BasicDiagnostic;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.xtext.diagnostics.Diagnostic;
+import org.eclipse.xtext.diagnostics.ExceptionDiagnostic;
 import org.eclipse.xtext.diagnostics.Severity;
 import org.eclipse.xtext.testing.util.ParseHelper;
+import org.eclipse.xtext.util.CancelIndicator;
 import org.eclipse.xtext.validation.CheckMode;
 import org.eclipse.xtext.validation.EValidatorRegistrar;
+import org.eclipse.xtext.validation.IResourceValidator;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -36,6 +40,9 @@ public class HalfParsedValidationTest {
 
     @Inject
     private OxstsPackageParseHelper packageParseHelper;
+
+    @Inject
+    private IResourceValidator resourceValidator;
 
     @ParameterizedTest
     @ValueSource(
@@ -96,6 +103,47 @@ public class HalfParsedValidationTest {
                 .isNotEmpty()
                 .allSatisfy(issue -> {
                     assertThat(issue.getCode()).isEqualTo(Diagnostic.SYNTAX_DIAGNOSTIC);
+                });
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                "inline counter.",
+                "inline worker.",
+                "inline worker.missing()",
+                "inline worker.missing.step()",
+            })
+    void aHalfWrittenCallReportsOnlyItsSyntaxOrLinkingError(String statement) throws Exception {
+        var oxstsPackage = parseHelper.parse("""
+            package test
+            class Worker {
+                tran step() { }
+            }
+            class Host {
+                contains worker: Worker
+                var counter: int := 0
+                redefine tran {
+                    %s
+                }
+            }
+            """.formatted(statement));
+        EcoreUtil.resolveAll(oxstsPackage);
+
+        var validator = injector.getInstance(RethrowingValidator.class);
+        var diagnostics = new BasicDiagnostic();
+        Map<Object, Object> context = new HashMap<>(Map.of(CheckMode.KEY, CheckMode.ALL));
+        oxstsPackage.eAllContents().forEachRemaining(element -> {
+            validator.validate(element.eClass(), element, diagnostics, context);
+        });
+
+        assertThat(oxstsPackage.eResource().getErrors()).noneMatch(ExceptionDiagnostic.class::isInstance);
+        var issues = resourceValidator.validate(oxstsPackage.eResource(), CheckMode.ALL, CancelIndicator.NullImpl);
+        assertThat(issues)
+                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .isNotEmpty()
+                .allSatisfy(issue -> {
+                    assertThat(issue.getCode()).isIn(Diagnostic.SYNTAX_DIAGNOSTIC, Diagnostic.LINKING_DIAGNOSTIC);
                 });
     }
 
