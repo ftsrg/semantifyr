@@ -1,0 +1,38 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+a.button { text-decoration: none; }
+:where(button, [tabindex], a):focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 1px; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+.floating { z-index: 40; outline: none; }
+.floating > .menu { position: relative; outline: none; }
+.menu-item { color: var(--text-primary); font-size: var(--text-body); }
+.menu-item[data-highlighted] { background: var(--surface-hover); }
+.menu-item:focus-visible { outline: none; background: var(--surface-hover); }
+.menu-heading { display: block; }
+
+.scrim { position: fixed; inset: 0; z-index: 50; }
+.dialog { position: fixed; z-index: 51; max-width: calc(100vw - 24px); }
+.toast { position: fixed; z-index: 60; }
+
+.verdict-glyph { cursor: pointer; }
+.verdict-glyph::before, .verdict-glyph::after { content: ""; position: absolute; left: 50%; top: 50%; width: 13px; height: 13px; box-sizing: border-box; border-radius: 50%; transform: translate(-50%, -50%); transition: transform var(--duration-fast); }
+.verdict-glyph:hover::before, .verdict-glyph:hover::after { transform: translate(-50%, -50%) scale(1.12); }
+.verdict-glyph::after { -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat; }
+.verdict-glyph-passed::before { background: var(--verdict-passed); }
+.verdict-glyph-passed::after { background: var(--verdict-glyph-on-disc); -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M4.9 8.2l2.15 2.15 4.1-4.45' fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.9'/></svg>"); mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M4.9 8.2l2.15 2.15 4.1-4.45' fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.9'/></svg>"); }
+.verdict-glyph-failed::before { background: var(--verdict-failed); }
+.verdict-glyph-failed::after { background: var(--verdict-glyph-on-disc); -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M5.5 5.5l5 5M10.5 5.5l-5 5' fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.9'/></svg>"); mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M5.5 5.5l5 5M10.5 5.5l-5 5' fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.9'/></svg>"); }
+.verdict-glyph-inconclusive::before { border: 1.5px solid var(--verdict-inconclusive); }
+.verdict-glyph-inconclusive::after { background: var(--verdict-inconclusive); -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M6.2 6.3a1.8 1.8 0 1 1 2.5 1.65c-.45.2-.7.55-.7 1v.3' fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.7'/><circle cx='8' cy='11.25' r='.95' fill='black'/></svg>"); mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M6.2 6.3a1.8 1.8 0 1 1 2.5 1.65c-.45.2-.7.55-.7 1v.3' fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.7'/><circle cx='8' cy='11.25' r='.95' fill='black'/></svg>"); }
+.verdict-glyph-error::before { border: 1.5px solid var(--problem); }
+.verdict-glyph-error::after { background: var(--problem); -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M8 4.6v4.1' fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.7'/><circle cx='8' cy='11.1' r='.95' fill='black'/></svg>"); mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M8 4.6v4.1' fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.7'/><circle cx='8' cy='11.1' r='.95' fill='black'/></svg>"); }
+.verdict-glyph-not-run::before, .verdict-glyph-queued::before { border: 1.5px dashed var(--verdict-pending); }
+.verdict-glyph-queued::after { background: var(--verdict-pending); -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M8 4.9V8l2.1 1.4' fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.7'/></svg>"); mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M8 4.9V8l2.1 1.4' fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.7'/></svg>"); }
+.verdict-glyph-running::before { border: 1.5px solid color-mix(in srgb, var(--text-secondary) 22%, transparent); border-top-color: var(--text-secondary); animation: verdict-glyph-spin 0.9s linear infinite; }
+.verdict-glyph-outdated { opacity: 0.4; }
+@keyframes verdict-glyph-spin { to { transform: translate(-50%, -50%) rotate(360deg); } }

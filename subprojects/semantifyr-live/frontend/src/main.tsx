@@ -4,21 +4,19 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import { lazy, Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
 
-import '@fontsource/open-sans/latin-400.css';
-import '@fontsource/open-sans/latin-ext-400.css';
-import '@fontsource/open-sans/latin-600.css';
-import '@fontsource/open-sans/latin-ext-600.css';
-import '@fontsource/open-sans/latin-700.css';
-import '@fontsource/open-sans/latin-ext-700.css';
-import '@fontsource/jetbrains-mono/latin-400.css';
-import '@fontsource/jetbrains-mono/latin-ext-400.css';
-import '@fontsource/jetbrains-mono/latin-700.css';
-import '@fontsource/jetbrains-mono/latin-ext-700.css';
-import App from './App';
 import ErrorBoundary from './components/shell/ErrorBoundary';
-import './styles.css';
+import { isShellRoute } from './shells/route';
+
+// each route loads its own chunk, so the new shells never load today's component library
+const App = lazy(() => {
+  return import('./App');
+});
+const ShellApp = lazy(() => {
+  return import('./shells/ShellApp');
+});
 
 const root = document.getElementById('root');
 if (!root) {
@@ -41,6 +39,8 @@ const appErrorFallback = (
 
 ReactDOM.createRoot(root).render(
   <ErrorBoundary label="app" fallback={appErrorFallback}>
-    <App />
+    <Suspense fallback={null}>
+      {isShellRoute(window.location.pathname) ? <ShellApp /> : <App />}
+    </Suspense>
   </ErrorBoundary>,
 );

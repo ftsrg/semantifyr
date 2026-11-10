@@ -26,9 +26,10 @@ export interface InitializationState {
 }
 
 export const InitializationSteps = {
-  editor: { id: 'editor', label: 'Starting the editor' },
   connect: { id: 'connect', label: 'Connecting to the server' },
-  cases: { id: 'cases', label: 'Finding the cases' },
+  server: { id: 'server', label: 'Starting the language server' },
+  library: { id: 'library', label: 'Loading the library' },
+  cases: { id: 'cases', label: 'Finding the verification cases' },
 } as const
 
 export function initializationOf(definitions: readonly InitializationStepDefinition[]): InitializationState {
@@ -77,6 +78,16 @@ export function finishStep(state: InitializationState, id: string, now: number):
     }
     return { ...step, state: 'done', startedAt: step.startedAt ?? now, finishedAt: now }
   })
+}
+
+// a later step done means every step before it is done too
+export function finishThrough(state: InitializationState, id: string, now: number): InitializationState {
+  const last = state.steps.findIndex((step) => {
+    return step.id === id
+  })
+  return state.steps.slice(0, last + 1).reduce((finished, step) => {
+    return finishStep(finished, step.id, now)
+  }, state)
 }
 
 export function failStep(state: InitializationState, id: string, now: number): InitializationState {

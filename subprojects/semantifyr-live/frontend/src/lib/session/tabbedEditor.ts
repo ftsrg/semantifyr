@@ -1,0 +1,332 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+import * as vscode from 'vscode'
+import { editor as monacoEditor, Uri } from 'monaco-editor'
+import type { Range } from '@semantifyr/editor-common'
+
+import type { ResolvedColorMode } from '../util/colorMode'
+import type { VerificationCaseState } from '../verification/engine'
+import { caseRowOf } from '../workspace/caseRows'
+import type { DocumentTabsState, ReadOnlyDocument } from '../workspace/documentTabs'
+import { libraryTabOf } from '../workspace/libraryTabs'
+import type { Live } from '../workspace/live'
+import { createEditor, setEditorOpener, type EditorInstance } from './monaco'
+import { problemsOf } from './problems'
+import { LIBRARY_SCHEME } from './readOnlyDocuments'
+
+export interface CursorPosition {
+  line: number
+  column: number
+}
+
+export interface TabbedEditorOptions {
+  host: HTMLElement
+  live: Live
+  document: { uri: string, languageId: string, text: string }
+  colorMode: ResolvedColorMode
+  // the cursor in the model, null while a read-only tab is shown
+  onCursor: (position: CursorPosition | null) => void
+}
+
+export interface TabbedEditor {
+  dispose: () => Promise<void>
+}
+
+type TextModel = monacoEditor.ITextModel
+
+const MARK_CLASS = 'verdict-glyph'
+
+function toMonacoRange(range: Range): { startLineNumber: number, startColumn: number, endLineNumber: number, endColumn: number } {
+  return {
+    startLineNumber: range.start.line + 1,
+    startColumn: range.start.character + 1,
+    endLineNumber: range.end.line + 1,
+    endColumn: range.end.character + 1,
+  }
+}
+
+function markOf(caseState: VerificationCaseState): monacoEditor.IModelDeltaDecoration {
+  const row = caseRowOf(caseState)
+  const line = caseState.caseInfo.location.range.start.line + 1
+  const time = row.time !== null ? ` · ${row.time}` : ''
+  return {
+    range: { startLineNumber: line, startColumn: 1, endLineNumber: line, endColumn: 1 },
+    options: {
+      glyphMarginClassName: `${MARK_CLASS} ${MARK_CLASS}-${row.status}${row.outdated ? ` ${MARK_CLASS}-outdated` : ''}`,
+      glyphMarginHoverMessage: { value: `\`${row.name}\` · ${row.word}${row.outdated ? ' · outdated' : ''}${time}` },
+      stickiness: monacoEditor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
+    },
+  }
+}
+
+// One editor instance for the model and its read-only tabs: each document keeps its view state, the model its undo history
+export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
+  const { live } = options
+  const modelUri = options.document.uri
+  let instance: EditorInstance | null = null
+  let disposed = false
+  const cleanups: (() => void)[] = []
+  const viewStates = new Map<string, monacoEditor.ICodeEditorViewState | null>()
+  const ownedModels = new Map<string, TextModel>()
+  const openedDocuments = new Map<string, vscode.TextDocument>()
+  let markIds: string[] = []
+  const caseOfMark = new Map<string, string>()
+  let shownSelection = 0
+  let restoreModel = (): void => {}
+
+  const caseStates = (): readonly VerificationCaseState[] => {
+    const key = live.workspace.get().documentKey
+    return key === null ? [] : live.verification.get().get(key)?.cases ?? []
+  }
+
+  const attach = (editorInstance: EditorInstance): void => {
+    instance = editorInstance
+    const editor = editorInstance.editorApp.getEditor()
+    const model = editor?.getModel()
+    if (!editor || !model) {
+      return
+    }
+    editor.updateOptions({ glyphMargin: true, lineNumbersMinChars: 3, fontSize: 13, lineHeight: 20, readOnlyMessage: { value: 'Read-only. Back to the model to edit.' } })
+
+    const refreshProblems = (): void => {
+      live.problems.set(problemsOf(vscode.Uri.parse(modelUri)))
+    }
+    const diagnostics = vscode.languages.onDidChangeDiagnostics(refreshProblems)
+    cleanups.push(() => {
+      diagnostics.dispose()
+    })
+    refreshProblems()
+
+    const refreshMarks = (): void => {
+      const cases = caseStates()
+      markIds = model.deltaDecorations(markIds, cases.map(markOf))
+      caseOfMark.clear()
+      markIds.forEach((id, index) => {
+        const caseState = cases[index]
+        if (caseState) {
+          caseOfMark.set(id, caseState.caseInfo.id)
+        }
+      })
+    }
+    cleanups.push(live.verification.subscribe(refreshMarks), live.workspace.subscribe(refreshMarks))
+    refreshMarks()
+
+    const mouse = editor.onMouseDown((event) => {
+      if (event.target.type !== monacoEditor.MouseTargetType.GUTTER_GLYPH_MARGIN || editor.getModel() !== model) {
+        return
+      }
+      const line = event.target.position.lineNumber
+      const markId = model.getLineDecorations(line).find((decoration) => {
+        return caseOfMark.has(decoration.id)
+      })?.id
+      const caseId = markId === undefined ? undefined : caseOfMark.get(markId)
+      const caseState = caseStates().find((candidate) => {
+        return candidate.caseInfo.id === caseId
+      })
+      if (!caseState) {
+        return
+      }
+      const row = caseRowOf(caseState)
+      if (row.status === 'not-run' || row.outdated) {
+        live.verifyCase(caseState.caseInfo.id)
+      } else if (row.status !== 'running' && row.status !== 'queued') {
+        live.selectCase(caseState.caseInfo.id)
+      }
+    })
+    cleanups.push(() => {
+      mouse.dispose()
+    })
+
+    const cursor = editor.onDidChangeCursorPosition((event) => {
+      if (editor.getModel() === model) {
+        options.onCursor({ line: event.position.lineNumber, column: event.position.column })
+      }
+    })
+    cleanups.push(() => {
+      cursor.dispose()
+    })
+    options.onCursor({ line: 1, column: 1 })
+
+    const modelFor = async (tab: ReadOnlyDocument): Promise<TextModel | null> => {
+      const uri = Uri.parse(tab.uri)
+      if (tab.text !== undefined) {
+        const existing = ownedModels.get(tab.uri) ?? monacoEditor.getModel(uri)
+        if (existing) {
+          if (existing.getValue() !== tab.text) {
+            existing.pushEditOperations([], [{ range: existing.getFullModelRange(), text: tab.text }], () => {
+              return null
+            })
+          }
+          return existing
+        }
+        const created = monacoEditor.createModel(tab.text, tab.languageId, uri)
+        ownedModels.set(tab.uri, created)
+        return created
+      }
+      try {
+        const opened = await vscode.workspace.openTextDocument(vscode.Uri.parse(tab.uri))
+        openedDocuments.set(tab.uri, opened)
+      } catch (error) {
+        console.warn('semantifyr-live: a read-only document could not be read', error)
+        return null
+      }
+      const resolved = monacoEditor.getModel(uri)
+      if (resolved && resolved.getLanguageId() !== tab.languageId) {
+        monacoEditor.setModelLanguage(resolved, tab.languageId)
+      }
+      return resolved
+    }
+
+    const show = (target: TextModel, readOnly: boolean): void => {
+      const current = editor.getModel()
+      if (current === target) {
+        return
+      }
+      if (current) {
+        viewStates.set(current.uri.toString(), editor.saveViewState())
+      }
+      editor.setModel(target)
+      editor.updateOptions({ readOnly })
+      const saved = viewStates.get(target.uri.toString())
+      if (saved) {
+        editor.restoreViewState(saved)
+      }
+      const position = editor.getPosition()
+      options.onCursor(readOnly || !position ? null : { line: position.lineNumber, column: position.column })
+    }
+
+    restoreModel = () => {
+      editor.setModel(model)
+    }
+
+    // a definition is revealed with the cursor at its start; a place in a read-only tab is selected
+    const reveal = (range: Range, select: boolean): void => {
+      const target = toMonacoRange(range)
+      editor.revealRangeInCenterIfOutsideViewport(target)
+      if (select) {
+        editor.setSelection(target)
+      } else {
+        editor.setPosition({ lineNumber: target.startLineNumber, column: target.startColumn })
+      }
+      editor.focus()
+    }
+
+    const applyTabs = async (state: DocumentTabsState): Promise<void> => {
+      for (const tab of state.tabs) {
+        if (tab.text !== undefined && ownedModels.has(tab.uri)) {
+          await modelFor(tab)
+        }
+      }
+      const activeTab = state.tabs.find((tab) => {
+        return tab.id === state.active
+      })
+      if (!activeTab) {
+        show(model, false)
+        return
+      }
+      const target = await modelFor(activeTab)
+      if (disposed || live.tabs.state.get().active !== activeTab.id || !target) {
+        return
+      }
+      show(target, true)
+      if (state.selection?.id === activeTab.id && state.selection.sequence !== shownSelection) {
+        shownSelection = state.selection.sequence
+        reveal(state.selection.range, true)
+      }
+    }
+    let applying = Promise.resolve()
+    cleanups.push(live.tabs.state.subscribe(() => {
+      applying = applying.then(() => {
+        return applyTabs(live.tabs.state.get())
+      })
+    }))
+    void applyTabs(live.tabs.state.get())
+
+    cleanups.push(live.reveal.subscribe(() => {
+      const request = live.reveal.get()
+      if (request?.uri !== modelUri) {
+        return
+      }
+      live.tabs.show(null)
+      show(model, false)
+      reveal(request.range, false)
+    }))
+
+    cleanups.push(setEditorOpener((modelReference, editorOptions) => {
+      const opened = modelReference.object.textEditorModel
+      const uri = opened.uri.toString()
+      const selection = editorOptions && 'selection' in editorOptions ? editorOptions.selection as { startLineNumber: number, startColumn: number, endLineNumber?: number, endColumn?: number } | undefined : undefined
+      const range: Range | undefined = selection
+        ? {
+          start: { line: selection.startLineNumber - 1, character: selection.startColumn - 1 },
+          end: { line: (selection.endLineNumber ?? selection.startLineNumber) - 1, character: (selection.endColumn ?? selection.startColumn) - 1 },
+        }
+        : undefined
+      if (uri === modelUri) {
+        live.tabs.show(null)
+        if (range) {
+          show(model, false)
+          reveal(range, true)
+        }
+        return Promise.resolve(editor)
+      }
+      if (opened.uri.scheme !== LIBRARY_SCHEME) {
+        return Promise.resolve(undefined)
+      }
+      live.tabs.open(libraryTabOf(uri, opened.getLanguageId()), range)
+      return Promise.resolve(editor)
+    }))
+  }
+
+  const disposeInstance = async (editorInstance: EditorInstance): Promise<void> => {
+    try {
+      await editorInstance.editorApp.dispose()
+    } catch {
+      /* ignore */
+    }
+    try {
+      editorInstance.fsOverlay.dispose()
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const ready = createEditor(options.host, options.colorMode, vscode.Uri.parse(modelUri), options.document.languageId, options.document.text)
+    .then(async (editorInstance) => {
+      if (disposed) {
+        await disposeInstance(editorInstance)
+        return
+      }
+      attach(editorInstance)
+    })
+    .catch((error: unknown) => {
+      console.warn('semantifyr-live: the editor failed to start', error)
+    })
+
+  return {
+    dispose: async () => {
+      disposed = true
+      for (const cleanup of cleanups) {
+        cleanup()
+      }
+      live.problems.set([])
+      options.onCursor(null)
+      await ready
+      if (instance) {
+        restoreModel()
+        await disposeInstance(instance)
+        instance = null
+      }
+      for (const owned of ownedModels.values()) {
+        owned.dispose()
+      }
+      ownedModels.clear()
+      openedDocuments.clear()
+      viewStates.clear()
+    },
+  }
+}

@@ -6,22 +6,28 @@
 
 import * as vscode from 'vscode';
 import {
+  FileSystemProviderCapabilities,
+  FileSystemProviderError,
+  FileSystemProviderErrorCode,
   RegisteredFileSystemProvider,
   RegisteredMemoryFile,
+  registerCustomProvider,
   registerFileSystemOverlay,
 } from '@codingame/monaco-vscode-files-service-override';
+import type { OpenEditor } from '@codingame/monaco-vscode-editor-service-override';
 import { configureDefaultWorkerFactory } from 'monaco-languageclient/workerFactory';
 import { MonacoVscodeApiWrapper, type MonacoVscodeApiConfig, type ExtensionConfig } from 'monaco-languageclient/vscodeApiWrapper';
 import { LanguageClientWrapper, LcWebSocket, LcWorker, type LanguageClientConfig } from 'monaco-languageclient/lcwrapper';
 import { EditorApp, type EditorAppConfig } from 'monaco-languageclient/editorApp';
 import { editor, Uri, type IDisposable } from 'monaco-editor';
-import type { MessageTransports } from 'vscode-languageclient';
+import type { MessageTransports, Middleware } from 'vscode-languageclient';
 
 import { normalizeBaseUrl, type NavigateToParams } from '@semantifyr/editor-common';
 import type { ResolvedColorMode } from '../util/colorMode';
 import { observeSocketClose, type SocketClose } from './reconnectController';
 import type { ModelDocuments } from './modelDocuments';
 import type { SemantifyrLiveApi } from '../api/lspExtensions';
+import { fileUriOfLibrary, isLibraryFileUri, LIBRARY_SCHEME, libraryUriOf } from './readOnlyDocuments';
 
 // Synced from :semantifyr-vscode by the cloneVscodeLanguageAssets Gradle task.
 import oxstsGrammar from '../../vscode/imported/syntaxes/oxsts.tmLanguage.json';
@@ -129,6 +135,112 @@ function buildSemantifyrExtension(): ExtensionConfig {
   };
 }
 
+type LibraryReader = (fileUri: string) => Promise<string | null>;
+
+const NO_LIBRARY: LibraryReader = () => {
+  return Promise.resolve(null);
+};
+
+let libraryReader = NO_LIBRARY;
+let editorOpener: OpenEditor | null = null;
+
+// Reads a library file a definition leads into, through the current language's session
+export function setLibraryReader(reader: LibraryReader): () => void {
+  libraryReader = reader;
+  return () => {
+    if (libraryReader === reader) {
+      libraryReader = NO_LIBRARY;
+    }
+  };
+}
+
+// Opens a document the editor navigates to; without one, navigation stays in the current document
+export function setEditorOpener(opener: OpenEditor): () => void {
+  editorOpener = opener;
+  return () => {
+    if (editorOpener === opener) {
+      editorOpener = null;
+    }
+  };
+}
+
+class LibraryFileSystemProvider extends RegisteredFileSystemProvider {
+  constructor() {
+    super(true);
+    // without the stream capability the file service reads through readFile, which reads the file in first
+    this.capabilities = FileSystemProviderCapabilities.FileReadWrite | FileSystemProviderCapabilities.PathCaseSensitive | FileSystemProviderCapabilities.Readonly;
+  }
+
+  private readonly reads = new Map<string, Promise<void>>();
+
+  // the file service stats and reads at once, so both wait for one read
+  private ensureRegistered(resource: vscode.Uri): Promise<void> {
+    const key = resource.toString();
+    let read = this.reads.get(key);
+    if (!read) {
+      read = this.register(resource);
+      this.reads.set(key, read);
+      read.catch(() => {
+        this.reads.delete(key);
+      });
+    }
+    return read;
+  }
+
+  private async register(resource: vscode.Uri): Promise<void> {
+    const text = await libraryReader(fileUriOfLibrary(resource.toString()));
+    if (text === null) {
+      throw FileSystemProviderError.create('library file not found', FileSystemProviderErrorCode.FileNotFound);
+    }
+    this.registerFile(new RegisteredMemoryFile(resource, text));
+  }
+
+  override async stat(resource: vscode.Uri): ReturnType<RegisteredFileSystemProvider['stat']> {
+    await this.ensureRegistered(resource);
+    return super.stat(resource);
+  }
+
+  override async readFile(resource: vscode.Uri): Promise<Uint8Array> {
+    await this.ensureRegistered(resource);
+    return super.readFile(resource);
+  }
+}
+
+function toLibraryUri(uri: vscode.Uri): vscode.Uri {
+  const text = uri.toString();
+  return isLibraryFileUri(text) ? vscode.Uri.parse(libraryUriOf(text)) : uri;
+}
+
+type DefinitionResult = vscode.Location | vscode.Location[] | vscode.LocationLink[] | null | undefined;
+
+function definitionsIntoLibrary(result: DefinitionResult): DefinitionResult {
+  if (!result) {
+    return result;
+  }
+  if (!Array.isArray(result)) {
+    return new vscode.Location(toLibraryUri(result.uri), result.range);
+  }
+  return result.map((entry: vscode.Location | vscode.LocationLink) => {
+    if ('targetUri' in entry) {
+      return { ...entry, targetUri: toLibraryUri(entry.targetUri) };
+    }
+    return new vscode.Location(toLibraryUri(entry.uri), entry.range);
+  }) as vscode.Location[] | vscode.LocationLink[];
+}
+
+// a definition in a library opens the library's read-only document, which no client syncs
+const LIBRARY_NAVIGATION: Middleware = {
+  provideDefinition: async (document, position, token, next) => {
+    return definitionsIntoLibrary(await next(document, position, token));
+  },
+  provideDeclaration: async (document, position, token, next) => {
+    return definitionsIntoLibrary(await next(document, position, token));
+  },
+  provideTypeDefinition: async (document, position, token, next) => {
+    return definitionsIntoLibrary(await next(document, position, token));
+  },
+};
+
 let apiWrapperPromise: Promise<MonacoVscodeApiWrapper> | null = null;
 let markMonacoReady: () => void = () => {};
 // Monaco's editor API is touched only once the VS Code services are up, or it starts the standalone ones
@@ -140,7 +252,12 @@ export async function initializeMonaco(initialColorMode: ResolvedColorMode): Pro
   if (apiWrapperPromise) return apiWrapperPromise;
   const vscodeApiConfig: MonacoVscodeApiConfig = {
     $type: 'extended',
-    viewsConfig: { $type: 'EditorService' },
+    viewsConfig: {
+      $type: 'EditorService',
+      openEditorFunc: async (modelReference, options, sideBySide) => {
+        return editorOpener ? editorOpener(modelReference, options, sideBySide) : undefined;
+      },
+    },
     userConfiguration: {
       json: JSON.stringify({
         'workbench.colorTheme': themeIdFor(initialColorMode),
@@ -153,6 +270,8 @@ export async function initializeMonaco(initialColorMode: ResolvedColorMode): Pro
     extensions: [buildSemantifyrExtension()],
   };
   apiWrapperPromise = (async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-assignment -- monaco-vscode-api declares the file enums in several modules
+    registerCustomProvider(LIBRARY_SCHEME, new LibraryFileSystemProvider());
     const wrapper = new MonacoVscodeApiWrapper(vscodeApiConfig);
     await wrapper.start();
     markMonacoReady();
@@ -173,6 +292,27 @@ export async function applyColorTheme(colorMode: ResolvedColorMode): Promise<voi
   } catch (error) {
     console.warn('semantifyr-live: applyColorTheme failed', error)
   }
+}
+
+export function onDiagnosticsOf(uri: string, listener: () => void): () => void {
+  let subscription: { dispose: () => void } | null = null;
+  let disposed = false;
+  void monacoReady.then(() => {
+    if (disposed) {
+      return;
+    }
+    subscription = vscode.languages.onDidChangeDiagnostics((event) => {
+      if (event.uris.some((changed) => {
+        return changed.toString() === uri;
+      })) {
+        listener();
+      }
+    });
+  });
+  return () => {
+    disposed = true;
+    subscription?.dispose();
+  };
 }
 
 export function createFileUri(fileName: string): vscode.Uri {
@@ -397,23 +537,34 @@ export interface LanguageClientCallbacks {
   onProgress: (params: unknown) => void;
   onStopped: () => void;
   onClose: (close: SocketClose) => void;
+  onOpen?: () => void;
 }
 
 // LcWebSocket.start overwrites the onclose its reader installed, so the close code reaches the client through no handler
 class CloseObservingWebSocket extends LcWebSocket {
   private readonly onClose: (close: SocketClose) => void;
+  private readonly onOpen: () => void;
 
-  constructor(onClose: (close: SocketClose) => void) {
+  constructor(onClose: (close: SocketClose) => void, onOpen: () => void) {
     super();
     this.onClose = onClose;
+    this.onOpen = onOpen;
   }
 
   override async init(...parameters: Parameters<LcWebSocket['init']>): Promise<MessageTransports> {
     const transports = await super.init(...parameters);
     const { webSocket } = this as unknown as { webSocket: WebSocket };
     observeSocketClose(webSocket, this.onClose);
+    webSocket.addEventListener('open', () => {
+      this.onOpen();
+    });
     return transports;
   }
+}
+
+function socketAddress(wsBaseUrl: string, flavorId: string, sessionKind: string | undefined): string {
+  const address = `${wsBaseUrl}/ws/lsp/${encodeURIComponent(flavorId)}`;
+  return sessionKind === undefined ? address : `${address}?kind=${encodeURIComponent(sessionKind)}`;
 }
 
 const LSP_STATE_STOPPED = 1;
@@ -435,7 +586,8 @@ export async function connectWorkerLanguageClient(
       },
     },
     clientOptions: {
-      documentSelector: [languageId],
+      documentSelector: [{ language: languageId, scheme: 'file' }],
+      middleware: LIBRARY_NAVIGATION,
       workspaceFolder: {
         index: 0,
         name: 'workspace',
@@ -465,6 +617,7 @@ export async function connectLanguageClient(
   flavorId: string,
   languageId: string,
   callbacks: LanguageClientCallbacks,
+  sessionKind?: string,
 ): Promise<LanguageClientWrapper> {
   const { ws: wsBaseUrl } = normalizeBaseUrl(backendUrl);
   const languageClientConfig: LanguageClientConfig = {
@@ -472,13 +625,14 @@ export async function connectLanguageClient(
     connection: {
       options: {
         $family: 'WebSocket',
-        realization: () => new CloseObservingWebSocket(callbacks.onClose),
-        webSocketUrl: `${wsBaseUrl}/ws/lsp/${encodeURIComponent(flavorId)}`,
+        realization: () => new CloseObservingWebSocket(callbacks.onClose, callbacks.onOpen ?? (() => {})),
+        webSocketUrl: socketAddress(wsBaseUrl, flavorId, sessionKind),
         disposeResources: true,
       },
     },
     clientOptions: {
-      documentSelector: [languageId],
+      documentSelector: [{ language: languageId, scheme: 'file' }],
+      middleware: LIBRARY_NAVIGATION,
       workspaceFolder: {
         index: 0,
         name: 'workspace',

@@ -19,7 +19,8 @@ import type { Settings } from '../stores/settings'
 import { createStore, type ReadableStore, type Store } from '../stores/store'
 import type { ResolvedColorMode } from '../util/colorMode'
 import type { VerificationState } from '../verification/engine'
-import { createVerification } from './verification'
+import { createDocumentTabs, type DocumentTabs } from './documentTabs'
+import { createVerification, type RunTiming } from './verification'
 
 const CATALOG_RETRY_MS = 5000
 const DISCOVERY_DELAY_MS = 500
@@ -60,8 +61,24 @@ export interface RevealRequest {
   sequence: number
 }
 
+// The address named a language or an example that does not exist; what was opened in its place
+export interface AddressProblem {
+  kind: 'language' | 'example'
+  requested: string
+  flavorId: string
+  exampleId: string
+}
+
+export type SessionKind =
+  | 'full'
+  | 'embed'
+  | 'edit-only'
+
 export interface LiveOptions {
   backendUrl: string
+  // the flavor a bare address opens, the first served one when absent
+  defaultFlavorId?: string
+  sessionKind?: SessionKind
   settings: Store<Settings>
   colorMode: () => ResolvedColorMode
   modelDocuments: ModelDocuments
@@ -83,17 +100,25 @@ export interface Live {
   // filled by the editor from the model's diagnostics
   readonly problems: Store<readonly ProblemEntry[]>
   readonly reveal: ReadableStore<RevealRequest | null>
+  readonly address: Store<AddressProblem | null>
+  // the read-only documents beside the model in the editor; they belong to the running language
+  readonly tabs: DocumentTabs
+  readonly pendingVerifyAll: ReadableStore<boolean>
+  readonly runTiming: ReadableStore<RunTiming | null>
   start: (search: string) => void
   dispose: () => Promise<void>
   selectModel: (flavorId: string, exampleId: string) => void
   currentText: () => string | null
   revealRange: (range: Range) => void
   reconnect: () => void
+  // a new session for the open document, after the server ended the last one
+  restartSession: () => void
   disconnect: () => Promise<void>
   refreshCases: () => void
   verifyAll: () => void
   verifyCase: (caseId: string) => void
   cancelVerification: () => void
+  cancelCase: (caseId: string) => void
   validateWitness: (caseId: string) => void
   selectCase: (caseId: string | null) => void
   verificationPortfolioId: () => string | undefined
@@ -112,21 +137,31 @@ interface InitialDocument {
   example: LiveExample
   text: string
   shared: boolean
+  problem: AddressProblem | null
 }
 
-async function resolveInitialDocument(search: string, registry: LanguageRegistry): Promise<InitialDocument> {
+async function resolveInitialDocument(search: string, registry: LanguageRegistry, defaultFlavorId: string | undefined): Promise<InitialDocument> {
   const parameters = parseLiveEditorUrl(search)
-  const flavor = registry.flavorOf(parameters.flavor) ?? registry.flavors[0]
+  const flavor = registry.flavorOf(parameters.flavor) ?? registry.flavorOf(defaultFlavorId) ?? registry.flavors[0]
   const decodedCode = parameters.compressedCode ? await decodeCompressedBase64Url(parameters.compressedCode) : null
   const fallback = flavor.examples[0]
   if (!fallback) {
     throw new Error(`flavor ${flavor.id} has no examples`)
   }
-  if (parameters.example) {
-    const example = findExample(flavor, parameters.example) ?? fallback
-    return { flavor, example, text: decodedCode ?? example.code, shared: false }
+  const unknownLanguage = parameters.flavor !== null && registry.flavorOf(parameters.flavor) === undefined
+  const problemOf = (kind: AddressProblem['kind'], requested: string, example: LiveExample): AddressProblem => {
+    return { kind, requested, flavorId: flavor.id, exampleId: example.id }
   }
-  return { flavor, example: fallback, text: decodedCode ?? fallback.code, shared: decodedCode !== null }
+  if (parameters.example) {
+    const found = findExample(flavor, parameters.example)
+    const example = found ?? fallback
+    const problem = unknownLanguage && parameters.flavor !== null
+      ? problemOf('language', parameters.flavor, example)
+      : found ? null : problemOf('example', parameters.example, example)
+    return { flavor, example, text: decodedCode ?? example.code, shared: false, problem }
+  }
+  const problem = unknownLanguage && parameters.flavor !== null ? problemOf('language', parameters.flavor, fallback) : null
+  return { flavor, example: fallback, text: decodedCode ?? fallback.code, shared: decodedCode !== null, problem }
 }
 
 export function createLive(options: LiveOptions): Live {
@@ -141,6 +176,8 @@ export function createLive(options: LiveOptions): Live {
   const initialization = createStore<InitializationState>(initializationOf([]))
   const problems = createStore<readonly ProblemEntry[]>([])
   const reveal = createStore<RevealRequest | null>(null)
+  const address = createStore<AddressProblem | null>(null)
+  const tabs = createDocumentTabs()
 
   let disposed = false
   let catalogTimer: ReturnType<typeof setTimeout> | null = null
@@ -249,17 +286,23 @@ export function createLive(options: LiveOptions): Live {
       return
     }
     stopRuntime()
-    const unit = catalog.get().registry?.unitOf(document.flavor.id)
+    tabs.closeAll()
+    startRuntime(document.flavor, record)
+  }
+
+  const startRuntime = (flavor: LiveFlavor, record: DocumentRecord): void => {
+    const unit = catalog.get().registry?.unitOf(flavor.id)
     if (!unit) {
-      throw new Error(`no language serves the flavor ${document.flavor.id}`)
+      throw new Error(`no language serves the flavor ${flavor.id}`)
     }
-    const started = unit.start(document.flavor, {
+    const started = unit.start(flavor, {
       backendUrl: options.backendUrl,
       documentUri: record.uri,
       colorMode: options.colorMode(),
       modelDocuments,
+      ...(options.sessionKind ? { sessionKind: options.sessionKind } : {}),
     })
-    workspace.set({ flavor: document.flavor, documentKey: key, runtime: started })
+    workspace.set({ flavor, documentKey: record.key, runtime: started })
     stopFollowingRuntime = followRuntime(started, record.uri)
   }
 
@@ -277,13 +320,14 @@ export function createLive(options: LiveOptions): Live {
   const loadCatalog = async (search: string): Promise<void> => {
     try {
       const registry = createRegistry(liveFlavors(await server.fetchFlavors()))
-      const initial = await resolveInitialDocument(search, registry)
+      const initial = await resolveInitialDocument(search, registry, options.defaultFlavorId)
       if (disposed) {
         return
       }
       catalog.update((previous) => {
         return { ...previous, status: 'ready', registry }
       })
+      address.set(initial.problem)
       open(initial)
     } catch {
       if (disposed) {
@@ -322,6 +366,10 @@ export function createLive(options: LiveOptions): Live {
     selection: verification.selection,
     problems,
     reveal,
+    address,
+    tabs,
+    pendingVerifyAll: verification.pending,
+    runTiming: verification.timing,
     start: (search) => {
       if (typeof window !== 'undefined') {
         window.addEventListener('online', handleOnline)
@@ -348,7 +396,8 @@ export function createLive(options: LiveOptions): Live {
       if (!flavor || !example) {
         return
       }
-      open({ flavor, example, text: example.code, shared: false })
+      address.set(null)
+      open({ flavor, example, text: example.code, shared: false, problem: null })
     },
     currentText: () => {
       const record = currentDocument()
@@ -364,6 +413,16 @@ export function createLive(options: LiveOptions): Live {
       })
     },
     reconnect,
+    restartSession: () => {
+      const { flavor } = workspace.get()
+      const record = currentDocument()
+      if (!flavor || !record) {
+        return
+      }
+      verification.cancel()
+      stopRuntime()
+      startRuntime(flavor, record)
+    },
     disconnect: async () => {
       await workspace.get().runtime?.disconnect()
     },
@@ -373,6 +432,7 @@ export function createLive(options: LiveOptions): Live {
     verifyAll: verification.verifyAll,
     verifyCase: verification.verifyCase,
     cancelVerification: verification.cancel,
+    cancelCase: verification.cancelCase,
     validateWitness: verification.validate,
     selectCase: verification.select,
     verificationPortfolioId,

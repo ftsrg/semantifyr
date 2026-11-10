@@ -18,19 +18,11 @@ import {
   SYSML_OXSTS_URI,
   type SysmlMapping,
 } from '../session/sysmlBridge'
-import { finishStep, InitializationSteps, startStep } from '../stores/initialization'
 import { createStore } from '../stores/store'
+import { librariesOf, readSysmlLibrary, SYSML_LIBRARY_PREFIX } from './libraries'
+import { initializationStepsOf } from './presentation'
 import { createServedRuntime, type ServedRuntime } from './servedRuntime'
 import type { DerivedDocument, LanguageUnit } from './types'
-
-const LANGUAGE_SERVER_STEP = { id: 'language-server', label: 'Starting the SysML language server' }
-
-const SYSML_STEPS = [
-  InitializationSteps.editor,
-  InitializationSteps.connect,
-  LANGUAGE_SERVER_STEP,
-  { ...InitializationSteps.cases, label: 'Loading the libraries and finding the cases' },
-]
 
 const MAPPING_DELAY_MS = 300
 
@@ -77,6 +69,7 @@ export function createSysmlLanguage(id: string, flavors: readonly LiveFlavor[]):
     flavors,
     start: (flavor, context) => {
       const derivedDocuments = createStore(mappedOxsts(null))
+      const modelOxsts = createStore<DerivedDocument | null>(null)
       let mapperDiagnostics: vscode.DiagnosticCollection | null = null
       let mappingTimer: ReturnType<typeof setTimeout> | null = null
       let mappingGeneration = 0
@@ -94,6 +87,7 @@ export function createSysmlLanguage(id: string, flavors: readonly LiveFlavor[]):
 
       const applyMapping = (mapping: SysmlMapping): void => {
         derivedDocuments.set(mappedOxsts(mapping.oxsts ?? null))
+        modelOxsts.set(mappedOxsts(mapping.oxsts ?? null)[0] ?? null)
         mapperDiagnostics ??= vscode.languages.createDiagnosticCollection('semantifyr-mapper')
         mapperDiagnostics.set(vscode.Uri.parse(context.documentUri), toVscodeDiagnostics(mapperProblems(mapping)))
       }
@@ -127,24 +121,25 @@ export function createSysmlLanguage(id: string, flavors: readonly LiveFlavor[]):
 
       const runtime: ServedRuntime = createServedRuntime({
         backendUrl: context.backendUrl,
+        documentUri: context.documentUri,
+        sessionKind: context.sessionKind,
         flavor,
         socketFlavorId: SYSML_OXSTS_FLAVOR_ID,
         clientLanguageId: SYSML_HIDDEN_LANGUAGE_ID,
         colorMode: context.colorMode,
-        steps: SYSML_STEPS,
+        steps: initializationStepsOf(id, context.backendUrl),
         derivedDocuments,
+        modelOxsts,
+        libraryDocuments: librariesOf(flavor.id),
+        readOtherLibrary: (uri) => {
+          return uri.startsWith(SYSML_LIBRARY_PREFIX) ? readSysmlLibrary(uri, window.location.origin) : undefined
+        },
         clientOf: () => {
           return bridge.client
         },
         translateNotification: bridge.translateNotification,
         afterConnect: async () => {
-          runtime.initialization.update((state) => {
-            return startStep(state, LANGUAGE_SERVER_STEP.id, Date.now())
-          })
           await ensureWorker()
-          runtime.initialization.update((state) => {
-            return finishStep(state, LANGUAGE_SERVER_STEP.id, Date.now())
-          })
           scheduleMappingRefresh()
         },
         onDispose: () => {

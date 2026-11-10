@@ -8,7 +8,7 @@ import type { LanguageClientWrapper } from 'monaco-languageclient/lcwrapper'
 
 import type { LiveFlavor } from '../../examples'
 import { SemantifyrLiveApi } from '../api/lspExtensions'
-import { connectLanguageClient, initializeMonaco } from '../session/monaco'
+import { connectLanguageClient, initializeMonaco, onDiagnosticsOf } from '../session/monaco'
 import { wrapClientWithMetrics, type MetricsTracker } from '../session/lspMetrics'
 import {
   createReconnectController,
@@ -25,6 +25,7 @@ import {
 import {
   failStep,
   finishStep,
+  finishThrough,
   initializationOf,
   InitializationSteps,
   startStep,
@@ -34,7 +35,7 @@ import {
 import { constantStore, createStore, type ReadableStore } from '../stores/store'
 import type { ResolvedColorMode } from '../util/colorMode'
 import type { LspClient } from '../verification/engine'
-import type { DerivedDocument, LanguageRuntime } from './types'
+import type { DerivedDocument, LanguageRuntime, LibraryDocument } from './types'
 
 const MAX_RECONNECT_ATTEMPTS = 3
 const RECONNECT_BACKOFF_MS = [
@@ -44,9 +45,13 @@ const RECONNECT_BACKOFF_MS = [
 ]
 
 const NO_DERIVED_DOCUMENTS = constantStore<readonly DerivedDocument[]>([])
+const NO_MODEL_OXSTS = constantStore<DerivedDocument | null>(null)
 
 export interface ServedRuntimeOptions {
   backendUrl: string
+  // the model's document, whose first diagnostics end the library step
+  documentUri: string
+  sessionKind?: string | undefined
   flavor: LiveFlavor
   // the served flavor the WebSocket opens, and the language id whose documents its client syncs
   socketFlavorId: string
@@ -54,6 +59,10 @@ export interface ServedRuntimeOptions {
   colorMode: ResolvedColorMode
   steps: readonly InitializationStepDefinition[]
   derivedDocuments?: ReadableStore<readonly DerivedDocument[]>
+  modelOxsts?: ReadableStore<DerivedDocument | null>
+  libraryDocuments?: readonly LibraryDocument[]
+  // reads the library files the session does not serve, the rest through the session
+  readOtherLibrary?: (uri: string) => Promise<string | null> | undefined
   clientOf?: (served: LspClient) => LspClient
   translateNotification?: (method: string, params: unknown) => unknown
   afterConnect?: () => Promise<void>
@@ -121,9 +130,28 @@ export function createServedRuntime(options: ServedRuntimeOptions): ServedRuntim
       return connectionConnected(previous, Date.now())
     })
     changeStep((state, now) => {
-      return startStep(finishStep(state, InitializationSteps.connect.id, now), InitializationSteps.cases.id, now)
+      return startStep(finishThrough(state, InitializationSteps.server.id, now), InitializationSteps.library.id, now)
     })
   }
+
+  const reportOpen = (): void => {
+    changeStep((state, now) => {
+      return startStep(finishStep(state, InitializationSteps.connect.id, now), InitializationSteps.server.id, now)
+    })
+  }
+
+  // the server publishes the model's diagnostics once it has loaded the libraries the model needs
+  const stopWatchingDiagnostics = onDiagnosticsOf(options.documentUri, () => {
+    const library = initialization.get().steps.find((step) => {
+      return step.id === InitializationSteps.library.id
+    })
+    if (library?.state !== 'running') {
+      return
+    }
+    changeStep((state, now) => {
+      return startStep(finishStep(state, InitializationSteps.library.id, now), InitializationSteps.cases.id, now)
+    })
+  })
 
   const reportFailed = (reason: string, terminated = false): void => {
     connection.update((previous) => {
@@ -225,7 +253,9 @@ export function createServedRuntime(options: ServedRuntimeOptions): ServedRuntim
             lastClose = close
           }
         },
+        onOpen: reportOpen,
       },
+      options.sessionKind,
     )
     if (cancelled) {
       await tearDown(connected)
@@ -238,7 +268,7 @@ export function createServedRuntime(options: ServedRuntimeOptions): ServedRuntim
 
   const start = async (): Promise<void> => {
     changeStep((state, now) => {
-      return startStep(state, InitializationSteps.editor.id, now)
+      return startStep(state, InitializationSteps.connect.id, now)
     })
     try {
       await initializeMonaco(options.colorMode)
@@ -248,9 +278,6 @@ export function createServedRuntime(options: ServedRuntimeOptions): ServedRuntim
       }
       return
     }
-    changeStep((state, now) => {
-      return startStep(finishStep(state, InitializationSteps.editor.id, now), InitializationSteps.connect.id, now)
-    })
     try {
       await doConnect()
     } catch {
@@ -357,6 +384,7 @@ export function createServedRuntime(options: ServedRuntimeOptions): ServedRuntim
     }
     disposed = true
     cancelled = true
+    stopWatchingDiagnostics()
     reconnectController.cancel()
     if (languageClient) {
       await tearDown(languageClient)
@@ -369,12 +397,19 @@ export function createServedRuntime(options: ServedRuntimeOptions): ServedRuntim
 
   void start()
 
+  const api = new SemantifyrLiveApi(client, addNotificationListener)
+
   return {
     flavor: options.flavor,
     connection,
     initialization,
     derivedDocuments: options.derivedDocuments ?? NO_DERIVED_DOCUMENTS,
-    api: new SemantifyrLiveApi(client, addNotificationListener),
+    modelOxsts: options.modelOxsts ?? NO_MODEL_OXSTS,
+    libraryDocuments: options.libraryDocuments ?? [],
+    api,
+    readLibrary: (uri) => {
+      return options.readOtherLibrary?.(uri) ?? api.readDocument(uri)
+    },
     client,
     servedClient,
     metrics: () => {

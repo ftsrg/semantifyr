@@ -16,12 +16,17 @@ const connections = vi.hoisted(() => {
   return {
     callbacks: [] as LanguageClientCallbacks[],
     failures: 0,
+    diagnostics: [] as (() => void)[],
   }
 })
 
 vi.mock('../lib/session/monaco', () => {
   return {
     initializeMonaco: async () => {},
+    onDiagnosticsOf: (_uri: string, listener: () => void) => {
+      connections.diagnostics.push(listener)
+      return () => {}
+    },
     connectLanguageClient: async (
       _backendUrl: string,
       _flavorId: string,
@@ -33,6 +38,7 @@ vi.mock('../lib/session/monaco', () => {
         connections.failures--
         throw new Error('connection refused')
       }
+      callbacks.onOpen?.()
       return {
         getLanguageClient: () => undefined,
         dispose: async () => {},
@@ -52,13 +58,15 @@ async function startRuntime(): Promise<{
   const [flavor] = liveFlavors(servedFlavors)
   const runtime = createServedRuntime({
     backendUrl: 'http://localhost:8080',
+    documentUri: 'file:///workspace/snippet.oxsts',
     flavor,
     socketFlavorId: flavor.id,
     clientLanguageId: flavor.languageId,
     colorMode: 'dark',
     steps: [
-      InitializationSteps.editor,
       InitializationSteps.connect,
+      InitializationSteps.server,
+      InitializationSteps.library,
       InitializationSteps.cases,
     ],
   })
@@ -88,6 +96,7 @@ describe('servedRuntime', () => {
     vi.useFakeTimers()
     connections.callbacks.length = 0
     connections.failures = 0
+    connections.diagnostics.length = 0
   })
 
   afterEach(() => {
@@ -146,10 +155,14 @@ describe('servedRuntime', () => {
     await runtime.dispose()
   })
 
-  it('reports its initialization: the editor and the connection done, the cases left to discovery', async () => {
+  it('reports its initialization: the connection and the server done, the library loading until the model\'s first diagnostics', async () => {
     const { runtime } = await startRuntime()
 
-    expect(stepStates(runtime)).toEqual(['editor:done', 'connect:done', 'cases:running'])
+    expect(stepStates(runtime)).toEqual(['connect:done', 'server:done', 'library:running', 'cases:pending'])
+    for (const listener of connections.diagnostics) {
+      listener()
+    }
+    expect(stepStates(runtime)).toEqual(['connect:done', 'server:done', 'library:done', 'cases:running'])
     await runtime.dispose()
   })
 
@@ -157,13 +170,13 @@ describe('servedRuntime', () => {
     connections.failures = 1
     const { runtime, statuses } = await startRuntime()
     expect(statuses.at(-1)).toEqual({ status: 'failed', reason: 'Failed to connect to LSP server' })
-    expect(stepStates(runtime)).toEqual(['editor:done', 'connect:failed', 'cases:pending'])
+    expect(stepStates(runtime)).toEqual(['connect:failed', 'server:pending', 'library:pending', 'cases:pending'])
 
     runtime.reconnect()
     await vi.advanceTimersByTimeAsync(0)
 
     expect(statuses.at(-1)?.status).toBe('connected')
-    expect(stepStates(runtime)).toEqual(['editor:done', 'connect:done', 'cases:running'])
+    expect(stepStates(runtime)).toEqual(['connect:done', 'server:done', 'library:running', 'cases:pending'])
     await runtime.dispose()
   })
 

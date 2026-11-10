@@ -4,6 +4,16 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import '@fontsource/open-sans/latin-400.css';
+import '@fontsource/open-sans/latin-ext-400.css';
+import '@fontsource/open-sans/latin-600.css';
+import '@fontsource/open-sans/latin-ext-600.css';
+import '@fontsource/open-sans/latin-700.css';
+import '@fontsource/open-sans/latin-ext-700.css';
+import '@fontsource/jetbrains-mono/latin-400.css';
+import '@fontsource/jetbrains-mono/latin-ext-400.css';
+import '@fontsource/jetbrains-mono/latin-700.css';
+import '@fontsource/jetbrains-mono/latin-ext-700.css';
 import React, { Suspense, lazy, useState } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import { parseLiveEditorUrl } from '@semantifyr/editor-common';
@@ -13,6 +23,7 @@ import ReloadPrompt from './components/pwa/ReloadPrompt';
 import { useColorMode } from './lib/hooks/useColorMode';
 import { createSettingsStore, createSystemColorModeStore } from './lib/stores/settings';
 import { createSemantifyrTheme } from './lib/util/theme';
+import './styles.css';
 
 // The editor and its language machinery load as one chunk, after the first paint
 const EditorRoot = lazy(() => {

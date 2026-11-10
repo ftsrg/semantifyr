@@ -20,6 +20,9 @@ vi.mock('vscode', () => {
 vi.mock('../lib/session/monaco', () => {
   return {
     initializeMonaco: async () => {},
+    onDiagnosticsOf: () => {
+      return () => {}
+    },
     connectLanguageClient: async () => {
       return {
         getLanguageClient: () => undefined,
@@ -81,7 +84,7 @@ describe('the SysML language', () => {
 
     expect(workers.started).toBe(1)
     expect(second.initialization.get().steps.find((step) => {
-      return step.id === 'language-server'
+      return step.id === 'server'
     })?.state).toBe('done')
     await second.dispose()
   })

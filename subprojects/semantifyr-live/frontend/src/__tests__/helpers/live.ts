@@ -97,6 +97,11 @@ export function fakeRuntime(flavor: LiveFlavor, client: LspClient): FakeRuntime 
     connection,
     initialization,
     derivedDocuments: constantStore([]),
+    modelOxsts: constantStore(null),
+    libraryDocuments: [],
+    readLibrary: async () => {
+      return null
+    },
     api: new SemantifyrLiveApi(() => {
       return connected ? client : undefined
     }, () => {

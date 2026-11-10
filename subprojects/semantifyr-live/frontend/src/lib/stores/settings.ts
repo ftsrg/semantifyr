@@ -25,6 +25,10 @@ export interface Settings {
   sidePanelWidth: number
   resultsPanelOpen: boolean
   resultsPanelHeight: number
+  // the results column of the desktop shell; a size of 0 is the layout's default
+  resultsColumnWidth: number
+  caseListHeight: number
+  resultsColumnCollapsed: boolean
 }
 
 const SettingsKeys = {
@@ -36,6 +40,9 @@ const SettingsKeys = {
   sidePanelWidth: 'semantifyr-right-pane-width',
   resultsPanelOpen: 'semantifyr-verification-panel-open',
   resultsPanelHeight: 'semantifyr-verification-panel-height',
+  resultsColumnWidth: 'semantifyr-results-column-width',
+  caseListHeight: 'semantifyr-case-list-height',
+  resultsColumnCollapsed: 'semantifyr-results-column-collapsed',
 } as const
 
 const THEMES: readonly ColorModePreference[] = [
@@ -62,6 +69,9 @@ function readSettings(): Settings {
     sidePanelWidth: readPersistedSize(SettingsKeys.sidePanelWidth, 480),
     resultsPanelOpen: readPersistedBool(SettingsKeys.resultsPanelOpen, true),
     resultsPanelHeight: readPersistedSize(SettingsKeys.resultsPanelHeight, 220),
+    resultsColumnWidth: readPersistedSize(SettingsKeys.resultsColumnWidth, 0),
+    caseListHeight: readPersistedSize(SettingsKeys.caseListHeight, 0),
+    resultsColumnCollapsed: readPersistedBool(SettingsKeys.resultsColumnCollapsed, false),
   }
 }
 
@@ -74,6 +84,9 @@ function writeSettings(settings: Settings): void {
   persistSize(SettingsKeys.sidePanelWidth, settings.sidePanelWidth)
   persistBool(SettingsKeys.resultsPanelOpen, settings.resultsPanelOpen)
   persistSize(SettingsKeys.resultsPanelHeight, settings.resultsPanelHeight)
+  persistSize(SettingsKeys.resultsColumnWidth, settings.resultsColumnWidth)
+  persistSize(SettingsKeys.caseListHeight, settings.caseListHeight)
+  persistBool(SettingsKeys.resultsColumnCollapsed, settings.resultsColumnCollapsed)
 }
 
 export function createSettingsStore(): Store<Settings> {

@@ -55,3 +55,31 @@ export function constantStore<T>(value: T): ReadableStore<T> {
     },
   }
 }
+
+// Tells its owner whether anyone listens, so a store that costs a request per change computes only while shown
+export function createDemandStore<T>(initial: T, onDemand: (demanded: boolean) => void): Store<T> {
+  const store = createStore(initial)
+  let listeners = 0
+  return {
+    ...store,
+    subscribe: (listener) => {
+      const unsubscribe = store.subscribe(listener)
+      listeners++
+      if (listeners === 1) {
+        onDemand(true)
+      }
+      let subscribed = true
+      return () => {
+        if (!subscribed) {
+          return
+        }
+        subscribed = false
+        unsubscribe()
+        listeners--
+        if (listeners === 0) {
+          onDemand(false)
+        }
+      }
+    },
+  }
+}

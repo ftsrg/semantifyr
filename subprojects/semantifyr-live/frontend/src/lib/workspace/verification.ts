@@ -7,7 +7,7 @@
 import type { LiveFlavor } from '../../examples'
 import type { LanguageRuntime } from '../language/types'
 import type { ModelDocuments } from '../session/modelDocuments'
-import { finishStep, InitializationSteps, isInitialized } from '../stores/initialization'
+import { finishThrough, InitializationSteps, isInitialized } from '../stores/initialization'
 import type { Settings } from '../stores/settings'
 import { createStore, type ReadableStore } from '../stores/store'
 import {
@@ -50,15 +50,28 @@ export interface Verification {
   readonly states: ReadableStore<ReadonlyMap<string, VerificationState>>
   // the selected case of the current document
   readonly selection: ReadableStore<string | null>
+  // Verify all was pressed before the cases were known; it runs once they are
+  readonly pending: ReadableStore<boolean>
+  // the start and end of the last run of the current document, the end null while it runs
+  readonly timing: ReadableStore<RunTiming | null>
   discover: () => Promise<void>
   scheduleDiscovery: () => void
   documentEdited: (key: string) => void
   verifyAll: () => void
   verifyCase: (caseId: string) => void
   cancel: () => void
+  cancelCase: (caseId: string) => void
   validate: (caseId: string) => void
   select: (caseId: string | null) => void
   dispose: () => void
+}
+
+export interface RunTiming {
+  key: string
+  // the case a single run verifies, null for Verify all
+  caseId: string | null
+  startedAt: number
+  finishedAt: number | null
 }
 
 type StateUpdater = (next: VerificationState | ((previous: VerificationState) => VerificationState)) => void
@@ -87,8 +100,9 @@ function firstWithTrace(cases: readonly VerificationCaseState[]): VerificationCa
 export function createVerification(options: VerificationOptions): Verification {
   const states = createStore<ReadonlyMap<string, VerificationState>>(new Map())
   const selection = createStore<string | null>(null)
+  const pending = createStore(false)
+  const timing = createStore<RunTiming | null>(null)
   let run: ActiveRun | null = null
-  let pendingVerifyAll = false
   let discoveryTimer: ReturnType<typeof setTimeout> | null = null
   let discoveryGeneration = 0
 
@@ -148,6 +162,7 @@ export function createVerification(options: VerificationOptions): Verification {
 
   const startRun = (
     key: string,
+    caseId: string | null,
     start: (connection: Connected, setState: StateUpdater) => RunVerificationHandle,
     whenDone: (handle: ActiveRun) => void,
   ): void => {
@@ -158,10 +173,14 @@ export function createVerification(options: VerificationOptions): Verification {
     const handle = start(connection, updaterFor(key))
     const active: ActiveRun = { key, handle, selectionChanged: false }
     run = active
+    timing.set({ key, caseId, startedAt: Date.now(), finishedAt: null })
     void handle.done.then(() => {
       if (run === active) {
         run = null
       }
+      timing.update((previous) => {
+        return previous?.key === key ? { ...previous, finishedAt: Date.now() } : previous
+      })
       if (isCurrent(key)) {
         whenDone(active)
       }
@@ -174,7 +193,7 @@ export function createVerification(options: VerificationOptions): Verification {
       return
     }
     if (!isInitialized(current.runtime.initialization.get())) {
-      pendingVerifyAll = true
+      pending.set(true)
       return
     }
     const { key, uri } = current.target
@@ -187,7 +206,7 @@ export function createVerification(options: VerificationOptions): Verification {
       })
       return
     }
-    startRun(key, (connection, setState) => {
+    startRun(key, null, (connection, setState) => {
       return runAllVerifications(
         connection.client,
         connection.flavor.verificationCommand,
@@ -226,7 +245,7 @@ export function createVerification(options: VerificationOptions): Verification {
     if (!target) {
       return
     }
-    startRun(key, (connection, setState) => {
+    startRun(key, caseId, (connection, setState) => {
       return verifySingleCase(
         connection.client,
         connection.flavor.verificationCommand,
@@ -279,10 +298,10 @@ export function createVerification(options: VerificationOptions): Verification {
       return
     }
     connection.runtime.initialization.update((state) => {
-      return finishStep(state, InitializationSteps.cases.id, Date.now())
+      return finishThrough(state, InitializationSteps.cases.id, Date.now())
     })
-    if (pendingVerifyAll && isCurrent(key)) {
-      pendingVerifyAll = false
+    if (pending.get() && isCurrent(key)) {
+      pending.set(false)
       verifyAll()
     }
   }
@@ -295,7 +314,7 @@ export function createVerification(options: VerificationOptions): Verification {
   }
 
   const cancel = (): void => {
-    pendingVerifyAll = false
+    pending.set(false)
     const active = run
     run = null
     active?.handle.cancel()
@@ -304,6 +323,8 @@ export function createVerification(options: VerificationOptions): Verification {
   return {
     states,
     selection,
+    pending,
+    timing,
     discover,
     scheduleDiscovery: () => {
       clearDiscoveryTimer()
@@ -318,6 +339,9 @@ export function createVerification(options: VerificationOptions): Verification {
     verifyAll,
     verifyCase,
     cancel,
+    cancelCase: (caseId) => {
+      run?.handle.cancelCase(caseId)
+    },
     validate: (caseId) => {
       const connection = connected()
       const command = connection?.flavor.validateWitnessCommand

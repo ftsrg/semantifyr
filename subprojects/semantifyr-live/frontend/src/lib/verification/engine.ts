@@ -203,6 +203,8 @@ export async function discoverCases(
 
 export interface RunVerificationHandle {
   cancel: () => void
+  // cancels one running or queued case and lets the rest of the run go on
+  cancelCase: (caseId: string) => void
   done: Promise<void>
 }
 
@@ -393,10 +395,30 @@ export function runAllVerifications(
 ): RunVerificationHandle {
   let cancelled = false
   let activeRequestSource: CancellationTokenSource | null = null
+  let activeCaseId: string | null = null
+  const skipped = new Set<string>()
   const progress = createProgressDispatcher(setState)
   const caseIds = new Set(cases.map((caseInfo) => {
     return caseInfo.id
   }))
+
+  const cancelOne = (caseId: string): void => {
+    if (cancelled || !caseIds.has(caseId) || skipped.has(caseId)) {
+      return
+    }
+    skipped.add(caseId)
+    if (activeCaseId === caseId) {
+      activeRequestSource?.cancel()
+    }
+    setState((previous) => ({
+      ...previous,
+      cases: previous.cases.map((caseState) =>
+        caseState.caseInfo.id === caseId && (caseState.status === 'queued' || caseState.status === 'running')
+          ? cancelledCase(caseState)
+          : caseState,
+      ),
+    }))
+  }
 
   const cancelHandle = (): void => {
     if (cancelled) {
@@ -447,7 +469,7 @@ export function runAllVerifications(
 
   const runOne = async (index: number): Promise<void> => {
     const currentCase = cases[index]
-    if (!currentCase) {
+    if (!currentCase || skipped.has(currentCase.id)) {
       return
     }
     setState((previous) => {
@@ -462,6 +484,7 @@ export function runAllVerifications(
 
     const requestSource = createCancellationTokenSource()
     activeRequestSource = requestSource
+    activeCaseId = currentCase.id
     let outcome: VerifyOutcome
     try {
       outcome = await executeVerify(
@@ -476,9 +499,10 @@ export function runAllVerifications(
       requestSource.dispose()
       if (activeRequestSource === requestSource) {
         activeRequestSource = null
+        activeCaseId = null
       }
     }
-    if (cancelled) {
+    if (cancelled || skipped.has(currentCase.id)) {
       return
     }
 
@@ -523,7 +547,7 @@ export function runAllVerifications(
     }
   }
 
-  return { cancel: cancelHandle, done: runAll() }
+  return { cancel: cancelHandle, cancelCase: cancelOne, done: runAll() }
 }
 
 export function verifySingleCase(
@@ -605,7 +629,15 @@ export function verifySingleCase(
     }
   }
 
-  return { cancel: cancelHandle, done: run() }
+  return {
+    cancel: cancelHandle,
+    cancelCase: (cancelledId) => {
+      if (cancelledId === caseId) {
+        cancelHandle()
+      }
+    },
+    done: run(),
+  }
 }
 
 export interface WitnessValidationOutcome {

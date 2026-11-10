@@ -17,6 +17,7 @@
     "preview": "vite preview --port 5173 --host"
   },
   "dependencies": {
+    "@base-ui/react": "^1.9.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@fontsource/jetbrains-mono": "^5.2.8",
