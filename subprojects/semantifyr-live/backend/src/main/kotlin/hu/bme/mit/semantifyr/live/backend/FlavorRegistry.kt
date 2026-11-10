@@ -33,6 +33,7 @@ data class Flavor(
     val validateWitnessByCase: Boolean = false,
     val discoveryCommand: String,
     val peekCompiledOutput: Boolean = false,
+    val compiledOxstsCommand: String? = null,
     val navigationCommands: List<String> = emptyList(),
 ) {
     val commands: List<String>
@@ -41,6 +42,7 @@ data class Flavor(
                 discoveryCommand,
                 verificationCommand,
                 validateWitnessCommand,
+                compiledOxstsCommand,
             ) + navigationCommands
         }
 }
@@ -109,6 +111,7 @@ object FlavorRegistry {
             validateWitnessByCase = true,
             discoveryCommand = "gamma.case.discover",
             peekCompiledOutput = true,
+            compiledOxstsCommand = "gamma.compiled.oxsts",
         ),
     )
 

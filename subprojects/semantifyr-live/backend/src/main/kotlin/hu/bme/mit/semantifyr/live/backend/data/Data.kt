@@ -39,6 +39,7 @@ data class FlavorResponse(
     val validateWitnessCommand: String?,
     val validateWitnessByCase: Boolean,
     val peekCompiledOutput: Boolean,
+    val compiledOxstsCommand: String?,
 ) {
     companion object {
         fun fromFlavor(flavor: Flavor) = FlavorResponse(
@@ -52,6 +53,7 @@ data class FlavorResponse(
             validateWitnessCommand = flavor.validateWitnessCommand,
             validateWitnessByCase = flavor.validateWitnessByCase,
             peekCompiledOutput = flavor.peekCompiledOutput,
+            compiledOxstsCommand = flavor.compiledOxstsCommand,
         )
     }
 }

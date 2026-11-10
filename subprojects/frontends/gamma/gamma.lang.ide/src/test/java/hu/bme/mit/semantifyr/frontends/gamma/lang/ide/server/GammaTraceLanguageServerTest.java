@@ -11,6 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.ide.GammaIdeSetup;
+import hu.bme.mit.semantifyr.lang.ide.server.wire.CompiledOxstsResult;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandGson;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseSpecification;
@@ -160,6 +161,34 @@ class GammaTraceLanguageServerTest {
         assertThat(result.message()).isEqualTo("Case Crossroads.ACanBeGreen has no witness yet, verify it first");
         assertThat(result.portfolioId())
                 .isEqualTo(Portfolios.INSTANCE.getDefault().getId());
+    }
+
+    @Test
+    void theCompiledOxstsOfAModelIsItsOxstsText() throws Exception {
+        var model = copy(MODELS.resolve("examples/Simple.gamma"), "Simple.gamma");
+        initialize();
+        client.awaitDiagnostics(model);
+
+        var result = (CompiledOxstsResult) executeCommand("gamma.compiled.oxsts", new JsonPrimitive(uri(model)));
+
+        assertThat(result.status()).isEqualTo(CompiledOxstsResult.COMPILED);
+        assertThat(result.oxsts()).startsWith("package Simple");
+        assertThat(result.message()).isNull();
+    }
+
+    @Test
+    void theCompiledOxstsOfAModelWithASyntaxErrorIsAnErroredResult() throws Exception {
+        initialize();
+        var model = workspace.resolve("Broken.gamma");
+        languageServer.didOpen(new DidOpenTextDocumentParams(
+                new TextDocumentItem(uri(model), "gamma", 1, "package Broken\n\n} component ;; {\n")));
+        client.awaitDiagnostics(model);
+
+        var result = (CompiledOxstsResult) executeCommand("gamma.compiled.oxsts", new JsonPrimitive(uri(model)));
+
+        assertThat(result.status()).isEqualTo(CompiledOxstsResult.ERRORED);
+        assertThat(result.oxsts()).isNull();
+        assertThat(result.message()).startsWith("The model has a syntax error");
     }
 
     private Object executeCommand(String command, Object argument) throws Exception {

@@ -162,6 +162,19 @@ export interface WitnessValidationResult {
     metrics: VerificationMetrics | null;
 }
 
+export const CompiledOxstsStatus = {
+    Compiled: "compiled",
+    Errored: "errored",
+} as const;
+
+export type CompiledOxstsStatus = (typeof CompiledOxstsStatus)[keyof typeof CompiledOxstsStatus];
+
+export interface CompiledOxstsResult {
+    status: CompiledOxstsStatus;
+    oxsts: string | null;
+    message: string | null;
+}
+
 export type ThetaExecutor = "auto" | "shell" | "docker";
 
 export type ArtifactsLocation = "temporary" | "workspace";

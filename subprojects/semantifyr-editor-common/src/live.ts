@@ -27,6 +27,7 @@ export interface FlavorInfo {
     validateWitnessCommand: string | null;
     validateWitnessByCase: boolean;
     peekCompiledOutput: boolean;
+    compiledOxstsCommand?: string | null;
 }
 
 export interface FlavorsResponse {

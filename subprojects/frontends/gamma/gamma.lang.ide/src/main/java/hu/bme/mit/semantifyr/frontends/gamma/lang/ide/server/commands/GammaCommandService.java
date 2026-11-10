@@ -27,6 +27,9 @@ public class GammaCommandService extends SemantifyrCommandService {
     @Inject
     private CompileGammaCommandHandler compileGammaCommandHandler;
 
+    @Inject
+    private CompiledOxstsGammaCommandHandler compiledOxstsGammaCommandHandler;
+
     private List<CommandHandler> commandHandlers;
 
     @Override
@@ -36,7 +39,8 @@ public class GammaCommandService extends SemantifyrCommandService {
                     discoverVerificationCasesCommandHandler,
                     verifyGammaCaseCommandHandler,
                     validateWitnessGammaCommandHandler,
-                    compileGammaCommandHandler);
+                    compileGammaCommandHandler,
+                    compiledOxstsGammaCommandHandler);
         }
         return commandHandlers;
     }
