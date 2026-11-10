@@ -35,12 +35,22 @@ const VIEWS: readonly LiveEditorView[] = [
     "edit-only",
 ];
 
+export type LiveEditorTheme =
+    | "light"
+    | "dark";
+
+const THEMES: readonly LiveEditorTheme[] = [
+    "light",
+    "dark",
+];
+
 // The path names the model, the query how it is shown, the fragment what the visitor made, which a browser never sends to the server
 export interface LiveEditorLink {
     language: string;
     example?: string | undefined;
     library?: string | undefined;
     view?: LiveEditorView | undefined;
+    theme?: LiveEditorTheme | undefined;
     model?: string | undefined;
     case?: string | undefined;
     verdicts?: readonly (readonly [string, string])[] | undefined;
@@ -51,6 +61,7 @@ export interface LiveEditorAddress {
     example: string | null;
     library: string | null;
     view: LiveEditorView | null;
+    theme: LiveEditorTheme | null;
     compressedModel: string | null;
     case: string | null;
     compressedVerdicts: string | null;
@@ -72,6 +83,7 @@ export async function liveEditorUrl(base: string, link: LiveEditorLink): Promise
     }).join("");
     setOrDelete(url.searchParams, "library", link.library);
     setOrDelete(url.searchParams, "view", link.view);
+    setOrDelete(url.searchParams, "theme", link.theme);
     const fragment = new URLSearchParams();
     if (link.model !== undefined) {
         fragment.set("model", await encodeCompressedBase64Url(link.model));
@@ -122,6 +134,9 @@ export function parseLiveEditorUrl(location: LiveEditorLocation): LiveEditorAddr
         example: decodedSegment(example),
         library: query.get("library"),
         view: viewOf(query.get("view")),
+        theme: THEMES.find((theme) => {
+            return theme === query.get("theme");
+        }) ?? null,
         compressedModel: fragment.get("model"),
         case: fragment.get("case"),
         compressedVerdicts: fragment.get("verdicts"),

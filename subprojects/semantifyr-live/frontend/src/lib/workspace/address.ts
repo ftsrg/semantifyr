@@ -40,6 +40,11 @@ export function readAddress(address: string): LiveEditorAddress {
   return parseLiveEditorUrl(new URL(address, 'http://live.invalid'))
 }
 
+// an embedded frame takes the colour mode of the page around it, which is never stored
+export function frameColorMode(address: LiveEditorAddress): 'light' | 'dark' | null {
+  return address.view === null ? null : address.theme
+}
+
 function flavorOfLanguage(registry: LanguageRegistry, language: string, library: string | null): LiveFlavor | undefined {
   return registry.flavors.find((flavor) => {
     return flavor.languageId === language && libraryOf(flavor.id) === (library ?? undefined)

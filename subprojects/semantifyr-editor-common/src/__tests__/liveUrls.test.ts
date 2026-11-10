@@ -110,6 +110,7 @@ describe("liveEditorUrl and parseLiveEditorUrl", () => {
             example: null,
             library: null,
             view: null,
+            theme: null,
             compressedModel: null,
             case: null,
             compressedVerdicts: null,
@@ -128,6 +129,7 @@ describe("liveEditorUrl and parseLiveEditorUrl", () => {
             example: "basics",
             library: null,
             view: null,
+            theme: null,
             compressedModel: null,
         });
     });
@@ -138,12 +140,21 @@ describe("liveEditorUrl and parseLiveEditorUrl", () => {
         expect(parsed("https://live.semantifyr.org/oxsts?view=edit-only").view).toBe("edit-only");
     });
 
+    it("carry the theme of a frame, and read nothing but light and dark", async () => {
+        const url = await liveEditorUrl("https://live.semantifyr.org/", { language: "oxsts", view: "embed", theme: "dark" });
+
+        expect(url).toBe("https://live.semantifyr.org/oxsts?view=embed&theme=dark");
+        expect(parsed(url).theme).toBe("dark");
+        expect(parsed("https://live.semantifyr.org/oxsts?theme=sepia").theme).toBeNull();
+    });
+
     it("do not read today's mode, example, code and embed parameters", () => {
         expect(parsed("https://live.semantifyr.org/?mode=gamma&example=Crossroads&code=abc&embed=1")).toEqual({
             language: null,
             example: null,
             library: null,
             view: null,
+            theme: null,
             compressedModel: null,
             case: null,
             compressedVerdicts: null,

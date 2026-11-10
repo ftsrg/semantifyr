@@ -18,7 +18,7 @@ import { createSettingsStore, createSystemColorModeStore, resolveColorMode, type
 import type { ReadableStore, Store } from '../lib/stores/store'
 import { useStore } from '../lib/stores/useStore'
 import type { ResolvedColorMode } from '../lib/util/colorMode'
-import { libraryOf } from '../lib/workspace/address'
+import { frameColorMode, libraryOf, readAddress } from '../lib/workspace/address'
 import { createLive, type Live } from '../lib/workspace/live'
 import { CaseTrace } from '../trace/CaseTrace'
 import { ShellRoot } from './ShellRoot'
@@ -62,24 +62,28 @@ function useAddress(live: Live): void {
   }, [live])
 }
 
-function useColorMode(settings: Store<Settings>, system: ReadableStore<ResolvedColorMode>): ResolvedColorMode {
+function useColorMode(settings: Store<Settings>, system: ReadableStore<ResolvedColorMode>, frame: ResolvedColorMode | null): ResolvedColorMode {
   const theme = useStore(settings, (state) => {
     return state.theme
   })
-  return resolveColorMode(theme, useStore(system))
+  const resolved = resolveColorMode(theme, useStore(system))
+  return frame ?? resolved
 }
 
 export default function ShellApp(): React.JSX.Element {
   const [settings] = useState(createSettingsStore)
   const [system] = useState(createSystemColorModeStore)
   const [shell] = useState(createShellState)
-  const colorMode = useColorMode(settings, system)
+  const [frame] = useState(() => {
+    return frameColorMode(readAddress(window.location.href))
+  })
+  const colorMode = useColorMode(settings, system, frame)
   const [live] = useState(() => {
     return createLive({
       backendUrl: window.location.origin,
       settings,
       colorMode: () => {
-        return resolveColorMode(settings.get().theme, system.get())
+        return frame ?? resolveColorMode(settings.get().theme, system.get())
       },
       modelDocuments: createModelDocuments(),
       defaultFlavorId: SYSML_FLAVOR_ID,

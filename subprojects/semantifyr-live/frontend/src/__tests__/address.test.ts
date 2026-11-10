@@ -9,7 +9,7 @@ import { encodeCompressedBase64Url, liveEditorUrl } from '@semantifyr/editor-com
 
 import { findExample } from '../examples'
 import type { LspClient } from '../lib/verification/engine'
-import { readAddress, resolveAddress } from '../lib/workspace/address'
+import { frameColorMode, readAddress, resolveAddress } from '../lib/workspace/address'
 import { servedFlavors } from './fixtures/flavors'
 import { createTestLive, fakeRegistry, fakeRuntime, testFlavors, type TestLive } from './helpers/live'
 
@@ -60,6 +60,13 @@ describe('an address', () => {
     expect(await resolved('/kerml/level-crossing')).toMatchObject({ flavor: { id: 'sysml' }, example: { id: 'level-crossing' }, problem: { kind: 'language', requested: 'kerml' } })
     expect(await resolved('/oxsts/crossroads?library=uml')).toMatchObject({ flavor: { id: 'oxsts' }, example: { id: 'basics' }, problem: { kind: 'library', requested: 'uml' } })
     expect(await resolved('/gamma/level-crosing')).toMatchObject({ flavor: { id: 'gamma' }, example: { id: 'level-crossing' }, problem: { kind: 'example', requested: 'level-crosing' } })
+  })
+
+  it('gives only an embedded frame the colour mode of its page', () => {
+    expect(frameColorMode(readAddress('/oxsts?view=embed&theme=dark'))).toBe('dark')
+    expect(frameColorMode(readAddress('/oxsts?view=edit-only&theme=light'))).toBe('light')
+    expect(frameColorMode(readAddress('/oxsts?theme=dark'))).toBeNull()
+    expect(frameColorMode(readAddress('/oxsts?view=embed'))).toBeNull()
   })
 
   it('does not read today\'s parameters', async () => {
