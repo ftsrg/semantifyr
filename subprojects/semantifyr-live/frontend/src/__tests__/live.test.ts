@@ -130,6 +130,26 @@ describe('Live', () => {
     expect(open.runtimes).toHaveLength(1)
   })
 
+  it('shows the document it names after a switch to a flavour whose model has the same address, and keeps the edits of the one it left', async () => {
+    const routed = routedClient([caseAt('a', 1)])
+    const [plain, withGamma] = testFlavors()
+    const first = plain.examples[0]!
+    open = await openConnected(routed, `/oxsts/${first.id}`)
+    open.models.edit(MODEL_URI, 'edited model')
+
+    open.live.selectModel(withGamma!.id, withGamma!.examples[0]!.id)
+    expect(open.live.currentText()).toBe(withGamma!.examples[0]!.code)
+    expect(open.live.unsaved.get()).toBe(false)
+
+    open.live.selectModel(plain.id, plain.examples[1]!.id)
+    expect(open.live.currentText()).toBe(plain.examples[1]!.code)
+    expect(open.live.unsaved.get()).toBe(false)
+
+    open.live.selectModel(plain.id, first.id)
+    expect(open.live.currentText()).toBe('edited model')
+    expect(open.live.unsaved.get()).toBe(true)
+  })
+
   it('keeps a result after an edit and marks it outdated', async () => {
     const routed = routedClient([caseAt('a', 1)])
     open = await openConnected(routed)

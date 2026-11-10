@@ -293,6 +293,8 @@ export function createLive(options: LiveOptions): Live {
     } else {
       stopRuntime()
       tabs.closeAll()
+      // the editor's model at the document's address outlives the runtime that showed another document there
+      modelDocuments.replace(record.uri, record.text)
       startRuntime(document.flavor, record)
     }
     refreshUnsaved()
