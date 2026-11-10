@@ -83,7 +83,7 @@ class CompileInlinedOxstsCommandHandlerTest {
                 handler.execute(inlinedOxsts, mock(ILanguageServerAccess.class), mock(CommandProgressContext.class));
 
         var compiledModel = Path.of(java.net.URI.create((String) result));
-        assertThat(compiledModel).hasFileName("compiled.oxsts").isRegularFile();
+        assertThat(compiledModel).hasFileName("flattened.oxsts").isRegularFile();
         assertThat(Files.readString(compiledModel)).contains("CounterReachesThree");
         assertThat(Files.readString(inlinedModel)).isEqualTo(inlinedText);
         assertThat(serializer.serialize(inlinedOxsts)).isEqualTo(openModel);

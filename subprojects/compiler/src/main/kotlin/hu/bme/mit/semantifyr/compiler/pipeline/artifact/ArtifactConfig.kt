@@ -71,6 +71,10 @@ data class ArtifactConfig(
         return kind in enabled
     }
 
+    fun withEnabled(kind: ArtifactKind): ArtifactConfig {
+        return copy(enabled = enabled + kind)
+    }
+
     companion object {
         private val ReportOnlyArtifacts = ArtifactKind.entries.toSet() - ArtifactKind.CompilationStep
 

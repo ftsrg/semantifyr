@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import kotlinx.serialization.Serializable
+import java.nio.file.Path
 import kotlin.time.Duration
 
 @Serializable
@@ -101,6 +102,7 @@ class FlattenedCompilationContext(
     val transitionCallTraces: TransitionCallTraceMap,
     val flatteningInfo: FlatteningInfo,
     val compilationMetrics: CompilationMetrics = CompilationMetrics(),
+    val flattenedModelPath: Path? = null,
 ) : EvaluableCompilationContext
 
 class ArraySlot(

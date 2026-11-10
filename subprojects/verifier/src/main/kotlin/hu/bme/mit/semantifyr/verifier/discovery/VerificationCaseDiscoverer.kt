@@ -35,13 +35,19 @@ class VerificationCaseDiscoverer @Inject constructor(
         return packages.flatMap {
             verificationCaseFinder.streamTestCases(it).asSequence()
         }.map {
-            val qualifiedName = oxstsQualifiedNameProvider.getFullyQualifiedNameString(it)
-            VerificationCase(
-                classDeclaration = it,
-                qualifiedName = qualifiedName,
-                tags = tagsOf(it),
-            )
+            caseOf(it)
         }.toList()
+    }
+
+    fun caseOf(classDeclaration: ClassDeclaration): VerificationCase {
+        val qualifiedName = classDeclaration.name?.let {
+            oxstsQualifiedNameProvider.getFullyQualifiedNameString(classDeclaration)
+        } ?: "<unnamed>"
+        return VerificationCase(
+            classDeclaration = classDeclaration,
+            qualifiedName = qualifiedName,
+            tags = tagsOf(classDeclaration),
+        )
     }
 
     fun discover(context: SemantifyrModelContext, filter: CaseFilter): List<VerificationCase> {

@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.eclipse.xtext.resource.SaveOptions
 import org.eclipse.xtext.serializer.ISerializer
 import java.io.File
+import java.nio.file.Path
 
 @CompilationScoped
 class CompilationArtifactManager @Inject constructor(
@@ -46,8 +47,9 @@ class CompilationArtifactManager @Inject constructor(
         commitPhase(ArtifactKind.InlinedModel)
     }
 
-    fun commitFlattened() {
+    fun commitFlattened(): Path? {
         commitPhase(ArtifactKind.FlattenedModel)
+        return artifactManager.pathOrNull(ArtifactKind.FlattenedModel)
     }
 
     private fun commitPhase(kind: ArtifactKind) {

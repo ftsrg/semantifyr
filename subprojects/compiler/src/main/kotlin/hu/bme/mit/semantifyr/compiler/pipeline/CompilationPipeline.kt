@@ -62,7 +62,7 @@ class CompilationPipeline @Inject constructor(
         val flatteningStart = markNow()
         logger.info { "Phase: flattening" }
         val flattenedContext = oxstsFlattener.flatten(inlinedContext)
-        compilationArtifactManager.commitFlattened()
+        val flattenedModelPath = compilationArtifactManager.commitFlattened()
         val flatteningDuration = flatteningStart.elapsedNow()
         logger.info { "Phase: flattening done in $flatteningDuration" }
 
@@ -83,6 +83,7 @@ class CompilationPipeline @Inject constructor(
             transitionCallTraces = flattenedContext.transitionCallTraces,
             flatteningInfo = flattenedContext.flatteningInfo,
             compilationMetrics = compilationMetrics,
+            flattenedModelPath = flattenedModelPath,
         )
     }
 

@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.CompilationRequest
 import org.eclipse.emf.common.util.URI
 import java.io.File
+import java.nio.file.Path
 
 private const val PIPELINE = "pipeline"
 private const val INSTANTIATED_MODEL = "$PIPELINE/instantiated.oxsts"
@@ -49,6 +50,13 @@ class ArtifactManager @Inject constructor(
 
     fun resolveUri(kind: ArtifactKind): URI {
         return resolveUri(pathOf(kind))
+    }
+
+    fun pathOrNull(kind: ArtifactKind): Path? {
+        if (!config.isEnabled(kind)) {
+            return null
+        }
+        return resolve(kind).toPath()
     }
 
     fun withFile(kind: ArtifactKind, block: (File) -> Unit) {

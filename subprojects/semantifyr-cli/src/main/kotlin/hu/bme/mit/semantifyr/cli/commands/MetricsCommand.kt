@@ -23,7 +23,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.context.ModelSize
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
-import hu.bme.mit.semantifyr.verifier.caseDirectoryName
+import hu.bme.mit.semantifyr.verifier.caseDirectory
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import kotlin.io.path.createTempDirectory
 
@@ -56,7 +56,7 @@ class MetricsCommand @Inject constructor(
         val outputDirectory = createTempDirectory("semantifyr-metrics-")
         try {
             for (case in cases) {
-                val metrics = compileCase(compiler, case, outputDirectory.resolve(caseDirectoryName(case))).compilationMetrics
+                val metrics = compileCase(compiler, case, caseDirectory(outputDirectory, case)).compilationMetrics
                 if (json) {
                     echo(jsonLineFormat.encodeToString(MetricsLine(case.qualifiedName, metrics.inputSize, metrics.inlinedSize, metrics.flattenedSize)))
                 } else {
