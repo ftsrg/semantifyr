@@ -137,6 +137,14 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       expect(count('.embed-trace [data-testid=trace-calls] .call')).toBe(6)
     },
   },
+  'address-error': {
+    view: 'embed',
+    seed: { verification: discovered([notRun(BARRIER), notRun(TWO_TRAINS)]), address: { kind: 'example', requested: 'level-crosing', flavorId: 'sysml', exampleId: 'level-crossing' } },
+    expectState: () => {
+      expect(text('.embed-address-error')).toContain('The address names the example "level-crosing"')
+      expect(text('.embed-address-error')).toContain('Opened Level crossing in its place')
+    },
+  },
   'server-unreachable': {
     view: 'embed',
     seed: { catalog: 'waiting' },

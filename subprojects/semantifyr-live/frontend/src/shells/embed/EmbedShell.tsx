@@ -16,6 +16,7 @@ import { caseRowOf, type CaseRow } from '../../lib/workspace/caseRows'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import { Icon } from '../../ui/icons'
 import { ValidationMark, VerdictMark } from '../../ui/marks'
+import { addressProblemText } from '../desktop/Orientation'
 import { shareLink } from '../desktop/SharePopover'
 import { useFlavor } from '../hooks'
 import { BackToModel, ModelEditor } from '../modelEditor'
@@ -93,6 +94,21 @@ function OpenInLive(): React.JSX.Element {
       Open in Live
       <Icon name="external" size="small" />
     </button>
+  )
+}
+
+// a name of the address that was not found, and what opened in its place
+function AddressError(): React.JSX.Element | null {
+  const live = useLive()
+  const problem = useStore(live.address)
+  if (!problem) {
+    return null
+  }
+  return (
+    <div className="embed-address-error" role="alert">
+      <Icon name="alert" size="small" />
+      <span>{addressProblemText(live, problem)}</span>
+    </div>
   )
 }
 
@@ -255,6 +271,7 @@ export default function EmbedShell({ colorMode, trace }: Props): React.JSX.Eleme
   const editOnly = view === 'edit-only'
   return (
     <div ref={root} className={`embed${editOnly ? ' is-edit-only' : ''}`} data-language={languageId} data-testid="embed-shell">
+      <AddressError />
       <BackToModel />
       <div className="embed-editor" style={editOnly && contentHeight !== null ? { height: contentHeight } : undefined}>
         {languageId === undefined ? <AddressModel /> : <ModelEditor colorMode={colorMode} verdictMarks={!editOnly} {...(editOnly ? { onContentHeight: fit } : {})} />}
