@@ -162,6 +162,11 @@ function baseState() {
     verify: 'verify',
     portfolio: { verify: 'Automatic', validate: 'Automatic' },
     portfolioKind: 'verify',
+    expandedStep: null,
+    definitions: null,
+    problemSelected: null,
+    addressError: null,
+    updatePrompt: false,
     autoValidate: true,
     cases: [outcomes.notRun, outcomes.notRun],
     names: null,
@@ -169,7 +174,6 @@ function baseState() {
     filter: null,
     collapsed: false,
     traceView: 'own',
-    selectedItem: null,
     withoutCalls: false,
     longNames: false,
     shared: null,
@@ -191,6 +195,38 @@ const resultsState = () => ({
   cases: [outcomes.failed, outcomes.passedWithTrace],
   selectedCase: 0,
   status: doneStatus,
+});
+
+function sysmlCasesChanged() {
+  const text = sources.sysmlNaive;
+  const start = text.indexOf('verification def BarrierDownWhileTrainInCrossing');
+  const end = text.indexOf('verification def TwoTrainsCanBeInTheCrossing');
+  return text.slice(0, start) + text.slice(end).replace(/\n*$/, '\n') + `
+verification def ControllerNeverStuck {
+    subject system : LevelCrossing;
+
+    objective {
+        verify requirement {
+            require constraint {
+                mustAlways(not isStateActive(system.controller.Behaviour.TrainPresent) or eventually(isStateActive(system.controller.Behaviour.Idle)))
+            }
+        }
+    }
+}
+`;
+}
+
+const casesChangedState = () => ({
+  ...resultsState(),
+  source: sysmlCasesChanged(),
+  unsaved: true,
+  definitions: [
+    { id: 'TwoTrainsCanBeInTheCrossing', anchor: 'verification def TwoTrainsCanBeInTheCrossing' },
+    { id: 'ControllerNeverStuck', anchor: 'verification def ControllerNeverStuck' },
+  ],
+  cases: [{ ...outcomes.passedWithTrace, outdated: true }, outcomes.notRun],
+  selectedCase: null,
+  status: { text: 'The model changed: 1 case added, 1 removed', kind: 'idle' },
 });
 
 const markOutdated = (cases) => cases.map((outcome) => (['not-run', 'queued', 'running'].includes(outcome.status) ? outcome : { ...outcome, outdated: true }));
@@ -215,9 +251,12 @@ const fixedState = () => ({
 });
 
 const problems = [
-  { find: 'via barrier } then TrainPresent;', mark: '}', message: "missing ';' at '}'" },
-  { find: 'then TrainPresnt;', mark: 'TrainPresnt', message: "Couldn't resolve reference to StateUsage 'TrainPresnt'." },
+  { severity: 'error', find: 'via barrier } then TrainPresent;', mark: '}', message: "missing ';' at '}'" },
+  { severity: 'error', find: 'then TrainPresnt;', mark: 'TrainPresnt', message: "Couldn't resolve reference to StateUsage 'TrainPresnt'." },
+  { severity: 'warning', find: 'item def Lift;', mark: 'Lift', message: "Item 'Lift' is sent but never accepted." },
 ];
+
+const errorCountOf = (list) => (list || []).filter((entry) => entry.severity === 'error').length;
 
 const languageResults = (language) => ({ ...languageState(language), ...resultsState() });
 
@@ -231,6 +270,12 @@ const allStatesNames = ['BarrierDownWhileTrainInCrossing', 'TwoTrainsCanBeInTheC
 const stateDefinitions = [
   ['First visit', [
     ['first', 'Ready, not run', () => ({})],
+    ['address-unknown-example', 'Address names an unknown example', () => ({
+      addressError: 'The address names the example "level-crosing", which SysML v2 does not have. Opened Level crossing in its place.',
+    })],
+    ['address-unknown-language', 'Address names an unknown language', () => ({
+      addressError: 'The address names the language "kerml", which Live does not have. Opened SysML v2 with the Level crossing in its place.',
+    })],
     ['orientation-dismissed', 'Orientation dismissed', () => ({ orientation: false })],
     ['connecting', 'Connecting', () => ({
       connection: 'connecting',
@@ -271,12 +316,13 @@ const stateDefinitions = [
       orientation: false,
       names: allStatesNames,
       cases: [outcomes.failed, outcomes.passedWithTrace, outcomes.timedOut, outcomes.unsupported, outcomes.error, outcomes.running, outcomes.cancelled, outcomes.queued, outcomes.notRun],
-      selectedCase: null,
+      selectedCase: 0,
       status: { text: 'Done: 1 failed, 1 passed, 2 inconclusive, 1 error', kind: 'done' },
     })],
     ['filtered', 'Filtered by a count', () => ({ ...resultsState(), filter: 'failed' })],
     ['collapsed', 'Panel collapsed', () => ({ ...resultsState(), collapsed: true, selectedCase: null })],
     ['glyph-hover', 'Hovering the mark in the editor', () => ({ ...resultsState(), selectedCase: null, glyphHover: 0 })],
+    ['cases-changed', 'An edit added one case and removed one', () => ({ ...casesChangedState() })],
     ['validating', 'Validating', () => ({
       ...resultsState(),
       cases: [{ ...outcomes.failed, validation: { state: 'validating', portfolio: 'Automatic' } }, outcomes.passedWithTrace],
@@ -311,19 +357,22 @@ const stateDefinitions = [
     ['trace-sysml', 'SysML trace text first', () => resultsState()],
     ['trace-sysml-oxsts', 'OXSTS steps behind it', () => ({ ...resultsState(), traceView: 'oxsts' })],
     ['trace-sysml-calls', 'Sequence diagram of the calls', () => ({ ...resultsState(), traceView: 'calls' })],
+    ['trace-sysml-expanded', 'OXSTS steps, one step expanded', () => ({ ...resultsState(), traceView: 'oxsts', expandedStep: 1 })],
+    ['trace-sysml-witness', 'OXSTS witness as text', () => ({ ...resultsState(), traceView: 'witness' })],
     ['trace-long-names', 'Long names', () => ({ ...resultsState(), traceView: 'calls', longNames: true })],
     ['trace-long-names-steps', 'Long names, steps', () => ({ ...resultsState(), traceView: 'oxsts', longNames: true })],
     ['trace-passing', 'Passed, with its trace', () => ({ ...resultsState(), selectedCase: 1, traceView: 'calls' })],
   ]],
   ['Trace: Gamma', [
     ['trace-gamma', 'Gamma steps first', () => languageResults('gamma')],
-    ['trace-gamma-item', 'Step linked to the model', () => ({ ...languageResults('gamma'), selectedItem: '1:1' })],
+    ['trace-gamma-witness', 'OXSTS witness as text', () => ({ ...languageResults('gamma'), traceView: 'witness' })],
     ['trace-gamma-oxsts', 'OXSTS steps behind it', () => ({ ...languageResults('gamma'), traceView: 'oxsts' })],
     ['trace-gamma-calls', 'Sequence diagram of the calls', () => ({ ...languageResults('gamma'), traceView: 'calls' })],
   ]],
   ['Trace: OXSTS', [
     ['trace-oxsts', 'Steps with changed values', () => languageResults('oxsts')],
     ['trace-oxsts-calls', 'Sequence diagram of the calls', () => ({ ...languageResults('oxsts'), traceView: 'calls' })],
+    ['trace-oxsts-witness', 'Witness as text', () => ({ ...languageResults('oxsts'), traceView: 'witness' })],
     ['trace-oxsts-no-calls', 'No recorded calls', () => ({ ...languageResults('oxsts'), traceView: 'calls', withoutCalls: true })],
   ]],
   ['Read-only tabs', [
@@ -370,9 +419,10 @@ const stateDefinitions = [
       selectedCase: 0,
       status: { text: 'Done in 62 s: 1 failed, 1 inconclusive', kind: 'done' },
     })],
-    ['portfolio-verify', 'Verification portfolio', () => ({ ...resultsState(), overlay: 'portfolio', portfolioKind: 'verify' })],
-    ['portfolio-validate', 'Validation portfolio', () => ({ ...resultsState(), overlay: 'portfolio', portfolioKind: 'validate' })],
-    ['portfolio-engine', 'A single engine chosen', () => ({ ...resultsState(), portfolio: { verify: 'Theta', validate: 'Cross-check' } })],
+    ['portfolio-verify', 'Settings: verification portfolio', () => ({ ...resultsState(), overlay: 'settings', portfolioKind: 'verify' })],
+    ['portfolio-validate', 'Settings: validation portfolio', () => ({ ...resultsState(), overlay: 'settings', portfolioKind: 'validate' })],
+    ['portfolio-engine', 'A single engine chosen', () => ({ ...resultsState(), portfolio: { verify: 'Theta', validate: 'Cross-check' }, overlay: 'settings', portfolioKind: 'verify' })],
+    ['update-available', 'Reload to update', () => ({ ...resultsState(), updatePrompt: true })],
     ['about', 'About', () => ({ ...resultsState(), overlay: 'about' })],
     ['connection-menu', 'Connection popover', () => ({ ...resultsState(), overlay: 'connection' })],
   ]],
@@ -388,6 +438,23 @@ const stateDefinitions = [
       connection: 'lost',
       status: { html: 'Connection lost during the run. Reconnecting in 4 s. <button class="button-link" data-action="connect">Reconnect now</button>', kind: 'warning' },
     })],
+    ['connection-unreachable', 'Server not answering at page load', () => ({
+      ...initializingState('sysml', 0),
+      connection: 'unreachable',
+      initialization: { step: 0, pressed: false, failed: true, retrying: 'The server is not answering.', time: 'retrying in 5 s' },
+      status: { html: 'The server is not answering. Retrying in 5 s. The editor works; verifying needs a session.', kind: 'warning' },
+    })],
+    ['connection-refused', 'Session refused, backing off', () => ({
+      ...initializingState('sysml', 0),
+      connection: 'refused',
+      initialization: { step: 0, pressed: false, failed: true, retrying: 'The server refused the session: it is at capacity.', time: 'retrying in 16 s' },
+      status: { html: 'The server refused the session: it is at capacity. Retrying in 16 s; the wait grows with each refusal.', kind: 'warning' },
+    })],
+    ['connection-terminated', 'Session terminated', () => ({
+      ...resultsState(),
+      connection: 'terminated',
+      status: { html: 'The server terminated the session after 30 minutes idle. Not reconnecting until you ask. <button class="button-link" data-action="connect">Reconnect</button>', kind: 'warning' },
+    })],
     ['initialization-failed', 'Initialization failed', () => ({
       ...initializingState('sysml'),
       connection: 'lost',
@@ -402,12 +469,20 @@ const stateDefinitions = [
     })],
   ]],
   ['Outcomes, model problems', [
-    ['failure-problems', 'The model has problems', () => ({
+    ['failure-problems', 'Errors in the model: Verify all does not run', () => ({
       orientation: false,
       source: sysmlWithProblems(),
       unsaved: true,
       errors: problems,
-      status: { html: 'Not run: <button class="button-link" data-action="goto-problem">2 problems</button> in the model', kind: 'problem' },
+      status: { text: 'Verify all did not run: the model has 2 errors', kind: 'problem' },
+    })],
+    ['problems-list', 'The problems list', () => ({
+      orientation: false,
+      source: sysmlWithProblems(),
+      unsaved: true,
+      errors: problems,
+      overlay: 'problems',
+      status: { text: 'Verify all did not run: the model has 2 errors', kind: 'problem' },
     })],
     ['failure-timeout', 'Inconclusive: timed out', () => ({
       ...resultsState(),
@@ -422,7 +497,7 @@ const stateDefinitions = [
     })],
     ['failure-error', 'Error', () => ({
       ...resultsState(),
-      selectedCase: null,
+      selectedCase: 1,
       cases: [outcomes.error, outcomes.passedWithTrace],
       status: { text: 'Done: 1 error, 1 passed', kind: 'done' },
     })],
@@ -454,7 +529,7 @@ function sourceLines() {
 }
 
 function definitions() {
-  return caseDefinitions[state.language];
+  return state.definitions || caseDefinitions[state.language];
 }
 
 function caseNameOf(index) {
@@ -477,12 +552,6 @@ function orientationKey() {
   return `${state.language}:${state.exampleLabel}`;
 }
 
-function selectedFind() {
-  const scenario = scenarioOf(selectedOutcome());
-  if (!scenario || state.language !== 'gamma' || state.traceView !== 'own' || !state.selectedItem) return null;
-  return stepItemFind(scenario, state.selectedItem);
-}
-
 function renderCodeLines(lines, language, options) {
   const caseLines = new Map();
   if (options.marks) definitions().forEach((definition, index) => caseLines.set(findLine(lines, [definition.anchor]), index));
@@ -499,7 +568,7 @@ function renderCodeLines(lines, language, options) {
     if (error) {
       const target = error.mark === '}' ? '<span class="syntax-punctuation">}</span>' : escapeHtml(error.mark);
       const at = html.lastIndexOf(target);
-      html = html.slice(0, at) + `<span class="squiggle">${target}</span>` + html.slice(at + target.length) + `<span class="inline-diagnostic">${escapeHtml(error.message)}</span>`;
+      html = html.slice(0, at) + `<span class="squiggle is-${error.severity}">${target}</span>` + html.slice(at + target.length) + `<span class="inline-diagnostic is-${error.severity}">${escapeHtml(error.message)}</span>`;
     }
     let glyph = '<span class="line-glyph"></span>';
     if (caseLines.has(index)) {
@@ -537,17 +606,25 @@ function renderToolbar() {
       <button class="button button-quiet" data-action="about" aria-expanded="${state.overlay === 'about'}">${icon('info')}About</button>
       <button class="button button-icon" data-action="developer" title="Developer panel">${icon('terminal')}</button>
       <span class="separator"></span>
-      <button class="button button-icon" data-action="theme" title="Switch theme">${icon(theme === 'light' ? 'moon' : 'sun')}</button>
+      <div class="segmented segmented-small theme-switch" role="group" aria-label="Theme">
+        ${[['system', 'monitor', 'System'], ['light', 'sun', 'Light'], ['dark-a', 'moon', 'Dark']].map(([value, symbol, label]) => `<button class="segmented-option" aria-pressed="${theme === value}" data-action="theme" data-value="${value}" title="${label}">${icon(symbol, 'icon-small')}</button>`).join('')}
+      </div>
     </div>
   </header>`;
 }
 
 function renderOrientation() {
+  const address = state.addressError ? `
+  <div class="orientation is-error">
+    ${icon('alert', 'icon-small')}
+    <span class="orientation-text">${escapeHtml(state.addressError)}</span>
+    <button class="button button-icon" data-action="dismiss-address" title="Dismiss">${icon('close', 'icon-small')}</button>
+  </div>` : '';
   const entry = languages[state.language].examples.find(([label]) => label === state.exampleLabel);
   const visible = state.orientation && entry && !dismissedOrientations.has(orientationKey());
-  if (!visible) return '';
+  if (!visible) return address;
   const [label, detail, count] = entry;
-  return `
+  return address + `
   <div class="orientation">
     <span class="orientation-mark"></span>
     <span class="orientation-text"><strong>${label}.</strong> ${detail} It has ${count} verification cases. Press <strong>Verify all</strong> to check them.</span>
@@ -585,13 +662,13 @@ function renderEditor() {
     </section>`;
   }
   const lines = sourceLines();
-  const find = selectedFind();
-  const current = state.selectedCase !== null && !find ? findLine(lines, [definitions()[state.selectedCase].anchor]) : -1;
+  const problem = state.problemSelected === null ? null : state.errors[state.problemSelected];
+  const current = state.selectedCase !== null && !problem ? findLine(lines, [definitions()[state.selectedCase].anchor]) : -1;
   return `
   <section class="editor" data-language="${state.language}">
     ${renderTabs()}
     <div class="editor-body">
-      <div class="editor-scroll" id="editor-scroll"><div class="code">${renderCodeLines(lines, state.language, { marks: !state.initialization, selected: find ? findLine(lines, find) : -1, current })}</div></div>
+      <div class="editor-scroll" id="editor-scroll"><div class="code">${renderCodeLines(lines, state.language, { marks: !state.initialization, selected: problem ? findLine(lines, [problem.find]) : -1, current })}</div></div>
       ${drop}
     </div>
   </section>`;
@@ -603,34 +680,23 @@ function renderVerifyButton() {
     : `<button class="button button-primary" data-action="verify-all">${icon('play', 'icon-small')}Verify all</button>`;
 }
 
-function renderRunSettings() {
-  const choice = (kind) => `<button class="setting-choice" data-action="portfolio" data-value="${kind}" aria-expanded="${state.overlay === 'portfolio' && state.portfolioKind === kind}">${state.portfolio[kind]}${icon('chevron-down', 'icon-tiny')}</button>`;
-  return `
-  <div class="run-settings">
-    <div class="setting-row"><span class="setting-label">Verification</span>${choice('verify')}</div>
-    <div class="setting-row"><span class="setting-label">Validation</span>${choice('validate')}
-      <button class="switch-row" role="switch" aria-checked="${state.autoValidate}" data-action="auto-validate"><span class="switch"></span><span>validate automatically</span></button>
-    </div>
-  </div>`;
-}
-
 function renderInitialization() {
   const definition = languages[state.language];
   const initialization = state.initialization;
   const steps = definition.initialization.map(([label, time], index) => {
     if (index < initialization.step) return `<li class="initialization-step is-done">${icon('check')}<span>${label}</span><span class="initialization-step-time">${time}</span></li>`;
-    if (index === initialization.step && initialization.failed) return `<li class="initialization-step is-failed">${icon('alert')}<span>${label}</span><span class="initialization-step-time">failed</span></li>`;
+    if (index === initialization.step && initialization.failed) return `<li class="initialization-step is-failed">${icon('alert')}<span>${label}</span><span class="initialization-step-time">${initialization.time || 'failed'}</span></li>`;
     if (index === initialization.step) return `<li class="initialization-step is-current">${verdictMark('running')}<span>${label}</span><span class="initialization-step-time">${definition.elapsed}</span></li>`;
     return `<li class="initialization-step">${verdictMark('not-run')}<span>${label}</span><span></span></li>`;
   }).join('');
   const pressed = initialization.pressed ? `<div class="initialization-pressed">${icon('clock')}<span>Verify all is pressed. Every case runs as soon as initialization has finished.</span></div>` : '';
-  const failed = initialization.failed ? `<div><button class="button button-outline button-small" data-action="reload">${icon('refresh', 'icon-tiny')}Reload</button></div>` : '';
+  const failed = initialization.failed && !initialization.retrying ? `<div><button class="button button-outline button-small" data-action="reload">${icon('refresh', 'icon-tiny')}Reload</button></div>` : '';
   return `<div class="initialization" data-language="${state.language}">
     <div class="initialization-title">${languageMark(state.language)}Initializing ${definition.name}</div>
     <ul class="initialization-steps">${steps}</ul>
-    ${initialization.failed ? '' : '<div class="progress-indeterminate"></div>'}
+    ${initialization.failed && !initialization.retrying ? '' : '<div class="progress-indeterminate"></div>'}
     ${failed}
-    <div class="initialization-note">${initialization.failed ? 'The verification cases are known only after initialization.' : definition.initializationNote}</div>
+    <div class="initialization-note">${initialization.retrying ? `${initialization.retrying} The editor works; the verification cases are known once a session is up.` : initialization.failed ? 'The verification cases are known only after initialization.' : definition.initializationNote}</div>
     ${pressed}
   </div>`;
 }
@@ -638,6 +704,7 @@ function renderInitialization() {
 function renderCaseRow(outcome, index) {
   const selected = index === state.selectedCase;
   const outdated = outcome.outdated && isFinished(outcome);
+  const waiting = ['running', 'queued'].includes(outcome.status);
   const tags = (outdated ? '<span class="outdated-tag">Outdated</span>' : '')
     + (outcome.shared ? '<span class="shared-tag">Shared</span>' : '')
     + (outcome.differs ? `<span class="differs-tag" title="The shared verdict was ${outcome.differs}">${icon('alert', 'icon-tiny')}Differs, shared: ${outcome.differs}</span>` : '');
@@ -645,13 +712,16 @@ function renderCaseRow(outcome, index) {
   const validate = outcome.trace
     ? `<button class="case-action" data-action="validate-case" data-value="${index}" title="${outcome.validation ? 'Validate again' : 'Validate'}">${icon('shield-check')}</button>`
     : '';
+  const actions = waiting
+    ? `<button class="case-action" data-action="cancel-case" data-value="${index}" title="Cancel this case">${icon('stop')}</button>`
+    : `<button class="case-action" data-action="run-case" data-value="${index}" title="Run this case">${icon('play')}</button>${validate}`;
   const message = outcome.message ? `<div class="case-message">${outcome.message}</div>` : '';
   return `
-    <div class="case-row status-${outcome.status} ${selected ? 'is-selected' : ''} ${outdated ? 'is-outdated' : ''} ${outcome.shared ? 'is-shared' : ''}" data-action="select-case" data-value="${index}" title="Go to the definition of ${caseNameOf(index)}">
+    <div class="case-row status-${outcome.status} ${selected ? 'is-selected' : ''} ${outdated ? 'is-outdated' : ''} ${outcome.shared ? 'is-shared' : ''} ${waiting ? 'is-waiting' : ''}" data-action="select-case" data-value="${index}" title="Go to the definition of ${caseNameOf(index)}">
       ${verdictMark(outcome.status)}
       <span class="case-name">${caseNameOf(index)}</span>
       <span class="case-outcome">${tags}${validationMark(outcome.validation)}<span class="verdict-word">${outcome.word}</span>${time}</span>
-      <span class="case-actions"><button class="case-action" data-action="run-case" data-value="${index}" title="Run this case">${icon('play')}</button>${validate}</span>
+      <span class="case-actions">${actions}</span>
       ${message}
     </div>`;
 }
@@ -668,9 +738,6 @@ function renderResults() {
     </aside>`;
   }
   let notices = '';
-  if (state.errors) {
-    notices += `<div class="results-notice is-problem">${icon('alert')}<span>Not run: the model has ${state.errors.length} problems.</span><button class="button-link" data-action="goto-problem">Show them</button></div>`;
-  }
   if (state.shared) {
     notices += `<div class="results-notice is-shared">${icon('link')}<span>${sharedNotice[state.shared]}</span></div>`;
   }
@@ -691,12 +758,13 @@ function renderResults() {
       <button class="button button-icon" data-action="collapse" title="Collapse the panel">${icon('panel-collapse')}</button>
       ${header}
       <span class="results-spacer"></span>
+      <button class="button button-icon" data-action="settings" aria-expanded="${state.overlay === 'settings'}" title="Portfolios and validation">${icon('sliders')}</button>
       ${renderVerifyButton()}
     </div>
-    ${renderRunSettings()}
     ${notices}
-    ${state.initialization ? renderInitialization() : `<div class="case-list">${rows}</div>`}
-    ${state.initialization ? '' : renderTrace()}
+    ${state.initialization ? renderInitialization() : `<div class="case-list" id="case-list">${rows}</div>`}
+    ${state.initialization ? '' : '<div class="splitter splitter-horizontal" data-splitter="list" title="Drag to resize; double-click to reset"><span></span></div>' + renderTrace()}
+    <div class="splitter splitter-vertical" data-splitter="column" title="Drag to resize; double-click to reset"><span></span></div>
   </aside>`;
 }
 
@@ -717,19 +785,18 @@ function renderTrace() {
     scenario,
     outcome,
     view: state.traceView,
-    selectedItem: state.selectedItem,
+    expanded: state.expandedStep,
     withoutCalls: state.withoutCalls,
-    layout: { column: 168, rowHeight: 30, gutter: 34 },
+    layout: { column: 176, rowHeight: 30, gutter: 34 },
+    caseName: caseNameOf(state.selectedCase),
+    scenarioId: outcome.trace,
+    openable: true,
   });
   const isCalls = body.startsWith('<div class="calls-scroll"');
-  const textDocument = state.language === 'oxsts' ? 'oxsts-trace' : 'trace-text';
   return `
   <section class="trace status-${outcome.status} ${outcome.outdated ? 'is-outdated' : ''} ${isCalls ? 'is-calls' : ''}">
     <div class="trace-head">
-      <div class="trace-title"><span class="section-label">Trace</span><span class="case-name">${caseNameOf(state.selectedCase)}</span><span class="results-spacer"></span>
-        <button class="button-link" data-action="open-document" data-value="${textDocument}">Open as text</button>
-        ${state.language === 'oxsts' ? '' : '<button class="button-link" data-action="open-document" data-value="oxsts-trace">Show in OXSTS</button>'}
-      </div>
+      <div class="trace-title"><span class="section-label">Trace</span><span class="case-name">${caseNameOf(state.selectedCase)}</span></div>
       ${renderRunDetails(outcome)}
       ${renderTraceViews(state.language, state.traceView)}
     </div>
@@ -742,11 +809,14 @@ function renderStatus() {
   const statusIcon = status.kind === 'busy' ? verdictMark('running') : status.kind === 'warning' || status.kind === 'problem' ? icon('alert') : status.kind === 'done' ? icon('check') : '';
   const definition = languages[state.language];
   const flavour = state.language === 'oxsts' && state.flavour !== 'plain' ? `, ${flavours.find(([id]) => id === state.flavour)[1].toLowerCase()}` : '';
+  const errorTotal = errorCountOf(state.errors);
+  const warningTotal = (state.errors || []).length - errorTotal;
   const position = state.activeTab !== 'model' ? 'Read-only' : state.caret ? 'Ln 63, Col 93' : 'Ln 1, Col 1';
   return `
   <footer class="statusbar">
     <span class="status-message is-${status.kind}">${statusIcon}<span>${status.html || escapeHtml(status.text)}</span></span>
     <span class="status-end">
+      <button class="problem-counts ${errorTotal + warningTotal ? 'has-problems' : ''}" data-action="problems" aria-expanded="${state.overlay === 'problems'}" title="Problems in the model">${icon('error', 'icon-small')}<span>${errorTotal}</span>${icon('alert', 'icon-small')}<span>${warningTotal}</span></button>
       <span>${position}</span>
       <span class="status-language" data-language="${state.language}">${languageMark(state.language)}${definition.name}${flavour}</span>
     </span>
@@ -800,13 +870,20 @@ function renderOverlay() {
       <div class="share-note">Everything is in the link itself; nothing is stored on the server.</div>
     </div>`;
   }
-  if (state.overlay === 'portfolio') {
+  if (state.overlay === 'settings') {
     const kind = state.portfolioKind;
-    const title = kind === 'verify' ? 'Verification portfolio' : 'Validation portfolio';
-    return `<div class="menu portfolio-popover" id="portfolio-popover">
-      <div class="menu-heading portfolio-title">${title}</div>
+    const kindButton = (value, label) => `<button class="settings-kind" aria-pressed="${kind === value}" data-action="settings-kind" data-value="${value}"><span class="settings-kind-label">${label}</span><span class="settings-kind-value">${state.portfolio[value]}</span></button>`;
+    return `<div class="menu settings-popover" id="settings-popover">
+      <div class="settings-kinds">${kindButton('verify', 'Verification')}${kindButton('validate', 'Validation')}</div>
       ${renderPortfolioList(kind, state.portfolio[kind])}
+      <div class="menu-divider"></div>
+      <button class="switch-row switch-row-wide" role="switch" aria-checked="${state.autoValidate}" data-action="auto-validate"><span class="switch"></span><span>validate automatically</span></button>
     </div>`;
+  }
+  if (state.overlay === 'problems') {
+    const lines = sourceLines();
+    const entries = (state.errors || []).map((entry, index) => `<button class="menu-item problem-item is-${entry.severity}" data-action="reveal-problem" data-value="${index}">${icon(entry.severity === 'error' ? 'error' : 'alert', 'icon-small')}<span class="menu-item-label">${escapeHtml(entry.message)}</span><span class="menu-item-meta">Ln ${findLine(lines, [entry.find]) + 1}</span></button>`).join('');
+    return `<div class="menu problems-popover" id="problems-popover"><div class="menu-heading">Problems in the model</div>${entries || '<div class="problems-empty">No problems.</div>'}</div>`;
   }
   if (state.overlay === 'documents') {
     const hasTrace = state.selectedCase !== null && scenarioOf(selectedOutcome());
@@ -819,10 +896,16 @@ function renderOverlay() {
     return `<div class="menu documents-menu" id="documents-menu"><div class="menu-heading">Open read-only</div>${items}</div>`;
   }
   if (state.overlay === 'connection') {
+    const details = {
+      unreachable: ['The server is not answering', 'The page could not reach live.semantifyr.org. The editor shell is shown and the page keeps retrying; your model stays on screen.', 'Retry now'],
+      refused: ['Session refused', 'The server refused the session because it is at capacity. The page retries with a growing wait; your model stays on screen.', 'Retry now'],
+      terminated: ['Session terminated', 'The server ended the session after it sat idle. The page does not reconnect until you ask; your model stays on screen.', 'Reconnect'],
+    };
+    const failure = details[state.connection];
     return `<div class="menu connection-popover" id="connection-popover">
-      <div class="connection-row">${cloud('connected')}<span class="popover-title">Connected</span></div>
-      <div class="connection-detail">To live.semantifyr.org. The SysML v2 language server is ready and the verifiers are idle. Your model is sent only to be verified, and is not stored.</div>
-      <button class="button button-outline button-small" data-action="disconnect">Disconnect</button>
+      <div class="connection-row">${cloud(failure ? state.connection : 'connected')}<span class="popover-title">${failure ? failure[0] : 'Connected'}</span></div>
+      <div class="connection-detail">${failure ? failure[1] : 'To live.semantifyr.org. The SysML v2 language server is ready and the verifiers are idle. Your model is sent only to be verified, and is not stored.'}</div>
+      <button class="button button-outline button-small" data-action="${failure ? 'connect' : 'disconnect'}">${failure ? failure[2] : 'Disconnect'}</button>
     </div>`;
   }
   if (state.overlay === 'about') {
@@ -835,7 +918,8 @@ function renderOverlay() {
       <div class="dialog-body">
         <p class="dialog-lead">Live checks a model against its verification cases with the Semantifyr toolchain: SysML v2, Gamma and OXSTS models are compiled to transition systems and handed to model checkers, and every result comes back in the model's own terms.</p>
         <div class="dialog-section"><span class="section-label">Research prototype</span><p>Semantifyr is developed as a PhD project at the Budapest University of Technology and Economics. Live is a research prototype and comes with no guarantee of correctness or availability.</p></div>
-        <div class="dialog-section"><span class="section-label">Privacy</span><p>Nothing is stored. Your model is sent to the server only to be verified and is dropped when the run ends; the browser keeps neither your edits nor your results, and a reload starts afresh. A shared link carries the model and its results in the link itself.</p></div>
+        <div class="dialog-section"><span class="section-label">Nothing is stored</span><p>No model and no result is stored anywhere: the server keeps your model only while it verifies it, and a reload starts afresh. The browser keeps your display preferences, such as the theme and the portfolios, and the site's own files so that it loads fast. A shared link carries the model and its results in the link itself.</p></div>
+        <div class="dialog-section"><span class="section-label">Privacy</span><p>Live collects no personal data. The server counts sessions and runs for its own metrics, without the content of any model.</p></div>
         <div class="dialog-links">
           <button class="button button-outline button-small">${icon('globe', 'icon-tiny')}semantifyr.org</button>
           <button class="button button-outline button-small">${icon('book', 'icon-tiny')}Documentation</button>
@@ -868,12 +952,30 @@ function renderOverlay() {
   return '';
 }
 
+function renderUpdatePrompt() {
+  if (!state.updatePrompt) return '';
+  return `<div class="toast" role="status">${icon('refresh', 'icon-small')}<span>A new version of Live is available.</span><button class="button button-primary button-small" data-action="reload-page">Reload</button><button class="button button-quiet button-small" data-action="later">Later</button></div>`;
+}
+
+let resultsWidth = null;
+let caseListHeight = null;
+
+function effectiveTheme() {
+  if (theme !== 'system') return theme;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark-a' : 'light';
+}
+
 function render() {
-  document.documentElement.dataset.theme = theme;
+  document.documentElement.dataset.theme = effectiveTheme();
   useLongNames = state.longNames;
   const app = document.getElementById('app');
   app.dataset.language = state.language;
-  app.innerHTML = renderToolbar() + renderOrientation() + `<main class="workspace ${state.collapsed ? 'is-collapsed' : ''}">${renderEditor()}${renderResults()}</main>` + renderStatus() + `<div class="overlay-layer" id="overlay-layer">${renderOverlay()}</div>`;
+  app.innerHTML = renderToolbar() + renderOrientation() + `<main class="workspace ${state.collapsed ? 'is-collapsed' : ''}">${renderEditor()}${renderResults()}</main>` + renderStatus() + `<div class="overlay-layer" id="overlay-layer">${renderOverlay()}${renderUpdatePrompt()}</div>`;
+  document.title = `${state.exampleLabel || state.documentName} - ${languages[state.language].name} - Semantifyr Live`;
+  const workspace = app.querySelector('.workspace');
+  if (resultsWidth && !state.collapsed) workspace.style.gridTemplateColumns = `minmax(0, 1fr) ${resultsWidth}px`;
+  const caseList = document.getElementById('case-list');
+  if (caseList && caseListHeight) caseList.style.height = `${caseListHeight}px`;
   positionOverlays();
   scrollEditor();
   renderMockControls();
@@ -886,7 +988,8 @@ function positionOverlays() {
     'connection-popover': ['[data-action="connection"]', 'left'],
     'save-menu': ['[data-action="save-menu"]', 'right'],
     'share-popover': ['[data-action="share"]', 'right'],
-    'portfolio-popover': [`[data-action="portfolio"][data-value="${state.portfolioKind}"]`, 'left'],
+    'settings-popover': ['[data-action="settings"]', 'right'],
+    'problems-popover': ['[data-action="problems"]', 'up'],
     'documents-menu': ['[data-action="documents"]', 'right'],
   };
   Object.entries(anchors).forEach(([overlayId, [selector, side]]) => {
@@ -894,9 +997,9 @@ function positionOverlays() {
     const anchor = document.querySelector(`.app ${selector}`);
     if (!overlay || !anchor) return;
     const box = anchor.getBoundingClientRect();
-    overlay.style.top = `${box.bottom + 6}px`;
-    overlay.style.left = side === 'left'
-      ? `${Math.min(box.left, window.innerWidth - overlay.offsetWidth - 12)}px`
+    overlay.style.top = side === 'up' ? `${box.top - overlay.offsetHeight - 6}px` : `${box.bottom + 6}px`;
+    overlay.style.left = side === 'left' || side === 'up'
+      ? `${Math.min(side === 'up' ? box.right - overlay.offsetWidth : box.left, window.innerWidth - overlay.offsetWidth - 12)}px`
       : `${Math.min(box.right - overlay.offsetWidth, window.innerWidth - overlay.offsetWidth - 12)}px`;
   });
 }
@@ -917,7 +1020,7 @@ function renderMockControls() {
   container.innerHTML = `
     <div class="mock-controls-header" data-mock="toggle"><strong>MOCK</strong><span>${collapsed ? 'States' : 'Review controls'}</span><span>${collapsed ? '+' : '-'}</span></div>
     <div class="mock-body">
-      <div class="mock-theme">${themeButton('light', 'Light')}${themeButton('dark-a', 'Dark A')}</div>
+      <div class="mock-theme">${themeButton('light', 'Light')}${themeButton('dark-a', 'Dark A')}${themeButton('system', 'System')}</div>
       ${stateDefinitions.map(([group, entries]) => `<div class="mock-group"><div class="mock-group-title">${group}</div>${entries.map(([name, label]) => `<button class="mock-state ${name === currentName ? 'is-current' : ''}" data-mock="state" data-value="${name}">${label}</button>`).join('')}</div>`).join('')}
     </div>`;
 }
@@ -940,6 +1043,11 @@ const finalOutcomes = [outcomes.failed, outcomes.passedWithTrace];
 
 function startRun() {
   clearTimeout(runTimer);
+  const errors = errorCountOf(state.errors);
+  if (errors) {
+    update({ status: { text: `Verify all did not run: the model has ${errors} error${errors === 1 ? '' : 's'}`, kind: 'problem' } });
+    return;
+  }
   if (state.initialization) {
     update({ verify: 'cancel', orientation: false, initialization: { ...state.initialization, pressed: true } });
     runTimer = setTimeout(() => {
@@ -981,6 +1089,13 @@ function validateCase(index, delay = 1100) {
   }, delay);
 }
 
+function cancelCase(index) {
+  const cases = state.cases.map((outcome, position) => (position === index ? outcomes.cancelled : outcome));
+  const waiting = cases.some((outcome) => ['running', 'queued'].includes(outcome.status));
+  if (!waiting) clearTimeout(runTimer);
+  update({ cases, verify: waiting ? 'cancel' : 'verify', status: waiting ? state.status : { text: 'Verification cancelled', kind: 'done' } });
+}
+
 function cancelRun() {
   clearTimeout(runTimer);
   if (state.initialization) return go('initializing');
@@ -1018,11 +1133,12 @@ document.addEventListener('click', (event) => {
   const action = target ? target.dataset.action : null;
   const value = target ? target.dataset.value : null;
   const toggleOverlay = (name) => update({ overlay: state.overlay === name ? null : name });
-  const selectCase = (index) => update({ selectedCase: index, selectedItem: null, activeTab: 'model', glyphHover: null });
+  const selectCase = (index) => update({ selectedCase: index, expandedStep: null, activeTab: 'model', glyphHover: null });
   switch (action) {
     case 'verify-all': startRun(); break;
     case 'cancel': cancelRun(); break;
     case 'run-case': event.stopPropagation(); runCase(Number(value)); break;
+    case 'cancel-case': event.stopPropagation(); cancelCase(Number(value)); break;
     case 'validate-case': event.stopPropagation(); validateCase(Number(value)); break;
     case 'auto-validate': update({ autoValidate: !state.autoValidate }); break;
     case 'glyph': {
@@ -1032,8 +1148,15 @@ document.addEventListener('click', (event) => {
       break;
     }
     case 'select-case': selectCase(Number(value)); break;
-    case 'trace-view': update({ traceView: value, selectedItem: null }); break;
-    case 'select-item': update({ selectedItem: value, activeTab: 'model' }); break;
+    case 'trace-view': update({ traceView: value, expandedStep: null }); break;
+    case 'expand-step': update({ expandedStep: state.expandedStep === Number(value) ? null : Number(value) }); break;
+    case 'problems': toggleOverlay('problems'); break;
+    case 'reveal-problem': update({ problemSelected: Number(value), overlay: null, activeTab: 'model' }); break;
+    case 'dismiss-address': update({ addressError: null }); break;
+    case 'reload-page': go('first'); break;
+    case 'later': update({ updatePrompt: false }); break;
+    case 'settings': toggleOverlay('settings'); break;
+    case 'settings-kind': update({ portfolioKind: value }); break;
     case 'filter': update({ filter: state.filter === value ? null : value }); break;
     case 'collapse': update({ collapsed: !state.collapsed }); break;
     case 'tab': update({ activeTab: value }); break;
@@ -1052,10 +1175,9 @@ document.addEventListener('click', (event) => {
     case 'save-menu': toggleOverlay('save'); break;
     case 'save': update({ unsaved: false, overlay: null, status: { text: `Saved to ${state.documentName}`, kind: 'done' } }); break;
     case 'share': toggleOverlay('share'); break;
-    case 'portfolio': update({ overlay: state.overlay === 'portfolio' && state.portfolioKind === value ? null : 'portfolio', portfolioKind: value }); break;
     case 'choose-portfolio': {
       const [kind, name] = value.split(':');
-      update({ portfolio: { ...state.portfolio, [kind]: name }, overlay: null });
+      update({ portfolio: { ...state.portfolio, [kind]: name } });
       break;
     }
     case 'about': toggleOverlay('about'); break;
@@ -1066,13 +1188,8 @@ document.addEventListener('click', (event) => {
     case 'open': toggleOverlay('open-dialog'); break;
     case 'open-file': update({ ...fixedState(), cases: [outcomes.notRun, outcomes.notRun], selectedCase: null, overlay: null, status: { text: 'Opened level-crossing-fixed.sysml', kind: 'idle' } }); break;
     case 'dismiss': dismissedOrientations.add(orientationKey()); update({ orientation: false }); break;
-    case 'theme': theme = theme === 'light' ? 'dark-a' : 'light'; go(currentName); break;
+    case 'theme': theme = value; go(currentName); break;
     case 'close': update({ overlay: null }); break;
-    case 'goto-problem': {
-      const squiggle = document.querySelector('.squiggle');
-      if (squiggle) squiggle.scrollIntoView({ block: 'center' });
-      break;
-    }
     default:
       if (state.overlay && !event.target.closest('.menu, .dialog, .file-dialog')) update({ overlay: null });
   }
@@ -1101,10 +1218,47 @@ document.addEventListener('drop', (event) => {
   file.text().then((text) => loadFile(file.name, text));
 });
 
+document.addEventListener('mousedown', (event) => {
+  const handle = event.target.closest('[data-splitter]');
+  if (!handle) return;
+  event.preventDefault();
+  const kind = handle.dataset.splitter;
+  const move = (moveEvent) => {
+    if (kind === 'column') {
+      resultsWidth = Math.min(900, Math.max(360, window.innerWidth - moveEvent.clientX));
+      document.querySelector('.workspace').style.gridTemplateColumns = `minmax(0, 1fr) ${resultsWidth}px`;
+    } else {
+      const list = document.getElementById('case-list');
+      caseListHeight = Math.max(40, moveEvent.clientY - list.getBoundingClientRect().top);
+      list.style.height = `${caseListHeight}px`;
+    }
+  };
+  const stop = () => {
+    document.removeEventListener('mousemove', move);
+    document.removeEventListener('mouseup', stop);
+  };
+  document.addEventListener('mousemove', move);
+  document.addEventListener('mouseup', stop);
+});
+
+document.addEventListener('dblclick', (event) => {
+  const handle = event.target.closest('[data-splitter]');
+  if (!handle) return;
+  if (handle.dataset.splitter === 'column') resultsWidth = null;
+  else caseListHeight = null;
+  render();
+});
+
 window.addEventListener('resize', () => render());
 
 const [initialName, initialTheme] = location.hash.slice(1).split('/');
-if (['light', 'dark-a'].includes(initialTheme)) theme = initialTheme;
-else if (window.matchMedia('(prefers-color-scheme: dark)').matches) theme = 'dark-a';
+if (['light', 'dark-a', 'system'].includes(initialTheme)) theme = initialTheme;
+else theme = 'system';
 if (new URLSearchParams(location.search).has('shots')) document.body.classList.add('mock-hidden');
 go(stateBuilders[initialName] ? initialName : 'first');
+
+window.addEventListener('hashchange', () => {
+  const [name, hashTheme] = location.hash.slice(1).split('/');
+  if (['light', 'dark-a', 'system'].includes(hashTheme)) theme = hashTheme;
+  if (stateBuilders[name] && name !== currentName) go(name);
+});

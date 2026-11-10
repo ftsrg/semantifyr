@@ -257,3 +257,21 @@ body { background: var(--surface-inset); }
 @media (max-width: 600px) {
   .mock-controls { top: auto; bottom: 110px; left: 8px; opacity: 0.92; }
 }
+
+.phone-problems { display: inline-flex; align-items: center; gap: 3px; margin-left: auto; padding: 4px 6px; border: 0; border-radius: var(--radius-small); background: transparent; color: var(--text-tertiary); font-size: 12px; }
+.phone-problems .icon { width: 13px; height: 13px; margin-left: 3px; }
+.phone-problems .icon:first-child { margin-left: 0; }
+.phone-problems.has-problems { color: var(--text-primary); }
+.phone-problems.has-problems .icon:first-child { color: var(--problem); }
+.phone-problems.has-problems .icon:nth-of-type(2) { color: var(--attention); }
+.phone-orientation.is-error { background: var(--problem-soft); }
+.phone-orientation.is-error > .icon { color: var(--problem); flex: none; }
+.phone-case.is-selected { background: var(--surface-selected); }
+.sheet-title { padding: var(--space-4) var(--space-6) var(--space-3); color: var(--text-tertiary); font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.toast { position: absolute; left: 12px; right: 12px; transform: none; bottom: calc(var(--bottom-height) + 12px); z-index: 40; display: flex; align-items: center; gap: var(--space-4); padding: var(--space-4) var(--space-4) var(--space-4) var(--space-5); border: 1px solid var(--border); border-radius: var(--radius-large); background: var(--surface-overlay); box-shadow: var(--shadow-overlay); font-size: 14px; }
+.toast > span { flex: 1; }
+.step-toggle { opacity: 1; width: 32px; height: 32px; }
+.phone .step-items { padding-right: 34px; }
+.phone .step-variable { font-size: 12.5px; }
+.phone .calls-head-name { font-size: 11px; }
+.phone .frame-open { display: none; }

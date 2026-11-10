@@ -21,6 +21,9 @@ const connectionTitles = {
   connecting: 'Connecting to live.semantifyr.org',
   offline: 'Disconnected. Click to connect',
   lost: 'Connection lost, reconnecting',
+  unreachable: 'The server is not answering. Retrying',
+  refused: 'The server refused the session. Retrying with a backoff',
+  terminated: 'The session was terminated. Not reconnecting until you ask',
 };
 
 function cloud(connection) {
@@ -32,13 +35,24 @@ function cloud(connection) {
     connecting: `<path class="cloud-outline" d="${shape}"/>`,
     offline: `<path class="cloud-outline" d="${shape}"/><path class="cloud-slash" d="M4 4.5l16 15"/>`,
     lost: `<path class="cloud-outline" d="${shape}"/><path class="cloud-slash" d="M4 4.5l16 15"/>`,
+    unreachable: `<path class="cloud-outline" d="${shape}"/><path class="cloud-slash" d="M4 4.5l16 15"/>`,
+    refused: `<path class="cloud-outline" d="${shape}"/><path class="cloud-slash" d="M4 4.5l16 15"/>`,
+    terminated: `<path class="cloud-outline" d="${shape}"/><path class="cloud-slash" d="M4 4.5l16 15"/>`,
   };
   return `<svg class="cloud" viewBox="0 0 24 24">${bodies[connection]}</svg>`;
 }
 
+const connectionReasons = {
+  unreachable: 'retrying',
+  refused: 'refused, retrying',
+  terminated: 'terminated',
+};
+
 function connectionIndicator(connection, expanded = false) {
   const kind = connection === 'busy' ? 'connecting is-busy' : connection;
-  return `<button class="connection is-${kind}" data-action="connection" aria-expanded="${expanded}" title="${connectionTitles[connection]}">${cloud(connection)}<span>Live</span></button>`;
+  const failure = connection in connectionReasons;
+  const reason = failure ? `<span class="connection-reason">${connectionReasons[connection]}</span>` : '';
+  return `<button class="connection is-${kind} ${failure ? 'is-failure' : ''}" data-action="connection" aria-expanded="${expanded}" title="${connectionTitles[connection]}">${cloud(connection)}<span>Live</span>${reason}</button>`;
 }
 
 
@@ -54,7 +68,7 @@ function verdictMark(status) {
     error: ring + '<path class="glyph" d="M8 4.6v4.1"/><circle class="glyph-fill" cx="8" cy="11.1" r=".95"/>',
     'not-run': dashed,
     queued: dashed + clock,
-    running: '<circle class="ring" cx="8" cy="8" r="6.75" opacity="0.22"/><path class="ring spinner" d="M8 1.25a6.75 6.75 0 0 1 6.75 6.75"/>',
+    running: '<circle class="ring" cx="8" cy="8" r="6.75" opacity="0.22"/><path class="ring spinner" stroke-linecap="round" d="M8 1.25a6.75 6.75 0 0 1 6.75 6.75"/>',
   };
   return `<svg class="verdict-mark status-${status}" viewBox="0 0 16 16">${glyphs[status]}</svg>`;
 }
@@ -94,10 +108,10 @@ const outcomes = {
   queued: { status: 'queued', word: 'Queued' },
   running: { status: 'running', word: 'Running', time: '2.4 s' },
   cancelled: { status: 'not-run', word: 'Not run', message: 'cancelled' },
-  failed: { status: 'failed', word: 'Failed', time: '2.9 s', trace: 'failing', run: { portfolio: 'Automatic', backend: 'nuXmv' }, validation: validatedBy('Theta', '0.6 s') },
-  passedWithTrace: { status: 'passed', word: 'Passed', time: '0.8 s', trace: 'passing', run: { portfolio: 'Automatic', backend: 'Theta' }, validation: validatedBy('nuXmv', '0.4 s') },
+  failed: { status: 'failed', word: 'Failed', time: '2.9 s', trace: 'failing', run: { portfolio: 'Automatic', backend: 'Theta' }, validation: validatedBy('Spin', '0.6 s') },
+  passedWithTrace: { status: 'passed', word: 'Passed', time: '0.8 s', trace: 'passing', run: { portfolio: 'Automatic', backend: 'Spin' }, validation: validatedBy('Theta', '0.4 s') },
   passed: { status: 'passed', word: 'Passed', time: '4.0 s', run: { portfolio: 'Automatic', backend: 'Spin' } },
-  passedFixedWithTrace: { status: 'passed', word: 'Passed', time: '1.1 s', trace: 'passingFixed', run: { portfolio: 'Automatic', backend: 'Theta' }, validation: validatedBy('nuXmv', '0.5 s') },
+  passedFixedWithTrace: { status: 'passed', word: 'Passed', time: '1.1 s', trace: 'passingFixed', run: { portfolio: 'Automatic', backend: 'Theta' }, validation: validatedBy('Spin', '0.5 s') },
   timedOut: { status: 'inconclusive', word: 'Inconclusive', time: '60 s', message: 'timed out after 60 s' },
   unsupported: { status: 'inconclusive', word: 'Inconclusive', time: '0.3 s', message: 'not supported: unbounded attribute trains' },
   error: { status: 'error', word: 'Error', time: '3.2 s', message: 'the verifier stopped with an internal error' },
@@ -138,7 +152,7 @@ const portfolioChoices = [
   ['Cross-check', 'runs every engine and requires them to agree'],
 ];
 
-const engines = ['Theta', 'nuXmv', 'Spin', 'Uppaal'];
+const engines = ['Theta', 'Spin'];
 
 function renderPortfolioList(kind, current) {
   const entry = (name, detail) => `
@@ -446,7 +460,9 @@ function oxstsTrace(language, scenario, withoutCalls = false) {
     const changes = variables
       .filter((variable) => valueOf(maps[index], variable) !== valueOf(maps[index + 1], variable))
       .map((variable) => ({ variable, previous: valueOf(maps[index], variable), value: valueOf(maps[index + 1], variable) }));
-    return { changes, calls: withoutCalls ? [] : callBuilders[language](scenario, index) };
+    const everything = [...new Set([...Object.keys(maps[index + 1]), ...Object.keys(defaults)])];
+    const variablesAfter = everything.map((variable) => ({ variable, value: valueOf(maps[index + 1], variable), changed: changes.some((change) => change.variable === variable) }));
+    return { changes, variables: variablesAfter, calls: withoutCalls ? [] : callBuilders[language](scenario, index) };
   });
   const start = Object.entries(maps[0]).map(([variable, value]) => ({ variable, value }));
   return { start, steps };
@@ -455,6 +471,13 @@ function oxstsTrace(language, scenario, withoutCalls = false) {
 function shortPath(path, keep = 2) {
   const segments = path.split('.');
   return segments.length <= keep ? path : `…${segments.slice(-keep).join('.')}`;
+}
+
+function shortInstance(path, budget = 22) {
+  const segments = path.split('.');
+  let kept = [segments.pop()];
+  while (segments.length && kept.join('.').length + segments[segments.length - 1].length + 1 <= budget) kept = [segments.pop(), ...kept];
+  return segments.length ? `…${kept.join('.')}` : kept.join('.');
 }
 
 function pathReference(path, keep = 3) {
@@ -474,39 +497,6 @@ function oxstsItems(step) {
   }));
 }
 
-function gammaItems(scenario, index) {
-  const step = scenario.steps[index];
-  const before = statesAt(scenario, index);
-  const items = step.environment.map(([part, event]) => ({
-    kind: 'input',
-    icon: 'input',
-    html: `${reference(`${partName(part)}.sensors`)} raises ${reference(event)}`,
-    find: [`event sensors.${event}`, 'statechart Track'],
-  }));
-  Object.entries(step.changes).forEach(([part, to]) => {
-    items.push({
-      kind: 'transition',
-      icon: 'transition',
-      html: `${reference(`${partName(part)}.Main`)} <span class="step-from">${before[part]}</span><span class="step-arrow">→</span>${reference(to)}`,
-      find: [`transition ${before[part]} to ${to}`, `statechart ${partType(part)}`],
-    });
-  });
-  step.sends.forEach((send) => {
-    items.push({
-      kind: 'send',
-      icon: 'send',
-      html: `${reference(`${partName(send.from)}.${sendPorts(send)[0]}`)} raises ${reference(lowerFirst(send.item))}`,
-      find: [`raise ${sendPorts(send)[0]}.${lowerFirst(send.item)}`, `statechart ${partType(send.from)}`],
-    });
-  });
-  return items;
-}
-
-function stepItemFind(scenario, key) {
-  const [step, item] = key.split(':').map(Number);
-  return gammaItems(scenario, step)[item].find;
-}
-
 const propertyTexts = {
   sysml: {
     failing: 'mustAlways(not (isStateActive(system.trackA.Behaviour.InCrossing) or isStateActive(system.trackB.Behaviour.InCrossing)) or isStateActive(system.barrier.Behaviour.Down))',
@@ -519,89 +509,72 @@ const propertyTexts = {
   },
 };
 
-function renderStepList(startHtml, stepItemLists, options) {
-  const { status, closing, selectedItem } = options;
-  const steps = stepItemLists.map((items, index) => {
-    const isFinal = index === stepItemLists.length - 1;
-    const rows = items.map((item, itemIndex) => {
-      const key = `${index}:${itemIndex}`;
-      const action = item.find ? `data-action="select-item" data-value="${key}"` : '';
-      return `<div class="step-item is-${item.kind} ${item.find ? 'is-linked' : ''} ${selectedItem === key ? 'is-selected' : ''}" ${action}>${icon(item.icon)}<span>${item.html}</span></div>`;
-    }).join('');
+function renderStepList(startHtml, steps, options) {
+  const { status, closing, expanded } = options;
+  const rendered = steps.map((step, index) => {
+    const isFinal = index === steps.length - 1;
+    const rows = oxstsItems(step).map((item) => `<div class="step-item is-${item.kind}">${icon(item.icon)}<span>${item.html}</span></div>`).join('');
+    const isOpen = expanded === index;
+    const variables = isOpen ? `<div class="step-variables">${step.variables.map((entry) => `<div class="step-variable ${entry.changed ? 'is-changed' : ''}">${pathReference(entry.variable)}<span class="step-equals">=</span>${valueReference(entry.value)}</div>`).join('')}</div>` : '';
     const end = isFinal && closing ? `<div class="step-end">${verdictMark(status)}<span class="verdict-word">Fails</span><code class="property-text">${highlight(closing.text, closing.language)}</code></div>` : '';
-    return `<div class="step ${isFinal ? 'is-final status-' + status : ''}">
+    return `<div class="step ${isFinal ? 'is-final status-' + status : ''} ${isOpen ? 'is-open' : ''}">
       <span class="step-number">${index + 1}</span>
-      <div class="step-items">${rows}${end}</div>
+      <div class="step-items">${rows}${variables}${end}</div>
+      <button class="step-toggle" data-action="expand-step" data-value="${index}" aria-expanded="${isOpen}" title="${isOpen ? 'Collapse' : 'Every variable at this step'}">${icon('chevron-down', 'icon-tiny')}</button>
     </div>`;
   }).join('');
   return `<div class="steps">
     <div class="step"><span class="step-number">0</span><div class="step-start">${startHtml}</div></div>
-    ${steps}
+    ${rendered}
   </div>`;
 }
 
-function renderCalls(language, steps, layout) {
+function renderCalls(steps, layout) {
   const { column, rowHeight, gutter } = layout;
   const lifelines = [];
-  const lifelineOf = (self) => {
-    const segments = self.split('.');
-    return segments.slice(0, Math.min(language === 'oxsts' ? 2 : 3, segments.length)).join('.');
-  };
   const collect = (entry) => {
-    const id = lifelineOf(entry.self);
-    if (!lifelines.includes(id)) lifelines.push(id);
+    if (!lifelines.includes(entry.self)) lifelines.push(entry.self);
     entry.inner.forEach(collect);
   };
   steps.forEach((step) => step.calls.forEach(collect));
   if (!lifelines.length) {
     return `<div class="empty-hint calls-empty">${icon('alert', 'icon-small')}<span>No calls were recorded for this trace. A call is recorded only for a transition annotated with <span class="mono">@Trace</span>, and this model annotates none.</span></div>`;
   }
-  lifelines.sort((left, right) => (left === 'root' ? -1 : right === 'root' ? 1 : 0));
   const x = Object.fromEntries(lifelines.map((id, index) => [id, gutter + column * (index + 0.5)]));
   let width = gutter + column * lifelines.length;
   let backgrounds = '';
   let foreground = '';
   let y = 0;
-  const labelOf = (entry) => {
-    const name = entry.transition.split('::').slice(-2).join('::');
-    return `${name}(${entry.args.map(([key, value]) => `${key} = ${value}`).join(', ')})`;
-  };
+  const labelOf = (entry) => `${entry.transition.split('::').pop()}(${entry.args.map(([key, value]) => `${key} = ${value}`).join(', ')})`;
   steps.forEach((step, index) => {
     const top = y;
     let cursor = top + 6;
     const nodes = [];
-    const place = (entry, parent, stack) => {
-      const id = lifelineOf(entry.self);
-      const offset = stack.filter((other) => other === id).length;
-      const node = { entry, parent, id, offset, centerY: cursor + rowHeight / 2, bottom: 0 };
+    const place = (entry, parent) => {
+      const node = { entry, parent, centerY: cursor + rowHeight / 2, bottom: 0 };
       nodes.push(node);
       cursor += rowHeight;
-      entry.inner.forEach((child) => place(child, node, [...stack, id]));
+      entry.inner.forEach((child) => place(child, node));
       node.bottom = cursor - 3;
     };
-    step.calls.forEach((entry) => place(entry, null, []));
+    step.calls.forEach((entry) => place(entry, null));
     if (!nodes.length) cursor += rowHeight;
     nodes.forEach((node) => {
-      const center = x[node.id] + node.offset * 5;
-      const selfCall = node.parent && node.parent.id === node.id;
+      const center = x[node.entry.self];
       const label = labelOf(node.entry);
-      const labelX = center + (selfCall ? 30 : 11);
+      const labelX = center + 11;
       width = Math.max(width, labelX + label.length * 6.5 + 16);
-      foreground += `<g class="call" data-self="${escapeHtml(node.entry.self)}">
+      foreground += `<g class="call">
         <title>${escapeHtml(`${node.entry.self}\n${node.entry.transition}`)}</title>
         <rect class="activation" x="${center - 4}" y="${node.centerY - 11}" width="8" height="${Math.max(22, node.bottom - node.centerY + 11)}" rx="2"/>
         <text x="${labelX}" y="${node.centerY - 1}">${escapeHtml(label)}</text>
       </g>`;
       if (!node.parent) return;
-      const parentCenter = x[node.parent.id] + node.parent.offset * 5;
-      if (selfCall) {
-        foreground += `<g class="call-arrow"><path d="M${parentCenter + 4} ${node.centerY - 9} H${parentCenter + 24} V${node.centerY + 6} H${center + 7}"/><path class="arrowhead" d="M${center + 4} ${node.centerY + 6} l7 -3.5 v7z"/></g>`;
-      } else {
-        const direction = center > parentCenter ? 1 : -1;
-        const from = parentCenter + 4 * direction;
-        const to = center - 4 * direction;
-        foreground += `<g class="call-arrow"><path d="M${from} ${node.centerY + 6} H${to - 7 * direction}"/><path class="arrowhead" d="M${to} ${node.centerY + 6} l${-7 * direction} -3.5 v7z"/></g>`;
-      }
+      const parentCenter = x[node.parent.entry.self];
+      const direction = center > parentCenter ? 1 : -1;
+      const from = parentCenter + 4 * direction;
+      const to = center - 4 * direction;
+      foreground += `<g class="call-arrow"><path d="M${from} ${node.centerY + 6} H${to - 7 * direction}"/><path class="arrowhead" d="M${to} ${node.centerY + 6} l${-7 * direction} -3.5 v7z"/></g>`;
     });
     if (!step.calls.length) foreground += `<text class="band-empty" x="${gutter + 10}" y="${top + 6 + rowHeight / 2 + 4}">no calls</text>`;
     cursor += 6;
@@ -613,40 +586,46 @@ function renderCalls(language, steps, layout) {
     y = cursor;
   });
   const lines = lifelines.map((id) => `<line class="lifeline" x1="${x[id]}" y1="0" x2="${x[id]}" y2="${y}"/>`).join('');
-  const heads = lifelines.map((id) => `<div class="calls-head" style="left:${x[id]}px" title="${escapeHtml(id)}"><span class="calls-head-name">${escapeHtml(shortPath(id, 2))}</span></div>`).join('');
+  const heads = lifelines.map((id) => `<div class="calls-head" style="left:${x[id]}px" title="${escapeHtml(id)}"><span class="calls-head-name">${escapeHtml(shortInstance(id))}</span></div>`).join('');
   return `<div class="calls-scroll"><div class="calls" style="width:${width}px"><div class="calls-heads">${heads}</div><svg width="${width}" height="${y}" viewBox="0 0 ${width} ${y}">${backgrounds}${lines}${foreground}</svg></div></div>`;
 }
 
 const traceViewLabels = {
-  sysml: [['own', 'SysML trace'], ['oxsts', 'OXSTS steps'], ['calls', 'Calls']],
-  gamma: [['own', 'Gamma steps'], ['oxsts', 'OXSTS steps'], ['calls', 'Calls']],
-  oxsts: [['own', 'Steps'], ['calls', 'Calls']],
+  sysml: [['own', 'SysML trace'], ['oxsts', 'OXSTS steps'], ['calls', 'Calls'], ['witness', 'OXSTS witness']],
+  gamma: [['own', 'Gamma trace'], ['oxsts', 'OXSTS steps'], ['calls', 'Calls'], ['witness', 'OXSTS witness']],
+  oxsts: [['own', 'Steps'], ['calls', 'Calls'], ['witness', 'Witness']],
 };
 
 function renderTraceViews(language, view, small = true) {
-  const entries = traceViewLabels[language];
-  const buttons = entries.map(([id, label], index) => `${index === 1 ? '<span class="views-divider" title="The OXSTS level, the same under every language"></span>' : ''}<button class="segmented-option" aria-pressed="${view === id}" data-action="trace-view" data-value="${id}">${label}</button>`).join('');
+  const buttons = traceViewLabels[language].map(([id, label], index) => `${index === 1 ? '<span class="views-divider"></span>' : ''}<button class="segmented-option" aria-pressed="${view === id}" data-action="trace-view" data-value="${id}">${label}</button>`).join('');
   return `<div class="segmented ${small ? 'segmented-small' : ''} segmented-plain trace-views">${buttons}</div>`;
 }
 
-function renderTraceText(scenario) {
-  return `<div class="trace-frame"><div class="trace-frame-bar">${icon('lock', 'icon-small')}<span class="mono">${scenario.traceName}</span><span>SysML v2, read-only</span></div><div class="code trace-text">${renderPlainCode(sources[scenario.trace], 'sysml', true)}</div></div>`;
+function traceTextOf(language, scenarioId, view, caseName) {
+  const scenario = scenarios[scenarioId];
+  if (view === 'witness') {
+    if (language === 'sysml' && scenarioId === 'failing') return { text: documentSources.sysmlWitnessOxsts, label: `${caseName}.witness.oxsts`, language: 'oxsts', tab: 'oxsts-trace' };
+    return { text: witnessSource(language, scenario, caseName), label: `${caseName}.witness.oxsts`, language: 'oxsts', tab: 'oxsts-trace' };
+  }
+  if (language === 'sysml') return { text: sources[scenario.trace], label: `${caseName}Trace.sysml`, language: 'sysml', tab: 'trace-text', links: true };
+  return { text: gammaTraceSource(scenario, caseName), label: `${caseName}.trace.gamma`, language: 'gamma', tab: 'trace-text', links: true };
+}
+
+function renderTraceText(text, openable) {
+  const open = openable ? `<button class="frame-open" data-action="open-document" data-value="${text.tab}" title="Open in the editor as a read-only tab">${icon('external', 'icon-tiny')}</button>` : '';
+  const hint = text.links ? 'Ctrl and click a name' : 'read-only';
+  return `<div class="trace-frame"><div class="trace-frame-bar">${icon('lock', 'icon-small')}<span class="mono">${text.label}</span><span>${hint}</span>${open}</div><div class="code trace-text">${renderPlainCode(text.text, text.language, text.links)}</div></div>`;
 }
 
 function renderTraceBody(options) {
-  const { language, scenario, outcome, view, selectedItem, withoutCalls, layout } = options;
+  const { language, scenario, scenarioId, outcome, view, expanded, withoutCalls, layout, caseName, openable } = options;
+  if (view === 'calls') return renderCalls(oxstsTrace(language, scenario, withoutCalls).steps, layout);
+  const textual = view === 'witness' || (view === 'own' && language !== 'oxsts');
+  if (textual) return renderTraceText(traceTextOf(language, scenarioId, view, caseName), openable);
   const trace = oxstsTrace(language, scenario, withoutCalls);
-  const failed = outcome.status === 'failed';
-  const closing = failed ? { text: propertyTexts[language].failing, language } : null;
-  const common = { status: outcome.status, closing, selectedItem };
-  if (view === 'calls') return renderCalls(language, trace.steps, layout);
-  if (view === 'oxsts' || (view === 'own' && language === 'oxsts')) {
-    const start = `Start${trace.start.map((entry) => `<div class="step-start-line">${pathReference(entry.variable)} <span class="step-equals">=</span> ${valueReference(entry.value)}</div>`).join('')}`;
-    return renderStepList(start, trace.steps.map(oxstsItems), common);
-  }
-  if (language === 'sysml') return renderTraceText(scenario);
-  const start = `Start: ${Object.entries(scenario.start).map(([part, value]) => `${reference(partName(part))} ${escapeHtml(value)}`).join(', ')}`;
-  return renderStepList(start, scenario.steps.map((step, index) => gammaItems(scenario, index)), common);
+  const closing = outcome.status === 'failed' ? { text: propertyTexts[language].failing, language } : null;
+  const start = `Start${trace.start.map((entry) => `<div class="step-start-line">${pathReference(entry.variable)} <span class="step-equals">=</span> ${valueReference(entry.value)}</div>`).join('')}`;
+  return renderStepList(start, trace.steps, { status: outcome.status, closing, expanded });
 }
 
 function witnessSource(language, scenario, caseName) {

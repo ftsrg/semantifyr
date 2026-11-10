@@ -6,8 +6,8 @@ const caseDefinitions = [
 const editedLine = '        transition first TrainPresent accept : TrainApproaching via trackA then TrainPresent;';
 
 const problems = [
-  { find: 'via barrier } then TrainPresent;', mark: '}', message: "missing ';' at '}'" },
-  { find: 'then TrainPresnt;', mark: 'TrainPresnt', message: "Couldn't resolve reference to StateUsage 'TrainPresnt'." },
+  { severity: 'error', find: 'via barrier } then TrainPresent;', mark: '}', message: "missing ';' at '}'" },
+  { severity: 'error', find: 'then TrainPresnt;', mark: 'TrainPresnt', message: "Couldn't resolve reference to StateUsage 'TrainPresnt'." },
 ];
 
 function sysmlWithProblems() {
@@ -30,6 +30,7 @@ function baseState() {
     cases: [outcomes.notRun, outcomes.notRun],
     open: null,
     view: 'own',
+    expanded: null,
     kind: 'verify',
     excerpt: false,
     errors: null,
@@ -40,7 +41,7 @@ function baseState() {
   };
 }
 
-const resultsState = () => ({ cases: [outcomes.failed, outcomes.passedWithTrace], status: doneStatus });
+const resultsState = () => ({ cases: [outcomes.failed, outcomes.passedWithTrace], open: 0, status: doneStatus });
 
 const stateDefinitions = [
   ['Before a run', [
@@ -53,20 +54,24 @@ const stateDefinitions = [
     ['cancelled', 'Cancelled', () => ({ cases: [outcomes.cancelled, outcomes.notRun], status: { text: 'Verification cancelled', kind: 'done' } })],
   ]],
   ['Results', [
-    ['results', 'Failed and passed, validated', resultsState],
+    ['results', 'Finished run: first failed case open', resultsState],
     ['trace', 'Trace: SysML trace text first', () => ({ ...resultsState(), open: 0 })],
+    ['trace-expanded', 'Trace: OXSTS steps, one step expanded', () => ({ ...resultsState(), view: 'oxsts', expanded: 1 })],
+    ['trace-witness', 'Trace: OXSTS witness as text', () => ({ ...resultsState(), view: 'witness' })],
     ['trace-oxsts', 'Trace: OXSTS steps', () => ({ ...resultsState(), open: 0, view: 'oxsts' })],
     ['trace-calls', 'Trace: sequence diagram of the calls', () => ({ ...resultsState(), open: 0, view: 'calls' })],
     ['validating', 'Validating', () => ({ cases: [{ ...outcomes.failed, validation: { state: 'validating', portfolio: 'Automatic' } }, outcomes.passedWithTrace], status: doneStatus })],
-    ['failure-timeout', 'Inconclusive: timed out', () => ({ cases: [outcomes.timedOut, outcomes.error], status: { text: 'Done: 1 inconclusive, 1 error', kind: 'done' } })],
+    ['failure-timeout', 'Inconclusive: timed out', () => ({ open: null, cases: [outcomes.timedOut, outcomes.error], status: { text: 'Done: 1 inconclusive, 1 error', kind: 'done' } })],
   ]],
   ['Edit-only view', [
     ['edit-only', 'Editor alone, for excerpts', () => ({ kind: 'edit' })],
   ]],
   ['Edits and trouble', [
     ['outdated', 'After an edit', () => ({ cases: markOutdated([outcomes.failed, outcomes.passedWithTrace]), open: 0, source: sysmlEdited(), caret: editedLine.trim(), status: { text: 'The model changed: 2 results are outdated', kind: 'idle' } })],
-    ['failure-problems', 'The model has problems', () => ({ source: sysmlWithProblems(), errors: problems, status: { html: 'Not run: <span class="link" data-action="goto-problem">2 problems</span> in the model', kind: 'problem' } })],
-    ['connection-lost', 'Connection lost', () => ({ ...resultsState(), cases: [outcomes.failed, outcomes.notRun], status: { html: 'Connection lost. Reconnecting in 4 s. <span class="link" data-action="reconnect">Reconnect now</span>', kind: 'warning' } })],
+    ['failure-problems', 'Errors in the model: Verify all does not run', () => ({ source: sysmlWithProblems(), errors: problems, status: { html: 'Verify all did not run: <span class="link" data-action="goto-problem">2 errors</span> in the model', kind: 'problem' } })],
+    ['connection-unreachable', 'Server not answering', () => ({ cases: [outcomes.notRun, outcomes.notRun], status: { text: 'The server is not answering. Retrying in 5 s. The editor works; verifying needs a session.', kind: 'warning' } })],
+    ['connection-refused', 'Session refused, backing off', () => ({ cases: [outcomes.notRun, outcomes.notRun], status: { text: 'The server refused the session: it is at capacity. Retrying in 16 s.', kind: 'warning' } })],
+    ['connection-terminated', 'Session terminated', () => ({ ...resultsState(), status: { html: 'The session was terminated. Not reconnecting until you ask. <span class="link" data-action="reconnect">Reconnect</span>', kind: 'warning' } })],
   ]],
 ];
 
@@ -103,7 +108,7 @@ function renderCode() {
     if (error) {
       const target = error.mark === '}' ? '<span class="syntax-punctuation">}</span>' : escapeHtml(error.mark);
       const at = html.lastIndexOf(target);
-      html = html.slice(0, at) + `<span class="squiggle">${target}</span>` + html.slice(at + target.length) + `<span class="inline-diagnostic">${escapeHtml(error.message)}</span>`;
+      html = html.slice(0, at) + `<span class="squiggle is-error">${target}</span>` + html.slice(at + target.length) + `<span class="inline-diagnostic">${escapeHtml(error.message)}</span>`;
     }
     const caseIndex = caseLines.get(index);
     const mark = caseIndex === undefined ? '' : `${verdictMark(state.cases[caseIndex].status)}${renderGlyphTip(caseDefinitions[caseIndex].id, state.cases[caseIndex])}`;
@@ -131,7 +136,7 @@ function renderCase(outcome, index) {
 }
 
 function renderTrace(scenario, outcome) {
-  const body = renderTraceBody({ language: 'sysml', scenario, outcome, view: state.view, selectedItem: null, withoutCalls: false, layout: { column: 168, rowHeight: 30, gutter: 34 } });
+  const body = renderTraceBody({ language: 'sysml', scenario, scenarioId: outcome.trace, outcome, view: state.view, expanded: state.expanded, withoutCalls: false, layout: { column: 176, rowHeight: 30, gutter: 34 }, caseName: caseDefinitions[state.open].id, openable: false });
   const isCalls = body.startsWith('<div class="calls-scroll"');
   return `
     <div class="embed-trace ${outcome.outdated ? 'is-outdated' : ''}">
@@ -198,6 +203,7 @@ function renderPage(embed) {
 
 function render() {
   document.documentElement.dataset.theme = theme;
+  document.title = `${state.kind === 'edit' ? 'Part definitions' : 'Checking the level crossing'} - Semantifyr Live embed`;
   document.body.dataset.view = page;
   useLongNames = false;
   const embed = renderEmbed();
@@ -275,8 +281,9 @@ document.addEventListener('click', (event) => {
   switch (target.dataset.action) {
     case 'verify-all': startRun(); break;
     case 'cancel': clearTimeout(runTimer); go(state.initializing ? 'initializing' : 'cancelled'); break;
-    case 'toggle-case': update({ open: state.open === Number(value) ? null : Number(value), view: 'own' }); break;
-    case 'trace-view': update({ view: value }); break;
+    case 'toggle-case': update({ open: state.open === Number(value) ? null : Number(value), view: 'own', expanded: null }); break;
+    case 'trace-view': update({ view: value, expanded: null }); break;
+    case 'expand-step': update({ expanded: state.expanded === Number(value) ? null : Number(value) }); break;
     case 'goto-problem': scrollEditor(); break;
     case 'reconnect': go('results'); break;
   }
@@ -290,3 +297,9 @@ else if (window.matchMedia('(prefers-color-scheme: dark)').matches) theme = 'dar
 if (initialPage === 'page') page = 'page';
 if (new URLSearchParams(location.search).has('shots')) document.body.classList.add('mock-hidden');
 go(stateBuilders[initialName] ? initialName : 'first');
+
+window.addEventListener('hashchange', () => {
+  const [name, hashTheme] = location.hash.slice(1).split('/');
+  if (['light', 'dark-a', 'system'].includes(hashTheme)) theme = hashTheme;
+  if (stateBuilders[name] && name !== currentName) go(name);
+});

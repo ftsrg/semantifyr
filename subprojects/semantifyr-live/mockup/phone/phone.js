@@ -6,8 +6,9 @@ const caseDefinitions = [
 const editedLine = '        transition first TrainPresent accept : TrainApproaching via trackA then TrainPresent;';
 
 const problems = [
-  { find: 'via barrier } then TrainPresent;', mark: '}', message: "missing ';' at '}'" },
-  { find: 'then TrainPresnt;', mark: 'TrainPresnt', message: "Couldn't resolve reference to StateUsage 'TrainPresnt'." },
+  { severity: 'error', find: 'via barrier } then TrainPresent;', mark: '}', message: "missing ';' at '}'" },
+  { severity: 'error', find: 'then TrainPresnt;', mark: 'TrainPresnt', message: "Couldn't resolve reference to StateUsage 'TrainPresnt'." },
+  { severity: 'warning', find: 'item def Lift;', mark: 'Lift', message: "Item 'Lift' is sent but never accepted." },
 ];
 
 function sysmlWithProblems() {
@@ -79,6 +80,10 @@ function baseState() {
     cases: [outcomes.notRun, outcomes.notRun],
     open: null,
     view: 'own',
+    expanded: null,
+    definitions: null,
+    addressError: null,
+    updatePrompt: false,
     autoValidate: true,
     portfolio: { verify: 'Automatic', validate: 'Automatic' },
     unsaved: false,
@@ -96,9 +101,9 @@ function baseState() {
 
 const markOutdated = (cases) => cases.map((outcome) => ({ ...outcome, outdated: true }));
 
-const resultsState = () => ({ pane: 'results', orientation: false, cases: [outcomes.failed, outcomes.passedWithTrace], status: doneStatus });
+const resultsState = () => ({ pane: 'results', orientation: false, cases: [outcomes.failed, outcomes.passedWithTrace], open: 0, status: doneStatus });
 const outdatedState = () => ({ ...resultsState(), cases: markOutdated([outcomes.failed, outcomes.passedWithTrace]), open: 0, source: sysmlEdited(), unsaved: true, caret: editedLine.trim(), status: { text: 'The model changed: 2 results are outdated', kind: 'idle' } });
-const problemsState = () => ({ pane: 'results', orientation: false, source: sysmlWithProblems(), errors: problems, unsaved: true, status: { text: 'Not run: 2 problems in the model', kind: 'problem' } });
+const problemsState = () => ({ pane: 'results', orientation: false, source: sysmlWithProblems(), errors: problems, unsaved: true, status: { text: 'Verify all did not run: 2 errors', kind: 'problem' } });
 const initializingState = () => ({ pane: 'results', connection: 'busy', initializing: true, status: { text: 'Initializing SysML v2: loading the standard library', kind: 'busy' } });
 
 const stateDefinitions = [
@@ -122,6 +127,8 @@ const stateDefinitions = [
     ['results', 'Results', resultsState],
     ['trace', 'Trace: SysML trace text first', () => ({ ...resultsState(), pane: 'trace', open: 0 })],
     ['trace-oxsts', 'Trace: OXSTS steps', () => ({ ...resultsState(), pane: 'trace', open: 0, view: 'oxsts' })],
+    ['trace-expanded', 'Trace: OXSTS steps, one step expanded', () => ({ ...resultsState(), pane: 'trace', open: 0, view: 'oxsts', expanded: 1 })],
+    ['trace-witness', 'Trace: OXSTS witness as text', () => ({ ...resultsState(), pane: 'trace', open: 0, view: 'witness' })],
     ['trace-calls', 'Trace: sequence diagram of the calls', () => ({ ...resultsState(), pane: 'trace', open: 0, view: 'calls' })],
     ['validating', 'Validating', () => ({ ...resultsState(), cases: [{ ...outcomes.failed, validation: { state: 'validating', portfolio: 'Automatic' } }, outcomes.passedWithTrace] })],
     ['validation-failed', 'Validation failed', () => ({ ...resultsState(), cases: [outcomes.failed, { ...outcomes.passedWithTrace, validation: { state: 'validation-failed', time: '0.9 s', portfolio: 'Automatic', backend: 'Theta' } }] })],
@@ -133,7 +140,13 @@ const stateDefinitions = [
     ['outdated-model', 'After an edit, model', () => ({ ...outdatedState(), pane: 'model' })],
     ['failure-problems', 'The model has problems', problemsState],
     ['failure-problems-model', 'Problems, model', () => ({ ...problemsState(), pane: 'model' })],
-    ['connection-lost', 'Connection lost', () => ({ ...resultsState(), cases: [outcomes.failed, outcomes.notRun], connection: 'lost', status: { text: 'Connection lost. Reconnecting in 4 s', kind: 'warning' } })],
+    ['connection-unreachable', 'Server not answering', () => ({ ...initializingState(), connection: 'unreachable', status: { text: 'The server is not answering. Retrying in 5 s. The editor works.', kind: 'warning' } })],
+    ['connection-refused', 'Session refused, backing off', () => ({ ...initializingState(), connection: 'refused', status: { text: 'The server refused the session: at capacity. Retrying in 16 s.', kind: 'warning' } })],
+    ['connection-terminated', 'Session terminated', () => ({ ...resultsState(), connection: 'terminated', status: { text: 'The session was terminated. Not reconnecting until you ask.', kind: 'warning' } })],
+    ['cases-changed', 'An edit added one case and removed one', () => ({ ...resultsState(), open: null, unsaved: true, definitions: [{ id: 'TwoTrainsCanBeInTheCrossing', anchor: 'verification def TwoTrainsCanBeInTheCrossing' }, { id: 'ControllerNeverStuck', anchor: 'verification def ControllerNeverStuck' }], cases: [{ ...outcomes.passedWithTrace, outdated: true }, outcomes.notRun], status: { text: 'The model changed: 1 case added, 1 removed', kind: 'idle' } })],
+    ['address-unknown-example', 'Address names an unknown example', () => ({ addressError: 'No example "level-crosing" in SysML v2. Opened Level crossing in its place.' })],
+    ['update-available', 'Reload to update', () => ({ ...resultsState(), updatePrompt: true })],
+    ['problems-sheet', 'The problems list', () => ({ ...problemsState(), overlay: 'problems' })],
   ]],
 ];
 
@@ -141,11 +154,18 @@ const stateBuilders = Object.fromEntries(stateDefinitions.flatMap(([, entries]) 
 
 let currentName = 'first';
 let theme = 'light';
-let darkVariant = 'dark-a';
+function effectiveTheme() {
+  if (theme !== 'system') return theme;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark-a' : 'light';
+}
 let state = buildState('first');
 
 function buildState(name) {
   return { ...baseState(), ...stateBuilders[name]() };
+}
+
+function definitions() {
+  return state.definitions || caseDefinitions;
 }
 
 function sourceLines() {
@@ -159,7 +179,7 @@ function scenarioOf(index) {
 
 function renderCode() {
   const lines = sourceLines();
-  const caseLines = state.initializing ? new Map() : new Map(caseDefinitions.map((definition, index) => [findLine(lines, [definition.anchor]), index]));
+  const caseLines = state.initializing ? new Map() : new Map(definitions().map((definition, index) => [findLine(lines, [definition.anchor]), index]));
   const errorLines = new Map((state.errors || []).map((error) => [findLine(lines, [error.find]), error]));
   return lines.map((line, index) => {
     const indent = line.match(/^ */)[0].length;
@@ -171,7 +191,7 @@ function renderCode() {
     if (error) {
       const target = error.mark === '}' ? '<span class="syntax-punctuation">}</span>' : escapeHtml(error.mark);
       const at = html.lastIndexOf(target);
-      html = html.slice(0, at) + `<span class="squiggle">${target}</span>` + html.slice(at + target.length) + `<span class="inline-diagnostic">${escapeHtml(error.message)}</span>`;
+      html = html.slice(0, at) + `<span class="squiggle is-${error.severity}">${target}</span>` + html.slice(at + target.length) + `<span class="inline-diagnostic">${escapeHtml(error.message)}</span>`;
     }
     const caseIndex = caseLines.get(index);
     const mark = caseIndex === undefined ? '' : verdictMark(state.cases[caseIndex].status);
@@ -224,28 +244,27 @@ function renderResults() {
       </div>
     </section>`;
   }
-  const problemsNotice = state.errors ? `<div class="phone-notice is-problem">${icon('alert', 'icon-small')}<span>Not run: the model has ${state.errors.length} problems.</span><button class="phone-link" data-action="goto-problem">Show them</button></div>` : '';
   const sharedNotice = state.shared ? `<div class="phone-notice is-shared">${icon('link', 'icon-small')}<span>Opened from a shared link. 1 of 2 results came out differently from the shared one.</span></div>` : '';
   const rows = state.cases.map((outcome, index) => {
     const scenario = scenarioOf(index);
     const tags = (outcome.outdated ? '<span class="outdated-tag">Outdated</span>' : '')
       + (outcome.differs ? `<span class="differs-tag">${icon('alert', 'icon-tiny')}Differs, shared: ${outcome.differs}</span>` : '');
     return `
-      <div class="phone-case status-${outcome.status} ${outcome.outdated ? 'is-outdated' : ''}" ${scenario ? `data-action="open-trace" data-value="${index}"` : ''}>
+      <div class="phone-case status-${outcome.status} ${outcome.outdated ? 'is-outdated' : ''} ${state.open === index ? 'is-selected' : ''}" ${scenario ? `data-action="open-trace" data-value="${index}"` : ''}>
         ${verdictMark(outcome.status)}
         <div class="phone-case-main">
-          <div class="case-name">${caseDefinitions[index].id}</div>
+          <div class="case-name">${definitions()[index].id}</div>
           <div class="phone-case-outcome">${validationMark(outcome.validation)}<span class="verdict-word">${outcome.word}</span>${outcome.time ? `<span class="case-time">${outcome.time}</span>` : ''}${tags}</div>
           ${outcome.message ? `<div class="case-message">${outcome.message}</div>` : ''}
         </div>
-        <span class="phone-case-side"><button class="phone-case-run" data-action="run-case" data-value="${index}" title="Run this case">${icon('play')}</button>${scenario ? icon('chevron-right') : ''}</span>
+        <span class="phone-case-side">${['running', 'queued'].includes(outcome.status) ? `<button class="phone-case-run" data-action="cancel-case" data-value="${index}" title="Cancel this case">${icon('stop')}</button>` : `<button class="phone-case-run" data-action="run-case" data-value="${index}" title="Run this case">${icon('play')}</button>`}${scenario ? icon('chevron-right') : ''}</span>
       </div>`;
   }).join('');
   return `
   <section class="pane pane-results">
     <div class="pane-scroll" id="pane-scroll">
       <div class="pane-header">${renderCounts(state.cases, null)}</div>
-      ${problemsNotice}${sharedNotice}
+      ${sharedNotice}
       ${rows}
     </div>
   </section>`;
@@ -255,12 +274,12 @@ function renderTracePane() {
   const scenario = scenarioOf(state.open);
   if (!scenario) return '<section class="pane pane-trace"><p class="pane-hint">Open a case with a trace to see it here.</p></section>';
   const outcome = state.cases[state.open];
-  const body = renderTraceBody({ language: 'sysml', scenario, outcome, view: state.view, selectedItem: null, withoutCalls: false, layout: { column: 140, rowHeight: 30, gutter: 28 } });
+  const body = renderTraceBody({ language: 'sysml', scenario, scenarioId: outcome.trace, outcome, view: state.view, expanded: state.expanded, withoutCalls: false, layout: { column: 150, rowHeight: 30, gutter: 28 }, caseName: definitions()[state.open].id, openable: false });
   const isCalls = body.startsWith('<div class="calls-scroll"');
   return `
   <section class="pane pane-trace ${outcome.outdated ? 'is-outdated' : ''} ${isCalls ? 'is-calls' : ''}">
     <div class="trace-head status-${outcome.status}">
-      <div class="trace-head-title">${verdictMark(outcome.status)}<span class="case-name">${caseDefinitions[state.open].id}</span></div>
+      <div class="trace-head-title">${verdictMark(outcome.status)}<span class="case-name">${definitions()[state.open].id}</span></div>
       <div class="trace-head-meta"><span class="verdict-word">${outcome.word}</span><span>${outcome.time}</span>${outcome.outdated ? '<span class="outdated-tag">Outdated</span>' : ''}</div>
       ${renderRunDetails(outcome)}
       ${renderTraceViews('sysml', state.view, false)}
@@ -272,6 +291,8 @@ function renderTracePane() {
 function renderBottom() {
   const status = state.status;
   const statusIcon = status.kind === 'busy' ? verdictMark('running') : status.kind === 'warning' || status.kind === 'problem' ? icon('alert') : status.kind === 'done' ? icon('check') : '';
+  const errorTotal = (state.errors || []).filter((entry) => entry.severity === 'error').length;
+  const warningTotal = (state.errors || []).length - errorTotal;
   const hasTrace = state.cases.some((outcome) => outcome.trace);
   const failed = state.cases.some((outcome) => outcome.status === 'failed');
   const tab = (pane, iconName, label, extra = '') => `<button class="phone-tab" data-action="pane" data-value="${pane}" aria-pressed="${state.pane === pane}" ${pane === 'trace' && !hasTrace ? 'disabled' : ''}><span class="phone-tab-icon">${icon(iconName)}${extra}</span><span>${label}</span></button>`;
@@ -281,7 +302,7 @@ function renderBottom() {
   return `
   <footer class="phone-bottom">
     ${state.initializing ? '<div class="progress-indeterminate" data-language="sysml"></div>' : ''}
-    <div class="phone-status is-${status.kind}">${statusIcon}<span>${status.html || escapeHtml(status.text)}</span></div>
+    <div class="phone-status is-${status.kind}">${statusIcon}<span>${status.html || escapeHtml(status.text)}</span><button class="phone-problems ${state.errors ? 'has-problems' : ''}" data-action="problems">${icon('error', 'icon-small')}${errorTotal}${icon('alert', 'icon-small')}${warningTotal}</button></div>
     <nav class="phone-bar">
       ${tab('model', 'code', 'Model')}
       ${tab('results', 'list', 'Results', failed ? `<span class="tab-dot status-failed ${state.outdated ? 'is-outdated' : ''}"></span>` : '')}
@@ -326,9 +347,14 @@ function renderOverlay() {
       </div>
     </div>`;
   }
+  if (state.overlay === 'problems') {
+    const lines = sourceLines();
+    const entries = (state.errors || []).map((entry, index) => `<button class="sheet-item" data-action="reveal-problem" data-value="${index}">${icon(entry.severity === 'error' ? 'error' : 'alert')}<span>${escapeHtml(entry.message)}</span><span class="sheet-item-detail">Ln ${findLine(lines, [entry.find]) + 1}</span></button>`).join('');
+    return `<div class="scrim" data-action="close"></div><div class="sheet-bottom"><div class="sheet-grabber"></div><div class="sheet-title">Problems in the model</div>${entries || '<div class="sheet-item"><span>No problems.</span></div>'}</div>`;
+  }
   if (state.overlay === 'menu') {
     const item = (iconName, label, detail = '') => `<button class="sheet-item" data-action="close">${icon(iconName)}<span>${label}</span><span class="sheet-item-detail">${detail}</span></button>`;
-    const dark = theme !== 'light';
+    const dark = effectiveTheme() !== 'light';
     return `
     <div class="scrim" data-action="close"></div>
     <div class="sheet-bottom">
@@ -341,7 +367,7 @@ function renderOverlay() {
       ${item('info', 'About')}
       ${item('terminal', 'Developer panel')}
       <div class="sheet-item sheet-theme">${icon(dark ? 'moon' : 'sun')}<span>Theme</span>
-        <div class="segmented segmented-plain"><button class="segmented-option" aria-pressed="${!dark}" data-action="theme" data-value="light">Light</button><button class="segmented-option" aria-pressed="${dark}" data-action="theme" data-value="dark">Dark</button></div>
+        <div class="segmented segmented-plain">${[['system', 'System'], ['light', 'Light'], ['dark-a', 'Dark']].map(([value, label]) => `<button class="segmented-option" aria-pressed="${theme === value}" data-action="theme" data-value="${value}">${label}</button>`).join('')}</div>
       </div>
     </div>`;
   }
@@ -349,11 +375,14 @@ function renderOverlay() {
 }
 
 function render() {
-  document.documentElement.dataset.theme = theme;
+  document.documentElement.dataset.theme = effectiveTheme();
+  document.title = 'Level crossing - SysML v2 - Semantifyr Live';
   const panes = { model: renderModel, results: renderResults, trace: renderTracePane };
   const phone = document.getElementById('phone');
   phone.classList.toggle('is-editing', state.editing);
-  phone.innerHTML = renderTop() + panes[state.pane]() + (state.editing ? renderKeyboard() : renderBottom()) + renderOverlay();
+  const address = state.addressError ? `<div class="phone-orientation is-error">${icon('alert', 'icon-small')}<span>${escapeHtml(state.addressError)}</span><button class="phone-icon-button" data-action="dismiss-address" title="Dismiss">${icon('close', 'icon-small')}</button></div>` : '';
+  const toast = state.updatePrompt ? `<div class="toast" role="status"><span>A new version of Live is available.</span><button class="button button-primary button-small" data-action="reload-page">Reload</button><button class="button button-quiet button-small" data-action="later">Later</button></div>` : '';
+  phone.innerHTML = renderTop() + address + panes[state.pane]() + (state.editing ? renderKeyboard() : renderBottom()) + renderOverlay() + toast;
   scrollPane();
   renderMockControls();
 }
@@ -374,7 +403,7 @@ function renderMockControls() {
   container.innerHTML = `
     <div class="mock-controls-header" data-mock="toggle"><strong>MOCK</strong><span>Phone states</span><span>${collapsed ? '+' : '-'}</span></div>
     <div class="mock-body">
-      <div class="mock-pair">${themeButton('light', 'Light')}${themeButton('dark-a', 'Dark A')}</div>
+      <div class="mock-pair">${themeButton('light', 'Light')}${themeButton('dark-a', 'Dark A')}${themeButton('system', 'System')}</div>
       ${stateDefinitions.map(([group, entries]) => `<div class="mock-group"><div class="mock-group-title">${group}</div>${entries.map(([name, label]) => `<button class="mock-state ${name === currentName ? 'is-current' : ''}" data-mock="state" data-value="${name}">${label}</button>`).join('')}</div>`).join('')}
     </div>`;
 }
@@ -422,7 +451,6 @@ document.addEventListener('click', (event) => {
     clearTimeout(runTimer);
     if (kind === 'theme') {
       theme = mock.dataset.value;
-      if (theme !== 'light') darkVariant = theme;
     }
     go(kind === 'state' ? mock.dataset.value : currentName);
     return;
@@ -440,8 +468,15 @@ document.addEventListener('click', (event) => {
     case 'cancel': clearTimeout(runTimer); go(state.initializing ? 'initializing' : 'cancelled'); break;
     case 'pane': update({ pane: value }); break;
     case 'open-trace': update({ pane: 'trace', open: Number(value), view: 'own' }); break;
-    case 'trace-view': update({ view: value }); break;
+    case 'trace-view': update({ view: value, expanded: null }); break;
     case 'run-case': event.stopPropagation(); break;
+    case 'cancel-case': event.stopPropagation(); break;
+    case 'expand-step': update({ expanded: state.expanded === Number(value) ? null : Number(value) }); break;
+    case 'problems': update({ overlay: 'problems' }); break;
+    case 'reveal-problem': update({ overlay: null, pane: 'model' }); break;
+    case 'dismiss-address': update({ addressError: null }); break;
+    case 'reload-page': go('first'); break;
+    case 'later': update({ updatePrompt: false }); break;
     case 'glyph': update({ pane: 'results' }); break;
     case 'auto-validate': update({ autoValidate: !state.autoValidate }); break;
     case 'goto-problem': update({ pane: 'model' }); break;
@@ -453,16 +488,21 @@ document.addEventListener('click', (event) => {
     case 'choose-example': go('first'); break;
     case 'menu': update({ overlay: 'menu' }); break;
     case 'close': update({ overlay: null }); break;
-    case 'theme': theme = value === 'dark' ? darkVariant : 'light'; render(); break;
+    case 'theme': theme = value; render(); break;
   }
 });
 
 window.addEventListener('resize', () => render());
 
 const [initialName, initialTheme] = location.hash.slice(1).split('/');
-if (['light', 'dark-a'].includes(initialTheme)) theme = initialTheme;
-else if (window.matchMedia('(prefers-color-scheme: dark)').matches) theme = darkVariant;
-if (theme !== 'light') darkVariant = theme;
+if (['light', 'dark-a', 'system'].includes(initialTheme)) theme = initialTheme;
+else theme = 'system';
 if (new URLSearchParams(location.search).has('shots')) document.body.classList.add('mock-hidden');
 if (window.innerWidth < 700) document.getElementById('mock-controls').dataset.collapsed = 'true';
 go(stateBuilders[initialName] ? initialName : 'first');
+
+window.addEventListener('hashchange', () => {
+  const [name, hashTheme] = location.hash.slice(1).split('/');
+  if (['light', 'dark-a', 'system'].includes(hashTheme)) theme = hashTheme;
+  if (stateBuilders[name] && name !== currentName) go(name);
+});
