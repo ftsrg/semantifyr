@@ -270,10 +270,6 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
 
     @Override
     protected TypeEvaluation visit(IfThenElse expression) {
-        // The result type is the type the two branches have in common. If
-        // one is a subtype of the other, that subtype's supertype is taken;
-        // for now we approximate with the `then` branch's type and rely on
-        // the validator to reject incompatible branches.
         if (expression.getThen() == null || expression.getElse() == null) {
             return InvalidTypeEvaluation.Instance;
         }
@@ -285,7 +281,7 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
                 || elseType instanceof InvalidTypeEvaluation) {
             return InvalidTypeEvaluation.Instance;
         }
-        return thenType;
+        return typeCompatibility.join(thenType, elseType, expression);
     }
 
     public TypeEvaluation fromTypeSpecification(TypeSpecification typeSpecification) {

@@ -2165,7 +2165,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (thenType == null || elseType == null) {
             return;
         }
-        if (!typeCompatibility.isComparable(thenType, elseType, expression)) {
+        if (!typeCompatibility.isJoinable(thenType, elseType, expression)) {
             acceptError(
                     "Branches of if-then-else expression have incompatible types: "
                             + formatType(thenType)

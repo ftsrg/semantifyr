@@ -284,6 +284,122 @@ public class TypeValidationTest {
     }
 
     @Test
+    void ifThenElseWithASupertypeElseBranch_isNotAssignableToTheSubtype() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Base {
+            }
+            class Child : Base {
+            }
+            class Holder {
+                contains child: Child
+                contains base: Base
+                var flag: bool := false
+                redefine tran {
+                    var picked: Child := if flag then child else base
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "is not assignable to variable 'picked'");
+    }
+
+    @Test
+    void ifThenElseWithASupertypeElseBranch_isAssignableToTheSupertype() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Base {
+            }
+            class Child : Base {
+            }
+            class Holder {
+                contains child: Child
+                contains base: Base
+                var flag: bool := false
+                redefine tran {
+                    var picked: Base := if flag then child else base
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
+    }
+
+    @Test
+    void ifThenElseWithANothingBranch_isNotAssignableToARequiredSlot() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Leaf {
+            }
+            class Holder {
+                contains leaf: Leaf
+                var flag: bool := false
+                redefine tran {
+                    var picked: Leaf := if flag then leaf else nothing
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "is not assignable to variable 'picked'");
+    }
+
+    @Test
+    void ifThenElseWithANothingBranch_isAssignableToAnOptionalSlot() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Leaf {
+            }
+            class Holder {
+                contains leaf: Leaf
+                var flag: bool := false
+                redefine tran {
+                    var picked: Leaf[0..1] := if flag then leaf else nothing
+                    var swapped: Leaf[0..1] := if flag then nothing else leaf
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
+    }
+
+    @Test
+    void ifThenElseOverArraysOfDifferentSizes_isRejected() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Holder {
+                var flag: bool := false
+                var three: int[3] := [1, 2, 3]
+                var two: int[2] := [1, 2]
+                redefine tran {
+                    three := if flag then three else two
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "incompatible");
+    }
+
+    @Test
+    void ifThenElseOverArraysOfTheSameSize_passes() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Holder {
+                var flag: bool := false
+                var first: int[2] := [1, 2]
+                var second: int[2] := [3, 4]
+                redefine tran {
+                    first := if flag then second else [5, 6]
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
+    }
+
+    @Test
     void ifThenElseInPropertyBody_isAllowed() {
         var parsedPackage = parseHelper.parse("""
             package test

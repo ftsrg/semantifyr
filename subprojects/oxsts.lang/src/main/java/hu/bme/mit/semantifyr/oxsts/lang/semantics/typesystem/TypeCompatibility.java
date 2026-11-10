@@ -126,6 +126,64 @@ public class TypeCompatibility {
                 || isDomainAssignable(rightDomain, leftDomain, context);
     }
 
+    public boolean isJoinable(TypeEvaluation left, TypeEvaluation right, EObject context) {
+        if (!isComparable(left, right, context)) {
+            return false;
+        }
+        if (left instanceof InvalidTypeEvaluation
+                || right instanceof InvalidTypeEvaluation
+                || left instanceof NothingTypeEvaluation
+                || right instanceof NothingTypeEvaluation) {
+            return true;
+        }
+        return isMultiplicityAssignable(left.getRange(), right.getRange())
+                || isMultiplicityAssignable(right.getRange(), left.getRange());
+    }
+
+    public TypeEvaluation join(TypeEvaluation left, TypeEvaluation right, EObject context) {
+        if (left instanceof InvalidTypeEvaluation || right instanceof InvalidTypeEvaluation) {
+            return InvalidTypeEvaluation.Instance;
+        }
+        if (left instanceof NothingTypeEvaluation) {
+            return optional(right);
+        }
+        if (right instanceof NothingTypeEvaluation) {
+            return optional(left);
+        }
+        var range = left.getRange();
+        if (range != null && right.getRange() != null) {
+            range = RangeEvaluation.of(
+                    Math.min(range.getLowerBound(), right.getRange().getLowerBound()),
+                    Math.max(range.getUpperBound(), right.getRange().getUpperBound()));
+        }
+        return new ImmutableTypeEvaluation(joinDomain(left.getDomain(), right.getDomain(), context), range);
+    }
+
+    private TypeEvaluation optional(TypeEvaluation type) {
+        if (type instanceof NothingTypeEvaluation) {
+            return type;
+        }
+        var range = type.getRange();
+        if (range == null) {
+            return type;
+        }
+        return new ImmutableTypeEvaluation(
+                type.getDomain(), RangeEvaluation.of(Math.min(0, range.getLowerBound()), range.getUpperBound()));
+    }
+
+    private DomainDeclaration joinDomain(DomainDeclaration left, DomainDeclaration right, EObject context) {
+        if (isDomainAssignable(left, right, context)) {
+            return left;
+        }
+        if (isDomainAssignable(right, left, context)) {
+            return right;
+        }
+        if (left instanceof FeatureDeclaration && right instanceof FeatureDeclaration) {
+            return joinDomain(unwrap(left), unwrap(right), context);
+        }
+        return left;
+    }
+
     /**
      * Returns {@code true} if a value of the {@code assigned} type can be assigned into a location
      * typed as {@code assignee}. Checks domain compatibility plus multiplicity (can an optional
