@@ -30,6 +30,8 @@ class SessionSemantifyrExtensionsTest {
         flavorId = "oxsts",
         kind = "full",
         uptime = Duration.ZERO,
+        runningCount = 0,
+        queuedCount = 0,
         workingDirectory = "/tmp/session-1",
         activeVerifications = emptyList(),
     )

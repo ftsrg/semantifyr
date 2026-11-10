@@ -78,6 +78,17 @@ data class FlavorsResponse(
 @Serializable
 data class AdminStatusResponse(
     val sessions: List<SessionInfo>,
+    val load: AdminLoadResponse,
+)
+
+@Serializable
+data class AdminLoadResponse(
+    val activeSessions: Int,
+    val maxSessions: Int,
+    val runningVerifications: Int,
+    val queuedVerifications: Int,
+    val verificationPermits: Int,
+    val uptime: Duration,
 )
 
 @Serializable
@@ -108,6 +119,8 @@ data class SessionInfo(
     val flavorId: String,
     val kind: String,
     val uptime: Duration,
+    val runningCount: Int,
+    val queuedCount: Int,
     val workingDirectory: String,
     val activeVerifications: List<ActiveVerificationInfo>,
 )
