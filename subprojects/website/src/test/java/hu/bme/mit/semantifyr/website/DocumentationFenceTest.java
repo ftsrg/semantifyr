@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.oxsts.lang.tests.documentation;
+package hu.bme.mit.semantifyr.website;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,7 +34,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 @InjectWithOxsts
 public class DocumentationFenceTest {
 
-    private static final Path DOCUMENTATION = Path.of("../website/src/docs");
+    private static final Path DOCUMENTATION = Path.of("src/docs");
 
     private static final Pattern OPENING_FENCE = Pattern.compile("^(\\s*)```oxsts(\\s.*)?$");
 

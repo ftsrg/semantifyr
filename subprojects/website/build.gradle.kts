@@ -9,6 +9,7 @@ import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
 
 plugins {
+    id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
     id("hu.bme.mit.semantifyr.gradle.conventions.nodejs")
 }
 
@@ -31,6 +32,9 @@ val apiDocsFiles = configurations.resolvable("apiDocsFiles") {
 }
 
 dependencies {
+    testImplementation(project(":oxsts.lang"))
+    testImplementation(testFixtures(project(":oxsts.lang")))
+
     editorCommon(project(":semantifyr-editor-common"))
     cliDistribution(project(":semantifyr-cli"))
     cliDistribution(project(":sysml-cli"))
@@ -174,6 +178,12 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
 }
 
 tasks {
+    test {
+        inputs.dir(project.layout.projectDirectory.dir("src/docs"))
+            .withPropertyName("documentation")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+    }
+
     assemble {
         dependsOn(npmAssemble)
     }
