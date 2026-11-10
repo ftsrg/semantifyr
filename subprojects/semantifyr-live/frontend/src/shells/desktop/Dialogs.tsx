@@ -18,6 +18,7 @@ import { Icon } from '../../ui/icons'
 import { Logo } from '../../ui/marks'
 import { useLanguage } from '../hooks'
 
+const HOME = 'https://semantifyr.org'
 const WEBSITE = 'https://ftsrg.mit.bme.hu/semantifyr'
 const SOURCE_CODE = 'https://github.com/ftsrg/semantifyr'
 const PAGE_START = Date.now()
@@ -58,6 +59,10 @@ export function AboutDialog(): React.JSX.Element {
               <p>Live collects no personal data. The server counts sessions and runs for its own metrics, without the content of any model.</p>
             </div>
             <div className="dialog-links">
+              <a className="button button-outline button-small" href={HOME} target="_blank" rel="noreferrer">
+                <Icon name="globe" size="tiny" />
+                semantifyr.org
+              </a>
               <a className="button button-outline button-small" href={WEBSITE} target="_blank" rel="noreferrer">
                 <Icon name="book" size="tiny" />
                 Documentation
