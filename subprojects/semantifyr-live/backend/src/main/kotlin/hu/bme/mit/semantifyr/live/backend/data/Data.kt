@@ -135,6 +135,7 @@ data class AdminConfigResponse(
     val server: AdminServerConfigResponse,
     val sessionManager: AdminSessionManagerConfigResponse,
     val verification: AdminVerificationConfigResponse,
+    val portfolios: List<AdminPortfolioResponse>,
 )
 
 @Serializable
@@ -159,4 +160,10 @@ data class AdminSessionManagerConfigResponse(
 data class AdminVerificationConfigResponse(
     val concurrency: Int,
     val timeout: Duration,
+)
+
+@Serializable
+data class AdminPortfolioResponse(
+    val id: String,
+    val engines: List<String>,
 )

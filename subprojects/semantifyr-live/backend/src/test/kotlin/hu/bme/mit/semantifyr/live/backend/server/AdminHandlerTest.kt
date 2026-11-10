@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.live.backend.server
 
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
+import hu.bme.mit.semantifyr.live.backend.PortfolioRegistry
 import hu.bme.mit.semantifyr.live.backend.ServerConfig
 import hu.bme.mit.semantifyr.live.backend.ServerStatus
 import hu.bme.mit.semantifyr.live.backend.data.ActiveVerificationInfo
@@ -22,6 +23,7 @@ import hu.bme.mit.semantifyr.live.backend.testing.handler
 import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrApp
 import hu.bme.mit.semantifyr.live.backend.testing.jsonClient
 import hu.bme.mit.semantifyr.live.backend.testing.testInjector
+import hu.bme.mit.semantifyr.portfolios.Portfolios
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -192,6 +194,20 @@ class AdminHandlerTest {
         assertThat(config.sessionManager.maxSessionsGlobal).isEqualTo(256)
         assertThat(config.verification.concurrency).isEqualTo(4)
         assertThat(config.server.port).isEqualTo(8080)
+        assertThat(config.verification.timeout.isPositive()).isTrue
+        val thetaPortfolio = config.portfolios.single {
+            it.id == Portfolios.ThetaFull.id
+        }
+        assertThat(thetaPortfolio.engines).isNotEmpty
+        assertThat(
+            config.portfolios.map {
+                it.id
+            },
+        ).containsExactlyElementsOf(
+            PortfolioRegistry.entries.map {
+                it.portfolio.id
+            },
+        )
     }
 
     @Test

@@ -9,9 +9,11 @@ package hu.bme.mit.semantifyr.live.backend.server
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
+import hu.bme.mit.semantifyr.live.backend.PortfolioRegistry
 import hu.bme.mit.semantifyr.live.backend.ServerStatus
 import hu.bme.mit.semantifyr.live.backend.data.AdminConfigResponse
 import hu.bme.mit.semantifyr.live.backend.data.AdminLoadResponse
+import hu.bme.mit.semantifyr.live.backend.data.AdminPortfolioResponse
 import hu.bme.mit.semantifyr.live.backend.data.AdminServerConfigResponse
 import hu.bme.mit.semantifyr.live.backend.data.AdminSessionManagerConfigResponse
 import hu.bme.mit.semantifyr.live.backend.data.AdminStatusResponse
@@ -131,6 +133,14 @@ class AdminHandler @Inject constructor(
                 concurrency = config.verification.concurrency,
                 timeout = config.verification.timeout,
             ),
+            portfolios = PortfolioRegistry.entries.map {
+                AdminPortfolioResponse(
+                    id = it.portfolio.id,
+                    engines = it.portfolio.executorKeys.map { key ->
+                        key.name
+                    }.sorted(),
+                )
+            },
         )
     }
 }
