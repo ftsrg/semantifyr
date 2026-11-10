@@ -36,7 +36,7 @@ function useTitle(live: Live): void {
     if (!workspace.flavor || !document) {
       return 'Semantifyr Live'
     }
-    const name = document.shared ? 'Shared model' : document.example.label
+    const name = document.file?.name ?? (document.shared ? 'Shared model' : document.example.label)
     return `${name} - ${presentationOf(workspace.flavor.languageId).name} - Semantifyr Live`
   })
   useEffect(() => {

@@ -52,7 +52,7 @@ export function AboutDialog(): React.JSX.Element {
             </div>
             <div className="dialog-section">
               <span className="section-label">Nothing is stored</span>
-              <p>No model and no result is stored anywhere: the server keeps your model only while it verifies it, and a reload starts afresh. The browser keeps your display preferences, such as the theme and the portfolios, and the site&apos;s own files so that it loads fast. A shared link carries the model in the link itself.</p>
+              <p>No model and no result is stored anywhere: the server keeps your model only while it verifies it, and a reload starts afresh. The browser keeps your display preferences, such as the theme and the portfolios, and the site&apos;s own files so that it loads fast. A shared link carries the model and its results in the link itself.</p>
             </div>
             <div className="dialog-section">
               <span className="section-label">Privacy</span>

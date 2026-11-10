@@ -63,6 +63,9 @@ export interface Verification {
   cancelCase: (caseId: string) => void
   validate: (caseId: string) => void
   select: (caseId: string | null) => void
+  // the case a shared link selected stays selected when the run ends
+  holdSelection: (caseId: string | null) => void
+  forget: (key: string) => void
   dispose: () => void
 }
 
@@ -105,6 +108,7 @@ export function createVerification(options: VerificationOptions): Verification {
   let run: ActiveRun | null = null
   let discoveryTimer: ReturnType<typeof setTimeout> | null = null
   let discoveryGeneration = 0
+  let selectionHeld = false
 
   const stateOf = (key: string): VerificationState => {
     return states.get().get(key) ?? NO_VERIFICATION
@@ -154,6 +158,7 @@ export function createVerification(options: VerificationOptions): Verification {
   }
 
   const select = (caseId: string | null): void => {
+    selectionHeld = false
     selection.set(caseId)
     if (run) {
       run.selectionChanged = true
@@ -220,7 +225,7 @@ export function createVerification(options: VerificationOptions): Verification {
       )
     }, (active) => {
       const state = stateOf(key)
-      if (active.selectionChanged || state.phase !== 'done') {
+      if (active.selectionChanged || selectionHeld || state.phase !== 'done') {
         return
       }
       const shown = firstWithTrace(state.cases)
@@ -359,6 +364,17 @@ export function createVerification(options: VerificationOptions): Verification {
       })
     },
     select,
+    holdSelection: (caseId) => {
+      selection.set(caseId)
+      selectionHeld = caseId !== null
+    },
+    forget: (key) => {
+      states.update((previous) => {
+        const changed = new Map(previous)
+        changed.delete(key)
+        return changed
+      })
+    },
     dispose: () => {
       clearDiscoveryTimer()
       cancel()

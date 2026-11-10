@@ -19,6 +19,7 @@ import type { ReadableStore, Store } from '../lib/stores/store'
 import { useStore } from '../lib/stores/useStore'
 import type { ResolvedColorMode } from '../lib/util/colorMode'
 import { createLive, type Live } from '../lib/workspace/live'
+import { SHARED_RESULTS_PARAMETER } from '../lib/workspace/sharedResults'
 import { ShellRoot } from './ShellRoot'
 import { createShellState } from './shellState'
 import { UpdatePrompt } from './UpdatePrompt'
@@ -40,7 +41,9 @@ function useAddress(live: Live): void {
         return
       }
       void liveEditorUrl(window.location.href, { flavor: flavor.id, example: document.example.id }).then((url) => {
-        window.history.replaceState(null, '', url)
+        const address = new URL(url)
+        address.searchParams.delete(SHARED_RESULTS_PARAMETER)
+        window.history.replaceState(null, '', address)
       })
     })
   }, [live])

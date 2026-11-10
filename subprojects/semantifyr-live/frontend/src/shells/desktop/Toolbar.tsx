@@ -12,6 +12,7 @@ import { LANGUAGE_ORDER, presentationOf } from '../../lib/language/presentation'
 import type { LanguageUnit } from '../../lib/language/types'
 import { changeSettings } from '../../lib/stores/settings'
 import { useStore } from '../../lib/stores/useStore'
+import { documentKey } from '../../lib/workspace/live'
 import { useLive } from '../../lib/workspace/liveContext'
 import type { ColorModePreference } from '../../lib/util/colorMode'
 import { Icon, type IconName } from '../../ui/icons'
@@ -19,6 +20,7 @@ import { LanguageMark, Logo } from '../../ui/marks'
 import { useCurrentDocument, useFlavor } from '../hooks'
 import { AboutDialog, DeveloperDialog } from './Dialogs'
 import { ConnectionIndicator } from './ConnectionIndicator'
+import { OpenButton } from './keeping'
 import { SharePopover } from './SharePopover'
 
 const FLAVOUR_TEXTS: Readonly<Record<string, { label: string, detail: string }>> = {
@@ -146,8 +148,9 @@ function ExampleMenu(): React.JSX.Element | null {
   const blank = flavor.examples.find((example) => {
     return example.id === 'blank'
   })
+  const kept = document.shared ? undefined : live.documents.get().get(documentKey(flavor.id, '', true))
   const currentId = document.shared ? null : document.example.id
-  const triggerLabel = document.shared ? 'Shared model' : document.example.label
+  const triggerLabel = document.file?.name ?? (document.shared ? 'Shared model' : document.example.label)
   return (
     <Menu.Root>
       <Menu.Trigger className="button button-quiet example-button">
@@ -165,6 +168,25 @@ function ExampleMenu(): React.JSX.Element | null {
               <span className="language-intro-detail">{presentation.detail}</span>
             </div>
             <Menu.Separator className="menu-divider" />
+            {kept
+              ? (
+                <>
+                  <Menu.Item
+                    className="menu-item"
+                    onClick={() => {
+                      live.showKept(flavor.id)
+                    }}
+                  >
+                    <span>
+                      <Icon name="file" size="small" />
+                    </span>
+                    <span className="menu-item-label">{kept.file?.name ?? 'Shared model'}</span>
+                    <span />
+                  </Menu.Item>
+                  <Menu.Separator className="menu-divider" />
+                </>
+              )
+              : null}
             {examples.map((example) => {
               const current = example.id === currentId
               const count = caseCountOf(live, flavor, example)
@@ -256,6 +278,7 @@ export function Toolbar(): React.JSX.Element {
         <ExampleMenu />
       </div>
       <div className="toolbar-group toolbar-group-end">
+        <OpenButton />
         <SharePopover />
         <AboutDialog />
         <DeveloperDialog />

@@ -32,6 +32,12 @@ export interface CaseRow {
   validation: ValidationMark | null
   validationMessage: string | null
   hasTrace: boolean
+  // the case is queued or running, whatever verdict the row shows
+  waiting: boolean
+  // the verdict shown is the sharer's, until the run gives the case its own
+  shared: boolean
+  // the sharer's verdict, as a word, when the run's came out differently
+  differs: string | null
 }
 
 export interface CaseCounts {
@@ -130,6 +136,9 @@ export function caseRowOf(caseState: VerificationCaseState): CaseRow {
     validation: finished ? validationOf(caseState) : null,
     validationMessage: caseState.validationMessage ?? null,
     hasTrace: finished && caseState.trace !== undefined,
+    waiting: status === 'running' || status === 'queued',
+    shared: false,
+    differs: null,
   }
 }
 

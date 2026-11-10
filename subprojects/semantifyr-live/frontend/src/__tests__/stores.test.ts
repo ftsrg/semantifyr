@@ -62,6 +62,20 @@ describe('settings', () => {
     })
   })
 
+  it('remembers the pane sizes and the collapsed column', () => {
+    changeSettings(createSettingsStore(), {
+      resultsColumnWidth: 640,
+      caseListHeight: 180,
+      resultsColumnCollapsed: true,
+    })
+
+    expect(createSettingsStore().get()).toMatchObject({
+      resultsColumnWidth: 640,
+      caseListHeight: 180,
+      resultsColumnCollapsed: true,
+    })
+  })
+
   it('starts from the defaults on a first visit', () => {
     expect(createSettingsStore().get()).toMatchObject({
       theme: 'system',

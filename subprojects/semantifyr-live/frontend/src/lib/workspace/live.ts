@@ -20,6 +20,8 @@ import { createStore, type ReadableStore, type Store } from '../stores/store'
 import type { ResolvedColorMode } from '../util/colorMode'
 import type { VerificationState } from '../verification/engine'
 import { createDocumentTabs, type DocumentTabs } from './documentTabs'
+import { flavorOfFile, type DocumentFile, type OpenedFile } from './files'
+import { decodeSharedResults, SHARED_RESULTS_PARAMETER, type SharedResults } from './sharedResults'
 import { createVerification, type RunTiming } from './verification'
 
 const CATALOG_RETRY_MS = 5000
@@ -47,6 +49,10 @@ export interface DocumentRecord {
   uri: string
   // the text when the document was last left; the editor's model holds it while the document is open
   text: string
+  // the text when the document was opened or last saved
+  savedText: string
+  // the file the document was opened from or saved to
+  file: DocumentFile | null
 }
 
 export interface Workspace {
@@ -63,7 +69,7 @@ export interface RevealRequest {
 
 // The address named a language or an example that does not exist; what was opened in its place
 export interface AddressProblem {
-  kind: 'language' | 'example'
+  kind: 'language' | 'example' | 'results'
   requested: string
   flavorId: string
   exampleId: string
@@ -101,6 +107,10 @@ export interface Live {
   readonly problems: Store<readonly ProblemEntry[]>
   readonly reveal: ReadableStore<RevealRequest | null>
   readonly address: Store<AddressProblem | null>
+  // the current document differs from its text when it was opened or last saved
+  readonly unsaved: ReadableStore<boolean>
+  // the sharer's verdicts of the link that opened the current document
+  readonly sharedResults: ReadableStore<SharedResults | null>
   // the read-only documents beside the model in the editor; they belong to the running language
   readonly tabs: DocumentTabs
   readonly pendingVerifyAll: ReadableStore<boolean>
@@ -108,6 +118,11 @@ export interface Live {
   start: (search: string) => void
   dispose: () => Promise<void>
   selectModel: (flavorId: string, exampleId: string) => void
+  openFile: (opened: OpenedFile) => void
+  // back to the shared model or the file of the language, which the visit keeps
+  showKept: (flavorId: string) => void
+  markSaved: (file: DocumentFile | null, text: string) => void
+  hasUnsaved: () => boolean
   currentText: () => string | null
   revealRange: (range: Range) => void
   reconnect: () => void
@@ -138,12 +153,18 @@ interface InitialDocument {
   text: string
   shared: boolean
   problem: AddressProblem | null
+  file?: DocumentFile
+  // a document opened from a file replaces the shared one
+  replace?: boolean
+  results?: SharedResults
 }
 
 async function resolveInitialDocument(search: string, registry: LanguageRegistry, defaultFlavorId: string | undefined): Promise<InitialDocument> {
   const parameters = parseLiveEditorUrl(search)
   const flavor = registry.flavorOf(parameters.flavor) ?? registry.flavorOf(defaultFlavorId) ?? registry.flavors[0]
   const decodedCode = parameters.compressedCode ? await decodeCompressedBase64Url(parameters.compressedCode) : null
+  const encodedResults = new URLSearchParams(search).get(SHARED_RESULTS_PARAMETER)
+  const results = encodedResults === null ? null : await decodeSharedResults(encodedResults)
   const fallback = flavor.examples[0]
   if (!fallback) {
     throw new Error(`flavor ${flavor.id} has no examples`)
@@ -152,16 +173,20 @@ async function resolveInitialDocument(search: string, registry: LanguageRegistry
   const problemOf = (kind: AddressProblem['kind'], requested: string, example: LiveExample): AddressProblem => {
     return { kind, requested, flavorId: flavor.id, exampleId: example.id }
   }
+  const resultsOf = results === null ? {} : { results }
+  const unreadable = (example: LiveExample): AddressProblem | null => {
+    return encodedResults !== null && results === null ? problemOf('results', '', example) : null
+  }
   if (parameters.example) {
     const found = findExample(flavor, parameters.example)
     const example = found ?? fallback
     const problem = unknownLanguage && parameters.flavor !== null
       ? problemOf('language', parameters.flavor, example)
       : found ? null : problemOf('example', parameters.example, example)
-    return { flavor, example, text: decodedCode ?? example.code, shared: false, problem }
+    return { flavor, example, text: decodedCode ?? example.code, shared: false, problem: problem ?? unreadable(example), ...resultsOf }
   }
   const problem = unknownLanguage && parameters.flavor !== null ? problemOf('language', parameters.flavor, fallback) : null
-  return { flavor, example: fallback, text: decodedCode ?? fallback.code, shared: decodedCode !== null, problem }
+  return { flavor, example: fallback, text: decodedCode ?? fallback.code, shared: decodedCode !== null, problem: problem ?? unreadable(fallback), ...resultsOf }
 }
 
 export function createLive(options: LiveOptions): Live {
@@ -177,6 +202,8 @@ export function createLive(options: LiveOptions): Live {
   const problems = createStore<readonly ProblemEntry[]>([])
   const reveal = createStore<RevealRequest | null>(null)
   const address = createStore<AddressProblem | null>(null)
+  const unsaved = createStore(false)
+  const sharedResults = createStore<SharedResults | null>(null)
   const tabs = createDocumentTabs()
 
   let disposed = false
@@ -212,6 +239,15 @@ export function createLive(options: LiveOptions): Live {
     },
   })
 
+  const textOf = (record: DocumentRecord): string => {
+    return modelDocuments.read(record.uri) ?? record.text
+  }
+
+  const refreshUnsaved = (): void => {
+    const record = currentDocument()
+    unsaved.set(record !== undefined && textOf(record) !== record.savedText)
+  }
+
   const putDocument = (record: DocumentRecord): void => {
     documents.update((previous) => {
       const changed = new Map(previous)
@@ -241,7 +277,9 @@ export function createLive(options: LiveOptions): Live {
         const key = workspace.get().documentKey
         if (!change.replaced && key !== null) {
           verification.documentEdited(key)
+          sharedResults.set(null)
         }
+        refreshUnsaved()
         verification.scheduleDiscovery()
       }),
     ]
@@ -261,33 +299,45 @@ export function createLive(options: LiveOptions): Live {
   const open = (document: InitialDocument): void => {
     const key = documentKey(document.flavor.id, document.example.id, document.shared)
     const leaving = currentDocument()
-    if (leaving?.key === key) {
+    if (leaving?.key === key && document.replace !== true) {
       return
     }
     verification.cancel()
-    if (leaving) {
-      putDocument({ ...leaving, text: modelDocuments.read(leaving.uri) ?? leaving.text })
+    if (leaving && leaving.key !== key) {
+      putDocument({ ...leaving, text: textOf(leaving) })
     }
-    const record = documents.get().get(key) ?? {
+    const existing = document.replace === true ? undefined : documents.get().get(key)
+    const record = existing ?? {
       key,
       flavorId: document.flavor.id,
       example: document.example,
       shared: document.shared,
       uri: documentUri(document.flavor),
       text: document.text,
+      savedText: document.text,
+      file: document.file ?? null,
     }
     putDocument(record)
+    if (document.replace === true) {
+      verification.forget(key)
+    }
     verification.select(null)
+    sharedResults.set(document.results ?? null)
     const { flavor, runtime } = workspace.get()
     if (runtime && flavor?.id === document.flavor.id) {
       workspace.set({ flavor, documentKey: key, runtime })
       modelDocuments.replace(record.uri, record.text)
       verification.scheduleDiscovery()
-      return
+    } else {
+      stopRuntime()
+      tabs.closeAll()
+      startRuntime(document.flavor, record)
     }
-    stopRuntime()
-    tabs.closeAll()
-    startRuntime(document.flavor, record)
+    refreshUnsaved()
+    if (document.results) {
+      verification.holdSelection(document.results.selectedCase)
+      verification.verifyAll()
+    }
   }
 
   const startRuntime = (flavor: LiveFlavor, record: DocumentRecord): void => {
@@ -390,6 +440,43 @@ export function createLive(options: LiveOptions): Live {
       stopFollowingRuntime()
       await workspace.get().runtime?.dispose()
     },
+    unsaved,
+    sharedResults,
+    openFile: (opened) => {
+      const registry = catalog.get().registry
+      if (!registry) {
+        return
+      }
+      const flavor = flavorOfFile(registry, opened.name, workspace.get().flavor)
+      const example = flavor.examples[0]
+      if (!example) {
+        return
+      }
+      address.set(null)
+      open({ flavor, example, text: opened.text, shared: true, problem: null, file: { name: opened.name, write: opened.write }, replace: true })
+    },
+    showKept: (flavorId) => {
+      const flavor = catalog.get().registry?.flavorOf(flavorId)
+      const record = documents.get().get(documentKey(flavorId, '', true))
+      if (!flavor || !record) {
+        return
+      }
+      address.set(null)
+      open({ flavor, example: record.example, text: record.text, shared: true, problem: null })
+    },
+    markSaved: (file, text) => {
+      const record = currentDocument()
+      if (!record) {
+        return
+      }
+      putDocument({ ...record, savedText: text, file: file ?? record.file })
+      refreshUnsaved()
+    },
+    hasUnsaved: () => {
+      return [...documents.get().values()].some((record) => {
+        return record.key === workspace.get().documentKey ? textOf(record) !== record.savedText : record.text !== record.savedText
+      })
+    },
     selectModel: (flavorId, exampleId) => {
       const flavor = catalog.get().registry?.flavorOf(flavorId)
       const example = flavor ? findExample(flavor, exampleId) ?? flavor.examples[0] : undefined
@@ -401,7 +488,7 @@ export function createLive(options: LiveOptions): Live {
     },
     currentText: () => {
       const record = currentDocument()
-      return record ? modelDocuments.read(record.uri) ?? record.text : null
+      return record ? textOf(record) : null
     },
     revealRange: (range) => {
       const record = currentDocument()

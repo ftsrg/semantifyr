@@ -24,6 +24,7 @@ import { Icon } from '../../ui/icons'
 import { LanguageMark } from '../../ui/marks'
 import { documentLabel, useCurrentDocument, useFlavor } from '../hooks'
 import { useShell } from '../shellContext'
+import { DropTarget, UnsavedMark, useFileDrop, useKeepingEvents } from './keeping'
 
 const LIBRARY_ENTRY_LABELS: Readonly<Record<LibraryKind, string>> = {
   'library': 'Library',
@@ -122,6 +123,7 @@ function Tabs({ flavor, modelLabel, runtime }: { flavor: LiveFlavor, modelLabel:
       >
         <LanguageMark languageId={flavor.languageId} />
         <span className="tab-label">{modelLabel}</span>
+        <UnsavedMark />
       </button>
       {tabs.tabs.map((tab) => {
         return (
@@ -266,6 +268,8 @@ export function EditorArea({ colorMode }: { colorMode: ResolvedColorMode }): Rea
   })
   const modelLabel = document && flavor ? documentLabel(document, flavor) : null
   useModelOxstsTab(live, runtime, modelLabel)
+  useKeepingEvents()
+  const drop = useFileDrop()
 
   useEffect(() => {
     if (!runtime) {
@@ -275,11 +279,12 @@ export function EditorArea({ colorMode }: { colorMode: ResolvedColorMode }): Rea
   }, [runtime])
 
   return (
-    <section className={`editor${readOnly ? ' is-readonly' : ''}`} data-language={flavor?.languageId}>
+    <section className={`editor${readOnly ? ' is-readonly' : ''}`} data-language={flavor?.languageId} {...drop.handlers}>
       {flavor && document && modelLabel !== null ? <Tabs flavor={flavor} modelLabel={modelLabel} runtime={runtime} /> : <div className="tabs" />}
       <ReadOnlyBanner />
       <div className="editor-body">
         {flavor && document ? <EditorHost key={flavor.id} document={document} flavor={flavor} colorMode={colorMode} /> : <WaitingModel />}
+        {drop.dragging ? <DropTarget /> : null}
       </div>
     </section>
   )

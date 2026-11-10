@@ -56,6 +56,9 @@ export function useNow(intervalMs: number | null): number {
 
 // the file name the model is shown under, after its example
 export function documentLabel(document: DocumentRecord, flavor: LiveFlavor): string {
+  if (document.file) {
+    return document.file.name
+  }
   const extension = flavor.fileName.slice(flavor.fileName.lastIndexOf('.'))
   const base = document.shared ? 'shared' : document.example.id.replace(/_/g, '-')
   return `${base}${extension}`

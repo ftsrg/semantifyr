@@ -12,7 +12,7 @@ import { initializationStepsOf, presentationOf } from '../../lib/language/presen
 import { initializationOf, isInitialized, type InitializationStep } from '../../lib/stores/initialization'
 import { changeSettings } from '../../lib/stores/settings'
 import { useStore } from '../../lib/stores/useStore'
-import { caseRowOf, countsOf, formatSeconds, type CaseCounts, type CaseRow, type RowStatus } from '../../lib/workspace/caseRows'
+import { countsOf, formatSeconds, type CaseCounts, type CaseRow, type RowStatus } from '../../lib/workspace/caseRows'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import type { Live } from '../../lib/workspace/live'
 import { Icon } from '../../ui/icons'
@@ -21,6 +21,7 @@ import { useFlavor, useNow } from '../hooks'
 import { useShell } from '../shellContext'
 import { verifyAll, type CountFilter } from '../shellState'
 import type { TraceSlot } from '../traceSlot'
+import { SharedNotice, useCaseRows } from './keeping'
 import { SettingsPopover } from './SettingsPopover'
 
 const COUNT_GROUPS: readonly { group: CountFilter, status: RowStatus, label: string }[] = [
@@ -206,7 +207,7 @@ function Initialization(): React.JSX.Element {
 
 function CaseRowView({ row, selected, canValidate }: { row: CaseRow, selected: boolean, canValidate: boolean }): React.JSX.Element {
   const live = useLive()
-  const waiting = row.status === 'running' || row.status === 'queued'
+  const waiting = row.waiting
   const select = (): void => {
     live.selectCase(row.id)
     const caseState = live.verification.get().get(live.workspace.get().documentKey ?? '')?.cases.find((candidate) => {
@@ -218,7 +219,7 @@ function CaseRowView({ row, selected, canValidate }: { row: CaseRow, selected: b
   }
   return (
     <div
-      className={`case-row status-${row.status}${selected ? ' is-selected' : ''}${row.outdated ? ' is-outdated' : ''}${waiting ? ' is-waiting' : ''}`}
+      className={`case-row status-${row.status}${selected ? ' is-selected' : ''}${row.outdated ? ' is-outdated' : ''}${row.shared ? ' is-shared' : ''}${waiting ? ' is-waiting' : ''}`}
       role="row"
       tabIndex={0}
       aria-selected={selected}
@@ -246,6 +247,15 @@ function CaseRowView({ row, selected, canValidate }: { row: CaseRow, selected: b
       <span className="case-name">{row.name}</span>
       <span className="case-outcome">
         {row.outdated ? <span className="outdated-tag">Outdated</span> : null}
+        {row.shared ? <span className="shared-tag">Shared</span> : null}
+        {row.differs !== null
+          ? (
+            <span className="differs-tag" title={`The shared verdict was ${row.differs}`}>
+              <Icon name="alert" size="tiny" />
+              {`Differs, shared: ${row.differs}`}
+            </span>
+          )
+          : null}
         {row.validation !== null ? <ValidationMark state={row.validation} detail={row.validationMessage} /> : null}
         <span className="verdict-word">{row.word}</span>
         {row.time !== null ? <span className="case-time">{row.time}</span> : null}
@@ -526,7 +536,6 @@ function Rail({ counts, initialized }: { counts: CaseCounts, initialized: boolea
 
 export function ResultsColumn({ trace }: { trace: TraceSlot | undefined }): React.JSX.Element {
   const live = useLive()
-  const verification = useCurrentVerification(live)
   const initialization = useStore(live.initialization)
   const catalog = useStore(live.catalog, (state) => {
     return state.status
@@ -536,7 +545,7 @@ export function ResultsColumn({ trace }: { trace: TraceSlot | undefined }): Reac
   })
   const column = useRef<HTMLElement>(null)
   const initialized = catalog === 'ready' && initialization.steps.length > 0 && isInitialized(initialization)
-  const rows = verification.cases.map(caseRowOf)
+  const { rows, results, running } = useCaseRows()
   const counts = countsOf(rows)
 
   if (collapsed) {
@@ -564,6 +573,7 @@ export function ResultsColumn({ trace }: { trace: TraceSlot | undefined }): Reac
       {initialized
         ? (
           <>
+            {results ? <SharedNotice rows={rows} results={results} running={running} /> : null}
             <CaseList rows={rows} />
             <ListSplitter column={column} />
             <TraceArea rows={rows} slot={trace} />

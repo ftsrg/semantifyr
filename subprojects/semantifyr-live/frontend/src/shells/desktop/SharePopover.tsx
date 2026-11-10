@@ -11,24 +11,37 @@ import { liveEditorUrl } from '@semantifyr/editor-common'
 
 import type { Live } from '../../lib/workspace/live'
 import { useLive } from '../../lib/workspace/liveContext'
+import { encodeSharedResults, SHARED_RESULTS_PARAMETER, sharedResultsOf } from '../../lib/workspace/sharedResults'
 import { Icon } from '../../ui/icons'
 
 type CopyState =
   | 'copied'
   | 'failed'
 
-async function shareLink(live: Live): Promise<string | null> {
+export async function shareLink(live: Live, withResults = false): Promise<string | null> {
   const { flavor, documentKey } = live.workspace.get()
   const document = documentKey === null ? undefined : live.documents.get().get(documentKey)
   if (!flavor || !document) {
     return null
   }
   const content = live.currentText() ?? document.text
-  return liveEditorUrl(`${window.location.origin}${window.location.pathname}`, {
+  const link = await liveEditorUrl(`${window.location.origin}${window.location.pathname}`, {
     flavor: flavor.id,
     example: document.shared ? undefined : document.example.id,
     code: document.shared || content !== document.example.code ? content : undefined,
   })
+  const results = withResults && documentKey !== null ? sharedResultsOf(live.verification.get().get(documentKey), live.selection.get()) : null
+  if (results === null) {
+    return link
+  }
+  const address = new URL(link)
+  address.searchParams.set(SHARED_RESULTS_PARAMETER, await encodeSharedResults(results))
+  return address.toString()
+}
+
+function hasResults(live: Live): boolean {
+  const { documentKey } = live.workspace.get()
+  return documentKey !== null && sharedResultsOf(live.verification.get().get(documentKey), null) !== null
 }
 
 async function copy(link: string): Promise<CopyState> {
@@ -40,16 +53,29 @@ async function copy(link: string): Promise<CopyState> {
   }
 }
 
-// the share link carries the model; its verdicts are a later step
 export function SharePopover(): React.JSX.Element {
   const live = useLive()
   const [link, setLink] = useState<string | null>(null)
   const [state, setState] = useState<CopyState | null>(null)
+  const [withResults, setWithResults] = useState(true)
+  const [available, setAvailable] = useState(false)
 
-  const open = async (): Promise<void> => {
-    const built = await shareLink(live)
+  const build = async (carryResults: boolean): Promise<void> => {
+    const built = await shareLink(live, carryResults)
     setLink(built)
     setState(built === null ? null : await copy(built))
+  }
+
+  const open = async (): Promise<void> => {
+    const carries = hasResults(live)
+    setAvailable(carries)
+    setWithResults(carries)
+    await build(carries)
+  }
+
+  const choose = (carryResults: boolean): void => {
+    setWithResults(carryResults)
+    void build(carryResults)
   }
 
   return (
@@ -85,6 +111,37 @@ export function SharePopover(): React.JSX.Element {
                 }}
               >
                 <Icon name="copy" size="small" />
+              </button>
+            </div>
+            <div className="share-options" role="radiogroup" aria-label="What the link carries">
+              <button
+                type="button"
+                role="radio"
+                className="share-option"
+                aria-checked={withResults}
+                disabled={!available}
+                onClick={() => {
+                  choose(true)
+                }}
+              >
+                <span className={`radio${withResults ? ' is-checked' : ''}`} />
+                <span>With results</span>
+                <span className="share-option-detail">
+                  {available ? 'Carries the model, the selected case and each verdict. The receiver sees your verdicts while the run reproduces them.' : 'No result to carry yet; verify the cases first.'}
+                </span>
+              </button>
+              <button
+                type="button"
+                role="radio"
+                className="share-option"
+                aria-checked={!withResults}
+                onClick={() => {
+                  choose(false)
+                }}
+              >
+                <span className={`radio${withResults ? '' : ' is-checked'}`} />
+                <span>Model only</span>
+                <span className="share-option-detail">A shorter link; the receiver presses Verify all.</span>
               </button>
             </div>
             <div className="share-note">Everything is in the link itself; nothing is stored on the server.</div>

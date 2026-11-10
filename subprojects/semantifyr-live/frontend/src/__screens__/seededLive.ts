@@ -20,6 +20,7 @@ import { constantStore, createStore } from '../lib/stores/store'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
 import { createDocumentTabs, type ReadOnlyDocument } from '../lib/workspace/documentTabs'
 import { documentKey, documentUri, type AddressProblem, type Catalog, type DocumentRecord, type Live } from '../lib/workspace/live'
+import type { SharedResults } from '../lib/workspace/sharedResults'
 import type { RunTiming } from '../lib/workspace/verification'
 import { createShellState, type ShellState } from '../shells/shellState'
 import { servedFlavors } from '../__tests__/fixtures/flavors'
@@ -41,6 +42,8 @@ export interface Seed {
   settings?: Partial<Settings>
   timing?: RunTiming | null
   verifyBlocked?: boolean
+  unsaved?: boolean
+  sharedResults?: SharedResults | null
 }
 
 export interface Seeded {
@@ -114,7 +117,7 @@ export function seedLive(seed: Seed): Seeded {
   const steps = initialization(flavor.languageId, seed.initializingAt ?? null)
   const runtime = runtimeOf(flavor, connection, steps, seed.modelOxsts)
   const key = documentKey(flavor.id, example.id, false)
-  const record: DocumentRecord = { key, flavorId: flavor.id, example, shared: false, uri: documentUri(flavor), text: example.code }
+  const record: DocumentRecord = { key, flavorId: flavor.id, example, shared: false, uri: documentUri(flavor), text: example.code, savedText: example.code, file: null }
   const settings = createSettingsStore()
   settings.update((previous) => {
     return { ...previous, resultsColumnWidth: 0, caseListHeight: 0, resultsColumnCollapsed: false, ...seed.settings }
@@ -141,6 +144,8 @@ export function seedLive(seed: Seed): Seeded {
     problems: createStore<readonly ProblemEntry[]>([]),
     reveal: constantStore(null),
     address: createStore(seed.address ?? null),
+    unsaved: constantStore(seed.unsaved ?? false),
+    sharedResults: constantStore(seed.sharedResults ?? null),
     tabs,
     pendingVerifyAll: constantStore(seed.pending ?? false),
     runTiming: constantStore(seed.timing ?? null),
@@ -149,6 +154,12 @@ export function seedLive(seed: Seed): Seeded {
       return Promise.resolve()
     },
     selectModel: () => {},
+    openFile: () => {},
+    showKept: () => {},
+    markSaved: () => {},
+    hasUnsaved: () => {
+      return seed.unsaved ?? false
+    },
     currentText: () => {
       return example.code
     },
