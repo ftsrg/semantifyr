@@ -73,6 +73,11 @@ export interface VerificationCaseState {
   validationMetrics?: VerificationMetrics
   validationBackendId?: string
   validationPortfolioIdUsed?: string
+  // the status of the result shown, kept while a new run of the case is queued or running
+  resultStatus?: VerificationCaseStatus
+  // the model was edited after the result shown was verified
+  outdated?: boolean
+  editedDuringRun?: boolean
 }
 
 export type VerificationPhase = 'idle' | 'running' | 'done' | 'error' | 'cancelled'
@@ -83,7 +88,7 @@ export interface VerificationState {
   phase: VerificationPhase
   discovery: DiscoveryPhase
   message?: string
-  progress?: string
+  progress?: string | undefined
   cases: VerificationCaseState[]
 }
 
@@ -111,15 +116,32 @@ interface ProgressParams {
   }
 }
 
-type StateUpdater = (next: VerificationState | ((prev: VerificationState) => VerificationState)) => void
+type StateUpdater = (next: VerificationState | ((previous: VerificationState) => VerificationState)) => void
 
-function clearedRunningCase(cs: VerificationCaseState, portfolioId?: string): VerificationCaseState {
-  // exactOptionalPropertyTypes forbids assigning undefined; rebuild without the optional fields.
+function runningCase(caseState: VerificationCaseState): VerificationCaseState {
+  return { ...caseState, status: 'running', editedDuringRun: false }
+}
+
+function cancelledCase(caseState: VerificationCaseState): VerificationCaseState {
+  if (caseState.resultStatus === undefined) {
+    return { caseInfo: caseState.caseInfo, status: 'stale', message: 'Verification cancelled' }
+  }
+  const { editedDuringRun: _editedDuringRun, ...result } = caseState
+  return { ...result, status: caseState.resultStatus }
+}
+
+export function markEdited(state: VerificationState): VerificationState {
   return {
-    caseInfo: cs.caseInfo,
-    status: 'running',
-    ...(cs.message !== undefined ? { message: cs.message } : {}),
-    ...(portfolioId !== undefined ? { portfolioId } : {}),
+    ...state,
+    cases: state.cases.map((caseState) => {
+      if (caseState.status === 'running') {
+        return { ...caseState, editedDuringRun: true }
+      }
+      if (caseState.resultStatus !== undefined && caseState.outdated !== true) {
+        return { ...caseState, outdated: true }
+      }
+      return caseState
+    }),
   }
 }
 
@@ -142,7 +164,7 @@ function parseResultStatus(response: VerificationCaseResult | null): Verificatio
 
 export { discoverVerificationCases, witnessValidationLocation } from '@semantifyr/editor-common'
 
-function mergeDiscoveredCases(
+export function mergeDiscoveredCases(
   previous: readonly VerificationCaseState[],
   discovered: readonly VerificationCaseSpecification[],
 ): VerificationCaseState[] {
@@ -161,25 +183,27 @@ export async function discoverCases(
   discoveryCommand: string,
   fileUri: string,
   setState: StateUpdater,
-): Promise<void> {
-  setState((prev) => ({ ...prev, discovery: 'discovering' }))
+): Promise<boolean> {
+  setState((previous) => ({ ...previous, discovery: 'discovering' }))
   let discovered: VerificationCaseSpecification[]
   try {
     discovered = await discoverVerificationCases(client, discoveryCommand, fileUri)
   } catch {
-    setState((prev) => ({ ...prev, discovery: 'idle' }))
-    return
+    setState((previous) => ({ ...previous, discovery: 'idle' }))
+    return false
   }
-  setState((prev) => {
-    if (prev.phase === 'running') {
-      return { ...prev, discovery: 'discovered' }
+  setState((previous) => {
+    if (previous.phase === 'running') {
+      return { ...previous, discovery: 'discovered' }
     }
-    return { ...prev, discovery: 'discovered', cases: mergeDiscoveredCases(prev.cases, discovered) }
+    return { ...previous, discovery: 'discovered', cases: mergeDiscoveredCases(previous.cases, discovered) }
   })
+  return true
 }
 
 export interface RunVerificationHandle {
   cancel: () => void
+  done: Promise<void>
 }
 
 export interface AutoValidateRequest {
@@ -212,14 +236,21 @@ function toVerifyOutcome(response: VerificationCaseResult | null): VerifyOutcome
   }
 }
 
-function applyVerifyOutcome(cs: VerificationCaseState, outcome: VerifyOutcome): VerificationCaseState {
+function applyVerifyOutcome(
+  caseState: VerificationCaseState,
+  outcome: VerifyOutcome,
+  portfolioId: string | undefined,
+): VerificationCaseState {
   return {
-    ...cs,
+    caseInfo: caseState.caseInfo,
     status: outcome.status,
+    resultStatus: outcome.status,
+    outdated: caseState.editedDuringRun === true,
     ...(outcome.message != null ? { message: outcome.message } : {}),
     ...(outcome.trace ? { trace: outcome.trace } : {}),
     ...(outcome.metrics ? { metrics: outcome.metrics } : {}),
     ...(outcome.backendId ? { backendId: outcome.backendId } : {}),
+    ...(portfolioId !== undefined ? { portfolioId } : {}),
   }
 }
 
@@ -271,10 +302,28 @@ function maybeDispatchAutoValidation(
   })
 }
 
+const CASE_OUTCOME_WORDS: Partial<Record<VerificationCaseStatus, string>> = {
+  passed: 'passed',
+  failed: 'failed',
+  inconclusive: 'was inconclusive',
+  timeout: 'timed out',
+  not_supported: 'is not supported by the portfolio',
+  errored: 'errored',
+  cancelled: 'was cancelled',
+}
+
+function deriveCaseMessage(caseState: VerificationCaseState | undefined): string | undefined {
+  if (caseState === undefined) {
+    return undefined
+  }
+  const word = CASE_OUTCOME_WORDS[caseState.status]
+  return word === undefined ? undefined : `${caseState.caseInfo.label} ${word}`
+}
+
 function deriveBatchMessage(cases: readonly VerificationCaseState[]): string {
-  const hasFailures = cases.some((cs) => cs.status === 'failed')
-  const hasErrors = cases.some((cs) => cs.status === 'errored' || cs.status === 'timeout')
-  const allPassed = cases.every((cs) => cs.status === 'passed')
+  const hasFailures = cases.some((caseState) => caseState.status === 'failed')
+  const hasErrors = cases.some((caseState) => caseState.status === 'errored' || caseState.status === 'timeout')
+  const allPassed = cases.every((caseState) => caseState.status === 'passed')
   if (allPassed) {
     return 'All cases passed'
   }
@@ -318,7 +367,7 @@ function createProgressDispatcher(setState: StateUpdater): ProgressDispatcher {
       }
       const text = progressTextFor(value)
       if (text) {
-        setState((prev) => ({ ...prev, progress: text }))
+        setState((previous) => ({ ...previous, progress: text }))
       }
     },
     cancelAll: (client) => {
@@ -345,6 +394,9 @@ export function runAllVerifications(
   let cancelled = false
   let activeRequestSource: CancellationTokenSource | null = null
   const progress = createProgressDispatcher(setState)
+  const caseIds = new Set(cases.map((caseInfo) => {
+    return caseInfo.id
+  }))
 
   const cancelHandle = (): void => {
     if (cancelled) {
@@ -353,40 +405,60 @@ export function runAllVerifications(
     cancelled = true
     activeRequestSource?.cancel()
     progress.cancelAll(client)
-    // Collapse queued/running rows to stale so cancel leaves no orphaned spinners.
-    setState((prev) => ({
-      ...prev,
+    setState((previous) => ({
+      ...previous,
       phase: 'cancelled',
       message: 'Verification cancelled',
-      cases: prev.cases.map((cs) =>
-        cs.status === 'queued' || cs.status === 'running'
-          ? { caseInfo: cs.caseInfo, status: 'stale' as const }
-          : cs,
+      progress: undefined,
+      cases: previous.cases.map((caseState) =>
+        caseIds.has(caseState.caseInfo.id) && (caseState.status === 'queued' || caseState.status === 'running')
+          ? cancelledCase(caseState)
+          : caseState,
       ),
     }))
   }
 
   const removeListener = onProgress(progress.handle)
 
-  setState((prev) => ({
-    phase: 'running',
-    discovery: prev.discovery,
-    message: 'Starting verification...',
-    cases: cases.map((c) => ({ caseInfo: c, status: 'queued' as const })),
-  }))
+  setState((previous) => {
+    const existing = new Map(previous.cases.map((caseState) => {
+      return [caseState.caseInfo.id, caseState]
+    }))
+    return {
+      phase: 'running',
+      discovery: previous.discovery,
+      message: 'Starting verification...',
+      cases: cases.map((caseInfo) => {
+        return { ...existing.get(caseInfo.id), caseInfo, status: 'queued' as const }
+      }),
+    }
+  })
+
+  const updateCase = (caseId: string, change: (caseState: VerificationCaseState) => VerificationCaseState): void => {
+    setState((previous) => {
+      return {
+        ...previous,
+        cases: previous.cases.map((caseState) => {
+          return caseState.caseInfo.id === caseId ? change(caseState) : caseState
+        }),
+      }
+    })
+  }
 
   const runOne = async (index: number): Promise<void> => {
     const currentCase = cases[index]
     if (!currentCase) {
       return
     }
-    setState((prev) => ({
-      ...prev,
-      message: `Verifying ${currentCase.label} (${index + 1}/${cases.length})...`,
-      cases: prev.cases.map((cs, idx) =>
-        idx === index ? clearedRunningCase(cs, options.portfolioId) : cs,
-      ),
-    }))
+    setState((previous) => {
+      return {
+        ...previous,
+        message: `Verifying ${currentCase.label} (${index + 1}/${cases.length})...`,
+        cases: previous.cases.map((caseState) => {
+          return caseState.caseInfo.id === currentCase.id ? runningCase(caseState) : caseState
+        }),
+      }
+    })
 
     const requestSource = createCancellationTokenSource()
     activeRequestSource = requestSource
@@ -410,10 +482,9 @@ export function runAllVerifications(
       return
     }
 
-    setState((prev) => ({
-      ...prev,
-      cases: prev.cases.map((cs, idx) => (idx === index ? applyVerifyOutcome(cs, outcome) : cs)),
-    }))
+    updateCase(currentCase.id, (caseState) => {
+      return applyVerifyOutcome(caseState, outcome, options.portfolioId)
+    })
 
     maybeDispatchAutoValidation(client, currentCase, outcome, setState, options)
   }
@@ -422,20 +493,29 @@ export function runAllVerifications(
     try {
       for (let i = 0; i < cases.length; i++) {
         if (cancelled) {
-          setState((prev) => ({ ...prev, phase: 'cancelled', message: 'Verification cancelled' }))
+          setState((previous) => {
+            return { ...previous, phase: 'cancelled', message: 'Verification cancelled', progress: undefined }
+          })
           return
         }
         await runOne(i)
       }
-      setState((prev) => ({ ...prev, phase: 'done', message: deriveBatchMessage(prev.cases) }))
+      if (!cancelled) {
+        setState((previous) => {
+          return { ...previous, phase: 'done', message: deriveBatchMessage(previous.cases), progress: undefined }
+        })
+      }
     } catch (error) {
       if (cancelled) {
-        setState((prev) => ({ ...prev, phase: 'cancelled', message: 'Verification cancelled' }))
+        setState((previous) => {
+          return { ...previous, phase: 'cancelled', message: 'Verification cancelled', progress: undefined }
+        })
       } else {
-        setState((prev) => ({
-          ...prev,
+        setState((previous) => ({
+          ...previous,
           phase: 'error',
           message: error instanceof Error ? error.message : String(error),
+          progress: undefined,
         }))
       }
     } finally {
@@ -443,9 +523,7 @@ export function runAllVerifications(
     }
   }
 
-  void runAll()
-
-  return { cancel: cancelHandle }
+  return { cancel: cancelHandle, done: runAll() }
 }
 
 export function verifySingleCase(
@@ -470,28 +548,29 @@ export function verifySingleCase(
     cancelled = true
     requestSource.cancel()
     progress.cancelAll(client)
-    setState((prev) => ({
-      ...prev,
+    setState((previous) => ({
+      ...previous,
       phase: 'cancelled',
       message: 'Verification cancelled',
-      cases: prev.cases.map((cs) =>
-        cs.caseInfo.id === caseId && (cs.status === 'running' || cs.status === 'queued')
-          ? { caseInfo: cs.caseInfo, status: 'stale' as const }
-          : cs,
+      progress: undefined,
+      cases: previous.cases.map((caseState) =>
+        caseState.caseInfo.id === caseId && (caseState.status === 'running' || caseState.status === 'queued')
+          ? cancelledCase(caseState)
+          : caseState,
       ),
     }))
   }
 
-  setState((prev) => ({
-    ...prev,
+  setState((previous) => ({
+    ...previous,
     phase: 'running',
     message: `Verifying ${targetCase.label}...`,
-    cases: prev.cases.map((caseState) =>
-      caseState.caseInfo.id === caseId ? clearedRunningCase(caseState, options.portfolioId) : caseState,
+    cases: previous.cases.map((caseState) =>
+      caseState.caseInfo.id === caseId ? runningCase(caseState) : caseState,
     ),
   }))
 
-  void (async () => {
+  const run = async (): Promise<void> => {
     try {
       const outcome = await executeVerify(
         client,
@@ -501,25 +580,32 @@ export function verifySingleCase(
         options,
         requestSource.token,
       )
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- cancelled may flip during await
       if (cancelled) {
         return
       }
-      setState((prev) => ({
-        ...prev,
-        phase: 'done',
-        cases: prev.cases.map((cs) =>
-          cs.caseInfo.id === caseId ? applyVerifyOutcome(cs, outcome) : cs,
-        ),
-      }))
+      setState((previous) => {
+        const cases = previous.cases.map((caseState) =>
+          caseState.caseInfo.id === caseId ? applyVerifyOutcome(caseState, outcome, options.portfolioId) : caseState,
+        )
+        const message = deriveCaseMessage(cases.find((caseState) => {
+          return caseState.caseInfo.id === caseId
+        }))
+        return {
+          ...previous,
+          phase: 'done',
+          progress: undefined,
+          ...(message !== undefined ? { message } : {}),
+          cases,
+        }
+      })
       maybeDispatchAutoValidation(client, targetCase, outcome, setState, options)
     } finally {
       requestSource.dispose()
       removeListener()
     }
-  })()
+  }
 
-  return { cancel: cancelHandle }
+  return { cancel: cancelHandle, done: run() }
 }
 
 export interface WitnessValidationOutcome {
@@ -562,11 +648,11 @@ function toValidationOutcome(response: WitnessValidationResult | null): WitnessV
 }
 
 function applyValidationOutcome(
-  cs: VerificationCaseState,
+  caseState: VerificationCaseState,
   outcome: WitnessValidationOutcome,
 ): VerificationCaseState {
   return {
-    ...cs,
+    ...caseState,
     validating: false,
     witnessValidation: outcome.status,
     validationMessage: outcome.message,
@@ -584,10 +670,10 @@ export function dispatchAutoValidation(
   setState: StateUpdater,
   options: { validationPortfolioId?: string | undefined } = {},
 ): void {
-  setState((prev) => ({
-    ...prev,
-    cases: prev.cases.map((cs) =>
-      cs.caseInfo.id === caseId ? { ...cs, validating: true } : cs,
+  setState((previous) => ({
+    ...previous,
+    cases: previous.cases.map((caseState) =>
+      caseState.caseInfo.id === caseId ? { ...caseState, validating: true } : caseState,
     ),
   }))
   void validateWitness(
@@ -598,10 +684,10 @@ export function dispatchAutoValidation(
       ...(options.validationPortfolioId ? { portfolioId: options.validationPortfolioId } : {}),
     },
   ).then((outcome) => {
-    setState((prev) => ({
-      ...prev,
-      cases: prev.cases.map((cs) =>
-        cs.caseInfo.id === caseId ? applyValidationOutcome(cs, outcome) : cs,
+    setState((previous) => ({
+      ...previous,
+      cases: previous.cases.map((caseState) =>
+        caseState.caseInfo.id === caseId ? applyValidationOutcome(caseState, outcome) : caseState,
       ),
     }))
   })
