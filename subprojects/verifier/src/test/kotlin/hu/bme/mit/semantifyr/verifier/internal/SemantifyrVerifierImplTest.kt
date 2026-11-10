@@ -61,6 +61,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -94,11 +95,11 @@ class SemantifyrVerifierImplTest {
     @Test
     fun `verifier timeout maps to Timeout`(@TempDir output: Path) = runTest {
         val portfolio = ScriptedPortfolio { _, _ ->
-            delay(10.seconds)
+            delay(1.hours)
             decisiveResult(VerificationVerdict.Passed)
         }
 
-        val result = build(portfolio, output, timeout = 50.milliseconds)
+        val result = build(portfolio, output, timeout = 10.seconds)
             .verify(loadFirstCase())
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Timeout)
