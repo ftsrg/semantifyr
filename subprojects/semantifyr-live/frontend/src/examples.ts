@@ -83,6 +83,11 @@ const TUTORIAL_OXSTS: readonly ImportedDescriptor[] = [
     description:
       'Final state from the "Advanced Tutorial".',
   },
+  {
+    id: 'level-crossing',
+    label: 'Level crossing',
+    description: 'Two tracks, a controller and a barrier; the controller forgets a second train.',
+  },
 ];
 
 const SYSMLV2_IMPORTED: readonly ImportedDescriptor[] = Object.values(importedSysmlv2Manifest).flatMap((manifest) =>
@@ -92,6 +97,11 @@ const SYSMLV2_IMPORTED: readonly ImportedDescriptor[] = Object.values(importedSy
 );
 
 const GAMMA_IMPORTED: readonly ImportedDescriptor[] = [
+  {
+    id: 'LevelCrossing',
+    label: 'Level crossing',
+    description: 'Two tracks, a controller and a barrier; the controller forgets a second train.',
+  },
   {
     id: 'Spacecraft',
     label: 'Spacecraft',

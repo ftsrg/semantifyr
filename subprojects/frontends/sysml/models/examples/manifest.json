@@ -71,6 +71,14 @@
             ]
         },
         {
+            "file": "level_crossing.sysml",
+            "example": { "label": "Level crossing", "description": "Two tracks, a controller and a barrier; the controller forgets a second train." },
+            "cases": [
+                { "name": "BarrierDownWhileTrainInCrossingViolated", "verdict": "Failed", "tier": "Integration", "engines": ["theta", "spin"] },
+                { "name": "TwoTrainsCanBeInTheCrossing", "verdict": "Passed", "tier": "Integration", "engines": ["theta", "spin"] }
+            ]
+        },
+        {
             "file": "door_access.sysml",
             "example": { "label": "Door access", "description": "Door-access model with parallel state regions." },
             "cases": [
@@ -183,14 +191,6 @@
                 { "name": "ReachableYellowRed", "verdict": "Passed", "tier": "Nightly", "engines": ["nuxmv", "uppaal"] },
                 { "name": "UnreachableYellowGreen", "verdict": "Passed", "tier": "Nightly", "engines": ["nuxmv", "uppaal"] },
                 { "name": "ReachableYellowYellow", "verdict": "Passed", "tier": "Nightly", "engines": ["nuxmv", "uppaal"] }
-            ]
-        },
-        {
-            "file": "level_crossing.sysml",
-            "example": { "label": "Level crossing", "description": "Two tracks, a controller and a barrier, with a design error to find." },
-            "cases": [
-                { "name": "BarrierDownWhileTrainInCrossingViolated", "verdict": "Failed", "tier": "Integration", "engines": ["theta", "spin"] },
-                { "name": "TwoTrainsCanBeInTheCrossing", "verdict": "Passed", "tier": "Integration", "engines": ["theta", "spin"] }
             ]
         },
         {
