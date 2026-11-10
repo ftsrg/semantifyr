@@ -289,9 +289,16 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
     }
 
     public TypeEvaluation fromTypeSpecification(TypeSpecification typeSpecification) {
+        var domain = typeSpecification.getDomain();
+
+        // the unresolved domain carries its own linking diagnostic
+        if (domain == null || domain.eIsProxy()) {
+            return InvalidTypeEvaluation.Instance;
+        }
+
         var rangeEvaluation = multiplicityRangeEvaluator.evaluate(typeSpecification);
 
-        return new ImmutableTypeEvaluation(typeSpecification.getDomain(), rangeEvaluation);
+        return new ImmutableTypeEvaluation(domain, rangeEvaluation);
     }
 
     private TypeEvaluation featureTypeEvaluation(FeatureDeclaration featureDeclaration) {
