@@ -250,8 +250,7 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
     view: 'steps',
     expectState: () => {
       expect(count('.steps > .step')).toBe(4)
-      expect(text('.step.is-final .step-end')).toContain('Fails')
-      expect(text('.step.is-final .property-text')).toContain('mustAlways(')
+      expect(count('.step.is-final.status-failed')).toBe(1)
     },
   },
   'sysml-steps-expanded': {
@@ -299,7 +298,8 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
     language: 'gamma',
     view: 'steps',
     expectState: () => {
-      expect(text('.step.is-final .property-text')).toContain('AG ((!isActive (system.trackA.Main.InCrossing)')
+      expect(text('.trace-views [aria-pressed=true]')).toBe('OXSTS steps')
+      expect(count('.step.is-final.status-failed')).toBe(1)
     },
   },
   'gamma-calls': {
@@ -322,7 +322,6 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
     view: 'steps',
     expectState: () => {
       expect(text('.trace-views [aria-pressed=true]')).toBe('Steps')
-      expect(text('.step.is-final .property-text')).toContain('AG (!(trackA.state == TrackState::InCrossing')
       expect(text('.steps > .step:nth-child(2)')).toContain('Free')
       expect(text('.steps > .step:nth-child(2) .step-from')).toContain('Free')
     },
@@ -382,7 +381,7 @@ function expectLayout(): void {
   const trace = document.querySelector('.case-trace')!.getBoundingClientRect()
   expect(trace.right, 'trace right').toBeLessThanOrEqual(window.innerWidth)
   expect(trace.bottom, 'trace bottom').toBeLessThanOrEqual(window.innerHeight)
-  for (const selector of ['.step-item', '.step-start-line', '.step-variable', '.step-end', '.run-line']) {
+  for (const selector of ['.step-item', '.step-start-line', '.step-variable', '.run-line']) {
     for (const element of document.querySelectorAll(selector)) {
       expect(element.scrollWidth, `${selector} cut`).toBeLessThanOrEqual(element.clientWidth + 1)
     }

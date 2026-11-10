@@ -18,8 +18,6 @@ export interface TraceViewProps {
   trace: VerificationTrace
   caseName: string
   verdict: RowStatus
-  // the case's property as the model writes it, null when the definition gives none
-  property: string | null
   expandedStep: number | null
   expandStep: (step: number | null) => void
   runtime: LanguageRuntime | null

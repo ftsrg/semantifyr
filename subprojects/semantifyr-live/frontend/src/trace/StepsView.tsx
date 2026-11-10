@@ -9,7 +9,6 @@ import { useMemo } from 'react'
 import { shortenPath, traceStates } from '@semantifyr/editor-common'
 
 import { Icon } from '../ui/icons'
-import { VerdictMark } from '../ui/marks'
 import type { TraceViewProps } from './registry'
 
 const VARIABLE_LENGTH = 32
@@ -30,7 +29,7 @@ function Value({ value, className = 'reference' }: { value: string, className?: 
   return <span className={className} title={value}>{valueName(value)}</span>
 }
 
-export function StepsView({ trace, verdict, property, expandedStep, expandStep }: TraceViewProps): React.JSX.Element {
+export function StepsView({ trace, verdict, expandedStep, expandStep }: TraceViewProps): React.JSX.Element {
   const states = useMemo(() => {
     return traceStates(trace.witnessState)
   }, [trace])
@@ -85,15 +84,6 @@ export function StepsView({ trace, verdict, property, expandedStep, expandStep }
                         </div>
                       )
                     })}
-                  </div>
-                )
-                : null}
-              {final && verdict === 'failed'
-                ? (
-                  <div className="step-end">
-                    <VerdictMark status="failed" />
-                    <span className="verdict-word">Fails</span>
-                    {property !== null ? <code className="property-text">{property}</code> : null}
                   </div>
                 )
                 : null}

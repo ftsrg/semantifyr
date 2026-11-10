@@ -491,11 +491,6 @@ code, .mono { font-family: var(--font-mono); font-feature-settings: "calt" 0; }
 .step-start .reference { color: var(--text-secondary); }
 .step.is-final { margin-top: var(--space-2); background: var(--status-soft); }
 .step.is-final .step-number { color: var(--status); }
-.step-end { display: flex; align-items: flex-start; gap: var(--space-4); margin-top: var(--space-2); padding: 4px var(--space-4) 2px 0; font-size: 12.5px; color: var(--text-primary); }
-.step-end .verdict-mark { width: 14px; height: 14px; }
-.step-end .verdict-word { white-space: nowrap; }
-.step-end .verdict-mark { margin-top: 2px; }
-.property-text { min-width: 0; font-family: var(--font-mono); font-size: 11.5px; line-height: 18px; overflow-wrap: anywhere; }
 
 .calls-scroll { height: 100%; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
 .calls { position: relative; min-width: 100%; }

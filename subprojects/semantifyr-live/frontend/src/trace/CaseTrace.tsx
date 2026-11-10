@@ -5,14 +5,12 @@
  */
 
 import type React from 'react'
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, useState } from 'react'
 
-import type { VerificationCaseState } from '../lib/verification/engine'
 import { caseRowOf } from '../lib/workspace/caseRows'
-import { useCurrentVerification, useLive, useRuntime } from '../lib/workspace/liveContext'
+import { useLive, useRuntime } from '../lib/workspace/liveContext'
 import type { TraceSlotProps } from '../shells/traceSlot'
 import { Icon } from '../ui/icons'
-import { propertyText } from './property'
 import { traceLanguageOf, type TraceView } from './registry'
 import { RunDetails } from './RunDetails'
 
@@ -43,34 +41,12 @@ function ViewSelector({ views, active, choose }: { views: readonly TraceView[], 
   )
 }
 
-// the case's property, cut from its definition up to the next case's
-function useProperty(caseState: VerificationCaseState, languageId: string): string | null {
-  const live = useLive()
-  const cases = useCurrentVerification(live).cases
-  return useMemo(() => {
-    const text = live.currentText()
-    const start = caseState.caseInfo.location.range.start
-    const next = cases
-      .map((candidate) => {
-        return candidate.caseInfo.location.range.start
-      })
-      .filter((position) => {
-        return position.line > start.line
-      })
-      .sort((first, second) => {
-        return first.line - second.line
-      })[0]
-    return text === null ? null : propertyText(languageId, text, start, next ?? null)
-  }, [live, cases, caseState, languageId])
-}
-
 function TraceOfCase({ caseState, flavor, readOnlyTabs }: TraceSlotProps): React.JSX.Element | null {
   const live = useLive()
   const runtime = useRuntime(live)
   const language = traceLanguageOf(flavor.languageId)
   const [activeId, setActiveId] = useState(language.views[0].id)
   const [expandedStep, setExpandedStep] = useState<number | null>(null)
-  const property = useProperty(caseState, flavor.languageId)
   const { trace } = caseState
   if (!trace) {
     return null
@@ -106,7 +82,6 @@ function TraceOfCase({ caseState, flavor, readOnlyTabs }: TraceSlotProps): React
           trace={trace}
           caseName={row.name}
           verdict={row.status}
-          property={property}
           expandedStep={expandedStep}
           expandStep={setExpandedStep}
           runtime={runtime}
