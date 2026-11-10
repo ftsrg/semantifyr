@@ -12,6 +12,8 @@ import type { VerificationCaseState } from '../lib/verification/engine'
 export interface TraceSlotProps {
   caseState: VerificationCaseState
   flavor: LiveFlavor
+  // a shell with read-only tabs; without them no view offers to open as one
+  readOnlyTabs?: boolean
 }
 
 // What the trace area shows under the selected case's name; the shell draws the area and the name

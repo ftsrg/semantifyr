@@ -20,6 +20,7 @@ import { useStore } from '../lib/stores/useStore'
 import type { ResolvedColorMode } from '../lib/util/colorMode'
 import { createLive, type Live } from '../lib/workspace/live'
 import { SHARED_RESULTS_PARAMETER } from '../lib/workspace/sharedResults'
+import { CaseTrace } from '../trace/CaseTrace'
 import { ShellRoot } from './ShellRoot'
 import { createShellState } from './shellState'
 import { UpdatePrompt } from './UpdatePrompt'
@@ -82,7 +83,7 @@ export default function ShellApp(): React.JSX.Element {
   useAddress(live)
   return (
     <>
-      <ShellRoot live={live} shell={shell} colorMode={colorMode} />
+      <ShellRoot live={live} shell={shell} colorMode={colorMode} trace={CaseTrace} />
       <UpdatePrompt />
     </>
   )

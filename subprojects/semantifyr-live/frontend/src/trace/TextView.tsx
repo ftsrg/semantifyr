@@ -1,0 +1,194 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+import type React from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { editor as monacoEditor, Uri } from 'monaco-editor'
+import type { VerificationTrace } from '@semantifyr/editor-common'
+
+import type { LanguageRuntime } from '../lib/language/types'
+import { openDerivedDocument, whenMonacoReady } from '../lib/session/monaco'
+import { traceUriOf } from '../lib/session/readOnlyDocuments'
+import { useLive } from '../lib/workspace/liveContext'
+import type { Live } from '../lib/workspace/live'
+import { Icon } from '../ui/icons'
+import type { TraceView, TraceViewProps } from './registry'
+
+export interface TraceTextSource {
+  // the read-only tab the text opens in, one per kind of text
+  tabId: string
+  // the file the verification wrote, read through the session
+  fileUri: string
+  label: string
+  languageId: string
+  banner: string
+  // names in it lead to the model
+  linked: boolean
+}
+
+type TextModel = monacoEditor.ITextModel
+
+type TraceText =
+  | { state: 'loading' }
+  | { state: 'missing' }
+  | { state: 'ready', text: string, model: TextModel }
+
+const EDITOR_OPTIONS: monacoEditor.IStandaloneEditorConstructionOptions = {
+  readOnly: true,
+  readOnlyMessage: { value: 'Read-only.' },
+  automaticLayout: true,
+  minimap: { enabled: false },
+  scrollBeyondLastLine: false,
+  fontSize: 12,
+  lineHeight: 18,
+  lineNumbersMinChars: 3,
+  glyphMargin: false,
+  folding: false,
+  renderLineHighlight: 'none',
+  overviewRulerLanes: 0,
+  stickyScroll: { enabled: false },
+  scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 },
+  padding: { top: 6, bottom: 6 },
+}
+
+// the text of a trace in the model the editor's services own, so the language server of the session sees it
+async function traceModel(uri: string, languageId: string, text: string): Promise<TextModel | null> {
+  await whenMonacoReady()
+  const existing = monacoEditor.getModel(Uri.parse(uri))
+  if (existing) {
+    if (existing.getValue() !== text) {
+      existing.pushEditOperations([], [{ range: existing.getFullModelRange(), text }], () => {
+        return null
+      })
+    }
+    return existing
+  }
+  await openDerivedDocument(uri, text)
+  const created = monacoEditor.getModel(Uri.parse(uri))
+  if (created && created.getLanguageId() !== languageId) {
+    monacoEditor.setModelLanguage(created, languageId)
+  }
+  return created
+}
+
+async function readText(runtime: LanguageRuntime | null, fileUri: string): Promise<string | null> {
+  try {
+    return await runtime?.api.readDocument(fileUri) ?? null
+  } catch {
+    return null
+  }
+}
+
+// an open tab of the same document keeps the text the inline view shows
+function updateOpenTab(live: Live, tabId: string, uri: string, text: string): void {
+  const open = live.tabs.state.get().tabs.some((tab) => {
+    return tab.id === tabId && tab.uri === uri
+  })
+  if (open) {
+    live.tabs.update(tabId, text)
+  }
+}
+
+function useTraceText(source: TraceTextSource | null, runtime: LanguageRuntime | null, trace: VerificationTrace): TraceText {
+  const live = useLive()
+  const [text, setText] = useState<TraceText>({ state: 'loading' })
+  const fileUri = source?.fileUri ?? null
+  const languageId = source?.languageId ?? ''
+  const tabId = source?.tabId ?? ''
+  useEffect(() => {
+    let current = true
+    const stale = (): boolean => {
+      return !current
+    }
+    setText({ state: 'loading' })
+    void (async () => {
+      const read = fileUri === null ? null : await readText(runtime, fileUri)
+      if (stale()) {
+        return
+      }
+      if (fileUri === null || read === null) {
+        setText({ state: 'missing' })
+        return
+      }
+      const uri = traceUriOf(fileUri)
+      const model = await traceModel(uri, languageId, read)
+      if (stale()) {
+        return
+      }
+      updateOpenTab(live, tabId, uri, read)
+      setText(model ? { state: 'ready', text: read, model } : { state: 'missing' })
+    })()
+    return () => {
+      current = false
+    }
+  }, [live, runtime, fileUri, languageId, tabId, trace])
+  return text
+}
+
+function InlineEditor({ model }: { model: TextModel }): React.JSX.Element {
+  const host = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!host.current) {
+      return
+    }
+    const created = monacoEditor.create(host.current, { ...EDITOR_OPTIONS, model })
+    return () => {
+      created.dispose()
+    }
+  }, [model])
+  return <div ref={host} className="trace-editor" />
+}
+
+function TextBody({ source, context }: { source: TraceTextSource | null, context: TraceViewProps }): React.JSX.Element {
+  const text = useTraceText(source, context.runtime, context.trace)
+  if (!source || text.state === 'missing') {
+    return <div className="trace-hint">The text of this trace could not be read.</div>
+  }
+  const { openTab } = context
+  return (
+    <div className="trace-frame">
+      <div className="trace-frame-bar">
+        <Icon name="lock" size="small" />
+        <span className="mono" title={source.label}>{source.label}</span>
+        <span>{source.linked ? 'Ctrl and click a name' : 'read-only'}</span>
+        {openTab && text.state === 'ready'
+          ? (
+            <button
+              type="button"
+              className="button button-small button-outline frame-open"
+              title="Open in the editor as a read-only tab"
+              onClick={() => {
+                openTab({
+                  id: source.tabId,
+                  label: source.label,
+                  uri: traceUriOf(source.fileUri),
+                  languageId: source.languageId,
+                  banner: source.banner,
+                  text: text.text,
+                })
+              }}
+            >
+              <Icon name="external" size="tiny" />
+              Open
+            </button>
+          )
+          : null}
+      </div>
+      {text.state === 'ready' ? <InlineEditor model={text.model} /> : <div className="trace-editor is-loading" />}
+    </div>
+  )
+}
+
+export function textView(id: string, label: string, sourceOf: (context: TraceViewProps) => TraceTextSource | null): TraceView {
+  return {
+    id,
+    label,
+    layout: 'text',
+    View: (context) => {
+      return <TextBody source={sourceOf(context)} context={context} />
+    },
+  }
+}

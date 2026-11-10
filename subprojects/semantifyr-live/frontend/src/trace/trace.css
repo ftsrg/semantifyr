@@ -1,0 +1,36 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+.case-trace { display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; }
+.case-trace-head { flex: none; display: grid; gap: var(--space-3); padding: 0 var(--space-6) var(--space-3); min-width: 0; }
+.case-trace .trace-views { justify-self: start; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.case-trace .run-line > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+
+.case-trace-body { flex: 1; min-height: 0; overflow: auto; padding: 0 var(--space-5) var(--space-7) var(--space-3); scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.case-trace-body.is-calls { overflow: hidden; display: flex; flex-direction: column; padding: 0 var(--space-3) var(--space-3); }
+.case-trace-body.is-calls .calls-scroll { flex: 1; min-height: 0; height: auto; }
+.case-trace-body.is-text { overflow: hidden; display: flex; flex-direction: column; padding: 0 var(--space-5) var(--space-5); }
+.case-trace-body.is-outdated > *:not(.case-trace-outdated) { opacity: 0.5; filter: saturate(0.6); }
+.case-trace-outdated {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin: 0 0 var(--space-4) var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-medium);
+  background: var(--attention-soft);
+  color: var(--attention);
+  font-size: var(--text-small);
+}
+
+.trace-hint { padding: var(--space-6); color: var(--text-tertiary); line-height: 1.55; }
+.trace-hint .mono { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-secondary); }
+
+.case-trace .trace-frame { flex: 1; min-height: 160px; display: flex; flex-direction: column; }
+.case-trace .trace-frame-bar { flex: none; min-width: 0; }
+.case-trace .trace-frame-bar > .icon, .case-trace .trace-frame-bar > span:not(.mono) { flex: none; white-space: nowrap; }
+.trace-editor { flex: 1; min-height: 0; }

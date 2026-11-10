@@ -397,7 +397,7 @@ function TraceArea({ rows, slot }: { rows: readonly CaseRow[], slot: TraceSlot |
           <span className="case-name">{selected.name}</span>
         </div>
       </div>
-      {Slot ? <Slot caseState={caseState} flavor={flavor} /> : null}
+      {Slot ? <Slot caseState={caseState} flavor={flavor} readOnlyTabs /> : null}
     </section>
   )
 }
