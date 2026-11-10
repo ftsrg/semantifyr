@@ -27,7 +27,7 @@ The completed model is at the end of this page under [Snapshot](#snapshot), wher
 The embedded editor stacks three parts:
 
 - The **editor** is a Monaco-based code editor with syntax highlighting, diagnostics (red underlines for errors), and content assist (triggered with `Ctrl+Space`). The language server validates the model as you type.
-- The **side panel** lists running and recent verifications on its *Verifications* tab. After a verification that produced a witness, its *Witness* tab shows the witness in three views: *Trace* lists the traced calls of each step, *State* the variable values of each step, and *Raw* the witness as an OXSTS model. *Trace* fills only for calls of transitions marked [`@Trace`](../../language/standard-library.md#trace), which the models of these tutorials do not mark; the [SysML v2 tutorial](../sysml-v2.md#reading-the-witness) reads such a trace, the calls its semantic library traces. In a wide window, such as the standalone editor, the side panel sits to the right of the editor.
+- The **side panel** lists running and recent verifications on its *Verifications* tab. After a verification that produced a witness, its *Witness* tab shows the witness in three views: *Trace* lists the traced calls of each step, *State* the variable values of each step, and *Raw* the witness as an OXSTS model. *Trace* fills only for calls of transitions marked [`@Trace`](../../language/standard-library.md#trace), which the finished model of each tutorial marks on the transition that changes the state and the models of the steps in between do not; the [SysML v2 tutorial](../sysml-v2.md#reading-the-witness) reads such a trace, the calls its semantic library traces. In a wide window, such as the standalone editor, the side panel sits to the right of the editor.
 - The **Verification Cases** panel lists the verification cases of the model and updates as you type. A circle means not yet verified, a green check mark means passed, and a red cross means failed. The play button at the end of a row verifies that case, the button with a list and a play arrow in the panel header verifies all of them, and the crosshair button jumps to the case in the editor. Once a case has a witness, a document button in its row opens it. With *auto-validate* on, every witness is checked by a second verification, shown as *validated* next to the verification time.
 
 The standalone editor adds a toolbar with a model picker (language and example), a **Copy link** button that encodes your model into a shareable URL, and links to this documentation and to GitHub.
@@ -152,3 +152,5 @@ The next tutorial in the series, [Building a Library](building-a-library.md), ex
 The complete final model:
 
 <LiveEmbed code={basics} />
+
+In the finished model, `setColor` carries `@Trace`, so a witness lists its calls in the *Trace* view.

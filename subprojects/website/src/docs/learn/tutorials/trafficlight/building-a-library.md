@@ -146,3 +146,5 @@ The next tutorial in the series, the [Advanced Tutorial](advanced-tutorial.md), 
 The complete final model:
 
 <LiveEmbed code={intermediate} />
+
+In the finished model, `Transition`'s main transition carries `@Trace`, so a witness lists the transitions that fired in the *Trace* view.

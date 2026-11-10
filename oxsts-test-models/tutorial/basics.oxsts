@@ -19,6 +19,7 @@ class TrafficLight {
         assume(self.color == color)
     }
 
+    @Trace
     tran setColor(color: LightColor) {
         self.color := color
     }

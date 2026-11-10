@@ -165,3 +165,5 @@ The production libraries build on the same patterns: Gamma's `Statecharts.oxsts`
 The complete final model:
 
 <LiveEmbed code={advanced} />
+
+In the finished model, `Transition`'s main transition carries `@Trace`, so a witness lists the transitions that fired in the *Trace* view.
