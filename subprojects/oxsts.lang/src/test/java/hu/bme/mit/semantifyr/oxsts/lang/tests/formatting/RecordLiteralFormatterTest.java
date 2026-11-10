@@ -85,7 +85,9 @@ public class RecordLiteralFormatterTest {
                 } }
             """);
 
-        assertThat(formatted).contains("record Line {\n    var start: Point := Point { x = 1 }\n    var finish: Point := Point {\n        x = 2\n    }\n}\n");
+        assertThat(formatted)
+                .contains(
+                        "record Line {\n    var start: Point := Point { x = 1 }\n    var finish: Point := Point {\n        x = 2\n    }\n}\n");
     }
 
     private String format(String source) {

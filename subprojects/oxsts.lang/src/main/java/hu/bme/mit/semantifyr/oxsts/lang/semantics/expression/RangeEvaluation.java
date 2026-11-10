@@ -38,7 +38,8 @@ public class RangeEvaluation implements ExpressionEvaluation {
         return lowerBound != NEGATIVE_INFINITY && upperBound != INFINITY;
     }
 
-    public static RangeEvaluation of(ExpressionEvaluation lowerBound, ExpressionEvaluation upperBound, boolean exclusive) {
+    public static RangeEvaluation of(
+            ExpressionEvaluation lowerBound, ExpressionEvaluation upperBound, boolean exclusive) {
         long leftValue;
         if (lowerBound instanceof IntegerEvaluation(int lowerValue)) {
             leftValue = lowerValue;

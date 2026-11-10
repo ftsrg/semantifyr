@@ -143,8 +143,10 @@ public class MultiplicitySyntaxTest {
             """);
         parsedPackage.assertNoResourceErrors();
         var host = parsedPackage.classByName("Host");
-        var undefinedRange = multiplicityRangeEvaluator.evaluate(host.featureByName("undefinedLeaves").typeSpecification());
-        var anyRange = multiplicityRangeEvaluator.evaluate(host.featureByName("anyLeaves").typeSpecification());
+        var undefinedRange = multiplicityRangeEvaluator.evaluate(
+                host.featureByName("undefinedLeaves").typeSpecification());
+        var anyRange = multiplicityRangeEvaluator.evaluate(
+                host.featureByName("anyLeaves").typeSpecification());
         assertThat(undefinedRange).isSameAs(RangeEvaluation.UNBOUNDED);
         assertThat(undefinedRange.getLowerBound()).isEqualTo(RangeEvaluation.NEGATIVE_INFINITY);
         assertThat(anyRange).isSameAs(RangeEvaluation.SOME);

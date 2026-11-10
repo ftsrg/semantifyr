@@ -90,7 +90,8 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
     // int is the mathematical integer, so a value the evaluation cannot hold is no value rather than a wrapped one
     private static IntegerEvaluation integerEvaluation(Expression expression, long value) {
         if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
-            throw EvaluationFailureException.at(expression, "The value " + value + " lies outside the integers the compiler evaluates!");
+            throw EvaluationFailureException.at(
+                    expression, "The value " + value + " lies outside the integers the compiler evaluates!");
         }
         return new IntegerEvaluation((int) value);
     }
