@@ -9,11 +9,33 @@ Inline operations are resolved at **compile time** during unfolding. They never 
 
 ## Inline Call
 
-`inline target.transition(args)` substitutes the body of the target transition at the call site, rewriting `self`, contextual member references, and parameters according to the call.
+`inline target.transition(args)` substitutes the body of the target transition at the call site, rewriting `self` and contextual member references according to the call.
+
+Arguments are passed by value. An argument that reads runtime state (a variable, or a property call over one) is evaluated once, in argument order, into a local variable before the body runs, and the parameter reads that local: a write in the body does not change what a parameter reads. A compile-time argument (a constant, a feature, an instance reference) is substituted for the parameter, so it can steer an `inline if`, an `inline for` range or a call through the parameter.
+
+```oxsts
+class Swapper {
+  var x: int := 1
+  var y: int := 2
+
+  tran swap(first: int, second: int) {
+    x := second
+    y := first
+  }
+
+  redefine tran {
+    inline swap(x, y)
+  }
+}
+```
+
+After the main transition runs, `x` is `2` and `y` is `1`: `first` reads the value `x` had at the call, not the value the body wrote.
 
 ```oxsts
 inline counter.increment()
 ```
+
+A body never writes a parameter: an assignment or a `havoc` whose target is a parameter is rejected (`OXSTS.INCORRECT_ASSIGNMENT`), since arguments are passed by value and the write could not reach the caller. Copy the parameter into a local variable to change it.
 
 ### One-step example
 

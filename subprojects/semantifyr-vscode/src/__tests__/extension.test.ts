@@ -7,12 +7,16 @@
 import net from 'node:net';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { activate, deactivate } from '../extension.js';
-import { commands, createExtensionContext, Position, resetVscode, state, Uri, window } from './stubs/vscode.js';
+import { commands, createExtensionContext, Position, resetVscode, state, Uri, ViewColumn, window } from './stubs/vscode.js';
 import { LanguageClient } from './stubs/vscode-languageclient-node.js';
 
 interface ExecuteCommandParams {
     command: string;
     arguments: unknown[];
+}
+
+interface ExecuteCommandMiddleware {
+    executeCommand(command: string, commandArguments: unknown[], next: (command: string, commandArguments: unknown[]) => Promise<unknown>): Promise<unknown>;
 }
 
 let requests: { client: string; parameters: ExecuteCommandParams }[];
@@ -117,6 +121,46 @@ describe('activate', () => {
         expect(mode).toBe('peek');
         expect(locations).toMatchObject([{ range: { start: { line: 1, character: 2 }, end: { line: 1, character: 8 } } }]);
         expect(String((locations as { uri: Uri }[])[0]!.uri)).toBe('file:///workspace/library.oxsts');
+    });
+
+    it('opens the inlined model of an Inline lens beside the source, read-only', async () => {
+        await activate(createExtensionContext('/extension') as never);
+        const middleware = client('oxstsLSP').clientOptions.middleware as ExecuteCommandMiddleware;
+        const request = { location: { uri: 'file:///workspace/lamp.oxsts' }, serializeSteps: true };
+        const next = vi.fn(async () => 'file:///tmp/semantifyr/lamp.Safe/inlined.oxsts');
+
+        await middleware.executeCommand('oxsts.class.inline', [request], next);
+
+        expect(next).toHaveBeenCalledWith('oxsts.class.inline', [request]);
+        const [target, options] = window.showTextDocument.mock.calls[0]!;
+        expect((target as Uri).toString()).toBe('file:///tmp/semantifyr/lamp.Safe/inlined.oxsts');
+        expect(options).toEqual({ viewColumn: ViewColumn.Beside, preview: false });
+        expect(commands.executeCommand).toHaveBeenCalledWith('workbench.action.files.setActiveEditorReadonlyInSession');
+    });
+
+    it('opens the compiled model of a Compile lens beside the source, read-only', async () => {
+        await activate(createExtensionContext('/extension') as never);
+        const middleware = client('oxstsLSP').clientOptions.middleware as ExecuteCommandMiddleware;
+        const location = { uri: 'file:///tmp/semantifyr/lamp.Safe/inlined.oxsts' };
+        const next = vi.fn(async () => 'file:///tmp/semantifyr/lamp.Safe/compiled.oxsts');
+
+        await middleware.executeCommand('oxsts.inlined.compile', [location], next);
+
+        expect(next).toHaveBeenCalledWith('oxsts.inlined.compile', [location]);
+        const [target, options] = window.showTextDocument.mock.calls[0]!;
+        expect((target as Uri).toString()).toBe('file:///tmp/semantifyr/lamp.Safe/compiled.oxsts');
+        expect(options).toEqual({ viewColumn: ViewColumn.Beside, preview: false });
+        expect(commands.executeCommand).toHaveBeenCalledWith('workbench.action.files.setActiveEditorReadonlyInSession');
+    });
+
+    it('passes the other OXSTS commands through without opening anything', async () => {
+        await activate(createExtensionContext('/extension') as never);
+        const middleware = client('oxstsLSP').clientOptions.middleware as ExecuteCommandMiddleware;
+        const next = vi.fn(async () => 'file:///workspace/other.oxsts');
+
+        expect(await middleware.executeCommand('oxsts.inlined.verify', [], next)).toBe('file:///workspace/other.oxsts');
+
+        expect(window.showTextDocument).not.toHaveBeenCalled();
     });
 
     it('connects to a running server when its debug port is set', async () => {

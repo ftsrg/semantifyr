@@ -53,8 +53,28 @@ class FeatureEvaluator(
             FeatureKind.CONTAINER,
             -> evaluateContainmentFeature(instance, featureDeclaration)
             FeatureKind.DERIVED -> evaluateDerivedFeature(instance, featureDeclaration)
-            FeatureKind.FEATURE -> sourceError(featureDeclaration, "Abstract features can not be evaluated!")
+            FeatureKind.FEATURE -> evaluateAbstractFeature(instance, featureDeclaration)
         }
+    }
+
+    private fun evaluateAbstractFeature(
+        instance: Instance,
+        featureDeclaration: FeatureDeclaration,
+    ): ExpressionEvaluation {
+        val subSetters = featureSubSettersFinder.getSubSetters(instance.domain, featureDeclaration)
+        if (subSetters.isEmpty()) {
+            sourceError(featureDeclaration, "Abstract feature '${featureDeclaration.name}' is neither redefined nor subsetted, so it can not be evaluated!")
+        }
+
+        val instances = mutableSetOf<Instance>()
+
+        for (feature in subSetters) {
+            val evaluation = evaluateFeature(instance, feature)
+            check(evaluation is InstanceEvaluation)
+            instances += evaluation.instances
+        }
+
+        return InstanceEvaluation(instances)
     }
 
     private fun evaluateReferenceFeature(

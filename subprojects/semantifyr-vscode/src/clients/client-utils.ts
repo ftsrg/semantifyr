@@ -7,17 +7,18 @@
 import { workspace } from "vscode";
 import * as net from "net";
 import { spawn } from "child_process";
-import { LanguageClient, type LanguageClientOptions, type ServerOptions, type StreamInfo } from "vscode-languageclient/node";
+import { LanguageClient, type LanguageClientOptions, type Middleware, type ServerOptions, type StreamInfo } from "vscode-languageclient/node";
 import { DidChangeConfigurationNotification } from "vscode-languageclient";
 import { readSemantifyrPayload } from "./settings.js";
 
-function buildClientOptions(language: string): LanguageClientOptions {
+function buildClientOptions(language: string, middleware: Middleware): LanguageClientOptions {
     return {
         documentSelector: [{ scheme: "file", language: language }],
         synchronize: {
             fileEvents: workspace.createFileSystemWatcher("**"),
         },
         initializationOptions: readSemantifyrPayload(),
+        middleware,
     };
 }
 
@@ -36,7 +37,7 @@ export function registerSemantifyrSettingsSync(client: LanguageClient) {
     return subscription;
 }
 
-export function createRemoteLspClient(port: number, language: string): LanguageClient {
+export function createRemoteLspClient(port: number, language: string, middleware: Middleware = {}): LanguageClient {
     const serverOptions: ServerOptions = () => {
         return new Promise((resolve, reject) => {
             const socket = net.connect(port, "127.0.0.1", () => {
@@ -55,11 +56,11 @@ export function createRemoteLspClient(port: number, language: string): LanguageC
         `${language}LSP`,
         `${language.toUpperCase()} Language Server`,
         serverOptions,
-        buildClientOptions(language)
+        buildClientOptions(language, middleware)
     );
 }
 
-export function createLspClient(lspExecutable: string, language: string): LanguageClient {
+export function createLspClient(lspExecutable: string, language: string, middleware: Middleware = {}): LanguageClient {
     const serverOptions: ServerOptions = () => new Promise<StreamInfo>((resolve, reject) => {
         const server = net.createServer((socket) => {
             resolve({ reader: socket, writer: socket });
@@ -90,6 +91,6 @@ export function createLspClient(lspExecutable: string, language: string): Langua
         `${language}LSP`,
         `${language.toUpperCase()} Language Server`,
         serverOptions,
-        buildClientOptions(language)
+        buildClientOptions(language, middleware)
     );
 }

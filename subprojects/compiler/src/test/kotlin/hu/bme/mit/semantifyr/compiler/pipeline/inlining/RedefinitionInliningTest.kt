@@ -37,6 +37,82 @@ class RedefinitionInliningTest : InliningTestBase() {
     """
 
     @Test
+    fun `an anonymous init and tran without redefine are the class's own`() {
+        assertInlinedModel(
+            "Host",
+            """
+                package inlining::tests
+                @VerificationCase
+                class Host {
+                    var counter: int := 0
+                    init {
+                        counter := 1
+                    }
+                    tran {
+                        counter := counter + 1
+                    }
+                    prop {
+                        return EF counter == 5
+                    }
+                }
+            """,
+            """
+                init {
+                    root.counter := 1
+                }
+
+                tran {
+                    root.counter := root.counter + 1
+                }
+
+                prop {
+                    EF root.counter == 5
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `an anonymous tran without redefine replaces the tran of the parent class`() {
+        assertInlinedModel(
+            "Host",
+            """
+                package inlining::tests
+                class Base {
+                    var counter: int := 0
+                    tran {
+                        counter := 1
+                    }
+                    prop {
+                        return EF counter == 2
+                    }
+                }
+                @VerificationCase
+                class Host : Base {
+                    tran {
+                        counter := 2
+                    }
+                    prop {
+                        return EF counter == 3
+                    }
+                }
+            """,
+            """
+                init {
+                }
+
+                tran {
+                    root.counter := 2
+                }
+
+                prop {
+                    EF root.counter == 3
+                }
+            """,
+        )
+    }
+
+    @Test
     fun `a call on an instance of a subclass runs the redefinition`() {
         assertInlinedModel(
             "Host",

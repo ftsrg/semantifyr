@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ImmutableTypeEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
+import hu.bme.mit.semantifyr.oxsts.lang.utils.SourceLocation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Declaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Element
@@ -46,22 +47,38 @@ class ExpressionRewriter @Inject constructor(
         parametricDeclaration: ParametricDeclaration,
         callSuffixExpression: CallSuffixExpression,
     ) {
+        rewriteParameterReferences(rootElement) {
+            val index = parametricDeclaration.parameters.indexOf(it)
+            OxstsUtils.getArgumentFor(callSuffixExpression.arguments, it, index)?.expression?.copy()
+                ?: omittedArgument(it, callSuffixExpression)
+        }
+    }
+
+    fun rewriteExpressionsToBindings(
+        rootElement: Element,
+        bindings: Map<ParameterDeclaration, Expression>,
+    ) {
+        rewriteParameterReferences(rootElement) {
+            bindings.getValue(it).copy()
+        }
+    }
+
+    private fun rewriteParameterReferences(
+        rootElement: Element,
+        boundExpressionOf: (ParameterDeclaration) -> Expression,
+    ) {
         val parameterReferences = rootElement.eAllOfType<ElementReference>().filter {
             it.element is ParameterDeclaration
         }.toList()
 
         for (parameterReference in parameterReferences) {
-            val parameter = parameterReference.element as ParameterDeclaration
-            val index = parametricDeclaration.parameters.indexOf(parameter)
-            val argument = OxstsUtils.getArgumentFor(callSuffixExpression.arguments, parameter, index)?.expression?.copy()
-                ?: omittedArgument(parameter, callSuffixExpression)
-
+            val argument = boundExpressionOf(parameterReference.element as ParameterDeclaration)
             EcoreUtil2.replace(parameterReference, argument)
             fixRedefinitions(argument)
         }
     }
 
-    private fun omittedArgument(parameter: ParameterDeclaration, callSuffixExpression: CallSuffixExpression): Expression {
+    fun omittedArgument(parameter: ParameterDeclaration, callSuffixExpression: CallSuffixExpression): Expression {
         if (multiplicityRangeEvaluator.evaluate(parameter.typeSpecification).lowerBound != 0) {
             sourceError(callSuffixExpression, "No argument for the required parameter '${parameter.name}'")
         }
@@ -78,6 +95,7 @@ class ExpressionRewriter @Inject constructor(
                 it.primary = newContext.copy()
                 it.member = contextualReference.element
             }
+            SourceLocation.recordOrigin(contextualReference, newReference)
             EcoreUtil2.replace(contextualReference, newReference)
             fixRedefinitions(newReference)
         }
@@ -94,6 +112,7 @@ class ExpressionRewriter @Inject constructor(
 
         for (elementReference in elementReferences) {
             val context = newContext.copy()
+            SourceLocation.recordOrigin(elementReference, context)
             EcoreUtil2.replace(elementReference, context)
             fixRedefinitions(context)
         }
@@ -125,6 +144,7 @@ class ExpressionRewriter @Inject constructor(
 
         for (selfReference in selfReferences) {
             val context = newContext.copy()
+            SourceLocation.recordOrigin(selfReference, context)
             EcoreUtil2.replace(selfReference, context)
             fixRedefinitions(context)
         }

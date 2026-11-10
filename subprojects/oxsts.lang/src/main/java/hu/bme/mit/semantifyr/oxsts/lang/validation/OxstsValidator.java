@@ -29,7 +29,6 @@ import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.eclipse.emf.ecore.EObject;
@@ -265,6 +264,10 @@ public class OxstsValidator extends AbstractOxstsValidator {
                 && redefinableDeclaration.isRedefine()) {
             return;
         }
+        // an anonymous transition or property redefines the inherited one
+        if (namedElement.getName() == null) {
+            return;
+        }
 
         var parentDomain = EcoreUtil2.getContainerOfType(namedElement.eContainer(), DomainDeclaration.class);
         if (parentDomain == null) {
@@ -273,7 +276,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
         var declarations =
                 domainMemberCollectionProvider.getParentCollection(parentDomain).getDeclarations();
 
-        if (declarations.stream().anyMatch(d -> Objects.equals(NamingUtil.getName(d), namedElement.getName()))) {
+        if (declarations.stream().anyMatch(d -> namedElement.getName().equals(NamingUtil.getName(d)))) {
             acceptWarning(
                     "Name shadows another element.",
                     namedElement,
@@ -688,6 +691,25 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
     }
 
+    @Check
+    public void checkTracedCallArgumentModality(CallSuffixExpression callSuffixExpression) {
+        var primary = metaConstantExpressionEvaluatorProvider.evaluate(callSuffixExpression.getPrimary());
+        if (!(primary instanceof TransitionDeclaration transitionDeclaration)
+                || !builtinAnnotationHandler.isTransitionTraced(transitionDeclaration)) {
+            return;
+        }
+        for (var argument : callSuffixExpression.getArguments()) {
+            if (argument.getExpression() != null) {
+                checkModalityAtMost(
+                        argument.getExpression(),
+                        Modality.COMPILE_TIME,
+                        "Argument of a call to the traced transition '"
+                                + NamingUtil.getName(transitionDeclaration)
+                                + "' must be evaluable at compile time, the witness records its value");
+            }
+        }
+    }
+
     private void checkArgumentAssignableToParameter(Argument argument, ParameterDeclaration parameter) {
         if (parameter == null || parameter.eIsProxy() || parameter.getTypeSpecification() == null) {
             return;
@@ -722,7 +744,10 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (reference == null) {
             return;
         }
-        if (!(evaluateWriteTarget(reference) instanceof VariableDeclaration)) {
+        var written = evaluateWriteTarget(reference);
+        if (written instanceof ParameterDeclaration parameter) {
+            rejectParameterWrite(parameter, havocOperation, OxstsPackage.Literals.HAVOC_OPERATION__REFERENCE);
+        } else if (!(written instanceof VariableDeclaration)) {
             acceptError(
                     "havoc target must be a variable reference.",
                     havocOperation,
@@ -937,7 +962,10 @@ public class OxstsValidator extends AbstractOxstsValidator {
         // first. Same for navigation chains - we want the leaf reference's element.
         var reference = unwrapAssignmentTarget(assignmentOperation.getReference());
 
-        if (!(evaluateWriteTarget(reference) instanceof VariableDeclaration)) {
+        var written = evaluateWriteTarget(reference);
+        if (written instanceof ParameterDeclaration parameter) {
+            rejectParameterWrite(parameter, assignmentOperation, OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE);
+        } else if (!(written instanceof VariableDeclaration)) {
             acceptError(
                     "Only variables can be assigned to!",
                     assignmentOperation,
@@ -945,6 +973,16 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     0,
                     INCORRECT_ASSIGNMENT);
         }
+    }
+
+    // a runtime argument binds to a local before the body and a compile-time one is substituted, so the write is lost
+    private void rejectParameterWrite(ParameterDeclaration parameter, EObject host, EStructuralFeature feature) {
+        acceptError(
+                "Cannot write parameter '" + parameter.getName() + "': arguments are passed by value.",
+                host,
+                feature,
+                0,
+                INCORRECT_ASSIGNMENT);
     }
 
     // a literal or another value that names no declaration is not a write target

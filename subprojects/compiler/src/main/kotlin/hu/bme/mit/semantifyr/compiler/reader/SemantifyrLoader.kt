@@ -15,9 +15,12 @@ import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryAdapterFinder
 import hu.bme.mit.semantifyr.oxsts.lang.library.OxstsLibrary
 import hu.bme.mit.semantifyr.oxsts.lang.utils.ResourceUriProvider
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
+import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.resource.ResourceSet
+import org.eclipse.xtext.resource.XtextResource
 import org.eclipse.xtext.resource.XtextResourceSet
+import java.io.ByteArrayInputStream
 import java.nio.file.Path
 import kotlin.io.path.PathWalkOption
 import kotlin.io.path.isRegularFile
@@ -54,8 +57,8 @@ class SemantifyrLoader @Inject constructor(
         return startContext().loadModel(path).buildAndResolve()
     }
 
-    fun fromResourceSet(resourceSet: ResourceSet): SemantifyrModelContext {
-        val clonedResourceSet = cloneOxstsPackagesInResourceSet(resourceSet)
+    fun fromResourceSet(resourceSet: ResourceSet, openDocumentTexts: Map<URI, String>): SemantifyrModelContext {
+        val clonedResourceSet = cloneOxstsPackagesInResourceSet(resourceSet, openDocumentTexts)
         return SemantifyrModelContext(
             resourceSet = clonedResourceSet,
             libraryResources = emptyList(),
@@ -63,14 +66,19 @@ class SemantifyrLoader @Inject constructor(
         )
     }
 
-    private fun cloneOxstsPackagesInResourceSet(resourceSet: ResourceSet): ResourceSet {
+    private fun cloneOxstsPackagesInResourceSet(resourceSet: ResourceSet, openDocumentTexts: Map<URI, String>): ResourceSet {
         val clone = createResourceSet()
 
         // For some reason resourceSet.resources may change in the loop leading to concurrent modification
         val resourcesCopy = resourceSet.resources.toList()
         for (resource in resourcesCopy) {
             if (resource.contents.singleOrNull() is OxstsModelPackage) {
-                openResource(clone, resource)
+                val text = openDocumentTexts[resource.uri]
+                if (text == null) {
+                    openResource(clone, resource)
+                } else {
+                    openResourceFromText(clone, resource.uri, text)
+                }
             }
         }
 
@@ -81,6 +89,16 @@ class SemantifyrLoader @Inject constructor(
 
     private fun openResource(resourceSet: ResourceSet, resource: Resource): Resource {
         return resourceSet.getResource(resource.uri, true)
+    }
+
+    private fun openResourceFromText(
+        resourceSet: ResourceSet,
+        uri: URI,
+        text: String,
+    ): Resource {
+        val resource = resourceSet.createResource(uri)
+        resource.load(ByteArrayInputStream(text.toByteArray(Charsets.UTF_8)), mapOf(XtextResource.OPTION_ENCODING to Charsets.UTF_8.name()))
+        return resource
     }
 
     inner class SemantifyrLoaderContext {

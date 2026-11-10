@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type CancellationToken, ResponseError } from 'vscode-jsonrpc';
 import { LSPErrorCodes } from 'vscode-languageserver-protocol';
 import type { VerificationCaseResult, VerificationCaseSpecification } from '@semantifyr/editor-common';
 import { VerificationTestController } from '../clients/verification-test-controller.js';
 import { WitnessView } from '../witness.js';
 import { counterexample, modelUri, reachableCase, resolutionNote, result, safeCase } from './fixtures.js';
-import { CancellationTokenSource, createExtensionContext, resetVscode, state, type TestController, type TestItem, Uri, window } from './stubs/vscode.js';
+import { CancellationTokenSource, createExtensionContext, openDocument, resetVscode, state, type TestController, type TestItem, Uri, window } from './stubs/vscode.js';
 import { LanguageClient } from './stubs/vscode-languageclient-node.js';
 
 interface ExecuteCommandParams {
@@ -57,6 +57,14 @@ function caseItem(id: string): TestItem {
     return controller.items.get(modelUri)!.children.get(id)!;
 }
 
+function discoverRequests() {
+    return requests.filter((request) => (request.parameters as ExecuteCommandParams).command === 'oxsts.case.discover');
+}
+
+function edit(uri: string) {
+    state.documentChanged.fire({ document: openDocument(Uri.parse(uri)) });
+}
+
 async function run(items: TestItem[], token = new CancellationTokenSource().token) {
     await controller.profiles[0]!.runHandler({ include: items }, token);
     return controller.runs.at(-1)!;
@@ -71,6 +79,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+    vi.useRealTimers();
     LanguageClient.disposeAll();
 });
 
@@ -103,6 +112,88 @@ describe('discovery', () => {
         cases = [safeCase];
         state.watchers.find((watcher) => watcher.glob === '**/*.oxsts')!.changed.fire(Uri.parse(modelUri));
         await expect.poll(() => controller.items.get(modelUri)?.children.size).toBe(1);
+    });
+});
+
+describe('rediscovery on edits', () => {
+    const movedSafeCase = { ...safeCase, location: { uri: modelUri, range: { start: { line: 5, character: 0 }, end: { line: 9, character: 1 } } } };
+
+    it('rediscovers an edited document once the edits settle', async () => {
+        await setUp();
+        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+        cases = [movedSafeCase];
+
+        edit(modelUri);
+        edit(modelUri);
+        expect(discoverRequests()).toHaveLength(1);
+        await vi.advanceTimersByTimeAsync(1000);
+        vi.useRealTimers();
+
+        await expect.poll(() => caseItem('lamp::Safe').range).toEqual(movedSafeCase.location.range);
+        expect(discoverRequests()).toHaveLength(2);
+    });
+
+    it('ignores edits of documents in another language', async () => {
+        await setUp();
+        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+
+        edit('file:///workspace/crossroads.gamma');
+        await vi.advanceTimersByTimeAsync(1000);
+        await run([caseItem('lamp::Safe')]);
+
+        expect(discoverRequests()).toHaveLength(1);
+    });
+
+    it('rediscovers an edited document before a run verifies its cases', async () => {
+        await setUp();
+        cases = [movedSafeCase, reachableCase];
+
+        edit(modelUri);
+        await run([caseItem('lamp::Safe')]);
+
+        expect(requests.at(-1)).toEqual({
+            method: 'workspace/executeCommand',
+            parameters: { command: 'oxsts.case.verify', arguments: [{ uri: modelUri, range: movedSafeCase.location.range }] },
+        });
+    });
+
+    it('skips a case the edit removed instead of verifying another one', async () => {
+        await setUp();
+        const removed = caseItem('lamp::Safe');
+        cases = [reachableCase];
+
+        edit(modelUri);
+        const testRun = await run([removed]);
+
+        expect(testRun.outcome(removed)).toBe('skipped');
+        expect(requests.filter((request) => (request.parameters as ExecuteCommandParams).command === 'oxsts.case.verify')).toEqual([]);
+    });
+});
+
+describe('generated artifacts', () => {
+    const artifactUri = 'file:///workspace/.artifacts/lamp.Safe/pipeline/flattened.oxsts';
+
+    it('are not discovered in the workspace', async () => {
+        state.files = [Uri.parse(modelUri), Uri.parse(artifactUri)];
+
+        await setUp();
+
+        expect(discoverRequests().map((request) => (request.parameters as ExecuteCommandParams).arguments)).toEqual([[modelUri]]);
+        expect(controller.items.get(artifactUri)).toBeUndefined();
+    });
+
+    it('are not discovered when they are written, opened or edited', async () => {
+        await setUp();
+
+        const watcher = state.watchers.find((it) => it.glob === '**/*.oxsts')!;
+        watcher.created.fire(Uri.parse(artifactUri));
+        watcher.changed.fire(Uri.parse(artifactUri));
+        state.documentOpened.fire(openDocument(Uri.parse(artifactUri)));
+        edit(artifactUri);
+        await run([caseItem('lamp::Safe')]);
+
+        expect(discoverRequests()).toHaveLength(1);
+        expect(controller.items.get(artifactUri)).toBeUndefined();
     });
 });
 

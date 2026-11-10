@@ -197,6 +197,101 @@ public class DeclarationValidationTest {
     }
 
     @Test
+    void anonymousTransitionsWithoutRedefinePass() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Base {
+                var count: int := 0
+                init {
+                    count := 1
+                }
+                tran {
+                    count := 2
+                }
+            }
+            class Child : Base {
+                init {
+                    count := 3
+                }
+                tran {
+                    count := 4
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationIssues();
+    }
+
+    @Test
+    void twoAnonymousTransitionsOfOneKindAreRejected() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Machine {
+                var count: int := 0
+                tran {
+                    count := 1
+                }
+                init {
+                    count := 0
+                }
+                tran {
+                    count := 2
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.getIssues())
+                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .extracting(issue -> issue.getCode() + "@" + issue.getLineNumber())
+                .containsExactlyInAnyOrder(
+                        OxstsValidator.DUPLICATE_NAME_ISSUE + "@4", OxstsValidator.DUPLICATE_NAME_ISSUE + "@10");
+    }
+
+    @Test
+    void anonymousPropertyWithoutRedefineRealizesTheInheritedAbstractOne() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            abstract class Base {
+                var count: int := 0
+                abstract prop
+            }
+            class Child : Base {
+                prop {
+                    return AG count == 0
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationIssues();
+    }
+
+    @Test
+    void twoAnonymousPropertiesAreRejected() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Machine {
+                var count: int := 0
+                prop {
+                    return AG count == 0
+                }
+                prop {
+                    return EF count == 1
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.getIssues())
+                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .extracting(issue -> issue.getCode() + "@" + issue.getLineNumber())
+                .containsExactlyInAnyOrder(
+                        OxstsValidator.DUPLICATE_NAME_ISSUE + "@4", OxstsValidator.DUPLICATE_NAME_ISSUE + "@7");
+    }
+
+    @Test
     void duplicateTopLevelNamesAreRejected() {
         var parsedPackage = parseHelper.parse("""
             package test

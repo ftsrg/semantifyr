@@ -312,6 +312,7 @@ export const state = {
     configurationChanged: new EventEmitter<{ affectsConfiguration(section: string): boolean }>(),
     workspaceFoldersChanged: new EventEmitter<unknown>(),
     documentOpened: new EventEmitter<TextDocument>(),
+    documentChanged: new EventEmitter<{ document: TextDocument }>(),
     filesRenamed: new EventEmitter<unknown>(),
 };
 
@@ -320,7 +321,7 @@ function languageOf(uri: Uri): string {
     return { oxsts: 'oxsts', gamma: 'gamma', md: 'markdown' }[extension] ?? 'plaintext';
 }
 
-function openDocument(uri: Uri): TextDocument {
+export function openDocument(uri: Uri): TextDocument {
     const provider = state.contentProviders.get(uri.scheme);
     return { uri, languageId: languageOf(uri), getText: () => provider?.provideTextDocumentContent(uri) ?? '' };
 }
@@ -349,6 +350,7 @@ export const workspace = {
     onDidChangeConfiguration: state.configurationChanged.event,
     onDidChangeWorkspaceFolders: state.workspaceFoldersChanged.event,
     onDidOpenTextDocument: state.documentOpened.event,
+    onDidChangeTextDocument: state.documentChanged.event,
     onDidRenameFiles: state.filesRenamed.event,
     createFileSystemWatcher: vi.fn((glob: string) => {
         const watcher = new FileSystemWatcher(glob);
@@ -391,7 +393,7 @@ export function resetVscode() {
     state.controllers = [];
     state.watchers = [];
     state.contentProviders.clear();
-    for (const emitter of [state.configurationChanged, state.workspaceFoldersChanged, state.documentOpened, state.filesRenamed]) {
+    for (const emitter of [state.configurationChanged, state.workspaceFoldersChanged, state.documentOpened, state.documentChanged, state.filesRenamed]) {
         emitter.dispose();
     }
     window.activeTextEditor = undefined;
