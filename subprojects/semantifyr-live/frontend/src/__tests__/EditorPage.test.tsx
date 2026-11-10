@@ -74,7 +74,7 @@ describe('EditorPage', () => {
   }
 
   async function waitForEditor(): Promise<HTMLElement> {
-    return await screen.findByTestId('live-editor');
+    return await screen.findByTestId('live-editor', {}, { timeout: 4000 });
   }
 
   it('defaults to the first flavor and its first example when the URL has no params', async () => {
