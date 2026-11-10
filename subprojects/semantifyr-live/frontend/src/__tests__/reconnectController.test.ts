@@ -205,20 +205,17 @@ describe('reconnectController', () => {
 })
 
 describe('observeSocketClose', () => {
-  it('reports the close code and reason after the onclose handler is overwritten and before it runs', () => {
+  it('reports the close code and reason before the onclose handler that stops the client runs', () => {
     const socket = new WebSocket('ws://127.0.0.1:9/ws/lsp/oxsts')
     const order: string[] = []
     const closes: SocketClose[] = []
     socket.onclose = () => {
-      order.push('reader')
+      order.push('client')
     }
     observeSocketClose(socket, (close) => {
       order.push('observer')
       closes.push(close)
     })
-    socket.onclose = () => {
-      order.push('client')
-    }
 
     socket.dispatchEvent(new CloseEvent('close', { code: CloseCode.SessionTerminated, reason: 'Session terminated' }))
 

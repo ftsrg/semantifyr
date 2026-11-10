@@ -39,15 +39,13 @@ export function sessionLimitReason(close: SocketClose | null): string | null {
   return close.reason || 'Too many sessions'
 }
 
+// Wraps the onclose handler the language client stops on, so the close is known when the client stops; Chromium runs that handler before a capturing listener
 export function observeSocketClose(socket: WebSocket, onClose: (close: SocketClose) => void): void {
-  // At the target a capturing listener runs before the onclose handler the language client stops on
-  socket.addEventListener(
-    'close',
-    (event) => {
-      onClose({ code: event.code, reason: event.reason })
-    },
-    { capture: true },
-  )
+  const stop = socket.onclose
+  socket.onclose = (event) => {
+    onClose({ code: event.code, reason: event.reason })
+    stop?.call(socket, event)
+  }
 }
 
 export interface ReconnectControllerOptions {

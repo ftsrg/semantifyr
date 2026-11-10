@@ -507,7 +507,7 @@ export interface LanguageClientCallbacks {
   onOpen?: () => void;
 }
 
-// LcWebSocket.start overwrites the onclose its reader installed, so the close code reaches the client through no handler
+// LcWebSocket.start installs the onclose that stops the client, so the close code reaches the client through no handler of its own
 class CloseObservingWebSocket extends LcWebSocket {
   private readonly onClose: (close: SocketClose) => void;
   private readonly onOpen: () => void;
@@ -521,11 +521,19 @@ class CloseObservingWebSocket extends LcWebSocket {
   override async init(...parameters: Parameters<LcWebSocket['init']>): Promise<MessageTransports> {
     const transports = await super.init(...parameters);
     const { webSocket } = this as unknown as { webSocket: WebSocket };
-    observeSocketClose(webSocket, this.onClose);
     webSocket.addEventListener('open', () => {
       this.onOpen();
     });
     return transports;
+  }
+
+  override start(): Promise<void> {
+    const started = super.start();
+    const { webSocket } = this as unknown as { webSocket: WebSocket | undefined };
+    if (webSocket) {
+      observeSocketClose(webSocket, this.onClose);
+    }
+    return started;
   }
 }
 
