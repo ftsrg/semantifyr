@@ -29,7 +29,7 @@ var value: int := 0
 
 ## With Arguments
 
-Annotation arguments bind like call arguments: a named argument (`name = value`) binds the parameter of that name, a positional argument the parameter at its position. Arguments must be constants: annotations are read without an instance, so the validator rejects a reference to a feature or variable (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`).
+Annotation arguments bind like call arguments: a named argument (`name = value`) binds the parameter of that name, a positional argument the parameter at its position, and every named argument follows all positional arguments. Arguments must be constants: annotations are read without an instance, so the validator rejects a reference to a feature or variable (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`).
 
 ```oxsts
 @VerificationCase(summary = "Reaches the limit")
@@ -68,7 +68,7 @@ With parameters:
 annotation Description(text: string)
 ```
 
-A custom annotation may then be applied like any built-in:
+A custom annotation may then be applied like any built-in. A variable keeps its annotations in the verified model, so an annotation on a variable takes no string argument (`OXSTS.UNSUPPORTED_FEATURE`).
 
 ```oxsts fragment
 @Description(text = "Increments the counter by one")

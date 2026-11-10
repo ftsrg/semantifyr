@@ -82,6 +82,8 @@ Until November 2026 the three boolean operators shared one level and read left t
 | `==` | Equal |
 | `!=` | Not equal |
 
+`<`, `<=`, `>` and `>=` take numeric operands; ordering other values, such as enum literals (`Color::Red < Color::Green`), is rejected (`OXSTS.TYPE_MISMATCH`).
+
 Evaluated at compile time, as in an `inline if` guard, `==` between instance expressions (features, `self`, navigations, `nothing`) compares the sets of instances the two sides denote: they are equal when they hold the same instances, in any order. `nothing` is the empty set, so an empty side equals only another empty side, and `!=` is the negation of `==`.
 
 ## Arithmetic Operators
@@ -152,6 +154,8 @@ prop {
   return AG counter.value < 100
 }
 ```
+
+A temporal operator is only allowed as the whole expression a property returns: one in a transition (`flag := AG true`), below another operator or nested in another temporal operator (`AG (EF on)`) is rejected (`OXSTS.MISPLACED_TEMPORAL_OPERATOR`).
 
 <Planned table={constructs} construct="AF, EG, AX, EX temporal operators">
 
