@@ -109,18 +109,44 @@ public class UnsupportedFeatureTest {
     }
 
     @Test
-    void readThroughClassTypedVariableIsRejected() {
+    void readsThroughRuntimeHoldersPass() {
         var parsedPackage = parseHelper.parse(WORKERS + """
             class Team {
-                contains lead: Worker
+                contains workers: Worker[0..*]
+                contains lead: Worker subsets workers
                 var current: Worker[0..1] := nothing
-                prop { return EF current.done }
+                var seen: bool := false
+                redefine tran {
+                    var picked: Worker[0..1] := lead
+                    seen := current.done || picked.done || current.part.done
+                    for (worker in workers) {
+                        seen := worker.done
+                    }
+                }
+                prop {
+                    return EF current.done
+                }
             }
             """, CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
-        parsedPackage.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "through variable 'current'");
-        assertOnlyErrorsAreUnsupportedAtLine(parsedPackage, 15);
+        parsedPackage.assertNoValidationErrors();
+    }
+
+    @Test
+    void callThroughAChainOfAVariablePasses() {
+        var parsedPackage = parseHelper.parse(WORKERS + """
+            class Team {
+                contains lead: Worker
+                var current: Worker[0..1] := lead
+                redefine tran {
+                    inline current.part.step()
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
@@ -130,59 +156,38 @@ public class UnsupportedFeatureTest {
                 contains workers: Worker[0..*]
                 contains lead: Worker subsets workers
                 var current: workers[0..1] := nothing
-                redefine tran { current.done := true }
-            }
-            """, CheckMode.ALL);
-
-        parsedPackage.assertNoResourceErrors();
-        parsedPackage.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "through variable 'current'");
-        assertOnlyErrorsAreUnsupportedAtLine(parsedPackage, 16);
-    }
-
-    @Test
-    void optionalNavigationThroughVariableIsRejected() {
-        var parsedPackage = parseHelper.parse(WORKERS + """
-            class Team {
-                contains lead: Worker
-                var current: Worker[0..1] := nothing
-                prop { return EF current?.done }
-            }
-            """, CheckMode.ALL);
-
-        parsedPackage.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "through variable 'current'");
-    }
-
-    @Test
-    void featureAccessThroughVariableIsRejectedEvenWhenCalled() {
-        var parsedPackage = parseHelper.parse(WORKERS + """
-            class Team {
-                contains lead: Worker
-                var current: Worker[0..1] := lead
-                redefine tran { inline current.part.step() }
-            }
-            """, CheckMode.ALL);
-
-        parsedPackage.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "through variable 'current'");
-    }
-
-    @Test
-    void accessThroughLocalVariableIsRejected() {
-        var parsedPackage = parseHelper.parse(WORKERS + """
-            class Team {
-                contains lead: Worker
-                var seen: bool := false
                 redefine tran {
-                    var current: Worker[0..1] := lead
-                    seen := current.done
+                    current.done := true
                 }
             }
             """, CheckMode.ALL);
 
-        parsedPackage.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "through variable 'current'");
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertHasValidationIssue(
+                OxstsValidator.UNSUPPORTED_FEATURE, "Writing through variable 'current'");
+        assertOnlyErrorsAreUnsupportedAtLine(parsedPackage, 17);
     }
 
     @Test
-    void accessThroughRuntimeForLoopVariableIsRejected() {
+    void havocThroughAChainOfAVariableIsRejected() {
+        var parsedPackage = parseHelper.parse(WORKERS + """
+            class Team {
+                contains lead: Worker
+                var current: Worker[0..1] := nothing
+                redefine tran {
+                    havoc(current.part.done)
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertHasValidationIssue(
+                OxstsValidator.UNSUPPORTED_FEATURE, "Writing through variable 'current'");
+        assertOnlyErrorsAreUnsupportedAtLine(parsedPackage, 16);
+    }
+
+    @Test
+    void writeThroughRuntimeForLoopVariableIsRejected() {
         var parsedPackage = parseHelper.parse(WORKERS + """
             class Team {
                 contains workers: Worker[0..*]
@@ -195,7 +200,26 @@ public class UnsupportedFeatureTest {
             }
             """, CheckMode.ALL);
 
-        parsedPackage.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "through variable 'worker'");
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "Writing through variable 'worker'");
+        assertOnlyErrorsAreUnsupportedAtLine(parsedPackage, 17);
+    }
+
+    @Test
+    void optionalReadThroughVariableIsRejected() {
+        var parsedPackage = parseHelper.parse(WORKERS + """
+            class Team {
+                contains lead: Worker
+                var current: Worker[0..1] := nothing
+                prop {
+                    return EF current?.done
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "'?.' through variable 'current'");
+        assertOnlyErrorsAreUnsupportedAtLine(parsedPackage, 16);
     }
 
     @Test

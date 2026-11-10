@@ -6,14 +6,10 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.typesystem;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
-import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.WrappedOxstsPackage;
 import hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator;
-import org.eclipse.xtext.diagnostics.Severity;
 import org.eclipse.xtext.validation.CheckMode;
 import org.junit.jupiter.api.Test;
 
@@ -202,7 +198,7 @@ public class ArrayTypeTest {
     }
 
     @Test
-    void memberAccessThroughAnArraySlotIsRejected() {
+    void readThroughAnArraySlotPasses() {
         var parsedPackage = parseHelper.parse("""
             package test
             class Worker {
@@ -211,13 +207,14 @@ public class ArrayTypeTest {
             class Team {
                 contains first: Worker
                 var queue: Worker[2] := [first, first]
-                prop { return EF queue[0].done }
+                prop {
+                    return EF queue[0].done
+                }
             }
             """, CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
-        parsedPackage.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "through variable 'queue'");
-        assertOnlyErrorsAreUnsupportedAtLine(parsedPackage, 8);
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
@@ -264,16 +261,6 @@ public class ArrayTypeTest {
 
         parsedPackage.assertNoResourceErrors();
         parsedPackage.assertNoValidationErrors();
-    }
-
-    private static void assertOnlyErrorsAreUnsupportedAtLine(WrappedOxstsPackage parsedPackage, int line) {
-        assertThat(parsedPackage.getIssues())
-                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
-                .isNotEmpty()
-                .allSatisfy(issue -> {
-                    assertThat(issue.getCode()).isEqualTo(OxstsValidator.UNSUPPORTED_FEATURE);
-                    assertThat(issue.getLineNumber()).isEqualTo(line);
-                });
     }
 
     @Test

@@ -1636,7 +1636,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     }
 
     @Check
-    public void checkNoMemberAccessThroughVariable(NavigationSuffixExpression expression) {
+    public void checkNoWriteOrOptionalReadThroughVariable(NavigationSuffixExpression expression) {
         if (expression.eContainer() instanceof CallSuffixExpression call && call.getPrimary() == expression) {
             return;
         }
@@ -1652,16 +1652,34 @@ public class OxstsValidator extends AbstractOxstsValidator {
         } catch (RuntimeException e) {
             return;
         }
-        if (holder instanceof VariableDeclaration variable && holderModality == Modality.RUNTIME) {
+        if (!(holder instanceof VariableDeclaration variable) || holderModality != Modality.RUNTIME) {
+            return;
+        }
+        if (isWriteTarget(expression)) {
             acceptError(
-                    "Member access through variable '"
+                    "Writing through variable '"
                             + variable.getName()
-                            + "' is not yet supported by the compiler; only a call such as '"
+                            + "' is not yet supported by the compiler; only a read or a call through a variable dispatches over the instances it may hold.",
+                    expression,
+                    UNSUPPORTED_FEATURE);
+        } else if (expression.isOptional()) {
+            acceptError(
+                    "Optional navigation '?.' through variable '"
                             + variable.getName()
-                            + ".step()' dispatches over the instances a variable may hold.",
+                            + "' is not yet supported by the compiler; a read with '.' dispatches over the instances the variable may hold.",
                     expression,
                     UNSUPPORTED_FEATURE);
         }
+    }
+
+    private static boolean isWriteTarget(Expression expression) {
+        EObject current = expression;
+        while (current.eContainer() instanceof PostfixUnaryExpression postfix && postfix.getPrimary() == current) {
+            current = postfix;
+        }
+        var container = current.eContainer();
+        return (container instanceof AssignmentOperation assignment && assignment.getReference() == current)
+                || (container instanceof HavocOperation havoc && havoc.getReference() == current);
     }
 
     private boolean isFixedSizeArray(TypeSpecification typeSpecification) {
