@@ -169,7 +169,7 @@ class GammaToOxstsSerializer {
     }
 
     private fun IndentingStringBuilder.serialize(channel: Channel) {
-        val name = nameStore.declareGenerated(channel.eContainer(), channel, "channel")
+        val name = nameStore.declareGenerated(channel.eContainer(), channel, deriveName(channel))
         appendIndent("contains $name: Channel subsets channels") {
             appendLine("redefine refers inputPort: Port = ${channel.providedPort.instance.name}.${channel.providedPort.port.name}")
             appendLine("redefine refers outputPort: Port = ${channel.requiredPort.instance.name}.${channel.requiredPort.port.name}")
@@ -271,14 +271,14 @@ class GammaToOxstsSerializer {
     }
 
     private fun IndentingStringBuilder.serialize(transition: EntryTransition) {
-        val name = nameStore.declareGenerated(transition.eContainer(), transition, "transition")
+        val name = nameStore.declareGenerated(transition.eContainer(), transition, "entry_to_${transition.to.name}")
         appendIndent("contains $name: EntryTransition subsets entryTransitions") {
             appendLine("redefine refers to: State = ${transition.to.name}")
         }
     }
 
     private fun IndentingStringBuilder.serialize(transition: StateTransition) {
-        val name = nameStore.declareGenerated(transition.eContainer(), transition, "transition")
+        val name = nameStore.declareGenerated(transition.eContainer(), transition, deriveName(transition))
         appendIndent("contains $name: Transition subsets transitions") {
             appendLine("redefine refers from: State = ${transition.from.name}")
             appendLine("redefine refers to: State = ${transition.to.name}")
@@ -328,11 +328,54 @@ class GammaToOxstsSerializer {
         else -> error("Unknown action type: $action")
     }
 
+    private fun deriveName(channel: Channel): String {
+        val provided = "${channel.providedPort.instance.name}_${channel.providedPort.port.name}"
+        val required = "${channel.requiredPort.instance.name}_${channel.requiredPort.port.name}"
+        return "${provided}_to_$required"
+    }
+
+    private fun deriveName(transition: StateTransition): String {
+        val base = "${transition.from.name}_to_${transition.to.name}"
+        val siblings = (transition.eContainer() as Region).transitions.filterIsInstance<StateTransition>()
+        val collides = siblings.any {
+            it !== transition && "${it.from.name}_to_${it.to.name}" == base
+        }
+        if (!collides || transition.trigger == null) {
+            return base
+        }
+
+        return "${base}_on_${deriveName(transition.trigger)}"
+    }
+
+    private fun deriveName(trigger: Trigger) = when (trigger) {
+        is EventTrigger -> "${trigger.port.name}_${trigger.event.name}"
+        is TimeoutTrigger -> trigger.timeout.name
+        else -> error("Unknown trigger type: $trigger")
+    }
+
+    private fun deriveName(
+        action: Action,
+        subsets: String,
+    ): String {
+        val prefix = when (subsets) {
+            "entryActions" -> "entry_"
+            "exitActions" -> "exit_"
+            else -> ""
+        }
+        val derived = when (action) {
+            is RaiseEventAction -> "raise_${action.port.name}_${action.event.name}"
+            is SetTimeoutAction -> "set_${action.timeout.name}"
+            is AssignmentAction -> "assign_${action.variable.name}"
+            else -> error("Unknown action type: $action")
+        }
+        return "$prefix$derived"
+    }
+
     private fun IndentingStringBuilder.serialize(
         action: RaiseEventAction,
         subsets: String,
     ) {
-        val name = nameStore.declareGenerated(action.eContainer(), action, "action")
+        val name = nameStore.declareGenerated(action.eContainer(), action, deriveName(action, subsets))
         appendIndent("contains $name: RaiseEventAction subsets $subsets") {
             appendLine("redefine refers port: Port = ${action.port.name}")
             appendLine("redefine refers event: Event = ${action.port.name}.interface.${action.event.name}")
@@ -343,7 +386,7 @@ class GammaToOxstsSerializer {
         action: SetTimeoutAction,
         subsets: String,
     ) {
-        val name = nameStore.declareGenerated(action.eContainer(), action, "action")
+        val name = nameStore.declareGenerated(action.eContainer(), action, deriveName(action, subsets))
         appendIndent("contains $name: SetTimeoutAction subsets $subsets") {
             appendLine("redefine refers timeout: Timeout = ${action.timeout.name}")
             serialize(action.value, "expression")
@@ -354,7 +397,7 @@ class GammaToOxstsSerializer {
         action: AssignmentAction,
         subsets: String,
     ) {
-        val name = nameStore.declareGenerated(action.eContainer(), action, "action")
+        val name = nameStore.declareGenerated(action.eContainer(), action, deriveName(action, subsets))
         appendIndent("contains $name: AssignmentAction subsets $subsets") {
             appendLine("redefine refers variable: Variable = ${action.variable.name}")
             serialize(action.expression, "expression")

@@ -10,7 +10,6 @@ import org.eclipse.emf.ecore.EObject
 
 class GammaNameStore {
     private val generatedNames = mutableMapOf<EObject, String>()
-    private val generatedNameCounters = mutableMapOf<String, Int>()
     private val members = mutableMapOf<EObject, MutableMap<String, EObject>>()
     private val types = mutableMapOf<EObject, EObject>()
 
@@ -38,11 +37,17 @@ class GammaNameStore {
     fun declareGenerated(
         scope: EObject,
         element: EObject,
-        prefix: String,
+        derivedName: String,
     ): String {
         val name = generatedNames.getOrPut(element) {
-            val number = generatedNameCounters.merge(prefix, 1, Int::plus)
-            "$prefix$number"
+            val taken = members[scope].orEmpty()
+            var candidate = derivedName
+            var number = 2
+            while (candidate in taken) {
+                candidate = "${derivedName}_$number"
+                number++
+            }
+            candidate
         }
         return declare(scope, element, name)
     }

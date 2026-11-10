@@ -39,7 +39,7 @@
         {
             "traces": [
                 {
-                    "self": "root.system.controller.Main.Operating.OperatingRegion.transition2",
+                    "self": "root.system.controller.Main.Operating.OperatingRegion.BothYellow_to_BothRed",
                     "calledTransition": "semantifyr::gamma::statecharts::Transition::fire",
                     "arguments": [],
                     "innerTraces": [
@@ -89,7 +89,7 @@
                     "innerTraces": null
                 },
                 {
-                    "self": "root.system.trafficLightA.Main.Normal.NormalRegion.transition12",
+                    "self": "root.system.trafficLightA.Main.Normal.NormalRegion.Yellow_to_Red",
                     "calledTransition": "semantifyr::gamma::statecharts::Transition::fire",
                     "arguments": [],
                     "innerTraces": [
@@ -107,7 +107,7 @@
                     ]
                 },
                 {
-                    "self": "root.system.trafficLightB.Main.Normal.NormalRegion.transition12",
+                    "self": "root.system.trafficLightB.Main.Normal.NormalRegion.Yellow_to_Red",
                     "calledTransition": "semantifyr::gamma::statecharts::Transition::fire",
                     "arguments": [],
                     "innerTraces": [
@@ -146,7 +146,7 @@
                     "innerTraces": null
                 },
                 {
-                    "self": "root.system.controller.Main.Operating.OperatingRegion.transition3",
+                    "self": "root.system.controller.Main.Operating.OperatingRegion.BothRed_to_TrafficOnA",
                     "calledTransition": "semantifyr::gamma::statecharts::Transition::fire",
                     "arguments": [],
                     "innerTraces": [
@@ -185,7 +185,7 @@
                     "innerTraces": null
                 },
                 {
-                    "self": "root.system.trafficLightA.Main.Normal.NormalRegion.transition13",
+                    "self": "root.system.trafficLightA.Main.Normal.NormalRegion.Red_to_Green",
                     "calledTransition": "semantifyr::gamma::statecharts::Transition::fire",
                     "arguments": [],
                     "innerTraces": [
