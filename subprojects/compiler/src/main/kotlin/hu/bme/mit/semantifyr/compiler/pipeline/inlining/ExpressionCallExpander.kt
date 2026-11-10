@@ -22,6 +22,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
 class ExpressionCallExpander @Inject constructor(
     private val compileTimeExpressionEvaluatorProvider: CompileTimeExpressionEvaluatorProvider,
@@ -84,40 +85,56 @@ class ExpressionCallExpander @Inject constructor(
         target: CallTarget.VariableDispatch,
         callExpression: CallSuffixExpression,
     ): Expression {
-        if (target.candidateInstances.isEmpty()) {
-            sourceError(
-                callExpression,
-                "Variable '${target.variable.name}' has no candidate instances to dispatch the property call over.",
-            )
-        }
-
-        val candidates = target.candidateInstances.toList()
-
-        // Start with the last candidate's expansion as the final else branch.
-        // The instance tree invariant guarantees `var` holds one of these
-        // candidates, so the fallthrough is safe.
-        var result = expandForContainer(
-            containerInstance = candidates.last(),
-            baseTargetDeclaration = target.targetDeclaration,
-            callExpression = callExpression,
-        )
-
-        for (index in candidates.size - 2 downTo 0) {
-            val candidate = candidates[index]
-            val candidateReference = instanceReferenceProvider.getReference(candidate)
-            val thenExpr = expandForContainer(
-                containerInstance = candidate,
+        val branches = target.branches.associate {
+            it.candidateInstance to expandForContainer(
+                containerInstance = it.containerInstance,
                 baseTargetDeclaration = target.targetDeclaration,
                 callExpression = callExpression,
             )
+        }
+        return dispatch(target.containerReferenceExpression, target.variable, branches, callExpression)
+    }
+
+    fun isThroughRuntimeHolder(expression: Expression, instance: Instance): Boolean {
+        return callTargetResolver.runtimeHolderOf(expression, instance) != null
+    }
+
+    fun dispatchMemberReadOrNull(expression: Expression, instance: Instance): Expression? {
+        val runtimeHolder = callTargetResolver.runtimeHolderOf(expression, instance) ?: return null
+        val branches = runtimeHolder.candidateInstances.associateWith {
+            callTargetResolver.replaceHolder(expression, runtimeHolder, instanceReferenceProvider.getReference(it))
+        }
+        return dispatch(runtimeHolder.holderExpression, runtimeHolder.variable, branches, expression)
+    }
+
+    private fun dispatch(
+        holderExpression: Expression,
+        variable: VariableDeclaration,
+        branches: Map<Instance, Expression>,
+        dispatchedExpression: Expression,
+    ): Expression {
+        if (branches.isEmpty()) {
+            sourceError(
+                dispatchedExpression,
+                "Variable '${variable.name}' has no candidate instances to dispatch over.",
+            )
+        }
+
+        val candidates = branches.keys.toList()
+
+        // The instance tree invariant guarantees the holder holds one of the candidates, so the last one is the final else.
+        var result = branches.getValue(candidates.last())
+
+        for (index in candidates.size - 2 downTo 0) {
+            val candidate = candidates[index]
             val guard = OxstsFactory.createComparisonOperator().also {
                 it.op = ComparisonOp.EQ
-                it.left = target.containerReferenceExpression.copy()
-                it.right = candidateReference
+                it.left = holderExpression.copy()
+                it.right = instanceReferenceProvider.getReference(candidate)
             }
             result = OxstsFactory.createIfThenElse().also {
                 it.guard = guard
-                it.then = thenExpr
+                it.then = branches.getValue(candidate)
                 it.`else` = result
             }
         }
