@@ -15,6 +15,7 @@ import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext
 import { Icon, type IconName } from '../../ui/icons'
 import { LanguageMark, Logo } from '../../ui/marks'
 import { ConnectionIndicator } from '../desktop/ConnectionIndicator'
+import { useKeepingEvents } from '../desktop/keeping'
 import { useCurrentDocument, useFlavor } from '../hooks'
 import { useShell } from '../shellContext'
 import { verifyAll } from '../shellState'
@@ -227,6 +228,7 @@ export default function PhoneShell({ colorMode, trace }: Props): React.JSX.Eleme
   const touch = useTouchInput()
   const editing = useStore(shell.editing) && touch
   const viewport = useVisualViewport()
+  useKeepingEvents()
 
   useLayoutEffect(() => {
     document.documentElement.dataset.shell = 'phone'
