@@ -49,6 +49,8 @@ const EDITOR_OPTIONS: editor.IStandaloneEditorConstructionOptions = {
   minimap: { enabled: false },
   scrollBeyondLastLine: false,
   fontSize: 15,
+  // an embed in a frame of fixed height scrolls on once its editor reaches an end
+  scrollbar: { alwaysConsumeMouseWheel: false },
 } as const;
 
 const LANGUAGE_DEFS = [

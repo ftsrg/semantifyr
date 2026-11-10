@@ -48,7 +48,7 @@ const EDITOR_OPTIONS: monacoEditor.IStandaloneEditorConstructionOptions = {
   renderLineHighlight: 'none',
   overviewRulerLanes: 0,
   stickyScroll: { enabled: false },
-  scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 },
+  scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8, alwaysConsumeMouseWheel: false },
   padding: { top: 6, bottom: 6 },
 }
 
