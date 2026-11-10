@@ -39,13 +39,26 @@ export interface SessionInfo {
   sessionId: string
   remoteIp: string
   flavorId: string
+  kind: string
   uptime: string
+  runningCount: number
+  queuedCount: number
   workingDirectory: string
   activeVerifications: ActiveVerificationInfo[]
 }
 
+export interface AdminLoadResponse {
+  activeSessions: number
+  maxSessions: number
+  runningVerifications: number
+  queuedVerifications: number
+  verificationPermits: number
+  uptime: string
+}
+
 export interface AdminStatusResponse {
   sessions: SessionInfo[]
+  load: AdminLoadResponse
 }
 
 export interface AdminServerConfigResponse {
@@ -73,8 +86,14 @@ export interface AdminWhoamiResponse {
   user: string
 }
 
+export interface AdminPortfolioResponse {
+  id: string
+  engines: string[]
+}
+
 export interface AdminConfigResponse {
   server: AdminServerConfigResponse
   sessionManager: AdminSessionManagerConfigResponse
   verification: AdminVerificationConfigResponse
+  portfolios: AdminPortfolioResponse[]
 }
