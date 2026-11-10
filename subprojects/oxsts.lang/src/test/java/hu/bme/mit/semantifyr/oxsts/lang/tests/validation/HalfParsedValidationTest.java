@@ -11,11 +11,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
 import hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.emf.common.util.BasicDiagnostic;
+import org.eclipse.xtext.diagnostics.Diagnostic;
+import org.eclipse.xtext.diagnostics.Severity;
 import org.eclipse.xtext.testing.util.ParseHelper;
 import org.eclipse.xtext.validation.CheckMode;
 import org.eclipse.xtext.validation.EValidatorRegistrar;
@@ -30,6 +33,9 @@ public class HalfParsedValidationTest {
 
     @Inject
     private Injector injector;
+
+    @Inject
+    private OxstsPackageParseHelper packageParseHelper;
 
     @ParameterizedTest
     @ValueSource(
@@ -60,6 +66,37 @@ public class HalfParsedValidationTest {
         oxstsPackage.eAllContents().forEachRemaining(element -> {
             validator.validate(element.eClass(), element, diagnostics, context);
         });
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                "counter :=",
+                "counter",
+                "counter := counter.",
+                "inline counter.",
+                "havoc()",
+                "assume()",
+                "if ()",
+                "var",
+            })
+    void anIncompleteStatementReportsOnlyItsSyntaxError(String statement) {
+        var parsedPackage = packageParseHelper.parse("""
+            package test
+            class Host {
+                var counter: int := 0
+                redefine tran {
+                    %s
+                }
+            }
+            """.formatted(statement), CheckMode.ALL);
+
+        assertThat(parsedPackage.getIssues())
+                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .isNotEmpty()
+                .allSatisfy(issue -> {
+                    assertThat(issue.getCode()).isEqualTo(Diagnostic.SYNTAX_DIAGNOSTIC);
+                });
     }
 
     public static class RethrowingValidator extends OxstsValidator {

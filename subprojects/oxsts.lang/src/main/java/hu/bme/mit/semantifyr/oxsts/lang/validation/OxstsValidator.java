@@ -1570,7 +1570,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
 
     @Check
     public void checkVariableInitialized(VariableDeclaration variableDeclaration) {
-        if (OxstsUtils.isLoopVariable(variableDeclaration)) {
+        // a nameless variable is half-parsed, and its syntax error is the diagnostic
+        if (OxstsUtils.isLoopVariable(variableDeclaration) || variableDeclaration.getName() == null) {
             return;
         }
         var initializer = variableDeclaration.getExpression();
@@ -1854,7 +1855,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
     // semantics#OxstsInflator#pullDownVariables()
     @Check
     public void checkNoImplicitlyTypeVariables(VariableDeclaration variableDeclaration) {
-        if (OxstsUtils.isLoopVariable(variableDeclaration)) {
+        // a nameless variable is half-parsed, and its syntax error is the diagnostic
+        if (OxstsUtils.isLoopVariable(variableDeclaration) || variableDeclaration.getName() == null) {
             return;
         }
 
