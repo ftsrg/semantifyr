@@ -22,6 +22,8 @@ vi.mock('../shells/UpdatePrompt', () => {
 describe('the embed of a framing page with a colour mode', () => {
   for (const theme of ['dark', 'light'] as const) {
     it(`shows the ${theme} theme the address names`, async () => {
+      // a seeded test of the same browser may have stored a colour mode
+      window.localStorage.removeItem('semantifyr-live-color-mode')
       const address = `${window.location.pathname}${window.location.search}`
       window.history.replaceState(null, '', `${window.location.pathname}?view=embed&theme=${theme}`)
       const container = document.createElement('div')
