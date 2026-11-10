@@ -5,11 +5,22 @@
  */
 
 import type { ConnectionState } from '../stores/connection'
-import { currentStep, isInitialized, type InitializationState } from '../stores/initialization'
+import { currentStep, isInitialized, type InitializationState, type InitializationStep } from '../stores/initialization'
 import type { VerificationState } from '../verification/engine'
 import { caseRowOf, countsOf, countsPhrase, formatSeconds } from './caseRows'
 import type { CatalogStatus } from './live'
 import type { RunTiming } from './verification'
+
+// the clock of a view ticks every second, so a step can start after its last tick
+export function stepTimeText(step: InitializationStep, now: number, failedWord: string): string {
+  if (step.state === 'done' && step.startedAt !== null && step.finishedAt !== null) {
+    return formatSeconds(step.finishedAt - step.startedAt)
+  }
+  if (step.state === 'running' && step.startedAt !== null) {
+    return `${Math.floor(Math.max(0, now - step.startedAt) / 1000)} s`
+  }
+  return step.state === 'failed' ? failedWord : ''
+}
 
 // how long the line that closes a run stays before the status line returns to rest
 export const CLOSING_LINE_MS = 8000

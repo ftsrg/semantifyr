@@ -9,12 +9,13 @@ import { useRef } from 'react'
 
 import { parseLiveEditorUrl } from '@semantifyr/editor-common'
 import { initializationStepsOf, presentationOf } from '../../lib/language/presentation'
-import { initializationOf, isInitialized, type InitializationStep } from '../../lib/stores/initialization'
+import { initializationOf, isInitialized } from '../../lib/stores/initialization'
 import { changeSettings } from '../../lib/stores/settings'
 import { useStore } from '../../lib/stores/useStore'
-import { countsOf, formatSeconds, type CaseCounts, type CaseRow, type RowStatus } from '../../lib/workspace/caseRows'
+import { countsOf, type CaseCounts, type CaseRow, type RowStatus } from '../../lib/workspace/caseRows'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import type { Live } from '../../lib/workspace/live'
+import { stepTimeText } from '../../lib/workspace/shellStatus'
 import { Icon } from '../../ui/icons'
 import { LanguageMark, ValidationMark, VerdictMark } from '../../ui/marks'
 import { useFlavor, useNow } from '../hooks'
@@ -128,16 +129,6 @@ function VerifyButton({ compact }: { compact: boolean }): React.JSX.Element {
   )
 }
 
-function stepTime(step: InitializationStep, now: number, failedWord: string): string {
-  if (step.state === 'done' && step.startedAt !== null && step.finishedAt !== null) {
-    return formatSeconds(step.finishedAt - step.startedAt)
-  }
-  if (step.state === 'running' && step.startedAt !== null) {
-    return `${Math.floor((now - step.startedAt) / 1000)} s`
-  }
-  return step.state === 'failed' ? failedWord : ''
-}
-
 // the language the address will open, while the server has not answered with its languages
 function addressedLanguage(): string {
   return parseLiveEditorUrl(window.location).language ?? 'sysml'
@@ -182,7 +173,7 @@ function Initialization(): React.JSX.Element {
               {step.state === 'running' ? <VerdictMark status="running" /> : null}
               {step.state === 'pending' ? <VerdictMark status="not-run" /> : null}
               <span>{step.label}</span>
-              <span className="initialization-step-time">{stepTime(step, now, waiting ? 'retrying' : 'failed')}</span>
+              <span className="initialization-step-time">{stepTimeText(step, now, waiting ? 'retrying' : 'failed')}</span>
             </li>
           )
         })}

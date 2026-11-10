@@ -18,7 +18,7 @@ import { connectionView } from '../lib/workspace/connectionView'
 import { createDocumentTabs } from '../lib/workspace/documentTabs'
 import { libraryTabOf } from '../lib/workspace/libraryTabs'
 import { portfolioChoices, portfolioName } from '../lib/workspace/portfolioChoices'
-import { CLOSING_LINE_MS, shellStatus, type ShellStatusInput } from '../lib/workspace/shellStatus'
+import { CLOSING_LINE_MS, shellStatus, stepTimeText, type ShellStatusInput } from '../lib/workspace/shellStatus'
 
 vi.mock('vscode', () => {
   return {}
@@ -106,6 +106,13 @@ describe('the status line', () => {
     expect(statusOf({ blockedErrors: 2 })).toBe('Verify all did not run: the model has 2 errors')
     const initializing = startStep(initializationOf([InitializationSteps.connect, InitializationSteps.library]), InitializationSteps.connect.id, 0)
     expect(statusOf({ initialization: initializing })).toBe('Initializing SysML v2: connecting to the server')
+  })
+
+  it('times a step that started after the view\'s clock last ticked from zero, never below', () => {
+    const library = startStep(initializationOf([InitializationSteps.library]), InitializationSteps.library.id, 10_400).steps[0]!
+
+    expect(stepTimeText(library, 10_000, 'failed')).toBe('0 s')
+    expect(stepTimeText(library, 12_500, 'failed')).toBe('2 s')
   })
 
   it('names session trouble in words and offers what fixes it', () => {
