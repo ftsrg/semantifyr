@@ -391,7 +391,7 @@ public class OxstsIdeContentProposalProvider extends IdeContentProposalProvider 
         var domain = EcoreUtil2.getContainerOfType(redefinableDeclaration.eContainer(), DomainDeclaration.class);
         var nameOnly = isFollowedByDeclarationRest(context);
         for (var declaration : redefinableMembers(domain, redefinableDeclaration)) {
-            if (!isRedefinableBy(declaration, redefinableDeclaration) || !hasExplicitName(declaration)) {
+            if (!isRedefinableBy(declaration, redefinableDeclaration) || NamingUtil.isAnonymous(declaration)) {
                 continue;
             }
             var header = header(declaration);
@@ -413,7 +413,8 @@ public class OxstsIdeContentProposalProvider extends IdeContentProposalProvider 
             DomainDeclaration domain, ContentAssistContext context, IIdeContentProposalAcceptor acceptor) {
         for (var declaration : redefinableMembers(domain, null)) {
             for (var keyword : redefinitionKeywords(declaration)) {
-                var header = "redefine " + keyword + (hasExplicitName(declaration) ? " " + header(declaration) : "");
+                var header =
+                        "redefine " + keyword + (NamingUtil.isAnonymous(declaration) ? "" : " " + header(declaration));
                 var body = body(declaration);
                 var entry = getProposalCreator().createProposal(header + body, context, kind(declaration), (it) -> {
                     it.setLabel(header);
@@ -473,10 +474,6 @@ public class OxstsIdeContentProposalProvider extends IdeContentProposalProvider 
                         && (inherited.getKind() == feature.getKind() || inherited.getKind() == FeatureKind.FEATURE);
             default -> false;
         };
-    }
-
-    private boolean hasExplicitName(RedefinableDeclaration declaration) {
-        return declaration.getName() != null && !declaration.getName().isEmpty();
     }
 
     private boolean isFollowedByDeclarationRest(ContentAssistContext context) {

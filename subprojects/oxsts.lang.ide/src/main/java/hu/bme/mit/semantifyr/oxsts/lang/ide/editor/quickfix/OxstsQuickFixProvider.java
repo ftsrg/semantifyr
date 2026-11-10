@@ -186,7 +186,7 @@ public class OxstsQuickFixProvider implements IQuickFixProvider {
             var end = nextLeaf != null ? nextLeaf.getOffset() : redefineKeyword.getEndOffset();
             site.accept("Remove redefine", redefineKeyword.getOffset(), end - redefineKeyword.getOffset(), "");
         }
-        if (declaration.getName() == null || declaration.getRedefined() != null) {
+        if (NamingUtil.isAnonymous(declaration) || declaration.getRedefined() != null) {
             return;
         }
         var containerDomain = EcoreUtil2.getContainerOfType(declaration.eContainer(), DomainDeclaration.class);

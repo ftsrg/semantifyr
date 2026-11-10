@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.eclipse.emf.ecore.EObject;
@@ -310,12 +311,9 @@ public class OxstsValidator extends AbstractOxstsValidator {
 
     @Check
     public void checkShadowedNames(NamedElement namedElement) {
-        if (namedElement instanceof RedefinableDeclaration redefinableDeclaration
-                && redefinableDeclaration.isRedefine()) {
-            return;
-        }
         // an anonymous transition or property redefines the inherited one
-        if (namedElement.getName() == null) {
+        if (namedElement instanceof RedefinableDeclaration redefinableDeclaration
+                && (redefinableDeclaration.isRedefine() || NamingUtil.isAnonymous(redefinableDeclaration))) {
             return;
         }
 
@@ -326,7 +324,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
         var declarations =
                 domainMemberCollectionProvider.getParentCollection(parentDomain).getDeclarations();
 
-        if (declarations.stream().anyMatch(d -> namedElement.getName().equals(NamingUtil.getName(d)))) {
+        if (declarations.stream().anyMatch(d -> Objects.equals(NamingUtil.getName(d), namedElement.getName()))) {
             acceptWarning(
                     "Name shadows another element.",
                     namedElement,

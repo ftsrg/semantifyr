@@ -128,7 +128,7 @@ public class OxstsDeclarationRenderer {
             text.append("abstract ");
         }
         text.append(transition.getKind() == TransitionKind.INIT ? "init" : "tran");
-        if (transition.getName() != null) {
+        if (!NamingUtil.isAnonymous(transition)) {
             text.append(" ").append(transition.getName());
             text.append("(").append(renderParameters(transition)).append(")");
         }
@@ -141,7 +141,7 @@ public class OxstsDeclarationRenderer {
             text.append("abstract ");
         }
         text.append("prop");
-        if (property.getName() != null) {
+        if (!NamingUtil.isAnonymous(property)) {
             text.append(" ").append(property.getName());
             text.append("(").append(renderParameters(property)).append(")");
             text.append(": ").append(renderTypeSpecification(property.getReturnType()));
