@@ -126,7 +126,7 @@ class UnsavedEditsCommandHandlerTest {
                 mock(ILanguageServerAccess.class),
                 mock(CommandProgressContext.class));
 
-        var inlinedModel = Path.of(URI.createURI((String) result).toFileString());
+        var inlinedModel = Path.of(java.net.URI.create((String) result));
         assertThat(Files.readString(inlinedModel)).contains("OnlyInBuffer");
     }
 }

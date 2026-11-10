@@ -61,7 +61,7 @@ class CompileInlinedOxstsCommandHandlerTest {
                 new InlineClassCommandParams(classDeclaration, false),
                 mock(ILanguageServerAccess.class),
                 mock(CommandProgressContext.class));
-        inlinedModel = Path.of(URI.createURI((String) inlined).toFileString());
+        inlinedModel = Path.of(java.net.URI.create((String) inlined));
         var inlinedResource = resourceSet.getResource(URI.createFileURI(inlinedModel.toString()), true);
         inlinedOxsts = (InlinedOxsts) inlinedResource.getContents().getFirst();
         handler = new CompileInlinedOxstsCommandHandler() {
@@ -82,7 +82,7 @@ class CompileInlinedOxstsCommandHandlerTest {
         var result =
                 handler.execute(inlinedOxsts, mock(ILanguageServerAccess.class), mock(CommandProgressContext.class));
 
-        var compiledModel = Path.of(URI.createURI((String) result).toFileString());
+        var compiledModel = Path.of(java.net.URI.create((String) result));
         assertThat(compiledModel).hasFileName("compiled.oxsts").isRegularFile();
         assertThat(Files.readString(compiledModel)).contains("CounterReachesThree");
         assertThat(Files.readString(inlinedModel)).isEqualTo(inlinedText);
