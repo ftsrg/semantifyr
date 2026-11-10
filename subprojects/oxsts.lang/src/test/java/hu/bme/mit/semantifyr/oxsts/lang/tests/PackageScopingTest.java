@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.WrappedOxstsPackage;
 import hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
@@ -31,6 +32,9 @@ public class PackageScopingTest {
 
     @Inject
     private ParseHelper<OxstsModelPackage> parseHelper;
+
+    @Inject
+    private ParseHelper<InlinedOxsts> inlinedOxstsParseHelper;
 
     @Inject
     private Provider<XtextResourceSet> resourceSetProvider;
@@ -227,6 +231,33 @@ public class PackageScopingTest {
                 .isSameAs(validatedSnippet.enumByName("Color").literalByName("Red"));
         assertThat(qualifiedNameProvider.getFullyQualifiedNameString(lamp.eObject()))
                 .isEqualTo("Lamp");
+    }
+
+    @Test
+    void inlinedModelResolvesAClassOfAnUnnamedPackageBySimpleName() throws Exception {
+        var resourceSet = resourceSetProvider.get();
+        var snippet = parse(resourceSet, """
+            @VerificationCase
+            class Switch {
+                var on: bool := false
+            }
+            """);
+        var inlinedOxsts = inlinedOxstsParseHelper.parse("""
+            inlined oxsts of Switch
+            init {
+            }
+            tran {
+            }
+            prop {
+                true
+            }
+            """, resourceSet);
+
+        EcoreUtil.resolveAll(resourceSet);
+
+        assertThat(inlinedOxsts.eResource().getErrors()).isEmpty();
+        assertThat(inlinedOxsts.getClassDeclaration())
+                .isSameAs(snippet.classByName("Switch").eObject());
     }
 
     @Test
