@@ -242,6 +242,13 @@ jobs:
         env:
           SEMANTIFYR_LIVE_URL: http://localhost:8080
         run: npm run smoke -w @ftsrg/semantifyr-live-frontend
+      - name: Install Chromium for the live flows
+        run: npx playwright install --with-deps chromium
+      - name: Run the live flows on the image
+        timeout-minutes: 15
+        env:
+          SEMANTIFYR_LIVE_URL: http://localhost:8080
+        run: npm run flows -w @ftsrg/semantifyr-live-frontend
       - name: Show the container log
         if: ${{ failure() }}
         run: docker logs live
