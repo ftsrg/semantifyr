@@ -359,10 +359,42 @@ public class OperatorSyntaxTest {
     }
 
     @Test
+    void rangeExclusiveFromZeroToZeroIsEmpty() {
+        var range = evaluateFirstRange("0..<0");
+        assertThat(range.getLowerBound()).isEqualTo(0);
+        assertThat(range.getUpperBound()).isEqualTo(-1);
+        assertThat(range.isBounded()).isTrue();
+    }
+
+    @Test
+    void rangeFromMinusOneKeepsItsLowerBound() {
+        var range = evaluateFirstRange("-1..1");
+        assertThat(range.getLowerBound()).isEqualTo(-1);
+        assertThat(range.getUpperBound()).isEqualTo(1);
+        assertThat(range.isBounded()).isTrue();
+    }
+
+    @Test
+    void rangeEndingAtMinusOneKeepsItsUpperBound() {
+        var range = evaluateFirstRange("-3..-1");
+        assertThat(range.getLowerBound()).isEqualTo(-3);
+        assertThat(range.getUpperBound()).isEqualTo(-1);
+        assertThat(range.isBounded()).isTrue();
+    }
+
+    @Test
+    void rangeExclusiveBelowTheLeastIntIsEmpty() {
+        var range = evaluateFirstRange("0..<-2147483647 - 1");
+        assertThat(range.getUpperBound()).isEqualTo((long) Integer.MIN_VALUE - 1);
+        assertThat(range.isBounded()).isTrue();
+    }
+
+    @Test
     void rangeExclusiveWithInfinityStaysUnbounded() {
         var range = evaluateFirstRange("1..<*");
         assertThat(range.getLowerBound()).isEqualTo(1);
         assertThat(range.getUpperBound()).isEqualTo(RangeEvaluation.INFINITY);
+        assertThat(range.isBounded()).isFalse();
     }
 
     private RangeEvaluation evaluateFirstRange(String rangeText) {

@@ -131,6 +131,45 @@ public class MultiplicitySyntaxTest {
     }
 
     @Test
+    void undefinedMultiplicityIsDistinctFromAnyCount() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Leaf {
+            }
+            class Host {
+                contains undefinedLeaves: Leaf[]
+                contains anyLeaves: Leaf[0..*]
+            }
+            """);
+        parsedPackage.assertNoResourceErrors();
+        var host = parsedPackage.classByName("Host");
+        var undefinedRange = multiplicityRangeEvaluator.evaluate(host.featureByName("undefinedLeaves").typeSpecification());
+        var anyRange = multiplicityRangeEvaluator.evaluate(host.featureByName("anyLeaves").typeSpecification());
+        assertThat(undefinedRange).isSameAs(RangeEvaluation.UNBOUNDED);
+        assertThat(undefinedRange.getLowerBound()).isEqualTo(RangeEvaluation.NEGATIVE_INFINITY);
+        assertThat(anyRange).isSameAs(RangeEvaluation.SOME);
+        assertThat(anyRange.getLowerBound()).isEqualTo(0);
+    }
+
+    @Test
+    void emptyExclusiveRangeMultiplicityIsNotUnbounded() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Leaf {
+            }
+            class Host {
+                contains leaves: Leaf[0..<0]
+            }
+            """);
+        parsedPackage.assertNoResourceErrors();
+        var typeSpec = parsedPackage.classByName("Host").featureByName("leaves").typeSpecification();
+        var range = multiplicityRangeEvaluator.evaluate(typeSpec);
+        assertThat(range.getLowerBound()).isEqualTo(0);
+        assertThat(range.getUpperBound()).isEqualTo(-1);
+        assertThat(range.isBounded()).isTrue();
+    }
+
+    @Test
     void multiplicityFromElementReference() {
         var parsedPackage = parseHelper.parse("""
             package test

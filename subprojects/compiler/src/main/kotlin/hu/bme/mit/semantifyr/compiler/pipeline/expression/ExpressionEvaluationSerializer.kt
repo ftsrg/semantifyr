@@ -59,7 +59,14 @@ class ExpressionEvaluationSerializer @Inject constructor(
     }
 
     override fun visit(evaluation: RangeEvaluation): String {
-        return "${evaluation.lowerBound}..${evaluation.upperBound}"
+        return "${rangeBound(evaluation.lowerBound)}..${rangeBound(evaluation.upperBound)}"
+    }
+
+    private fun rangeBound(value: Long): String {
+        return when (value) {
+            RangeEvaluation.INFINITY, RangeEvaluation.NEGATIVE_INFINITY -> "*"
+            else -> value.toString()
+        }
     }
 
     override fun visit(evaluation: RealEvaluation): String {

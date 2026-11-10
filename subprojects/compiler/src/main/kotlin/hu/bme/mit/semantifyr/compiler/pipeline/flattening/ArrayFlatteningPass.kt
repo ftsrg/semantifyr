@@ -54,7 +54,7 @@ class ArrayFlatteningPass @Inject constructor(
     }
 
     private fun slotCount(arrayVariable: VariableDeclaration): Int {
-        return multiplicityRangeEvaluator.evaluate(arrayVariable.typeSpecification).upperBound
+        return multiplicityRangeEvaluator.evaluate(arrayVariable.typeSpecification).upperBound.toInt()
     }
 
     private fun expandWholeArrayOperations(inlinedOxsts: InlinedOxsts, slotCounts: Map<VariableDeclaration, Int>) {
@@ -199,7 +199,7 @@ class ArrayFlatteningPass @Inject constructor(
     private fun flattenVariable(arrayVariable: VariableDeclaration): List<VariableDeclaration> {
         val typeSpec = arrayVariable.typeSpecification ?: return emptyList()
         val range = multiplicityRangeEvaluator.evaluate(typeSpec)
-        val slotCount = range.upperBound
+        val slotCount = range.upperBound.toInt()
         if (slotCount <= 0) {
             return emptyList()
         }

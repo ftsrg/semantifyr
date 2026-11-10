@@ -338,11 +338,11 @@ class InlineOperationExpander @Inject constructor(
                 instanceReferenceProvider.getReference(it)
             }
             is RangeEvaluation -> {
-                if (evaluation.lowerBound == RangeEvaluation.INFINITY || evaluation.upperBound == RangeEvaluation.INFINITY) {
+                if (!evaluation.isBounded) {
                     sourceError(rangeExpression, "inline for requires a bounded range; the range is unbounded")
                 }
                 (evaluation.lowerBound..evaluation.upperBound).map {
-                    OxstsFactory.createLiteralInteger(it)
+                    OxstsFactory.createLiteralInteger(it.toInt())
                 }
             }
             else -> sourceError(
