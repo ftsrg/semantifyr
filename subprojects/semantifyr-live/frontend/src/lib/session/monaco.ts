@@ -27,7 +27,7 @@ import type { ResolvedColorMode } from '../util/colorMode';
 import { observeSocketClose, type SocketClose } from './reconnectController';
 import type { ModelDocuments } from './modelDocuments';
 import type { SemantifyrLiveApi } from '../api/lspExtensions';
-import { fileUriOfLibrary, isLibraryFileUri, LIBRARY_SCHEME, libraryUriOf } from './readOnlyDocuments';
+import { DERIVED_SCHEME, fileUriOfLibrary, isLibraryFileUri, LIBRARY_SCHEME, libraryUriOf } from './readOnlyDocuments';
 
 // Synced from :semantifyr-vscode by the cloneVscodeLanguageAssets Gradle task.
 import oxstsGrammar from '../../vscode/imported/syntaxes/oxsts.tmLanguage.json';
@@ -133,6 +133,14 @@ function buildSemantifyrExtension(): ExtensionConfig {
     },
     filesOrContents: files,
   };
+}
+
+const derivedTexts = new Map<string, string>();
+
+// A document the page derives is opened through the editor's services, which then own its model
+export async function openDerivedDocument(uri: string, text: string): Promise<vscode.TextDocument> {
+  derivedTexts.set(uri, text);
+  return vscode.workspace.openTextDocument(vscode.Uri.parse(uri));
 }
 
 type LibraryReader = (fileUri: string) => Promise<string | null>;
@@ -274,6 +282,11 @@ export async function initializeMonaco(initialColorMode: ResolvedColorMode): Pro
     registerCustomProvider(LIBRARY_SCHEME, new LibraryFileSystemProvider());
     const wrapper = new MonacoVscodeApiWrapper(vscodeApiConfig);
     await wrapper.start();
+    vscode.workspace.registerTextDocumentContentProvider(DERIVED_SCHEME, {
+      provideTextDocumentContent: (uri) => {
+        return derivedTexts.get(uri.toString()) ?? '';
+      },
+    });
     markMonacoReady();
     return wrapper;
   })();

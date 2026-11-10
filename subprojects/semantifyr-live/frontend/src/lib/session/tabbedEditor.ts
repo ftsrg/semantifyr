@@ -14,7 +14,7 @@ import { caseRowOf } from '../workspace/caseRows'
 import type { DocumentTabsState, ReadOnlyDocument } from '../workspace/documentTabs'
 import { libraryTabOf } from '../workspace/libraryTabs'
 import type { Live } from '../workspace/live'
-import { createEditor, setEditorOpener, type EditorInstance } from './monaco'
+import { createEditor, openDerivedDocument, setEditorOpener, type EditorInstance } from './monaco'
 import { problemsOf } from './problems'
 import { LIBRARY_SCHEME } from './readOnlyDocuments'
 
@@ -156,6 +156,7 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
       if (tab.text !== undefined) {
         const existing = ownedModels.get(tab.uri) ?? monacoEditor.getModel(uri)
         if (existing) {
+          ownedModels.set(tab.uri, existing)
           if (existing.getValue() !== tab.text) {
             existing.pushEditOperations([], [{ range: existing.getFullModelRange(), text: tab.text }], () => {
               return null
@@ -163,8 +164,12 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
           }
           return existing
         }
-        const created = monacoEditor.createModel(tab.text, tab.languageId, uri)
-        ownedModels.set(tab.uri, created)
+        openedDocuments.set(tab.uri, await openDerivedDocument(tab.uri, tab.text))
+        const created = monacoEditor.getModel(uri)
+        if (created) {
+          monacoEditor.setModelLanguage(created, tab.languageId)
+          ownedModels.set(tab.uri, created)
+        }
         return created
       }
       try {
@@ -321,9 +326,7 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
         await disposeInstance(instance)
         instance = null
       }
-      for (const owned of ownedModels.values()) {
-        owned.dispose()
-      }
+      // the derived models stay for the visit: the extension host still names them after the editor goes
       ownedModels.clear()
       openedDocuments.clear()
       viewStates.clear()

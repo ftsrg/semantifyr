@@ -16,7 +16,7 @@ export interface ReadOnlyDocument {
   languageId: string
   // the line under the tabs that says what the document is
   banner: string
-  // the text the page owns; absent, the editor reads the document by its URI
+  // the text the page owns, for a document under the derived scheme (derivedUriOf); absent, the editor reads the document by its URI
   text?: string | undefined
 }
 
