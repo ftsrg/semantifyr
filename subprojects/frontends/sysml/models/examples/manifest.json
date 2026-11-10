@@ -186,6 +186,14 @@
             ]
         },
         {
+            "file": "level_crossing.sysml",
+            "example": { "label": "Level crossing", "description": "Two tracks, a controller and a barrier, with a design error to find." },
+            "cases": [
+                { "name": "BarrierDownWhileTrainInCrossingViolated", "verdict": "Failed", "tier": "Integration", "engines": ["theta", "spin"] },
+                { "name": "TwoTrainsCanBeInTheCrossing", "verdict": "Passed", "tier": "Integration", "engines": ["theta", "spin"] }
+            ]
+        },
+        {
             "file": "compressedspacecraft.sysml",
             "example": { "label": "Spacecraft (compressed)", "description": "Compressed variant of the spacecraft model." },
             "cases": [
