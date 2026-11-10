@@ -53,7 +53,7 @@ The intersection and the two verification cases from Building a Library now ask 
 
 **Task:** Open the step in the editor and verify all cases.
 
-**Check:** `GreenColorIsReachable` and `IntersectionNeverBothGreen` pass, but `NeverGreenInStandby` fails. Open its witness and switch to *State*: in the last state, the light's `activeState` is `standby` while `operating.activeState` still holds `green`.
+**Check:** `GreenColorIsReachable` and `IntersectionNeverBothGreen` pass, but `NeverGreenInStandby` fails. Select its row and read *Steps* in the trace: in the last state, the light's `activeState` is `standby` while `operating.activeState` still holds `green`.
 
 ## Keeping Parents and Children Consistent
 
@@ -95,7 +95,7 @@ Only entry actions write the lamp, so the case checks that every state that can 
 
 **Task:** Open the step and verify all cases. Then make `standby` a plain state (`contains standby: State subsets states`) and verify `GreenLampOnlyInGreen` again.
 
-**Check:** All cases pass. Without its entry action, `standby` leaves the lamp as it was: `GreenLampOnlyInGreen` fails, and its witness ends with the light in standby and the lamp showing green.
+**Check:** All cases pass. Without its entry action, `standby` leaves the lamp as it was: `GreenLampOnlyInGreen` fails, and its trace ends with the light in standby and the lamp showing green.
 
 ## Events and Triggers
 
@@ -166,4 +166,4 @@ The complete final model:
 
 <LiveEmbed code={advanced} />
 
-In the finished model, `Transition`'s main transition carries `@Trace`, so a witness lists the transitions that fired in the *Trace* view.
+In the finished model, `Transition`'s main transition carries `@Trace`, so the trace lists the transitions that fired in the *Calls* view.

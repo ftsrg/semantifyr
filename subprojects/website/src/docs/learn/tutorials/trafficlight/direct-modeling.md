@@ -16,7 +16,7 @@ This is the entry-level tutorial for Semantifyr. It walks through modeling a sma
 
 ## Requirements
 
-A browser is enough. Every step of this tutorial ends in a complete model: the **Open this step in the editor** button below a code block loads the model of that step into a live editor embedded in this page, where you can edit it and verify its cases. The same editor runs standalone at [live.semantifyr.org](https://live.semantifyr.org). See [Getting Started](../../getting-started.md) for the other ways to run Semantifyr.
+A browser is enough. Every step of this tutorial ends in a complete model: the **Open this step in the editor** button below a code block loads the model of that step into a live editor embedded in this page, where you can edit it and verify its cases. The same editor runs standalone at [live.semantifyr.org/oxsts](https://live.semantifyr.org/oxsts). See [Getting Started](../../getting-started.md) for the other ways to run Semantifyr.
 
 :::tip Finished example
 The completed model is at the end of this page under [Snapshot](#snapshot), where **Edit and verify here** opens it in the embedded editor. The standalone live editor also offers it in its model picker as *Tutorial: Basics*.
@@ -24,13 +24,14 @@ The completed model is at the end of this page under [Snapshot](#snapshot), wher
 
 ## The Live Editor
 
-The embedded editor stacks three parts:
+The editor has two parts, which the embedded one stacks, the results under the editor:
 
 - The **editor** is a Monaco-based code editor with syntax highlighting, diagnostics (red underlines for errors), and content assist (triggered with `Ctrl+Space`). The language server validates the model as you type.
-- The **side panel** lists running and recent verifications on its *Verifications* tab. After a verification that produced a witness, its *Witness* tab shows the witness in three views: *Trace* lists the traced calls of each step, *State* the variable values of each step, and *Raw* the witness as an OXSTS model. *Trace* fills only for calls of transitions marked [`@Trace`](../../language/standard-library.md#trace), which the finished model of each tutorial marks on the transition that changes the state and the models of the steps in between do not; the [SysML v2 tutorial](../sysml-v2.md#reading-the-witness) reads such a trace, the calls its semantic library traces. In a wide window, such as the standalone editor, the side panel sits to the right of the editor.
-- The **Verification Cases** panel lists the verification cases of the model and updates as you type. A circle means not yet verified, a green check mark means passed, and a red cross means failed. The play button at the end of a row verifies that case, the button with a list and a play arrow in the panel header verifies all of them, and the crosshair button jumps to the case in the editor. Once a case has a witness, a document button in its row opens it. With *auto-validate* on, every witness is checked by a second verification, shown as *validated* next to the verification time.
+- The **results** column lists the verification cases of the model and updates as you type. Its header counts the cases that *Passed*, *Failed*, were *Inconclusive* or ended in an *Error*, and holds **Verify all**; a case that has not run says *Not run*. The play button in a case's row verifies that case alone. Below the cases, the **trace** of the selected case shows how the verdict came about, in three views: *Steps* lists the state changes of each step, *Calls* the traced calls of each step, and *Witness* the witness as a read-only OXSTS model that **Open** moves to a tab of its own. *Calls* fills only for calls of transitions marked [`@Trace`](../../language/standard-library.md#trace), which the finished model of each tutorial marks on the transition that changes the state and the models of the steps in between do not; the [SysML v2 tutorial](../sysml-v2.md#reading-the-witness) reads such a trace, the calls its semantic library traces. A trace whose witness a second verification confirmed is marked *validated*.
 
-The standalone editor adds a toolbar with a model picker (language and example), a **Copy link** button that encodes your model into a shareable URL, and links to this documentation and to GitHub.
+A step whose model has no verification case opens a lighter view, the editor alone.
+
+The standalone editor adds a toolbar with a language picker (SysML v2, Gamma and OXSTS) and an example picker, **Open** and **Save** for files, **Share**, which encodes your model into a link, and a theme switch, and puts the results to the right of the editor.
 
 ## The Traffic Light
 
@@ -56,7 +57,7 @@ To specify _behavior_ we need **transitions**. Every class implicitly extends th
 
 The main transition is a non-deterministic `choice` of three branches. Each branch uses an `assume` to state its precondition (the color the light must currently have) and an assignment `:=` to set the next color. Only a branch whose `assume` holds in the current state can fire, so the model behaves like a state machine that cycles `Red`, `Green`, `Yellow`, `Red`.
 
-Open the step in the editor and try content assist or introduce a typo to see a diagnostic. The verification panel stays empty: the model has no verification case yet.
+Open the step in the editor and try content assist or introduce a typo to see a diagnostic. The step opens the editor alone: the model has no verification case yet.
 
 ## Verification Cases
 
@@ -68,9 +69,9 @@ The anonymous `prop` is the property the verifier checks. Its body uses a tempor
 
 The `@Tag` annotation attaches a free-form label to a verification case. The tutorial models carry `expect-pass` or `expect-fail`, the verdict we expect, and Semantifyr's own test suite checks every tutorial model against these tags. Your own models do not need them.
 
-**Task:** Open the step in the editor. The verification panel lists `TrafficLight`. Click the play button at the end of its row.
+**Task:** Open the step in the editor. The results column lists `TrafficLight`. Press **Verify all**, or the play button in its row.
 
-**Check:** While the verification runs, the row shows a spinner. When it finishes, a green check mark appears: the property holds. Click the document button that appeared in the row to open the witness and switch to *State*: the witness is an execution that drives `color` from `Red` through `Green` to `Yellow`, which proves the `EF` property.
+**Check:** While the verification runs, the row shows that it is running. When it finishes, the row says *Passed*: the property holds. The trace under the cases lists the witness: in *Steps*, an execution that drives `color` from `Red` through `Green` to `Yellow`, which proves the `EF` property.
 
 ## Helper Transitions
 
@@ -108,9 +109,9 @@ The crucial question for any intersection is whether the two lights can ever be 
 
 This is an `AG` safety property: on every execution, the two lights are never green at the same time. The tag already gives away what we expect.
 
-**Task:** Open the step in the editor. The verification panel now shows `GreenColorIsReachable` and `IntersectionNeverBothGreen`. Click the button with a list and a play arrow in the panel header to verify both.
+**Task:** Open the step in the editor. The results column now lists `GreenColorIsReachable` and `IntersectionNeverBothGreen`. Press **Verify all** to verify both.
 
-**Check:** `GreenColorIsReachable` passes, and `IntersectionNeverBothGreen` fails with a red cross; the editor also marks its property with an error. A failed safety property comes with a counterexample: open its witness and switch to *State* to see the steps that drive both lights to `Green`, one after the other.
+**Check:** `GreenColorIsReachable` passes, and `IntersectionNeverBothGreen` fails. A failed safety property comes with a counterexample: select its row and read *Steps* in the trace to see the steps that drive both lights to `Green`, one after the other.
 
 ## Fixing the Intersection
 
@@ -153,4 +154,4 @@ The complete final model:
 
 <LiveEmbed code={basics} />
 
-In the finished model, `setColor` carries `@Trace`, so a witness lists its calls in the *Trace* view.
+In the finished model, `setColor` carries `@Trace`, so the trace lists its calls in the *Calls* view.

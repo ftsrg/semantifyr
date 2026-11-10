@@ -89,7 +89,7 @@ Add a verification case that asks whether the light can turn green:
 
 **Task:** Open the step and verify `GreenColorIsReachable`.
 
-**Check:** It fails. Only the `init` and main transitions of the verified class run: `GreenColorIsReachable` inlines the light's main transition, but nothing calls the light's `init`, so `activeState` stays `nothing`, no transition is ever enabled, and the light never turns green. A failed reachability property has no witness to show.
+**Check:** It fails. Only the `init` and main transitions of the verified class run: `GreenColorIsReachable` inlines the light's main transition, but nothing calls the light's `init`, so `activeState` stays `nothing`, no transition is ever enabled, and the light never turns green. A failed reachability property has no trace to show.
 
 ## The Init Chain
 
@@ -101,7 +101,7 @@ The `redefine init` of the verification case inlines the light's `init`. This is
 
 **Task:** Open the step and verify `GreenColorIsReachable` again.
 
-**Check:** It passes. In the *State* view of the witness, `root.light.activeState` holds `root.light.red` in the *Init* step, the initial state `init` produces, and `root.light.green` after the first step.
+**Check:** It passes. In the *Steps* view of the trace, `root.light.activeState` holds `root.light.red` in the *Init* step, the initial state `init` produces, and `root.light.green` after the first step.
 
 ## The Intersection
 
@@ -147,4 +147,4 @@ The complete final model:
 
 <LiveEmbed code={intermediate} />
 
-In the finished model, `Transition`'s main transition carries `@Trace`, so a witness lists the transitions that fired in the *Trace* view.
+In the finished model, `Transition`'s main transition carries `@Trace`, so the trace lists the transitions that fired in the *Calls* view.

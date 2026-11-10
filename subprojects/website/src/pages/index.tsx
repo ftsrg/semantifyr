@@ -121,8 +121,9 @@ function TryIt() {
             </div>
             <p className={styles.card__body}>
               A lightweight editor for quick experimentation. Supports syntax
-              highlighting, diagnostics, content assist, and an integrated
-              verification panel. No installation or account required.
+              highlighting, diagnostics, content assist, and verification
+              cases with their verdicts and traces. No installation or
+              account required.
             </p>
             <Link
               href={liveUrl}
