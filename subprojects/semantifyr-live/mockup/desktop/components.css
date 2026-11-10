@@ -545,8 +545,7 @@ code, .mono { font-family: var(--font-mono); font-feature-settings: "calt" 0; }
 .step-variable .reference { color: var(--text-tertiary); }
 .step-variable.is-changed { background: var(--editor-selection); color: var(--text-primary); font-weight: var(--weight-medium); }
 .step-variable.is-changed .reference { color: var(--text-primary); }
-.frame-open { margin-left: var(--space-3); display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: var(--radius-small); background: transparent; color: var(--text-tertiary); cursor: pointer; }
-.frame-open:hover { background: var(--surface-selected); color: var(--text-primary); }
+.frame-open { margin-left: auto; flex: none; height: 22px; }
 .toast { position: absolute; left: 50%; bottom: 44px; transform: translateX(-50%); display: flex; align-items: center; gap: var(--space-5); padding: var(--space-4) var(--space-4) var(--space-4) var(--space-6); border: 1px solid var(--border); border-radius: var(--radius-large); background: var(--surface-overlay); box-shadow: var(--shadow-overlay); color: var(--text-primary); white-space: nowrap; }
 .toast .icon { color: var(--text-secondary); }
 .switch-row-wide { width: 100%; height: 30px; padding: 0 var(--space-4); font-size: 12.5px; }

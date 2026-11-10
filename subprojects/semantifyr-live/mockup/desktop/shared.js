@@ -612,7 +612,7 @@ function traceTextOf(language, scenarioId, view, caseName) {
 }
 
 function renderTraceText(text, openable) {
-  const open = openable ? `<button class="frame-open" data-action="open-document" data-value="${text.tab}" title="Open in the editor as a read-only tab">${icon('external', 'icon-tiny')}</button>` : '';
+  const open = openable ? `<button class="button button-small button-outline frame-open" data-action="open-document" data-value="${text.tab}" title="Open in the editor as a read-only tab">${icon('external', 'icon-tiny')}Open</button>` : '';
   const hint = text.links ? 'Ctrl and click a name' : 'read-only';
   return `<div class="trace-frame"><div class="trace-frame-bar">${icon('lock', 'icon-small')}<span class="mono">${text.label}</span><span>${hint}</span>${open}</div><div class="code trace-text">${renderPlainCode(text.text, text.language, text.links)}</div></div>`;
 }
