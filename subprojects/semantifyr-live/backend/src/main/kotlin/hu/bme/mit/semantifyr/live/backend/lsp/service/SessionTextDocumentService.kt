@@ -92,36 +92,53 @@ class SessionTextDocumentService @Inject constructor(
 
     override fun didOpen(params: DidOpenTextDocumentParams) {
         val clientUri = params.textDocument.uri
-        sessionRequestManager.runWrite {
-            try {
-                if (sessionDocumentManager.existsOnDisk(clientUri)) {
-                    sessionDocumentManager.openExistingByClient(clientUri)
-                } else {
-                    sessionDocumentManager.openByClient(clientUri, params.textDocument.text)
+        sessionRequestManager.runWrite(
+            {
+                try {
+                    if (sessionDocumentManager.existsOnDisk(clientUri)) {
+                        sessionDocumentManager.openExistingByClient(clientUri)
+                    } else {
+                        sessionDocumentManager.openByClient(clientUri, params.textDocument.text)
+                    }
+                    true
+                } catch (e: WorkspaceUriException) {
+                    logger.warn(e) { "Rejected didOpen sessionId=$sessionId clientUri=$clientUri" }
+                    false
                 }
-                sessionDocumentManager.validateAll(sessionClient.get(), it)
-            } catch (e: WorkspaceUriException) {
-                logger.warn(e) { "Rejected didOpen sessionId=$sessionId clientUri=$clientUri" }
-            }
-        }
+            },
+            { cancelIndicator, opened ->
+                if (opened) {
+                    sessionDocumentManager.validateAll(sessionClient.get(), cancelIndicator)
+                }
+            },
+        )
     }
 
     override fun didChange(params: DidChangeTextDocumentParams) {
-        val document = sessionDocumentManager.findByClient(params.textDocument.uri)
-
-        if (document == null) {
-            logger.warn { "didChange for unknown file sessionId=$sessionId clientUri=${params.textDocument.uri}" }
-            return
-        }
-
-        sessionRequestManager.runWrite {
-            document.applyChanges(params.contentChanges)
-            sessionDocumentManager.validateAll(sessionClient.get(), it)
-        }
+        val clientUri = params.textDocument.uri
+        sessionRequestManager.runWrite(
+            {
+                val document = sessionDocumentManager.findByClient(clientUri)
+                if (document == null) {
+                    logger.warn { "didChange for unknown file sessionId=$sessionId clientUri=$clientUri" }
+                } else {
+                    document.applyChanges(params.contentChanges)
+                }
+            },
+            { cancelIndicator, _ ->
+                sessionDocumentManager.validateAll(sessionClient.get(), cancelIndicator)
+            },
+        )
     }
 
     override fun didClose(params: DidCloseTextDocumentParams) {
-        sessionDocumentManager.closeByClient(params.textDocument.uri)
+        sessionRequestManager.runWrite(
+            {
+                sessionDocumentManager.closeByClient(params.textDocument.uri)
+            },
+            { _, _ ->
+            },
+        )
     }
 
     override fun didSave(params: DidSaveTextDocumentParams) {

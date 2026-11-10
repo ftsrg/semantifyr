@@ -14,7 +14,6 @@ import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationTrace
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionRequestManager
-import hu.bme.mit.semantifyr.live.backend.lsp.service.runWrite
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import kotlinx.coroutines.future.await
@@ -53,9 +52,13 @@ class LiveVerificationExecutor : VerificationExecutor {
         if (sessionDocumentManager.find(uri) != null || !sessionDocumentManager.existsOnDisk(uri)) {
             return
         }
-        sessionRequestManager.runWrite {
-            sessionDocumentManager.openExistingByClient(uri)
-        }.await()
+        sessionRequestManager.runWrite(
+            {
+                sessionDocumentManager.openExistingByClient(uri)
+            },
+            { _, _ ->
+            },
+        ).await()
     }
 
     private fun rewriteWitnessUri(sessionDocumentManager: SessionDocumentManager, result: Any?): Any? {
