@@ -12,6 +12,7 @@ import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
 import hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator;
+import org.eclipse.xtext.diagnostics.Diagnostic;
 import org.eclipse.xtext.diagnostics.Severity;
 import org.eclipse.xtext.validation.CheckMode;
 import org.junit.jupiter.api.Test;
@@ -114,5 +115,29 @@ public class DiagnosticSuppressionTest {
                 .as("only the innermost comparison error should fire")
                 .hasSize(1);
         assertThat(typeMismatches.getFirst().getMessage()).containsIgnoringCase("compare");
+    }
+
+    @Test
+    void unresolvedTypeIsTheOnlyError() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Holder {
+                var reading: Missing := 0
+                var counter: int := 0
+                redefine tran {
+                    counter := reading
+                    assume(reading)
+                    assume(reading == 1)
+                }
+            }
+            """, CheckMode.ALL);
+
+        assertThat(parsedPackage.getIssues())
+                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .singleElement()
+                .satisfies(issue -> {
+                    assertThat(issue.getCode()).isEqualTo(Diagnostic.LINKING_DIAGNOSTIC);
+                    assertThat(issue.getMessage()).contains("'Missing'");
+                });
     }
 }

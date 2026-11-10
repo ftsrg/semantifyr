@@ -1637,6 +1637,10 @@ public class OxstsValidator extends AbstractOxstsValidator {
 
     @Check
     public void checkNoWriteOrOptionalNavigationThroughVariable(NavigationSuffixExpression expression) {
+        // the unresolved member carries its own linking diagnostic
+        if (expression.getMember() == null || expression.getMember().eIsProxy()) {
+            return;
+        }
         if (expression.eContainer() instanceof CallSuffixExpression call
                 && call.getPrimary() == expression
                 && !expression.isOptional()) {
