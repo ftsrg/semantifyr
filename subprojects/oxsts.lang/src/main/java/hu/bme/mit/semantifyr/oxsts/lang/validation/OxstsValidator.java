@@ -1050,7 +1050,15 @@ public class OxstsValidator extends AbstractOxstsValidator {
             return;
         }
         for (var argument : callSuffixExpression.getArguments()) {
-            if (argument.getExpression() != null) {
+            var argumentType = argument.getExpression() != null ? evaluateTypeSafely(argument.getExpression()) : null;
+            if (argumentType != null && argumentType.getDomain() instanceof RecordDeclaration) {
+                acceptError(
+                        "Record arguments of the traced transition '"
+                                + NamingUtil.getName(transitionDeclaration)
+                                + "' are not yet supported by the compiler, the witness cannot record a record value.",
+                        argument,
+                        UNSUPPORTED_FEATURE);
+            } else if (argument.getExpression() != null) {
                 checkModalityAtMost(
                         argument.getExpression(),
                         Modality.COMPILE_TIME,

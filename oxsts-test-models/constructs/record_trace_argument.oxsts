@@ -1,0 +1,28 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::constructs::record_trace_argument
+
+record Point {
+    var x: int := 0
+}
+
+class Port {
+    var item: int := 0
+
+    @Trace
+    tran send(point: Point) {
+        item := point.x
+    }
+}
+
+class Host {
+    contains port: Port
+
+    redefine tran {
+        inline port.send(Point { x = 1 })
+    }
+}
