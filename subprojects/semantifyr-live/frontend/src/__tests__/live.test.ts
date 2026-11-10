@@ -117,7 +117,7 @@ describe('Live', () => {
   it('keeps the edits and the verdicts of an example across a switch to another example and back, on one runtime', async () => {
     const routed = routedClient([caseAt('a', 1)])
     const [first, second] = testFlavors()[0].examples
-    open = await openConnected(routed, `?example=${first!.id}`)
+    open = await openConnected(routed, `/oxsts/${first!.id}`)
     await runAll(open)
     open.models.edit(MODEL_URI, 'edited model')
 
