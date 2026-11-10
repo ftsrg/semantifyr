@@ -429,7 +429,6 @@ public class OxstsIdeContentProposalProvider extends IdeContentProposalProvider 
         }
     }
 
-    // An abstract `features` member is made concrete by its redefinition.
     private List<String> redefinitionKeywords(RedefinableDeclaration declaration) {
         if (declaration instanceof FeatureDeclaration feature && feature.getKind() == FeatureKind.FEATURE) {
             return List.of(

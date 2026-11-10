@@ -311,7 +311,6 @@ public class OxstsValidator extends AbstractOxstsValidator {
 
     @Check
     public void checkShadowedNames(NamedElement namedElement) {
-        // an anonymous transition or property redefines the inherited one
         if (namedElement instanceof RedefinableDeclaration redefinableDeclaration
                 && (redefinableDeclaration.isRedefine() || NamingUtil.isAnonymous(redefinableDeclaration))) {
             return;
@@ -790,7 +789,6 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
     }
 
-    // Name and URI of the class whose narrowing cast checkCastCompatibility accepts and that makes the value fit.
     private String[] narrowingCastData(TypeEvaluation expected, TypeEvaluation actual, EObject context) {
         if (!(actual instanceof ImmutableTypeEvaluation)
                 || !(typeCompatibility.unwrappedDomain(expected) instanceof ClassDeclaration castClass)) {

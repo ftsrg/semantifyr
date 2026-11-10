@@ -30,7 +30,6 @@ class VerificationManager @Inject constructor(
 
     private var waiting = 0
 
-    // Iteration order is the rotation: a session joins at the end and moves to the end once served
     private val sessionQueues = LinkedHashMap<String, ArrayDeque<PermitRequest>>()
 
     val availablePermits: Int

@@ -87,7 +87,6 @@ public class OxstsSemanticHighlightingCalculator extends DefaultSemanticHighligh
         return List.of();
     }
 
-    // The written segments are a suffix of the target's qualified name, which follows its named containers.
     protected void highlightReference(IHighlightedPositionAcceptor acceptor, INode node, EObject target) {
         if (target.eIsProxy()) {
             return;

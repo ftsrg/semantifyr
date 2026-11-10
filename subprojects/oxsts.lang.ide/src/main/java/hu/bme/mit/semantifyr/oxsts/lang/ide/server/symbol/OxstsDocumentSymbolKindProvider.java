@@ -26,7 +26,6 @@ import org.eclipse.xtext.ide.server.symbol.DocumentSymbolMapper;
 @Singleton
 public class OxstsDocumentSymbolKindProvider extends DocumentSymbolMapper.DocumentSymbolKindProvider {
 
-    // A null kind leaves the element out of the outline: parameters, local and loop variables.
     @Override
     public SymbolKind getSymbolKind(EObject object) {
         return switch (object) {
