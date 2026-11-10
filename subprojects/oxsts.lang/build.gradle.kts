@@ -21,8 +21,6 @@ dependencies {
     implementation(project(":utils"))
 
     testRuntimeOnly(libs.slf4j.log4j)
-    // Xtext's FormatterTestHelper asserts through JUnit 4; the Xtext platform sets its version
-    testRuntimeOnly(libs.junit4)
 
     metamodel(project(":oxsts.model"))
 }

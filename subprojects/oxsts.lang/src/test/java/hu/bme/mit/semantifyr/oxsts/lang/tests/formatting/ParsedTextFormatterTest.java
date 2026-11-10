@@ -6,10 +6,16 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.formatting;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
-import org.eclipse.xtext.formatting2.FormatterPreferenceKeys;
-import org.eclipse.xtext.testing.formatter.FormatterTestHelper;
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
+import org.eclipse.xtext.formatting2.FormatterRequest;
+import org.eclipse.xtext.formatting2.IFormatter2;
+import org.eclipse.xtext.formatting2.regionaccess.TextRegionAccessBuilder;
+import org.eclipse.xtext.resource.XtextResource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -18,7 +24,16 @@ import org.junit.jupiter.params.provider.ValueSource;
 public class ParsedTextFormatterTest {
 
     @Inject
-    private FormatterTestHelper formatterTestHelper;
+    private OxstsPackageParseHelper parseHelper;
+
+    @Inject
+    private Provider<IFormatter2> formatter;
+
+    @Inject
+    private Provider<FormatterRequest> formatterRequest;
+
+    @Inject
+    private Provider<TextRegionAccessBuilder> regionAccessBuilder;
 
     @ParameterizedTest
     @ValueSource(strings = {"<", "<=", ">", ">=", "==", "!=", "+", "-", "*", "/", "&&", "||", "^^"})
@@ -335,11 +350,18 @@ public class ParsedTextFormatterTest {
     }
 
     private void assertFormatted(String toBeFormatted, String expectation) {
-        formatterTestHelper.assertFormatted(request -> {
-            request.setUseSerializer(false);
-            request.getOrCreateMapBasedPreferences().put(FormatterPreferenceKeys.indentation, "    ");
-            request.setToBeFormatted(toBeFormatted);
-            request.setExpectation(expectation);
-        });
+        var parsedPackage = parseHelper.parse(toBeFormatted);
+        parsedPackage.assertNoResourceErrors();
+        var resource = (XtextResource) parsedPackage.getOxstsPackage().eResource();
+        var request = formatterRequest
+                .get()
+                .setAllowIdentityEdits(true)
+                .setTextRegionAccess(
+                        regionAccessBuilder.get().forNodeModel(resource).create());
+
+        var replacements = formatter.get().format(request);
+        var formatted = request.getTextRegionAccess().getRewriter().renderToString(replacements);
+
+        assertThat(formatted).isEqualTo(expectation);
     }
 }
