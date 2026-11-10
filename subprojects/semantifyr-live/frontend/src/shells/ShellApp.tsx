@@ -10,7 +10,7 @@ import '@fontsource/jetbrains-mono/latin-600.css'
 import '@fontsource/jetbrains-mono/latin-ext-600.css'
 import type React from 'react'
 import { useEffect, useState } from 'react'
-import { liveEditorUrl } from '@semantifyr/editor-common'
+import { liveEditorUrl, parseLiveEditorUrl } from '@semantifyr/editor-common'
 
 import { createModelDocuments } from '../lib/session/monaco'
 import { SYSML_FLAVOR_ID } from '../lib/session/sysmlBridge'
@@ -18,20 +18,19 @@ import { createSettingsStore, createSystemColorModeStore, resolveColorMode, type
 import type { ReadableStore, Store } from '../lib/stores/store'
 import { useStore } from '../lib/stores/useStore'
 import type { ResolvedColorMode } from '../lib/util/colorMode'
+import { libraryOf } from '../lib/workspace/address'
 import { createLive, type Live } from '../lib/workspace/live'
-import { SHARED_RESULTS_PARAMETER } from '../lib/workspace/sharedResults'
 import { CaseTrace } from '../trace/CaseTrace'
-import { sessionKindOf } from './route'
 import { ShellRoot } from './ShellRoot'
 import { createShellState } from './shellState'
 import { UpdatePrompt } from './UpdatePrompt'
 
-// the address follows the visitor's switches of language and example, as today's page does
+// the address follows the visitor's switches of language and example in place, so Back leaves the page and never shows another model than its address
 function useAddress(live: Live): void {
   useEffect(() => {
     let first = true
     let last: string | null = null
-    return live.workspace.subscribe(() => {
+    const unsubscribe = live.workspace.subscribe(() => {
       const { flavor, documentKey } = live.workspace.get()
       const document = documentKey === null ? undefined : live.documents.get().get(documentKey)
       if (!flavor || !document || documentKey === last) {
@@ -42,12 +41,24 @@ function useAddress(live: Live): void {
         first = false
         return
       }
-      void liveEditorUrl(window.location.href, { flavor: flavor.id, example: document.example.id }).then((url) => {
-        const address = new URL(url)
-        address.searchParams.delete(SHARED_RESULTS_PARAMETER)
-        window.history.replaceState(null, '', address)
+      void liveEditorUrl(window.location.href, {
+        language: flavor.languageId,
+        example: document.shared ? undefined : document.example.id,
+        library: libraryOf(flavor.id),
+        view: parseLiveEditorUrl(window.location).view ?? undefined,
+      }).then((url) => {
+        window.history.replaceState(null, '', url)
       })
     })
+    // a link of another fragment opens in the same page
+    const follow = (): void => {
+      live.openAddress(window.location.href)
+    }
+    window.addEventListener('popstate', follow)
+    return () => {
+      unsubscribe()
+      window.removeEventListener('popstate', follow)
+    }
   }, [live])
 }
 
@@ -72,11 +83,11 @@ export default function ShellApp(): React.JSX.Element {
       },
       modelDocuments: createModelDocuments(),
       defaultFlavorId: SYSML_FLAVOR_ID,
-      sessionKind: sessionKindOf(window.location.search),
+      sessionKind: parseLiveEditorUrl(window.location).view ?? 'full',
     })
   })
   useEffect(() => {
-    live.start(window.location.search)
+    live.start(window.location.href)
     return () => {
       void live.dispose()
     }

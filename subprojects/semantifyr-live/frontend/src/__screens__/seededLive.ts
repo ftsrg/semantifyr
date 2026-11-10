@@ -154,6 +154,7 @@ export function seedLive(seed: Seed): Seeded {
     pendingVerifyAll: constantStore(seed.pending ?? false),
     runTiming: constantStore(seed.timing ?? null),
     start: () => {},
+    openAddress: () => {},
     dispose: () => {
       return Promise.resolve()
     },

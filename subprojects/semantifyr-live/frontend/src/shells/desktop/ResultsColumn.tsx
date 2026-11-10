@@ -140,11 +140,7 @@ function stepTime(step: InitializationStep, now: number, failedWord: string): st
 
 // the language the address will open, while the server has not answered with its languages
 function addressedLanguage(): string {
-  const flavor = parseLiveEditorUrl(window.location.search).flavor
-  if (flavor === 'gamma') {
-    return 'gamma'
-  }
-  return flavor?.startsWith('oxsts') ? 'oxsts' : 'sysml'
+  return parseLiveEditorUrl(window.location).language ?? 'sysml'
 }
 
 function Initialization(): React.JSX.Element {

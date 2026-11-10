@@ -6,27 +6,18 @@
 
 import { beforeAll, describe, expect, it } from 'vitest'
 
-import { chooseShell, embedViewOf, sessionKindOf } from '../shells/route'
+import { chooseShell } from '../shells/route'
 import { createShellState } from '../shells/shellState'
 
 describe('the address and the width choose the shell', () => {
-  it('opens the verifying embed on embed=1 and the edit-only one on embed=edit, whatever the width', () => {
-    expect(embedViewOf('?mode=oxsts&embed=1')).toBe('verify')
-    expect(embedViewOf('?embed=edit')).toBe('edit-only')
-    expect(chooseShell('?embed=1', true)).toBe('embed')
-    expect(chooseShell('?embed=edit', false)).toBe('embed')
+  it('opens the embed on either embed view, whatever the width', () => {
+    expect(chooseShell('embed', true)).toBe('embed')
+    expect(chooseShell('edit-only', false)).toBe('embed')
   })
 
   it('opens the phone below the phone width and the desktop above it', () => {
-    expect(chooseShell('?mode=gamma', true)).toBe('phone')
-    expect(chooseShell('', false)).toBe('desktop')
-    expect(chooseShell('?embed=0', false)).toBe('desktop')
-  })
-
-  it('names the session after the view, so the metrics tell them apart', () => {
-    expect(sessionKindOf('?embed=1')).toBe('embed')
-    expect(sessionKindOf('?embed=edit')).toBe('edit-only')
-    expect(sessionKindOf('?example=crossroads')).toBe('full')
+    expect(chooseShell(null, true)).toBe('phone')
+    expect(chooseShell(null, false)).toBe('desktop')
   })
 })
 

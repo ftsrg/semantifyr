@@ -58,7 +58,7 @@ describe('liveFlavors', () => {
   it('the sysml flavor offers the corpus examples as SysML source', () => {
     const flavor = findFlavor(servedLiveFlavors, 'sysml');
     const expectedIds = Object.values(importedSysmlv2Manifest).flatMap((manifest) =>
-      manifest.models.flatMap((model) => (model.example ? [model.file.replace(/\.sysml$/, '')] : [])),
+      manifest.models.flatMap((model) => (model.example ? [model.file.replace(/\.sysml$/, '').replaceAll('_', '-')] : [])),
     );
 
     expect(flavor?.languageId).toBe('sysml');
@@ -77,6 +77,14 @@ describe('liveFlavors', () => {
         if (example.id !== 'blank') {
           expect(example.code.length).toBeGreaterThan(0);
         }
+      }
+    }
+  });
+
+  it('example ids are address names, lower-case with hyphens', () => {
+    for (const flavor of servedLiveFlavors) {
+      for (const example of flavor.examples) {
+        expect(example.id).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
       }
     }
   });
@@ -116,7 +124,7 @@ describe('SysML v2 corpus examples', () => {
     expect(manifests).toHaveLength(1);
     const expected = manifests[0]!.models
       .filter((model) => model.example)
-      .map((model) => `${model.file.replace(/\.sysml$/, '')}-sysmlv2-library`);
+      .map((model) => model.file.replace(/\.sysml$/, '').replaceAll('_', '-'));
     const registered = findFlavor(servedLiveFlavors, 'oxsts-with-sysmlv2-library')!
       .examples.filter((example) => example.id !== 'blank')
       .map((example) => example.id);

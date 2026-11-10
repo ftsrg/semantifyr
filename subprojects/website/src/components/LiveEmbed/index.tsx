@@ -68,7 +68,7 @@ export default function LiveEmbed({ code, flavor = 'oxsts', show }: Props): Reac
   const [editorUrl, setEditorUrl] = useState<string | null>(null);
 
   const openEditor = async (): Promise<void> => {
-    setEditorUrl(await liveEditorUrl(`${normalizeBaseUrl(liveBackendUrl).http}/`, { flavor, code: source, embed: true }));
+    setEditorUrl(await liveEditorUrl(`${normalizeBaseUrl(liveBackendUrl).http}/`, { language: flavor, model: source, view: 'embed' }));
   };
 
   if (editorUrl !== null) {

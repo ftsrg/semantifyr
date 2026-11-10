@@ -234,12 +234,12 @@ function WaitingModel(): React.JSX.Element | null {
   const waiting = useStore(live.catalog, (catalog) => {
     return catalog.status === 'waiting'
   })
-  const parameters = parseLiveEditorUrl(window.location.search)
+  const address = parseLiveEditorUrl(window.location)
   const [sysml] = liveFlavors([])
-  if (!waiting || (parameters.flavor !== null && parameters.flavor !== sysml.id)) {
+  if (!waiting || (address.language !== null && address.language !== sysml.languageId)) {
     return null
   }
-  const example = findExample(sysml, parameters.example) ?? sysml.examples[0]
+  const example = findExample(sysml, address.example) ?? sysml.examples[0]
   if (!example) {
     return null
   }

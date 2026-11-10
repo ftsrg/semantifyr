@@ -20,13 +20,18 @@ export function addressProblemText(live: Live, problem: AddressProblem): string 
   const flavor = live.catalog.get().registry?.flavorOf(problem.flavorId)
   const languageName = flavor ? presentationOf(flavor.languageId).name : problem.flavorId
   const exampleLabel = (flavor ? findExample(flavor, problem.exampleId)?.label : undefined) ?? problem.exampleId
-  if (problem.kind === 'results') {
-    return `The results in the link could not be read. Opened the ${exampleLabel} without them.`
+  switch (problem.kind) {
+    case 'results':
+      return `The results in the link could not be read. Opened the ${exampleLabel} without them.`
+    case 'model':
+      return `The model in the link could not be read. Opened the ${exampleLabel} in its place.`
+    case 'language':
+      return `The address names the language "${problem.requested}", which Live does not have. Opened ${languageName} with the ${exampleLabel} in its place.`
+    case 'library':
+      return `The address names the library "${problem.requested}", which ${languageName} does not have. Opened ${languageName} without a library, with the ${exampleLabel}, in its place.`
+    case 'example':
+      return `The address names the example "${problem.requested}", which ${languageName} does not have. Opened ${exampleLabel} in its place.`
   }
-  if (problem.kind === 'language') {
-    return `The address names the language "${problem.requested}", which Live does not have. Opened ${languageName} with the ${exampleLabel} in its place.`
-  }
-  return `The address names the example "${problem.requested}", which ${languageName} does not have. Opened ${exampleLabel} in its place.`
 }
 
 function AddressError(): React.JSX.Element | null {

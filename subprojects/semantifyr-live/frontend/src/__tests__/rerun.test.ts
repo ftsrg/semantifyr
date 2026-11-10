@@ -10,7 +10,7 @@ import {
   runAllVerifications,
   type LspClient,
   type VerificationState,
-} from '../lib/verification'
+} from '../lib/verification/engine'
 import { sampleCase } from './fixtures/cases'
 import { failedResult, passedResult } from './fixtures/verification-results'
 

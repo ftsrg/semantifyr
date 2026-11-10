@@ -10,10 +10,9 @@ import type { VerificationCaseState, VerificationState } from '../lib/verificati
 import { caseRowOf } from '../lib/workspace/caseRows'
 import {
   compareWithShared,
-  decodeSharedResults,
-  encodeSharedResults,
   rowsWithSharedVerdicts,
   sharedResultsOf,
+  verdictsOf,
   type SharedResults,
 } from '../lib/workspace/sharedResults'
 import { sampleCase } from './fixtures/cases'
@@ -38,21 +37,13 @@ const SHARED: SharedResults = {
 }
 
 describe('the results part of a share link', () => {
-  it('round-trips the selected case and each verdict', async () => {
-    const decoded = await decodeSharedResults(await encodeSharedResults(SHARED))
-
-    expect(decoded).toEqual(SHARED)
+  it('reads each verdict of the link', () => {
+    expect(verdictsOf([['a', 'failed'], ['b', 'passed']])).toEqual(SHARED.verdicts)
   })
 
-  it('reads a link that carries no case selected', async () => {
-    const decoded = await decodeSharedResults(await encodeSharedResults({ selectedCase: null, verdicts: new Map([['a', 'error']]) }))
-
-    expect(decoded?.selectedCase).toBeNull()
-    expect(decoded?.verdicts.get('a')).toBe('error')
-  })
-
-  it('does not read what is not a results part', async () => {
-    expect(await decodeSharedResults('not-a-link')).toBeNull()
+  it('does not read a verdict it does not know, nor an empty list', () => {
+    expect(verdictsOf([['a', 'violated']])).toBeNull()
+    expect(verdictsOf([])).toBeNull()
   })
 
   it('carries a verdict per finished case, the outdated and the unfinished left out', () => {

@@ -7,14 +7,10 @@
 import { lazy, Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
 
-import ErrorBoundary from './components/shell/ErrorBoundary';
+import ErrorBoundary from './ErrorBoundary';
 import { isAdminRoute } from './admin/route';
-import { isShellRoute } from './shells/route';
 
-// each route loads its own chunk, so the new shells never load today's component library
-const App = lazy(() => {
-  return import('./App');
-});
+// each route loads its own chunk, so the admin page never loads the editor
 const ShellApp = lazy(() => {
   return import('./shells/ShellApp');
 });
@@ -44,7 +40,7 @@ const appErrorFallback = (
 ReactDOM.createRoot(root).render(
   <ErrorBoundary label="app" fallback={appErrorFallback}>
     <Suspense fallback={null}>
-      {isAdminRoute(window.location.pathname) ? <AdminApp /> : isShellRoute(window.location.pathname) ? <ShellApp /> : <App />}
+      {isAdminRoute(window.location.pathname) ? <AdminApp /> : <ShellApp />}
     </Suspense>
   </ErrorBoundary>,
 );

@@ -14,14 +14,14 @@ import { findExample, liveFlavors } from '../../examples'
 export function AddressModel(): React.JSX.Element | null {
   const [text, setText] = useState<string | null>(null)
   useEffect(() => {
-    const parameters = parseLiveEditorUrl(window.location.search)
-    if (parameters.compressedCode !== null) {
-      void decodeCompressedBase64Url(parameters.compressedCode).then(setText)
+    const address = parseLiveEditorUrl(window.location)
+    if (address.compressedModel !== null) {
+      void decodeCompressedBase64Url(address.compressedModel).then(setText)
       return
     }
     const [sysml] = liveFlavors([])
-    if (parameters.flavor === null || parameters.flavor === sysml.id) {
-      setText((findExample(sysml, parameters.example) ?? sysml.examples[0])?.code ?? null)
+    if (address.language === null || address.language === sysml.languageId) {
+      setText((findExample(sysml, address.example) ?? sysml.examples[0])?.code ?? null)
     }
   }, [])
   if (text === null) {

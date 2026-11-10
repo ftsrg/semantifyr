@@ -164,8 +164,8 @@ interface Language {
 }
 
 const LANGUAGES: Readonly<Record<string, Language>> = {
-  sysml: { flavorId: 'sysml', exampleId: 'level_crossing', caseName: 'BarrierDownWhileTrainInCrossingViolated', definition: 'verification def BarrierDownWhileTrainInCrossingViolated', traceUri: SYSML_TRACE_URI },
-  gamma: { flavorId: 'gamma', exampleId: 'LevelCrossing', caseName: 'BarrierDownWhileTrainInCrossing', definition: 'verification case BarrierDownWhileTrainInCrossing', traceUri: GAMMA_TRACE_URI },
+  sysml: { flavorId: 'sysml', exampleId: 'level-crossing', caseName: 'BarrierDownWhileTrainInCrossingViolated', definition: 'verification def BarrierDownWhileTrainInCrossingViolated', traceUri: SYSML_TRACE_URI },
+  gamma: { flavorId: 'gamma', exampleId: 'level-crossing', caseName: 'BarrierDownWhileTrainInCrossing', definition: 'verification case BarrierDownWhileTrainInCrossing', traceUri: GAMMA_TRACE_URI },
   oxsts: { flavorId: 'oxsts', exampleId: 'level-crossing', caseName: 'BarrierDownWhileTrainInCrossing', definition: 'class BarrierDownWhileTrainInCrossing', traceUri: OXSTS_WITNESS_URI },
 }
 

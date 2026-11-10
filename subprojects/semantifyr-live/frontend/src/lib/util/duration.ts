@@ -33,10 +33,6 @@ export function formatIsoDuration(iso: string): string {
   return `${seconds}s`;
 }
 
-export function isoDurationFromMs(totalMs: number): string {
-  return `PT${(totalMs / 1000).toFixed(3)}S`;
-}
-
 export function isoDurationToMs(iso: string): number {
   let parsed;
   try {

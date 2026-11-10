@@ -13,7 +13,7 @@ import {
   type AutoValidateRequest,
   type LspClient,
   type VerificationState,
-} from '../lib/verification';
+} from '../lib/verification/engine';
 import type { VerificationCaseResult } from '@semantifyr/editor-common';
 import { sampleCase } from './fixtures/cases';
 import {

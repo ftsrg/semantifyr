@@ -6,6 +6,7 @@
 
 import type React from 'react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { parseLiveEditorUrl } from '@semantifyr/editor-common'
 
 import { presentationOf } from '../../lib/language/presentation'
 import { isInitialized } from '../../lib/stores/initialization'
@@ -18,7 +19,6 @@ import { ValidationMark, VerdictMark } from '../../ui/marks'
 import { shareLink } from '../desktop/SharePopover'
 import { useFlavor } from '../hooks'
 import { BackToModel, ModelEditor } from '../modelEditor'
-import { embedViewOf } from '../route'
 import { useShell } from '../shellContext'
 import { verifyAll } from '../shellState'
 import { StatusContent, useStatusLine } from '../statusLine'
@@ -239,7 +239,7 @@ export default function EmbedShell({ colorMode, trace }: Props): React.JSX.Eleme
     return workspace.flavor?.languageId
   })
   const [view] = useState(() => {
-    return embedViewOf(window.location.search) ?? 'verify'
+    return parseLiveEditorUrl(window.location).view ?? 'embed'
   })
   const [contentHeight, setContentHeight] = useState<number | null>(null)
   const fit = useCallback((height: number) => {

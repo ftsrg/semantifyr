@@ -6,7 +6,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { VerificationCaseResult, VerificationCaseSpecification } from '@semantifyr/editor-common'
-import type { LspClient, VerificationState } from '../lib/verification'
+import type { LspClient, VerificationState } from '../lib/verification/engine'
 import { NO_VERIFICATION } from '../lib/workspace/verification'
 import { createTestLive, testFlavors, type TestLive } from './helpers/live'
 import { failedResult, passedResult } from './fixtures/verification-results'
@@ -263,14 +263,14 @@ describe('Live', () => {
     await open.live.dispose()
 
     open = createTestLive(routed.client, servedFlavors, { defaultFlavorId: gamma!.id })
-    open.live.start('?mode=kerml')
+    open.live.start('/kerml')
     await vi.waitFor(() => {
       expect(open!.live.address.get()).toMatchObject({ kind: 'language', requested: 'kerml', flavorId: gamma!.id })
     })
     await open.live.dispose()
 
     open = createTestLive(routed.client)
-    open.live.start('?mode=oxsts&example=missing')
+    open.live.start('/oxsts/missing')
     await vi.waitFor(() => {
       expect(open!.live.address.get()).toMatchObject({ kind: 'example', requested: 'missing', flavorId: 'oxsts' })
     })

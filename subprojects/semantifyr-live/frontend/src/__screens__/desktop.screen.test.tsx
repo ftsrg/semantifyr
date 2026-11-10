@@ -116,7 +116,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
   'results': {
     // the run ends as the screen opens, so the status line still closes it
     get seed(): Seed {
-      return { verification: RESULTS, selection: BARRIER.id, timing: { key: 'sysml#level_crossing', caseId: null, startedAt: Date.now() - 3700, finishedAt: Date.now() } }
+      return { verification: RESULTS, selection: BARRIER.id, timing: { key: 'sysml#level-crossing', caseId: null, startedAt: Date.now() - 3700, finishedAt: Date.now() } }
     },
     expectState: () => {
       expect(count('.case-row.status-failed')).toBe(1)
@@ -133,7 +133,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     },
   },
   'address-unknown-example': {
-    seed: { verification: discovered([notRun(BARRIER), notRun(TWO_TRAINS)]), address: { kind: 'example', requested: 'level-crosing', flavorId: 'sysml', exampleId: 'level_crossing' } },
+    seed: { verification: discovered([notRun(BARRIER), notRun(TWO_TRAINS)]), address: { kind: 'example', requested: 'level-crosing', flavorId: 'sysml', exampleId: 'level-crossing' } },
     expectState: () => {
       expect(text('.orientation.is-error')).toContain('The address names the example "level-crosing"')
     },

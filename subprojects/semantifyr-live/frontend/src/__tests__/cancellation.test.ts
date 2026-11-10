@@ -11,7 +11,7 @@ import {
   runAllVerifications,
   verifySingleCase,
   type LspClient,
-} from '../lib/verification';
+} from '../lib/verification/engine';
 import { wrapClientWithMetrics } from '../lib/session/lspMetrics';
 import { sampleCase } from './fixtures/cases';
 

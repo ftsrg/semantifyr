@@ -55,7 +55,7 @@ function discovered(cases: VerificationCaseState[], phase: VerificationState['ph
 const RESULTS = discovered([finished(BARRIER, 'failed', 2.9), finished(TWO_TRAINS, 'passed', 0.8)], 'done')
 
 interface ScreenState {
-  embed: string
+  view: 'embed' | 'edit-only'
   seed: Seed
   expectState: () => void
 }
@@ -70,7 +70,7 @@ function count(selector: string): number {
 
 const STATES: Readonly<Record<string, ScreenState>> = {
   'rest': {
-    embed: '1',
+    view: 'embed',
     seed: { verification: discovered([notRun(BARRIER), notRun(TWO_TRAINS)]) },
     expectState: () => {
       expect(count('.strip-bar .button-primary')).toBe(1)
@@ -80,7 +80,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     },
   },
   'running': {
-    embed: '1',
+    view: 'embed',
     seed: { verification: discovered([{ caseInfo: BARRIER, status: 'running' }, { caseInfo: TWO_TRAINS, status: 'queued' }], 'running') },
     expectState: () => {
       expect(count('.strip-bar .button-cancel')).toBe(1)
@@ -90,7 +90,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     },
   },
   'results': {
-    embed: '1',
+    view: 'embed',
     seed: { verification: RESULTS },
     expectState: () => {
       expect(count('.embed-case.status-failed.has-trace')).toBe(1)
@@ -99,7 +99,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     },
   },
   'trace': {
-    embed: '1',
+    view: 'embed',
     seed: { verification: RESULTS, selection: BARRIER.id },
     expectState: () => {
       expect(count('.embed-case.is-open')).toBe(1)
@@ -107,7 +107,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     },
   },
   'server-unreachable': {
-    embed: '1',
+    view: 'embed',
     seed: { catalog: 'waiting' },
     expectState: () => {
       expect(text('[data-testid=status-message]')).toContain('The server is not answering')
@@ -116,7 +116,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     },
   },
   'edit-only': {
-    embed: 'edit',
+    view: 'edit-only',
     seed: { text: EXCERPT },
     expectState: () => {
       expect(count('.embed.is-edit-only')).toBe(1)
@@ -146,7 +146,7 @@ describe('the embed shell', () => {
     for (const [state, screen] of Object.entries(STATES)) {
       it(`lays out ${state} in the ${colorMode} theme and reports its height`, async () => {
         const address = `${window.location.pathname}${window.location.search}`
-        window.history.replaceState(null, '', `${window.location.pathname}?embed=${screen.embed}`)
+        window.history.replaceState(null, '', `${window.location.pathname}?view=${screen.view}`)
         expect(window.parent, 'the tests run in a frame').not.toBe(window)
         const posted = vi.spyOn(window.parent, 'postMessage')
         const { live, shell } = seedLive(screen.seed)

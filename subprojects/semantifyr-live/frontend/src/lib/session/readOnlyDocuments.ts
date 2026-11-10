@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { Location } from '@semantifyr/editor-common'
-
 // Library files a definition leads into are opened under this scheme, so no language client syncs them
 export const LIBRARY_SCHEME = 'live-library'
 
@@ -56,8 +54,4 @@ export function traceUriOf(fileUri: string): string {
 
 export function fileNameOf(uri: string): string {
   return uri.slice(uri.lastIndexOf('/') + 1)
-}
-
-export function toLibraryLocation<T extends Pick<Location, 'uri'>>(location: T): T {
-  return isLibraryFileUri(location.uri) ? { ...location, uri: libraryUriOf(location.uri) } : location
 }

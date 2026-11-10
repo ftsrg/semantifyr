@@ -6,6 +6,7 @@
 
 import type React from 'react'
 import { useEffect, useLayoutEffect, useState, useSyncExternalStore } from 'react'
+import { parseLiveEditorUrl } from '@semantifyr/editor-common'
 
 import { presentationOf } from '../lib/language/presentation'
 import { applyEditorTheme } from '../lib/session/editorTheme'
@@ -83,7 +84,7 @@ export function ShellRoot({ live, shell, colorMode, trace }: ShellRootProps): Re
   return (
     <LiveContext.Provider value={live}>
       <ShellContext.Provider value={shell}>
-        {SHELLS[chooseShell(window.location.search, phoneWidth)]({ colorMode, ...(trace ? { trace } : {}) })}
+        {SHELLS[chooseShell(parseLiveEditorUrl(window.location).view, phoneWidth)]({ colorMode, ...(trace ? { trace } : {}) })}
       </ShellContext.Provider>
     </LiveContext.Provider>
   )

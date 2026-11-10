@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { decodeCompressedBase64Url, parseLiveEditorUrl, type Range } from '@semantifyr/editor-common'
+import type { Range } from '@semantifyr/editor-common'
 
 import { findExample, liveFlavors, type LiveExample, type LiveFlavor } from '../../examples'
+import { readAddress, resolveAddress, type InitialDocument } from './address'
 import { createApi, type LiveServerApi } from '../api/rest'
 import type { PortfolioInfo } from '../api/types'
 import { createLanguageRegistry, type LanguageRegistry } from '../language/registry'
@@ -21,7 +22,7 @@ import type { ResolvedColorMode } from '../util/colorMode'
 import type { VerificationState } from '../verification/engine'
 import { createDocumentTabs, type DocumentTabs } from './documentTabs'
 import { flavorOfFile, type DocumentFile, type OpenedFile } from './files'
-import { decodeSharedResults, SHARED_RESULTS_PARAMETER, type SharedResults } from './sharedResults'
+import type { SharedResults } from './sharedResults'
 import { createVerification, type RunTiming } from './verification'
 
 const CATALOG_RETRY_MS = 5000
@@ -67,9 +68,9 @@ export interface RevealRequest {
   sequence: number
 }
 
-// The address named a language or an example that does not exist; what was opened in its place
+// The address named a language, a library or an example that does not exist, or carried what cannot be read; what was opened in its place
 export interface AddressProblem {
-  kind: 'language' | 'example' | 'results'
+  kind: 'language' | 'library' | 'example' | 'model' | 'results'
   requested: string
   flavorId: string
   exampleId: string
@@ -115,7 +116,10 @@ export interface Live {
   readonly tabs: DocumentTabs
   readonly pendingVerifyAll: ReadableStore<boolean>
   readonly runTiming: ReadableStore<RunTiming | null>
-  start: (search: string) => void
+  // the address of the page, or a path with its query and fragment
+  start: (location: string) => void
+  // the page moved to another address without loading, as a link of another fragment does
+  openAddress: (location: string) => void
   dispose: () => Promise<void>
   selectModel: (flavorId: string, exampleId: string) => void
   openFile: (opened: OpenedFile) => void
@@ -145,48 +149,6 @@ export function documentKey(flavorId: string, exampleId: string, shared: boolean
 
 export function documentUri(flavor: LiveFlavor): string {
   return `file:///workspace/${flavor.fileName}`
-}
-
-interface InitialDocument {
-  flavor: LiveFlavor
-  example: LiveExample
-  text: string
-  shared: boolean
-  problem: AddressProblem | null
-  file?: DocumentFile
-  // a document opened from a file replaces the shared one
-  replace?: boolean
-  results?: SharedResults
-}
-
-async function resolveInitialDocument(search: string, registry: LanguageRegistry, defaultFlavorId: string | undefined): Promise<InitialDocument> {
-  const parameters = parseLiveEditorUrl(search)
-  const flavor = registry.flavorOf(parameters.flavor) ?? registry.flavorOf(defaultFlavorId) ?? registry.flavors[0]
-  const decodedCode = parameters.compressedCode ? await decodeCompressedBase64Url(parameters.compressedCode) : null
-  const encodedResults = new URLSearchParams(search).get(SHARED_RESULTS_PARAMETER)
-  const results = encodedResults === null ? null : await decodeSharedResults(encodedResults)
-  const fallback = flavor.examples[0]
-  if (!fallback) {
-    throw new Error(`flavor ${flavor.id} has no examples`)
-  }
-  const unknownLanguage = parameters.flavor !== null && registry.flavorOf(parameters.flavor) === undefined
-  const problemOf = (kind: AddressProblem['kind'], requested: string, example: LiveExample): AddressProblem => {
-    return { kind, requested, flavorId: flavor.id, exampleId: example.id }
-  }
-  const resultsOf = results === null ? {} : { results }
-  const unreadable = (example: LiveExample): AddressProblem | null => {
-    return encodedResults !== null && results === null ? problemOf('results', '', example) : null
-  }
-  if (parameters.example) {
-    const found = findExample(flavor, parameters.example)
-    const example = found ?? fallback
-    const problem = unknownLanguage && parameters.flavor !== null
-      ? problemOf('language', parameters.flavor, example)
-      : found ? null : problemOf('example', parameters.example, example)
-    return { flavor, example, text: decodedCode ?? example.code, shared: false, problem: problem ?? unreadable(example), ...resultsOf }
-  }
-  const problem = unknownLanguage && parameters.flavor !== null ? problemOf('language', parameters.flavor, fallback) : null
-  return { flavor, example: fallback, text: decodedCode ?? fallback.code, shared: decodedCode !== null, problem: problem ?? unreadable(fallback), ...resultsOf }
 }
 
 export function createLive(options: LiveOptions): Live {
@@ -337,6 +299,8 @@ export function createLive(options: LiveOptions): Live {
     if (document.results) {
       verification.holdSelection(document.results.selectedCase)
       verification.verifyAll()
+    } else if (document.selectedCase !== undefined) {
+      verification.select(document.selectedCase)
     }
   }
 
@@ -367,10 +331,10 @@ export function createLive(options: LiveOptions): Live {
     }
   }
 
-  const loadCatalog = async (search: string): Promise<void> => {
+  const loadCatalog = async (location: string): Promise<void> => {
     try {
       const registry = createRegistry(liveFlavors(await server.fetchFlavors()))
-      const initial = await resolveInitialDocument(search, registry, options.defaultFlavorId)
+      const initial = await resolveAddress(readAddress(location), registry, options.defaultFlavorId)
       if (disposed) {
         return
       }
@@ -388,7 +352,7 @@ export function createLive(options: LiveOptions): Live {
       })
       catalogTimer = setTimeout(() => {
         catalogTimer = null
-        void loadCatalog(search)
+        void loadCatalog(location)
       }, options.catalogRetryMs ?? CATALOG_RETRY_MS)
     }
   }
@@ -420,12 +384,25 @@ export function createLive(options: LiveOptions): Live {
     tabs,
     pendingVerifyAll: verification.pending,
     runTiming: verification.timing,
-    start: (search) => {
+    start: (location) => {
       if (typeof window !== 'undefined') {
         window.addEventListener('online', handleOnline)
       }
       void loadPortfolios()
-      void loadCatalog(search)
+      void loadCatalog(location)
+    },
+    openAddress: (location) => {
+      const registry = catalog.get().registry
+      if (!registry) {
+        return
+      }
+      void resolveAddress(readAddress(location), registry, options.defaultFlavorId).then((initial) => {
+        if (disposed) {
+          return
+        }
+        address.set(initial.problem)
+        open(initial)
+      })
     },
     dispose: async () => {
       disposed = true

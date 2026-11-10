@@ -9,9 +9,10 @@ import { useState } from 'react'
 import { Popover } from '@base-ui/react/popover'
 import { liveEditorUrl } from '@semantifyr/editor-common'
 
+import { libraryOf } from '../../lib/workspace/address'
 import type { Live } from '../../lib/workspace/live'
 import { useLive } from '../../lib/workspace/liveContext'
-import { encodeSharedResults, SHARED_RESULTS_PARAMETER, sharedResultsOf } from '../../lib/workspace/sharedResults'
+import { sharedResultsOf } from '../../lib/workspace/sharedResults'
 import { Icon } from '../../ui/icons'
 
 type CopyState =
@@ -25,18 +26,17 @@ export async function shareLink(live: Live, withResults = false): Promise<string
     return null
   }
   const content = live.currentText() ?? document.text
-  const link = await liveEditorUrl(`${window.location.origin}${window.location.pathname}`, {
-    flavor: flavor.id,
-    example: document.shared ? undefined : document.example.id,
-    code: document.shared || content !== document.example.code ? content : undefined,
-  })
+  const untouched = !document.shared && content === document.example.code
   const results = withResults && documentKey !== null ? sharedResultsOf(live.verification.get().get(documentKey), live.selection.get()) : null
-  if (results === null) {
-    return link
-  }
-  const address = new URL(link)
-  address.searchParams.set(SHARED_RESULTS_PARAMETER, await encodeSharedResults(results))
-  return address.toString()
+  // a link opens the full editor, whatever view it was made in
+  return liveEditorUrl(`${window.location.origin}/`, {
+    language: flavor.languageId,
+    example: untouched ? document.example.id : undefined,
+    library: libraryOf(flavor.id),
+    model: untouched ? undefined : content,
+    case: results?.selectedCase ?? undefined,
+    verdicts: results === null ? undefined : [...results.verdicts],
+  })
 }
 
 function hasResults(live: Live): boolean {

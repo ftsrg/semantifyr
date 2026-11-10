@@ -4,12 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { decodeCompressedBase64Url, encodeCompressedBase64Url } from '@semantifyr/editor-common'
-
 import type { VerificationCaseState, VerificationState } from '../verification/engine'
 import { STATUS_WORDS, type CaseRow } from './caseRows'
-
-export const SHARED_RESULTS_PARAMETER = 'verdicts'
 
 export type SharedVerdict =
   | 'passed'
@@ -20,11 +16,6 @@ export type SharedVerdict =
 export interface SharedResults {
   selectedCase: string | null
   verdicts: ReadonlyMap<string, SharedVerdict>
-}
-
-interface SharedResultsWire {
-  selectedCase: string | null
-  verdicts: [string, SharedVerdict][]
 }
 
 const VERDICTS: readonly SharedVerdict[] = [
@@ -65,39 +56,22 @@ export function sharedResultsOf(state: VerificationState | undefined, selectedCa
   return verdicts.size === 0 ? null : { selectedCase: verdicts.has(selectedCase ?? '') ? selectedCase : null, verdicts }
 }
 
-export async function encodeSharedResults(results: SharedResults): Promise<string> {
-  const wire: SharedResultsWire = { selectedCase: results.selectedCase, verdicts: [...results.verdicts] }
-  return encodeCompressedBase64Url(JSON.stringify(wire))
-}
-
 function isVerdict(value: unknown): value is SharedVerdict {
   return VERDICTS.some((verdict) => {
     return verdict === value
   })
 }
 
-export async function decodeSharedResults(encoded: string): Promise<SharedResults | null> {
-  const text = await decodeCompressedBase64Url(encoded)
-  if (text === null) {
-    return null
-  }
-  try {
-    const wire = JSON.parse(text) as Partial<SharedResultsWire>
-    const entries = wire.verdicts
-    if (!Array.isArray(entries) || entries.length === 0) {
+// null when a verdict is not one of the four or none is given
+export function verdictsOf(entries: readonly (readonly [string, string])[]): ReadonlyMap<string, SharedVerdict> | null {
+  const verdicts = new Map<string, SharedVerdict>()
+  for (const [caseId, verdict] of entries) {
+    if (!isVerdict(verdict)) {
       return null
     }
-    const verdicts = new Map<string, SharedVerdict>()
-    for (const entry of entries) {
-      if (!Array.isArray(entry) || typeof entry[0] !== 'string' || !isVerdict(entry[1])) {
-        return null
-      }
-      verdicts.set(entry[0], entry[1])
-    }
-    return { selectedCase: typeof wire.selectedCase === 'string' ? wire.selectedCase : null, verdicts }
-  } catch {
-    return null
+    verdicts.set(caseId, verdict)
   }
+  return verdicts.size === 0 ? null : verdicts
 }
 
 function finished(row: CaseRow): boolean {

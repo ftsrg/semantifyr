@@ -14,7 +14,7 @@ import { connectionConnected, INITIAL_CONNECTION, type ConnectionState } from '.
 import { finishStep, initializationOf, InitializationSteps, startStep } from '../../lib/stores/initialization'
 import { createSettingsStore } from '../../lib/stores/settings'
 import { constantStore, createStore } from '../../lib/stores/store'
-import type { LspClient } from '../../lib/verification'
+import type { LspClient } from '../../lib/verification/engine'
 import { createLive, type Live, type LiveOptions } from '../../lib/workspace/live'
 import { servedFlavors } from '../fixtures/flavors'
 

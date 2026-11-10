@@ -26,7 +26,6 @@ import { normalizeBaseUrl, type NavigateToParams } from '@semantifyr/editor-comm
 import type { ResolvedColorMode } from '../util/colorMode';
 import { observeSocketClose, type SocketClose } from './reconnectController';
 import type { ModelDocuments } from './modelDocuments';
-import type { SemantifyrLiveApi } from '../api/lspExtensions';
 import { DERIVED_SCHEME, fileUriOfLibrary, isLibraryFileUri, LIBRARY_SCHEME, libraryUriOf, TRACE_SCHEME } from './readOnlyDocuments';
 
 // Synced from :semantifyr-vscode by the cloneVscodeLanguageAssets Gradle task.
@@ -324,20 +323,6 @@ export function whenMonacoReady(): Promise<void> {
   return monacoReady;
 }
 
-export async function applyColorTheme(colorMode: ResolvedColorMode): Promise<void> {
-  if (!apiWrapperPromise) {
-    return
-  }
-  try {
-    await apiWrapperPromise
-    await vscode.workspace
-      .getConfiguration()
-      .update('workbench.colorTheme', themeIdFor(colorMode), vscode.ConfigurationTarget.Global)
-  } catch (error) {
-    console.warn('semantifyr-live: applyColorTheme failed', error)
-  }
-}
-
 export function onDiagnosticsOf(uri: string, listener: () => void): () => void {
   let subscription: { dispose: () => void } | null = null;
   let disposed = false;
@@ -357,10 +342,6 @@ export function onDiagnosticsOf(uri: string, listener: () => void): () => void {
     disposed = true;
     subscription?.dispose();
   };
-}
-
-export function createFileUri(fileName: string): vscode.Uri {
-  return vscode.Uri.file(`/workspace/${fileName}`);
 }
 
 export interface EditorInstance {
@@ -397,64 +378,6 @@ export async function createEditor(
   }
 
   return { editorApp, fsOverlay };
-}
-
-export interface SecondaryEditorHandle {
-  dispose: () => void;
-}
-
-export type ReadonlyEditorOpener = (host: HTMLElement, uri: string, language: string) => Promise<SecondaryEditorHandle>;
-
-export async function createSecondaryEditor(
-  host: HTMLElement,
-  fileUri: vscode.Uri,
-  language: string,
-  initialContent: string,
-  options: { readOnly?: boolean } = {},
-): Promise<SecondaryEditorHandle> {
-  if (!apiWrapperPromise) {
-    throw new Error('createSecondaryEditor called before the primary editor is up');
-  }
-  await apiWrapperPromise;
-
-  const fileSystemProvider = new RegisteredFileSystemProvider(false);
-  fileSystemProvider.registerFile(new RegisteredMemoryFile(fileUri, initialContent));
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-assignment -- monaco-vscode-api declares the file enums in several modules
-  const fsOverlay = registerFileSystemOverlay(1, fileSystemProvider);
-
-  const editorAppConfig: EditorAppConfig = {
-    codeResources: {
-      modified: { text: initialContent, uri: fileUri.path, enforceLanguageId: language },
-    },
-    editorOptions: { ...EDITOR_OPTIONS, readOnly: options.readOnly ?? false },
-  };
-  const editorApp = new EditorApp(editorAppConfig);
-  await editorApp.start(host);
-
-  return {
-    dispose: () => {
-      try {
-        void editorApp.dispose();
-      } catch {
-        /* ignore */
-      }
-      try {
-        fsOverlay.dispose();
-      } catch {
-        /* ignore */
-      }
-    },
-  };
-}
-
-export async function attachReadonlyEditor(
-  host: HTMLElement,
-  api: SemantifyrLiveApi,
-  uri: string,
-  language: string,
-): Promise<SecondaryEditorHandle> {
-  const content = (await api.readDocument(uri)) ?? '// Witness source unavailable.';
-  return createSecondaryEditor(host, vscode.Uri.parse(uri), language, content, { readOnly: true });
 }
 
 export function createModelDocuments(): ModelDocuments {

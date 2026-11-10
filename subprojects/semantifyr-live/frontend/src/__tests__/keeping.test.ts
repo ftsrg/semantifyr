@@ -5,12 +5,11 @@
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { VerificationCaseSpecification } from '@semantifyr/editor-common'
+import { encodeCompressedBase64Url, type VerificationCaseSpecification } from '@semantifyr/editor-common'
 
-import type { LspClient } from '../lib/verification'
+import type { LspClient } from '../lib/verification/engine'
 import { flavorOfFile, languageOfFile, type DocumentFile, type FileAccess } from '../lib/workspace/files'
 import { saveDocument, saveDocumentAs } from '../lib/workspace/keeping'
-import { encodeSharedResults, SHARED_RESULTS_PARAMETER } from '../lib/workspace/sharedResults'
 import { fakeRegistry, createTestLive, testFlavors, type TestLive } from './helpers/live'
 import { failedResult, passedResult } from './fixtures/verification-results'
 
@@ -345,14 +344,8 @@ describe('a link with results', () => {
 
   it('starts the verification by itself and keeps the sharer\'s selected case selected when the run ends', async () => {
     const verified: number[] = []
-    const encoded = await encodeSharedResults({
-      selectedCase: 'a',
-      verdicts: new Map([
-        ['a', 'passed'],
-        ['b', 'passed'],
-      ]),
-    })
-    const search = `?mode=oxsts&${SHARED_RESULTS_PARAMETER}=${encoded}`
+    const encoded = await encodeCompressedBase64Url(JSON.stringify([['a', 'passed'], ['b', 'passed']]))
+    const search = `/oxsts#case=a&verdicts=${encoded}`
     open = createTestLive(answering([caseAt('a', 1), caseAt('b', 2)], verified))
     open.live.start(search)
     await vi.waitFor(() => {
@@ -374,9 +367,9 @@ describe('a link with results', () => {
   })
 
   it('forgets the sharer\'s verdicts when the model is edited', async () => {
-    const encoded = await encodeSharedResults({ selectedCase: null, verdicts: new Map([['a', 'passed']]) })
+    const encoded = await encodeCompressedBase64Url(JSON.stringify([['a', 'passed']]))
     open = createTestLive(answering([caseAt('a', 1)]))
-    open.live.start(`?mode=oxsts&${SHARED_RESULTS_PARAMETER}=${encoded}`)
+    open.live.start(`/oxsts#verdicts=${encoded}`)
     await vi.waitFor(() => {
       expect(open!.live.sharedResults.get()).not.toBeNull()
     })
@@ -389,7 +382,7 @@ describe('a link with results', () => {
 
   it('opens the model and says so when the results cannot be read', async () => {
     open = createTestLive(answering([caseAt('a', 1)]))
-    open.live.start(`?mode=oxsts&${SHARED_RESULTS_PARAMETER}=garbled`)
+    open.live.start('/oxsts#verdicts=garbled')
     await vi.waitFor(() => {
       expect(open!.live.workspace.get().runtime).not.toBeNull()
     })
@@ -401,7 +394,7 @@ describe('a link with results', () => {
 
   it('opens as it does today without results', async () => {
     open = createTestLive(answering([]))
-    open.live.start('?mode=oxsts')
+    open.live.start('/oxsts')
     await vi.waitFor(() => {
       expect(open!.live.workspace.get().runtime).not.toBeNull()
     })
