@@ -41,38 +41,26 @@ class CompileTimeExpressionEvaluator @AssistedInject constructor(
     }
 
     override fun visit(expression: ComparisonOperator): ExpressionEvaluation {
-        val left = evaluate(expression.getLeft())
-        val right = evaluate(expression.getRight())
+        val left = instancesOrNull(evaluate(expression.getLeft()))
+        val right = instancesOrNull(evaluate(expression.getRight()))
 
-        if (left is InstanceEvaluation) {
-            if (right is InstanceEvaluation) {
-                return when (expression.getOp()) {
-                    ComparisonOp.EQ -> BooleanEvaluation((left.instances - right.instances).isEmpty())
-                    ComparisonOp.NOT_EQ -> BooleanEvaluation(!(left.instances - right.instances).isEmpty())
-                    else -> sourceError(expression, "Unsupported comparison operator for instance operands: ${expression.getOp()}")
-                }
-            }
-
-            if (right is NothingEvaluation) {
-                return when (expression.getOp()) {
-                    ComparisonOp.EQ -> BooleanEvaluation(left.instances.isEmpty())
-                    ComparisonOp.NOT_EQ -> BooleanEvaluation(left.instances.any())
-                    else -> sourceError(expression, "Unsupported comparison operator when comparing instance to nothing: ${expression.getOp()}")
-                }
-            }
+        if (left == null || right == null) {
+            return super.visit(expression)
         }
 
-        if (right is InstanceEvaluation) {
-            if (left is NothingEvaluation) {
-                return when (expression.getOp()) {
-                    ComparisonOp.EQ -> BooleanEvaluation(right.instances.isEmpty())
-                    ComparisonOp.NOT_EQ -> BooleanEvaluation(right.instances.any())
-                    else -> sourceError(expression, "Unsupported comparison operator when comparing nothing to instance: ${expression.getOp()}")
-                }
-            }
+        return when (expression.getOp()) {
+            ComparisonOp.EQ -> BooleanEvaluation(left == right)
+            ComparisonOp.NOT_EQ -> BooleanEvaluation(left != right)
+            else -> sourceError(expression, "Unsupported comparison operator for instance operands: ${expression.getOp()}")
         }
+    }
 
-        return super.visit(expression)
+    private fun instancesOrNull(evaluation: ExpressionEvaluation): Set<Instance>? {
+        return when (evaluation) {
+            is InstanceEvaluation -> evaluation.instances
+            is NothingEvaluation -> emptySet()
+            else -> null
+        }
     }
 
     override fun visit(expression: SelfReference): ExpressionEvaluation {

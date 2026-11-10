@@ -1,0 +1,79 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::verification::lang::member_dispatch
+
+class Gauge {
+    var level: int := 0
+}
+
+class Worker {
+    var level: int := 0
+    contains gauge: Gauge
+}
+
+class Plant {
+    contains first: Worker
+    contains second: Worker
+    var current: Worker[0..1] := nothing
+    var seen: int := 0
+
+    redefine init {
+        first.level := 1
+        first.gauge.level := 1
+        second.level := 2
+        second.gauge.level := 2
+        choice {
+            current := first
+        } or {
+            current := second
+        }
+    }
+
+    prop levelOf(worker: Worker[0..1]): int {
+        return worker.level
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class MemberReadThroughVariableReach : Plant {
+    redefine tran {
+        seen := current.level
+    }
+
+    prop {
+        return EF seen == 2
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class MemberReadThroughVariableUnreachable : Plant {
+    redefine tran {
+        seen := current.level
+    }
+
+    prop {
+        return EF seen == 3
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class MemberReadThroughVariableBound : Plant {
+    prop {
+        return AG current.gauge.level == levelOf(current)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class MemberReadThroughVariableViolated : Plant {
+    prop {
+        return AG levelOf(current) == 1
+    }
+}

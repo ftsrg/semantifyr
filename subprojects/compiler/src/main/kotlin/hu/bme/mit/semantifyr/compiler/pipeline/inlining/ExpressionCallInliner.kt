@@ -58,6 +58,13 @@ class ExpressionCallInliner @AssistedInject constructor(
         processAll()
     }
 
+    fun processWriteTarget(target: Expression) {
+        if (expressionCallExpander.isThroughRuntimeHolder(target, instance)) {
+            sourceError(target, "Writing through a variable is not supported.")
+        }
+        process(target)
+    }
+
     private fun processAll() {
         while (processorQueue.any()) {
             val next = processorQueue.removeFirst()
@@ -146,6 +153,9 @@ class ExpressionCallInliner @AssistedInject constructor(
     }
 
     override fun visit(expression: NavigationSuffixExpression) {
+        if (dispatchMemberRead(expression)) {
+            return
+        }
         if (expression.member.eContainer() is RecordDeclaration) {
             processorQueue.addFirst(expression.primary)
             return
@@ -162,7 +172,18 @@ class ExpressionCallInliner @AssistedInject constructor(
     }
 
     override fun visit(expression: IndexingSuffixExpression) {
+        if (dispatchMemberRead(expression)) {
+            return
+        }
         processorQueue.addFirst(expression.index)
+    }
+
+    private fun dispatchMemberRead(expression: Expression): Boolean {
+        val dispatched = expressionCallExpander.dispatchMemberReadOrNull(expression, instance) ?: return false
+        EcoreUtil2.replace(expression, dispatched)
+        processorQueue.addFirst(dispatched)
+        compilationArtifactManager.commitStep(CompilationPass.ExpressionCallInlining)
+        return true
     }
 
     override fun visit(expression: CastExpression) {

@@ -103,7 +103,7 @@ class OperationCallInliner @AssistedInject constructor(
     }
 
     override fun visit(operation: HavocOperation) {
-        // NO-OP
+        expressionCallInliner.processWriteTarget(operation.reference)
     }
 
     override fun visit(operation: AssumptionOperation) {
@@ -111,6 +111,7 @@ class OperationCallInliner @AssistedInject constructor(
     }
 
     override fun visit(operation: AssignmentOperation) {
+        expressionCallInliner.processWriteTarget(operation.reference)
         expressionCallInliner.process(operation.expression)
     }
 

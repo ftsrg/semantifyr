@@ -108,8 +108,8 @@ class Region {
     contains states: State[0..*] opposite parentRegion
     container parentState: State[0..1] opposite regions
 
-    contains abstractTransitions: AbstractTransition[0..*]
-    contains transitions: Transition[0..*] subsets abstractTransitions opposite parentRegion
+    contains abstractTransitions: AbstractTransition[0..*] opposite parentRegion
+    contains transitions: Transition[0..*] subsets abstractTransitions
     contains entryTransitions: EntryTransition[0..*] subsets abstractTransitions
 
     @Control
@@ -252,7 +252,7 @@ class Guard {
 }
 
 abstract class AbstractTransition {
-    container parentRegion: Region[1] opposite transitions
+    container parentRegion: Region[1] opposite abstractTransitions
 
     refers to: State[1]
 

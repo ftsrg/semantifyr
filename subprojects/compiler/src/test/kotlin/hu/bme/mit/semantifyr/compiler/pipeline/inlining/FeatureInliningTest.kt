@@ -430,6 +430,38 @@ class FeatureInliningTest : InliningTestBase() {
             .doesNotContain("root.counter := 1")
     }
 
+    @Test
+    fun `an inline if comparing an empty instance set with a non-empty one takes its else branch`() {
+        val main = inlinedMain(
+            "Host",
+            """
+                package inlining::tests
+                class Item {
+                }
+                @VerificationCase
+                class Host {
+                    contains first: Item[1]
+                    contains absent: Item[0..1]
+                    var counter: int := 0
+                    redefine tran {
+                        inline if (absent == first) {
+                            counter := 1
+                        } else {
+                            counter := 2
+                        }
+                    }
+                    prop {
+                        return AG true
+                    }
+                }
+            """,
+        )
+
+        assertThat(main)
+            .contains("root.counter := 2")
+            .doesNotContain("root.counter := 1")
+    }
+
     private fun inlinedMain(
         className: String,
         source: String,

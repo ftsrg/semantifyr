@@ -108,7 +108,7 @@ class InlineOperationExpander @Inject constructor(
         instance: Instance,
         target: CallTarget.VariableDispatch,
     ): Operation {
-        if (target.candidateInstances.isEmpty()) {
+        if (target.branches.isEmpty()) {
             sourceError(
                 callExpression,
                 "Variable '${target.variable.name}' has no candidate instances to dispatch the call over.",
@@ -116,11 +116,11 @@ class InlineOperationExpander @Inject constructor(
         }
 
         val dispatch = OxstsFactory.createChoiceOperation()
-        for (candidate in target.candidateInstances) {
-            val candidateReference = instanceReferenceProvider.getReference(candidate)
+        for (branch in target.branches) {
+            val candidateReference = instanceReferenceProvider.getReference(branch.candidateInstance)
             val inlinedBranch = inlineTransitionCall(
                 instance = instance,
-                containerInstance = candidate,
+                containerInstance = branch.containerInstance,
                 transitionDeclaration = transitionDeclaration,
                 callExpression = callExpression,
             )

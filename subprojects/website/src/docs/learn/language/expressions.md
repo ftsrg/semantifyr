@@ -82,6 +82,8 @@ Until November 2026 the three boolean operators shared one level and read left t
 | `==` | Equal |
 | `!=` | Not equal |
 
+Evaluated at compile time, as in an `inline if` guard, `==` between instance expressions (features, `self`, navigations, `nothing`) compares the sets of instances the two sides denote: they are equal when they hold the same instances, in any order. `nothing` is the empty set, so an empty side equals only another empty side, and `!=` is the negation of `==`.
+
 ## Arithmetic Operators
 
 | Operator | Description |
@@ -100,7 +102,7 @@ Until November 2026 the three boolean operators shared one level and read left t
 
 ## Member Access (`.`)
 
-The `.` operator names a member of an instance.
+The `.` operator names a member of an instance. When the instance is held by a variable, the member of the instance the variable holds is read (see [Feature-Typed Variables](variables.md#feature-typed-variables)).
 
 ```oxsts fragment
 counter.value

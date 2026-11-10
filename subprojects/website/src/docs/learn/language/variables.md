@@ -35,7 +35,7 @@ When no execution of `init` is enabled, as with `init { assume(false) }`, the sy
 
 ## Multiplicity on the Type
 
-A variable type may include a multiplicity bracket. This is how optional values are declared. A bounded multiplicity above one declares a fixed-size array, such as `var slots: int[3] := [0, 0, 0]`, whose initializer gives every slot. An array of class or feature type, such as `var queue: Job[2] := [first, second]`, holds one instance per slot, and a call through a slot, such as `inline queue[i].finish()`, runs on the instance the slot holds. An array is read and written slot by slot (`slots[i]`), or as a whole: `slots := other`, `slots := [0, 0, 0]`, `havoc(slots)` and `slots == other` act on every slot.
+A variable type may include a multiplicity bracket. This is how optional values are declared. A bounded multiplicity above one declares a fixed-size array, such as `var slots: int[3] := [0, 0, 0]`, whose initializer gives every slot. An array of class or feature type, such as `var queue: Job[2] := [first, second]`, holds one instance per slot, and a call or a read through a slot, such as `inline queue[i].finish()` or `queue[i].done`, acts on the instance the slot holds. An array is read and written slot by slot (`slots[i]`), or as a whole: `slots := other`, `slots := [0, 0, 0]`, `havoc(slots)` and `slots == other` act on every slot.
 
 ```oxsts fragment
 var occupant: Item[0..1] := nothing
@@ -43,7 +43,7 @@ var occupant: Item[0..1] := nothing
 
 ## Feature-Typed Variables
 
-A variable's type may be a [feature](features.md). The value domain of such a *feature-typed variable* is the set of instances reachable through that feature. A call through the variable, such as `inline active.step()`, runs the call on the instance the variable holds; the validator rejects member access through a variable or an array slot, such as `active.value` (`OXSTS.UNSUPPORTED_FEATURE`).
+A variable's type may be a [feature](features.md). The value domain of such a *feature-typed variable* is the set of instances reachable through that feature. A call through the variable, such as `inline active.step()`, runs the call on the instance the variable holds, and a read through it, such as `active.value` or `active.child.value`, reads the member of that instance. The same holds for a variable of class type, whose value domain is every instance of the class, for an array slot (`queue[i].value`), a local variable and the loop variable of a runtime `for`. A write through a variable, such as `active.value := 1` or `havoc(active.value)`, and optional navigation through one, such as `active?.value` or `inline active?.step()`, are rejected (`OXSTS.UNSUPPORTED_FEATURE`).
 
 ```oxsts fragment
 class Region {

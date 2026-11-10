@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package semantifyr::constructs::member_access_through_variable
+package semantifyr::constructs::write_through_variable
 
 class Worker {
     var done: bool := false
@@ -16,9 +16,10 @@ class Host {
 
     redefine tran {
         current := worker
+        current.done := true
     }
 
     prop {
-        return EF current.done
+        return EF worker.done
     }
 }
