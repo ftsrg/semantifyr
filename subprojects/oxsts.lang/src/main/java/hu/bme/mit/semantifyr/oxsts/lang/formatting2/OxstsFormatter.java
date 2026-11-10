@@ -138,11 +138,6 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         hrf.setNewLines(0, 0, 1);
     }
 
-    protected void spaceOrNewLine(IHiddenRegionFormatter hrf) {
-        hrf.setNewLines(0, 0, 1);
-        hrf.oneSpace();
-    }
-
     protected void format(OxstsModelPackage _package, IFormattableDocument document) {
         document.append(regionFor(_package).keyword("package"), this::oneSpace);
 
@@ -553,15 +548,29 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         var open = regionFor(recordLiteral).keyword("{");
         var close = regionFor(recordLiteral).keyword("}");
         document.prepend(open, this::oneSpace);
-        document.prepend(close, this::spaceOrNewLine);
-        document.interior(open, close, this::indent);
         document.prepend(allRegionsFor(recordLiteral).keyword(","), this::noSpace);
+        if (spansLines(recordLiteral)) {
+            document.prepend(close, this::newLine);
+            document.interior(open, close, this::indent);
+        } else {
+            document.prepend(close, this::oneSpace);
+        }
 
         recordLiteral.getFields().forEach(document::format);
     }
 
+    // a literal written over several lines keeps one field per line and its closing brace on a line of its own
+    protected boolean spansLines(RecordLiteral recordLiteral) {
+        var region = getTextRegionAccess().regionForEObject(recordLiteral);
+        return region != null && region.getText().contains("\n");
+    }
+
     protected void format(FieldAssignment fieldAssignment, IFormattableDocument document) {
-        document.set(previousHiddenRegion(fieldAssignment), this::spaceOrNewLine);
+        if (fieldAssignment.eContainer() instanceof RecordLiteral recordLiteral && spansLines(recordLiteral)) {
+            document.set(previousHiddenRegion(fieldAssignment), this::newLine);
+        } else {
+            document.set(previousHiddenRegion(fieldAssignment), this::oneSpace);
+        }
         document.surround(regionFor(fieldAssignment).keyword("="), this::oneSpace);
 
         document.format(fieldAssignment.getExpression());
