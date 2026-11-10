@@ -242,7 +242,7 @@ class RedefinitionInliningTest : InliningTestBase() {
                 }
 
                 tran {
-                    assume (root.thresholdSensor.count < 3)
+                    assume(root.thresholdSensor.count < 3)
                     root.thresholdSensor.count := root.thresholdSensor.count + 1
                 }
 

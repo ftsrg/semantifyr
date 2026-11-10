@@ -181,7 +181,7 @@ public class ModalityValidationTest {
             }
             """, CheckMode.ALL);
 
-        parsedPackage.assertHasValidationIssue(OxstsValidator.INCORRECT_ASSIGNMENT, "modality COMPILE_TIME");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.INCORRECT_ASSIGNMENT, "loop variable");
     }
 
     @Test
@@ -197,7 +197,7 @@ public class ModalityValidationTest {
             }
             """, CheckMode.ALL);
 
-        parsedPackage.assertHasValidationIssue(OxstsValidator.INCORRECT_ASSIGNMENT, "modality COMPILE_TIME");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.INCORRECT_ASSIGNMENT, "loop variable");
     }
 
     @Test

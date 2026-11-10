@@ -13,7 +13,6 @@ import semantifyr::sysml::items
 import semantifyr::sysml::actions
 
 abstract class AcceptAction {
-
     prop isTriggered(): bool {
         return true // should be abstract, but no good way to specify defaults atm
     }
@@ -22,7 +21,7 @@ abstract class AcceptAction {
     }
 
     tran assumeIsTriggered() {
-        assume (isTriggered())
+        assume(isTriggered())
     }
 
     tran initialize() {
@@ -30,7 +29,6 @@ abstract class AcceptAction {
 }
 
 class AcceptItemAction : AcceptAction {
-
     refers viaPort: Port
     refers payload: Item
 
@@ -40,7 +38,6 @@ class AcceptItemAction : AcceptAction {
 }
 
 class AcceptTimeoutAction : AcceptAction {
-
     refers afterTime: int = 1
 
     var remainingTime: int := 0
@@ -61,11 +58,9 @@ class AcceptTimeoutAction : AcceptAction {
 }
 
 class AcceptWhenAction : AcceptAction {
-
     contains expression: Expression
 
     redefine prop isTriggered(): bool {
         return expression.evaluate() as bool
     }
-
 }

@@ -24,6 +24,7 @@ import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.VerificationCase
+import hu.bme.mit.semantifyr.verifier.caseDirectory
 import hu.bme.mit.semantifyr.verifier.caseDirectoryName
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import org.eclipse.xtext.resource.SaveOptions
@@ -99,7 +100,7 @@ class CompileCommand @Inject constructor(
         target: Path,
     ) {
         echo("Compiling ${case.qualifiedName} to $target")
-        val caseDirectory = artifactOptions.resolvedOutputDirectory.resolve(caseDirectoryName(case))
+        val caseDirectory = caseDirectory(artifactOptions.resolvedOutputDirectory, case)
         val compiled = compileCase(compiler, case, caseDirectory)
         writeInlinedOxsts(compiled.inlinedOxsts, target)
         if (caseDirectory.isDirectory()) {

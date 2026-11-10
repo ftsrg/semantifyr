@@ -25,8 +25,8 @@ class SourceErrorTest {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var first : int := 0
-                var second : int := 0
+                var first: int := 0
+                var second: int := 0
                 init {
                 }
                 tran {
@@ -52,8 +52,8 @@ class SourceErrorTest {
         val inlined = parseHelper.parse(
             """
                 inlined oxsts of semantifyr::Anything
-                var first : int := 0
-                var second : int := 0
+                var first: int := 0
+                var second: int := 0
                 init {
                 }
                 tran {

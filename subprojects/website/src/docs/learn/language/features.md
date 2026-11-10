@@ -43,8 +43,6 @@ class Display {
 A `container` feature is the **reverse** of a `contains` feature: the child pointing back to its owning parent. A `container` must always be paired with the corresponding `contains` via `opposite`. A validation rule enforces this pairing.
 
 ```oxsts
-package example
-
 class Tree {
   contains children: Tree[0..*] opposite parent
   container parent: Tree[0..1] opposite children
@@ -67,8 +65,6 @@ class StateNode {
 The `features` keyword declares an **abstract** feature whose kind is left to subclasses. A subclass redefines it as a concrete `contains` or `refers`, or fills it through features that [subset](#subsets) it: one that is not redefined holds the instances of its subsetters.
 
 ```oxsts
-package example
-
 abstract class Container {
   features payload: any
 }
@@ -100,8 +96,6 @@ The infinity literal `*` is allowed in ranges (`0..*`); a bare `[*]` is rejected
 `opposite` declares a bidirectional relationship: navigating in one direction automatically populates the other. A validation rule enforces that opposite features point to each other and that `container`/`contains` pairs match.
 
 ```oxsts
-package example
-
 class Tree {
   contains children: Tree[0..*] opposite parent
   container parent: Tree[0..1] opposite children

@@ -79,6 +79,7 @@ public class OxstsRuntimeModule extends AbstractOxstsRuntimeModule {
         binder.bind(FormatterRequest.class).toProvider(() -> {
             MapBasedPreferenceValues preferences = new MapBasedPreferenceValues();
             preferences.put(FormatterPreferenceKeys.lineSeparator, "\n");
+            preferences.put(FormatterPreferenceKeys.indentation, "    ");
             return new FormatterRequest().setPreferences(preferences).setExceptionHandler(ExceptionAcceptor.THROWING);
         });
     }

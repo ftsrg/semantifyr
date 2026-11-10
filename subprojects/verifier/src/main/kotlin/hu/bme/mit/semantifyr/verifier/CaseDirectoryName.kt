@@ -23,8 +23,12 @@ fun caseDirectoryName(case: VerificationCase): String {
     return "${name.take(MAX_CASE_DIRECTORY_LENGTH - hash.length - 1)}-$hash"
 }
 
+fun caseDirectory(outputDirectory: Path, case: VerificationCase): Path {
+    return outputDirectory.resolve(caseDirectoryName(case))
+}
+
 fun caseReportPath(outputDirectory: Path, case: VerificationCase): Path {
-    return reportPath(outputDirectory.resolve(caseDirectoryName(case)))
+    return reportPath(caseDirectory(outputDirectory, case))
 }
 
 internal fun reportPath(caseDirectory: Path): Path {

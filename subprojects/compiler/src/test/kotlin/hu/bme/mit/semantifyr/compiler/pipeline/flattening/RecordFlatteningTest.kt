@@ -106,7 +106,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
         val previousX = quoted(field("previous", "x"))
         val previousY = quoted(field("previous", "y"))
         val main = serialize(flattened.inlinedOxsts.mainTransition)
-        assertThat(main).contains("$positionX := $positionX + 1", "$previousX := $positionX", "$previousY := $positionY", "havoc ($positionX)", "havoc ($positionY)")
+        assertThat(main).contains("$positionX := $positionX + 1", "$previousX := $positionX", "$previousY := $positionY", "havoc($positionX)", "havoc($positionY)")
         assertThat(serialize(flattened.inlinedOxsts.property)).contains("$positionX != $previousX || $positionY != $previousY")
     }
 
@@ -155,8 +155,8 @@ class RecordFlatteningTest : FlatteningTestBase() {
         val positionX = Regex.escape(quoted(field("position", "x")))
         val positionY = Regex.escape(quoted(field("position", "y")))
         val main = serialize(flattened.inlinedOxsts.mainTransition)
-        assertThat(main).containsPattern("var ${localField("copy", "x")} : int := $positionX")
-        assertThat(main).containsPattern("var ${localField("copy", "y")} : int := $positionY")
+        assertThat(main).containsPattern("var ${localField("copy", "x")}: int := $positionX")
+        assertThat(main).containsPattern("var ${localField("copy", "y")}: int := $positionY")
         assertThat(main).containsPattern("$positionX := ${localField("copy", "x")}")
     }
 
@@ -180,8 +180,8 @@ class RecordFlatteningTest : FlatteningTestBase() {
         )
 
         val main = serialize(flattened.inlinedOxsts.mainTransition)
-        assertThat(main).containsPattern("var ${localField("fresh", "x")} : int := 4")
-        assertThat(main).containsPattern("var ${localField("fresh", "y")} : int := 7")
+        assertThat(main).containsPattern("var ${localField("fresh", "x")}: int := 4")
+        assertThat(main).containsPattern("var ${localField("fresh", "y")}: int := 7")
         assertThat(main).doesNotContain("havoc")
     }
 
@@ -214,7 +214,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
             val position = Regex.escape(quoted(field("position", name)))
             val previous = Regex.escape(quoted(field("previous", name)))
             val target = localField("target", name)
-            assertThat(main).containsPattern("var $target : int := $previous")
+            assertThat(main).containsPattern("var $target: int := $previous")
             assertThat(main).containsPattern("$position := if $flag then $target else $position")
         }
     }
@@ -291,8 +291,8 @@ class RecordFlatteningTest : FlatteningTestBase() {
         assertThat(serialize(flattened.variableNamed(field("position", "y")))).contains(":= 2")
         val positionY = Regex.escape(quoted(field("position", "y")))
         val main = serialize(flattened.inlinedOxsts.mainTransition)
-        assertThat(main).containsPattern("var ${localField("local", "x")} : int := $positionY")
-        assertThat(main).containsPattern("var ${localField("local", "y")} : int := 7")
+        assertThat(main).containsPattern("var ${localField("local", "x")}: int := $positionY")
+        assertThat(main).containsPattern("var ${localField("local", "y")}: int := 7")
     }
 
     @Test
@@ -382,8 +382,8 @@ class RecordFlatteningTest : FlatteningTestBase() {
         val main = serialize(flattened.inlinedOxsts.mainTransition)
         val targetX = localField("target", "x")
         val targetY = localField("target", "y")
-        assertThat(main).containsPattern("var $targetX : int := $last \\+ 1")
-        assertThat(main).containsPattern("var $targetY : int := 7")
+        assertThat(main).containsPattern("var $targetX: int := $last \\+ 1")
+        assertThat(main).containsPattern("var $targetY: int := 7")
         assertThat(main).containsPattern("$positionX := $targetX")
         assertThat(main).containsPattern("$positionY := $targetY")
         assertThat(main).containsPattern("$last := $targetX")
@@ -439,7 +439,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
         val positionX = Regex.escape(quoted(field("position", "x")))
         val positionY = Regex.escape(quoted(field("position", "y")))
         val main = serialize(flattened.inlinedOxsts.mainTransition)
-        assertThat(main).containsPattern("var ${saved(field("position", "y"))} : int := $positionX \\+ 1\\s+$positionX := $positionX \\+ 1\\s+$positionY := ${saved(field("position", "y"))}")
+        assertThat(main).containsPattern("var ${saved(field("position", "y"))}: int := $positionX \\+ 1\\s+$positionX := $positionX \\+ 1\\s+$positionY := ${saved(field("position", "y"))}")
     }
 
     @Test
@@ -469,7 +469,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
         val savedPy = saved(field("position", "y"))
         val savedGuard = saved(field("previous", "y"))
         val main = serialize(flattened.inlinedOxsts.mainTransition)
-        assertThat(main).containsPattern("var $savedPy : int := $positionX\\s+$positionX := $positionY\\s+$positionY := $savedPy")
-        assertThat(main).containsPattern("var $savedGuard : int := if $previousX > 0 then $positionY else $previousY\\s+$previousX := if $previousX > 0 then $positionX else $previousX\\s+$previousY := $savedGuard")
+        assertThat(main).containsPattern("var $savedPy: int := $positionX\\s+$positionX := $positionY\\s+$positionY := $savedPy")
+        assertThat(main).containsPattern("var $savedGuard: int := if $previousX > 0 then $positionY else $previousY\\s+$previousX := if $previousX > 0 then $positionX else $previousX\\s+$previousY := $savedGuard")
     }
 }

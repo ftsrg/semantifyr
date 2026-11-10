@@ -22,7 +22,7 @@ class PackageInliningOperationTest : InliningTestBase() {
                 package inlining::tests
                 @VerificationCase
                 class Host {
-                    var counter : int := 0
+                    var counter: int := 0
                     redefine tran {
                         counter := counter + 1
                     }
@@ -45,7 +45,7 @@ class PackageInliningOperationTest : InliningTestBase() {
                 package inlining::tests
                 @VerificationCase
                 class Host {
-                    var counter : int := 0
+                    var counter: int := 0
                     tran step() {
                         counter := counter + 1
                     }
@@ -72,7 +72,7 @@ class PackageInliningOperationTest : InliningTestBase() {
                 package inlining::tests
                 @VerificationCase
                 class Host {
-                    var counter : int := 0
+                    var counter: int := 0
                     tran step() {
                         counter := counter + 1
                     }
@@ -98,14 +98,14 @@ class PackageInliningOperationTest : InliningTestBase() {
             """
                 package inlining::tests
                 class Worker {
-                    var done : bool := false
+                    var done: bool := false
                     tran step() {
                         done := true
                     }
                 }
                 @VerificationCase
                 class Host {
-                    contains worker : Worker[1]
+                    contains worker: Worker[1]
                     redefine tran {
                         inline worker.step()
                     }
@@ -128,17 +128,17 @@ class PackageInliningOperationTest : InliningTestBase() {
             """
                 package inlining::tests
                 class Leaf {
-                    var value : int := 0
+                    var value: int := 0
                     tran bump() {
                         value := value + 1
                     }
                 }
                 class Middle {
-                    contains leaf : Leaf[1]
+                    contains leaf: Leaf[1]
                 }
                 @VerificationCase
                 class Host {
-                    contains middle : Middle[1]
+                    contains middle: Middle[1]
                     redefine tran {
                         inline middle.leaf.bump()
                     }
@@ -165,15 +165,15 @@ class PackageInliningOperationTest : InliningTestBase() {
                     }
                 }
                 class Child : Base {
-                    var counter : int := 0
+                    var counter: int := 0
                     redefine tran someBehavior() {
                         counter := 10
                     }
                 }
                 @VerificationCase
                 class Testing {
-                    contains bases : Base[0..*]
-                    contains child : Child[1] subsets bases
+                    contains bases: Base[0..*]
+                    contains child: Child[1] subsets bases
                     redefine tran {
                         inline bases.someBehavior()
                     }
@@ -201,21 +201,21 @@ class PackageInliningOperationTest : InliningTestBase() {
                     }
                 }
                 class Middle : Base {
-                    var middleValue : int := 0
+                    var middleValue: int := 0
                     redefine tran act() {
                         middleValue := 1
                     }
                 }
                 class Leaf : Middle {
-                    var leafValue : int := 0
+                    var leafValue: int := 0
                     redefine tran act() {
                         leafValue := 2
                     }
                 }
                 @VerificationCase
                 class Testing {
-                    contains bases : Base[0..*]
-                    contains leaf : Leaf[1] subsets bases
+                    contains bases: Base[0..*]
+                    contains leaf: Leaf[1] subsets bases
                     redefine tran {
                         inline bases.act()
                     }
@@ -239,17 +239,17 @@ class PackageInliningOperationTest : InliningTestBase() {
             """
                 package inlining::tests
                 class Worker {
-                    var done : bool := false
+                    var done: bool := false
                     tran step() {
                         done := true
                     }
                 }
                 @VerificationCase
                 class Dispatcher {
-                    contains workers : Worker[0..*]
-                    contains first : Worker[1] subsets workers
-                    contains second : Worker[1] subsets workers
-                    var current : workers[0..1] := nothing
+                    contains workers: Worker[0..*]
+                    contains first: Worker[1] subsets workers
+                    contains second: Worker[1] subsets workers
+                    var current: workers[0..1] := nothing
                     redefine init {
                         choice {
                             current := first
@@ -283,16 +283,16 @@ class PackageInliningOperationTest : InliningTestBase() {
             """
                 package inlining::tests
                 class Worker {
-                    var done : bool := false
+                    var done: bool := false
                     tran step() {
                         done := true
                     }
                 }
                 @VerificationCase
                 class Dispatcher {
-                    contains first : Worker[1]
-                    contains second : Worker[1]
-                    var current : Worker[0..1] := nothing
+                    contains first: Worker[1]
+                    contains second: Worker[1]
+                    var current: Worker[0..1] := nothing
                     redefine init {
                         choice {
                             current := first
@@ -326,14 +326,14 @@ class PackageInliningOperationTest : InliningTestBase() {
             """
                 package inlining::tests
                 class Leaf {
-                    var value : int := 0
+                    var value: int := 0
                     tran bump() {
                         value := value + 1
                     }
                 }
                 @VerificationCase
                 class Host {
-                    contains leaf : Leaf[0..1]
+                    contains leaf: Leaf[0..1]
                     redefine tran {
                         inline leaf?.bump()
                     }
@@ -361,9 +361,9 @@ class PackageInliningOperationTest : InliningTestBase() {
                 package inlining::tests
                 @VerificationCase
                 class Host {
-                    var counter : int := 0
-                    var base : int := 3
-                    tran addBy(amount : int) {
+                    var counter: int := 0
+                    var base: int := 3
+                    tran addBy(amount: int) {
                         counter := counter + amount
                     }
                     redefine tran {
@@ -396,8 +396,8 @@ class PackageInliningOperationTest : InliningTestBase() {
                 }
                 @VerificationCase
                 class Host {
-                    var counter : int := 0
-                    tran apply(command : Command) {
+                    var counter: int := 0
+                    tran apply(command: Command) {
                         choice {
                             assume(command == Command::Increment)
                             counter := counter + 1
@@ -433,9 +433,9 @@ class PackageInliningOperationTest : InliningTestBase() {
                 package inlining::tests
                 @VerificationCase
                 class Host {
-                    var counter : int := 0
+                    var counter: int := 0
                     tran step() {
-                        var scratch : int := 0
+                        var scratch: int := 0
                         scratch := 1
                         counter := counter + scratch
                     }
@@ -473,9 +473,9 @@ class PackageInliningOperationTest : InliningTestBase() {
                 package inlining::tests
                 @VerificationCase
                 class Host {
-                    var left : int := 0
-                    var right : int := 0
-                    tran set(first : int, second : int) {
+                    var left: int := 0
+                    var right: int := 0
+                    tran set(first: int, second: int) {
                         left := first
                         right := second
                     }
@@ -501,19 +501,19 @@ class PackageInliningOperationTest : InliningTestBase() {
             """
                 package inlining::tests
                 abstract class Base {
-                    abstract tran set(first : int, second : int)
+                    abstract tran set(first: int, second: int)
                 }
                 class Leaf : Base {
-                    var left : int := 0
-                    var right : int := 0
-                    redefine tran set(first : int, second : int) {
+                    var left: int := 0
+                    var right: int := 0
+                    redefine tran set(first: int, second: int) {
                         left := first
                         right := second
                     }
                 }
                 @VerificationCase
                 class Host {
-                    contains leaf : Leaf[1]
+                    contains leaf: Leaf[1]
                     redefine tran {
                         inline leaf.set(second = 2, first = 1)
                     }
@@ -539,9 +539,9 @@ class PackageInliningOperationTest : InliningTestBase() {
                 }
                 @VerificationCase
                 class Host {
-                    contains worker : Worker[1]
-                    var current : Worker[0..1] := worker
-                    tran select(target : Worker[0..1]) {
+                    contains worker: Worker[1]
+                    var current: Worker[0..1] := worker
+                    tran select(target: Worker[0..1]) {
                         current := target
                     }
                     redefine tran {
@@ -568,14 +568,14 @@ class PackageInliningOperationTest : InliningTestBase() {
                     abstract tran set()
                 }
                 class Leaf : Base {
-                    var counter : int := 0
-                    redefine tran set(value : int) {
+                    var counter: int := 0
+                    redefine tran set(value: int) {
                         counter := value
                     }
                 }
                 @VerificationCase
                 class Host {
-                    contains leaf : Leaf[1]
+                    contains leaf: Leaf[1]
                     redefine tran {
                         inline leaf.set()
                     }

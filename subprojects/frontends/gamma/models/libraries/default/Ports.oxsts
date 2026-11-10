@@ -30,7 +30,7 @@ class Port {
     }
 
     tran assumeHasInputEvent(event: Event) {
-        assume (hasInputEvent(event))
+        assume(hasInputEvent(event))
     }
 
     tran setInputEvent(event: Event) {
@@ -57,7 +57,7 @@ class Port {
             inline for choice (event in inputEvents) {
                 inline raiseInputEvent(event)
             } else {
-                assume (false)
+                assume(false)
             }
         }
     }
@@ -68,7 +68,7 @@ class Port {
     }
 
     tran havocOutputEvent() {
-        havoc (outputEvent)
+        havoc(outputEvent)
     }
 }
 

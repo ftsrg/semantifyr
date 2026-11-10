@@ -25,7 +25,7 @@ class LocalVariableSemanticsTest : AnalysisTestBase() {
                 init {
                 }
                 tran {
-                    var local : int := 5
+                    var local: int := 5
                     assume(local == 5)
                 }
                 prop {
@@ -45,7 +45,7 @@ class LocalVariableSemanticsTest : AnalysisTestBase() {
                 init {
                 }
                 tran {
-                    var local : int := 5
+                    var local: int := 5
                     assume(local == 5)
                 }
                 prop {
@@ -62,11 +62,11 @@ class LocalVariableSemanticsTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var copy : int := 0
+                var copy: int := 0
                 init {
                 }
                 tran {
-                    var local : int := 5
+                    var local: int := 5
                     local := 10
                     copy := local
                 }
@@ -90,11 +90,11 @@ class LocalVariableSemanticsTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var copy : int := 0
+                var copy: int := 0
                 init {
                 }
                 tran {
-                    var local : int := 5
+                    var local: int := 5
                     copy := local
                     local := 10
                 }
@@ -117,10 +117,10 @@ class LocalVariableSemanticsTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var activeState : int := -1
+                var activeState: int := -1
                 init { activeState := 0 }
                 tran {
-                    var anyRegionExecuted : bool := false
+                    var anyRegionExecuted: bool := false
                     choice {
                         assume(activeState == 0)
                         activeState := 25
@@ -161,10 +161,10 @@ class LocalVariableSemanticsTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var copy : int := 0
+                var copy: int := 0
                 init { }
                 tran {
-                    var local : int := 5
+                    var local: int := 5
                     copy := local
                 }
                 prop { AG true }
@@ -185,10 +185,10 @@ class LocalVariableSemanticsTest : AnalysisTestBase() {
                 init { }
                 tran {
                     choice {
-                        var local : int := 1
+                        var local: int := 1
                         assume(local == 1)
                     } or {
-                        var local : int := 2
+                        var local: int := 2
                         assume(local == 2)
                     }
                 }

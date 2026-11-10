@@ -7,6 +7,34 @@
 import siteConfig from '@generated/docusaurus.config';
 import type * as PrismNamespace from 'prismjs';
 import type { Optional } from 'utility-types';
+import oxstsTextMateGrammar from '../../../semantifyr-vscode/syntaxes/oxsts.tmLanguage.json';
+
+interface TextMatePattern {
+  name?: string;
+  match?: string;
+}
+
+interface TextMateRepositoryEntry {
+  patterns?: TextMatePattern[];
+}
+
+const oxstsTextMateRepository: Record<string, TextMateRepositoryEntry> = oxstsTextMateGrammar.repository;
+
+function oxstsTextMatePattern(...scopes: string[]): RegExp {
+  const matches = Object.values(oxstsTextMateRepository)
+    .flatMap((entry) => {
+      return entry.patterns ?? [];
+    })
+    .filter((pattern) => {
+      return scopes.some((scope) => {
+        return pattern.name?.startsWith(scope) ?? false;
+      });
+    })
+    .flatMap((pattern) => {
+      return pattern.match ?? [];
+    });
+  return new RegExp(matches.join('|'));
+}
 
 export default function prismIncludeLanguages(
   PrismObject: typeof PrismNamespace,
@@ -47,9 +75,8 @@ export default function prismIncludeLanguages(
       { pattern: /\/\/.*/, greedy: true },
     ],
     string: { pattern: /"(?:\\.|[^"\\])*"/, greedy: true },
-    keyword:
-      /\b(?:abstract|annotation|any|assume|bool|choice|class|containment|container|contains|datatype|derived|else|enum|extern|false|feature|features|for|global|havoc|if|import|in|inline|inlined|init|int|main|nothing|of|opposite|or|oxsts|package|prop|real|record|redefine|redefines|refers|reference|return|self|string|subsets|trace|tran|true|var|witness)\b/,
-    operator: /(:=|==|!=|<=|>=|&&|\|\||\^\^|<|>|\+|-|\*|\/|!|\?\.)/,
+    keyword: oxstsTextMatePattern('keyword.control', 'constant.language'),
+    operator: oxstsTextMatePattern('keyword.operator'),
     number: /\b\d+(?:\.\d+)?\b/,
     punctuation: /[{}[\]();:,.@]/,
   };

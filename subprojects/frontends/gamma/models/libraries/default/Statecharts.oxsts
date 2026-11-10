@@ -14,7 +14,7 @@ import semantifyr::gamma::actions
 import semantifyr::gamma::events
 
 enum RegionSchedule {
-    TopDown, 
+    TopDown,
     BottomUp
 }
 
@@ -38,14 +38,14 @@ class TransitionScheduler {
             } or {
                 // fire state transitions if local transitions are not enabled (top-down)
                 inline region.assumeNoLocalTransitionEnabled()
-                inline region.fireInnerTransitions(RegionSchedule::TopDown)     
-                anyRegionExecuted := true       
+                inline region.fireInnerTransitions(RegionSchedule::TopDown)
+                anyRegionExecuted := true
             } or {
                 // do nothing, if no transition is enabled
                 inline region.assumeNoTransitionEnabled()
             }
         }
-        assume (anyRegionExecuted) // at least one inner "parallel" region must be executed
+        assume(anyRegionExecuted) // at least one inner "parallel" region must be executed
     }
 
     tran fireTransitionsBottomUp() {
@@ -57,16 +57,15 @@ class TransitionScheduler {
                 inline region.fireLocalTransitions()
                 anyRegionExecuted := true
             } or {
-                inline region.fireInnerTransitions(RegionSchedule::BottomUp)     
-                anyRegionExecuted := true       
+                inline region.fireInnerTransitions(RegionSchedule::BottomUp)
+                anyRegionExecuted := true
             } or {
                 // do nothing, if no transition is enabled
                 inline region.assumeNoTransitionEnabled()
             }
         }
-        assume (anyRegionExecuted) // at least one inner "parallel" region must be executed
+        assume(anyRegionExecuted) // at least one inner "parallel" region must be executed
     }
-
 }
 
 class Statechart : Component {
@@ -98,7 +97,6 @@ class Statechart : Component {
     }
 
     // TODO: would be easier to implement if we had ...any { } and ...all { } lambda functions that could compose expressions
-
     tran assumeNoTransitionEnabled() {
         inline for (region in regions) {
             inline region.assumeNoTransitionEnabled()
@@ -132,7 +130,7 @@ class Region {
         inline for choice (transition in transitions) {
             inline transition.main()
         } else {
-            assume (false)
+            assume(false)
         }
     }
 
@@ -140,13 +138,13 @@ class Region {
         inline for choice (state in states) {
             inline state.fireTransitions(regionSchedule)
         } else {
-            assume (false)
+            assume(false)
         }
     }
 
     tran assumeNoLocalTransitionEnabled() {
         inline for (transition in transitions) {
-            assume (! transition.isEnabled())
+            assume(!transition.isEnabled())
         }
     }
 
@@ -160,7 +158,6 @@ class Region {
         inline assumeNoLocalTransitionEnabled()
         inline assumeNoInnerTransitionEnabled()
     }
-
 }
 
 class State {
@@ -211,7 +208,7 @@ class State {
             inline region.deactivateRecursive()
         }
     }
-    tran enterRecursive(commonRegion : Region) {
+    tran enterRecursive(commonRegion: Region) {
         inline if (commonRegion != parentRegion) {
             inline if (parentState != nothing) {
                 inline parentState.enterRecursive(commonRegion)
@@ -233,7 +230,7 @@ class State {
     }
     tran fireTransitions(regionSchedule: RegionSchedule) {
         inline if (regions == nothing) {
-            assume (false)
+            assume(false)
         } else {
             inline transitionScheduler.fireTransitions(regionSchedule)
         }
@@ -266,7 +263,7 @@ abstract class AbstractTransition {
     }
 
     redefine tran {
-        assume (isEnabled())
+        assume(isEnabled())
         inline fire()
     }
 }
@@ -309,5 +306,4 @@ class IsStateActiveExpression : Expression {
     redefine prop evaluate(): bool {
         return state.isActive()
     }
-    
 }

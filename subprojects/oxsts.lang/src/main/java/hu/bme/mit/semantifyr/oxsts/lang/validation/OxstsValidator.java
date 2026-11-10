@@ -10,34 +10,55 @@ import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
+import hu.bme.mit.semantifyr.oxsts.lang.resource.ResourceDescriptionProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.scoping.imports.ImportCollector;
+import hu.bme.mit.semantifyr.oxsts.lang.scoping.imports.PackageSelectableProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.scoping.selectables.TrimPrefixSelectable;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.OppositeHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.PropertyTypeHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EvaluationFailureException;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.ExpressionModalityEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.Modality;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ImmutableTypeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.InvalidTypeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.NothingTypeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.TypeCompatibility;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.TypeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EStructuralFeature;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.xtext.EcoreUtil2;
 import org.eclipse.xtext.Keyword;
+import org.eclipse.xtext.linking.impl.LinkingHelper;
+import org.eclipse.xtext.naming.IQualifiedNameConverter;
+import org.eclipse.xtext.naming.IQualifiedNameProvider;
+import org.eclipse.xtext.naming.QualifiedName;
 import org.eclipse.xtext.nodemodel.ICompositeNode;
+import org.eclipse.xtext.nodemodel.INode;
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils;
 import org.eclipse.xtext.resource.ILocationInFileProvider;
+import org.eclipse.xtext.resource.ISelectable;
+import org.eclipse.xtext.scoping.IGlobalScopeProvider;
+import org.eclipse.xtext.scoping.impl.ScopeBasedSelectable;
+import org.eclipse.xtext.util.Strings;
 import org.eclipse.xtext.validation.Check;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,6 +92,9 @@ public class OxstsValidator extends AbstractOxstsValidator {
     private ExpressionModalityEvaluatorProvider modalityEvaluatorProvider;
 
     @Inject
+    private ConstantExpressionEvaluatorProvider constantExpressionEvaluatorProvider;
+
+    @Inject
     private ExpressionTypeEvaluatorProvider typeEvaluatorProvider;
 
     @Inject
@@ -84,6 +108,27 @@ public class OxstsValidator extends AbstractOxstsValidator {
 
     @Inject
     private BuiltinAnnotationHandler builtinAnnotationHandler;
+
+    @Inject
+    private IGlobalScopeProvider globalScopeProvider;
+
+    @Inject
+    private ImportCollector importCollector;
+
+    @Inject
+    private PackageSelectableProvider packageSelectableProvider;
+
+    @Inject
+    private LinkingHelper linkingHelper;
+
+    @Inject
+    private IQualifiedNameConverter qualifiedNameConverter;
+
+    @Inject
+    private IQualifiedNameProvider qualifiedNameProvider;
+
+    @Inject
+    private ResourceDescriptionProvider resourceDescriptionProvider;
 
     private static final String ISSUE_PREFIX = "OXSTS.";
     public static final String DUPLICATE_NAME_ISSUE = ISSUE_PREFIX + "DUPLICATE_NAME";
@@ -102,6 +147,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String VARIABLE_WITH_IMPLICIT_TYPE = ISSUE_PREFIX + "VARIABLE_WITH_IMPLICIT_TYPE";
     public static final String UNSUPPORTED_FEATURE = ISSUE_PREFIX + "UNSUPPORTED_FEATURE";
     public static final String EXPRESSION_MODALITY_TOO_HIGH = ISSUE_PREFIX + "EXPRESSION_MODALITY_TOO_HIGH";
+    public static final String COULD_BE_INLINE = ISSUE_PREFIX + "COULD_BE_INLINE";
+    public static final String CONSTANT_EXPRESSION = ISSUE_PREFIX + "CONSTANT_EXPRESSION";
     public static final String TYPE_MISMATCH = ISSUE_PREFIX + "TYPE_MISMATCH";
     public static final String INVALID_CAST = ISSUE_PREFIX + "INVALID_CAST";
     public static final String MULTIPLE_INHERITANCE = ISSUE_PREFIX + "MULTIPLE_INHERITANCE";
@@ -110,6 +157,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String MIXED_BOOLEAN_OPERATORS = ISSUE_PREFIX + "MIXED_BOOLEAN_OPERATORS";
     public static final String MISSING_INITIALIZER = ISSUE_PREFIX + "MISSING_INITIALIZER";
     public static final String ABSTRACT_VERIFICATION_CASE = ISSUE_PREFIX + "ABSTRACT_VERIFICATION_CASE";
+    public static final String AMBIGUOUS_REFERENCE = ISSUE_PREFIX + "AMBIGUOUS_REFERENCE";
+    public static final String DECLARED_IN_ANOTHER_FILE = ISSUE_PREFIX + "DECLARED_IN_ANOTHER_FILE";
 
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
@@ -178,19 +227,21 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     .toList();
 
             if (!abstractInheritedMembers.isEmpty()) {
+                var memberNames = abstractInheritedMembers.stream()
+                        .map(NamingUtil::getName)
+                        .toList();
                 var message = "Class '"
                         + NamingUtil.getName(classDeclaration)
                         + "' must either be declared abstract or redefine abstract members: "
-                        + abstractInheritedMembers.stream()
-                                .map(m -> "'" + NamingUtil.getName(m) + "'")
-                                .collect(Collectors.joining(", "));
+                        + memberNames.stream().map(name -> "'" + name + "'").collect(Collectors.joining(", "));
 
                 acceptError(
                         message,
                         classDeclaration,
                         OxstsPackage.Literals.NAMED_ELEMENT__NAME,
                         0,
-                        ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED);
+                        ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED,
+                        memberNames.toArray(String[]::new));
             }
         }
     }
@@ -261,11 +312,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     @Check
     public void checkShadowedNames(NamedElement namedElement) {
         if (namedElement instanceof RedefinableDeclaration redefinableDeclaration
-                && redefinableDeclaration.isRedefine()) {
-            return;
-        }
-        // an anonymous transition or property redefines the inherited one
-        if (namedElement.getName() == null) {
+                && (redefinableDeclaration.isRedefine() || NamingUtil.isAnonymous(redefinableDeclaration))) {
             return;
         }
 
@@ -276,7 +323,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
         var declarations =
                 domainMemberCollectionProvider.getParentCollection(parentDomain).getDeclarations();
 
-        if (declarations.stream().anyMatch(d -> namedElement.getName().equals(NamingUtil.getName(d)))) {
+        if (declarations.stream().anyMatch(d -> Objects.equals(NamingUtil.getName(d), namedElement.getName()))) {
             acceptWarning(
                     "Name shadows another element.",
                     namedElement,
@@ -591,15 +638,18 @@ public class OxstsValidator extends AbstractOxstsValidator {
         var minimumRequired =
                 parameters.stream().filter(p -> !isParameterOptional(p)).count();
         if (arguments.size() < minimumRequired) {
-            var unbound = parameters.stream()
-                    .filter(p -> !isParameterOptional(p))
-                    .skip(arguments.size())
-                    .map(NamedElement::getName)
-                    .collect(Collectors.joining(", "));
+            var unbound = new ArrayList<String>();
+            for (int i = 0; i < parameters.size(); i++) {
+                var parameter = parameters.get(i);
+                if (!isParameterOptional(parameter) && OxstsUtils.getArgumentFor(arguments, parameter, i) == null) {
+                    unbound.add(parameter.getName());
+                }
+            }
             acceptError(
-                    "Missing argument(s) for non-optional parameter(s): " + unbound + ".",
+                    "Missing argument(s) for non-optional parameter(s): " + String.join(", ", unbound) + ".",
                     callSuffixExpression,
-                    INVALID_CALL_ARGUMENTS_COUND);
+                    INVALID_CALL_ARGUMENTS_COUND,
+                    unbound.toArray(String[]::new));
         }
     }
 
@@ -734,8 +784,22 @@ public class OxstsValidator extends AbstractOxstsValidator {
                             + formatType(parameterType)
                             + ".",
                     argument,
-                    TYPE_MISMATCH);
+                    TYPE_MISMATCH,
+                    narrowingCastData(parameterType, expressionType, argument));
         }
+    }
+
+    private String[] narrowingCastData(TypeEvaluation expected, TypeEvaluation actual, EObject context) {
+        if (!(actual instanceof ImmutableTypeEvaluation)
+                || !(typeCompatibility.unwrappedDomain(expected) instanceof ClassDeclaration castClass)) {
+            return new String[0];
+        }
+        var castType = new ImmutableTypeEvaluation(castClass);
+        if (!typeCompatibility.isAssignable(actual, castType, context)
+                || !typeCompatibility.isAssignable(expected, castType, context)) {
+            return new String[0];
+        }
+        return new String[] {castClass.getName(), EcoreUtil.getURI(castClass).toString()};
     }
 
     @Check
@@ -782,7 +846,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     propertyDeclaration,
                     OxstsPackage.Literals.PROPERTY_DECLARATION__EXPRESSION,
                     0,
-                    TYPE_MISMATCH);
+                    TYPE_MISMATCH,
+                    narrowingCastData(expected, actual, expression));
         }
     }
 
@@ -814,7 +879,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     variableDeclaration,
                     OxstsPackage.Literals.VARIABLE_DECLARATION__EXPRESSION,
                     0,
-                    TYPE_MISMATCH);
+                    TYPE_MISMATCH,
+                    narrowingCastData(declared, actual, variableDeclaration));
         }
     }
 
@@ -843,7 +909,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     featureDeclaration,
                     OxstsPackage.Literals.FEATURE_DECLARATION__EXPRESSION,
                     0,
-                    TYPE_MISMATCH);
+                    TYPE_MISMATCH,
+                    narrowingCastData(declared, actual, featureDeclaration));
         }
     }
 
@@ -1050,6 +1117,33 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
     }
 
+    @Check
+    public void checkNoLoopVariableWrite(Operation operation) {
+        Expression target;
+        EStructuralFeature feature;
+        if (operation instanceof AssignmentOperation assignmentOperation) {
+            target = assignmentOperation.getReference();
+            feature = OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE;
+        } else if (operation instanceof HavocOperation havocOperation) {
+            target = havocOperation.getReference();
+            feature = OxstsPackage.Literals.HAVOC_OPERATION__REFERENCE;
+        } else {
+            return;
+        }
+        if (target == null) {
+            return;
+        }
+        if (evaluateWriteTarget(unwrapAssignmentTarget(target)) instanceof VariableDeclaration variable
+                && OxstsUtils.isLoopVariable(variable)) {
+            acceptError(
+                    "Cannot write loop variable '" + variable.getName() + "': it takes its values from the range.",
+                    operation,
+                    feature,
+                    0,
+                    INCORRECT_ASSIGNMENT);
+        }
+    }
+
     // The right-hand side is at most RUNTIME, so it always fits a runtime target.
     private void checkWriteTargetIsRuntime(Expression target, EObject host, EStructuralFeature feature) {
         if (target == null) {
@@ -1063,7 +1157,9 @@ public class OxstsValidator extends AbstractOxstsValidator {
         } catch (RuntimeException e) {
             return;
         }
-        if (written instanceof VariableDeclaration variable && modality != Modality.RUNTIME) {
+        if (written instanceof VariableDeclaration variable
+                && modality != Modality.RUNTIME
+                && !OxstsUtils.isLoopVariable(variable)) {
             acceptError(
                     "Cannot write '"
                             + variable.getName()
@@ -1164,6 +1260,79 @@ public class OxstsValidator extends AbstractOxstsValidator {
     }
 
     @Check
+    public void checkRuntimeOperationCouldBeInline(Operation operation) {
+        Expression compileTimeCandidate;
+        String candidateName;
+        if (operation instanceof IfOperation ifOperation) {
+            compileTimeCandidate = ifOperation.getGuard();
+            candidateName = "guard";
+        } else if (operation instanceof ForOperation forOperation) {
+            compileTimeCandidate = forOperation.getRangeExpression();
+            candidateName = "range";
+        } else {
+            return;
+        }
+        if (compileTimeCandidate == null || EcoreUtil2.getContainerOfType(operation, InlinedOxsts.class) != null) {
+            return;
+        }
+        Modality modality;
+        try {
+            modality = modalityEvaluatorProvider.evaluate(compileTimeCandidate);
+        } catch (RuntimeException e) {
+            return;
+        }
+        if (!modality.isAtMost(Modality.COMPILE_TIME)) {
+            return;
+        }
+        for (var leaf : NodeModelUtils.findActualNodeFor(operation).getLeafNodes()) {
+            if (!leaf.isHidden()) {
+                var keyword = leaf.getText();
+                acceptInfo(
+                        "`%s` could be `inline %s`: its %s is evaluable at compile time."
+                                .formatted(keyword, keyword, candidateName),
+                        operation,
+                        leaf.getOffset(),
+                        leaf.getLength(),
+                        COULD_BE_INLINE);
+                return;
+            }
+        }
+    }
+
+    @Check
+    public void checkConstantExpression(Expression expression) {
+        if (!isFoldableConstant(expression)
+                || (expression.eContainer() instanceof Expression container && isFoldableConstant(container))
+                || EcoreUtil2.getContainerOfType(expression, InlinedOxsts.class) != null) {
+            return;
+        }
+        var region = locationInFileProvider.getFullTextRegion(expression);
+        acceptInfo(
+                "The expression is constant, it can be inlined as its value.",
+                expression,
+                region.getOffset(),
+                region.getLength(),
+                CONSTANT_EXPRESSION);
+    }
+
+    private boolean isFoldableConstant(Expression expression) {
+        if (expression instanceof LiteralExpression
+                || expression instanceof ElementReference
+                || expression instanceof RangeExpression
+                || (expression instanceof ArithmeticUnaryOperator unary
+                        && unary.getBody() instanceof LiteralExpression)) {
+            return false;
+        }
+        try {
+            return modalityEvaluatorProvider.evaluate(expression) == Modality.CONSTANT
+                    && !(typeEvaluatorProvider.evaluate(expression) instanceof InvalidTypeEvaluation)
+                    && !(constantExpressionEvaluatorProvider.evaluate(expression) instanceof RangeEvaluation);
+        } catch (RuntimeException e) {
+            return false;
+        }
+    }
+
+    @Check
     public void checkAssignmentTypes(AssignmentOperation assignmentOperation) {
         var lhs = assignmentOperation.getReference();
         var rhs = assignmentOperation.getExpression();
@@ -1183,7 +1352,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
                             + formatType(lhsType)
                             + ".",
                     assignmentOperation,
-                    TYPE_MISMATCH);
+                    TYPE_MISMATCH,
+                    narrowingCastData(lhsType, rhsType, assignmentOperation));
         }
     }
 
@@ -1687,6 +1857,127 @@ public class OxstsValidator extends AbstractOxstsValidator {
                 acceptError(message, namedElement, OxstsPackage.Literals.NAMED_ELEMENT__NAME, 0, DUPLICATE_NAME_ISSUE);
             }
         }
+    }
+
+    @Check
+    public void checkAmbiguousReference(EObject element) {
+        if (!(EcoreUtil2.getRootContainer(element) instanceof OxstsModelPackage modelPackage)) {
+            return;
+        }
+        for (var reference : element.eClass().getEAllReferences()) {
+            if (reference.isContainment() || reference.isContainer() || reference.isDerived()) {
+                continue;
+            }
+            var value = element.eGet(reference, false);
+            List<?> values;
+            if (reference.isMany()) {
+                values = (List<?>) value;
+            } else {
+                values = Collections.singletonList(value);
+            }
+            List<INode> nodes = null;
+            for (var index = 0; index < values.size(); index++) {
+                if (!(values.get(index) instanceof EObject target)
+                        || target.eIsProxy()
+                        || !(target.eContainer() instanceof OxstsModelPackage || target instanceof EnumLiteral)) {
+                    continue;
+                }
+                if (nodes == null) {
+                    nodes = NodeModelUtils.findNodesForFeature(element, reference);
+                }
+                if (index >= nodes.size()) {
+                    break;
+                }
+                var text = linkingHelper.getCrossRefNodeAsString(nodes.get(index), true);
+                if (Strings.isEmpty(text)) {
+                    continue;
+                }
+                var candidates = getPackageLevelCandidates(
+                        modelPackage, reference, qualifiedNameConverter.toQualifiedName(text));
+                if (candidates.size() < 2
+                        || !candidates.contains(qualifiedNameProvider.getFullyQualifiedName(target))) {
+                    continue;
+                }
+                var qualifiedNames = candidates.stream()
+                        .map(qualifiedNameConverter::toString)
+                        .toList();
+                var message = "Ambiguous reference '%s': it names both %s; write the qualified name %s."
+                        .formatted(text, String.join(" and ", qualifiedNames), String.join(" or ", qualifiedNames));
+                int issueIndex;
+                if (reference.isMany()) {
+                    issueIndex = index;
+                } else {
+                    issueIndex = INSIGNIFICANT_INDEX;
+                }
+                acceptError(message, element, reference, issueIndex, AMBIGUOUS_REFERENCE);
+            }
+        }
+    }
+
+    // outside its own file a name of the package resolves to the first file of the resource set declaring it
+    @Check
+    public void checkDeclaredInAnotherFileOfThePackage(OxstsModelPackage modelPackage) {
+        if (Strings.isEmpty(modelPackage.getName())) {
+            return;
+        }
+        var resource = modelPackage.eResource();
+        var resources = List.copyOf(resource.getResourceSet().getResources());
+        for (var declaration : modelPackage.getDeclarations()) {
+            var qualifiedName = qualifiedNameProvider.getFullyQualifiedName(declaration);
+            if (qualifiedName == null) {
+                continue;
+            }
+            for (var other : resources) {
+                if (other == resource) {
+                    break;
+                }
+                var description = resourceDescriptionProvider.getResourceDescription(other);
+                if (description == null
+                        || !description
+                                .getExportedObjects(OxstsPackage.Literals.DECLARATION, qualifiedName, false)
+                                .iterator()
+                                .hasNext()) {
+                    continue;
+                }
+                var message = "'%s' is also declared in %s, which other files of the package resolve it to."
+                        .formatted(
+                                qualifiedNameConverter.toString(qualifiedName),
+                                other.getURI().lastSegment());
+                acceptWarning(
+                        message,
+                        declaration,
+                        OxstsPackage.Literals.NAMED_ELEMENT__NAME,
+                        INSIGNIFICANT_INDEX,
+                        DECLARED_IN_ANOTHER_FILE);
+                break;
+            }
+        }
+    }
+
+    // a named package and every explicit import compete for a simple name, an unnamed package's own declarations win
+    protected Set<QualifiedName> getPackageLevelCandidates(
+            OxstsModelPackage modelPackage, EReference reference, QualifiedName name) {
+        var resource = modelPackage.eResource();
+        var index = new ScopeBasedSelectable(globalScopeProvider.getScope(resource, reference, null));
+        var packageName = qualifiedNameProvider.getFullyQualifiedName(modelPackage);
+        var selectables = new ArrayList<ISelectable>();
+        if (packageName != null) {
+            selectables.add(packageSelectableProvider.getFileSelectable(modelPackage));
+            selectables.add(new TrimPrefixSelectable(index, packageName));
+        }
+        for (var importEntry : importCollector.getDirectImports(resource)) {
+            if (!importEntry.isImplicit() && !importEntry.packageName().equals(packageName)) {
+                selectables.add(new TrimPrefixSelectable(index, importEntry.packageName()));
+            }
+        }
+        var candidates = new LinkedHashSet<QualifiedName>();
+        for (var selectable : selectables) {
+            for (var description : selectable.getExportedObjects(reference.getEReferenceType(), name, false)) {
+                var candidate = EcoreUtil.resolve(description.getEObjectOrProxy(), modelPackage);
+                candidates.add(qualifiedNameProvider.getFullyQualifiedName(candidate));
+            }
+        }
+        return candidates;
     }
 
     protected void acceptError(String message, EObject object, String code, String... issueData) {

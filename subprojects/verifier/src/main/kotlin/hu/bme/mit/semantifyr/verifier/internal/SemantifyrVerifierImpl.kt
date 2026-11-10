@@ -20,11 +20,10 @@ import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
+import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
-import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider
-import hu.bme.mit.semantifyr.oxsts.lang.utils.SelfContainedResource
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.BackAnnotationException
 import hu.bme.mit.semantifyr.verifier.ProgressContext
@@ -35,7 +34,8 @@ import hu.bme.mit.semantifyr.verifier.VerificationMetrics
 import hu.bme.mit.semantifyr.verifier.VerificationReport
 import hu.bme.mit.semantifyr.verifier.VerificationResult
 import hu.bme.mit.semantifyr.verifier.VerifierMetrics
-import hu.bme.mit.semantifyr.verifier.caseDirectoryName
+import hu.bme.mit.semantifyr.verifier.caseDirectory
+import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.LimitedConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import hu.bme.mit.semantifyr.verifier.reportPath
@@ -50,7 +50,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withTimeout
-import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.util.EcoreUtil
 import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
@@ -83,7 +82,8 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
     private val callTraceTransformer: CallTraceTransformer,
     private val trivialVerifier: TrivialVerifier,
     private val verificationArtifactWriter: VerificationArtifactWriter,
-    private val qualifiedNameProvider: OxstsQualifiedNameProvider,
+    private val verificationCaseDiscoverer: VerificationCaseDiscoverer,
+    private val semantifyrLoader: SemantifyrLoader,
 ) : SemantifyrVerifier {
 
     private val compiler = SemantifyrCompiler(
@@ -109,39 +109,18 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
     }
 
     override suspend fun verify(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext): VerificationResult {
-        val qualifiedName = inlinedOxsts.classDeclaration.name?.let {
-            qualifiedNameProvider.getFullyQualifiedNameString(inlinedOxsts.classDeclaration)
-        } ?: "<inlined>"
-        val case = VerificationCase(
-            qualifiedName = qualifiedName,
-            classDeclaration = inlinedOxsts.classDeclaration,
-        )
+        val case = verificationCaseDiscoverer.caseOf(inlinedOxsts.classDeclaration)
         val deadline = markNow() + semantifyrVerifierConfiguration.timeout
-        progressContext.reportProgress("Compiling $qualifiedName")
-        logger.info { "Compiling inlined of '$qualifiedName'" }
+        progressContext.reportProgress("Compiling ${case.qualifiedName}")
+        logger.info { "Compiling inlined of '${case.qualifiedName}'" }
         // the model re-verified here usually lies in the case directory, a witness the verify left there, so the run keeps out of the verify's artifacts
         val validationDirectory = prepareDirectory(caseDirectoryFor(case).resolve("validation"))
-        val copy = copyIntoOwnResource(inlinedOxsts, validationDirectory)
+        val clone = semantifyrLoader.fromResourceSet(inlinedOxsts.eResource().resourceSet, emptyMap())
+            .resourceSet
+            .getEObject(EcoreUtil.getURI(inlinedOxsts), true) as InlinedOxsts
         return compileAndVerify(case, validationDirectory, progressContext, deadline) {
-            compiler.compile(copy, validationDirectory)
+            compiler.compile(clone, validationDirectory)
         }
-    }
-
-    // compiling rewrites the inlined model in place, and the original may be a document open in an editor
-    private fun copyIntoOwnResource(inlinedOxsts: InlinedOxsts, directory: Path): InlinedOxsts {
-        val resourceSet = inlinedOxsts.eResource().resourceSet
-        val uri = URI.createFileURI(directory.resolve("inlined.oxsts").toAbsolutePath().toString())
-        resourceSet.getResource(uri, false)?.let {
-            check(it !== inlinedOxsts.eResource()) {
-                "Cannot re-verify the inlined model at $uri into its own directory"
-            }
-            resourceSet.resources.remove(it)
-        }
-        val copy = EcoreUtil.copy(inlinedOxsts)
-        val resource = resourceSet.createResource(uri)
-        SelfContainedResource.mark(resource)
-        resource.contents += copy
-        return copy
     }
 
     private suspend fun compileAndVerify(
@@ -384,7 +363,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
     }
 
     private fun caseDirectoryFor(case: VerificationCase): Path {
-        return semantifyrVerifierConfiguration.outputDirectory.resolve(caseDirectoryName(case))
+        return caseDirectory(semantifyrVerifierConfiguration.outputDirectory, case)
     }
 
     private fun prepareDirectory(directory: Path): Path {

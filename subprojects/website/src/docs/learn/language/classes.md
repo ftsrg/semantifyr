@@ -25,8 +25,6 @@ A class has one [`init`](transitions.md), one [implicit `tran`](transitions.md#t
 A class declaration consists of the `class` keyword, a name, an optional superclass, and a body in `{ }`. Members may appear in any order.
 
 ```oxsts
-package example
-
 class Counter {
   var value: int := 0
 
@@ -43,8 +41,6 @@ class Counter {
 A class with no members may be written with an empty body.
 
 ```oxsts
-package example
-
 class Sentinel {
 }
 ```
@@ -52,8 +48,6 @@ class Sentinel {
 Or without any.
 
 ```oxsts
-package example
-
 class Sentinel
 ```
 
@@ -66,8 +60,6 @@ Generally Semantifyr is lenient with the use or absence of semicolons `;`.
 `abstract class` cannot be instantiated directly, so it cannot be a `@VerificationCase` (`OXSTS.ABSTRACT_VERIFICATION_CASE`). An abstract class may declare abstract members (without bodies) that concrete subclasses must redefine.
 
 ```oxsts
-package example
-
 abstract class Shape {
   abstract prop area(): int
 }
@@ -78,8 +70,6 @@ abstract class Shape {
 A class extends one superclass, listed after `:`.
 
 ```oxsts
-package example
-
 abstract class Shape {
   abstract prop area(): int
 }

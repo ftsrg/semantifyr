@@ -58,7 +58,8 @@ InlinedProperty returns PropertyDeclaration:
 ;
 
 OxstsModelPackage:
-    'package' name=QualifiedIdentifier ';'?
+    {OxstsModelPackage}
+    ('package' name=QualifiedIdentifier ';'?)?
     imports += ImportStatement*
     declarations += TopLevelDeclaration*
 ;

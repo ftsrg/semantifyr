@@ -24,7 +24,7 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
     fun `init choice with two distinct constants must not collapse the variable to its default`() = assertOptimizerTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var current : int := -1
+            var current: int := -1
             init {
                 choice {
                     current := 0
@@ -40,7 +40,7 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var current : int := -1
+            var current: int := -1
             init {
                 choice {
                     current := 0
@@ -60,9 +60,9 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
     fun `init choice plus tran reads must keep both init writes alive`() = assertOptimizerTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var current : int := -1
-            var done_first : bool := false
-            var done_second : bool := false
+            var current: int := -1
+            var done_first: bool := false
+            var done_second: bool := false
             init {
                 choice {
                     current := 0
@@ -72,10 +72,10 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
             }
             tran {
                 choice {
-                    assume (current == 0)
+                    assume(current == 0)
                     done_first := true
                 } or {
-                    assume (current == 1)
+                    assume(current == 1)
                     done_second := true
                 }
             }
@@ -85,9 +85,9 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var current : int := -1
-            var done_first : bool := false
-            var done_second : bool := false
+            var current: int := -1
+            var done_first: bool := false
+            var done_second: bool := false
             init {
                 choice {
                     current := 0
@@ -97,10 +97,10 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
             }
             tran {
                 choice {
-                    assume (current == 0)
+                    assume(current == 0)
                     done_first := true
                 } or {
-                    assume (current == 1)
+                    assume(current == 1)
                     done_second := true
                 }
             }
@@ -114,7 +114,7 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
     fun `single tran write that is reached only via the loop is not folded into the property`() = assertOptimizerTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var done_first : bool := false
+            var done_first: bool := false
             init {
             }
             tran {
@@ -126,7 +126,7 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var done_first : bool := false
+            var done_first: bool := false
             init {
             }
             tran {
@@ -142,13 +142,13 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
     fun `assumes guarding tran keep their read variables in the cone of influence`() = assertOptimizerTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var step : int := -1
-            var aux : int := 0
+            var step: int := -1
+            var aux: int := 0
             init {
                 step := 1
             }
             tran {
-                assume (step == 1)
+                assume(step == 1)
                 step := 2
             }
             prop {
@@ -157,12 +157,12 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var step : int := -1
+            var step: int := -1
             init {
                 step := 1
             }
             tran {
-                assume (step == 1)
+                assume(step == 1)
                 step := 2
             }
             prop {
@@ -175,13 +175,13 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
     fun `step counter style witness model - init writes must survive`() = assertOptimizerTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var step : int := 0
+            var step: int := 0
             init {
-                assume (step == 0)
+                assume(step == 0)
                 step := 1
             }
             tran {
-                assume (step == 1)
+                assume(step == 1)
                 step := 2
             }
             prop {
@@ -190,13 +190,13 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var step : int := 0
+            var step: int := 0
             init {
-                assume (step == 0)
+                assume(step == 0)
                 step := 1
             }
             tran {
-                assume (step == 1)
+                assume(step == 1)
                 step := 2
             }
             prop {
@@ -209,7 +209,7 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
     fun `nested choice in init - all branches stay live when read in tran`() = assertOptimizerTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var current : int := -1
+            var current: int := -1
             init {
                 choice {
                     choice {
@@ -222,7 +222,7 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
                 }
             }
             tran {
-                assume (current == 0 || current == 1 || current == 2)
+                assume(current == 0 || current == 1 || current == 2)
             }
             prop {
                 AG (current != 99)
@@ -230,7 +230,7 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var current : int := -1
+            var current: int := -1
             init {
                 choice {
                     current := 2
@@ -241,7 +241,7 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
                 }
             }
             tran {
-                assume (current == 0 || current == 1 || current == 2)
+                assume(current == 0 || current == 1 || current == 2)
             }
             prop {
                 AG (current != 99)
@@ -253,34 +253,34 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
     fun `witness shape with step counter and dispatch must be preserved`() = assertOptimizerTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var step : int := 0
-            var current : int := -1
-            var first_done : bool := false
-            var second_done : bool := false
+            var step: int := 0
+            var current: int := -1
+            var first_done: bool := false
+            var second_done: bool := false
             init {
-                assume (step == 0)
+                assume(step == 0)
                 choice {
                     current := 0
                 } or {
                     current := 1
                 }
-                assume (current == 1)
-                assume (first_done == false)
-                assume (second_done == false)
+                assume(current == 1)
+                assume(first_done == false)
+                assume(second_done == false)
                 step := 1
             }
             tran {
-                assume (step == 1)
+                assume(step == 1)
                 choice {
-                    assume (current == 0)
+                    assume(current == 0)
                     first_done := true
                 } or {
-                    assume (current == 1)
+                    assume(current == 1)
                     second_done := true
                 }
-                assume (current == 1)
-                assume (first_done == false)
-                assume (second_done == true)
+                assume(current == 1)
+                assume(first_done == false)
+                assume(second_done == true)
                 step := 2
             }
             prop {
@@ -289,34 +289,34 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var step : int := 0
-            var current : int := -1
-            var first_done : bool := false
-            var second_done : bool := false
+            var step: int := 0
+            var current: int := -1
+            var first_done: bool := false
+            var second_done: bool := false
             init {
-                assume (step == 0)
+                assume(step == 0)
                 choice {
                     current := 0
                 } or {
                     current := 1
                 }
-                assume (current == 1)
-                assume (first_done == false)
-                assume (second_done == false)
+                assume(current == 1)
+                assume(first_done == false)
+                assume(second_done == false)
                 step := 1
             }
             tran {
-                assume (step == 1)
+                assume(step == 1)
                 choice {
-                    assume (current == 0)
+                    assume(current == 0)
                     first_done := true
                 } or {
-                    assume (current == 1)
+                    assume(current == 1)
                     second_done := true
                 }
-                assume (current == 1)
-                assume (first_done == false)
-                assume (second_done == true)
+                assume(current == 1)
+                assume(first_done == false)
+                assume(second_done == true)
                 step := 2
             }
             prop {
@@ -330,7 +330,7 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
         source = """
             inlined oxsts of semantifyr::Anything
             @NonOptimizable
-            var tracer : bool := false
+            var tracer: bool := false
             init {
             }
             tran {
@@ -343,7 +343,7 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             @NonOptimizable
-            var tracer : bool := false
+            var tracer: bool := false
             init {
             }
             tran {

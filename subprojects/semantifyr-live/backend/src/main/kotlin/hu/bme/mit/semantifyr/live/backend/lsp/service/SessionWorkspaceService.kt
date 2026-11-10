@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseSpecification
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
+import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServices
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionContext
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScoped
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionVerificationManager
@@ -21,7 +22,11 @@ import org.eclipse.lsp4j.DidChangeConfigurationParams
 import org.eclipse.lsp4j.DidChangeWatchedFilesParams
 import org.eclipse.lsp4j.ExecuteCommandParams
 import org.eclipse.lsp4j.Location
+import org.eclipse.lsp4j.SymbolInformation
+import org.eclipse.lsp4j.WorkspaceSymbol
+import org.eclipse.lsp4j.WorkspaceSymbolParams
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
+import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseError
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode
 import org.eclipse.lsp4j.services.WorkspaceService
@@ -34,6 +39,7 @@ class SessionWorkspaceService @Inject constructor(
     private val sessionRequestManager: SessionRequestManager,
     private val sessionVerificationManager: SessionVerificationManager,
     private val verificationExecutor: VerificationExecutor,
+    private val languageServices: LanguageServices,
 ) : WorkspaceService {
 
     private val flavor
@@ -45,6 +51,29 @@ class SessionWorkspaceService @Inject constructor(
 
     override fun didChangeWatchedFiles(params: DidChangeWatchedFilesParams) {
         // no op
+    }
+
+    override fun symbol(
+        params: WorkspaceSymbolParams,
+    ): CompletableFuture<Either<MutableList<out SymbolInformation>, MutableList<out WorkspaceSymbol>>> {
+        return sessionRequestManager.runRead { cancelIndicator ->
+            val symbols = languageServices.workspaceSymbolService.getSymbols(
+                params.query,
+                sessionDocumentManager.referenceResourceAccess(),
+                sessionDocumentManager.referenceIndex(),
+                cancelIndicator,
+            )
+            val translated = symbols.map {
+                toClientSymbol(it)
+            }.toMutableList()
+            Either.forRight<MutableList<out SymbolInformation>, MutableList<out WorkspaceSymbol>>(translated)
+        }
+    }
+
+    private fun toClientSymbol(symbol: WorkspaceSymbol): WorkspaceSymbol {
+        val location = symbol.location.left
+        val clientLocation = Location(sessionDocumentManager.toClientUri(location.uri), location.range)
+        return WorkspaceSymbol(symbol.name, symbol.kind, Either.forLeft(clientLocation), symbol.containerName)
     }
 
     override fun executeCommand(params: ExecuteCommandParams): CompletableFuture<Any?> {

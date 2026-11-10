@@ -20,7 +20,7 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var observed : int := 0
+                var observed: int := 0
                 init {
                 }
                 tran {
@@ -40,8 +40,8 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var observed : int := 0
-                var unrelated : int := 0
+                var observed: int := 0
+                var unrelated: int := 0
                 init {
                 }
                 tran {
@@ -64,7 +64,7 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var observed : int := 0
+                var observed: int := 0
                 init {
                     observed := 1
                 }
@@ -92,8 +92,8 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var observed : int := 0
-                var guard : int := 0
+                var observed: int := 0
+                var guard: int := 0
                 init {
                 }
                 tran {
@@ -124,8 +124,8 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var counter : int := 0
-                var observed : int := 0
+                var counter: int := 0
+                var observed: int := 0
                 init {
                 }
                 tran {
@@ -156,8 +156,8 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var observed : int := 0
-                var feeder : int := 0
+                var observed: int := 0
+                var feeder: int := 0
                 init {
                 }
                 tran {
@@ -187,7 +187,7 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var activeState : int := -1
+                var activeState: int := -1
                 init {
                     activeState := 0
                 }
@@ -220,8 +220,8 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var activeState : int := -1
-                var inputEvent : int := 0
+                var activeState: int := -1
+                var inputEvent: int := 0
                 init {
                     activeState := 0
                 }
@@ -258,10 +258,10 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var observed : int := 0
-                var outerGuard : int := 0
-                var ifGuard : int := 0
-                var innerGuard : int := 0
+                var observed: int := 0
+                var outerGuard: int := 0
+                var ifGuard: int := 0
+                var innerGuard: int := 0
                 init {
                 }
                 tran {
@@ -315,8 +315,8 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var bound : int := 5
-                var sum : int := 0
+                var bound: int := 5
+                var sum: int := 0
                 init {
                 }
                 tran {
@@ -343,7 +343,7 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var step : int := -1
+                var step: int := -1
                 init {
                     step := 1
                 }
@@ -373,7 +373,7 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var seed : int := 7
+                var seed: int := 7
                 init {
                     assume(seed == 7)
                 }
@@ -396,7 +396,7 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var value : int := 0
+                var value: int := 0
                 init {
                     value := 5
                 }
@@ -426,8 +426,8 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var first : int := 0
-                var second : int := 0
+                var first: int := 0
+                var second: int := 0
                 init {
                     first := 1
                     second := 2
@@ -456,8 +456,8 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var available : int := 0
-                var selected : int := 0
+                var available: int := 0
+                var selected: int := 0
                 init {
                     available := 7
                     selected := available
@@ -484,8 +484,8 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var observed : int := 0
-                var guard : int := 0
+                var observed: int := 0
+                var guard: int := 0
                 init {
                 }
                 tran {
@@ -513,9 +513,9 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var observed : int := 0
-                var unrelated : int := 0
-                var siblingGuard : int := 0
+                var observed: int := 0
+                var unrelated: int := 0
+                var siblingGuard: int := 0
                 init {
                 }
                 tran {
@@ -554,12 +554,12 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var toggled : int := 0
-                var seen : int := 0
+                var toggled: int := 0
+                var seen: int := 0
                 init { }
                 tran {
                     toggled := 1 - toggled
-                    var local : int := toggled
+                    var local: int := toggled
                     seen := local
                 }
                 prop { EF (seen == 1) }
@@ -578,14 +578,14 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runConeOfInfluence(
             """
                 inlined oxsts of semantifyr::Anything
-                var toggled : int := 0
-                var seen : int := 0
-                var other : int := 0
+                var toggled: int := 0
+                var seen: int := 0
+                var other: int := 0
                 init {
                 }
                 tran {
                     toggled := 1 - toggled
-                    var local : int := toggled
+                    var local: int := toggled
                     other := local
                     seen := 1
                 }

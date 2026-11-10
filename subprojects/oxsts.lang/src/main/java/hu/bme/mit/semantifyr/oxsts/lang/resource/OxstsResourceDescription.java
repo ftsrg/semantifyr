@@ -22,6 +22,7 @@ import org.eclipse.xtext.resource.IEObjectDescription;
 import org.eclipse.xtext.resource.impl.DefaultResourceDescription;
 import org.eclipse.xtext.util.IAcceptor;
 import org.eclipse.xtext.util.IResourceScopeCache;
+import org.eclipse.xtext.util.Strings;
 
 public class OxstsResourceDescription extends DefaultResourceDescription {
 
@@ -63,6 +64,10 @@ public class OxstsResourceDescription extends DefaultResourceDescription {
     }
 
     protected List<IEObjectDescription> computeExportedObjects(OxstsModelPackage oxstsModelPackage) {
+        if (Strings.isEmpty(oxstsModelPackage.getName())) {
+            return List.of();
+        }
+
         final List<IEObjectDescription> exportedEObjects = newArrayList();
         IAcceptor<IEObjectDescription> acceptor = exportedEObjects::add;
 

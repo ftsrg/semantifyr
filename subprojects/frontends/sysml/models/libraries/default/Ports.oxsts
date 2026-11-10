@@ -23,7 +23,7 @@ abstract class Port {
     }
 
     tran assumeHasIncomingItem(item: Item) {
-        assume (hasIncomingItem(item))
+        assume(hasIncomingItem(item))
     }
 
     tran setIncomingItem(item: Item) {
@@ -44,11 +44,11 @@ abstract class Port {
     }
 
     tran havocIncomingItem() {
-        havoc (incomingItem)
+        havoc(incomingItem)
     }
 
     tran havocOutgoingItem() {
-        havoc (outgoingItem)
+        havoc(outgoingItem)
     }
 }
 

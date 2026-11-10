@@ -10,7 +10,6 @@ import semantifyr::gamma::events
 import semantifyr::gamma::ports
 
 abstract class Component {
-
     contains ports: Port[0..*]
     contains timeouts: Timeout[0..*]
 

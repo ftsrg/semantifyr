@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.live.backend.lsp.service
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.lang.ide.server.hierarchy.HierarchyItemData
 import hu.bme.mit.semantifyr.live.backend.exceptions.WorkspaceUriException
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocument
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
@@ -16,8 +17,17 @@ import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionContext
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScoped
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
+import org.eclipse.emf.ecore.resource.Resource
+import org.eclipse.lsp4j.CallHierarchyIncomingCall
+import org.eclipse.lsp4j.CallHierarchyIncomingCallsParams
+import org.eclipse.lsp4j.CallHierarchyItem
+import org.eclipse.lsp4j.CallHierarchyOutgoingCall
+import org.eclipse.lsp4j.CallHierarchyOutgoingCallsParams
+import org.eclipse.lsp4j.CallHierarchyPrepareParams
 import org.eclipse.lsp4j.CodeAction
 import org.eclipse.lsp4j.CodeActionParams
+import org.eclipse.lsp4j.CodeLens
+import org.eclipse.lsp4j.CodeLensParams
 import org.eclipse.lsp4j.Command
 import org.eclipse.lsp4j.CompletionItem
 import org.eclipse.lsp4j.CompletionList
@@ -37,16 +47,32 @@ import org.eclipse.lsp4j.FoldingRange
 import org.eclipse.lsp4j.FoldingRangeRequestParams
 import org.eclipse.lsp4j.Hover
 import org.eclipse.lsp4j.HoverParams
+import org.eclipse.lsp4j.InlayHint
+import org.eclipse.lsp4j.InlayHintParams
 import org.eclipse.lsp4j.Location
 import org.eclipse.lsp4j.LocationLink
+import org.eclipse.lsp4j.PrepareRenameDefaultBehavior
+import org.eclipse.lsp4j.PrepareRenameParams
+import org.eclipse.lsp4j.PrepareRenameResult
+import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.ReferenceParams
+import org.eclipse.lsp4j.RenameParams
 import org.eclipse.lsp4j.SemanticTokens
 import org.eclipse.lsp4j.SemanticTokensParams
+import org.eclipse.lsp4j.SignatureHelp
+import org.eclipse.lsp4j.SignatureHelpParams
 import org.eclipse.lsp4j.SymbolInformation
 import org.eclipse.lsp4j.TextEdit
+import org.eclipse.lsp4j.TypeHierarchyItem
+import org.eclipse.lsp4j.TypeHierarchyPrepareParams
+import org.eclipse.lsp4j.TypeHierarchySubtypesParams
+import org.eclipse.lsp4j.TypeHierarchySupertypesParams
+import org.eclipse.lsp4j.WorkspaceEdit
 import org.eclipse.lsp4j.jsonrpc.messages.Either
+import org.eclipse.lsp4j.jsonrpc.messages.Either3
 import org.eclipse.lsp4j.services.TextDocumentService
 import org.eclipse.xtext.ide.server.codeActions.ICodeActionService2
+import org.eclipse.xtext.ide.server.rename.IRenameService2
 import org.eclipse.xtext.util.CancelIndicator
 import java.util.concurrent.CompletableFuture
 
@@ -119,6 +145,17 @@ class SessionTextDocumentService @Inject constructor(
     override fun hover(params: HoverParams): CompletableFuture<Hover?> {
         return readDocument(params.textDocument.uri, null) { file, cancelIndicator ->
             languageServices.hoverService.hover(file.xtextDocument(), file.resource, params, cancelIndicator)
+        }
+    }
+
+    override fun signatureHelp(params: SignatureHelpParams): CompletableFuture<SignatureHelp?> {
+        return readDocument(params.textDocument.uri, null) { file, cancelIndicator ->
+            languageServices.signatureHelpService.getSignatureHelp(
+                file.xtextDocument(),
+                file.resource,
+                params,
+                cancelIndicator,
+            )
         }
     }
 
@@ -234,9 +271,180 @@ class SessionTextDocumentService @Inject constructor(
                 this.document = file.xtextDocument()
                 this.resource = file.resource
                 this.languageServerAccess = sessionLanguageServerAccessFactory.create(cancelIndicator)
+                this.uri = params.textDocument.uri
             }
-            service.getCodeActions(options).orEmpty().toMutableList()
+            val codeActions = service.getCodeActions(options).orEmpty()
+            codeActions.mapNotNull {
+                it.right?.edit
+            }.forEach {
+                toClientEdit(it)
+            }
+            codeActions.toMutableList()
         }
+    }
+
+    private fun toClientEdit(edit: WorkspaceEdit) {
+        edit.changes = edit.changes?.mapKeys {
+            sessionDocumentManager.toClientUri(it.key)
+        }
+        edit.documentChanges?.mapNotNull {
+            it.left?.textDocument
+        }?.forEach {
+            it.uri = sessionDocumentManager.toClientUri(it.uri)
+        }
+    }
+
+    override fun rename(params: RenameParams): CompletableFuture<WorkspaceEdit?> {
+        if (!languageServices.supportsRename) {
+            return CompletableFuture.completedFuture(null)
+        }
+        return readDocument(params.textDocument.uri, null) { _, cancelIndicator ->
+            val options = IRenameService2.Options().apply {
+                this.languageServerAccess = sessionLanguageServerAccessFactory.create(cancelIndicator)
+                this.renameParams = params
+                this.cancelIndicator = cancelIndicator
+            }
+            toClientWorkspaceEdit(languageServices.renameService.rename(options))
+        }
+    }
+
+    override fun prepareRename(
+        params: PrepareRenameParams,
+    ): CompletableFuture<Either3<Range, PrepareRenameResult, PrepareRenameDefaultBehavior>?> {
+        if (!languageServices.supportsRename) {
+            return CompletableFuture.completedFuture(null)
+        }
+        return readDocument(params.textDocument.uri, null) { _, cancelIndicator ->
+            val options = IRenameService2.PrepareRenameOptions().apply {
+                this.languageServerAccess = sessionLanguageServerAccessFactory.create(cancelIndicator)
+                this.params = params
+                this.cancelIndicator = cancelIndicator
+            }
+            languageServices.renameService.prepareRename(options)
+        }
+    }
+
+    override fun codeLens(params: CodeLensParams): CompletableFuture<MutableList<out CodeLens>> {
+        val service = languageServices.codeLensService ?: return CompletableFuture.completedFuture(mutableListOf())
+        return readDocument(params.textDocument.uri, mutableListOf()) { file, cancelIndicator ->
+            service.computeCodeLenses(file.xtextDocument(), file.resource, params, cancelIndicator)
+                .orEmpty()
+                .filter {
+                    it.command?.command in sessionContext.flavor.commands
+                }
+                .toMutableList()
+        }
+    }
+
+    override fun inlayHint(params: InlayHintParams): CompletableFuture<MutableList<InlayHint>> {
+        val service = languageServices.inlayHintService ?: return CompletableFuture.completedFuture(mutableListOf())
+        return readDocument(params.textDocument.uri, mutableListOf()) { file, cancelIndicator ->
+            val hints = service.computeInlayHints(file.xtextDocument(), file.resource, params, cancelIndicator)
+            hints.flatMap {
+                it.label.right.orEmpty()
+            }.forEach { part ->
+                part.location = part.location?.let {
+                    toClientLocation(it)
+                }
+            }
+            hints.toMutableList()
+        }
+    }
+
+    override fun prepareTypeHierarchy(
+        params: TypeHierarchyPrepareParams,
+    ): CompletableFuture<MutableList<TypeHierarchyItem>> {
+        val service = languageServices.typeHierarchyService ?: return CompletableFuture.completedFuture(mutableListOf())
+        return readDocument(params.textDocument.uri, mutableListOf()) { file, cancelIndicator ->
+            service.prepareTypeHierarchy(file.xtextDocument(), file.resource, params, cancelIndicator).map {
+                toClientItem(it)
+            }.toMutableList()
+        }
+    }
+
+    override fun typeHierarchySupertypes(
+        params: TypeHierarchySupertypesParams,
+    ): CompletableFuture<MutableList<TypeHierarchyItem>> {
+        val service = languageServices.typeHierarchyService ?: return CompletableFuture.completedFuture(mutableListOf())
+        return readItem(params.item.data, mutableListOf()) { resource, _ ->
+            service.supertypes(resource, params.item).map {
+                toClientItem(it)
+            }.toMutableList()
+        }
+    }
+
+    override fun typeHierarchySubtypes(
+        params: TypeHierarchySubtypesParams,
+    ): CompletableFuture<MutableList<TypeHierarchyItem>> {
+        val service = languageServices.typeHierarchyService ?: return CompletableFuture.completedFuture(mutableListOf())
+        return readItem(params.item.data, mutableListOf()) { resource, _ ->
+            service.subtypes(resource, params.item).map {
+                toClientItem(it)
+            }.toMutableList()
+        }
+    }
+
+    override fun prepareCallHierarchy(
+        params: CallHierarchyPrepareParams,
+    ): CompletableFuture<MutableList<CallHierarchyItem>> {
+        val service = languageServices.callHierarchyService ?: return CompletableFuture.completedFuture(mutableListOf())
+        return readDocument(params.textDocument.uri, mutableListOf()) { file, cancelIndicator ->
+            service.prepareCallHierarchy(file.xtextDocument(), file.resource, params, cancelIndicator).map {
+                toClientItem(it)
+            }.toMutableList()
+        }
+    }
+
+    override fun callHierarchyIncomingCalls(
+        params: CallHierarchyIncomingCallsParams,
+    ): CompletableFuture<MutableList<CallHierarchyIncomingCall>> {
+        val service = languageServices.callHierarchyService ?: return CompletableFuture.completedFuture(mutableListOf())
+        return readItem(params.item.data, mutableListOf()) { resource, cancelIndicator ->
+            service.incomingCalls(
+                resource,
+                params.item,
+                sessionDocumentManager.referenceResourceAccess(),
+                sessionDocumentManager.referenceIndex(),
+                cancelIndicator,
+            ).map {
+                CallHierarchyIncomingCall(toClientItem(it.from), it.fromRanges)
+            }.toMutableList()
+        }
+    }
+
+    override fun callHierarchyOutgoingCalls(
+        params: CallHierarchyOutgoingCallsParams,
+    ): CompletableFuture<MutableList<CallHierarchyOutgoingCall>> {
+        val service = languageServices.callHierarchyService ?: return CompletableFuture.completedFuture(mutableListOf())
+        return readItem(params.item.data, mutableListOf()) { resource, _ ->
+            service.outgoingCalls(resource, params.item).map {
+                CallHierarchyOutgoingCall(toClientItem(it.to), it.fromRanges)
+            }.toMutableList()
+        }
+    }
+
+    private inline fun <T> readItem(
+        itemData: Any?,
+        empty: T,
+        crossinline block: (Resource, CancelIndicator) -> T,
+    ): CompletableFuture<T> {
+        return sessionRequestManager.runRead {
+            val resource = sessionDocumentManager.findResourceByClient(HierarchyItemData.of(itemData).documentUri())
+            if (resource == null) {
+                return@runRead empty
+            }
+            block(resource, it)
+        }
+    }
+
+    private fun toClientItem(item: TypeHierarchyItem): TypeHierarchyItem {
+        item.uri = sessionDocumentManager.toClientUri(item.uri)
+        return item
+    }
+
+    private fun toClientItem(item: CallHierarchyItem): CallHierarchyItem {
+        item.uri = sessionDocumentManager.toClientUri(item.uri)
+        return item
     }
 
     private inline fun <T> readDocument(
@@ -259,5 +467,12 @@ class SessionTextDocumentService @Inject constructor(
             return location
         }
         return Location(translated, location.range)
+    }
+
+    private fun toClientWorkspaceEdit(edit: WorkspaceEdit): WorkspaceEdit {
+        val changes = edit.changes.orEmpty().entries.associate { (uri, edits) ->
+            sessionDocumentManager.toClientUri(uri) to edits
+        }
+        return WorkspaceEdit(changes)
     }
 }

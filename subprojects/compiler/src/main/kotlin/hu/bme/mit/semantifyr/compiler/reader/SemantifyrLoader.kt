@@ -14,13 +14,17 @@ import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryAdapterFinder
 import hu.bme.mit.semantifyr.oxsts.lang.library.OxstsLibrary
 import hu.bme.mit.semantifyr.oxsts.lang.utils.ResourceUriProvider
+import hu.bme.mit.semantifyr.oxsts.lang.utils.SelfContainedResource
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
 import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.resource.ResourceSet
+import org.eclipse.xtext.EcoreUtil2
 import org.eclipse.xtext.resource.XtextResource
 import org.eclipse.xtext.resource.XtextResourceSet
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.nio.file.Path
 import kotlin.io.path.PathWalkOption
 import kotlin.io.path.isRegularFile
@@ -57,38 +61,49 @@ class SemantifyrLoader @Inject constructor(
         return startContext().loadModel(path).buildAndResolve()
     }
 
+    // every OXSTS resource is copied from the open buffer or its own content, since compiling rewrites the clone in place
     fun fromResourceSet(resourceSet: ResourceSet, openDocumentTexts: Map<URI, String>): SemantifyrModelContext {
-        val clonedResourceSet = cloneOxstsPackagesInResourceSet(resourceSet, openDocumentTexts)
-        return SemantifyrModelContext(
-            resourceSet = clonedResourceSet,
-            libraryResources = emptyList(),
-            modelResources = clonedResourceSet.resources.toList(),
-        )
-    }
-
-    private fun cloneOxstsPackagesInResourceSet(resourceSet: ResourceSet, openDocumentTexts: Map<URI, String>): ResourceSet {
         val clone = createResourceSet()
 
         // For some reason resourceSet.resources may change in the loop leading to concurrent modification
-        val resourcesCopy = resourceSet.resources.toList()
-        for (resource in resourcesCopy) {
-            if (resource.contents.singleOrNull() is OxstsModelPackage) {
-                val text = openDocumentTexts[resource.uri]
-                if (text == null) {
-                    openResource(clone, resource)
-                } else {
-                    openResourceFromText(clone, resource.uri, text)
-                }
+        for (resource in resourceSet.resources.toList()) {
+            if (!isOxstsModel(resource) || clone.getResource(resource.uri, false) != null) {
+                continue
+            }
+            val text = openDocumentTexts[resource.uri] ?: contentOf(resource)
+            val cloned = openResourceFromText(clone, resource.uri, text)
+            if (cloned.contents.singleOrNull() is InlinedOxsts) {
+                SelfContainedResource.mark(cloned)
             }
         }
 
-        resourceSetLoader.resolveAllAndValidate(clone)
+        EcoreUtil2.resolveAll(clone)
+        for (resource in clone.resources.toList()) {
+            if (resource.contents.singleOrNull() !is InlinedOxsts) {
+                resourceSetLoader.validateResource(resource)
+            }
+        }
 
-        return clone
+        return SemantifyrModelContext(
+            resourceSet = clone,
+            libraryResources = emptyList(),
+            modelResources = clone.resources.toList(),
+        )
     }
 
-    private fun openResource(resourceSet: ResourceSet, resource: Resource): Resource {
-        return resourceSet.getResource(resource.uri, true)
+    private fun isOxstsModel(resource: Resource): Boolean {
+        val root = resource.contents.singleOrNull()
+        return root is OxstsModelPackage || root is InlinedOxsts
+    }
+
+    private fun contentOf(resource: Resource): String {
+        val rootNode = (resource as? XtextResource)?.parseResult?.rootNode
+        if (rootNode != null) {
+            return rootNode.text
+        }
+        val output = ByteArrayOutputStream()
+        resource.save(output, mapOf(XtextResource.OPTION_ENCODING to Charsets.UTF_8.name()))
+        return output.toString(Charsets.UTF_8)
     }
 
     private fun openResourceFromText(

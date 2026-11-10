@@ -18,17 +18,17 @@ class FeatureInliningTest : InliningTestBase() {
             """
                 package inlining::tests
                 class Item {
-                    var hits : int := 0
+                    var hits: int := 0
                     tran act() {
                         hits := hits + 1
                     }
                 }
                 @VerificationCase
                 class Host {
-                    contains items : Item[0..*]
-                    contains first : Item[1] subsets items
-                    contains second : Item[1] subsets items
-                    contains other : Item[1]
+                    contains items: Item[0..*]
+                    contains first: Item[1] subsets items
+                    contains second: Item[1] subsets items
+                    contains other: Item[1]
                     redefine tran {
                         inline for (item in items) {
                             inline item.act()
@@ -54,27 +54,27 @@ class FeatureInliningTest : InliningTestBase() {
             """
                 package inlining::tests
                 class Item {
-                    var hits : int := 0
+                    var hits: int := 0
                     tran act() {
                         hits := hits + 1
                     }
                 }
                 class SpecialItem : Item {
-                    var special : int := 0
+                    var special: int := 0
                     redefine tran act() {
                         special := special + 1
                     }
                 }
                 class Holder {
-                    contains items : Item[0..*]
-                    contains first : Item[1] subsets items
+                    contains items: Item[0..*]
+                    contains first: Item[1] subsets items
                 }
                 class SpecialHolder : Holder {
-                    redefine contains first : SpecialItem[1]
+                    redefine contains first: SpecialItem[1]
                 }
                 @VerificationCase
                 class Host {
-                    contains holder : SpecialHolder[1]
+                    contains holder: SpecialHolder[1]
                     redefine tran {
                         inline for (item in holder.items) {
                             inline item.act()
@@ -97,29 +97,29 @@ class FeatureInliningTest : InliningTestBase() {
             """
                 package inlining::tests
                 class Item {
-                    var hits : int := 0
+                    var hits: int := 0
                     tran act() {
                         hits := hits + 1
                     }
                 }
                 class SpecialItem : Item {
-                    var special : int := 0
+                    var special: int := 0
                     redefine tran act() {
                         special := special + 1
                     }
                 }
                 class Pair {
-                    contains original : Item[1]
+                    contains original: Item[1]
                     tran run() {
                         inline original.act()
                     }
                 }
                 class RenamedPair : Pair {
-                    contains replacement : SpecialItem[1] redefines original
+                    contains replacement: SpecialItem[1] redefines original
                 }
                 @VerificationCase
                 class Host {
-                    contains pair : RenamedPair[1]
+                    contains pair: RenamedPair[1]
                     redefine tran {
                         inline pair.run()
                     }
@@ -142,23 +142,23 @@ class FeatureInliningTest : InliningTestBase() {
             """
                 package inlining::tests
                 class Lamp {
-                    var on : bool := false
+                    var on: bool := false
                     tran switchOn() {
                         on := true
                     }
                 }
                 class Switch {
-                    refers lamp : Lamp[1]
+                    refers lamp: Lamp[1]
                     tran press() {
                         inline lamp.switchOn()
                     }
                 }
                 @VerificationCase
                 class Host {
-                    contains kitchen : Lamp[1]
-                    contains hall : Lamp[1]
-                    contains button : Switch[1] {
-                        redefine refers lamp : Lamp[1] = kitchen
+                    contains kitchen: Lamp[1]
+                    contains hall: Lamp[1]
+                    contains button: Switch[1] {
+                        redefine refers lamp: Lamp[1] = kitchen
                     }
                     redefine tran {
                         inline button.press()
@@ -182,8 +182,8 @@ class FeatureInliningTest : InliningTestBase() {
             """
                 package inlining::tests
                 class Limited {
-                    refers limit : int = 2
-                    var count : int := 0
+                    refers limit: int = 2
+                    var count: int := 0
                     tran step() {
                         assume(count < limit)
                         count := count + 1
@@ -191,9 +191,9 @@ class FeatureInliningTest : InliningTestBase() {
                 }
                 @VerificationCase
                 class Host {
-                    contains plain : Limited[1]
-                    contains raised : Limited[1] {
-                        redefine refers limit : int = 3
+                    contains plain: Limited[1]
+                    contains raised: Limited[1] {
+                        redefine refers limit: int = 3
                     }
                     redefine tran {
                         inline plain.step()
@@ -218,25 +218,25 @@ class FeatureInliningTest : InliningTestBase() {
             """
                 package inlining::tests
                 class Node {
-                    var visits : int := 0
-                    derived refers incoming : Edge[0..*] opposite to
+                    var visits: int := 0
+                    derived refers incoming: Edge[0..*] opposite to
                 }
                 class Edge {
-                    var used : bool := false
-                    refers to : Node[1] opposite incoming
+                    var used: bool := false
+                    refers to: Node[1] opposite incoming
                 }
                 @VerificationCase
                 class Host {
-                    contains firstNode : Node[1]
-                    contains secondNode : Node[1]
-                    contains firstEdge : Edge[1] {
-                        redefine refers to : Node[1] = secondNode
+                    contains firstNode: Node[1]
+                    contains secondNode: Node[1]
+                    contains firstEdge: Edge[1] {
+                        redefine refers to: Node[1] = secondNode
                     }
-                    contains secondEdge : Edge[1] {
-                        redefine refers to : Node[1] = secondNode
+                    contains secondEdge: Edge[1] {
+                        redefine refers to: Node[1] = secondNode
                     }
-                    contains thirdEdge : Edge[1] {
-                        redefine refers to : Node[1] = firstNode
+                    contains thirdEdge: Edge[1] {
+                        redefine refers to: Node[1] = firstNode
                     }
                     redefine tran {
                         inline for (edge in secondNode.incoming) {
@@ -263,23 +263,23 @@ class FeatureInliningTest : InliningTestBase() {
             """
                 package inlining::tests
                 class Item {
-                    var hits : int := 0
+                    var hits: int := 0
                     tran act() {
                         hits := hits + 1
                     }
                 }
                 abstract class Slot {
-                    features payload : Item
+                    features payload: Item
                     tran run() {
                         inline payload.act()
                     }
                 }
                 class FilledSlot : Slot {
-                    redefine contains payload : Item[1]
+                    redefine contains payload: Item[1]
                 }
                 @VerificationCase
                 class Host {
-                    contains slot : FilledSlot[1]
+                    contains slot: FilledSlot[1]
                     redefine tran {
                         inline slot.run()
                     }
@@ -300,17 +300,17 @@ class FeatureInliningTest : InliningTestBase() {
             """
                 package inlining::tests
                 class Item {
-                    var hits : int := 0
+                    var hits: int := 0
                     tran act() {
                         hits := hits + 1
                     }
                 }
                 @VerificationCase
                 class Host {
-                    features items : Item[0..*]
-                    contains first : Item[1] subsets items
-                    contains second : Item[1] subsets items
-                    contains other : Item[1]
+                    features items: Item[0..*]
+                    contains first: Item[1] subsets items
+                    contains second: Item[1] subsets items
+                    contains other: Item[1]
                     redefine tran {
                         inline for (item in items) {
                             inline item.act()
@@ -336,23 +336,23 @@ class FeatureInliningTest : InliningTestBase() {
             """
                 package inlining::tests
                 class Item {
-                    var hits : int := 0
+                    var hits: int := 0
                     tran act() {
                         hits := hits + 1
                     }
                 }
                 abstract class Slot {
-                    features payload : Item[0..1]
+                    features payload: Item[0..1]
                     tran run() {
                         inline payload.act()
                     }
                 }
                 class FilledSlot : Slot {
-                    contains item : Item[1] subsets payload
+                    contains item: Item[1] subsets payload
                 }
                 @VerificationCase
                 class Host {
-                    contains slot : FilledSlot[1]
+                    contains slot: FilledSlot[1]
                     redefine tran {
                         inline slot.run()
                     }
@@ -373,7 +373,7 @@ class FeatureInliningTest : InliningTestBase() {
             """
                 package inlining::tests
                 class Worker {
-                    var done : bool := false
+                    var done: bool := false
                     tran step() {
                         done := true
                     }
@@ -407,10 +407,10 @@ class FeatureInliningTest : InliningTestBase() {
                 }
                 @VerificationCase
                 class Host {
-                    contains first : Item[1]
-                    contains second : Item[1]
-                    refers chosen : Item[1] = second
-                    var counter : int := 0
+                    contains first: Item[1]
+                    contains second: Item[1]
+                    refers chosen: Item[1] = second
+                    var counter: int := 0
                     redefine tran {
                         inline if (chosen == first) {
                             counter := 1

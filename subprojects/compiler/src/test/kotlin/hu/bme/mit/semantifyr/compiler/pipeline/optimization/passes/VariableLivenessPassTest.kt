@@ -13,8 +13,8 @@ class VariableLivenessPassTest : PassTestBase() {
     fun `unread variable and its assignments are removed`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var observed : int := 0
-            var unread : int := 0
+            var observed: int := 0
+            var unread: int := 0
             init {
             }
             tran {
@@ -27,7 +27,7 @@ class VariableLivenessPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var observed : int := 0
+            var observed: int := 0
             init {
             }
             tran {
@@ -45,7 +45,7 @@ class VariableLivenessPassTest : PassTestBase() {
     fun `initializer-only variable is substituted into its reads`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var constant : int := 7
+            var constant: int := 7
             init {
             }
             tran {
@@ -72,7 +72,7 @@ class VariableLivenessPassTest : PassTestBase() {
     fun `single unused variable is fully eliminated, yielding a zero-variable model`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var dummy : int := 0
+            var dummy: int := 0
             init {
             }
             tran {
@@ -99,7 +99,7 @@ class VariableLivenessPassTest : PassTestBase() {
     fun `variable with both havoc and assignment is left alone when read`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -112,7 +112,7 @@ class VariableLivenessPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -132,7 +132,7 @@ class VariableLivenessPassTest : PassTestBase() {
         source = """
             inlined oxsts of semantifyr::Anything
             @NonOptimizable
-            var tracer : bool := false
+            var tracer: bool := false
             init {
             }
             tran {
@@ -145,7 +145,7 @@ class VariableLivenessPassTest : PassTestBase() {
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             @NonOptimizable
-            var tracer : bool := false
+            var tracer: bool := false
             init {
             }
             tran {
@@ -163,11 +163,11 @@ class VariableLivenessPassTest : PassTestBase() {
     fun `a local's initializer is not moved past a later write of its source`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var source : int := 0
-            var seen : int := 0
+            var source: int := 0
+            var seen: int := 0
             init { }
             tran {
-                var snapshot : int := source
+                var snapshot: int := source
                 source := source + 1
                 seen := snapshot
             }
@@ -175,11 +175,11 @@ class VariableLivenessPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var source : int := 0
-            var seen : int := 0
+            var source: int := 0
+            var seen: int := 0
             init { }
             tran {
-                var snapshot : int := source
+                var snapshot: int := source
                 source := source + 1
                 seen := snapshot
             }
@@ -193,12 +193,12 @@ class VariableLivenessPassTest : PassTestBase() {
     fun `a local's initializer is not moved past a write of its source on one branch`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var source : int := 0
-            var seen : int := 0
+            var source: int := 0
+            var seen: int := 0
             init {
             }
             tran {
-                var snapshot : int := source
+                var snapshot: int := source
                 choice {
                     source := 1
                 } or {
@@ -211,12 +211,12 @@ class VariableLivenessPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var source : int := 0
-            var seen : int := 0
+            var source: int := 0
+            var seen: int := 0
             init {
             }
             tran {
-                var snapshot : int := source
+                var snapshot: int := source
                 choice {
                     source := 1
                 } or {
@@ -235,11 +235,11 @@ class VariableLivenessPassTest : PassTestBase() {
     fun `a local's initializer is not moved into a loop whose body writes its source`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var source : int := 0
-            var seen : int := 0
+            var source: int := 0
+            var seen: int := 0
             init { }
             tran {
-                var snapshot : int := source
+                var snapshot: int := source
                 for (index in 0..2) {
                     seen := snapshot
                     source := source + index
@@ -249,11 +249,11 @@ class VariableLivenessPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var source : int := 0
-            var seen : int := 0
+            var source: int := 0
+            var seen: int := 0
             init { }
             tran {
-                var snapshot : int := source
+                var snapshot: int := source
                 for (index in 0..2) {
                     seen := snapshot
                     source := source + index
@@ -269,12 +269,12 @@ class VariableLivenessPassTest : PassTestBase() {
     fun `a local's initializer is substituted when its source is written only after the reads`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var source : int := 0
-            var seen : int := 0
+            var source: int := 0
+            var seen: int := 0
             init {
             }
             tran {
-                var snapshot : int := source
+                var snapshot: int := source
                 seen := snapshot
                 source := source + 1
             }
@@ -284,8 +284,8 @@ class VariableLivenessPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var source : int := 0
-            var seen : int := 0
+            var source: int := 0
+            var seen: int := 0
             init {
             }
             tran {
@@ -304,7 +304,7 @@ class VariableLivenessPassTest : PassTestBase() {
     fun `an unread runtime loop variable is kept`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var counter : int := 0
+            var counter: int := 0
             init {
             }
             tran {
@@ -318,7 +318,7 @@ class VariableLivenessPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var counter : int := 0
+            var counter: int := 0
             init {
             }
             tran {
@@ -338,7 +338,7 @@ class VariableLivenessPassTest : PassTestBase() {
     fun `an unread runtime loop variable is kept when the loop body is empty`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var counter : int := 0
+            var counter: int := 0
             init {
             }
             tran {
@@ -352,7 +352,7 @@ class VariableLivenessPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var counter : int := 0
+            var counter: int := 0
             init {
             }
             tran {

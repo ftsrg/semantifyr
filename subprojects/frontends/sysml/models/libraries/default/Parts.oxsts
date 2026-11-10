@@ -86,7 +86,7 @@ class Part {
 
         inline for (flow in flows) {
             inline flow.main()
-        }        
+        }
     }
 }
 

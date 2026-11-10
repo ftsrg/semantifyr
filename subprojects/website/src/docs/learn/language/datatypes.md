@@ -23,8 +23,6 @@ The [standard library](standard-library.md) declares the following primitive dat
 An `enum` declares a type with a fixed set of named literals.
 
 ```oxsts
-package example
-
 enum Color {
   Red,
   Green,
@@ -45,8 +43,6 @@ if (current == Color::Red) {
 A `record` declares a value type that groups named fields. Records have no identity: assignment copies every field, and two records are equal when all their fields are equal. Records have no inheritance and no behavior; they only carry data. A field is a primitive, an enumeration or another record, and every field carries an initializer, the default value of the field.
 
 ```oxsts
-package example
-
 record Point {
   var x: int := 0
   var y: int := 0
@@ -82,8 +78,6 @@ class Plotter {
 A record literal names the record and gives fields by name. An omitted field takes its default, and a literal names at least one field: `Point {}` is not a literal. The values may read the state, literals nest, and the whole value is read before the target is written, so a literal can swap fields. A literal can be assigned, initialize a variable, be compared with `==` and `!=`, and be passed as an argument; it cannot be written or havoced.
 
 ```oxsts
-package example
-
 record Point {
   var x: int := 0
   var y: int := 0

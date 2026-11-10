@@ -17,13 +17,13 @@ class TrafficLight {
 
     redefine tran {
         choice {
-            assume (color == LightColor::Red)
+            assume(color == LightColor::Red)
             color := LightColor::Green
         } or {
-            assume (color == LightColor::Green)
+            assume(color == LightColor::Green)
             color := LightColor::Yellow
         } or {
-            assume (color == LightColor::Yellow)
+            assume(color == LightColor::Yellow)
             color := LightColor::Red
         }
     }

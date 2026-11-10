@@ -14,7 +14,7 @@ class ConstantVariableSubstitutionPassTest : PassTestBase() {
     fun `variable whose initializer and only assignment agree is substituted`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 7
+            var value: int := 7
             init {
                 value := 7
             }
@@ -26,7 +26,7 @@ class ConstantVariableSubstitutionPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 7
+            var value: int := 7
             init {
                 value := 7
             }
@@ -45,7 +45,7 @@ class ConstantVariableSubstitutionPassTest : PassTestBase() {
     fun `havoced variable is not treated as constant`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -58,7 +58,7 @@ class ConstantVariableSubstitutionPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -78,7 +78,7 @@ class ConstantVariableSubstitutionPassTest : PassTestBase() {
     fun `variable with differing writes is not treated as constant`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -94,7 +94,7 @@ class ConstantVariableSubstitutionPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {

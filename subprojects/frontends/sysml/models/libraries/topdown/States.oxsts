@@ -55,7 +55,7 @@ class State : AbstractState {
     redefine prop getActiveState(): AbstractState[0..1] {
         return activeState
     }
-    
+
     redefine tran setActiveState(state: AbstractState) {
         activeState := state
     }
@@ -74,14 +74,14 @@ class State : AbstractState {
         inline for choice (transition in transitions) {
             inline transition.fire()
         } else {
-            assume (false)
+            assume(false)
         }
     }
     tran fireInnerTransitions() {
         inline for choice (state in states) {
             inline state.fireTransitions()
         } else {
-            assume (false)
+            assume(false)
         }
     }
 
@@ -91,7 +91,7 @@ class State : AbstractState {
     }
     tran assumeNoLocalTransitionEnabled() {
         inline for (transition in transitions) {
-            assume (!transition.isEnabled())
+            assume(!transition.isEnabled())
         }
     }
     tran assumeNoInnerTransitionEnabled() {
@@ -160,7 +160,7 @@ class State : AbstractState {
 
         inline entryAction.main()
     }
-    
+
     tran deactivate() {
         if (parent.getActiveState() == self) {
             inline exitAction.main()
@@ -168,7 +168,6 @@ class State : AbstractState {
             inline parent.setActiveState(nothing)
         }
     }
-
 }
 
 class Transition {
@@ -187,7 +186,7 @@ class Transition {
 
     @Trace
     tran fire() {
-        assume (isEnabled())
+        assume(isEnabled())
         inline performTransition()
     }
 
@@ -196,10 +195,10 @@ class Transition {
     }
 
     tran performTransition() {
-		inline from.exit(parentState)
-		inline action.main()
-		inline to.enter(parentState)
-	}
+        inline from.exit(parentState)
+        inline action.main()
+        inline to.enter(parentState)
+    }
 
     tran passTime() {
         inline acceptAction.passTime()
@@ -208,7 +207,6 @@ class Transition {
     tran initialize() {
         inline acceptAction.initialize()
     }
-
 }
 
 class ParallelState : AbstractState {
@@ -217,15 +215,14 @@ class ParallelState : AbstractState {
     redefine prop getActiveState(): AbstractState[0..1] {
         return nothing
     }
-    
+
     redefine tran setActiveState(state: AbstractState) {
-        
     }
 
     redefine prop isInnerStateActive(state: AbstractState): bool {
         return isActive()
     }
-    
+
     redefine tran fireTransitions() {
         var anyStateExecuted: bool := false
 
@@ -239,7 +236,7 @@ class ParallelState : AbstractState {
             }
         }
 
-        assume (anyStateExecuted)
+        assume(anyStateExecuted)
     }
 
     redefine tran assumeNoTransitionEnabled() {
@@ -305,7 +302,7 @@ class ParallelState : AbstractState {
             inline entryAction.main()
         }
     }
-    
+
     tran deactivate() {
         inline if (parent != nothing) {
             inline exitAction.main()
@@ -315,26 +312,22 @@ class ParallelState : AbstractState {
             }
         }
     }
-
 }
 
 class EntryState : StateNode {
-    
     redefine prop isActive(): bool {
         return false
     }
 
     redefine tran enter(commonState: StateNode) {
         inline for choice (transition in outgoingTransitions) {
-            assume (transition.guard.isOpen())
+            assume(transition.guard.isOpen())
             inline transition.performTransition()
         }
     }
 
     redefine tran exit(commonState: StateNode) {
-        
     }
-
 }
 
 class IsStateActiveExpression : Expression {

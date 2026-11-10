@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScoped
 import hu.bme.mit.semantifyr.logging.error
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
+import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.lsp4j.Diagnostic
 import org.eclipse.lsp4j.DiagnosticSeverity
@@ -38,6 +39,9 @@ import org.eclipse.emf.common.util.URI as EmfURI
 
 private const val CLIENT_PREFIX = "file:///workspace/"
 
+// The builtin library is extracted outside the session, so the client reads it through this prefix.
+private const val BUILTIN_CLIENT_PREFIX = "${CLIENT_PREFIX}.semantifyr/builtin/"
+
 @SessionScoped
 class SessionDocumentManager @Inject constructor(
     private val languageServices: LanguageServices,
@@ -53,6 +57,10 @@ class SessionDocumentManager @Inject constructor(
     private val resourceSet = languageServices.newResourceSet()
 
     private val openDocuments = ConcurrentHashMap<String, SessionDocument>()
+
+    private val builtinLibraryRoot by lazy {
+        languageServices.builtinLibrary.extractedLibraryPath.toAbsolutePath().normalize()
+    }
 
     fun findByClient(clientUri: String): SessionDocument? {
         return openDocuments[clientToServer(clientUri)]
@@ -102,6 +110,9 @@ class SessionDocumentManager @Inject constructor(
     }
 
     fun readDocumentText(clientUri: String): String? {
+        builtinLibraryPathOrNull(clientUri)?.let {
+            return Files.readString(it)
+        }
         find(clientUri)?.let {
             return it.text()
         }
@@ -166,6 +177,15 @@ class SessionDocumentManager @Inject constructor(
         return ResourceDescriptionsData(descriptions)
     }
 
+    fun findResourceByClient(clientUri: String): Resource? {
+        findByClient(clientUri)?.let {
+            return it.resource
+        }
+        return resourceSet.resources.firstOrNull {
+            toClientUri(it.uri.toString()) == clientUri
+        }
+    }
+
     fun serverToClient(serverUri: String): String {
         return serverUri.replace(serverPrefix, CLIENT_PREFIX)
     }
@@ -173,6 +193,10 @@ class SessionDocumentManager @Inject constructor(
     fun toClientUri(serverUri: String): String {
         val path = fileUriToPathOrNull(serverUri) ?: return serverUri
         val normalized = path.toAbsolutePath().normalize()
+        if (normalized.startsWith(builtinLibraryRoot)) {
+            val relative = builtinLibraryRoot.relativize(normalized).joinToString("/")
+            return "$BUILTIN_CLIENT_PREFIX$relative"
+        }
         if (!normalized.startsWith(workspaceRoot)) {
             return serverUri
         }
@@ -200,6 +224,17 @@ class SessionDocumentManager @Inject constructor(
         if (resourceSet.getResource(emfUri, false) == null) {
             resourceSet.createResource(emfUri)?.load(emptyMap<Any, Any>())
         }
+    }
+
+    private fun builtinLibraryPathOrNull(clientUri: String): Path? {
+        if (!clientUri.startsWith(BUILTIN_CLIENT_PREFIX)) {
+            return null
+        }
+        val path = builtinLibraryRoot.resolve(clientUri.removePrefix(BUILTIN_CLIENT_PREFIX)).normalize()
+        if (!path.startsWith(builtinLibraryRoot) || !Files.isRegularFile(path)) {
+            return null
+        }
+        return path
     }
 
     private fun clientToServer(clientUri: String): String {
@@ -276,14 +311,16 @@ class SessionDocumentManager @Inject constructor(
             issue.message ?: "",
             issueSeverity(issue.severity),
             "semantifyr",
-        )
+            issue.code,
+        ).apply {
+            data = issue.data
+        }
     }
 
     private fun issueSeverity(severity: Severity): DiagnosticSeverity {
         return when (severity) {
             Severity.ERROR -> DiagnosticSeverity.Error
             Severity.WARNING -> DiagnosticSeverity.Warning
-            Severity.INFO -> DiagnosticSeverity.Information
             else -> DiagnosticSeverity.Hint
         }
     }

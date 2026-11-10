@@ -12,9 +12,11 @@ import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServices
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionClient
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionContext
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScoped
+import hu.bme.mit.semantifyr.oxsts.lang.ide.client.NavigateToParams
 import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.lsp4j.InitializeParams
 import org.eclipse.lsp4j.InitializeResult
+import org.eclipse.lsp4j.Location
 import org.eclipse.lsp4j.services.LanguageClient
 import org.eclipse.xtext.ide.server.ILanguageServerAccess
 import org.eclipse.xtext.ide.server.ILanguageServerAccess.Context
@@ -22,6 +24,8 @@ import org.eclipse.xtext.ide.server.ILanguageServerAccess.IBuildListener
 import org.eclipse.xtext.ide.server.ILanguageServerAccess.IndexContext
 import org.eclipse.xtext.resource.impl.ResourceDescriptionsData
 import org.eclipse.xtext.util.CancelIndicator
+import java.io.ByteArrayInputStream
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
 import org.eclipse.emf.common.util.URI as EmfURI
@@ -52,11 +56,24 @@ class SessionLanguageServerAccess(
     }
 
     override fun getLanguageClient(): LanguageClient {
-        return client
+        if (client !is SessionLanguageClient) {
+            return client
+        }
+        return ClientUriLanguageClient(client, sessionDocumentManager)
     }
 
     override fun newLiveScopeResourceSet(uri: EmfURI?): ResourceSet {
-        return languageServices.newResourceSet()
+        val resourceSet = languageServices.newResourceSet()
+        val document = uri?.let {
+            sessionDocumentManager.find(it.toString())
+        }
+        if (document != null) {
+            // the on-disk copy can lag behind the editor, so the fresh resource is loaded from the session's text
+            ByteArrayInputStream(document.text().toByteArray(StandardCharsets.UTF_8)).use {
+                resourceSet.createResource(uri).load(it, emptyMap<Any, Any>())
+            }
+        }
+        return resourceSet
     }
 
     override fun getInitializeParams(): InitializeParams {
@@ -72,6 +89,19 @@ class SessionLanguageServerAccess(
     private fun contextFor(uri: String): Context {
         val file = sessionDocumentManager.find(uri) ?: error("No resource registered for uri=$uri")
         return Context(file.resource, file.xtextDocument(), true, cancelIndicator)
+    }
+}
+
+private class ClientUriLanguageClient(
+    private val delegate: SessionLanguageClient,
+    private val sessionDocumentManager: SessionDocumentManager,
+) : SessionLanguageClient by delegate {
+
+    override fun navigateTo(params: NavigateToParams): CompletableFuture<Void>? {
+        val locations = params.locations().map {
+            Location(sessionDocumentManager.toClientUri(it.uri), it.range)
+        }
+        return delegate.navigateTo(NavigateToParams(locations))
     }
 }
 

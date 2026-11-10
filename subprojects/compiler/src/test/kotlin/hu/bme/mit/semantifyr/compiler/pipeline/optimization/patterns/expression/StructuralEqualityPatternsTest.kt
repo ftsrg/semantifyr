@@ -15,7 +15,7 @@ class StructuralEqualityPatternsTest : PatternTestBase() {
         pattern = SelfArithmeticPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var operand : int := 0
+            var operand: int := 0
             init {
             }
             tran {
@@ -26,7 +26,7 @@ class StructuralEqualityPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var operand : int := 0
+            var operand: int := 0
             init {
             }
             tran {
@@ -42,7 +42,7 @@ class StructuralEqualityPatternsTest : PatternTestBase() {
         pattern = SelfComparisonPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var operand : int := 0
+            var operand: int := 0
             init {
             }
             tran {
@@ -53,7 +53,7 @@ class StructuralEqualityPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var operand : int := 0
+            var operand: int := 0
             init {
             }
             tran {
@@ -69,7 +69,7 @@ class StructuralEqualityPatternsTest : PatternTestBase() {
         pattern = SelfComparisonPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var operand : int := 0
+            var operand: int := 0
             init {
             }
             tran {
@@ -80,7 +80,7 @@ class StructuralEqualityPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var operand : int := 0
+            var operand: int := 0
             init {
             }
             tran {

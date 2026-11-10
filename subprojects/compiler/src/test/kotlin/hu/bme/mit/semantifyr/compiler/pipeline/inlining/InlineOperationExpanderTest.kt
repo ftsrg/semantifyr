@@ -17,7 +17,7 @@ class InlineOperationExpanderTest : InliningTestBase() {
     fun `inline if with a true static guard returns the then branch`() = assertFirstExpansion(
         input = """
             inlined oxsts of semantifyr::Anything
-            var taken : int := 0
+            var taken: int := 0
             init {
             }
             tran {
@@ -33,7 +33,7 @@ class InlineOperationExpanderTest : InliningTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var taken : int := 0
+            var taken: int := 0
             init {
             }
             tran {
@@ -51,7 +51,7 @@ class InlineOperationExpanderTest : InliningTestBase() {
     fun `inline if with a false static guard returns the else branch`() = assertFirstExpansion(
         input = """
             inlined oxsts of semantifyr::Anything
-            var taken : int := 0
+            var taken: int := 0
             init {
             }
             tran {
@@ -67,7 +67,7 @@ class InlineOperationExpanderTest : InliningTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var taken : int := 0
+            var taken: int := 0
             init {
             }
             tran {
@@ -85,7 +85,7 @@ class InlineOperationExpanderTest : InliningTestBase() {
     fun `inline if with a false guard and no else branch returns empty sequence`() = assertFirstExpansion(
         input = """
             inlined oxsts of semantifyr::Anything
-            var taken : int := 0
+            var taken: int := 0
             init {
             }
             tran {
@@ -99,7 +99,7 @@ class InlineOperationExpanderTest : InliningTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var taken : int := 0
+            var taken: int := 0
             init {
             }
             tran {
@@ -116,7 +116,7 @@ class InlineOperationExpanderTest : InliningTestBase() {
     fun `inline seq for over an integer range unrolls into sequential steps`() = assertFirstExpansion(
         input = """
             inlined oxsts of semantifyr::Anything
-            var total : int := 0
+            var total: int := 0
             init {
             }
             tran {
@@ -130,7 +130,7 @@ class InlineOperationExpanderTest : InliningTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var total : int := 0
+            var total: int := 0
             init {
             }
             tran {
@@ -156,7 +156,7 @@ class InlineOperationExpanderTest : InliningTestBase() {
     fun `inline choice for over an integer range produces a choice over each value`() = assertFirstExpansion(
         input = """
             inlined oxsts of semantifyr::Anything
-            var chosen : int := 0
+            var chosen: int := 0
             init {
             }
             tran {
@@ -170,7 +170,7 @@ class InlineOperationExpanderTest : InliningTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var chosen : int := 0
+            var chosen: int := 0
             init {
             }
             tran {
@@ -192,7 +192,7 @@ class InlineOperationExpanderTest : InliningTestBase() {
     fun `inline seq for over an exclusive range stops before the upper bound`() = assertFirstExpansion(
         input = """
             inlined oxsts of semantifyr::Anything
-            var total : int := 0
+            var total: int := 0
             init {
             }
             tran {
@@ -206,7 +206,7 @@ class InlineOperationExpanderTest : InliningTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var total : int := 0
+            var total: int := 0
             init {
             }
             tran {
@@ -229,7 +229,7 @@ class InlineOperationExpanderTest : InliningTestBase() {
     fun `inline choice for over an exclusive range omits the upper bound`() = assertFirstExpansion(
         input = """
             inlined oxsts of semantifyr::Anything
-            var chosen : int := 0
+            var chosen: int := 0
             init {
             }
             tran {
@@ -243,7 +243,7 @@ class InlineOperationExpanderTest : InliningTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var chosen : int := 0
+            var chosen: int := 0
             init {
             }
             tran {
@@ -263,7 +263,7 @@ class InlineOperationExpanderTest : InliningTestBase() {
     fun `inline seq for over an empty exclusive range takes the else branch`() = assertFirstExpansion(
         input = """
             inlined oxsts of semantifyr::Anything
-            var total : int := 0
+            var total: int := 0
             init {
             }
             tran {
@@ -279,7 +279,7 @@ class InlineOperationExpanderTest : InliningTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var total : int := 0
+            var total: int := 0
             init {
             }
             tran {
@@ -297,7 +297,7 @@ class InlineOperationExpanderTest : InliningTestBase() {
     fun `inline seq for over an empty range with no else branch produces empty sequence`() = assertFirstExpansion(
         input = """
             inlined oxsts of semantifyr::Anything
-            var total : int := 0
+            var total: int := 0
             init {
             }
             tran {
@@ -311,7 +311,7 @@ class InlineOperationExpanderTest : InliningTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var total : int := 0
+            var total: int := 0
             init {
             }
             tran {
@@ -328,7 +328,7 @@ class InlineOperationExpanderTest : InliningTestBase() {
     fun `inline seq for over a negative integer range unrolls in ascending order`() = assertFirstExpansion(
         input = """
             inlined oxsts of semantifyr::Anything
-            var total : int := 0
+            var total: int := 0
             init {
             }
             tran {
@@ -342,7 +342,7 @@ class InlineOperationExpanderTest : InliningTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var total : int := 0
+            var total: int := 0
             init {
             }
             tran {
@@ -369,7 +369,7 @@ class InlineOperationExpanderTest : InliningTestBase() {
         prepare(
             """
                 inlined oxsts of semantifyr::Anything
-                var total : int := 0
+                var total: int := 0
                 init {
                 }
                 tran {

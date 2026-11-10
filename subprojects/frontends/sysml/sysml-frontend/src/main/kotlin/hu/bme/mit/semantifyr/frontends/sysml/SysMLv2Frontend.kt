@@ -22,7 +22,7 @@ import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.VerificationResult
 import hu.bme.mit.semantifyr.verifier.VerificationResultDto
-import hu.bme.mit.semantifyr.verifier.caseDirectoryName
+import hu.bme.mit.semantifyr.verifier.caseDirectory
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import hu.bme.mit.semantifyr.verifier.toJavaDto
@@ -102,11 +102,7 @@ class SysMLv2Frontend private constructor(
     }
 
     fun sysmlTracePath(case: VerificationCase): Path {
-        return caseDirectory(case).resolve("trace.sysml")
-    }
-
-    private fun caseDirectory(case: VerificationCase): Path {
-        return sysmlConfiguration.outputDirectory.resolve(caseDirectoryName(case))
+        return caseDirectory(sysmlConfiguration.outputDirectory, case).resolve("trace.sysml")
     }
 
     // a witness the generator cannot express keeps its verdict, as an artifact the verifier fails to write does
@@ -115,7 +111,7 @@ class SysMLv2Frontend private constructor(
         try {
             sharedSysMLv2Compiler.trace(
                 sourcePath = sysmlConfiguration.sourcePath,
-                tracePath = caseDirectory(case).resolve("trace.json"),
+                tracePath = caseDirectory(sysmlConfiguration.outputDirectory, case).resolve("trace.json"),
                 caseName = case.qualifiedName.substringAfterLast("::"),
                 outputPath = tracePath,
             )

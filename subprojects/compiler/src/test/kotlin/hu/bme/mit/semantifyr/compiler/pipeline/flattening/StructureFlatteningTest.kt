@@ -20,17 +20,17 @@ class StructureFlatteningTest : FlatteningTestBase() {
             """
                 package flattening::tests
                 class Counter {
-                    var count : int := 0
+                    var count: int := 0
                 }
                 class User {
                     @Shared
-                    contains counter : Counter[1]
-                    contains own : Counter[1]
+                    contains counter: Counter[1]
+                    contains own: Counter[1]
                 }
                 @VerificationCase
                 class Host {
-                    contains firstUser : User[1]
-                    contains secondUser : User[1]
+                    contains firstUser: User[1]
+                    contains secondUser: User[1]
                     redefine tran {
                         firstUser.counter.count := 1
                         firstUser.own.count := 1
@@ -59,11 +59,11 @@ class StructureFlatteningTest : FlatteningTestBase() {
             """
                 package flattening::tests
                 class Parent {
-                    contains child : Offspring[1] opposite parent
-                    var generation : int := 0
+                    contains child: Offspring[1] opposite parent
+                    var generation: int := 0
                 }
                 class Offspring {
-                    container parent : Parent[1] opposite child
+                    container parent: Parent[1] opposite child
                     tran bumpParent() {
                         assume(parent.generation < 3)
                         parent.generation := parent.generation + 1
@@ -71,7 +71,7 @@ class StructureFlatteningTest : FlatteningTestBase() {
                 }
                 @VerificationCase
                 class Host {
-                    contains parent : Parent[1]
+                    contains parent: Parent[1]
                     redefine tran {
                         inline parent.child.bumpParent()
                     }
@@ -85,7 +85,7 @@ class StructureFlatteningTest : FlatteningTestBase() {
                 }
 
                 tran {
-                    assume ('$$root$$parent$$generation' < 3)
+                    assume('$$root$$parent$$generation' < 3)
                     '$$root$$parent$$generation' := '$$root$$parent$$generation' + 1
                 }
 
@@ -104,11 +104,11 @@ class StructureFlatteningTest : FlatteningTestBase() {
                 """
                     package flattening::tests
                     class Leaf {
-                        var count : int := 0
+                        var count: int := 0
                     }
                     @VerificationCase
                     class Host {
-                        contains leaf : Leaf[0..1]
+                        contains leaf: Leaf[0..1]
                         prop {
                             return AG leaf?.count == 0
                         }
@@ -126,7 +126,7 @@ class StructureFlatteningTest : FlatteningTestBase() {
                 package flattening::tests
                 @VerificationCase
                 class Host {
-                    var counter : int := 0
+                    var counter: int := 0
                     redefine init {
                         counter := 1
                     } or {

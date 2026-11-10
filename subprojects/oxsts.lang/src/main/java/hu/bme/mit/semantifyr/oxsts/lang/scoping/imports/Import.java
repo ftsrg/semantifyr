@@ -6,15 +6,15 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.scoping.imports;
 
-import org.eclipse.emf.common.util.URI;
+import org.eclipse.xtext.naming.QualifiedName;
 
-public record Import(URI uri, boolean isImplicit) {
+public record Import(QualifiedName packageName, boolean isImplicit) {
 
-    public static Import implicit(URI importedPackage) {
-        return new Import(importedPackage, true);
+    public static Import implicit(QualifiedName packageName) {
+        return new Import(packageName, true);
     }
 
-    public static Import explicit(URI uri) {
-        return new Import(uri, false);
+    public static Import explicit(QualifiedName packageName) {
+        return new Import(packageName, false);
     }
 }

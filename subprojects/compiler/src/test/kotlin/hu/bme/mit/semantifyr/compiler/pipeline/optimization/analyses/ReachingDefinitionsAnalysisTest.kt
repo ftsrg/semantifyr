@@ -26,7 +26,7 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var value : int := 0
+                var value: int := 0
                 init {
                     value := 1
                 }
@@ -51,7 +51,7 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var value : int := 0
+                var value: int := 0
                 init {
                     value := 1
                 }
@@ -82,8 +82,8 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var source : int := 0
-                var copy : int := 0
+                var source: int := 0
+                var copy: int := 0
                 init {
                 }
                 tran {
@@ -114,8 +114,8 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var current : int := -1
-                var copy : int := 0
+                var current: int := -1
+                var copy: int := 0
                 init {
                     choice {
                         current := 0
@@ -149,8 +149,8 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var current : int := -1
-                var copy : int := 0
+                var current: int := -1
+                var copy: int := 0
                 init {
                     choice {
                         current := 0
@@ -178,8 +178,8 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var source : int := 0
-                var copy : int := 0
+                var source: int := 0
+                var copy: int := 0
                 init {
                     if (true) {
                         source := 1
@@ -206,8 +206,8 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var source : int := 0
-                var copy : int := 0
+                var source: int := 0
+                var copy: int := 0
                 init {
                     if (true) {
                         source := 1
@@ -241,7 +241,7 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var value : int := 0
+                var value: int := 0
                 init {
                 }
                 tran {
@@ -266,8 +266,8 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var source : int := 0
-                var other : int := 0
+                var source: int := 0
+                var other: int := 0
                 init {
                 }
                 tran {
@@ -297,7 +297,7 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var activeState : int := -1
+                var activeState: int := -1
                 init {
                     activeState := 0
                 }
@@ -332,9 +332,9 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
         val (inlined, result) = runReachingDefinitions(
             """
                 inlined oxsts of semantifyr::Anything
-                var condition : bool := false
-                var source : int := 0
-                var copy : int := 0
+                var condition: bool := false
+                var source: int := 0
+                var copy: int := 0
                 init {
                     if (condition) {
                         source := 1

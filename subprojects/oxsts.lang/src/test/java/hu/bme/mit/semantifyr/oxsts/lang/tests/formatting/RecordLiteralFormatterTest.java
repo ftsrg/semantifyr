@@ -55,7 +55,7 @@ public class RecordLiteralFormatterTest {
             }
             """);
 
-        assertThat(formatted).contains("\tvar position: Point := Point {\n\t\tx = 1,\n\t\ty = 2\n\t}\n");
+        assertThat(formatted).contains("    var position: Point := Point {\n        x = 1,\n        y = 2\n    }\n");
     }
 
     private String format(String source) {

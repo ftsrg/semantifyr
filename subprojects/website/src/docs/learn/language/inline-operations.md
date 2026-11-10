@@ -14,8 +14,6 @@ Inline operations are resolved at **compile time** during unfolding. They never 
 Arguments are passed by value. An argument that reads runtime state (a variable, or a property call over one) is evaluated once, in argument order, into a local variable before the body runs, and the parameter reads that local: a write in the body does not change what a parameter reads. A compile-time argument (a constant, a feature, an instance reference) is substituted for the parameter, so it can steer an `inline if`, an `inline for` range or a call through the parameter.
 
 ```oxsts
-package example
-
 class Swapper {
   var x: int := 1
   var y: int := 2
@@ -42,8 +40,6 @@ A body never writes a parameter: an assignment or a `havoc` whose target is a pa
 ### One-step example
 
 ```oxsts
-package example
-
 class Counter {
   var value: int := 0
 
@@ -79,8 +75,6 @@ redefine tran {
 `inline if (guard) { ... } else { ... }` evaluates the guard at compile time and keeps the surviving branch. The other branch is discarded.
 
 ```oxsts
-package example
-
 class Counter {
   refers maximum: int = 10
   var value: int := 0
@@ -152,7 +146,7 @@ The `else` branch of an `inline for` is taken when the range expression evaluate
 inline for choice (counter in counters) {
   inline counter.increment()
 } else {
-  assume (false)
+  assume(false)
 }
 ```
 
@@ -163,3 +157,7 @@ inline for choice (counter in counters) {
 | Decision depends on | Model structure (which features exist, how many children) | Variable values |
 | Evaluated when | Compile time, during unfolding | Runtime, by the model checker |
 | Constructs | `inline if`, `inline for`, `inline for choice`, `inline call` | [`if`](operations.md#if), [`for`](operations.md#for) |
+
+The validator hints at an `if` whose guard, or a `for` whose range, is evaluable at compile time, and the editor offers a "Make inline" quick fix that turns it into its `inline` form. It also hints at a constant expression that is not already a literal or a reference, such as `2 * 3 + 1`, and offers "Inline as constant", which replaces the expression by its value.
+
+The loop variable of a `for` or an `inline for` takes its values from the range and cannot be written: the validator rejects an assignment or a `havoc` whose target is a loop variable (`OXSTS.INCORRECT_ASSIGNMENT`).

@@ -14,7 +14,7 @@ class DeadStoreEliminationPassTest : PassTestBase() {
     fun `write that reaches the property read is kept`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -26,7 +26,7 @@ class DeadStoreEliminationPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -45,7 +45,7 @@ class DeadStoreEliminationPassTest : PassTestBase() {
     fun `write followed by a guard reading the variable is kept`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -58,7 +58,7 @@ class DeadStoreEliminationPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -78,7 +78,7 @@ class DeadStoreEliminationPassTest : PassTestBase() {
     fun `property read keeps every write to a property-relevant variable alive`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var state : int := -1
+            var state: int := -1
             init {
                 state := 0
             }
@@ -97,7 +97,7 @@ class DeadStoreEliminationPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var state : int := -1
+            var state: int := -1
             init {
                 state := 0
             }
@@ -123,7 +123,7 @@ class DeadStoreEliminationPassTest : PassTestBase() {
     fun `consecutive writes - the earlier write stays because it reaches via the loop back-edge`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var state : int := -1
+            var state: int := -1
             init {
                 state := 0
             }
@@ -138,7 +138,7 @@ class DeadStoreEliminationPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var state : int := -1
+            var state: int := -1
             init {
                 state := 0
             }
@@ -160,7 +160,7 @@ class DeadStoreEliminationPassTest : PassTestBase() {
     fun `havoc followed by a deterministic write - both considered live`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -173,7 +173,7 @@ class DeadStoreEliminationPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -193,8 +193,8 @@ class DeadStoreEliminationPassTest : PassTestBase() {
     fun `write to a completely unread variable is dead`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
-            var scratch : int := 0
+            var value: int := 0
+            var scratch: int := 0
             init {
             }
             tran {
@@ -207,8 +207,8 @@ class DeadStoreEliminationPassTest : PassTestBase() {
         """,
         expectedSource = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
-            var scratch : int := 0
+            var value: int := 0
+            var scratch: int := 0
             init {
             }
             tran {
@@ -228,7 +228,7 @@ class DeadStoreEliminationPassTest : PassTestBase() {
         source = """
             inlined oxsts of semantifyr::Anything
             @NonOptimizable
-            var tracer : bool := false
+            var tracer: bool := false
             init {
             }
             tran {
@@ -241,7 +241,7 @@ class DeadStoreEliminationPassTest : PassTestBase() {
         expectedSource = """
             inlined oxsts of semantifyr::Anything
             @NonOptimizable
-            var tracer : bool := false
+            var tracer: bool := false
             init {
             }
             tran {

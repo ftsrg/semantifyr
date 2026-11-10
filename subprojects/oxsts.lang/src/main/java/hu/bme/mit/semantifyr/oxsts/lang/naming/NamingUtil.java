@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.naming;
 
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.RedefinableDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionKind;
 import java.util.regex.Pattern;
@@ -42,6 +43,12 @@ public class NamingUtil {
         }
 
         return property.getName();
+    }
+
+    // a class has one main, one init and one property, so an anonymous one is the class's own
+    public static boolean isAnonymous(RedefinableDeclaration declaration) {
+        return (declaration instanceof TransitionDeclaration || declaration instanceof PropertyDeclaration)
+                && Strings.isEmpty(declaration.getName());
     }
 
     public static int getEndOfIdentifierSegment(String input, int startIndex) {

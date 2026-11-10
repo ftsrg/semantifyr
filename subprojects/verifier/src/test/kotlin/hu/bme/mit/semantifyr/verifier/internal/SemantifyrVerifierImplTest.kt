@@ -61,6 +61,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -94,11 +95,11 @@ class SemantifyrVerifierImplTest {
     @Test
     fun `verifier timeout maps to Timeout`(@TempDir output: Path) = runTest {
         val portfolio = ScriptedPortfolio { _, _ ->
-            delay(10.seconds)
+            delay(1.hours)
             decisiveResult(VerificationVerdict.Passed)
         }
 
-        val result = build(portfolio, output, timeout = 50.milliseconds)
+        val result = build(portfolio, output, timeout = 10.seconds)
             .verify(loadFirstCase())
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Timeout)
@@ -330,21 +331,21 @@ class SemantifyrVerifierImplTest {
             """
             witness of semantifyr::verification::simple::Incrementing
 
-            var step : int := 0
+            var step: int := 0
 
-            contains root : semantifyr::verification::simple::Incrementing
+            contains root: semantifyr::verification::simple::Incrementing
 
             init {
-                assume (step == 0)
+                assume(step == 0)
                 inline root.init()
-                assume (root.x == 1)
+                assume(root.x == 1)
                 step := 1
             }
 
             tran {
-                assume (step == 1)
+                assume(step == 1)
                 inline root.main()
-                assume (root.x == 2)
+                assume(root.x == 2)
                 step := 2
             }
 

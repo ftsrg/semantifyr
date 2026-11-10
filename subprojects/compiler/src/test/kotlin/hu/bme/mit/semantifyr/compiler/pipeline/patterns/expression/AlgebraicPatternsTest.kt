@@ -17,7 +17,7 @@ class AlgebraicPatternsTest : PatternTestBase() {
         pattern = ArithmeticIdentityPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var operand : int := 0
+            var operand: int := 0
             init {
             }
             tran {
@@ -28,7 +28,7 @@ class AlgebraicPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var operand : int := 0
+            var operand: int := 0
             init {
             }
             tran {
@@ -44,7 +44,7 @@ class AlgebraicPatternsTest : PatternTestBase() {
         pattern = ArithmeticIdentityPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var operand : int := 0
+            var operand: int := 0
             init {
             }
             tran {
@@ -55,7 +55,7 @@ class AlgebraicPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var operand : int := 0
+            var operand: int := 0
             init {
             }
             tran {
@@ -71,7 +71,7 @@ class AlgebraicPatternsTest : PatternTestBase() {
         pattern = ArithmeticIdentityPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var operand : int := 0
+            var operand: int := 0
             init {
             }
             tran {
@@ -82,7 +82,7 @@ class AlgebraicPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var operand : int := 0
+            var operand: int := 0
             init {
             }
             tran {
@@ -98,7 +98,7 @@ class AlgebraicPatternsTest : PatternTestBase() {
         pattern = ArithmeticIdentityPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var operand : int := 0
+            var operand: int := 0
             init {
             }
             tran {
@@ -109,7 +109,7 @@ class AlgebraicPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var operand : int := 0
+            var operand: int := 0
             init {
             }
             tran {
@@ -125,7 +125,7 @@ class AlgebraicPatternsTest : PatternTestBase() {
         pattern = DoubleUnaryMinusPattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var operand : int := 0
+            var operand: int := 0
             init {
             }
             tran {
@@ -136,7 +136,7 @@ class AlgebraicPatternsTest : PatternTestBase() {
         """,
         expected = """
             inlined oxsts of semantifyr::Anything
-            var operand : int := 0
+            var operand: int := 0
             init {
             }
             tran {

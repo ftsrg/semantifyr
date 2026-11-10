@@ -67,9 +67,9 @@ class InlineClassCommandHandlerTest {
 
         var inlinedModel = inline(false);
 
-        assertThat(inlinedModel).hasFileName("inlined.oxsts").isRegularFile();
+        assertThat(inlinedModel).hasFileName("flattened.oxsts").isRegularFile();
         assertThat(Files.readString(inlinedModel)).contains("CounterReachesThree");
-        assertThat(inlinedModel.resolveSibling("pipeline").resolve("steps")).doesNotExist();
+        assertThat(inlinedModel.resolveSibling("steps")).doesNotExist();
         assertThat(resourceSet.getResources()).hasSize(resourceCount);
     }
 
@@ -78,7 +78,7 @@ class InlineClassCommandHandlerTest {
         var inlinedModel = inline(true);
 
         assertThat(inlinedModel).isRegularFile();
-        assertThat(inlinedModel.resolveSibling("pipeline").resolve("steps")).isNotEmptyDirectory();
+        assertThat(inlinedModel.resolveSibling("steps")).isNotEmptyDirectory();
     }
 
     @Test

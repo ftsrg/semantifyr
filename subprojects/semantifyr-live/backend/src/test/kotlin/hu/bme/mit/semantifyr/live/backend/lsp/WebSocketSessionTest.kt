@@ -15,10 +15,12 @@ import hu.bme.mit.semantifyr.live.backend.data.SessionInfo
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SemantifyrLiveMethods
 import hu.bme.mit.semantifyr.live.backend.server.ProxyUserResolver
 import hu.bme.mit.semantifyr.live.backend.testing.LspWire
+import hu.bme.mit.semantifyr.live.backend.testing.awaitPublishDiagnostics
 import hu.bme.mit.semantifyr.live.backend.testing.awaitResponseFor
 import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrApp
 import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrLiveBackend
 import hu.bme.mit.semantifyr.live.backend.testing.jsonClient
+import hu.bme.mit.semantifyr.live.backend.testing.paramsAs
 import hu.bme.mit.semantifyr.live.backend.testing.resultAs
 import hu.bme.mit.semantifyr.live.backend.testing.testInjector
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
@@ -37,8 +39,21 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
+import org.eclipse.lsp4j.CodeAction
+import org.eclipse.lsp4j.CodeActionContext
+import org.eclipse.lsp4j.CodeActionParams
 import org.eclipse.lsp4j.InitializeResult
+import org.eclipse.lsp4j.InlayHint
+import org.eclipse.lsp4j.InlayHintKind
+import org.eclipse.lsp4j.Position
+import org.eclipse.lsp4j.PublishDiagnosticsParams
 import org.eclipse.lsp4j.SemanticTokens
+import org.eclipse.lsp4j.SignatureHelp
+import org.eclipse.lsp4j.SignatureHelpParams
+import org.eclipse.lsp4j.TextDocumentIdentifier
+import org.eclipse.lsp4j.TypeHierarchyItem
+import org.eclipse.lsp4j.TypeHierarchyPrepareParams
+import org.eclipse.lsp4j.TypeHierarchySupertypesParams
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.mockito.kotlin.any
@@ -96,6 +111,8 @@ class WebSocketSessionTest {
                 "oxsts.case.discover",
                 "oxsts.case.verify",
                 "oxsts.case.validateWitness",
+                "oxsts.redefinable.redefined.navigate",
+                "oxsts.redefinable.redefiners.navigate",
             )
         }
     }
@@ -109,6 +126,49 @@ class WebSocketSessionTest {
             send(Frame.Text(LspWire.initializeRequest()))
             val response = awaitResponseFor(id = 1).resultAs(InitializeResult::class.java)
             assertThat(response.capabilities.codeActionProvider.left).isTrue
+        }
+    }
+
+    @Test
+    fun `code action over websocket adds redefine to a shadowing transition`(@TempDir tmp: Path) = testApplication {
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(testInjector(config(tmp)))
+        }
+        val uri = "file:///workspace/snippet.oxsts"
+        val model = """
+            package test
+
+            class Light {
+                tran toggle() {
+                }
+            }
+
+            class Special : Light {
+                tran toggle() {
+                }
+            }
+        """.trimIndent()
+        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
+            openWith(uri, model)
+            val diagnostics = awaitPublishDiagnostics(uri).paramsAs(PublishDiagnosticsParams::class.java).diagnostics
+            val shadowed = diagnostics.filter {
+                it.code?.left == "OXSTS.ELEMENT_SHADOWED"
+            }
+            assertThat(shadowed).hasSize(1)
+            val params = CodeActionParams(TextDocumentIdentifier(uri), shadowed[0].range, CodeActionContext(shadowed))
+            send(Frame.Text(LspWire.request(id = 2, method = "textDocument/codeAction", params = params)))
+            val codeActions = awaitResponseFor(id = 2).resultAs(Array<CodeAction>::class.java)
+            assertThat(
+                codeActions.map {
+                    it.title
+                },
+            ).containsExactly("Add redefine")
+            val edits = codeActions[0].edit.changes
+            assertThat(edits.keys).containsExactly(uri)
+            assertThat(edits.getValue(uri)).hasSize(1)
+            val edit = edits.getValue(uri)[0]
+            assertThat(edit.newText).isEqualTo("redefine ")
+            assertThat(edit.range.start).isEqualTo(Position(8, 4))
         }
     }
 
@@ -183,6 +243,45 @@ class WebSocketSessionTest {
     }
 
     @Test
+    fun `signature help over websocket shows the callee and the active parameter`(@TempDir tmp: Path) = testApplication {
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(testInjector(config(tmp)))
+        }
+        val model = """
+            package test
+
+            class Light {
+                var level: int := 0
+
+                tran dim(from: int, to: int) {
+                    level := to
+                }
+
+                tran {
+                    inline dim(1, 0)
+                }
+            }
+        """.trimIndent()
+        val uri = "file:///workspace/snippet.oxsts"
+        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
+            send(Frame.Text(LspWire.initializeRequest()))
+            val capabilities = awaitResponseFor(id = 1).resultAs(InitializeResult::class.java).capabilities
+            assertThat(capabilities.signatureHelpProvider.triggerCharacters).containsExactly("(", ",")
+            send(Frame.Text(LspWire.initializedNotification()))
+            send(Frame.Text(LspWire.didOpenNotification(uri = uri, languageId = "oxsts", text = model)))
+            val params = SignatureHelpParams(TextDocumentIdentifier(uri), Position(10, 22))
+            send(Frame.Text(LspWire.request(id = 2, method = "textDocument/signatureHelp", params = params)))
+            val signatureHelp = awaitResponseFor(id = 2).resultAs(SignatureHelp::class.java)
+            assertThat(
+                signatureHelp.signatures.map {
+                    it.label
+                },
+            ).containsExactly("dim(from: int, to: int)")
+            assertThat(signatureHelp.activeParameter).isEqualTo(1)
+        }
+    }
+
+    @Test
     fun `semanticTokens stay populated when an extra OxstsStandaloneSetup is constructed at runtime`(
         @TempDir tmp: Path,
     ) = testApplication {
@@ -216,6 +315,81 @@ class WebSocketSessionTest {
             assertThat(afterOverwrite.data)
                 .withFailMessage("semantic tokens collapsed to empty after a duplicate OxstsStandaloneSetup ran")
                 .isNotEmpty
+        }
+    }
+
+    @Test
+    fun `inlay hints name a positional argument and resolve it to the parameter`(@TempDir tmp: Path) = testApplication {
+        val uri = "file:///workspace/snippet.oxsts"
+        val model = """
+            package test
+
+            class Lamp {
+                var level: int := 0
+
+                tran set(level: int) {
+                    self.level := level
+                }
+            }
+
+            class Garage {
+                contains lamp: Lamp[1]
+
+                redefine tran {
+                    inline lamp.set(1)
+                }
+            }
+        """.trimIndent()
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(testInjector(config(tmp)))
+        }
+        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
+            openWith(uri, model)
+            send(Frame.Text(LspWire.inlayHintRequest(id = 2, uri = uri, range = LspWire.range(endLine = 20))))
+            val hints = awaitResponseFor(id = 2).resultAs(Array<InlayHint>::class.java)
+            assertThat(hints).hasSize(1)
+            assertThat(hints[0].kind).isEqualTo(InlayHintKind.Parameter)
+            val label = hints[0].label.right.single()
+            assertThat(label.value).isEqualTo("level:")
+            assertThat(label.location.uri).isEqualTo(uri)
+        }
+    }
+
+    @Test
+    fun `type hierarchy items carry client uris`(@TempDir tmp: Path) = testApplication {
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(testInjector(config(tmp)))
+        }
+        val uri = "file:///workspace/snippet.oxsts"
+        val model = """
+            package test
+
+            class Lamp {
+                var on: bool := false
+            }
+
+            class DimmableLamp : Lamp {
+                var dimmed: bool := false
+            }
+        """.trimIndent()
+        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
+            send(Frame.Text(LspWire.initializeRequest()))
+            val capabilities = awaitResponseFor(id = 1).resultAs(InitializeResult::class.java).capabilities
+            assertThat(capabilities.typeHierarchyProvider.left).isTrue
+            send(Frame.Text(LspWire.initializedNotification()))
+            send(Frame.Text(LspWire.didOpenNotification(uri = uri, languageId = "oxsts", text = model)))
+
+            val prepareParams = TypeHierarchyPrepareParams(TextDocumentIdentifier(uri), Position(6, 8))
+            send(Frame.Text(LspWire.request(id = 2, method = "textDocument/prepareTypeHierarchy", params = prepareParams)))
+            val dimmableLamp = awaitResponseFor(id = 2).resultAs(Array<TypeHierarchyItem>::class.java).single()
+            assertThat(dimmableLamp.name).isEqualTo("DimmableLamp")
+            assertThat(dimmableLamp.uri).isEqualTo(uri)
+
+            val supertypesParams = TypeHierarchySupertypesParams(dimmableLamp)
+            send(Frame.Text(LspWire.request(id = 3, method = "typeHierarchy/supertypes", params = supertypesParams)))
+            val lamp = awaitResponseFor(id = 3).resultAs(Array<TypeHierarchyItem>::class.java).single()
+            assertThat(lamp.name).isEqualTo("Lamp")
+            assertThat(lamp.uri).isEqualTo(uri)
         }
     }
 

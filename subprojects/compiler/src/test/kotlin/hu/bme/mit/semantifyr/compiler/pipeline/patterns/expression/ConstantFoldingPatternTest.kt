@@ -51,7 +51,7 @@ class ConstantFoldingPatternTest : PatternTestBase() {
         pattern = pattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var value : int := 0
+            var value: int := 0
             init {
             }
             tran {
@@ -70,7 +70,7 @@ class ConstantFoldingPatternTest : PatternTestBase() {
             init {
             }
             tran {
-                assume (- 1 == 3)
+                assume(- 1 == 3)
             }
             prop {
                 AG true
@@ -119,7 +119,7 @@ class ConstantFoldingPatternTest : PatternTestBase() {
         pattern = pattern(),
         input = """
             inlined oxsts of semantifyr::Anything
-            var value : int := - 1
+            var value: int := - 1
             init {
             }
             tran {

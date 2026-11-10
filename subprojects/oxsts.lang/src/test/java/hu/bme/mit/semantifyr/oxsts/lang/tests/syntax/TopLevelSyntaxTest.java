@@ -9,11 +9,16 @@ package hu.bme.mit.semantifyr.oxsts.lang.tests.syntax;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AnnotationDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.xtext.EcoreUtil2;
+import org.eclipse.xtext.resource.XtextResourceSet;
+import org.eclipse.xtext.testing.util.ParseHelper;
 import org.junit.jupiter.api.Test;
 
 @InjectWithOxsts
@@ -21,6 +26,12 @@ public class TopLevelSyntaxTest {
 
     @Inject
     private OxstsPackageParseHelper parseHelper;
+
+    @Inject
+    private ParseHelper<OxstsModelPackage> packageParseHelper;
+
+    @Inject
+    private Provider<XtextResourceSet> resourceSetProvider;
 
     @Test
     void packageDeclaration() {
@@ -38,6 +49,49 @@ public class TopLevelSyntaxTest {
             package test::empty
             """);
         parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.getOxstsPackage().getDeclarations()).isEmpty();
+    }
+
+    @Test
+    void fileWithoutPackageDeclaration() {
+        var parsedPackage = parseHelper.parse("""
+            import semantifyr
+            class Lamp {
+                var on: bool := false
+            }
+            """);
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.getOxstsPackage().getName()).isNull();
+        assertThat(parsedPackage.getOxstsPackage().getImports()).hasSize(1);
+        assertThat(parsedPackage.classByName("Lamp").name()).isEqualTo("Lamp");
+    }
+
+    @Test
+    void secondFileWithoutPackageDeclarationDeclaringTheSameNames() throws Exception {
+        var resourceSet = resourceSetProvider.get();
+        var first = packageParseHelper.parse("""
+            class Lamp {
+                var on: bool := false
+            }
+            """, resourceSet);
+        var second = packageParseHelper.parse("""
+            class Lamp {
+                var on: bool := true
+            }
+            """, resourceSet);
+        EcoreUtil.resolveAll(resourceSet);
+
+        assertThat(first.eResource().getErrors()).isEmpty();
+        assertThat(second.eResource().getErrors()).isEmpty();
+        assertThat(second.getName()).isNull();
+        assertThat(second.getDeclarations()).hasSize(1);
+    }
+
+    @Test
+    void emptyFile() {
+        var parsedPackage = parseHelper.parse("");
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.getOxstsPackage().getName()).isNull();
         assertThat(parsedPackage.getOxstsPackage().getDeclarations()).isEmpty();
     }
 

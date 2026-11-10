@@ -50,8 +50,6 @@ A transition declared **without** a name has an **implicit name** based on its k
 Hence `tran { value := value + 1 }` is equivalent to a transition `tran main() { value := value + 1 }`. The implicit `main` and `init` transitions are the special transitions checked and run by the model checker.
 
 ```oxsts
-package example
-
 class Counter {
   var value: int := 0
 
