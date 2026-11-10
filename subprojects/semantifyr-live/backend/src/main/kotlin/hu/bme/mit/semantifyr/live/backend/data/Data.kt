@@ -106,6 +106,7 @@ data class SessionInfo(
     val sessionId: String,
     val remoteIp: String,
     val flavorId: String,
+    val kind: String,
     val uptime: Duration,
     val workingDirectory: String,
     val activeVerifications: List<ActiveVerificationInfo>,

@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.live.backend.exceptions.WorkspaceUriException
 import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServices
 import hu.bme.mit.semantifyr.live.backend.lsp.language.LiveOxstsLanguageSetup
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionContext
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionKind
 import hu.bme.mit.semantifyr.live.backend.testing.emptyGlobalsModule
 import io.ktor.websocket.WebSocketSession
 import org.assertj.core.api.Assertions.assertThat
@@ -32,6 +33,7 @@ class SessionDocumentManagerTest {
             sessionId = "test-session",
             remoteIp = "127.0.0.1",
             flavor = FlavorRegistry.flavors.first(),
+            kind = SessionKind.Full,
             workingDirectoryPath = workingDirectory,
             webSocketSession = mock<WebSocketSession>(),
         )

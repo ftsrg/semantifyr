@@ -133,6 +133,7 @@ class AdminHandlerTest {
             sessionId = "test-session",
             remoteIp = "127.0.0.1",
             flavorId = "oxsts",
+            kind = "embed",
             uptime = 30.seconds,
             workingDirectory = "/tmp/test",
             activeVerifications = listOf(
@@ -149,6 +150,7 @@ class AdminHandlerTest {
         assertThat(status.sessions[0].sessionId).isEqualTo("test-session")
         assertThat(status.sessions[0].remoteIp).isEqualTo("127.0.0.1")
         assertThat(status.sessions[0].flavorId).isEqualTo("oxsts")
+        assertThat(status.sessions[0].kind).isEqualTo("embed")
         assertThat(status.sessions[0].activeVerifications).hasSize(1)
         assertThat(status.sessions[0].activeVerifications[0].verificationId).isEqualTo("req-1")
         assertThat(status.sessions[0].activeVerifications[0].portfolioId).isEqualTo("smart-full")

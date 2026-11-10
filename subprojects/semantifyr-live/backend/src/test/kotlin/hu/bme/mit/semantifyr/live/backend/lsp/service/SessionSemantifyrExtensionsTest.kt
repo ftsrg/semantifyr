@@ -28,6 +28,7 @@ class SessionSemantifyrExtensionsTest {
         sessionId = "session-1",
         remoteIp = "127.0.0.1",
         flavorId = "oxsts",
+        kind = "full",
         uptime = Duration.ZERO,
         workingDirectory = "/tmp/session-1",
         activeVerifications = emptyList(),

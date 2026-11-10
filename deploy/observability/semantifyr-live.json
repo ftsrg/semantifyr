@@ -671,6 +671,62 @@
       "description": "From request to permit"
     },
     {
+      "type": "timeseries",
+      "title": "Open sessions by kind",
+      "id": 20,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 29
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 30,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          },
+          "min": 0,
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (kind) (semantifyr_live_sessions_active_by_kind{instance=~\"$instance\"})",
+          "legendFormat": "{{kind}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
       "type": "row",
       "title": "HTTP",
       "collapsed": false,
@@ -679,7 +735,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 29
+        "y": 37
       },
       "panels": []
     },
@@ -695,7 +751,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 30
+        "y": 38
       },
       "fieldConfig": {
         "defaults": {
@@ -750,7 +806,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 30
+        "y": 38
       },
       "fieldConfig": {
         "defaults": {
@@ -803,7 +859,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 38
+        "y": 46
       },
       "panels": []
     },
@@ -819,7 +875,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 39
+        "y": 47
       },
       "fieldConfig": {
         "defaults": {
@@ -892,7 +948,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 39
+        "y": 47
       },
       "fieldConfig": {
         "defaults": {
@@ -956,7 +1012,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 47
+        "y": 55
       },
       "fieldConfig": {
         "defaults": {
@@ -1011,7 +1067,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 47
+        "y": 55
       },
       "fieldConfig": {
         "defaults": {

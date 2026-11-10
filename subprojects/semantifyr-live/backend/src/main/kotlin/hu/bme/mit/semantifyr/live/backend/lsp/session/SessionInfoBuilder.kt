@@ -21,6 +21,7 @@ class SessionInfoBuilder @Inject constructor(
             sessionId = sessionContext.sessionId,
             remoteIp = sessionContext.remoteIp,
             flavorId = sessionContext.flavor.id,
+            kind = sessionContext.kind.id,
             uptime = sessionRunContext.startMark.elapsedNow(),
             workingDirectory = sessionContext.workingDirectoryPath.toString(),
             activeVerifications = sessionVerificationManager.active().map {

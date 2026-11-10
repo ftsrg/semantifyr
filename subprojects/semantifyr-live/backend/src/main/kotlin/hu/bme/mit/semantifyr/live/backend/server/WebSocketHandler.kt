@@ -11,6 +11,7 @@ import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.FlavorRegistry
 import hu.bme.mit.semantifyr.live.backend.exceptions.SessionLimitReachedException
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionKind
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionManager
 import hu.bme.mit.semantifyr.logging.error
 import hu.bme.mit.semantifyr.logging.info
@@ -66,7 +67,7 @@ class WebSocketHandler @Inject constructor(
                     }
 
                     val closeReason = try {
-                        sessionManager.runSession(this, remoteIp, flavor)
+                        sessionManager.runSession(this, remoteIp, flavor, SessionKind.fromId(call.request.queryParameters["kind"]))
                         logger.info { "WebSocket session ended normally for ip=$remoteIp flavor=$flavorId" }
                         CloseReason(CloseReason.Codes.NORMAL, "Session ended")
                     } catch (e: SessionLimitReachedException) {
