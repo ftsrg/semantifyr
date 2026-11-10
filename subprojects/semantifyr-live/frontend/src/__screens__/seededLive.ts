@@ -11,7 +11,7 @@ import { SemantifyrLiveApi } from '../lib/api/lspExtensions'
 import { librariesOf } from '../lib/language/libraries'
 import { initializationStepsOf } from '../lib/language/presentation'
 import { createLanguageRegistry } from '../lib/language/registry'
-import type { LanguageRuntime } from '../lib/language/types'
+import type { DerivedDocument, LanguageRuntime } from '../lib/language/types'
 import type { ProblemEntry } from '../lib/session/problems'
 import { connectionConnected, INITIAL_CONNECTION, type ConnectionState } from '../lib/stores/connection'
 import { finishThrough, initializationOf, startStep, type InitializationState } from '../lib/stores/initialization'
@@ -35,8 +35,9 @@ export interface Seed {
   verification?: VerificationState
   selection?: string | null
   address?: AddressProblem | null
-  problems?: readonly ProblemEntry[]
   tab?: ReadOnlyDocument
+  // the OXSTS the runtime gives for the model, which the OXSTS tab shows
+  modelOxsts?: string
   settings?: Partial<Settings>
   timing?: RunTiming | null
   verifyBlocked?: boolean
@@ -65,13 +66,13 @@ function initialization(languageId: string, runningStep: string | null): Initial
   return startStep(finished, runningStep, now - 6000)
 }
 
-function runtimeOf(flavor: LiveFlavor, connection: ConnectionState, steps: InitializationState): LanguageRuntime {
+function runtimeOf(flavor: LiveFlavor, connection: ConnectionState, steps: InitializationState, modelOxsts: string | undefined): LanguageRuntime {
   return {
     flavor,
     connection: constantStore(connection),
     initialization: createStore(steps),
     derivedDocuments: constantStore([]),
-    modelOxsts: constantStore(null),
+    modelOxsts: constantStore<DerivedDocument | null>(modelOxsts === undefined ? null : { id: 'oxsts', label: 'OXSTS', uri: 'file:///workspace/snippet.oxsts', languageId: 'oxsts', text: modelOxsts }),
     libraryDocuments: librariesOf(flavor.id),
     api: new SemantifyrLiveApi(() => {
       return undefined
@@ -111,7 +112,7 @@ export function seedLive(seed: Seed): Seeded {
   const ready = (seed.catalog ?? 'ready') === 'ready'
   const connection = seed.connection ?? CONNECTED
   const steps = initialization(flavor.languageId, seed.initializingAt ?? null)
-  const runtime = runtimeOf(flavor, connection, steps)
+  const runtime = runtimeOf(flavor, connection, steps, seed.modelOxsts)
   const key = documentKey(flavor.id, example.id, false)
   const record: DocumentRecord = { key, flavorId: flavor.id, example, shared: false, uri: documentUri(flavor), text: example.code }
   const settings = createSettingsStore()
@@ -137,7 +138,7 @@ export function seedLive(seed: Seed): Seeded {
     initialization: constantStore(ready ? steps : initializationOf([])),
     verification: constantStore(verification),
     selection: constantStore(seed.selection ?? null),
-    problems: createStore(seed.problems ?? []),
+    problems: createStore<readonly ProblemEntry[]>([]),
     reveal: constantStore(null),
     address: createStore(seed.address ?? null),
     tabs,
