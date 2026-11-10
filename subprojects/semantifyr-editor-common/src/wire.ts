@@ -19,6 +19,10 @@ export interface Location {
     range: Range;
 }
 
+export interface NavigateToParams {
+    locations: Location[];
+}
+
 export interface VerificationCaseSpecification {
     id: string;
     label: string;
@@ -169,7 +173,6 @@ export type OptimizationLevel = "none" | "all";
 export interface ServerSettings {
     portfolio?: string;
     timeoutSeconds?: number;
-    maxConcurrency?: number;
     theta?: {
         executor?: ThetaExecutor;
         dockerImage?: string;

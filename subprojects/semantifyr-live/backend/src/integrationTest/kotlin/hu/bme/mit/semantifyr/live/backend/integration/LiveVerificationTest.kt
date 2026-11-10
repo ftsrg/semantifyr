@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.live.backend.integration
 
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
+import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseSpecification
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationStatus
 import hu.bme.mit.semantifyr.live.backend.lsp.service.ReadDocumentParams
@@ -110,7 +111,7 @@ class LiveVerificationTest {
                     .isEqualTo(WitnessValidationStatus.VALID)
                 send(Frame.Text(LspWire.request(id = 7, method = SemantifyrLiveMethods.READ_DOCUMENT, params = ReadDocumentParams(witnessUri))))
                 assertThat(awaitResponseFor(id = 7).resultAs(ReadDocumentResult::class.java).text).isEqualTo(witnessText)
-                assertThat(artifactsOnDisk(tmp, "snippet.CounterReachesThree")).contains(
+                assertThat(artifactsOnDisk(tmp, caseDirectoryName("snippet", selectedCase))).contains(
                     "report.json",
                     "witness.oxsts",
                     "validation/report.json",
@@ -177,7 +178,8 @@ class LiveVerificationTest {
                 send(Frame.Text(LspWire.didOpenNotification(uri = documentUri, languageId = "gamma", text = modelSource)))
 
                 val cases = discoverCases(id = 2, command = "gamma.case.discover", documentUri = documentUri, flavor = "gamma")
-                val request = VerificationCaseRequest(documentUri, cases.pickByLabel("LeaderStatechartIdleReachable").location().range, "smart-full")
+                val selectedCase = cases.pickByLabel("LeaderStatechartIdleReachable")
+                val request = VerificationCaseRequest(documentUri, selectedCase.location().range, "smart-full")
 
                 send(Frame.Text(LspWire.executeCommandRequest(id = 3, command = "gamma.witness.validate", arguments = listOf(request))))
                 val missing = awaitResponseFor(id = 3).resultAs(WitnessValidationResult::class.java)
@@ -195,11 +197,12 @@ class LiveVerificationTest {
                     .isEqualTo(WitnessValidationStatus.VALID)
                 assertThat(validation.verdict()).isEqualTo("passed")
                 assertThat(validation.portfolioId()).isEqualTo("smart-full")
+                val verificationDirectory = caseDirectoryName("model", selectedCase)
                 assertThat(artifactsOnDisk(tmp, "Simple.LeaderStatechartIdleReachable")).contains(
-                    "verification/model.LeaderStatechartIdleReachable/report.json",
-                    "verification/model.LeaderStatechartIdleReachable/witness.oxsts",
-                    "verification/model.LeaderStatechartIdleReachable/trace.gamma",
-                    "verification/model.LeaderStatechartIdleReachable/validation/report.json",
+                    "verification/$verificationDirectory/report.json",
+                    "verification/$verificationDirectory/witness.oxsts",
+                    "verification/$verificationDirectory/trace.gamma",
+                    "verification/$verificationDirectory/validation/report.json",
                 )
             }
         }
@@ -221,6 +224,10 @@ class LiveVerificationTest {
             flavor = "oxsts-with-sysmlv2-library",
             modelSource = stagedModel(StagedTestSupport.sysmlLibraryModelsDirectory, "semantifyr.live.sysmlLibraryModels", "door_access.oxsts"),
         )
+    }
+
+    private fun caseDirectoryName(modelStem: String, case: VerificationCaseSpecification): String {
+        return "$modelStem.${case.id().replace("::", ".")}"
     }
 
     private fun artifactsOnDisk(root: Path, caseDirectoryName: String): List<String> {

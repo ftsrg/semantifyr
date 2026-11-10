@@ -218,4 +218,42 @@ class SpinLogVerdictParserTest {
         assertThat(summary.reportedNoErrors).isTrue
         assertThat(summary.executionProblem).isTrue
     }
+
+    @Test
+    fun `a model spin rejects names spin's message`() {
+        val rejection = parser.rejection(
+            sequenceOf(
+                "ltl p: [] ((! (__semantifyr_stable)) || ((counter<2)))",
+                "spin: model.pml:7, Error: duplicate `else'\tsaw ''}' = 125'",
+            ),
+        )
+
+        assertThat(rejection).contains("duplicate `else'")
+    }
+
+    @Test
+    fun `a pan that does not compile names the compiler's message`() {
+        val rejection = parser.rejection(sequenceOf("pan.c:12:3: error: 'now' undeclared (first use in this function)"))
+
+        assertThat(rejection).contains("'now' undeclared")
+    }
+
+    @Test
+    fun `the merge limit is no rejection`() {
+        assertThat(parser.rejection(sequenceOf("spin: model.pml:303, Error: merge requires more than 256 bups"))).isNull()
+    }
+
+    @Test
+    fun `a search that ran has no rejection`() {
+        val rejection = parser.rejection(
+            sequenceOf(
+                "pan:1: assertion violated  !( !(( !(semantifyr_stable)||(counter<2)))) (at depth 5)",
+                "pan: wrote model.pml.trail",
+                "State-vector 20 byte, depth reached 7, errors: 1",
+            ),
+        )
+
+        assertThat(rejection).isNull()
+    }
+
 }

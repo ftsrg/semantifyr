@@ -122,15 +122,31 @@ class UppaalVerificationContext @AssistedInject constructor(
 
         detectOutOfRangeError()
 
-        if (result.exitCode != 0 && result.exitCode != 1) {
-            error("verifyta execution failed with exit code ${result.exitCode}")
-        }
-
-        return artifactManager.logFile.takeIf {
+        val verdict = artifactManager.logFile.takeIf {
             it.exists()
         }?.useLines {
             uppaalLogVerdictParser.parse(it)
         }
+        if (verdict == null) {
+            checkRejection()
+        }
+
+        if (result.exitCode != 0 && result.exitCode != 1) {
+            error("verifyta execution failed with exit code ${result.exitCode}")
+        }
+
+        return verdict
+    }
+
+    private fun checkRejection() {
+        val rejection = listOf(artifactManager.errorFile, artifactManager.logFile).filter {
+            it.exists()
+        }.firstNotNullOfOrNull { file ->
+            file.useLines {
+                uppaalLogVerdictParser.rejection(it)
+            }
+        } ?: return
+        error("verifyta rejected the model: $rejection")
     }
 
     private fun detectOutOfRangeError() {

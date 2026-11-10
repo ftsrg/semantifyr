@@ -12,7 +12,6 @@ import org.eclipse.emf.common.util.URI
 import java.io.File
 
 private const val PIPELINE = "pipeline"
-private const val OUTPUT_MODEL = "inlined.oxsts"
 private const val INSTANTIATED_MODEL = "$PIPELINE/instantiated.oxsts"
 private const val INLINED_MODEL = "$PIPELINE/inlined.oxsts"
 private const val FLATTENED_MODEL = "$PIPELINE/flattened.oxsts"
@@ -26,7 +25,6 @@ class ArtifactManager @Inject constructor(
 
     fun pathOf(artifactKind: ArtifactKind): String {
         return when (artifactKind) {
-            ArtifactKind.OutputModel -> OUTPUT_MODEL
             ArtifactKind.InstantiatedModel -> INSTANTIATED_MODEL
             ArtifactKind.InlinedModel -> INLINED_MODEL
             ArtifactKind.FlattenedModel -> FLATTENED_MODEL

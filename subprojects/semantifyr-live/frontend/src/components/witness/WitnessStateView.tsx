@@ -12,7 +12,7 @@ import IconButton from '@mui/material/IconButton';
 import Collapse from '@mui/material/Collapse';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
-import { type WitnessStateChange, witnessStateChanges } from '@semantifyr/editor-common';
+import { traceStepLabel, type WitnessStateChange, witnessStateChanges } from '@semantifyr/editor-common';
 import type { WitnessState, WitnessStateValue } from '../../lib/verification';
 import { FONT_SIZE, ICON_SIZE } from '../../lib/util/theme';
 
@@ -110,7 +110,7 @@ export default function WitnessStateView({ trace }: Props): React.JSX.Element {
   rows.push(
     <StateStepRow
       key="initialized"
-      label="Init"
+      label={traceStepLabel(0)}
       initial
       changed={initializedChanged}
       allValues={trace.initializedStep.values}
@@ -121,7 +121,7 @@ export default function WitnessStateView({ trace }: Props): React.JSX.Element {
     rows.push(
       <StateStepRow
         key={`step-${i}`}
-        label={`Step ${i + 1}`}
+        label={traceStepLabel(i + 1)}
         initial={false}
         changed={stepsChanged[i] ?? []}
         allValues={step.values}

@@ -22,7 +22,7 @@ class ReplayingSpinExecutor(
 
     override suspend fun execute(specification: SpinExecutionSpecification): SpinExecutionResult {
         val trail = specification.workingDirectory.resolve("${specification.modelFileName}.trail")
-        val outputs = listOfNotNull(specification.logFile, trail)
+        val outputs = listOfNotNull(specification.logFile, specification.errorFile, trail)
         val step = if (specification.statementMerging) {
             "execute"
         } else {

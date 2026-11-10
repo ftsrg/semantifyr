@@ -9,6 +9,7 @@ import { renderTrace, WitnessView } from '../witness.js';
 import { registerOutputChannel } from '../outputChannel.js';
 import { counterexample, resolutionNote, result, witnessUri } from './fixtures.js';
 import { createExtensionContext, resetVscode, state, TestItem, TestMessage, Uri, ViewColumn, commands, window, workspace } from './stubs/vscode.js';
+import type { WitnessValidationResult } from '@semantifyr/editor-common';
 
 describe('renderTrace', () => {
     it('lists the calls and the state changes of each step', () => {
@@ -68,6 +69,18 @@ describe('renderTrace', () => {
         const document = renderTrace('Safe', result('passed', counterexample, message), counterexample);
 
         expect(document.split('\n')[2]).toBe('Verdict: passed (backend theta-cegar-expl, portfolio theta-full)');
+    });
+
+    it('adds the witness validation below the verdict', () => {
+        const validation: WitnessValidationResult = { status: 'invalid', verdict: 'passed', message: 'spurious', backendId: 'theta-bmc', portfolioId: 'smart-full', metrics: null };
+
+        const document = renderTrace('Safe', result('failed', counterexample), counterexample, validation);
+
+        expect(document.split('\n').slice(2, 5)).toEqual([
+            'Verdict: failed (backend theta-cegar-expl, portfolio theta-full)',
+            '',
+            'Validation: Witness invalid (backend theta-bmc, portfolio smart-full) - spurious',
+        ]);
     });
 
     it('leaves out a missing witness and origin', () => {
@@ -173,7 +186,7 @@ describe('WitnessView', () => {
         await showWitness(item);
         await showWitness(undefined);
 
-        expect(window.showInformationMessage.mock.calls).toEqual([['No witness recorded for Safe.'], ['No witness recorded for this test.']]);
+        expect(window.showInformationMessage.mock.calls).toEqual([['No witness for Safe.'], ['No witness for this test.']]);
         expect(window.showTextDocument).not.toHaveBeenCalled();
     });
 
@@ -192,5 +205,86 @@ describe('WitnessView', () => {
         expect(view.provideTextDocumentContent(Uri.parse(changes[0]!) as never)).toContain('# Safe');
         expect(view.provideTextDocumentContent(Uri.parse(changes[1]!) as never)).toContain('# Reachable');
         expect(workspace.registerTextDocumentContentProvider).toHaveBeenCalledWith('semantifyr-trace', view);
+    });
+});
+
+describe('WitnessView validation', () => {
+    const modelUri = Uri.parse('file:///workspace/crossroads.gamma');
+    let view: WitnessView;
+    let item: TestItem;
+
+    beforeEach(() => {
+        resetVscode();
+        const context = createExtensionContext('/extension');
+        registerOutputChannel(context as never);
+        view = new WitnessView();
+        view.register(context as never);
+        item = new TestItem('crossroads::ACanBeGreen', 'ACanBeGreen', modelUri);
+    });
+
+    function validateWitness(argument: unknown) {
+        return state.commands.get('semantifyr.witness.validate')!(argument);
+    }
+
+    function validation(status: WitnessValidationResult['status'], message: string | null = null): WitnessValidationResult {
+        return { status, verdict: null, message, backendId: null, portfolioId: 'smart-full', metrics: null };
+    }
+
+    function traceDocument(): string {
+        return [...state.contentProviders.values()][0]!.provideTextDocumentContent(Uri.parse('semantifyr-trace:/ACanBeGreen.md?1'));
+    }
+
+    it('validates under a cancellable progress and adds the result to the trace', async () => {
+        view.record(item as never, result('failed', counterexample), async () => validation('valid'));
+
+        await validateWitness({ test: item });
+
+        expect(window.withProgress.mock.calls[0]![0]).toEqual({ location: 15, title: 'Validating the witness of ACanBeGreen', cancellable: true });
+        expect(window.showInformationMessage).toHaveBeenCalledWith('ACanBeGreen: Witness valid (portfolio smart-full)');
+        expect(traceDocument()).toContain('Validation: Witness valid (portfolio smart-full)');
+    });
+
+    it.each([
+        ['invalid', 'showErrorMessage', 'ACanBeGreen: Witness invalid (portfolio smart-full) - spurious\n'],
+        ['errored', 'showErrorMessage', 'ACanBeGreen: Validation errored (portfolio smart-full) - spurious\n'],
+        ['inconclusive', 'showWarningMessage', 'ACanBeGreen: Validation inconclusive (portfolio smart-full) - spurious'],
+        ['timeout', 'showWarningMessage', 'ACanBeGreen: Validation timed out (portfolio smart-full) - spurious'],
+    ] as const)('reports a %s witness through %s', async (status, method, text) => {
+        view.record(item as never, result('failed', counterexample), async () => validation(status, 'spurious'));
+
+        await validateWitness(item);
+
+        expect(window[method]).toHaveBeenCalledWith(text);
+    });
+
+    it('reports a validator that throws as errored', async () => {
+        view.record(item as never, result('failed', counterexample), async () => {
+            throw new Error('connection closed');
+        });
+
+        await validateWitness(item);
+
+        expect(window.showErrorMessage).toHaveBeenCalledWith('ACanBeGreen: Validation errored - connection closed\n');
+    });
+
+    it('drops the validation of a witness a rerun replaced', async () => {
+        view.record(item as never, result('failed', counterexample), async () => {
+            view.record(item as never, result('failed', counterexample, 'again'));
+            return validation('valid');
+        });
+
+        await validateWitness(item);
+
+        expect(window.showInformationMessage).not.toHaveBeenCalled();
+        expect(traceDocument()).not.toContain('Validation:');
+    });
+
+    it('says so when the case has no witness to validate', async () => {
+        view.record(item as never, result('failed', counterexample));
+
+        await validateWitness(item);
+
+        expect(window.showInformationMessage).toHaveBeenCalledWith('No witness for ACanBeGreen.');
+        expect(window.withProgress).not.toHaveBeenCalled();
     });
 });

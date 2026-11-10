@@ -7,14 +7,11 @@
 import vscode, { commands, type ExtensionContext, Location, Position, Range, Uri, ViewColumn, window } from "vscode";
 import path from "path";
 import type { LanguageClient, Middleware } from "vscode-languageclient/node";
+import type { NavigateToParams } from "@semantifyr/editor-common";
 import { createRemoteLspClient, createLspClient, registerSemantifyrSettingsSync } from "./client-utils.js";
 import { executablePostfix } from "../runner-utils.js";
 import { VerificationTestController } from "./verification-test-controller.js";
 import type { WitnessView } from "../witness.js";
-
-interface NavigateToParams {
-    locations: Location[]
-}
 
 let client: LanguageClient;
 
@@ -60,6 +57,7 @@ export async function startOxstsClient(context: ExtensionContext, witnesses: Wit
         controllerLabel: 'Semantifyr Verification Cases',
         discoverCommand: 'oxsts.case.discover',
         verifyCommand: 'oxsts.case.verify',
+        validateWitnessCommand: 'oxsts.case.validateWitness',
     }, witnesses);
     oxstsTestController.registerTestProvider(context);
     await oxstsTestController.refreshWorkspaceTests();
@@ -69,14 +67,14 @@ export async function stopOxstsClient() {
     await client.stop();
 }
 
-async function navigateToLocation(locations: Location[]) {
+async function navigateToLocation(locations: NavigateToParams["locations"]) {
     const firstLocation = locations[0];
     if (!firstLocation) {
         return;
     }
 
     const actualLocations = locations.map(location => {
-        const uri = vscode.Uri.parse(location.uri.toString());
+        const uri = vscode.Uri.parse(location.uri);
         const range = new Range(
             new Position(location.range.start.line, location.range.start.character),
             new Position(location.range.end.line, location.range.end.character),
@@ -86,7 +84,7 @@ async function navigateToLocation(locations: Location[]) {
 
     let editor = vscode.window.activeTextEditor;
     if (editor === undefined) {
-        const doc = await vscode.workspace.openTextDocument(firstLocation.uri);
+        const doc = await vscode.workspace.openTextDocument(vscode.Uri.parse(firstLocation.uri));
         editor = await vscode.window.showTextDocument(doc);
     }
 

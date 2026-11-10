@@ -270,6 +270,51 @@ class VerificationPortfolioTest {
     }
 
     @Test
+    fun `all reports Inconclusive over a NotSupported leg that finished first`() = runTest {
+        val notSupported = FakeBackend.delayed("refusing", 10, VerificationVerdict.NotSupported)
+        val inconclusive = FakeBackend.delayed("undecided", 100, VerificationVerdict.Inconclusive)
+
+        val outcome = portfolio.runAll(noopGate) {
+            enqueue(notSupported)
+            enqueue(inconclusive)
+        }
+
+        val result = outcome.toBackendVerificationResult(Clock.System.now())
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
+        assertThat(result.message).contains("refusing=NotSupported", "undecided=Inconclusive")
+    }
+
+    @Test
+    fun `all reports Timeout over an Inconclusive leg that finished first`() = runTest {
+        val inconclusive = FakeBackend.delayed("undecided", 10, VerificationVerdict.Inconclusive)
+        val timedOut = FakeBackend.delayed("timed-out", 100, VerificationVerdict.Timeout)
+
+        val outcome = portfolio.runAll(noopGate) {
+            enqueue(inconclusive)
+            enqueue(timedOut)
+        }
+
+        val result = outcome.toBackendVerificationResult(Clock.System.now())
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Timeout)
+        assertThat(result.message).contains("undecided=Inconclusive", "timed-out=Timeout")
+    }
+
+    @Test
+    fun `all reports Inconclusive over an Errored leg that finished first`() = runTest {
+        val errored = FakeBackend.delayed("broken", 10, VerificationVerdict.Errored)
+        val inconclusive = FakeBackend.delayed("undecided", 100, VerificationVerdict.Inconclusive)
+
+        val outcome = portfolio.runAll(noopGate) {
+            enqueue(errored)
+            enqueue(inconclusive)
+        }
+
+        val result = outcome.toBackendVerificationResult(Clock.System.now())
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
+        assertThat(result.message).contains("broken=Errored", "undecided=Inconclusive")
+    }
+
+    @Test
     suspend fun `all ignores a Timeout job when the decisive jobs agree`() {
         val timedOut = FakeBackend.verdict("timed-out", VerificationVerdict.Timeout)
         val passed = FakeBackend.verdict("passed", VerificationVerdict.Passed)

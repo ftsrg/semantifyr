@@ -12,6 +12,7 @@ import IconButton from '@mui/material/IconButton';
 import Collapse from '@mui/material/Collapse';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import { formatTraceCall, traceStepLabel } from '@semantifyr/editor-common';
 import type { TraceEntry, CallTrace, CallTraceStep } from '../../lib/verification';
 import { FONT_SIZE, ICON_SIZE } from '../../lib/util/theme';
 
@@ -29,10 +30,7 @@ function TraceEntryNode({ call, depth }: TraceEntryNodeProps): React.JSX.Element
   const [open, setOpen] = useState(true);
   const inner = call.innerTraces ?? [];
   const hasChildren = inner.length > 0;
-  const args = call.arguments
-    .map((a) => `${a.parameter}=${a.value}`)
-    .join(', ');
-  const headerText = `${call.self}.${call.calledTransition}(${args})`;
+  const headerText = formatTraceCall(call);
   return (
     <Box sx={{ pl: depth * 1.5 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -126,7 +124,7 @@ export default function CallTraceView({ trace }: Props): React.JSX.Element {
     <CallStepRow
       key="initialized"
       step={trace.initializedStep}
-      label="Init"
+      label={traceStepLabel(0)}
       defaultOpen
     />,
   );
@@ -135,7 +133,7 @@ export default function CallTraceView({ trace }: Props): React.JSX.Element {
       <CallStepRow
         key={`step-${i}`}
         step={step}
-        label={`Step ${i + 1}`}
+        label={traceStepLabel(i + 1)}
         defaultOpen={false}
       />,
     );

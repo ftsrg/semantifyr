@@ -14,6 +14,7 @@ import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.switch
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.verifier.BackAnnotationException
 import hu.bme.mit.semantifyr.verifier.VerificationResult
 import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
@@ -48,6 +49,21 @@ suspend fun SuspendingCliktCommand.verifyCase(
         verify()
     } catch (exception: CancellationException) {
         throw exception
+    } catch (exception: BackAnnotationException) {
+        val message = exception.message ?: exception::class.simpleName
+        when (output) {
+            VerifyOutput.Text -> {
+                echo("  BACK_ANNOTATION_ERROR")
+            }
+            VerifyOutput.Quiet -> {
+                echo("BACK_ANNOTATION_ERROR")
+            }
+            VerifyOutput.Json -> {
+                echo(jsonLineFormat.encodeToString(CaseFailureLine(caseName, ExitCode.BackAnnotation.code, CasePhase.BackAnnotation, message)))
+            }
+        }
+        echo("Back-annotating the witness of $caseName failed: $message", err = true)
+        return ExitCode.BackAnnotation
     } catch (exception: Exception) {
         val message = exception.message ?: exception::class.simpleName
         when (output) {
@@ -58,7 +74,7 @@ suspend fun SuspendingCliktCommand.verifyCase(
                 echo("COMPILATION_ERROR")
             }
             VerifyOutput.Json -> {
-                echo(jsonLineFormat.encodeToString(CompilationFailureLine(caseName, ExitCode.Compilation.code, message)))
+                echo(jsonLineFormat.encodeToString(CaseFailureLine(caseName, ExitCode.Compilation.code, CasePhase.Compilation, message)))
             }
         }
         echo("Compiling $caseName failed: $message", err = true)
@@ -72,14 +88,14 @@ suspend fun SuspendingCliktCommand.verifyCase(
             val message = result.message?.let {
                 " - $it"
             } ?: ""
-            echo("  ${verdictTag(result.verdict)} (${result.metrics.totalDuration})$message")
+            echo("  ${verdictTag(result.verdict)} (${result.metrics.verifier.compilationDuration + result.metrics.totalDuration})$message")
             echo("  report: $report")
         }
         VerifyOutput.Quiet -> {
             echo(verdictTag(result.verdict))
         }
         VerifyOutput.Json -> {
-            echo(jsonLineFormat.encodeToString(VerifyOutcomeLine(caseName, exitCode.code, report.toString())))
+            echo(jsonLineFormat.encodeToString(VerifyOutcomeLine(caseName, exitCode.code, report.toString(), result.metrics.verifier.compilationDuration, result.metrics.totalDuration)))
         }
     }
     return exitCode

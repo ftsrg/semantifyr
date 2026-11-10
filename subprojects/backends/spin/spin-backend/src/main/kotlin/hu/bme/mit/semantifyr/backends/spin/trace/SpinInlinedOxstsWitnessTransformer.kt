@@ -98,7 +98,7 @@ class SpinInlinedOxstsWitnessTransformer @Inject constructor(
 
     private fun findLiteralByName(enumDeclaration: EnumDeclaration, raw: String): EnumLiteral? {
         return enumDeclaration.literals.firstOrNull {
-            it.name == raw
+            spinVariableTransformer.nameOf(it) == raw
         }
     }
 

@@ -29,6 +29,18 @@ class UppaalLogVerdictParser {
         }
     }
 
+    fun rejection(lines: Sequence<String>): String? {
+        val messages = lines.map {
+            it.trim()
+        }.filter {
+            "[error]" in it || it.contains("license", ignoreCase = true)
+        }.toList()
+        if (messages.isEmpty()) {
+            return null
+        }
+        return messages.joinToString("; ")
+    }
+
     private fun detectInLine(trimmedLine: String): UppaalVerdict? {
         return when {
             trimmedLine.contains("Formula is NOT satisfied", ignoreCase = true) -> UppaalVerdict.Unsatisfied

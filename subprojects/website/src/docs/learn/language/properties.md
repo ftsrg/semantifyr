@@ -11,7 +11,7 @@ Properties are **pure computations**: they return a value without changing any s
 
 A property declaration consists of the `prop` keyword, a name, a parameter list, a return type, and a body containing exactly one `return` statement followed by an expression.
 
-```oxsts
+```oxsts fragment
 prop isPositive(): bool {
   return value > 0
 }
@@ -19,7 +19,7 @@ prop isPositive(): bool {
 
 With parameters:
 
-```oxsts
+```oxsts fragment
 prop isAtLeast(threshold: int): bool {
   return value >= threshold
 }
@@ -31,7 +31,7 @@ The single-`return` restriction may be relaxed in future versions.
 
 An `abstract` property has no body. Concrete subclasses must redefine it.
 
-```oxsts
+```oxsts fragment
 abstract prop maximum(): int
 ```
 
@@ -39,7 +39,7 @@ abstract prop maximum(): int
 
 Override an inherited property of the **same name** with `redefine`. The redefinition takes as many parameters as the inherited property, and its return type must be assignable to the inherited one.
 
-```oxsts
+```oxsts fragment
 redefine prop maximum(): int {
   return 10
 }
@@ -49,13 +49,13 @@ redefine prop maximum(): int {
 
 A property is invoked via the `()` invocation expression.
 
-```oxsts
+```oxsts fragment
 prop atLimit(): bool {
   return value == maximum()
 }
 ```
 
-```oxsts
+```oxsts fragment
 prop pairAtLimit(): bool {
   return a.atLimit() && b.atLimit()
 }
@@ -67,7 +67,7 @@ See [Expressions / Property Invocation](expressions.md#property-invocation-).
 
 A `prop { return expr; }` without a name has the **implicit name** `prop`. This is the special property checked by the model checker. The body uses [temporal operators](expressions.md#temporal-operators) such as `AG` and `EF` to express safety and reachability properties.
 
-```oxsts
+```oxsts fragment
 class Reaches10 {
   contains counter: Counter
 

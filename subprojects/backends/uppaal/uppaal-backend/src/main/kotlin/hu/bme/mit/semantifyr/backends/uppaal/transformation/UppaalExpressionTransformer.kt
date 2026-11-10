@@ -105,7 +105,7 @@ class UppaalExpressionTransformer @Inject constructor(
     override fun visit(expression: ElementReference): String {
         return when (val element = expression.element) {
             is VariableDeclaration -> uppaalVariableTransformer.nameOf(element)
-            is EnumLiteral -> element.name
+            is EnumLiteral -> uppaalVariableTransformer.nameOf(element)
             else -> error("Unexpected kind of element: $element")
         }
     }

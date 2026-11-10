@@ -107,7 +107,7 @@ class NuxmvExpressionVisitor @AssistedInject constructor(
     override fun visit(expression: ElementReference): String {
         return when (val element = expression.element) {
             is VariableDeclaration -> substitution[element] ?: nuxmvVariableTransformer.nameOf(element)
-            is EnumLiteral -> element.name
+            is EnumLiteral -> nuxmvVariableTransformer.nameOf(element)
             else -> error("Unexpected kind of element: $element")
         }
     }

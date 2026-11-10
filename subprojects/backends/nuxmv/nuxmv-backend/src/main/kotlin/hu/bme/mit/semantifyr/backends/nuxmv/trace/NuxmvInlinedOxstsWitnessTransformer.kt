@@ -67,7 +67,7 @@ class NuxmvInlinedOxstsWitnessTransformer @Inject constructor(
             NuxmvVariableKind.Enum -> {
                 val enumDeclaration = variable.typeSpecification?.domain as? EnumDeclaration ?: return null
                 val literal = enumDeclaration.literals.firstOrNull {
-                    nuxmvVariableTransformer.sanitizeEnumLiteral(it) == raw
+                    nuxmvVariableTransformer.nameOf(it) == raw
                 } ?: return null
                 OxstsFactory.createElementReference(literal)
             }

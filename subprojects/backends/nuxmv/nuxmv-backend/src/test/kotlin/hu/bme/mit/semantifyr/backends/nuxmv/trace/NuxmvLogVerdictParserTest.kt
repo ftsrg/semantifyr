@@ -74,4 +74,50 @@ class NuxmvLogVerdictParserTest {
         assertThat(NuxmvVerdict.True.invert()).isEqualTo(NuxmvVerdict.False)
         assertThat(NuxmvVerdict.False.invert()).isEqualTo(NuxmvVerdict.True)
     }
+
+    @Test
+    fun `a model nuXmv rejects names nuXmv's message`() {
+        val rejection = parser.rejection(
+            sequenceOf(
+                "",
+                "file /work/model.smv: line 6: at token \"TRANS\": syntax error",
+                "aborting 'source commands.cmd'",
+            ),
+        )
+
+        assertThat(rejection).isEqualTo("file /work/model.smv: line 6: at token \"TRANS\": syntax error")
+    }
+
+    @Test
+    fun `a property nuXmv refuses names nuXmv's message`() {
+        val rejection = parser.rejection(
+            sequenceOf(
+                "TYPE ERROR file /work/model.smv: line 6 : undefined identifier 'z'",
+                "ERROR: Property \"z < 3 \" is not correct or not well typed.",
+                "aborting 'source commands.cmd'",
+            ),
+        )
+
+        assertThat(rejection).contains("undefined identifier 'z'", "is not correct or not well typed")
+    }
+
+    @Test
+    fun `a BDD check of an unbounded integer names nuXmv's message`() {
+        val rejection = parser.rejection(sequenceOf("file /work/model.smv: line 6: Impossible to build a BDD FSM with infinite precision variables"))
+
+        assertThat(rejection).contains("Impossible to build a BDD FSM with infinite precision variables")
+    }
+
+    @Test
+    fun `a check that ran has no rejection`() {
+        val rejection = parser.rejection(
+            sequenceOf(
+                "*** Copyright (c) 2014-2024, Fondazione Bruno Kessler",
+                "-- no proof or counterexample found with bound 10",
+            ),
+        )
+
+        assertThat(rejection).isNull()
+    }
+
 }

@@ -18,11 +18,11 @@ This extension brings the Semantifyr toolchain into VS Code, including a languag
 
 ## Verification
 
-The verification cases of the open workspace appear in the *Testing* view. When a verdict comes with a witness, **Show Witness** on the failure message or in the case's context menu opens the back-annotated witness (for a Gamma case, the witness as a Gamma execution trace) read-only beside the model, and next to it the trace with the calls and the state changes of each step.
+The verification cases of the open workspace appear in the *Testing* view. When a verdict comes with a witness, **Show Witness** on the failure message or in the case's context menu opens the back-annotated witness (for a Gamma case, the witness as a Gamma execution trace) read-only beside the model, and next to it the trace with the calls and the state changes of each step. After a verdict with a witness the extension validates the witness, verifying it again (`semantifyr.verification.autoValidate`, on by default, on `semantifyr.verification.validationPortfolio`, by default the verification portfolio), and adds the result to the test message and the trace; **Validate Witness** in the same places runs it again.
 
 ## Extension settings
 
-The `semantifyr.*` settings choose the portfolio, the timeout, the concurrency, the Theta executor and image, the artifacts and the optimization level. The default portfolio, `smart-full`, races every installed backend, so one of Theta, nuXmv, Spin or Uppaal is enough.
+The `semantifyr.*` settings choose the portfolio, the timeout, the witness validation, the Theta executor and image, the artifacts and the optimization level. The default portfolio, `smart-full`, races every installed backend, so one of Theta, nuXmv, Spin or Uppaal is enough.
 
 ## Known issues
 

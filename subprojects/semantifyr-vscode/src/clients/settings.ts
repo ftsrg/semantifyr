@@ -18,7 +18,6 @@ export function readSemantifyrSettings(): ServerSettings {
     return {
         portfolio: config.get<string>("portfolio", "smart-full"),
         timeoutSeconds: config.get<number>("timeoutSeconds", 300),
-        maxConcurrency: config.get<number>("maxConcurrency", 0),
         theta: {
             executor: config.get<ThetaExecutor>("theta.executor", "auto"),
             dockerImage: config.get<string>("theta.dockerImage", "ftsrg/theta-xsts-cli:8.6.0"),
@@ -30,6 +29,20 @@ export function readSemantifyrSettings(): ServerSettings {
         optimization: {
             level: config.get<OptimizationLevel>("optimization.level", "all"),
         },
+    };
+}
+
+export interface VerificationSettings {
+    autoValidate: boolean;
+    validationPortfolio: string | undefined;
+}
+
+export function readVerificationSettings(): VerificationSettings {
+    const config = workspace.getConfiguration("semantifyr");
+    const validationPortfolio = config.get<string>("verification.validationPortfolio", "");
+    return {
+        autoValidate: config.get<boolean>("verification.autoValidate", true),
+        validationPortfolio: validationPortfolio === "" ? undefined : validationPortfolio,
     };
 }
 

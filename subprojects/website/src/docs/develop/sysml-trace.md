@@ -13,7 +13,7 @@ The reference pair is `subprojects/frontends/sysml/models/etc/crossroads-green.*
 
 ## Refinement
 
-```sysml
+```sysmlv2
 part def TrafficLightABehaviorNormalGreenUnreachableViolatedTrace :> CrossroadSystem {
     part controller :>> controller {
         exhibit state Behaviour[1] :>> Behaviour {
@@ -29,7 +29,7 @@ Every occurrence the trace declares, and every connector, has multiplicity `[1]`
 
 ## States and transitions
 
-```sysml
+```sysmlv2
 state operating1[1] :> Operating {
     state bothYellow1[1] :> BothYellow;
     action toBothRed1[1] :> stateTransitions {
@@ -46,7 +46,7 @@ state operating1[1] :> Operating {
 
 ## Time
 
-```sysml
+```sysmlv2
 snapshot step0[1];
 timeslice dwell1[1] { assert constraint { DurationOf(dwell1) == 1 [s] } }
 snapshot step2[1];

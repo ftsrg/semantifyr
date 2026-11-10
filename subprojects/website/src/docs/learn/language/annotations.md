@@ -11,7 +11,7 @@ Annotations attach metadata to declarations. They do not change behavior directl
 
 The `@` prefix attaches an annotation to the immediately following declaration.
 
-```oxsts
+```oxsts fragment
 @VerificationCase
 class Reaches10 {
   contains counter: Counter
@@ -22,7 +22,7 @@ class Reaches10 {
 }
 ```
 
-```oxsts
+```oxsts fragment
 @Control
 var value: int := 0
 ```
@@ -32,12 +32,16 @@ var value: int := 0
 Annotation arguments bind like call arguments: a named argument (`name = value`) binds the parameter of that name, a positional argument the parameter at its position. Arguments must be constants: annotations are read without an instance, so the validator rejects a reference to a feature or variable (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`).
 
 ```oxsts
+package example
+
 @VerificationCase(summary = "Reaches the limit")
 class Reaches10 {
 }
 ```
 
 ```oxsts
+package example
+
 @Tag(category = "slow")
 class LargeTest {
 }
@@ -48,6 +52,8 @@ class LargeTest {
 Multiple annotations may be applied to a single declaration. Each starts on its own `@`.
 
 ```oxsts
+package example
+
 @VerificationCase
 @Tag(category = "slow")
 class LargeTest {
@@ -59,18 +65,22 @@ class LargeTest {
 Without parameters:
 
 ```oxsts
+package example
+
 annotation Important
 ```
 
 With parameters:
 
 ```oxsts
+package example
+
 annotation Description(text: string)
 ```
 
 A custom annotation may then be applied like any built-in:
 
-```oxsts
+```oxsts fragment
 @Description(text = "Increments the counter by one")
 tran increment() {
   value := value + 1

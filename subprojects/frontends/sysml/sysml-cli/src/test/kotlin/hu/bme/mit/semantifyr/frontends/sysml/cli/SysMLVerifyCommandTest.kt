@@ -46,7 +46,7 @@ class SysMLVerifyCommandTest {
             "semantifyr::sysml::model::LampLitOnlyWhileSwitchOnViolated",
         )
         assertThat(Path(lines.first().report))
-            .isEqualTo(artifacts.resolve("room.LampLitReachable").resolve("report.json").toAbsolutePath().normalize())
+            .isEqualTo(artifacts.resolve("room.semantifyr.sysml.model.LampLitReachable").resolve("report.json").toAbsolutePath().normalize())
             .exists()
     }
 

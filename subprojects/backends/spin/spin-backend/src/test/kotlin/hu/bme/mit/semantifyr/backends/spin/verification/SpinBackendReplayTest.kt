@@ -75,6 +75,22 @@ class SpinBackendReplayTest {
     }
 
     @Test
+    suspend fun `a model spin rejects is Errored with spin's message`() {
+        val result = verify("RejectedModel", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(result.message).contains("duplicate `else")
+    }
+
+    @Test
+    suspend fun `a pan that stops on its state vector is Errored with pan's message`() {
+        val result = verify("VectorTooSmall", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(result.message).contains("VECTORSZ too small")
+    }
+
+    @Test
     suspend fun `a violated invariant fails with a witness through the violating states`() {
         val result = verify("CounterExceedsBound", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
 

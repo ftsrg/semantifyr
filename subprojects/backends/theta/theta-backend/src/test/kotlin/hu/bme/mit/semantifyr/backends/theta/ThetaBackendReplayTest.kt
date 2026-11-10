@@ -89,6 +89,15 @@ class ThetaBackendReplayTest {
     }
 
     @Test
+    suspend fun `a counterexample that does not parse fails the witness and keeps the verdict`() {
+        val result = verify("MalformedCounterexample", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        assertThat(result.inlinedWitness).isNull()
+        assertThat(result.message).contains("(counter #b1)")
+    }
+
+    @Test
     suspend fun `witness values keep the declaration order`() {
         val result = verify("OneOfSeveralChanges", models.parse(BackendTestModels.SATURATING_ONE_OF_SEVERAL_CHANGES))
 

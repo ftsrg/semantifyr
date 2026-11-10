@@ -16,6 +16,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
@@ -28,11 +29,15 @@ class VerificationManagerTest {
         return VerificationManager(config, registry)
     }
 
+    private suspend fun <T> VerificationManager.withPermit(sessionId: String, block: suspend () -> T): T {
+        return withPermit(enqueue(sessionId), block)
+    }
+
     @Test
     fun `withPermit acquires and releases permit`() = runTest {
         val manager = manager(concurrency = 2)
         assertThat(manager.availablePermits).isEqualTo(2)
-        manager.withPermit {
+        manager.withPermit("session") {
             assertThat(manager.availablePermits).isEqualTo(1)
         }
         assertThat(manager.availablePermits).isEqualTo(2)
@@ -42,7 +47,7 @@ class VerificationManagerTest {
     fun `withPermit releases permit on exception`() = runTest {
         val manager = manager(concurrency = 1)
         try {
-            manager.withPermit {
+            manager.withPermit("session") {
                 throw RuntimeException("boom")
             }
         } catch (_: RuntimeException) {
@@ -56,12 +61,12 @@ class VerificationManagerTest {
         coroutineScope {
             var secondStarted = false
             val first = async {
-                manager.withPermit {
+                manager.withPermit("session") {
                     assertThat(secondStarted).isFalse()
                 }
             }
             val second = async {
-                manager.withPermit {
+                manager.withPermit("session") {
                     secondStarted = true
                 }
             }
@@ -70,6 +75,89 @@ class VerificationManagerTest {
             assertThat(secondStarted).isTrue()
             assertThat(manager.availablePermits).isEqualTo(1)
         }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `a freed permit goes to the session that waited longest since it was last served`() = runTest {
+        val manager = manager(concurrency = 1)
+        val order = mutableListOf<String>()
+        val release = CompletableDeferred<Unit>()
+        val blocker = manager.enqueue("other")
+        launch {
+            manager.withPermit(blocker) {
+                release.await()
+            }
+        }
+        val requests = listOf(
+            "busy-1",
+            "busy-2",
+            "busy-3",
+            "busy-4",
+            "single",
+        ).associateWith {
+            manager.enqueue(it.substringBefore("-"))
+        }
+        for ((name, request) in requests) {
+            launch {
+                manager.withPermit(request) {
+                    order += name
+                }
+            }
+        }
+        runCurrent()
+        assertThat(order).isEmpty()
+
+        release.complete(Unit)
+        advanceUntilIdle()
+        assertThat(order).containsExactly(
+            "busy-1",
+            "single",
+            "busy-2",
+            "busy-3",
+            "busy-4",
+        )
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `within a session the permits go in arrival order`() = runTest {
+        val manager = manager(concurrency = 1)
+        val order = mutableListOf<Int>()
+        val requests = (1..4).map {
+            manager.enqueue("session")
+        }
+        for ((index, request) in requests.withIndex().reversed()) {
+            launch {
+                manager.withPermit(request) {
+                    order += index
+                }
+            }
+        }
+        advanceUntilIdle()
+        assertThat(order).containsExactly(0, 1, 2, 3)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `an abandoned request leaves the queue and an abandoned grant passes the permit on`() = runTest {
+        val manager = manager(concurrency = 1)
+        val granted = manager.enqueue("first")
+        val queued = manager.enqueue("second")
+        val next = manager.enqueue("third")
+        assertThat(manager.queuedCount).isEqualTo(2)
+
+        manager.abandon(queued)
+        assertThat(manager.queuedCount).isEqualTo(1)
+
+        manager.abandon(granted)
+        assertThat(manager.queuedCount).isEqualTo(0)
+        var ran = false
+        manager.withPermit(next) {
+            ran = true
+        }
+        assertThat(ran).isTrue()
+        assertThat(manager.availablePermits).isEqualTo(1)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -84,12 +172,12 @@ class VerificationManagerTest {
 
         val release = CompletableDeferred<Unit>()
         val first = launch {
-            manager.withPermit {
+            manager.withPermit("session") {
                 release.await()
             }
         }
         val second = launch {
-            manager.withPermit {
+            manager.withPermit("session") {
                 release.await()
             }
         }

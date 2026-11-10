@@ -26,6 +26,56 @@ class NuxmvCapabilityCheckerTest : NuxmvTransformationTestBase() {
         }
     }
 
+    private fun unsupportedByBdd(body: String): List<String> {
+        val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors)
+        return bddCapabilityChecker().check(inlinedOxsts).map {
+            it.description
+        }
+    }
+
+    @Test
+    fun `the BDD engine refuses an integer variable`() {
+        val unsupported = unsupportedByBdd(
+            """
+                var counter : int := 0
+                var flag : bool := false
+                init {
+                }
+                tran {
+                    counter := counter + 1
+                }
+                prop {
+                    AG counter < 3
+                }
+            """,
+        )
+
+        assertThat(unsupported).containsExactly("integer variables")
+    }
+
+    @Test
+    fun `the BDD engine accepts boolean and enumeration variables`() {
+        val unsupported = unsupportedByBdd(
+            """
+                var flag : bool := false
+                var color : test::colors::Color := test::colors::Color::Red
+                init {
+                    havoc(flag)
+                }
+                tran {
+                    if (flag) {
+                        color := test::colors::Color::Green
+                    }
+                }
+                prop {
+                    AG color == test::colors::Color::Red
+                }
+            """,
+        )
+
+        assertThat(unsupported).isEmpty()
+    }
+
     @Test
     fun `a model of supported constructs passes`() {
         val unsupported = unsupported(

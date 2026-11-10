@@ -58,6 +58,7 @@ class CompileCommand @Inject constructor(
         logger.info { "compile model=$model libraries=$libraries" }
 
         checkInputs()
+        artifactOptions.checkOutputDirectory()
         val semantifyrModelContext = readModelContext()
         val cases = caseSpecificationOptions.collectVerificationCases(semantifyrModelContext)
 
@@ -66,7 +67,7 @@ class CompileCommand @Inject constructor(
         } else {
             val directory = validateMultipleCasesOutput(cases.size)
             cases.map {
-                directory.resolve("${it.qualifiedName}.oxsts")
+                directory.resolve("${caseDirectoryName(it)}.oxsts")
             }
         }
         val compiler = SemantifyrCompiler(injector, artifactOptions.resolved, compilationOptions.resolved)

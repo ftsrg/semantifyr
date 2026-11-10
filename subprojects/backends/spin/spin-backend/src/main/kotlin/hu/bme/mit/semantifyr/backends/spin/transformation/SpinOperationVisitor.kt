@@ -107,11 +107,11 @@ class SpinOperationVisitor @AssistedInject constructor(
     }
 
     private fun renderLocalType(operation: LocalVarDeclarationOperation): String {
-        return when (spinVariableTransformer.describe(operation).kind) {
+        val described = spinVariableTransformer.describe(operation)
+        return when (described.kind) {
             SpinVariableKind.Integer -> "int"
             SpinVariableKind.Boolean -> "bool"
-            // For a local enum-typed var we fall back to int; the global emits the proper mtype.
-            SpinVariableKind.Enum -> "int"
+            SpinVariableKind.Enum -> "mtype:${spinVariableTransformer.nameOf(described.enumDeclaration!!)}"
         }
     }
 
@@ -140,7 +140,7 @@ class SpinOperationVisitor @AssistedInject constructor(
             ?: error("Enum-typed havoc target '${variable.name}' has no enum declaration")
         builder.appendLine("if")
         for (literal in enum.literals) {
-            val literalName = spinVariableTransformer.sanitizeEnumLiteral(literal)
+            val literalName = spinVariableTransformer.nameOf(literal)
             builder.appendLine(":: ${variable.name} = $literalName")
         }
         builder.appendLine("fi;")

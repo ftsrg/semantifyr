@@ -15,11 +15,11 @@ Operations (and whole transitions) are atomic in nature, which means either the 
 
 `lhs := rhs;` updates a variable's value. The left-hand side may be a navigation expression. Only runtime variables can be written: the validator rejects an assignment or havoc whose target is substituted at compile time, such as the loop variable of an [`inline for`](inline-operations.md) (`OXSTS.INCORRECT_ASSIGNMENT`).
 
-```oxsts
+```oxsts fragment
 value := value + 1
 ```
 
-```oxsts
+```oxsts fragment
 self.value := input
 ```
 
@@ -29,7 +29,7 @@ Assignments always execute.
 
 `havoc(reference);` non-deterministically picks a value of the reference's type. Used to model unknown environment inputs, and in `init` to give a variable an arbitrary initial value.
 
-```oxsts
+```oxsts fragment
 havoc (input)
 ```
 
@@ -39,7 +39,7 @@ Havocs are special assignments, and always execute.
 
 `assume(expr);` assumption states that the given `expr` expression **MUST** evaluate to true **IF** the operation is executed.
 
-```oxsts
+```oxsts fragment
 assume (value > 0)
 ```
 
@@ -53,7 +53,7 @@ Composites allow specifying complex behavior.
 
 Curly braces group operations into a sequence, executed in order.
 
-```oxsts
+```oxsts fragment
 {
   value := value + 1
   count := count + 1
@@ -66,7 +66,7 @@ Only executed if every inner operation is executed.
 
 `choice` is non-deterministic selection. The model checker explores every feasible branch.
 
-```oxsts
+```oxsts fragment
 choice {
   value := value + 1
 } or {
@@ -84,7 +84,7 @@ This results in the selection of execution paths based on which assumptions eval
 
 A runtime conditional. The guard is evaluated at runtime, and the specific body is executed accordingly.
 
-```oxsts
+```oxsts fragment
 if (value < maximum()) {
   value := value + 1
 } else {
@@ -96,7 +96,7 @@ if (value < maximum()) {
 
 A runtime loop over a range. The loop variable takes each value in the range in turn. The expression can be any runtime expression.
 
-```oxsts
+```oxsts fragment
 for (i in 1..10) {
   value := value + 1
 }
@@ -106,7 +106,7 @@ for (i in 1..10) {
 
 Local variables allow the definition of temporary locals in the operation structure. A local variable may be a fixed-size array, such as `var values: int[3] := [1, 2, 3]`, indexed like a class array. A local variable carries an initializer like every variable. A local variable of class or feature type, such as `var picked: Worker := first` or `var picked: workers := first`, holds one instance like a class variable, and a call through it, such as `inline picked.finish()`, runs on the instance it holds; a feature-typed local holds the instances of the feature on the instance whose transition declares it, and `havoc(picked)` chooses among the instances of its type.
 
-```oxsts
+```oxsts fragment
 var choiceTaken: bool := false
 choice {
     choiceTaken := true

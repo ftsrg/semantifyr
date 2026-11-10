@@ -23,8 +23,10 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
+import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider
 import hu.bme.mit.semantifyr.oxsts.lang.utils.SelfContainedResource
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.verifier.BackAnnotationException
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.Trace
@@ -81,6 +83,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
     private val callTraceTransformer: CallTraceTransformer,
     private val trivialVerifier: TrivialVerifier,
     private val verificationArtifactWriter: VerificationArtifactWriter,
+    private val qualifiedNameProvider: OxstsQualifiedNameProvider,
 ) : SemantifyrVerifier {
 
     private val compiler = SemantifyrCompiler(
@@ -106,7 +109,9 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
     }
 
     override suspend fun verify(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext): VerificationResult {
-        val qualifiedName = inlinedOxsts.classDeclaration.name ?: "<inlined>"
+        val qualifiedName = inlinedOxsts.classDeclaration.name?.let {
+            qualifiedNameProvider.getFullyQualifiedNameString(inlinedOxsts.classDeclaration)
+        } ?: "<inlined>"
         val case = VerificationCase(
             qualifiedName = qualifiedName,
             classDeclaration = inlinedOxsts.classDeclaration,
@@ -252,6 +257,10 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
                 message = "Timeout (${semantifyrVerifierConfiguration.timeout}) exceeded while back-annotating the witness of ${backendResult.metadata.backendId}'s ${backendResult.verdict} verdict.",
             )
             BackAnnotationOutcome(timedOut, null, backAnnotationMark.elapsedNow())
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (exception: Exception) {
+            throw BackAnnotationException(exception.message ?: exception::class.simpleName, exception)
         }
 
         val totalDuration = (Clock.System.now() - startedAt)

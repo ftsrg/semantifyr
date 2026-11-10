@@ -28,6 +28,18 @@ class ShellBasedSpinExecutorTest {
     }
 
     @Test
+    fun `the state vector size goes to the compiler`() {
+        val specification = SpinExecutionSpecification(
+            workingDirectory = File("."),
+            modelFileName = "model.pml",
+            extraArguments = listOf("-DSAFETY"),
+            vectorSize = 2048,
+        )
+
+        assertThat(executor.searchArguments(specification)).containsExactly("-search", "-DVECTORSZ=2048", "-DSAFETY", "model.pml")
+    }
+
+    @Test
     fun `a search without statement merging passes -o3 before -search`() {
         val specification = SpinExecutionSpecification(
             workingDirectory = File("."),

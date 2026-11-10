@@ -267,7 +267,7 @@ function VerificationPanelInner(
       const target = verifyStateRef.current.cases.find((cs) => cs.caseInfo.id === caseId);
       const witnessUri = target?.trace?.witnessUri;
       if (!witnessUri) return;
-      const location = witnessValidationLocation(target.caseInfo, witnessUri, validateWitnessByCase);
+      const location = witnessValidationLocation(target.caseInfo.location, witnessUri, validateWitnessByCase);
       dispatchAutoValidation(client, validateWitnessCommand, caseId, location, stateUpdater, {
         validationPortfolioId,
       });

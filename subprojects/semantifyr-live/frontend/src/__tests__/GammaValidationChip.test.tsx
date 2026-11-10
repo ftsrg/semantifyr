@@ -167,7 +167,7 @@ describe('Gamma validation chip', { timeout: 20_000 }, () => {
 
   it.each([
     ['invalid', 'Witness invalid', 'The re-verification did not reach the target'],
-    ['inconclusive', 'Inconclusive', 'Timed out after 300 s'],
+    ['inconclusive', 'Validation inconclusive', 'Timed out after 300 s'],
     ['errored', 'Validation errored', 'Case Crossroads.ACanBeGreen has no witness yet, verify it first'],
   ] as const)('shows a %s validation as %s with its message on hover', async (status, label, message) => {
     const client = createGammaClient();

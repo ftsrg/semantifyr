@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.xsts.lang.xsts.BooleanOp
 import hu.bme.mit.semantifyr.xsts.lang.xsts.SequenceOperation
 import hu.bme.mit.semantifyr.xsts.lang.xsts.Transition
@@ -43,8 +44,8 @@ class ThetaModelTransformer @Inject constructor(
 
         excludeDeclarationValuation(xsts)
 
-        xsts.enumDeclarations += inlinedOxsts.variables.asSequence().map {
-            it.typeSpecification.domain
+        xsts.enumDeclarations += inlinedOxsts.eAllContents().asSequence().filterIsInstance<VariableDeclaration>().map {
+            it.typeSpecification?.domain
         }.filterIsInstance<EnumDeclaration>().map {
             thetaDomainTransformer.transform(it)
         }.distinct()

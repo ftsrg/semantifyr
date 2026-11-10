@@ -13,8 +13,10 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
+import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.cli.SMOKE_CASE
-import hu.bme.mit.semantifyr.cli.common.CompilationFailureLine
+import hu.bme.mit.semantifyr.cli.common.CaseFailureLine
+import hu.bme.mit.semantifyr.cli.common.CasePhase
 import hu.bme.mit.semantifyr.cli.common.VerifyOutcomeLine
 import hu.bme.mit.semantifyr.cli.common.fakePortfolio
 import hu.bme.mit.semantifyr.cli.common.jsonLineFormat
@@ -22,27 +24,34 @@ import hu.bme.mit.semantifyr.cli.common.jsonLines
 import hu.bme.mit.semantifyr.cli.runCli
 import hu.bme.mit.semantifyr.cli.smokeModel
 import hu.bme.mit.semantifyr.cli.testModels
+import hu.bme.mit.semantifyr.cli.writeSameStemModels
 import hu.bme.mit.semantifyr.verifier.FakeBackend
 import hu.bme.mit.semantifyr.verifier.FakeConfig
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.VerificationReport
+import hu.bme.mit.semantifyr.verifier.fakeMetadata
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
+import org.mockito.kotlin.doThrow
+import org.mockito.kotlin.mock
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.copyTo
 import kotlin.io.path.createDirectory
 import kotlin.io.path.createFile
+import kotlin.io.path.isWritable
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
+import kotlin.time.Duration
 
 class VerifyCommandTest {
 
@@ -189,10 +198,11 @@ class VerifyCommandTest {
             it.isNotBlank()
         }
         assertThat(lines).hasSize(2)
-        val failing = jsonLineFormat.decodeFromString<CompilationFailureLine>(lines[0])
+        val failing = jsonLineFormat.decodeFromString<CaseFailureLine>(lines[0])
         val passing = jsonLineFormat.decodeFromString<VerifyOutcomeLine>(lines[1])
         assertThat(failing.case).isEqualTo("untemporal::Untemporal")
         assertThat(failing.exitCode).isEqualTo(4)
+        assertThat(failing.phase).isEqualTo(CasePhase.Compilation)
         assertThat(failing.error).contains("temporal operator")
         assertThat(passing.case).isEqualTo("untemporal::Temporal")
         assertThat(passing.exitCode).isZero()
@@ -287,6 +297,101 @@ class VerifyCommandTest {
         val result = runCli("verify", "--portfolio", "absent", directory.resolve("absent.oxsts").toString(), portfolios = listOf(UnavailablePortfolio))
 
         assertThat(result.statusCode).isEqualTo(3)
+    }
+
+    @Test
+    suspend fun `the printed time includes the compilation`(@TempDir artifacts: Path) {
+        val portfolio = fakePortfolio("fixed", VerificationVerdict.Passed)
+
+        val result = runCli("verify", "--portfolio", portfolio.id, "-d", artifacts.toString(), smokeModel.toString(), portfolios = listOf(portfolio))
+
+        assertThat(result.statusCode).describedAs(result.output).isZero()
+        val lines = result.stdout.lines()
+        val metrics = Json.decodeFromString<VerificationReport>(Path(lines[2].removePrefix("  report: ")).readText()).result.metrics
+        assertThat(metrics.verifier.compilationDuration).isGreaterThan(Duration.ZERO)
+        assertThat(lines[1]).isEqualTo("  PASSED (${metrics.verifier.compilationDuration + metrics.totalDuration})")
+    }
+
+    @Test
+    suspend fun `the json line keeps the compilation and verification durations apart`(@TempDir artifacts: Path) {
+        val portfolio = fakePortfolio("fixed", VerificationVerdict.Passed)
+
+        val result = runCli("verify", "--json", "--portfolio", portfolio.id, "-d", artifacts.toString(), smokeModel.toString(), portfolios = listOf(portfolio))
+
+        assertThat(result.statusCode).describedAs(result.output).isZero()
+        val line = jsonLines<VerifyOutcomeLine>(result.stdout).single()
+        val metrics = Json.decodeFromString<VerificationReport>(Path(line.report).readText()).result.metrics
+        assertThat(line.compilationDuration).isEqualTo(metrics.verifier.compilationDuration)
+        assertThat(line.verificationDuration).isEqualTo(metrics.totalDuration)
+    }
+
+    @Test
+    suspend fun `cases of models sharing a file stem get their own reports`(@TempDir directory: Path) {
+        val models = writeSameStemModels(directory)
+        val portfolio = fakePortfolio("fixed", VerificationVerdict.Passed, VerificationVerdict.Passed)
+
+        val result = runCli("verify", "--json", "--portfolio", portfolio.id, "-d", directory.resolve("artifacts").toString(), models.toString(), portfolios = listOf(portfolio))
+
+        assertThat(result.statusCode).describedAs(result.output).isZero()
+        val reports = jsonLines<VerifyOutcomeLine>(result.stdout).map {
+            Path(it.report)
+        }
+        assertThat(reports).hasSize(2).doesNotHaveDuplicates()
+        for (report in reports) {
+            assertThat(report).exists()
+        }
+    }
+
+    @Test
+    suspend fun `a witness that fails to back-annotate exits with the back-annotation code`(@TempDir artifacts: Path) {
+        val portfolio = brokenWitnessPortfolio()
+
+        val result = runCli("verify", "--json", "--portfolio", portfolio.id, "-d", artifacts.toString(), smokeModel.toString(), portfolios = listOf(portfolio))
+
+        assertThat(result.statusCode).describedAs(result.output).isEqualTo(9)
+        val line = jsonLines<CaseFailureLine>(result.stdout).single()
+        assertThat(line.case).isEqualTo(SMOKE_CASE)
+        assertThat(line.exitCode).isEqualTo(9)
+        assertThat(line.phase).isEqualTo(CasePhase.BackAnnotation)
+        assertThat(line.error).contains("broken witness")
+        assertThat(result.stderr).contains("Back-annotating the witness of $SMOKE_CASE failed").doesNotContain("Compiling")
+    }
+
+    @Test
+    suspend fun `a witness that fails to back-annotate is no compilation error in text mode`(@TempDir artifacts: Path) {
+        val portfolio = brokenWitnessPortfolio()
+
+        val result = runCli("verify", "--portfolio", portfolio.id, "-d", artifacts.toString(), smokeModel.toString(), portfolios = listOf(portfolio))
+
+        assertThat(result.statusCode).isEqualTo(9)
+        assertThat(result.stdout.lines()).containsSequence("Verifying $SMOKE_CASE ...", "  BACK_ANNOTATION_ERROR")
+    }
+
+    @Test
+    suspend fun `an artifact directory that cannot be written exits with the output code before verifying`(@TempDir directory: Path) {
+        val readOnly = directory.resolve("read-only").createDirectory()
+        assumeTrue(readOnly.toFile().setWritable(false) && !readOnly.isWritable(), "the file system cannot revoke write access")
+        val backend = FakeBackend.verdict("counted", VerificationVerdict.Passed)
+        val portfolio = SingleBackendPortfolio(backend, FakeConfig("counted"))
+
+        val result = runCli("verify", "--portfolio", portfolio.id, "-d", readOnly.resolve("artifacts").toString(), smokeModel.toString(), portfolios = listOf(portfolio))
+
+        assertThat(result.statusCode).describedAs(result.output).isEqualTo(10)
+        assertThat(result.stdout).isEmpty()
+        assertThat(result.stderr).contains("Artifact directory").contains("cannot be written")
+        assertThat(backend.invocations.get()).isZero()
+    }
+
+    private fun brokenWitnessPortfolio(): SingleBackendPortfolio<FakeConfig> {
+        val witness = mock<InlinedWitness> {
+            on {
+                initializedState
+            } doThrow IllegalStateException("broken witness")
+        }
+        val backend = FakeBackend("broken") {
+            BackendVerificationResult(verdict = VerificationVerdict.Failed, metadata = fakeMetadata("broken"), inlinedWitness = witness)
+        }
+        return SingleBackendPortfolio(backend, FakeConfig("broken"))
     }
 
     private object UnavailablePortfolio : VerificationPortfolio() {

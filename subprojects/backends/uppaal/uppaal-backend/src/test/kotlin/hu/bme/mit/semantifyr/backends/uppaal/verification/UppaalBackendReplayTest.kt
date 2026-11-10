@@ -77,6 +77,14 @@ class UppaalBackendReplayTest {
     }
 
     @Test
+    suspend fun `a model verifyta rejects is Errored with verifyta's message`() {
+        val result = verify("RejectedModel", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(result.message).contains("Duplicate definition of On.")
+    }
+
+    @Test
     suspend fun `a violated invariant fails with a witness through the violating states`() {
         val result = verify("CounterExceedsBound", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
 

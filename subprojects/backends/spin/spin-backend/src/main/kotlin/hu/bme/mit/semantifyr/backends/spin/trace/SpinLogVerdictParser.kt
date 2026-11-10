@@ -6,6 +6,10 @@
 
 package hu.bme.mit.semantifyr.backends.spin.trace
 
+private const val MERGE_LIMIT = "merge requires more than 256 bups"
+private val SPIN_ERROR = Regex("^spin: .*Error: ")
+private val COMPILER_ERROR = Regex("^\\S+:\\d+(:\\d+)?: (fatal )?error: ")
+
 data class SpinLogSummary(
     val violationFound: Boolean,
     val reportedNoErrors: Boolean,
@@ -29,8 +33,26 @@ class SpinLogVerdictParser {
 
     fun exceedsMergeLimit(lines: Sequence<String>): Boolean {
         return lines.any {
-            "merge requires more than 256 bups" in it
+            MERGE_LIMIT in it
         }
+    }
+
+    fun rejection(lines: Sequence<String>): String? {
+        val messages = lines.map {
+            it.trim()
+        }.filter {
+            isRejectionLine(it)
+        }.toList()
+        if (messages.isEmpty()) {
+            return null
+        }
+        return messages.joinToString("; ")
+    }
+
+    private fun isRejectionLine(line: String): Boolean {
+        return (SPIN_ERROR.containsMatchIn(line) && MERGE_LIMIT !in line) ||
+            COMPILER_ERROR.containsMatchIn(line) ||
+            line.startsWith("pan: error")
     }
 
     fun summarize(lines: Sequence<String>): SpinLogSummary {

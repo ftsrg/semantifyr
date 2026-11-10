@@ -11,7 +11,7 @@ A `class` describes a part of the modeled system. Classes have state ([variables
 
 Every class declared in Semantifyr implicitly extends `Anything` from the [standard library](standard-library.md). `Anything` provides empty `init` and `tran` transitions:
 
-```oxsts
+```oxsts fragment
 class Anything {
   tran { }
   init { }
@@ -25,6 +25,8 @@ A class has one [`init`](transitions.md), one [implicit `tran`](transitions.md#t
 A class declaration consists of the `class` keyword, a name, an optional superclass, and a body in `{ }`. Members may appear in any order.
 
 ```oxsts
+package example
+
 class Counter {
   var value: int := 0
 
@@ -41,6 +43,8 @@ class Counter {
 A class with no members may be written with an empty body.
 
 ```oxsts
+package example
+
 class Sentinel {
 }
 ```
@@ -48,6 +52,8 @@ class Sentinel {
 Or without any.
 
 ```oxsts
+package example
+
 class Sentinel
 ```
 
@@ -60,8 +66,10 @@ Generally Semantifyr is lenient with the use or absence of semicolons `;`.
 `abstract class` cannot be instantiated directly, so it cannot be a `@VerificationCase` (`OXSTS.ABSTRACT_VERIFICATION_CASE`). An abstract class may declare abstract members (without bodies) that concrete subclasses must redefine.
 
 ```oxsts
+package example
+
 abstract class Shape {
-  abstract prop area(): real
+  abstract prop area(): int
 }
 ```
 
@@ -70,10 +78,16 @@ abstract class Shape {
 A class extends one superclass, listed after `:`.
 
 ```oxsts
+package example
+
+abstract class Shape {
+  abstract prop area(): int
+}
+
 class Square : Shape {
   var side: int := 1
 
-  redefine prop area(): real {
+  redefine prop area(): int {
     return side * side
   }
 }
@@ -87,19 +101,19 @@ The grammar accepts several superclasses separated by commas, but a class has on
 
 `redefine` overrides an inherited member of the **same name**. A redefined [transition](transitions.md) or [property](properties.md) takes as many parameters as the inherited one (`OXSTS.REDEFINITION_SIGNATURE_MISMATCH`), and a redefined property's return type or feature's type must be assignable to the inherited one (`OXSTS.TYPE_MISMATCH`); parameter types may differ. Variables cannot be redefined. Redefining is the primary mechanism by which semantic libraries specialize behavior.
 
-```oxsts
+```oxsts fragment
 redefine tran fire() {
   inline target.activate()
 }
 ```
 
-```oxsts
+```oxsts fragment
 redefine prop evaluate(): int {
   return value
 }
 ```
 
-```oxsts
+```oxsts fragment
 redefine contains entryAction: SendAction
 ```
 
@@ -107,7 +121,7 @@ redefine contains entryAction: SendAction
 
 Inside a class body, `self` refers to the current instance of that class or [feature](features.md). It is typically used to pass the current instance as an argument.
 
-```oxsts
+```oxsts fragment
 class Counter {
   contains parent: Group
 

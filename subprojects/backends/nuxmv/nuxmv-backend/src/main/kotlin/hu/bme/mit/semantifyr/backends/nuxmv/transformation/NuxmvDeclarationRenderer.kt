@@ -65,7 +65,7 @@ class NuxmvDeclarationRenderer @Inject constructor(
     private fun renderEnumType(variable: NuxmvVariable): String {
         val enum = variable.enumDeclaration ?: error("Enum variable ${variable.name} has no enum declaration")
         return enum.literals.joinToString(", ", "{ ", " }") {
-            it.name
+            nuxmvVariableTransformer.nameOf(it)
         }
     }
 }

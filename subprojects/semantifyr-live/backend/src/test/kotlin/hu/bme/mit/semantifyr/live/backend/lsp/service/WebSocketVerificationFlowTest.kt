@@ -274,6 +274,43 @@ class WebSocketVerificationFlowTest {
     }
 
     @Test
+    fun `a queued verify of a case is answered as superseded when the case is verified again`(@TempDir tmp: Path) = testApplication {
+        val running = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val executor = FakeVerificationExecutor {
+            if (running.complete(Unit)) {
+                release.await()
+            }
+            cannedResult
+        }
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(
+                testInjector(config(tmp).copy(verification = VerificationConfig(concurrency = 1))) {
+                    bind(VerificationExecutor::class.java).toInstance(executor)
+                },
+            )
+        }
+
+        val otherCase = VerificationCaseRequest(documentUri, LspWire.range(startLine = 5, endLine = 5), "smart-full")
+        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
+            send(Frame.Text(LspWire.initializeRequest()))
+            awaitResponseFor(id = 1)
+            send(Frame.Text(verifyCommand(id = 2, argument = otherCase)))
+            running.await()
+            send(Frame.Text(verifyCommand(id = 3)))
+            send(Frame.Text(verifyCommand(id = 4)))
+            val superseded = awaitResponseFor(id = 3).resultAs(VerificationCaseResult::class.java)
+            assertThat(superseded.status()).isEqualTo(VerificationStatus.CANCELLED)
+            assertThat(superseded.message()).contains("superseded")
+            assertThat(superseded.portfolioId()).isEqualTo("smart-full")
+            release.complete(Unit)
+            assertThat(awaitResponseFor(id = 4).resultAs(VerificationCaseResult::class.java).status()).isEqualTo("passed")
+        }
+
+        assertThat(executor.calls).hasSize(2)
+    }
+
+    @Test
     fun `verify command missing the portfolio is rejected with an InvalidParams error and skips the executor`(
         @TempDir tmp: Path,
     ) = testApplication {

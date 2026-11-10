@@ -11,6 +11,7 @@ import com.google.inject.Injector;
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader;
 import hu.bme.mit.semantifyr.lang.ide.server.OpenDocumentTexts;
 import hu.bme.mit.semantifyr.lang.ide.server.ServerSettings;
+import hu.bme.mit.semantifyr.lang.ide.server.WitnessOwners;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest;
@@ -20,6 +21,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier;
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer;
 import java.util.List;
+import org.eclipse.emf.common.util.URI;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.slf4j.Logger;
@@ -47,6 +49,9 @@ public class VerifyClassCommandHandler
 
     @Inject
     protected Injector injector;
+
+    @Inject
+    protected WitnessOwners witnessOwners;
 
     @Override
     public String getId() {
@@ -83,6 +88,7 @@ public class VerifyClassCommandHandler
         progressContext.begin("Verifying class " + classDeclaration.getName(), "Initializing");
 
         var targetQualifiedName = oxstsQualifiedNameProvider.getFullyQualifiedNameString(classDeclaration);
+        var caseResource = classDeclaration.eResource().getURI();
         LOGGER.info("LSP verify request for case '{}'", targetQualifiedName);
         var context = semantifyrLoader.fromResourceSet(
                 classDeclaration.eResource().getResourceSet(),
@@ -109,7 +115,12 @@ public class VerifyClassCommandHandler
 
                 var dto = verifier.verifyBlocking(match, progressContext);
                 LOGGER.info("LSP verify '{}' -> {}", targetQualifiedName, dto.getVerdict());
-                return VerificationCaseResult.fromDto(dto, portfolio.getId());
+                var result = VerificationCaseResult.fromDto(dto, portfolio.getId());
+                var trace = result.trace();
+                if (serverSettings.keepsTemporaryArtifacts() && trace != null && trace.witnessUri() != null) {
+                    witnessOwners.record(URI.createURI(trace.witnessUri()), caseResource);
+                }
+                return result;
             } catch (Exception e) {
                 LOGGER.error(
                         "LSP verify '{}' threw {}",

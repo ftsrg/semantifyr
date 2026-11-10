@@ -36,6 +36,8 @@ export async function startGammaClient(context: ExtensionContext, witnesses: Wit
         controllerLabel: 'Gamma Verification Cases',
         discoverCommand: 'gamma.case.discover',
         verifyCommand: 'gamma.case.verify',
+        validateWitnessCommand: 'gamma.witness.validate',
+        validateWitnessByCase: true,
     }, witnesses);
     gammaTestController.registerTestProvider(context);
     await gammaTestController.refreshWorkspaceTests();

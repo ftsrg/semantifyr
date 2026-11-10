@@ -15,6 +15,8 @@ import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig;
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.ArtifactsLocation;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.ServerSettingsPayload;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import org.junit.jupiter.api.Test;
 
@@ -24,7 +26,6 @@ class ServerSettingsTest {
     void defaultsAreApplied() {
         ServerSettings settings = new ServerSettings();
         assertThat(settings.resolveTimeout()).isEqualTo(Duration.ofSeconds(300));
-        assertThat(settings.resolveMaxConcurrencyOrNull()).isNull();
         assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("smart-full");
         assertThat(settings.resolveArtifactConfig()).isEqualTo(ArtifactConfig.ALL);
         assertThat(settings.resolveOptimizationConfig()).isSameAs(OptimizationConfig.Companion.getALL());
@@ -37,14 +38,12 @@ class ServerSettingsTest {
                 {
                   "portfolio": "theta-full",
                   "timeoutSeconds": 42,
-                  "maxConcurrency": 3,
                   "theta": {"executor": "docker", "dockerImage": "example:1"},
                   "artifacts": {"location": "workspace", "preset": "debug"},
                   "optimization": {"level": "none"}
                 }
                 """));
         assertThat(settings.resolveTimeout()).isEqualTo(Duration.ofSeconds(42));
-        assertThat(settings.resolveMaxConcurrencyOrNull()).isEqualTo(3);
         assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("theta-full");
         assertThat(settings.resolveArtifactConfig()).isEqualTo(ArtifactConfig.DEBUG);
         assertThat(settings.resolveOptimizationConfig()).isSameAs(OptimizationConfig.Companion.getNONE());
@@ -94,20 +93,32 @@ class ServerSettingsTest {
     @Test
     void aTypedPayloadAppliesDirectly() {
         ServerSettings settings = new ServerSettings();
-        settings.apply(new ServerSettingsPayload("theta-full", 99L, null, null, null, null));
+        settings.apply(new ServerSettingsPayload("theta-full", 99L, null, null, null));
         assertThat(settings.resolveTimeout()).isEqualTo(Duration.ofSeconds(99));
         assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("theta-full");
         // fields the payload leaves null fall back to the built-in defaults
-        assertThat(settings.resolveMaxConcurrencyOrNull()).isNull();
+        assertThat(settings.resolveArtifactConfig()).isEqualTo(ArtifactConfig.ALL);
     }
 
     @Test
     void applyingAPayloadReplacesAllSettings() {
         ServerSettings settings = new ServerSettings();
-        settings.apply(new ServerSettingsPayload("theta-full", 99L, null, null, null, null));
+        settings.apply(new ServerSettingsPayload("theta-full", 99L, null, null, null));
         settings.apply(ServerSettingsPayload.withArtifactsLocation(ArtifactsLocation.WORKSPACE));
         // the second apply omits the portfolio / timeout, so they are back to the defaults
         assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("smart-full");
         assertThat(settings.resolveTimeout()).isEqualTo(Duration.ofSeconds(300));
+    }
+
+    @Test
+    void temporaryArtifactsShareOneDirectoryPerServer() {
+        ServerSettings settings = new ServerSettings();
+
+        Path first = settings.resolveArtifactOutputDirectory(null);
+        Path second = settings.resolveArtifactOutputDirectory(null);
+
+        assertThat(first).isEqualTo(second);
+        assertThat(Files.isDirectory(first)).isTrue();
+        assertThat(new ServerSettings().resolveArtifactOutputDirectory(null)).isNotEqualTo(first);
     }
 }

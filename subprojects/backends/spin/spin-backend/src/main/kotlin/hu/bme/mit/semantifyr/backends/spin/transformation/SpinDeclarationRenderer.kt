@@ -22,9 +22,9 @@ class SpinDeclarationRenderer @Inject constructor(
         }
         for (enum in enums) {
             val literals = enum.literals.joinToString(", ") {
-                spinVariableTransformer.sanitizeEnumLiteral(it)
+                spinVariableTransformer.nameOf(it)
             }
-            builder.appendLine("mtype:${enum.name} = { $literals };")
+            builder.appendLine("mtype:${spinVariableTransformer.nameOf(enum)} = { $literals };")
         }
         builder.appendLine()
     }
@@ -53,7 +53,7 @@ class SpinDeclarationRenderer @Inject constructor(
         return when (variable.kind) {
             SpinVariableKind.Integer -> "int"
             SpinVariableKind.Boolean -> "bool"
-            SpinVariableKind.Enum -> "mtype:${variable.enumDeclaration!!.name}"
+            SpinVariableKind.Enum -> "mtype:${spinVariableTransformer.nameOf(variable.enumDeclaration!!)}"
         }
     }
 

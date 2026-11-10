@@ -45,7 +45,6 @@ class LiveLanguageServerModule : AbstractModule() {
                     null,
                     config.verification.timeout.inWholeSeconds,
                     null,
-                    null,
                     ServerSettingsPayload.Artifacts(ArtifactsLocation.WORKSPACE, null),
                     null,
                 ),

@@ -54,6 +54,7 @@ class VerifyCommand @Inject constructor(
         }
 
         checkInputs()
+        artifactOptions.checkOutputDirectory()
         backendOptions.checkAvailable()
 
         val semantifyrModelContext = readModelContext()

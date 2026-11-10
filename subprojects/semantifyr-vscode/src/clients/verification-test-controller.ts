@@ -8,11 +8,16 @@ import vscode, { type CancellationToken, type ExtensionContext, Location, Positi
 import type { LanguageClient } from "vscode-languageclient/node";
 import {
     discoverVerificationCases,
+    validateWitness,
+    type VerificationCaseLocation,
+    type VerificationCaseResult,
     verifyCase,
     VerificationStatus,
     type VerificationCaseSpecification,
+    witnessValidationLocation,
 } from "@semantifyr/editor-common";
-import { witnessMessageContext, type WitnessView } from "../witness.js";
+import { renderValidation, validatableWitnessMessageContext, witnessMessageContext, type WitnessValidator, type WitnessView } from "../witness.js";
+import { readVerificationSettings } from "./settings.js";
 
 export interface VerificationTestControllerConfig {
     languageId: string;
@@ -21,6 +26,8 @@ export interface VerificationTestControllerConfig {
     controllerLabel: string;
     discoverCommand: string;
     verifyCommand: string;
+    validateWitnessCommand?: string;
+    validateWitnessByCase?: boolean;
 }
 
 const rediscoveryDelayMs = 500;
@@ -273,35 +280,41 @@ export class VerificationTestController {
             return;
         }
         const range = testItem.range;
+        const location: VerificationCaseLocation = {
+            uri: testItem.uri.toString(),
+            range: {
+                start: { line: range.start.line, character: range.start.character },
+                end: { line: range.end.line, character: range.end.character },
+            },
+        };
 
         try {
-            const result = await verifyCase(this.client, this.config.verifyCommand, {
-                uri: testItem.uri.toString(),
-                range: {
-                    start: { line: range.start.line, character: range.start.character },
-                    end: { line: range.end.line, character: range.end.character },
-                },
-            }, { token });
+            const result = await verifyCase(this.client, this.config.verifyCommand, location, { token });
 
             if (result === null) {
                 run.errored(testItem, new TestMessage('The language server returned no result'));
                 return;
             }
 
-            this.witnesses.record(testItem, result);
+            const validator = this.witnessValidator(location, result);
+            this.witnesses.record(testItem, result, validator);
+            const validation = validator && readVerificationSettings().autoValidate ? await this.witnesses.autoValidate(testItem, token) : undefined;
+            const validationLine = validation === undefined ? undefined : `Validation: ${renderValidation(validation)}`;
 
             switch (result.status) {
                 case VerificationStatus.Passed:
-                    if (result.message) {
-                        run.appendOutput(`${result.message}\r\n`, new Location(testItem.uri, range), testItem);
+                    for (const line of [result.message, validationLine]) {
+                        if (line) {
+                            run.appendOutput(`${line}\r\n`, new Location(testItem.uri, range), testItem);
+                        }
                     }
                     run.passed(testItem);
                     break;
                 case VerificationStatus.Failed: {
-                    const message = new TestMessage(result.message ?? 'Failed');
+                    const message = new TestMessage([result.message ?? 'Failed', validationLine].filter((line) => line !== undefined).join('\n'));
                     message.location = new Location(testItem.uri, range);
                     if (result.trace) {
-                        message.contextValue = witnessMessageContext;
+                        message.contextValue = validator ? validatableWitnessMessageContext : witnessMessageContext;
                     }
                     run.failed(testItem, message);
                     break;
@@ -330,6 +343,19 @@ export class VerificationTestController {
                 run.errored(testItem, new TestMessage(e instanceof Error ? e.message : 'Test run failed'));
             }
         }
+    }
+
+    protected witnessValidator(caseLocation: VerificationCaseLocation, result: VerificationCaseResult): WitnessValidator | undefined {
+        const command = this.config.validateWitnessCommand;
+        const witnessUri = result.trace?.witnessUri;
+        if (command === undefined || witnessUri === undefined || witnessUri === null) {
+            return undefined;
+        }
+        const location = witnessValidationLocation(caseLocation, witnessUri, this.config.validateWitnessByCase ?? false);
+        return async (token) => {
+            const portfolio = readVerificationSettings().validationPortfolio;
+            return await validateWitness(this.client, command, location, { token, ...(portfolio === undefined ? {} : { portfolio }) });
+        };
     }
 }
 

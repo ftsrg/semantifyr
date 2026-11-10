@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backends.theta.backannotation
 
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
+import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.cex.lang.CexStandaloneSetup
 import hu.bme.mit.semantifyr.cex.lang.cex.CexModel
 import org.eclipse.emf.common.util.URI
@@ -16,6 +17,7 @@ import org.eclipse.xtext.resource.IResourceServiceProvider
 import org.eclipse.xtext.resource.XtextResourceSet
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.readLines
 
 // one injector per JVM, and one parse at a time: Xtext registers global EMF state and initializes
 // its parser lazily, neither safe for racing legs
@@ -39,6 +41,10 @@ class CexReader {
             }
             val resourceSet = cexInjector.getInstance(XtextResourceSet::class.java)
             val resource = loadFile(resourceSet, model)
+            resource.errors.firstOrNull()?.let {
+                val text = model.readLines().getOrNull(it.line - 1)?.trim()
+                throw WitnessFailedException("Theta's counterexample does not parse at line ${it.line} (${it.message}): $text")
+            }
             return resource.contents.single() as CexModel
         }
     }

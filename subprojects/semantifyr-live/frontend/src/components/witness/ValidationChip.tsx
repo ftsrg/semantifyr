@@ -16,6 +16,7 @@ import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined'
 import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined'
 import TimerOffOutlinedIcon from '@mui/icons-material/TimerOffOutlined'
 import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined'
+import { witnessValidationLabel } from '@semantifyr/editor-common'
 import type { WitnessValidationStatus } from '../../lib/verification'
 import { ICON_SIZE } from '../../lib/util/theme';
 
@@ -38,42 +39,42 @@ function chipDescriptor(status: WitnessValidationStatus | undefined): Descriptor
   switch (status) {
     case 'valid':
       return {
-        label: 'Witness valid',
+        label: witnessValidationLabel(status),
         color: 'var(--success)',
         icon: <CheckCircleOutlinedIcon sx={{ fontSize: ICON_SIZE.sm }} />,
         tooltip: 'The witness is verified to be a real (counter)example.',
       }
     case 'invalid':
       return {
-        label: 'Witness invalid',
+        label: witnessValidationLabel(status),
         color: 'var(--danger)',
         icon: <ErrorOutlinedIcon sx={{ fontSize: ICON_SIZE.sm }} />,
         tooltip: 'The witness is verified to NOT be a real (counter)example.',
       }
     case 'inconclusive':
       return {
-        label: 'Inconclusive',
+        label: witnessValidationLabel(status),
         color: 'var(--warning)',
         icon: <HelpOutlineOutlinedIcon sx={{ fontSize: ICON_SIZE.sm }} />,
         tooltip: 'The portfolio could not validate the witness.',
       }
     case 'timeout':
       return {
-        label: 'Validation timed out',
+        label: witnessValidationLabel(status),
         color: 'var(--warning)',
         icon: <TimerOffOutlinedIcon sx={{ fontSize: ICON_SIZE.sm }} />,
         tooltip: 'The validation ran out of time before the portfolio decided.',
       }
     case 'cancelled':
       return {
-        label: 'Validation cancelled',
+        label: witnessValidationLabel(status),
         color: 'text.secondary',
         icon: <BlockOutlinedIcon sx={{ fontSize: ICON_SIZE.sm }} />,
         tooltip: 'The validation was cancelled.',
       }
     case 'errored':
       return {
-        label: 'Validation errored',
+        label: witnessValidationLabel(status),
         color: 'var(--danger)',
         icon: <ErrorOutlinedIcon sx={{ fontSize: ICON_SIZE.sm }} />,
         tooltip: 'An error occurred while validating the witness.',

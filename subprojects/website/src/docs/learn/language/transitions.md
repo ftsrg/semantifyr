@@ -22,7 +22,7 @@ The declaration valuation, every variable at its initializer, is not a state: th
 
 A transition declaration consists of one of the kind keywords, a name, a parameter list, and a body in `{ }`.
 
-```oxsts
+```oxsts fragment
 tran increment() {
   value := value + 1
 }
@@ -30,7 +30,7 @@ tran increment() {
 
 With parameters:
 
-```oxsts
+```oxsts fragment
 tran setBy(amount: int) {
   value := value + amount
 }
@@ -50,6 +50,8 @@ A transition declared **without** a name has an **implicit name** based on its k
 Hence `tran { value := value + 1 }` is equivalent to a transition `tran main() { value := value + 1 }`. The implicit `main` and `init` transitions are the special transitions checked and run by the model checker.
 
 ```oxsts
+package example
+
 class Counter {
   var value: int := 0
 
@@ -67,7 +69,7 @@ class Counter {
 
 A transition body may contain alternative branches separated by `or`. This is a shorthand for wrapping the body in a top-level [`choice`](operations.md#choice).
 
-```oxsts
+```oxsts fragment
 tran step() {
   value := value + 1
 } or {
@@ -81,7 +83,7 @@ The verifier explores both branches non-deterministically.
 
 An `abstract` transition has no body. Concrete subclasses must redefine it.
 
-```oxsts
+```oxsts fragment
 abstract tran fire()
 ```
 
@@ -89,7 +91,7 @@ abstract tran fire()
 
 Override an inherited transition of the **same name** with `redefine`.
 
-```oxsts
+```oxsts fragment
 redefine tran increment() {
   if (value < maximum()) {
     value := value + 1
@@ -99,13 +101,13 @@ redefine tran increment() {
 
 The implicit transitions inherited from `Anything` are overridden by declaring them, with or without `redefine`: a class has one `main` and one `init`, and a second anonymous transition of a kind in the same class is a duplicate name (`OXSTS.DUPLICATE_NAME`).
 
-```oxsts
+```oxsts fragment
 redefine init {
   value := 0
 }
 ```
 
-```oxsts
+```oxsts fragment
 redefine tran {
   inline child.main()
 }

@@ -70,6 +70,11 @@
         "command": "semantifyr.witness.show",
         "title": "Show Witness",
         "category": "Semantifyr"
+      },
+      {
+        "command": "semantifyr.witness.validate",
+        "title": "Validate Witness",
+        "category": "Semantifyr"
       }
     ],
     "menus": {
@@ -84,24 +89,40 @@
         {
           "command": "semantifyr.witness.show",
           "when": "false"
+        },
+        {
+          "command": "semantifyr.witness.validate",
+          "when": "false"
         }
       ],
       "testing/item/context": [
         {
           "command": "semantifyr.witness.show",
           "when": "controllerId == oxsts.verification || controllerId == gamma.verification"
+        },
+        {
+          "command": "semantifyr.witness.validate",
+          "when": "controllerId == oxsts.verification || controllerId == gamma.verification"
         }
       ],
       "testing/message/content": [
         {
           "command": "semantifyr.witness.show",
-          "when": "testMessage == semantifyr.witness"
+          "when": "testMessage =~ /^semantifyr\\.witness/"
+        },
+        {
+          "command": "semantifyr.witness.validate",
+          "when": "testMessage == semantifyr.witness.validatable"
         }
       ],
       "testing/message/context": [
         {
           "command": "semantifyr.witness.show",
-          "when": "testMessage == semantifyr.witness"
+          "when": "testMessage =~ /^semantifyr\\.witness/"
+        },
+        {
+          "command": "semantifyr.witness.validate",
+          "when": "testMessage == semantifyr.witness.validatable"
         }
       ]
     },
@@ -193,11 +214,15 @@
           "minimum": 1,
           "markdownDescription": "Wall-clock timeout per case, in seconds. It covers the case's compilation, every backend run of the portfolio and the back-annotation of the witness."
         },
-        "semantifyr.maxConcurrency": {
-          "type": "number",
-          "default": 0,
-          "minimum": 0,
-          "markdownDescription": "Maximum number of concurrent backend runs. `0` lets the server decide (defaults to available processor count)."
+        "semantifyr.verification.autoValidate": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Validate the witness of every result that carries one, right after the verification: the witness is verified again on `semantifyr.verification.validationPortfolio`, and the result goes into the test message and the trace."
+        },
+        "semantifyr.verification.validationPortfolio": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Portfolio a witness validation runs on, by id as `semantifyr.portfolio` takes it. Empty: the verification portfolio, `semantifyr.portfolio`."
         },
         "semantifyr.theta.executor": {
           "type": "string",
@@ -221,7 +246,7 @@
             "temporary",
             "workspace"
           ],
-          "markdownDescription": "Where to retain compiled/generated artifacts. `temporary`: a short-lived temp directory cleaned on exit; `workspace`: write under `<workspace>/.artifacts/`."
+          "markdownDescription": "Where the language servers write the artifacts of a verification. `temporary`: one temporary directory per language server, deleted when it exits; `workspace`: `<workspace>/.artifacts/`, kept."
         },
         "semantifyr.artifacts.preset": {
           "type": "string",

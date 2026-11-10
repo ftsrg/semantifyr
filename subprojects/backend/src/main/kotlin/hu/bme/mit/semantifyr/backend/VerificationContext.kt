@@ -8,9 +8,11 @@ package hu.bme.mit.semantifyr.backend
 
 import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
+import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.oxsts.lang.utils.SourceLocation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.emf.ecore.EObject
@@ -118,8 +120,15 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
 
         val verdict = interpret(rawVerdict, artifacts)
 
+        var witnessFailure: String? = null
         val (witness, witnessDuration) = measureTimedValue {
-            buildWitness(rawVerdict, artifacts)
+            try {
+                buildWitness(rawVerdict, artifacts)
+            } catch (exception: WitnessFailedException) {
+                logger.warn { "[$backendId] witness not produced: ${exception.message}" }
+                witnessFailure = "Witness not produced: ${exception.message}"
+                null
+            }
         }
         val backAnnotationDuration = if (witness != null) {
             logger.info { "[$backendId] back-annotated witness in $witnessDuration" }
@@ -139,6 +148,7 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
             inlinedWitness = witness,
             soundness = soundness,
             isTrusted = soundness.trusts(verdict, request.inlinedOxsts.property.expression),
+            message = witnessFailure,
         )
     }
 
