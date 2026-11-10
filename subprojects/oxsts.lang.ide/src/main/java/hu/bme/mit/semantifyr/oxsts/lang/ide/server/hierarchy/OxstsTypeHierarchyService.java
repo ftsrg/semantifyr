@@ -7,7 +7,7 @@
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.hierarchy;
 
 import com.google.inject.Inject;
-import hu.bme.mit.semantifyr.lang.ide.server.hierarchy.TypeHierarchyItemData;
+import hu.bme.mit.semantifyr.lang.ide.server.hierarchy.HierarchyItemData;
 import hu.bme.mit.semantifyr.lang.ide.server.hierarchy.TypeHierarchyService;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.references.RedefinitionChainCollector;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
@@ -23,9 +23,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
-import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
-import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.lsp4j.TypeHierarchyItem;
@@ -37,6 +36,7 @@ import org.eclipse.xtext.naming.IQualifiedNameProvider;
 import org.eclipse.xtext.resource.EObjectAtOffsetHelper;
 import org.eclipse.xtext.resource.IResourceDescriptionsProvider;
 import org.eclipse.xtext.resource.XtextResource;
+import org.eclipse.xtext.util.CancelIndicator;
 
 public class OxstsTypeHierarchyService implements TypeHierarchyService {
 
@@ -65,8 +65,11 @@ public class OxstsTypeHierarchyService implements TypeHierarchyService {
     private IQualifiedNameConverter qualifiedNameConverter;
 
     @Override
-    public List<TypeHierarchyItem> prepare(
-            XtextResource resource, Document document, TypeHierarchyPrepareParams params) {
+    public List<TypeHierarchyItem> prepareTypeHierarchy(
+            Document document,
+            XtextResource resource,
+            TypeHierarchyPrepareParams params,
+            CancelIndicator cancelIndicator) {
         var element = eObjectAtOffsetHelper.resolveElementAt(resource, document.getOffSet(params.getPosition()));
         while (element != null
                 && !(element instanceof ClassDeclaration)
@@ -80,9 +83,9 @@ public class OxstsTypeHierarchyService implements TypeHierarchyService {
     }
 
     @Override
-    public List<TypeHierarchyItem> supertypes(ResourceSet resourceSet, TypeHierarchyItem item) {
-        var data = TypeHierarchyItemData.of(item);
-        return switch (resolve(resourceSet, data)) {
+    public List<TypeHierarchyItem> supertypes(Resource documentResource, TypeHierarchyItem item) {
+        var data = HierarchyItemData.of(item.getData());
+        return switch (data.resolve(documentResource)) {
             case ClassDeclaration classDeclaration -> createItems(superClasses(classDeclaration), data.documentUri());
             case RedefinableDeclaration declaration -> createItems(redefined(declaration), data.documentUri());
             case null, default -> List.of();
@@ -90,17 +93,13 @@ public class OxstsTypeHierarchyService implements TypeHierarchyService {
     }
 
     @Override
-    public List<TypeHierarchyItem> subtypes(ResourceSet resourceSet, TypeHierarchyItem item) {
-        var data = TypeHierarchyItemData.of(item);
-        return switch (resolve(resourceSet, data)) {
+    public List<TypeHierarchyItem> subtypes(Resource documentResource, TypeHierarchyItem item) {
+        var data = HierarchyItemData.of(item.getData());
+        return switch (data.resolve(documentResource)) {
             case ClassDeclaration classDeclaration -> createItems(subClasses(classDeclaration), data.documentUri());
             case RedefinableDeclaration declaration -> createItems(redefiners(declaration), data.documentUri());
             case null, default -> List.of();
         };
-    }
-
-    private EObject resolve(ResourceSet resourceSet, TypeHierarchyItemData data) {
-        return resourceSet.getEObject(URI.createURI(data.elementUri()), true);
     }
 
     private List<ClassDeclaration> superClasses(ClassDeclaration classDeclaration) {
@@ -158,8 +157,8 @@ public class OxstsTypeHierarchyService implements TypeHierarchyService {
             var item = new TypeHierarchyItem(
                     name, symbolKind(element), location.getUri(), fullLocation.getRange(), location.getRange());
             item.setDetail(detail(element));
-            item.setData(new TypeHierarchyItemData(
-                    documentUri, EcoreUtil.getURI(element).toString()));
+            item.setData(
+                    new HierarchyItemData(documentUri, EcoreUtil.getURI(element).toString()));
             items.add(item);
         }
         return items;

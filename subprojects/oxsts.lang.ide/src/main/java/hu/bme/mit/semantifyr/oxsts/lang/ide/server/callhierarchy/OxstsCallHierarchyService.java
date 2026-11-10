@@ -6,10 +6,10 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.callhierarchy;
 
-import com.google.gson.JsonPrimitive;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import hu.bme.mit.semantifyr.lang.ide.server.callhierarchy.CallHierarchyService;
+import hu.bme.mit.semantifyr.lang.ide.server.hierarchy.HierarchyItemData;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.references.RedefinitionChainCollector;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression;
@@ -90,17 +90,18 @@ public class OxstsCallHierarchyService implements CallHierarchyService {
         if (!isCallable(element)) {
             return List.of();
         }
-        return List.of(toItem(element));
+        return List.of(toItem(element, params.getTextDocument().getUri()));
     }
 
     @Override
     public List<CallHierarchyIncomingCall> incomingCalls(
-            Resource resource,
+            Resource documentResource,
             CallHierarchyItem item,
             IReferenceFinder.IResourceAccess resourceAccess,
             IResourceDescriptions index,
             CancelIndicator cancelIndicator) {
-        var callee = resolveItem(resource, item);
+        var data = HierarchyItemData.of(item.getData());
+        var callee = data.resolve(documentResource);
         if (!isCallable(callee)) {
             return List.of();
         }
@@ -121,7 +122,8 @@ public class OxstsCallHierarchyService implements CallHierarchyService {
                     if (caller != null) {
                         calls.computeIfAbsent(
                                         EcoreUtil.getURI(caller),
-                                        uri -> new CallHierarchyIncomingCall(toItem(caller), new ArrayList<>()))
+                                        uri -> new CallHierarchyIncomingCall(
+                                                toItem(caller, data.documentUri()), new ArrayList<>()))
                                 .getFromRanges()
                                 .add(callRange(source, reference.getEReference()));
                     }
@@ -135,9 +137,9 @@ public class OxstsCallHierarchyService implements CallHierarchyService {
     }
 
     @Override
-    public List<CallHierarchyOutgoingCall> outgoingCalls(
-            Resource resource, CallHierarchyItem item, CancelIndicator cancelIndicator) {
-        var caller = resolveItem(resource, item);
+    public List<CallHierarchyOutgoingCall> outgoingCalls(Resource documentResource, CallHierarchyItem item) {
+        var data = HierarchyItemData.of(item.getData());
+        var caller = data.resolve(documentResource);
         if (caller == null) {
             return List.of();
         }
@@ -150,7 +152,8 @@ public class OxstsCallHierarchyService implements CallHierarchyService {
                 if (isCallable(callee) && !callee.eIsProxy()) {
                     calls.computeIfAbsent(
                                     EcoreUtil.getURI(callee),
-                                    uri -> new CallHierarchyOutgoingCall(toItem(callee), new ArrayList<>()))
+                                    uri -> new CallHierarchyOutgoingCall(
+                                            toItem(callee, data.documentUri()), new ArrayList<>()))
                             .getFromRanges()
                             .add(callRange(primary, calleeReference(primary)));
                 }
@@ -159,7 +162,7 @@ public class OxstsCallHierarchyService implements CallHierarchyService {
         return List.copyOf(calls.values());
     }
 
-    private CallHierarchyItem toItem(EObject element) {
+    private CallHierarchyItem toItem(EObject element, String documentUri) {
         var location = documentExtensions.newLocation(element);
         var item = new CallHierarchyItem(
                 NamingUtil.getName(element),
@@ -168,7 +171,8 @@ public class OxstsCallHierarchyService implements CallHierarchyService {
                 documentExtensions.newFullLocation(element).getRange(),
                 location.getRange());
         item.setDetail(getDetail(element));
-        item.setData(element.eResource().getURIFragment(element));
+        item.setData(
+                new HierarchyItemData(documentUri, EcoreUtil.getURI(element).toString()));
         return item;
     }
 
@@ -192,18 +196,6 @@ public class OxstsCallHierarchyService implements CallHierarchyService {
             return qualifiedNameConverter.toString(qualifiedName);
         }
         return NamingUtil.getName(owner);
-    }
-
-    private EObject resolveItem(Resource resource, CallHierarchyItem item) {
-        var fragment = switch (item.getData()) {
-            case JsonPrimitive primitive -> primitive.getAsString();
-            case String string -> string;
-            case null, default -> null;
-        };
-        if (fragment == null) {
-            return null;
-        }
-        return resource.getEObject(fragment);
     }
 
     private boolean isCallable(EObject element) {

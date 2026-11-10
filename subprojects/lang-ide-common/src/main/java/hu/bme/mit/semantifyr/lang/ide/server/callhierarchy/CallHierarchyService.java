@@ -26,14 +26,12 @@ public interface CallHierarchyService {
             CallHierarchyPrepareParams params,
             CancelIndicator cancelIndicator);
 
-    // The resource is the one the item's uri names, resolved by the host since only it knows the client's uris.
     List<CallHierarchyIncomingCall> incomingCalls(
-            Resource resource,
+            Resource documentResource,
             CallHierarchyItem item,
             IReferenceFinder.IResourceAccess resourceAccess,
             IResourceDescriptions index,
             CancelIndicator cancelIndicator);
 
-    List<CallHierarchyOutgoingCall> outgoingCalls(
-            Resource resource, CallHierarchyItem item, CancelIndicator cancelIndicator);
+    List<CallHierarchyOutgoingCall> outgoingCalls(Resource documentResource, CallHierarchyItem item);
 }

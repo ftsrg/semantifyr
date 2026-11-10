@@ -7,17 +7,22 @@
 package hu.bme.mit.semantifyr.lang.ide.server.hierarchy;
 
 import java.util.List;
-import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.lsp4j.TypeHierarchyItem;
 import org.eclipse.lsp4j.TypeHierarchyPrepareParams;
 import org.eclipse.xtext.ide.server.Document;
 import org.eclipse.xtext.resource.XtextResource;
+import org.eclipse.xtext.util.CancelIndicator;
 
 public interface TypeHierarchyService {
 
-    List<TypeHierarchyItem> prepare(XtextResource resource, Document document, TypeHierarchyPrepareParams params);
+    List<TypeHierarchyItem> prepareTypeHierarchy(
+            Document document,
+            XtextResource resource,
+            TypeHierarchyPrepareParams params,
+            CancelIndicator cancelIndicator);
 
-    List<TypeHierarchyItem> supertypes(ResourceSet resourceSet, TypeHierarchyItem item);
+    List<TypeHierarchyItem> supertypes(Resource documentResource, TypeHierarchyItem item);
 
-    List<TypeHierarchyItem> subtypes(ResourceSet resourceSet, TypeHierarchyItem item);
+    List<TypeHierarchyItem> subtypes(Resource documentResource, TypeHierarchyItem item);
 }

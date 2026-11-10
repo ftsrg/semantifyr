@@ -7,7 +7,7 @@
 package hu.bme.mit.semantifyr.live.backend.lsp.service
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.lang.ide.server.hierarchy.TypeHierarchyService
+import hu.bme.mit.semantifyr.lang.ide.server.hierarchy.HierarchyItemData
 import hu.bme.mit.semantifyr.live.backend.exceptions.WorkspaceUriException
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocument
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
@@ -18,7 +18,6 @@ import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScoped
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import org.eclipse.emf.ecore.resource.Resource
-import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.lsp4j.CallHierarchyIncomingCall
 import org.eclipse.lsp4j.CallHierarchyIncomingCallsParams
 import org.eclipse.lsp4j.CallHierarchyItem
@@ -76,7 +75,6 @@ import org.eclipse.xtext.ide.server.codeActions.ICodeActionService2
 import org.eclipse.xtext.ide.server.rename.IRenameService2
 import org.eclipse.xtext.util.CancelIndicator
 import java.util.concurrent.CompletableFuture
-import org.eclipse.emf.common.util.URI as EmfURI
 
 @SessionScoped
 class SessionTextDocumentService @Inject constructor(
@@ -356,43 +354,34 @@ class SessionTextDocumentService @Inject constructor(
     override fun prepareTypeHierarchy(
         params: TypeHierarchyPrepareParams,
     ): CompletableFuture<MutableList<TypeHierarchyItem>> {
-        val service = languageServices.typeHierarchyService
-            ?: return CompletableFuture.completedFuture(mutableListOf())
-        return readDocument(params.textDocument.uri, mutableListOf()) { file, _ ->
-            toClientItems(service.prepare(file.resource, file.xtextDocument(), params))
+        val service = languageServices.typeHierarchyService ?: return CompletableFuture.completedFuture(mutableListOf())
+        return readDocument(params.textDocument.uri, mutableListOf()) { file, cancelIndicator ->
+            service.prepareTypeHierarchy(file.xtextDocument(), file.resource, params, cancelIndicator).map {
+                toClientItem(it)
+            }.toMutableList()
         }
     }
 
     override fun typeHierarchySupertypes(
         params: TypeHierarchySupertypesParams,
     ): CompletableFuture<MutableList<TypeHierarchyItem>> {
-        return relatedTypes(params.item, TypeHierarchyService::supertypes)
+        val service = languageServices.typeHierarchyService ?: return CompletableFuture.completedFuture(mutableListOf())
+        return readItem(params.item.data, mutableListOf()) { resource, _ ->
+            service.supertypes(resource, params.item).map {
+                toClientItem(it)
+            }.toMutableList()
+        }
     }
 
     override fun typeHierarchySubtypes(
         params: TypeHierarchySubtypesParams,
     ): CompletableFuture<MutableList<TypeHierarchyItem>> {
-        return relatedTypes(params.item, TypeHierarchyService::subtypes)
-    }
-
-    private fun relatedTypes(
-        item: TypeHierarchyItem,
-        query: (TypeHierarchyService, ResourceSet, TypeHierarchyItem) -> List<TypeHierarchyItem>,
-    ): CompletableFuture<MutableList<TypeHierarchyItem>> {
-        val service = languageServices.typeHierarchyService
-            ?: return CompletableFuture.completedFuture(mutableListOf())
-        return sessionRequestManager.runRead {
-            val items = sessionDocumentManager.referenceResourceAccess().readOnly(EmfURI.createURI(item.uri)) {
-                query(service, it, item)
-            }
-            toClientItems(items)
+        val service = languageServices.typeHierarchyService ?: return CompletableFuture.completedFuture(mutableListOf())
+        return readItem(params.item.data, mutableListOf()) { resource, _ ->
+            service.subtypes(resource, params.item).map {
+                toClientItem(it)
+            }.toMutableList()
         }
-    }
-
-    private fun toClientItems(items: List<TypeHierarchyItem>): MutableList<TypeHierarchyItem> {
-        return items.onEach {
-            it.uri = sessionDocumentManager.toClientUri(it.uri)
-        }.toMutableList()
     }
 
     override fun prepareCallHierarchy(
@@ -410,7 +399,7 @@ class SessionTextDocumentService @Inject constructor(
         params: CallHierarchyIncomingCallsParams,
     ): CompletableFuture<MutableList<CallHierarchyIncomingCall>> {
         val service = languageServices.callHierarchyService ?: return CompletableFuture.completedFuture(mutableListOf())
-        return readResource(params.item.uri, mutableListOf()) { resource, cancelIndicator ->
+        return readItem(params.item.data, mutableListOf()) { resource, cancelIndicator ->
             service.incomingCalls(
                 resource,
                 params.item,
@@ -427,25 +416,30 @@ class SessionTextDocumentService @Inject constructor(
         params: CallHierarchyOutgoingCallsParams,
     ): CompletableFuture<MutableList<CallHierarchyOutgoingCall>> {
         val service = languageServices.callHierarchyService ?: return CompletableFuture.completedFuture(mutableListOf())
-        return readResource(params.item.uri, mutableListOf()) { resource, cancelIndicator ->
-            service.outgoingCalls(resource, params.item, cancelIndicator).map {
+        return readItem(params.item.data, mutableListOf()) { resource, _ ->
+            service.outgoingCalls(resource, params.item).map {
                 CallHierarchyOutgoingCall(toClientItem(it.to), it.fromRanges)
             }.toMutableList()
         }
     }
 
-    private inline fun <T> readResource(
-        clientUri: String,
+    private inline fun <T> readItem(
+        itemData: Any?,
         empty: T,
         crossinline block: (Resource, CancelIndicator) -> T,
     ): CompletableFuture<T> {
         return sessionRequestManager.runRead {
-            val resource = sessionDocumentManager.findResourceByClient(clientUri)
+            val resource = sessionDocumentManager.findResourceByClient(HierarchyItemData.of(itemData).documentUri())
             if (resource == null) {
                 return@runRead empty
             }
             block(resource, it)
         }
+    }
+
+    private fun toClientItem(item: TypeHierarchyItem): TypeHierarchyItem {
+        item.uri = sessionDocumentManager.toClientUri(item.uri)
+        return item
     }
 
     private fun toClientItem(item: CallHierarchyItem): CallHierarchyItem {
