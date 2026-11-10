@@ -63,6 +63,9 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     seed: { verification: discovered([{ caseInfo: BARRIER, status: 'stale' }, { caseInfo: TWO_TRAINS, status: 'stale' }], 'idle') },
     expectState: () => {
       expect(count('.unsaved-mark')).toBe(0)
+      expect(count('.save-split')).toBe(1)
+      expect(count('.save-menu')).toBe(0)
+      expect(text('[data-testid=status-message]')).not.toContain('Unsaved changes')
       expect(count('[data-testid=shared-notice]')).toBe(0)
       expect(count('[data-testid=drop-target]')).toBe(0)
     },
@@ -71,6 +74,21 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     seed: { unsaved: true, verification: discovered([{ caseInfo: BARRIER, status: 'stale' }, { caseInfo: TWO_TRAINS, status: 'stale' }], 'idle') },
     expectState: () => {
       expect(count('.tab-model .unsaved-mark')).toBe(1)
+      expect(text('[data-testid=status-message]')).toContain('Unsaved changes. Ctrl S')
+    },
+  },
+  'save-menu': {
+    seed: { unsaved: true, verification: discovered([{ caseInfo: BARRIER, status: 'stale' }, { caseInfo: TWO_TRAINS, status: 'stale' }], 'idle') },
+    act: async () => {
+      document.querySelector<HTMLElement>('.save-split button[aria-label="Save options"]')?.click()
+      await new Promise((resolve) => {
+        setTimeout(resolve, 500)
+      })
+    },
+    expectState: () => {
+      expect(text('.save-menu')).toContain('Ctrl Shift S')
+      expect(text('.save-menu')).toContain('Save as...')
+      expect(text('.save-menu .save-note')).toContain('Save ')
     },
   },
   'file-over-the-editor': {

@@ -20,7 +20,7 @@ import { LanguageMark, Logo } from '../../ui/marks'
 import { useCurrentDocument, useFlavor } from '../hooks'
 import { AboutDialog, DeveloperDialog } from './Dialogs'
 import { ConnectionIndicator } from './ConnectionIndicator'
-import { OpenButton } from './keeping'
+import { OpenButton, SaveSplit } from './keeping'
 import { SharePopover } from './SharePopover'
 
 const FLAVOUR_TEXTS: Readonly<Record<string, { label: string, detail: string }>> = {
@@ -279,6 +279,7 @@ export function Toolbar(): React.JSX.Element {
       </div>
       <div className="toolbar-group toolbar-group-end">
         <OpenButton />
+        <SaveSplit />
         <SharePopover />
         <AboutDialog />
         <DeveloperDialog />

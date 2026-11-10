@@ -14,6 +14,7 @@ import { Icon } from '../../ui/icons'
 import { LanguageMark, VerdictMark } from '../../ui/marks'
 import { useFlavor, useLanguage, useNow } from '../hooks'
 import { useShell } from '../shellContext'
+import { UnsavedLine } from './keeping'
 import { flavourText } from './Toolbar'
 
 function StatusIcon({ status }: { status: ShellStatus }): React.JSX.Element | null {
@@ -45,6 +46,7 @@ function StatusMessage(): React.JSX.Element {
   const language = useLanguage(live)
   const closing = timing !== null && timing.finishedAt !== null && Date.now() - timing.finishedAt < CLOSING_LINE_MS
   const now = useNow(closing ? 1000 : null)
+  const unsaved = useStore(live.unsaved)
   const errors = problems.filter((problem) => {
     return problem.severity === 'error'
   }).length
@@ -71,7 +73,7 @@ function StatusMessage(): React.JSX.Element {
     <span className={`status-message is-${status.kind}`} role="status" data-testid="status-message">
       <StatusIcon status={status} />
       <span>
-        {status.text}
+        {unsaved && status.kind === 'idle' ? <UnsavedLine /> : status.text}
         {status.caseName !== undefined ? <span className="case-ref">{status.caseName}</span> : null}
         {status.after}
         {status.action !== undefined

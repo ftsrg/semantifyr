@@ -9,7 +9,7 @@ import type { VerificationCaseSpecification } from '@semantifyr/editor-common'
 
 import type { LspClient } from '../lib/verification'
 import { flavorOfFile, languageOfFile, type DocumentFile, type FileAccess } from '../lib/workspace/files'
-import { saveDocument } from '../lib/workspace/keeping'
+import { saveDocument, saveDocumentAs } from '../lib/workspace/keeping'
 import { encodeSharedResults, SHARED_RESULTS_PARAMETER } from '../lib/workspace/sharedResults'
 import { fakeRegistry, createTestLive, testFlavors, type TestLive } from './helpers/live'
 import { failedResult, passedResult } from './fixtures/verification-results'
@@ -249,6 +249,61 @@ describe('saving', () => {
     expect(await saveDocument(open.live, access, 'suggested.oxsts')).toBe('downloaded')
     expect(access.downloads).toEqual([{ name: 'opened.oxsts', text: 'edited model' }])
     expect(open.live.unsaved.get()).toBe(false)
+  })
+
+  it('asks for a place on Save as even when a file is behind the document, and that file is the document\'s from then on', async () => {
+    open = await openConnected()
+    const old: string[] = []
+    const chosen: string[] = []
+    open.live.openFile({
+      name: 'old.oxsts',
+      text: 'file text',
+      write: async (text) => {
+        old.push(text)
+      },
+    })
+    open.models.edit(MODEL_URI, 'edited model')
+    const access = recordingAccess({
+      saveAs: async () => {
+        return {
+          name: 'new.oxsts',
+          write: async (text) => {
+            chosen.push(text)
+          },
+        }
+      },
+    })
+
+    expect(await saveDocumentAs(open.live, access, 'suggested.oxsts')).toBe('saved')
+    expect(old).toEqual([])
+    expect(open.live.unsaved.get()).toBe(false)
+    expect(open.live.documents.get().get(open.live.workspace.get().documentKey!)?.file?.name).toBe('new.oxsts')
+    open.models.edit(MODEL_URI, 'edited again')
+    expect(await saveDocument(open.live, access, 'suggested.oxsts')).toBe('written')
+    expect(chosen).toEqual(['edited again'])
+  })
+
+  it('downloads on Save as where the browser has no save dialog, under the suggested name', async () => {
+    open = await openConnected()
+    open.models.edit(MODEL_URI, 'edited model')
+    const access = recordingAccess()
+
+    expect(await saveDocumentAs(open.live, access, 'suggested.oxsts')).toBe('downloaded')
+    expect(access.downloads).toEqual([{ name: 'suggested.oxsts', text: 'edited model' }])
+    expect(open.live.unsaved.get()).toBe(false)
+  })
+
+  it('stays unsaved when the Save as dialog is cancelled', async () => {
+    open = await openConnected()
+    open.models.edit(MODEL_URI, 'edited model')
+    const access = recordingAccess({
+      saveAs: async () => {
+        return null
+      },
+    })
+
+    expect(await saveDocumentAs(open.live, access, 'suggested.oxsts')).toBe('cancelled')
+    expect(open.live.unsaved.get()).toBe(true)
   })
 
   it('stays unsaved when the save dialog is cancelled', async () => {

@@ -5,12 +5,13 @@
  */
 
 import type React from 'react'
+import { Menu } from '@base-ui/react/menu'
 import { useEffect, useState } from 'react'
 
 import { useStore } from '../../lib/stores/useStore'
 import { caseRowOf, type CaseRow } from '../../lib/workspace/caseRows'
 import { browserFileAccess, fileOfDrop, type FileAccess } from '../../lib/workspace/files'
-import { openFileInto, saveDocument } from '../../lib/workspace/keeping'
+import { openFileInto, saveDocument, saveDocumentAs, saveWayOf } from '../../lib/workspace/keeping'
 import { compareWithShared, rowsWithSharedVerdicts, type SharedResults } from '../../lib/workspace/sharedResults'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import { Icon } from '../../ui/icons'
@@ -59,10 +60,10 @@ export function useKeepingEvents(): void {
   const suggestedName = flavor && document ? documentLabel(document, flavor) : null
   useEffect(() => {
     const save = (event: KeyboardEvent): void => {
-      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 's') {
+      if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === 's') {
         event.preventDefault()
         if (suggestedName !== null) {
-          void saveDocument(live, fileAccess(), suggestedName)
+          void (event.shiftKey ? saveDocumentAs : saveDocument)(live, fileAccess(), suggestedName)
         }
       }
     }
@@ -166,5 +167,95 @@ export function SharedNotice({ rows, results, running }: { rows: readonly CaseRo
       <Icon name="link" />
       <span>{`Opened from a shared link. ${text}`}</span>
     </div>
+  )
+}
+
+function saveNote(live: ReturnType<typeof useLive>, name: string | null): string {
+  const file = live.documents.get().get(live.workspace.get().documentKey ?? '')?.file ?? null
+  switch (saveWayOf(file, fileAccess())) {
+    case 'write':
+      return `Save writes back to ${file?.name ?? ''} on your disk.`
+    case 'dialog':
+      return 'Save asks where on your disk to put the file.'
+    case 'download':
+      return `Save downloads ${name ?? 'the file'}.`
+  }
+}
+
+export function SaveSplit(): React.JSX.Element {
+  const live = useLive()
+  const flavor = useFlavor(live)
+  const document = useCurrentDocument(live)
+  useStore(live.documents)
+  const name = flavor && document ? documentLabel(document, flavor) : null
+  const run = (save: typeof saveDocument): void => {
+    if (name !== null) {
+      void save(live, fileAccess(), name)
+    }
+  }
+  return (
+    <span className="save-split">
+      <button
+        type="button"
+        className="button button-quiet"
+        onClick={() => {
+          run(saveDocument)
+        }}
+      >
+        <Icon name="save" />
+        Save
+      </button>
+      <Menu.Root>
+        <Menu.Trigger className="button button-quiet" title="Save options" aria-label="Save options">
+          <Icon name="chevron-down" size="small" />
+        </Menu.Trigger>
+        <Menu.Portal>
+          <Menu.Positioner className="floating" side="bottom" align="end" sideOffset={6}>
+            <Menu.Popup className="menu save-menu">
+              <Menu.Item
+                className="menu-item"
+                onClick={() => {
+                  run(saveDocument)
+                }}
+              >
+                <span>
+                  <Icon name="save" size="small" />
+                </span>
+                <span className="menu-item-label">Save</span>
+                <span className="kbd">Ctrl S</span>
+              </Menu.Item>
+              <Menu.Item
+                className="menu-item"
+                onClick={() => {
+                  run(saveDocumentAs)
+                }}
+              >
+                <span>
+                  <Icon name="save-as" size="small" />
+                </span>
+                <span className="menu-item-label">Save as...</span>
+                <span className="kbd">Ctrl Shift S</span>
+              </Menu.Item>
+              <Menu.Separator className="menu-divider" />
+              <div className="menu-item-detail save-note">{saveNote(live, name)}</div>
+            </Menu.Popup>
+          </Menu.Positioner>
+        </Menu.Portal>
+      </Menu.Root>
+    </span>
+  )
+}
+
+export function UnsavedLine(): React.JSX.Element {
+  const live = useLive()
+  const flavor = useFlavor(live)
+  const document = useCurrentDocument(live)
+  const name = flavor && document ? documentLabel(document, flavor) : ''
+  const way = saveWayOf(document?.file ?? null, fileAccess())
+  return (
+    <>
+      Unsaved changes. <span className="kbd">Ctrl S</span>
+      {way === 'dialog' ? ' asks where to save' : ` ${way === 'write' ? 'saves to' : 'downloads'} ${name}`}
+    </>
   )
 }

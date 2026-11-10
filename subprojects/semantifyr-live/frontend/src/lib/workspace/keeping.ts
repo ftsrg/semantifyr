@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { FileAccess, OpenedFile } from './files'
+import type { DocumentFile, FileAccess, OpenedFile } from './files'
 import type { DocumentRecord, Live } from './live'
 
 export type SaveOutcome =
@@ -26,6 +26,38 @@ export function openFileInto(live: Live, access: FileAccess, opened: OpenedFile)
   live.openFile(opened)
 }
 
+export type SaveWay =
+  | 'write'
+  | 'dialog'
+  | 'download'
+
+export function saveWayOf(file: DocumentFile | null, access: FileAccess): SaveWay {
+  if (file?.write) {
+    return 'write'
+  }
+  return access.saveAs ? 'dialog' : 'download'
+}
+
+export async function saveDocumentAs(live: Live, access: FileAccess, suggestedName: string): Promise<SaveOutcome> {
+  const record = currentRecord(live)
+  const text = live.currentText()
+  if (!record || text === null) {
+    return 'cancelled'
+  }
+  const name = record.file?.name ?? suggestedName
+  if (access.saveAs) {
+    const file = await access.saveAs(name, text)
+    if (file === null) {
+      return 'cancelled'
+    }
+    live.markSaved(file, text)
+    return 'saved'
+  }
+  access.download(name, text)
+  live.markSaved(null, text)
+  return 'downloaded'
+}
+
 export async function saveDocument(live: Live, access: FileAccess, suggestedName: string): Promise<SaveOutcome> {
   const record = currentRecord(live)
   const text = live.currentText()
@@ -41,16 +73,5 @@ export async function saveDocument(live: Live, access: FileAccess, suggestedName
       /* the browser refused the write: the file is saved the way a new one is */
     }
   }
-  const name = record.file?.name ?? suggestedName
-  if (access.saveAs) {
-    const file = await access.saveAs(name, text)
-    if (file === null) {
-      return 'cancelled'
-    }
-    live.markSaved(file, text)
-    return 'saved'
-  }
-  access.download(name, text)
-  live.markSaved(null, text)
-  return 'downloaded'
+  return saveDocumentAs(live, access, suggestedName)
 }
