@@ -69,6 +69,14 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       expect(count('.segmented-option[data-language=oxsts][aria-pressed=true]')).toBe(1)
     },
   },
+  'long-name': {
+    seed: { fileName: 'level-crossing-with-a-third-track-and-a-second-barrier.sysml', verification: discovered([{ caseInfo: BARRIER, status: 'stale' }]) },
+    expectState: () => {
+      const label = document.querySelector('.example-label')!
+      expect(label.textContent).toBe('level-crossing-with-a-third-track-and-a-second-barrier.sysml')
+      expect(label.scrollWidth, 'the name is cut').toBeGreaterThan(label.clientWidth)
+    },
+  },
 }
 
 function expectApart(left: string, right: string): void {
@@ -83,6 +91,18 @@ function expectInViewport(selector: string): void {
     expect(box.left, `${selector} left`).toBeGreaterThanOrEqual(0)
     expect(box.right, `${selector} right`).toBeLessThanOrEqual(window.innerWidth)
     expect(box.bottom, `${selector} bottom`).toBeLessThanOrEqual(window.innerHeight)
+  }
+}
+
+// a name too long for its button ends in an ellipsis inside it, and the button keeps a width that shows the name's start
+function expectEllipsized(button: string, label: string): void {
+  const buttonBox = document.querySelector(button)!.getBoundingClientRect()
+  const labelElement = document.querySelector(label)!
+  const labelBox = labelElement.getBoundingClientRect()
+  expect(buttonBox.width, `${button} width`).toBeGreaterThanOrEqual(64)
+  expect(labelBox.right, `${label} past ${button}`).toBeLessThanOrEqual(buttonBox.right)
+  if (labelElement.scrollWidth > labelElement.clientWidth) {
+    expect(getComputedStyle(labelElement).textOverflow).toBe('ellipsis')
   }
 }
 
@@ -116,6 +136,7 @@ describe('the desktop shell on a tablet', () => {
           expect(scrollWidth, 'horizontal overflow').toBeLessThanOrEqual(clientWidth)
           expectInViewport('.toolbar .button, .toolbar .segmented-option, .results-header .button, .statusbar')
           expectApart('.toolbar-group .example-button', '.toolbar-group-end')
+          expectEllipsized('.example-button', '.example-label')
           for (const selector of UNCLIPPED) {
             for (const element of document.querySelectorAll(selector)) {
               expect(element.scrollWidth, `${selector} clipped`).toBeLessThanOrEqual(element.clientWidth + 1)

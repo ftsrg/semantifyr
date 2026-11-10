@@ -153,8 +153,8 @@ function ExampleMenu(): React.JSX.Element | null {
   const triggerLabel = document.file?.name ?? (document.shared ? 'Shared model' : document.example.label)
   return (
     <Menu.Root>
-      <Menu.Trigger className="button button-quiet example-button">
-        {triggerLabel}
+      <Menu.Trigger className="button button-quiet example-button" title={triggerLabel}>
+        <span className="example-label">{triggerLabel}</span>
         <span className="chevron">
           <Icon name="chevron-down" size="small" />
         </span>

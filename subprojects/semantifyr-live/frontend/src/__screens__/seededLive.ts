@@ -46,6 +46,8 @@ export interface Seed {
   sharedResults?: SharedResults | null
   // the model's text in place of the example's
   text?: string
+  // the name of the file the model was opened from
+  fileName?: string
   portfolios?: PortfolioInfo[]
 }
 
@@ -121,7 +123,7 @@ export function seedLive(seed: Seed): Seeded {
   const runtime = runtimeOf(flavor, connection, steps, seed.modelOxsts)
   const key = documentKey(flavor.id, example.id, false)
   const text = seed.text ?? example.code
-  const record: DocumentRecord = { key, flavorId: flavor.id, example, shared: false, uri: documentUri(flavor), text, savedText: text, file: null }
+  const record: DocumentRecord = { key, flavorId: flavor.id, example, shared: false, uri: documentUri(flavor), text, savedText: text, file: seed.fileName === undefined ? null : { name: seed.fileName, write: null } }
   const settings = createSettingsStore()
   settings.update((previous) => {
     return { ...previous, resultsColumnWidth: 0, caseListHeight: 0, resultsColumnCollapsed: false, ...seed.settings }
