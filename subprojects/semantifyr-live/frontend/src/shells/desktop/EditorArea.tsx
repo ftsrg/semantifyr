@@ -8,7 +8,9 @@ import type React from 'react'
 import { useEffect, useRef } from 'react'
 import { Menu } from '@base-ui/react/menu'
 
-import type { LiveFlavor } from '../../examples'
+import { parseLiveEditorUrl } from '@semantifyr/editor-common'
+
+import { findExample, liveFlavors, type LiveFlavor } from '../../examples'
 import type { LanguageRuntime, LibraryKind } from '../../lib/language/types'
 import { setLibraryReader } from '../../lib/session/monaco'
 import { fileNameOf } from '../../lib/session/readOnlyDocuments'
@@ -219,6 +221,39 @@ function EditorHost({ document, flavor, colorMode }: { document: DocumentRecord,
   return <div ref={hostReference} className="editor-host" data-testid="editor-host" />
 }
 
+// while the server does not answer, the SysML model the address names is shown as text; it knows no language yet
+function WaitingModel(): React.JSX.Element | null {
+  const live = useLive()
+  const waiting = useStore(live.catalog, (catalog) => {
+    return catalog.status === 'waiting'
+  })
+  const parameters = parseLiveEditorUrl(window.location.search)
+  const [sysml] = liveFlavors([])
+  if (!waiting || (parameters.flavor !== null && parameters.flavor !== sysml.id)) {
+    return null
+  }
+  const example = findExample(sysml, parameters.example) ?? sysml.examples[0]
+  if (!example) {
+    return null
+  }
+  return (
+    <div className="editor-scroll">
+      <div className="code" data-language={sysml.languageId}>
+        {example.code.replace(/\n+$/, '').split('\n').map((line, index) => {
+          const indent = /^ */.exec(line)?.[0].length ?? 0
+          return (
+            <div key={index} className="code-line is-plain">
+              <span className="line-number">{index + 1}</span>
+              <span />
+              <span className="line-text" style={{ '--indent': indent } as React.CSSProperties}>{line.slice(indent) || ' '}</span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export function EditorArea({ colorMode }: { colorMode: ResolvedColorMode }): React.JSX.Element {
   const live = useLive()
   const flavor = useFlavor(live)
@@ -244,7 +279,7 @@ export function EditorArea({ colorMode }: { colorMode: ResolvedColorMode }): Rea
       {flavor && document && modelLabel !== null ? <Tabs flavor={flavor} modelLabel={modelLabel} runtime={runtime} /> : <div className="tabs" />}
       <ReadOnlyBanner />
       <div className="editor-body">
-        {flavor && document ? <EditorHost key={flavor.id} document={document} flavor={flavor} colorMode={colorMode} /> : null}
+        {flavor && document ? <EditorHost key={flavor.id} document={document} flavor={flavor} colorMode={colorMode} /> : <WaitingModel />}
       </div>
     </section>
   )

@@ -10,6 +10,7 @@ import type { LspClient, VerificationState } from '../lib/verification'
 import { NO_VERIFICATION } from '../lib/workspace/verification'
 import { createTestLive, testFlavors, type TestLive } from './helpers/live'
 import { failedResult, passedResult } from './fixtures/verification-results'
+import { servedFlavors } from './fixtures/flavors'
 
 vi.mock('vscode', () => {
   return {}
@@ -248,5 +249,93 @@ describe('Live', () => {
       return { ...settings, verificationPortfolioId: 'retired' }
     })
     expect(open.live.verificationPortfolioId()).toBe('smart-full')
+  })
+
+  it('opens the default language on a bare address, and says which name of an address it did not find', async () => {
+    const routed = routedClient([])
+    const [, gamma] = [servedFlavors[0], servedFlavors[3]]
+    open = createTestLive(routed.client, servedFlavors, { defaultFlavorId: gamma!.id })
+    open.live.start('')
+    await vi.waitFor(() => {
+      expect(open!.live.workspace.get().flavor?.id).toBe(gamma!.id)
+    })
+    expect(open.live.address.get()).toBeNull()
+    await open.live.dispose()
+
+    open = createTestLive(routed.client, servedFlavors, { defaultFlavorId: gamma!.id })
+    open.live.start('?mode=kerml')
+    await vi.waitFor(() => {
+      expect(open!.live.address.get()).toMatchObject({ kind: 'language', requested: 'kerml', flavorId: gamma!.id })
+    })
+    await open.live.dispose()
+
+    open = createTestLive(routed.client)
+    open.live.start('?mode=oxsts&example=missing')
+    await vi.waitFor(() => {
+      expect(open!.live.address.get()).toMatchObject({ kind: 'example', requested: 'missing', flavorId: 'oxsts' })
+    })
+    open.live.selectModel('oxsts', testFlavors()[0].examples[0]!.id)
+    expect(open.live.address.get()).toBeNull()
+  })
+
+  it('cancels one case of Verify all and runs the rest', async () => {
+    const routed = routedClient([caseAt('a', 1), caseAt('b', 2)])
+    const pending = deferred<VerificationCaseResult>()
+    routed.results.set(1, async () => {
+      return pending.promise
+    })
+    open = await openConnected(routed)
+
+    open.live.verifyAll()
+    await vi.waitFor(() => {
+      expect(verificationOf(open!).cases[0]?.status).toBe('running')
+    })
+    open.live.cancelCase('a')
+
+    await vi.waitFor(() => {
+      expect(verificationOf(open!).phase).toBe('done')
+    })
+    expect(verificationOf(open).cases.map((caseState) => {
+      return [caseState.status, caseState.message]
+    })).toEqual([['stale', 'Verification cancelled'], ['passed', undefined]])
+    expect(open.live.runTiming.get()).toMatchObject({ caseId: null, finishedAt: expect.any(Number) })
+    pending.resolve(failedResult)
+  })
+
+  it('shows Verify all as pending until the cases are known, and drops it on cancel', async () => {
+    const routed = routedClient([caseAt('a', 1)])
+    open = createTestLive(routed.client)
+    open.live.start('')
+    await vi.waitFor(() => {
+      expect(open!.live.workspace.get().runtime).not.toBeNull()
+    })
+
+    open.live.verifyAll()
+    expect(open.live.pendingVerifyAll.get()).toBe(true)
+    open.live.cancelVerification()
+    expect(open.live.pendingVerifyAll.get()).toBe(false)
+  })
+
+  it('starts a new session for the open document when asked after the server ended the last one', async () => {
+    const routed = routedClient([caseAt('a', 1)])
+    open = await openConnected(routed)
+    const first = open.runtime()
+
+    open.live.restartSession()
+
+    expect(open.runtimes).toHaveLength(2)
+    expect(open.runtime()).not.toBe(first)
+    expect(open.live.workspace.get().runtime).toBe(open.runtime())
+  })
+
+  it('closes the read-only tabs with the language they belong to and keeps them on an example switch', async () => {
+    const routed = routedClient([])
+    open = await openConnected(routed)
+    open.live.tabs.open({ id: 'library', label: 'semantifyr.oxsts', uri: 'live-library:/workspace/.semantifyr/builtin/semantifyr.oxsts', languageId: 'oxsts', banner: '' })
+
+    open.live.selectModel('oxsts', testFlavors()[0].examples[1]!.id)
+    expect(open.live.tabs.state.get().tabs).toHaveLength(1)
+    open.live.selectModel('gamma', testFlavors()[3]!.examples[0]!.id)
+    expect(open.live.tabs.state.get().tabs).toHaveLength(0)
   })
 })

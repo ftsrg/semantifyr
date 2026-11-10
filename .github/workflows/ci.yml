@@ -73,6 +73,19 @@ jobs:
       - name: Gradle build
         shell: bash
         run: ./gradlew build --continue -Pwebsite.apiDocs=$WEBSITE_API_DOCS
+      - name: Install Chromium for the live screen tests
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: npx playwright install --with-deps chromium
+      - name: Run the live screen tests
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: npm run screens -w @ftsrg/semantifyr-live-frontend
+      - name: Upload the live screens
+        if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: live-screens
+          path: subprojects/semantifyr-live/frontend/build/screens/
+          if-no-files-found: warn
       - name: Read the VS Code version of the integration test
         id: vscode
         if: ${{ matrix.os == 'ubuntu-latest' }}

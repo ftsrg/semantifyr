@@ -102,7 +102,7 @@ function runningStatus(verification: VerificationState): ShellStatus {
   }).length
   const position = waiting > 1 || index > 0 ? `, ${index + 1} of ${verification.cases.length}` : ''
   const progress = verification.progress ? ` - ${verification.progress}` : ''
-  return { kind: 'busy', text: 'Verifying ', caseName: running.caseInfo.label, after: `${position}${progress}` }
+  return { kind: 'busy', text: 'Verifying ', caseName: caseRowOf(running).name, after: `${position}${progress}` }
 }
 
 function closingStatus(verification: VerificationState, timing: RunTiming): ShellStatus | null {

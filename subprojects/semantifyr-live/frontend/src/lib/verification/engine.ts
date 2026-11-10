@@ -264,8 +264,14 @@ async function executeVerify(
   options: RunVerificationOptions,
   token: CancellationToken,
 ): Promise<VerifyOutcome> {
+  // a cancelled case is over at once, whenever the server answers its cancel
+  const cancelled = new Promise<VerifyOutcome>((resolve) => {
+    token.onCancellationRequested(() => {
+      resolve({ status: 'cancelled' })
+    })
+  })
   try {
-    const response = await verifyCase(
+    const response = verifyCase(
       client,
       command,
       { uri: fileUri, range: caseInfo.location.range },
@@ -273,8 +279,8 @@ async function executeVerify(
         ...(options.portfolioId ? { portfolio: options.portfolioId } : {}),
         token,
       },
-    )
-    return toVerifyOutcome(response)
+    ).then(toVerifyOutcome)
+    return await Promise.race([response, cancelled])
   } catch (error) {
     return {
       status: 'errored',

@@ -15,7 +15,7 @@ import { finishStep, initializationOf, InitializationSteps, startStep } from '..
 import { createSettingsStore } from '../../lib/stores/settings'
 import { constantStore, createStore } from '../../lib/stores/store'
 import type { LspClient } from '../../lib/verification'
-import { createLive, type Live } from '../../lib/workspace/live'
+import { createLive, type Live, type LiveOptions } from '../../lib/workspace/live'
 import { servedFlavors } from '../fixtures/flavors'
 
 export interface FakeModelDocuments extends ModelDocuments {
@@ -174,10 +174,11 @@ export interface TestLive {
 }
 
 // A Live over fake runtimes that answer through the given client; the editor's models are plain text
-export function createTestLive(client: LspClient, served: readonly FlavorInfo[] = servedFlavors): TestLive {
+export function createTestLive(client: LspClient, served: readonly FlavorInfo[] = servedFlavors, options: Pick<LiveOptions, 'defaultFlavorId'> = {}): TestLive {
   const models = fakeModelDocuments()
   const runtimes: FakeRuntime[] = []
   const live = createLive({
+    ...options,
     backendUrl: 'https://test.example',
     settings: createSettingsStore(),
     colorMode: () => {

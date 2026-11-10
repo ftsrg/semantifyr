@@ -189,10 +189,7 @@ export function createVerification(options: VerificationOptions): Verification {
 
   const verifyAll = (): void => {
     const current = options.current()
-    if (!current) {
-      return
-    }
-    if (!isInitialized(current.runtime.initialization.get())) {
+    if (!current || !isInitialized(current.runtime.initialization.get())) {
       pending.set(true)
       return
     }

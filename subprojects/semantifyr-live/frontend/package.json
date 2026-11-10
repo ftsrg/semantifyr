@@ -9,6 +9,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "smoke": "vitest run --config vitest.smoke.config.ts",
+    "screens": "vitest run --config vitest.screen.config.ts",
     "load-test": "node --disable-warning=ExperimentalWarning src/__load__/main.ts",
     "check": "npm run typecheck && npm run lint && npm run test",
     "assemble": "vite build",
@@ -42,7 +43,9 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^6.0.0",
+    "@vitest/browser-playwright": "^5.0.5",
     "jsdom": "^29.0.0",
+    "playwright": "^1.65.0",
     "vite": "^8.0.0",
     "vite-plugin-pwa": "^1.3.0",
     "vitest": "^5.0.5"
