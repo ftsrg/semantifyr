@@ -78,7 +78,7 @@ With parameters:
 annotation Description(text: string)
 ```
 
-A custom annotation may then be applied like any built-in. A variable keeps its annotations in the verified model, so an annotation on a variable takes no string argument (`OXSTS.UNSUPPORTED_FEATURE`).
+A custom annotation may then be applied like any built-in.
 
 ```oxsts fragment
 @Description(text = "Increments the counter by one")

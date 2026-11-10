@@ -23,7 +23,6 @@ Arrays of records, array fields in records	reject	constructs/record_array.oxsts	
 Record-typed features	reject	constructs/record_feature.oxsts	OXSTS.UNSUPPORTED_FEATURE
 Record argument of a traced call	reject	constructs/record_trace_argument.oxsts	OXSTS.UNSUPPORTED_FEATURE
 Ordering on non-numeric values `Red < Green`	reject	constructs/enum_ordering.oxsts	OXSTS.TYPE_MISMATCH
-String annotation argument on a variable `@Note("a counter") var x`	reject	constructs/string_annotation_on_variable.oxsts	OXSTS.UNSUPPORTED_FEATURE
 `derived refers` without `opposite`	reject	constructs/derived_without_opposite.oxsts	OXSTS.UNSUPPORTED_FEATURE
 Multiple inheritance `class C : A, B`	reject	constructs/multiple_inheritance.oxsts	OXSTS.MULTIPLE_INHERITANCE
 `fun` declarations	parse	constructs/function_declaration.oxsts	-

@@ -1550,30 +1550,6 @@ public class OxstsValidator extends AbstractOxstsValidator {
     }
 
     @Check
-    public void checkNoStringAnnotationArgumentOnVariable(Annotation annotation) {
-        if (!(annotation.eContainer() instanceof AnnotationContainer container)
-                || !(container.eContainer() instanceof VariableDeclaration variable)) {
-            return;
-        }
-        for (var argument : annotation.getArguments()) {
-            var type = argument.getExpression() == null ? null : evaluateTypeSafely(argument.getExpression());
-            if (type != null && typeCompatibility.isString(type, argument)) {
-                var declaration = annotation.getDeclaration();
-                var annotationName = declaration == null || declaration.eIsProxy() ? "" : declaration.getName();
-                acceptError(
-                        "Annotation '@"
-                                + annotationName
-                                + "' on variable '"
-                                + variable.getName()
-                                + "' cannot take a string argument; a variable keeps its annotations in the verified model, which holds no strings.",
-                        annotation,
-                        UNSUPPORTED_FEATURE);
-                return;
-            }
-        }
-    }
-
-    @Check
     public void checkSelfInsideClass(SelfReference selfReference) {
         if (selfReference.getClass_() == null
                 && EcoreUtil2.getContainerOfType(selfReference, ClassDeclaration.class) == null
