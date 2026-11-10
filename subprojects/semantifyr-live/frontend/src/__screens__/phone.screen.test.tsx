@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type React from 'react'
 import { createRoot } from 'react-dom/client'
 import { beforeAll, describe, expect, it, onTestFinished } from 'vitest'
 import { page } from 'vitest/browser'
@@ -13,8 +12,9 @@ import type { PortfolioInfo } from '@semantifyr/editor-common'
 import type { ResolvedColorMode } from '../lib/util/colorMode'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
 import { ShellRoot } from '../shells/ShellRoot'
-import type { TraceSlotProps } from '../shells/traceSlot'
-import { caseOf, finished, seedLive, type Seed } from './seededLive'
+import { CaseTrace } from '../trace/CaseTrace'
+import { caseOf, finished, seedLive, type Seed, type Seeded } from './seededLive'
+import { caseState, LANGUAGES, seedWithTrace } from './traces'
 
 // Goal: every phone state the mockup draws lays out in the phone's viewport in both themes, one pane at a time,
 // with the real editor; the states that a tap opens are reached by the tap
@@ -32,9 +32,8 @@ const PORTFOLIOS: PortfolioInfo[] = [
   { id: 'spin', displayName: 'Spin', description: '', available: true },
 ]
 
-function TraceStub({ caseState }: TraceSlotProps): React.JSX.Element {
-  return <div className="trace-stub" style={{ height: 240 }}>{`Trace of ${caseState.caseInfo.id}`}</div>
-}
+const SYSML = LANGUAGES.sysml!
+const TRACED = caseState(SYSML, { validated: true, recorded: true })
 
 function notRun(caseInfo: typeof BARRIER): VerificationCaseState {
   return { caseInfo, status: 'stale' }
@@ -48,7 +47,7 @@ const NOT_RUN = discovered([notRun(BARRIER), notRun(TWO_TRAINS)])
 const RESULTS = discovered([finished(BARRIER, 'failed', 2.9), finished(TWO_TRAINS, 'passed', 0.8)], 'done')
 
 interface ScreenState {
-  seed: Seed
+  seed: Seed | (() => Seeded)
   act?: () => Promise<void>
   expectState: () => void
 }
@@ -143,17 +142,40 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     },
   },
   'trace': {
-    seed: { verification: RESULTS, selection: BARRIER.id },
+    seed: () => {
+      return seedWithTrace(SYSML, TRACED)
+    },
     act: async () => {
       await tapTab('Results')
       await tap('.phone-case.status-failed')
     },
     expectState: () => {
       expect(visiblePanes()).toEqual(['Trace'])
-      expect(text('.trace-head-title')).toContain(BARRIER.id)
-      expect(text('.pane-trace .trace-stub')).toBe(`Trace of ${BARRIER.id}`)
+      expect(text('.trace-head-title')).toContain(TRACED.caseInfo.id)
+      expect(text('.pane-trace .trace-views [aria-pressed=true]')).toBe('SysML trace')
+      expect(text('.pane-trace [data-testid=run-details]')).toContain('decided by Theta')
     },
   },
+  ...Object.fromEntries([
+    ['steps', '.pane-trace [data-testid=trace-steps] .step'],
+    ['calls', '.pane-trace [data-testid=trace-calls] .call'],
+    ['witness', '.pane-trace .trace-frame'],
+  ].map(([view, shown]) => {
+    return [`trace-${view}`, {
+      seed: () => {
+        return seedWithTrace(SYSML, TRACED)
+      },
+      act: async () => {
+        await tapTab('Results')
+        await tap('.phone-case.status-failed')
+        await tap(`.pane-trace .trace-views [data-view=${view}]`)
+      },
+      expectState: () => {
+        expect(count(`.pane-trace .trace-views [data-view=${view}][aria-pressed=true]`)).toBe(1)
+        expect(count(shown!)).toBeGreaterThan(0)
+      },
+    }]
+  })),
   'chooser': {
     seed: { verification: NOT_RUN },
     act: async () => {
@@ -172,11 +194,10 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     },
     expectState: () => {
       const entries = text('.sheet-bottom')
-      for (const entry of ['Verification', 'Validation', 'Validate automatically', 'About', 'Developer panel', 'Theme']) {
+      for (const entry of ['Open a file', 'Share', 'Verification', 'Validation', 'Validate automatically', 'About', 'Developer panel', 'Theme']) {
         expect(entries).toContain(entry)
       }
-      expect(entries).not.toContain('Open')
-      expect(entries).not.toContain('Share')
+      expect(text('.sheet-bottom .sheet-item:nth-of-type(2)')).toMatch(/^Share\s+Model$/)
     },
   },
   'settings': {
@@ -186,7 +207,10 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       await expect.poll(() => {
         return document.querySelector('.sheet-bottom .sheet-item')
       }).toBeTruthy()
-      document.querySelector<HTMLElement>('.sheet-bottom .sheet-item')!.click()
+      const verification = [...document.querySelectorAll<HTMLElement>('.sheet-bottom .sheet-item')].find((item) => {
+        return item.innerText.startsWith('Verification')
+      })
+      verification!.click()
       await expect.poll(() => {
         return count('.portfolio-choice')
       }).toBe(4)
@@ -207,7 +231,13 @@ function expectLayout(): void {
   expect(phone.height).toBe(HEIGHT)
   const bottom = document.querySelector('.phone-bottom')!.getBoundingClientRect()
   expect(bottom.bottom).toBeLessThanOrEqual(HEIGHT)
-  for (const selector of ['.phone-bar', '.pane-header .counts', '.phone-case-outcome', '.sheet-item', '.chooser-languages', '.phone-init-step']) {
+  // every view of the trace is reachable without scrolling sideways
+  for (const option of document.querySelectorAll('.trace-views .segmented-option')) {
+    const box = option.getBoundingClientRect()
+    expect(box.left, `${option.textContent} left`).toBeGreaterThanOrEqual(0)
+    expect(box.right, `${option.textContent} right`).toBeLessThanOrEqual(WIDTH)
+  }
+  for (const selector of ['.phone-bar', '.pane-header .counts', '.phone-case-outcome', '.sheet-item', '.chooser-languages', '.phone-init-step', '.trace-views']) {
     for (const element of document.querySelectorAll(selector)) {
       expect(element.scrollWidth, `${selector} clipped`).toBeLessThanOrEqual(element.clientWidth + 1)
     }
@@ -222,7 +252,7 @@ describe('the phone shell', () => {
   for (const colorMode of ['light', 'dark'] as const satisfies readonly ResolvedColorMode[]) {
     for (const [state, screen] of Object.entries(STATES)) {
       it(`lays out ${state} in the ${colorMode} theme`, async () => {
-        const { live, shell } = seedLive(screen.seed)
+        const { live, shell } = typeof screen.seed === 'function' ? screen.seed() : seedLive(screen.seed)
         const container = document.createElement('div')
         document.body.append(container)
         const root = createRoot(container)
@@ -230,7 +260,7 @@ describe('the phone shell', () => {
           root.unmount()
           container.remove()
         })
-        root.render(<ShellRoot live={live} shell={shell} colorMode={colorMode} trace={TraceStub} />)
+        root.render(<ShellRoot live={live} shell={shell} colorMode={colorMode} trace={CaseTrace} />)
         await expect.poll(() => {
           return document.querySelector('.monaco-editor .view-line')
         }, { timeout: 60_000 }).toBeTruthy()

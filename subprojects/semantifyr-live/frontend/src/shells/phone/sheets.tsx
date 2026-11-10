@@ -15,11 +15,14 @@ import { changeSettings } from '../../lib/stores/settings'
 import { useStore } from '../../lib/stores/useStore'
 import type { ColorModePreference, ResolvedColorMode } from '../../lib/util/colorMode'
 import type { Live } from '../../lib/workspace/live'
-import { useLive } from '../../lib/workspace/liveContext'
+import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import { portfolioChoices, portfolioName, type PortfolioChoice } from '../../lib/workspace/portfolioChoices'
+import { sharedResultsOf } from '../../lib/workspace/sharedResults'
 import { Icon, type IconName } from '../../ui/icons'
 import { LanguageMark } from '../../ui/marks'
 import { AboutDialog, DeveloperDialog } from '../desktop/Dialogs'
+import { pickFile } from '../desktop/keeping'
+import { shareLink } from '../desktop/SharePopover'
 import { useCurrentDocument, useFlavor } from '../hooks'
 
 export type Overlay =
@@ -229,6 +232,48 @@ function MenuEntry({ icon, label, detail, onClick }: { icon: IconName, label: st
   )
 }
 
+// the phone's own share sheet takes the link where it has one; elsewhere the link is copied
+async function share(live: Live): Promise<'shared' | 'copied' | 'failed'> {
+  const link = await shareLink(live, true)
+  if (link === null) {
+    return 'failed'
+  }
+  try {
+    if (typeof navigator.share === 'function') {
+      await navigator.share({ title: document.title, url: link })
+      return 'shared'
+    }
+    await navigator.clipboard.writeText(link)
+    return 'copied'
+  } catch {
+    return 'failed'
+  }
+}
+
+function ShareEntry({ onClose }: { onClose: () => void }): React.JSX.Element {
+  const live = useLive()
+  const verification = useCurrentVerification(live)
+  const [copied, setCopied] = useState<'copied' | 'failed' | null>(null)
+  const withResults = sharedResultsOf(verification, null) !== null
+  const detail = copied === 'copied' ? 'Link copied' : copied === 'failed' ? 'Could not share the link' : withResults ? 'Model and results' : 'Model'
+  return (
+    <MenuEntry
+      icon="link"
+      label="Share"
+      detail={detail}
+      onClick={() => {
+        void share(live).then((outcome) => {
+          if (outcome === 'shared') {
+            onClose()
+          } else {
+            setCopied(outcome)
+          }
+        })
+      }}
+    />
+  )
+}
+
 export function MenuSheet({ open, onClose, onPortfolios, colorMode }: SheetProps & { onPortfolios: (kind: 'verification' | 'validation') => void, colorMode: ResolvedColorMode }): React.JSX.Element {
   const live = useLive()
   const settings = useStore(live.settings)
@@ -239,6 +284,15 @@ export function MenuSheet({ open, onClose, onPortfolios, colorMode }: SheetProps
   return (
     <Sheet open={open} onClose={onClose} className="sheet-bottom" label="Menu">
       <div className="sheet-grabber" />
+      <MenuEntry
+        icon="open"
+        label="Open a file"
+        onClick={() => {
+          onClose()
+          pickFile(live)
+        }}
+      />
+      {open ? <ShareEntry onClose={onClose} /> : null}
       <MenuEntry
         icon="sliders"
         label="Verification"

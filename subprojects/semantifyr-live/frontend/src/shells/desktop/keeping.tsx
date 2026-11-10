@@ -12,6 +12,7 @@ import { useStore } from '../../lib/stores/useStore'
 import { caseRowOf, type CaseRow } from '../../lib/workspace/caseRows'
 import { browserFileAccess, fileOfDrop, type FileAccess } from '../../lib/workspace/files'
 import { openFileInto, saveDocument, saveDocumentAs, saveWayOf } from '../../lib/workspace/keeping'
+import type { Live } from '../../lib/workspace/live'
 import { compareWithShared, rowsWithSharedVerdicts, type SharedResults } from '../../lib/workspace/sharedResults'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import { Icon } from '../../ui/icons'
@@ -26,6 +27,14 @@ function fileAccess(): FileAccess {
   return access
 }
 
+export function pickFile(live: Live): void {
+  void fileAccess().pick().then((opened) => {
+    if (opened) {
+      openFileInto(live, fileAccess(), opened)
+    }
+  })
+}
+
 export function OpenButton(): React.JSX.Element {
   const live = useLive()
   return (
@@ -33,11 +42,7 @@ export function OpenButton(): React.JSX.Element {
       type="button"
       className="button button-quiet"
       onClick={() => {
-        void fileAccess().pick().then((opened) => {
-          if (opened) {
-            openFileInto(live, fileAccess(), opened)
-          }
-        })
+        pickFile(live)
       }}
     >
       <Icon name="open" />
