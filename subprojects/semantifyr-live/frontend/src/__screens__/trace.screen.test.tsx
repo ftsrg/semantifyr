@@ -243,7 +243,6 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
     expectState: async () => {
       await editorShows('part def BarrierDownWhileTrainInCrossingViolatedTrace')
       expect(text('.case-trace .trace-frame-bar')).toContain('BarrierDownWhileTrainInCrossingViolatedTrace.sysml')
-      expect(text('.case-trace .trace-frame-bar')).toContain('Ctrl and click a name')
     },
   },
   'sysml-steps': {

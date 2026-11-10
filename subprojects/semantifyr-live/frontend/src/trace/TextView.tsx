@@ -25,8 +25,6 @@ export interface TraceTextSource {
   label: string
   languageId: string
   banner: string
-  // names in it lead to the model
-  linked: boolean
 }
 
 type TextModel = monacoEditor.ITextModel
@@ -153,7 +151,7 @@ function TextBody({ source, context }: { source: TraceTextSource | null, context
       <div className="trace-frame-bar">
         <Icon name="lock" size="small" />
         <span className="mono" title={source.label}>{source.label}</span>
-        <span>{source.linked ? 'Ctrl and click a name' : 'read-only'}</span>
+        <span>read-only</span>
         {openTab && text.state === 'ready'
           ? (
             <button

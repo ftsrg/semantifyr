@@ -60,7 +60,6 @@ function witness(label: string, uriOf: (trace: VerificationTrace, runtime: Langu
         label: `${context.caseName}.witness.oxsts`,
         languageId: 'oxsts',
         banner: `The trace of ${context.caseName}, as the verifier returned it in OXSTS.`,
-        linked: false,
       }
       : null
   })
@@ -75,7 +74,6 @@ function languageTrace(label: string, languageId: string, fileName: (caseName: s
         label: fileName(context.caseName),
         languageId,
         banner: `The trace of ${context.caseName}, written in ${languageName}.`,
-        linked: true,
       }
       : null
   })
