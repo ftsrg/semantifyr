@@ -81,7 +81,7 @@ function OpenInLive(): React.JSX.Element {
           return
         }
         opened.opener = null
-        void shareLink(live).then((link) => {
+        void shareLink(live, true).then((link) => {
           if (link === null) {
             opened.close()
           } else {
