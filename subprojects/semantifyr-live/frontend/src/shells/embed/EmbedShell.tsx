@@ -73,7 +73,7 @@ function OpenInLive(): React.JSX.Element {
     <button
       type="button"
       className="button button-quiet open-live"
-      title="Opens Semantifyr Live with this model in a new tab"
+      title="Opens Semantifyr Live with this model and its results in a new tab"
       onClick={() => {
         // opened within the click, so no popup blocker stops it, and pointed at the link once it is built
         const opened = window.open('', '_blank')
