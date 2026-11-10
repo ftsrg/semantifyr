@@ -100,7 +100,7 @@ Until November 2026 the three boolean operators shared one level and read left t
 
 ## Member Access (`.`)
 
-The `.` operator names a member of an instance.
+The `.` operator names a member of an instance. When the instance is held by a variable, the member of the instance the variable holds is read (see [Feature-Typed Variables](variables.md#feature-typed-variables)).
 
 ```oxsts fragment
 counter.value

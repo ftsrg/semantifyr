@@ -25,6 +25,14 @@ prop isAtLeast(threshold: int): bool {
 }
 ```
 
+A parameter may hold an instance, and the body reads its members. An argument that is a variable reads the members of the instance the variable holds.
+
+```oxsts fragment
+prop isDoneOf(worker: Worker[0..1]): bool {
+  return worker.done
+}
+```
+
 The single-`return` restriction may be relaxed in future versions.
 
 ## Abstract Properties
