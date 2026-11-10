@@ -16,6 +16,8 @@ import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext
 import { Icon } from '../../ui/icons'
 import { documentLabel, useCurrentDocument, useFlavor } from '../hooks'
 
+import './keeping.css'
+
 let access: FileAccess | null = null
 
 function fileAccess(): FileAccess {
