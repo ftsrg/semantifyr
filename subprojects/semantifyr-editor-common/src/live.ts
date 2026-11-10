@@ -26,7 +26,6 @@ export interface FlavorInfo {
     discoveryCommand: string;
     validateWitnessCommand: string | null;
     validateWitnessByCase: boolean;
-    peekCompiledOutput: boolean;
     compiledOxstsCommand?: string | null;
 }
 

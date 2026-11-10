@@ -38,7 +38,6 @@ export const SYSML_FLAVOR_INFO: FlavorInfo = {
   discoveryCommand: DISCOVER_COMMAND,
   validateWitnessCommand: VALIDATE_COMMAND,
   validateWitnessByCase: false,
-  peekCompiledOutput: true,
 }
 
 interface ServerDiagnostic {

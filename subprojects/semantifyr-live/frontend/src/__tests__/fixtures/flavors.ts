@@ -17,7 +17,6 @@ function oxstsFlavor(id: string, displayName: string): FlavorInfo {
     discoveryCommand: 'oxsts.case.discover',
     validateWitnessCommand: 'oxsts.case.validateWitness',
     validateWitnessByCase: false,
-    peekCompiledOutput: false,
   };
 }
 
@@ -35,6 +34,5 @@ export const servedFlavors: FlavorInfo[] = [
     discoveryCommand: 'gamma.case.discover',
     validateWitnessCommand: 'gamma.witness.validate',
     validateWitnessByCase: true,
-    peekCompiledOutput: true,
   },
 ];
