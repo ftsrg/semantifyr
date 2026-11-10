@@ -5,7 +5,7 @@
  */
 
 import type React from 'react'
-import { useEffect, useLayoutEffect } from 'react'
+import { useEffect, useLayoutEffect, useState, useSyncExternalStore } from 'react'
 
 import { presentationOf } from '../lib/language/presentation'
 import { applyEditorTheme } from '../lib/session/editorTheme'
@@ -14,7 +14,9 @@ import type { ResolvedColorMode } from '../lib/util/colorMode'
 import type { Live } from '../lib/workspace/live'
 import { LiveContext } from '../lib/workspace/liveContext'
 import DesktopShell from './desktop/DesktopShell'
-import { chooseShell, type ShellKind } from './route'
+import EmbedShell from './embed/EmbedShell'
+import PhoneShell from './phone/PhoneShell'
+import { chooseShell, PHONE_QUERY, type ShellKind } from './route'
 import { ShellContext } from './shellContext'
 import type { ShellState } from './shellState'
 import type { TraceSlot } from './traceSlot'
@@ -48,6 +50,26 @@ const SHELLS: Readonly<Record<ShellKind, (properties: { colorMode: ResolvedColor
   desktop: (properties) => {
     return <DesktopShell {...properties} />
   },
+  embed: (properties) => {
+    return <EmbedShell {...properties} />
+  },
+  phone: (properties) => {
+    return <PhoneShell {...properties} />
+  },
+}
+
+function usePhoneWidth(): boolean {
+  const [query] = useState(() => {
+    return window.matchMedia(PHONE_QUERY)
+  })
+  return useSyncExternalStore((listener) => {
+    query.addEventListener('change', listener)
+    return () => {
+      query.removeEventListener('change', listener)
+    }
+  }, () => {
+    return query.matches
+  })
 }
 
 // the shells over the same stores; the store wiring and the theme are the same for each
@@ -57,10 +79,11 @@ export function ShellRoot({ live, shell, colorMode, trace }: ShellRootProps): Re
     void applyEditorTheme(colorMode)
   }, [colorMode])
   useTitle(live)
+  const phoneWidth = usePhoneWidth()
   return (
     <LiveContext.Provider value={live}>
       <ShellContext.Provider value={shell}>
-        {SHELLS[chooseShell()]({ colorMode, ...(trace ? { trace } : {}) })}
+        {SHELLS[chooseShell(window.location.search, phoneWidth)]({ colorMode, ...(trace ? { trace } : {}) })}
       </ShellContext.Provider>
     </LiveContext.Provider>
   )

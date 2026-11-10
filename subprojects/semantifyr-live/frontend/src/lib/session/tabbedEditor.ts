@@ -8,6 +8,7 @@ import * as vscode from 'vscode'
 import { editor as monacoEditor, Uri } from 'monaco-editor'
 import type { Range } from '@semantifyr/editor-common'
 
+import type { ReadableStore } from '../stores/store'
 import type { ResolvedColorMode } from '../util/colorMode'
 import type { VerificationCaseState } from '../verification/engine'
 import { caseRowOf } from '../workspace/caseRows'
@@ -30,6 +31,11 @@ export interface TabbedEditorOptions {
   colorMode: ResolvedColorMode
   // the cursor in the model, null while a read-only tab is shown
   onCursor: (position: CursorPosition | null) => void
+  // the model takes no typing while this holds, and no on-screen keyboard opens on it
+  modelLocked?: ReadableStore<boolean>
+  verdictMarks?: boolean
+  // the height the model's text takes, for a host that grows with it
+  onContentHeight?: (height: number) => void
 }
 
 export interface TabbedEditor {
@@ -39,6 +45,10 @@ export interface TabbedEditor {
 type TextModel = monacoEditor.ITextModel
 
 const MARK_CLASS = 'verdict-glyph'
+
+function readOnlyMessageOf(modelLocked: boolean): { value: string } {
+  return { value: modelLocked ? 'Press Edit to change the model.' : 'Read-only. Back to the model to edit.' }
+}
 
 function toMonacoRange(range: Range): { startLineNumber: number, startColumn: number, endLineNumber: number, endColumn: number } {
   return {
@@ -90,7 +100,54 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
     if (!editor || !model) {
       return
     }
-    editor.updateOptions({ glyphMargin: true, lineNumbersMinChars: 3, fontSize: 13, lineHeight: 20, readOnlyMessage: { value: 'Read-only. Back to the model to edit.' } })
+    const verdictMarks = options.verdictMarks !== false
+    editor.updateOptions({ glyphMargin: verdictMarks, lineNumbersMinChars: 3, fontSize: 13, lineHeight: 20 })
+
+    const modelLocked = (): boolean => {
+      return options.modelLocked?.get() ?? false
+    }
+    let wasLocked = false
+    let everLocked = false
+    const applyLock = (): void => {
+      const locked = modelLocked()
+      everLocked ||= locked
+      if (editor.getModel() === model) {
+        // the text area honours the read-only flag on a phone, the EditContext does not
+        editor.updateOptions({ readOnly: locked, domReadOnly: locked, readOnlyMessage: readOnlyMessageOf(locked), ...(locked ? { editContext: false } : {}) })
+        if (wasLocked && !locked) {
+          editor.focus()
+        }
+        if (!wasLocked && locked && document.activeElement instanceof HTMLElement && editor.hasTextFocus()) {
+          document.activeElement.blur()
+        }
+      }
+      wasLocked = locked
+    }
+    if (options.modelLocked) {
+      cleanups.push(options.modelLocked.subscribe(applyLock))
+    }
+    applyLock()
+    // on touch the on-screen keyboard shrinks the editor; the cursor stays in sight above it
+    const layout = editor.onDidLayoutChange(() => {
+      const position = editor.getPosition()
+      if (everLocked && position && editor.hasTextFocus()) {
+        editor.revealPositionInCenterIfOutsideViewport(position)
+      }
+    })
+    cleanups.push(() => {
+      layout.dispose()
+    })
+
+    if (options.onContentHeight) {
+      const report = options.onContentHeight
+      const contentSize = editor.onDidContentSizeChange((event) => {
+        report(event.contentHeight)
+      })
+      cleanups.push(() => {
+        contentSize.dispose()
+      })
+      report(editor.getContentHeight())
+    }
 
     const refreshProblems = (): void => {
       live.problems.set(problemsOf(vscode.Uri.parse(modelUri)))
@@ -112,8 +169,10 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
         }
       })
     }
-    cleanups.push(live.verification.subscribe(refreshMarks), live.workspace.subscribe(refreshMarks))
-    refreshMarks()
+    if (verdictMarks) {
+      cleanups.push(live.verification.subscribe(refreshMarks), live.workspace.subscribe(refreshMarks))
+      refreshMarks()
+    }
 
     const mouse = editor.onMouseDown((event) => {
       if (event.target.type !== monacoEditor.MouseTargetType.GUTTER_GLYPH_MARGIN || editor.getModel() !== model) {
@@ -195,7 +254,8 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
         viewStates.set(current.uri.toString(), editor.saveViewState())
       }
       editor.setModel(target)
-      editor.updateOptions({ readOnly })
+      const locked = target === model && modelLocked()
+      editor.updateOptions({ readOnly: readOnly || locked, domReadOnly: locked, readOnlyMessage: readOnlyMessageOf(locked) })
       const saved = viewStates.get(target.uri.toString())
       if (saved) {
         editor.restoreViewState(saved)

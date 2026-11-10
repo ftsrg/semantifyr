@@ -1,0 +1,387 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+import type React from 'react'
+
+import { parseLiveEditorUrl } from '@semantifyr/editor-common'
+import { findExample } from '../../examples'
+import { initializationStepsOf, presentationOf } from '../../lib/language/presentation'
+import { initializationOf, isInitialized, type InitializationStep } from '../../lib/stores/initialization'
+import { useStore } from '../../lib/stores/useStore'
+import type { ResolvedColorMode } from '../../lib/util/colorMode'
+import { caseRowOf, countsOf, formatSeconds, type CaseCounts, type CaseRow, type RowStatus } from '../../lib/workspace/caseRows'
+import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
+import { Icon } from '../../ui/icons'
+import { LanguageMark, ValidationMark, VerdictMark } from '../../ui/marks'
+import { addressProblemText } from '../desktop/Orientation'
+import { documentLabel, useCurrentDocument, useFlavor, useNow } from '../hooks'
+import { BackToModel, ModelEditor } from '../modelEditor'
+import { useShell } from '../shellContext'
+import { dismissOrientation } from '../shellState'
+import { EditControl, useTouchInput } from '../touch'
+import type { TraceSlot } from '../traceSlot'
+
+export type Pane =
+  | 'model'
+  | 'results'
+  | 'trace'
+
+export function AddressError(): React.JSX.Element | null {
+  const live = useLive()
+  const problem = useStore(live.address)
+  if (!problem) {
+    return null
+  }
+  return (
+    <div className="phone-orientation is-error" role="alert">
+      <Icon name="alert" size="small" />
+      <span>{addressProblemText(live, problem)}</span>
+      <button
+        type="button"
+        className="phone-icon-button"
+        title="Dismiss"
+        aria-label="Dismiss"
+        onClick={() => {
+          live.address.set(null)
+        }}
+      >
+        <Icon name="close" size="small" />
+      </button>
+    </div>
+  )
+}
+
+function Orientation(): React.JSX.Element | null {
+  const live = useLive()
+  const shell = useShell()
+  const document = useCurrentDocument(live)
+  const flavor = useFlavor(live)
+  const verification = useCurrentVerification(live)
+  const dismissed = useStore(shell.dismissedOrientations)
+  if (!document || !flavor || document.shared || dismissed.has(document.key)) {
+    return null
+  }
+  const example = findExample(flavor, document.example.id)
+  if (!example) {
+    return null
+  }
+  const count = verification.discovery === 'discovered' ? verification.cases.length : null
+  const cases = count === null ? '' : count === 0 ? ' It has no verification cases yet.' : ` It has ${count} verification ${count === 1 ? 'case' : 'cases'}.`
+  return (
+    <div className="phone-orientation">
+      <span className="orientation-mark" />
+      <span className="orientation-text">
+        <strong>{`${example.label}.`}</strong>
+        {` ${example.description}${cases} Press `}
+        <strong>Verify all</strong>
+        {count === 1 ? ' to check it.' : ' to check them.'}
+      </span>
+      <button
+        type="button"
+        className="phone-icon-button"
+        title="Dismiss"
+        aria-label="Dismiss"
+        onClick={() => {
+          dismissOrientation(shell, document.key)
+        }}
+      >
+        <Icon name="close" size="small" />
+      </button>
+    </div>
+  )
+}
+
+function ModelBar(): React.JSX.Element | null {
+  const live = useLive()
+  const shell = useShell()
+  const flavor = useFlavor(live)
+  const document = useCurrentDocument(live)
+  const touch = useTouchInput()
+  const editing = useStore(shell.editing)
+  if (!flavor || !document) {
+    return <div className="model-bar" />
+  }
+  const label = documentLabel(document, flavor)
+  if (touch && editing) {
+    return (
+      <div className="model-bar is-editing">
+        <Icon name="edit" size="small" />
+        <span className="model-bar-name">{`Editing ${label}`}</span>
+        <EditControl className="model-bar-button" />
+      </div>
+    )
+  }
+  return (
+    <div className="model-bar">
+      <LanguageMark languageId={flavor.languageId} />
+      <span className="model-bar-name">{label}</span>
+      {touch ? <span className="model-bar-hint">Read-only</span> : null}
+      <EditControl className="model-bar-button" />
+    </div>
+  )
+}
+
+// stays mounted behind the other panes, so the editor keeps its document, its undo history and its view
+export function ModelPane({ colorMode, hidden }: { colorMode: ResolvedColorMode, hidden: boolean }): React.JSX.Element {
+  const live = useLive()
+  const shell = useShell()
+  const flavor = useFlavor(live)
+  const editing = useStore(shell.editing)
+  return (
+    <section className={`pane pane-model${editing ? ' is-editing' : ''}`} data-language={flavor?.languageId} aria-label="Model" hidden={hidden}>
+      {editing ? null : <Orientation />}
+      <ModelBar />
+      <BackToModel />
+      <div className="pane-editor">
+        <ModelEditor colorMode={colorMode} verdictMarks />
+      </div>
+    </section>
+  )
+}
+
+const COUNT_GROUPS: readonly { status: RowStatus & keyof CaseCounts, label: string }[] = [
+  { status: 'passed', label: 'Passed' },
+  { status: 'failed', label: 'Failed' },
+  { status: 'inconclusive', label: 'Inconclusive' },
+  { status: 'error', label: 'Error' },
+]
+
+function Counts({ counts }: { counts: CaseCounts }): React.JSX.Element {
+  return (
+    <span className="counts">
+      {COUNT_GROUPS.map(({ status, label }) => {
+        const value = counts[status]
+        return (
+          <span key={status} className={`count status-${status}${value === 0 ? ' is-zero' : ''}`} title={`${label}: ${value}`} aria-label={`${label}: ${value}`}>
+            <VerdictMark status={status} />
+            <span>{value}</span>
+          </span>
+        )
+      })}
+      <span className="counts-total">{`of ${counts.total}`}</span>
+    </span>
+  )
+}
+
+function stepTime(step: InitializationStep, now: number, failedWord: string): string {
+  if (step.state === 'done' && step.startedAt !== null && step.finishedAt !== null) {
+    return formatSeconds(step.finishedAt - step.startedAt)
+  }
+  if (step.state === 'running' && step.startedAt !== null) {
+    return `${Math.floor((now - step.startedAt) / 1000)} s`
+  }
+  return step.state === 'failed' ? failedWord : ''
+}
+
+// the language the address will open, while the server has not answered with its languages
+function addressedLanguage(): string {
+  const flavor = parseLiveEditorUrl(window.location.search).flavor
+  if (flavor === 'gamma') {
+    return 'gamma'
+  }
+  return flavor?.startsWith('oxsts') ? 'oxsts' : 'sysml'
+}
+
+function Initialization(): React.JSX.Element {
+  const live = useLive()
+  const catalog = useStore(live.catalog, (state) => {
+    return state.status
+  })
+  const flavor = useFlavor(live)
+  const runtimeSteps = useStore(live.initialization)
+  const pending = useStore(live.pendingVerifyAll)
+  const now = useNow(1000)
+  const languageId = flavor?.languageId ?? addressedLanguage()
+  const presentation = presentationOf(languageId)
+  const waiting = catalog === 'waiting'
+  const steps = flavor
+    ? runtimeSteps.steps
+    : initializationOf(initializationStepsOf(languageId, window.location.origin)).steps.map((step, index) => {
+      return index === 0 ? { ...step, state: waiting ? 'failed' as const : 'running' as const, startedAt: now } : step
+    })
+  const failed = steps.some((step) => {
+    return step.state === 'failed'
+  })
+  const note = waiting
+    ? 'The server is not answering. The editor works; the verification cases are known once a session is up.'
+    : failed ? 'The verification cases are known only after initialization.' : presentation.initializationNote
+  return (
+    <div className="phone-init" data-language={languageId}>
+      <div className="phone-init-title">
+        <LanguageMark languageId={languageId} />
+        {`Initializing ${presentation.name}`}
+      </div>
+      <ul className="phone-init-steps">
+        {steps.map((step) => {
+          const state = step.state === 'done' ? 'is-done' : step.state === 'running' ? 'is-current' : step.state === 'failed' ? 'is-failed' : ''
+          return (
+            <li key={step.id} className={`phone-init-step ${state}`}>
+              {step.state === 'done' ? <Icon name="check" /> : null}
+              {step.state === 'failed' ? <Icon name="alert" /> : null}
+              {step.state === 'running' ? <VerdictMark status="running" /> : null}
+              {step.state === 'pending' ? <VerdictMark status="not-run" /> : null}
+              <span>{step.label}</span>
+              <span className="phone-init-time">{stepTime(step, now, waiting ? 'retrying' : 'failed')}</span>
+            </li>
+          )
+        })}
+      </ul>
+      {failed ? null : <div className="progress-indeterminate" />}
+      <p className="phone-init-note">{note}</p>
+      {pending
+        ? (
+          <div className="phone-init-pressed">
+            <Icon name="clock" />
+            <span>Verify all is pressed. Every case runs as soon as initialization has finished.</span>
+          </div>
+        )
+        : null}
+    </div>
+  )
+}
+
+function CaseRowView({ row, selected, onOpen }: { row: CaseRow, selected: boolean, onOpen: (row: CaseRow) => void }): React.JSX.Element {
+  const live = useLive()
+  const waiting = row.status === 'running' || row.status === 'queued'
+  return (
+    <div
+      className={`phone-case status-${row.status}${row.outdated ? ' is-outdated' : ''}${selected ? ' is-selected' : ''}`}
+      role="button"
+      tabIndex={0}
+      data-case={row.id}
+      onClick={() => {
+        onOpen(row)
+      }}
+      onKeyDown={(event) => {
+        if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault()
+          onOpen(row)
+        }
+      }}
+    >
+      <VerdictMark status={row.status} label={row.word} />
+      <div className="phone-case-main">
+        <div className="case-name">{row.name}</div>
+        <div className="phone-case-outcome">
+          {row.validation !== null ? <ValidationMark state={row.validation} detail={row.validationMessage} /> : null}
+          <span className="verdict-word">{row.word}</span>
+          {row.time !== null ? <span className="case-time">{row.time}</span> : null}
+          {row.outdated ? <span className="outdated-tag">Outdated</span> : null}
+        </div>
+        {row.message !== null ? <div className="case-message">{row.message}</div> : null}
+      </div>
+      <span className="phone-case-side">
+        <button
+          type="button"
+          className="phone-case-run"
+          title={waiting ? 'Cancel this case' : 'Run this case'}
+          aria-label={`${waiting ? 'Cancel' : 'Run'} ${row.name}`}
+          onClick={(event) => {
+            event.stopPropagation()
+            if (waiting) {
+              live.cancelCase(row.id)
+            } else {
+              live.verifyCase(row.id)
+            }
+          }}
+        >
+          <Icon name={waiting ? 'stop' : 'play'} />
+        </button>
+        {row.hasTrace ? <Icon name="chevron-right" /> : null}
+      </span>
+    </div>
+  )
+}
+
+export function useInitialized(): boolean {
+  const live = useLive()
+  const catalog = useStore(live.catalog, (state) => {
+    return state.status
+  })
+  const initialization = useStore(live.initialization)
+  return catalog === 'ready' && initialization.steps.length > 0 && isInitialized(initialization)
+}
+
+export function ResultsPane({ onPane }: { onPane: (pane: Pane) => void }): React.JSX.Element {
+  const live = useLive()
+  const verification = useCurrentVerification(live)
+  const selection = useStore(live.selection)
+  const initialized = useInitialized()
+  const rows = verification.cases.map(caseRowOf)
+  // a case with a trace opens it; one without shows its definition
+  const open = (row: CaseRow): void => {
+    live.selectCase(row.id)
+    if (row.hasTrace) {
+      onPane('trace')
+      return
+    }
+    const caseState = verification.cases.find((candidate) => {
+      return candidate.caseInfo.id === row.id
+    })
+    if (caseState) {
+      onPane('model')
+      live.revealRange(caseState.caseInfo.location.range)
+    }
+  }
+  return (
+    <section className="pane pane-results" aria-label="Results">
+      <div className="pane-scroll">
+        {initialized
+          ? (
+            <>
+              <div className="pane-header">
+                <Counts counts={countsOf(rows)} />
+              </div>
+              <div role="list" aria-label="Verification cases" data-testid="case-list">
+                {rows.map((row) => {
+                  return <CaseRowView key={row.id} row={row} selected={row.id === selection} onOpen={open} />
+                })}
+              </div>
+              {rows.length === 0 ? <p className="pane-hint">The model has no verification cases.</p> : null}
+            </>
+          )
+          : <Initialization />}
+      </div>
+    </section>
+  )
+}
+
+export function TracePane({ slot }: { slot: TraceSlot | undefined }): React.JSX.Element {
+  const live = useLive()
+  const flavor = useFlavor(live)
+  const verification = useCurrentVerification(live)
+  const selection = useStore(live.selection)
+  const caseState = verification.cases.find((candidate) => {
+    return candidate.caseInfo.id === selection
+  })
+  const row = caseState ? caseRowOf(caseState) : undefined
+  if (!caseState || !row || !row.hasTrace || !flavor) {
+    return (
+      <section className="pane pane-trace" aria-label="Trace">
+        <p className="pane-hint">Open a case with a trace to see it here.</p>
+      </section>
+    )
+  }
+  const Slot = slot
+  return (
+    <section className={`pane pane-trace status-${row.status}${row.outdated ? ' is-outdated' : ''}`} aria-label="Trace">
+      <div className="trace-head">
+        <div className="trace-head-title">
+          <VerdictMark status={row.status} label={row.word} />
+          <span className="case-name">{row.name}</span>
+        </div>
+        <div className="trace-head-meta">
+          <span className="verdict-word">{row.word}</span>
+          {row.time !== null ? <span>{row.time}</span> : null}
+          {row.outdated ? <span className="outdated-tag">Outdated</span> : null}
+        </div>
+      </div>
+      <div className="trace-body">
+        {Slot ? <Slot caseState={caseState} flavor={flavor} /> : null}
+      </div>
+    </section>
+  )
+}

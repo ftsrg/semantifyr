@@ -23,12 +23,22 @@ const WEBSITE = 'https://ftsrg.mit.bme.hu/semantifyr'
 const SOURCE_CODE = 'https://github.com/ftsrg/semantifyr'
 const PAGE_START = Date.now()
 
-export function AboutDialog(): React.JSX.Element {
+// the phone's menu draws the triggers as its own entries
+interface TriggerProps {
+  className?: string
+  children?: React.ReactNode
+}
+
+export function AboutDialog({ className, children }: TriggerProps): React.JSX.Element {
   return (
     <Dialog.Root>
-      <Dialog.Trigger className="button button-quiet">
-        <Icon name="info" />
-        About
+      <Dialog.Trigger className={className ?? 'button button-quiet'}>
+        {children ?? (
+          <>
+            <Icon name="info" />
+            About
+          </>
+        )}
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Backdrop className="scrim" />
@@ -192,12 +202,12 @@ function DeveloperBody(): React.JSX.Element {
   )
 }
 
-export function DeveloperDialog(): React.JSX.Element {
+export function DeveloperDialog({ className, children }: TriggerProps): React.JSX.Element {
   const [open, setOpen] = useState(false)
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Trigger className="button button-icon" title="Developer panel" aria-label="Developer panel">
-        <Icon name="terminal" />
+      <Dialog.Trigger className={className ?? 'button button-icon'} title="Developer panel" aria-label="Developer panel">
+        {children ?? <Icon name="terminal" />}
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Backdrop className="scrim" />

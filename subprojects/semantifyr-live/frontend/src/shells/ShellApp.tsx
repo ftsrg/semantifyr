@@ -21,6 +21,7 @@ import type { ResolvedColorMode } from '../lib/util/colorMode'
 import { createLive, type Live } from '../lib/workspace/live'
 import { SHARED_RESULTS_PARAMETER } from '../lib/workspace/sharedResults'
 import { CaseTrace } from '../trace/CaseTrace'
+import { sessionKindOf } from './route'
 import { ShellRoot } from './ShellRoot'
 import { createShellState } from './shellState'
 import { UpdatePrompt } from './UpdatePrompt'
@@ -71,7 +72,7 @@ export default function ShellApp(): React.JSX.Element {
       },
       modelDocuments: createModelDocuments(),
       defaultFlavorId: SYSML_FLAVOR_ID,
-      sessionKind: 'full',
+      sessionKind: sessionKindOf(window.location.search),
     })
   })
   useEffect(() => {

@@ -18,6 +18,7 @@ import { Toolbar } from './Toolbar'
 
 import './desktop.css'
 import './shell.css'
+import './tablet.css'
 
 interface Props {
   colorMode: ResolvedColorMode

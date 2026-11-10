@@ -25,6 +25,7 @@ import { LanguageMark } from '../../ui/marks'
 import { documentLabel, useCurrentDocument, useFlavor } from '../hooks'
 import { useShell } from '../shellContext'
 import { DropTarget, UnsavedMark, useFileDrop, useKeepingEvents } from './keeping'
+import { EditControl, modelLockOf } from '../touch'
 
 const LIBRARY_ENTRY_LABELS: Readonly<Record<LibraryKind, string>> = {
   'library': 'Library',
@@ -162,7 +163,10 @@ function Tabs({ flavor, modelLabel, runtime }: { flavor: LiveFlavor, modelLabel:
         )
       })}
       <span className="tabs-spacer" />
-      <span className="tabs-end">{runtime ? <DocumentsMenu runtime={runtime} flavor={flavor} modelLabel={modelLabel} /> : null}</span>
+      <span className="tabs-end">
+        <EditControl className="button-small" />
+        {runtime ? <DocumentsMenu runtime={runtime} flavor={flavor} modelLabel={modelLabel} /> : null}
+      </span>
     </div>
   )
 }
@@ -214,6 +218,7 @@ function EditorHost({ document, flavor, colorMode }: { document: DocumentRecord,
       onCursor: (position) => {
         shell.cursor.set(position)
       },
+      modelLocked: modelLockOf(shell),
     })
     return () => {
       void binding.dispose()

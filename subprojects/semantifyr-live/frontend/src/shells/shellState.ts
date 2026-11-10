@@ -18,6 +18,8 @@ export interface ShellState {
   verifyBlocked: Store<boolean>
   cursor: Store<CursorPosition | null>
   filter: Store<CountFilter | null>
+  // the edit control was pressed, so the model takes typing on touch input
+  editing: Store<boolean>
 }
 
 export function createShellState(): ShellState {
@@ -26,6 +28,7 @@ export function createShellState(): ShellState {
     verifyBlocked: createStore(false),
     cursor: createStore<CursorPosition | null>(null),
     filter: createStore<CountFilter | null>(null),
+    editing: createStore(false),
   }
 }
 

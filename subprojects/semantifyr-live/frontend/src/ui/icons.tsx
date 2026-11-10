@@ -239,6 +239,18 @@ const ICONS = {
       <path d="M4.5 15v3.5a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1V15" />
     </>
   ),
+  'more': (
+    <>
+      <circle cx="5.5" cy="12" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="18.5" cy="12" r="1.5" fill="currentColor" stroke="none" />
+    </>
+  ),
+  'chevron-right': (
+    <>
+      <path d="M10 7l5 5-5 5" />
+    </>
+  ),
 } as const
 
 export type IconName = keyof typeof ICONS

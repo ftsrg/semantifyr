@@ -1,0 +1,22 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+@media (max-width: 1199.98px) {
+  .app { min-width: 0; --results-width: clamp(400px, 44vw, 460px); }
+  .orientation { height: auto; min-height: var(--orientation-height); padding-top: var(--space-3); padding-bottom: var(--space-3); line-height: 1.45; }
+  .toolbar-group-end { flex-shrink: 0; }
+}
+
+/* a tablet in portrait: the buttons and the languages not chosen keep their icons and drop their words, which stay their names */
+@media (max-width: 999.98px) {
+  .toolbar-group-end > .button-quiet { gap: 0; padding: 0 var(--space-3); font-size: 0; }
+  .toolbar-group-end > .button-quiet .icon { width: 16px; height: 16px; }
+  .language-switch .segmented-option[aria-pressed="false"] { gap: 0; padding: 0 var(--space-4); font-size: 0; }
+  .results-header .counts-total { display: none; }
+  .statusbar, .status-end { gap: var(--space-4); }
+  .status-message { overflow: hidden; }
+  .status-message > span { overflow: hidden; text-overflow: ellipsis; }
+}
