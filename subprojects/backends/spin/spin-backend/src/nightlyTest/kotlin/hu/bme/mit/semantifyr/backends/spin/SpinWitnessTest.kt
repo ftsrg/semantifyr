@@ -12,10 +12,10 @@ import hu.bme.mit.semantifyr.backends.spin.verification.SpinBackendModule
 import hu.bme.mit.semantifyr.backends.spin.verification.SpinConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.portfolios.Portfolios
+import hu.bme.mit.semantifyr.verifier.EngineVerdictPortfolio
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
-import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -59,7 +59,7 @@ class SpinWitnessTest {
         helper.checkTestModel(
             context,
             verificationCase,
-            verificationPortfolio = SingleBackendPortfolio(SpinBackend(), SpinConfig.SafeDfs),
+            verificationPortfolio = EngineVerdictPortfolio(SpinBackend(), SpinConfig.SafeDfs),
             outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(SpinWitnessTest::class.java),
             validationPortfolio = Portfolios.AllAgree,
         )

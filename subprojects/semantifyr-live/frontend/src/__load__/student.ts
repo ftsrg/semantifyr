@@ -12,14 +12,19 @@ import {
   verifyCase,
   VerificationStatus,
   type FlavorInfo,
+  type Location,
+  type VerificationCaseResult,
   type VerificationCaseSpecification,
+  type WitnessValidationStatus,
 } from '@semantifyr/editor-common'
+import { validateWitness, witnessValidationLocation, type LspClient } from '../lib/verification/engine.ts'
 import type { LoadTestModel } from './models.ts'
 
 export interface StudentOptions {
   webSocketBase: string
   flavor: FlavorInfo
   portfolio: string
+  validationPortfolio: string
   model: LoadTestModel
   edit: boolean
   timeoutMs: number
@@ -38,7 +43,24 @@ export interface CaseRun {
   serverMs: number | null
 }
 
-export type Phase = 'connect' | 'initialize' | 'diagnostics' | 'discovery' | 'verify' | 'edit'
+export interface ValidationRun {
+  name: string
+  edited: boolean
+  status: WitnessValidationStatus
+  message: string | null
+  wallMs: number
+  queueMs: number | null
+  serverMs: number | null
+}
+
+export type Phase =
+  | 'connect'
+  | 'initialize'
+  | 'diagnostics'
+  | 'discovery'
+  | 'verify'
+  | 'edit'
+  | 'validate'
 
 export interface StudentError {
   phase: Phase
@@ -57,6 +79,7 @@ export interface StudentRun {
   discoveryMs: number[]
   errorDiagnostics: number
   cases: CaseRun[]
+  validations: ValidationRun[]
   error: StudentError | null
 }
 
@@ -117,21 +140,77 @@ function diagnosticsListener(connection: MessageConnection, uri: string) {
   })
 }
 
-// the server reports Queued, then Running once a verification permit is free; a student runs one verification at a time
-function runningListener(connection: MessageConnection) {
-  let runningAt: number | null = null
-  connection.onNotification('semantifyr/live/session/verification/changed', (params: { active?: { state: string }[] }) => {
-    if (runningAt === null && params.active?.some((entry) => entry.state === 'Running')) {
-      runningAt = performance.now()
+export interface RunningTracker {
+  reset: (key: string) => void
+  runningAt: (key: string) => number | null
+}
+
+interface ActiveVerification {
+  kind: string
+  state: string
+  location?: Location
+}
+
+function activityKey(kind: 'Verify' | 'Validate', location: Location): string {
+  return `${kind} ${location.uri} ${location.range.start.line}:${location.range.start.character}`
+}
+
+// the server reports Queued, then Running once a verification permit is free; validations run beside the verifications
+function runningListener(connection: MessageConnection): RunningTracker {
+  const runningAt = new Map<string, number>()
+  connection.onNotification('semantifyr/live/session/verification/changed', (params: { active?: ActiveVerification[] }) => {
+    for (const entry of params.active ?? []) {
+      if (entry.state === 'Running' && entry.location && (entry.kind === 'Verify' || entry.kind === 'Validate')) {
+        const key = activityKey(entry.kind, entry.location)
+        if (!runningAt.has(key)) {
+          runningAt.set(key, performance.now())
+        }
+      }
     }
   })
   return {
-    reset() {
-      runningAt = null
+    reset(key) {
+      runningAt.delete(key)
     },
-    runningAt() {
-      return runningAt
+    runningAt(key) {
+      return runningAt.get(key) ?? null
     },
+  }
+}
+
+export interface ValidationRequest {
+  flavor: FlavorInfo
+  verificationCase: VerificationCaseSpecification
+  result: VerificationCaseResult | null
+  edited: boolean
+  portfolio: string
+  timeoutMs: number
+}
+
+// as the editor's auto-validation: every result with a witness, sent by case where the flavor validates by case
+export async function validateResult(client: LspClient, running: RunningTracker, request: ValidationRequest): Promise<ValidationRun | null> {
+  const witnessUri = request.result?.trace?.witnessUri
+  const command = request.flavor.validateWitnessCommand
+  if (!witnessUri || !command) {
+    return null
+  }
+  const location = witnessValidationLocation(request.verificationCase, witnessUri, request.flavor.validateWitnessByCase)
+  const key = activityKey('Validate', location)
+  const tokenSource = new CancellationTokenSource()
+  running.reset(key)
+  const sentAt = performance.now()
+  const outcome = await withTimeout(validateWitness(client, command, location, { portfolioId: request.portfolio }, tokenSource.token), request.timeoutMs, () => {
+    tokenSource.cancel()
+  })
+  const runningAt = running.runningAt(key)
+  return {
+    name: caseName(request.verificationCase),
+    edited: request.edited,
+    status: outcome.status,
+    message: outcome.message ?? null,
+    wallMs: performance.now() - sentAt,
+    queueMs: runningAt === null ? null : runningAt - sentAt,
+    serverMs: milliseconds(outcome.metrics?.totalDuration),
   }
 }
 
@@ -148,6 +227,7 @@ export async function runStudent(student: number, round: number, options: Studen
     discoveryMs: [],
     errorDiagnostics: 0,
     cases: [],
+    validations: [],
     error: null,
   }
   const uri = `file:///workspace/${flavor.fileName}`
@@ -212,16 +292,33 @@ export async function runStudent(student: number, round: number, options: Studen
       return cases.value
     }
 
+    const validations: Promise<void>[] = []
+    const validationFailures: Error[] = []
+    const validate = (request: ValidationRequest) => {
+      validations.push(validateResult(connection, running, request).then(
+        (validation) => {
+          if (validation) {
+            run.validations.push(validation)
+          }
+        },
+        (error: unknown) => {
+          validationFailures.push(error instanceof Error ? error : new Error(String(error)))
+        },
+      ))
+    }
+
     const verifyAll = async (cases: VerificationCaseSpecification[], edited: boolean) => {
       state.phase = 'verify'
       for (const verificationCase of cases) {
         const name = caseName(verificationCase)
         const expected = model.cases.find((declaredCase) => declaredCase.name === name)?.expected ?? null
+        const location = { uri, range: verificationCase.location.range }
+        const key = activityKey('Verify', location)
         const tokenSource = new CancellationTokenSource()
-        running.reset()
+        running.reset(key)
         const sentAt = performance.now()
         const result = await timed(
-          verifyCase(connection, flavor.verificationCommand, { uri, range: verificationCase.location.range }, {
+          verifyCase(connection, flavor.verificationCommand, location, {
             portfolio: options.portfolio,
             token: tokenSource.token,
           }),
@@ -229,7 +326,7 @@ export async function runStudent(student: number, round: number, options: Studen
             tokenSource.cancel()
           },
         )
-        const runningAt = running.runningAt()
+        const runningAt = running.runningAt(key)
         const status = result.value?.status ?? null
         run.cases.push({
           name,
@@ -242,6 +339,7 @@ export async function runStudent(student: number, round: number, options: Studen
           queueMs: runningAt === null ? null : runningAt - sentAt,
           serverMs: milliseconds(result.value?.metrics?.totalDuration),
         })
+        validate({ flavor, verificationCase, result: result.value, edited, portfolio: options.validationPortfolio, timeoutMs })
       }
     }
 
@@ -256,6 +354,13 @@ export async function runStudent(student: number, round: number, options: Studen
       })
       run.editDiagnosticsMs = (await timed(editDiagnostics)).elapsedMs
       await verifyAll(await discover(), true)
+    }
+
+    state.phase = 'validate'
+    await Promise.all(validations)
+    const [validationFailure] = validationFailures
+    if (validationFailure) {
+      throw validationFailure
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)

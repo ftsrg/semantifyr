@@ -9,12 +9,15 @@ package hu.bme.mit.semantifyr.live.backend.lsp.service
 import hu.bme.mit.semantifyr.lang.ide.server.concurrent.WorkManager
 import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServices
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionClient
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionContext
+import hu.bme.mit.semantifyr.live.backend.testing.testFlavor
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.lsp4j.InitializeParams
 import org.eclipse.lsp4j.ServerCapabilities
 import org.eclipse.lsp4j.WorkDoneProgressCancelParams
 import org.eclipse.lsp4j.services.LanguageClient
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
@@ -25,11 +28,15 @@ class SessionLanguageServerTest {
 
     private val workManager = mock<WorkManager>()
     private val languageServices = mock<LanguageServices> {
-        on { this.serverCapabilities } doReturn serverCapabilities
+        on { serverCapabilities(any()) } doReturn serverCapabilities
+    }
+    private val sessionContext = mock<SessionContext> {
+        on { flavor } doReturn testFlavor()
     }
     private val sessionClient = mock<SessionClient>()
 
     private val server = SessionLanguageServer(
+        sessionContext,
         sessionClient,
         workManager,
         languageServices,
@@ -39,9 +46,16 @@ class SessionLanguageServerTest {
     )
 
     @Test
-    fun `initialize returns the language server capabilities`() {
+    fun `initialize returns the language server capabilities with the flavor's commands`() {
         val result = server.initialize(InitializeParams()).get()
         assertThat(result.capabilities).isSameAs(serverCapabilities)
+        verify(languageServices).serverCapabilities(
+            listOf(
+                "oxsts.case.discover",
+                "oxsts.case.verify",
+                "oxsts.case.validateWitness",
+            ),
+        )
     }
 
     @Test

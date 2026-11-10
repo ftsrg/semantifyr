@@ -14,6 +14,8 @@ import RefreshIcon from '@mui/icons-material/Refresh'
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined'
 import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined'
 import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined'
+import TimerOffOutlinedIcon from '@mui/icons-material/TimerOffOutlined'
+import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined'
 import type { WitnessValidationStatus } from '../../lib/verification'
 import { ICON_SIZE } from '../../lib/util/theme';
 
@@ -54,6 +56,20 @@ function chipDescriptor(status: WitnessValidationStatus | undefined): Descriptor
         color: 'var(--warning)',
         icon: <HelpOutlineOutlinedIcon sx={{ fontSize: ICON_SIZE.sm }} />,
         tooltip: 'The portfolio could not validate the witness.',
+      }
+    case 'timeout':
+      return {
+        label: 'Validation timed out',
+        color: 'var(--warning)',
+        icon: <TimerOffOutlinedIcon sx={{ fontSize: ICON_SIZE.sm }} />,
+        tooltip: 'The validation ran out of time before the portfolio decided.',
+      }
+    case 'cancelled':
+      return {
+        label: 'Validation cancelled',
+        color: 'text.secondary',
+        icon: <BlockOutlinedIcon sx={{ fontSize: ICON_SIZE.sm }} />,
+        tooltip: 'The validation was cancelled.',
       }
     case 'errored':
       return {

@@ -8,12 +8,13 @@ import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import {
   discoverVerificationCases,
+  normalizeBaseUrl,
   verifyCase,
   type FlavorInfo,
   type LspClient,
   type VerificationStatus,
 } from '@semantifyr/editor-common';
-import { fetchLiveSetup, normalizeBaseUrl, useLiveBackendUrl, type LiveSetup } from '@site/src/lib/live';
+import { fetchLiveSetup, useLiveBackendUrl, type LiveSetup } from '@site/src/lib/live';
 import styles from './styles.module.css';
 
 interface Props {

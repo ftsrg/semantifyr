@@ -23,7 +23,13 @@ import {
 } from './monaco'
 import type { LspClient, VerificationCaseLocation } from '../verification/engine'
 import { wrapClientWithMetrics, type LspMetrics, type MetricsTracker } from './lspMetrics'
-import { createReconnectController, type ReconnectController } from './reconnectController'
+import {
+  createReconnectController,
+  isTerminalClose,
+  sessionLimitReason,
+  type ReconnectController,
+  type SocketClose,
+} from './reconnectController'
 import { SemantifyrLiveApi } from '../api/lspExtensions'
 import {
   createSysmlBridge,
@@ -41,6 +47,7 @@ export type LiveEditorStatus =
   | 'disconnected'
   | 'reconnecting'
   | 'errored'
+  | 'terminated'
 
 export interface ProblemEntry {
   severity: 'error' | 'warning' | 'info' | 'hint'
@@ -176,8 +183,11 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
   let mappedOxsts: string | null = null
   let contentSubscription: { dispose: () => void } | null = null
   let fsOverlay: { dispose: () => void } | null = null
+  let connectionGeneration = 0
+  let lastClose: SocketClose | null = null
   let cancelled = false
   let started = false
+  let startCompleted = false
   let disposed = false
 
   let metricsClient: (LspClient & MetricsTracker) | null = null
@@ -261,6 +271,8 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
   }
 
   const doConnect = async (): Promise<void> => {
+    const generation = ++connectionGeneration
+    lastClose = null
     if (languageClient) {
       await tearDownLanguageClient(languageClient)
       languageClient = null
@@ -280,6 +292,11 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
             return
           }
           reconnectController.schedule()
+        },
+        onClose: (close) => {
+          if (generation === connectionGeneration) {
+            lastClose = close
+          }
         },
       },
     )
@@ -323,12 +340,49 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
     )
   }
 
+  const completeStart = (): void => {
+    if (startCompleted) {
+      return
+    }
+    startCompleted = true
+
+    if (sysmlBridge) {
+      contentSubscription = editorApp?.getEditor()?.onDidChangeModelContent(scheduleMappingRefresh) ?? null
+      void refreshMapping()
+    }
+
+    const api = createApi(options.backendUrl)
+    const flavorLookup = sysmlBridge ? Promise.resolve(SYSML_FLAVOR_INFO) : api.fetchFlavor(options.flavorId)
+    flavorLookup
+      .then((found) => {
+        if (cancelled) {
+          return
+        }
+        lastFlavor = found
+        notifyListeners(flavorListeners, (cb) => { cb(found); }, 'flavor')
+      })
+      .catch(() => { /* non-fatal */ })
+  }
+
+  // A first connect that failed is completed by whichever later connect succeeds
+  const reportConnected = (): void => {
+    reportStatus('connected')
+    completeStart()
+  }
+
   const reconnectController: ReconnectController = createReconnectController({
     maxAttempts: MAX_RECONNECT_ATTEMPTS,
     backoffMs: RECONNECT_BACKOFF_MS,
     connect: doConnect,
     isCancelled: () => cancelled,
-    onStatus: reportStatus,
+    lastClose: () => lastClose,
+    onStatus: (status, info) => {
+      if (status === 'connected') {
+        reportConnected()
+      } else {
+        reportStatus(status, info)
+      }
+    },
   })
 
   const start = async (host: HTMLElement): Promise<void> => {
@@ -375,8 +429,13 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
         await doConnect()
       } catch {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- cancelled may flip during await
-        if (!cancelled) {
-          reportStatus('errored', 'Failed to connect to LSP server')
+        if (cancelled) {
+          return
+        }
+        if (isTerminalClose(lastClose)) {
+          reconnectController.schedule()
+        } else {
+          reportStatus('errored', sessionLimitReason(lastClose) ?? 'Failed to connect to LSP server')
         }
         return
       }
@@ -386,24 +445,7 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
         return
       }
       reconnectController.resetAttempts()
-      reportStatus('connected')
-
-      if (sysmlBridge) {
-        contentSubscription = editorApp.getEditor()?.onDidChangeModelContent(scheduleMappingRefresh) ?? null
-        void refreshMapping()
-      }
-
-      const api = createApi(options.backendUrl)
-      const flavorLookup = sysmlBridge ? Promise.resolve(SYSML_FLAVOR_INFO) : api.fetchFlavor(options.flavorId)
-      flavorLookup
-        .then((found) => {
-          if (cancelled) {
-            return
-          }
-          lastFlavor = found
-          notifyListeners(flavorListeners, (cb) => { cb(found); }, 'flavor')
-        })
-        .catch(() => { /* non-fatal */ })
+      reportConnected()
     } catch {
       if (!cancelled) {
         reportStatus('errored', 'Editor failed to start')
@@ -469,7 +511,7 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
   }
 
   const reconnect = (): void => {
-    if (disposed) {
+    if (disposed || reconnectController.terminated()) {
       return
     }
     cancelled = false
@@ -481,7 +523,7 @@ export function createLiveEditorSession(options: LiveEditorSessionOptions): Live
         if (cancelled) {
           return
         }
-        reportStatus('connected')
+        reportConnected()
       })
       .catch(() => {
         reconnectController.schedule()

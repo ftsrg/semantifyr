@@ -90,7 +90,7 @@ function stubOxsts(result = failedResult()) {
 
 function verifyRequest(worker: LspClient, oxsts: LspClient) {
   const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => worker, getOxstsClient: () => oxsts })
-  const verifyArguments = { uri: fileUri, range: sysmlRange, portfolio: 'smart-full', caseLabel: 'LampNeverLit' }
+  const verifyArguments = { uri: fileUri, range: sysmlRange, portfolio: 'smart-full' }
   return {
     bridge,
     run: () => bridge.client.sendRequest('workspace/executeCommand', { command: 'sysml.case.verify', arguments: [verifyArguments] }) as Promise<VerificationCaseResult>,
@@ -121,7 +121,7 @@ describe('sysml bridge', () => {
     ])
     expect(oxsts.commands[1]).toEqual({
       command: 'oxsts.case.verify',
-      arguments: [{ uri: SYSML_OXSTS_URI, range: oxstsRange, portfolio: 'smart-full', caseLabel: 'LampNeverLit' }],
+      arguments: [{ uri: SYSML_OXSTS_URI, range: oxstsRange, portfolio: 'smart-full' }],
     })
     expect(worker.requests.at(-1)).toEqual({
       command: 'syside.semantifyr.sysml.trace',
@@ -135,14 +135,15 @@ describe('sysml bridge', () => {
   it('sends a full-text change for a changed mapping and reopens on a new session', async () => {
     let oxstsText = 'first'
     const worker = stubWorker()
-    worker.sendRequest = (_method, params) => {
+    const stubbed = worker.sendRequest
+    worker.sendRequest = (method, params) => {
       const request = params as Command
-      return Promise.resolve(request.command === 'syside.semantifyr.sysml.oxsts' ? { oxsts: oxstsText, diagnostics: [] } : 'trace')
+      return request.command === 'syside.semantifyr.sysml.oxsts' ? Promise.resolve({ oxsts: oxstsText, diagnostics: [] }) : stubbed(method, params)
     }
     let session = stubOxsts()
     const firstSession = session
     const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => worker, getOxstsClient: () => session.client })
-    const verify = () => bridge.client.sendRequest('workspace/executeCommand', { command: 'sysml.case.verify', arguments: [{ uri: fileUri, range: sysmlRange, caseLabel: 'LampNeverLit' }] })
+    const verify = () => bridge.client.sendRequest('workspace/executeCommand', { command: 'sysml.case.verify', arguments: [{ uri: fileUri, range: sysmlRange }] })
 
     await verify()
     oxstsText = 'second'
@@ -159,6 +160,17 @@ describe('sysml bridge', () => {
       contentChanges: [{ text: 'second' }],
     })
     expect(session.notifications.map((notification) => notification.method)).toEqual(['textDocument/didOpen'])
+  })
+
+  it('errors without reaching the backend when no case is at the requested range', async () => {
+    const oxsts = stubOxsts()
+    const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => stubWorker(), getOxstsClient: () => oxsts.client })
+    const otherRange = { start: { line: 12, character: 0 }, end: { line: 14, character: 1 } }
+
+    const result = (await bridge.client.sendRequest('workspace/executeCommand', { command: 'sysml.case.verify', arguments: [{ uri: fileUri, range: otherRange }] })) as VerificationCaseResult
+
+    expect(result.status).toBe(VerificationStatus.Errored)
+    expect(oxsts.commands).toEqual([])
   })
 
   it('does not reach the backend when the model has no OXSTS', async () => {
@@ -195,12 +207,12 @@ describe('sysml bridge', () => {
 
     await bridge.client.sendRequest('workspace/executeCommand', {
       command: 'sysml.witness.validate',
-      arguments: [{ uri: result.trace?.witnessUri, range: oxstsRange, caseLabel: 'LampNeverLit' }],
+      arguments: [{ uri: result.trace?.witnessUri, range: oxstsRange }],
     })
 
     expect(oxsts.commands.at(-1)).toEqual({
       command: 'oxsts.case.validateWitness',
-      arguments: [{ uri: witnessUri, range: oxstsRange, caseLabel: 'LampNeverLit' }],
+      arguments: [{ uri: witnessUri, range: oxstsRange }],
     })
   })
 

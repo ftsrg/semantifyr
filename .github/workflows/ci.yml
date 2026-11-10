@@ -216,6 +216,19 @@ jobs:
         env:
           TAG: ${{ steps.tag.outputs.tag }}
         run: .github/scripts/smoke-test-live-image.sh live "$IMAGE:$TAG"
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+      - name: Verify on the image
+        timeout-minutes: 5
+        env:
+          SEMANTIFYR_LIVE_URL: http://localhost:8080
+        run: npm run smoke -w @ftsrg/semantifyr-live-frontend
       - name: Show the container log
         if: ${{ failure() }}
         run: docker logs live

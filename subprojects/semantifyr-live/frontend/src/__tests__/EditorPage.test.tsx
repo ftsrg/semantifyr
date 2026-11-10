@@ -29,18 +29,32 @@ vi.mock('../components/editor/LiveEditor', () => ({
 }));
 
 import EditorPage from '../components/EditorPage';
-import { LIVE_FLAVORS } from '../examples';
-import { encodeCompressedBase64Url } from '../lib/api/urls';
+import { liveFlavors } from '../examples';
+import { encodeCompressedBase64Url } from '@semantifyr/editor-common';
 import { setLocation } from './helpers/location';
+import { servedFlavors } from './fixtures/flavors';
+
+const defaultFlavor = liveFlavors(servedFlavors)[0];
+
+function serveFlavors(): void {
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+    if (url.endsWith('/api/flavors')) {
+      return new Response(JSON.stringify({ flavors: servedFlavors }));
+    }
+    return new Response(null, { status: 404 });
+  }));
+}
 
 describe('EditorPage', () => {
   let originalLocation: Location;
 
   beforeEach(() => {
     originalLocation = window.location;
+    serveFlavors();
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     Object.defineProperty(window, 'location', {
       configurable: true,
       writable: true,
@@ -60,7 +74,7 @@ describe('EditorPage', () => {
   }
 
   async function waitForEditor(): Promise<HTMLElement> {
-    return await screen.findByTestId('live-editor');
+    return await screen.findByTestId('live-editor', {}, { timeout: 4000 });
   }
 
   it('defaults to the first flavor and its first example when the URL has no params', async () => {
@@ -69,8 +83,34 @@ describe('EditorPage', () => {
     const editor = await waitForEditor();
     expect(editor.dataset.language).toBe('oxsts');
     const code = within(editor).getByTestId('initial-code').textContent;
-    const expectedCode = LIVE_FLAVORS[0].examples[0]!.code;
+    const expectedCode = defaultFlavor.examples[0]!.code;
     expect(code).toBe(expectedCode);
+  });
+
+  it('opens the flavor named by ?mode= with its first example', async () => {
+    setLocation('https://test.example/?mode=gamma');
+    renderPage();
+    const editor = await waitForEditor();
+    expect(editor.dataset.flavorId).toBe('gamma');
+    expect(editor.dataset.language).toBe('gamma');
+  });
+
+  it('opens the first served flavor for an unknown ?mode=', async () => {
+    setLocation('https://test.example/?mode=cobol');
+    renderPage();
+    const editor = await waitForEditor();
+    expect(editor.dataset.flavorId).toBe('oxsts');
+    expect(within(editor).getByTestId('initial-code').textContent).toBe(defaultFlavor.examples[0]!.code);
+  });
+
+  it('waits for the server before showing the editor when the flavors do not load', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => {
+      return new Response(null, { status: 502 });
+    }));
+    setLocation('https://test.example/');
+    renderPage();
+    expect(await screen.findByText('Waiting for the Semantifyr server...')).toBeInTheDocument();
+    expect(screen.queryByTestId('live-editor')).toBeNull();
   });
 
   it('respects ?example=<id> with the flavor inferred from the registry', async () => {
@@ -99,7 +139,7 @@ describe('EditorPage', () => {
     setLocation('https://test.example/?example=basics');
     renderPage();
     await waitForEditor();
-    const basics = LIVE_FLAVORS[0].examples.find((example) => example.id === 'basics')!;
+    const basics = defaultFlavor.examples.find((example) => example.id === 'basics')!;
     await waitFor(() => {
       expect(document.title).toBe(`${basics.label} - Semantifyr Live`);
     });
@@ -132,11 +172,24 @@ describe('EditorPage', () => {
     expect(copied.searchParams.get('code')).not.toBeNull();
   });
 
+  it('copies a link to an unchanged example without its code', async () => {
+    setLocation('https://test.example/?example=basics');
+    renderPage();
+    await waitForEditor();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Copy link' }));
+
+    await screen.findByText('Link copied!');
+    const copied = new URL(await navigator.clipboard.readText());
+    expect(copied.searchParams.get('example')).toBe('basics');
+    expect(copied.searchParams.has('code')).toBe(false);
+  });
+
   it('falls back to the default example when ?example points at an unknown id', async () => {
     setLocation('https://test.example/?example=does-not-exist');
     renderPage();
     const editor = await waitForEditor();
-    const defaultCode = LIVE_FLAVORS[0].examples[0]!.code;
+    const defaultCode = defaultFlavor.examples[0]!.code;
     expect(within(editor).getByTestId('initial-code').textContent).toBe(defaultCode);
   });
 

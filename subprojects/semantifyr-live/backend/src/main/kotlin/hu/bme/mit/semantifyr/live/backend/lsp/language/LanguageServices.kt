@@ -47,27 +47,29 @@ class LanguageServices @Inject constructor(
     @Inject(optional = true)
     var codeActionService: ICodeActionService2? = null
 
-    val serverCapabilities = ServerCapabilities().apply {
-        textDocumentSync = Either.forLeft(TextDocumentSyncKind.Full)
-        executeCommandProvider = ExecuteCommandOptions(commandService.initialize())
-        completionProvider = CompletionOptions(false, listOf("."))
-        hoverProvider = Either.forLeft(true)
-        definitionProvider = Either.forLeft(true)
-        referencesProvider = Either.forLeft(true)
-        documentSymbolProvider = Either.forLeft(true)
-        documentHighlightProvider = Either.forLeft(true)
-        documentFormattingProvider = Either.forLeft(true)
-        documentRangeFormattingProvider = Either.forLeft(true)
-        codeActionProvider = Either.forLeft(codeActionService != null)
-        foldingRangeProvider = Either.forLeft(true)
-        semanticTokensProvider = SemanticTokensWithRegistrationOptions(
-            SemanticTokensLegend(
-                semanticTokensService.tokenTypes,
-                semanticTokensService.tokenModifiers,
-            ),
-        ).apply {
-            full = Either.forLeft(true)
-            range = Either.forLeft(false)
+    fun serverCapabilities(commands: List<String>): ServerCapabilities {
+        return ServerCapabilities().apply {
+            textDocumentSync = Either.forLeft(TextDocumentSyncKind.Full)
+            executeCommandProvider = ExecuteCommandOptions(commands)
+            completionProvider = CompletionOptions(false, listOf("."))
+            hoverProvider = Either.forLeft(true)
+            definitionProvider = Either.forLeft(true)
+            referencesProvider = Either.forLeft(true)
+            documentSymbolProvider = Either.forLeft(true)
+            documentHighlightProvider = Either.forLeft(true)
+            documentFormattingProvider = Either.forLeft(true)
+            documentRangeFormattingProvider = Either.forLeft(true)
+            codeActionProvider = Either.forLeft(codeActionService != null)
+            foldingRangeProvider = Either.forLeft(true)
+            semanticTokensProvider = SemanticTokensWithRegistrationOptions(
+                SemanticTokensLegend(
+                    semanticTokensService.tokenTypes,
+                    semanticTokensService.tokenModifiers,
+                ),
+            ).apply {
+                full = Either.forLeft(true)
+                range = Either.forLeft(false)
+            }
         }
     }
 

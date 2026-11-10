@@ -74,7 +74,7 @@ class WebSocketHandler @Inject constructor(
                         CloseReason(4429, e.message ?: "Too many sessions")
                     } catch (e: CancellationException) {
                         logger.info(e) { "WebSocket session cancelled for ip=$remoteIp flavor=$flavorId" }
-                        CloseReason(4000, e.message ?: "Session terminated")
+                        CloseReason(4000, "Session terminated by an administrator")
                     } catch (e: Throwable) {
                         logger.error(e) { "WebSocket session error for ip=$remoteIp flavor=$flavorId" }
                         CloseReason(4500, "Internal server error")

@@ -15,7 +15,7 @@ import java.io.File
 val SpinExecutorKey = ExecutorKey(
     name = "spin",
     unavailableHints = listOf(
-        "Install Spin from https://spinroot.com/spin/Src/ and make sure both 'spin' and a C compiler (gcc) are on PATH.",
+        "Install Spin from https://spinroot.com/spin/Src/ and gcc, which Spin compiles every search with, and make sure both 'spin' and 'gcc' are on PATH.",
     ),
 ) {
     SpinExecutor.autoDetect()

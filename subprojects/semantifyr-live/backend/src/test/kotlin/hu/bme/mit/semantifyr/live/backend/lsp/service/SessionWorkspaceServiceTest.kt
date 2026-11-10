@@ -23,12 +23,14 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.eclipse.lsp4j.ExecuteCommandParams
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyBlocking
 import org.mockito.kotlin.whenever
@@ -114,6 +116,19 @@ class SessionWorkspaceServiceTest {
         val kindCaptor = argumentCaptor<VerificationKind>()
         verify(fixture.sessionVerificationManager).launch(any(), kindCaptor.capture(), any())
         assertThat(kindCaptor.firstValue).isEqualTo(VerificationKind.Validate)
+    }
+
+    @Test
+    fun `a command outside the flavor's commands is rejected with MethodNotFound and never dispatched`() {
+        val fixture = Fixture()
+        assertThatThrownBy {
+            fixture.service.executeCommand(ExecuteCommandParams("oxsts.class.inline", emptyList()))
+        }.isInstanceOfSatisfying(ResponseErrorException::class.java) {
+            assertThat(it.responseError.code).isEqualTo(ResponseErrorCode.MethodNotFound.value)
+            assertThat(it.responseError.message).contains("oxsts.class.inline")
+        }
+        verify(fixture.sessionRequestManager, never()).executeCommand(any())
+        verify(fixture.documentManager, never()).flushAllToDisk()
     }
 
     @Test

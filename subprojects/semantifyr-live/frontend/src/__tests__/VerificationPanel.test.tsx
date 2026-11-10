@@ -122,6 +122,28 @@ describe('VerificationPanel', () => {
     expect(screen.getByText('Case b')).toBeInTheDocument();
   });
 
+  it('shows the discovering text only while discovery is pending', async () => {
+    const fake = createFakeHandle();
+    renderPanel({ fake });
+
+    expect(await screen.findByText('Discovering cases...')).toBeInTheDocument();
+
+    fake.resolveDiscovery([sampleCase('a')]);
+
+    expect(await screen.findByText('Case a')).toBeInTheDocument();
+    expect(screen.queryByText('Discovering cases...')).not.toBeInTheDocument();
+  });
+
+  it('says there are no verification cases after a discovery that finds none', async () => {
+    const fake = createFakeHandle();
+    renderPanel({ fake });
+
+    fake.resolveDiscovery([]);
+
+    expect(await screen.findByText('No verification cases')).toBeInTheDocument();
+    expect(screen.queryByText('Discovering cases...')).not.toBeInTheDocument();
+  });
+
   it('reports status messages: "Discovering..." (idle/null) -> running -> verdict', async () => {
     const fake = createFakeHandle();
     const { onStatusMessage } = renderPanel({ fake });

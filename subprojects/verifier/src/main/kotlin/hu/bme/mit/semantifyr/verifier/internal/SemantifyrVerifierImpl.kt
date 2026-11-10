@@ -23,6 +23,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
+import hu.bme.mit.semantifyr.oxsts.lang.utils.SelfContainedResource
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
@@ -33,9 +34,9 @@ import hu.bme.mit.semantifyr.verifier.VerificationReport
 import hu.bme.mit.semantifyr.verifier.VerificationResult
 import hu.bme.mit.semantifyr.verifier.VerifierMetrics
 import hu.bme.mit.semantifyr.verifier.caseDirectoryName
-import hu.bme.mit.semantifyr.verifier.caseReportPath
 import hu.bme.mit.semantifyr.verifier.portfolio.LimitedConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
+import hu.bme.mit.semantifyr.verifier.reportPath
 import hu.bme.mit.semantifyr.verifier.witness.CallTraceTransformer
 import hu.bme.mit.semantifyr.verifier.witness.ClassWitnessBackAnnotator
 import hu.bme.mit.semantifyr.verifier.witness.ClassWitnessTransformer
@@ -47,6 +48,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withTimeout
+import org.eclipse.emf.common.util.URI
+import org.eclipse.emf.ecore.util.EcoreUtil
 import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.createDirectories
@@ -96,8 +99,8 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         val deadline = markNow() + semantifyrVerifierConfiguration.timeout
         progressContext.reportProgress("Compiling ${verificationCase.qualifiedName}")
         logger.info { "Compiling '${verificationCase.qualifiedName}'" }
-        val caseDirectory = prepareCaseDirectory(verificationCase)
-        return compileAndVerify(verificationCase, progressContext, deadline) {
+        val caseDirectory = prepareDirectory(caseDirectoryFor(verificationCase))
+        return compileAndVerify(verificationCase, caseDirectory, progressContext, deadline) {
             compiler.compile(verificationCase.classDeclaration, caseDirectory)
         }
     }
@@ -111,14 +114,34 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         val deadline = markNow() + semantifyrVerifierConfiguration.timeout
         progressContext.reportProgress("Compiling $qualifiedName")
         logger.info { "Compiling inlined of '$qualifiedName'" }
-        val caseDirectory = prepareCaseDirectory(case)
-        return compileAndVerify(case, progressContext, deadline) {
-            compiler.compile(inlinedOxsts, caseDirectory)
+        // the model re-verified here usually lies in the case directory, a witness the verify left there, so the run keeps out of the verify's artifacts
+        val validationDirectory = prepareDirectory(caseDirectoryFor(case).resolve("validation"))
+        val copy = copyIntoOwnResource(inlinedOxsts, validationDirectory)
+        return compileAndVerify(case, validationDirectory, progressContext, deadline) {
+            compiler.compile(copy, validationDirectory)
         }
+    }
+
+    // compiling rewrites the inlined model in place, and the original may be a document open in an editor
+    private fun copyIntoOwnResource(inlinedOxsts: InlinedOxsts, directory: Path): InlinedOxsts {
+        val resourceSet = inlinedOxsts.eResource().resourceSet
+        val uri = URI.createFileURI(directory.resolve("inlined.oxsts").toAbsolutePath().toString())
+        resourceSet.getResource(uri, false)?.let {
+            check(it !== inlinedOxsts.eResource()) {
+                "Cannot re-verify the inlined model at $uri into its own directory"
+            }
+            resourceSet.resources.remove(it)
+        }
+        val copy = EcoreUtil.copy(inlinedOxsts)
+        val resource = resourceSet.createResource(uri)
+        SelfContainedResource.mark(resource)
+        resource.contents += copy
+        return copy
     }
 
     private suspend fun compileAndVerify(
         case: VerificationCase,
+        caseDirectory: Path,
         progress: ProgressContext,
         deadline: ValueTimeMark,
         compile: () -> FlattenedCompilationContext,
@@ -146,15 +169,16 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
                 ),
                 message = "Timeout (${semantifyrVerifierConfiguration.timeout}) exceeded while compiling.",
             )
-            writeReport(case, result)
+            writeReport(case, caseDirectory, result)
             return result
         }
-        return verifyCompilation(compilation, case, progress, deadline)
+        return verifyCompilation(compilation, case, caseDirectory, progress, deadline)
     }
 
     private suspend fun verifyCompilation(
         compilation: FlattenedCompilationContext,
         case: VerificationCase,
+        caseDirectory: Path,
         progress: ProgressContext,
         deadline: ValueTimeMark,
     ): VerificationResult {
@@ -165,7 +189,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         val portfolioMark = markNow()
         val (backendResult, portfolioDuration) = try {
             runInTimeout(progress, deadline) {
-                runBackend(compilation, case, startedAt, progress, deadline)
+                runBackend(compilation, caseDirectory, startedAt, progress, deadline)
             }
         } catch (_: TimeoutCancellationException) {
             logger.info { "Verification of '$qualifiedName' timed out after ${semantifyrVerifierConfiguration.timeout}" }
@@ -201,8 +225,6 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
                 portfolioMark.elapsedNow(),
             )
         }
-
-        val caseArtifactPath = caseDirectoryFor(case)
 
         val backAnnotationMark = markNow()
         val (outcome, trace, verifierBackAnnotationDuration) = try {
@@ -255,15 +277,19 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
 
         logger.info { "Case '$qualifiedName' -> ${result.verdict} in $totalDuration - ${result.message ?: "no message"}" }
 
-        writeReport(case, result)
+        writeReport(case, caseDirectory, result)
         if (trace != null) {
-            verificationArtifactWriter.writeWitnessArtifacts(trace, caseArtifactPath, qualifiedName)
+            verificationArtifactWriter.writeWitnessArtifacts(trace, caseDirectory, qualifiedName)
         }
 
         return result
     }
 
-    private fun writeReport(case: VerificationCase, result: VerificationResult) {
+    private fun writeReport(
+        case: VerificationCase,
+        caseDirectory: Path,
+        result: VerificationResult,
+    ) {
         val report = VerificationReport(
             verificationCase = case.qualifiedName,
             portfolioId = semantifyrVerifierConfiguration.portfolio.id,
@@ -271,12 +297,12 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
             timeout = semantifyrVerifierConfiguration.timeout,
             result = result,
         )
-        verificationArtifactWriter.writeReport(caseReportPath(semantifyrVerifierConfiguration.outputDirectory, case), report)
+        verificationArtifactWriter.writeReport(reportPath(caseDirectory), report)
     }
 
     private suspend fun runBackend(
         compilation: FlattenedCompilationContext,
-        case: VerificationCase,
+        caseDirectory: Path,
         startedAt: Instant,
         progress: ProgressContext,
         deadline: ValueTimeMark,
@@ -292,7 +318,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
 
         val request = BackendVerificationRequest(
             inlinedOxsts = inlinedOxsts,
-            artifactOutputPath = caseDirectoryFor(case),
+            artifactOutputPath = caseDirectory,
             flatteningInfo = compilation.flatteningInfo,
             timeout = deadline - markNow(),
         )
@@ -352,13 +378,12 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         return semantifyrVerifierConfiguration.outputDirectory.resolve(caseDirectoryName(case))
     }
 
-    private fun prepareCaseDirectory(case: VerificationCase): Path {
-        val caseDirectory = caseDirectoryFor(case)
-        if (caseDirectory.toFile().exists()) {
-            caseDirectory.toFile().deleteRecursively()
+    private fun prepareDirectory(directory: Path): Path {
+        if (directory.toFile().exists()) {
+            directory.toFile().deleteRecursively()
         }
-        caseDirectory.createDirectories()
-        return caseDirectory
+        directory.createDirectories()
+        return directory
     }
 
     private data class BackendOutcomeWithDuration(

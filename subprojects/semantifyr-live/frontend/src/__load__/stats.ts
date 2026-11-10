@@ -30,10 +30,15 @@ export interface Summary {
   verification: Distribution | null
   queued: Distribution | null
   onServer: Distribution | null
+  validation: Distribution | null
+  validationQueued: Distribution | null
+  validationOnServer: Distribution | null
   runs: number
   failedRuns: number
   cases: number
   wrongVerdicts: number
+  validations: number
+  failedValidations: number
   errors: number
   timeouts: number
   errorDiagnostics: number
@@ -62,6 +67,7 @@ export function distribution(values: (number | null)[]): Distribution | null {
 
 export function summarize(runs: StudentRun[], health: HealthSample[]): Summary {
   const cases = runs.flatMap((run) => run.cases)
+  const validations = runs.flatMap((run) => run.validations)
   const activeSessions = health.map((sample) => sample.activeSessions).filter((value) => value !== null)
   return {
     connect: distribution(runs.map((run) => run.connectMs)),
@@ -72,10 +78,15 @@ export function summarize(runs: StudentRun[], health: HealthSample[]): Summary {
     verification: distribution(cases.map((verification) => verification.wallMs)),
     queued: distribution(cases.map((verification) => verification.queueMs)),
     onServer: distribution(cases.map((verification) => verification.serverMs)),
+    validation: distribution(validations.map((validation) => validation.wallMs)),
+    validationQueued: distribution(validations.map((validation) => validation.queueMs)),
+    validationOnServer: distribution(validations.map((validation) => validation.serverMs)),
     runs: runs.length,
     failedRuns: runs.filter((run) => run.error !== null || run.cases.some((verification) => !verification.ok)).length,
     cases: cases.length,
     wrongVerdicts: cases.filter((verification) => !verification.ok).length,
+    validations: validations.length,
+    failedValidations: validations.filter((validation) => validation.status === 'invalid' || validation.status === 'errored').length,
     errors: runs.filter((run) => run.error !== null).length,
     timeouts: runs.filter((run) => run.error?.timeout).length,
     errorDiagnostics: runs.reduce((total, run) => total + run.errorDiagnostics, 0),
@@ -93,6 +104,9 @@ export function failures(summary: Summary, maxVerificationP95Ms: number, aborted
   }
   if (summary.wrongVerdicts > 0) {
     reasons.push(`${summary.wrongVerdicts} verdicts were not the expected ones`)
+  }
+  if (summary.failedValidations > 0) {
+    reasons.push(`${summary.failedValidations} witness validations came back invalid or errored`)
   }
   if (summary.errors > 0) {
     reasons.push(`${summary.errors} student runs failed with an error, ${summary.timeouts} of them on a timeout`)
@@ -120,6 +134,9 @@ export function formatSummary(summary: Summary): string {
     ['verification', summary.verification],
     ['  queued', summary.queued],
     ['  on server', summary.onServer],
+    ['witness validation', summary.validation],
+    ['  queued', summary.validationQueued],
+    ['  on server', summary.validationOnServer],
     ['/api/health', summary.healthLatency],
   ]
   const lines = [`${''.padEnd(24)}${'count'.padStart(7)}${'median'.padStart(11)}${'p95'.padStart(11)}${'max'.padStart(11)}`]
@@ -132,6 +149,7 @@ export function formatSummary(summary: Summary): string {
     '',
     `student runs ${summary.runs}, failed ${summary.failedRuns}`,
     `verifications ${summary.cases}, unexpected verdicts ${summary.wrongVerdicts}`,
+    `witness validations ${summary.validations}, invalid or errored ${summary.failedValidations}`,
     `errors ${summary.errors}, timeouts ${summary.timeouts}, error diagnostics ${summary.errorDiagnostics}`,
     `health samples ${summary.healthSamples}, failed ${summary.healthFailures}, max active sessions ${summary.maxActiveSessions ?? 'unknown'}`,
   )

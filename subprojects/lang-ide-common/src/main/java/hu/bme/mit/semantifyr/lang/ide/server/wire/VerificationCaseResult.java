@@ -29,6 +29,14 @@ public record VerificationCaseResult(
         return new VerificationCaseResult(VerificationStatus.ERRORED, message, null, portfolioId, null, null);
     }
 
+    public static VerificationCaseResult timedOut(String message, String portfolioId) {
+        return new VerificationCaseResult(VerificationStatus.TIMEOUT, message, null, portfolioId, null, null);
+    }
+
+    public static VerificationCaseResult cancelled(String message, String portfolioId) {
+        return new VerificationCaseResult(VerificationStatus.CANCELLED, message, null, portfolioId, null, null);
+    }
+
     private static VerificationCaseResult build(
             VerificationResultDto dto, String portfolioId, VerificationTrace trace) {
         return new VerificationCaseResult(

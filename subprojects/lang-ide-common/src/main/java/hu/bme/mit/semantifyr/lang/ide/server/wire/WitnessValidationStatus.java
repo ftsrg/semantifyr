@@ -12,6 +12,8 @@ public final class WitnessValidationStatus {
     public static final String INVALID = "invalid";
     public static final String INCONCLUSIVE = "inconclusive";
     public static final String ERRORED = "errored";
+    public static final String TIMEOUT = "timeout";
+    public static final String CANCELLED = "cancelled";
 
     private WitnessValidationStatus() {}
 }

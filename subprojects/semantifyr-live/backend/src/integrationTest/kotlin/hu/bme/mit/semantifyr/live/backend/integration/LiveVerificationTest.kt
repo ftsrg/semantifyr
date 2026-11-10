@@ -34,6 +34,7 @@ import org.eclipse.lsp4j.DiagnosticSeverity
 import org.eclipse.lsp4j.PublishDiagnosticsParams
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.minutes
 
@@ -89,6 +90,31 @@ class LiveVerificationTest {
                 assertThat(validation.status())
                     .describedAs("witness validation: $validation")
                     .isEqualTo(WitnessValidationStatus.VALID)
+                send(Frame.Text(LspWire.request(id = 5, method = SemantifyrLiveMethods.READ_DOCUMENT, params = ReadDocumentParams(witnessUri))))
+                val witnessText = awaitResponseFor(id = 5).resultAs(ReadDocumentResult::class.java).text
+
+                send(
+                    Frame.Text(
+                        LspWire.executeCommandRequest(
+                            id = 6,
+                            command = "oxsts.case.validateWitness",
+                            arguments = listOf(
+                                VerificationCaseRequest(witnessUri, LspWire.range(), "smart-full"),
+                            ),
+                        ),
+                    ),
+                )
+                val revalidation = awaitResponseFor(id = 6, timeout = 1.minutes).resultAs(WitnessValidationResult::class.java)
+                assertThat(revalidation.status())
+                    .describedAs("second witness validation: $revalidation")
+                    .isEqualTo(WitnessValidationStatus.VALID)
+                send(Frame.Text(LspWire.request(id = 7, method = SemantifyrLiveMethods.READ_DOCUMENT, params = ReadDocumentParams(witnessUri))))
+                assertThat(awaitResponseFor(id = 7).resultAs(ReadDocumentResult::class.java).text).isEqualTo(witnessText)
+                assertThat(artifactsOnDisk(tmp, "snippet.CounterReachesThree")).contains(
+                    "report.json",
+                    "witness.oxsts",
+                    "validation/report.json",
+                )
             }
         }
     }
@@ -169,6 +195,12 @@ class LiveVerificationTest {
                     .isEqualTo(WitnessValidationStatus.VALID)
                 assertThat(validation.verdict()).isEqualTo("passed")
                 assertThat(validation.portfolioId()).isEqualTo("smart-full")
+                assertThat(artifactsOnDisk(tmp, "Simple.LeaderStatechartIdleReachable")).contains(
+                    "verification/model.LeaderStatechartIdleReachable/report.json",
+                    "verification/model.LeaderStatechartIdleReachable/witness.oxsts",
+                    "verification/model.LeaderStatechartIdleReachable/trace.gamma",
+                    "verification/model.LeaderStatechartIdleReachable/validation/report.json",
+                )
             }
         }
     }
@@ -189,6 +221,21 @@ class LiveVerificationTest {
             flavor = "oxsts-with-sysmlv2-library",
             modelSource = stagedModel(StagedTestSupport.sysmlLibraryModelsDirectory, "semantifyr.live.sysmlLibraryModels", "door_access.oxsts"),
         )
+    }
+
+    private fun artifactsOnDisk(root: Path, caseDirectoryName: String): List<String> {
+        val caseDirectory = Files.walk(root).use {
+            it.filter {
+                Files.isDirectory(it) && it.fileName.toString() == caseDirectoryName
+            }.toList()
+        }.single()
+        return Files.walk(caseDirectory).use {
+            it.filter {
+                Files.isRegularFile(it)
+            }.map {
+                caseDirectory.relativize(it).joinToString("/")
+            }.toList()
+        }
     }
 
     private suspend fun verifyFirstCase(

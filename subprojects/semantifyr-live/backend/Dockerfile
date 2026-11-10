@@ -5,7 +5,7 @@
 FROM eclipse-temurin:25-jre-noble
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends curl libgomp1 libmpfr-dev spin \
+ && apt-get install -y --no-install-recommends curl gcc libc6-dev libgomp1 libmpfr-dev spin \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/* \
  && useradd --system --create-home semantifyr

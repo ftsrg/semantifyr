@@ -34,9 +34,10 @@ abstract class ShellBasedBackendExecutor : BackendExecutor {
         probeArgs: List<String>,
         timeoutSeconds: Long = 2,
         expectedExitCode: Int = 0,
+        binary: String = binaryName,
     ): Boolean {
         val available = runCatching {
-            val process = buildProcess(probeArgs)
+            val process = buildProcess(binary, probeArgs)
                 .redirectOutput(ProcessBuilder.Redirect.DISCARD)
                 .redirectError(ProcessBuilder.Redirect.DISCARD)
                 .start()
@@ -47,7 +48,7 @@ abstract class ShellBasedBackendExecutor : BackendExecutor {
                 process.exitValue() == expectedExitCode
             }
         }.getOrElse { false }
-        logger.debug { "$binaryName on PATH: $available" }
+        logger.debug { "$binary on PATH: $available" }
         return available
     }
 
@@ -70,7 +71,7 @@ abstract class ShellBasedBackendExecutor : BackendExecutor {
             ProcessBuilder.Redirect.appendTo(it)
         } ?: ProcessBuilder.Redirect.DISCARD
 
-        val process = buildProcess(arguments)
+        val process = buildProcess(binaryName, arguments)
             .directory(workingDirectory)
             .redirectOutput(logRedirect)
             .redirectError(errorRedirect)
@@ -96,11 +97,11 @@ abstract class ShellBasedBackendExecutor : BackendExecutor {
         exitCode
     }
 
-    private fun buildProcess(arguments: List<String>): ProcessBuilder {
+    private fun buildProcess(binary: String, arguments: List<String>): ProcessBuilder {
         val command = if (isWindows) {
-            listOf("cmd", "/c", binaryName) + arguments
+            listOf("cmd", "/c", binary) + arguments
         } else {
-            listOf(binaryName) + arguments
+            listOf(binary) + arguments
         }
         return ProcessBuilder(command)
     }

@@ -6,6 +6,7 @@
 
 import { describe, expect, it, vi } from 'vitest';
 import {
+  discoverCases,
   dispatchAutoValidation,
   runAllVerifications,
   validateWitness,
@@ -27,7 +28,7 @@ function captureStates(): {
   setState: (next: VerificationState | ((previous: VerificationState) => VerificationState)) => void;
 } {
   const states: VerificationState[] = [];
-  let current: VerificationState = { phase: 'idle', cases: [] };
+  let current: VerificationState = { phase: 'idle', discovery: 'idle', cases: [] };
   const setState = (next: VerificationState | ((previous: VerificationState) => VerificationState)): void => {
     current = typeof next === 'function' ? next(current) : next;
     states.push(current);
@@ -65,6 +66,11 @@ describe('runAllVerifications', () => {
     expect(final.cases[0]!.portfolioId).toBe('smart-full');
     expect(final.cases[1]!.trace).toBeDefined();
     expect(final.message).toMatch(/some cases failed/i);
+
+    expect(sendRequest.mock.calls[0]![1]).toEqual({
+      command: 'oxsts.case.verify',
+      arguments: [{ uri: 'file:///workspace/snippet.oxsts', range: sampleCase('a').location.range, portfolio: 'smart-full' }],
+    });
 
     // The first batch transition should mark all cases queued.
     expect(states[0]!.cases.every((verificationCase) => verificationCase.status === 'queued')).toBe(true);
@@ -212,6 +218,110 @@ describe('runAllVerifications', () => {
   });
 });
 
+describe('verification statuses', () => {
+  it.each([
+    ['timeout', 'timeout'],
+    ['cancelled', 'cancelled'],
+    ['inconclusive', 'inconclusive'],
+    ['mystery', 'errored'],
+  ] as const)('maps a %s result to the %s case status', async (wireStatus, caseStatus) => {
+    const response = { ...passedResult, status: wireStatus, message: 'note' };
+    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => response);
+    const client: LspClient = { sendRequest, sendNotification: () => {} };
+
+    const { states, setState } = captureStates();
+    runAllVerifications(
+      client,
+      'oxsts.case.verify',
+      'file:///workspace/snippet.oxsts',
+      [sampleCase('a')],
+      setState,
+      noopProgress,
+    );
+
+    await vi.waitFor(() => {
+      expect(states.at(-1)?.phase).toBe('done');
+    });
+    expect(states.at(-1)?.cases[0]?.status).toBe(caseStatus);
+    expect(states.at(-1)?.cases[0]?.message).toBe('note');
+  });
+
+  it.each([
+    'timeout',
+    'cancelled',
+  ] as const)('keeps a %s witness validation status', async (status) => {
+    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => ({ status, message: 'note' }));
+    const client: LspClient = { sendRequest, sendNotification: () => {} };
+
+    const outcome = await validateWitness(
+      client,
+      'oxsts.case.validateWitness',
+      { uri: 'inmemory:///x', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } },
+    );
+    expect(outcome.status).toBe(status);
+    expect(outcome.message).toBe('note');
+  });
+});
+
+describe('discoverCases', () => {
+  it('is discovering while the request is pending and discovered with the cases once it resolves', async () => {
+    let resolveDiscovery: (cases: unknown) => void = () => {};
+    const sendRequest = vi.fn<LspClient['sendRequest']>(() => new Promise((resolve) => {
+      resolveDiscovery = resolve;
+    }));
+    const client: LspClient = { sendRequest, sendNotification: () => {} };
+
+    const { states, setState } = captureStates();
+    const discovery = discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.oxsts', setState);
+
+    expect(states.at(-1)?.discovery).toBe('discovering');
+    resolveDiscovery([sampleCase('a')]);
+    await discovery;
+
+    expect(states.at(-1)?.discovery).toBe('discovered');
+    expect(states.at(-1)?.cases.map((caseState) => caseState.caseInfo.id)).toEqual(['a']);
+    expect(states.at(-1)?.cases[0]?.status).toBe('stale');
+  });
+
+  it('is discovered with no cases when the model declares none', async () => {
+    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => []);
+    const client: LspClient = { sendRequest, sendNotification: () => {} };
+
+    const { states, setState } = captureStates();
+    await discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.oxsts', setState);
+
+    expect(states.at(-1)?.discovery).toBe('discovered');
+    expect(states.at(-1)?.cases).toEqual([]);
+  });
+
+  it('keeps the verdict of a case discovered again', async () => {
+    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => [sampleCase('a')]);
+    const client: LspClient = { sendRequest, sendNotification: () => {} };
+
+    const { states, setState } = captureStates();
+    setState({
+      phase: 'done',
+      discovery: 'discovered',
+      cases: [{ caseInfo: sampleCase('a'), status: 'passed' }],
+    });
+    await discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.oxsts', setState);
+
+    expect(states.at(-1)?.cases[0]?.status).toBe('passed');
+  });
+
+  it('returns to idle when the discovery request fails', async () => {
+    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => {
+      throw new Error('closed');
+    });
+    const client: LspClient = { sendRequest, sendNotification: () => {} };
+
+    const { states, setState } = captureStates();
+    await discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.oxsts', setState);
+
+    expect(states.at(-1)?.discovery).toBe('idle');
+  });
+});
+
 describe('validateWitness', () => {
   it('parses a valid response into a structured outcome', async () => {
     const sendRequest = vi.fn<LspClient['sendRequest']>(async () => ({
@@ -227,16 +337,15 @@ describe('validateWitness', () => {
       client,
       'oxsts.case.validateWitness',
       { uri: 'inmemory:///x', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } },
-      { portfolioId: 'smart-full', caseLabel: 'Case a' },
+      { portfolioId: 'smart-full' },
     );
     expect(outcome.status).toBe('invalid');
     expect(outcome.backendId).toBe('theta-bmc');
     expect(outcome.portfolioId).toBe('smart-full');
 
     const callArguments = sendRequest.mock.calls[0]!;
-    const parameters = callArguments[1] as { arguments: { portfolio?: string; caseLabel?: string }[] };
-    expect(parameters.arguments[0]!.portfolio).toBe('smart-full');
-    expect(parameters.arguments[0]!.caseLabel).toBe('Case a');
+    const parameters = callArguments[1] as { arguments: { portfolio?: string }[] };
+    expect(parameters.arguments[0]).toEqual({ uri: 'inmemory:///x', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } }, portfolio: 'smart-full' });
   });
 
   it('treats unknown response shapes as errored', async () => {
@@ -278,6 +387,7 @@ describe('dispatchAutoValidation', () => {
     const { states, setState } = captureStates();
     setState({
       phase: 'done',
+      discovery: 'discovered',
       cases: [{ caseInfo: sampleCase('a'), status: 'failed', trace: sampleTrace }],
     });
 
@@ -287,7 +397,7 @@ describe('dispatchAutoValidation', () => {
       'a',
       { uri: 'inmemory:///workspace/snippet.witness.oxsts', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } },
       setState,
-      { validationPortfolioId: 'smart-full', caseLabel: 'Case a' },
+      { validationPortfolioId: 'smart-full' },
     );
 
     // First synchronous transition flips validating=true; the second (after the resolved

@@ -16,6 +16,7 @@ export function caseStatusToSeverity(
     case 'errored':
       return 'error'
     case 'inconclusive':
+    case 'timeout':
     case 'not_supported':
       return 'warning'
     default:
@@ -26,14 +27,20 @@ export function caseStatusToSeverity(
 export function defaultMessageForStatus(
   status: VerificationCaseStatus,
   label: string,
+  hasWitness: boolean,
 ): string {
   switch (status) {
     case 'failed':
-      return `${label}: property fails on at least one execution. See the witness pane.`
+      if (hasWitness) {
+        return `${label}: property fails on at least one execution. See the witness pane.`
+      }
+      return `${label}: property fails.`
     case 'errored':
       return `${label}: verification raised an error. Check the verification panel for details.`
     case 'inconclusive':
       return `${label}: the verifier could not produce a decisive verdict. Try a different portfolio.`
+    case 'timeout':
+      return `${label}: the verifier ran out of time. Try a different portfolio.`
     case 'not_supported':
       return `${label}: the chosen portfolio cannot transform this case. Pick another.`
     default:
@@ -56,7 +63,7 @@ export function casesToMarkers(
       startColumn: cs.caseInfo.location.range.start.character,
       endLine: cs.caseInfo.location.range.end.line,
       endColumn: cs.caseInfo.location.range.end.character,
-      message: cs.message ?? defaultMessageForStatus(cs.status, cs.caseInfo.label),
+      message: cs.message ?? defaultMessageForStatus(cs.status, cs.caseInfo.label, cs.trace !== undefined),
       source: 'semantifyr-verify',
     })
   }

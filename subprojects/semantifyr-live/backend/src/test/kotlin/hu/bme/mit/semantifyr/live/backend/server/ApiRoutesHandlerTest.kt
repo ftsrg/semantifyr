@@ -122,6 +122,7 @@ class ApiRoutesHandlerTest {
         assertThat(oxsts.verificationCommand).isEqualTo("oxsts.case.verify")
         assertThat(oxsts.validateWitnessCommand).isEqualTo("oxsts.case.validateWitness")
         assertThat(oxsts.validateWitnessByCase).isFalse()
+        assertThat(oxsts.description).isNotBlank()
 
         val gamma = flavors.flavors.first { it.id == "gamma" }
         assertThat(gamma.validateWitnessCommand).isEqualTo("gamma.witness.validate")

@@ -15,9 +15,11 @@ import { MonacoVscodeApiWrapper, type MonacoVscodeApiConfig, type ExtensionConfi
 import { LanguageClientWrapper, LcWebSocket, LcWorker, type LanguageClientConfig } from 'monaco-languageclient/lcwrapper';
 import { EditorApp, type EditorAppConfig } from 'monaco-languageclient/editorApp';
 import type { editor } from 'monaco-editor';
+import type { MessageTransports } from 'vscode-languageclient';
 
-import { normalizeBaseUrl } from '../api/urls';
+import { normalizeBaseUrl } from '@semantifyr/editor-common';
 import type { ResolvedColorMode } from '../util/colorMode';
+import { observeSocketClose, type SocketClose } from './reconnectController';
 
 // Synced from :semantifyr-vscode by the cloneVscodeLanguageAssets Gradle task.
 import oxstsGrammar from '../../vscode/imported/syntaxes/oxsts.tmLanguage.json';
@@ -295,6 +297,24 @@ async function handleNavigateTo(params: NavigateToParams): Promise<void> {
 export interface LanguageClientCallbacks {
   onProgress: (params: unknown) => void;
   onStopped: () => void;
+  onClose: (close: SocketClose) => void;
+}
+
+// LcWebSocket.start overwrites the onclose its reader installed, so the close code reaches the client through no handler
+class CloseObservingWebSocket extends LcWebSocket {
+  private readonly onClose: (close: SocketClose) => void;
+
+  constructor(onClose: (close: SocketClose) => void) {
+    super();
+    this.onClose = onClose;
+  }
+
+  override async init(...parameters: Parameters<LcWebSocket['init']>): Promise<MessageTransports> {
+    const transports = await super.init(...parameters);
+    const { webSocket } = this as unknown as { webSocket: WebSocket };
+    observeSocketClose(webSocket, this.onClose);
+    return transports;
+  }
 }
 
 const LSP_STATE_STOPPED = 1;
@@ -353,7 +373,7 @@ export async function connectLanguageClient(
     connection: {
       options: {
         $family: 'WebSocket',
-        realization: () => new LcWebSocket(),
+        realization: () => new CloseObservingWebSocket(callbacks.onClose),
         webSocketUrl: `${wsBaseUrl}/ws/lsp/${encodeURIComponent(flavorId)}`,
         disposeResources: true,
       },

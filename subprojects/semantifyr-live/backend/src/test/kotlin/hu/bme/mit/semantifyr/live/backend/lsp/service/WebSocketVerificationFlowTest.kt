@@ -9,7 +9,9 @@ package hu.bme.mit.semantifyr.live.backend.lsp.service
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseSpecification
+import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationStatus
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult
+import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationStatus
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.ServerConfig
 import hu.bme.mit.semantifyr.live.backend.SessionManagerConfig
@@ -39,6 +41,8 @@ import org.eclipse.lsp4j.jsonrpc.messages.ResponseError
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -177,6 +181,99 @@ class WebSocketVerificationFlowTest {
     }
 
     @Test
+    fun `a witness validation that outlasts the session timeout comes back as a timeout validation result`(@TempDir tmp: Path) = testApplication {
+        val executor = FakeVerificationExecutor {
+            awaitCancellation()
+        }
+        val injector = testInjector(config(tmp).copy(verification = VerificationConfig(timeout = 200.milliseconds))) {
+            bind(VerificationExecutor::class.java).toInstance(executor)
+        }
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(injector)
+        }
+
+        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
+            send(Frame.Text(LspWire.initializeRequest()))
+            awaitResponseFor(id = 1)
+            send(Frame.Text(verifyCommand(id = 2, command = "oxsts.case.validateWitness")))
+            val result = awaitResponseFor(id = 2).resultAs(WitnessValidationResult::class.java)
+            assertThat(result.status()).isEqualTo(WitnessValidationStatus.TIMEOUT)
+            assertThat(result.verdict()).isEqualTo(VerificationStatus.TIMEOUT)
+            assertThat(result.message()).contains("timed out")
+            assertThat(result.portfolioId()).isEqualTo("smart-full")
+        }
+
+        assertThat(verificationCount(injector.getInstance(MeterRegistry::class.java), "validate", "none", "timeout")).isEqualTo(1)
+    }
+
+    @Test
+    fun `a witness validation that throws comes back as an errored validation result`(@TempDir tmp: Path) = testApplication {
+        val executor = FakeVerificationExecutor {
+            throw RuntimeException("verifier exploded")
+        }
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(
+                testInjector(config(tmp)) {
+                    bind(VerificationExecutor::class.java).toInstance(executor)
+                },
+            )
+        }
+
+        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
+            send(Frame.Text(LspWire.initializeRequest()))
+            awaitResponseFor(id = 1)
+            send(Frame.Text(verifyCommand(id = 2, command = "oxsts.case.validateWitness")))
+            val result = awaitResponseFor(id = 2).resultAs(WitnessValidationResult::class.java)
+            assertThat(result.status()).isEqualTo(WitnessValidationStatus.ERRORED)
+            assertThat(result.message()).contains("verifier exploded")
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            "oxsts.case.verify",
+            "oxsts.case.validateWitness",
+        ],
+    )
+    fun `a verification cancelled on the server comes back as a cancelled result of its kind`(
+        command: String,
+        @TempDir tmp: Path,
+    ) = testApplication {
+        val running = CompletableDeferred<Unit>()
+        val executor = FakeVerificationExecutor {
+            running.complete(Unit)
+            awaitCancellation()
+        }
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(
+                testInjector(config(tmp)) {
+                    bind(VerificationExecutor::class.java).toInstance(executor)
+                },
+            )
+        }
+
+        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
+            send(Frame.Text(LspWire.initializeRequest()))
+            awaitResponseFor(id = 1)
+            send(Frame.Text(verifyCommand(id = 2, command = command)))
+            running.await()
+            send(Frame.Text(LspWire.request(id = 3, method = SemantifyrLiveMethods.CANCEL_ALL_VERIFICATIONS)))
+            val response = awaitResponseFor(id = 2)
+            if (command == "oxsts.case.verify") {
+                val result = response.resultAs(VerificationCaseResult::class.java)
+                assertThat(result.status()).isEqualTo(VerificationStatus.CANCELLED)
+                assertThat(result.portfolioId()).isEqualTo("smart-full")
+            } else {
+                val result = response.resultAs(WitnessValidationResult::class.java)
+                assertThat(result.status()).isEqualTo(WitnessValidationStatus.CANCELLED)
+                assertThat(result.verdict()).isEqualTo(VerificationStatus.CANCELLED)
+                assertThat(result.portfolioId()).isEqualTo("smart-full")
+            }
+        }
+    }
+
+    @Test
     fun `verify command missing the portfolio is rejected with an InvalidParams error and skips the executor`(
         @TempDir tmp: Path,
     ) = testApplication {
@@ -196,6 +293,31 @@ class WebSocketVerificationFlowTest {
             val error = awaitResponseFor(id = 2).errorAs(ResponseError::class.java)
             assertThat(error.code).isEqualTo(ResponseErrorCode.InvalidParams.value)
             assertThat(error.message).contains("portfolio")
+        }
+
+        assertThat(executor.calls).isEmpty()
+    }
+
+    @Test
+    fun `a command outside the flavor's commands is answered with MethodNotFound and skips the executor`(
+        @TempDir tmp: Path,
+    ) = testApplication {
+        val executor = FakeVerificationExecutor { cannedResult }
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(
+                testInjector(config(tmp)) {
+                    bind(VerificationExecutor::class.java).toInstance(executor)
+                },
+            )
+        }
+
+        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
+            send(Frame.Text(LspWire.initializeRequest()))
+            awaitResponseFor(id = 1)
+            send(Frame.Text(verifyCommand(id = 2, command = "oxsts.class.inline")))
+            val error = awaitResponseFor(id = 2).errorAs(ResponseError::class.java)
+            assertThat(error.code).isEqualTo(ResponseErrorCode.MethodNotFound.value)
+            assertThat(error.message).contains("oxsts.class.inline")
         }
 
         assertThat(executor.calls).isEmpty()

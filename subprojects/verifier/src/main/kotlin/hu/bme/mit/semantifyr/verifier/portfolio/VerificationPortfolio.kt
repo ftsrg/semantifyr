@@ -257,10 +257,7 @@ abstract class VerificationPortfolio {
         val trusted = decisive.filter { it.isTrusted }
         when {
             decisive.isEmpty() && collected.isEmpty() -> outcome
-            decisive.isEmpty() && collected.all { it.verdict == VerificationVerdict.NotSupported } -> {
-                val backends = collected.joinToString(", ") { it.metadata.backendId ?: "?" }
-                PortfolioOutcome.AllNotSupported("$id: every backend reported NotSupported ($backends)")
-            }
+            decisive.isEmpty() && collected.all { it.verdict == VerificationVerdict.NotSupported } -> allNotSupported(collected)
             decisive.isEmpty() && (outcome is PortfolioOutcome.TimedOut || outcome is PortfolioOutcome.AllErrored) -> outcome
             decisive.isEmpty() -> PortfolioOutcome.Decided(collected.first())
             trusted.isEmpty() -> outcome
@@ -325,17 +322,14 @@ abstract class VerificationPortfolio {
             }
             null
         }
-        val allNotSupported = errors.isEmpty() &&
+        val everyLegNotSupported = errors.isEmpty() &&
             collected.isNotEmpty() &&
             collected.all { it.verdict == VerificationVerdict.NotSupported }
         val observed = describeObserved(collected, errors)
         return when {
             decided != null -> PortfolioOutcome.Decided(decided)
             done < total -> PortfolioOutcome.TimedOut("$id: no trusted verdict within $timeout$observed")
-            allNotSupported -> {
-                val backends = collected.joinToString(", ") { it.metadata.backendId ?: "?" }
-                PortfolioOutcome.AllNotSupported("$id: every backend reported NotSupported ($backends)")
-            }
+            everyLegNotSupported -> allNotSupported(collected)
             errors.size + collected.count { it.verdict == VerificationVerdict.Errored } == total -> {
                 val failures = errors.map {
                     "${it::class.simpleName}: ${it.message ?: ""}"
@@ -350,6 +344,13 @@ abstract class VerificationPortfolio {
             }
             else -> PortfolioOutcome.NoDecision("$id: no trusted verdict$observed")
         }
+    }
+
+    private fun allNotSupported(collected: List<BackendVerificationResult>): PortfolioOutcome.AllNotSupported {
+        val legs = collected.map {
+            "${it.metadata.backendId ?: "?"} (${it.message ?: "no construct reported"})"
+        }.distinct().joinToString(", ")
+        return PortfolioOutcome.AllNotSupported("$id: every backend reported NotSupported: $legs")
     }
 
     private fun describeObserved(collected: List<BackendVerificationResult>, errors: List<Throwable>): String {

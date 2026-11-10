@@ -261,8 +261,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
             .buildAndResolve()
         val witness = reparsedContext.modelResources.last().contents.filterIsInstance<InlinedOxsts>().single()
 
-        val validationDirectory = outputDirectory.resolve("reparsed-validation")
-        val verifier = buildVerifier(verificationPortfolio, timeout, validationDirectory, environment)
+        val verifier = buildVerifier(verificationPortfolio, timeout, outputDirectory, environment)
         val outcome = WitnessValidator().validate(verifier, witness)
         assertThat(outcome.isValid)
             .describedAs("Reparsed witness for ${case.qualifiedName} must re-verify Passed via ${verificationPortfolio.id} but got ${outcome.verification.verdict} (${outcome.verification.message ?: "no message"})")
@@ -284,8 +283,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
 
         logger.info { "Validating returned witness" }
 
-        val validationDirectory = outputDirectory.resolve("validation")
-        val verifier = buildVerifier(validation, timeout, validationDirectory, environment)
+        val verifier = buildVerifier(validation, timeout, outputDirectory, environment)
         val outcome = WitnessValidator().validate(verifier, trace)
         assertThat(outcome.isValid)
             .describedAs("Witness for ${case.qualifiedName} (original verdict $originalVerdict) must re-verify Passed via ${validation.id} but got ${outcome.verification.verdict} (${outcome.verification.message ?: "no message"})")

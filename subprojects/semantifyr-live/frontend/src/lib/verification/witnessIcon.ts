@@ -40,6 +40,24 @@ export function witnessIconDescriptor(
         tooltip: 'Show witness (validation inconclusive)',
         ariaLabel: 'Show witness, validation inconclusive',
       }
+    case 'timeout':
+      return {
+        kind: 'inconclusive',
+        iconColor: 'var(--warning)',
+        badgeColor: 'warning',
+        badgeVisible: true,
+        tooltip: 'Show witness (validation timed out)',
+        ariaLabel: 'Show witness, validation timed out',
+      }
+    case 'cancelled':
+      return {
+        kind: 'simple',
+        iconColor: 'var(--text-muted)',
+        badgeColor: 'default',
+        badgeVisible: false,
+        tooltip: 'Show witness (validation cancelled)',
+        ariaLabel: 'Show witness, validation cancelled',
+      }
     case 'invalid':
       return {
         kind: 'failed',

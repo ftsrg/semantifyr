@@ -10,17 +10,16 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 import {
-  LIVE_FLAVORS,
   findExample,
   findFlavor,
+  liveFlavors,
   type LiveExample,
   type LiveFlavor,
 } from '../examples';
-import { decodeCompressedBase64Url } from '../lib/api/urls';
-import { buildShareableUrl } from '../lib/util/sharing';
+import { decodeCompressedBase64Url, liveEditorUrl, parseLiveEditorUrl } from '@semantifyr/editor-common';
 import type { ColorModePreference, ResolvedColorMode } from '../lib/util/colorMode';
 import { createApi, type FlavorInfo, type PortfolioInfo } from '../lib/api';
-import type { VerificationCaseState, WitnessValidationStatus } from '../lib/verification';
+import { DEFAULT_VALIDATION_PORTFOLIO_ID, type VerificationCaseState, type WitnessValidationStatus } from '../lib/verification';
 import { casesToMarkers } from '../lib/session/caseMarkers';
 import { findPortfolioLabel } from '../lib/verification/portfolioLabel';
 import {
@@ -50,21 +49,12 @@ import { FONT_SIZE } from '../lib/util/theme';
 
 const LiveEditor = lazy(() => import('./editor/LiveEditor'));
 
-const DEFAULT_FLAVOR = LIVE_FLAVORS[0];
-const DEFAULT_EXAMPLE: LiveExample = (() => {
-  const first = DEFAULT_FLAVOR.examples[0];
-  if (!first) {
-    throw new Error(`flavor ${DEFAULT_FLAVOR.id} has no examples`);
-  }
-  return first;
-})();
 const RIGHT_PANE_WIDTH_KEY = 'semantifyr-right-pane-width';
 const DEFAULT_RIGHT_PANE_WIDTH = 480;
 const MIN_LEFT_WIDTH = 320;
 const MIN_RIGHT_WIDTH = 280;
 const VALIDATION_PORTFOLIO_KEY = 'semantifyr-validation-portfolio';
 const AUTO_VALIDATE_KEY = 'semantifyr-auto-validate';
-const DEFAULT_VALIDATION_PORTFOLIO_ID = 'smart-full';
 
 const VERIFICATION_PANEL_HEIGHT_KEY = 'semantifyr-verification-panel-height';
 const VERIFICATION_PANEL_OPEN_KEY = 'semantifyr-verification-panel-open';
@@ -74,12 +64,8 @@ const MIN_VERIFICATION_PANEL_HEIGHT = 80;
 const MIN_EDITOR_AREA_HEIGHT = 120;
 
 const COPY_CONFIRMATION_MS = 2000;
+const FLAVORS_RETRY_MS = 5000;
 
-function resolveInitialFlavor(search: string): LiveFlavor {
-  const params = new URLSearchParams(search);
-  const modeParam = params.get('mode');
-  return (modeParam ? findFlavor(modeParam) : undefined) ?? DEFAULT_FLAVOR;
-}
 
 interface Props {
   backendUrl: string;
@@ -97,20 +83,22 @@ interface UrlState {
   shared: boolean;
 }
 
-async function resolveInitialState(search: string): Promise<UrlState> {
-  const flavor = resolveInitialFlavor(search);
-  const params = new URLSearchParams(search);
-  const exampleParam = params.get('example');
-  const codeParam = params.get('code');
+interface LoadedPage {
+  flavors: readonly [LiveFlavor, ...LiveFlavor[]];
+  initial: UrlState;
+}
 
-  const decodedCode = codeParam ? await decodeCompressedBase64Url(codeParam) : null;
+async function resolveInitialState(search: string, flavors: readonly [LiveFlavor, ...LiveFlavor[]]): Promise<UrlState> {
+  const parameters = parseLiveEditorUrl(search);
+  const flavor = findFlavor(flavors, parameters.flavor) ?? flavors[0];
+  const decodedCode = parameters.compressedCode ? await decodeCompressedBase64Url(parameters.compressedCode) : null;
 
   const fallback = flavor.examples[0];
   if (!fallback) {
     throw new Error(`flavor ${flavor.id} has no examples`);
   }
-  if (exampleParam) {
-    const example = findExample(flavor, exampleParam) ?? fallback;
+  if (parameters.example) {
+    const example = findExample(flavor, parameters.example) ?? fallback;
     return { flavor, example, code: decodedCode ?? example.code, shared: false };
   }
 
@@ -122,22 +110,72 @@ function deriveConnectionMessage(status: LiveEditorStatus, statusInfo: string | 
     case 'initializing': return statusInfo ?? 'Initializing...';
     case 'reconnecting': return statusInfo ?? 'Reconnecting...';
     case 'errored': return statusInfo ?? 'Connection error';
+    case 'terminated': return statusInfo ?? 'Session ended';
     case 'disconnected': return 'Disconnected';
     case 'connected': return 'Ready';
   }
 }
 
-export default function EditorPage({
+export default function EditorPage(props: Props): React.JSX.Element {
+  const { backendUrl } = props;
+  const [loaded, setLoaded] = useState<LoadedPage | null>(null);
+  const [waiting, setWaiting] = useState(false);
+
+  useEffect(() => {
+    const api = createApi(backendUrl);
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    const load = async (): Promise<void> => {
+      try {
+        const flavors = liveFlavors(await api.fetchFlavors());
+        const initial = await resolveInitialState(typeof window === 'undefined' ? '' : window.location.search, flavors);
+        if (!cancelled) {
+          setLoaded({ flavors, initial });
+        }
+      } catch {
+        if (!cancelled) {
+          setWaiting(true);
+          retryTimer = setTimeout(() => {
+            void load();
+          }, FLAVORS_RETRY_MS);
+        }
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+      if (retryTimer !== null) {
+        clearTimeout(retryTimer);
+      }
+    };
+  }, [backendUrl]);
+
+  if (loaded === null) {
+    return (
+      <Box sx={{ height: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, bgcolor: 'var(--page-bg)' }}>
+        <CircularProgress size={32} sx={{ color: 'text.secondary' }} />
+        <Typography sx={{ color: 'text.secondary', fontSize: FONT_SIZE.md }}>
+          {waiting ? 'Waiting for the Semantifyr server...' : 'Loading editor...'}
+        </Typography>
+      </Box>
+    );
+  }
+  return <EditorWorkspace {...props} flavors={loaded.flavors} initial={loaded.initial} />;
+}
+
+function EditorWorkspace({
   backendUrl,
   colorMode,
   colorModePreference,
   onToggleColorMode,
   embedded = false,
-}: Props): React.JSX.Element {
-  const [flavor, setFlavor] = useState<LiveFlavor>(DEFAULT_FLAVOR);
-  const [example, setExample] = useState<LiveExample>(DEFAULT_EXAMPLE);
-  const [code, setCode] = useState<string>(DEFAULT_EXAMPLE.code);
-  const [shared, setShared] = useState(false);
+  flavors,
+  initial,
+}: Props & LoadedPage): React.JSX.Element {
+  const [flavor, setFlavor] = useState<LiveFlavor>(initial.flavor);
+  const [example, setExample] = useState<LiveExample>(initial.example);
+  const [code, setCode] = useState<string>(initial.code);
+  const [shared, setShared] = useState(initial.shared);
   const [copyConfirmation, setCopyConfirmation] = useState<string | null>(null);
   const [pendingSwitch, setPendingSwitch] = useState<(() => void) | null>(null);
 
@@ -191,21 +229,6 @@ export default function EditorPage({
   const copyConfirmationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    let cancelled = false;
-    void resolveInitialState(window.location.search).then((initial) => {
-      if (cancelled) return;
-      setFlavor(initial.flavor);
-      setExample(initial.example);
-      setCode(initial.code);
-      setShared(initial.shared);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
     const api = createApi(backendUrl);
     let cancelled = false;
     void api.fetchPortfolios()
@@ -234,7 +257,7 @@ export default function EditorPage({
   }, [currentEditorContent, example.code]);
 
   const handleSelectModel = useCallback((flavorId: string, exampleId: string) => {
-    const nextFlavor = findFlavor(flavorId);
+    const nextFlavor = findFlavor(flavors, flavorId);
     if (!nextFlavor) return;
     const fallbackExample = nextFlavor.examples[0];
     if (!fallbackExample) return;
@@ -247,14 +270,12 @@ export default function EditorPage({
       setShared(false);
       setSelectedWitnessCaseId(null);
       if (typeof window !== 'undefined') {
-        const url = new URL(window.location.href);
-        url.searchParams.set('mode', nextFlavor.id);
-        url.searchParams.set('example', nextExample.id);
-        url.searchParams.delete('code');
-        window.history.replaceState(null, '', url.toString());
+        void liveEditorUrl(window.location.href, { flavor: nextFlavor.id, example: nextExample.id, embed: embedded }).then((url) => {
+          window.history.replaceState(null, '', url);
+        });
       }
     });
-  }, [flavor.id, example.id, runOrConfirm]);
+  }, [flavors, flavor.id, example.id, embedded, runOrConfirm]);
 
   const flashCopyConfirmation = useCallback((message: string) => {
     setCopyConfirmation(message);
@@ -278,17 +299,12 @@ export default function EditorPage({
 
   const handleCopyLink = useCallback(async () => {
     if (typeof window === 'undefined') return;
-    const url = await buildShareableUrl(
-      `${window.location.origin}${window.location.pathname}`,
-      shared
-        ? { flavorId: flavor.id, code: currentEditorContent() }
-        : {
-            flavorId: flavor.id,
-            exampleId: example.id,
-            code: currentEditorContent(),
-            exampleCode: example.code,
-          },
-    );
+    const content = currentEditorContent();
+    const url = await liveEditorUrl(`${window.location.origin}${window.location.pathname}`, {
+      flavor: flavor.id,
+      example: shared ? undefined : example.id,
+      code: shared || content !== example.code ? content : undefined,
+    });
     try {
       await navigator.clipboard.writeText(url);
       flashCopyConfirmation('Link copied!');
@@ -623,7 +639,7 @@ export default function EditorPage({
       {embedded ? body : (
         <EditorShell
           logoSrc={logoSrc}
-          flavors={LIVE_FLAVORS}
+          flavors={flavors}
           currentFlavorId={flavor.id}
           currentExampleId={example.id}
           onSelectModel={handleSelectModel}

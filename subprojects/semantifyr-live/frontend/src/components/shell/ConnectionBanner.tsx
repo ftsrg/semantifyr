@@ -30,6 +30,7 @@ interface BannerContent {
   body: string;
   accent: string;
   actionLabel: string;
+  onAction: () => void;
 }
 
 export default function ConnectionBanner({ status, statusInfo, onReconnect }: Props): React.JSX.Element | null {
@@ -41,37 +42,49 @@ export default function ConnectionBanner({ status, statusInfo, onReconnect }: Pr
     setDismissed(false);
   }, [status]);
 
-  if ((status !== 'errored' && status !== 'disconnected') || dismissed) {
+  if ((status !== 'errored' && status !== 'disconnected' && status !== 'terminated') || dismissed) {
     return null;
   }
 
-  const content: BannerContent = status === 'disconnected'
+  const content: BannerContent = status === 'terminated'
     ? {
         icon: <CloudOffOutlinedIcon sx={{ fontSize: ICON_SIZE.md }} />,
-        title: 'Disconnected',
-        body: 'Diagnostics and verification are paused.',
-        accent: 'var(--text-muted)',
-        actionLabel: 'Reconnect',
+        title: 'Session ended',
+        body: statusInfo ?? 'The server closed the session.',
+        accent: 'var(--danger)',
+        actionLabel: 'Reload',
+        onAction: () => { window.location.reload(); },
       }
-    : !online
+    : status === 'disconnected'
       ? {
-          icon: <WifiOffOutlinedIcon sx={{ fontSize: ICON_SIZE.md }} />,
-          title: "You're offline",
-          body: 'Editing works; live features resume when you reconnect.',
-          accent: 'var(--warning)',
-          actionLabel: 'Retry',
-        }
-      : {
           icon: <CloudOffOutlinedIcon sx={{ fontSize: ICON_SIZE.md }} />,
-          title: 'Connection lost',
-          body: statusInfo ?? 'Could not reach the language server.',
-          accent: 'var(--danger)',
-          actionLabel: 'Retry',
-        };
+          title: 'Disconnected',
+          body: 'Diagnostics and verification are paused.',
+          accent: 'var(--text-muted)',
+          actionLabel: 'Reconnect',
+          onAction: onReconnect,
+        }
+      : !online
+        ? {
+            icon: <WifiOffOutlinedIcon sx={{ fontSize: ICON_SIZE.md }} />,
+            title: "You're offline",
+            body: 'Editing works; live features resume when you reconnect.',
+            accent: 'var(--warning)',
+            actionLabel: 'Retry',
+            onAction: onReconnect,
+          }
+        : {
+            icon: <CloudOffOutlinedIcon sx={{ fontSize: ICON_SIZE.md }} />,
+            title: 'Connection lost',
+            body: statusInfo ?? 'Could not reach the language server.',
+            accent: 'var(--danger)',
+            actionLabel: 'Retry',
+            onAction: onReconnect,
+          };
 
   return (
     <Box
-      role={status === 'errored' ? 'alert' : 'status'}
+      role={status === 'disconnected' ? 'status' : 'alert'}
       sx={{
         position: 'absolute',
         bottom: 12,
@@ -105,7 +118,7 @@ export default function ConnectionBanner({ status, statusInfo, onReconnect }: Pr
         <Button
           size="small"
           color="primary"
-          onClick={onReconnect}
+          onClick={content.onAction}
           sx={{ mt: 0.5, px: 1, py: 0.1, minWidth: 0, fontSize: FONT_SIZE.xs }}
         >
           {content.actionLabel}

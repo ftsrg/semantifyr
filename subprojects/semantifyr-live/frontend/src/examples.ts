@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import type { FlavorInfo } from '@semantifyr/editor-common';
+import { SYSML_FLAVOR_INFO } from './lib/session/sysmlBridge';
+
 const importedTutorialOxsts = import.meta.glob('./snippets/imported/tutorial/*.oxsts', {
   query: '?raw',
   import: 'default',
@@ -43,28 +46,15 @@ export const importedSysmlv2Manifest = import.meta.glob<SysmlCorpusManifest>('./
   eager: true,
 });
 
-export type LiveFlavorId =
-  | 'oxsts'
-  | 'oxsts-with-gamma-library'
-  | 'oxsts-with-sysmlv2-library'
-  | 'gamma'
-  | 'sysml';
-
 export interface LiveExample {
   id: string;
-  flavor: LiveFlavorId;
+  flavor: string;
   label: string;
   description: string;
   code: string;
 }
 
-export interface LiveFlavor {
-  id: LiveFlavorId;
-  displayName: string;
-  description: string;
-  languageId: string;
-  fileName: string;
-  peekCompiledOutput: boolean;
+export interface LiveFlavor extends FlavorInfo {
   examples: LiveExample[];
 }
 
@@ -213,7 +203,7 @@ function buildImportedGammaLibraryExamples(): LiveExample[] {
   });
 }
 
-const blank = (flavor: LiveFlavorId, libraryName: string | null): LiveExample => ({
+const blank = (flavor: string, libraryName: string | null): LiveExample => ({
   id: 'blank',
   flavor,
   label: 'Blank',
@@ -247,27 +237,36 @@ const sysmlExamples: LiveExample[] = [
   blank('sysml', null),
 ];
 
-export const LIVE_FLAVORS: readonly [LiveFlavor, ...LiveFlavor[]] = [
-  { id: 'oxsts', displayName: 'Semantifyr', description: 'The core Semantifyr modelling language, no extra libraries.', languageId: 'oxsts', fileName: 'snippet.oxsts', peekCompiledOutput: false, examples: oxstsExamples },
-  { id: 'oxsts-with-gamma-library', displayName: 'Semantifyr with Gamma library', description: 'Semantifyr with the Gamma statechart library available to import.', languageId: 'oxsts', fileName: 'snippet.oxsts', peekCompiledOutput: false, examples: oxstsWithGammaLibraryExamples },
-  { id: 'oxsts-with-sysmlv2-library', displayName: 'Semantifyr with SysML v2 library', description: 'Semantifyr with the SysML v2 library available to import.', languageId: 'oxsts', fileName: 'snippet.oxsts', peekCompiledOutput: false, examples: oxstsWithSysmlv2LibraryExamples },
-  { id: 'gamma', displayName: 'Gamma', description: 'Gamma statechart source, compiled to Semantifyr before verification.', languageId: 'gamma', fileName: 'snippet.gamma', peekCompiledOutput: true, examples: gammaExamples },
-  { id: 'sysml', displayName: 'SysML v2', description: 'A SysML v2 model, with the standard and verification libraries loaded in the background.', languageId: 'sysml', fileName: 'snippet.sysml', peekCompiledOutput: true, examples: sysmlExamples },
-];
+const BUNDLED_EXAMPLES: Readonly<Record<string, LiveExample[]>> = {
+  'oxsts': oxstsExamples,
+  'oxsts-with-gamma-library': oxstsWithGammaLibraryExamples,
+  'oxsts-with-sysmlv2-library': oxstsWithSysmlv2LibraryExamples,
+  'gamma': gammaExamples,
+  [SYSML_FLAVOR_INFO.id]: sysmlExamples,
+};
 
-export function findFlavor(id: string | null | undefined): LiveFlavor | undefined {
-  return LIVE_FLAVORS.find((f) => f.id === id);
+function withExamples(info: FlavorInfo): LiveFlavor {
+  return { ...info, examples: BUNDLED_EXAMPLES[info.id] ?? [blank(info.id, null)] };
+}
+
+// The served flavors keep the server's order; the client-only SysML flavor comes last.
+export function liveFlavors(served: readonly FlavorInfo[]): [LiveFlavor, ...LiveFlavor[]] {
+  const sysml = withExamples(SYSML_FLAVOR_INFO);
+  const [first, ...rest] = served.map(withExamples);
+  if (first === undefined) {
+    return [sysml];
+  }
+  return [first, ...rest, sysml];
+}
+
+export function findFlavor(flavors: readonly LiveFlavor[], id: string | null | undefined): LiveFlavor | undefined {
+  return flavors.find((flavor) => {
+    return flavor.id === id;
+  });
 }
 
 export function findExample(flavor: LiveFlavor, id: string | null | undefined): LiveExample | undefined {
-  return flavor.examples.find((e) => e.id === id);
-}
-
-export function findExampleAcrossFlavors(id: string | null | undefined): { flavor: LiveFlavor; example: LiveExample } | undefined {
-  if (!id) return undefined;
-  for (const flavor of LIVE_FLAVORS) {
-    const example = flavor.examples.find((e) => e.id === id);
-    if (example) return { flavor, example };
-  }
-  return undefined;
+  return flavor.examples.find((example) => {
+    return example.id === id;
+  });
 }

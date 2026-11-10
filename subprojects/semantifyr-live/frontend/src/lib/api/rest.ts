@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { FlavorsResponse } from '@semantifyr/editor-common'
-import { normalizeBaseUrl } from './urls'
+import { normalizeBaseUrl, type FlavorsResponse } from '@semantifyr/editor-common'
 import type {
   AdminConfigResponse,
   AdminStatusResponse,
@@ -61,11 +60,7 @@ export function createApi(rawBackendUrl: string): LiveServerApi {
 
     async fetchFlavors() {
       const response = await get('/api/flavors')
-      if (!response.ok) {
-        return []
-      }
-      const data = (await response.json()) as FlavorsResponse
-      return data.flavors
+      return (await expectOk<FlavorsResponse>(response)).flavors
     },
 
     async fetchFlavor(id) {

@@ -4,7 +4,51 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-export type ReconnectStatus = 'reconnecting' | 'connected' | 'errored'
+export type ReconnectStatus =
+  | 'reconnecting'
+  | 'connected'
+  | 'errored'
+  | 'terminated'
+
+export interface SocketClose {
+  code: number
+  reason: string
+}
+
+export const CloseCode = {
+  SessionTerminated: 4000,
+  MissingFlavor: 4400,
+  UnknownFlavor: 4404,
+  TooManySessions: 4429,
+} as const
+
+const TERMINAL_CLOSE_CODES: ReadonlySet<number> = new Set([
+  CloseCode.SessionTerminated,
+  CloseCode.MissingFlavor,
+  CloseCode.UnknownFlavor,
+])
+
+export function isTerminalClose(close: SocketClose | null): close is SocketClose {
+  return close !== null && TERMINAL_CLOSE_CODES.has(close.code)
+}
+
+export function sessionLimitReason(close: SocketClose | null): string | null {
+  if (close?.code !== CloseCode.TooManySessions) {
+    return null
+  }
+  return close.reason || 'Too many sessions'
+}
+
+export function observeSocketClose(socket: WebSocket, onClose: (close: SocketClose) => void): void {
+  // At the target a capturing listener runs before the onclose handler the language client stops on
+  socket.addEventListener(
+    'close',
+    (event) => {
+      onClose({ code: event.code, reason: event.reason })
+    },
+    { capture: true },
+  )
+}
 
 export interface ReconnectControllerOptions {
   maxAttempts: number
@@ -12,6 +56,7 @@ export interface ReconnectControllerOptions {
   backoffMs: readonly number[]
   connect: () => Promise<void>
   isCancelled: () => boolean
+  lastClose: () => SocketClose | null
   onStatus: (status: ReconnectStatus, info?: string) => void
 }
 
@@ -20,11 +65,13 @@ export interface ReconnectController {
   cancel(): void
   resetAttempts(): void
   attempts(): number
+  terminated(): boolean
 }
 
 interface InternalState {
   attempts: number
   timer: ReturnType<typeof setTimeout> | null
+  terminated: boolean
 }
 
 function delayFor(backoffMs: readonly number[], attempt: number): number {
@@ -32,7 +79,7 @@ function delayFor(backoffMs: readonly number[], attempt: number): number {
 }
 
 export function createReconnectController(options: ReconnectControllerOptions): ReconnectController {
-  const state: InternalState = { attempts: 0, timer: null }
+  const state: InternalState = { attempts: 0, timer: null, terminated: false }
 
   const clearTimer = (): void => {
     if (state.timer !== null) {
@@ -42,17 +89,28 @@ export function createReconnectController(options: ReconnectControllerOptions): 
   }
 
   const schedule = (): void => {
-    if (options.isCancelled()) {
+    if (options.isCancelled() || state.terminated) {
       return
     }
     clearTimer()
+    const close = options.lastClose()
+    if (isTerminalClose(close)) {
+      state.terminated = true
+      options.onStatus('terminated', close.reason || 'The server closed the session')
+      return
+    }
+    const rejection = sessionLimitReason(close)
     const next = state.attempts + 1
     if (next > options.maxAttempts) {
-      options.onStatus('errored', 'Connection failed after multiple attempts')
+      options.onStatus('errored', rejection ?? 'Connection failed after multiple attempts')
       return
     }
     state.attempts = next
-    options.onStatus('reconnecting', `Reconnecting (attempt ${next}/${options.maxAttempts})...`)
+    const attemptText = `attempt ${next}/${options.maxAttempts}`
+    options.onStatus(
+      'reconnecting',
+      rejection !== null ? `${rejection}, reconnecting (${attemptText})...` : `Reconnecting (${attemptText})...`,
+    )
     state.timer = setTimeout(() => {
       state.timer = null
       const run = async (): Promise<void> => {
@@ -83,5 +141,6 @@ export function createReconnectController(options: ReconnectControllerOptions): 
       state.attempts = 0
     },
     attempts: () => state.attempts,
+    terminated: () => state.terminated,
   }
 }

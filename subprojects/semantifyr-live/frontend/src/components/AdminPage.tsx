@@ -33,7 +33,6 @@ import {
   type LiveServerApi,
   type PortfolioInfo,
 } from '../lib/api';
-import { resolveBackendUrl } from '../lib/util/backendUrl';
 import { FONT_SIZE, ICON_SIZE } from '../lib/util/theme';
 
 const REFRESH_INTERVAL_MS = 1000;
@@ -321,7 +320,7 @@ interface AdminPageProps {
 }
 
 export default function AdminPage({ colorModePreference, colorMode, onToggleColorMode }: AdminPageProps): React.JSX.Element {
-  const api = useMemo(() => createApi(resolveBackendUrl()), []);
+  const api = useMemo(() => createApi(window.location.origin), []);
   return (
     <Dashboard
       api={api}

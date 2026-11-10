@@ -25,8 +25,8 @@ import Badge from '@mui/material/Badge';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 
 import {
+  discoverCases,
   dispatchAutoValidation,
-  discoverVerificationCases,
   runAllVerifications,
   verifySingleCase,
   witnessValidationLocation,
@@ -146,7 +146,7 @@ function VerificationPanelInner(
   }: Props,
   ref: React.Ref<VerificationPanelHandle>,
 ): React.JSX.Element {
-  const [verifyState, setVerifyState] = useState<VerificationState>({ phase: 'idle', cases: [] });
+  const [verifyState, setVerifyState] = useState<VerificationState>({ phase: 'idle', discovery: 'idle', cases: [] });
   const verifyStateRef = useRef(verifyState);
   const runHandleRef = useRef<RunVerificationHandle | null>(null);
   const discoveryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -170,24 +170,7 @@ function VerificationPanelInner(
   const handleRefreshCases = useCallback((): void => {
     const client = editorHandle?.getLspClient();
     if (!client || !editorHandle) return;
-    void discoverVerificationCases(client, discoveryCommand, editorHandle.getFileUri())
-      .then((discoveredCases) => {
-        stateUpdater((prev) => {
-          if (prev.phase === 'running') return prev;
-
-          const existingById = new Map(prev.cases.map((cs) => [cs.caseInfo.id, cs]));
-          const mergedCases = discoveredCases.map((discovered) => {
-            const existing = existingById.get(discovered.id);
-            if (existing) {
-              return { ...existing, caseInfo: discovered };
-            }
-            return { caseInfo: discovered, status: 'stale' as const };
-          });
-
-          return { ...prev, cases: mergedCases };
-        });
-      })
-      .catch(() => { /* non-fatal */ });
+    void discoverCases(client, discoveryCommand, editorHandle.getFileUri(), stateUpdater);
   }, [editorHandle, discoveryCommand, stateUpdater]);
 
   // Discovery: run on connect, debounce on text changes.
@@ -233,7 +216,7 @@ function VerificationPanelInner(
 
     const cases = verifyStateRef.current.cases.map((cs) => cs.caseInfo);
     if (cases.length === 0) {
-      stateUpdater({ phase: 'error', message: 'No verification cases found.', cases: [] });
+      stateUpdater((prev) => ({ phase: 'error', discovery: prev.discovery, message: 'No verification cases found.', cases: [] }));
       return;
     }
 
@@ -287,12 +270,11 @@ function VerificationPanelInner(
       const location = witnessValidationLocation(target.caseInfo, witnessUri, validateWitnessByCase);
       dispatchAutoValidation(client, validateWitnessCommand, caseId, location, stateUpdater, {
         validationPortfolioId,
-        caseLabel: target.caseInfo.label,
       });
     },
   }), [editorHandle, validateWitnessCommand, validateWitnessByCase, stateUpdater, validationPortfolioId]);
 
-  const { phase, cases } = verifyState;
+  const { phase, discovery, cases } = verifyState;
   const verifyBusy = phase === 'running';
   const stale = !connected;
 
@@ -452,7 +434,7 @@ function VerificationPanelInner(
                       </Box>
                     }
                     secondary={
-                      caseState.message != null && (caseState.status === 'failed' || caseState.status === 'errored' || caseState.status === 'inconclusive' || caseState.status === 'not_supported')
+                      caseState.message != null && (caseState.status === 'failed' || caseState.status === 'errored' || caseState.status === 'inconclusive' || caseState.status === 'timeout' || caseState.status === 'not_supported' || caseState.status === 'cancelled')
                         ? caseState.message
                         : null
                     }
@@ -515,11 +497,19 @@ function VerificationPanelInner(
             </List>
           )}
 
-          {cases.length === 0 && connected && (
+          {cases.length === 0 && connected && discovery === 'discovering' && (
             <Box sx={{ px: 1.5, py: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
               <CircularProgress size={14} sx={{ color: 'text.secondary' }} />
               <Typography variant="body2" sx={{ fontSize: FONT_SIZE.md, color: 'text.secondary' }}>
                 Discovering cases...
+              </Typography>
+            </Box>
+          )}
+
+          {cases.length === 0 && connected && discovery === 'discovered' && phase !== 'error' && (
+            <Box sx={{ px: 1.5, py: 1 }}>
+              <Typography variant="body2" sx={{ fontSize: FONT_SIZE.md, color: 'text.secondary' }}>
+                No verification cases
               </Typography>
             </Box>
           )}

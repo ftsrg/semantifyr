@@ -38,4 +38,9 @@ class ShellBasedSpinExecutorTest {
 
         assertThat(executor.searchArguments(specification)).containsExactly("-o3", "-search", "-DSAFETY", "model.pml")
     }
+
+    @Test
+    fun `spin without its C compiler is not available`() {
+        assertThat(ShellBasedSpinExecutor(compilerName = "semantifyr-missing-compiler").isAvailable()).isFalse
+    }
 }

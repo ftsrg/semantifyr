@@ -247,6 +247,9 @@ export class VerificationTestController {
                 case VerificationStatus.Timeout:
                     run.errored(testItem, new TestMessage(`Timed out: ${result.message ?? 'no message'}`));
                     break;
+                case VerificationStatus.Cancelled:
+                    run.skipped(testItem);
+                    break;
                 case VerificationStatus.NotSupported:
                     run.errored(testItem, new TestMessage(`Not supported by the chosen portfolio: ${result.message ?? 'no message'}`));
                     break;

@@ -46,8 +46,10 @@ const TERMINAL_STATUSES: ReadonlySet<VerificationCaseStatus> = new Set([
   'passed',
   'failed',
   'inconclusive',
+  'timeout',
   'errored',
   'not_supported',
+  'cancelled',
 ])
 
 const SECTION_TITLE_SX = {
@@ -89,7 +91,9 @@ function deriveSummaryStats(cases: readonly VerificationCaseState[]): SummarySta
     failed: 0,
     errored: 0,
     inconclusive: 0,
+    timeout: 0,
     notSupported: 0,
+    cancelled: 0,
     other: 0,
   }
   let totalMs = 0
@@ -100,7 +104,9 @@ function deriveSummaryStats(cases: readonly VerificationCaseState[]): SummarySta
       case 'failed': counts.failed++; break
       case 'errored': counts.errored++; break
       case 'inconclusive': counts.inconclusive++; break
+      case 'timeout': counts.timeout++; break
       case 'not_supported': counts.notSupported++; break
+      case 'cancelled': counts.cancelled++; break
       default: counts.other++
     }
     if (cs.metrics?.totalDuration && isMeaningfulDuration(cs.metrics.totalDuration)) {
@@ -115,7 +121,9 @@ function deriveSummaryStats(cases: readonly VerificationCaseState[]): SummarySta
   ]
   if (counts.errored > 0) stats.push({ label: 'Errored', value: String(counts.errored) })
   if (counts.inconclusive > 0) stats.push({ label: 'Inconclusive', value: String(counts.inconclusive) })
+  if (counts.timeout > 0) stats.push({ label: 'Timed out', value: String(counts.timeout) })
   if (counts.notSupported > 0) stats.push({ label: 'Unsupported', value: String(counts.notSupported) })
+  if (counts.cancelled > 0) stats.push({ label: 'Cancelled', value: String(counts.cancelled) })
   if (timedCount > 0) {
     stats.push({ label: 'Wall-clock', value: formatIsoDurationDetailed(isoDurationFromMs(totalMs)) })
     stats.push({ label: 'Average', value: formatIsoDurationDetailed(isoDurationFromMs(totalMs / timedCount)) })

@@ -19,6 +19,7 @@ import io.ktor.server.testing.testApplication
 import io.ktor.server.websocket.WebSocketServerSession
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.close
+import kotlinx.coroutines.CancellationException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -135,6 +136,27 @@ class WebSocketHandlerTest {
             }
         }
         assertThat(secondAttempt.exceptionOrNull()).isNotNull
+    }
+
+    @Test
+    fun `a cancelled session returns close code 4000 with a fixed reason`() = testApplication {
+        val handler = createHandler { _, _, _ ->
+            throw CancellationException("Job was cancelled")
+        }
+        installSemantifyrApp(contentNegotiation = false, webSockets = true) {
+            with(handler) {
+                configure()
+            }
+        }
+
+        val wsClient = createClient {
+            install(ClientWebSockets)
+        }
+        wsClient.webSocket("/ws/lsp/oxsts") {
+            val reason = closeReason.await()
+            assertThat(reason?.code).isEqualTo(4000.toShort())
+            assertThat(reason?.message).isEqualTo("Session terminated by an administrator")
+        }
     }
 
     @Test

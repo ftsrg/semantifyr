@@ -5,14 +5,16 @@
  */
 
 import {
+  discoverVerificationCases,
   VerificationStatus,
+  WitnessValidationStatus,
   type Location,
   type VerificationCaseResult,
   type VerificationCaseSpecification,
   type VerificationMetrics,
   type VerificationTrace,
   type WitnessValidationResult,
-  type WitnessValidationStatus,
+  verifyCase,
 } from '@semantifyr/editor-common'
 import {
   CancellationTokenSource as VscodeCancellationTokenSource,
@@ -39,6 +41,8 @@ export type {
   WitnessValidationStatus,
 } from '@semantifyr/editor-common'
 
+export const DEFAULT_VALIDATION_PORTFOLIO_ID = 'smart-full'
+
 export type VerificationCaseStatus =
   | 'stale'
   | 'queued'
@@ -46,8 +50,10 @@ export type VerificationCaseStatus =
   | 'passed'
   | 'failed'
   | 'inconclusive'
+  | 'timeout'
   | 'not_supported'
   | 'errored'
+  | 'cancelled'
 
 export interface VerificationCaseState {
   caseInfo: VerificationCaseSpecification
@@ -68,8 +74,11 @@ export interface VerificationCaseState {
 
 export type VerificationPhase = 'idle' | 'running' | 'done' | 'error' | 'cancelled'
 
+export type DiscoveryPhase = 'idle' | 'discovering' | 'discovered'
+
 export interface VerificationState {
   phase: VerificationPhase
+  discovery: DiscoveryPhase
   message?: string
   progress?: string
   cases: VerificationCaseState[]
@@ -119,10 +128,10 @@ function parseResultStatus(response: VerificationCaseResult | null): Verificatio
     case VerificationStatus.Passed:
     case VerificationStatus.Failed:
     case VerificationStatus.Inconclusive:
-    case VerificationStatus.NotSupported:
-      return response.status
     case VerificationStatus.Timeout:
-      return 'inconclusive'
+    case VerificationStatus.NotSupported:
+    case VerificationStatus.Cancelled:
+      return response.status
     default:
       return 'errored'
   }
@@ -130,16 +139,54 @@ function parseResultStatus(response: VerificationCaseResult | null): Verificatio
 
 function parseValidationStatus(response: WitnessValidationResult | null): WitnessValidationStatus {
   switch (response?.status) {
-    case 'valid':
-    case 'invalid':
-    case 'inconclusive':
+    case WitnessValidationStatus.Valid:
+    case WitnessValidationStatus.Invalid:
+    case WitnessValidationStatus.Inconclusive:
+    case WitnessValidationStatus.Timeout:
+    case WitnessValidationStatus.Cancelled:
       return response.status
     default:
-      return 'errored'
+      return WitnessValidationStatus.Errored
   }
 }
 
 export { discoverVerificationCases } from '@semantifyr/editor-common'
+
+function mergeDiscoveredCases(
+  previous: readonly VerificationCaseState[],
+  discovered: readonly VerificationCaseSpecification[],
+): VerificationCaseState[] {
+  const existingById = new Map(previous.map((caseState) => [caseState.caseInfo.id, caseState]))
+  return discovered.map((caseInfo) => {
+    const existing = existingById.get(caseInfo.id)
+    if (existing) {
+      return { ...existing, caseInfo }
+    }
+    return { caseInfo, status: 'stale' as const }
+  })
+}
+
+export async function discoverCases(
+  client: LspClient,
+  discoveryCommand: string,
+  fileUri: string,
+  setState: StateUpdater,
+): Promise<void> {
+  setState((prev) => ({ ...prev, discovery: 'discovering' }))
+  let discovered: VerificationCaseSpecification[]
+  try {
+    discovered = await discoverVerificationCases(client, discoveryCommand, fileUri)
+  } catch {
+    setState((prev) => ({ ...prev, discovery: 'idle' }))
+    return
+  }
+  setState((prev) => {
+    if (prev.phase === 'running') {
+      return { ...prev, discovery: 'discovered' }
+    }
+    return { ...prev, discovery: 'discovered', cases: mergeDiscoveredCases(prev.cases, discovered) }
+  })
+}
 
 export interface RunVerificationHandle {
   cancel: () => void
@@ -155,23 +202,6 @@ export interface RunVerificationOptions {
   portfolioId?: string | undefined
   // Called per case after a witness arrives; returning non-null dispatches validateWitness.
   getAutoValidateRequest?: (() => AutoValidateRequest | null) | undefined
-}
-
-function buildVerifyArguments(
-  fileUri: string,
-  caseInfo: VerificationCaseSpecification,
-  options: RunVerificationOptions,
-): Record<string, unknown> {
-  const payload: Record<string, unknown> = {
-    uri: fileUri,
-    range: caseInfo.location.range,
-    // Echoed back via the live-server's active-verifications monitor; the LSP server ignores it.
-    caseLabel: caseInfo.label,
-  }
-  if (options.portfolioId) {
-    payload.portfolio = options.portfolioId
-  }
-  return payload
 }
 
 interface VerifyOutcome {
@@ -212,11 +242,15 @@ async function executeVerify(
   token: CancellationToken,
 ): Promise<VerifyOutcome> {
   try {
-    const response = (await client.sendRequest(
-      'workspace/executeCommand',
-      { command, arguments: [buildVerifyArguments(fileUri, caseInfo, options)] },
-      token,
-    )) as VerificationCaseResult | null
+    const response = await verifyCase(
+      client,
+      command,
+      { uri: fileUri, range: caseInfo.location.range },
+      {
+        ...(options.portfolioId ? { portfolio: options.portfolioId } : {}),
+        token,
+      },
+    )
     return toVerifyOutcome(response)
   } catch (error) {
     return {
@@ -244,22 +278,21 @@ function maybeDispatchAutoValidation(
   const location = witnessValidationLocation(caseInfo, witnessUri, validate.byCase ?? false)
   dispatchAutoValidation(client, validate.command, caseInfo.id, location, setState, {
     validationPortfolioId: validate.portfolioId,
-    caseLabel: caseInfo.label,
   })
 }
 
 function deriveBatchMessage(cases: readonly VerificationCaseState[]): string {
   const hasFailures = cases.some((cs) => cs.status === 'failed')
-  const hasErrors = cases.some((cs) => cs.status === 'errored')
+  const hasErrors = cases.some((cs) => cs.status === 'errored' || cs.status === 'timeout')
   const allPassed = cases.every((cs) => cs.status === 'passed')
   if (allPassed) {
     return 'All cases passed'
   }
   if (hasErrors && hasFailures) {
-    return 'Some cases failed or errored'
+    return 'Some cases failed, errored or timed out'
   }
   if (hasErrors) {
-    return 'Some cases errored'
+    return 'Some cases errored or timed out'
   }
   return 'Some cases failed'
 }
@@ -345,11 +378,12 @@ export function runAllVerifications(
 
   const removeListener = onProgress(progress.handle)
 
-  setState({
+  setState((prev) => ({
     phase: 'running',
+    discovery: prev.discovery,
     message: 'Starting verification...',
     cases: cases.map((c) => ({ caseInfo: c, status: 'queued' as const })),
-  })
+  }))
 
   const runOne = async (index: number): Promise<void> => {
     const currentCase = cases[index]
@@ -533,7 +567,7 @@ export async function validateWitness(
   client: LspClient,
   validateCommand: string,
   location: ValidateWitnessLocation,
-  options: RunVerificationOptions & { caseLabel?: string | undefined } = {},
+  options: RunVerificationOptions = {},
   token?: CancellationToken,
 ): Promise<WitnessValidationOutcome> {
   const args: Record<string, unknown> = {
@@ -542,9 +576,6 @@ export async function validateWitness(
   }
   if (options.portfolioId) {
     args.portfolio = options.portfolioId
-  }
-  if (options.caseLabel) {
-    args.caseLabel = options.caseLabel
   }
   try {
     const params = { command: validateCommand, arguments: [args] }
@@ -589,7 +620,7 @@ export function dispatchAutoValidation(
   caseId: string,
   location: ValidateWitnessLocation,
   setState: StateUpdater,
-  options: { validationPortfolioId?: string | undefined; caseLabel?: string | undefined } = {},
+  options: { validationPortfolioId?: string | undefined } = {},
 ): void {
   setState((prev) => ({
     ...prev,
@@ -603,7 +634,6 @@ export function dispatchAutoValidation(
     location,
     {
       ...(options.validationPortfolioId ? { portfolioId: options.validationPortfolioId } : {}),
-      ...(options.caseLabel ? { caseLabel: options.caseLabel } : {}),
     },
   ).then((outcome) => {
     setState((prev) => ({

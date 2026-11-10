@@ -8,16 +8,16 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { parseArgs } from 'node:util'
-import type { FlavorsResponse, PortfoliosResponse } from '@semantifyr/editor-common'
+import { normalizeBaseUrl, type FlavorsResponse, type PortfoliosResponse } from '@semantifyr/editor-common'
 import type { InfoResponse } from '../lib/api/types.ts'
-import { normalizeBaseUrl } from '../lib/api/urls.ts'
+import { DEFAULT_VALIDATION_PORTFOLIO_ID } from '../lib/verification/engine.ts'
 import { readModel, tutorialStepModels } from './models.ts'
 import { failures, formatSummary, summarize, type HealthSample } from './stats.ts'
 import { runStudent, type StudentRun } from './student.ts'
 
 const usage = `Usage: npm run load-test -- [options]
 
-Simulates a class on a live server: each student opens a tutorial model, waits for diagnostics, discovers and verifies every case with the default portfolio, edits the model, verifies again and disconnects.
+Simulates a class on a live server: each student opens a tutorial model, waits for diagnostics, discovers and verifies every case with the default portfolio, validates every witness as the editor does, edits the model, verifies again and disconnects once the validations are back.
 
   --url <url>               live server (default $SEMANTIFYR_LIVE_URL, else https://live-staging.semantifyr.org)
   --students <n>            concurrent students (default 30)
@@ -25,9 +25,10 @@ Simulates a class on a live server: each student opens a tutorial model, waits f
   --rounds <n>              sessions per student, each on the next model (default 1)
   --models <files>          comma-separated .oxsts files (default the tutorial step models with a case)
   --portfolio <id>          (default the server's default portfolio)
+  --validation-portfolio <id>  witness validation portfolio (default the editor's, ${DEFAULT_VALIDATION_PORTFOLIO_ID})
   --no-edit                 skip the edit and the second verification
   --timeout <seconds>       per request, verification queueing included (default 300)
-  --max-verify-p95 <s>      fail when the p95 verification time exceeds this (default 60)
+  --max-verify-p95 <s>      fail when the p95 verification time exceeds this (default 120)
   --output <file>           JSON result (default build/load-test/<start time>.json)`
 
 // mirrors the container health check: a 5 s timeout, unhealthy after 3 failures in a row
@@ -87,9 +88,10 @@ async function main(): Promise<number> {
       'rounds': { type: 'string', default: '1' },
       'models': { type: 'string' },
       'portfolio': { type: 'string' },
+      'validation-portfolio': { type: 'string', default: DEFAULT_VALIDATION_PORTFOLIO_ID },
       'edit': { type: 'boolean', default: true },
       'timeout': { type: 'string', default: '300' },
-      'max-verify-p95': { type: 'string', default: '60' },
+      'max-verify-p95': { type: 'string', default: '120' },
       'output': { type: 'string' },
       'help': { type: 'boolean', default: false },
     },
@@ -123,7 +125,7 @@ async function main(): Promise<number> {
   const info = await getJson<InfoResponse>(`${httpBase}/api/info`).catch(() => null)
 
   console.log(`Load test against ${httpBase}${info ? ` (version ${info.version}, commit ${info.commit}, ${info.activeSessions} active sessions)` : ''}`)
-  console.log(`students ${students}, rounds ${rounds}, ramp ${rampMs / 1000} s, edit ${values.edit ? 'on' : 'off'}, portfolio ${portfolio}, timeout ${timeoutMs / 1000} s`)
+  console.log(`students ${students}, rounds ${rounds}, ramp ${rampMs / 1000} s, edit ${values.edit ? 'on' : 'off'}, portfolio ${portfolio}, validation portfolio ${values['validation-portfolio']}, timeout ${timeoutMs / 1000} s`)
   console.log(`models: ${models.map((model) => `${model.name} (${model.cases.length})`).join(', ')}`)
 
   const origin = performance.now()
@@ -157,9 +159,9 @@ async function main(): Promise<number> {
       if (!model) {
         break
       }
-      const run = await runStudent(student, round, { webSocketBase, flavor, portfolio, model, edit: values.edit, timeoutMs, signal: abort.signal })
+      const run = await runStudent(student, round, { webSocketBase, flavor, portfolio, validationPortfolio: values['validation-portfolio'], model, edit: values.edit, timeoutMs, signal: abort.signal })
       const wrong = run.cases.filter((verification) => !verification.ok).map((verification) => `${verification.name} ${verification.status ?? 'no result'}${verification.message ? ` (${verification.message})` : ''}`)
-      const outcome = run.error ? `${run.error.phase} failed: ${run.error.message}` : `${run.cases.length} verifications${wrong.length > 0 ? `, unexpected: ${wrong.join('; ')}` : ''}`
+      const outcome = run.error ? `${run.error.phase} failed: ${run.error.message}` : `${run.cases.length} verifications, ${run.validations.length} witness validations${wrong.length > 0 ? `, unexpected: ${wrong.join('; ')}` : ''}`
       console.log(`${elapsed()}  student ${student + 1} round ${round + 1} ${model.name}: ${outcome}`)
       results.push(run)
     }
@@ -183,7 +185,7 @@ async function main(): Promise<number> {
     server: info,
     startedAt: startedAt.toISOString(),
     durationMs,
-    options: { students, rampMs, rounds, edit: values.edit, timeoutMs, maxVerificationP95Ms, portfolio, models: models.map((model) => model.name) },
+    options: { students, rampMs, rounds, edit: values.edit, timeoutMs, maxVerificationP95Ms, portfolio, validationPortfolio: values['validation-portfolio'], models: models.map((model) => model.name) },
     summary,
     failures: reasons,
     health,

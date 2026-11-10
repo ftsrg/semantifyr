@@ -6,7 +6,8 @@
 
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import { liveEditorUrl, useLiveBackendUrl } from '@site/src/lib/live';
+import { liveEditorUrl, normalizeBaseUrl } from '@semantifyr/editor-common';
+import { useLiveBackendUrl } from '@site/src/lib/live';
 import styles from './styles.module.css';
 
 interface Props {
@@ -20,7 +21,7 @@ export default function OpenInLiveLink({ language, code }: Props): React.JSX.Ele
 
   useEffect(() => {
     let active = true;
-    void liveEditorUrl(liveBackendUrl, language, code).then((url) => {
+    void liveEditorUrl(`${normalizeBaseUrl(liveBackendUrl).http}/`, { flavor: language, code }).then((url) => {
       if (active) {
         setHref(url);
       }

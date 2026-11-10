@@ -6,11 +6,11 @@
 
 import React from 'react';
 import { ThemeProvider } from '@mui/material/styles';
+import { parseLiveEditorUrl } from '@semantifyr/editor-common';
 import EditorPage from './components/EditorPage';
 import AdminPage from './components/AdminPage';
 import ReloadPrompt from './components/pwa/ReloadPrompt';
 import { useColorMode } from './lib/hooks/useColorMode';
-import { resolveBackendUrl } from './lib/util/backendUrl';
 import { createSemantifyrTheme } from './lib/util/theme';
 
 function isAdminRoute(): boolean {
@@ -21,12 +21,11 @@ function isEmbedded(): boolean {
   if (typeof window === 'undefined') {
     return false;
   }
-  return new URLSearchParams(window.location.search).get('embed') === '1';
+  return parseLiveEditorUrl(window.location.search).embed;
 }
 
 export default function App(): React.JSX.Element {
   const { preference, colorMode, cycle } = useColorMode();
-  const backendUrl = React.useMemo(() => resolveBackendUrl(), []);
   const theme = React.useMemo(() => createSemantifyrTheme(colorMode), [colorMode]);
 
   const surface = isAdminRoute() ? (
@@ -40,7 +39,7 @@ export default function App(): React.JSX.Element {
       colorMode={colorMode}
       colorModePreference={preference}
       onToggleColorMode={cycle}
-      backendUrl={backendUrl}
+      backendUrl={window.location.origin}
       embedded={isEmbedded()}
     />
   );

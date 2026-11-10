@@ -11,6 +11,7 @@ import {
   defaultMessageForStatus,
 } from '../lib/session/caseMarkers'
 import type { VerificationCaseState } from '../lib/verification'
+import { sampleTrace } from './fixtures/verification-results'
 
 function fakeCase(
   overrides: Partial<VerificationCaseState> & { status: VerificationCaseState['status'] },
@@ -36,6 +37,7 @@ describe('caseStatusToSeverity', () => {
     expect(caseStatusToSeverity('failed')).toBe('error')
     expect(caseStatusToSeverity('errored')).toBe('error')
     expect(caseStatusToSeverity('inconclusive')).toBe('warning')
+    expect(caseStatusToSeverity('timeout')).toBe('warning')
     expect(caseStatusToSeverity('not_supported')).toBe('warning')
   })
 
@@ -44,15 +46,22 @@ describe('caseStatusToSeverity', () => {
     expect(caseStatusToSeverity('running')).toBeNull()
     expect(caseStatusToSeverity('stale')).toBeNull()
     expect(caseStatusToSeverity('passed')).toBeNull()
+    expect(caseStatusToSeverity('cancelled')).toBeNull()
   })
 })
 
 describe('defaultMessageForStatus', () => {
   it('mentions the case label and steers the user to the next action', () => {
-    expect(defaultMessageForStatus('failed', 'P1')).toContain('P1')
-    expect(defaultMessageForStatus('failed', 'P1')).toMatch(/witness/i)
-    expect(defaultMessageForStatus('inconclusive', 'P1')).toMatch(/portfolio/i)
-    expect(defaultMessageForStatus('not_supported', 'P1')).toMatch(/portfolio/i)
+    expect(defaultMessageForStatus('failed', 'P1', true)).toContain('P1')
+    expect(defaultMessageForStatus('failed', 'P1', true)).toMatch(/witness/i)
+    expect(defaultMessageForStatus('inconclusive', 'P1', false)).toMatch(/portfolio/i)
+    expect(defaultMessageForStatus('timeout', 'P1', false)).toMatch(/portfolio/i)
+    expect(defaultMessageForStatus('not_supported', 'P1', false)).toMatch(/portfolio/i)
+  })
+
+  it('names no witness for a failed case without one', () => {
+    expect(defaultMessageForStatus('failed', 'P1', false)).toContain('P1')
+    expect(defaultMessageForStatus('failed', 'P1', false)).not.toMatch(/witness/i)
   })
 })
 
@@ -74,6 +83,15 @@ describe('casesToMarkers', () => {
 
   it('falls back to defaultMessageForStatus when the case has no message', () => {
     const markers = casesToMarkers([fakeCase({ status: 'inconclusive' })])
-    expect(markers[0]!.message).toBe(defaultMessageForStatus('inconclusive', 'P1'))
+    expect(markers[0]!.message).toBe(defaultMessageForStatus('inconclusive', 'P1', false))
+  })
+
+  it('points to the witness only when the failed case carries a trace', () => {
+    const markers = casesToMarkers([
+      fakeCase({ status: 'failed', trace: sampleTrace }),
+      fakeCase({ status: 'failed' }),
+    ])
+    expect(markers[0]!.message).toMatch(/witness/i)
+    expect(markers[1]!.message).not.toMatch(/witness/i)
   })
 })

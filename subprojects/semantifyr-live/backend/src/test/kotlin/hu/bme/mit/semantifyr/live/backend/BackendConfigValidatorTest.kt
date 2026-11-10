@@ -23,6 +23,7 @@ class BackendConfigValidatorTest {
     private fun libraryNeedingFlavor(libraryRelativePath: String) = Flavor(
         id = "needs-library",
         displayName = "Needs library",
+        description = "A flavor that needs a library.",
         fileName = "snippet.oxsts",
         language = Language.Oxsts,
         workspaceLayout = WorkspaceLayout.WithLibrary(Path.of(libraryRelativePath), "Library"),

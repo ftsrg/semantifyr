@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
 import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServices
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionClient
+import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionContext
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionScoped
 import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.lsp4j.InitializeParams
@@ -29,6 +30,7 @@ class SessionLanguageServerAccess(
     private val sessionDocumentManager: SessionDocumentManager,
     private val client: LanguageClient,
     private val languageServices: LanguageServices,
+    private val commands: List<String>,
     private val cancelIndicator: CancelIndicator,
 ) : ILanguageServerAccess {
 
@@ -64,7 +66,7 @@ class SessionLanguageServerAccess(
     }
 
     override fun getInitializeResult(): InitializeResult {
-        return InitializeResult(languageServices.serverCapabilities)
+        return InitializeResult(languageServices.serverCapabilities(commands))
     }
 
     private fun contextFor(uri: String): Context {
@@ -75,6 +77,7 @@ class SessionLanguageServerAccess(
 
 @SessionScoped
 class SessionLanguageServerAccessFactory @Inject constructor(
+    private val sessionContext: SessionContext,
     private val sessionDocumentManager: SessionDocumentManager,
     private val sessionClient: SessionClient,
     private val languageServices: LanguageServices,
@@ -84,6 +87,7 @@ class SessionLanguageServerAccessFactory @Inject constructor(
             sessionDocumentManager,
             sessionClient.get(),
             languageServices,
+            sessionContext.flavor.commands,
             cancelIndicator,
         )
     }

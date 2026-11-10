@@ -7,7 +7,8 @@
 import type React from 'react';
 import { useState } from 'react';
 import CodeBlock from '@theme/CodeBlock';
-import { liveEditorUrl, useLiveBackendUrl } from '@site/src/lib/live';
+import { liveEditorUrl, normalizeBaseUrl } from '@semantifyr/editor-common';
+import { useLiveBackendUrl } from '@site/src/lib/live';
 import styles from './styles.module.css';
 
 interface Props {
@@ -67,7 +68,7 @@ export default function LiveEmbed({ code, flavor = 'oxsts', show }: Props): Reac
   const [editorUrl, setEditorUrl] = useState<string | null>(null);
 
   const openEditor = async (): Promise<void> => {
-    setEditorUrl(await liveEditorUrl(liveBackendUrl, flavor, source, true));
+    setEditorUrl(await liveEditorUrl(`${normalizeBaseUrl(liveBackendUrl).http}/`, { flavor, code: source, embed: true }));
   };
 
   if (editorUrl !== null) {

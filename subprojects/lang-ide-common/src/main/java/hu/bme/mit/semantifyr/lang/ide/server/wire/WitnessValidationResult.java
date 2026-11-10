@@ -31,6 +31,16 @@ public record WitnessValidationResult(
         return new WitnessValidationResult(WitnessValidationStatus.ERRORED, null, message, null, portfolioId, null);
     }
 
+    public static WitnessValidationResult timedOut(String message, String portfolioId) {
+        return new WitnessValidationResult(
+                WitnessValidationStatus.TIMEOUT, VerificationStatus.TIMEOUT, message, null, portfolioId, null);
+    }
+
+    public static WitnessValidationResult cancelled(String message, String portfolioId) {
+        return new WitnessValidationResult(
+                WitnessValidationStatus.CANCELLED, VerificationStatus.CANCELLED, message, null, portfolioId, null);
+    }
+
     private static String statusOf(WitnessValidationResultDto dto) {
         return switch (dto.getKind()) {
             case VALID -> WitnessValidationStatus.VALID;
