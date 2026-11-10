@@ -5,4 +5,4 @@
  */
 
 .edit-control { gap: var(--space-3); }
-.tabs-end .edit-control { width: auto; margin-right: var(--space-2); padding: 0 var(--space-4); color: var(--text-secondary); }
+.tabs-end .button.edit-control { width: auto; margin-right: var(--space-2); padding: 0 var(--space-4); color: var(--text-secondary); }

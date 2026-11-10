@@ -61,6 +61,20 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       expect(count('.case-row.status-passed')).toBe(1)
     },
   },
+  // the widest toolbar: a flavour menu and the longest example name
+  'oxsts': {
+    seed: { flavorId: 'oxsts', exampleId: 'intermediate', verification: discovered([{ caseInfo: caseOf('GreenColorIsReachable', 40, 'file:///workspace/snippet.oxsts'), status: 'stale' }]) },
+    expectState: () => {
+      expect(count('.flavour-button')).toBe(1)
+      expect(count('.segmented-option[data-language=oxsts][aria-pressed=true]')).toBe(1)
+    },
+  },
+}
+
+function expectApart(left: string, right: string): void {
+  const leftBox = document.querySelector(left)!.getBoundingClientRect()
+  const rightBox = document.querySelector(right)!.getBoundingClientRect()
+  expect(leftBox.right, `${left} overlaps ${right}`).toBeLessThanOrEqual(rightBox.left)
 }
 
 function expectInViewport(selector: string): void {
@@ -98,6 +112,7 @@ describe('the desktop shell on a tablet', () => {
           const { scrollWidth, clientWidth } = document.documentElement
           expect(scrollWidth, 'horizontal overflow').toBeLessThanOrEqual(clientWidth)
           expectInViewport('.toolbar .button, .toolbar .segmented-option, .results-header .button, .statusbar')
+          expectApart('.toolbar-group .example-button', '.toolbar-group-end')
           for (const selector of UNCLIPPED) {
             for (const element of document.querySelectorAll(selector)) {
               expect(element.scrollWidth, `${selector} clipped`).toBeLessThanOrEqual(element.clientWidth + 1)
