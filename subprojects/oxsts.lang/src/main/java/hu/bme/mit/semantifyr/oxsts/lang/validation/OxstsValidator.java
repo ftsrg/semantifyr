@@ -1636,8 +1636,10 @@ public class OxstsValidator extends AbstractOxstsValidator {
     }
 
     @Check
-    public void checkNoWriteOrOptionalReadThroughVariable(NavigationSuffixExpression expression) {
-        if (expression.eContainer() instanceof CallSuffixExpression call && call.getPrimary() == expression) {
+    public void checkNoWriteOrOptionalNavigationThroughVariable(NavigationSuffixExpression expression) {
+        if (expression.eContainer() instanceof CallSuffixExpression call
+                && call.getPrimary() == expression
+                && !expression.isOptional()) {
             return;
         }
         if (expression.getMember() instanceof VariableDeclaration member
@@ -1666,7 +1668,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
             acceptError(
                     "Optional navigation '?.' through variable '"
                             + variable.getName()
-                            + "' is not yet supported by the compiler; a read with '.' dispatches over the instances the variable may hold.",
+                            + "' is not yet supported by the compiler; a read or a call with '.' dispatches over the instances the variable may hold.",
                     expression,
                     UNSUPPORTED_FEATURE);
         }

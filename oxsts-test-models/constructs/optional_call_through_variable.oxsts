@@ -1,0 +1,29 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::constructs::optional_call_through_variable
+
+class Worker {
+    var done: bool := false
+
+    tran step() {
+        done := true
+    }
+}
+
+class Host {
+    contains worker: Worker
+    var current: Worker[0..1] := nothing
+
+    redefine tran {
+        current := worker
+        inline current?.step()
+    }
+
+    prop {
+        return EF worker.done
+    }
+}

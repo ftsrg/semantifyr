@@ -14,6 +14,7 @@ Call through a variable `v.t()`	pass	hu.bme.mit.semantifyr.compiler.pipeline.inl
 Member read through a variable `v.x`	pass	semantic/member_dispatch.oxsts	MemberReadThroughVariableReach
 Write through a variable `v.x := e`	reject	constructs/write_through_variable.oxsts	OXSTS.UNSUPPORTED_FEATURE
 Optional read through a variable `v?.x`	reject	constructs/optional_read_through_variable.oxsts	OXSTS.UNSUPPORTED_FEATURE
+Optional call through a variable `v?.t()`	reject	constructs/optional_call_through_variable.oxsts	OXSTS.UNSUPPORTED_FEATURE
 `record X { ... }`	pass	semantic/records.oxsts	RecordFieldWriteReach
 Record literal `Point { x = 0 }`	pass	semantic/records.oxsts	RecordLiteralAssignReach
 Arrays of records, array fields in records	reject	constructs/record_array.oxsts	OXSTS.UNSUPPORTED_FEATURE

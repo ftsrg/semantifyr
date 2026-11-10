@@ -43,7 +43,7 @@ var occupant: Item[0..1] := nothing
 
 ## Feature-Typed Variables
 
-A variable's type may be a [feature](features.md). The value domain of such a *feature-typed variable* is the set of instances reachable through that feature. A call through the variable, such as `inline active.step()`, runs the call on the instance the variable holds, and a read through it, such as `active.value` or `active.child.value`, reads the member of that instance. The same holds for a variable of class type, whose value domain is every instance of the class, for an array slot (`queue[i].value`), a local variable and the loop variable of a runtime `for`. A write through a variable, such as `active.value := 1` or `havoc(active.value)`, and an optional read through one, such as `active?.value`, are rejected (`OXSTS.UNSUPPORTED_FEATURE`).
+A variable's type may be a [feature](features.md). The value domain of such a *feature-typed variable* is the set of instances reachable through that feature. A call through the variable, such as `inline active.step()`, runs the call on the instance the variable holds, and a read through it, such as `active.value` or `active.child.value`, reads the member of that instance. The same holds for a variable of class type, whose value domain is every instance of the class, for an array slot (`queue[i].value`), a local variable and the loop variable of a runtime `for`. A write through a variable, such as `active.value := 1` or `havoc(active.value)`, and optional navigation through one, such as `active?.value` or `inline active?.step()`, are rejected (`OXSTS.UNSUPPORTED_FEATURE`).
 
 ```oxsts fragment
 class Region {
