@@ -11,15 +11,20 @@ Local arrays of class or feature type	pass	hu.bme.mit.semantifyr.compiler.pipeli
 Parameter arrays	reject	constructs/parameter_array.oxsts	OXSTS.UNSUPPORTED_FEATURE
 Unbounded variable multiplicity `[]`, `[lb..*]`	reject	constructs/unbounded_variable.oxsts	OXSTS.TYPE_MISMATCH
 Call through a variable `v.t()`	pass	hu.bme.mit.semantifyr.compiler.pipeline.inlining.VariableDispatchInliningTest	a call through a class-typed variable chooses among the instances of the class
+Positional argument after a named one `f(a = 1, 2)`	reject	constructs/positional_after_named_argument.oxsts	OXSTS.POSITIONAL_ARGUMENT_AFTER_NAMED
 Member read through a variable `v.x`	pass	semantic/member_dispatch.oxsts	MemberReadThroughVariableReach
 Write through a variable `v.x := e`	reject	constructs/write_through_variable.oxsts	OXSTS.UNSUPPORTED_FEATURE
 Optional read through a variable `v?.x`	reject	constructs/optional_read_through_variable.oxsts	OXSTS.UNSUPPORTED_FEATURE
 Optional call through a variable `v?.t()`	reject	constructs/optional_call_through_variable.oxsts	OXSTS.UNSUPPORTED_FEATURE
+Call through a many-valued feature `workers.step()`	reject	constructs/call_through_many_valued_feature.oxsts	OXSTS.CALL_THROUGH_MANY_VALUED_FEATURE
 `record X { ... }`	pass	semantic/records.oxsts	RecordFieldWriteReach
 Record literal `Point { x = 0 }`	pass	semantic/records.oxsts	RecordLiteralAssignReach
 Arrays of records, array fields in records	reject	constructs/record_array.oxsts	OXSTS.UNSUPPORTED_FEATURE
 Record-typed features	reject	constructs/record_feature.oxsts	OXSTS.UNSUPPORTED_FEATURE
+Ordering on non-numeric values `Red < Green`	reject	constructs/enum_ordering.oxsts	OXSTS.TYPE_MISMATCH
+String annotation argument on a variable `@Note("a counter") var x`	reject	constructs/string_annotation_on_variable.oxsts	OXSTS.UNSUPPORTED_FEATURE
 Multiple inheritance `class C : A, B`	reject	constructs/multiple_inheritance.oxsts	OXSTS.MULTIPLE_INHERITANCE
 `fun` declarations	parse	constructs/function_declaration.oxsts	-
 `pattern` declarations	parse	constructs/pattern_declaration.oxsts	-
+Temporal operator below the property root `AG (EF x)`, `b := AG x`	reject	constructs/nested_temporal_operator.oxsts	OXSTS.MISPLACED_TEMPORAL_OPERATOR
 AF, EG, AX, EX temporal operators	parse	constructs/af_operator.oxsts	-

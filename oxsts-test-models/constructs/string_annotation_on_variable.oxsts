@@ -1,0 +1,22 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::constructs::string_annotation_on_variable
+
+annotation Note(text: string)
+
+class Counter {
+    @Note("a counter")
+    var count: int := 0
+
+    redefine tran {
+        count := count + 1
+    }
+
+    prop {
+        return EF count == 1
+    }
+}

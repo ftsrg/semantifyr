@@ -1,0 +1,29 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::constructs::call_through_many_valued_feature
+
+class Worker {
+    var done: bool := false
+
+    tran step() {
+        done := true
+    }
+}
+
+class Team {
+    contains workers: Worker[0..*]
+    contains first: Worker subsets workers
+    contains second: Worker subsets workers
+
+    redefine tran {
+        inline workers.step()
+    }
+
+    prop {
+        return EF first.done
+    }
+}

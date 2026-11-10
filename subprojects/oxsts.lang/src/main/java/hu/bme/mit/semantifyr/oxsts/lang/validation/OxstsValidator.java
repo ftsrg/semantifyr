@@ -137,6 +137,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String MEMBER_NOT_IN_ABSTRACT_CLASS = ISSUE_PREFIX + "MEMBER_NOT_IN_ABSTRACT_CLASS";
     public static final String ELEMENT_SHADOWED = ISSUE_PREFIX + "ELEMENT_SHADOWED";
     public static final String INVALID_CALL_ARGUMENTS_COUND = ISSUE_PREFIX + "INVALID_CALL_ARGUMENTS_COUNT";
+    public static final String PARAMETER_BOUND_TWICE = ISSUE_PREFIX + "PARAMETER_BOUND_TWICE";
+    public static final String POSITIONAL_ARGUMENT_AFTER_NAMED = ISSUE_PREFIX + "POSITIONAL_ARGUMENT_AFTER_NAMED";
     public static final String INCORRECT_OPPOSITE = ISSUE_PREFIX + "INCORRECT_OPPOSITE";
     public static final String ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED =
             ISSUE_PREFIX + "ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED";
@@ -144,6 +146,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
             ISSUE_PREFIX + "ABSTRACT_FEATURE_INHERITED_MEMBERS_NOT_REDEFINED";
     public static final String INCORRECT_ASSIGNMENT = ISSUE_PREFIX + "INCORRECT_ASSIGNMENT";
     public static final String INCORRECT_CALLED_ELEMENT = ISSUE_PREFIX + "INCORRECT_CALLED_ELEMENT";
+    public static final String CALL_THROUGH_MANY_VALUED_FEATURE = ISSUE_PREFIX + "CALL_THROUGH_MANY_VALUED_FEATURE";
     public static final String VARIABLE_WITH_IMPLICIT_TYPE = ISSUE_PREFIX + "VARIABLE_WITH_IMPLICIT_TYPE";
     public static final String UNSUPPORTED_FEATURE = ISSUE_PREFIX + "UNSUPPORTED_FEATURE";
     public static final String EXPRESSION_MODALITY_TOO_HIGH = ISSUE_PREFIX + "EXPRESSION_MODALITY_TOO_HIGH";
@@ -155,6 +158,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String REDEFINITION_SIGNATURE_MISMATCH = ISSUE_PREFIX + "REDEFINITION_SIGNATURE_MISMATCH";
     public static final String RECURSIVE_RECORD = ISSUE_PREFIX + "RECURSIVE_RECORD";
     public static final String MIXED_BOOLEAN_OPERATORS = ISSUE_PREFIX + "MIXED_BOOLEAN_OPERATORS";
+    public static final String MISPLACED_TEMPORAL_OPERATOR = ISSUE_PREFIX + "MISPLACED_TEMPORAL_OPERATOR";
     public static final String MISSING_INITIALIZER = ISSUE_PREFIX + "MISSING_INITIALIZER";
     public static final String ABSTRACT_VERIFICATION_CASE = ISSUE_PREFIX + "ABSTRACT_VERIFICATION_CASE";
     public static final String AMBIGUOUS_REFERENCE = ISSUE_PREFIX + "AMBIGUOUS_REFERENCE";
@@ -640,21 +644,87 @@ public class OxstsValidator extends AbstractOxstsValidator {
             return;
         }
 
-        var minimumRequired =
-                parameters.stream().filter(p -> !isParameterOptional(p)).count();
-        if (arguments.size() < minimumRequired) {
-            var unbound = new ArrayList<String>();
-            for (int i = 0; i < parameters.size(); i++) {
-                var parameter = parameters.get(i);
-                if (!isParameterOptional(parameter) && OxstsUtils.getArgumentFor(arguments, parameter, i) == null) {
-                    unbound.add(parameter.getName());
-                }
+        // a positional argument after a named one has its own error and binds nothing here
+        var positionalAfterNamed = false;
+        var seenNamed = false;
+        for (var argument : arguments) {
+            seenNamed |= argument.getParameter() != null;
+            positionalAfterNamed |= seenNamed && argument.getParameter() == null;
+        }
+        if (positionalAfterNamed) {
+            return;
+        }
+
+        var unbound = new ArrayList<String>();
+        for (int i = 0; i < parameters.size(); i++) {
+            var parameter = parameters.get(i);
+            if (!isParameterOptional(parameter) && OxstsUtils.getArgumentFor(arguments, parameter, i) == null) {
+                unbound.add(parameter.getName());
             }
+        }
+        if (!unbound.isEmpty()) {
             acceptError(
                     "Missing argument(s) for non-optional parameter(s): " + String.join(", ", unbound) + ".",
                     callSuffixExpression,
                     INVALID_CALL_ARGUMENTS_COUND,
                     unbound.toArray(String[]::new));
+        }
+    }
+
+    @Check
+    public void checkCallArgumentBindings(CallSuffixExpression callSuffixExpression) {
+        if (callSuffixExpression.getPrimary() instanceof NavigationSuffixExpression navigation
+                && (navigation.getMember() == null || navigation.getMember().eIsProxy())) {
+            return;
+        }
+        var primary = metaConstantExpressionEvaluatorProvider.evaluate(callSuffixExpression.getPrimary());
+        if (primary instanceof ParametricDeclaration parametricDeclaration) {
+            checkArgumentBindings(callSuffixExpression.getArguments(), parametricDeclaration.getParameters());
+        }
+    }
+
+    @Check
+    public void checkAnnotationArgumentBindings(Annotation annotation) {
+        var declaration = annotation.getDeclaration();
+        if (declaration != null && !declaration.eIsProxy()) {
+            checkArgumentBindings(annotation.getArguments(), declaration.getParameters());
+        }
+    }
+
+    private void checkArgumentBindings(List<Argument> arguments, List<ParameterDeclaration> parameters) {
+        var boundNames = new LinkedHashSet<String>();
+        Argument firstNamed = null;
+        for (int i = 0; i < arguments.size(); i++) {
+            var argument = arguments.get(i);
+            var named = argument.getParameter();
+            if (named == null) {
+                if (firstNamed != null) {
+                    acceptError(
+                            "Positional argument follows the named argument '"
+                                    + firstNamed.getParameter().getName()
+                                    + "'. Every named argument must follow all positional arguments.",
+                            argument,
+                            POSITIONAL_ARGUMENT_AFTER_NAMED);
+                } else if (i < parameters.size()) {
+                    boundNames.add(parameters.get(i).getName());
+                }
+                continue;
+            }
+            if (named.eIsProxy()) {
+                continue;
+            }
+            if (firstNamed == null) {
+                firstNamed = argument;
+            }
+            if (!boundNames.add(named.getName())) {
+                acceptError(
+                        "Parameter '"
+                                + named.getName()
+                                + "' is already bound by an earlier argument. A parameter is bound at most once, by position or by name.",
+                        argument,
+                        PARAMETER_BOUND_TWICE,
+                        named.getName());
+            }
         }
     }
 
@@ -1219,6 +1289,67 @@ public class OxstsValidator extends AbstractOxstsValidator {
     }
 
     @Check
+    public void checkCallThroughSingleValuedFeature(CallSuffixExpression callSuffixExpression) {
+        if (!(callSuffixExpression.getPrimary() instanceof NavigationSuffixExpression navigation)) {
+            return;
+        }
+        var holder = navigation.getPrimary();
+        FeatureDeclaration feature = null;
+        if (holder instanceof ElementReference reference
+                && reference.getElement() instanceof FeatureDeclaration referenced) {
+            feature = referenced;
+        } else if (holder instanceof NavigationSuffixExpression holderNavigation
+                && holderNavigation.getMember() instanceof FeatureDeclaration member) {
+            feature = member;
+        }
+        if (feature == null || feature.getTypeSpecification() == null) {
+            return;
+        }
+        RangeEvaluation range;
+        try {
+            range = multiplicityRangeEvaluator.evaluate(feature.getTypeSpecification());
+        } catch (RuntimeException e) {
+            return;
+        }
+        var upperBound = range.getUpperBound();
+        if (upperBound == RangeEvaluation.INFINITY || upperBound > 1) {
+            var upperText = upperBound == RangeEvaluation.INFINITY ? "*" : String.valueOf(upperBound);
+            acceptError(
+                    "Cannot call through feature '"
+                            + feature.getName()
+                            + "', whose upper multiplicity is "
+                            + upperText
+                            + "; a call needs a holder with at most one instance, so call each instance in an `inline for` over the feature.",
+                    navigation,
+                    CALL_THROUGH_MANY_VALUED_FEATURE);
+        }
+    }
+
+    @Check
+    public void checkNoStringAnnotationArgumentOnVariable(Annotation annotation) {
+        if (!(annotation.eContainer() instanceof AnnotationContainer container)
+                || !(container.eContainer() instanceof VariableDeclaration variable)) {
+            return;
+        }
+        for (var argument : annotation.getArguments()) {
+            var type = argument.getExpression() == null ? null : evaluateTypeSafely(argument.getExpression());
+            if (type != null && typeCompatibility.isString(type, argument)) {
+                var declaration = annotation.getDeclaration();
+                var annotationName = declaration == null || declaration.eIsProxy() ? "" : declaration.getName();
+                acceptError(
+                        "Annotation '@"
+                                + annotationName
+                                + "' on variable '"
+                                + variable.getName()
+                                + "' cannot take a string argument; a variable keeps its annotations in the verified model, which holds no strings.",
+                        annotation,
+                        UNSUPPORTED_FEATURE);
+                return;
+            }
+        }
+    }
+
+    @Check
     public void checkFeatureBoundExpressionModality(FeatureDeclaration featureDeclaration) {
         var expression = featureDeclaration.getExpression();
         if (expression == null) {
@@ -1520,6 +1651,18 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     "Arrays can only be compared with == and != to an array of the same size.",
                     operator,
                     TYPE_MISMATCH);
+        } else if (operator.getOp() != ComparisonOp.EQ
+                && operator.getOp() != ComparisonOp.NOT_EQ
+                && (!typeCompatibility.isNumeric(leftType, operator)
+                        || !typeCompatibility.isNumeric(rightType, operator))) {
+            acceptError(
+                    "Ordering comparisons need numeric operands, found "
+                            + formatType(leftType)
+                            + " and "
+                            + formatType(rightType)
+                            + "; only == and != compare other values.",
+                    operator,
+                    TYPE_MISMATCH);
         }
     }
 
@@ -1803,6 +1946,30 @@ public class OxstsValidator extends AbstractOxstsValidator {
                             + ".",
                     expression,
                     TYPE_MISMATCH);
+        }
+    }
+
+    @Check
+    public void checkTemporalOperatorPlacement(TemporalOperator operator) {
+        var keyword = operator instanceof AG ? "AG" : "EF";
+        if (EcoreUtil2.getContainerOfType(operator.eContainer(), TemporalOperator.class) != null) {
+            acceptError(
+                    "Temporal operator `"
+                            + keyword
+                            + "` cannot be nested in another temporal operator; a temporal operator is only allowed as the whole expression a property returns.",
+                    operator,
+                    MISPLACED_TEMPORAL_OPERATOR);
+            return;
+        }
+        EObject root = operator;
+        while (root.eContainer() instanceof CastExpression cast && cast.getBody() == root) {
+            root = cast;
+        }
+        if (root.eContainmentFeature() != OxstsPackage.Literals.PROPERTY_DECLARATION__EXPRESSION) {
+            acceptError(
+                    "Temporal operator `" + keyword + "` is only allowed as the whole expression a property returns.",
+                    operator,
+                    MISPLACED_TEMPORAL_OPERATOR);
         }
     }
 
