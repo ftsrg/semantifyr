@@ -111,7 +111,7 @@
 .trace-head-title .verdict-mark { width: 18px; height: 18px; flex: none; }
 .trace-head-title .case-name { overflow: hidden; font-size: 14px; text-overflow: ellipsis; }
 .trace-head-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-3); color: var(--text-tertiary); font-size: 13.5px; }
-.pane-trace .trace-body { flex: 1; min-height: 0; overflow: auto; padding: 0 var(--space-4) var(--space-6) var(--space-1); }
+.pane-trace .trace-body { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: auto; padding: 0 var(--space-4) var(--space-6) var(--space-1); }
 .pane-trace.is-outdated .trace-body { opacity: 0.5; filter: saturate(0.6); }
 .phone .trace-views { display: flex; margin-top: var(--space-4); }
 .phone .trace-views .segmented-option { flex: 1; justify-content: center; height: 38px; font-size: 14px; }
