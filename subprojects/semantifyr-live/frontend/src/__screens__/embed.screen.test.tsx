@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type React from 'react'
 import { createRoot } from 'react-dom/client'
 import { beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest'
 import { page } from 'vitest/browser'
@@ -12,8 +11,9 @@ import { page } from 'vitest/browser'
 import type { ResolvedColorMode } from '../lib/util/colorMode'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
 import { ShellRoot } from '../shells/ShellRoot'
-import type { TraceSlotProps } from '../shells/traceSlot'
-import { caseOf, finished, seedLive, type Seed } from './seededLive'
+import { CaseTrace } from '../trace/CaseTrace'
+import { caseOf, finished, seedLive, type Seed, type Seeded } from './seededLive'
+import { caseState, LANGUAGES, seedWithTrace } from './traces'
 
 // Goal: both embed views lay out at the width the mockup frames them, in both themes, with the real editor,
 // and the frame's page is told the height the embed takes, the trace's included
@@ -23,7 +23,8 @@ const WIDTH = 760
 const BARRIER = caseOf('BarrierDownWhileTrainInCrossingViolated', 97)
 const TWO_TRAINS = caseOf('TwoTrainsCanBeInTheCrossing', 112)
 
-const STUB_HEIGHT = 240
+const SYSML = LANGUAGES.sysml!
+const TRACED = caseState(SYSML, { validated: true, recorded: true })
 
 const EXCERPT = `part def Track {
     port sensors : ~Sensors;
@@ -40,10 +41,6 @@ const EXCERPT = `part def Track {
 }
 `
 
-function TraceStub({ caseState }: TraceSlotProps): React.JSX.Element {
-  return <div className="trace-stub" style={{ height: STUB_HEIGHT }}>{`Trace of ${caseState.caseInfo.id}`}</div>
-}
-
 function notRun(caseInfo: typeof BARRIER): VerificationCaseState {
   return { caseInfo, status: 'stale' }
 }
@@ -56,7 +53,8 @@ const RESULTS = discovered([finished(BARRIER, 'failed', 2.9), finished(TWO_TRAIN
 
 interface ScreenState {
   view: 'embed' | 'edit-only'
-  seed: Seed
+  seed: Seed | (() => Seeded)
+  act?: () => Promise<void>
   expectState: () => void
 }
 
@@ -100,10 +98,43 @@ const STATES: Readonly<Record<string, ScreenState>> = {
   },
   'trace': {
     view: 'embed',
-    seed: { verification: RESULTS, selection: BARRIER.id },
+    seed: () => {
+      return seedWithTrace(SYSML, TRACED)
+    },
     expectState: () => {
       expect(count('.embed-case.is-open')).toBe(1)
-      expect(text('.embed-trace .trace-stub')).toBe(`Trace of ${BARRIER.id}`)
+      expect(text('.embed-trace .trace-views [aria-pressed=true]')).toBe('SysML trace')
+      expect(text('.embed-trace [data-testid=run-details]')).toContain('decided by Theta')
+    },
+  },
+  'trace-steps': {
+    view: 'embed',
+    seed: () => {
+      return seedWithTrace(SYSML, TRACED)
+    },
+    act: async () => {
+      await expect.poll(() => {
+        return document.querySelector('.embed-trace .trace-views [data-view=steps]')
+      }).toBeTruthy()
+      document.querySelector<HTMLElement>('.embed-trace .trace-views [data-view=steps]')!.click()
+    },
+    expectState: () => {
+      expect(count('.embed-trace [data-testid=trace-steps] .step')).toBe(4)
+    },
+  },
+  'trace-calls': {
+    view: 'embed',
+    seed: () => {
+      return seedWithTrace(SYSML, TRACED)
+    },
+    act: async () => {
+      await expect.poll(() => {
+        return document.querySelector('.embed-trace .trace-views [data-view=calls]')
+      }).toBeTruthy()
+      document.querySelector<HTMLElement>('.embed-trace .trace-views [data-view=calls]')!.click()
+    },
+    expectState: () => {
+      expect(count('.embed-trace [data-testid=trace-calls] .call')).toBe(6)
     },
   },
   'server-unreachable': {
@@ -149,7 +180,7 @@ describe('the embed shell', () => {
         window.history.replaceState(null, '', `${window.location.pathname}?view=${screen.view}`)
         expect(window.parent, 'the tests run in a frame').not.toBe(window)
         const posted = vi.spyOn(window.parent, 'postMessage')
-        const { live, shell } = seedLive(screen.seed)
+        const { live, shell } = typeof screen.seed === 'function' ? screen.seed() : seedLive(screen.seed)
         const container = document.createElement('div')
         document.body.append(container)
         const root = createRoot(container)
@@ -159,11 +190,12 @@ describe('the embed shell', () => {
           posted.mockRestore()
           window.history.replaceState(null, '', address)
         })
-        root.render(<ShellRoot live={live} shell={shell} colorMode={colorMode} trace={TraceStub} />)
-        const waiting = screen.seed.catalog === 'waiting'
+        root.render(<ShellRoot live={live} shell={shell} colorMode={colorMode} trace={CaseTrace} />)
+        const waiting = typeof screen.seed !== 'function' && screen.seed.catalog === 'waiting'
         await expect.poll(() => {
           return document.querySelector(waiting ? '.code-line' : '.monaco-editor .view-line')
         }, { timeout: 60_000 }).toBeTruthy()
+        await screen.act?.()
         await new Promise((resolve) => {
           setTimeout(resolve, 600)
         })
@@ -183,9 +215,9 @@ describe('the embed shell', () => {
         await expect.poll(() => {
           return lastReportedHeight(posted)
         }).toBe(Math.ceil(embed.getBoundingClientRect().height))
-        const stub = document.querySelector('.trace-stub')
-        if (stub) {
-          expect(lastReportedHeight(posted)!, 'the trace grows the frame').toBeGreaterThanOrEqual(stub.getBoundingClientRect().bottom - box.top)
+        const trace = document.querySelector('.embed-trace')
+        if (trace) {
+          expect(lastReportedHeight(posted)!, 'the trace grows the frame').toBeGreaterThanOrEqual(trace.getBoundingClientRect().bottom - box.top)
         }
         await page.screenshot({ path: `../../build/screens/embed-${state}-${colorMode}.png`, element: embed })
       })

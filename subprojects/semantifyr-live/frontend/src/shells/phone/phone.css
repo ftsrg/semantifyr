@@ -113,8 +113,10 @@
 .trace-head-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-3); color: var(--text-tertiary); font-size: 13.5px; }
 .pane-trace .trace-body { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: auto; padding: 0 var(--space-4) var(--space-6) var(--space-1); }
 .pane-trace.is-outdated .trace-body { opacity: 0.5; filter: saturate(0.6); }
-.phone .trace-views { display: flex; margin-top: var(--space-4); }
-.phone .trace-views .segmented-option { flex: 1; justify-content: center; height: 38px; font-size: 14px; }
+/* the views wrap onto a second row rather than scroll sideways; the language's own view keeps the first place */
+.phone .trace-views { display: flex; flex-wrap: wrap; row-gap: var(--space-2); margin-top: var(--space-4); overflow: visible; }
+.phone .trace-views .segmented-option { flex: 1 1 auto; justify-content: center; height: 38px; font-size: 14px; }
+.phone .trace-views .views-divider { display: none; }
 .phone .steps { padding-top: 0; }
 .phone .step { grid-template-columns: 30px 1fr; }
 .phone .step-number { font-size: 12.5px; }
