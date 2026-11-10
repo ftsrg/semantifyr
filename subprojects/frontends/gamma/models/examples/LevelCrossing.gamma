@@ -1,0 +1,100 @@
+package LevelCrossing
+
+interface Sensors {
+    out event approach
+    out event near
+    out event enter
+    out event leave
+}
+
+interface TrackReports {
+    out event trainApproaching
+    out event trainLeft
+}
+
+interface BarrierCommands {
+    out event lower
+    out event lift
+}
+
+statechart Track [
+    port sensors : requires Sensors,
+    port controller : provides TrackReports
+] {
+    region Main {
+        entry transition to Free
+
+        state Free
+        state Approaching
+        state Near
+        state InCrossing
+
+        transition Free to Approaching when event sensors.approach / raise controller.trainApproaching;
+        transition Approaching to Near when event sensors.near
+        transition Near to InCrossing when event sensors.enter
+        transition InCrossing to Free when event sensors.leave / raise controller.trainLeft;
+    }
+}
+
+statechart Controller [
+    port trackA : requires TrackReports,
+    port trackB : requires TrackReports,
+    port barrier : provides BarrierCommands
+] {
+    region Main {
+        entry transition to Idle
+
+        state Idle
+        state TrainPresent
+
+        transition Idle to TrainPresent when event trackA.trainApproaching / raise barrier.lower;
+        transition Idle to TrainPresent when event trackB.trainApproaching / raise barrier.lower;
+        transition TrainPresent to Idle when event trackA.trainLeft / raise barrier.lift;
+        transition TrainPresent to Idle when event trackB.trainLeft / raise barrier.lift;
+    }
+}
+
+statechart Barrier [
+    port controller : requires BarrierCommands
+] {
+    region Main {
+        entry transition to Up
+
+        state Up
+        state Down
+
+        transition Up to Down when event controller.lower
+        transition Down to Up when event controller.lift
+    }
+}
+
+sync component LevelCrossing [
+    port trackASensors : requires Sensors,
+    port trackBSensors : requires Sensors
+] {
+    component trackA : Track
+    component trackB : Track
+    component controller : Controller
+    component barrier : Barrier
+
+    bind trackASensors -> trackA.sensors
+    bind trackBSensors -> trackB.sensors
+
+    channel [ trackA.controller ] -> [ controller.trackA ]
+    channel [ trackB.controller ] -> [ controller.trackB ]
+    channel [ controller.barrier ] -> [ barrier.controller ]
+}
+
+verification case BarrierDownWhileTrainInCrossing {
+    component system : LevelCrossing
+    property {
+        AG ((!isActive (system.trackA.Main.InCrossing) && !isActive (system.trackB.Main.InCrossing)) || isActive (system.barrier.Main.Down))
+    }
+}
+
+verification case TwoTrainsCanBeInTheCrossing {
+    component system : LevelCrossing
+    property {
+        EF (isActive (system.trackA.Main.InCrossing) && isActive (system.trackB.Main.InCrossing))
+    }
+}

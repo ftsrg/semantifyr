@@ -67,11 +67,13 @@ fun gammaExampleTask(name: String) = tasks.register<JavaExec>("compileGammaExamp
 }
 
 val compileGammaExampleCrossroads = gammaExampleTask("Crossroads")
+val compileGammaExampleLevelCrossing = gammaExampleTask("LevelCrossing")
 val compileGammaExampleSimple = gammaExampleTask("Simple")
 val compileGammaExampleSpacecraft = gammaExampleTask("Spacecraft")
 
 val compileGammaExamples = tasks.register("compileGammaExamples") {
     inputs.files(compileGammaExampleCrossroads)
+    inputs.files(compileGammaExampleLevelCrossing)
     inputs.files(compileGammaExampleSimple)
     inputs.files(compileGammaExampleSpacecraft)
 }
