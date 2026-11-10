@@ -44,6 +44,14 @@ const THEMES: readonly LiveEditorTheme[] = [
     "dark",
 ];
 
+// a fixed frame keeps the size its page gives it; without one the embed grows with its content
+export type LiveEditorFrame =
+    | "fixed";
+
+const FRAMES: readonly LiveEditorFrame[] = [
+    "fixed",
+];
+
 // The path names the model, the query how it is shown, the fragment what the visitor made, which a browser never sends to the server
 export interface LiveEditorLink {
     language: string;
@@ -51,6 +59,7 @@ export interface LiveEditorLink {
     library?: string | undefined;
     view?: LiveEditorView | undefined;
     theme?: LiveEditorTheme | undefined;
+    frame?: LiveEditorFrame | undefined;
     model?: string | undefined;
     case?: string | undefined;
     verdicts?: readonly (readonly [string, string])[] | undefined;
@@ -62,6 +71,7 @@ export interface LiveEditorAddress {
     library: string | null;
     view: LiveEditorView | null;
     theme: LiveEditorTheme | null;
+    frame: LiveEditorFrame | null;
     compressedModel: string | null;
     case: string | null;
     compressedVerdicts: string | null;
@@ -84,6 +94,7 @@ export async function liveEditorUrl(base: string, link: LiveEditorLink): Promise
     setOrDelete(url.searchParams, "library", link.library);
     setOrDelete(url.searchParams, "view", link.view);
     setOrDelete(url.searchParams, "theme", link.theme);
+    setOrDelete(url.searchParams, "frame", link.frame);
     const fragment = new URLSearchParams();
     if (link.model !== undefined) {
         fragment.set("model", await encodeCompressedBase64Url(link.model));
@@ -136,6 +147,9 @@ export function parseLiveEditorUrl(location: LiveEditorLocation): LiveEditorAddr
         view: viewOf(query.get("view")),
         theme: THEMES.find((theme) => {
             return theme === query.get("theme");
+        }) ?? null,
+        frame: FRAMES.find((frame) => {
+            return frame === query.get("frame");
         }) ?? null,
         compressedModel: fragment.get("model"),
         case: fragment.get("case"),

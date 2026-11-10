@@ -180,8 +180,8 @@ export function caseState(language: Language, options: { validated: boolean, rec
   }
 }
 
-export function seedWithTrace(language: Language, state: VerificationCaseState): Seeded {
-  const seeded = seedLive({ flavorId: language.flavorId, exampleId: language.exampleId, verification: { phase: 'done', discovery: 'discovered', cases: [state] }, selection: state.caseInfo.id })
+export function seedWithTrace(language: Language, state: VerificationCaseState, others: VerificationCaseState[] = []): Seeded {
+  const seeded = seedLive({ flavorId: language.flavorId, exampleId: language.exampleId, verification: { phase: 'done', discovery: 'discovered', cases: [state, ...others] }, selection: state.caseInfo.id })
   const runtime = seeded.live.workspace.get().runtime
   if (runtime) {
     runtime.api.readDocument = (uri) => {

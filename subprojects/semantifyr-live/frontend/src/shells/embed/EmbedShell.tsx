@@ -8,10 +8,13 @@ import type React from 'react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { parseLiveEditorUrl } from '@semantifyr/editor-common'
 
+import type { LiveFlavor } from '../../examples'
 import { presentationOf } from '../../lib/language/presentation'
 import { isInitialized } from '../../lib/stores/initialization'
 import { useStore } from '../../lib/stores/useStore'
 import type { ResolvedColorMode } from '../../lib/util/colorMode'
+import type { VerificationCaseState } from '../../lib/verification/engine'
+import { fixedFrame } from '../../lib/workspace/address'
 import { caseRowOf, type CaseRow } from '../../lib/workspace/caseRows'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import { Icon } from '../../ui/icons'
@@ -152,16 +155,53 @@ function CaseLine({ row, open, onToggle }: { row: CaseRow, open: boolean, onTogg
   )
 }
 
-function Cases({ slot }: { slot: TraceSlot | undefined }): React.JSX.Element {
+function useCasesListed(): boolean {
+  const live = useLive()
+  const catalog = useStore(live.catalog, (state) => {
+    return state.status
+  })
+  const initialized = useStore(live.initialization, (state) => {
+    return state.steps.length > 0 && isInitialized(state)
+  })
+  return catalog === 'ready' && initialized
+}
+
+function CaseTraceArea({ caseState, row, flavor, slot }: { caseState: VerificationCaseState, row: CaseRow, flavor: LiveFlavor, slot: TraceSlot | undefined }): React.JSX.Element {
+  const Slot = slot
+  return (
+    <div className={`embed-trace status-${row.status}${row.outdated ? ' is-outdated' : ''}`} aria-label={`Trace of ${row.name}`}>
+      {Slot ? <Slot caseState={caseState} flavor={flavor} /> : null}
+    </div>
+  )
+}
+
+// a fixed frame shows the open case's trace below every case line, in the room the lines leave
+function FixedTrace({ slot }: { slot: TraceSlot | undefined }): React.JSX.Element | null {
   const live = useLive()
   const flavor = useFlavor(live)
   const verification = useCurrentVerification(live)
-  const initialization = useStore(live.initialization)
+  const selection = useStore(live.selection)
+  const listed = useCasesListed()
+  const caseState = verification.cases.find((candidate) => {
+    return candidate.caseInfo.id === selection
+  })
+  if (!listed || !caseState || !flavor) {
+    return null
+  }
+  const row = caseRowOf(caseState)
+  return row.hasTrace ? <CaseTraceArea caseState={caseState} row={row} flavor={flavor} slot={slot} /> : null
+}
+
+function Cases({ slot, inlineTrace }: { slot: TraceSlot | undefined, inlineTrace: boolean }): React.JSX.Element {
+  const live = useLive()
+  const flavor = useFlavor(live)
+  const verification = useCurrentVerification(live)
+  const listed = useCasesListed()
   const catalog = useStore(live.catalog, (state) => {
     return state.status
   })
   const selection = useStore(live.selection)
-  if (catalog !== 'ready' || initialization.steps.length === 0 || !isInitialized(initialization) || !flavor) {
+  if (!listed || !flavor) {
     const text = catalog === 'waiting'
       ? 'The server is not answering. The editor works; the verification cases are listed once a session is up.'
       : `The verification cases are listed once ${flavor ? presentationOf(flavor.languageId).name : 'the language'} has initialized.`
@@ -170,7 +210,6 @@ function Cases({ slot }: { slot: TraceSlot | undefined }): React.JSX.Element {
   if (verification.cases.length === 0) {
     return <div className="embed-initializing">The model has no verification cases.</div>
   }
-  const Slot = slot
   return (
     <>
       {verification.cases.map((caseState) => {
@@ -185,13 +224,7 @@ function Cases({ slot }: { slot: TraceSlot | undefined }): React.JSX.Element {
                 live.selectCase(open ? null : row.id)
               }}
             />
-            {open
-              ? (
-                <div className={`embed-trace status-${row.status}${row.outdated ? ' is-outdated' : ''}`} aria-label={`Trace of ${row.name}`}>
-                  {Slot ? <Slot caseState={caseState} flavor={flavor} /> : null}
-                </div>
-              )
-              : null}
+            {open && inlineTrace ? <CaseTraceArea caseState={caseState} row={row} flavor={flavor} slot={slot} /> : null}
           </div>
         )
       })}
@@ -199,7 +232,7 @@ function Cases({ slot }: { slot: TraceSlot | undefined }): React.JSX.Element {
   )
 }
 
-function Strip({ slot }: { slot: TraceSlot | undefined }): React.JSX.Element {
+function Strip({ slot, fixed }: { slot: TraceSlot | undefined, fixed: boolean }): React.JSX.Element {
   const live = useLive()
   const line = useStatusLine()
   const catalog = useStore(live.catalog, (state) => {
@@ -219,18 +252,19 @@ function Strip({ slot }: { slot: TraceSlot | undefined }): React.JSX.Element {
         <OpenInLive />
       </div>
       <div className="embed-cases" data-testid="case-list">
-        <Cases slot={slot} />
+        <Cases slot={slot} inlineTrace={!fixed} />
       </div>
+      {fixed ? <FixedTrace slot={slot} /> : null}
     </div>
   )
 }
 
 // the frame's page is told the embed's height whenever it changes, so the frame grows with the trace
-function useReportedHeight(): React.RefObject<HTMLDivElement | null> {
+function useReportedHeight(reported: boolean): React.RefObject<HTMLDivElement | null> {
   const root = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const element = root.current
-    if (!element) {
+    if (!element || !reported) {
       return
     }
     let last = -1
@@ -245,7 +279,7 @@ function useReportedHeight(): React.RefObject<HTMLDivElement | null> {
     return () => {
       observer.disconnect()
     }
-  }, [])
+  }, [reported])
   return root
 }
 
@@ -254,14 +288,16 @@ export default function EmbedShell({ colorMode, trace }: Props): React.JSX.Eleme
   const languageId = useStore(live.workspace, (workspace) => {
     return workspace.flavor?.languageId
   })
-  const [view] = useState(() => {
-    return parseLiveEditorUrl(window.location).view ?? 'embed'
+  const [address] = useState(() => {
+    return parseLiveEditorUrl(window.location)
   })
+  const view = address.view ?? 'embed'
+  const fixed = fixedFrame(address)
   const [contentHeight, setContentHeight] = useState<number | null>(null)
   const fit = useCallback((height: number) => {
     setContentHeight(height)
   }, [])
-  const root = useReportedHeight()
+  const root = useReportedHeight(!fixed)
   useLayoutEffect(() => {
     document.documentElement.dataset.shell = 'embed'
     return () => {
@@ -269,15 +305,16 @@ export default function EmbedShell({ colorMode, trace }: Props): React.JSX.Eleme
     }
   }, [])
   const editOnly = view === 'edit-only'
+  const fitted = editOnly && !fixed
   return (
-    <div ref={root} className={`embed${editOnly ? ' is-edit-only' : ''}`} data-language={languageId} data-testid="embed-shell">
+    <div ref={root} className={`embed${editOnly ? ' is-edit-only' : ''}${fixed ? ' is-fixed' : ''}`} data-language={languageId} data-testid="embed-shell">
       <AddressError />
       <BackToModel />
-      <div className="embed-editor" style={editOnly && contentHeight !== null ? { height: contentHeight } : undefined}>
-        {languageId === undefined ? <AddressModel /> : <ModelEditor colorMode={colorMode} verdictMarks={!editOnly} {...(editOnly ? { onContentHeight: fit } : {})} />}
+      <div className="embed-editor" style={fitted && contentHeight !== null ? { height: contentHeight } : undefined}>
+        {languageId === undefined ? <AddressModel /> : <ModelEditor colorMode={colorMode} verdictMarks={!editOnly} {...(fitted ? { onContentHeight: fit } : {})} />}
         <EditControl className="embed-edit-control" />
       </div>
-      {editOnly ? null : <Strip slot={trace} />}
+      {editOnly ? null : <Strip slot={trace} fixed={fixed} />}
     </div>
   )
 }

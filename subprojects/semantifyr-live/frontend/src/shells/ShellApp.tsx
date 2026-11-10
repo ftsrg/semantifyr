@@ -41,11 +41,13 @@ function useAddress(live: Live): void {
         first = false
         return
       }
+      const address = parseLiveEditorUrl(window.location)
       void liveEditorUrl(window.location.href, {
         language: flavor.languageId,
         example: document.shared ? undefined : document.example.id,
         library: libraryOf(flavor.id),
-        view: parseLiveEditorUrl(window.location).view ?? undefined,
+        view: address.view ?? undefined,
+        frame: address.frame ?? undefined,
       }).then((url) => {
         window.history.replaceState(null, '', url)
       })

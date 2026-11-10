@@ -45,6 +45,10 @@ export function frameColorMode(address: LiveEditorAddress): 'light' | 'dark' | n
   return address.view === null ? null : address.theme
 }
 
+export function fixedFrame(address: LiveEditorAddress): boolean {
+  return address.view !== null && address.frame === 'fixed'
+}
+
 function flavorOfLanguage(registry: LanguageRegistry, language: string, library: string | null): LiveFlavor | undefined {
   return registry.flavors.find((flavor) => {
     return flavor.languageId === language && libraryOf(flavor.id) === (library ?? undefined)

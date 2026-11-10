@@ -72,3 +72,29 @@
 .embed .trace-head, .embed .step-item { font-size: 12.5px; }
 .embed .steps { padding-top: 0; padding-bottom: var(--space-2); }
 .embed .trace-text { max-height: 420px; overflow: auto; }
+
+.embed.is-fixed { height: 100vh; }
+.embed.is-fixed > .embed-editor { flex: 1 1 0; height: auto; min-height: 220px; }
+.embed.is-fixed.is-edit-only > .embed-editor { min-height: 0; }
+.embed.is-fixed > .embed-strip { flex: 0 1 auto; min-height: 0; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.embed.is-fixed .strip-bar { position: sticky; top: 0; z-index: 2; background: var(--surface-panel); }
+
+@media (min-width: 760px) {
+  .embed.is-fixed:not(.is-edit-only) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(400px, 50%);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-areas:
+      "error error"
+      "back results"
+      "editor results";
+  }
+  .embed.is-fixed > .embed-address-error { grid-area: error; }
+  .embed.is-fixed > .readonly-banner { grid-area: back; }
+  .embed.is-fixed:not(.is-edit-only) > .embed-editor { grid-area: editor; min-height: 0; }
+  .embed.is-fixed > .embed-strip { grid-area: results; display: flex; flex-direction: column; overflow: hidden; border-top: 0; border-left: 1px solid var(--border); }
+  .embed.is-fixed .strip-bar { flex: none; position: static; }
+  .embed.is-fixed .embed-cases { flex: 0 1 auto; min-height: 41px; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+  .embed.is-fixed .embed-strip:has(> .embed-trace) > .embed-cases { max-height: 35%; }
+  .embed.is-fixed > .embed-strip > .embed-trace { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+}

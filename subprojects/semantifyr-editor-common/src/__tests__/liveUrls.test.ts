@@ -111,6 +111,7 @@ describe("liveEditorUrl and parseLiveEditorUrl", () => {
             library: null,
             view: null,
             theme: null,
+            frame: null,
             compressedModel: null,
             case: null,
             compressedVerdicts: null,
@@ -130,6 +131,7 @@ describe("liveEditorUrl and parseLiveEditorUrl", () => {
             library: null,
             view: null,
             theme: null,
+            frame: null,
             compressedModel: null,
         });
     });
@@ -148,6 +150,15 @@ describe("liveEditorUrl and parseLiveEditorUrl", () => {
         expect(parsed("https://live.semantifyr.org/oxsts?theme=sepia").theme).toBeNull();
     });
 
+    it("carry a fixed frame, and read nothing else as one", async () => {
+        const url = await liveEditorUrl("https://live.semantifyr.org/", { language: "gamma", example: "level-crossing", view: "embed", frame: "fixed" });
+
+        expect(url).toBe("https://live.semantifyr.org/gamma/level-crossing?view=embed&frame=fixed");
+        expect(parsed(url).frame).toBe("fixed");
+        expect(parsed("https://live.semantifyr.org/gamma?view=embed&frame=grow").frame).toBeNull();
+        expect(parsed(await liveEditorUrl(url, { language: "gamma" })).frame).toBeNull();
+    });
+
     it("do not read today's mode, example, code and embed parameters", () => {
         expect(parsed("https://live.semantifyr.org/?mode=gamma&example=Crossroads&code=abc&embed=1")).toEqual({
             language: null,
@@ -155,6 +166,7 @@ describe("liveEditorUrl and parseLiveEditorUrl", () => {
             library: null,
             view: null,
             theme: null,
+            frame: null,
             compressedModel: null,
             case: null,
             compressedVerdicts: null,
