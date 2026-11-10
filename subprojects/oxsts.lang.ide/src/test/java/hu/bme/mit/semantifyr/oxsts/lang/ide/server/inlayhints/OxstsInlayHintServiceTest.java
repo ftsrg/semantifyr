@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.inlayhints;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import hu.bme.mit.semantifyr.oxsts.lang.ide.InlineModels;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.MarkedText;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsLanguageServerTest;
 import java.util.List;
@@ -23,7 +24,7 @@ class OxstsInlayHintServiceTest extends OxstsLanguageServerTest {
 
     @Test
     void positionalArgumentsOfCallsAreNamedByTheirParameters() throws Exception {
-        var model = LampModels.withGarage("""
+        var model = withGarage("""
                 class Garage {
                     contains lamp: Lamp
 
@@ -50,7 +51,7 @@ class OxstsInlayHintServiceTest extends OxstsLanguageServerTest {
 
     @Test
     void mixedArgumentsNameOnlyThePositionalOnes() throws Exception {
-        var model = LampModels.withGarage("""
+        var model = withGarage("""
                 @Brightness(<|>3, label = "dim")
                 class Garage {
                     contains lamp: Lamp
@@ -69,7 +70,7 @@ class OxstsInlayHintServiceTest extends OxstsLanguageServerTest {
 
     @Test
     void namedArgumentsGetNoParameterHints() throws Exception {
-        var model = LampModels.withGarage("""
+        var model = withGarage("""
                 class Garage {
                     contains lamp: Lamp
 
@@ -84,7 +85,7 @@ class OxstsInlayHintServiceTest extends OxstsLanguageServerTest {
 
     @Test
     void argumentReferencingANameEqualToTheParameterGetsNoHint() throws Exception {
-        var model = LampModels.withGarage("""
+        var model = withGarage("""
                 class Garage {
                     contains lamp: Lamp[1]
 
@@ -104,7 +105,7 @@ class OxstsInlayHintServiceTest extends OxstsLanguageServerTest {
 
     @Test
     void loopVariableShowsTheElementTypeOfItsRange() throws Exception {
-        var model = LampModels.withGarage("""
+        var model = withGarage("""
                 class Garage {
                     contains lamp: Lamp[1]
 
@@ -129,7 +130,7 @@ class OxstsInlayHintServiceTest extends OxstsLanguageServerTest {
 
     @Test
     void featureWithoutMultiplicityShowsTheDefault() throws Exception {
-        var model = LampModels.withGarage("""
+        var model = withGarage("""
                 class Garage {
                     contains lamp: Lamp<|>
                     contains spares: Lamp[0..*]
@@ -146,7 +147,7 @@ class OxstsInlayHintServiceTest extends OxstsLanguageServerTest {
 
     @Test
     void bindingToAComputedConstantShowsItsValue() throws Exception {
-        var model = LampModels.withGarage("""
+        var model = withGarage("""
                 class Garage {
                     refers base: int[1] = 4
                     refers limit: int[1] = 2 * 3<|>
@@ -159,6 +160,10 @@ class OxstsInlayHintServiceTest extends OxstsLanguageServerTest {
             assertThat(hint.getPosition()).isEqualTo(model.position());
             assertThat(hint.getLabel().getLeft()).isEqualTo("= 6");
         });
+    }
+
+    private static MarkedText withGarage(String garage) {
+        return MarkedText.of(InlineModels.LAMP_LIBRARY + "\n" + garage);
     }
 
     private List<InlayHint> hintsOfKind(MarkedText model, InlayHintKind kind) throws Exception {

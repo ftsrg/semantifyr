@@ -6,8 +6,7 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server;
 
-import static hu.bme.mit.semantifyr.oxsts.lang.ide.server.InlineHintModels.COUNTER;
-import static hu.bme.mit.semantifyr.oxsts.lang.ide.server.InlineHintModels.WORKER;
+import static hu.bme.mit.semantifyr.oxsts.lang.ide.InlineModels.TRAFFIC_LIGHT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import hu.bme.mit.semantifyr.oxsts.lang.ide.MarkedText;
@@ -27,35 +26,47 @@ import org.junit.jupiter.api.Test;
 
 class InlineQuickFixTest extends OxstsLanguageServerTest {
 
+    private static final String COUNTER = """
+            package example::counter
+
+            class Counter {
+                var count: int := 0
+
+                redefine tran {
+                    count := %s
+                }
+            }
+            """;
+
     @Test
     void makeInlineTurnsAnIfWithACompileTimeGuardIntoAnInlineIf() throws Exception {
-        var fixed = applyQuickFix(WORKER + """
+        var fixed = applyQuickFix(TRAFFIC_LIGHT + """
 
                 class Factory {
-                    contains first: Worker[1]
-                    contains second: Worker[1]
+                    contains first: TrafficLight[1]
+                    contains second: TrafficLight[1]
 
                     redefine tran {
                         <|>if (first == second) {
-                            inline first.step()
+                            inline first.setColor(LightColor::Red)
                         } else {
-                            inline second.step()
+                            inline second.setColor(LightColor::Green)
                         }
                     }
                 }
                 """, OxstsValidator.COULD_BE_INLINE, "Make inline");
 
-        assertThat(fixed).isEqualTo(WORKER + """
+        assertThat(fixed).isEqualTo(TRAFFIC_LIGHT + """
 
                 class Factory {
-                    contains first: Worker[1]
-                    contains second: Worker[1]
+                    contains first: TrafficLight[1]
+                    contains second: TrafficLight[1]
 
                     redefine tran {
                         inline if (first == second) {
-                            inline first.step()
+                            inline first.setColor(LightColor::Red)
                         } else {
-                            inline second.step()
+                            inline second.setColor(LightColor::Green)
                         }
                     }
                 }
@@ -64,27 +75,27 @@ class InlineQuickFixTest extends OxstsLanguageServerTest {
 
     @Test
     void makeInlineTurnsAForOverAFeatureIntoAnInlineFor() throws Exception {
-        var fixed = applyQuickFix(WORKER + """
+        var fixed = applyQuickFix(TRAFFIC_LIGHT + """
 
                 class Factory {
-                    contains workers: Worker[2]
+                    contains lights: TrafficLight[2]
 
                     redefine tran {
-                        <|>for (worker in workers) {
-                            inline worker.step()
+                        <|>for (light in lights) {
+                            inline light.setColor(LightColor::Red)
                         }
                     }
                 }
                 """, OxstsValidator.COULD_BE_INLINE, "Make inline");
 
-        assertThat(fixed).isEqualTo(WORKER + """
+        assertThat(fixed).isEqualTo(TRAFFIC_LIGHT + """
 
                 class Factory {
-                    contains workers: Worker[2]
+                    contains lights: TrafficLight[2]
 
                     redefine tran {
-                        inline for (worker in workers) {
-                            inline worker.step()
+                        inline for (light in lights) {
+                            inline light.setColor(LightColor::Red)
                         }
                     }
                 }

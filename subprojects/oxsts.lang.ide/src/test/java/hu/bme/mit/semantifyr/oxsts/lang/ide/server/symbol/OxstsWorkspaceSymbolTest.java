@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import hu.bme.mit.semantifyr.oxsts.lang.ide.MarkedText;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsLanguageServerTest;
-import hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsTestModels;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels;
 import java.util.List;
 import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.lsp4j.WorkspaceSymbol;
@@ -33,7 +33,7 @@ class OxstsWorkspaceSymbolTest extends OxstsLanguageServerTest {
                 }
                 """);
         var libraryUri = addLibraryFile("Lamps.oxsts", library.text());
-        openModel(OxstsTestModels.basics());
+        openModel(TestModels.basics());
 
         var symbols = symbols("switchOn");
 
@@ -47,7 +47,7 @@ class OxstsWorkspaceSymbolTest extends OxstsLanguageServerTest {
 
     @Test
     void workspaceSymbolsFindTheBuiltinLibraryOutsideTheWorkspace() throws Exception {
-        openModel(OxstsTestModels.basics());
+        openModel(TestModels.basics());
 
         var symbols = symbols("Anything");
 

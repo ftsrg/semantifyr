@@ -6,10 +6,10 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server;
 
-import static hu.bme.mit.semantifyr.oxsts.lang.ide.server.TypeHierarchyModels.GARAGE;
-import static hu.bme.mit.semantifyr.oxsts.lang.ide.server.TypeHierarchyModels.LAMPS_LIBRARY;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import hu.bme.mit.semantifyr.oxsts.lang.ide.InlineModels;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.MarkedText;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsLanguageServerTest;
 import java.util.List;
 import org.eclipse.lsp4j.Position;
@@ -22,6 +22,33 @@ import org.eclipse.lsp4j.TypeHierarchySupertypesParams;
 import org.junit.jupiter.api.Test;
 
 class TypeHierarchyTest extends OxstsLanguageServerTest {
+
+    // Markers: the Lamp class, then its toggle transition.
+    private static final MarkedText LAMPS_LIBRARY =
+            MarkedText.of(MarkedText.markEvery(InlineModels.LAMP_LIBRARY, "Lamp {", "toggle("));
+
+    // Markers: the DimmableLamp class, the Lamp reference, DimmableLamp's toggle, the SmartLamp class, SmartLamp's
+    // toggle.
+    private static final MarkedText GARAGE = MarkedText.of("""
+            package example::garage
+
+            import example::library
+
+            class <|>DimmableLamp : <|>Lamp {
+                var dimmed: bool := false
+
+                redefine tran <|>toggle() {
+                    self.dimmed := false
+                    self.on := !self.on
+                }
+            }
+
+            class <|>SmartLamp : DimmableLamp {
+                redefine tran <|>toggle() {
+                    self.on := true
+                }
+            }
+            """);
 
     private String libraryUri;
 
@@ -94,7 +121,7 @@ class TypeHierarchyTest extends OxstsLanguageServerTest {
     }
 
     private void openGarage() {
-        libraryUri = addLibraryFile("Lamps.oxsts", LAMPS_LIBRARY.text());
+        libraryUri = addLibraryFile(InlineModels.LAMP_LIBRARY_FILE_NAME, LAMPS_LIBRARY.text());
         garage = openModel(GARAGE.text());
     }
 

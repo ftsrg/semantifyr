@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import hu.bme.mit.semantifyr.oxsts.lang.ide.InlineModels;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.MarkedText;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsLanguageServerTest;
 import org.eclipse.lsp4j.CallHierarchyIncomingCallsParams;
@@ -22,13 +23,48 @@ import org.junit.jupiter.api.Test;
 
 class CallHierarchyTest extends OxstsLanguageServerTest {
 
-    private final MarkedText lamps = MarkedText.of(CallHierarchyModels.LAMPS);
+    // The marker starts the name of the library transition.
+    private final MarkedText lamps = MarkedText.of(MarkedText.markEvery(InlineModels.LAMP_LIBRARY, "toggle("));
 
-    private final MarkedText garage = MarkedText.of(CallHierarchyModels.GARAGE);
+    // In source order, the markers start the call in reset, the case's main transition, each call in main and the call
+    // in lit's initializer.
+    private final MarkedText garage = MarkedText.of("""
+            package example::garage
+
+            import example::library
+
+            class GarageLamp : Lamp {
+                redefine tran toggle() {
+                    self.on := false
+                }
+            }
+
+            @VerificationCase
+            class Garage {
+                contains lamp: Lamp[1]
+                contains garageLamp: GarageLamp[1]
+
+                tran reset() {
+                    inline lamp.<|>toggle()
+                }
+
+                <|>redefine tran {
+                    inline lamp.<|>toggle()
+                    inline garageLamp.<|>toggle()
+                    inline <|>reset()
+                }
+
+                var lit: bool := lamp.<|>isOn()
+
+                prop {
+                    return true
+                }
+            }
+            """);
 
     @Test
     void incomingCallsOfALibraryTransitionIncludeTheCallsThroughItsRedefiner() throws Exception {
-        var lampsUri = addLibraryFile(CallHierarchyModels.LAMPS_FILE_NAME, lamps.text());
+        var lampsUri = addLibraryFile(InlineModels.LAMP_LIBRARY_FILE_NAME, lamps.text());
         var document = openModel(garage.text());
 
         var toggle = prepare(document, garage.positions().getFirst());
@@ -75,7 +111,7 @@ class CallHierarchyTest extends OxstsLanguageServerTest {
 
     @Test
     void outgoingCallsOfACaseMainAreEveryCallInItsBody() throws Exception {
-        var lampsUri = addLibraryFile(CallHierarchyModels.LAMPS_FILE_NAME, lamps.text());
+        var lampsUri = addLibraryFile(InlineModels.LAMP_LIBRARY_FILE_NAME, lamps.text());
         var document = openModel(garage.text());
 
         var main = prepare(document, garage.positions().get(1));

@@ -20,8 +20,12 @@ public final class TestModels {
 
     private TestModels() {}
 
+    public static String basics() throws IOException {
+        return Files.readString(BASICS_TUTORIAL);
+    }
+
     public static String basicsWith(String addition) throws IOException {
-        return Files.readString(BASICS_TUTORIAL) + "\n" + addition;
+        return basics() + "\n" + addition;
     }
 
     public static Map<String, String> gammaLibrary() throws IOException {

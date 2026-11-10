@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import hu.bme.mit.semantifyr.oxsts.lang.ide.InlineModels;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.MarkedText;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsLanguageServerTest;
 import org.eclipse.lsp4j.ParameterInformation;
@@ -20,11 +21,11 @@ class OxstsSignatureHelpTest extends OxstsLanguageServerTest {
 
     @BeforeEach
     void addLightsLibrary() {
-        addLibraryFile(TrafficLightFixture.LIBRARY_FILE_NAME, TrafficLightFixture.LIBRARY);
+        addLibraryFile(InlineModels.TRAFFIC_LIGHT_FILE_NAME, InlineModels.TRAFFIC_LIGHT);
     }
 
     private SignatureHelp signatureHelp(String members) throws Exception {
-        var model = MarkedText.of(TrafficLightFixture.crossing(members));
+        var model = MarkedText.of(InlineModels.crossing(members));
         var document = openModel(model.text());
         return languageServer
                 .signatureHelp(new SignatureHelpParams(document, model.position()))

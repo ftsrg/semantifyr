@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import hu.bme.mit.semantifyr.oxsts.lang.ide.InlineModels;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.MarkedText;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsLanguageServerTest;
 import org.eclipse.lsp4j.Location;
@@ -19,7 +20,7 @@ class ReferencesTest extends OxstsLanguageServerTest {
 
     @Test
     void referencesOnARedefinedTransitionIncludeItsRedefinitionsAndTheCallsThroughThem() throws Exception {
-        var model = MarkedText.of(RedefinitionModels.TRAFFIC_LIGHTS);
+        var model = MarkedText.of(MarkedText.markEvery(InlineModels.TRAFFIC_LIGHT, "setColor"));
         var document = openModel(model.text());
 
         var references = languageServer
@@ -39,7 +40,7 @@ class ReferencesTest extends OxstsLanguageServerTest {
 
     @Test
     void referencesOnAnUnnamedTransitionStopBelowTheBuiltinAnything() throws Exception {
-        var model = MarkedText.of(RedefinitionModels.LIGHT_SWITCH);
+        var model = MarkedText.of(MarkedText.markEvery(InlineModels.TRAFFIC_LIGHT, "redefine tran {", "main()"));
         var document = openModel(model.text());
 
         var references = languageServer

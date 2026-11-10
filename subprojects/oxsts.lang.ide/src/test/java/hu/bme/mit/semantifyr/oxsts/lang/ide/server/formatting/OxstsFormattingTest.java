@@ -24,21 +24,73 @@ class OxstsFormattingTest extends OxstsLanguageServerTest {
 
     private static final FormattingOptions OPTIONS = new FormattingOptions(4, true);
 
+    private static final String UNFORMATTED = """
+            package   example::format
+            class Messy{var x:int:=0
+            <|>tran   step( ){ if(x<3){x:=x+1}else{ x := 0 }
+            choice { x:=1 } or {x:=2}
+            }<|>
+                prop{return AG(x>=0&&x<=3)}
+            }
+            """;
+
+    private static final String FORMATTED = """
+            package example::format
+
+            class Messy {
+                var x: int := 0
+                tran step() {
+                    if (x < 3) {
+                        x := x + 1
+                    } else {
+                        x := 0
+                    }
+                    choice {
+                        x := 1
+                    } or {
+                        x := 2
+                    }
+                }
+                prop {
+                    return AG (x >= 0 && x <= 3)
+                }
+            }
+            """;
+
+    private static final String TRANSITION_FORMATTED = """
+            package   example::format
+            class Messy{var x:int:=0
+                tran step() {
+                    if (x < 3) {
+                        x := x + 1
+                    } else {
+                        x := 0
+                    }
+                    choice {
+                        x := 1
+                    } or {
+                        x := 2
+                    }
+                }
+                prop{return AG(x>=0&&x<=3)}
+            }
+            """;
+
     @Test
     void formattingTheDocumentSpacesOperatorsDeclarationsAndKeywords() throws Exception {
-        var model = MarkedText.of(FormattingModels.UNFORMATTED);
+        var model = MarkedText.of(UNFORMATTED);
         var document = openModel(model.text());
 
         var edits = languageServer
                 .formatting(new DocumentFormattingParams(document, OPTIONS))
                 .get();
 
-        assertThat(applyEdits(model.text(), edits)).isEqualTo(FormattingModels.FORMATTED);
+        assertThat(applyEdits(model.text(), edits)).isEqualTo(FORMATTED);
     }
 
     @Test
     void rangeFormattingFormatsTheFirstLineOfTheRange() throws Exception {
-        var model = MarkedText.of(FormattingModels.UNFORMATTED);
+        var model = MarkedText.of(UNFORMATTED);
         var document = openModel(model.text());
         var range = new Range(model.positions().getFirst(), model.positions().getLast());
 
@@ -46,7 +98,7 @@ class OxstsFormattingTest extends OxstsLanguageServerTest {
                 .rangeFormatting(new DocumentRangeFormattingParams(document, OPTIONS, range))
                 .get();
 
-        assertThat(applyEdits(model.text(), edits)).isEqualTo(FormattingModels.TRANSITION_FORMATTED);
+        assertThat(applyEdits(model.text(), edits)).isEqualTo(TRANSITION_FORMATTED);
     }
 
     private static String applyEdits(String text, List<? extends TextEdit> edits) {

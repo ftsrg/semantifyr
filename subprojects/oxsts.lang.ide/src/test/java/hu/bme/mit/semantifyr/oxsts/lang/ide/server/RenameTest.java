@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import hu.bme.mit.semantifyr.oxsts.lang.ide.InlineModels;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.MarkedText;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsLanguageServerTest;
 import java.util.List;
@@ -26,7 +27,7 @@ class RenameTest extends OxstsLanguageServerTest {
 
     @Test
     void renameOfARedefinedTransitionRenamesItsRedefinitionsAndEditsOnlyNames() throws Exception {
-        var model = MarkedText.of(RedefinitionModels.TRAFFIC_LIGHTS);
+        var model = MarkedText.of(MarkedText.markEvery(InlineModels.TRAFFIC_LIGHT, "setColor"));
         var document = openModel(model.text());
 
         var edit = rename(document, model.positions().getFirst(), "switchColor");
@@ -38,10 +39,10 @@ class RenameTest extends OxstsLanguageServerTest {
 
     @Test
     void renameOfARedefinitionRenamesTheRedefinedTransition() throws Exception {
-        var model = MarkedText.of(RedefinitionModels.TRAFFIC_LIGHTS);
+        var model = MarkedText.of(MarkedText.markEvery(InlineModels.TRAFFIC_LIGHT, "setColor"));
         var document = openModel(model.text());
 
-        var edit = rename(document, model.positions().get(2), "switchColor");
+        var edit = rename(document, model.positions().get(3), "switchColor");
 
         assertThat(edit.getChanges().get(document.getUri()))
                 .containsExactlyInAnyOrderElementsOf(nameEdits(model.positions(), "setColor", "switchColor"));
@@ -49,18 +50,8 @@ class RenameTest extends OxstsLanguageServerTest {
 
     @Test
     void renameOfARedefinitionInTheModelRenamesTheRedefinedTransitionInALibrary() throws Exception {
-        var library = MarkedText.of("""
-                package example::library
-
-                class Lamp {
-                    var on: bool := false
-
-                    tran <|>toggle() {
-                        self.on := true
-                    }
-                }
-                """);
-        var libraryUri = addLibraryFile("Lamps.oxsts", library.text());
+        var library = MarkedText.of(MarkedText.markEvery(InlineModels.LAMP_LIBRARY, "toggle("));
+        var libraryUri = addLibraryFile(InlineModels.LAMP_LIBRARY_FILE_NAME, library.text());
         var model = MarkedText.of("""
                 package example::garage
 
@@ -93,13 +84,13 @@ class RenameTest extends OxstsLanguageServerTest {
 
     @Test
     void renameToANameTheClassAlreadyDeclaresIsRefused() {
-        var model = MarkedText.of(RedefinitionModels.TRAFFIC_LIGHTS);
+        var model = MarkedText.of(MarkedText.markEvery(InlineModels.TRAFFIC_LIGHT, "setColor"));
         var document = openModel(model.text());
 
         assertThatThrownBy(() -> rename(document, model.positions().getFirst(), "color"))
                 .cause()
                 .isInstanceOf(ResponseErrorException.class)
-                .hasMessage("example::trafficlight::TrafficLight already declares color");
+                .hasMessage("example::lights::TrafficLight already declares color");
     }
 
     @Test
@@ -136,7 +127,7 @@ class RenameTest extends OxstsLanguageServerTest {
 
     @Test
     void renameOfAnUnnamedTransitionIsRefused() {
-        var model = MarkedText.of(RedefinitionModels.LIGHT_SWITCH);
+        var model = MarkedText.of(MarkedText.markEvery(InlineModels.TRAFFIC_LIGHT, "redefine tran {", "main()"));
         var document = openModel(model.text());
 
         assertThatThrownBy(() -> rename(document, model.positions().get(2), "toggle"))

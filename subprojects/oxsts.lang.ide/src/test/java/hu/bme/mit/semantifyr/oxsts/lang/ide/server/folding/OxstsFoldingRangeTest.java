@@ -9,7 +9,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.folding;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsLanguageServerTest;
-import hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsTestModels;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels;
 import java.util.List;
 import org.eclipse.lsp4j.FoldingRange;
 import org.eclipse.lsp4j.FoldingRangeKind;
@@ -23,7 +23,7 @@ class OxstsFoldingRangeTest extends OxstsLanguageServerTest {
 
     @Test
     void everyBlockFoldsOnceAndKeepsItsClosingBraceVisible() throws Exception {
-        var document = openModel(OxstsTestModels.basics());
+        var document = openModel(TestModels.basics());
 
         var lines = foldingRanges(document).stream()
                 .map(range -> new Lines(range.getStartLine(), range.getEndLine()))

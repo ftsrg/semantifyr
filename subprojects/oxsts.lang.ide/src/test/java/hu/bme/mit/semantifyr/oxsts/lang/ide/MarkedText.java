@@ -39,6 +39,17 @@ public record MarkedText(String text, List<Position> positions) {
         return new MarkedText(text.toString(), List.copyOf(positions));
     }
 
+    public static String markEvery(String text, String... tokens) {
+        var marked = text;
+        for (var token : tokens) {
+            if (!marked.contains(token)) {
+                throw new IllegalArgumentException("No " + token + " in the text");
+            }
+            marked = marked.replace(token, MARKER + token);
+        }
+        return marked;
+    }
+
     public Position position() {
         if (positions.size() != 1) {
             throw new IllegalStateException("Expected one marker but found " + positions.size());

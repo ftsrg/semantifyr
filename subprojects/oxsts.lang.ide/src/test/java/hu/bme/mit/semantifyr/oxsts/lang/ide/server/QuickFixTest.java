@@ -6,8 +6,7 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server;
 
-import static hu.bme.mit.semantifyr.oxsts.lang.ide.server.QuickFixModels.SHAPES;
-import static hu.bme.mit.semantifyr.oxsts.lang.ide.server.QuickFixModels.TRAFFIC_LIGHT;
+import static hu.bme.mit.semantifyr.oxsts.lang.ide.InlineModels.TRAFFIC_LIGHT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import hu.bme.mit.semantifyr.oxsts.lang.ide.MarkedText;
@@ -24,6 +23,14 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.jupiter.api.Test;
 
 class QuickFixTest extends OxstsLanguageServerTest {
+
+    private static final String SHAPES = """
+            package example::shapes
+
+            abstract class Shape {
+                abstract tran draw()
+            }
+            """;
 
     @Test
     void addRedefineToATransitionThatShadowsAnInheritedOne() throws Exception {

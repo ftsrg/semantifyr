@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.editor.syntaxcoloring;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.Inject;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.InlineModels;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.MarkedText;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsLanguageServerTest;
 import java.util.HashMap;
@@ -23,6 +24,31 @@ import org.eclipse.xtext.ide.server.semantictokens.SemanticTokensService;
 import org.junit.jupiter.api.Test;
 
 class OxstsSemanticTokensTest extends OxstsLanguageServerTest {
+
+    private static final String GARAGE_WITH_QUALIFIED_REFERENCES = """
+            package example::garage
+
+            import example::library
+
+            class Garage {
+                contains lamp: example::library::Lamp
+                var color: LightColor := LightColor::Red
+            }
+            """;
+
+    private static final String VEHICLES_WITH_MODIFIERS = """
+            package example::vehicles
+
+            abstract class Vehicle {
+                container garage: Garage
+                abstract tran drive()
+            }
+
+            class Garage {
+                refers vehicle: Vehicle
+                var open: bool := false
+            }
+            """;
 
     record Token(int length, String type, Set<String> modifiers) {}
 
@@ -52,7 +78,7 @@ class OxstsSemanticTokensTest extends OxstsLanguageServerTest {
 
     @Test
     void eachSegmentOfAPackageNameIsANamespaceDeclaration() throws Exception {
-        var model = highlight(SemanticTokensModels.GARAGE_WITH_QUALIFIED_REFERENCES);
+        var model = highlight(GARAGE_WITH_QUALIFIED_REFERENCES);
 
         assertThat(model.tokenAt("package <|>example::garage"))
                 .isEqualTo(new Token(7, SemanticTokenTypes.Namespace, Set.of(SemanticTokenModifiers.Declaration)));
@@ -63,7 +89,7 @@ class OxstsSemanticTokensTest extends OxstsLanguageServerTest {
 
     @Test
     void eachSegmentOfAQualifiedTypeReferenceHasTheKindOfWhatItResolvesTo() throws Exception {
-        var model = highlightWithLibrary(SemanticTokensModels.GARAGE_WITH_QUALIFIED_REFERENCES);
+        var model = highlightWithLibrary(GARAGE_WITH_QUALIFIED_REFERENCES);
 
         assertThat(model.tokenAt("lamp: <|>example::library::Lamp"))
                 .isEqualTo(new Token(7, SemanticTokenTypes.Namespace, Set.of()));
@@ -76,7 +102,7 @@ class OxstsSemanticTokensTest extends OxstsLanguageServerTest {
 
     @Test
     void anEnumLiteralReferenceHasAnEnumAndAnEnumMemberSegment() throws Exception {
-        var model = highlightWithLibrary(SemanticTokensModels.GARAGE_WITH_QUALIFIED_REFERENCES);
+        var model = highlightWithLibrary(GARAGE_WITH_QUALIFIED_REFERENCES);
 
         assertThat(model.tokenAt(":= <|>LightColor::Red")).isEqualTo(new Token(10, SemanticTokenTypes.Enum, Set.of()));
         assertThat(model.tokenAt(":= LightColor::<|>Red"))
@@ -85,7 +111,7 @@ class OxstsSemanticTokensTest extends OxstsLanguageServerTest {
 
     @Test
     void abstractDeclarationsAndTheirReferencesAreAbstract() throws Exception {
-        var model = highlight(SemanticTokensModels.VEHICLES_WITH_MODIFIERS);
+        var model = highlight(VEHICLES_WITH_MODIFIERS);
 
         assertThat(model.tokenAt("abstract class <|>Vehicle"))
                 .isEqualTo(new Token(
@@ -103,7 +129,7 @@ class OxstsSemanticTokensTest extends OxstsLanguageServerTest {
 
     @Test
     void referenceAndContainerFeaturesAreReadonlyAndAVariableIsNot() throws Exception {
-        var model = highlight(SemanticTokensModels.VEHICLES_WITH_MODIFIERS);
+        var model = highlight(VEHICLES_WITH_MODIFIERS);
 
         assertThat(model.tokenAt("refers <|>vehicle"))
                 .isEqualTo(new Token(
@@ -121,14 +147,14 @@ class OxstsSemanticTokensTest extends OxstsLanguageServerTest {
 
     @Test
     void aBuiltinTypeIsFromTheDefaultLibrary() throws Exception {
-        var model = highlight(SemanticTokensModels.VEHICLES_WITH_MODIFIERS);
+        var model = highlight(VEHICLES_WITH_MODIFIERS);
 
         assertThat(model.tokenAt("open: <|>bool"))
                 .isEqualTo(new Token(4, SemanticTokenTypes.Type, Set.of(SemanticTokenModifiers.DefaultLibrary)));
     }
 
     private HighlightedModel highlightWithLibrary(String text) throws Exception {
-        addLibraryFile("Lamps.oxsts", SemanticTokensModels.LAMP_LIBRARY);
+        addLibraryFile(InlineModels.LAMP_LIBRARY_FILE_NAME, InlineModels.LAMP_LIBRARY);
         return highlight(text);
     }
 

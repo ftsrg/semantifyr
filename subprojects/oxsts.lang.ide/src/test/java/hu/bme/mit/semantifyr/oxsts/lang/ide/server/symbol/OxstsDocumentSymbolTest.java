@@ -9,7 +9,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.symbol;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsLanguageServerTest;
-import hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsTestModels;
+import hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels;
 import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.DocumentSymbolCapabilities;
 import org.eclipse.lsp4j.DocumentSymbolParams;
@@ -34,7 +34,7 @@ class OxstsDocumentSymbolTest extends OxstsLanguageServerTest {
 
     @Test
     void outlineOfTheBasicsTutorialHasOneKindPerDeclarationSimpleNamesAndSignatures() throws Exception {
-        var document = openModel(OxstsTestModels.basics());
+        var document = openModel(TestModels.basics());
 
         var symbols = languageServer
                 .documentSymbol(new DocumentSymbolParams(document))
