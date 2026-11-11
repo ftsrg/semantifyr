@@ -15,7 +15,7 @@ import type { LanguageRuntime } from '../language/types'
 import type { ModelDocuments } from '../session/modelDocuments'
 import type { ProblemEntry } from '../session/problems'
 import { INITIAL_CONNECTION, type ConnectionState } from '../stores/connection'
-import { failStep, initializationOf, InitializationSteps, type InitializationState } from '../stores/initialization'
+import { failStep, initializationOf, InitializationSteps, type InitializationState, type InitializationStep } from '../stores/initialization'
 import type { Settings } from '../stores/settings'
 import { createStore, type ReadableStore, type Store } from '../stores/store'
 import type { ResolvedColorMode } from '../util/colorMode'
@@ -156,7 +156,7 @@ export interface Live {
   verificationPortfolioId: () => string | undefined
 }
 
-function initializeStepOf(state: InitializationState): InitializationState['steps'][number] | undefined {
+function initializeStepOf(state: InitializationState): InitializationStep | undefined {
   return state.steps.find((step) => {
     return step.id === InitializationSteps.initialize.id
   })
