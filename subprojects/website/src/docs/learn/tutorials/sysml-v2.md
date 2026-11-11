@@ -63,7 +63,7 @@ The complete model is one file. **Verify** in the corner of the code block below
 
 ## Verifying
 
-The editor loads the SysML v2 standard library in the background, which takes about 15 seconds, and then lists the three cases, a line each, under **Verify all**, which runs them all. Each case is verified by the live editor's portfolio of backends and takes a few seconds.
+The editor lists the three cases, a line each, under **Verify all**, which runs them all, once the SysML v2 language server in your browser has found them. The language server goes on initializing after that; a verification asked for meanwhile waits and starts by itself when it is done. Each case is verified by the live editor's portfolio of backends and takes a few seconds.
 
 Expect `LampLitReachable` to pass and both `Violated` cases to fail.
 
