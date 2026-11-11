@@ -189,6 +189,36 @@ describe('Live', () => {
     expect(verificationOf(open).cases[0]?.trace).toBeUndefined()
   })
 
+  it('ends a run when its session goes: a case without a verdict is not run and cancelled, one with a verdict keeps it', async () => {
+    const routed = routedClient([caseAt('a', 1), caseAt('b', 2), caseAt('c', 3)])
+    open = await openConnected(routed)
+    open.live.verifyCase('c')
+    await vi.waitFor(() => {
+      expect(verificationOf(open!).phase).toBe('done')
+    })
+    routed.results.set(1, async () => {
+      return failedResult
+    })
+    const never = deferred<VerificationCaseResult>()
+    routed.results.set(2, async () => {
+      return never.promise
+    })
+    open.live.verifyAll()
+    await vi.waitFor(() => {
+      expect(verificationOf(open!).cases[1]?.status).toBe('running')
+    })
+
+    open.runtime().terminate()
+
+    await vi.waitFor(() => {
+      expect(open!.live.runTiming.get()?.finishedAt).not.toBeNull()
+    })
+    expect(verificationOf(open).phase).toBe('cancelled')
+    expect(verificationOf(open).cases.map((caseState) => {
+      return [caseState.status, caseState.message]
+    })).toEqual([['failed', failedResult.message], ['stale', 'Verification cancelled'], ['passed', undefined]])
+  })
+
   it('starts a Verify all pressed during initialization once the cases are known', async () => {
     const routed = routedClient([caseAt('a', 1)])
     open = createTestLive(routed.client)

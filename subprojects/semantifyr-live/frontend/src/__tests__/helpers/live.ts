@@ -10,7 +10,7 @@ import { SemantifyrLiveApi } from '../../lib/api/lspExtensions'
 import type { LanguageRegistry } from '../../lib/language/registry'
 import type { LanguageRuntime, LanguageUnit } from '../../lib/language/types'
 import type { ModelChange, ModelDocuments } from '../../lib/session/modelDocuments'
-import { connectionConnected, INITIAL_CONNECTION, type ConnectionState } from '../../lib/stores/connection'
+import { connectionConnected, connectionLost, INITIAL_CONNECTION, type ConnectionState } from '../../lib/stores/connection'
 import { finishStep, initializationOf, InitializationSteps, startStep } from '../../lib/stores/initialization'
 import { createSettingsStore } from '../../lib/stores/settings'
 import { constantStore, createStore } from '../../lib/stores/store'
@@ -81,6 +81,8 @@ export function fakeModelDocuments(): FakeModelDocuments {
 
 export interface FakeRuntime extends LanguageRuntime {
   connect: () => void
+  // the server ended the session
+  terminate: () => void
   progress: (params: unknown) => void
 }
 
@@ -129,6 +131,12 @@ export function fakeRuntime(flavor: LiveFlavor, client: LspClient): FakeRuntime 
       })
       connection.update((previous) => {
         return connectionConnected(previous, 0)
+      })
+    },
+    terminate: () => {
+      connected = false
+      connection.update((previous) => {
+        return connectionLost(previous, 'failed', 'Session terminated by an administrator', { terminated: true })
       })
     },
     progress: (params) => {

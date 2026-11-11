@@ -67,9 +67,9 @@ export function wrapClientWithMetrics(client: LspClient): LspClient & MetricsTra
         throw error
       }
     },
-    sendNotification: (method: string, params?: unknown): void => {
+    sendNotification: (method: string, params?: unknown) => {
       notificationCount++
-      client.sendNotification(method, params)
+      return client.sendNotification(method, params)
     },
     getMetrics,
     reset,

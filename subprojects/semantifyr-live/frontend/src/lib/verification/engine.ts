@@ -103,7 +103,7 @@ export function createCancellationTokenSource(): CancellationTokenSource {
 
 export interface LspClient {
   sendRequest: (method: string, params?: unknown, token?: CancellationToken) => Promise<unknown>
-  sendNotification: (method: string, params?: unknown) => void
+  sendNotification: (method: string, params?: unknown) => Promise<void> | void
 }
 
 interface ProgressParams {
@@ -380,8 +380,9 @@ function createProgressDispatcher(setState: StateUpdater): ProgressDispatcher {
     },
     cancelAll: (client) => {
       for (const token of tokens) {
+        // a client whose session went refuses to send
         try {
-          client.sendNotification('window/workDoneProgress/cancel', { token })
+          void Promise.resolve(client.sendNotification('window/workDoneProgress/cancel', { token })).catch(() => {})
         } catch {
           /* ignore */
         }

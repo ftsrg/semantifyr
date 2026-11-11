@@ -221,9 +221,13 @@ export function createLive(options: LiveOptions): Live {
   const followRuntime = (runtime: LanguageRuntime, uri: string): (() => void) => {
     const copyConnection = (): void => {
       const previous = connection.get().status
+      const current = runtime.connection.get().status
       connection.set(runtime.connection.get())
-      if (previous !== 'connected' && runtime.connection.get().status === 'connected') {
+      if (previous !== 'connected' && current === 'connected') {
         void verification.discover()
+      }
+      if (previous === 'connected' && current !== 'connected') {
+        verification.sessionLost()
       }
     }
     const copyInitialization = (): void => {

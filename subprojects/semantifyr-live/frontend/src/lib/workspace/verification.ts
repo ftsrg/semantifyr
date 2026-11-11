@@ -60,6 +60,8 @@ export interface Verification {
   verifyAll: () => void
   verifyCase: (caseId: string) => void
   cancel: () => void
+  // the session went: the run ends as a cancelled one, a Verify all pressed before the cases were known still waits
+  sessionLost: () => void
   cancelCase: (caseId: string) => void
   validate: (caseId: string) => void
   select: (caseId: string | null) => void
@@ -315,11 +317,15 @@ export function createVerification(options: VerificationOptions): Verification {
     }
   }
 
-  const cancel = (): void => {
-    pending.set(false)
+  const endRun = (): void => {
     const active = run
     run = null
     active?.handle.cancel()
+  }
+
+  const cancel = (): void => {
+    pending.set(false)
+    endRun()
   }
 
   return {
@@ -341,6 +347,7 @@ export function createVerification(options: VerificationOptions): Verification {
     verifyAll,
     verifyCase,
     cancel,
+    sessionLost: endRun,
     cancelCase: (caseId) => {
       run?.handle.cancelCase(caseId)
     },

@@ -166,9 +166,9 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
       openedOn = client
       sentText = text
       version = 1
-      client.sendNotification('textDocument/didOpen', {
+      void Promise.resolve(client.sendNotification('textDocument/didOpen', {
         textDocument: { uri: SYSML_OXSTS_URI, languageId: 'oxsts', version, text },
-      })
+      })).catch(() => {})
       return
     }
     if (text === sentText) {
@@ -176,10 +176,10 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
     }
     sentText = text
     version += 1
-    client.sendNotification('textDocument/didChange', {
+    void Promise.resolve(client.sendNotification('textDocument/didChange', {
       textDocument: { uri: SYSML_OXSTS_URI, version },
       contentChanges: [{ text }],
-    })
+    })).catch(() => {})
   }
 
   const liftTrace = async (
@@ -335,7 +335,7 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
     client: {
       sendRequest,
       sendNotification: (method, params) => {
-        oxstsClient().sendNotification(method, params)
+        return oxstsClient().sendNotification(method, params)
       },
     },
     readMapping,
