@@ -114,6 +114,30 @@ describe('the views of a trace', () => {
   })
 })
 
+describe('a trace text over a scrolled model', () => {
+  test('opens as a tab with none of the model\'s sticky lines over it, and the model tab shows them again', async ({ ui }) => {
+    const page = await traced(ui, '/sysml/level-crossing')
+    const sticky = page.locator('section.editor .sticky-widget')
+    await page.locator('section.editor .view-line', { hasText: 'port def Sensors {' }).first().click()
+    await page.keyboard.press('PageDown')
+    await expect.poll(async () => {
+      return (await sticky.innerText()).replace(/\s+/g, ' ')
+    }, { timeout: 30_000 }).not.toBe('')
+
+    await caseTrace(page).locator('.frame-open').click()
+    await expect.poll(async () => {
+      return editor(page).selectedTab.innerText()
+    }).toMatch(/Trace\.sysml$/)
+    await page.waitForTimeout(1000)
+    expect(await sticky.innerText()).toBe('')
+    await editor(page).tabs.first().click()
+
+    await expect.poll(async () => {
+      return (await sticky.innerText()).replace(/\s+/g, ' ')
+    }).toContain('port def Sensors')
+  })
+})
+
 describe('the documents control', () => {
   test('lists the documents of the selected case and follows the selection', async ({ ui }) => {
     const page = await traced(ui, '/gamma/level-crossing')
