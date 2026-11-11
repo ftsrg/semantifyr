@@ -264,7 +264,10 @@ export function createLive(options: LiveOptions): Live {
     if (leaving?.key === key && document.replace !== true) {
       return
     }
-    verification.cancel()
+    // a Verify all pressed before the first document opened waits for its cases
+    if (leaving) {
+      verification.cancel()
+    }
     if (leaving && leaving.key !== key) {
       putDocument({ ...leaving, text: textOf(leaving) })
     }
@@ -322,27 +325,19 @@ export function createLive(options: LiveOptions): Live {
     stopFollowingRuntime = followRuntime(started, record.uri)
   }
 
-  const loadPortfolios = async (): Promise<void> => {
-    try {
-      const response = await server.fetchPortfolios()
-      catalog.update((previous) => {
-        return { ...previous, portfolios: response.portfolios, defaultPortfolioId: response.defaultPortfolio }
-      })
-    } catch {
-      /* non-fatal: verification runs on the server's default */
-    }
-  }
-
+  // a verification names its portfolio, so the session starts once the portfolios are known
   const loadCatalog = async (location: string): Promise<void> => {
     try {
-      const registry = createRegistry(liveFlavors(await server.fetchFlavors()))
+      const [flavors, portfolios] = await Promise.all([
+        server.fetchFlavors(),
+        server.fetchPortfolios(),
+      ])
+      const registry = createRegistry(liveFlavors(flavors))
       const initial = await resolveAddress(readAddress(location), registry, options.defaultFlavorId)
       if (disposed) {
         return
       }
-      catalog.update((previous) => {
-        return { ...previous, status: 'ready', registry }
-      })
+      catalog.set({ status: 'ready', registry, portfolios: portfolios.portfolios, defaultPortfolioId: portfolios.defaultPortfolio })
       address.set(initial.problem)
       open(initial)
     } catch {
@@ -390,7 +385,6 @@ export function createLive(options: LiveOptions): Live {
       if (typeof window !== 'undefined') {
         window.addEventListener('online', handleOnline)
       }
-      void loadPortfolios()
       void loadCatalog(location)
     },
     openAddress: (location) => {

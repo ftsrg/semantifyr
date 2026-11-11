@@ -38,6 +38,7 @@ interface RoutedClient {
   cases: VerificationCaseSpecification[]
   results: Map<number, () => Promise<VerificationCaseResult>>
   verifiedLines: number[]
+  portfolios: (string | undefined)[]
 }
 
 // answers discovery with `cases` and a verify with the result registered for the case's line
@@ -46,18 +47,20 @@ function routedClient(cases: VerificationCaseSpecification[]): RoutedClient {
     cases,
     results: new Map(),
     verifiedLines: [],
+    portfolios: [],
     client: {
       sendRequest: async (method, parameters) => {
         if (method !== 'workspace/executeCommand') {
           return null
         }
-        const { command, arguments: commandArguments } = parameters as { command: string, arguments: [{ range: { start: { line: number } } }] }
+        const { command, arguments: commandArguments } = parameters as { command: string, arguments: [{ range: { start: { line: number } }, portfolio?: string }] }
         if (command === 'oxsts.case.discover') {
           return routed.cases
         }
         if (command === 'oxsts.case.verify') {
           const line = commandArguments[0].range.start.line
           routed.verifiedLines.push(line)
+          routed.portfolios.push(commandArguments[0].portfolio)
           return (routed.results.get(line) ?? (async () => {
             return passedResult
           }))()
@@ -206,6 +209,38 @@ describe('Live', () => {
     expect(open.live.initialization.get().steps.every((step) => {
       return step.state === 'done'
     })).toBe(true)
+  })
+
+  it('starts no session before the portfolios are known, so a Verify all pressed early names one', async () => {
+    const routed = routedClient([caseAt('a', 1)])
+    let refusals = 1
+    open = createTestLive(routed.client, servedFlavors, {
+      catalogRetryMs: 0,
+      server: {
+        fetchFlavors: async () => {
+          return [...servedFlavors]
+        },
+        fetchPortfolios: async () => {
+          if (refusals > 0) {
+            refusals--
+            throw new Error('the server is not answering')
+          }
+          return { portfolios: [{ id: 'smart-full', displayName: 'Smart full', description: '', available: true }], defaultPortfolio: 'smart-full' }
+        },
+      },
+    })
+    open.live.start('')
+    open.live.verifyAll()
+    await vi.waitFor(() => {
+      expect(open!.live.workspace.get().runtime).not.toBeNull()
+    })
+    open.models.open(MODEL_URI, 'model')
+    open.runtime().connect()
+
+    await vi.waitFor(() => {
+      expect(verificationOf(open!).phase).toBe('done')
+    })
+    expect(routed.portfolios).toEqual(['smart-full'])
   })
 
   it('follows the model: a removed case goes with its result and a new one is not run', async () => {
