@@ -65,11 +65,13 @@ const SHARED_VERDICTS = {
   ]),
 }
 
+const { witnessValidation: _validated, ...UNVALIDATED_BARRIER } = finished(BARRIER, 'failed', 2.9)
+
 const STATES: Readonly<Record<string, ScreenState>> = {
   'validating': {
     seed: {
       selection: BARRIER.id,
-      verification: discovered([{ ...finished(BARRIER, 'failed', 2.9), witnessValidation: undefined, validating: true }, finished(TWO_TRAINS, 'passed', 0.8)], 'done'),
+      verification: discovered([{ ...UNVALIDATED_BARRIER, validating: true }, finished(TWO_TRAINS, 'passed', 0.8)], 'done'),
     },
     expectState: () => {
       expect(document.querySelector(`.case-row[data-case="${BARRIER.id}"] .validation-mark.is-validating`)).not.toBeNull()
