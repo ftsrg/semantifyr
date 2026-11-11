@@ -56,9 +56,8 @@ public class CompiledOxstsGammaCommandHandler extends AbstractCommandHandler<Str
     protected Object execute(Resource arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
         if (!arguments.getErrors().isEmpty()) {
             var error = arguments.getErrors().getFirst();
-            return CompiledOxstsResult.errored(
-                    "The model has a syntax error at line " + error.getLine() + ", column " + error.getColumn() + ": "
-                            + error.getMessage());
+            return CompiledOxstsResult.errored("The model has a syntax error at line " + error.getLine() + ", column "
+                    + error.getColumn() + ": " + error.getMessage());
         }
         if (arguments.getContents().isEmpty()
                 || !(arguments.getContents().getFirst() instanceof GammaModelPackage gammaModel)) {
