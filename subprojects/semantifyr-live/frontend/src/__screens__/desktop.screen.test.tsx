@@ -13,7 +13,6 @@ import { toVscodeDiagnostics, type ProblemEntry } from '../lib/session/problems'
 import { connectionLost } from '../lib/stores/connection'
 import type { ResolvedColorMode } from '../lib/util/colorMode'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
-import { modelOxstsTabOf } from '../lib/workspace/libraryTabs'
 import { ShellRoot } from '../shells/ShellRoot'
 import { caseOf, CONNECTED, finished, seedLive, type Seed } from './seededLive'
 
@@ -158,10 +157,17 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     expectState: () => {
       expect(count('.rail')).toBe(1)
       expect(count('.results')).toBe(0)
+      expect(count('.rail .model-oxsts-button')).toBe(1)
     },
   },
   'tab-model-oxsts': {
-    seed: { verification: RESULTS, modelOxsts: MODEL_OXSTS, tab: modelOxstsTabOf('level-crossing.sysml', MODEL_OXSTS) },
+    seed: { verification: RESULTS, modelOxsts: MODEL_OXSTS },
+    act: async () => {
+      document.querySelector<HTMLElement>('.results-header .model-oxsts-button')?.click()
+      await expect.poll(() => {
+        return count('.readonly-banner')
+      }).toBe(1)
+    },
     expectState: () => {
       expect(text('.tab.is-readonly[aria-selected=true]')).toContain('level-crossing.oxsts')
       expect(text('.readonly-banner')).toContain('compiles to')
@@ -214,6 +220,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     expectState: () => {
       expect(count('.segmented-option[data-language=gamma][aria-pressed=true]')).toBe(1)
       expect(count('.tab-model .language-mark[data-language=gamma]')).toBe(1)
+      expect(text('.results-header .model-oxsts-button')).toBe('OXSTS')
     },
   },
   'oxsts': {
@@ -222,6 +229,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       expect(count('.segmented-option[data-language=oxsts][aria-pressed=true]')).toBe(1)
       expect(count('.tab-model .language-mark[data-language=oxsts]')).toBe(1)
       expect(text('.flavour-button')).toContain('Plain')
+      expect(count('.model-oxsts-button')).toBe(0)
     },
   },
 }

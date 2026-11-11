@@ -13,12 +13,13 @@ import { initializationOf, isInitialized } from '../../lib/stores/initialization
 import { changeSettings } from '../../lib/stores/settings'
 import { useStore } from '../../lib/stores/useStore'
 import { countsOf, STATUS_WORDS, type CaseCounts, type CaseRow, type RowStatus } from '../../lib/workspace/caseRows'
+import { openModelOxsts } from '../../lib/workspace/libraryTabs'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import type { Live } from '../../lib/workspace/live'
 import { secondsToRetry, stepTimeText } from '../../lib/workspace/shellStatus'
 import { Icon } from '../../ui/icons'
 import { LanguageMark, ValidationMark, VerdictMark } from '../../ui/marks'
-import { useFlavor, useNow } from '../hooks'
+import { documentLabel, useCurrentDocument, useFlavor, useNow } from '../hooks'
 import { useShell } from '../shellContext'
 import { verifyAll, type CountFilter } from '../shellState'
 import { clamp, ColumnSplitter, KEYBOARD_STEP, useDrag } from '../splitter'
@@ -127,6 +128,32 @@ function VerifyButton({ compact }: { compact: boolean }): React.JSX.Element {
     >
       <Icon name="play" size={compact ? undefined : 'small'} />
       {compact ? null : 'Verify all'}
+    </button>
+  )
+}
+
+function ModelOxstsButton({ compact }: { compact: boolean }): React.JSX.Element | null {
+  const live = useLive()
+  const flavor = useFlavor(live)
+  const document = useCurrentDocument(live)
+  const runtime = useStore(live.workspace, (workspace) => {
+    return workspace.runtime
+  })
+  if (!flavor || !document || !runtime || flavor.languageId === 'oxsts') {
+    return null
+  }
+  return (
+    <button
+      type="button"
+      className={`button model-oxsts-button ${compact ? 'button-icon' : 'button-small button-quiet'}`}
+      title="Open the OXSTS of the model"
+      aria-label="Open the OXSTS of the model"
+      onClick={() => {
+        openModelOxsts(live, runtime, documentLabel(document, flavor))
+      }}
+    >
+      <LanguageMark languageId="oxsts" />
+      {compact ? null : 'OXSTS'}
     </button>
   )
 }
@@ -497,6 +524,7 @@ function Rail({ counts, initialized }: { counts: CaseCounts, initialized: boolea
         <Icon name="panel-expand" />
       </button>
       <VerifyButton compact />
+      <ModelOxstsButton compact />
       <span className="rail-divider" />
       {initialized ? <Counts counts={counts} compact /> : <VerdictMark status="running" label="Initializing" />}
     </aside>
@@ -536,6 +564,7 @@ export function ResultsColumn({ trace }: { trace: TraceSlot | undefined }): Reac
         </button>
         {initialized ? <Counts counts={counts} compact={false} /> : <span className="results-initializing-label">Initializing</span>}
         <span className="results-spacer" />
+        <ModelOxstsButton compact={false} />
         <SettingsPopover />
         <VerifyButton compact={false} />
       </div>

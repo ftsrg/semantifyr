@@ -14,7 +14,7 @@ import type { LanguageRuntime, LibraryDocument, LibraryKind } from '../../lib/la
 import { fileNameOf } from '../../lib/session/readOnlyDocuments'
 import { useStore } from '../../lib/stores/useStore'
 import { caseRowOf } from '../../lib/workspace/caseRows'
-import { libraryTabOf, modelOxstsTabOf } from '../../lib/workspace/libraryTabs'
+import { libraryTabOf, openModelOxsts } from '../../lib/workspace/libraryTabs'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import { traceLanguageOf, type TraceView } from '../../trace/registry'
 import { openTraceText } from '../../trace/TextView'
@@ -34,10 +34,6 @@ const LIBRARY_ORDER: readonly LibraryKind[] = [
 
 // more files than the menu shows at once get a filter
 const FILTERED_FROM = 16
-
-export function modelOxstsText(text: string | null, message: string | null | undefined): string {
-  return text ?? `// ${message ?? 'The OXSTS shows once the model compiles.'}\n`
-}
 
 // the folder of a file inside its library, empty for one at the library's root
 function folderOf(library: LibraryDocument): string {
@@ -177,8 +173,7 @@ export function DocumentsMenu({ runtime, flavor, modelLabel }: { runtime: Langua
                       detail={modelOxstsLabel}
                       document="model-oxsts"
                       onOpen={() => {
-                        const document = runtime.modelOxsts.get()
-                        live.tabs.open(modelOxstsTabOf(modelLabel, modelOxstsText(document?.text ?? null, document?.message)))
+                        openModelOxsts(live, runtime, modelLabel)
                         close()
                       }}
                     />

@@ -138,6 +138,15 @@
   flex: none;
 }
 .results-spacer { flex: 1; }
+.results-header { container: results-header / inline-size; }
+.results-header .model-oxsts-button { flex: none; }
+/* a narrow column keeps the mark and drops the word, which stays the button's name; a narrower one leaves it to the documents menu */
+@container results-header (max-width: 499.98px) {
+  .results-header .model-oxsts-button { gap: 0; padding: 0 var(--space-3); font-size: 0; }
+}
+@container results-header (max-width: 429.98px) {
+  .results-header .model-oxsts-button { display: none; }
+}
 .results-header .button-icon { color: var(--text-tertiary); }
 .results-initializing-label { color: var(--text-tertiary); font-size: var(--text-small); white-space: nowrap; }
 

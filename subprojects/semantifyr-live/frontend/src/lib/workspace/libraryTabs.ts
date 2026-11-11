@@ -5,8 +5,10 @@
  */
 
 import { SYSML_LIBRARY_PREFIX } from '../language/libraries'
+import type { LanguageRuntime } from '../language/types'
 import { derivedUriOf, fileNameOf, fileUriOfLibrary, LIBRARY_SCHEME, libraryUriOf } from '../session/readOnlyDocuments'
 import type { ReadOnlyDocument } from './documentTabs'
+import type { Live } from './live'
 
 export const MODEL_OXSTS_TAB_ID = 'model-oxsts'
 
@@ -54,4 +56,13 @@ export function modelOxstsTabOf(modelLabel: string, text: string): ReadOnlyDocum
     banner: `The OXSTS that ${modelLabel} compiles to. It follows your edits.`,
     text,
   }
+}
+
+export function modelOxstsText(text: string | null, message: string | null | undefined): string {
+  return text ?? `// ${message ?? 'The OXSTS shows once the model compiles.'}\n`
+}
+
+export function openModelOxsts(live: Live, runtime: LanguageRuntime, modelLabel: string): void {
+  const document = runtime.modelOxsts.get()
+  live.tabs.open(modelOxstsTabOf(modelLabel, modelOxstsText(document?.text ?? null, document?.message)))
 }
