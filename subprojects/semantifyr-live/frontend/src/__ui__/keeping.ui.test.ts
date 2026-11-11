@@ -9,7 +9,7 @@ import { join } from 'node:path'
 import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
-import { TEST_BROWSER } from '../testBrowser'
+import { editorKeysOf, TEST_BROWSER } from '../testBrowser'
 import { casesListed, editor, results, statesOf, test } from './harness'
 
 const BASICS = readFileSync(join(import.meta.dirname, '../snippets/imported/tutorial/basics.oxsts'), 'utf-8')
@@ -92,7 +92,7 @@ async function openFile(page: Page, name: string, text: string): Promise<void> {
 
 async function typeAtTheEnd(page: Page, text: string): Promise<void> {
   await editor(page).lines.click()
-  await page.keyboard.press('Control+End')
+  await page.keyboard.press((await editorKeysOf(page)).endOfDocument)
   await page.keyboard.type(text)
 }
 

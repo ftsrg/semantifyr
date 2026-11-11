@@ -7,6 +7,7 @@
 import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
+import { editorKeysOf } from '../testBrowser'
 import { LIVE_URL, SLOW, test, token, verifyAll } from './browser'
 
 function results(page: Page) {
@@ -44,8 +45,9 @@ describe('the SysML v2 language server of the fork, in the page', () => {
     }, { timeout: SLOW }).toBeGreaterThan(0)
 
     await token(page, 'port sensors : ~Sensors;', 'Sensors').click()
-    await page.keyboard.press('Control+k')
-    await page.keyboard.press('Control+i')
+    const { command } = await editorKeysOf(page)
+    await page.keyboard.press(`${command}+k`)
+    await page.keyboard.press(`${command}+i`)
     await expect.poll(async () => {
       return page.locator('.monaco-hover').filter({ visible: true }).innerText()
     }, { timeout: 30_000 }).toContain('Sensors')

@@ -7,6 +7,7 @@
 import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
+import { editorKeysOf } from '../testBrowser'
 import { casesListed, editor, test } from './harness'
 
 const BUILTIN = 'file:///workspace/.semantifyr/builtin/semantifyr.oxsts'
@@ -151,7 +152,7 @@ describe('the OXSTS of the model', () => {
     }).toContain('package')
     await editor(page).tabs.first().click()
     await editor(page).lines.click()
-    await page.keyboard.press('Control+End')
+    await page.keyboard.press((await editorKeysOf(page)).endOfDocument)
     await page.keyboard.type('\n// edited\n')
     await editor(page).tabs.filter({ hasText: 'level-crossing.oxsts' }).click()
     await expect.poll(async () => {
@@ -160,7 +161,7 @@ describe('the OXSTS of the model', () => {
     await editor(page).lines.click()
 
     await expect.poll(async () => {
-      await page.keyboard.press('Control+End')
+      await page.keyboard.press((await editorKeysOf(page)).endOfDocument)
       return (await editor(page).lines.innerText()).replace(/\u00a0/g, ' ')
     }).toContain('// recompiled')
   })

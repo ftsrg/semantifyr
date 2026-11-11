@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { chromium, firefox, webkit, type Browser, type LaunchOptions } from 'playwright'
+import { chromium, firefox, webkit, type Browser, type LaunchOptions, type Page } from 'playwright'
 
 const ENGINES = {
   chromium,
@@ -31,4 +31,17 @@ export const LAUNCH_OPTIONS: LaunchOptions = TEST_BROWSER === 'chromium' && chro
 
 export function launchTestBrowser(): Promise<Browser> {
   return ENGINES[TEST_BROWSER].launch(LAUNCH_OPTIONS)
+}
+
+export interface EditorKeys {
+  command: 'Control' | 'Meta'
+  endOfDocument: string
+}
+
+// the editor binds the keys of the platform the user agent names, and Playwright's WebKit names a Mac on every platform
+export async function editorKeysOf(page: Page): Promise<EditorKeys> {
+  const mac = await page.evaluate(() => {
+    return navigator.userAgent.includes('Macintosh')
+  })
+  return mac ? { command: 'Meta', endOfDocument: 'Meta+ArrowDown' } : { command: 'Control', endOfDocument: 'Control+End' }
 }

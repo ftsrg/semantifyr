@@ -8,6 +8,7 @@ import type { VerificationCaseResult, VerificationCaseSpecification } from '@sem
 import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
+import { editorKeysOf } from '../testBrowser'
 import { casesListed, editor, results, statesOf, test, type Ui } from './harness'
 import type { CaseRequest } from './mock/session'
 
@@ -281,7 +282,7 @@ describe('the case list', () => {
     }).toEqual(['failed', 'passed'])
 
     await editor(page).lines.click()
-    await page.keyboard.press('Control+End')
+    await page.keyboard.press((await editorKeysOf(page)).endOfDocument)
     await page.keyboard.type('\n')
 
     await expect.poll(async () => {
@@ -311,7 +312,7 @@ describe('the case list', () => {
     }
 
     await editor(page).lines.click()
-    await page.keyboard.press('Control+End')
+    await page.keyboard.press((await editorKeysOf(page)).endOfDocument)
     await page.keyboard.type('\n')
 
     await expect.poll(async () => {
