@@ -25,7 +25,7 @@ function finishedCase(id: string, status: VerificationCaseState['status']): Veri
 }
 
 function waitingCase(id: string, status: 'queued' | 'running'): VerificationCaseState {
-  return { caseInfo: sampleCase(id), status }
+  return status === 'running' ? { caseInfo: sampleCase(id), status, serverState: 'Running' } : { caseInfo: sampleCase(id), status }
 }
 
 const SHARED: SharedResults = {

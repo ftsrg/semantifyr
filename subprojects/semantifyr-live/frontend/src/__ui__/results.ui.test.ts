@@ -174,6 +174,41 @@ describe('a single run', () => {
   })
 })
 
+describe('the server\'s queue', () => {
+  test('shows a case the server holds in its queue as queued, says the server is busy, and shows it running once the server runs it', async ({ ui }) => {
+    const queue = gate()
+    const held = new Held()
+    ui.backend.answer('queue', async (request) => {
+      await Promise.race([
+        queue.passed,
+        new Promise<void>((resolve) => {
+          request.signal.addEventListener('abort', () => {
+            resolve()
+          })
+        }),
+      ])
+    })
+    ui.backend.answer('verify', held.verify)
+    const page = await opened(ui)
+
+    await results(page).row(BARRIER).getByRole('button', { name: `Run ${BARRIER}` }).click()
+    await expect.poll(async () => {
+      return page.getByTestId('status-message').innerText()
+    }).toBe(`The server is busy with other verifications: ${BARRIER} waits`)
+    expect(await rowStates(page)).toEqual(['queued', 'not-run'])
+
+    queue.open()
+    await expect.poll(async () => {
+      return rowStates(page)
+    }).toEqual(['running', 'not-run'])
+    expect(await page.getByTestId('status-message').innerText()).toContain(`Verifying ${BARRIER}`)
+    held.open(BARRIER)
+    await expect.poll(async () => {
+      return rowStates(page)
+    }).toEqual(['failed', 'not-run'])
+  })
+})
+
 describe('cancelling', () => {
   test('one case from its row lets the rest of the run go on', async ({ ui }) => {
     const held = new Held()

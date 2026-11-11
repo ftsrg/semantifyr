@@ -6,8 +6,10 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { VerificationCaseResult, VerificationCaseSpecification } from '@semantifyr/editor-common'
+import type { ActiveVerificationInfo } from '../../lib/api/types'
 import { areCasesKnown } from '../../lib/stores/initialization'
 import type { LspClient, VerificationState } from '../../lib/verification/engine'
+import { caseRowOf } from '../../lib/workspace/caseRows'
 import { NO_VERIFICATION } from '../../lib/workspace/verification'
 import { createTestLive, testFlavors, type TestLive } from '../helpers/live'
 import { failedResult, passedResult } from '../fixtures/verification-results'
@@ -80,6 +82,10 @@ function deferred<T>(): { promise: Promise<T>, resolve: (value: T) => void } {
     resolve = settle
   })
   return { promise, resolve }
+}
+
+function reported(caseInfo: VerificationCaseSpecification, state: ActiveVerificationInfo['state']): ActiveVerificationInfo {
+  return { verificationId: `verify-${caseInfo.id}`, portfolioId: 'smart-full', kind: 'Verify', state, elapsed: 'PT0S', location: caseInfo.location }
 }
 
 function verificationOf(test: TestLive): VerificationState {
@@ -419,6 +425,66 @@ describe('Live', () => {
     pending.resolve(failedResult)
   })
 
+  it('shows a sent case queued while the server queues it and running once the server runs it, and counts its time from then', async () => {
+    const target = caseAt('a', 1)
+    const routed = routedClient([target])
+    open = await openConnected(routed)
+    const pending = deferred<VerificationCaseResult>()
+    routed.results.set(1, async () => {
+      return pending.promise
+    })
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(1_000)
+    const row = (): ReturnType<typeof caseRowOf> => {
+      return caseRowOf(verificationOf(open!).cases[0]!)
+    }
+
+    open.live.verifyCase('a')
+    await vi.waitFor(() => {
+      expect(routed.verifiedLines).toEqual([1])
+    })
+    expect(row().status).toBe('queued')
+    open.runtime().report([reported(target, 'Queued')])
+    expect(row().status).toBe('queued')
+    clock.mockReturnValue(5_000)
+    open.runtime().report([reported(target, 'Running')])
+    expect(row().status).toBe('running')
+    open.runtime().report([])
+    expect(row().status).toBe('running')
+    clock.mockReturnValue(7_500)
+    pending.resolve({ ...passedResult, status: 'timeout', message: 'Verification timed out', metrics: null })
+
+    await vi.waitFor(() => {
+      expect(verificationOf(open!).phase).toBe('done')
+    })
+    expect(row()).toMatchObject({ status: 'inconclusive', time: '2.5 s' })
+    clock.mockRestore()
+  })
+
+  it('shows every case asked for as queued while the language server initializes, the ones found meanwhile included, and not run again on cancel', async () => {
+    const routed = routedClient([caseAt('a', 1), caseAt('b', 2)])
+    open = createTestLive(routed.client, undefined, { initializing: true })
+    open.live.start('')
+    await vi.waitFor(() => {
+      expect(open!.live.workspace.get().runtime).not.toBeNull()
+    })
+
+    open.live.verifyAll()
+    open.runtime().connect()
+    open.models.open(MODEL_URI, 'model')
+    await vi.waitFor(() => {
+      expect(verificationOf(open!).discovery).toBe('discovered')
+    })
+    expect(verificationOf(open).cases.map(caseRowOf).map((row) => {
+      return row.word
+    })).toEqual(['Queued', 'Queued'])
+
+    open.live.cancelVerification()
+    expect(verificationOf(open).cases.map(caseRowOf).map((row) => {
+      return [row.word, row.message]
+    })).toEqual([['Not run', 'cancelled'], ['Not run', 'cancelled']])
+    expect(routed.verifiedLines).toEqual([])
+  })
+
   it('queues Verify all until the cases are known, and drops it on cancel', async () => {
     const routed = routedClient([caseAt('a', 1)])
     open = createTestLive(routed.client)
@@ -440,6 +506,9 @@ describe('Live', () => {
 
     open.live.verifyCase('b')
     expect(open.live.queuedVerification.get()).toEqual({ caseId: 'b' })
+    expect(verificationOf(open).cases.map((caseState) => {
+      return caseState.status
+    })).toEqual(['stale', 'queued'])
     expect(routed.verifiedLines).toEqual([])
     open.runtime().initialized()
 

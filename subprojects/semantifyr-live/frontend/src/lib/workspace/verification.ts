@@ -5,17 +5,21 @@
  */
 
 import type { LiveFlavor } from '../../examples'
+import type { ActiveVerificationInfo } from '../api/types'
 import type { LanguageRuntime } from '../language/types'
 import type { ModelDocuments } from '../session/modelDocuments'
 import { failStep, finishStep, InitializationSteps, isReadyToVerify } from '../stores/initialization'
 import type { Settings } from '../stores/settings'
 import { createStore, type ReadableStore } from '../stores/store'
 import {
+  applyServerReport,
   discoverVerificationCases,
   dispatchAutoValidation,
   markEdited,
+  markQueued,
   mergeDiscoveredCases,
   runAllVerifications,
+  unmarkQueued,
   verifySingleCase,
   witnessValidationLocation,
   type AutoValidateRequest,
@@ -73,6 +77,8 @@ export interface Verification {
   cancel: () => void
   // the session went: the run ends as a cancelled one, a queued verification still waits
   sessionLost: () => void
+  // the session's verifications the server holds, each queued or running
+  serverReported: (active: readonly ActiveVerificationInfo[]) => void
   cancelCase: (caseId: string) => void
   validate: (caseId: string) => void
   select: (caseId: string | null) => void
@@ -191,6 +197,16 @@ export function createVerification(options: VerificationOptions): Verification {
     }
   }
 
+  const queue = (caseId: string | null): void => {
+    queued.set({ caseId })
+    const key = options.current()?.target.key
+    if (key !== undefined) {
+      updaterFor(key)((state) => {
+        return markQueued(state, caseId)
+      })
+    }
+  }
+
   const select = (caseId: string | null): void => {
     selectionHeld = false
     selection.set(caseId)
@@ -229,7 +245,7 @@ export function createVerification(options: VerificationOptions): Verification {
   const verifyAll = (): void => {
     const current = options.current()
     if (!current || !isReady(current)) {
-      queued.set({ caseId: null })
+      queue(null)
       return
     }
     const { key, uri } = current.target
@@ -282,7 +298,7 @@ export function createVerification(options: VerificationOptions): Verification {
       return
     }
     if (!isReady(current)) {
-      queued.set({ caseId })
+      queue(caseId)
       return
     }
     startRun(key, caseId, (connection, setState) => {
@@ -340,7 +356,8 @@ export function createVerification(options: VerificationOptions): Verification {
         if (previous.phase === 'running') {
           return { ...previous, discovery: 'discovered' }
         }
-        return { ...previous, discovery: 'discovered', cases: mergeDiscoveredCases(previous.cases, discovered) }
+        const merged = { ...previous, discovery: 'discovered' as const, cases: mergeDiscoveredCases(previous.cases, discovered) }
+        return queued.get()?.caseId === null ? markQueued(merged, null) : merged
       })
     } catch (error) {
       if (generation !== discoveryGeneration) {
@@ -400,6 +417,10 @@ export function createVerification(options: VerificationOptions): Verification {
   }
 
   const cancel = (): void => {
+    const key = options.current()?.target.key
+    if (queued.get() !== null && key !== undefined) {
+      updaterFor(key)(unmarkQueued)
+    }
     queued.set(null)
     endRun()
   }
@@ -426,6 +447,14 @@ export function createVerification(options: VerificationOptions): Verification {
     verifyCase,
     cancel,
     sessionLost: endRun,
+    serverReported: (active) => {
+      const key = options.current()?.target.key
+      if (key !== undefined) {
+        updaterFor(key)((state) => {
+          return applyServerReport(state, active, Date.now())
+        })
+      }
+    },
     cancelCase: (caseId) => {
       run?.handle.cancelCase(caseId)
     },

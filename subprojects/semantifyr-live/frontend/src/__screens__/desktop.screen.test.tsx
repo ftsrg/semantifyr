@@ -117,9 +117,10 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     },
   },
   'case-queued': {
-    seed: { initializingAt: 'initialize', verification: discovered([notRun(BARRIER), notRun(TWO_TRAINS)]), queued: { caseId: BARRIER.id } },
+    seed: { initializingAt: 'initialize', verification: discovered([{ caseInfo: BARRIER, status: 'queued' }, notRun(TWO_TRAINS)]), queued: { caseId: BARRIER.id } },
     expectState: () => {
-      expect(count('.case-row.status-not-run')).toBe(2)
+      expect(count(`.case-row.status-queued[data-case="${BARRIER.id}"]`)).toBe(1)
+      expect(count('.case-row.status-not-run')).toBe(1)
       expect(count('.results-header .button-cancel')).toBe(1)
       expect(text('[data-testid=status-message]')).toBe(`Verify ${BARRIER.id} waits: initializing the SysML v2 language server`)
     },
@@ -132,12 +133,20 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     },
   },
   'running': {
-    seed: { verification: discovered([{ caseInfo: BARRIER, status: 'running' }, { caseInfo: TWO_TRAINS, status: 'queued' }], 'running') },
+    seed: { verification: discovered([{ caseInfo: BARRIER, status: 'running', serverState: 'Running' }, { caseInfo: TWO_TRAINS, status: 'queued' }], 'running') },
     expectState: () => {
       expect(count('.results-header .button-cancel')).toBe(1)
       expect(count('.case-row.status-running')).toBe(1)
       expect(count('.case-row.status-queued')).toBe(1)
       expect(text('[data-testid=status-message]')).toContain('Verifying')
+    },
+  },
+  'server-busy': {
+    seed: { verification: discovered([{ caseInfo: BARRIER, status: 'running', serverState: 'Queued' }, { caseInfo: TWO_TRAINS, status: 'queued' }], 'running') },
+    expectState: () => {
+      expect(count('.case-row.status-queued')).toBe(2)
+      expect(count('.case-row.status-running')).toBe(0)
+      expect(text('[data-testid=status-message]')).toBe(`The server is busy with other verifications: ${BARRIER.id} waits`)
     },
   },
   'results': {

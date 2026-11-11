@@ -24,6 +24,8 @@ import {
   type CancellationToken as VscodeCancellationToken,
 } from 'vscode-jsonrpc'
 
+import type { ActiveVerificationInfo, VerificationState as ServerState } from '../api/types'
+
 export type VerificationCaseLocation = Location
 
 export type {
@@ -49,6 +51,7 @@ export const DEFAULT_VALIDATION_PORTFOLIO_ID = 'smart-full'
 export type VerificationCaseStatus =
   | 'stale'
   | 'queued'
+  // sent to the server, which reports it queued or running in serverState
   | 'running'
   | 'passed'
   | 'failed'
@@ -67,6 +70,13 @@ export interface VerificationCaseState {
   validationMessage?: string | undefined
   // True between the trace arriving and the follow-up validateWitness resolving.
   validating?: boolean
+  // what the server last reported of the case it was sent, absent before its first report
+  serverState?: ServerState
+  validationServerState?: ServerState
+  // when the server was first reported running the case, by the page's clock
+  runningSince?: number
+  // the time from runningSince to the result, for a result whose metrics give none
+  ranMilliseconds?: number
   metrics?: VerificationMetrics
   backendId?: string
   portfolioId?: string
@@ -119,15 +129,108 @@ interface ProgressParams {
 type StateUpdater = (next: VerificationState | ((previous: VerificationState) => VerificationState)) => void
 
 function runningCase(caseState: VerificationCaseState): VerificationCaseState {
-  return { ...caseState, status: 'running', editedDuringRun: false }
+  const { serverState: _serverState, runningSince: _runningSince, ...rest } = caseState
+  return { ...rest, status: 'running', editedDuringRun: false }
 }
 
 function cancelledCase(caseState: VerificationCaseState): VerificationCaseState {
   if (caseState.resultStatus === undefined) {
     return { caseInfo: caseState.caseInfo, status: 'stale', message: 'Verification cancelled' }
   }
-  const { editedDuringRun: _editedDuringRun, ...result } = caseState
+  const { editedDuringRun: _editedDuringRun, serverState: _serverState, runningSince: _runningSince, ...result } = caseState
   return { ...result, status: caseState.resultStatus }
+}
+
+function isWaiting(caseState: VerificationCaseState): boolean {
+  return caseState.status === 'queued' || caseState.status === 'running'
+}
+
+// cases asked for before they can be sent; null asks for every case
+export function markQueued(state: VerificationState, caseId: string | null): VerificationState {
+  if (!state.cases.some((caseState) => {
+    return (caseId === null || caseState.caseInfo.id === caseId) && !isWaiting(caseState)
+  })) {
+    return state
+  }
+  return {
+    ...state,
+    cases: state.cases.map((caseState) => {
+      return (caseId === null || caseState.caseInfo.id === caseId) && !isWaiting(caseState)
+        ? { ...caseState, status: 'queued' as const }
+        : caseState
+    }),
+  }
+}
+
+export function unmarkQueued(state: VerificationState): VerificationState {
+  if (!state.cases.some((caseState) => {
+    return caseState.status === 'queued'
+  })) {
+    return state
+  }
+  return {
+    ...state,
+    cases: state.cases.map((caseState) => {
+      return caseState.status === 'queued' ? cancelledCase(caseState) : caseState
+    }),
+  }
+}
+
+function sameStart(location: Location, other: Location): boolean {
+  return location.uri === other.uri
+    && location.range.start.line === other.range.start.line
+    && location.range.start.character === other.range.start.character
+}
+
+function reportedState(
+  active: readonly ActiveVerificationInfo[],
+  kind: ActiveVerificationInfo['kind'],
+  matches: (location: Location) => boolean,
+): ServerState | undefined {
+  return active.find((entry) => {
+    return entry.kind === kind && entry.location !== undefined && matches(entry.location)
+  })?.state
+}
+
+// a case the report leaves out has not been registered yet or is finishing, so it keeps what was last reported
+function withReport(caseState: VerificationCaseState, active: readonly ActiveVerificationInfo[], now: number): VerificationCaseState {
+  let changed = caseState
+  if (caseState.status === 'running') {
+    const reported = reportedState(active, 'Verify', (location) => {
+      return sameStart(location, caseState.caseInfo.location)
+    })
+    if (reported !== undefined && reported !== caseState.serverState) {
+      changed = { ...changed, serverState: reported }
+      if (reported === 'Running' && changed.runningSince === undefined) {
+        changed = { ...changed, runningSince: now }
+      }
+    }
+  }
+  if (caseState.validating === true) {
+    const witnessUri = caseState.trace?.witnessUri
+    const reported = reportedState(active, 'Validate', (location) => {
+      return location.uri === witnessUri || sameStart(location, caseState.caseInfo.location)
+    })
+    if (reported !== undefined && reported !== caseState.validationServerState) {
+      changed = { ...changed, validationServerState: reported }
+    }
+  }
+  return changed
+}
+
+export function applyServerReport(
+  state: VerificationState,
+  active: readonly ActiveVerificationInfo[],
+  now: number,
+): VerificationState {
+  const cases = state.cases.map((caseState) => {
+    return withReport(caseState, active, now)
+  })
+  return cases.every((caseState, index) => {
+    return caseState === state.cases[index]
+  })
+    ? state
+    : { ...state, cases }
 }
 
 export function markEdited(state: VerificationState): VerificationState {
@@ -243,8 +346,10 @@ function applyVerifyOutcome(
   outcome: VerifyOutcome,
   portfolioId: string | undefined,
 ): VerificationCaseState {
+  const { runningSince } = caseState
   return {
     caseInfo: caseState.caseInfo,
+    ...(outcome.metrics?.totalDuration === undefined && runningSince !== undefined ? { ranMilliseconds: Date.now() - runningSince } : {}),
     status: outcome.status,
     resultStatus: outcome.status,
     outdated: caseState.editedDuringRun === true,
@@ -686,12 +791,17 @@ function toValidationOutcome(response: WitnessValidationResult | null): WitnessV
   }
 }
 
+function withoutValidationReport(caseState: VerificationCaseState): VerificationCaseState {
+  const { validationServerState: _validationServerState, ...rest } = caseState
+  return rest
+}
+
 function applyValidationOutcome(
   caseState: VerificationCaseState,
   outcome: WitnessValidationOutcome,
 ): VerificationCaseState {
   return {
-    ...caseState,
+    ...withoutValidationReport(caseState),
     validating: false,
     witnessValidation: outcome.status,
     validationMessage: outcome.message,
@@ -712,7 +822,7 @@ export function dispatchAutoValidation(
   setState((previous) => ({
     ...previous,
     cases: previous.cases.map((caseState) =>
-      caseState.caseInfo.id === caseId ? { ...caseState, validating: true } : caseState,
+      caseState.caseInfo.id === caseId ? { ...withoutValidationReport(caseState), validating: true } : caseState,
     ),
   }))
   void validateWitness(

@@ -292,6 +292,9 @@ export function createLive(options: LiveOptions): Live {
     const subscriptions = [
       runtime.connection.subscribe(copyConnection),
       runtime.initialization.subscribe(copyInitialization),
+      runtime.api.onVerificationsChanged((params) => {
+        verification.serverReported(params.active ?? [])
+      }),
       modelDocuments.onDidOpen(uri, verification.scheduleDiscovery),
       modelDocuments.onDidChange(uri, (change) => {
         const key = workspace.get().documentKey

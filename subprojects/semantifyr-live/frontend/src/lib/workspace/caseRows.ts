@@ -17,6 +17,7 @@ export type RowStatus =
   | 'queued'
 
 export type ValidationMark =
+  | 'validation-queued'
   | 'validating'
   | 'validated'
   | 'validation-failed'
@@ -68,6 +69,11 @@ export function formatSeconds(milliseconds: number): string {
   return seconds < 10 ? `${seconds.toFixed(1)} s` : `${Math.round(seconds)} s`
 }
 
+// a case sent to the server runs only once the server says so
+function ownStatusOf(caseState: VerificationCaseState): RowStatus {
+  return caseState.status === 'running' && caseState.serverState !== 'Running' ? 'queued' : statusOf(caseState.status)
+}
+
 function statusOf(status: VerificationCaseState['status']): RowStatus {
   switch (status) {
     case 'passed':
@@ -110,7 +116,7 @@ function messageOf(caseState: VerificationCaseState, status: VerificationCaseSta
 
 function validationOf(caseState: VerificationCaseState): ValidationMark | null {
   if (caseState.validating === true) {
-    return 'validating'
+    return caseState.validationServerState === 'Running' ? 'validating' : 'validation-queued'
   }
   switch (caseState.witnessValidation) {
     case undefined:
@@ -128,27 +134,35 @@ function isWaiting(status: RowStatus): status is 'running' | 'queued' {
 }
 
 // a case run again shows the verdict it had until the new one arrives
-function shownStatusOf(caseState: VerificationCaseState): VerificationCaseState['status'] {
+function keptStatusOf(caseState: VerificationCaseState): VerificationCaseState['status'] | null {
   const kept = caseState.resultStatus
   if (!isWaiting(statusOf(caseState.status)) || kept === undefined || statusOf(kept) === 'not-run') {
-    return caseState.status
+    return null
   }
   return kept
 }
 
-export function caseRowOf(caseState: VerificationCaseState): CaseRow {
-  const shown = shownStatusOf(caseState)
-  const status = statusOf(shown)
-  const own = statusOf(caseState.status)
-  const finished = status !== 'not-run' && !isWaiting(status)
+function timeOf(caseState: VerificationCaseState): string | null {
   const duration = caseState.metrics?.totalDuration
+  if (duration !== undefined) {
+    return formatSeconds(isoDurationToMs(duration))
+  }
+  return caseState.ranMilliseconds === undefined ? null : formatSeconds(caseState.ranMilliseconds)
+}
+
+export function caseRowOf(caseState: VerificationCaseState): CaseRow {
+  const kept = keptStatusOf(caseState)
+  const shown = kept ?? caseState.status
+  const own = ownStatusOf(caseState)
+  const status = kept === null ? own : statusOf(kept)
+  const finished = status !== 'not-run' && !isWaiting(status)
   return {
     id: caseState.caseInfo.id,
     name: caseState.caseInfo.label.split('::').at(-1) ?? caseState.caseInfo.label,
     status,
     word: STATUS_WORDS[status],
     message: messageOf(caseState, shown),
-    time: finished && duration !== undefined ? formatSeconds(isoDurationToMs(duration)) : null,
+    time: finished ? timeOf(caseState) : null,
     outdated: finished && caseState.outdated === true,
     validation: finished ? validationOf(caseState) : null,
     validationMessage: caseState.validationMessage ?? null,

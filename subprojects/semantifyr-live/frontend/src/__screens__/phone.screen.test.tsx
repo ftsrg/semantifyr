@@ -118,12 +118,13 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     },
   },
   'cases-while-initializing': {
-    seed: { initializingAt: 'initialize', verification: NOT_RUN, queued: { caseId: BARRIER.id } },
+    seed: { initializingAt: 'initialize', verification: discovered([{ caseInfo: BARRIER, status: 'queued' }, notRun(TWO_TRAINS)]), queued: { caseId: BARRIER.id } },
     act: async () => {
       await tapTab('Results')
     },
     expectState: () => {
-      expect(count('.phone-case.status-not-run')).toBe(2)
+      expect(count('.phone-case.status-queued')).toBe(1)
+      expect(count('.phone-case.status-not-run')).toBe(1)
       expect(count('.phone-init')).toBe(0)
       expect(text('[data-testid=status-message]')).toContain(`Verify ${BARRIER.id} waits: initializing the SysML v2 language server`)
     },
@@ -149,7 +150,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     },
   },
   'running': {
-    seed: { verification: discovered([{ caseInfo: BARRIER, status: 'running' }, { caseInfo: TWO_TRAINS, status: 'queued' }], 'running') },
+    seed: { verification: discovered([{ caseInfo: BARRIER, status: 'running', serverState: 'Running' }, { caseInfo: TWO_TRAINS, status: 'queued' }], 'running') },
     act: async () => {
       await tapTab('Results')
     },
@@ -157,6 +158,17 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       expect(count('.phone-case.status-running')).toBe(1)
       expect(count('.phone-case.status-queued')).toBe(1)
       expect(count('.phone-bar .button-cancel')).toBe(1)
+    },
+  },
+  'server-busy': {
+    seed: { verification: discovered([{ caseInfo: BARRIER, status: 'running', serverState: 'Queued' }, { caseInfo: TWO_TRAINS, status: 'queued' }], 'running') },
+    act: async () => {
+      await tapTab('Results')
+    },
+    expectState: () => {
+      expect(count('.phone-case.status-queued')).toBe(2)
+      expect(count('.phone-case.status-running')).toBe(0)
+      expect(text('[data-testid=status-message]')).toBe(`The server is busy with other verifications: ${BARRIER.id} waits`)
     },
   },
   'verify-all': {

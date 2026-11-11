@@ -6,7 +6,7 @@
 
 import type { ConnectionState } from '../stores/connection'
 import { areCasesKnown, currentStep, isInitialized, type InitializationState, type InitializationStep } from '../stores/initialization'
-import type { VerificationState } from '../verification/engine'
+import type { VerificationCaseState, VerificationState } from '../verification/engine'
 import { caseRowOf, countsOf, countsPhrase, formatSeconds } from './caseRows'
 import type { CatalogStatus } from './live'
 import type { QueuedVerification, RunTiming } from './verification'
@@ -134,11 +134,50 @@ function queuedStatus(queued: QueuedVerification, verification: VerificationStat
   return { kind: 'busy', text: 'Verify ', caseName: caseRowOf(target).name, after: ` waits: ${reason}` }
 }
 
-// a single run names its case, Verify all its position among the cases
-function runningStatus(verification: VerificationState, timing: RunTiming | null): ShellStatus {
-  const index = verification.cases.findIndex((caseState) => {
-    return caseState.status === 'running'
+export interface ServerWait {
+  caseState: VerificationCaseState
+  validation: boolean
+}
+
+// a case the server queues while it runs none of the session's: other sessions hold every permit
+export function serverWaitOf(cases: readonly VerificationCaseState[]): ServerWait | null {
+  const running = cases.some((caseState) => {
+    return caseState.serverState === 'Running' || caseState.validationServerState === 'Running'
   })
+  if (running) {
+    return null
+  }
+  const verify = cases.find((caseState) => {
+    return caseState.status === 'running' && caseState.serverState === 'Queued'
+  })
+  if (verify) {
+    return { caseState: verify, validation: false }
+  }
+  const validate = cases.find((caseState) => {
+    return caseState.validating === true && caseState.validationServerState === 'Queued'
+  })
+  return validate ? { caseState: validate, validation: true } : null
+}
+
+function serverBusyStatus(wait: ServerWait): ShellStatus {
+  return {
+    kind: 'busy',
+    text: 'The server is busy with other verifications: ',
+    caseName: caseRowOf(wait.caseState).name,
+    after: wait.validation ? ' waits to be validated' : ' waits',
+  }
+}
+
+// a single run names its case, Verify all its position among the cases; a case sent and not yet reported reads as verifying, so the line does not flicker
+function runningStatus(verification: VerificationState, timing: RunTiming | null): ShellStatus {
+  const reportedRunning = verification.cases.findIndex((caseState) => {
+    return caseState.status === 'running' && caseState.serverState === 'Running'
+  })
+  const index = reportedRunning === -1
+    ? verification.cases.findIndex((caseState) => {
+      return caseState.status === 'running'
+    })
+    : reportedRunning
   const running = verification.cases[index]
   if (!running) {
     return { kind: 'busy', text: verification.message ?? 'Verifying...' }
@@ -186,6 +225,10 @@ export function shellStatus(input: ShellStatusInput): ShellStatus {
   const { connection, initialization, verification, timing } = input
   if (input.catalog === 'waiting') {
     return { kind: 'warning', text: 'The server is not answering. Retrying. Editing and verifying start once it answers.' }
+  }
+  const wait = serverWaitOf(verification.cases)
+  if (wait) {
+    return serverBusyStatus(wait)
   }
   if (verification.phase === 'running') {
     return runningStatus(verification, timing)

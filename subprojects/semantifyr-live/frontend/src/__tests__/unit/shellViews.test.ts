@@ -79,7 +79,7 @@ describe('a case row', () => {
 
   it('marks a result outdated and its validation, but not a case that waits', () => {
     expect(caseRowOf(result('a', 'passed', { outdated: true, witnessValidation: 'valid' }))).toMatchObject({ outdated: true, validation: 'validated' })
-    expect(caseRowOf(result('a', 'passed', { validating: true }))).toMatchObject({ validation: 'validating' })
+    expect(caseRowOf(result('a', 'passed', { validating: true, validationServerState: 'Running' }))).toMatchObject({ validation: 'validating' })
     expect(caseRowOf(result('a', 'passed', { witnessValidation: 'invalid' }))).toMatchObject({ validation: 'validation-failed' })
     expect(caseRowOf(result('a', 'running', { outdated: true }))).toMatchObject({ outdated: false, validation: null, time: null })
   })
@@ -87,7 +87,7 @@ describe('a case row', () => {
   it('keeps the verdict of a case run again, with its trace and its count, until the new one arrives', () => {
     const trace = { callTrace: { initializedStep: { traces: [] }, steps: [] }, witnessState: { initializedStep: { values: [] }, steps: [] }, witnessUri: null }
     const rows = [
-      result('a', 'failed', { status: 'running', trace }),
+      result('a', 'failed', { status: 'running', serverState: 'Running', trace }),
       result('b', 'passed', { status: 'queued' }),
       { caseInfo: caseAt('c', 1), status: 'queued' as const },
     ].map(caseRowOf)
@@ -96,6 +96,24 @@ describe('a case row', () => {
     expect(rows[1]).toMatchObject({ status: 'passed', waiting: true, rerun: 'queued' })
     expect(rows[2]).toMatchObject({ status: 'queued', waiting: true, rerun: null })
     expect(countsOf(rows)).toEqual({ passed: 1, failed: 1, inconclusive: 0, error: 0, waiting: 1, total: 3 })
+  })
+
+  it('reads queued for a case sent to the server until the server reports it running, and running from then', () => {
+    expect(caseRowOf({ caseInfo: caseAt('a', 1), status: 'running' })).toMatchObject({ status: 'queued', word: 'Queued', waiting: true })
+    expect(caseRowOf({ caseInfo: caseAt('a', 1), status: 'running', serverState: 'Queued' })).toMatchObject({ status: 'queued', word: 'Queued' })
+    expect(caseRowOf({ caseInfo: caseAt('a', 1), status: 'running', serverState: 'Running' })).toMatchObject({ status: 'running', word: 'Running' })
+    expect(caseRowOf(result('a', 'failed', { status: 'running', serverState: 'Queued' }))).toMatchObject({ status: 'failed', rerun: 'queued' })
+  })
+
+  it('times a result by the server\'s metrics, else from when the server ran it', () => {
+    expect(caseRowOf({ caseInfo: caseAt('a', 1), status: 'timeout', resultStatus: 'timeout', ranMilliseconds: 60_400 })).toMatchObject({ time: '60 s' })
+    expect(caseRowOf(result('a', 'passed', { ranMilliseconds: 60_400 }))).toMatchObject({ time: '2.9 s' })
+  })
+
+  it('marks a validation validating only while the server runs it', () => {
+    expect(caseRowOf(result('a', 'failed', { validating: true }))).toMatchObject({ validation: 'validation-queued' })
+    expect(caseRowOf(result('a', 'failed', { validating: true, validationServerState: 'Queued' }))).toMatchObject({ validation: 'validation-queued' })
+    expect(caseRowOf(result('a', 'failed', { validating: true, validationServerState: 'Running' }))).toMatchObject({ validation: 'validating' })
   })
 
   it('counts the verdicts and the waiting cases, and says the failed first', () => {
@@ -126,6 +144,25 @@ describe('the status line', () => {
     const running: VerificationState = { phase: 'running', discovery: 'discovered', cases: [result('a', 'stale'), result('b', 'running')] }
     const timing = { key: 'k', caseId: 'example::b', startedAt: 6_300, finishedAt: null }
     expect(shellStatus({ ...statusInput(), verification: running, timing })).toMatchObject({ kind: 'busy', caseName: 'b', after: '' })
+  })
+
+  it('says the server is busy exactly when it queues a case of the session and runs none of them', () => {
+    const queuedOnServer: VerificationState = { phase: 'running', discovery: 'discovered', cases: [result('a', 'running', { serverState: 'Queued' }), result('b', 'queued')] }
+    expect(shellStatus({ ...statusInput(), verification: queuedOnServer })).toMatchObject({ kind: 'busy', text: 'The server is busy with other verifications: ', caseName: 'a', after: ' waits' })
+
+    const validationRunning: VerificationState = { ...queuedOnServer, cases: [result('a', 'running', { serverState: 'Queued' }), result('b', 'failed', { validating: true, validationServerState: 'Running' })] }
+    expect(shellStatus({ ...statusInput(), verification: validationRunning })).toMatchObject({ text: 'Verifying ', caseName: 'a' })
+
+    const notReported: VerificationState = { ...queuedOnServer, cases: [result('a', 'running'), result('b', 'queued')] }
+    expect(shellStatus({ ...statusInput(), verification: notReported })).toMatchObject({ text: 'Verifying ', caseName: 'a', after: ', 1 of 2' })
+
+    const validationQueued: VerificationState = { phase: 'done', discovery: 'discovered', cases: [result('a', 'failed', { validating: true, validationServerState: 'Queued' })] }
+    expect(shellStatus({ ...statusInput(), verification: validationQueued })).toMatchObject({ caseName: 'a', after: ' waits to be validated' })
+  })
+
+  it('names the case the server runs, not the first one sent', () => {
+    const verification: VerificationState = { phase: 'running', discovery: 'discovered', cases: [result('a', 'running', { serverState: 'Queued' }), result('b', 'running', { serverState: 'Running' })] }
+    expect(shellStatus({ ...statusInput(), verification })).toMatchObject({ caseName: 'b', after: ', 2 of 2' })
   })
 
   it('says the results are outdated before it says the model is unsaved', () => {

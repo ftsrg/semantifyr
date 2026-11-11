@@ -188,7 +188,7 @@ function framed(frame: Frame): Readonly<Record<string, ScreenState>> {
     running: {
       frame,
       view: 'embed',
-      seed: gamma({ verification: discovered([{ caseInfo: BARRIER, status: 'running' }, { caseInfo: TWO_TRAINS, status: 'queued' }], 'running') }),
+      seed: gamma({ verification: discovered([{ caseInfo: BARRIER, status: 'running', serverState: 'Running' }, { caseInfo: TWO_TRAINS, status: 'queued' }], 'running') }),
       expectState: () => {
         expect(count('.strip-bar .button-cancel')).toBe(1)
         expect(count('.embed-case.status-running')).toBe(1)

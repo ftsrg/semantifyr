@@ -278,12 +278,25 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
     })
   }
 
+  const traceUriOf = (witnessUri: string): string | undefined => {
+    return [...witnessUris].find(([, candidate]) => {
+      return candidate === witnessUri
+    })?.[0]
+  }
+
+  // a validation names the OXSTS witness, which the page knows by the case's trace
+  const translateLocation = (location: Location): Location | undefined => {
+    if (location.uri === SYSML_OXSTS_URI) {
+      return verifiedCaseLocations.get(rangeKey(location.range))
+    }
+    const traceUri = traceUriOf(location.uri)
+    return traceUri === undefined ? undefined : { ...location, uri: traceUri }
+  }
+
   const translateActive = (params: VerificationsChangedParams | null): VerificationsChangedParams => {
     return {
       active: params?.active?.map((item) => {
-        const location = item.location?.uri === SYSML_OXSTS_URI
-          ? verifiedCaseLocations.get(rangeKey(item.location.range))
-          : undefined
+        const location = item.location ? translateLocation(item.location) : undefined
         return location ? { ...item, location } : item
       }) ?? [],
     }

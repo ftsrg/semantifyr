@@ -132,6 +132,7 @@ export function VerdictMark({ status, label }: { status: RowStatus, label?: stri
 }
 
 const VALIDATION_WORDS: Readonly<Record<ValidationState, string>> = {
+  'validation-queued': 'validation queued',
   'validating': 'validating',
   'validated': 'validated',
   'validation-failed': 'validation failed',
@@ -145,7 +146,7 @@ export function ValidationMark({ state, detail }: { state: ValidationState, deta
   return (
     <svg className={`validation-mark is-${state}`} viewBox="0 0 16 16" role="img" aria-label={word}>
       <title>{title}</title>
-      {state === 'validating' ? <path className="shield" d={SHIELD} strokeDasharray="3 2.4" /> : <path className="shield" d={SHIELD} />}
+      {state === 'validating' || state === 'validation-queued' ? <path className="shield" d={SHIELD} strokeDasharray="3 2.4" /> : <path className="shield" d={SHIELD} />}
       {state === 'validated' ? <path className="glyph" d="M5.6 8.1l1.7 1.7 3.2-3.5" /> : null}
       {state === 'validation-failed'
         ? (

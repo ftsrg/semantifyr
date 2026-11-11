@@ -45,7 +45,7 @@ function runLine(metrics: VerificationMetrics | undefined, portfolio: string, ba
 
 function validationLine(caseState: VerificationCaseState, portfolio: (id: string | null | undefined) => string, chosen: string): string {
   if (caseState.validating === true) {
-    return `validating, ${portfolio(chosen)}`
+    return `${caseState.validationServerState === 'Running' ? 'validating' : 'queued'}, ${portfolio(chosen)}`
   }
   switch (caseState.witnessValidation) {
     case undefined:

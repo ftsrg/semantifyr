@@ -321,7 +321,7 @@ function CaseRowView({ row, selected, canValidate }: { row: CaseRow, selected: b
               >
                 <Icon name="play" />
               </button>
-              {row.hasTrace && canValidate && row.validation !== 'validating'
+              {row.hasTrace && canValidate && row.validation !== 'validating' && row.validation !== 'validation-queued'
                 ? (
                   <button
                     type="button"

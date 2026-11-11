@@ -65,6 +65,8 @@ export interface Answers {
   discover: Answer<DocumentRequest, VerificationCaseSpecification[]>
   verify: Answer<CaseRequest, VerificationCaseResult>
   validate: Answer<CaseRequest, WitnessValidationResult>
+  // how long a verification or validation stays queued before the server runs it, no time by default
+  queue: Answer<CaseRequest, void>
   compiled: Answer<DocumentRequest, CompiledOxstsResult>
   read: Answer<ReadRequest, string | null>
   // a language feature of the editor, as textDocument/definition, which by default finds nothing
@@ -464,10 +466,6 @@ export class MockSession {
       token: `progress-${id}`,
       abort,
     }
-    this.active.set(id, active)
-    this.announce()
-    active.state = 'Running'
-    this.announce()
     const caseRequest: CaseRequest = {
       session: this,
       command,
@@ -477,6 +475,14 @@ export class MockSession {
       caseId: this.caseAt(location.uri, location.range),
       signal: abort.signal,
     }
+    this.active.set(id, active)
+    this.announce()
+    await this.answers().queue?.(caseRequest, () => {})
+    if (!this.active.has(id)) {
+      return NO_ANSWER
+    }
+    active.state = 'Running'
+    this.announce()
     const progress = kind === 'Verify' ? this.fixture.verifyProgress : this.fixture.validateProgress
     this.send(request(String(this.nextServerId++), 'window/workDoneProgress/create', { token: active.token }))
     this.progress(active.token, progress.slice(0, -1))

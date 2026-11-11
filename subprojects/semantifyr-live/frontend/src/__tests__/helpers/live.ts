@@ -6,7 +6,8 @@
 
 import type { FlavorInfo } from '@semantifyr/editor-common'
 import { liveFlavors, type LiveFlavor } from '../../examples'
-import { SemantifyrLiveApi } from '../../lib/api/lspExtensions'
+import { SemantifyrLiveApi, SemantifyrLiveMethods } from '../../lib/api/lspExtensions'
+import type { ActiveVerificationInfo } from '../../lib/api/types'
 import type { LanguageRegistry } from '../../lib/language/registry'
 import type { LanguageRuntime, LanguageUnit } from '../../lib/language/types'
 import type { ModelChange, ModelDocuments } from '../../lib/session/modelDocuments'
@@ -86,6 +87,8 @@ export interface FakeRuntime extends LanguageRuntime {
   // the server ended the session
   terminate: () => void
   progress: (params: unknown) => void
+  // the server's notification of the session's verifications
+  report: (active: ActiveVerificationInfo[]) => void
 }
 
 // a runtime whose language server initializes at the connect, or only when told to when it is `initializing`
@@ -102,6 +105,7 @@ export function fakeRuntime(flavor: LiveFlavor, client: LspClient, initializing 
     })
   }
   const progressListeners = new Set<(params: unknown) => void>()
+  const notificationListeners = new Set<{ method: string, listener: (params: unknown) => void }>()
   let connected = false
   return {
     flavor,
@@ -115,8 +119,12 @@ export function fakeRuntime(flavor: LiveFlavor, client: LspClient, initializing 
     },
     api: new SemantifyrLiveApi(() => {
       return connected ? client : undefined
-    }, () => {
-      return () => {}
+    }, (method, listener) => {
+      const entry = { method, listener }
+      notificationListeners.add(entry)
+      return () => {
+        notificationListeners.delete(entry)
+      }
     }),
     client: () => {
       return connected ? client : undefined
@@ -156,6 +164,13 @@ export function fakeRuntime(flavor: LiveFlavor, client: LspClient, initializing 
     progress: (params) => {
       for (const listener of progressListeners) {
         listener(params)
+      }
+    },
+    report: (active) => {
+      for (const entry of notificationListeners) {
+        if (entry.method === SemantifyrLiveMethods.VERIFICATIONS_CHANGED) {
+          entry.listener({ active })
+        }
       }
     },
   }

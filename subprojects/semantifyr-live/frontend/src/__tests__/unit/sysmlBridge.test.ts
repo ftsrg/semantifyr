@@ -226,6 +226,17 @@ describe('sysml bridge', () => {
     })
   })
 
+  it('reports a validation of the OXSTS witness at the trace the page knows', async () => {
+    const { run, bridge } = verifyRequest(stubWorker(), stubOxsts().client)
+    const result = await run()
+    const witnessRange = { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } }
+    const params = { active: [{ verificationId: '2', kind: 'Validate', location: { uri: witnessUri, range: witnessRange } }] }
+
+    expect(bridge.translateNotification('semantifyr/live/session/verification/changed', params)).toEqual({
+      active: [{ verificationId: '2', kind: 'Validate', location: { uri: result.trace?.witnessUri, range: witnessRange } }],
+    })
+  })
+
   it('renders only the mapper diagnostics, keeping their severity', () => {
     const range = { start: { line: 1, character: 2 }, end: { line: 1, character: 8 } }
 

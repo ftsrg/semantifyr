@@ -53,7 +53,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
   'validating': {
     seed: {
       selection: BARRIER.id,
-      verification: discovered([{ ...UNVALIDATED_BARRIER, validating: true }, finished(TWO_TRAINS, 'passed', 0.8)], 'done'),
+      verification: discovered([{ ...UNVALIDATED_BARRIER, validating: true, validationServerState: 'Running' }, finished(TWO_TRAINS, 'passed', 0.8)], 'done'),
     },
     expectState: () => {
       expect(document.querySelector(`.case-row[data-case="${BARRIER.id}"] .validation-mark.is-validating`)).not.toBeNull()
@@ -122,7 +122,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     seed: {
       selection: BARRIER.id,
       verification: discovered([
-        { ...finished(BARRIER, 'failed', 2.9), status: 'running' },
+        { ...finished(BARRIER, 'failed', 2.9), status: 'running', serverState: 'Running' },
         { ...finished(TWO_TRAINS, 'passed', 0.8), status: 'queued' },
       ], 'running'),
     },
