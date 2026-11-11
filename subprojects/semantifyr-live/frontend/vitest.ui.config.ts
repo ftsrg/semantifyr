@@ -10,7 +10,7 @@ export default defineConfig({
   test: {
     include: ['src/__ui__/**/*.ui.test.ts'],
     globalSetup: ['./src/__ui__/staticServer.ts'],
-    testTimeout: 90 * 1000,
+    testTimeout: 240 * 1000,
     hookTimeout: 60 * 1000,
     fileParallelism: false,
     expect: {

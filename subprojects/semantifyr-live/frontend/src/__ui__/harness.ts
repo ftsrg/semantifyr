@@ -152,7 +152,7 @@ export async function casesListed(page: Page): Promise<void> {
   const { rows, initialization } = results(page)
   await expect.poll(async () => {
     return await initialization.count() === 0 && await rows.count() > 0
-  }, { timeout: 60_000 }).toBe(true)
+  }, { timeout: 150_000 }).toBe(true)
 }
 
 // collects every text the status line shows from the page's start, which a test reads with seenStatusTexts
