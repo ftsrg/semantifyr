@@ -6,7 +6,7 @@
 
 import { createRoot } from 'react-dom/client'
 import { afterAll, describe, expect, it, onTestFinished, vi } from 'vitest'
-import { page, server } from 'vitest/browser'
+import { page, server, userEvent } from 'vitest/browser'
 
 import { initializeMonaco } from '../lib/session/monaco'
 import { LiveContext } from '../lib/workspace/liveContext'
@@ -31,7 +31,7 @@ function count(selector: string): number {
 }
 
 async function chooseView(id: string): Promise<void> {
-  document.querySelector<HTMLElement>(`.trace-views [data-view=${id}]`)?.click()
+  await userEvent.click(document.querySelector<HTMLElement>(`.trace-views [data-view=${id}]`)!)
   await expect.poll(() => {
     return count(`.trace-views [data-view=${id}][aria-pressed=true]`)
   }).toBe(1)
@@ -73,7 +73,7 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
     language: 'sysml',
     view: 'steps',
     act: async () => {
-      document.querySelectorAll<HTMLElement>('.step-toggle')[1]?.click()
+      await userEvent.click(document.querySelectorAll<HTMLElement>('.step-toggle')[1]!)
       await expect.poll(() => {
         return count('.step.is-open .step-variable')
       }).toBe(6)
@@ -345,7 +345,7 @@ describe('the documents menu', () => {
       await expect.poll(() => {
         return document.querySelector('.monaco-editor .view-line') && document.querySelector('.case-trace')
       }, { timeout: 60_000 }).toBeTruthy()
-      document.querySelector<HTMLElement>('[aria-label="Read-only documents"]')!.click()
+      await userEvent.click(document.querySelector<HTMLElement>('[aria-label="Read-only documents"]')!)
       await expect.poll(() => {
         return [...document.querySelectorAll<HTMLElement>('.documents-menu .menu-item-label')].map((label) => {
           return label.innerText
@@ -367,7 +367,7 @@ describe('the documents menu', () => {
       const fileName = traceEntry.querySelector<HTMLElement>('.menu-item-detail')!.innerText
       expect(fileName).toBe(`${language.caseName}.witness.oxsts`)
       await page.screenshot({ path: `../../build/screens/${server.browser}/trace-documents-${languageName}-light.png` })
-      traceEntry.click()
+      await userEvent.click(traceEntry)
       await expect.poll(() => {
         return text('.tab.is-readonly[aria-selected=true]')
       }).toContain(fileName)

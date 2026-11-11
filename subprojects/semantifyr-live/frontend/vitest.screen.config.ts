@@ -64,10 +64,7 @@ export default defineConfig({
   test: {
     include: ['src/__screens__/**/*.screen.test.tsx'],
     testTimeout: 120 * 1000,
-    setupFiles: [
-      './src/__screens__/workers.ts',
-      './src/__screens__/focused.ts',
-    ],
+    setupFiles: ['./src/__screens__/workers.ts'],
     browser: {
       enabled: true,
       headless: true,
