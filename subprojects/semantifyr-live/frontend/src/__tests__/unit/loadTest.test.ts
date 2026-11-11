@@ -9,7 +9,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { VerificationStatus, type VerificationCaseResult } from '@semantifyr/editor-common'
 import { declaredCases, tutorialStepModels } from '../../__load__/models.ts'
-import { distribution, failures, summarize } from '../../__load__/stats.ts'
+import { distribution, failures, fairness, summarize } from '../../__load__/stats.ts'
 import { validateResult, type CaseRun, type RunningTracker, type StudentRun, type ValidationRun } from '../../__load__/student.ts'
 import type { LspClient } from '../../lib/verification/engine.ts'
 import { servedFlavors } from '../fixtures/flavors.ts'
@@ -22,6 +22,7 @@ function caseRun(overrides: Partial<CaseRun>): CaseRun {
     status: 'passed',
     message: null,
     ok: true,
+    sentAtMs: 0,
     wallMs: 1000,
     queueMs: 10,
     serverMs: 900,
@@ -142,6 +143,45 @@ describe('summarize', () => {
     expect(summary.validations).toBe(2)
     expect(summary.failedValidations).toBe(1)
     expect(summary.validationQueued).toEqual({ count: 2, median: 30, p95: 50, max: 50 })
+  })
+})
+
+describe('fairness', () => {
+  function session(student: number, starts: [number, number][]): StudentRun {
+    return studentRun({
+      student,
+      cases: starts.map(([sentAtMs, startedAtMs]) => {
+        return caseRun({ sentAtMs, queueMs: startedAtMs - sentAtMs })
+      }),
+    })
+  }
+
+  it('is absent when no case waited', () => {
+    expect(fairness([session(0, [[0, 10], [0, 20]])])).toBeNull()
+  })
+
+  it('counts nothing when waiting students are served in turns', () => {
+    const runs = [
+      session(0, [[0, 0], [0, 4000], [0, 8000]]),
+      session(1, [[100, 2000], [100, 6000]]),
+    ]
+    expect(fairness(runs)).toEqual({ waitedCases: 4, servedAgainWhileOtherWaited: 0 })
+  })
+
+  it('counts a student served again while another waited throughout', () => {
+    const runs = [
+      session(0, [[0, 0], [0, 4000], [0, 8000]]),
+      session(1, [[100, 12000]]),
+    ]
+    expect(fairness(runs)).toEqual({ waitedCases: 3, servedAgainWhileOtherWaited: 2 })
+  })
+
+  it('ignores a difference within the clock tolerance', () => {
+    const runs = [
+      session(0, [[0, 0], [0, 4000]]),
+      session(1, [[3900, 4100]]),
+    ]
+    expect(fairness(runs)).toEqual({ waitedCases: 1, servedAgainWhileOtherWaited: 0 })
   })
 })
 

@@ -17,7 +17,7 @@ import { runStudent, type StudentRun } from './student.ts'
 
 const usage = `Usage: npm run load-test -- [options]
 
-Simulates a class on a live server: each student opens a tutorial model, waits for diagnostics, discovers and verifies every case with the default portfolio, validates every witness as the editor does, edits the model, verifies again and disconnects once the validations are back.
+Simulates a class on a live server: each student opens a tutorial model, waits for diagnostics, discovers every case and verifies them all at once with the default portfolio, validates every witness as the editor does, edits the model, verifies again and disconnects once the validations are back.
 
   --url <url>               live server (default $SEMANTIFYR_LIVE_URL, else https://live-staging.semantifyr.org)
   --students <n>            concurrent students (default 30)

@@ -21,6 +21,11 @@ export interface Distribution {
   max: number
 }
 
+export interface Fairness {
+  waitedCases: number
+  servedAgainWhileOtherWaited: number
+}
+
 export interface Summary {
   connect: Distribution | null
   initialize: Distribution | null
@@ -46,6 +51,58 @@ export interface Summary {
   healthFailures: number
   healthLatency: Distribution | null
   maxActiveSessions: number | null
+  fairness: Fairness | null
+}
+
+const clockToleranceMs = 250
+
+interface Grant {
+  session: StudentRun
+  sentAtMs: number
+  startedAtMs: number
+}
+
+function grantsOf(runs: StudentRun[]): Grant[] {
+  return runs.flatMap((session) => {
+    return session.cases.flatMap((verification): Grant[] => {
+      if (verification.queueMs === null) {
+        return []
+      }
+      return [{ session, sentAtMs: verification.sentAtMs, startedAtMs: verification.sentAtMs + verification.queueMs }]
+    })
+  })
+}
+
+// round robin: a student served again while another student waited the whole time between its two grants and got none in between
+export function fairness(runs: StudentRun[]): Fairness | null {
+  const grants = grantsOf(runs)
+  const waited = grants.filter((grant) => {
+    return grant.startedAtMs - grant.sentAtMs > clockToleranceMs
+  })
+  if (waited.length === 0) {
+    return null
+  }
+  const servedAgain = waited.filter((grant) => {
+    const previousStart = Math.max(...grants.filter((other) => {
+      return other.session === grant.session && other.startedAtMs < grant.startedAtMs
+    }).map((other) => {
+      return other.startedAtMs
+    }))
+    if (!Number.isFinite(previousStart)) {
+      return false
+    }
+    return waited.some((waiting) => {
+      if (waiting.session === grant.session) {
+        return false
+      }
+      const waitedThroughout = waiting.sentAtMs <= previousStart + clockToleranceMs && waiting.startedAtMs >= grant.startedAtMs + clockToleranceMs
+      const servedBetween = grants.some((other) => {
+        return other.session === waiting.session && other.startedAtMs > previousStart - clockToleranceMs && other.startedAtMs < grant.startedAtMs + clockToleranceMs
+      })
+      return waitedThroughout && !servedBetween
+    })
+  })
+  return { waitedCases: waited.length, servedAgainWhileOtherWaited: servedAgain.length }
 }
 
 function percentile(sorted: number[], percent: number): number {
@@ -94,6 +151,7 @@ export function summarize(runs: StudentRun[], health: HealthSample[]): Summary {
     healthFailures: health.filter((sample) => !sample.ok).length,
     healthLatency: distribution(health.map((sample) => sample.latencyMs)),
     maxActiveSessions: activeSessions.length === 0 ? null : Math.max(...activeSessions),
+    fairness: fairness(runs),
   }
 }
 
@@ -153,5 +211,11 @@ export function formatSummary(summary: Summary): string {
     `errors ${summary.errors}, timeouts ${summary.timeouts}, error diagnostics ${summary.errorDiagnostics}`,
     `health samples ${summary.healthSamples}, failed ${summary.healthFailures}, max active sessions ${summary.maxActiveSessions ?? 'unknown'}`,
   )
+  if (summary.fairness) {
+    lines.push('', `fairness: ${summary.fairness.waitedCases} cases waited for a permit; in ${summary.fairness.servedAgainWhileOtherWaited} of them a student was served again while another waited throughout (clock tolerance ${clockToleranceMs} ms; 0 is fair)`)
+  }
+  if (!summary.fairness) {
+    lines.push('', 'fairness: no case waited for a verification permit')
+  }
   return lines.join('\n')
 }

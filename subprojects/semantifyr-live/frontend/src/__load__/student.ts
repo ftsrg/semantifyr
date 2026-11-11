@@ -38,6 +38,7 @@ export interface CaseRun {
   status: VerificationStatus | null
   message: string | null
   ok: boolean
+  sentAtMs: number
   wallMs: number
   queueMs: number | null
   serverMs: number | null
@@ -309,7 +310,7 @@ export async function runStudent(student: number, round: number, options: Studen
 
     const verifyAll = async (cases: VerificationCaseSpecification[], edited: boolean) => {
       state.phase = 'verify'
-      for (const verificationCase of cases) {
+      const runs = await Promise.all(cases.map(async (verificationCase) => {
         const name = caseName(verificationCase)
         const expected = model.cases.find((declaredCase) => declaredCase.name === name)?.expected ?? null
         const location = { uri, range: verificationCase.location.range }
@@ -328,19 +329,21 @@ export async function runStudent(student: number, round: number, options: Studen
         )
         const runningAt = running.runningAt(key)
         const status = result.value?.status ?? null
-        run.cases.push({
+        validate({ flavor, verificationCase, result: result.value, edited, portfolio: options.validationPortfolio, timeoutMs })
+        return {
           name,
           edited,
           expected,
           status,
           message: result.value?.message ?? null,
           ok: expected ? status === expected : status === VerificationStatus.Passed || status === VerificationStatus.Failed,
+          sentAtMs: sentAt,
           wallMs: result.elapsedMs,
           queueMs: runningAt === null ? null : runningAt - sentAt,
           serverMs: milliseconds(result.value?.metrics?.totalDuration),
-        })
-        validate({ flavor, verificationCase, result: result.value, edited, portfolio: options.validationPortfolio, timeoutMs })
-      }
+        }
+      }))
+      run.cases.push(...runs)
     }
 
     await verifyAll(await discover(), false)
