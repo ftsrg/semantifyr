@@ -250,12 +250,17 @@ class SessionTextDocumentService @Inject constructor(
 
     override fun semanticTokensFull(params: SemanticTokensParams): CompletableFuture<SemanticTokens?> {
         return readDocumentOrLibrary(params.textDocument.uri, null) { services, document, resource, cancelIndicator ->
-            services.semanticTokensService.semanticTokensFull(
-                document,
-                resource,
-                params,
-                cancelIndicator,
-            )
+            // the tokens of another language than the session's do not fit the legend the session announced
+            if (services !== languageServices) {
+                null
+            } else {
+                services.semanticTokensService.semanticTokensFull(
+                    document,
+                    resource,
+                    params,
+                    cancelIndicator,
+                )
+            }
         }
     }
 
@@ -480,7 +485,7 @@ class SessionTextDocumentService @Inject constructor(
         }
     }
 
-    // a library file is no open document: its read-only document is answered from the resource the session loaded, by the services of its own language
+    // a library file is no open document: its read-only document is answered from the resource the session loaded; a document is answered by the services of its own language, as the OXSTS a Gamma model compiles to
     private inline fun <T> readDocumentOrLibrary(
         clientUri: String,
         empty: T,
@@ -489,7 +494,7 @@ class SessionTextDocumentService @Inject constructor(
         return sessionRequestManager.runRead {
             val document = sessionDocumentManager.findByClient(clientUri)
             if (document != null) {
-                return@runRead block(languageServices, document.xtextDocument(), document.resource, it)
+                return@runRead block(languageServicesOf(document.resource), document.xtextDocument(), document.resource, it)
             }
             val library = sessionDocumentManager.findLibraryByClient(clientUri) ?: return@runRead empty
             val text = library.parseResult?.rootNode?.text ?: return@runRead empty
