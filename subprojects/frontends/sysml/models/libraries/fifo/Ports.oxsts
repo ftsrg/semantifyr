@@ -1,0 +1,89 @@
+package semantifyr::sysml::ports
+
+import semantifyr::sysml::items
+
+// a port queues its arrived items, oldest first, up to capacity, and drops an item arriving at a full queue
+abstract class Port {
+    refers capacity: int = 2
+
+    // the multiplicity is a literal, so it repeats capacity
+    var incomingItems: Item[0..2] := [nothing, nothing]
+    var incomingCount: int := 0
+    var outgoingItem: Item[0..1] := nothing
+
+    var consumed: bool := false
+    var consumptionRequired: bool := false
+
+    prop hasIncoming(): bool {
+        return incomingCount > 0
+    }
+
+    prop hasOutgoing(): bool {
+        return outgoingItem != nothing
+    }
+
+    prop hasIncomingItem(item: Item): bool {
+        return incomingCount > 0 && incomingItems[0] == item
+    }
+
+    prop hasOutgoingItem(item: Item): bool {
+        return outgoingItem == item
+    }
+
+    prop canConsume(item: Item): bool {
+        return hasIncomingItem(item) && !consumed
+    }
+
+    tran assumeHasIncomingItem(item: Item) {
+        assume(hasIncomingItem(item))
+    }
+
+    tran consumeIncomingItem() {
+        consumed := true
+        incomingItems := [incomingItems[1], nothing]
+        incomingCount := incomingCount - 1
+    }
+
+    tran requireConsumption() {
+        consumptionRequired := true
+    }
+
+    tran assumeRequiredConsumption() {
+        assume(!consumptionRequired || consumed)
+    }
+
+    tran resetConsumption() {
+        consumed := false
+        consumptionRequired := false
+    }
+
+    tran setIncomingItem(item: Item) {
+        if (incomingCount < capacity) {
+            incomingItems[incomingCount] := item
+            incomingCount := incomingCount + 1
+        }
+    }
+
+    tran setOutgoingItem(item: Item) {
+        outgoingItem := item
+    }
+
+    tran resetOutgoingItem() {
+        outgoingItem := nothing
+    }
+
+    tran havocIncomingItem() {
+        var item: Item[0..1] := nothing
+        havoc(item)
+        if (item != nothing) {
+            inline setIncomingItem(item as Item)
+        }
+    }
+
+    tran havocOutgoingItem() {
+        havoc(outgoingItem)
+    }
+}
+
+class NormalPort : Port
+class ConjugatedPort : Port
