@@ -89,6 +89,11 @@ describe('liveFlavors', () => {
     }
   });
 
+  it('the blank Gamma model names its package, which a Gamma model must', () => {
+    const gamma = findFlavor(servedLiveFlavors, 'gamma')!;
+    expect(findExample(gamma, 'blank')?.code).toMatch(/^package \w+\n$/);
+  });
+
   it('example ids are unique within a flavor', () => {
     for (const flavor of servedLiveFlavors) {
       const ids = flavor.examples.map((example) => example.id);

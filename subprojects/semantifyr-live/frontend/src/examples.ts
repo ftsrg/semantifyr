@@ -224,14 +224,15 @@ function buildImportedGammaLibraryExamples(): LiveExample[] {
   });
 }
 
-const blank = (flavor: string, libraryName: string | null): LiveExample => ({
+// a Gamma model names its package; an empty OXSTS or SysML file is valid as it is
+const blank = (flavor: string, libraryName: string | null, code = ''): LiveExample => ({
   id: 'blank',
   flavor,
   label: 'Blank',
   description: libraryName
     ? `Empty file with the ${libraryName} library preloaded.`
     : 'Empty file, start from scratch.',
-  code: '',
+  code,
 });
 
 const oxstsExamples: LiveExample[] = [
@@ -250,7 +251,7 @@ const oxstsWithSysmlv2LibraryExamples: LiveExample[] = [
 
 const gammaExamples: LiveExample[] = [
   ...buildImportedGammaExamples(),
-  blank('gamma', null),
+  blank('gamma', null, 'package model\n'),
 ];
 
 const sysmlExamples: LiveExample[] = [
