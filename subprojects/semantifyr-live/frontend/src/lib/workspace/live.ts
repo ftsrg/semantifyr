@@ -15,7 +15,7 @@ import type { LanguageRuntime } from '../language/types'
 import type { ModelDocuments } from '../session/modelDocuments'
 import type { ProblemEntry } from '../session/problems'
 import { INITIAL_CONNECTION, type ConnectionState } from '../stores/connection'
-import { initializationOf, InitializationSteps, type InitializationState } from '../stores/initialization'
+import { failStep, initializationOf, InitializationSteps, type InitializationState } from '../stores/initialization'
 import type { Settings } from '../stores/settings'
 import { createStore, type ReadableStore, type Store } from '../stores/store'
 import type { ResolvedColorMode } from '../util/colorMode'
@@ -33,6 +33,7 @@ const DISCOVERY_RETRY_MS = [
   4000,
 ]
 const DISCOVERY_TIMEOUT_MS = 30000
+const LIBRARY_TIMEOUT_MS = 60000
 
 export type CatalogStatus =
   | 'loading'
@@ -101,6 +102,8 @@ export interface LiveOptions {
   discoveryDelayMs?: number
   discoveryRetryMs?: readonly number[]
   discoveryTimeoutMs?: number
+  // how long the session may take to load the libraries before the cases are asked for anyway
+  libraryTimeoutMs?: number
 }
 
 export interface Live {
@@ -153,10 +156,18 @@ export interface Live {
   verificationPortfolioId: () => string | undefined
 }
 
-function isFindingCases(state: InitializationState): boolean {
+function isRunning(state: InitializationState, id: string): boolean {
   return state.steps.some((step) => {
-    return step.id === InitializationSteps.cases.id && step.state === 'running'
+    return step.id === id && step.state === 'running'
   })
+}
+
+function isFindingCases(state: InitializationState): boolean {
+  return isRunning(state, InitializationSteps.cases.id)
+}
+
+function isLoadingLibrary(state: InitializationState): boolean {
+  return isRunning(state, InitializationSteps.library.id)
 }
 
 export function documentKey(flavorId: string, exampleId: string, shared: boolean): string {
@@ -249,6 +260,31 @@ export function createLive(options: LiveOptions): Live {
         verification.sessionLost()
       }
     }
+    let libraryTimer: ReturnType<typeof setTimeout> | null = null
+    const libraryTimeoutMs = options.libraryTimeoutMs ?? LIBRARY_TIMEOUT_MS
+    const stopWatchingLibrary = (): void => {
+      if (libraryTimer) {
+        clearTimeout(libraryTimer)
+        libraryTimer = null
+      }
+    }
+    // the libraries are loaded once the model's first diagnostics arrive; without them the step fails with what it waited for, and the cases are asked for anyway
+    const watchLibrary = (): void => {
+      if (!isLoadingLibrary(runtime.initialization.get())) {
+        stopWatchingLibrary()
+        return
+      }
+      libraryTimer ??= setTimeout(() => {
+        libraryTimer = null
+        if (!isLoadingLibrary(runtime.initialization.get())) {
+          return
+        }
+        runtime.initialization.update((state) => {
+          return failStep(state, InitializationSteps.library.id, Date.now(), `${InitializationSteps.library.label} did not end within ${Math.round(libraryTimeoutMs / 1000)} s.`)
+        })
+        void verification.discover()
+      }, libraryTimeoutMs)
+    }
     // the model's first diagnostics show the session has it, so its cases are asked for then too
     const copyInitialization = (): void => {
       const findingBefore = isFindingCases(initialization.get())
@@ -256,6 +292,7 @@ export function createLive(options: LiveOptions): Live {
       if (!findingBefore && isFindingCases(initialization.get())) {
         void verification.discover()
       }
+      watchLibrary()
     }
     copyConnection()
     copyInitialization()
@@ -274,6 +311,7 @@ export function createLive(options: LiveOptions): Live {
       }),
     ]
     return () => {
+      stopWatchingLibrary()
       for (const unsubscribe of subscriptions) {
         unsubscribe()
       }

@@ -438,6 +438,14 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
         }
         return Promise.resolve(editor)
       }
+      // a place in a trace text or the OXSTS of the model opens the tab that shows it
+      const openTab = live.tabs.state.get().tabs.find((tab) => {
+        return tab.uri === uri
+      })
+      if (openTab) {
+        live.tabs.open(openTab, range)
+        return Promise.resolve(editor)
+      }
       if (opened.uri.scheme !== LIBRARY_SCHEME) {
         return Promise.resolve(undefined)
       }

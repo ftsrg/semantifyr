@@ -6,7 +6,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { VerificationCaseSpecification } from '@semantifyr/editor-common'
-import { InitializationSteps, isInitialized, startStep, type InitializationState } from '../lib/stores/initialization'
+import { finishStep, initializationOf, InitializationSteps, isInitialized, startStep, type InitializationState } from '../lib/stores/initialization'
 import type { LspClient } from '../lib/verification/engine'
 import { createTestLive, type TestLive } from './helpers/live'
 
@@ -168,5 +168,35 @@ describe('finding the verification cases', () => {
       expect(isInitialized(open!.live.initialization.get())).toBe(true)
     })
     expect(session.attempts()).toBe(asked + 1)
+  })
+
+  it('ends the library step with what it waited for when the diagnostics of the model never come, and lists the cases once the model is there', async () => {
+    const session = discoveryClient(async () => {
+      return CASES
+    })
+    open = createTestLive(session.client, undefined, { libraryTimeoutMs: 50 })
+    open.live.start('/oxsts')
+    await vi.waitFor(() => {
+      expect(open!.live.workspace.get().runtime).not.toBeNull()
+    })
+    const runtime = open.runtime()
+    runtime.connect()
+    runtime.initialization.set(startStep(finishStep(initializationOf([
+      InitializationSteps.connect,
+      InitializationSteps.library,
+      InitializationSteps.cases,
+    ]), InitializationSteps.connect.id, Date.now()), InitializationSteps.library.id, Date.now()))
+
+    await vi.waitFor(() => {
+      expect(open!.live.initialization.get().steps.find((step) => {
+        return step.id === InitializationSteps.library.id
+      })?.reason).toBe('Loading the library did not end within 0 s.')
+    })
+
+    const record = open.live.documents.get().get(open.live.workspace.get().documentKey!)!
+    open.models.open(record.uri, record.text)
+    await vi.waitFor(() => {
+      expect(isInitialized(open!.live.initialization.get())).toBe(true)
+    })
   })
 })

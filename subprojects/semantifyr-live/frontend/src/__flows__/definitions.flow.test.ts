@@ -62,6 +62,10 @@ describe('going to a definition in a library', () => {
     await goesTo(page, 'Tag(category: string)', 15, 'semantifyr.oxsts', 'extern datatype string')
     await back(page, 'semantifyr.oxsts', 'annotation Tag(category: string)')
     await back(page, 'basics.oxsts', '@Trace')
+    await page.locator('section.editor .view-line', { hasText: '@VerificationCase' }).first().locator('span > span', { hasText: 'VerificationCase' }).last().click({ modifiers: ['Control'] })
+    await expect.poll(async () => {
+      return shownPlace(page)
+    }, { timeout: 30_000 }).toEqual({ tab: 'semantifyr.oxsts', line: 'annotation VerificationCase(summary: string[0..1])' })
     await page.close()
   })
 
