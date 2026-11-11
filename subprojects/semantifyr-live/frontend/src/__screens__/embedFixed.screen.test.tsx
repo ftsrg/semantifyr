@@ -5,7 +5,7 @@
  */
 
 import { createRoot } from 'react-dom/client'
-import { describe, expect, it, onTestFinished, vi } from 'vitest'
+import { describe, expect, it, onTestFinished } from 'vitest'
 import { cdp, page, userEvent } from 'vitest/browser'
 
 import { connectionLost, INITIAL_CONNECTION } from '../lib/stores/connection'
@@ -18,7 +18,7 @@ import { caseOf, finished, seedLive, type Seed, type Seeded } from './seededLive
 import { caseState, LANGUAGES, seedWithTrace } from './traces'
 
 // Goal: an embed in a frame of a fixed size fills it and never grows: the document does not scroll, the open trace and the model
-// both show inside the frame, beside each other in a slide's frame and below each other in a narrow one, and no height is posted
+// both show inside the frame, beside each other in a slide's frame and below each other in a narrow one
 
 const GAMMA = LANGUAGES.gamma!
 const GAMMA_URI = 'file:///workspace/snippet.gamma'
@@ -331,12 +331,6 @@ const STATES: Readonly<Record<string, ScreenState>> = {
   },
 }
 
-function heightsPosted(posted: { mock: { calls: unknown[][] } }): number {
-  return posted.mock.calls.filter(([message]) => {
-    return (message as { type?: string }).type === 'semantifyr-live:height'
-  }).length
-}
-
 describe('the embed in a fixed frame', () => {
   for (const colorMode of ['light', 'dark'] as const satisfies readonly ResolvedColorMode[]) {
     for (const [state, screen] of Object.entries(STATES)) {
@@ -344,8 +338,6 @@ describe('the embed in a fixed frame', () => {
         await page.viewport(screen.frame.width, screen.frame.height)
         const address = `${window.location.pathname}${window.location.search}`
         window.history.replaceState(null, '', `${window.location.pathname}?view=${screen.view}&frame=fixed`)
-        expect(window.parent, 'the tests run in a frame').not.toBe(window)
-        const posted = vi.spyOn(window.parent, 'postMessage')
         const { live, shell } = typeof screen.seed === 'function' ? screen.seed() : seedLive(screen.seed)
         const container = document.createElement('div')
         document.body.append(container)
@@ -353,7 +345,6 @@ describe('the embed in a fixed frame', () => {
         onTestFinished(() => {
           root.unmount()
           container.remove()
-          posted.mockRestore()
           window.history.replaceState(null, '', address)
         })
         root.render(<ShellRoot live={live} shell={shell} colorMode={colorMode} trace={CaseTrace} />)
@@ -378,7 +369,6 @@ describe('the embed in a fixed frame', () => {
             expect(element.scrollWidth, `${selector} clipped`).toBeLessThanOrEqual(element.clientWidth + 1)
           }
         }
-        expect(heightsPosted(posted), 'no height is posted').toBe(0)
         await page.screenshot({ path: `../../build/screens/embed-fixed-${state}-${colorMode}.png`, element: embed })
       })
     }

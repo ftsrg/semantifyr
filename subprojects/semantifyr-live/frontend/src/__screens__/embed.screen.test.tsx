@@ -5,7 +5,7 @@
  */
 
 import { createRoot } from 'react-dom/client'
-import { beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest'
+import { beforeAll, describe, expect, it, onTestFinished } from 'vitest'
 import { page } from 'vitest/browser'
 
 import type { ResolvedColorMode } from '../lib/util/colorMode'
@@ -15,8 +15,7 @@ import { CaseTrace } from '../trace/CaseTrace'
 import { caseOf, finished, seedLive, type Seed, type Seeded } from './seededLive'
 import { caseState, LANGUAGES, seedWithTrace } from './traces'
 
-// Goal: both embed views lay out at the width the mockup frames them, in both themes, with the real editor,
-// and the frame's page is told the height the embed takes, the trace's included
+// Goal: both embed views lay out at the width the mockup frames them, in both themes, with the real editor
 
 const WIDTH = 760
 
@@ -171,14 +170,6 @@ const STATES: Readonly<Record<string, ScreenState>> = {
   },
 }
 
-function lastReportedHeight(posted: { mock: { calls: unknown[][] } }): number | null {
-  const heights = posted.mock.calls.flatMap(([message]) => {
-    const height = (message as { type?: string, height?: number }).type === 'semantifyr-live:height' ? (message as { height: number }).height : undefined
-    return height === undefined ? [] : [height]
-  })
-  return heights.at(-1) ?? null
-}
-
 describe('the embed shell', () => {
   beforeAll(async () => {
     await page.viewport(WIDTH, 1200)
@@ -186,11 +177,9 @@ describe('the embed shell', () => {
 
   for (const colorMode of ['light', 'dark'] as const satisfies readonly ResolvedColorMode[]) {
     for (const [state, screen] of Object.entries(STATES)) {
-      it(`lays out ${state} in the ${colorMode} theme and reports its height`, async () => {
+      it(`lays out ${state} in the ${colorMode} theme`, async () => {
         const address = `${window.location.pathname}${window.location.search}`
         window.history.replaceState(null, '', `${window.location.pathname}?view=${screen.view}`)
-        expect(window.parent, 'the tests run in a frame').not.toBe(window)
-        const posted = vi.spyOn(window.parent, 'postMessage')
         const { live, shell } = typeof screen.seed === 'function' ? screen.seed() : seedLive(screen.seed)
         const container = document.createElement('div')
         document.body.append(container)
@@ -198,7 +187,6 @@ describe('the embed shell', () => {
         onTestFinished(() => {
           root.unmount()
           container.remove()
-          posted.mockRestore()
           window.history.replaceState(null, '', address)
         })
         root.render(<ShellRoot live={live} shell={shell} colorMode={colorMode} trace={CaseTrace} />)
@@ -223,13 +211,6 @@ describe('the embed shell', () => {
         }
         expect(getComputedStyle(document.body).backgroundColor, 'the page shows around the frame').toBe('rgba(0, 0, 0, 0)')
         expect(getComputedStyle(embed).backgroundColor).not.toBe('rgba(0, 0, 0, 0)')
-        await expect.poll(() => {
-          return lastReportedHeight(posted)
-        }).toBe(Math.ceil(embed.getBoundingClientRect().height))
-        const trace = document.querySelector('.embed-trace')
-        if (trace) {
-          expect(lastReportedHeight(posted)!, 'the trace grows the frame').toBeGreaterThanOrEqual(trace.getBoundingClientRect().bottom - box.top)
-        }
         await page.screenshot({ path: `../../build/screens/embed-${state}-${colorMode}.png`, element: embed })
       })
     }

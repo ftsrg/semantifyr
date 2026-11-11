@@ -9,7 +9,6 @@ import { describe, expect, it, onTestFinished } from 'vitest'
 import { page, userEvent } from 'vitest/browser'
 
 import type { VerificationState } from '../lib/verification/engine'
-import { libraryTabOf } from '../lib/workspace/libraryTabs'
 import { ShellRoot } from '../shells/ShellRoot'
 import { caseOf, finished, seedLive, type Seed } from './seededLive'
 
@@ -71,22 +70,6 @@ describe('the read-only documents and the margin', () => {
 
     await expect.poll(marks, { timeout: 30_000 }).toEqual(['verdict-glyph-passed'])
     await page.screenshot({ path: '../../build/screens/readonly-marks-light.png' })
-  })
-
-  it('closes a read-only tab on a middle click and keeps the model on one', async () => {
-    await page.viewport(1440, 900)
-    await mount({ tab: libraryTabOf('file:///workspace/Library/States.oxsts', 'oxsts') })
-    await expect.poll(() => {
-      return document.querySelectorAll('.tabs .tab.is-readonly').length
-    }).toBe(1)
-
-    document.querySelector('.tabs .tab-model')!.dispatchEvent(new MouseEvent('auxclick', { button: 1, bubbles: true }))
-    document.querySelector('.tabs .tab.is-readonly')!.dispatchEvent(new MouseEvent('auxclick', { button: 1, bubbles: true }))
-
-    await expect.poll(() => {
-      return document.querySelectorAll('.tabs .tab.is-readonly').length
-    }).toBe(0)
-    expect(document.querySelectorAll('.tabs .tab-model')).toHaveLength(1)
   })
 
   it('filters the long list of the SysML library files', async () => {

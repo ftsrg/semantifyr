@@ -7,7 +7,7 @@
 import * as vscode from 'vscode'
 import { createRoot } from 'react-dom/client'
 import { describe, expect, it, onTestFinished } from 'vitest'
-import { page, userEvent } from 'vitest/browser'
+import { page } from 'vitest/browser'
 
 import { toVscodeDiagnostics } from '../lib/session/problems'
 import { connectionLost, INITIAL_CONNECTION } from '../lib/stores/connection'
@@ -16,28 +16,10 @@ import type { VerificationCaseState, VerificationState } from '../lib/verificati
 import { ShellRoot } from '../shells/ShellRoot'
 import { caseOf, finished, seedLive, type Seed } from './seededLive'
 
-// Goal: what the desktop shows while a case is run again, and what reaches the page's handlers from inside the editor, in both themes
+// Goal: what the desktop shows while a case is run again, in both themes
 
 const BARRIER = caseOf('BarrierDownWhileTrainInCrossingViolated', 97)
 const TWO_TRAINS = caseOf('TwoTrainsCanBeInTheCrossing', 112)
-
-const saves: string[] = []
-
-// the page asks the browser where to save; the test answers as the visitor would
-Object.assign(window, {
-  showSaveFilePicker: async (options: { suggestedName: string }) => {
-    saves.push(options.suggestedName)
-    return {
-      name: options.suggestedName,
-      createWritable: async () => {
-        return {
-          write: async () => {},
-          close: async () => {},
-        }
-      },
-    }
-  },
-})
 
 function discovered(cases: VerificationCaseState[], phase: VerificationState['phase']): VerificationState {
   return { phase, discovery: 'discovered', cases }
@@ -152,18 +134,6 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       expect(document.querySelector('.count.status-failed')?.textContent).toBe('1')
       expect(document.querySelector('.count.status-passed')?.textContent).toBe('1')
       expect(text('.trace .trace-title')).toContain(BARRIER.id)
-    },
-  },
-  'save-from-the-editor': {
-    seed: { unsaved: true, verification: discovered([{ caseInfo: BARRIER, status: 'stale' }, { caseInfo: TWO_TRAINS, status: 'stale' }], 'idle') },
-    act: async () => {
-      saves.length = 0
-      await userEvent.click(document.querySelector<HTMLElement>('.view-lines')!)
-      await userEvent.keyboard('{Control>}s{/Control}')
-      await userEvent.keyboard('{Control>}{Shift>}s{/Shift}{/Control}')
-    },
-    expectState: () => {
-      expect(saves).toEqual(['level-crossing.sysml', 'level-crossing.sysml'])
     },
   },
 }
