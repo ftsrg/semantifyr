@@ -41,7 +41,7 @@ function discovered(cases: VerificationCaseState[], phase: VerificationState['ph
 }
 
 function text(selector: string): string {
-  return (document.querySelector<HTMLElement>(selector)?.innerText ?? '').replace(/ /g, ' ')
+  return (document.querySelector<HTMLElement>(selector)?.innerText ?? '').replace(/\u00a0/g, ' ')
 }
 
 function rowText(caseId: string): string {
