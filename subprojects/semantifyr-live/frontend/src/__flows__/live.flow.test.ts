@@ -97,6 +97,35 @@ describe('SysML v2 on the bare address', () => {
   })
 })
 
+describe('the SysML trace text as a tab', () => {
+  it('opens over a scrolled model with nothing of the model drawn over it', async () => {
+    const page = await openPage(browser, '/sysml/level-crossing')
+    const { cases, verifyAll: button, trace } = results(page)
+    await verifyAll(cases, button)
+    await expect.poll(async () => {
+      return trace.locator('.frame-open').isVisible()
+    }, { timeout: 30_000 }).toBe(true)
+    const stickyLines = page.locator('section.editor .sticky-widget')
+    await token(page, 'port def Sensors {', 'Sensors').click()
+    await page.keyboard.press('PageDown')
+    await expect.poll(async () => {
+      return stickyLines.innerText()
+    }, { timeout: 30_000 }).not.toBe('')
+    await trace.locator('.frame-open').click()
+    const traceTab = page.locator('.tabs [role="tab"]', { hasText: 'Trace.sysml' })
+    await expect.poll(async () => {
+      return traceTab.getAttribute('aria-selected')
+    }, { timeout: 30_000 }).toBe('true')
+    await page.waitForTimeout(1000)
+    expect(await stickyLines.innerText()).toBe('')
+    await page.locator('.tabs [role="tab"]').first().click()
+    await expect.poll(async () => {
+      // the editor draws spaces as no-break spaces
+      return (await stickyLines.innerText()).replace(/\s+/g, ' ')
+    }, { timeout: 30_000 }).toContain('port def Sensors')
+  })
+})
+
 describe('Gamma', () => {
   it('verifies every case of the level crossing and opens the first trace on the Gamma trace text', async () => {
     const page = await openPage(browser, '/gamma/level-crossing')

@@ -253,6 +253,8 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
       if (current) {
         viewStates.set(current.uri.toString(), editor.saveViewState())
       }
+      // the sticky lines are redrawn only on a scroll, so the previous document's would stay over the new one
+      editor.updateOptions({ stickyScroll: { enabled: false } })
       editor.setModel(target)
       const locked = target === model && modelLocked()
       editor.updateOptions({ readOnly: readOnly || locked, domReadOnly: locked, readOnlyMessage: readOnlyMessageOf(locked) })
@@ -260,6 +262,7 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
       if (saved) {
         editor.restoreViewState(saved)
       }
+      editor.updateOptions({ stickyScroll: { enabled: true } })
       const position = editor.getPosition()
       options.onCursor(readOnly || !position ? null : { line: position.lineNumber, column: position.column })
     }
