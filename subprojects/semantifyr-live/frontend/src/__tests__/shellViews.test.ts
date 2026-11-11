@@ -129,6 +129,14 @@ describe('the status line', () => {
     expect(stepTimeText(library, 12_500, 'failed')).toBe('2 s')
   })
 
+  it('says when the next attempt to connect comes, for a refusal and for a lost connection', () => {
+    const refused = connectionLost(INITIAL_CONNECTION, 'connecting', 'Session limit reached', { reconnecting: true, refused: true, retryAt: 26_000 })
+    expect(statusOf({ connection: refused })).toBe('The server refused the session: it is at capacity. Retrying in 16 s; the wait grows with each refusal.')
+    const lost = connectionLost(INITIAL_CONNECTION, 'connecting', 'Connection lost', { reconnecting: true, retryAt: 13_400 })
+    expect(shellStatus({ ...statusInput(), connection: lost })).toMatchObject({ text: 'Connection lost. Reconnecting in 4 s.', action: 'reconnect' })
+    expect(statusOf({ connection: lost, now: 14_000 })).toBe('Connection lost. Reconnecting.')
+  })
+
   it('names session trouble in words and offers what fixes it', () => {
     const terminated = shellStatus({ ...statusInput(), connection: connectionLost(INITIAL_CONNECTION, 'failed', 'Session terminated', { terminated: true }) })
     expect(terminated).toMatchObject({ kind: 'warning', text: 'Session terminated. Not reconnecting until you ask.', action: 'reconnect' })
@@ -139,7 +147,7 @@ describe('the status line', () => {
 
 describe('the connection indicator', () => {
   it('tells a refusal, a termination and a load apart', () => {
-    const refused = connectionLost(INITIAL_CONNECTION, 'connecting', 'Session limit reached, reconnecting (attempt 1/3)...', { reconnecting: true })
+    const refused = connectionLost(INITIAL_CONNECTION, 'connecting', 'Session limit reached', { reconnecting: true, refused: true, retryAt: 16_000 })
     expect(connectionView('ready', refused, true, 'live.example', 'SysML v2')).toMatchObject({ look: 'failure', reason: 'refused, retrying', action: 'reconnect' })
     const terminated = connectionLost(INITIAL_CONNECTION, 'failed', 'Session terminated', { terminated: true })
     expect(connectionView('ready', terminated, true, 'live.example', 'SysML v2')).toMatchObject({ reason: 'terminated', action: 'restart', actionLabel: 'Reconnect' })

@@ -31,8 +31,6 @@ export interface ConnectionView {
   actionLabel: string | null
 }
 
-const SESSION_LIMIT = /session limit/i
-
 export function connectionView(
   catalog: CatalogStatus,
   connection: ConnectionState,
@@ -59,7 +57,7 @@ export function connectionView(
       if (!connection.reconnecting) {
         return connecting(host)
       }
-      if (SESSION_LIMIT.test(connection.reason ?? '')) {
+      if (connection.refused) {
         return {
           look: 'failure',
           reason: 'refused, retrying',

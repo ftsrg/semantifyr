@@ -10,6 +10,7 @@ import {
   createReconnectController,
   observeSocketClose,
   type ReconnectControllerOptions,
+  type ReconnectInfo,
   type ReconnectStatus,
   type SocketClose,
 } from '../lib/session/reconnectController'
@@ -17,7 +18,7 @@ import {
 const BACKOFF = [1000, 2000, 4000] as const
 
 interface Harness {
-  statuses: { status: ReconnectStatus; info?: string }[]
+  statuses: { status: ReconnectStatus; info?: ReconnectInfo }[]
   attemptResults: ('success' | 'fail')[]
   cancelled: { value: boolean }
   close: { value: SocketClose | null }
@@ -31,8 +32,10 @@ function createHarness(overrides?: Partial<ReconnectControllerOptions>): Harness
   const cancelled = { value: false }
   const close: Harness['close'] = { value: null }
   const options: ReconnectControllerOptions = {
-    maxAttempts: 3,
     backoffMs: BACKOFF,
+    now: () => {
+      return Date.now()
+    },
     connect: async () => {
       const next = attemptResults.shift()
       if (next === 'success') {
@@ -59,23 +62,23 @@ describe('reconnectController', () => {
     vi.useRealTimers()
   })
 
-  it('walks the backoff sequence and gives up after maxAttempts', async () => {
+  it('walks the backoff sequence, says when the next attempt starts and never gives up', async () => {
     const harness = createHarness()
-    harness.attemptResults.push('fail', 'fail', 'fail')
+    harness.attemptResults.push('fail', 'fail', 'fail', 'fail')
+    const started = Date.now()
 
     harness.controller.schedule()
-    expect(harness.statuses[0]?.status).toBe('reconnecting')
-    expect(harness.statuses[0]?.info).toMatch(/attempt 1\/3/)
+    expect(harness.statuses[0]).toEqual({ status: 'reconnecting', info: { reason: 'Connection lost', refused: false, retryAt: started + BACKOFF[0] } })
     expect(harness.controller.attempts()).toBe(1)
 
     await vi.advanceTimersByTimeAsync(BACKOFF[0])
-    expect(harness.statuses[1]?.info).toMatch(/attempt 2\/3/)
-
+    expect(harness.statuses[1]?.info?.retryAt).toBe(started + BACKOFF[0] + BACKOFF[1])
     await vi.advanceTimersByTimeAsync(BACKOFF[1])
-    expect(harness.statuses[2]?.info).toMatch(/attempt 3\/3/)
-
     await vi.advanceTimersByTimeAsync(BACKOFF[2])
-    expect(harness.statuses.at(-1)?.status).toBe('errored')
+    expect(harness.statuses[3]?.info?.retryAt).toBe(started + BACKOFF[0] + BACKOFF[1] + 2 * BACKOFF[2])
+    await vi.advanceTimersByTimeAsync(BACKOFF[2])
+    expect(harness.statuses.at(-1)?.status).toBe('reconnecting')
+    expect(harness.controller.attempts()).toBe(5)
   })
 
   it('resets the attempt counter on a successful connect', async () => {
@@ -133,14 +136,13 @@ describe('reconnectController', () => {
     const connect = vi.fn(async () => {
       throw new Error('boom')
     })
-    const harness = createHarness({ maxAttempts: 5, backoffMs: [100], connect })
+    const harness = createHarness({ backoffMs: [100], connect })
     harness.controller.schedule()
     for (let attempt = 0; attempt < 5; attempt++) {
       await vi.advanceTimersByTimeAsync(100)
     }
-    // Five failed attempts then errored.
     expect(connect).toHaveBeenCalledTimes(5)
-    expect(harness.statuses.at(-1)?.status).toBe('errored')
+    expect(harness.statuses.at(-1)?.status).toBe('reconnecting')
   })
 
   it.each([
@@ -156,7 +158,7 @@ describe('reconnectController', () => {
     harness.controller.schedule()
     await vi.advanceTimersByTimeAsync(BACKOFF[2] + 100)
 
-    expect(harness.statuses).toEqual([{ status: 'terminated', info: reason }])
+    expect(harness.statuses).toEqual([{ status: 'terminated', info: { reason, refused: false, retryAt: null } }])
     expect(harness.controller.terminated()).toBe(true)
     expect(connect).not.toHaveBeenCalled()
   })
@@ -180,10 +182,10 @@ describe('reconnectController', () => {
     harness.attemptResults.push('fail', 'fail', 'fail')
 
     harness.controller.schedule()
-    expect(harness.statuses[0]).toEqual({ status: 'reconnecting', info: 'Session limit reached, reconnecting (attempt 1/3)...' })
+    expect(harness.statuses[0]).toEqual({ status: 'reconnecting', info: { reason: 'Session limit reached', refused: true, retryAt: Date.now() + BACKOFF[0] } })
 
     await vi.advanceTimersByTimeAsync(BACKOFF[0] + BACKOFF[1] + BACKOFF[2])
-    expect(harness.statuses.at(-1)).toEqual({ status: 'errored', info: 'Session limit reached' })
+    expect(harness.statuses.at(-1)).toMatchObject({ status: 'reconnecting', info: { refused: true } })
     expect(harness.controller.terminated()).toBe(false)
   })
 
@@ -197,7 +199,7 @@ describe('reconnectController', () => {
     harness.attemptResults.push('success')
 
     harness.controller.schedule()
-    expect(harness.statuses[0]).toEqual({ status: 'reconnecting', info: 'Reconnecting (attempt 1/3)...' })
+    expect(harness.statuses[0]).toMatchObject({ status: 'reconnecting', info: { reason: 'Connection lost', refused: false } })
 
     await vi.advanceTimersByTimeAsync(BACKOFF[0])
     expect(harness.statuses.at(-1)?.status).toBe('connected')

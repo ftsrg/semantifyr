@@ -67,14 +67,32 @@ function plural(count: number, word: string): string {
   return `${count} ${word}${count === 1 ? '' : 's'}`
 }
 
-function connectionStatus(connection: ConnectionState): ShellStatus | null {
+// the seconds until the next attempt to connect, null when none waits
+export function secondsToRetry(connection: ConnectionState, now: number): number | null {
+  return connection.retryAt === null ? null : Math.max(0, Math.ceil((connection.retryAt - now) / 1000))
+}
+
+function connectionStatus(connection: ConnectionState, now: number): ShellStatus | null {
+  const seconds = secondsToRetry(connection, now)
   switch (connection.status) {
     case 'connected':
-    case 'connecting':
-      if (connection.reconnecting && connection.reason !== null) {
-        return { kind: 'warning', text: connection.reason }
-      }
       return null
+    case 'connecting':
+      if (!connection.reconnecting) {
+        return null
+      }
+      if (connection.refused) {
+        return {
+          kind: 'warning',
+          text: seconds ? `The server refused the session: it is at capacity. Retrying in ${seconds} s; the wait grows with each refusal.` : 'The server refused the session: it is at capacity. Retrying.',
+        }
+      }
+      return {
+        kind: 'warning',
+        text: seconds ? `Connection lost. Reconnecting in ${seconds} s.` : 'Connection lost. Reconnecting.',
+        action: 'reconnect',
+        actionLabel: 'Reconnect now',
+      }
     case 'disconnected':
       return {
         kind: 'idle',
@@ -157,7 +175,7 @@ export function shellStatus(input: ShellStatusInput): ShellStatus {
   if (verification.phase === 'running') {
     return runningStatus(verification)
   }
-  const connectionProblem = connectionStatus(connection)
+  const connectionProblem = connectionStatus(connection, input.now)
   if (connectionProblem) {
     return connectionProblem
   }

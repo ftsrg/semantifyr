@@ -10,12 +10,7 @@ import type { LiveFlavor } from '../../examples'
 import { SemantifyrLiveApi } from '../api/lspExtensions'
 import { connectLanguageClient, initializeMonaco, onDiagnosticsOf } from '../session/monaco'
 import { wrapClientWithMetrics, type MetricsTracker } from '../session/lspMetrics'
-import {
-  createReconnectController,
-  isTerminalClose,
-  sessionLimitReason,
-  type SocketClose,
-} from '../session/reconnectController'
+import { createReconnectController, type SocketClose } from '../session/reconnectController'
 import {
   connectionConnected,
   connectionLost,
@@ -23,6 +18,7 @@ import {
   type ConnectionState,
 } from '../stores/connection'
 import {
+  currentStep,
   failStep,
   finishStep,
   finishThrough,
@@ -37,11 +33,13 @@ import type { ResolvedColorMode } from '../util/colorMode'
 import type { LspClient } from '../verification/engine'
 import type { DerivedDocument, LanguageRuntime, LibraryDocument } from './types'
 
-const MAX_RECONNECT_ATTEMPTS = 3
 const RECONNECT_BACKOFF_MS = [
   1000,
   2000,
   4000,
+  8000,
+  16000,
+  30000,
 ]
 
 const NO_DERIVED_DOCUMENTS = constantStore<readonly DerivedDocument[]>([])
@@ -192,8 +190,15 @@ export function createServedRuntime(options: ServedRuntimeOptions): ServedRuntim
     }
   }
 
+  // a session refused or lost before initialization ends fails the step it was at, until an attempt connects
+  const failRunningStep = (): void => {
+    changeStep((state, now) => {
+      const running = currentStep(state)
+      return running?.state === 'running' ? failStep(state, running.id, now) : state
+    })
+  }
+
   const reconnectController = createReconnectController({
-    maxAttempts: MAX_RECONNECT_ATTEMPTS,
     backoffMs: RECONNECT_BACKOFF_MS,
     connect: async () => {
       await doConnect()
@@ -211,14 +216,12 @@ export function createServedRuntime(options: ServedRuntimeOptions): ServedRuntim
           break
         case 'reconnecting':
           connection.update((previous) => {
-            return connectionLost(previous, 'connecting', info ?? null, { reconnecting: true })
+            return connectionLost(previous, 'connecting', info?.reason ?? null, { reconnecting: true, refused: info?.refused ?? false, retryAt: info?.retryAt ?? null })
           })
-          break
-        case 'errored':
-          reportFailed(info ?? 'Connection error')
+          failRunningStep()
           break
         case 'terminated':
-          reportFailed(info ?? 'Session ended', true)
+          reportFailed(info?.reason ?? 'Session ended', true)
           break
       }
     },
@@ -233,7 +236,14 @@ export function createServedRuntime(options: ServedRuntimeOptions): ServedRuntim
     }
     metricsClient = null
     metricsServedClient = null
-    const connected = await connectLanguageClient(
+    // the language client waits for its initialize answer even when the server closes the socket first, as it does on a refusal
+    let closedEarly = (): void => {}
+    const closedBeforeStart = new Promise<never>((_resolve, reject) => {
+      closedEarly = () => {
+        reject(new Error('The server closed the session before it started'))
+      }
+    })
+    const starting = connectLanguageClient(
       options.backendUrl,
       options.socketFlavorId,
       options.clientLanguageId,
@@ -251,12 +261,20 @@ export function createServedRuntime(options: ServedRuntimeOptions): ServedRuntim
         onClose: (close) => {
           if (generation === connectionGeneration) {
             lastClose = close
+            closedEarly()
           }
         },
         onOpen: reportOpen,
       },
       options.sessionKind,
     )
+    let connected: LanguageClientWrapper
+    try {
+      connected = await Promise.race([starting, closedBeforeStart])
+    } catch (error) {
+      void starting.then(tearDown, () => {})
+      throw error
+    }
     if (cancelled) {
       await tearDown(connected)
       return
@@ -281,13 +299,8 @@ export function createServedRuntime(options: ServedRuntimeOptions): ServedRuntim
     try {
       await doConnect()
     } catch {
-      if (cancelled) {
-        return
-      }
-      if (isTerminalClose(lastClose)) {
+      if (!cancelled) {
         reconnectController.schedule()
-      } else {
-        reportFailed(sessionLimitReason(lastClose) ?? 'Failed to connect to LSP server')
       }
       return
     }
@@ -349,7 +362,7 @@ export function createServedRuntime(options: ServedRuntimeOptions): ServedRuntim
     reconnectController.cancel()
     reconnectController.resetAttempts()
     connection.update((previous) => {
-      return connectionLost(previous, 'connecting', 'Reconnecting...', { reconnecting: true })
+      return connectionLost(previous, 'connecting', previous.reason, { reconnecting: true, refused: previous.refused })
     })
     doConnect()
       .then(() => {

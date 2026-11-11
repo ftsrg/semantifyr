@@ -7,7 +7,6 @@
 export type ReconnectStatus =
   | 'reconnecting'
   | 'connected'
-  | 'errored'
   | 'terminated'
 
 export interface SocketClose {
@@ -49,13 +48,21 @@ export function observeSocketClose(socket: WebSocket, onClose: (close: SocketClo
 }
 
 export interface ReconnectControllerOptions {
-  maxAttempts: number
-  // Nth attempt uses index N-1; attempts past the end reuse the last entry.
+  // Nth attempt waits entry N-1; attempts past the end wait the last entry, so the wait grows to a cap and the attempts never end
   backoffMs: readonly number[]
   connect: () => Promise<void>
   isCancelled: () => boolean
   lastClose: () => SocketClose | null
-  onStatus: (status: ReconnectStatus, info?: string) => void
+  onStatus: (status: ReconnectStatus, info?: ReconnectInfo) => void
+  now?: () => number
+}
+
+export interface ReconnectInfo {
+  reason: string
+  // the server is at capacity and refused the session
+  refused: boolean
+  // when the next attempt starts, null for a session the server ended
+  retryAt: number | null
 }
 
 export interface ReconnectController {
@@ -78,6 +85,7 @@ function delayFor(backoffMs: readonly number[], attempt: number): number {
 
 export function createReconnectController(options: ReconnectControllerOptions): ReconnectController {
   const state: InternalState = { attempts: 0, timer: null, terminated: false }
+  const now = options.now ?? Date.now
 
   const clearTimer = (): void => {
     if (state.timer !== null) {
@@ -94,21 +102,13 @@ export function createReconnectController(options: ReconnectControllerOptions): 
     const close = options.lastClose()
     if (isTerminalClose(close)) {
       state.terminated = true
-      options.onStatus('terminated', close.reason || 'The server closed the session')
+      options.onStatus('terminated', { reason: close.reason || 'The server closed the session', refused: false, retryAt: null })
       return
     }
     const rejection = sessionLimitReason(close)
-    const next = state.attempts + 1
-    if (next > options.maxAttempts) {
-      options.onStatus('errored', rejection ?? 'Connection failed after multiple attempts')
-      return
-    }
-    state.attempts = next
-    const attemptText = `attempt ${next}/${options.maxAttempts}`
-    options.onStatus(
-      'reconnecting',
-      rejection !== null ? `${rejection}, reconnecting (${attemptText})...` : `Reconnecting (${attemptText})...`,
-    )
+    state.attempts += 1
+    const delay = delayFor(options.backoffMs, state.attempts)
+    options.onStatus('reconnecting', { reason: rejection ?? 'Connection lost', refused: rejection !== null, retryAt: now() + delay })
     state.timer = setTimeout(() => {
       state.timer = null
       const run = async (): Promise<void> => {
@@ -127,7 +127,7 @@ export function createReconnectController(options: ReconnectControllerOptions): 
         }
       }
       void run()
-    }, delayFor(options.backoffMs, next))
+    }, delay)
   }
 
   return {

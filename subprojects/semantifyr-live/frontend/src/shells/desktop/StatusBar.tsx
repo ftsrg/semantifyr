@@ -45,7 +45,7 @@ function StatusMessage(): React.JSX.Element {
   const problems = useStore(live.problems)
   const language = useLanguage(live)
   const closing = timing !== null && timing.finishedAt !== null && Date.now() - timing.finishedAt < CLOSING_LINE_MS
-  const now = useNow(closing ? 1000 : null)
+  const now = useNow(closing || connection.retryAt !== null ? 1000 : null)
   const unsaved = useStore(live.unsaved)
   const errors = problems.filter((problem) => {
     return problem.severity === 'error'

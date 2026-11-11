@@ -16,6 +16,7 @@ const connections = vi.hoisted(() => {
   return {
     callbacks: [] as LanguageClientCallbacks[],
     failures: 0,
+    refusals: 0,
     diagnostics: [] as (() => void)[],
   }
 })
@@ -37,6 +38,12 @@ vi.mock('../lib/session/monaco', () => {
       if (connections.failures > 0) {
         connections.failures--
         throw new Error('connection refused')
+      }
+      if (connections.refusals > 0) {
+        connections.refusals--
+        callbacks.onOpen?.()
+        callbacks.onClose({ code: 4429, reason: 'Session limit reached' })
+        return new Promise(() => {})
       }
       callbacks.onOpen?.()
       return {
@@ -96,6 +103,7 @@ describe('servedRuntime', () => {
     vi.useFakeTimers()
     connections.callbacks.length = 0
     connections.failures = 0
+    connections.refusals = 0
     connections.diagnostics.length = 0
   })
 
@@ -123,7 +131,8 @@ describe('servedRuntime', () => {
 
     closeCurrentSocket(CloseCode.TooManySessions, 'Session limit reached')
 
-    expect(statuses.at(-1)).toEqual({ status: 'connecting', reason: 'Session limit reached, reconnecting (attempt 1/3)...' })
+    expect(statuses.at(-1)).toEqual({ status: 'connecting', reason: 'Session limit reached' })
+    expect(runtime.connection.get()).toMatchObject({ refused: true, retryAt: Date.now() + 1_000 })
     await vi.advanceTimersByTimeAsync(1_000)
     expect(connections.callbacks).toHaveLength(2)
     expect(statuses.at(-1)?.status).toBe('connected')
@@ -136,7 +145,7 @@ describe('servedRuntime', () => {
 
     closeCurrentSocket(1006, '')
 
-    expect(statuses.at(-1)).toEqual({ status: 'connecting', reason: 'Reconnecting (attempt 1/3)...' })
+    expect(statuses.at(-1)).toEqual({ status: 'connecting', reason: 'Connection lost' })
     await vi.advanceTimersByTimeAsync(1_000)
     expect(connections.callbacks).toHaveLength(2)
     await runtime.dispose()
@@ -166,10 +175,27 @@ describe('servedRuntime', () => {
     await runtime.dispose()
   })
 
+  it('retries a session the server refuses before it starts with a growing wait, and starts once the server takes it', async () => {
+    connections.refusals = 3
+    const { runtime, statuses } = await startRuntime()
+    expect(statuses.at(-1)).toEqual({ status: 'connecting', reason: 'Session limit reached' })
+    expect(runtime.connection.get()).toMatchObject({ refused: true, retryAt: Date.now() + 1_000 })
+    expect(stepStates(runtime)).toEqual(['connect:done', 'server:failed', 'library:pending', 'cases:pending'])
+
+    await vi.advanceTimersByTimeAsync(1_000)
+    expect(runtime.connection.get()).toMatchObject({ refused: true, retryAt: Date.now() + 2_000 })
+    await vi.advanceTimersByTimeAsync(2_000 + 4_000)
+
+    expect(connections.callbacks).toHaveLength(4)
+    expect(statuses.at(-1)?.status).toBe('connected')
+    expect(stepStates(runtime)).toEqual(['connect:done', 'server:done', 'library:running', 'cases:pending'])
+    await runtime.dispose()
+  })
+
   it('fails the connection step when the first connect fails, and completes it when a retry connects', async () => {
     connections.failures = 1
     const { runtime, statuses } = await startRuntime()
-    expect(statuses.at(-1)).toEqual({ status: 'failed', reason: 'Failed to connect to LSP server' })
+    expect(statuses.at(-1)).toEqual({ status: 'connecting', reason: 'Connection lost' })
     expect(stepStates(runtime)).toEqual(['connect:failed', 'server:pending', 'library:pending', 'cases:pending'])
 
     runtime.reconnect()

@@ -8,6 +8,7 @@ import { createRoot } from 'react-dom/client'
 import { describe, expect, it, onTestFinished } from 'vitest'
 import { page, userEvent } from 'vitest/browser'
 
+import { connectionLost, INITIAL_CONNECTION } from '../lib/stores/connection'
 import type { ResolvedColorMode } from '../lib/util/colorMode'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
 import { ShellRoot } from '../shells/ShellRoot'
@@ -55,6 +56,27 @@ interface ScreenState {
 }
 
 const STATES: Readonly<Record<string, ScreenState>> = {
+  'session-refused': {
+    seed: {
+      initializingAt: 'server',
+      connection: connectionLost(INITIAL_CONNECTION, 'connecting', 'Session limit reached', { reconnecting: true, refused: true, retryAt: Date.now() + 300_000 }),
+    },
+    expectState: () => {
+      expect(text('[data-testid=status-message]')).toMatch(/The server refused the session: it is at capacity\. Retrying in \d+ s; the wait grows with each refusal\./)
+      expect(text('.connection-reason')).toBe('refused, retrying')
+      expect(text('.initialization-note')).toContain('The server refused the session')
+    },
+  },
+  'connection-lost': {
+    seed: {
+      verification: discovered([finished(BARRIER, 'failed', 2.9), { caseInfo: TWO_TRAINS, status: 'stale', message: 'Verification cancelled' }], 'cancelled'),
+      connection: connectionLost(INITIAL_CONNECTION, 'connecting', 'Connection lost', { reconnecting: true, retryAt: Date.now() + 300_000 }),
+    },
+    expectState: () => {
+      expect(text('[data-testid=status-message]')).toMatch(/Connection lost\. Reconnecting in \d+ s\. Reconnect now/)
+      expect(rowText(TWO_TRAINS.id)).toContain('cancelled')
+    },
+  },
   'run-again': {
     seed: {
       selection: BARRIER.id,

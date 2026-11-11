@@ -15,7 +15,7 @@ import { useStore } from '../../lib/stores/useStore'
 import { countsOf, STATUS_WORDS, type CaseCounts, type CaseRow, type RowStatus } from '../../lib/workspace/caseRows'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import type { Live } from '../../lib/workspace/live'
-import { stepTimeText } from '../../lib/workspace/shellStatus'
+import { secondsToRetry, stepTimeText } from '../../lib/workspace/shellStatus'
 import { Icon } from '../../ui/icons'
 import { LanguageMark, ValidationMark, VerdictMark } from '../../ui/marks'
 import { useFlavor, useNow } from '../hooks'
@@ -143,6 +143,7 @@ function Initialization(): React.JSX.Element {
   })
   const flavor = useFlavor(live)
   const runtimeSteps = useStore(live.initialization)
+  const connection = useStore(live.connection)
   const pending = useStore(live.pendingVerifyAll)
   const now = useNow(1000)
   const languageId = flavor?.languageId ?? addressedLanguage()
@@ -156,9 +157,12 @@ function Initialization(): React.JSX.Element {
   const failed = steps.some((step) => {
     return step.state === 'failed'
   })
-  const note = waiting
-    ? 'The server is not answering. The editor works; the verification cases are known once a session is up.'
+  const retrying = secondsToRetry(connection, now)
+  const trouble = waiting ? 'The server is not answering.' : connection.refused ? 'The server refused the session: it is at capacity.' : retrying === null ? null : 'The connection was lost.'
+  const note = trouble !== null
+    ? `${trouble} The editor works; the verification cases are known once a session is up.`
     : failed ? 'The verification cases are known only after initialization.' : presentation.initializationNote
+  const failedWord = waiting ? 'retrying' : retrying ? `retrying in ${retrying} s` : retrying === 0 ? 'retrying' : 'failed'
   return (
     <div className="initialization" data-language={languageId}>
       <div className="initialization-title">
@@ -175,7 +179,7 @@ function Initialization(): React.JSX.Element {
               {step.state === 'running' ? <VerdictMark status="running" /> : null}
               {step.state === 'pending' ? <VerdictMark status="not-run" /> : null}
               <span>{step.label}</span>
-              <span className="initialization-step-time">{stepTimeText(step, now, waiting ? 'retrying' : 'failed')}</span>
+              <span className="initialization-step-time">{stepTimeText(step, now, failedWord)}</span>
             </li>
           )
         })}
