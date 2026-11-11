@@ -6,7 +6,7 @@
 
 import { createRoot } from 'react-dom/client'
 import { beforeAll, describe, expect, it, onTestFinished } from 'vitest'
-import { page } from 'vitest/browser'
+import { page, server } from 'vitest/browser'
 
 import type { ResolvedColorMode } from '../lib/util/colorMode'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
@@ -105,7 +105,14 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       expect(text('.embed-trace .trace-views [aria-pressed=true]')).toBe('SysML trace')
       expect(text('.embed-trace [data-testid=run-details]')).toContain('decided by Theta')
       // the trace text is as tall as it is, every line drawn, and wraps instead of scrolling sideways
-      expect(count('.embed-trace .trace-editor .line-numbers')).toBe(14)
+      const numbered = [...document.querySelectorAll('.embed-trace .trace-editor .line-numbers')].map((element) => {
+        return element.textContent.trim()
+      }).filter((number) => {
+        return number !== ''
+      })
+      expect(numbered).toEqual(Array.from({ length: 14 }, (_, index) => {
+        return String(index + 1)
+      }))
       expect(document.querySelector('.embed-trace .trace-editor .view-lines')!.scrollWidth).toBeLessThanOrEqual(document.querySelector('.embed-trace .trace-editor')!.clientWidth)
     },
   },
@@ -211,7 +218,7 @@ describe('the embed shell', () => {
         }
         expect(getComputedStyle(document.body).backgroundColor, 'the page shows around the frame').toBe('rgba(0, 0, 0, 0)')
         expect(getComputedStyle(embed).backgroundColor).not.toBe('rgba(0, 0, 0, 0)')
-        await page.screenshot({ path: `../../build/screens/embed-${state}-${colorMode}.png`, element: embed })
+        await page.screenshot({ path: `../../build/screens/${server.browser}/embed-${state}-${colorMode}.png`, element: embed })
       })
     }
   }
