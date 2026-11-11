@@ -15,6 +15,7 @@ import {
   registerFileSystemOverlay,
 } from '@codingame/monaco-vscode-files-service-override';
 import type { OpenEditor } from '@codingame/monaco-vscode-editor-service-override';
+import { getService, ITextModelService } from '@codingame/monaco-vscode-api/services';
 import { configureDefaultWorkerFactory } from 'monaco-languageclient/workerFactory';
 import { MonacoVscodeApiWrapper, type MonacoVscodeApiConfig, type ExtensionConfig } from 'monaco-languageclient/vscodeApiWrapper';
 import { LanguageClientWrapper, LcWebSocket, LcWorker, type LanguageClientConfig } from 'monaco-languageclient/lcwrapper';
@@ -140,10 +141,25 @@ function buildSemantifyrExtension(): ExtensionConfig {
 
 const derivedTexts = new Map<string, string>();
 
-// A document the page derives is opened through the editor's services, which then own its model
+const keptModels = new Map<string, Promise<IDisposable>>();
+
+// The extension host lets go of a document it opened three minutes later, and the model goes with it unless something holds it
+export async function openKeptDocument(uri: string): Promise<vscode.TextDocument> {
+  const opened = await vscode.workspace.openTextDocument(vscode.Uri.parse(uri));
+  const key = opened.uri.toString();
+  if (!keptModels.has(key)) {
+    keptModels.set(key, getService(ITextModelService).then((models) => {
+      return models.createModelReference(Uri.parse(key));
+    }));
+  }
+  await keptModels.get(key);
+  return opened;
+}
+
+// A document the page derives is opened through the editor's services, which then own its model for the visit
 export async function openDerivedDocument(uri: string, text: string): Promise<vscode.TextDocument> {
   derivedTexts.set(uri, text);
-  return vscode.workspace.openTextDocument(vscode.Uri.parse(uri));
+  return openKeptDocument(uri);
 }
 
 type LibraryReader = (fileUri: string) => Promise<string | null>;

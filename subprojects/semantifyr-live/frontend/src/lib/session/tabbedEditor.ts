@@ -15,7 +15,7 @@ import { caseRowOf } from '../workspace/caseRows'
 import type { DocumentTabsState, ReadOnlyDocument } from '../workspace/documentTabs'
 import { libraryTabOf } from '../workspace/libraryTabs'
 import type { Live } from '../workspace/live'
-import { createEditor, openDerivedDocument, setEditorOpener, type EditorInstance } from './monaco'
+import { createEditor, openDerivedDocument, openKeptDocument, setEditorOpener, type EditorInstance } from './monaco'
 import { problemsOf } from './problems'
 import { LIBRARY_SCHEME } from './readOnlyDocuments'
 
@@ -232,7 +232,7 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
         return created
       }
       try {
-        const opened = await vscode.workspace.openTextDocument(vscode.Uri.parse(tab.uri))
+        const opened = await openKeptDocument(tab.uri)
         openedDocuments.set(tab.uri, opened)
       } catch (error) {
         console.warn('semantifyr-live: a read-only document could not be read', error)
@@ -389,7 +389,6 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
         await disposeInstance(instance)
         instance = null
       }
-      // the derived models stay for the visit: the extension host still names them after the editor goes
       ownedModels.clear()
       openedDocuments.clear()
       viewStates.clear()

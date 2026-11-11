@@ -5,7 +5,7 @@
  */
 
 import { createRoot } from 'react-dom/client'
-import { afterAll, describe, expect, it, onTestFinished } from 'vitest'
+import { afterAll, describe, expect, it, onTestFinished, vi } from 'vitest'
 import { page } from 'vitest/browser'
 
 import { initializeMonaco } from '../lib/session/monaco'
@@ -262,6 +262,47 @@ describe('the chosen view of the trace', () => {
     await chooseView('witness')
     expect(await show(withoutText)).toBe('own')
     expect(await show(first)).toBe('witness')
+  })
+})
+
+describe('the text of a trace', () => {
+  it('stays in its view after the extension host lets go of its document', async () => {
+    await page.viewport(1440, 900)
+    await initializeMonaco('light')
+    const language = LANGUAGES.sysml!
+    const traced = caseState(language, { validated: false, recorded: true })
+    // a document of its own, which no test before opened
+    const witnessUri = 'file:///workspace/traces/Kept.trace.sysml'
+    const kept: typeof traced = { ...traced, caseInfo: { ...traced.caseInfo, id: 'Kept', label: 'Kept' }, trace: { ...traced.trace!, witnessUri } }
+    const { live, shell } = seedWithTrace(language, kept)
+    const sysmlTrace = await live.workspace.get().runtime!.api.readDocument(language.traceUri)
+    live.workspace.get().runtime!.api.readDocument = () => {
+      return Promise.resolve(sysmlTrace)
+    }
+    const container = document.createElement('div')
+    container.style.cssText = 'display: flex; flex-direction: column; width: 600px; height: 760px'
+    document.body.append(container)
+    const root = createRoot(container)
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'], shouldAdvanceTime: true })
+    onTestFinished(() => {
+      vi.useRealTimers()
+      root.unmount()
+      container.remove()
+    })
+    root.render(
+      <LiveContext.Provider value={live}>
+        <ShellContext.Provider value={shell}>
+          <CaseTrace caseState={kept} flavor={live.workspace.get().flavor!} />
+        </ShellContext.Provider>
+      </LiveContext.Provider>,
+    )
+    await editorShows('part def BarrierDownWhileTrainInCrossingViolatedTrace')
+    vi.advanceTimersByTime(4 * 60 * 1000)
+    await new Promise((resolve) => {
+      setTimeout(resolve, 500)
+    })
+    expect(count('.case-trace .trace-editor .monaco-editor')).toBe(1)
+    expect(text('.case-trace .trace-editor .view-lines')).toContain('part def BarrierDownWhileTrainInCrossingViolatedTrace')
   })
 })
 
