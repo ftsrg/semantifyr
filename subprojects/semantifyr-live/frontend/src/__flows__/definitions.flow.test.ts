@@ -18,6 +18,7 @@ beforeAll(async () => {
   browser = await launch()
 })
 
+// a page closed with its session open reports the language client's failed disposal, an upstream fault, so the pages close with the browser
 afterAll(async () => {
   await browser.close()
 })
@@ -62,11 +63,11 @@ describe('going to a definition in a library', () => {
     await goesTo(page, 'Tag(category: string)', 15, 'semantifyr.oxsts', 'extern datatype string')
     await back(page, 'semantifyr.oxsts', 'annotation Tag(category: string)')
     await back(page, 'basics.oxsts', '@Trace')
+    await cursorAt(page, '@VerificationCase', 0)
     await page.locator('section.editor .view-line', { hasText: '@VerificationCase' }).first().locator('span > span', { hasText: 'VerificationCase' }).last().click({ modifiers: ['Control'] })
     await expect.poll(async () => {
       return shownPlace(page)
     }, { timeout: 30_000 }).toEqual({ tab: 'semantifyr.oxsts', line: 'annotation VerificationCase(summary: string[0..1])' })
-    await page.close()
   })
 
   it('opens the Gamma library from OXSTS, goes on from one library file into another, and Back returns', async () => {
@@ -76,14 +77,12 @@ describe('going to a definition in a library', () => {
     await back(page, 'Statecharts.oxsts', 'class Statechart : Component {')
     await page.locator('.tabs [role="tab"]').first().click()
     await goesTo(page, '@Shared', 1, 'semantifyr.oxsts', 'annotation Shared')
-    await page.close()
   })
 
   it('opens the SysML v2 semantic library from OXSTS', async () => {
     const page = await opened('/oxsts/level-crossing?library=sysml')
     await goesTo(page, ': Item', 2, 'Items.oxsts', 'class Item')
     await goesTo(page, 'semantifyr::sysml::items', 0, 'Items.oxsts', 'package semantifyr::sysml::items')
-    await page.close()
   })
 
   it('opens the Gamma library from the OXSTS of a Gamma model, which then still verifies', async () => {
@@ -97,7 +96,6 @@ describe('going to a definition in a library', () => {
     await goesTo(page, '@Shared', 1, 'semantifyr.oxsts', 'annotation Shared')
     await page.locator('.tabs [role="tab"]').first().click()
     await verifyAll(page.locator('.results .case-row'), page.locator('.results').getByRole('button', { name: 'Verify all', exact: true }))
-    await page.close()
   })
 
   it('opens the SysML v2 standard library from SysML, goes on inside it, and opens the semantic library from the OXSTS of the model', async () => {
@@ -113,6 +111,5 @@ describe('going to a definition in a library', () => {
       return page.locator('section.editor .view-lines').innerText()
     }, { timeout: 30_000 }).toContain('Item')
     await goesTo(page, ': Item', 2, 'Items.oxsts', 'class Item')
-    await page.close()
   })
 })

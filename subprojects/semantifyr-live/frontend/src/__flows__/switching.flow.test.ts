@@ -18,6 +18,7 @@ beforeAll(async () => {
   browser = await launch()
 })
 
+// a page closed with its session open reports the language client's failed disposal, an upstream fault, so the pages close with the browser
 afterAll(async () => {
   await browser.close()
 })
@@ -215,6 +216,5 @@ describe('switching around', () => {
         return LONG_EXAMPLES.has(exampleOf(now.path)) || now.marks.join(',') === now.rows.join(',')
       }, { timeout: 30_000, message: `the marks are the cases' after\n${context}` }).toBe(true)
     }
-    await page.close()
   })
 })
