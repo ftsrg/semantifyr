@@ -7,6 +7,10 @@
 package hu.bme.mit.semantifyr.oxsts.lang.serializer;
 
 import com.google.inject.Inject;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Set;
 import org.eclipse.xtext.Grammar;
 import org.eclipse.xtext.IGrammarAccess;
 import org.eclipse.xtext.serializer.analysis.IGrammarConstraintProvider;
@@ -17,20 +21,15 @@ import org.eclipse.xtext.serializer.analysis.ISyntacticSequencerPDAProvider.ISyn
 import org.eclipse.xtext.serializer.analysis.ISyntacticSequencerPDAProvider.ISynTransition;
 import org.eclipse.xtext.serializer.analysis.SerializationContextMap;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.Set;
-
-// Xtext builds these on first use into shared singletons and grammar adapters without synchronization, and publishes some before filling them
+// Xtext builds these on first use into shared singletons and grammar adapters without synchronization, and publishes
+// some before filling them
 public class SerializerGrammarAnalyses {
 
     @Inject
     public SerializerGrammarAnalyses(
             IGrammarAccess grammarAccess,
             IGrammarConstraintProvider constraintProvider,
-            ISyntacticSequencerPDAProvider syntacticSequencerProvider
-    ) {
+            ISyntacticSequencerPDAProvider syntacticSequencerProvider) {
         Grammar grammar = grammarAccess.getGrammar();
         buildConstraints(constraintProvider.getConstraints(grammar));
         buildSyntacticSequencerPDAs(syntacticSequencerProvider.getSyntacticSequencerPDAs(grammar));
@@ -68,5 +67,4 @@ public class SerializerGrammarAnalyses {
             }
         }
     }
-
 }
