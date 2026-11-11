@@ -5,9 +5,9 @@
  */
 
 import type { Browser, Page } from 'playwright'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 
-import { launch, LIVE_URL, openPage, SLOW, token, verifyAll } from './browser'
+import { launch, LIVE_URL, newPage, openPage, SLOW, takePageErrors, token, verifyAll } from './browser'
 
 // Goal: what a visitor does on the running image works end to end in a real browser: the bare address opens SysML v2,
 // Verify all gives every case a verdict and opens a trace, the editor's language features answer, and the embed grows with its trace
@@ -20,6 +20,10 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await browser.close()
+})
+
+afterEach(() => {
+  expect(takePageErrors(), 'uncaught errors in the page').toEqual([])
 })
 
 function results(page: Page) {
@@ -137,9 +141,50 @@ describe('Gamma', () => {
   })
 })
 
+describe('switching the model', () => {
+  it('goes through flavours, languages and examples, and Back and Forward, the editor kept across flavours, with nothing uncaught', async () => {
+    const page = await openPage(browser, '/oxsts/level-crossing')
+    const settled = async (path: string, text: string): Promise<void> => {
+      await expect.poll(async () => {
+        return new URL(page.url()).pathname + new URL(page.url()).search
+      }, { timeout: SLOW }).toBe(path)
+      await expect.poll(async () => {
+        return page.locator('section.editor .view-lines').innerText()
+      }, { timeout: SLOW }).toContain(text)
+      await page.waitForTimeout(3000)
+    }
+    await settled('/oxsts/level-crossing', 'package')
+    await page.locator('.flavour-button').click()
+    await page.getByRole('menuitem', { name: /With the Gamma library/ }).click()
+    await settled('/oxsts/level-crossing?library=gamma', 'package')
+    await expect.poll(async () => {
+      return results(page).cases.count()
+    }, { timeout: SLOW }).toBeGreaterThan(0)
+    await page.goBack()
+    await settled('/oxsts/level-crossing', 'package')
+    await page.goForward()
+    await settled('/oxsts/level-crossing?library=gamma', 'package')
+    await page.goBack()
+    await settled('/oxsts/level-crossing', 'package')
+    await page.locator('.example-button').click()
+    await page.getByRole('menuitem').nth(1).click()
+    await expect.poll(async () => {
+      return new URL(page.url()).pathname
+    }, { timeout: SLOW }).not.toBe('/oxsts/level-crossing')
+    await page.waitForTimeout(3000)
+    await page.goBack()
+    await settled('/oxsts/level-crossing', 'package')
+    await page.locator('.language-switch [role=group] button', { hasText: 'Gamma' }).click()
+    await settled('/gamma/level-crossing', 'package')
+    await page.goBack()
+    await settled('/oxsts/level-crossing', 'package')
+    await page.close()
+  })
+})
+
 describe('the verifying embed', () => {
   it('verifies in a frame and grows the frame with the trace it opens', async () => {
-    const page = await browser.newPage({ viewport: { width: 900, height: 900 } })
+    const page = await newPage(browser, { width: 900, height: 900 })
     await page.goto(`${LIVE_URL}/api/health`)
     await page.setContent(`
       <iframe src="${LIVE_URL}/gamma/level-crossing?view=embed" style="width: 760px; height: 600px; border: 0"></iframe>

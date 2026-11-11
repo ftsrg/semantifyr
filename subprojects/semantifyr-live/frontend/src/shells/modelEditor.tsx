@@ -73,7 +73,7 @@ export function ModelEditor({ colorMode, verdictMarks, wrapping, onContentHeight
   if (!flavor || !document) {
     return null
   }
-  return <EditorHost key={flavor.id} document={document} flavor={flavor} colorMode={colorMode} options={{ verdictMarks, wrapping: wrapping === true, ...(onContentHeight ? { onContentHeight } : {}) }} />
+  return <EditorHost key={flavor.languageId} document={document} flavor={flavor} colorMode={colorMode} options={{ verdictMarks, wrapping: wrapping === true, ...(onContentHeight ? { onContentHeight } : {}) }} />
 }
 
 // a read-only document the editor opened, a library's definition or a trace's text, and the way back

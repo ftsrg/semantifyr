@@ -23,8 +23,23 @@ export async function launch(): Promise<Browser> {
   return chromium.launch(executablePath ? { executablePath } : {})
 }
 
+const pageErrors: string[] = []
+
+// every page a flow opens reports its uncaught errors, its workers' included, which fail the flow
+export async function newPage(browser: Browser, viewport: { width: number, height: number }): Promise<Page> {
+  const page = await browser.newPage({ viewport })
+  page.on('pageerror', (error) => {
+    pageErrors.push(`${page.url()}: ${error.stack ?? error.message}`)
+  })
+  return page
+}
+
+export function takePageErrors(): string[] {
+  return pageErrors.splice(0)
+}
+
 export async function openPage(browser: Browser, path: string): Promise<Page> {
-  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+  const page = await newPage(browser, { width: 1440, height: 900 })
   await page.goto(`${LIVE_URL}${path}`)
   return page
 }

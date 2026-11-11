@@ -323,7 +323,7 @@ export function EditorArea({ colorMode }: { colorMode: ResolvedColorMode }): Rea
       {flavor && document && modelLabel !== null ? <Tabs flavor={flavor} modelLabel={modelLabel} runtime={runtime} /> : <div className="tabs" />}
       <ReadOnlyBanner />
       <div className="editor-body">
-        {flavor && document ? <EditorHost key={flavor.id} document={document} flavor={flavor} colorMode={colorMode} /> : <WaitingModel />}
+        {flavor && document ? <EditorHost key={flavor.languageId} document={document} flavor={flavor} colorMode={colorMode} /> : <WaitingModel />}
         {drop.dragging ? <DropTarget /> : null}
       </div>
     </section>
