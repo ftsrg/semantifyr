@@ -10,7 +10,7 @@ import type { VerificationMetrics } from '@semantifyr/editor-common'
 import { useStore } from '../lib/stores/useStore'
 import { isoDurationToMs } from '../lib/util/duration'
 import type { VerificationCaseState } from '../lib/verification/engine'
-import { formatSeconds } from '../lib/workspace/caseRows'
+import { formatSeconds, waitedPhrase } from '../lib/workspace/caseRows'
 import { useLive } from '../lib/workspace/liveContext'
 import { portfolioName } from '../lib/workspace/portfolioChoices'
 
@@ -30,9 +30,10 @@ function engineOf(backendId: string | undefined): string | null {
   return ENGINE_NAMES[engine] ?? engine
 }
 
-function runLine(metrics: VerificationMetrics | undefined, portfolio: string, backendId: string | undefined): string {
+function runLine(metrics: VerificationMetrics | undefined, portfolio: string, backendId: string | undefined, waited: number | undefined): string {
   const parts = [
     metrics ? formatSeconds(isoDurationToMs(metrics.totalDuration)) : null,
+    waitedPhrase(waited),
     portfolio,
   ]
   const engine = engineOf(backendId)
@@ -52,9 +53,9 @@ function validationLine(caseState: VerificationCaseState, portfolio: (id: string
     case 'cancelled':
       return 'not run'
     case 'valid':
-      return `validated, ${runLine(caseState.validationMetrics, portfolio(caseState.validationPortfolioIdUsed), caseState.validationBackendId)}`
+      return `validated, ${runLine(caseState.validationMetrics, portfolio(caseState.validationPortfolioIdUsed), caseState.validationBackendId, caseState.validationWaited)}`
     default:
-      return `validation failed, ${runLine(caseState.validationMetrics, portfolio(caseState.validationPortfolioIdUsed), caseState.validationBackendId)}`
+      return `validation failed, ${runLine(caseState.validationMetrics, portfolio(caseState.validationPortfolioIdUsed), caseState.validationBackendId, caseState.validationWaited)}`
   }
 }
 
@@ -73,7 +74,7 @@ export function RunDetails({ caseState }: { caseState: VerificationCaseState }):
     <div className="run-details" data-testid="run-details">
       <span className="run-line">
         <span className="run-label">Verification</span>
-        <span>{runLine(caseState.metrics, portfolio(caseState.portfolioId), caseState.backendId)}</span>
+        <span>{runLine(caseState.metrics, portfolio(caseState.portfolioId), caseState.backendId, caseState.waited)}</span>
       </span>
       <span className="run-line">
         <span className="run-label">Validation</span>

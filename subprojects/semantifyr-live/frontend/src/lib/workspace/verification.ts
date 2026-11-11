@@ -145,6 +145,8 @@ export function createVerification(options: VerificationOptions): Verification {
   let retryTimer: ReturnType<typeof setTimeout> | null = null
   let discoveryGeneration = 0
   let selectionHeld = false
+  // when the verification held for the language server was asked for
+  let heldSince: number | null = null
 
   const stateOf = (key: string): VerificationState => {
     return states.get().get(key) ?? NO_VERIFICATION
@@ -198,11 +200,13 @@ export function createVerification(options: VerificationOptions): Verification {
   }
 
   const queue = (caseId: string | null): void => {
+    const askedAt = Date.now()
+    heldSince = askedAt
     queued.set({ caseId })
     const key = options.current()?.target.key
     if (key !== undefined) {
       updaterFor(key)((state) => {
-        return markQueued(state, caseId)
+        return markQueued(state, caseId, askedAt)
       })
     }
   }
@@ -228,7 +232,8 @@ export function createVerification(options: VerificationOptions): Verification {
     const handle = start(connection, updaterFor(key))
     const active: ActiveRun = { key, handle, selectionChanged: false }
     run = active
-    timing.set({ key, caseId, startedAt: Date.now(), finishedAt: null })
+    timing.set({ key, caseId, startedAt: heldSince ?? Date.now(), finishedAt: null })
+    heldSince = null
     void handle.done.then(() => {
       if (run === active) {
         run = null
@@ -357,7 +362,7 @@ export function createVerification(options: VerificationOptions): Verification {
           return { ...previous, discovery: 'discovered' }
         }
         const merged = { ...previous, discovery: 'discovered' as const, cases: mergeDiscoveredCases(previous.cases, discovered) }
-        return queued.get()?.caseId === null ? markQueued(merged, null) : merged
+        return queued.get()?.caseId === null ? markQueued(merged, null, heldSince ?? Date.now()) : merged
       })
     } catch (error) {
       if (generation !== discoveryGeneration) {
@@ -422,6 +427,7 @@ export function createVerification(options: VerificationOptions): Verification {
       updaterFor(key)(unmarkQueued)
     }
     queued.set(null)
+    heldSince = null
     endRun()
   }
 

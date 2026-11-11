@@ -135,9 +135,9 @@ describe('the status line', () => {
 
     const done: VerificationState = { phase: 'done', discovery: 'discovered', cases: [result('a', 'failed', { ranDuring: { start: 7_000, end: 8_000 } }), result('b', 'passed', { ranDuring: { start: 7_500, end: 9_200 } })] }
     const timing = { key: 'k', caseId: null, startedAt: 6_300, finishedAt: 10_000 }
-    expect(statusOf({ verification: done, timing })).toBe('Done in 2.2 s: 1 failed, 1 passed')
+    expect(statusOf({ verification: done, timing })).toBe('Done in 2.2 s, waited 1.5 s: 1 failed, 1 passed')
     expect(statusOf({ verification: done, timing, now: 10_000 + CLOSING_LINE_MS })).toBe('Ready: 2 verification cases')
-    expect(statusOf({ verification: done, timing: { ...timing, caseId: 'example::b' } })).toBe('Done in 1.7 s: 1 passed')
+    expect(statusOf({ verification: done, timing: { ...timing, caseId: 'example::b' } })).toBe('Done in 1.7 s, waited 2.0 s: 1 passed')
   })
 
   it('times a run by the union of its cases\' running intervals, a gap where everything waited not counted, and not at all when nothing ran', () => {
@@ -146,7 +146,15 @@ describe('the status line', () => {
     expect(runningTimeOf([])).toBeNull()
 
     const neverRan: VerificationState = { phase: 'done', discovery: 'discovered', cases: [{ caseInfo: caseAt('a', 1), status: 'errored', resultStatus: 'errored' }] }
-    expect(statusOf({ verification: neverRan, timing: { key: 'k', caseId: null, startedAt: 6_300, finishedAt: 10_000 } })).toBe('Done: 1 error')
+    expect(statusOf({ verification: neverRan, timing: { key: 'k', caseId: null, startedAt: 6_300, finishedAt: 10_000 } })).toBe('Done, waited 3.7 s: 1 error')
+  })
+
+  it('says how long a run waited with none of its cases running, the gaps included, and nothing under a second', () => {
+    const timing = { key: 'k', caseId: null, startedAt: 0, finishedAt: 12_000 }
+    const withGap: VerificationState = { phase: 'done', discovery: 'discovered', cases: [result('a', 'passed', { ranDuring: { start: 2_000, end: 5_000 } }), result('b', 'passed', { ranDuring: { start: 9_000, end: 12_000 } })] }
+    expect(statusOf({ verification: withGap, timing, now: 12_000 })).toBe('Done in 6.0 s, waited 6.0 s: 2 passed')
+    const withoutWait: VerificationState = { ...withGap, cases: [result('a', 'passed', { ranDuring: { start: 300, end: 7_000 } }), result('b', 'passed', { ranDuring: { start: 6_000, end: 12_000 } })] }
+    expect(statusOf({ verification: withoutWait, timing, now: 12_000 })).toBe('Done in 12 s: 2 passed')
   })
 
   it('counts the cases cancelled in a run apart from the done ones, while it runs and when it closes', () => {
@@ -159,7 +167,7 @@ describe('the status line', () => {
     expect(shellStatus({ ...statusInput(), verification: withCancel, timing })).toMatchObject({ caseName: 'a', after: ', 0 of 3 done, 2 cancelled' })
 
     const closed: VerificationState = { phase: 'done', discovery: 'discovered', cases: [result('a', 'failed', { ranDuring: { start: 7_000, end: 9_000 } }), cancelledB, cancelledC] }
-    expect(statusOf({ verification: closed, timing: { ...timing, finishedAt: 10_000 } })).toBe('Done in 2.0 s: 1 failed, 2 cancelled')
+    expect(statusOf({ verification: closed, timing: { ...timing, finishedAt: 10_000 } })).toBe('Done in 2.0 s, waited 1.7 s: 1 failed, 2 cancelled')
   })
 
   it('names the case of a single run without a position', () => {

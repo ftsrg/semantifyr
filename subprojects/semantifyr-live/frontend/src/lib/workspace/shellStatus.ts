@@ -7,7 +7,7 @@
 import type { ConnectionState } from '../stores/connection'
 import { areCasesKnown, currentStep, isInitialized, type InitializationState, type InitializationStep } from '../stores/initialization'
 import type { RunningInterval, VerificationCaseState, VerificationState } from '../verification/engine'
-import { caseRowOf, countsOf, countsPhrase, formatSeconds } from './caseRows'
+import { caseRowOf, countsOf, countsPhrase, formatSeconds, waitedPhrase } from './caseRows'
 import type { CatalogStatus } from './live'
 import type { QueuedVerification, RunTiming } from './verification'
 
@@ -252,7 +252,10 @@ function closingStatus(verification: VerificationState, timing: RunTiming): Shel
   const phrase = [countsPhrase(countsOf(answered.map(caseRowOf))), cancelledPhrase(cancelled.length)].filter((part) => {
     return part !== ''
   }).join(', ')
-  const done = ran === null ? 'Done' : `Done in ${formatSeconds(ran)}`
+  const waited = waitedPhrase(timing.finishedAt - timing.startedAt - (ran ?? 0))
+  const done = [ran === null ? 'Done' : `Done in ${formatSeconds(ran)}`, waited].filter((part) => {
+    return part !== null
+  }).join(', ')
   return { kind: 'done', text: phrase === '' ? done : `${done}: ${phrase}` }
 }
 

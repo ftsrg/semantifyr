@@ -64,6 +64,11 @@ export const STATUS_WORDS: Readonly<Record<RowStatus, string>> = {
 
 const CANCELLED_MESSAGE = 'Verification cancelled'
 
+// a wait under a second is not worth saying
+export function waitedPhrase(milliseconds: number | undefined): string | null {
+  return milliseconds === undefined || milliseconds < 1000 ? null : `waited ${formatSeconds(milliseconds)}`
+}
+
 export function formatSeconds(milliseconds: number): string {
   const seconds = milliseconds / 1000
   return seconds < 10 ? `${seconds.toFixed(1)} s` : `${Math.round(seconds)} s`

@@ -152,13 +152,16 @@ const STATES: Readonly<Record<string, ScreenState>> = {
   'results': {
     // the run ends as the screen opens, so the status line still closes it
     get seed(): Seed {
-      return { verification: RESULTS, selection: BARRIER.id, timing: { key: 'sysml#level-crossing', caseId: null, startedAt: Date.now() - 3700, finishedAt: Date.now() } }
+      const [barrier, twoTrains] = RESULTS.cases
+      const waited = { ...RESULTS, cases: [{ ...barrier!, waited: 30_000 }, twoTrains!] }
+      return { verification: waited, selection: BARRIER.id, timing: { key: 'sysml#level-crossing', caseId: null, startedAt: Date.now() - 33_700, finishedAt: Date.now() } }
     },
     expectState: () => {
       expect(count('.case-row.status-failed')).toBe(1)
       expect(count('.case-row.status-passed')).toBe(1)
       expect(text('.trace-title')).toContain(BARRIER.id)
-      expect(text('[data-testid=status-message]')).toBe('Done in 2.9 s: 1 failed, 1 passed')
+      expect(text('[data-testid=status-message]')).toBe('Done in 2.9 s, waited 31 s: 1 failed, 1 passed')
+      expect(text('[data-testid=run-details]')).toContain('2.9 s, waited 30 s, Automatic')
     },
   },
   'outdated': {

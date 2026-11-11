@@ -79,6 +79,12 @@ export interface VerificationCaseState {
   ranDuring?: RunningInterval
   // when the case was cancelled, by the page's clock
   cancelledAt?: number
+  // when the case waiting or running now was asked for, by the page's clock
+  askedAt?: number
+  // from askedAt to the server's first Running report, for the result shown
+  waited?: number
+  validationAskedAt?: number
+  validationWaited?: number
   metrics?: VerificationMetrics
   backendId?: string
   portfolioId?: string
@@ -135,9 +141,11 @@ interface ProgressParams {
 
 type StateUpdater = (next: VerificationState | ((previous: VerificationState) => VerificationState)) => void
 
+// a case held before it was sent keeps the time it was asked for
 function runningCase(caseState: VerificationCaseState): VerificationCaseState {
   const { serverState: _serverState, runningSince: _runningSince, ranDuring: _ranDuring, cancelledAt: _cancelledAt, ...rest } = caseState
-  return { ...rest, status: 'running', editedDuringRun: false }
+  const askedAt = caseState.status === 'queued' && caseState.askedAt !== undefined ? caseState.askedAt : Date.now()
+  return { ...rest, status: 'running', editedDuringRun: false, askedAt }
 }
 
 function ranDuringOf(caseState: VerificationCaseState, end: number): { ranDuring?: RunningInterval } {
@@ -149,7 +157,7 @@ function cancelledCase(caseState: VerificationCaseState): VerificationCaseState 
   if (caseState.resultStatus === undefined) {
     return { caseInfo: caseState.caseInfo, status: 'stale', message: 'Verification cancelled', cancelledAt: now, ...ranDuringOf(caseState, now) }
   }
-  const { editedDuringRun: _editedDuringRun, serverState: _serverState, runningSince: _runningSince, ...result } = caseState
+  const { editedDuringRun: _editedDuringRun, serverState: _serverState, runningSince: _runningSince, askedAt: _askedAt, ...result } = caseState
   return { ...result, status: caseState.resultStatus, cancelledAt: now, ...ranDuringOf(caseState, now) }
 }
 
@@ -158,7 +166,7 @@ function isWaiting(caseState: VerificationCaseState): boolean {
 }
 
 // cases asked for before they can be sent; null asks for every case
-export function markQueued(state: VerificationState, caseId: string | null): VerificationState {
+export function markQueued(state: VerificationState, caseId: string | null, askedAt: number): VerificationState {
   if (!state.cases.some((caseState) => {
     return (caseId === null || caseState.caseInfo.id === caseId) && !isWaiting(caseState)
   })) {
@@ -168,7 +176,7 @@ export function markQueued(state: VerificationState, caseId: string | null): Ver
     ...state,
     cases: state.cases.map((caseState) => {
       return (caseId === null || caseState.caseInfo.id === caseId) && !isWaiting(caseState)
-        ? { ...caseState, status: 'queued' as const }
+        ? { ...caseState, status: 'queued' as const, askedAt }
         : caseState
     }),
   }
@@ -225,6 +233,9 @@ function withReport(caseState: VerificationCaseState, active: readonly ActiveVer
     })
     if (reported !== undefined && reported !== caseState.validationServerState) {
       changed = { ...changed, validationServerState: reported }
+      if (reported === 'Running' && changed.validationWaited === undefined && changed.validationAskedAt !== undefined) {
+        changed = { ...changed, validationWaited: now - changed.validationAskedAt }
+      }
     }
   }
   return changed
@@ -358,9 +369,11 @@ function applyVerifyOutcome(
   outcome: VerifyOutcome,
   portfolioId: string | undefined,
 ): VerificationCaseState {
+  const { askedAt, runningSince } = caseState
   return {
     caseInfo: caseState.caseInfo,
     ...ranDuringOf(caseState, Date.now()),
+    ...(askedAt !== undefined && runningSince !== undefined ? { waited: runningSince - askedAt } : {}),
     status: outcome.status,
     resultStatus: outcome.status,
     outdated: caseState.editedDuringRun === true,
@@ -763,7 +776,7 @@ function toValidationOutcome(response: WitnessValidationResult | null): WitnessV
 }
 
 function withoutValidationReport(caseState: VerificationCaseState): VerificationCaseState {
-  const { validationServerState: _validationServerState, ...rest } = caseState
+  const { validationServerState: _validationServerState, validationAskedAt: _validationAskedAt, ...rest } = caseState
   return rest
 }
 
@@ -782,6 +795,11 @@ function applyValidationOutcome(
   }
 }
 
+function askedForValidation(caseState: VerificationCaseState): VerificationCaseState {
+  const { validationWaited: _validationWaited, ...rest } = withoutValidationReport(caseState)
+  return { ...rest, validating: true, validationAskedAt: Date.now() }
+}
+
 export function dispatchAutoValidation(
   client: LspClient,
   validateCommand: string,
@@ -793,7 +811,7 @@ export function dispatchAutoValidation(
   setState((previous) => ({
     ...previous,
     cases: previous.cases.map((caseState) =>
-      caseState.caseInfo.id === caseId ? { ...withoutValidationReport(caseState), validating: true } : caseState,
+      caseState.caseInfo.id === caseId ? askedForValidation(caseState) : caseState,
     ),
   }))
   void validateWitness(

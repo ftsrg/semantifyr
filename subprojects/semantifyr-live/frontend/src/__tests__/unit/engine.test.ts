@@ -482,15 +482,51 @@ describe('cases asked for before they can be sent', () => {
   };
 
   it('are queued, one or all, and on cancel return to their verdict or to not run', () => {
-    expect(markQueued(asked, 'b').cases.map((caseState) => {
+    expect(markQueued(asked, 'b', 0).cases.map((caseState) => {
       return caseState.status;
     })).toEqual(['passed', 'queued']);
-    const all = markQueued(asked, null);
+    const all = markQueued(asked, null, 0);
     expect(all.cases.map((caseState) => {
       return caseState.status;
     })).toEqual(['queued', 'queued']);
     expect(unmarkQueued(all).cases.map((caseState) => {
       return [caseState.status, caseState.message];
     })).toEqual([['passed', undefined], ['stale', 'Verification cancelled']]);
+  });
+});
+
+describe('the wait of a case', () => {
+  const caseInfo = { ...sampleCase('a'), location: { uri: 'file:///workspace/snippet.oxsts', range: { start: { line: 3, character: 0 }, end: { line: 3, character: 1 } } } };
+  const running = (now: number) => {
+    return (state: VerificationState): VerificationState => {
+      return applyServerReport(state, [{ verificationId: 'v', portfolioId: 'smart-full', kind: 'Verify', state: 'Running', elapsed: 'PT0S', location: caseInfo.location }], now);
+    };
+  };
+
+  it.each([
+    ['sent at once', null, 4_000],
+    ['held for the language server', 1_000, 6_000],
+  ] as const)('runs from when it was asked for to the server running it, for a case %s', async (_name, heldAt, waited) => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(3_000);
+    let answer: (result: VerificationCaseResult) => void = () => {};
+    const sendRequest = vi.fn<LspClient['sendRequest']>(() => new Promise((resolve) => {
+      answer = resolve;
+    }));
+    const { states, setState } = captureStates();
+    if (heldAt !== null) {
+      setState(markQueued({ phase: 'idle', discovery: 'discovered', cases: [{ caseInfo, status: 'stale' }] }, null, heldAt));
+    }
+    runAllVerifications({ sendRequest, sendNotification: () => {} }, 'oxsts.case.verify', caseInfo.location.uri, [caseInfo], setState, noopProgress);
+    await vi.waitFor(() => {
+      expect(sendRequest).toHaveBeenCalled();
+    });
+    setState(running(7_000));
+    answer(passedResult);
+
+    await vi.waitFor(() => {
+      expect(states.at(-1)?.phase).toBe('done');
+    });
+    expect(states.at(-1)?.cases[0]?.waited).toBe(waited);
+    clock.mockRestore();
   });
 });
