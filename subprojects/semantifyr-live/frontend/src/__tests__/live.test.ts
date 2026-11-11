@@ -273,6 +273,37 @@ describe('Live', () => {
     expect(routed.portfolios).toEqual(['smart-full'])
   })
 
+  it('opens the address the visitor moved to while the server did not answer', async () => {
+    const routed = routedClient([caseAt('a', 1)])
+    let answering = false
+    open = createTestLive(routed.client, servedFlavors, {
+      catalogRetryMs: 0,
+      server: {
+        fetchFlavors: async () => {
+          if (!answering) {
+            throw new Error('the server is not answering')
+          }
+          return [...servedFlavors]
+        },
+        fetchPortfolios: async () => {
+          return { portfolios: [], defaultPortfolio: 'smart-full' }
+        },
+      },
+    })
+    const gamma = testFlavors()[3]!
+    open.live.start('/oxsts')
+    await vi.waitFor(() => {
+      expect(open!.live.catalog.get().status).toBe('waiting')
+    })
+
+    open.live.openAddress(`/gamma/${gamma.examples[1]!.id}`)
+    answering = true
+
+    await vi.waitFor(() => {
+      expect(open!.live.workspace.get().documentKey).toBe(`gamma#${gamma.examples[1]!.id}`)
+    })
+  })
+
   it('follows the model: a removed case goes with its result and a new one is not run', async () => {
     const routed = routedClient([caseAt('a', 1), caseAt('b', 2)])
     open = await openConnected(routed)

@@ -116,6 +116,8 @@ export interface Live {
   readonly tabs: DocumentTabs
   readonly pendingVerifyAll: ReadableStore<boolean>
   readonly runTiming: ReadableStore<RunTiming | null>
+  // the address the page opens once the server answers, null before the start
+  readonly requested: ReadableStore<string | null>
   // the address of the page, or a path with its query and fragment
   start: (location: string) => void
   // the page moved to another address without loading, as a link of another fragment does
@@ -166,6 +168,7 @@ export function createLive(options: LiveOptions): Live {
   const address = createStore<AddressProblem | null>(null)
   const unsaved = createStore(false)
   const sharedResults = createStore<SharedResults | null>(null)
+  const requested = createStore<string | null>(null)
   const tabs = createDocumentTabs()
 
   let disposed = false
@@ -330,7 +333,8 @@ export function createLive(options: LiveOptions): Live {
   }
 
   // a verification names its portfolio, so the session starts once the portfolios are known
-  const loadCatalog = async (location: string): Promise<void> => {
+  const loadCatalog = async (): Promise<void> => {
+    const location = requested.get() ?? ''
     try {
       const [flavors, portfolios] = await Promise.all([
         server.fetchFlavors(),
@@ -339,6 +343,10 @@ export function createLive(options: LiveOptions): Live {
       const registry = createRegistry(liveFlavors(flavors))
       const initial = await resolveAddress(readAddress(location), registry, options.defaultFlavorId)
       if (disposed) {
+        return
+      }
+      if (requested.get() !== location) {
+        void loadCatalog()
         return
       }
       catalog.set({ status: 'ready', registry, portfolios: portfolios.portfolios, defaultPortfolioId: portfolios.defaultPortfolio })
@@ -353,7 +361,7 @@ export function createLive(options: LiveOptions): Live {
       })
       catalogTimer = setTimeout(() => {
         catalogTimer = null
-        void loadCatalog(location)
+        void loadCatalog()
       }, options.catalogRetryMs ?? CATALOG_RETRY_MS)
     }
   }
@@ -385,13 +393,16 @@ export function createLive(options: LiveOptions): Live {
     tabs,
     pendingVerifyAll: verification.pending,
     runTiming: verification.timing,
+    requested,
     start: (location) => {
       if (typeof window !== 'undefined') {
         window.addEventListener('online', handleOnline)
       }
-      void loadCatalog(location)
+      requested.set(location)
+      void loadCatalog()
     },
     openAddress: (location) => {
+      requested.set(location)
       const registry = catalog.get().registry
       if (!registry) {
         return

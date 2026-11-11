@@ -8,9 +8,7 @@ import type React from 'react'
 import { useEffect, useRef } from 'react'
 import { Menu } from '@base-ui/react/menu'
 
-import { parseLiveEditorUrl } from '@semantifyr/editor-common'
-
-import { findExample, liveFlavors, type LiveFlavor } from '../../examples'
+import type { LiveFlavor } from '../../examples'
 import type { LanguageRuntime, LibraryKind } from '../../lib/language/types'
 import { setLibraryReader } from '../../lib/session/monaco'
 import { fileNameOf } from '../../lib/session/readOnlyDocuments'
@@ -22,7 +20,7 @@ import type { DocumentRecord, Live } from '../../lib/workspace/live'
 import { useLive } from '../../lib/workspace/liveContext'
 import { Icon } from '../../ui/icons'
 import { LanguageMark } from '../../ui/marks'
-import { documentLabel, useCurrentDocument, useFlavor } from '../hooks'
+import { documentLabel, useAddressedModel, useCurrentDocument, useFlavor } from '../hooks'
 import { useShell } from '../shellContext'
 import { DropTarget, UnsavedMark, useFileDrop, useKeepingEvents } from './keeping'
 import { EditControl, modelLockOf } from '../touch'
@@ -228,25 +226,20 @@ function EditorHost({ document, flavor, colorMode }: { document: DocumentRecord,
   return <div ref={hostReference} className="editor-host" data-testid="editor-host" />
 }
 
-// while the server does not answer, the SysML model the address names is shown as text; it knows no language yet
+// while the server does not answer, the model the address names is shown as text; it knows no language yet
 function WaitingModel(): React.JSX.Element | null {
   const live = useLive()
   const waiting = useStore(live.catalog, (catalog) => {
     return catalog.status === 'waiting'
   })
-  const address = parseLiveEditorUrl(window.location)
-  const [sysml] = liveFlavors([])
-  if (!waiting || (address.language !== null && address.language !== sysml.languageId)) {
-    return null
-  }
-  const example = findExample(sysml, address.example) ?? sysml.examples[0]
-  if (!example) {
+  const model = useAddressedModel(live)
+  if (!waiting || model.text === null) {
     return null
   }
   return (
     <div className="editor-scroll">
-      <div className="code" data-language={sysml.languageId}>
-        {example.code.replace(/\n+$/, '').split('\n').map((line, index) => {
+      <div className="code" data-language={model.languageId} data-testid="waiting-model">
+        {model.text.replace(/\n+$/, '').split('\n').map((line, index) => {
           const indent = /^ */.exec(line)?.[0].length ?? 0
           return (
             <div key={index} className="code-line is-plain">

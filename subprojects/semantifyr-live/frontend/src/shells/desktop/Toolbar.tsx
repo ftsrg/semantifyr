@@ -6,18 +6,19 @@
 
 import type React from 'react'
 import { Menu } from '@base-ui/react/menu'
+import { liveEditorUrl, parseLiveEditorUrl } from '@semantifyr/editor-common'
 
 import type { LiveExample, LiveFlavor } from '../../examples'
 import { LANGUAGE_ORDER, presentationOf } from '../../lib/language/presentation'
 import type { LanguageUnit } from '../../lib/language/types'
 import { changeSettings } from '../../lib/stores/settings'
 import { useStore } from '../../lib/stores/useStore'
-import { documentKey } from '../../lib/workspace/live'
+import { documentKey, type Live } from '../../lib/workspace/live'
 import { useLive } from '../../lib/workspace/liveContext'
 import type { ColorModePreference } from '../../lib/util/colorMode'
 import { Icon, type IconName } from '../../ui/icons'
 import { LanguageMark, Logo } from '../../ui/marks'
-import { useCurrentDocument, useFlavor } from '../hooks'
+import { useAddressedModel, useCurrentDocument, useFlavor } from '../hooks'
 import { AboutDialog, DeveloperDialog } from './Dialogs'
 import { ConnectionIndicator } from './ConnectionIndicator'
 import { OpenButton, SaveSplit } from './keeping'
@@ -43,6 +44,53 @@ function orderedUnits(units: readonly LanguageUnit[]): LanguageUnit[] {
   })
 }
 
+// while the server does not answer, a switch moves the page to the address, which opens once it answers
+function openWaitingAddress(live: Live, language: string, example: string | undefined, library: string | undefined): void {
+  const address = parseLiveEditorUrl(window.location)
+  void liveEditorUrl(window.location.href, {
+    language,
+    example,
+    library,
+    view: address.view ?? undefined,
+    frame: address.frame ?? undefined,
+  }).then((url) => {
+    window.history.pushState(null, '', url)
+    live.openAddress(url)
+  })
+}
+
+function WaitingLanguageSwitch(): React.JSX.Element {
+  const live = useLive()
+  const model = useAddressedModel(live)
+  return (
+    <div className="language-switch">
+      <div className="segmented" role="group" aria-label="Language">
+        {LANGUAGE_ORDER.map((languageId) => {
+          const presentation = presentationOf(languageId)
+          return (
+            <button
+              key={languageId}
+              type="button"
+              className="segmented-option"
+              data-language={languageId}
+              aria-pressed={model.languageId === languageId}
+              title={presentation.detail}
+              onClick={() => {
+                if (model.languageId !== languageId) {
+                  openWaitingAddress(live, languageId, undefined, undefined)
+                }
+              }}
+            >
+              <LanguageMark languageId={languageId} />
+              {presentation.name}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function LanguageSwitch(): React.JSX.Element | null {
   const live = useLive()
   const registry = useStore(live.catalog, (catalog) => {
@@ -50,7 +98,7 @@ function LanguageSwitch(): React.JSX.Element | null {
   })
   const flavor = useFlavor(live)
   if (!registry) {
-    return null
+    return <WaitingLanguageSwitch />
   }
   const flavors = flavor ? registry.unitOf(flavor.id)?.flavors ?? [] : []
   return (
@@ -133,11 +181,63 @@ function caseCountOf(live: ReturnType<typeof useLive>, flavor: LiveFlavor, examp
   return state?.discovery === 'discovered' ? state.cases.length : null
 }
 
+function WaitingExampleMenu(): React.JSX.Element {
+  const live = useLive()
+  const model = useAddressedModel(live)
+  const presentation = presentationOf(model.languageId)
+  const triggerLabel = model.example?.label ?? 'Shared model'
+  return (
+    <Menu.Root>
+      <Menu.Trigger className="button button-quiet example-button" title={triggerLabel}>
+        <span className="example-label">{triggerLabel}</span>
+        <span className="chevron">
+          <Icon name="chevron-down" size="small" />
+        </span>
+      </Menu.Trigger>
+      <Menu.Portal>
+        <Menu.Positioner className="floating" side="bottom" align="start" sideOffset={6}>
+          <Menu.Popup className="menu examples-menu" data-language={model.languageId}>
+            <div className="language-intro">
+              <LanguageMark languageId={model.languageId} />
+              <span className="language-intro-name">{`${presentation.name} examples`}</span>
+              <span className="language-intro-detail">{presentation.detail}</span>
+            </div>
+            <Menu.Separator className="menu-divider" />
+            {model.examples.map((example) => {
+              const current = example.id === model.example?.id
+              return (
+                <Menu.Item
+                  key={example.id}
+                  className={`menu-item${current ? ' is-current' : ''}`}
+                  onClick={() => {
+                    openWaitingAddress(live, model.languageId, example.id, model.library)
+                  }}
+                >
+                  <span>{current ? <span className="check"><Icon name="check" size="small" /></span> : null}</span>
+                  <span className="menu-item-label">{example.id === 'blank' ? 'Blank model' : example.label}</span>
+                  <span className="menu-item-meta" />
+                  <span className="menu-item-detail">{example.description}</span>
+                </Menu.Item>
+              )
+            })}
+          </Menu.Popup>
+        </Menu.Positioner>
+      </Menu.Portal>
+    </Menu.Root>
+  )
+}
+
 function ExampleMenu(): React.JSX.Element | null {
   const live = useLive()
   const flavor = useFlavor(live)
   const document = useCurrentDocument(live)
+  const waiting = useStore(live.catalog, (catalog) => {
+    return catalog.status === 'waiting'
+  })
   useStore(live.verification)
+  if (waiting) {
+    return <WaitingExampleMenu />
+  }
   if (!flavor || !document) {
     return null
   }

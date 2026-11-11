@@ -56,6 +56,15 @@ interface ScreenState {
 }
 
 const STATES: Readonly<Record<string, ScreenState>> = {
+  'server-not-answering-gamma': {
+    seed: { catalog: 'waiting', location: '/gamma/crossroads' },
+    expectState: () => {
+      expect(document.querySelector('[data-testid=waiting-model]')?.getAttribute('data-language')).toBe('gamma')
+      expect(text('[data-testid=waiting-model]')).toContain('package')
+      expect(text('.language-switch [aria-pressed=true]')).toBe('Gamma')
+      expect(text('.example-button')).toBe('Crossroads')
+    },
+  },
   'session-refused': {
     seed: {
       initializingAt: 'server',
@@ -123,7 +132,7 @@ describe('the fixes of the desktop shell', () => {
         })
         root.render(<ShellRoot live={live} shell={shell} colorMode={colorMode} />)
         await expect.poll(() => {
-          return document.querySelector('.monaco-editor .view-line')
+          return document.querySelector('.monaco-editor .view-line, [data-testid=waiting-model]')
         }, { timeout: 60_000 }).toBeTruthy()
         await screen.act?.()
         await new Promise((resolve) => {

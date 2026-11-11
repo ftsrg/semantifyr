@@ -49,6 +49,8 @@ export interface Seed {
   // the name of the file the model was opened from
   fileName?: string
   portfolios?: PortfolioInfo[]
+  // the address the page asks for while the server does not answer
+  location?: string
 }
 
 export interface Seeded {
@@ -155,6 +157,7 @@ export function seedLive(seed: Seed): Seeded {
     tabs,
     pendingVerifyAll: constantStore(seed.pending ?? false),
     runTiming: constantStore(seed.timing ?? null),
+    requested: constantStore(seed.location ?? null),
     start: () => {},
     openAddress: () => {},
     dispose: () => {

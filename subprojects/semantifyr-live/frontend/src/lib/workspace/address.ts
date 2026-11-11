@@ -6,7 +6,8 @@
 
 import { decodeCompressedBase64Url, decodeLiveVerdicts, parseLiveEditorUrl, type LiveEditorAddress } from '@semantifyr/editor-common'
 
-import { findExample, type LiveExample, type LiveFlavor } from '../../examples'
+import { bundledExamplesOf, findExample, type LiveExample, type LiveFlavor } from '../../examples'
+import { LANGUAGE_ORDER } from '../language/presentation'
 import type { LanguageRegistry } from '../language/registry'
 import type { DocumentFile } from './files'
 import type { AddressProblem } from './live'
@@ -20,6 +21,31 @@ const LIBRARIES: Readonly<Record<string, string>> = {
 
 export function libraryOf(flavorId: string): string | undefined {
   return LIBRARIES[flavorId]
+}
+
+// what an address names, from what the page knows before the server answers: a language's plain flavor carries its id
+export interface AddressedModel {
+  languageId: string
+  flavorId: string
+  library: string | undefined
+  examples: readonly LiveExample[]
+  // null for a model the address carries, or for an example the build does not ship
+  example: LiveExample | null
+  compressedModel: string | null
+}
+
+export function addressedModel(address: LiveEditorAddress, defaultLanguageId: string): AddressedModel {
+  const languageId = LANGUAGE_ORDER.find((language) => {
+    return language === address.language
+  }) ?? defaultLanguageId
+  const withLibrary = Object.entries(LIBRARIES).find(([flavorId, library]) => {
+    return library === address.library && flavorId.startsWith(`${languageId}-`)
+  })
+  const flavorId = withLibrary?.[0] ?? languageId
+  const examples = bundledExamplesOf(flavorId)
+  const compressedModel = address.language === languageId ? address.compressedModel : null
+  const example = compressedModel !== null && address.example === null ? null : findExample({ examples }, address.example) ?? examples[0] ?? null
+  return { languageId, flavorId, library: withLibrary?.[1], examples, example, compressedModel }
 }
 
 export interface InitialDocument {

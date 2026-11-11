@@ -266,8 +266,12 @@ const BUNDLED_EXAMPLES: Readonly<Record<string, LiveExample[]>> = {
   [SYSML_FLAVOR_INFO.id]: sysmlExamples,
 };
 
+export function bundledExamplesOf(flavorId: string): LiveExample[] {
+  return BUNDLED_EXAMPLES[flavorId] ?? [blank(flavorId, null)];
+}
+
 function withExamples(info: FlavorInfo): LiveFlavor {
-  return { ...info, examples: BUNDLED_EXAMPLES[info.id] ?? [blank(info.id, null)] };
+  return { ...info, examples: bundledExamplesOf(info.id) };
 }
 
 // The served flavors keep the server's order; the client-only SysML flavor comes last.
@@ -286,7 +290,7 @@ export function findFlavor(flavors: readonly LiveFlavor[], id: string | null | u
   });
 }
 
-export function findExample(flavor: LiveFlavor, id: string | null | undefined): LiveExample | undefined {
+export function findExample(flavor: Pick<LiveFlavor, 'examples'>, id: string | null | undefined): LiveExample | undefined {
   return flavor.examples.find((example) => {
     return example.id === id;
   });
