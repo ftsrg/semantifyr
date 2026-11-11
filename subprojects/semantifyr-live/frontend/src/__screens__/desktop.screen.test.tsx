@@ -202,6 +202,9 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       expect(about).toContain('research prototype')
       expect(about).toContain('deletes the folder when the session ends')
       expect(about).toContain('network address of each session')
+      expect(about).toContain('the name and verdict of each case it ran')
+      expect(about).toContain('The text of your model is never logged')
+      expect(about).not.toContain('No model and no result is kept')
       expect(about).not.toContain('collects no personal data')
       expect(about).not.toContain('only while it verifies')
     },
