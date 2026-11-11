@@ -559,6 +559,20 @@ class CloseObservingWebSocket extends LcWebSocket {
     super();
     this.onClose = onClose;
     this.onOpen = onOpen;
+    let disposeClient: () => unknown = () => {};
+    // the wrapper disposes its client when the socket closes, which fails on a socket already closed; the runtime tears the client down itself
+    Object.defineProperty(this, 'disconnected', {
+      get: () => {
+        return () => {
+          void Promise.resolve(disposeClient()).catch((error: unknown) => {
+            console.warn('semantifyr-live: the language client of a closed socket could not be disposed', error);
+          });
+        };
+      },
+      set: (handler: () => unknown) => {
+        disposeClient = handler;
+      },
+    });
   }
 
   override async init(...parameters: Parameters<LcWebSocket['init']>): Promise<MessageTransports> {
