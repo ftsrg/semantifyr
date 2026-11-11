@@ -9,7 +9,7 @@ import type { TraceEntry, VerificationTrace, WitnessStateStep } from '@semantify
 import { findExample, liveFlavors } from '../examples'
 import type { VerificationCaseState } from '../lib/verification/engine'
 import { servedFlavors } from '../__tests__/fixtures/flavors'
-import { seedLive, type Seeded } from './seededLive'
+import { seedLive, type Seed, type Seeded } from './seededLive'
 
 // A failed case of the level crossing with its trace in each language, and a Live that reads the trace's documents
 
@@ -180,8 +180,8 @@ export function caseState(language: Language, options: { validated: boolean, rec
   }
 }
 
-export function seedWithTrace(language: Language, state: VerificationCaseState, others: VerificationCaseState[] = []): Seeded {
-  const seeded = seedLive({ flavorId: language.flavorId, exampleId: language.exampleId, verification: { phase: 'done', discovery: 'discovered', cases: [state, ...others] }, selection: state.caseInfo.id })
+export function seedWithTrace(language: Language, state: VerificationCaseState, others: VerificationCaseState[] = [], seed: Seed = {}): Seeded {
+  const seeded = seedLive({ ...seed, flavorId: language.flavorId, exampleId: language.exampleId, verification: { phase: 'done', discovery: 'discovered', cases: [state, ...others] }, selection: state.caseInfo.id })
   const runtime = seeded.live.workspace.get().runtime
   if (runtime) {
     runtime.api.readDocument = (uri) => {

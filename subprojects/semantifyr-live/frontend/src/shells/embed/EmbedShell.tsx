@@ -5,7 +5,7 @@
  */
 
 import type React from 'react'
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { parseLiveEditorUrl } from '@semantifyr/editor-common'
 
 import type { LiveFlavor } from '../../examples'
@@ -115,6 +115,18 @@ function AddressError(): React.JSX.Element | null {
   )
 }
 
+// a fixed frame wraps a case name where one of its words starts
+function breakable(name: string): React.ReactNode {
+  return name.split(/(?<=[a-z0-9])(?=[A-Z])|(?<=[._:])(?=[^._:])/).map((part, index) => {
+    return (
+      <Fragment key={index}>
+        {index > 0 ? <wbr /> : null}
+        {part}
+      </Fragment>
+    )
+  })
+}
+
 function CaseLine({ row, open, onToggle }: { row: CaseRow, open: boolean, onToggle: () => void }): React.JSX.Element {
   const interactive = row.hasTrace
     ? {
@@ -133,7 +145,7 @@ function CaseLine({ row, open, onToggle }: { row: CaseRow, open: boolean, onTogg
   return (
     <div className={`embed-case status-${row.status}${open ? ' is-open' : ''}${row.outdated ? ' is-outdated' : ''}${row.hasTrace ? ' has-trace' : ''}`} data-case={row.id} {...interactive}>
       <VerdictMark status={row.status} label={row.word} />
-      <span className="case-name">{row.name}</span>
+      <span className="case-name">{breakable(row.name)}</span>
       <span className="embed-case-verdict">
         {row.validation !== null ? <ValidationMark state={row.validation} detail={row.validationMessage} /> : null}
         <span className="verdict-word">{row.word}</span>
@@ -166,12 +178,21 @@ function useCasesListed(): boolean {
   return catalog === 'ready' && initialized
 }
 
-// in a growing frame the trace text is as tall as it is and wraps; a fixed frame scrolls it in its area
+// in a growing frame the trace text is as tall as it is; a fixed frame scrolls it in its area, under a title naming the case, which its row may be scrolled away from
 function CaseTraceArea({ caseState, row, flavor, slot, growing }: { caseState: VerificationCaseState, row: CaseRow, flavor: LiveFlavor, slot: TraceSlot | undefined, growing: boolean }): React.JSX.Element {
   const Slot = slot
   return (
     <div className={`embed-trace status-${row.status}${row.outdated ? ' is-outdated' : ''}`} aria-label={`Trace of ${row.name}`}>
-      {Slot ? <Slot caseState={caseState} flavor={flavor} growing={growing} wrapping={growing} /> : null}
+      {growing
+        ? null
+        : (
+          <div className="embed-trace-title" data-testid="trace-title">
+            <span className="section-label">Trace</span>
+            <VerdictMark status={row.status} label={row.word} />
+            <span className="case-name">{breakable(row.name)}</span>
+          </div>
+        )}
+      {Slot ? <Slot caseState={caseState} flavor={flavor} growing={growing} wrapping /> : null}
     </div>
   )
 }
@@ -204,7 +225,7 @@ function Cases({ slot, inlineTrace }: { slot: TraceSlot | undefined, inlineTrace
   const selection = useStore(live.selection)
   if (!listed || !flavor) {
     const text = catalog === 'waiting'
-      ? 'The server is not answering. The editor works; the verification cases are listed once a session is up.'
+      ? 'The server is not answering. The model can be edited and its verification cases are listed once it answers.'
       : `The verification cases are listed once ${flavor ? presentationOf(flavor.languageId).name : 'the language'} has initialized.`
     return <div className="embed-initializing">{text}</div>
   }

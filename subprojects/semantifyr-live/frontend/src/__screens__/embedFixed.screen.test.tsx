@@ -8,8 +8,10 @@ import { createRoot } from 'react-dom/client'
 import { describe, expect, it, onTestFinished, vi } from 'vitest'
 import { page } from 'vitest/browser'
 
+import { connectionLost, INITIAL_CONNECTION } from '../lib/stores/connection'
 import type { ResolvedColorMode } from '../lib/util/colorMode'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
+import { documentKey } from '../lib/workspace/live'
 import { ShellRoot } from '../shells/ShellRoot'
 import { CaseTrace } from '../trace/CaseTrace'
 import { caseOf, finished, seedLive, type Seed, type Seeded } from './seededLive'
@@ -50,6 +52,11 @@ function gamma(seed: Seed): Seed {
 
 function traced(): Seeded {
   return seedWithTrace(GAMMA, TRACED, [finished(TWO_TRAINS, 'passed', 0.8)])
+}
+
+function justDone(): Seeded {
+  const finishedAt = Date.now()
+  return seedWithTrace(GAMMA, TRACED, [finished(TWO_TRAINS, 'passed', 0.8)], { timing: { key: documentKey(GAMMA.flavorId, GAMMA.exampleId, false), caseId: null, startedAt: finishedAt - 2700, finishedAt } })
 }
 
 function manyCases(): Seeded {
@@ -99,17 +106,32 @@ function expectInFrame(selector: string): void {
   expect(rectangle.right, `${selector} right`).toBeLessThanOrEqual(window.innerWidth + 0.5)
 }
 
+function expectWhole(selector: string): void {
+  const element = document.querySelector<HTMLElement>(selector)!
+  expect(element.scrollWidth, `${selector} cut`).toBeLessThanOrEqual(element.clientWidth + 1)
+  expectInFrame(selector)
+}
+
+// at the strip's font a line is under 18 px
+function expectStatusLines(most: number): void {
+  expect(box('[data-testid=status-message] > span').height, 'the status lines').toBeLessThanOrEqual(most * 18)
+}
+
 function expectTraceAndModel(frame: Frame): void {
+  expect(text('.embed-trace [data-testid=trace-title]')).toContain(TRACED.caseInfo.id)
+  expect(document.querySelector('.embed-trace [data-testid=trace-title] .verdict-mark.status-failed'), 'the verdict in the trace title').toBeTruthy()
   expect(text('.embed-trace .trace-views [aria-pressed=true]')).toBe('Gamma trace')
   expect(text('.embed-trace [data-testid=run-details]')).toContain('decided by Theta')
-  expectInFrame('.embed-trace .trace-frame')
+  expectInFrame('.embed-trace [data-testid=trace-title]')
   expectInFrame('.embed-editor')
   const editor = box('.embed-editor')
   const trace = box('.embed-trace')
   if (frame.beside) {
+    expectInFrame('.embed-trace .trace-frame')
     expect(trace.left, 'the trace beside the model').toBeGreaterThanOrEqual(editor.right - 1)
     expect(editor.height, 'the model takes the full height').toBeGreaterThan(window.innerHeight - 10)
   } else {
+    expect(box('.embed-trace .trace-frame').top, 'the trace text starts in the frame').toBeLessThan(window.innerHeight - 60)
     expect(trace.top, 'the trace below the model').toBeGreaterThanOrEqual(editor.bottom - 1)
     expect(editor.height, 'the model keeps its minimum').toBeGreaterThanOrEqual(220)
   }
@@ -169,6 +191,52 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       const cases = document.querySelector('.embed-cases')!
       expect(cases.scrollHeight, 'the case lines scroll').toBeGreaterThan(cases.clientHeight)
       expectTraceAndModel(SLIDE)
+    },
+  },
+  'zoomed-slide-reconnecting': {
+    frame: ZOOMED_SLIDE,
+    view: 'embed',
+    seed: gamma({
+      verification: discovered([finished(BARRIER, 'failed', 2.9), finished(TWO_TRAINS, 'passed', 0.8)], 'done'),
+      connection: connectionLost(INITIAL_CONNECTION, 'connecting', 'Connection lost', { reconnecting: true, retryAt: Date.now() + 300_000 }),
+    }),
+    expectState: () => {
+      expect(text('[data-testid=status-message]')).toMatch(/Connection lost\. Reconnecting in \d+ s\. Reconnect now/)
+      expectWhole('[data-testid=status-message] .button-link')
+      expectStatusLines(2)
+    },
+  },
+  'slide-reconnecting': {
+    frame: SLIDE,
+    view: 'embed',
+    seed: gamma({
+      verification: discovered([finished(BARRIER, 'failed', 2.9), finished(TWO_TRAINS, 'passed', 0.8)], 'done'),
+      connection: connectionLost(INITIAL_CONNECTION, 'connecting', 'Connection lost', { reconnecting: true, retryAt: Date.now() + 300_000 }),
+    }),
+    expectState: () => {
+      expectWhole('[data-testid=status-message] .button-link')
+      expectStatusLines(2)
+    },
+  },
+  'zoomed-slide-done': {
+    frame: ZOOMED_SLIDE,
+    view: 'embed',
+    seed: justDone,
+    expectState: () => {
+      expect(text('[data-testid=status-message]')).toMatch(/Done in 2\.7 s: 1 failed, 1 passed/)
+      expectStatusLines(2)
+      for (const caseInfo of [BARRIER, TWO_TRAINS]) {
+        const name = `.embed-case[data-case="${caseInfo.id}"] .case-name`
+        expect(text(name), 'the whole case name').toBe(caseInfo.id)
+        expectWhole(name)
+      }
+      expectTraceAndModel(ZOOMED_SLIDE)
+      const editor = box('.embed-trace .trace-editor')
+      const spans = [...document.querySelectorAll('.embed-trace .trace-editor .view-line > span')]
+      expect(spans.length).toBeGreaterThan(5)
+      for (const span of spans) {
+        expect(span.getBoundingClientRect().right, `the trace line "${(span as HTMLElement).innerText}" wraps`).toBeLessThanOrEqual(editor.right + 1)
+      }
     },
   },
   'narrow-trace': {
