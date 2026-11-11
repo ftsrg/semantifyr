@@ -12,6 +12,7 @@ import { Icon } from '../ui/icons'
 import type { TraceViewProps } from './registry'
 
 const COLUMN = 176
+const ENVIRONMENT_COLUMN = 104
 const ROW = 30
 const GUTTER = 34
 const BAND_PADDING = 6
@@ -37,6 +38,7 @@ interface Band {
 }
 
 interface Diagram {
+  environment: number
   lifelines: { id: string, x: number }[]
   bands: Band[]
   width: number
@@ -69,11 +71,12 @@ function labelX(placed: PlacedCall, enclosing: PlacedCall | undefined): number {
   return enclosing?.center === placed.center ? right + SELF_LOOP + 6 : right + 7
 }
 
+// the environment takes the first column, the instances the ones after it
 function layout(steps: readonly { number: number, step: TraceCallStep }[], lifelines: readonly string[]): Diagram {
   const columns = new Map(lifelines.map((id, index) => {
-    return [id, GUTTER + COLUMN * (index + 0.5)]
+    return [id, GUTTER + ENVIRONMENT_COLUMN + COLUMN * (index + 0.5)]
   }))
-  let width = GUTTER + COLUMN * lifelines.length
+  let width = GUTTER + ENVIRONMENT_COLUMN + COLUMN * lifelines.length
   let y = 0
   const bands = steps.map(({ number, step }) => {
     const top = y
@@ -95,14 +98,12 @@ function layout(steps: readonly { number: number, step: TraceCallStep }[], lifel
       const enclosing = entry.call.enclosing === null ? undefined : placed[entry.call.enclosing]
       width = Math.max(width, labelX(entry, enclosing) + labelOf(entry.call).length * CHARACTER_WIDTH + 16)
     })
-    if (placed.length === 0) {
-      cursor += ROW
-    }
     cursor += BAND_PADDING
     y = cursor
     return { number, top, bottom: cursor, calls: placed }
   })
   return {
+    environment: GUTTER + ENVIRONMENT_COLUMN / 2,
     lifelines: lifelines.map((id) => {
       return { id, x: columns.get(id) ?? GUTTER }
     }),
@@ -112,24 +113,31 @@ function layout(steps: readonly { number: number, step: TraceCallStep }[], lifel
   }
 }
 
-function Arrow({ placed, enclosing }: { placed: PlacedCall, enclosing: PlacedCall }): React.JSX.Element {
+// the caller's lifeline and how far its activation reaches beside it, none for the environment
+interface Caller {
+  center: number
+  reach: number
+}
+
+function Arrow({ placed, caller, fromEnvironment }: { placed: PlacedCall, caller: Caller, fromEnvironment: boolean }): React.JSX.Element {
+  const className = fromEnvironment ? 'call-arrow from-environment' : 'call-arrow'
   const y = placed.middle + 6
-  if (enclosing.center === placed.center) {
-    const from = enclosing.center + enclosing.offset + 4
+  if (caller.center === placed.center) {
+    const from = caller.center + caller.reach
     const to = placed.center + placed.offset + 4
     const right = to + SELF_LOOP
     return (
-      <g className="call-arrow">
+      <g className={className}>
         <path d={`M${from} ${y - 12} H${right} V${y} H${to + 7}`} />
         <path className="arrowhead" d={`M${to} ${y} l7 -3.5 v7z`} />
       </g>
     )
   }
-  const direction = placed.center > enclosing.center ? 1 : -1
-  const from = enclosing.center + (enclosing.offset + 4) * direction
+  const direction = placed.center > caller.center ? 1 : -1
+  const from = caller.center + caller.reach * direction
   const to = placed.center - 4 * direction
   return (
-    <g className="call-arrow">
+    <g className={className}>
       <path d={`M${from} ${y} H${to - 7 * direction}`} />
       <path className="arrowhead" d={`M${to} ${y} l${-7 * direction} -3.5 v7z`} />
     </g>
@@ -139,10 +147,9 @@ function Arrow({ placed, enclosing }: { placed: PlacedCall, enclosing: PlacedCal
 export function CallsView({ trace }: TraceViewProps): React.JSX.Element {
   const diagram = useMemo(() => {
     const calls = traceCalls(trace.callTrace)
-    const numbered = calls.steps.map((step, index) => {
-      return { number: index + 1, step }
+    const steps = [calls.initialized, ...calls.steps].map((step, number) => {
+      return { number, step }
     })
-    const steps = calls.initialized.calls.length > 0 ? [{ number: 0, step: calls.initialized }, ...numbered] : numbered
     return calls.lifelines.length > 0 ? layout(steps, calls.lifelines) : null
   }, [trace])
   if (!diagram) {
@@ -162,6 +169,9 @@ export function CallsView({ trace }: TraceViewProps): React.JSX.Element {
     <div className="calls-scroll" data-testid="trace-calls">
       <div className="calls" style={{ width: diagram.width }}>
         <div className="calls-heads">
+          <div className="calls-head calls-head-environment" style={{ left: diagram.environment }} title="What runs the model: init once, then main for every step">
+            <span className="calls-head-name">environment</span>
+          </div>
           {diagram.lifelines.map((lifeline) => {
             return (
               <div key={lifeline.id} className="calls-head" style={{ left: lifeline.x }} title={lifeline.id}>
@@ -180,21 +190,20 @@ export function CallsView({ trace }: TraceViewProps): React.JSX.Element {
               </g>
             )
           })}
+          <line className="lifeline lifeline-environment" x1={diagram.environment} y1="0" x2={diagram.environment} y2={diagram.height} />
           {diagram.lifelines.map((lifeline) => {
             return <line key={lifeline.id} className="lifeline" x1={lifeline.x} y1="0" x2={lifeline.x} y2={diagram.height} />
           })}
           {diagram.bands.map((band) => {
-            if (band.calls.length === 0) {
-              return <text key={`empty-${band.number}`} className="band-empty" x={GUTTER + 10} y={band.top + BAND_PADDING + ROW / 2 + 4}>no calls</text>
-            }
             return band.calls.map((placed, index) => {
               const enclosing = placed.call.enclosing === null ? undefined : band.calls[placed.call.enclosing]
+              const caller = enclosing ? { center: enclosing.center, reach: enclosing.offset + 4 } : { center: diagram.environment, reach: 0 }
               return (
                 <g key={`${band.number}-${index}`} className="call">
                   <title>{titleOf(placed.call)}</title>
                   <rect className="activation" x={placed.center + placed.offset - 4} y={placed.middle - 11} width="8" height={Math.max(22, placed.bottom - placed.middle + 11)} rx="2" />
                   <text x={labelX(placed, enclosing)} y={placed.middle - 1}>{labelOf(placed.call)}</text>
-                  {enclosing ? <Arrow placed={placed} enclosing={enclosing} /> : null}
+                  <Arrow placed={placed} caller={caller} fromEnvironment={!enclosing} />
                 </g>
               )
             })

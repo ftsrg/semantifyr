@@ -143,7 +143,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       document.querySelector<HTMLElement>('.embed-trace .trace-views [data-view=calls]')!.click()
     },
     expectState: () => {
-      expect(count('.embed-trace [data-testid=trace-calls] .call')).toBe(6)
+      expect(count('.embed-trace [data-testid=trace-calls] .call')).toBe(10)
     },
   },
   'address-error': {

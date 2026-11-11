@@ -37,32 +37,53 @@ describe("traceStates", () => {
 });
 
 describe("traceCalls", () => {
-    it("lists the calls of a step each before the calls it encloses, and a lifeline per instance in the order of its first call", () => {
-        const calls = traceCalls({
-            initializedStep: { traces: [] },
-            steps: [
-                {
-                    traces: [
-                        entry("root.track.transition", "Transition::fire", [entry("root.track.port", "Port::send")]),
-                        entry("root", "Case::passTime"),
-                    ],
-                },
-                { traces: [entry("root.track.port", "Port::send")] },
-            ],
-        });
+    const trace = {
+        initializedStep: { traces: [] },
+        steps: [
+            {
+                traces: [
+                    entry("root.track.transition", "Transition::fire", [entry("root.track.port", "Port::send")]),
+                    entry("root", "Case::passTime"),
+                ],
+            },
+            { traces: [] },
+        ],
+    };
 
-        expect(calls.steps[0]?.calls.map((call) => {
-            return [call.self, call.enclosing, call.depth];
+    it("starts every step with the environment's call on the root instance, init first and main after it, which encloses the recorded calls", () => {
+        const calls = traceCalls(trace);
+
+        expect(calls.initialized.calls.map((call) => {
+            return [call.self, call.calledTransition, call.enclosing, call.depth];
         })).toEqual([
-            ["root.track.transition", null, 0],
-            ["root.track.port", 0, 1],
-            ["root", null, 0],
+            ["root", "init", null, 0],
         ]);
-        expect(calls.lifelines).toEqual(["root.track.transition", "root.track.port", "root"]);
+        expect(calls.steps.map((step) => {
+            return step.calls.map((call) => {
+                return [call.self, call.calledTransition, call.enclosing, call.depth];
+            });
+        })).toEqual([
+            [
+                ["root", "main", null, 0],
+                ["root.track.transition", "Transition::fire", 0, 1],
+                ["root.track.port", "Port::send", 1, 2],
+                ["root", "Case::passTime", 0, 1],
+            ],
+            [
+                ["root", "main", null, 0],
+            ],
+        ]);
     });
 
-    it("has no lifeline when no call was recorded", () => {
-        expect(traceCalls({ initializedStep: { traces: [] }, steps: [{ traces: [] }] }).lifelines).toEqual([]);
+    it("has a lifeline for the root instance, then one per instance in the order of its first call", () => {
+        expect(traceCalls(trace).lifelines).toEqual(["root", "root.track.transition", "root.track.port"]);
+    });
+
+    it("has no lifeline and no step when no call was recorded", () => {
+        const calls = traceCalls({ initializedStep: { traces: [] }, steps: [{ traces: [] }] });
+
+        expect(calls.lifelines).toEqual([]);
+        expect(calls.steps).toEqual([]);
     });
 });
 

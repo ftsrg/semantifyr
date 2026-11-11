@@ -495,19 +495,21 @@ code, .mono { font-family: var(--font-mono); font-feature-settings: "calt" 0; }
 .calls-heads { position: sticky; top: 0; z-index: 2; height: 30px; background: var(--surface-panel); border-bottom: 1px solid var(--border-faint); }
 .calls-head { position: absolute; top: 7px; transform: translateX(-50%); white-space: nowrap; }
 .calls-head-name { font-family: var(--font-mono); font-size: 11.5px; font-weight: 600; color: var(--text-primary); }
+.calls-head-environment .calls-head-name { font-family: var(--font-sans); font-style: italic; font-weight: 500; color: var(--text-tertiary); }
 .calls svg { display: block; overflow: visible; }
 .lifeline { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2 3; }
 .band-rule { stroke: var(--border-faint); stroke-width: 1; }
 .band-fill { fill: transparent; }
 .band:hover .band-fill { fill: var(--surface-hover); }
 .band-number { fill: var(--text-tertiary); font-family: var(--font-mono); font-size: 11.5px; font-weight: 600; text-anchor: end; }
-.band-empty { fill: var(--text-disabled); font-family: var(--font-sans); font-size: 11px; font-style: italic; }
 .activation { fill: var(--surface-raised); stroke: var(--text-tertiary); stroke-width: 1.2; }
 .call:hover .activation { stroke: var(--text-primary); fill: var(--surface-selected); }
 .call text { fill: var(--text-secondary); font-family: var(--font-mono); font-size: 11px; paint-order: stroke; stroke: var(--surface-panel); stroke-width: 4px; stroke-linejoin: round; }
 .call:hover text { fill: var(--text-primary); }
 .call-arrow path { stroke: var(--text-secondary); stroke-width: 1.2; fill: none; stroke-linejoin: round; }
 .call-arrow .arrowhead { fill: var(--text-secondary); stroke: none; }
+.call-arrow.from-environment path { stroke: var(--text-tertiary); }
+.call-arrow.from-environment .arrowhead { fill: var(--text-tertiary); stroke: none; }
 .calls-empty { display: flex; gap: var(--space-4); align-items: flex-start; }
 .calls-empty .icon { margin-top: 2px; }
 .views-divider { align-self: center; width: 1px; height: 14px; margin: 0 var(--space-2); background: var(--border-strong); }
