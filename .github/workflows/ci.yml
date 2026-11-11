@@ -86,6 +86,16 @@ jobs:
           name: live-screens
           path: subprojects/semantifyr-live/frontend/build/screens/
           if-no-files-found: warn
+      - name: Run the live UI tests
+        if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
+        run: npm run ui -w @ftsrg/semantifyr-live-frontend
+      - name: Upload the evidence of failed live UI tests
+        if: ${{ matrix.os == 'ubuntu-latest' && failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: live-ui-evidence
+          path: subprojects/semantifyr-live/frontend/build/evidence/
+          if-no-files-found: ignore
       - name: Read the VS Code version of the integration test
         id: vscode
         if: ${{ matrix.os == 'ubuntu-latest' }}
@@ -249,6 +259,13 @@ jobs:
         env:
           SEMANTIFYR_LIVE_URL: http://localhost:8080
         run: npm run flows -w @ftsrg/semantifyr-live-frontend
+      - name: Upload the evidence of failed live flows
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: live-flows-evidence
+          path: subprojects/semantifyr-live/frontend/build/evidence/
+          if-no-files-found: ignore
       - name: Show the container log
         if: ${{ failure() }}
         run: docker logs live
