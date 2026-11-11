@@ -4,8 +4,10 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { chromium, type Browser, type Locator, type Page } from 'playwright'
-import { expect } from 'vitest'
+import { chromium, type Browser, type BrowserContext, type Locator, type Page } from 'playwright'
+import { expect, test as base } from 'vitest'
+
+import { keepEvidence, recordEvidence } from '../__ui__/evidence'
 
 const url = process.env.SEMANTIFYR_LIVE_URL
 if (!url) {
@@ -18,31 +20,46 @@ export const SLOW = 4 * 60 * 1000
 
 const FINISHED = /status-(passed|failed|inconclusive|error)\b/
 
-export async function launch(): Promise<Browser> {
-  const executablePath = process.env.SCREEN_TEST_CHROMIUM
-  return chromium.launch(executablePath ? { executablePath } : {})
+export interface Flow {
+  open: (address: string, viewport?: { width: number, height: number }) => Promise<Page>
 }
 
-const pageErrors: string[] = []
-
-// every page a flow opens reports its uncaught errors, its workers' included, which fail the flow
-export async function newPage(browser: Browser, viewport: { width: number, height: number }): Promise<Page> {
-  const page = await browser.newPage({ viewport })
-  page.on('pageerror', (error) => {
-    pageErrors.push(`${page.url()}: ${error.stack ?? error.message}`)
-  })
-  return page
-}
-
-export function takePageErrors(): string[] {
-  return pageErrors.splice(0)
-}
-
-export async function openPage(browser: Browser, path: string): Promise<Page> {
-  const page = await newPage(browser, { width: 1440, height: 900 })
-  await page.goto(`${LIVE_URL}${path}`)
-  return page
-}
+// each flow records its trace in a context of its own, kept with a screenshot when the flow fails; an uncaught error in a page fails the flow
+export const test = base.extend<{ flow: Flow, browser: Browser }>({
+  browser: [
+    // vitest reads the fixtures a fixture needs from the pattern of its first parameter, and this one needs none
+    // eslint-disable-next-line no-empty-pattern
+    async ({}, provide) => {
+      const executablePath = process.env.SCREEN_TEST_CHROMIUM
+      const browser = await chromium.launch(executablePath ? { executablePath } : {})
+      await provide(browser)
+      await browser.close()
+    },
+    { scope: 'worker' },
+  ],
+  flow: async ({ browser, task }, provide) => {
+    const pageErrors: string[] = []
+    const contexts: BrowserContext[] = []
+    await provide({
+      open: async (address, viewport = { width: 1440, height: 900 }) => {
+        const context = await browser.newContext({ viewport, serviceWorkers: 'block' })
+        await recordEvidence(context)
+        contexts.push(context)
+        const page = await context.newPage()
+        page.on('pageerror', (error) => {
+          pageErrors.push(`${page.url()}: ${error.stack ?? error.message}`)
+        })
+        await page.goto(`${LIVE_URL}${address}`)
+        return page
+      },
+    })
+    for (const context of contexts) {
+      await keepEvidence(context, 'flows', task.name, task.result?.state === 'fail' || pageErrors.length > 0)
+      await context.close()
+    }
+    expect(pageErrors, 'uncaught errors in the page').toEqual([])
+  },
+})
 
 // every case of the model reaches a verdict, whichever engines the server has
 export async function verifyAll(cases: Locator, verifyButton: Locator): Promise<void> {
@@ -72,30 +89,4 @@ export async function verifyAll(cases: Locator, verifyButton: Locator): Promise<
 // a token of the model's text, by the line that holds it
 export function token(page: Page, line: string, text: string): Locator {
   return page.locator('.view-line', { hasText: line }).locator('span > span').filter({ hasText: text }).last()
-}
-
-// puts the cursor on the first occurrence of `text` in the document shown, `offset` characters into it
-export async function cursorAt(page: Page, text: string, offset: number): Promise<void> {
-  await page.locator('section.editor .view-lines').first().click()
-  await page.keyboard.press('Control+Home')
-  await page.keyboard.press('Control+f')
-  await page.keyboard.type(text)
-  await page.keyboard.press('Enter')
-  await page.keyboard.press('Escape')
-  await page.keyboard.press('ArrowLeft')
-  for (let step = 0; step < offset; step++) {
-    await page.keyboard.press('ArrowRight')
-  }
-}
-
-// the tab shown and the text of the line the cursor is on
-export async function shownPlace(page: Page): Promise<{ tab: string, line: string }> {
-  return page.evaluate(() => {
-    const tab = document.querySelector('.tabs [role="tab"][aria-selected="true"]')?.textContent ?? ''
-    const top = document.querySelector<HTMLElement>('section.editor .view-overlays .current-line')?.parentElement?.style.top
-    const line = [...document.querySelectorAll<HTMLElement>('section.editor .view-line')].find((candidate) => {
-      return candidate.style.top === top
-    })?.textContent ?? ''
-    return { tab, line: line.replace(/\u00a0/g, ' ').trim() }
-  })
 }
