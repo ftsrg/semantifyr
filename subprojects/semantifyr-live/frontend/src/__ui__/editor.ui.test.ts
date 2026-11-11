@@ -19,7 +19,7 @@ async function currentLine(page: Page): Promise<string> {
     const line = [...document.querySelectorAll<HTMLElement>('section.editor .view-line')].find((candidate) => {
       return candidate.style.top === top
     })
-    return (line?.textContent ?? '').replace(/ /g, ' ').trim()
+    return (line?.textContent ?? '').replace(/\u00a0/g, ' ').trim()
   })
 }
 
