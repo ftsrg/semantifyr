@@ -183,6 +183,9 @@ export function shellStatus(input: ShellStatusInput): ShellStatus {
     return connectionProblem
   }
   const step = currentStep(initialization)
+  if (step?.state === 'failed' && step.reason !== undefined) {
+    return { kind: 'problem', text: step.reason }
+  }
   if (input.catalog === 'loading' || !isInitialized(initialization)) {
     const label = step ? `: ${lowerFirst(step.label)}` : ''
     return { kind: 'busy', text: `Initializing ${input.languageName}${label}` }

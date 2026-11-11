@@ -100,7 +100,7 @@ export function fakeRuntime(flavor: LiveFlavor, client: LspClient): FakeRuntime 
     initialization,
     derivedDocuments: constantStore([]),
     modelOxsts: constantStore(null),
-    libraryDocuments: [],
+    libraryDocuments: constantStore([]),
     readLibrary: async () => {
       return null
     },
@@ -182,7 +182,7 @@ export interface TestLive {
 }
 
 // A Live over fake runtimes that answer through the given client; the editor's models are plain text
-export function createTestLive(client: LspClient, served: readonly FlavorInfo[] = servedFlavors, options: Pick<LiveOptions, 'defaultFlavorId' | 'server' | 'catalogRetryMs'> = {}): TestLive {
+export function createTestLive(client: LspClient, served: readonly FlavorInfo[] = servedFlavors, options: Pick<LiveOptions, 'defaultFlavorId' | 'server' | 'catalogRetryMs' | 'discoveryRetryMs' | 'discoveryTimeoutMs'> = {}): TestLive {
   const models = fakeModelDocuments()
   const runtimes: FakeRuntime[] = []
   const live = createLive({

@@ -94,7 +94,8 @@ function TraceOfCase({ caseState, flavor, readOnlyTabs, growing, wrapping }: Tra
           wrapping={wrapping === true}
           openTab={readOnlyTabs === true
             ? (document) => {
-              live.tabs.open(document)
+              const documentKey = live.workspace.get().documentKey
+              live.tabs.open(documentKey === null ? document : { ...document, trace: { documentKey, caseId: caseState.caseInfo.id, view: view.id, shown: trace } })
             }
             : null}
         />

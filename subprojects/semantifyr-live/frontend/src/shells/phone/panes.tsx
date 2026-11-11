@@ -189,12 +189,13 @@ function Initialization(): React.JSX.Element {
     : initializationOf(initializationStepsOf(languageId, window.location.origin)).steps.map((step, index) => {
       return index === 0 ? { ...step, state: waiting ? 'failed' as const : 'running' as const, startedAt: now } : step
     })
-  const failed = steps.some((step) => {
+  const failedStep = steps.find((step) => {
     return step.state === 'failed'
   })
+  const failed = failedStep !== undefined
   const note = waiting
     ? 'The server is not answering. The model can be edited and its verification cases are known once it answers.'
-    : failed ? 'The verification cases are known only after initialization.' : presentation.initializationNote
+    : failedStep?.reason ?? (failed ? 'The verification cases are known only after initialization.' : presentation.initializationNote)
   return (
     <div className="phone-init" data-language={languageId}>
       <div className="phone-init-title">

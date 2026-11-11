@@ -154,16 +154,17 @@ function Initialization(): React.JSX.Element {
     : initializationOf(initializationStepsOf(languageId, window.location.origin)).steps.map((step, index) => {
       return index === 0 ? { ...step, state: waiting ? 'failed' as const : 'running' as const, startedAt: now } : step
     })
-  const failed = steps.some((step) => {
+  const failedStep = steps.find((step) => {
     return step.state === 'failed'
   })
+  const failed = failedStep !== undefined
   const retrying = secondsToRetry(connection, now)
   const trouble = waiting ? 'The server is not answering.' : connection.refused ? 'The server refused the session: it is at capacity.' : retrying === null ? null : 'The connection was lost.'
   const note = waiting
     ? 'The server is not answering. The model can be edited and its verification cases are known once it answers.'
     : trouble !== null
       ? `${trouble} The editor works; the verification cases are known once a session is up.`
-    : failed ? 'The verification cases are known only after initialization.' : presentation.initializationNote
+    : failedStep?.reason ?? (failed ? 'The verification cases are known only after initialization.' : presentation.initializationNote)
   const failedWord = waiting ? 'retrying' : retrying ? `retrying in ${retrying} s` : retrying === 0 ? 'retrying' : 'failed'
   return (
     <div className="initialization" data-language={languageId}>

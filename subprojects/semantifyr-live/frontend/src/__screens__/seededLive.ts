@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { PortfolioInfo, VerificationCaseSpecification, VerificationTrace } from '@semantifyr/editor-common'
+import type { LibrariesResponse, PortfolioInfo, VerificationCaseSpecification, VerificationTrace } from '@semantifyr/editor-common'
 
 import { findExample, liveFlavors, type LiveFlavor } from '../examples'
 import { SemantifyrLiveApi } from '../lib/api/lspExtensions'
-import { librariesOf } from '../lib/language/libraries'
+import { libraryDocumentsOf } from '../lib/language/libraries'
 import { initializationStepsOf } from '../lib/language/presentation'
 import { createLanguageRegistry } from '../lib/language/registry'
 import type { DerivedDocument, LanguageRuntime } from '../lib/language/types'
@@ -60,6 +60,77 @@ export interface Seeded {
 
 const BACKEND = 'http://live.example'
 
+// the libraries' files as the server lists them, the standard library in part
+const LIBRARY_LISTING: LibrariesResponse = {
+  builtin: [
+    'semantifyr.oxsts',
+  ],
+  semantic: {
+    'oxsts-with-gamma-library': [
+      'Actions.oxsts',
+      'Components.oxsts',
+      'Events.oxsts',
+      'Expressions.oxsts',
+      'Ports.oxsts',
+      'Statecharts.oxsts',
+      'Triggers.oxsts',
+      'Variables.oxsts',
+      'Verification.oxsts',
+    ],
+    'oxsts-with-sysmlv2-library': [
+      'Actions.oxsts',
+      'Attributes.oxsts',
+      'Expressions.oxsts',
+      'Items.oxsts',
+      'Parts.oxsts',
+      'Ports.oxsts',
+      'States.oxsts',
+      'Triggers.oxsts',
+      'Verification.oxsts',
+    ],
+    'gamma': [
+      'Actions.oxsts',
+      'Components.oxsts',
+      'Events.oxsts',
+      'Expressions.oxsts',
+      'Ports.oxsts',
+      'Statecharts.oxsts',
+      'Triggers.oxsts',
+      'Variables.oxsts',
+      'Verification.oxsts',
+    ],
+  },
+  sysml: [
+    'Kernel Libraries/Kernel Data Type Library/Collections.kerml',
+    'Kernel Libraries/Kernel Data Type Library/ScalarValues.kerml',
+    'Kernel Libraries/Kernel Data Type Library/VectorValues.kerml',
+    'Kernel Libraries/Kernel Function Library/BaseFunctions.kerml',
+    'Kernel Libraries/Kernel Function Library/BooleanFunctions.kerml',
+    'Systems Library/Actions.sysml',
+    'Systems Library/Allocations.sysml',
+    'Systems Library/AnalysisCases.sysml',
+    'Systems Library/Attributes.sysml',
+    'Systems Library/Calculations.sysml',
+    'Systems Library/Cases.sysml',
+    'Systems Library/Connections.sysml',
+    'Systems Library/Constraints.sysml',
+    'Systems Library/Flows.sysml',
+    'Systems Library/Interfaces.sysml',
+    'Systems Library/Items.sysml',
+    'Systems Library/Metadata.sysml',
+    'Systems Library/Parts.sysml',
+    'Systems Library/Ports.sysml',
+    'Systems Library/Requirements.sysml',
+    'Systems Library/StandardViewDefinitions.sysml',
+    'Systems Library/States.sysml',
+    'Systems Library/SysML.sysml',
+    'Systems Library/UseCases.sysml',
+    'Systems Library/VerificationCases.sysml',
+    'Systems Library/Views.sysml',
+    'Verification.sysml',
+  ],
+}
+
 export const CONNECTED = connectionConnected(INITIAL_CONNECTION, Date.now())
 
 function initialization(languageId: string, runningStep: string | null): InitializationState {
@@ -83,7 +154,7 @@ function runtimeOf(flavor: LiveFlavor, connection: ConnectionState, steps: Initi
     initialization: createStore(steps),
     derivedDocuments: constantStore([]),
     modelOxsts: constantStore<DerivedDocument | null>(modelOxsts === undefined ? null : { id: 'oxsts', label: 'OXSTS', uri: 'file:///workspace/snippet.oxsts', languageId: 'oxsts', text: modelOxsts }),
-    libraryDocuments: librariesOf(flavor.id),
+    libraryDocuments: constantStore(libraryDocumentsOf(flavor.id, LIBRARY_LISTING)),
     api: new SemantifyrLiveApi(() => {
       return undefined
     }, () => {

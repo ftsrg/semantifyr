@@ -7,7 +7,7 @@
 import type { LiveFlavor } from '../../examples'
 import type { LanguageRuntime } from '../language/types'
 import type { ModelDocuments } from '../session/modelDocuments'
-import { finishThrough, InitializationSteps, isInitialized } from '../stores/initialization'
+import { failStep, finishThrough, InitializationSteps, isInitialized } from '../stores/initialization'
 import type { Settings } from '../stores/settings'
 import { createStore, type ReadableStore } from '../stores/store'
 import {
@@ -43,6 +43,10 @@ export interface VerificationOptions {
   current: () => { target: VerificationTarget, runtime: LanguageRuntime, flavor: LiveFlavor } | null
   portfolioId: () => string | undefined
   discoveryDelayMs: number
+  // the waits before asking a session again whose discovery failed; once they are spent, initialization fails with the reason
+  discoveryRetryMs: readonly number[]
+  // how long a discovery may go unanswered
+  discoveryTimeoutMs: number
 }
 
 export interface Verification {
@@ -94,6 +98,20 @@ interface Connected {
   client: LspClient
 }
 
+function answeredWithin<T>(answer: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | null = null
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error(message))
+    }, timeoutMs)
+  })
+  return Promise.race([answer, timeout]).finally(() => {
+    if (timer) {
+      clearTimeout(timer)
+    }
+  })
+}
+
 function firstWithTrace(cases: readonly VerificationCaseState[]): VerificationCaseState | undefined {
   return cases.find((caseState) => {
     return caseState.status === 'failed' && caseState.trace !== undefined
@@ -109,6 +127,7 @@ export function createVerification(options: VerificationOptions): Verification {
   const timing = createStore<RunTiming | null>(null)
   let run: ActiveRun | null = null
   let discoveryTimer: ReturnType<typeof setTimeout> | null = null
+  let retryTimer: ReturnType<typeof setTimeout> | null = null
   let discoveryGeneration = 0
   let selectionHeld = false
 
@@ -271,7 +290,16 @@ export function createVerification(options: VerificationOptions): Verification {
     })
   }
 
-  const discover = async (): Promise<void> => {
+  const clearRetryTimer = (): void => {
+    if (retryTimer) {
+      clearTimeout(retryTimer)
+      retryTimer = null
+    }
+  }
+
+  // the session may not have the document yet, or may not answer; it is asked again, and initialization fails with the reason once the waits are spent
+  const discover = async (attempt = 0): Promise<void> => {
+    clearRetryTimer()
     const connection = connected()
     if (!connection || !options.modelDocuments.isOpen(connection.target.uri)) {
       return
@@ -283,7 +311,11 @@ export function createVerification(options: VerificationOptions): Verification {
       return { ...previous, discovery: 'discovering' }
     })
     try {
-      const discovered = await discoverVerificationCases(connection.client, connection.flavor.discoveryCommand, uri)
+      const discovered = await answeredWithin(
+        discoverVerificationCases(connection.client, connection.flavor.discoveryCommand, uri),
+        options.discoveryTimeoutMs,
+        `The server did not list the verification cases within ${Math.round(options.discoveryTimeoutMs / 1000)} s.`,
+      )
       if (generation !== discoveryGeneration) {
         return
       }
@@ -293,12 +325,29 @@ export function createVerification(options: VerificationOptions): Verification {
         }
         return { ...previous, discovery: 'discovered', cases: mergeDiscoveredCases(previous.cases, discovered) }
       })
-    } catch {
-      if (generation === discoveryGeneration) {
-        setState((previous) => {
-          return { ...previous, discovery: 'idle' }
-        })
+    } catch (error) {
+      if (generation !== discoveryGeneration) {
+        return
       }
+      setState((previous) => {
+        return { ...previous, discovery: 'idle' }
+      })
+      const current = options.current()
+      if (current?.runtime !== connection.runtime || current.target.key !== key) {
+        return
+      }
+      const wait = options.discoveryRetryMs[attempt]
+      if (wait !== undefined) {
+        retryTimer = setTimeout(() => {
+          retryTimer = null
+          void discover(attempt + 1)
+        }, wait)
+        return
+      }
+      const reason = error instanceof Error && error.message !== '' ? error.message : 'The server did not answer.'
+      connection.runtime.initialization.update((state) => {
+        return failStep(state, InitializationSteps.cases.id, Date.now(), `The verification cases could not be listed. ${reason}`)
+      })
       return
     }
     connection.runtime.initialization.update((state) => {
@@ -336,6 +385,7 @@ export function createVerification(options: VerificationOptions): Verification {
     discover,
     scheduleDiscovery: () => {
       clearDiscoveryTimer()
+      clearRetryTimer()
       discoveryTimer = setTimeout(() => {
         discoveryTimer = null
         void discover()
@@ -384,6 +434,7 @@ export function createVerification(options: VerificationOptions): Verification {
     },
     dispose: () => {
       clearDiscoveryTimer()
+      clearRetryTimer()
       cancel()
     },
   }

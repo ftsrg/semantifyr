@@ -15,7 +15,7 @@ import type { LanguageRuntime } from '../language/types'
 import type { ModelDocuments } from '../session/modelDocuments'
 import type { ProblemEntry } from '../session/problems'
 import { INITIAL_CONNECTION, type ConnectionState } from '../stores/connection'
-import { initializationOf, type InitializationState } from '../stores/initialization'
+import { initializationOf, InitializationSteps, type InitializationState } from '../stores/initialization'
 import type { Settings } from '../stores/settings'
 import { createStore, type ReadableStore, type Store } from '../stores/store'
 import type { ResolvedColorMode } from '../util/colorMode'
@@ -27,6 +27,12 @@ import { createVerification, type RunTiming } from './verification'
 
 const CATALOG_RETRY_MS = 5000
 const DISCOVERY_DELAY_MS = 500
+const DISCOVERY_RETRY_MS = [
+  1000,
+  2000,
+  4000,
+]
+const DISCOVERY_TIMEOUT_MS = 30000
 
 export type CatalogStatus =
   | 'loading'
@@ -93,6 +99,8 @@ export interface LiveOptions {
   createRegistry?: (flavors: readonly [LiveFlavor, ...LiveFlavor[]]) => LanguageRegistry
   catalogRetryMs?: number
   discoveryDelayMs?: number
+  discoveryRetryMs?: readonly number[]
+  discoveryTimeoutMs?: number
 }
 
 export interface Live {
@@ -145,6 +153,12 @@ export interface Live {
   verificationPortfolioId: () => string | undefined
 }
 
+function isFindingCases(state: InitializationState): boolean {
+  return state.steps.some((step) => {
+    return step.id === InitializationSteps.cases.id && step.state === 'running'
+  })
+}
+
 export function documentKey(flavorId: string, exampleId: string, shared: boolean): string {
   return shared ? `${flavorId}#shared` : `${flavorId}#${exampleId}`
 }
@@ -193,6 +207,8 @@ export function createLive(options: LiveOptions): Live {
     settings,
     modelDocuments,
     discoveryDelayMs: options.discoveryDelayMs ?? DISCOVERY_DELAY_MS,
+    discoveryRetryMs: options.discoveryRetryMs ?? DISCOVERY_RETRY_MS,
+    discoveryTimeoutMs: options.discoveryTimeoutMs ?? DISCOVERY_TIMEOUT_MS,
     portfolioId: verificationPortfolioId,
     current: () => {
       const { flavor, runtime } = workspace.get()
@@ -233,8 +249,13 @@ export function createLive(options: LiveOptions): Live {
         verification.sessionLost()
       }
     }
+    // the model's first diagnostics show the session has it, so its cases are asked for then too
     const copyInitialization = (): void => {
+      const findingBefore = isFindingCases(initialization.get())
       initialization.set(runtime.initialization.get())
+      if (!findingBefore && isFindingCases(initialization.get())) {
+        void verification.discover()
+      }
     }
     copyConnection()
     copyInitialization()

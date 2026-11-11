@@ -128,6 +128,8 @@ export interface SysmlBridgeOptions {
 export interface SysmlBridge {
   client: LspClient
   readMapping: () => Promise<SysmlMapping>
+  // keeps the OXSTS of the model open in the session, where its read-only document navigates
+  showOxsts: (text: string) => void
   translateNotification: (method: string, params: unknown) => unknown
   witnessUriOf: (traceUri: string) => string | undefined
 }
@@ -339,6 +341,12 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
       },
     },
     readMapping,
+    showOxsts: (text) => {
+      const client = options.getOxstsClient()
+      if (client) {
+        syncOxsts(client, text)
+      }
+    },
     translateNotification: (method, params) => {
       return method === SemantifyrLiveMethods.VERIFICATIONS_CHANGED
         ? translateActive(params as VerificationsChangedParams | null)

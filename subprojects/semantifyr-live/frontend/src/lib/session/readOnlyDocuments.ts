@@ -44,6 +44,15 @@ export function fileUriOfLibrary(libraryUri: string): string {
   return `file://${libraryUri.slice(`${LIBRARY_SCHEME}:`.length)}`
 }
 
+// the address a language server knows a library file by: the session's file, or the worker's for the SysML standard library
+export function serverUriOfLibrary(libraryUri: string): string {
+  const path = libraryUri.slice(`${LIBRARY_SCHEME}:`.length)
+  if (path.startsWith(SYSML_LIBRARY_PATH)) {
+    return `${workerLibraryPrefix()}${path.slice(SYSML_LIBRARY_PATH.length)}`
+  }
+  return `file://${path}`
+}
+
 export function derivedUriOf(id: string, fileName: string): string {
   return `${DERIVED_SCHEME}:/${id}/${fileName}`
 }

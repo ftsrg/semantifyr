@@ -12,8 +12,7 @@ import type { VerificationTrace } from '@semantifyr/editor-common'
 import type { LanguageRuntime } from '../lib/language/types'
 import { openDerivedDocument, whenMonacoReady } from '../lib/session/monaco'
 import { traceUriOf } from '../lib/session/readOnlyDocuments'
-import type { ReadOnlyDocument } from '../lib/workspace/documentTabs'
-import { useLive } from '../lib/workspace/liveContext'
+import type { ReadOnlyDocument, TraceOfTab } from '../lib/workspace/documentTabs'
 import type { Live } from '../lib/workspace/live'
 import { Icon } from '../ui/icons'
 import type { TraceSourceContext, TraceView, TraceViewProps } from './registry'
@@ -75,7 +74,7 @@ async function traceModel(uri: string, languageId: string, text: string): Promis
   return created
 }
 
-async function readText(runtime: LanguageRuntime | null, fileUri: string): Promise<string | null> {
+export async function readText(runtime: LanguageRuntime | null, fileUri: string): Promise<string | null> {
   try {
     return await runtime?.api.readDocument(fileUri) ?? null
   } catch {
@@ -83,7 +82,7 @@ async function readText(runtime: LanguageRuntime | null, fileUri: string): Promi
   }
 }
 
-export function traceTabOf(source: TraceTextSource, text: string): ReadOnlyDocument {
+export function traceTabOf(source: TraceTextSource, text: string, trace?: TraceOfTab): ReadOnlyDocument {
   return {
     id: source.tabId,
     label: source.label,
@@ -91,33 +90,22 @@ export function traceTabOf(source: TraceTextSource, text: string): ReadOnlyDocum
     languageId: source.languageId,
     banner: source.banner,
     text,
+    trace,
   }
 }
 
 // opens the text as the read-only tab the trace area's Open opens
-export async function openTraceText(live: Live, runtime: LanguageRuntime | null, source: TraceTextSource): Promise<void> {
+export async function openTraceText(live: Live, runtime: LanguageRuntime | null, source: TraceTextSource, trace: TraceOfTab): Promise<void> {
   const text = await readText(runtime, source.fileUri)
   if (text !== null) {
-    live.tabs.open(traceTabOf(source, text))
-  }
-}
-
-// an open tab of the same document keeps the text the inline view shows
-function updateOpenTab(live: Live, tabId: string, uri: string, text: string): void {
-  const open = live.tabs.state.get().tabs.some((tab) => {
-    return tab.id === tabId && tab.uri === uri
-  })
-  if (open) {
-    live.tabs.update(tabId, text)
+    live.tabs.open(traceTabOf(source, text, trace))
   }
 }
 
 function useTraceText(source: TraceTextSource | null, runtime: LanguageRuntime | null, trace: VerificationTrace): TraceText {
-  const live = useLive()
   const [text, setText] = useState<TraceText>({ state: 'loading' })
   const fileUri = source?.fileUri ?? null
   const languageId = source?.languageId ?? ''
-  const tabId = source?.tabId ?? ''
   useEffect(() => {
     let current = true
     const stale = (): boolean => {
@@ -138,13 +126,12 @@ function useTraceText(source: TraceTextSource | null, runtime: LanguageRuntime |
       if (stale()) {
         return
       }
-      updateOpenTab(live, tabId, uri, read)
       setText(model ? { state: 'ready', text: read, model } : { state: 'missing' })
     })()
     return () => {
       current = false
     }
-  }, [live, runtime, fileUri, languageId, tabId, trace])
+  }, [runtime, fileUri, languageId, trace])
   return text
 }
 

@@ -5,7 +5,7 @@
  */
 
 import * as vscode from 'vscode'
-import { editor as monacoEditor, Uri } from 'monaco-editor'
+import { editor as monacoEditor, KeyCode, KeyMod, Uri } from 'monaco-editor'
 import type { Range } from '@semantifyr/editor-common'
 
 import type { ReadableStore } from '../stores/store'
@@ -48,6 +48,19 @@ type TextModel = monacoEditor.ITextModel
 
 const MARK_CLASS = 'verdict-glyph'
 
+// the selection sources of going to a definition in the document shown
+const JUMP_SOURCES = [
+  'code.jump',
+  'code.navigation',
+]
+
+interface Place {
+  // the read-only tab, null for the model
+  tab: string | null
+  line: number
+  column: number
+}
+
 function readOnlyMessageOf(modelLocked: boolean): { value: string } {
   return { value: modelLocked ? 'Press Edit to change the model.' : 'Read-only. Back to the model to edit.' }
 }
@@ -85,10 +98,10 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
   const viewStates = new Map<string, monacoEditor.ICodeEditorViewState | null>()
   const ownedModels = new Map<string, TextModel>()
   const openedDocuments = new Map<string, vscode.TextDocument>()
-  let markIds: string[] = []
   const caseOfMark = new Map<string, string>()
   let shownSelection = 0
   let restoreModel = (): void => {}
+  let removeMarks = (): void => {}
 
   const caseStates = (): readonly VerificationCaseState[] => {
     const key = live.workspace.get().documentKey
@@ -160,9 +173,20 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
     })
     refreshProblems()
 
+    // the model outlives the editor, so the marks an earlier editor put on it are taken off too
+    const shownMarks = (): string[] => {
+      return model.getAllMarginDecorations().filter((decoration) => {
+        return decoration.options.glyphMarginClassName?.split(' ').includes(MARK_CLASS) === true
+      }).map((decoration) => {
+        return decoration.id
+      })
+    }
     const refreshMarks = (): void => {
-      const cases = caseStates()
-      markIds = model.deltaDecorations(markIds, cases.map(markOf))
+      if (model.isDisposed()) {
+        return
+      }
+      const cases = verdictMarks ? caseStates() : []
+      const markIds = model.deltaDecorations(shownMarks(), cases.map(markOf))
       caseOfMark.clear()
       markIds.forEach((id, index) => {
         const caseState = cases[index]
@@ -171,10 +195,24 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
         }
       })
     }
+    removeMarks = () => {
+      if (!model.isDisposed()) {
+        model.deltaDecorations(shownMarks(), [])
+      }
+    }
+    // replacing the whole text drops the model's decorations
+    const flushed = model.onDidChangeContent((event) => {
+      if (event.isFlush) {
+        refreshMarks()
+      }
+    })
+    cleanups.push(() => {
+      flushed.dispose()
+    })
     if (verdictMarks) {
       cleanups.push(live.verification.subscribe(refreshMarks), live.workspace.subscribe(refreshMarks))
-      refreshMarks()
     }
+    refreshMarks()
 
     const mouse = editor.onMouseDown((event) => {
       if (event.target.type !== monacoEditor.MouseTargetType.GUTTER_GLYPH_MARGIN || editor.getModel() !== model) {
@@ -202,10 +240,27 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
       mouse.dispose()
     })
 
+    // the places a definition was gone to from, which Back returns to across the tabs
+    const backPlaces: Place[] = []
+    let lastPlace: Place | null = null
+    const placeHere = (): Place | null => {
+      const position = editor.getPosition()
+      return position ? { tab: live.tabs.state.get().active, line: position.lineNumber, column: position.column } : null
+    }
+    const rememberPlace = (place: Place | null): void => {
+      const top = backPlaces.at(-1)
+      if (place && (top?.tab !== place.tab || top.line !== place.line || top.column !== place.column)) {
+        backPlaces.push(place)
+      }
+    }
     const cursor = editor.onDidChangeCursorPosition((event) => {
       if (editor.getModel() === model) {
         options.onCursor({ line: event.position.lineNumber, column: event.position.column })
       }
+      if (JUMP_SOURCES.includes(event.source)) {
+        rememberPlace(lastPlace)
+      }
+      lastPlace = { tab: live.tabs.state.get().active, line: event.position.lineNumber, column: event.position.column }
     })
     cleanups.push(() => {
       cursor.dispose()
@@ -326,7 +381,46 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
       reveal(request.range, false)
     }))
 
+    const goBack = editor.addAction({
+      id: 'semantifyr.navigateBack',
+      label: 'Go Back',
+      keybindings: [
+        KeyMod.Alt | KeyCode.LeftArrow,
+      ],
+      run: () => {
+        const isOpen = (candidate: Place): boolean => {
+          return candidate.tab === null || live.tabs.state.get().tabs.some((tab) => {
+            return tab.id === candidate.tab
+          })
+        }
+        let place = backPlaces.pop()
+        while (place && !isOpen(place)) {
+          place = backPlaces.pop()
+        }
+        if (!place) {
+          return
+        }
+        const position = { line: place.line - 1, character: place.column - 1 }
+        if (place.tab === null) {
+          live.tabs.show(null)
+          show(model, false)
+          reveal({ start: position, end: position }, false)
+          return
+        }
+        const tab = live.tabs.state.get().tabs.find((candidate) => {
+          return candidate.id === place.tab
+        })
+        if (tab) {
+          live.tabs.open(tab, { start: position, end: position })
+        }
+      },
+    })
+    cleanups.push(() => {
+      goBack.dispose()
+    })
+
     cleanups.push(setEditorOpener((modelReference, editorOptions) => {
+      rememberPlace(placeHere())
       const opened = modelReference.object.textEditorModel
       const uri = opened.uri.toString()
       const selection = editorOptions && 'selection' in editorOptions ? editorOptions.selection as { startLineNumber: number, startColumn: number, endLineNumber?: number, endColumn?: number } | undefined : undefined
@@ -388,6 +482,7 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
       await ready
       if (instance) {
         restoreModel()
+        removeMarks()
         await disposeInstance(instance)
         instance = null
       }

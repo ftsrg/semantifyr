@@ -35,7 +35,6 @@ export interface DerivedDocument {
 }
 
 export interface LibraryDocument {
-  // library or semantic-library
   kind: LibraryKind
   // the file URI the language reads it by
   uri: string
@@ -45,6 +44,7 @@ export interface LibraryDocument {
 export type LibraryKind =
   | 'library'
   | 'semantic-library'
+  | 'standard-library'
 
 // Outlives the model's document: switching the example keeps the runtime and what it has loaded
 export interface LanguageRuntime {
@@ -54,7 +54,8 @@ export interface LanguageRuntime {
   readonly derivedDocuments: ReadableStore<readonly DerivedDocument[]>
   // the OXSTS the model compiles to, null for a language that is OXSTS; it may compute only while subscribed
   readonly modelOxsts: ReadableStore<DerivedDocument | null>
-  readonly libraryDocuments: readonly LibraryDocument[]
+  // every file of every library the session has
+  readonly libraryDocuments: ReadableStore<readonly LibraryDocument[]>
   readonly api: SemantifyrLiveApi
   // reads a library file by its file URI
   readLibrary: (uri: string) => Promise<string | null>

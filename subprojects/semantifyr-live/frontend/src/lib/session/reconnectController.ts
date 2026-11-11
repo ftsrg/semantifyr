@@ -47,6 +47,13 @@ export function observeSocketClose(socket: WebSocket, onClose: (close: SocketClo
   }
 }
 
+// a session that did not start in time, which the attempt that follows names as its reason
+export class SessionStartTimeout extends Error {}
+
+function reasonOf(error: unknown): string | undefined {
+  return error instanceof SessionStartTimeout ? error.message : undefined
+}
+
 export interface ReconnectControllerOptions {
   // Nth attempt waits entry N-1; attempts past the end wait the last entry, so the wait grows to a cap and the attempts never end
   backoffMs: readonly number[]
@@ -66,7 +73,7 @@ export interface ReconnectInfo {
 }
 
 export interface ReconnectController {
-  schedule(): void
+  schedule(error?: unknown): void
   cancel(): void
   resetAttempts(): void
   attempts(): number
@@ -94,7 +101,7 @@ export function createReconnectController(options: ReconnectControllerOptions): 
     }
   }
 
-  const schedule = (): void => {
+  const schedule = (error?: unknown): void => {
     if (options.isCancelled() || state.terminated) {
       return
     }
@@ -108,7 +115,7 @@ export function createReconnectController(options: ReconnectControllerOptions): 
     const rejection = sessionLimitReason(close)
     state.attempts += 1
     const delay = delayFor(options.backoffMs, state.attempts)
-    options.onStatus('reconnecting', { reason: rejection ?? 'Connection lost', refused: rejection !== null, retryAt: now() + delay })
+    options.onStatus('reconnecting', { reason: rejection ?? reasonOf(error) ?? 'Connection lost', refused: rejection !== null, retryAt: now() + delay })
     state.timer = setTimeout(() => {
       state.timer = null
       const run = async (): Promise<void> => {
@@ -119,11 +126,11 @@ export function createReconnectController(options: ReconnectControllerOptions): 
           }
           state.attempts = 0
           options.onStatus('connected')
-        } catch {
+        } catch (failure) {
           if (options.isCancelled()) {
             return
           }
-          schedule()
+          schedule(failure)
         }
       }
       void run()

@@ -19,7 +19,8 @@ import {
   type SysmlMapping,
 } from '../session/sysmlBridge'
 import { createStore } from '../stores/store'
-import { librariesOf, readSysmlLibrary, SYSML_LIBRARY_PREFIX } from './libraries'
+import { MODEL_OXSTS_TAB_ID } from '../workspace/libraryTabs'
+import { libraryDocumentsStore, readSysmlLibrary, SYSML_LIBRARY_PREFIX } from './libraries'
 import { initializationStepsOf } from './presentation'
 import { createServedRuntime, type ServedRuntime } from './servedRuntime'
 import type { DerivedDocument, LanguageUnit } from './types'
@@ -90,6 +91,9 @@ export function createSysmlLanguage(id: string, flavors: readonly LiveFlavor[]):
         modelOxsts.set(mappedOxsts(mapping.oxsts ?? null)[0] ?? null)
         mapperDiagnostics ??= vscode.languages.createDiagnosticCollection('semantifyr-mapper')
         mapperDiagnostics.set(vscode.Uri.parse(context.documentUri), toVscodeDiagnostics(mapperProblems(mapping)))
+        if (mapping.oxsts !== undefined) {
+          bridge.showOxsts(mapping.oxsts)
+        }
       }
 
       const refreshMapping = async (): Promise<void> => {
@@ -134,7 +138,13 @@ export function createSysmlLanguage(id: string, flavors: readonly LiveFlavor[]):
         steps: initializationStepsOf(id, context.backendUrl),
         derivedDocuments,
         modelOxsts,
-        libraryDocuments: librariesOf(flavor.id),
+        libraryDocuments: libraryDocumentsStore(flavor.id, context.backendUrl),
+        // the OXSTS of the model is the document the bridge keeps open in the session
+        readOnlyAddresses: {
+          derivedServerUri: (uri) => {
+            return uri.path.startsWith(`/${MODEL_OXSTS_TAB_ID}/`) ? SYSML_OXSTS_URI : null
+          },
+        },
         readOtherLibrary: (uri) => {
           return uri.startsWith(SYSML_LIBRARY_PREFIX) ? readSysmlLibrary(uri, window.location.origin) : undefined
         },

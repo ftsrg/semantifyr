@@ -8,9 +8,9 @@ import type { LanguageClientWrapper } from 'monaco-languageclient/lcwrapper'
 
 import type { LiveFlavor } from '../../examples'
 import { SemantifyrLiveApi } from '../api/lspExtensions'
-import { connectLanguageClient, initializeMonaco, onDiagnosticsOf } from '../session/monaco'
+import { connectLanguageClient, initializeMonaco, onDiagnosticsOf, type ReadOnlyAddresses } from '../session/monaco'
 import { wrapClientWithMetrics, type MetricsTracker } from '../session/lspMetrics'
-import { createReconnectController, type SocketClose } from '../session/reconnectController'
+import { createReconnectController, SessionStartTimeout, type SocketClose } from '../session/reconnectController'
 import {
   connectionConnected,
   connectionLost,
@@ -42,8 +42,12 @@ const RECONNECT_BACKOFF_MS = [
   30000,
 ]
 
+// a server that takes the socket and never answers the start of the session is given up on and asked again
+const SESSION_START_TIMEOUT_MS = 30000
+
 const NO_DERIVED_DOCUMENTS = constantStore<readonly DerivedDocument[]>([])
 const NO_MODEL_OXSTS = constantStore<DerivedDocument | null>(null)
+const NO_LIBRARY_DOCUMENTS = constantStore<readonly LibraryDocument[]>([])
 
 export interface ServedRuntimeOptions {
   backendUrl: string
@@ -58,9 +62,10 @@ export interface ServedRuntimeOptions {
   steps: readonly InitializationStepDefinition[]
   derivedDocuments?: ReadableStore<readonly DerivedDocument[]>
   modelOxsts?: ReadableStore<DerivedDocument | null>
-  libraryDocuments?: readonly LibraryDocument[]
+  libraryDocuments?: ReadableStore<readonly LibraryDocument[]>
   // reads the library files the session does not serve, the rest through the session
   readOtherLibrary?: (uri: string) => Promise<string | null> | undefined
+  readOnlyAddresses?: ReadOnlyAddresses
   clientOf?: (served: LspClient) => LspClient
   translateNotification?: (method: string, params: unknown) => unknown
   afterConnect?: () => Promise<void>
@@ -268,13 +273,23 @@ export function createServedRuntime(options: ServedRuntimeOptions): ServedRuntim
       },
       options.sessionKind,
       options.flavor.languageId,
+      options.readOnlyAddresses,
     )
+    let timeOut = (): void => {}
+    const startTimedOut = new Promise<never>((_resolve, reject) => {
+      timeOut = () => {
+        reject(new SessionStartTimeout(`The server did not start the session within ${SESSION_START_TIMEOUT_MS / 1000} s.`))
+      }
+    })
+    const startTimer = setTimeout(timeOut, SESSION_START_TIMEOUT_MS)
     let connected: LanguageClientWrapper
     try {
-      connected = await Promise.race([starting, closedBeforeStart])
+      connected = await Promise.race([starting, closedBeforeStart, startTimedOut])
     } catch (error) {
       void starting.then(tearDown, () => {})
       throw error
+    } finally {
+      clearTimeout(startTimer)
     }
     if (cancelled) {
       await tearDown(connected)
@@ -299,9 +314,9 @@ export function createServedRuntime(options: ServedRuntimeOptions): ServedRuntim
     }
     try {
       await doConnect()
-    } catch {
+    } catch (error) {
       if (!cancelled) {
-        reconnectController.schedule()
+        reconnectController.schedule(error)
       }
       return
     }
@@ -371,8 +386,8 @@ export function createServedRuntime(options: ServedRuntimeOptions): ServedRuntim
           reportConnected()
         }
       })
-      .catch(() => {
-        reconnectController.schedule()
+      .catch((error: unknown) => {
+        reconnectController.schedule(error)
       })
   }
 
@@ -419,7 +434,7 @@ export function createServedRuntime(options: ServedRuntimeOptions): ServedRuntim
     initialization,
     derivedDocuments: options.derivedDocuments ?? NO_DERIVED_DOCUMENTS,
     modelOxsts: options.modelOxsts ?? NO_MODEL_OXSTS,
-    libraryDocuments: options.libraryDocuments ?? [],
+    libraryDocuments: options.libraryDocuments ?? NO_LIBRARY_DOCUMENTS,
     api,
     readLibrary: (uri) => {
       return options.readOtherLibrary?.(uri) ?? api.readDocument(uri)

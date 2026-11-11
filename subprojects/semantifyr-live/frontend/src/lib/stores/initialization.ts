@@ -19,6 +19,8 @@ export interface InitializationStep extends InitializationStepDefinition {
   state: InitializationStepState
   startedAt: number | null
   finishedAt: number | null
+  // what went wrong, for a failed step that knows
+  reason?: string
 }
 
 export interface InitializationState {
@@ -67,7 +69,7 @@ export function startStep(state: InitializationState, id: string, now: number): 
     if (step.state === 'running' || step.state === 'done') {
       return step
     }
-    return { ...step, state: 'running', startedAt: step.startedAt ?? now, finishedAt: null }
+    return { id: step.id, label: step.label, state: 'running', startedAt: step.startedAt ?? now, finishedAt: null }
   })
 }
 
@@ -76,7 +78,7 @@ export function finishStep(state: InitializationState, id: string, now: number):
     if (step.state === 'done') {
       return step
     }
-    return { ...step, state: 'done', startedAt: step.startedAt ?? now, finishedAt: now }
+    return { id: step.id, label: step.label, state: 'done', startedAt: step.startedAt ?? now, finishedAt: now }
   })
 }
 
@@ -90,12 +92,12 @@ export function finishThrough(state: InitializationState, id: string, now: numbe
   }, state)
 }
 
-export function failStep(state: InitializationState, id: string, now: number): InitializationState {
+export function failStep(state: InitializationState, id: string, now: number, reason?: string): InitializationState {
   return changeStep(state, id, (step) => {
     if (step.state === 'done' || step.state === 'failed') {
       return step
     }
-    return { ...step, state: 'failed', finishedAt: now }
+    return { ...step, state: 'failed', finishedAt: now, ...(reason === undefined ? {} : { reason }) }
   })
 }
 

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { Range } from '@semantifyr/editor-common'
+import type { Range, VerificationTrace } from '@semantifyr/editor-common'
 
 import { createStore, type ReadableStore } from '../stores/store'
 
@@ -18,6 +18,17 @@ export interface ReadOnlyDocument {
   banner: string
   // the text the page owns, for a document under the derived scheme (derivedUriOf); absent, the editor reads the document by its URI
   text?: string | undefined
+  // a trace text follows the case it shows
+  trace?: TraceOfTab | undefined
+}
+
+export interface TraceOfTab {
+  documentKey: string
+  caseId: string
+  // the view of the trace the text is
+  view: string
+  // the trace whose text is shown
+  shown: VerificationTrace
 }
 
 export interface TabSelection {
@@ -40,6 +51,8 @@ export interface DocumentTabs {
   open: (document: ReadOnlyDocument, range?: Range) => void
   // updates the text of an open tab without showing it
   update: (id: string, text: string | undefined) => void
+  // replaces an open tab by another document without showing it
+  replace: (document: ReadOnlyDocument) => void
   close: (id: string) => void
   show: (id: string | null) => void
   closeAll: () => void
@@ -79,6 +92,21 @@ export function createDocumentTabs(): DocumentTabs {
           ...previous,
           tabs: previous.tabs.map((candidate) => {
             return candidate === tab ? { ...tab, text } : candidate
+          }),
+        }
+      })
+    },
+    replace: (document) => {
+      state.update((previous) => {
+        if (!previous.tabs.some((tab) => {
+          return tab.id === document.id
+        })) {
+          return previous
+        }
+        return {
+          ...previous,
+          tabs: previous.tabs.map((tab) => {
+            return tab.id === document.id ? document : tab
           }),
         }
       })

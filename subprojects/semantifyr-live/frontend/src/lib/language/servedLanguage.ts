@@ -9,7 +9,7 @@ import { CompiledOxstsStatus, type CompiledOxstsResult } from '@semantifyr/edito
 import type { LiveFlavor } from '../../examples'
 import type { ModelDocuments } from '../session/modelDocuments'
 import { createDemandStore, type Store } from '../stores/store'
-import { librariesOf } from './libraries'
+import { libraryDocumentsStore } from './libraries'
 import { initializationStepsOf } from './presentation'
 import { createServedRuntime, type ServedRuntime } from './servedRuntime'
 import type { DerivedDocument, LanguageUnit } from './types'
@@ -113,7 +113,7 @@ export function createServedLanguage(id: string, flavors: readonly LiveFlavor[])
         clientLanguageId: flavor.languageId,
         colorMode: context.colorMode,
         steps: initializationStepsOf(id, context.backendUrl),
-        libraryDocuments: librariesOf(flavor.id),
+        libraryDocuments: libraryDocumentsStore(flavor.id, context.backendUrl),
         ...(compiled ? { modelOxsts: compiled.store } : {}),
         onDispose: () => {
           compiled?.dispose()

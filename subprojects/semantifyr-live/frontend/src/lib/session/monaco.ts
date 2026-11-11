@@ -27,7 +27,7 @@ import { normalizeBaseUrl, type NavigateToParams } from '@semantifyr/editor-comm
 import type { ResolvedColorMode } from '../util/colorMode';
 import { observeSocketClose, type SocketClose } from './reconnectController';
 import type { ModelDocuments } from './modelDocuments';
-import { DERIVED_SCHEME, fileUriOfLibrary, isLibraryFileUri, LIBRARY_SCHEME, libraryUriOf, TRACE_SCHEME } from './readOnlyDocuments';
+import { DERIVED_SCHEME, fileUriOfLibrary, isLibraryFileUri, LIBRARY_SCHEME, libraryUriOf, serverUriOfLibrary, TRACE_SCHEME } from './readOnlyDocuments';
 
 // Synced from :semantifyr-vscode by the cloneVscodeLanguageAssets Gradle task.
 import oxstsGrammar from '../../vscode/imported/syntaxes/oxsts.tmLanguage.json';
@@ -238,58 +238,72 @@ function toLibraryUri(uri: vscode.Uri): vscode.Uri {
   return isLibraryFileUri(text) ? vscode.Uri.parse(libraryUriOf(text)) : uri;
 }
 
-type DefinitionResult = vscode.Location | vscode.Location[] | vscode.LocationLink[] | null | undefined;
-
-function definitionsIntoLibrary(result: DefinitionResult): DefinitionResult {
-  if (!result) {
-    return result;
-  }
-  if (!Array.isArray(result)) {
-    return new vscode.Location(toLibraryUri(result.uri), result.range);
-  }
-  return result.map((entry: vscode.Location | vscode.LocationLink) => {
-    if ('targetUri' in entry) {
-      return { ...entry, targetUri: toLibraryUri(entry.targetUri) };
-    }
-    return new vscode.Location(toLibraryUri(entry.uri), entry.range);
-  }) as vscode.Location[] | vscode.LocationLink[];
-}
-
-// a definition in a library opens the library's read-only document, which no client syncs
-const LIBRARY_NAVIGATION: Middleware = {
-  provideDefinition: async (document, position, token, next) => {
-    return definitionsIntoLibrary(await next(document, position, token));
-  },
-  provideDeclaration: async (document, position, token, next) => {
-    return definitionsIntoLibrary(await next(document, position, token));
-  },
-  provideTypeDefinition: async (document, position, token, next) => {
-    return definitionsIntoLibrary(await next(document, position, token));
-  },
-};
-
 const WORKSPACE_PATH = '/workspace/';
 // the servers take a document only under a workspace file address, so a trace document goes under one no file of the session has
 const TRACE_SERVER_PATH = '/workspace/.live-trace/';
 
-const TRACE_ADDRESSES = {
-  code2Protocol: (uri: vscode.Uri): string => {
-    return uri.scheme === TRACE_SCHEME && uri.path.startsWith(WORKSPACE_PATH)
-      ? vscode.Uri.file(`${TRACE_SERVER_PATH}${uri.path.slice(WORKSPACE_PATH.length)}`).toString()
-      : uri.toString();
+// how a client names the read-only documents of the page to its server, and back
+export interface ReadOnlyAddresses {
+  // the server's address of a derived document it holds under another name, as the OXSTS a SysML model maps to
+  derivedServerUri?: (uri: vscode.Uri) => string | null;
+}
+
+function addressesOf(readOnly: ReadOnlyAddresses): { code2Protocol: (uri: vscode.Uri) => string; protocol2Code: (value: string) => vscode.Uri } {
+  return {
+    code2Protocol: (uri) => {
+      if (uri.scheme === TRACE_SCHEME && uri.path.startsWith(WORKSPACE_PATH)) {
+        return vscode.Uri.file(`${TRACE_SERVER_PATH}${uri.path.slice(WORKSPACE_PATH.length)}`).toString();
+      }
+      if (uri.scheme === LIBRARY_SCHEME) {
+        return serverUriOfLibrary(uri.toString());
+      }
+      if (uri.scheme === DERIVED_SCHEME) {
+        return readOnly.derivedServerUri?.(uri) ?? uri.toString();
+      }
+      return uri.toString();
+    },
+    protocol2Code: (value) => {
+      const uri = vscode.Uri.parse(value);
+      if (uri.scheme === 'file' && uri.path.startsWith(TRACE_SERVER_PATH)) {
+        return uri.with({ scheme: TRACE_SCHEME, path: `${WORKSPACE_PATH}${uri.path.slice(TRACE_SERVER_PATH.length)}` });
+      }
+      // a library file opens as its read-only document, which no client syncs
+      return toLibraryUri(uri);
+    },
+  };
+}
+
+function isUnsynced(uri: vscode.Uri): boolean {
+  return uri.scheme === LIBRARY_SCHEME || uri.scheme === DERIVED_SCHEME;
+}
+
+// the server reads a library file from what it loaded and holds a derived document under its own name, so neither is sent to it
+const READ_ONLY_DOCUMENTS: Middleware = {
+  didOpen: async (document, next) => {
+    if (!isUnsynced(document.uri)) {
+      await next(document);
+    }
   },
-  protocol2Code: (value: string): vscode.Uri => {
-    const uri = vscode.Uri.parse(value);
-    return uri.scheme === 'file' && uri.path.startsWith(TRACE_SERVER_PATH)
-      ? uri.with({ scheme: TRACE_SCHEME, path: `${WORKSPACE_PATH}${uri.path.slice(TRACE_SERVER_PATH.length)}` })
-      : uri;
+  didChange: async (event, next) => {
+    if (!isUnsynced(event.document.uri)) {
+      await next(event);
+    }
+  },
+  didClose: async (document, next) => {
+    if (!isUnsynced(document.uri)) {
+      await next(document);
+    }
   },
 };
 
-function documentSelectorOf(languageId: string): { language: string; scheme: string }[] {
+function documentSelectorOf(languageId: string, readOnly: ReadOnlyAddresses): { language: string; scheme: string }[] {
+  const libraryLanguage = languageId === 'sysml' ? 'sysml' : 'oxsts';
   return [
     { language: languageId, scheme: 'file' },
     { language: languageId, scheme: TRACE_SCHEME },
+    { language: libraryLanguage, scheme: LIBRARY_SCHEME },
+    // a session that holds the OXSTS of a model of another language serves its OXSTS witnesses too
+    ...(readOnly.derivedServerUri ? [{ language: 'oxsts', scheme: DERIVED_SCHEME }, { language: 'oxsts', scheme: TRACE_SCHEME }] : []),
   ];
 }
 
@@ -498,7 +512,7 @@ async function handleNavigateTo(params: NavigateToParams): Promise<void> {
   const locations = params.locations.map(
     (loc) =>
       new vscode.Location(
-        vscode.Uri.parse(loc.uri),
+        toLibraryUri(vscode.Uri.parse(loc.uri)),
         new vscode.Range(
           loc.range.start.line,
           loc.range.start.character,
@@ -586,9 +600,9 @@ export async function connectWorkerLanguageClient(
       },
     },
     clientOptions: {
-      documentSelector: documentSelectorOf(languageId),
-      middleware: LIBRARY_NAVIGATION,
-      uriConverters: TRACE_ADDRESSES,
+      documentSelector: documentSelectorOf(languageId, {}),
+      middleware: READ_ONLY_DOCUMENTS,
+      uriConverters: addressesOf({}),
       workspaceFolder: {
         index: 0,
         name: 'workspace',
@@ -620,6 +634,7 @@ export async function connectLanguageClient(
   callbacks: LanguageClientCallbacks,
   sessionKind: string | undefined,
   sessionLanguage: string,
+  readOnly: ReadOnlyAddresses = {},
 ): Promise<LanguageClientWrapper> {
   const { ws: wsBaseUrl } = normalizeBaseUrl(backendUrl);
   const languageClientConfig: LanguageClientConfig = {
@@ -633,9 +648,9 @@ export async function connectLanguageClient(
       },
     },
     clientOptions: {
-      documentSelector: documentSelectorOf(languageId),
-      middleware: LIBRARY_NAVIGATION,
-      uriConverters: TRACE_ADDRESSES,
+      documentSelector: documentSelectorOf(languageId, readOnly),
+      middleware: READ_ONLY_DOCUMENTS,
+      uriConverters: addressesOf(readOnly),
       workspaceFolder: {
         index: 0,
         name: 'workspace',
