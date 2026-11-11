@@ -84,7 +84,7 @@ export function connectionView(
           reason: null,
           title: 'Connected, initializing',
           heading: 'Connected',
-          detail: `To ${host}. The ${languageName} language server is initializing. Your model is sent only to be verified, and is not stored.`,
+          detail: `To ${host}. The ${languageName} language server is initializing. Your model is sent to this session and deleted when the session ends.`,
           action: 'disconnect',
           actionLabel: 'Disconnect',
         }
@@ -94,7 +94,7 @@ export function connectionView(
         reason: null,
         title: `Connected to ${host}`,
         heading: 'Connected',
-        detail: `To ${host}. The ${languageName} language server is ready. Your model is sent only to be verified, and is not stored.`,
+        detail: `To ${host}. The ${languageName} language server is ready. Your model is sent to this session and deleted when the session ends.`,
         action: 'disconnect',
         actionLabel: 'Disconnect',
       }
