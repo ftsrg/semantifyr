@@ -210,14 +210,14 @@ describe('the server\'s queue', () => {
 })
 
 describe('cancelling', () => {
-  test('one case from its row lets the rest of the run go on', async ({ ui }) => {
+  test('one case from its row lets the rest of the run, sent with it, go on', async ({ ui }) => {
     const held = new Held()
     ui.backend.answer('verify', held.verify)
     const page = await opened(ui)
     await results(page).verifyAll.click()
     await expect.poll(async () => {
-      return held.started
-    }).toEqual([BARRIER])
+      return [...held.started].sort()
+    }).toEqual([BARRIER, TWO_TRAINS])
 
     await results(page).row(BARRIER).getByRole('button', { name: `Cancel ${BARRIER}` }).click()
     await expect.poll(async () => {
@@ -339,8 +339,8 @@ describe('the selection after a run', () => {
     const page = await opened(ui)
     await results(page).verifyAll.click()
     await expect.poll(async () => {
-      return held.started
-    }).toEqual([BARRIER])
+      return [...held.started].sort()
+    }).toEqual([BARRIER, TWO_TRAINS])
 
     await results(page).row(TWO_TRAINS).click()
     held.open(BARRIER, TWO_TRAINS)
