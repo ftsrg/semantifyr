@@ -392,7 +392,7 @@ describe('Verify all', () => {
     await expect.poll(async () => {
       return status.innerText()
     }).toBe(`Verify ${BARRIER} waits: initializing the OXSTS language server`)
-    expect(await rowStates(page)).toEqual(['not-run', 'not-run'])
+    expect(await rowStates(page)).toEqual(['queued', 'not-run'])
     diagnostics.open()
 
     await expect.poll(async () => {
