@@ -23,8 +23,15 @@ export function createStore<T>(initial: T): Store<T> {
       return
     }
     state = next
+    // a listener that throws keeps the others from missing the change; its error still reaches the page
     for (const listener of [...listeners]) {
-      listener()
+      try {
+        listener()
+      } catch (error) {
+        queueMicrotask(() => {
+          throw error
+        })
+      }
     }
   }
 

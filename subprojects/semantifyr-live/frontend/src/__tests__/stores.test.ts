@@ -32,6 +32,27 @@ describe('createStore', () => {
     expect(listener).toHaveBeenCalledTimes(1)
     expect(store.get()).toEqual({ count: 5 })
   })
+
+  it('notifies every subscriber when one throws, and lets the error reach the page', () => {
+    const store = createStore(0)
+    const later = vi.fn()
+    const failure = new Error('a listener failed')
+    const queued: (() => void)[] = []
+    const queue = vi.spyOn(globalThis, 'queueMicrotask').mockImplementation((callback) => {
+      queued.push(callback)
+    })
+    store.subscribe(() => {
+      throw failure
+    })
+    store.subscribe(later)
+
+    store.set(1)
+    queue.mockRestore()
+
+    expect(later).toHaveBeenCalledTimes(1)
+    expect(queued).toHaveLength(1)
+    expect(queued[0]).toThrow(failure)
+  })
 })
 
 describe('settings', () => {
