@@ -40,7 +40,8 @@ const EDITOR_USER_CONFIG = {
   // bracket pairs take no colours of their own: the editor's colours are the tokens'
   'editor.bracketPairColorization.enabled': false,
   'editor.wordBasedSuggestions': 'off',
-  'editor.experimental.asyncTokenization': true,
+  // the worker tokenizer of a newly shown model applies two answers out of order when the model changes between them, and throws on a state it lost
+  'editor.experimental.asyncTokenization': false,
   'editor.fontSize': 15,
   'editor.fontFamily': "'JetBrains Mono', monospace",
   'editor.fontLigatures': true,
