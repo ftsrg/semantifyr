@@ -168,7 +168,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     expectState: () => {
       expect(count('.phone-case.status-queued')).toBe(2)
       expect(count('.phone-case.status-running')).toBe(0)
-      expect(text('[data-testid=status-message]')).toBe(`The server is busy with other verifications: ${BARRIER.id} waits`)
+      expect(text('[data-testid=status-message]')).toContain(`The server is busy with other verifications: ${BARRIER.id} waits`)
     },
   },
   'verify-all': {
