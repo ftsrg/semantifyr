@@ -25,7 +25,7 @@ class Track {
 
     @Trace
     tran move(from: TrackState, to: TrackState) {
-        assume (state == from)
+        assume(state == from)
         state := to
     }
 
@@ -43,7 +43,7 @@ class Track {
             inline move(TrackState::InCrossing, TrackState::Free)
             trainLeft := true
         } or {
-            assume (true)
+            assume(true)
         }
     }
 }
