@@ -15,6 +15,7 @@ class SessionContext(
     val remoteIp: String,
     val flavor: Flavor,
     val kind: SessionKind,
+    val languageId: String,
     val workingDirectoryPath: Path,
     val webSocketSession: WebSocketSession,
 )

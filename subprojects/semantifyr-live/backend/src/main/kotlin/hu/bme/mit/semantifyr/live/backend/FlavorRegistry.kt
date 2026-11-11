@@ -34,7 +34,15 @@ data class Flavor(
     val discoveryCommand: String,
     val compiledOxstsCommand: String? = null,
     val navigationCommands: List<String> = emptyList(),
+    // the editor languages a session of this flavor serves; the SysML v2 library flavor serves the OXSTS a SysML model maps to
+    val editorLanguageIds: List<String> = listOf(language.id),
 ) {
+    fun sessionLanguageOf(requested: String?): String {
+        return editorLanguageIds.firstOrNull {
+            it == requested
+        } ?: language.id
+    }
+
     val commands: List<String>
         get() {
             return listOfNotNull(
@@ -94,6 +102,10 @@ object FlavorRegistry {
             validateWitnessCommand = "oxsts.case.validateWitness",
             discoveryCommand = "oxsts.case.discover",
             navigationCommands = oxstsNavigationCommands,
+            editorLanguageIds = listOf(
+                Language.Oxsts.id,
+                "sysml",
+            ),
         ),
         Flavor(
             id = "gamma",

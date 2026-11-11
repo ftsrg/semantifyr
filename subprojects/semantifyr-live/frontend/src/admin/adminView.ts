@@ -5,6 +5,7 @@
  */
 
 import type { FlavorInfo, SessionInfo } from '../lib/api'
+import { SYSML_FLAVOR_INFO } from '../lib/session/sysmlBridge'
 import { formatDuration, isoDurationToMs } from '../lib/util/duration'
 
 const KIND_LABELS: Readonly<Record<string, string>> = {
@@ -21,10 +22,23 @@ export function kindLabel(kind: string): string {
   return KIND_LABELS[kind] ?? kind
 }
 
-export function languageOf(flavors: readonly FlavorInfo[], flavorId: string): string {
-  return flavors.find((flavor) => {
-    return flavor.id === flavorId
-  })?.languageId ?? flavorId
+// the served flavours and SysML v2, which the page serves over the SysML v2 library flavour
+export function flavourRows(flavors: readonly FlavorInfo[]): FlavorInfo[] {
+  return [...flavors, SYSML_FLAVOR_INFO]
+}
+
+// a session whose editor speaks another language than its flavour is listed under that language's row
+export function flavourRowOf(flavors: readonly FlavorInfo[], session: SessionInfo): FlavorInfo | undefined {
+  const rows = flavourRows(flavors)
+  const flavor = rows.find((row) => {
+    return row.id === session.flavorId
+  })
+  if (flavor?.languageId === session.languageId) {
+    return flavor
+  }
+  return rows.find((row) => {
+    return row.id === session.languageId
+  }) ?? flavor
 }
 
 export function filterSessions(sessions: readonly SessionInfo[], flavors: readonly FlavorInfo[], filter: string): SessionInfo[] {
@@ -38,7 +52,8 @@ export function filterSessions(sessions: readonly SessionInfo[], flavors: readon
       session.kind,
       kindLabel(session.kind),
       session.flavorId,
-      languageOf(flavors, session.flavorId),
+      session.languageId,
+      flavourRowOf(flavors, session)?.displayName ?? '',
       session.remoteIp,
     ].some((field) => {
       return field.toLowerCase().includes(needle)
@@ -46,10 +61,11 @@ export function filterSessions(sessions: readonly SessionInfo[], flavors: readon
   })
 }
 
-export function sessionsPerFlavor(sessions: readonly SessionInfo[]): ReadonlyMap<string, number> {
+export function sessionsPerFlavor(sessions: readonly SessionInfo[], flavors: readonly FlavorInfo[]): ReadonlyMap<string, number> {
   const counts = new Map<string, number>()
   for (const session of sessions) {
-    counts.set(session.flavorId, (counts.get(session.flavorId) ?? 0) + 1)
+    const row = flavourRowOf(flavors, session)?.id ?? session.flavorId
+    counts.set(row, (counts.get(row) ?? 0) + 1)
   }
   return counts
 }

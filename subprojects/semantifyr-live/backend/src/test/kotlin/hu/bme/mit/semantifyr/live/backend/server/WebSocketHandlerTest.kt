@@ -33,19 +33,20 @@ class WebSocketHandlerTest {
 
     private fun createHandler(
         config: BackendConfig = BackendConfig(),
-        onRunSession: suspend (WebSocketServerSession, String, Flavor, SessionKind) -> Unit = { ws, _, _, _ ->
+        onRunSession: suspend (WebSocketServerSession, String, Flavor, SessionKind, String) -> Unit = { ws, _, _, _, _ ->
             ws.close(CloseReason(CloseReason.Codes.NORMAL, "done"))
         },
     ): WebSocketHandler {
         val sessionManager = mock<SessionManager>()
         wheneverBlocking {
-            sessionManager.runSession(any(), any(), any(), any())
+            sessionManager.runSession(any(), any(), any(), any(), any())
         } doSuspendableAnswer {
             val ws = it.getArgument<WebSocketServerSession>(0)
             val ip = it.getArgument<String>(1)
             val flavor = it.getArgument<Flavor>(2)
             val kind = it.getArgument<SessionKind>(3)
-            onRunSession(ws, ip, flavor, kind)
+            val languageId = it.getArgument<String>(4)
+            onRunSession(ws, ip, flavor, kind, languageId)
         }
 
         return testInjector(config) {
@@ -75,7 +76,7 @@ class WebSocketHandlerTest {
     @Test
     fun `valid flavor connects and runs session`() = testApplication {
         var ranWithFlavor: String? = null
-        val handler = createHandler { ws, _, flavor, _ ->
+        val handler = createHandler { ws, _, flavor, _, _ ->
             ranWithFlavor = flavor.id
             ws.close(CloseReason(CloseReason.Codes.NORMAL, "done"))
         }
@@ -98,7 +99,7 @@ class WebSocketHandlerTest {
     @Test
     fun `the kind parameter names a known kind and anything else is full`() = testApplication {
         val kinds = mutableListOf<SessionKind>()
-        val handler = createHandler { ws, _, _, kind ->
+        val handler = createHandler { ws, _, _, kind, _ ->
             kinds += kind
             ws.close(CloseReason(CloseReason.Codes.NORMAL, "done"))
         }
@@ -127,8 +128,45 @@ class WebSocketHandlerTest {
     }
 
     @Test
+    fun `the language parameter names a language the flavor serves and anything else is the flavor's`() = testApplication {
+        val languages = mutableListOf<String>()
+        val handler = createHandler { ws, _, _, _, languageId ->
+            languages += languageId
+            ws.close(CloseReason(CloseReason.Codes.NORMAL, "done"))
+        }
+        installSemantifyrApp(contentNegotiation = false, webSockets = true) {
+            with(handler) {
+                configure()
+            }
+        }
+
+        val wsClient = createClient {
+            install(ClientWebSockets)
+        }
+        val addresses = listOf(
+            "oxsts-with-sysmlv2-library?language=sysml",
+            "oxsts-with-sysmlv2-library?language=gamma",
+            "oxsts-with-sysmlv2-library",
+            "oxsts?language=sysml",
+            "gamma?language=gamma",
+        )
+        for (address in addresses) {
+            wsClient.webSocket("/ws/lsp/$address") {
+                closeReason.await()
+            }
+        }
+        assertThat(languages).containsExactly(
+            "sysml",
+            "oxsts",
+            "oxsts",
+            "oxsts",
+            "gamma",
+        )
+    }
+
+    @Test
     fun `session limit returns close code 4429`() = testApplication {
-        val handler = createHandler { _, _, _, _ ->
+        val handler = createHandler { _, _, _, _, _ ->
             throw SessionLimitReachedException("Too many sessions")
         }
         installSemantifyrApp(contentNegotiation = false, webSockets = true) {
@@ -173,7 +211,7 @@ class WebSocketHandlerTest {
 
     @Test
     fun `a cancelled session returns close code 4000 with a fixed reason`() = testApplication {
-        val handler = createHandler { _, _, _, _ ->
+        val handler = createHandler { _, _, _, _, _ ->
             throw CancellationException("Job was cancelled")
         }
         installSemantifyrApp(contentNegotiation = false, webSockets = true) {
@@ -194,7 +232,7 @@ class WebSocketHandlerTest {
 
     @Test
     fun `internal error returns close code 4500`() = testApplication {
-        val handler = createHandler { _, _, _, _ ->
+        val handler = createHandler { _, _, _, _, _ ->
             throw RuntimeException("something broke")
         }
         installSemantifyrApp(contentNegotiation = false, webSockets = true) {

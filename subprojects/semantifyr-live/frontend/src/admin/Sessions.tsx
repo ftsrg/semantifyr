@@ -12,7 +12,7 @@ import { Icon } from '../ui/icons'
 import { LanguageMark, VerdictMark } from '../ui/marks'
 import { AdminIcon } from './adminIcons'
 import type { AdminStore } from './adminStore'
-import { durationLabel, filterSessions, kindLabel, languageOf } from './adminView'
+import { durationLabel, filterSessions, flavourRowOf, kindLabel } from './adminView'
 
 function shortId(identifier: string): string {
   return identifier.length > 8 ? identifier.slice(0, 8) : identifier
@@ -87,10 +87,8 @@ interface SessionRowProps {
 }
 
 function SessionRow({ session, flavors, open, confirming, store }: SessionRowProps): React.JSX.Element {
-  const languageId = languageOf(flavors, session.flavorId)
-  const flavor = flavors.find((candidate) => {
-    return candidate.id === session.flavorId
-  })
+  const languageId = session.languageId
+  const flavor = flavourRowOf(flavors, session)
   return (
     <li className={`admin-session${open ? ' is-open' : ''}`} data-testid={`session-${session.sessionId}`}>
       <div className="admin-session-row">

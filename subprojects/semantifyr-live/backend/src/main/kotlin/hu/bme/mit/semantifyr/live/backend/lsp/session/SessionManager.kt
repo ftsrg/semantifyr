@@ -80,6 +80,7 @@ class SessionManager @Inject constructor(
         remoteIp: String,
         flavor: Flavor,
         kind: SessionKind,
+        languageId: String,
     ) {
         if (!globalGate.tryAcquire()) {
             rejectedSessions.increment()
@@ -87,7 +88,7 @@ class SessionManager @Inject constructor(
             throw SessionLimitReachedException("Global session limit reached, please try again later.")
         }
         try {
-            doRunSession(webSocketSession, remoteIp, flavor, kind)
+            doRunSession(webSocketSession, remoteIp, flavor, kind, languageId)
         } finally {
             globalGate.release()
         }
@@ -98,8 +99,9 @@ class SessionManager @Inject constructor(
         remoteIp: String,
         flavor: Flavor,
         kind: SessionKind,
+        languageId: String,
     ) {
-        val sessionContext = createSessionContext(webSocketSession, remoteIp, flavor, kind)
+        val sessionContext = createSessionContext(webSocketSession, remoteIp, flavor, kind, languageId)
         val injector = languageServiceRegistry.injectorFor(flavor)
         withSessionScope(sessionContext) {
             withContext(MdcContext("sessionId" to sessionContext.sessionId)) {
@@ -117,7 +119,7 @@ class SessionManager @Inject constructor(
                     sessionInfoBuilder = sessionInfoBuilder,
                 )
                 activeSessions[sessionContext.sessionId] = active
-                logger.info { "Created session=${sessionContext.sessionId} for ip=$remoteIp flavor=${flavor.id} kind=${kind.id}" }
+                logger.info { "Created session=${sessionContext.sessionId} for ip=$remoteIp flavor=${flavor.id} kind=${kind.id} language=$languageId" }
 
                 try {
                     stageLibraryOnDisk(sessionContext)
@@ -177,6 +179,7 @@ class SessionManager @Inject constructor(
         remoteIp: String,
         flavor: Flavor,
         kind: SessionKind,
+        languageId: String,
     ): SessionContext {
         val sessionId = UUID.randomUUID().toString()
         val workingDirectoryPath = backendConfig.sessionManager.rootWorkPath.resolve("sessions").resolve(sessionId)
@@ -186,6 +189,7 @@ class SessionManager @Inject constructor(
             remoteIp = remoteIp,
             flavor = flavor,
             kind = kind,
+            languageId = languageId,
             workingDirectoryPath = workingDirectoryPath,
             webSocketSession = webSocketSession,
         )

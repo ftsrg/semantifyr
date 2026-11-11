@@ -539,9 +539,14 @@ class CloseObservingWebSocket extends LcWebSocket {
   }
 }
 
-function socketAddress(wsBaseUrl: string, flavorId: string, sessionKind: string | undefined): string {
-  const address = `${wsBaseUrl}/ws/lsp/${encodeURIComponent(flavorId)}`;
-  return sessionKind === undefined ? address : `${address}?kind=${encodeURIComponent(sessionKind)}`;
+// the session tells the server its kind and the language of its editor, which the admin page lists
+export function socketAddress(wsBaseUrl: string, flavorId: string, sessionKind: string | undefined, sessionLanguage: string): string {
+  const query = new URLSearchParams();
+  if (sessionKind !== undefined) {
+    query.set('kind', sessionKind);
+  }
+  query.set('language', sessionLanguage);
+  return `${wsBaseUrl}/ws/lsp/${encodeURIComponent(flavorId)}?${query.toString()}`;
 }
 
 const LSP_STATE_STOPPED = 1;
@@ -595,7 +600,8 @@ export async function connectLanguageClient(
   flavorId: string,
   languageId: string,
   callbacks: LanguageClientCallbacks,
-  sessionKind?: string,
+  sessionKind: string | undefined,
+  sessionLanguage: string,
 ): Promise<LanguageClientWrapper> {
   const { ws: wsBaseUrl } = normalizeBaseUrl(backendUrl);
   const languageClientConfig: LanguageClientConfig = {
@@ -604,7 +610,7 @@ export async function connectLanguageClient(
       options: {
         $family: 'WebSocket',
         realization: () => new CloseObservingWebSocket(callbacks.onClose, callbacks.onOpen ?? (() => {})),
-        webSocketUrl: socketAddress(wsBaseUrl, flavorId, sessionKind),
+        webSocketUrl: socketAddress(wsBaseUrl, flavorId, sessionKind, sessionLanguage),
         disposeResources: true,
       },
     },

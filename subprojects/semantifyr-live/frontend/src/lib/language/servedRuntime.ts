@@ -267,6 +267,7 @@ export function createServedRuntime(options: ServedRuntimeOptions): ServedRuntim
         onOpen: reportOpen,
       },
       options.sessionKind,
+      options.flavor.languageId,
     )
     let connected: LanguageClientWrapper
     try {

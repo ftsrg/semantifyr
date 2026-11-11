@@ -14,15 +14,13 @@ import { fakeSession } from './fixtures/sessions'
 // Goal: what the filter matches, the per-flavour count and the sibling hosts of the deployment
 
 const SESSIONS = [
-  fakeSession({ sessionId: 'aaaa1111', flavorId: 'sysml', kind: 'full', remoteIp: '10.0.0.1' }),
+  fakeSession({ sessionId: 'aaaa1111', flavorId: 'oxsts-with-sysmlv2-library', languageId: 'sysml', kind: 'full', remoteIp: '10.0.0.1' }),
+  fakeSession({ sessionId: 'dddd4444', flavorId: 'oxsts-with-sysmlv2-library', kind: 'full', remoteIp: '10.0.0.4' }),
   fakeSession({ sessionId: 'bbbb2222', flavorId: 'oxsts', kind: 'embed', remoteIp: '10.0.0.2' }),
   fakeSession({ sessionId: 'cccc3333', flavorId: 'oxsts', kind: 'edit-only', remoteIp: '192.168.1.9' }),
 ]
 
-const FLAVOR_LIST: readonly FlavorInfo[] = [
-  ...servedFlavors,
-  { ...servedFlavors[0]!, id: 'sysml', languageId: 'sysml' },
-]
+const FLAVOR_LIST: readonly FlavorInfo[] = servedFlavors
 
 function matching(filter: string): string[] {
   return filterSessions(SESSIONS, FLAVOR_LIST, filter).map((session) => {
@@ -32,14 +30,16 @@ function matching(filter: string): string[] {
 
 describe('the session filter', () => {
   it('keeps every session without a filter', () => {
-    expect(matching('  ')).toHaveLength(3)
+    expect(matching('  ')).toHaveLength(4)
   })
 
-  it('matches the id, the kind, the flavour and the client address', () => {
+  it('matches the id, the kind, the language or flavour and the client address', () => {
     expect(matching('bbbb')).toEqual(['bbbb2222'])
     expect(matching('EMBED')).toEqual(['bbbb2222'])
     expect(matching('edit only')).toEqual(['cccc3333'])
-    expect(matching('sysml')).toEqual(['aaaa1111'])
+    expect(matching('SysML v2')).toEqual(['aaaa1111', 'dddd4444'])
+    expect(matching('sysml')).toEqual(['aaaa1111', 'dddd4444'])
+    expect(matching('OXSTS with the SysML')).toEqual(['dddd4444'])
     expect(matching('192.168')).toEqual(['cccc3333'])
   })
 
@@ -49,9 +49,12 @@ describe('the session filter', () => {
 })
 
 describe('the per-flavour count', () => {
-  it('counts the sessions of each flavour', () => {
-    expect(sessionsPerFlavor(SESSIONS).get('oxsts')).toBe(2)
-    expect(sessionsPerFlavor(SESSIONS).get('gamma')).toBeUndefined()
+  it('counts the sessions of each flavour, a SysML v2 session as its own row', () => {
+    const counts = sessionsPerFlavor(SESSIONS, FLAVOR_LIST)
+    expect(counts.get('oxsts')).toBe(2)
+    expect(counts.get('sysml')).toBe(1)
+    expect(counts.get('oxsts-with-sysmlv2-library')).toBe(1)
+    expect(counts.get('gamma')).toBeUndefined()
   })
 })
 

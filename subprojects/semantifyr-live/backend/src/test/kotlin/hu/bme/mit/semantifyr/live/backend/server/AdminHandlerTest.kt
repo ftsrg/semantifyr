@@ -149,8 +149,9 @@ class AdminHandlerTest {
         val testSession = SessionInfo(
             sessionId = "test-session",
             remoteIp = "127.0.0.1",
-            flavorId = "oxsts",
+            flavorId = "oxsts-with-sysmlv2-library",
             kind = "embed",
+            languageId = "sysml",
             uptime = 30.seconds,
             runningCount = 1,
             queuedCount = 0,
@@ -168,8 +169,9 @@ class AdminHandlerTest {
         assertThat(status.sessions).hasSize(1)
         assertThat(status.sessions[0].sessionId).isEqualTo("test-session")
         assertThat(status.sessions[0].remoteIp).isEqualTo("127.0.0.1")
-        assertThat(status.sessions[0].flavorId).isEqualTo("oxsts")
+        assertThat(status.sessions[0].flavorId).isEqualTo("oxsts-with-sysmlv2-library")
         assertThat(status.sessions[0].kind).isEqualTo("embed")
+        assertThat(status.sessions[0].languageId).isEqualTo("sysml")
         assertThat(status.sessions[0].runningCount).isEqualTo(1)
         assertThat(status.sessions[0].queuedCount).isEqualTo(0)
         assertThat(status.load.activeSessions).isEqualTo(1)

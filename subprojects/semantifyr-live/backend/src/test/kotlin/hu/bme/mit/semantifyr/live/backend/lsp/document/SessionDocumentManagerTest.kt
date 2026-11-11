@@ -34,6 +34,7 @@ class SessionDocumentManagerTest {
             remoteIp = "127.0.0.1",
             flavor = FlavorRegistry.flavors.first(),
             kind = SessionKind.Full,
+            languageId = "oxsts",
             workingDirectoryPath = workingDirectory,
             webSocketSession = mock<WebSocketSession>(),
         )

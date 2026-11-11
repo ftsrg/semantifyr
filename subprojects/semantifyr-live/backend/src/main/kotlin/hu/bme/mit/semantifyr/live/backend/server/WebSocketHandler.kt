@@ -67,7 +67,13 @@ class WebSocketHandler @Inject constructor(
                     }
 
                     val closeReason = try {
-                        sessionManager.runSession(this, remoteIp, flavor, SessionKind.fromId(call.request.queryParameters["kind"]))
+                        sessionManager.runSession(
+                            this,
+                            remoteIp,
+                            flavor,
+                            SessionKind.fromId(call.request.queryParameters["kind"]),
+                            flavor.sessionLanguageOf(call.request.queryParameters["language"]),
+                        )
                         logger.info { "WebSocket session ended normally for ip=$remoteIp flavor=$flavorId" }
                         CloseReason(CloseReason.Codes.NORMAL, "Session ended")
                     } catch (e: SessionLimitReachedException) {

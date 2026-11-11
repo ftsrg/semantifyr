@@ -118,6 +118,7 @@ data class SessionInfo(
     val remoteIp: String,
     val flavorId: String,
     val kind: String,
+    val languageId: String,
     val uptime: Duration,
     val runningCount: Int,
     val queuedCount: Int,

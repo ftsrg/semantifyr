@@ -24,6 +24,7 @@ class SessionInfoBuilder @Inject constructor(
             remoteIp = sessionContext.remoteIp,
             flavorId = sessionContext.flavor.id,
             kind = sessionContext.kind.id,
+            languageId = sessionContext.languageId,
             uptime = sessionRunContext.startMark.elapsedNow(),
             runningCount = verifications.count {
                 it.state == VerificationState.Running

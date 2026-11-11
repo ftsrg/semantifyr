@@ -40,6 +40,8 @@ export interface SessionInfo {
   remoteIp: string
   flavorId: string
   kind: string
+  // the language of the session's editor, SysML v2 for the OXSTS a SysML model maps to
+  languageId: string
   uptime: string
   runningCount: number
   queuedCount: number

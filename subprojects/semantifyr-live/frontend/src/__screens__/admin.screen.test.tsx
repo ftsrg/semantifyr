@@ -27,8 +27,9 @@ const SESSIONS: SessionInfo[] = [
   {
     sessionId: '3f9c1a52-7b0e-4d1e-9a64-0c7d2b5e8f11',
     remoteIp: '84.236.12.40',
-    flavorId: 'sysml',
+    flavorId: 'oxsts-with-sysmlv2-library',
     kind: 'full',
+    languageId: 'sysml',
     uptime: 'PT12M30S',
     runningCount: 1,
     queuedCount: 1,
@@ -43,6 +44,7 @@ const SESSIONS: SessionInfo[] = [
     remoteIp: '2001:db8:85a3::8a2e:370:7334',
     flavorId: 'gamma',
     kind: 'full',
+    languageId: 'gamma',
     uptime: 'PT2H5M',
     runningCount: 0,
     queuedCount: 0,
@@ -54,6 +56,7 @@ const SESSIONS: SessionInfo[] = [
     remoteIp: '10.8.0.17',
     flavorId: 'oxsts',
     kind: 'embed',
+    languageId: 'oxsts',
     uptime: 'PT41S',
     runningCount: 0,
     queuedCount: 0,
@@ -65,6 +68,7 @@ const SESSIONS: SessionInfo[] = [
     remoteIp: '10.8.0.18',
     flavorId: 'oxsts-with-gamma-library',
     kind: 'edit-only',
+    languageId: 'oxsts',
     uptime: 'PT3M9S',
     runningCount: 0,
     queuedCount: 0,
@@ -74,8 +78,9 @@ const SESSIONS: SessionInfo[] = [
   {
     sessionId: 'e9b3c6a0-4d15-4e78-92f6-7a0d1c5b8e34',
     remoteIp: '84.236.12.40',
-    flavorId: 'sysml',
+    flavorId: 'oxsts-with-sysmlv2-library',
     kind: 'embed',
+    languageId: 'sysml',
     uptime: 'PT7M2S',
     runningCount: 0,
     queuedCount: 0,
@@ -144,10 +149,7 @@ function fakeServer(sessions: SessionInfo[], refusal?: ApiError): FakeServer {
       })
     },
     fetchFlavors: () => {
-      return Promise.resolve([
-        ...servedFlavors,
-        { ...servedFlavors[0]!, id: 'sysml', displayName: 'SysML v2', languageId: 'sysml' },
-      ].map((flavor) => {
+      return Promise.resolve(servedFlavors.map((flavor) => {
         return flavor.id === 'oxsts' ? { ...flavor, displayName: 'OXSTS' } : flavor
       }))
     },
@@ -224,6 +226,18 @@ function states(): Readonly<Record<string, ScreenState>> {
         expect(text('.admin-deployed')).toContain('unavailable')
         expect(text('.admin-header')).toContain('Signed in as octocat')
         expect(count('.admin-header a[href*=grafana]')).toBe(1)
+        expect([...document.querySelectorAll('.admin-deployed .admin-row-name')].map((row) => {
+          return `${row.textContent}: ${row.parentElement?.querySelector('.admin-row-count')?.textContent ?? ''}`
+        }).filter((row) => {
+          return /OXSTS|Gamma|SysML/.test(row)
+        })).toEqual([
+          'OXSTS: 1',
+          'OXSTS with the Gamma library: 1',
+          'OXSTS with the SysML v2 library: 0',
+          'Gamma: 1',
+          'SysML v2: 2',
+        ])
+        expect(text('.admin-session .admin-flavour-name')).toBe('SysML v2')
       },
     },
     'session-open': {

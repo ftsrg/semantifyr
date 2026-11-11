@@ -11,6 +11,7 @@ export function fakeSession(overrides: Partial<SessionInfo> & { sessionId: strin
     remoteIp: '127.0.0.1',
     flavorId: 'oxsts',
     kind: 'full',
+    languageId: 'oxsts',
     runningCount: 0,
     queuedCount: 0,
     uptime: 'PT1M',

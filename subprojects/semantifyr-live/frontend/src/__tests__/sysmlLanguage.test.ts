@@ -10,7 +10,7 @@ import { fakeModelDocuments } from './helpers/live'
 import { servedFlavors } from './fixtures/flavors'
 
 const workers = vi.hoisted(() => {
-  return { started: 0, connecting: Promise.resolve() }
+  return { started: 0, connecting: Promise.resolve(), sockets: [] as string[] }
 })
 
 vi.mock('vscode', () => {
@@ -23,7 +23,8 @@ vi.mock('../lib/session/monaco', () => {
     onDiagnosticsOf: () => {
       return () => {}
     },
-    connectLanguageClient: async () => {
+    connectLanguageClient: async (_backendUrl: string, flavorId: string, _languageId: string, _callbacks: unknown, _sessionKind: string | undefined, sessionLanguage: string) => {
+      workers.sockets.push(`${flavorId} ${sessionLanguage}`)
       await workers.connecting
       return {
         getLanguageClient: () => undefined,
@@ -94,7 +95,7 @@ describe('the SysML language', () => {
     await runtime.dispose()
   })
 
-  it('starts its worker once for the visit, however many runtimes it starts', async () => {
+  it('starts its worker once for the visit, however many runtimes it starts, and tells its session it is SysML v2', async () => {
     const registry = createLanguageRegistry(liveFlavors([]))
     const unit = registry.unitOf('sysml')!
     const flavor = unit.flavors[0]!
@@ -117,6 +118,7 @@ describe('the SysML language', () => {
     })
 
     expect(workers.started).toBe(before + 1)
+    expect(workers.sockets.at(-1)).toBe('oxsts-with-sysmlv2-library sysml')
     expect(second.initialization.get().steps.find((step) => {
       return step.id === 'server'
     })?.state).toBe('done')

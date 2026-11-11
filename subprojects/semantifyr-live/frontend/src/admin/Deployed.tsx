@@ -10,7 +10,7 @@ import { useStore } from '../lib/stores/useStore'
 import { formatIsoDuration } from '../lib/util/duration'
 import { LanguageMark } from '../ui/marks'
 import type { AdminStore } from './adminStore'
-import { languageOf, sessionsPerFlavor } from './adminView'
+import { flavourRows, sessionsPerFlavor } from './adminView'
 
 interface FactProps {
   label: string
@@ -50,7 +50,7 @@ export function Deployed({ store }: { store: AdminStore }): React.JSX.Element | 
     return null
   }
   const { info, config, status } = data
-  const counts = sessionsPerFlavor(status.sessions)
+  const counts = sessionsPerFlavor(status.sessions, flavors)
   return (
     <aside className="admin-panel admin-deployed" aria-label="Deployed">
       <div className="admin-panel-header">
@@ -100,12 +100,12 @@ export function Deployed({ store }: { store: AdminStore }): React.JSX.Element | 
         </Group>
         <Group title="Flavours">
           <ul className="admin-rows">
-            {flavors.map((flavor) => {
+            {flavourRows(flavors).map((flavor) => {
               const count = counts.get(flavor.id) ?? 0
               return (
                 <li key={flavor.id} className={`admin-row${count === 0 ? ' is-idle' : ''}`}>
                   <span className="admin-row-name" title={flavor.id}>
-                    <LanguageMark languageId={languageOf(flavors, flavor.id)} />
+                    <LanguageMark languageId={flavor.languageId} />
                     {flavor.displayName}
                   </span>
                   <span className="admin-row-count" title={`${count} ${count === 1 ? 'session' : 'sessions'}`}>{count}</span>
