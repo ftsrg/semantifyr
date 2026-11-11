@@ -135,22 +135,25 @@ export default function LiveEmbed({ code, language = 'oxsts', library, view, sho
     );
   }
 
+  const verifying = embedView === 'embed';
   return (
-    <div className={styles.embed}>
+    <div className={`${styles.embed} ${styles.block}`}>
       <CodeBlock language={language === 'sysml' ? 'sysmlv2' : language} metastring={show || language === 'sysml' ? '' : 'open'}>
         {show ? selectDeclarations(source, show) : source}
       </CodeBlock>
-      <div className={styles.toolbar}>
-        <button
-          type="button"
-          className={`${styles.button} ${styles.buttonPrimary}`}
-          onClick={() => {
-            setOpened(true);
-          }}
-        >
-          {show ? 'Open this step in the editor' : embedView === 'embed' ? 'Edit and verify here' : 'Edit here'}
-        </button>
-      </div>
+      <button
+        type="button"
+        className={styles.run}
+        title={show ? `Opens the model of this step in an editor here${verifying ? ', where its cases verify' : ''}` : verifying ? 'Opens the model in an editor here, where its cases verify' : 'Opens the model in an editor here'}
+        onClick={() => {
+          setOpened(true);
+        }}
+      >
+        <svg className={styles.runIcon} viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M4.5 2.8v10.4L13 8z" fill="currentColor" />
+        </svg>
+        {verifying ? 'Verify' : 'Edit'}
+      </button>
     </div>
   );
 }

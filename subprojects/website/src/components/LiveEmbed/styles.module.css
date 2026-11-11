@@ -14,6 +14,45 @@
   border: 0;
 }
 
+.block {
+  position: relative;
+}
+
+/* the run control sits in the code block's corner; the block's own copy button moves aside for it */
+.run {
+  position: absolute;
+  top: calc(var(--ifm-pre-padding) / 2);
+  right: calc(var(--ifm-pre-padding) / 2);
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.6rem 0.3rem 0.45rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: var(--ifm-global-radius);
+  background: var(--prism-background-color);
+  color: var(--ifm-color-primary);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.run:hover,
+.run:focus-visible {
+  border-color: var(--ifm-color-primary);
+}
+
+.runIcon {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.block :global(.theme-code-block) [class*='buttonGroup'] {
+  right: 6.5rem;
+}
+
 .toolbar {
   display: flex;
   justify-content: flex-end;
@@ -33,13 +72,4 @@
 
 .button:hover {
   background: var(--ifm-color-emphasis-300);
-}
-
-.buttonPrimary {
-  background: var(--ifm-color-primary);
-  color: white;
-}
-
-.buttonPrimary:hover {
-  background: var(--ifm-color-primary-dark);
 }
