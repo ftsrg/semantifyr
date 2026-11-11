@@ -18,10 +18,8 @@ import {
   type ConnectionState,
 } from '../stores/connection'
 import {
-  currentStep,
   failStep,
   finishStep,
-  finishThrough,
   initializationOf,
   InitializationSteps,
   startStep,
@@ -51,7 +49,7 @@ const NO_LIBRARY_DOCUMENTS = constantStore<readonly LibraryDocument[]>([])
 
 export interface ServedRuntimeOptions {
   backendUrl: string
-  // the model's document, whose first diagnostics end the library step
+  // the model's document, whose first diagnostics end the initialization of the language server
   documentUri: string
   sessionKind?: string | undefined
   flavor: LiveFlavor
@@ -133,7 +131,8 @@ export function createServedRuntime(options: ServedRuntimeOptions): ServedRuntim
       return connectionConnected(previous, Date.now())
     })
     changeStep((state, now) => {
-      return startStep(finishThrough(state, InitializationSteps.server.id, now), InitializationSteps.library.id, now)
+      const started = finishStep(finishStep(state, InitializationSteps.connect.id, now), InitializationSteps.server.id, now)
+      return startStep(startStep(started, InitializationSteps.initialize.id, now), InitializationSteps.cases.id, now)
     })
   }
 
@@ -143,16 +142,17 @@ export function createServedRuntime(options: ServedRuntimeOptions): ServedRuntim
     })
   }
 
-  // the server publishes the model's diagnostics once it has loaded the libraries the model needs
+  // a clean model gets an empty set; late diagnostics end an initialization that timed out, never one a lost session failed
   const stopWatchingDiagnostics = onDiagnosticsOf(options.documentUri, () => {
-    const library = initialization.get().steps.find((step) => {
-      return step.id === InitializationSteps.library.id
+    const step = initialization.get().steps.find((candidate) => {
+      return candidate.id === InitializationSteps.initialize.id
     })
-    if (library?.state !== 'running') {
+    const timedOut = step?.state === 'failed' && step.reason !== undefined
+    if (step?.state !== 'running' && !timedOut) {
       return
     }
     changeStep((state, now) => {
-      return startStep(finishStep(state, InitializationSteps.library.id, now), InitializationSteps.cases.id, now)
+      return finishStep(state, InitializationSteps.initialize.id, now)
     })
   })
 
@@ -195,11 +195,14 @@ export function createServedRuntime(options: ServedRuntimeOptions): ServedRuntim
     }
   }
 
-  // a session refused or lost before initialization ends fails the step it was at, until an attempt connects
-  const failRunningStep = (): void => {
+  // a session refused or lost before initialization ends fails the steps it was at, until an attempt connects
+  const failRunningSteps = (): void => {
     changeStep((state, now) => {
-      const running = currentStep(state)
-      return running?.state === 'running' ? failStep(state, running.id, now) : state
+      return state.steps.filter((step) => {
+        return step.state === 'running'
+      }).reduce((failed, step) => {
+        return failStep(failed, step.id, now)
+      }, state)
     })
   }
 
@@ -223,7 +226,7 @@ export function createServedRuntime(options: ServedRuntimeOptions): ServedRuntim
           connection.update((previous) => {
             return connectionLost(previous, 'connecting', info?.reason ?? null, { reconnecting: true, refused: info?.refused ?? false, retryAt: info?.retryAt ?? null })
           })
-          failRunningStep()
+          failRunningSteps()
           break
         case 'terminated':
           reportFailed(info?.reason ?? 'Session ended', true)

@@ -30,6 +30,7 @@ export function useStatusLine(): StatusLine {
   const initialization = useStore(live.initialization)
   const verification = useCurrentVerification(live)
   const timing = useStore(live.runTiming)
+  const queued = useStore(live.queuedVerification)
   const blocked = useStore(shell.verifyBlocked)
   const problems = useStore(live.problems)
   const language = useLanguage(live)
@@ -45,6 +46,7 @@ export function useStatusLine(): StatusLine {
     initialization,
     verification,
     timing,
+    queued,
     blockedErrors: blocked ? errors : null,
     now,
   })

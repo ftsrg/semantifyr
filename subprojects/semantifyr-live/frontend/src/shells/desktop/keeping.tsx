@@ -155,8 +155,8 @@ export function useCaseRows(): { rows: CaseRow[], results: SharedResults | null,
   const live = useLive()
   const verification = useCurrentVerification(live)
   const results = useStore(live.sharedResults)
-  const pending = useStore(live.pendingVerifyAll)
-  const running = pending || verification.phase === 'running'
+  const queued = useStore(live.queuedVerification) !== null
+  const running = queued || verification.phase === 'running'
   return { rows: rowsWithSharedVerdicts(verification.cases.map(caseRowOf), results, running), results, running }
 }
 

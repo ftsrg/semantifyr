@@ -154,6 +154,9 @@ describe('the unsaved state of the visit', () => {
     open.live.openFile({ name: 'opened.oxsts', text: 'file text', write: null })
     open.models.edit(MODEL_URI, 'edited model')
     open.live.markSaved(null, 'edited model')
+    await vi.waitFor(() => {
+      expect(open!.live.verification.get().get('oxsts#shared')?.discovery).toBe('discovered')
+    })
     open.live.verifyAll()
     await vi.waitFor(() => {
       expect(open!.live.verification.get().get('oxsts#shared')?.phase).toBe('done')
@@ -326,7 +329,7 @@ describe('a link with results', () => {
       expect(open!.live.workspace.get().runtime).not.toBeNull()
     })
     expect(open.live.sharedResults.get()?.verdicts.get('a')).toBe('passed')
-    expect(open.live.pendingVerifyAll.get()).toBe(true)
+    expect(open.live.queuedVerification.get()).toEqual({ caseId: null })
 
     open.models.open(MODEL_URI, open.live.currentText()!)
     open.runtime().connect()
@@ -363,7 +366,7 @@ describe('a link with results', () => {
 
     expect(open.live.address.get()?.kind).toBe('results')
     expect(open.live.sharedResults.get()).toBeNull()
-    expect(open.live.pendingVerifyAll.get()).toBe(false)
+    expect(open.live.queuedVerification.get()).toBeNull()
   })
 
   it('opens as it does today without results', async () => {

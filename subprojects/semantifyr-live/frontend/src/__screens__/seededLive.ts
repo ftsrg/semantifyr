@@ -14,14 +14,14 @@ import { createLanguageRegistry } from '../lib/language/registry'
 import type { DerivedDocument, LanguageRuntime } from '../lib/language/types'
 import type { ProblemEntry } from '../lib/session/problems'
 import { connectionConnected, INITIAL_CONNECTION, type ConnectionState } from '../lib/stores/connection'
-import { failStep, finishThrough, initializationOf, startStep, type InitializationState } from '../lib/stores/initialization'
+import { failStep, finishStep, initializationOf, InitializationSteps, startStep, type InitializationState } from '../lib/stores/initialization'
 import { createSettingsStore, type Settings } from '../lib/stores/settings'
 import { constantStore, createStore } from '../lib/stores/store'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
 import { createDocumentTabs, type ReadOnlyDocument } from '../lib/workspace/documentTabs'
 import { documentKey, documentUri, type AddressProblem, type Catalog, type DocumentRecord, type Live } from '../lib/workspace/live'
 import type { SharedResults } from '../lib/workspace/sharedResults'
-import type { RunTiming } from '../lib/workspace/verification'
+import type { QueuedVerification, RunTiming } from '../lib/workspace/verification'
 import { createShellState, type ShellState } from '../shells/shellState'
 import { servedFlavors } from '../__tests__/fixtures/flavors'
 
@@ -30,11 +30,11 @@ export interface Seed {
   exampleId?: string
   catalog?: Catalog['status']
   connection?: ConnectionState
-  // the step running, every step before it done; null when initialization is over
+  // the step running, every step before it done; the language server initializes while the cases are found and after; null when initialization is over
   initializingAt?: string | null
   // the step running fails with this reason
   initializationFailure?: string
-  pending?: boolean
+  queued?: QueuedVerification
   verification?: VerificationState
   selection?: string | null
   address?: AddressProblem | null
@@ -137,17 +137,19 @@ export const CONNECTED = connectionConnected(INITIAL_CONNECTION, Date.now())
 
 function initialization(languageId: string, runningStep: string | null, failure: string | undefined): InitializationState {
   const steps = initializationOf(initializationStepsOf(languageId, BACKEND))
-  const now = Date.now()
-  if (runningStep === null) {
-    return finishThrough(steps, 'cases', now - 2000)
-  }
-  const index = steps.steps.findIndex((step) => {
+  const startedAt = Date.now() - 6000
+  const running = runningStep === InitializationSteps.cases.id ? [InitializationSteps.initialize.id, runningStep] : runningStep === null ? [] : [runningStep]
+  const runningIndex = steps.steps.findIndex((step) => {
     return step.id === runningStep
   })
-  const before = steps.steps[index - 1]
-  const finished = before ? finishThrough(steps, before.id, now - 6000) : steps
-  const started = startStep(finished, runningStep, now - 6000)
-  return failure === undefined ? started : failStep(started, runningStep, now - 1000, failure)
+  const finishedBefore = runningStep === null || runningStep === InitializationSteps.initialize.id ? steps.steps.length : runningIndex
+  const seeded = steps.steps.reduce((state, step, index) => {
+    if (running.includes(step.id)) {
+      return startStep(state, step.id, startedAt)
+    }
+    return index < finishedBefore ? finishStep(state, step.id, startedAt) : state
+  }, steps)
+  return failure === undefined || runningStep === null ? seeded : failStep(seeded, runningStep, Date.now() - 1000, failure)
 }
 
 function runtimeOf(flavor: LiveFlavor, connection: ConnectionState, steps: InitializationState, modelOxsts: string | undefined): LanguageRuntime {
@@ -229,7 +231,7 @@ export function seedLive(seed: Seed): Seeded {
     unsaved: constantStore(seed.unsaved ?? false),
     sharedResults: constantStore(seed.sharedResults ?? null),
     tabs,
-    pendingVerifyAll: constantStore(seed.pending ?? false),
+    queuedVerification: constantStore(seed.queued ?? null),
     runTiming: constantStore(seed.timing ?? null),
     requested: constantStore(seed.location ?? null),
     start: () => {},

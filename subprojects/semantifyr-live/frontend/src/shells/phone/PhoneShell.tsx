@@ -8,6 +8,7 @@ import type React from 'react'
 import { useEffect, useLayoutEffect, useState } from 'react'
 
 import { presentationOf } from '../../lib/language/presentation'
+import { isInitialized } from '../../lib/stores/initialization'
 import { useStore } from '../../lib/stores/useStore'
 import type { ResolvedColorMode } from '../../lib/util/colorMode'
 import { caseRowOf } from '../../lib/workspace/caseRows'
@@ -22,7 +23,7 @@ import { verifyAll } from '../shellState'
 import { StatusContent, useStatusLine } from '../statusLine'
 import { useTouchInput } from '../touch'
 import type { TraceSlot } from '../traceSlot'
-import { AddressError, ModelPane, ResultsPane, TracePane, useInitialized, type Pane } from './panes'
+import { AddressError, ModelPane, ResultsPane, TracePane, type Pane } from './panes'
 import { ChooserSheet, MenuSheet, PortfolioSheet, ProblemsSheet, type Overlay } from './sheets'
 
 import './phone.css'
@@ -81,8 +82,8 @@ function VerifyButton({ onRun }: { onRun: () => void }): React.JSX.Element {
   const live = useLive()
   const shell = useShell()
   const verification = useCurrentVerification(live)
-  const pending = useStore(live.pendingVerifyAll)
-  if (verification.phase === 'running' || pending) {
+  const queued = useStore(live.queuedVerification) !== null
+  if (verification.phase === 'running' || queued) {
     return (
       <button
         type="button"
@@ -139,7 +140,9 @@ function Bottom({ pane, onPane, onProblems }: { pane: Pane, onPane: (pane: Pane)
   const live = useLive()
   const line = useStatusLine()
   const verification = useCurrentVerification(live)
-  const initialized = useInitialized()
+  const initializing = useStore(live.initialization, (state) => {
+    return state.steps.length === 0 || !isInitialized(state)
+  })
   const catalog = useStore(live.catalog, (state) => {
     return state.status
   })
@@ -171,7 +174,7 @@ function Bottom({ pane, onPane, onProblems }: { pane: Pane, onPane: (pane: Pane)
   }
   return (
     <footer className="phone-bottom">
-      {!initialized && catalog !== 'waiting' ? <div className="progress-indeterminate" /> : null}
+      {initializing && catalog !== 'waiting' ? <div className="progress-indeterminate" /> : null}
       <div className={`phone-status is-${line.status.kind}`} role="status" data-testid="status-message">
         <StatusContent line={line} />
         <ProblemsButton onOpen={onProblems} />

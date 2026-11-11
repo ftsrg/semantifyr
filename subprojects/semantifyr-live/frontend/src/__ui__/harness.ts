@@ -147,7 +147,7 @@ export async function statesOf(locator: Locator, prefix: string): Promise<string
   }, prefix)
 }
 
-// the cases are listed once initialization is over, which in SysML waits for the standard library the worker loads
+// the cases are listed once they are found, which in SysML may wait for the worker to start
 export async function casesListed(page: Page): Promise<void> {
   const { rows, initialization } = results(page)
   await expect.poll(async () => {

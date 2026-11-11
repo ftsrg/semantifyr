@@ -10,7 +10,7 @@ import { parseLiveEditorUrl } from '@semantifyr/editor-common'
 
 import type { LiveFlavor } from '../../examples'
 import { presentationOf } from '../../lib/language/presentation'
-import { isInitialized } from '../../lib/stores/initialization'
+import { areCasesKnown, isInitialized } from '../../lib/stores/initialization'
 import { useStore } from '../../lib/stores/useStore'
 import type { ResolvedColorMode } from '../../lib/util/colorMode'
 import type { VerificationCaseState } from '../../lib/verification/engine'
@@ -43,8 +43,8 @@ function VerifyButton(): React.JSX.Element {
   const live = useLive()
   const shell = useShell()
   const verification = useCurrentVerification(live)
-  const pending = useStore(live.pendingVerifyAll)
-  if (verification.phase === 'running' || pending) {
+  const queued = useStore(live.queuedVerification) !== null
+  if (verification.phase === 'running' || queued) {
     return (
       <button
         type="button"
@@ -173,10 +173,10 @@ function useCasesListed(): boolean {
   const catalog = useStore(live.catalog, (state) => {
     return state.status
   })
-  const initialized = useStore(live.initialization, (state) => {
-    return state.steps.length > 0 && isInitialized(state)
+  const known = useStore(live.initialization, (state) => {
+    return areCasesKnown(state)
   })
-  return catalog === 'ready' && initialized
+  return catalog === 'ready' && known
 }
 
 // in a growing frame the trace text is as tall as it is; a fixed frame scrolls it in its area, under a title naming the case, which its row may be scrolled away from
@@ -227,7 +227,7 @@ function Cases({ slot, inlineTrace }: { slot: TraceSlot | undefined, inlineTrace
   if (!listed || !flavor) {
     const text = catalog === 'waiting'
       ? 'The server is not answering. The model can be edited and its verification cases are listed once it answers.'
-      : `The verification cases are listed once ${flavor ? presentationOf(flavor.languageId).name : 'the language'} has initialized.`
+      : `The verification cases are listed once ${flavor ? `the ${presentationOf(flavor.languageId).name}` : 'the'} language server has found them.`
     return <div className="embed-initializing">{text}</div>
   }
   if (verification.cases.length === 0) {

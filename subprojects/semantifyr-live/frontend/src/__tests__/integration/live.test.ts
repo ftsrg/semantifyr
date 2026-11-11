@@ -6,6 +6,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { VerificationCaseResult, VerificationCaseSpecification } from '@semantifyr/editor-common'
+import { areCasesKnown } from '../../lib/stores/initialization'
 import type { LspClient, VerificationState } from '../../lib/verification/engine'
 import { NO_VERIFICATION } from '../../lib/workspace/verification'
 import { createTestLive, testFlavors, type TestLive } from '../helpers/live'
@@ -86,8 +87,8 @@ function verificationOf(test: TestLive): VerificationState {
   return key === null ? NO_VERIFICATION : test.live.verification.get().get(key) ?? NO_VERIFICATION
 }
 
-async function openConnected(routed: RoutedClient, search = ''): Promise<TestLive> {
-  const test = createTestLive(routed.client)
+async function openConnected(routed: RoutedClient, search = '', initializing = false): Promise<TestLive> {
+  const test = createTestLive(routed.client, undefined, { initializing })
   test.live.start(search)
   await vi.waitFor(() => {
     expect(test.live.workspace.get().runtime).not.toBeNull()
@@ -418,7 +419,7 @@ describe('Live', () => {
     pending.resolve(failedResult)
   })
 
-  it('shows Verify all as pending until the cases are known, and drops it on cancel', async () => {
+  it('queues Verify all until the cases are known, and drops it on cancel', async () => {
     const routed = routedClient([caseAt('a', 1)])
     open = createTestLive(routed.client)
     open.live.start('')
@@ -427,9 +428,62 @@ describe('Live', () => {
     })
 
     open.live.verifyAll()
-    expect(open.live.pendingVerifyAll.get()).toBe(true)
+    expect(open.live.queuedVerification.get()).toEqual({ caseId: null })
     open.live.cancelVerification()
-    expect(open.live.pendingVerifyAll.get()).toBe(false)
+    expect(open.live.queuedVerification.get()).toBeNull()
+  })
+
+  it('lists the cases while the language server initializes, and starts a case asked for meanwhile once it has', async () => {
+    const routed = routedClient([caseAt('a', 1), caseAt('b', 2)])
+    open = await openConnected(routed, '', true)
+    expect(areCasesKnown(open.live.initialization.get())).toBe(true)
+
+    open.live.verifyCase('b')
+    expect(open.live.queuedVerification.get()).toEqual({ caseId: 'b' })
+    expect(routed.verifiedLines).toEqual([])
+    open.runtime().initialized()
+
+    await vi.waitFor(() => {
+      expect(verificationOf(open!).phase).toBe('done')
+    })
+    expect(routed.verifiedLines).toEqual([2])
+    expect(open.live.queuedVerification.get()).toBeNull()
+  })
+
+  it('starts a Verify all asked for before anything was known once the cases arrive after the language server initialized', async () => {
+    const routed = routedClient([caseAt('a', 1)])
+    open = createTestLive(routed.client, undefined, { initializing: true })
+    open.live.start('')
+    await vi.waitFor(() => {
+      expect(open!.live.workspace.get().runtime).not.toBeNull()
+    })
+
+    open.live.verifyAll()
+    open.runtime().connect()
+    open.runtime().initialized()
+    expect(areCasesKnown(open.live.initialization.get())).toBe(false)
+    expect(routed.verifiedLines).toEqual([])
+    open.models.open(MODEL_URI, 'model')
+
+    await vi.waitFor(() => {
+      expect(verificationOf(open!).phase).toBe('done')
+    })
+    expect(routed.verifiedLines).toEqual([1])
+  })
+
+  it('keeps only the verification asked for last while the language server initializes', async () => {
+    const routed = routedClient([caseAt('a', 1), caseAt('b', 2)])
+    open = await openConnected(routed, '', true)
+
+    open.live.verifyAll()
+    open.live.verifyCase('a')
+    expect(open.live.queuedVerification.get()).toEqual({ caseId: 'a' })
+    open.runtime().initialized()
+
+    await vi.waitFor(() => {
+      expect(verificationOf(open!).phase).toBe('done')
+    })
+    expect(routed.verifiedLines).toEqual([1])
   })
 
   it('starts a new session for the open document when asked after the server ended the last one', async () => {

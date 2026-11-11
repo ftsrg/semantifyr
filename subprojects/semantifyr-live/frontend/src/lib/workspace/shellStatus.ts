@@ -5,11 +5,11 @@
  */
 
 import type { ConnectionState } from '../stores/connection'
-import { currentStep, isInitialized, type InitializationState, type InitializationStep } from '../stores/initialization'
+import { areCasesKnown, currentStep, isInitialized, type InitializationState, type InitializationStep } from '../stores/initialization'
 import type { VerificationState } from '../verification/engine'
 import { caseRowOf, countsOf, countsPhrase, formatSeconds } from './caseRows'
 import type { CatalogStatus } from './live'
-import type { RunTiming } from './verification'
+import type { QueuedVerification, RunTiming } from './verification'
 
 // the clock of a view ticks every second, so a step can start after its last tick
 export function stepTimeText(step: InitializationStep, now: number, failedWord: string): string {
@@ -56,6 +56,7 @@ export interface ShellStatusInput {
   initialization: InitializationState
   verification: VerificationState
   timing: RunTiming | null
+  queued: QueuedVerification | null
   // Verify all was pressed with errors in the model
   blockedErrors: number | null
   now: number
@@ -122,6 +123,17 @@ function connectionStatus(connection: ConnectionState, now: number): ShellStatus
   }
 }
 
+function queuedStatus(queued: QueuedVerification, verification: VerificationState, step: InitializationStep): ShellStatus {
+  const reason = lowerFirst(step.label)
+  const target = verification.cases.find((caseState) => {
+    return caseState.caseInfo.id === queued.caseId
+  })
+  if (!target) {
+    return { kind: 'busy', text: `Verify all waits: ${reason}` }
+  }
+  return { kind: 'busy', text: 'Verify ', caseName: caseRowOf(target).name, after: ` waits: ${reason}` }
+}
+
 // a single run names its case, Verify all its position among the cases
 function runningStatus(verification: VerificationState, timing: RunTiming | null): ShellStatus {
   const index = verification.cases.findIndex((caseState) => {
@@ -185,6 +197,12 @@ export function shellStatus(input: ShellStatusInput): ShellStatus {
   const step = currentStep(initialization)
   if (step?.state === 'failed' && step.reason !== undefined) {
     return { kind: 'problem', text: step.reason }
+  }
+  if (step && input.queued) {
+    return queuedStatus(input.queued, verification, step)
+  }
+  if (step && areCasesKnown(initialization)) {
+    return { kind: 'busy', text: step.label }
   }
   if (input.catalog === 'loading' || !isInitialized(initialization)) {
     const label = step ? `: ${lowerFirst(step.label)}` : ''

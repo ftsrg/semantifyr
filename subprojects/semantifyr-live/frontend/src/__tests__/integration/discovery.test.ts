@@ -6,7 +6,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { VerificationCaseSpecification } from '@semantifyr/editor-common'
-import { finishStep, initializationOf, InitializationSteps, isInitialized, startStep, type InitializationState } from '../../lib/stores/initialization'
+import { InitializationSteps, isInitialized, type InitializationState } from '../../lib/stores/initialization'
 import type { LspClient } from '../../lib/verification/engine'
 import { createTestLive, type TestLive } from '../helpers/live'
 
@@ -57,8 +57,8 @@ function casesStep(state: InitializationState): InitializationState['steps'][num
   })
 }
 
-async function openConnected(client: LspClient, retries: readonly number[], timeoutMs = 1000): Promise<TestLive> {
-  const test = createTestLive(client, undefined, { discoveryRetryMs: retries, discoveryTimeoutMs: timeoutMs })
+async function openConnected(client: LspClient, retries: readonly number[], timeoutMs = 1000, initializing = false): Promise<TestLive> {
+  const test = createTestLive(client, undefined, { discoveryRetryMs: retries, discoveryTimeoutMs: timeoutMs, initializing })
   test.live.start('/oxsts')
   await vi.waitFor(() => {
     expect(test.live.workspace.get().runtime).not.toBeNull()
@@ -139,7 +139,7 @@ describe('finding the verification cases', () => {
     })
   })
 
-  it('asks for the cases when the session has loaded the model, though the discovery at the connect found nothing to ask', async () => {
+  it('asks for the cases again once the language server has initialized, though the discovery at the connect found nothing to ask', async () => {
     let documentKnown = false
     const session = discoveryClient(async () => {
       if (!documentKnown) {
@@ -147,22 +147,14 @@ describe('finding the verification cases', () => {
       }
       return CASES
     })
-    open = await openConnected(session.client, [60_000])
+    open = await openConnected(session.client, [60_000], 1000, true)
     await vi.waitFor(() => {
       expect(open!.live.verification.get().get(open!.live.workspace.get().documentKey!)?.discovery).toBe('idle')
     })
     const asked = session.attempts()
-    const runtime = open.runtime()
-    runtime.initialization.update((state) => {
-      return { steps: state.steps.map((step) => {
-        return step.id === InitializationSteps.cases.id ? { id: step.id, label: step.label, state: 'pending', startedAt: null, finishedAt: null } : step
-      }) }
-    })
 
     documentKnown = true
-    runtime.initialization.update((state) => {
-      return startStep(state, InitializationSteps.cases.id, Date.now())
-    })
+    open.runtime().initialized()
 
     await vi.waitFor(() => {
       expect(isInitialized(open!.live.initialization.get())).toBe(true)
@@ -170,33 +162,41 @@ describe('finding the verification cases', () => {
     expect(session.attempts()).toBe(asked + 1)
   })
 
-  it('ends the library step with what it waited for when the diagnostics of the model never come, and lists the cases once the model is there', async () => {
-    const session = discoveryClient(async () => {
-      return CASES
-    })
-    open = createTestLive(session.client, undefined, { libraryTimeoutMs: 50 })
+  it('ends the initialization of the language server with what it waited for when the model\'s diagnostics never come, and leaves a queued verification to the server', async () => {
+    const commands: string[] = []
+    const client: LspClient = {
+      sendRequest: async (method, parameters) => {
+        if (method !== 'workspace/executeCommand') {
+          return null
+        }
+        const { command } = parameters as { command: string }
+        commands.push(command)
+        return command === 'oxsts.case.discover' ? CASES : new Promise(() => {})
+      },
+      sendNotification: () => {},
+    }
+    open = createTestLive(client, undefined, { initializing: true, initializationTimeoutMs: 400 })
     open.live.start('/oxsts')
     await vi.waitFor(() => {
       expect(open!.live.workspace.get().runtime).not.toBeNull()
     })
-    const runtime = open.runtime()
-    runtime.connect()
-    runtime.initialization.set(startStep(finishStep(initializationOf([
-      InitializationSteps.connect,
-      InitializationSteps.library,
-      InitializationSteps.cases,
-    ]), InitializationSteps.connect.id, Date.now()), InitializationSteps.library.id, Date.now()))
+    const record = open.live.documents.get().get(open.live.workspace.get().documentKey!)!
+    open.models.open(record.uri, record.text)
+    open.runtime().connect()
+    await vi.waitFor(() => {
+      expect(casesStep(open!.live.initialization.get())?.state).toBe('done')
+    })
+    open.live.verifyCase('a')
+    expect(commands).not.toContain('oxsts.case.verify')
 
     await vi.waitFor(() => {
       expect(open!.live.initialization.get().steps.find((step) => {
-        return step.id === InitializationSteps.library.id
-      })?.reason).toBe('Loading the library did not end within 0 s.')
+        return step.id === InitializationSteps.initialize.id
+      })?.reason).toBe('Initializing the language server did not end within 0 s.')
     })
-
-    const record = open.live.documents.get().get(open.live.workspace.get().documentKey!)!
-    open.models.open(record.uri, record.text)
     await vi.waitFor(() => {
-      expect(isInitialized(open!.live.initialization.get())).toBe(true)
+      expect(commands).toContain('oxsts.case.verify')
     })
+    expect(open.live.queuedVerification.get()).toBeNull()
   })
 })

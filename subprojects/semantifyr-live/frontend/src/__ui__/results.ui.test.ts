@@ -341,6 +341,30 @@ describe('Verify all', () => {
     }).toEqual(['failed', 'passed'])
   })
 
+  test('a case run from its row while the language server initializes waits with its reason, and starts once the model\'s first diagnostics arrive', async ({ ui }) => {
+    const diagnostics = gate()
+    ui.backend.answer('diagnostics', async (_request, recorded) => {
+      await diagnostics.passed
+      return recorded()
+    })
+    const page = await opened(ui)
+    const status = page.locator('[data-testid=status-message]')
+    await expect.poll(async () => {
+      return status.innerText()
+    }).toBe('Initializing the OXSTS language server')
+
+    await results(page).row(BARRIER).getByRole('button', { name: `Run ${BARRIER}` }).click()
+    await expect.poll(async () => {
+      return status.innerText()
+    }).toBe(`Verify ${BARRIER} waits: initializing the OXSTS language server`)
+    expect(await rowStates(page)).toEqual(['not-run', 'not-run'])
+    diagnostics.open()
+
+    await expect.poll(async () => {
+      return rowStates(page)
+    }).toEqual(['failed', 'not-run'])
+  })
+
   test('does not run with errors in the model, and the status line says so', async ({ ui }) => {
     ui.backend.answer('diagnostics', () => {
       return [{ range: { start: { line: 0, character: 0 }, end: { line: 0, character: 7 } }, severity: 1, message: 'Something is wrong', source: 'semantifyr' }]

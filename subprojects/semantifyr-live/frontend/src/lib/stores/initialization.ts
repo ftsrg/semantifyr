@@ -30,7 +30,8 @@ export interface InitializationState {
 export const InitializationSteps = {
   connect: { id: 'connect', label: 'Connecting to the server' },
   server: { id: 'server', label: 'Starting the language server' },
-  library: { id: 'library', label: 'Loading the library' },
+  // ends at the model's first diagnostics; it does not hold the cases back, only the start of a verification
+  initialize: { id: 'initialize', label: 'Initializing the language server' },
   cases: { id: 'cases', label: 'Finding the verification cases' },
 } as const
 
@@ -82,16 +83,6 @@ export function finishStep(state: InitializationState, id: string, now: number):
   })
 }
 
-// a later step done means every step before it is done too
-export function finishThrough(state: InitializationState, id: string, now: number): InitializationState {
-  const last = state.steps.findIndex((step) => {
-    return step.id === id
-  })
-  return state.steps.slice(0, last + 1).reduce((finished, step) => {
-    return finishStep(finished, step.id, now)
-  }, state)
-}
-
 export function failStep(state: InitializationState, id: string, now: number, reason?: string): InitializationState {
   return changeStep(state, id, (step) => {
     if (step.state === 'done' || step.state === 'failed') {
@@ -104,6 +95,19 @@ export function failStep(state: InitializationState, id: string, now: number, re
 export function isInitialized(state: InitializationState): boolean {
   return state.steps.every((step) => {
     return step.state === 'done'
+  })
+}
+
+export function areCasesKnown(state: InitializationState): boolean {
+  return state.steps.some((step) => {
+    return step.id === InitializationSteps.cases.id && step.state === 'done'
+  })
+}
+
+// a language server whose initialization failed is left to answer the verification itself
+export function isReadyToVerify(state: InitializationState): boolean {
+  return state.steps.length > 0 && state.steps.every((step) => {
+    return step.state === 'done' || (step.id === InitializationSteps.initialize.id && step.state === 'failed')
   })
 }
 

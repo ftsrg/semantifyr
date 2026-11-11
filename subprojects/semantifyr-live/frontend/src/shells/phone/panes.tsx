@@ -9,7 +9,7 @@ import type React from 'react'
 import { parseLiveEditorUrl } from '@semantifyr/editor-common'
 import { findExample } from '../../examples'
 import { initializationStepsOf, presentationOf } from '../../lib/language/presentation'
-import { initializationOf, isInitialized } from '../../lib/stores/initialization'
+import { areCasesKnown, initializationOf } from '../../lib/stores/initialization'
 import { useStore } from '../../lib/stores/useStore'
 import type { ResolvedColorMode } from '../../lib/util/colorMode'
 import { caseRowOf, countsOf, type CaseCounts, type CaseRow, type RowStatus } from '../../lib/workspace/caseRows'
@@ -179,7 +179,7 @@ function Initialization(): React.JSX.Element {
   })
   const flavor = useFlavor(live)
   const runtimeSteps = useStore(live.initialization)
-  const pending = useStore(live.pendingVerifyAll)
+  const queued = useStore(live.queuedVerification)
   const now = useNow(1000)
   const languageId = flavor?.languageId ?? addressedLanguage()
   const presentation = presentationOf(languageId)
@@ -195,7 +195,7 @@ function Initialization(): React.JSX.Element {
   const failed = failedStep !== undefined
   const note = waiting
     ? 'The server is not answering. The model can be edited and its verification cases are known once it answers.'
-    : failedStep?.reason ?? (failed ? 'The verification cases are known only after initialization.' : presentation.initializationNote)
+    : failedStep?.reason ?? (failed ? 'The verification cases are listed once a session has found them.' : null)
   return (
     <div className="phone-init" data-language={languageId}>
       <div className="phone-init-title">
@@ -218,8 +218,8 @@ function Initialization(): React.JSX.Element {
         })}
       </ul>
       {failed ? null : <div className="progress-indeterminate" />}
-      <p className="phone-init-note">{note}</p>
-      {pending
+      {note === null ? null : <p className="phone-init-note">{note}</p>}
+      {queued
         ? (
           <div className="phone-init-pressed">
             <Icon name="clock" />
@@ -284,20 +284,22 @@ function CaseRowView({ row, selected, onOpen }: { row: CaseRow, selected: boolea
   )
 }
 
-export function useInitialized(): boolean {
+function useCasesListed(): boolean {
   const live = useLive()
   const catalog = useStore(live.catalog, (state) => {
     return state.status
   })
-  const initialization = useStore(live.initialization)
-  return catalog === 'ready' && initialization.steps.length > 0 && isInitialized(initialization)
+  const known = useStore(live.initialization, (state) => {
+    return areCasesKnown(state)
+  })
+  return catalog === 'ready' && known
 }
 
 export function ResultsPane({ onPane }: { onPane: (pane: Pane) => void }): React.JSX.Element {
   const live = useLive()
   const verification = useCurrentVerification(live)
   const selection = useStore(live.selection)
-  const initialized = useInitialized()
+  const listed = useCasesListed()
   const rows = verification.cases.map(caseRowOf)
   // a case with a trace opens it; one without shows its definition
   const open = (row: CaseRow): void => {
@@ -317,7 +319,7 @@ export function ResultsPane({ onPane }: { onPane: (pane: Pane) => void }): React
   return (
     <section className="pane pane-results" aria-label="Results">
       <div className="pane-scroll">
-        {initialized
+        {listed
           ? (
             <>
               <div className="pane-header">

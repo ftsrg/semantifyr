@@ -91,17 +91,44 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     },
   },
   'initializing': {
-    seed: { initializingAt: 'library' },
+    seed: { initializingAt: 'cases' },
     expectState: () => {
-      expect(text('.initialization-step.is-current')).toContain('Loading the SysML v2 standard library')
+      expect([...document.querySelectorAll<HTMLElement>('.initialization-step.is-current')].map((step) => {
+        return step.innerText
+      }).join('\n')).toMatch(/Initializing the SysML v2 language server[\s\S]*Finding the verification cases/)
       expect(count('.initialization-pressed')).toBe(0)
     },
   },
   'initializing-pressed': {
-    seed: { initializingAt: 'library', pending: true },
+    seed: { initializingAt: 'cases', queued: { caseId: null } },
     expectState: () => {
       expect(text('.initialization-pressed')).toContain('Verify all is pressed')
       expect(count('.results-header .button-cancel')).toBe(1)
+      expect(text('[data-testid=status-message]')).toBe('Verify all waits: finding the verification cases')
+    },
+  },
+  'cases-while-initializing': {
+    seed: { initializingAt: 'initialize', verification: discovered([notRun(BARRIER), notRun(TWO_TRAINS)]) },
+    expectState: () => {
+      expect(count('.case-row.status-not-run')).toBe(2)
+      expect(count('.initialization')).toBe(0)
+      expect(text('[data-testid=status-message]')).toBe('Initializing the SysML v2 language server')
+      expect(count('.connection.is-busy')).toBe(1)
+    },
+  },
+  'case-queued': {
+    seed: { initializingAt: 'initialize', verification: discovered([notRun(BARRIER), notRun(TWO_TRAINS)]), queued: { caseId: BARRIER.id } },
+    expectState: () => {
+      expect(count('.case-row.status-not-run')).toBe(2)
+      expect(count('.results-header .button-cancel')).toBe(1)
+      expect(text('[data-testid=status-message]')).toBe(`Verify ${BARRIER.id} waits: initializing the SysML v2 language server`)
+    },
+  },
+  'initialization-timed-out': {
+    seed: { initializingAt: 'initialize', initializationFailure: 'Initializing the SysML v2 language server did not end within 60 s.', verification: discovered([notRun(BARRIER), notRun(TWO_TRAINS)]) },
+    expectState: () => {
+      expect(count('.case-row.status-not-run')).toBe(2)
+      expect(text('[data-testid=status-message]')).toBe('Initializing the SysML v2 language server did not end within 60 s.')
     },
   },
   'running': {

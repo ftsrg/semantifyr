@@ -106,18 +106,40 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     },
   },
   'initializing': {
-    seed: { initializingAt: 'library' },
+    seed: { initializingAt: 'cases' },
     act: async () => {
       await tapTab('Results')
     },
     expectState: () => {
       expect(visiblePanes()).toEqual(['Results'])
-      expect(text('.phone-init-step.is-current')).toContain('Loading the SysML v2 standard library')
+      expect(count('.phone-init-step.is-current')).toBe(2)
+      expect(text('.phone-init-steps')).toContain('Initializing the SysML v2 language server')
       expect(text('[data-testid=status-message]')).toContain('Initializing SysML v2')
     },
   },
+  'cases-while-initializing': {
+    seed: { initializingAt: 'initialize', verification: NOT_RUN, queued: { caseId: BARRIER.id } },
+    act: async () => {
+      await tapTab('Results')
+    },
+    expectState: () => {
+      expect(count('.phone-case.status-not-run')).toBe(2)
+      expect(count('.phone-init')).toBe(0)
+      expect(text('[data-testid=status-message]')).toBe(`Verify ${BARRIER.id} waits: initializing the SysML v2 language server`)
+    },
+  },
+  'initialization-timed-out': {
+    seed: { initializingAt: 'initialize', initializationFailure: 'Initializing the SysML v2 language server did not end within 60 s.', verification: NOT_RUN },
+    act: async () => {
+      await tapTab('Results')
+    },
+    expectState: () => {
+      expect(count('.phone-case.status-not-run')).toBe(2)
+      expect(text('[data-testid=status-message]')).toBe('Initializing the SysML v2 language server did not end within 60 s.')
+    },
+  },
   'initializing-pressed': {
-    seed: { initializingAt: 'library', pending: true },
+    seed: { initializingAt: 'cases', queued: { caseId: null } },
     act: async () => {
       await tapTab('Results')
     },

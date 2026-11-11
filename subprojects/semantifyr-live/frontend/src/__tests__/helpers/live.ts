@@ -81,17 +81,26 @@ export function fakeModelDocuments(): FakeModelDocuments {
 
 export interface FakeRuntime extends LanguageRuntime {
   connect: () => void
+  // the model's first diagnostics arrived
+  initialized: () => void
   // the server ended the session
   terminate: () => void
   progress: (params: unknown) => void
 }
 
-export function fakeRuntime(flavor: LiveFlavor, client: LspClient): FakeRuntime {
+// a runtime whose language server initializes at the connect, or only when told to when it is `initializing`
+export function fakeRuntime(flavor: LiveFlavor, client: LspClient, initializing = false): FakeRuntime {
   const connection = createStore<ConnectionState>(INITIAL_CONNECTION)
   const initialization = createStore(initializationOf([
     InitializationSteps.connect,
+    InitializationSteps.initialize,
     InitializationSteps.cases,
   ]))
+  const initialized = (): void => {
+    initialization.update((state) => {
+      return finishStep(state, InitializationSteps.initialize.id, 0)
+    })
+  }
   const progressListeners = new Set<(params: unknown) => void>()
   let connected = false
   return {
@@ -127,12 +136,17 @@ export function fakeRuntime(flavor: LiveFlavor, client: LspClient): FakeRuntime 
     connect: () => {
       connected = true
       initialization.update((state) => {
-        return startStep(finishStep(state, InitializationSteps.connect.id, 0), InitializationSteps.cases.id, 0)
+        const started = startStep(finishStep(state, InitializationSteps.connect.id, 0), InitializationSteps.initialize.id, 0)
+        return startStep(started, InitializationSteps.cases.id, 0)
       })
       connection.update((previous) => {
         return connectionConnected(previous, 0)
       })
+      if (!initializing) {
+        initialized()
+      }
     },
+    initialized,
     terminate: () => {
       connected = false
       connection.update((previous) => {
@@ -182,7 +196,7 @@ export interface TestLive {
 }
 
 // A Live over fake runtimes that answer through the given client; the editor's models are plain text
-export function createTestLive(client: LspClient, served: readonly FlavorInfo[] = servedFlavors, options: Pick<LiveOptions, 'defaultFlavorId' | 'server' | 'catalogRetryMs' | 'discoveryRetryMs' | 'discoveryTimeoutMs' | 'libraryTimeoutMs'> = {}): TestLive {
+export function createTestLive(client: LspClient, served: readonly FlavorInfo[] = servedFlavors, { initializing = false, ...options }: Pick<LiveOptions, 'defaultFlavorId' | 'server' | 'catalogRetryMs' | 'discoveryRetryMs' | 'discoveryTimeoutMs' | 'initializationTimeoutMs'> & { initializing?: boolean } = {}): TestLive {
   const models = fakeModelDocuments()
   const runtimes: FakeRuntime[] = []
   const live = createLive({
@@ -210,7 +224,7 @@ export function createTestLive(client: LspClient, served: readonly FlavorInfo[] 
     ...options,
     createRegistry: (flavors) => {
       return fakeRegistry(flavors, (flavor) => {
-        const runtime = fakeRuntime(flavor, client)
+        const runtime = fakeRuntime(flavor, client, initializing)
         runtimes.push(runtime)
         return runtime
       })

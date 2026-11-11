@@ -9,7 +9,7 @@ import { useRef } from 'react'
 
 import { parseLiveEditorUrl } from '@semantifyr/editor-common'
 import { initializationStepsOf, presentationOf } from '../../lib/language/presentation'
-import { initializationOf, isInitialized } from '../../lib/stores/initialization'
+import { areCasesKnown, initializationOf } from '../../lib/stores/initialization'
 import { changeSettings } from '../../lib/stores/settings'
 import { useStore } from '../../lib/stores/useStore'
 import { countsOf, STATUS_WORDS, type CaseCounts, type CaseRow, type RowStatus } from '../../lib/workspace/caseRows'
@@ -92,8 +92,8 @@ function Counts({ counts, compact }: { counts: CaseCounts, compact: boolean }): 
 
 function useBusy(live: Live): boolean {
   const verification = useCurrentVerification(live)
-  const pending = useStore(live.pendingVerifyAll)
-  return verification.phase === 'running' || pending
+  const queued = useStore(live.queuedVerification)
+  return verification.phase === 'running' || queued !== null
 }
 
 function VerifyButton({ compact }: { compact: boolean }): React.JSX.Element {
@@ -171,7 +171,7 @@ function Initialization(): React.JSX.Element {
   const flavor = useFlavor(live)
   const runtimeSteps = useStore(live.initialization)
   const connection = useStore(live.connection)
-  const pending = useStore(live.pendingVerifyAll)
+  const queued = useStore(live.queuedVerification)
   const now = useNow(1000)
   const languageId = flavor?.languageId ?? addressedLanguage()
   const presentation = presentationOf(languageId)
@@ -191,7 +191,7 @@ function Initialization(): React.JSX.Element {
     ? 'The server is not answering. The model can be edited and its verification cases are known once it answers.'
     : trouble !== null
       ? `${trouble} The editor works; the verification cases are known once a session is up.`
-    : failedStep?.reason ?? (failed ? 'The verification cases are known only after initialization.' : presentation.initializationNote)
+    : failedStep?.reason ?? (failed ? 'The verification cases are listed once a session has found them.' : null)
   const failedWord = waiting ? 'retrying' : retrying ? `retrying in ${retrying} s` : retrying === 0 ? 'retrying' : 'failed'
   return (
     <div className="initialization" data-language={languageId}>
@@ -215,8 +215,8 @@ function Initialization(): React.JSX.Element {
         })}
       </ul>
       {failed ? null : <div className="progress-indeterminate" />}
-      <div className="initialization-note">{note}</div>
-      {pending
+      {note === null ? null : <div className="initialization-note">{note}</div>}
+      {queued
         ? (
           <div className="initialization-pressed">
             <Icon name="clock" />
@@ -508,7 +508,7 @@ function ListSplitter({ column }: { column: React.RefObject<HTMLElement | null> 
   )
 }
 
-function Rail({ counts, initialized }: { counts: CaseCounts, initialized: boolean }): React.JSX.Element {
+function Rail({ counts, listed }: { counts: CaseCounts, listed: boolean }): React.JSX.Element {
   const live = useLive()
   return (
     <aside className="rail" aria-label="Verification cases">
@@ -526,7 +526,7 @@ function Rail({ counts, initialized }: { counts: CaseCounts, initialized: boolea
       <VerifyButton compact />
       <ModelOxstsButton compact />
       <span className="rail-divider" />
-      {initialized ? <Counts counts={counts} compact /> : <VerdictMark status="running" label="Initializing" />}
+      {listed ? <Counts counts={counts} compact /> : <VerdictMark status="running" label="Initializing" />}
     </aside>
   )
 }
@@ -541,12 +541,12 @@ export function ResultsColumn({ trace }: { trace: TraceSlot | undefined }): Reac
     return settings.resultsColumnCollapsed
   })
   const column = useRef<HTMLElement>(null)
-  const initialized = catalog === 'ready' && initialization.steps.length > 0 && isInitialized(initialization)
+  const listed = catalog === 'ready' && areCasesKnown(initialization)
   const { rows, results, running } = useCaseRows()
   const counts = countsOf(rows)
 
   if (collapsed) {
-    return <Rail counts={counts} initialized={initialized} />
+    return <Rail counts={counts} listed={listed} />
   }
   return (
     <aside className="results" ref={column} aria-label="Verification cases">
@@ -562,13 +562,13 @@ export function ResultsColumn({ trace }: { trace: TraceSlot | undefined }): Reac
         >
           <Icon name="panel-collapse" />
         </button>
-        {initialized ? <Counts counts={counts} compact={false} /> : <span className="results-initializing-label">Initializing</span>}
+        {listed ? <Counts counts={counts} compact={false} /> : <span className="results-initializing-label">Initializing</span>}
         <span className="results-spacer" />
         <ModelOxstsButton compact={false} />
         <SettingsPopover />
         <VerifyButton compact={false} />
       </div>
-      {initialized
+      {listed
         ? (
           <>
             {results ? <SharedNotice rows={rows} results={results} running={running} /> : null}

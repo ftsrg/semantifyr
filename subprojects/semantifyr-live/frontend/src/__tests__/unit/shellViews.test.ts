@@ -10,7 +10,7 @@ import type { VerificationCaseSpecification } from '@semantifyr/editor-common'
 import { editorColorsFrom, toHexColor } from '../../lib/session/editorTheme'
 import { fileUriOfLibrary, isLibraryFileUri, libraryUriOf } from '../../lib/session/readOnlyDocuments'
 import { connectionConnected, connectionLost, INITIAL_CONNECTION } from '../../lib/stores/connection'
-import { finishThrough, initializationOf, InitializationSteps, startStep } from '../../lib/stores/initialization'
+import { finishStep, initializationOf, InitializationSteps, startStep } from '../../lib/stores/initialization'
 import { createDemandStore } from '../../lib/stores/store'
 import type { VerificationCaseState, VerificationState } from '../../lib/verification/engine'
 import { caseRowOf, countsOf, countsPhrase } from '../../lib/workspace/caseRows'
@@ -48,15 +48,21 @@ function statusInput(): ShellStatusInput {
     initialization: READY,
     verification: { phase: 'idle', discovery: 'discovered', cases: [] },
     timing: null,
+    queued: null,
     blockedErrors: null,
     now: 10_000,
   }
 }
 
-const READY = finishThrough(initializationOf([
+const STEPS = initializationOf([
   InitializationSteps.connect,
+  InitializationSteps.initialize,
   InitializationSteps.cases,
-]), InitializationSteps.cases.id, 0)
+])
+
+const CASES_KNOWN = startStep(finishStep(finishStep(STEPS, InitializationSteps.connect.id, 0), InitializationSteps.cases.id, 0), InitializationSteps.initialize.id, 0)
+
+const READY = finishStep(CASES_KNOWN, InitializationSteps.initialize.id, 0)
 
 function statusOf(input: Partial<ShellStatusInput>): string {
   return shellStatus({ ...statusInput(), ...input }).text
@@ -131,15 +137,22 @@ describe('the status line', () => {
 
   it('says why Verify all did not run, and what initializes', () => {
     expect(statusOf({ blockedErrors: 2 })).toBe('Verify all did not run: the model has 2 errors')
-    const initializing = startStep(initializationOf([InitializationSteps.connect, InitializationSteps.library]), InitializationSteps.connect.id, 0)
+    const initializing = startStep(STEPS, InitializationSteps.connect.id, 0)
     expect(statusOf({ initialization: initializing })).toBe('Initializing SysML v2: connecting to the server')
   })
 
-  it('times a step that started after the view\'s clock last ticked from zero, never below', () => {
-    const library = startStep(initializationOf([InitializationSteps.library]), InitializationSteps.library.id, 10_400).steps[0]!
+  it('says the language server initializes once the cases are known, and what a queued verification waits for', () => {
+    const verification: VerificationState = { phase: 'idle', discovery: 'discovered', cases: [result('a', 'stale')] }
+    expect(statusOf({ initialization: CASES_KNOWN, verification })).toBe('Initializing the language server')
+    expect(statusOf({ initialization: CASES_KNOWN, verification, queued: { caseId: null } })).toBe('Verify all waits: initializing the language server')
+    expect(shellStatus({ ...statusInput(), initialization: CASES_KNOWN, verification, queued: { caseId: 'example::a' } })).toMatchObject({ kind: 'busy', text: 'Verify ', caseName: 'a', after: ' waits: initializing the language server' })
+  })
 
-    expect(stepTimeText(library, 10_000, 'failed')).toBe('0 s')
-    expect(stepTimeText(library, 12_500, 'failed')).toBe('2 s')
+  it('times a step that started after the view\'s clock last ticked from zero, never below', () => {
+    const step = startStep(STEPS, InitializationSteps.initialize.id, 10_400).steps[1]!
+
+    expect(stepTimeText(step, 10_000, 'failed')).toBe('0 s')
+    expect(stepTimeText(step, 12_500, 'failed')).toBe('2 s')
   })
 
   it('says when the next attempt to connect comes, for a refusal and for a lost connection', () => {
@@ -225,13 +238,6 @@ describe('the editor colours', () => {
 })
 
 describe('the stores', () => {
-  it('finish every step up to a later one that finished', () => {
-    const state = finishThrough(initializationOf([InitializationSteps.connect, InitializationSteps.server, InitializationSteps.cases]), InitializationSteps.server.id, 5)
-    expect(state.steps.map((step) => {
-      return step.state
-    })).toEqual(['done', 'done', 'pending'])
-  })
-
   it('tell their owner while anyone listens', () => {
     const demands: boolean[] = []
     const store = createDemandStore(0, (demanded) => {

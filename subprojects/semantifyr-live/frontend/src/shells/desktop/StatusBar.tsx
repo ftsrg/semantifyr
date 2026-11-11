@@ -41,6 +41,7 @@ function StatusMessage(): React.JSX.Element {
   const initialization = useStore(live.initialization)
   const verification = useCurrentVerification(live)
   const timing = useStore(live.runTiming)
+  const queued = useStore(live.queuedVerification)
   const blocked = useStore(shell.verifyBlocked)
   const problems = useStore(live.problems)
   const language = useLanguage(live)
@@ -57,6 +58,7 @@ function StatusMessage(): React.JSX.Element {
     initialization,
     verification,
     timing,
+    queued,
     blockedErrors: blocked ? errors : null,
     now,
     unsaved,

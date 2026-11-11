@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { LanguageClientCallbacks } from '../../lib/session/monaco'
 import { CloseCode } from '../../lib/session/reconnectController'
 import type { ConnectionState } from '../../lib/stores/connection'
-import { InitializationSteps } from '../../lib/stores/initialization'
+import { failStep, InitializationSteps } from '../../lib/stores/initialization'
 import { liveFlavors } from '../../examples'
 import { servedFlavors } from '../fixtures/flavors'
 
@@ -73,7 +73,7 @@ async function startRuntime(): Promise<{
     steps: [
       InitializationSteps.connect,
       InitializationSteps.server,
-      InitializationSteps.library,
+      InitializationSteps.initialize,
       InitializationSteps.cases,
     ],
   })
@@ -90,6 +90,12 @@ function closeCurrentSocket(code: number, reason: string): void {
   const callbacks = connections.callbacks.at(-1)!
   callbacks.onClose({ code, reason })
   callbacks.onStopped()
+}
+
+function receiveDiagnostics(): void {
+  for (const listener of connections.diagnostics) {
+    listener()
+  }
 }
 
 function stepStates(runtime: ReturnType<typeof createServedRuntime>): string[] {
@@ -164,14 +170,37 @@ describe('servedRuntime', () => {
     await runtime.dispose()
   })
 
-  it('reports its initialization: the connection and the server done, the library loading until the model\'s first diagnostics', async () => {
+  it('reports its initialization: the connection and the server done, the cases asked for and the language server initializing until the model\'s first diagnostics', async () => {
     const { runtime } = await startRuntime()
 
-    expect(stepStates(runtime)).toEqual(['connect:done', 'server:done', 'library:running', 'cases:pending'])
-    for (const listener of connections.diagnostics) {
-      listener()
-    }
-    expect(stepStates(runtime)).toEqual(['connect:done', 'server:done', 'library:done', 'cases:running'])
+    expect(stepStates(runtime)).toEqual(['connect:done', 'server:done', 'initialize:running', 'cases:running'])
+    receiveDiagnostics()
+    expect(stepStates(runtime)).toEqual(['connect:done', 'server:done', 'initialize:done', 'cases:running'])
+    await runtime.dispose()
+  })
+
+  it('ends an initialization that timed out when the diagnostics come late', async () => {
+    const { runtime } = await startRuntime()
+    runtime.initialization.update((state) => {
+      return failStep(state, InitializationSteps.initialize.id, Date.now(), 'Initializing the language server did not end within 60 s.')
+    })
+
+    receiveDiagnostics()
+
+    expect(stepStates(runtime)).toEqual(['connect:done', 'server:done', 'initialize:done', 'cases:running'])
+    await runtime.dispose()
+  })
+
+  it('fails the steps a lost session was at, keeps them failed through the diagnostics the old client clears, and starts them again on the reconnect', async () => {
+    const { runtime } = await startRuntime()
+
+    closeCurrentSocket(1006, '')
+    expect(stepStates(runtime)).toEqual(['connect:done', 'server:done', 'initialize:failed', 'cases:failed'])
+    receiveDiagnostics()
+    expect(stepStates(runtime)).toEqual(['connect:done', 'server:done', 'initialize:failed', 'cases:failed'])
+
+    await vi.advanceTimersByTimeAsync(1_000)
+    expect(stepStates(runtime)).toEqual(['connect:done', 'server:done', 'initialize:running', 'cases:running'])
     await runtime.dispose()
   })
 
@@ -180,7 +209,7 @@ describe('servedRuntime', () => {
     const { runtime, statuses } = await startRuntime()
     expect(statuses.at(-1)).toEqual({ status: 'connecting', reason: 'Session limit reached' })
     expect(runtime.connection.get()).toMatchObject({ refused: true, retryAt: Date.now() + 1_000 })
-    expect(stepStates(runtime)).toEqual(['connect:done', 'server:failed', 'library:pending', 'cases:pending'])
+    expect(stepStates(runtime)).toEqual(['connect:done', 'server:failed', 'initialize:pending', 'cases:pending'])
 
     await vi.advanceTimersByTimeAsync(1_000)
     expect(runtime.connection.get()).toMatchObject({ refused: true, retryAt: Date.now() + 2_000 })
@@ -188,7 +217,7 @@ describe('servedRuntime', () => {
 
     expect(connections.callbacks).toHaveLength(4)
     expect(statuses.at(-1)?.status).toBe('connected')
-    expect(stepStates(runtime)).toEqual(['connect:done', 'server:done', 'library:running', 'cases:pending'])
+    expect(stepStates(runtime)).toEqual(['connect:done', 'server:done', 'initialize:running', 'cases:running'])
     await runtime.dispose()
   })
 
@@ -196,13 +225,13 @@ describe('servedRuntime', () => {
     connections.failures = 1
     const { runtime, statuses } = await startRuntime()
     expect(statuses.at(-1)).toEqual({ status: 'connecting', reason: 'Connection lost' })
-    expect(stepStates(runtime)).toEqual(['connect:failed', 'server:pending', 'library:pending', 'cases:pending'])
+    expect(stepStates(runtime)).toEqual(['connect:failed', 'server:pending', 'initialize:pending', 'cases:pending'])
 
     runtime.reconnect()
     await vi.advanceTimersByTimeAsync(0)
 
     expect(statuses.at(-1)?.status).toBe('connected')
-    expect(stepStates(runtime)).toEqual(['connect:done', 'server:done', 'library:running', 'cases:pending'])
+    expect(stepStates(runtime)).toEqual(['connect:done', 'server:done', 'initialize:running', 'cases:running'])
     await runtime.dispose()
   })
 

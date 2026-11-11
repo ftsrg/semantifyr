@@ -122,7 +122,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     seed: {
       sharedResults: SHARED,
       selection: BARRIER.id,
-      pending: true,
+      queued: { caseId: null },
       verification: discovered([{ caseInfo: BARRIER, status: 'queued' }, { caseInfo: TWO_TRAINS, status: 'queued' }], 'running'),
     },
     expectState: () => {

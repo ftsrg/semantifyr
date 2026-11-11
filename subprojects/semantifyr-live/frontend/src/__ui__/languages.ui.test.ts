@@ -55,7 +55,7 @@ describe('initialization', () => {
     expect(await steps.locator('span:not(.initialization-step-time)').allInnerTexts()).toEqual([
       expect.stringContaining('Connecting to'),
       'Starting the Gamma language server',
-      expect.stringContaining('Loading the'),
+      'Initializing the Gamma language server',
       'Finding the verification cases',
     ])
     expect(await results(page).rows.count()).toBe(0)

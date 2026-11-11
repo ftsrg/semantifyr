@@ -8,11 +8,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createStore } from '../../lib/stores/store'
 import { changeSettings, createSettingsStore, nextTheme } from '../../lib/stores/settings'
 import {
+  areCasesKnown,
   currentStep,
   failStep,
   finishStep,
   initializationOf,
+  InitializationSteps,
   isInitialized,
+  isReadyToVerify,
   startStep,
 } from '../../lib/stores/initialization'
 
@@ -136,5 +139,22 @@ describe('initialization', () => {
     const state = failStep(startStep(startStep(initializationOf(steps), 'connect', 1), 'worker', 2), 'connect', 3)
 
     expect(currentStep(state)?.id).toBe('connect')
+  })
+
+  it('knows the cases before the language server is initialized, and is ready to verify once it is or once its initialization failed', () => {
+    const connected = finishStep(initializationOf([
+      InitializationSteps.connect,
+      InitializationSteps.initialize,
+      InitializationSteps.cases,
+    ]), InitializationSteps.connect.id, 1)
+    const initializing = startStep(connected, InitializationSteps.initialize.id, 1)
+    const casesKnown = finishStep(initializing, InitializationSteps.cases.id, 2)
+
+    expect([areCasesKnown(initializing), isReadyToVerify(initializing)]).toEqual([false, false])
+    expect([areCasesKnown(casesKnown), isReadyToVerify(casesKnown)]).toEqual([true, false])
+    expect(isReadyToVerify(finishStep(casesKnown, InitializationSteps.initialize.id, 3))).toBe(true)
+    expect(isReadyToVerify(failStep(casesKnown, InitializationSteps.initialize.id, 3, 'did not end'))).toBe(true)
+    expect(isReadyToVerify(finishStep(finishStep(connected, InitializationSteps.initialize.id, 3), InitializationSteps.cases.id, 4))).toBe(true)
+    expect(isReadyToVerify(failStep(finishStep(connected, InitializationSteps.initialize.id, 3), InitializationSteps.cases.id, 4))).toBe(false)
   })
 })

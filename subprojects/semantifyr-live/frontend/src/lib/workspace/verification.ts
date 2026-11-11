@@ -7,7 +7,7 @@
 import type { LiveFlavor } from '../../examples'
 import type { LanguageRuntime } from '../language/types'
 import type { ModelDocuments } from '../session/modelDocuments'
-import { failStep, finishThrough, InitializationSteps, isInitialized } from '../stores/initialization'
+import { failStep, finishStep, InitializationSteps, isReadyToVerify } from '../stores/initialization'
 import type { Settings } from '../stores/settings'
 import { createStore, type ReadableStore } from '../stores/store'
 import {
@@ -36,11 +36,17 @@ export interface VerificationTarget {
   uri: string
 }
 
+interface VerificationSubject {
+  target: VerificationTarget
+  runtime: LanguageRuntime
+  flavor: LiveFlavor
+}
+
 export interface VerificationOptions {
   settings: ReadableStore<Settings>
   modelDocuments: ModelDocuments
   // the document, runtime and flavor verification acts on now
-  current: () => { target: VerificationTarget, runtime: LanguageRuntime, flavor: LiveFlavor } | null
+  current: () => VerificationSubject | null
   portfolioId: () => string | undefined
   discoveryDelayMs: number
   // the waits before asking a session again whose discovery failed; once they are spent, initialization fails with the reason
@@ -54,17 +60,18 @@ export interface Verification {
   readonly states: ReadableStore<ReadonlyMap<string, VerificationState>>
   // the selected case of the current document
   readonly selection: ReadableStore<string | null>
-  // Verify all was pressed before the cases were known; it runs once they are
-  readonly pending: ReadableStore<boolean>
+  // a verification asked for before the cases were known or the language server was initialized; it starts once both are
+  readonly queued: ReadableStore<QueuedVerification | null>
   // the start and end of the last run of the current document, the end null while it runs
   readonly timing: ReadableStore<RunTiming | null>
   discover: () => Promise<void>
+  startQueued: () => void
   scheduleDiscovery: () => void
   documentEdited: (key: string) => void
   verifyAll: () => void
   verifyCase: (caseId: string) => void
   cancel: () => void
-  // the session went: the run ends as a cancelled one, a Verify all pressed before the cases were known still waits
+  // the session went: the run ends as a cancelled one, a queued verification still waits
   sessionLost: () => void
   cancelCase: (caseId: string) => void
   validate: (caseId: string) => void
@@ -73,6 +80,11 @@ export interface Verification {
   holdSelection: (caseId: string | null) => void
   forget: (key: string) => void
   dispose: () => void
+}
+
+export interface QueuedVerification {
+  // the case a single run verifies, null for Verify all
+  caseId: string | null
 }
 
 export interface RunTiming {
@@ -91,10 +103,7 @@ interface ActiveRun {
   selectionChanged: boolean
 }
 
-interface Connected {
-  target: VerificationTarget
-  runtime: LanguageRuntime
-  flavor: LiveFlavor
+interface Connected extends VerificationSubject {
   client: LspClient
 }
 
@@ -123,7 +132,7 @@ function firstWithTrace(cases: readonly VerificationCaseState[]): VerificationCa
 export function createVerification(options: VerificationOptions): Verification {
   const states = createStore<ReadonlyMap<string, VerificationState>>(new Map())
   const selection = createStore<string | null>(null)
-  const pending = createStore(false)
+  const queued = createStore<QueuedVerification | null>(null)
   const timing = createStore<RunTiming | null>(null)
   let run: ActiveRun | null = null
   let discoveryTimer: ReturnType<typeof setTimeout> | null = null
@@ -160,6 +169,10 @@ export function createVerification(options: VerificationOptions): Verification {
       return null
     }
     return { ...current, client }
+  }
+
+  const isReady = (current: VerificationSubject): boolean => {
+    return current.runtime.connection.get().status === 'connected' && isReadyToVerify(current.runtime.initialization.get())
   }
 
   const isCurrent = (key: string): boolean => {
@@ -215,8 +228,8 @@ export function createVerification(options: VerificationOptions): Verification {
 
   const verifyAll = (): void => {
     const current = options.current()
-    if (!current || !isInitialized(current.runtime.initialization.get())) {
-      pending.set(true)
+    if (!current || !isReady(current)) {
+      queued.set({ caseId: null })
       return
     }
     const { key, uri } = current.target
@@ -266,6 +279,10 @@ export function createVerification(options: VerificationOptions): Verification {
       return caseState.caseInfo.id === caseId
     })
     if (!target) {
+      return
+    }
+    if (!isReady(current)) {
+      queued.set({ caseId })
       return
     }
     startRun(key, caseId, (connection, setState) => {
@@ -351,11 +368,21 @@ export function createVerification(options: VerificationOptions): Verification {
       return
     }
     connection.runtime.initialization.update((state) => {
-      return finishThrough(state, InitializationSteps.cases.id, Date.now())
+      return finishStep(state, InitializationSteps.cases.id, Date.now())
     })
-    if (pending.get() && isCurrent(key)) {
-      pending.set(false)
+  }
+
+  const startQueued = (): void => {
+    const request = queued.get()
+    const current = options.current()
+    if (!request || !current || !isReady(current)) {
+      return
+    }
+    queued.set(null)
+    if (request.caseId === null) {
       verifyAll()
+    } else {
+      verifyCase(request.caseId)
     }
   }
 
@@ -373,16 +400,17 @@ export function createVerification(options: VerificationOptions): Verification {
   }
 
   const cancel = (): void => {
-    pending.set(false)
+    queued.set(null)
     endRun()
   }
 
   return {
     states,
     selection,
-    pending,
+    queued,
     timing,
     discover,
+    startQueued,
     scheduleDiscovery: () => {
       clearDiscoveryTimer()
       clearRetryTimer()

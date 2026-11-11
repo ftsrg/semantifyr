@@ -23,7 +23,7 @@ import type { VerificationState } from '../verification/engine'
 import { createDocumentTabs, type DocumentTabs } from './documentTabs'
 import { flavorOfFile, type DocumentFile, type OpenedFile } from './files'
 import type { SharedResults } from './sharedResults'
-import { createVerification, type RunTiming } from './verification'
+import { createVerification, type QueuedVerification, type RunTiming } from './verification'
 
 const CATALOG_RETRY_MS = 5000
 const DISCOVERY_DELAY_MS = 500
@@ -33,7 +33,7 @@ const DISCOVERY_RETRY_MS = [
   4000,
 ]
 const DISCOVERY_TIMEOUT_MS = 30000
-const LIBRARY_TIMEOUT_MS = 60000
+const INITIALIZATION_TIMEOUT_MS = 60000
 
 export type CatalogStatus =
   | 'loading'
@@ -102,8 +102,8 @@ export interface LiveOptions {
   discoveryDelayMs?: number
   discoveryRetryMs?: readonly number[]
   discoveryTimeoutMs?: number
-  // how long the session may take to load the libraries before the cases are asked for anyway
-  libraryTimeoutMs?: number
+  // how long the language server may take to initialize before a queued verification is started anyway
+  initializationTimeoutMs?: number
 }
 
 export interface Live {
@@ -125,7 +125,7 @@ export interface Live {
   readonly sharedResults: ReadableStore<SharedResults | null>
   // the read-only documents beside the model in the editor; they belong to the running language
   readonly tabs: DocumentTabs
-  readonly pendingVerifyAll: ReadableStore<boolean>
+  readonly queuedVerification: ReadableStore<QueuedVerification | null>
   readonly runTiming: ReadableStore<RunTiming | null>
   // the address the page opens once the server answers, null before the start
   readonly requested: ReadableStore<string | null>
@@ -156,18 +156,10 @@ export interface Live {
   verificationPortfolioId: () => string | undefined
 }
 
-function isRunning(state: InitializationState, id: string): boolean {
-  return state.steps.some((step) => {
-    return step.id === id && step.state === 'running'
+function initializeStepOf(state: InitializationState): InitializationState['steps'][number] | undefined {
+  return state.steps.find((step) => {
+    return step.id === InitializationSteps.initialize.id
   })
-}
-
-function isFindingCases(state: InitializationState): boolean {
-  return isRunning(state, InitializationSteps.cases.id)
-}
-
-function isLoadingLibrary(state: InitializationState): boolean {
-  return isRunning(state, InitializationSteps.library.id)
 }
 
 export function documentKey(flavorId: string, exampleId: string, shared: boolean): string {
@@ -260,39 +252,40 @@ export function createLive(options: LiveOptions): Live {
         verification.sessionLost()
       }
     }
-    let libraryTimer: ReturnType<typeof setTimeout> | null = null
-    const libraryTimeoutMs = options.libraryTimeoutMs ?? LIBRARY_TIMEOUT_MS
-    const stopWatchingLibrary = (): void => {
-      if (libraryTimer) {
-        clearTimeout(libraryTimer)
-        libraryTimer = null
+    let initializationTimer: ReturnType<typeof setTimeout> | null = null
+    const initializationTimeoutMs = options.initializationTimeoutMs ?? INITIALIZATION_TIMEOUT_MS
+    const stopWatchingInitialization = (): void => {
+      if (initializationTimer) {
+        clearTimeout(initializationTimer)
+        initializationTimer = null
       }
     }
-    // the libraries are loaded once the model's first diagnostics arrive; without them the step fails with what it waited for, and the cases are asked for anyway
-    const watchLibrary = (): void => {
-      if (!isLoadingLibrary(runtime.initialization.get())) {
-        stopWatchingLibrary()
+    // without the model's first diagnostics the step fails with what it waited for, and a queued verification is left to the server
+    const watchInitialization = (): void => {
+      if (initializeStepOf(runtime.initialization.get())?.state !== 'running') {
+        stopWatchingInitialization()
         return
       }
-      libraryTimer ??= setTimeout(() => {
-        libraryTimer = null
-        if (!isLoadingLibrary(runtime.initialization.get())) {
+      initializationTimer ??= setTimeout(() => {
+        initializationTimer = null
+        const step = initializeStepOf(runtime.initialization.get())
+        if (step?.state !== 'running') {
           return
         }
         runtime.initialization.update((state) => {
-          return failStep(state, InitializationSteps.library.id, Date.now(), `${InitializationSteps.library.label} did not end within ${Math.round(libraryTimeoutMs / 1000)} s.`)
+          return failStep(state, step.id, Date.now(), `${step.label} did not end within ${Math.round(initializationTimeoutMs / 1000)} s.`)
         })
-        void verification.discover()
-      }, libraryTimeoutMs)
+      }, initializationTimeoutMs)
     }
-    // the model's first diagnostics show the session has it, so its cases are asked for then too
+    // the cases are asked for again once the language server has the whole model
     const copyInitialization = (): void => {
-      const findingBefore = isFindingCases(initialization.get())
+      const initializedBefore = initializeStepOf(initialization.get())?.state === 'done'
       initialization.set(runtime.initialization.get())
-      if (!findingBefore && isFindingCases(initialization.get())) {
+      if (!initializedBefore && initializeStepOf(initialization.get())?.state === 'done') {
         void verification.discover()
       }
-      watchLibrary()
+      watchInitialization()
+      verification.startQueued()
     }
     copyConnection()
     copyInitialization()
@@ -311,7 +304,7 @@ export function createLive(options: LiveOptions): Live {
       }),
     ]
     return () => {
-      stopWatchingLibrary()
+      stopWatchingInitialization()
       for (const unsubscribe of subscriptions) {
         unsubscribe()
       }
@@ -330,7 +323,7 @@ export function createLive(options: LiveOptions): Live {
     if (leaving?.key === key && document.replace !== true) {
       return
     }
-    // a Verify all pressed before the first document opened waits for its cases
+    // a verification asked for before the first document opened waits for its cases
     if (leaving) {
       verification.cancel()
     }
@@ -450,7 +443,7 @@ export function createLive(options: LiveOptions): Live {
     reveal,
     address,
     tabs,
-    pendingVerifyAll: verification.pending,
+    queuedVerification: verification.queued,
     runTiming: verification.timing,
     requested,
     start: (location) => {

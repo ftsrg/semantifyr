@@ -76,6 +76,23 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       expect(text('.open-live')).toContain('Open in Live')
     },
   },
+  'cases-while-initializing': {
+    view: 'embed',
+    seed: { initializingAt: 'initialize', verification: discovered([notRun(BARRIER), notRun(TWO_TRAINS)]), queued: { caseId: null } },
+    expectState: () => {
+      expect(count('.embed-case.status-not-run')).toBe(2)
+      expect(count('.strip-bar .button-cancel')).toBe(1)
+      expect(text('[data-testid=status-message]')).toBe('Verify all waits: initializing the SysML v2 language server')
+    },
+  },
+  'initialization-timed-out': {
+    view: 'embed',
+    seed: { initializingAt: 'initialize', initializationFailure: 'Initializing the SysML v2 language server did not end within 60 s.', verification: discovered([notRun(BARRIER), notRun(TWO_TRAINS)]) },
+    expectState: () => {
+      expect(count('.embed-case.status-not-run')).toBe(2)
+      expect(text('[data-testid=status-message]')).toBe('Initializing the SysML v2 language server did not end within 60 s.')
+    },
+  },
   'running': {
     view: 'embed',
     seed: { verification: discovered([{ caseInfo: BARRIER, status: 'running' }, { caseInfo: TWO_TRAINS, status: 'queued' }], 'running') },
