@@ -7,11 +7,13 @@
 import type React from 'react'
 import { Fragment, useState } from 'react'
 
+import { useStore } from '../lib/stores/useStore'
 import { caseRowOf } from '../lib/workspace/caseRows'
 import { useLive, useRuntime } from '../lib/workspace/liveContext'
+import { useShell } from '../shells/shellContext'
 import type { TraceSlotProps } from '../shells/traceSlot'
 import { Icon } from '../ui/icons'
-import { traceLanguageOf, type TraceView } from './registry'
+import { shownView, traceLanguageOf, type TraceView } from './registry'
 import { RunDetails } from './RunDetails'
 
 import './trace.css'
@@ -43,18 +45,19 @@ function ViewSelector({ views, active, choose }: { views: readonly TraceView[], 
 
 function TraceOfCase({ caseState, flavor, readOnlyTabs }: TraceSlotProps): React.JSX.Element | null {
   const live = useLive()
+  const shell = useShell()
   const runtime = useRuntime(live)
   const language = traceLanguageOf(flavor.languageId)
-  const [activeId, setActiveId] = useState(language.views[0].id)
+  const chosen = useStore(shell.traceViews, (views) => {
+    return views.get(flavor.languageId)
+  })
   const [expandedStep, setExpandedStep] = useState<number | null>(null)
   const { trace } = caseState
   if (!trace) {
     return null
   }
   const row = caseRowOf(caseState)
-  const view = language.views.find((candidate) => {
-    return candidate.id === activeId
-  }) ?? language.views[0]
+  const view = shownView(language, chosen, { trace, caseName: row.name, runtime })
   const { View } = view
   return (
     <div className={`case-trace status-${row.status}`} data-view={view.id}>
@@ -64,7 +67,9 @@ function TraceOfCase({ caseState, flavor, readOnlyTabs }: TraceSlotProps): React
           views={language.views}
           active={view.id}
           choose={(id) => {
-            setActiveId(id)
+            shell.traceViews.update((previous) => {
+              return new Map([...previous, [flavor.languageId, id]])
+            })
             setExpandedStep(null)
           }}
         />
@@ -96,7 +101,7 @@ function TraceOfCase({ caseState, flavor, readOnlyTabs }: TraceSlotProps): React
   )
 }
 
-// a newly selected case opens on the language's own view
+// a newly selected case opens on the view chosen for its language, its steps folded
 export function CaseTrace(slot: TraceSlotProps): React.JSX.Element {
   return <TraceOfCase key={slot.caseState.caseInfo.id} {...slot} />
 }

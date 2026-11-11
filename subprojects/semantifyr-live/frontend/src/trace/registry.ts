@@ -30,11 +30,15 @@ export type TraceLayout =
   | 'calls'
   | 'text'
 
+export type TraceSourceContext = Pick<TraceViewProps, 'trace' | 'caseName' | 'runtime'>
+
 export interface TraceView {
   id: string
   label: string
   layout: TraceLayout
   View: React.ComponentType<TraceViewProps>
+  // the document a textual view shows, null when the trace has none
+  source?: (context: TraceSourceContext) => TraceTextSource | null
 }
 
 export interface TraceLanguage {
@@ -49,7 +53,7 @@ function steps(label: string): TraceView {
 }
 
 function witness(label: string, uriOf: (trace: VerificationTrace, runtime: LanguageRuntime | null) => string | null | undefined): TraceView {
-  return textView('witness', label, (context): TraceTextSource | null => {
+  return textView('witness', label, (context) => {
     const fileUri = uriOf(context.trace, context.runtime)
     return fileUri
       ? {
@@ -64,7 +68,7 @@ function witness(label: string, uriOf: (trace: VerificationTrace, runtime: Langu
 }
 
 function languageTrace(label: string, languageId: string, fileName: (caseName: string) => string, languageName: string): TraceView {
-  return textView('own', label, (context): TraceTextSource | null => {
+  return textView('own', label, (context) => {
     return context.trace.witnessUri
       ? {
         tabId: 'trace-text',
@@ -120,4 +124,15 @@ const TRACE_LANGUAGES: Readonly<Record<string, TraceLanguage>> = {
 
 export function traceLanguageOf(languageId: string): TraceLanguage {
   return TRACE_LANGUAGES[languageId] ?? OXSTS_TRACE
+}
+
+// the view chosen for the language, or its first when the chosen one has nothing to show of this trace
+export function shownView(language: TraceLanguage, chosen: string | undefined, context: TraceSourceContext): TraceView {
+  const view = language.views.find((candidate) => {
+    return candidate.id === chosen
+  })
+  if (!view || view.source?.(context) === null) {
+    return language.views[0]
+  }
+  return view
 }

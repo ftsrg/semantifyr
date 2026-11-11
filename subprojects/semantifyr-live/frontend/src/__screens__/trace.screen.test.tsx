@@ -10,6 +10,7 @@ import { page } from 'vitest/browser'
 
 import { initializeMonaco } from '../lib/session/monaco'
 import { LiveContext } from '../lib/workspace/liveContext'
+import { ShellContext } from '../shells/shellContext'
 import { ShellRoot } from '../shells/ShellRoot'
 import { CaseTrace } from '../trace/CaseTrace'
 import { caseState, LANGUAGES, seedWithTrace } from './traces'
@@ -221,6 +222,49 @@ afterAll(async () => {
   await page.viewport(1440, 900)
 })
 
+describe('the chosen view of the trace', () => {
+  it('stays chosen for the next case, and falls back to the first view for a trace without it', async () => {
+    await page.viewport(1440, 900)
+    const language = LANGUAGES.sysml!
+    const first = caseState(language, { validated: false, recorded: true })
+    const second: typeof first = { ...first, caseInfo: { ...first.caseInfo, id: 'TwoTrainsCanBeInTheCrossing', label: 'TwoTrainsCanBeInTheCrossing' } }
+    const withoutText: typeof first = { ...first, caseInfo: { ...first.caseInfo, id: 'NoText', label: 'NoText' }, trace: { ...first.trace!, witnessUri: null } }
+    const { live, shell } = seedWithTrace(language, first)
+    const flavor = live.workspace.get().flavor!
+    const container = document.createElement('div')
+    container.style.cssText = 'display: flex; flex-direction: column; width: 600px; height: 760px'
+    document.body.append(container)
+    const root = createRoot(container)
+    onTestFinished(() => {
+      root.unmount()
+      container.remove()
+    })
+    // the view the trace of a newly selected case opens on, once that trace has replaced the one before
+    const show = async (shown: typeof first): Promise<string | null | undefined> => {
+      const before = document.querySelector('.case-trace')
+      root.render(
+        <LiveContext.Provider value={live}>
+          <ShellContext.Provider value={shell}>
+            <CaseTrace caseState={shown} flavor={flavor} />
+          </ShellContext.Provider>
+        </LiveContext.Provider>,
+      )
+      await expect.poll(() => {
+        const current = document.querySelector('.case-trace')
+        return current !== null && current !== before
+      }).toBe(true)
+      return document.querySelector('.case-trace')?.getAttribute('data-view')
+    }
+    await initializeMonaco('light')
+    expect(await show(first)).toBe('own')
+    await chooseView('calls')
+    expect(await show(second)).toBe('calls')
+    await chooseView('witness')
+    expect(await show(withoutText)).toBe('own')
+    expect(await show(first)).toBe('witness')
+  })
+})
+
 describe('the trace area', () => {
   for (const colorMode of ['light', 'dark'] as const) {
     for (const [name, state] of Object.entries(STATES_BY_NAME)) {
@@ -254,7 +298,7 @@ describe('the trace area', () => {
         const state = STATES_BY_NAME[name]!
         const language = LANGUAGES[state.language]!
         const failed = caseState(language, { validated: true, recorded: true })
-        const { live } = seedWithTrace(language, failed)
+        const { live, shell } = seedWithTrace(language, failed)
         const flavor = live.workspace.get().flavor!
         const container = document.createElement('div')
         container.style.cssText = 'display: flex; flex-direction: column; width: 360px; height: 760px; background: var(--surface-panel)'
@@ -266,7 +310,9 @@ describe('the trace area', () => {
         })
         root.render(
           <LiveContext.Provider value={live}>
-            <CaseTrace caseState={failed} flavor={flavor} />
+            <ShellContext.Provider value={shell}>
+              <CaseTrace caseState={failed} flavor={flavor} />
+            </ShellContext.Provider>
           </LiveContext.Provider>,
         )
         await expect.poll(() => {

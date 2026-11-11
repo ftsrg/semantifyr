@@ -20,6 +20,8 @@ export interface ShellState {
   filter: Store<CountFilter | null>
   // the edit control was pressed, so the model takes typing on touch input
   editing: Store<boolean>
+  // the trace view chosen per language
+  traceViews: Store<ReadonlyMap<string, string>>
 }
 
 export function createShellState(): ShellState {
@@ -29,6 +31,7 @@ export function createShellState(): ShellState {
     cursor: createStore<CursorPosition | null>(null),
     filter: createStore<CountFilter | null>(null),
     editing: createStore(false),
+    traceViews: createStore<ReadonlyMap<string, string>>(new Map()),
   }
 }
 

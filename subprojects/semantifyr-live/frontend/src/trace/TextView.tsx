@@ -15,7 +15,7 @@ import { traceUriOf } from '../lib/session/readOnlyDocuments'
 import { useLive } from '../lib/workspace/liveContext'
 import type { Live } from '../lib/workspace/live'
 import { Icon } from '../ui/icons'
-import type { TraceView, TraceViewProps } from './registry'
+import type { TraceSourceContext, TraceView, TraceViewProps } from './registry'
 
 export interface TraceTextSource {
   // the read-only tab the text opens in, one per kind of text
@@ -180,11 +180,12 @@ function TextBody({ source, context }: { source: TraceTextSource | null, context
   )
 }
 
-export function textView(id: string, label: string, sourceOf: (context: TraceViewProps) => TraceTextSource | null): TraceView {
+export function textView(id: string, label: string, sourceOf: (context: TraceSourceContext) => TraceTextSource | null): TraceView {
   return {
     id,
     label,
     layout: 'text',
+    source: sourceOf,
     View: (context) => {
       return <TextBody source={sourceOf(context)} context={context} />
     },
