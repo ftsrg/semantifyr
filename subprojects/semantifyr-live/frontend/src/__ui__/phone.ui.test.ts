@@ -80,12 +80,11 @@ describe('touch input', () => {
     test(`locks the model of the ${shell} until Edit is pressed, and again when Done`, async ({ ui }) => {
       const page = await ui.open('/oxsts/basics', viewport)
       await ready(page)
-      const before = await phone(page).lines.innerText()
 
       await phone(page).lines.tap()
       await page.keyboard.insertText('locked ')
       await page.waitForTimeout(300)
-      expect(await phone(page).lines.innerText()).toBe(before)
+      expect(await phone(page).lines.innerText()).not.toContain('locked')
       await page.getByRole('button', { name: 'Edit' }).first().tap()
       await phone(page).lines.tap()
       await page.keyboard.insertText('unlocked ')

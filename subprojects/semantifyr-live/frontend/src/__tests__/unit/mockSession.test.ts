@@ -14,7 +14,8 @@ import { MockSession, type Answers } from '../../__ui__/mock/session'
 
 const URI = 'file:///workspace/snippet.oxsts'
 
-const BASICS = readFileSync(join(import.meta.dirname, '../../snippets/imported/tutorial/basics.oxsts'), 'utf-8')
+// the fixtures are recorded from a checkout with LF line ends
+const BASICS = readFileSync(join(import.meta.dirname, '../../snippets/imported/tutorial/basics.oxsts'), 'utf-8').replaceAll('\r\n', '\n')
 
 interface Harness {
   session: MockSession

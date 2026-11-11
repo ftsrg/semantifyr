@@ -18,3 +18,9 @@ path = [
 ]
 SPDX-FileCopyrightText = "2023-2026 The Semantifyr Authors"
 SPDX-License-Identifier = "EPL-2.0"
+
+[[annotations]]
+path = "subprojects/semantifyr-live/frontend/src/__ui__/mock/fixtures/**"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 The Semantifyr Authors"
+SPDX-License-Identifier = "EPL-2.0"
