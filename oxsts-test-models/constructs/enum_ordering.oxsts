@@ -1,0 +1,24 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::constructs::enum_ordering
+
+enum Color {
+    Red,
+    Green,
+}
+
+class Light {
+    var color: Color := Color::Red
+
+    redefine tran {
+        color := Color::Green
+    }
+
+    prop {
+        return EF color > Color::Red
+    }
+}

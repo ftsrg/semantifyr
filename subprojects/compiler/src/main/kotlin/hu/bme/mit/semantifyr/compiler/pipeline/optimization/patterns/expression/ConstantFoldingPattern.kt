@@ -10,6 +10,8 @@ import hu.bme.mit.semantifyr.compiler.pipeline.expression.ConstantExpressionEval
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EvaluationFailureException
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.IntegerEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticBinaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator
@@ -44,7 +46,15 @@ class ConstantFoldingPattern(
         }
         val parent = element.eContainer() ?: return false
 
-        val evaluation = evaluator.evaluate(element)
+        val evaluation = try {
+            evaluator.evaluate(element)
+        } catch (_: EvaluationFailureException) {
+            return false
+        }
+        // the least int has no literal, and folding it into its own minus expression would never stop
+        if (evaluation == IntegerEvaluation(Int.MIN_VALUE)) {
+            return false
+        }
         val constant = transformer.transformEvaluation(evaluation)
         EcoreUtil2.replace(element, constant)
         worklist.add(parent)

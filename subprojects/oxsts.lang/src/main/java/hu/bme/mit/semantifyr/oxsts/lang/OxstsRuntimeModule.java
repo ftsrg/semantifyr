@@ -29,6 +29,7 @@ import org.eclipse.xtext.scoping.IGlobalScopeProvider;
 import org.eclipse.xtext.scoping.IScopeProvider;
 import org.eclipse.xtext.scoping.impl.AbstractDeclarativeScopeProvider;
 import org.eclipse.xtext.util.ExceptionAcceptor;
+import org.eclipse.xtext.validation.CompositeEValidator;
 
 public class OxstsRuntimeModule extends AbstractOxstsRuntimeModule {
 
@@ -72,6 +73,14 @@ public class OxstsRuntimeModule extends AbstractOxstsRuntimeModule {
         binder.bind(IScopeProvider.class)
                 .annotatedWith(Names.named(AbstractDeclarativeScopeProvider.NAMED_DELEGATE))
                 .to(OxstsLocalScopeProvider.class);
+    }
+
+    // the grammar requires every feature the metamodel requires, so EMF's checks only repeat syntax and linking errors
+    @SuppressWarnings("unused")
+    public void configureUseEObjectValidator(Binder binder) {
+        binder.bind(Boolean.class)
+                .annotatedWith(Names.named(CompositeEValidator.USE_EOBJECT_VALIDATOR))
+                .toInstance(false);
     }
 
     @SuppressWarnings("unused")

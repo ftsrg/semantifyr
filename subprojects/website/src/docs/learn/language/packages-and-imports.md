@@ -45,6 +45,10 @@ class Lamp { }
 @VerificationCase
 class LampCase {
     contains lamp: Lamp
+
+    prop {
+        return AG true
+    }
 }
 ```
 

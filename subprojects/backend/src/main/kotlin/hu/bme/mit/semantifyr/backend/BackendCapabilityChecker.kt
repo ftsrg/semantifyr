@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.backend
 
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Annotation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.eclipse.emf.ecore.EObject
 
@@ -17,11 +18,18 @@ class UnsupportedConstruct(
 abstract class BackendCapabilityChecker {
 
     fun check(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {
-        val constructs = inlinedOxsts.eAllContents().asSequence().mapNotNull { element ->
-            describeUnsupported(element)?.let {
-                UnsupportedConstruct(element, it)
+        val constructs = mutableListOf<UnsupportedConstruct>()
+        val contents = inlinedOxsts.eAllContents()
+        for (element in contents) {
+            // no annotation argument reaches an engine model
+            if (element is Annotation) {
+                contents.prune()
+                continue
             }
-        }.toList()
+            describeUnsupported(element)?.let {
+                constructs += UnsupportedConstruct(element, it)
+            }
+        }
         return constructs + checkModel(inlinedOxsts)
     }
 

@@ -1,0 +1,23 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::constructs::positional_after_named_argument
+
+class Counter {
+    var count: int := 0
+
+    tran add(first: int, second: int[0..1]) {
+        count := count + first
+    }
+
+    redefine tran {
+        inline add(second = 1, 2)
+    }
+
+    prop {
+        return EF count == 2
+    }
+}

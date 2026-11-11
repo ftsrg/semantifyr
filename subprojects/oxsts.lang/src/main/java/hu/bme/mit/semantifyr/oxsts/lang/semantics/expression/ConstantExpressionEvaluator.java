@@ -25,11 +25,7 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
         var left = evaluate(expression.getLeft());
         var right = evaluate(expression.getRight());
 
-        if (expression.isExclusive() && right instanceof IntegerEvaluation(int upperValue)) {
-            right = new IntegerEvaluation(upperValue - 1);
-        }
-
-        return RangeEvaluation.of(left, right);
+        return RangeEvaluation.of(left, right, expression.isExclusive());
     }
 
     @Override
@@ -74,20 +70,30 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
         var right = evaluate(expression.getRight());
 
         if (left instanceof IntegerEvaluation(int lValue) && right instanceof IntegerEvaluation(int rValue)) {
-            return switch (expression.getOp()) {
-                case ADD -> new IntegerEvaluation(lValue + rValue);
-                case SUB -> new IntegerEvaluation(lValue - rValue);
-                case MUL -> new IntegerEvaluation(lValue * rValue);
+            long value = switch (expression.getOp()) {
+                case ADD -> (long) lValue + rValue;
+                case SUB -> (long) lValue - rValue;
+                case MUL -> (long) lValue * rValue;
                 case DIV -> {
                     if (rValue == 0) {
                         throw EvaluationFailureException.at(expression, "Division by zero!");
                     }
-                    yield new IntegerEvaluation(lValue / rValue);
+                    yield (long) lValue / rValue;
                 }
             };
+            return integerEvaluation(expression, value);
         }
 
         throw EvaluationFailureException.at(expression, "Left and right are not integer expressions!");
+    }
+
+    // int is the mathematical integer, so a value the evaluation cannot hold is no value rather than a wrapped one
+    private static IntegerEvaluation integerEvaluation(Expression expression, long value) {
+        if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
+            throw EvaluationFailureException.at(
+                    expression, "The value " + value + " lies outside the integers the compiler evaluates!");
+        }
+        return new IntegerEvaluation((int) value);
     }
 
     @Override
@@ -112,7 +118,7 @@ public class ConstantExpressionEvaluator extends ExpressionEvaluator<ExpressionE
 
         if (body instanceof IntegerEvaluation(int value)) {
             return switch (expression.getOp()) {
-                case MINUS -> new IntegerEvaluation(-value);
+                case MINUS -> integerEvaluation(expression, -(long) value);
                 case PLUS -> body;
             };
         }

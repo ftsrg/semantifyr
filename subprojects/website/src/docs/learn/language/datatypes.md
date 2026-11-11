@@ -103,4 +103,4 @@ class Plotter {
 }
 ```
 
-The compiler flattens a record variable into one variable per field, nested records recursively, and the witness shows the state field by field, such as `root.pen.x`. The validator rejects arrays of records, array fields, fields of class or feature type, record-typed features, recursive records (`OXSTS.RECURSIVE_RECORD`), ordering comparisons such as `<` on records, and a record literal in a position evaluated at compile time, such as an `inline if` guard.
+The compiler flattens a record variable into one variable per field, nested records recursively, and the witness shows the state field by field, such as `root.pen.x`. The validator rejects arrays of records, array fields, fields of class or feature type, record-typed features, recursive records (`OXSTS.RECURSIVE_RECORD`), ordering comparisons such as `<` on records, a record literal in a position evaluated at compile time, such as an `inline if` guard, and a record argument of a [`@Trace`](standard-library.md#trace) call.
