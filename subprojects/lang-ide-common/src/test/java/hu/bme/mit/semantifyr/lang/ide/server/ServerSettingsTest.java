@@ -11,10 +11,12 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment;
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig;
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.ArtifactsLocation;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.ServerSettingsPayload;
+import hu.bme.mit.semantifyr.lang.ide.server.wire.ThetaExecutor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -108,6 +110,29 @@ class ServerSettingsTest {
         // the second apply omits the portfolio / timeout, so they are back to the defaults
         assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("smart-full");
         assertThat(settings.resolveTimeout()).isEqualTo(Duration.ofSeconds(300));
+    }
+
+    @Test
+    void unchangedSettingsShareOneExecutionEnvironment() {
+        ServerSettings settings = new ServerSettings();
+        ExecutionEnvironment environment = settings.resolveExecutionEnvironment();
+
+        settings.apply(new ServerSettingsPayload("theta-full", 99L, null, null, null));
+
+        assertThat(settings.resolveExecutionEnvironment()).isSameAs(environment);
+    }
+
+    @Test
+    void changedThetaSettingsBuildANewExecutionEnvironment() {
+        ServerSettings settings = new ServerSettings();
+        ExecutionEnvironment environment = settings.resolveExecutionEnvironment();
+
+        settings.apply(new ServerSettingsPayload(
+                null, null, new ServerSettingsPayload.Theta(ThetaExecutor.DOCKER, "example:1"), null, null));
+        ExecutionEnvironment changed = settings.resolveExecutionEnvironment();
+
+        assertThat(changed).isNotSameAs(environment);
+        assertThat(settings.resolveExecutionEnvironment()).isSameAs(changed);
     }
 
     @Test
