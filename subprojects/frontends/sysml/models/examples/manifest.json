@@ -62,7 +62,28 @@
                 { "name": "RegionExitActionFiresWhenParallelStateExitsTestCase", "verdict": "Passed", "tier": "Integration" },
                 { "name": "InactiveParallelStateExitActionNeverFiresTestCase", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ExhibitedStateEntryActionFiresTestCase", "verdict": "Passed", "tier": "Integration" },
-                { "name": "ExhibitedStateEntryActionPrecedesSubstateTestCase", "verdict": "Passed", "tier": "Integration" }
+                { "name": "ExhibitedStateEntryActionPrecedesSubstateTestCase", "verdict": "Passed", "tier": "Integration" },
+                { "name": "ParallelExitReachesDoneTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "ParallelExitRunsExitsBeforeEffectTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "RegionEntryActionFiresTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "ItemFiresOneRegionPerStepTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "FirstRegionConsumesItemTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "SecondRegionConsumesItemTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "InitSendArrivesTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "UnacceptedItemIsDroppedTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "ObjectiveConstraintReachableTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "ObjectiveConstraintCheckedViolated", "verdict": "Failed", "tier": "Integration", "engines": ["theta"] }
+            ]
+        },
+        {
+            "file": "fifoqueue.sysml",
+            "variant": "Fifo",
+            "conformance": true,
+            "cases": [
+                { "name": "QueuedItemIsAcceptedLaterTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "QueuedItemsAreAcceptedInArrivalOrderTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "QueuedItemsAreNeverAcceptedOutOfOrderTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "FullQueueDropsNewestItemTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] }
             ]
         },
         {

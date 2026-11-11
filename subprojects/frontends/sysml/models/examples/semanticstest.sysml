@@ -1088,3 +1088,204 @@ verification def ExhibitedStateEntryActionPrecedesSubstateTestCase {
         }
     }
 }
+
+part def ParallelExitOrderModel {
+    attribute order : Integer default 0;
+    port input : PortE;
+
+    exhibit state Behaviour {
+        state Running parallel {
+            exit action { assign order := order * 10 + 5; }
+            state R1 {
+                exit action { assign order := order * 10 + 2; }
+                state A {
+                    exit action { assign order := order * 10 + 1; }
+                }
+                transition first start then A;
+                transition
+                    first A
+                    accept : EventE via input
+                    do action { assign order := order * 10 + 6; }
+                    then Done;
+            }
+            state R2 {
+                exit action { assign order := order * 10 + 4; }
+                state C {
+                    exit action { assign order := order * 10 + 3; }
+                }
+                transition first start then C;
+            }
+        }
+        state Done {
+            entry action { assign order := order * 10 + 7; }
+        }
+        transition first start then Running;
+    }
+}
+
+verification def ParallelExitReachesDoneTestCase {
+    subject system : ParallelExitOrderModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(isStateActive(system.Behaviour.Done)) }
+        }
+    }
+}
+
+verification def ParallelExitRunsExitsBeforeEffectTestCase {
+    subject system : ParallelExitOrderModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not isStateActive(system.Behaviour.Done) or system.order == 1234567) }
+        }
+    }
+}
+
+part def RegionEntryActionModel {
+    attribute regionEntered : Boolean default false;
+
+    exhibit state Behaviour {
+        state Running parallel {
+            state R1 {
+                entry action { assign regionEntered := true; }
+                state A;
+                transition first start then A;
+            }
+            state R2 {
+                state C;
+                transition first start then C;
+            }
+        }
+        transition first start then Running;
+    }
+}
+
+verification def RegionEntryActionFiresTestCase {
+    subject system : RegionEntryActionModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(system.regionEntered == true) }
+        }
+    }
+}
+
+part def SharedItemModel {
+    port input : PortE;
+
+    exhibit state Behaviour {
+        state Running parallel {
+            state R1 {
+                state A;
+                state B;
+                transition first start then A;
+                transition first A accept : EventE via input then B;
+                transition first B then A;
+            }
+            state R2 {
+                state C;
+                state D;
+                transition first start then C;
+                transition first C accept : EventE via input then D;
+                transition first D then C;
+            }
+        }
+        transition first start then Running;
+    }
+}
+
+verification def ItemFiresOneRegionPerStepTestCase {
+    subject system : SharedItemModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (isStateActive(system.Behaviour.Running.R1.B) and isStateActive(system.Behaviour.Running.R2.D))) }
+        }
+    }
+}
+
+verification def FirstRegionConsumesItemTestCase {
+    subject system : SharedItemModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(isStateActive(system.Behaviour.Running.R1.B)) }
+        }
+    }
+}
+
+verification def SecondRegionConsumesItemTestCase {
+    subject system : SharedItemModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(isStateActive(system.Behaviour.Running.R2.D)) }
+        }
+    }
+}
+
+part def InitSenderModel {
+    port output : PortMOut;
+
+    exhibit state Behaviour {
+        state Sending {
+            entry action { send new MessageM() via output; }
+        }
+        transition first start then Sending;
+    }
+}
+
+part def InitSendModel {
+    part sender : InitSenderModel;
+    part receiver : ReceiverPartModel;
+    flow from sender.output to receiver.input;
+}
+
+verification def InitSendArrivesTestCase {
+    subject system : InitSendModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(isStateActive(system.receiver.Behaviour.Got)) }
+        }
+    }
+}
+
+part def LateReceiverModel {
+    port input : ~PortMOut;
+
+    exhibit state Behaviour {
+        state Idle;
+        state Waiting;
+        state Ready;
+        state Got;
+        transition first start then Idle;
+        transition first Idle then Waiting;
+        transition first Waiting then Ready;
+        transition first Ready accept : MessageM via input then Got;
+    }
+}
+
+part def LateReceiverFlowModel {
+    part sender : SenderPartModel;
+    part receiver : LateReceiverModel;
+    flow from sender.output to receiver.input;
+}
+
+verification def UnacceptedItemIsDroppedTestCase {
+    subject system : LateReceiverFlowModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not isStateActive(system.receiver.Behaviour.Got)) }
+        }
+    }
+}
+
+verification def ObjectiveConstraintReachableTestCase {
+    subject system : EntryActionModel;
+    objective {
+        require constraint { eventually(system.entered == true) }
+    }
+}
+
+verification def ObjectiveConstraintCheckedViolated {
+    subject system : EntryActionModel;
+    objective {
+        require constraint { mustAlways(system.entered == false) }
+    }
+}
