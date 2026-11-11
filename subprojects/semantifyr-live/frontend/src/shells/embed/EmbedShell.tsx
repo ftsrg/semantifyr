@@ -342,8 +342,8 @@ function useReportedHeight(reported: boolean): React.RefObject<HTMLDivElement | 
       return
     }
     let last = -1
-    const observer = new ResizeObserver(() => {
-      const height = Math.ceil(element.getBoundingClientRect().height)
+    const observer = new ResizeObserver((entries) => {
+      const height = Math.ceil(entries.at(-1)?.borderBoxSize[0]?.blockSize ?? 0)
       if (height !== last) {
         last = height
         reportHeight(height)
