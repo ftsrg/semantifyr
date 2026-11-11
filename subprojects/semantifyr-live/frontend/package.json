@@ -12,6 +12,8 @@
     "test:watch": "vitest",
     "smoke": "vitest run --config vitest.smoke.config.ts",
     "screens": "vitest run --config vitest.screen.config.ts",
+    "ui": "vitest run --config vitest.ui.config.ts",
+    "ui:record": "node --disable-warning=ExperimentalWarning src/__ui__/mock/record.ts",
     "flows": "vitest run --config vitest.flows.config.ts",
     "load-test": "node --disable-warning=ExperimentalWarning src/__load__/main.ts",
     "check": "npm run typecheck && npm run lint && npm run test",
