@@ -175,7 +175,7 @@ export function caseState(language: Language, options: { validated: boolean, rec
     portfolioId: 'smart-full',
     trace: traceOf(language.traceUri, options.recorded),
     ...(options.validated
-      ? { witnessValidation: 'valid' as const, validationMetrics: { totalDuration: 'PT0.6S', preparationDuration: 'PT0S', verificationDuration: 'PT0.6S', backAnnotationDuration: 'PT0S' }, validationBackendId: 'spin:safe', validationPortfolioIdUsed: 'smart-full' }
+      ? { waited: 30_000, validationWaited: 4_000, witnessValidation: 'valid' as const, validationMetrics: { totalDuration: 'PT0.6S', preparationDuration: 'PT0S', verificationDuration: 'PT0.6S', backAnnotationDuration: 'PT0S' }, validationBackendId: 'spin:safe', validationPortfolioIdUsed: 'smart-full' }
       : {}),
   }
 }

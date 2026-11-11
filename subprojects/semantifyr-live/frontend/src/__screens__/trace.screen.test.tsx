@@ -174,8 +174,8 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
     validated: true,
     view: 'own',
     expectState: () => {
-      expect(text('[data-testid=run-details]')).toContain('2.9 s, Automatic, decided by Theta')
-      expect(text('[data-testid=run-details]')).toContain('validated, 0.6 s, Automatic, decided by Spin')
+      expect(text('[data-testid=run-details]')).toContain('2.9 s, waited 30 s, Automatic, decided by Theta')
+      expect(text('[data-testid=run-details]')).toContain('validated, 0.6 s, waited 4.0 s, Automatic, decided by Spin')
     },
   },
   'run-details-not-validated': {
