@@ -34,8 +34,9 @@ export interface ShellRootProps {
 }
 
 function useTitle(live: Live): void {
+  const documents = useStore(live.documents)
   const title = useStore(live.workspace, (workspace) => {
-    const document = workspace.documentKey === null ? undefined : live.documents.get().get(workspace.documentKey)
+    const document = workspace.documentKey === null ? undefined : documents.get(workspace.documentKey)
     if (!workspace.flavor || !document) {
       return 'Semantifyr Live'
     }
