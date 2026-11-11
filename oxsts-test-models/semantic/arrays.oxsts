@@ -397,3 +397,71 @@ class FeatureTypedArrayHavocChanges {
         return AG picks[1] == first
     }
 }
+
+@VerificationCase
+@Tag("expect-pass")
+class ArrayIfThenElseBound {
+    var slots: int[2] := [0, 0]
+    var others: int[2] := [1, 2]
+    var flag: bool := false
+
+    redefine tran {
+        havoc(flag)
+        slots := if flag then others else [3, 4]
+    }
+
+    prop {
+        return AG ((slots[0] == 0 && slots[1] == 0) || (slots[0] == 1 && slots[1] == 2) || (slots[0] == 3 && slots[1] == 4))
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ArrayIfThenElseViolated {
+    var slots: int[2] := [0, 0]
+    var others: int[2] := [1, 2]
+    var flag: bool := false
+
+    redefine tran {
+        havoc(flag)
+        slots := if flag then others else [3, 4]
+    }
+
+    prop {
+        return AG slots[1] != 4
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ArrayNestedIndexReach {
+    var slots: int[3] := [2, 0, 1]
+    var result: int := 0
+
+    redefine tran {
+        assume(result == 0)
+        result := slots[slots[0]]
+        slots[slots[1]] := 7
+    }
+
+    prop {
+        return EF (result == 1 && slots[0] == 7)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ArrayNestedIndexViolated {
+    var slots: int[3] := [2, 0, 1]
+    var result: int := 0
+
+    redefine tran {
+        assume(result == 0)
+        result := slots[slots[0]]
+        slots[slots[1]] := 7
+    }
+
+    prop {
+        return AG result == 0
+    }
+}

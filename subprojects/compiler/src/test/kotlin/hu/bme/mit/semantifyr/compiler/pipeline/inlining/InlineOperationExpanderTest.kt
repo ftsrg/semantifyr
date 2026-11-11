@@ -365,6 +365,120 @@ class InlineOperationExpanderTest : InliningTestBase() {
     )
 
     @Test
+    fun `inline seq for over an empty exclusive range from zero takes the else branch`() = assertFirstExpansion(
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var total: int := 0
+            init {
+            }
+            tran {
+                inline for (index in 0..<0) {
+                    total := total + index
+                } else {
+                    total := 7
+                }
+            }
+            prop {
+                AG true
+            }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var total: int := 0
+            init {
+            }
+            tran {
+                {
+                    total := 7
+                }
+            }
+            prop {
+                AG true
+            }
+        """,
+    )
+
+    @Test
+    fun `inline seq for over a range from minus one unrolls every value`() = assertFirstExpansion(
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var total: int := 0
+            init {
+            }
+            tran {
+                inline for (index in -1..1) {
+                    total := total + index
+                }
+            }
+            prop {
+                AG true
+            }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var total: int := 0
+            init {
+            }
+            tran {
+                {
+                    {
+                        total := total + -1
+                    }
+                    {
+                        total := total + 0
+                    }
+                    {
+                        total := total + 1
+                    }
+                }
+            }
+            prop {
+                AG true
+            }
+        """,
+    )
+
+    @Test
+    fun `inline seq for over a range of negative values ending at minus one unrolls every value`() = assertFirstExpansion(
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var total: int := 0
+            init {
+            }
+            tran {
+                inline for (index in -3..-1) {
+                    total := total + index
+                }
+            }
+            prop {
+                AG true
+            }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var total: int := 0
+            init {
+            }
+            tran {
+                {
+                    {
+                        total := total + -3
+                    }
+                    {
+                        total := total + -2
+                    }
+                    {
+                        total := total + -1
+                    }
+                }
+            }
+            prop {
+                AG true
+            }
+        """,
+    )
+
+    @Test
     fun `inline for over an unbounded range is rejected with a sourceError`() {
         prepare(
             """

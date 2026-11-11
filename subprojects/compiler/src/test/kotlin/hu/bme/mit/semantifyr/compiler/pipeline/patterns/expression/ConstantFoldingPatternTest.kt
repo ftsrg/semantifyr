@@ -129,4 +129,55 @@ class ConstantFoldingPatternTest : PatternTestBase() {
             }
         """,
     )
+
+    @Test
+    fun `arithmetic beyond the evaluated integers is not folded`() = assertPatternDoesNotMatch(
+        pattern = pattern(),
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var value: int := 0
+            init {
+            }
+            tran {
+                value := 2147483647 + 1
+            }
+            prop {
+                AG true
+            }
+        """,
+    )
+
+    @Test
+    fun `arithmetic reaching the least int is not folded since it has no literal`() = assertPatternDoesNotMatch(
+        pattern = pattern(),
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var value: int := 0
+            init {
+            }
+            tran {
+                value := - 2147483647 - 1
+            }
+            prop {
+                AG true
+            }
+        """,
+    )
+
+    @Test
+    fun `division by zero is not folded`() = assertPatternDoesNotMatch(
+        pattern = pattern(),
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var value: int := 0
+            init {
+            }
+            tran {
+                value := 1 / 0
+            }
+            prop {
+                AG true
+            }
+        """,
+    )
 }

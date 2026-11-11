@@ -58,6 +58,38 @@ public class RecordLiteralFormatterTest {
         assertThat(formatted).contains("    var position: Point := Point {\n        x = 1,\n        y = 2\n    }\n");
     }
 
+    @Test
+    void literalStartedOnSeveralLinesClosesOnALineOfItsOwn() {
+        var formatted = format(RECORDS + """
+            class Marker {
+                var position: Point := Point { x = 1,
+                    y = 2 }
+                redefine tran {
+                    position := Point {
+                        x = 3 }
+                }
+            }
+            """);
+
+        assertThat(formatted).contains("    var position: Point := Point {\n        x = 1,\n        y = 2\n    }\n");
+        assertThat(formatted).contains("        position := Point {\n            x = 3\n        }\n");
+    }
+
+    @Test
+    void literalEndingARecordDeclarationLeavesItsClosingBraceOnALineOfItsOwn() {
+        var formatted = format(RECORDS + """
+            record Line {
+                var start: Point := Point { x = 1 }
+                var finish: Point := Point {
+                    x = 2
+                } }
+            """);
+
+        assertThat(formatted)
+                .contains(
+                        "record Line {\n    var start: Point := Point { x = 1 }\n    var finish: Point := Point {\n        x = 2\n    }\n}\n");
+    }
+
     private String format(String source) {
         var parsedPackage = parseHelper.parse(source);
         parsedPackage.assertNoResourceErrors();

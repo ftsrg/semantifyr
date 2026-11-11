@@ -132,6 +132,52 @@ public class DeclarationValidationTest {
     }
 
     @Test
+    void verificationCaseWithoutAPropertyIsRejected() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            @VerificationCase
+            class Case {
+                var count: int := 0
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        assertOnlyErrorsAre(parsedPackage, OxstsValidator.MISSING_PROPERTY, 3);
+        parsedPackage.assertHasValidationIssue(OxstsValidator.MISSING_PROPERTY, "'Case' has no property");
+    }
+
+    @Test
+    void verificationCaseInheritingAPropertyPasses() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Base {
+                var count: int := 0
+                prop {
+                    return AG count == 0
+                }
+            }
+            @VerificationCase
+            class Case : Base { }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationIssues();
+    }
+
+    @Test
+    void classWithoutAPropertyThatIsNoVerificationCasePasses() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Part {
+                var count: int := 0
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationIssues();
+    }
+
+    @Test
     void redefinitionWithoutAnInheritedMemberIsRejected() {
         var parsedPackage = parseHelper.parse("""
             package test
@@ -194,6 +240,48 @@ public class DeclarationValidationTest {
             assertThat(issue.getSeverity()).isEqualTo(Severity.WARNING);
             assertThat(issue.getLineNumber()).isEqualTo(6);
         });
+    }
+
+    @Test
+    void parameterAndLocalVariableMayShareTheNameOfAnOwnMember() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Holder {
+                var value: int := 0
+                tran set(value: int) {
+                    self.value := value
+                }
+                tran reset() {
+                    var value: int := 0
+                    self.value := value
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationIssues();
+    }
+
+    @Test
+    void parameterAndLocalVariableMayShareTheNameOfAnInheritedMember() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Base {
+                var value: int := 0
+            }
+            class Holder : Base {
+                tran set(value: int) {
+                    self.value := value
+                }
+                tran reset() {
+                    var value: int := 0
+                    self.value := value
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationIssues();
     }
 
     @Test

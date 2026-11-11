@@ -65,10 +65,10 @@ open class ConstantExpressionEvaluationTransformer : ExpressionEvaluationTransfo
         }
     }
 
-    private fun rangeBound(value: Int): Expression {
+    private fun rangeBound(value: Long): Expression {
         return when (value) {
-            RangeEvaluation.INFINITY -> OxstsFactory.createLiteralInfinity()
-            else -> OxstsFactory.createLiteralInteger(value)
+            RangeEvaluation.INFINITY, RangeEvaluation.NEGATIVE_INFINITY -> OxstsFactory.createLiteralInfinity()
+            else -> OxstsFactory.createLiteralInteger(value.toInt())
         }
     }
 

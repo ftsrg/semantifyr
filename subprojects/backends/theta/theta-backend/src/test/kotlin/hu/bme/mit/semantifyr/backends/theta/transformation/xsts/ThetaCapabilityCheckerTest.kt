@@ -19,8 +19,13 @@ class ThetaCapabilityCheckerTest : ThetaTransformationTestBase() {
         }
     """
 
+    private val notes = """
+        package test::notes
+        annotation Note(text: string)
+    """
+
     private fun unsupported(body: String): List<String> {
-        val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors)
+        val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors, notes)
         return capabilityChecker().check(inlinedOxsts).map {
             it.description
         }
@@ -80,6 +85,30 @@ class ThetaCapabilityCheckerTest : ThetaTransformationTestBase() {
             "variables of type real",
             "variables of type any",
             "real literals",
+            "variables of type string",
+            "string literals",
+        )
+    }
+
+    @Test
+    fun `a string argument of an annotation on a variable passes while a string variable does not`() {
+        val unsupported = unsupported(
+            """
+                @test::notes::Note("a counter")
+                var counter : int := 0
+                var text : string := "text"
+                init {
+                }
+                tran {
+                    counter := counter + 1
+                }
+                prop {
+                    AG counter >= 0
+                }
+            """,
+        )
+
+        assertThat(unsupported).containsExactlyInAnyOrder(
             "variables of type string",
             "string literals",
         )

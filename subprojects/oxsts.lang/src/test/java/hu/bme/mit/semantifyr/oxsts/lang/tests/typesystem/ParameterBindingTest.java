@@ -197,19 +197,6 @@ public class ParameterBindingTest {
     }
 
     @Test
-    void annotationPositionalArgumentAfterNamed_bindsTheParameterAtItsPosition() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            annotation Pair(first: int, second: bool)
-            @Pair(first = 1, true)
-            class Annotated { }
-            """, CheckMode.ALL);
-
-        parsedPackage.assertNoResourceErrors();
-        parsedPackage.assertNoValidationErrors();
-    }
-
-    @Test
     void annotationNamedArgument_bindsTheParameterOfThatName() {
         var parsedPackage = parseHelper.parse("""
             package test

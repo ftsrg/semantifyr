@@ -32,6 +32,7 @@ import org.eclipse.xtext.resource.ISelectable;
 import org.eclipse.xtext.resource.XtextResourceSet;
 import org.eclipse.xtext.testing.util.ParseHelper;
 import org.eclipse.xtext.validation.CheckMode;
+import org.eclipse.xtext.validation.Issue;
 import org.junit.jupiter.api.Test;
 
 @InjectWithOxsts
@@ -254,6 +255,30 @@ public class ScopingTest {
                 .allSatisfy(error -> assertThat(error.getMessage()).startsWith("Couldn't resolve reference"));
         assertThat(parsedPackage.getResourceErrors())
                 .anySatisfy(error -> assertThat(error.getMessage()).contains("'missing'"));
+    }
+
+    @Test
+    void navigationThroughAnUnresolvedTypeReportsOnlyTheUnresolvedReferences() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Host {
+                var position: Missing := Missing {
+                    x = 0
+                }
+                redefine tran {
+                    position.x := 1
+                }
+            }
+            """, CheckMode.ALL);
+
+        assertThat(parsedPackage.getIssues())
+                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .extracting(Issue::getMessage)
+                .containsExactlyInAnyOrder(
+                        "Couldn't resolve reference to DomainDeclaration 'Missing'.",
+                        "Couldn't resolve reference to RecordDeclaration 'Missing'.",
+                        "Couldn't resolve reference to VariableDeclaration 'x'.",
+                        "Couldn't resolve reference to NamedElement 'x'.");
     }
 
     @Test

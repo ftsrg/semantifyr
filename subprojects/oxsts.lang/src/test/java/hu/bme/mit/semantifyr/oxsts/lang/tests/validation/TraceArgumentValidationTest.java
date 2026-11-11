@@ -111,4 +111,42 @@ public class TraceArgumentValidationTest {
         parsedPackage.assertNoResourceErrors();
         parsedPackage.assertNoValidationIssues();
     }
+
+    @Test
+    void recordArgumentOfATracedCallIsRejected() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            record Point {
+                var x: int := 0
+            }
+            class Port {
+                var item: int := 0
+                @Trace
+                tran send(point: Point) {
+                    item := point.x
+                }
+            }
+            class Host {
+                var position: Point := Point { x = 1 }
+                contains port: Port
+                tran relay(point: Point) {
+                    inline port.send(point)
+                }
+                redefine tran {
+                    inline port.send(Point { x = 2 })
+                    inline port.send(position)
+                    inline relay(position)
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.getIssues())
+                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .hasSize(3)
+                .allSatisfy(issue -> {
+                    assertThat(issue.getCode()).isEqualTo(OxstsValidator.UNSUPPORTED_FEATURE);
+                    assertThat(issue.getMessage()).contains("Record arguments of the traced transition 'send'");
+                });
+    }
 }

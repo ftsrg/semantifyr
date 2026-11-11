@@ -295,6 +295,30 @@ public class RecordValidationTest {
     }
 
     @Test
+    void globalRecordTypedFeatureIsRejected() {
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            global reference origin: Point
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        assertOnlyErrorsAreUnsupported(parsedPackage, "Record-typed features");
+    }
+
+    @Test
+    void localArrayOfRecordsIsRejected() {
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            class Holder {
+                redefine tran {
+                    var points: Point[2] := [Point { x = 0 }, Point { x = 1 }]
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        assertOnlyErrorsAreUnsupported(parsedPackage, "Arrays of records");
+    }
+
+    @Test
     void recordLiteralsAreAcceptedWhereRecordValuesAre() {
         var parsedPackage = parseHelper.parse(RECORDS + """
             record Box {

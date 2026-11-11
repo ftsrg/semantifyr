@@ -18,6 +18,13 @@ import hu.bme.mit.semantifyr.compiler.pipeline.utils.serializeFormatted
 import hu.bme.mit.semantifyr.compiler.scopes.withCompilationScopeBlocking
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.InlinedOxstsParseHelper
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfThenElse
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
@@ -466,6 +473,121 @@ class ArrayFlatteningPassTest {
         assertThat(serialized).contains("values_0 := values_0 + 1", "values_1 := values_1 + 1")
         assertThat(serialized).doesNotContainPattern(saved("values_\\d"))
         assertThat(serialized).containsPattern("var ${saved("others_1")}: int := if index == 0 then others_0 else others_1\\s+others_0 := 0\\s+others_1 := ${saved("others_1")}")
+    }
+
+    @Test
+    fun `an array-valued if-then-else is assigned, compared and indexed slot by slot`() {
+        val inlined = parseHelper.parse(
+            """
+                inlined oxsts of semantifyr::Anything
+                var values: int[2] := [1, 2]
+                var others: int[2] := [3, 4]
+                var flag: bool := false
+                var index: int := 0
+                var seen: int := 0
+                var same: bool := false
+                init {
+                }
+                tran {
+                    values := if flag then others else [5, 6]
+                    same := (if flag then values else others) == others
+                    seen := (if flag then values else others)[index]
+                }
+                prop {
+                    AG true
+                }
+            """.trimIndent(),
+        )
+
+        flattenArrays(inlined)
+
+        assertThat(inlined.eAllOfType<IndexingSuffixExpression>().toList()).isEmpty()
+        val serialized = serialize(inlined)
+        assertThat(serialized).contains(
+            "values_0 := if flag then others_0 else 5",
+            "values_1 := if flag then others_1 else 6",
+        )
+        val same = assignedValues(inlined, "same").single() as BooleanOperator
+        assertThat(same.op).isEqualTo(BooleanOp.AND)
+        assertThat(
+            listOf(same.left, same.right).map {
+                (it as ComparisonOperator).left
+            },
+        ).allSatisfy {
+            assertThat(it).isInstanceOf(IfThenElse::class.java)
+        }
+        val seen = assignedValues(inlined, "seen").single() as IfThenElse
+        assertThat(seen.then).isInstanceOf(IfThenElse::class.java)
+        assertThat(seen.`else`).isInstanceOf(IfThenElse::class.java)
+    }
+
+    @Test
+    fun `an array initialized from an if-then-else takes each slot from the chosen branch`() {
+        val inlined = parseHelper.parse(
+            """
+                inlined oxsts of semantifyr::Anything
+                var values: int[2] := [1, 2]
+                var flag: bool := false
+                init {
+                }
+                tran {
+                    var copy: int[2] := if flag then values else [3, 4]
+                    values := copy
+                }
+                prop {
+                    AG true
+                }
+            """.trimIndent(),
+        )
+
+        flattenArrays(inlined)
+
+        val serialized = serialize(inlined)
+        assertThat(serialized).contains(
+            "var copy_0: int := if flag then values_0 else 3",
+            "var copy_1: int := if flag then values_1 else 4",
+        )
+    }
+
+    @Test
+    fun `an index that reads the same array is rewritten inside the indexing it selects for`() {
+        val inlined = parseHelper.parse(
+            """
+                inlined oxsts of semantifyr::Anything
+                var values: int[2] := [1, 0]
+                var index: int := 0
+                var seen: int := 0
+                init {
+                }
+                tran {
+                    seen := values[values[0]]
+                    seen := values[values[index]]
+                    values[values[1]] := 7
+                }
+                prop {
+                    AG true
+                }
+            """.trimIndent(),
+        )
+
+        flattenArrays(inlined)
+
+        assertThat(inlined.eAllOfType<IndexingSuffixExpression>().toList()).isEmpty()
+        val serialized = serialize(inlined)
+        assertThat(serialized).contains(
+            "seen := if values_0 == 0 then values_0 else values_1",
+            "if (values_1 == 0) {",
+        )
+        val runtimeNested = assignedValues(inlined, "seen").last() as IfThenElse
+        assertThat((runtimeNested.guard as ComparisonOperator).left).isInstanceOf(IfThenElse::class.java)
+    }
+
+    private fun assignedValues(inlined: InlinedOxsts, variableName: String): List<Expression> {
+        return inlined.eAllOfType<AssignmentOperation>().filter {
+            ((it.reference as? ElementReference)?.element as? VariableDeclaration)?.name == variableName
+        }.map {
+            it.expression
+        }.toList()
     }
 
     private fun saved(slot: String): String {
