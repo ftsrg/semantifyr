@@ -212,7 +212,9 @@ describe('Live', () => {
     })
     open.live.verifyAll()
     await vi.waitFor(() => {
-      expect(verificationOf(open!).cases[1]?.status).toBe('running')
+      expect(verificationOf(open!).cases.map((caseState) => {
+        return caseState.status
+      })).toEqual(['failed', 'running', 'passed'])
     })
 
     open.runtime().terminate()
@@ -423,6 +425,87 @@ describe('Live', () => {
     })).toEqual([['stale', 'Verification cancelled'], ['passed', undefined]])
     expect(open.live.runTiming.get()).toMatchObject({ caseId: null, finishedAt: expect.any(Number) })
     pending.resolve(failedResult)
+  })
+
+  it('sends every case of Verify all at once and takes each verdict as it comes, in any order', async () => {
+    const routed = routedClient([caseAt('a', 1), caseAt('b', 2), caseAt('c', 3)])
+    open = await openConnected(routed)
+    const answers = [deferred<VerificationCaseResult>(), deferred<VerificationCaseResult>(), deferred<VerificationCaseResult>()]
+    answers.forEach((answer, index) => {
+      routed.results.set(index + 1, async () => {
+        return answer.promise
+      })
+    })
+    const statuses = (): string[] => {
+      return verificationOf(open!).cases.map((caseState) => {
+        return caseState.status
+      })
+    }
+
+    open.live.verifyAll()
+    await vi.waitFor(() => {
+      expect(routed.verifiedLines).toEqual([1, 2, 3])
+    })
+    answers[2]!.resolve(failedResult)
+    await vi.waitFor(() => {
+      expect(statuses()).toEqual(['running', 'running', 'failed'])
+    })
+    answers[0]!.resolve(passedResult)
+    await vi.waitFor(() => {
+      expect(statuses()).toEqual(['passed', 'running', 'failed'])
+    })
+    expect(verificationOf(open).phase).toBe('running')
+    answers[1]!.resolve(passedResult)
+
+    await vi.waitFor(() => {
+      expect(verificationOf(open!).phase).toBe('done')
+    })
+    expect(statuses()).toEqual(['passed', 'passed', 'failed'])
+  })
+
+  it('cancels one case of a run in flight and lets the others end, and cancels every sent case with Cancel', async () => {
+    const routed = routedClient([caseAt('a', 1), caseAt('b', 2), caseAt('c', 3)])
+    open = await openConnected(routed)
+    const answers = [deferred<VerificationCaseResult>(), deferred<VerificationCaseResult>(), deferred<VerificationCaseResult>()]
+    answers.forEach((answer, index) => {
+      routed.results.set(index + 1, async () => {
+        return answer.promise
+      })
+    })
+    const cases = (): (string | undefined)[][] => {
+      return verificationOf(open!).cases.map((caseState) => {
+        return [caseState.status, caseState.message]
+      })
+    }
+
+    open.live.verifyAll()
+    await vi.waitFor(() => {
+      expect(routed.verifiedLines).toEqual([1, 2, 3])
+    })
+    open.live.cancelCase('b')
+    answers[0]!.resolve(passedResult)
+    answers[2]!.resolve(failedResult)
+    await vi.waitFor(() => {
+      expect(verificationOf(open!).phase).toBe('done')
+    })
+    expect(cases()).toEqual([['passed', undefined], ['stale', 'Verification cancelled'], ['failed', failedResult.message]])
+
+    const never = deferred<VerificationCaseResult>()
+    for (const line of [1, 2, 3]) {
+      routed.results.set(line, async () => {
+        return never.promise
+      })
+    }
+    open.live.verifyAll()
+    await vi.waitFor(() => {
+      expect(routed.verifiedLines).toHaveLength(6)
+    })
+    open.live.cancelVerification()
+    await vi.waitFor(() => {
+      expect(open!.live.runTiming.get()?.finishedAt).not.toBeNull()
+    })
+    expect(verificationOf(open).phase).toBe('cancelled')
+    expect(cases()).toEqual([['passed', undefined], ['stale', 'Verification cancelled'], ['failed', failedResult.message]])
   })
 
   it('shows a sent case queued while the server queues it and running once the server runs it, and counts its time from then', async () => {

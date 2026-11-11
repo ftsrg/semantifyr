@@ -496,6 +496,7 @@ function createProgressDispatcher(setState: StateUpdater): ProgressDispatcher {
   }
 }
 
+// every case is sent at once; the server's queue decides the order
 export function runAllVerifications(
   client: LspClient,
   verificationCommand: string,
@@ -506,8 +507,7 @@ export function runAllVerifications(
   options: RunVerificationOptions = {},
 ): RunVerificationHandle {
   let cancelled = false
-  let activeRequestSource: CancellationTokenSource | null = null
-  let activeCaseId: string | null = null
+  const requestSources = new Map<string, CancellationTokenSource>()
   const skipped = new Set<string>()
   const progress = createProgressDispatcher(setState)
   const caseIds = new Set(cases.map((caseInfo) => {
@@ -519,9 +519,7 @@ export function runAllVerifications(
       return
     }
     skipped.add(caseId)
-    if (activeCaseId === caseId) {
-      activeRequestSource?.cancel()
-    }
+    requestSources.get(caseId)?.cancel()
     setState((previous) => ({
       ...previous,
       cases: previous.cases.map((caseState) =>
@@ -537,7 +535,9 @@ export function runAllVerifications(
       return
     }
     cancelled = true
-    activeRequestSource?.cancel()
+    for (const requestSource of requestSources.values()) {
+      requestSource.cancel()
+    }
     progress.cancelAll(client)
     setState((previous) => ({
       ...previous,
@@ -561,42 +561,16 @@ export function runAllVerifications(
     return {
       phase: 'running',
       discovery: previous.discovery,
-      message: 'Starting verification...',
+      message: `Verifying ${cases.length} cases...`,
       cases: cases.map((caseInfo) => {
-        return { ...existing.get(caseInfo.id), caseInfo, status: 'queued' as const }
+        return runningCase({ ...existing.get(caseInfo.id), caseInfo, status: 'queued' })
       }),
     }
   })
 
-  const updateCase = (caseId: string, change: (caseState: VerificationCaseState) => VerificationCaseState): void => {
-    setState((previous) => {
-      return {
-        ...previous,
-        cases: previous.cases.map((caseState) => {
-          return caseState.caseInfo.id === caseId ? change(caseState) : caseState
-        }),
-      }
-    })
-  }
-
-  const runOne = async (index: number): Promise<void> => {
-    const currentCase = cases[index]
-    if (!currentCase || skipped.has(currentCase.id)) {
-      return
-    }
-    setState((previous) => {
-      return {
-        ...previous,
-        message: `Verifying ${currentCase.label} (${index + 1}/${cases.length})...`,
-        cases: previous.cases.map((caseState) => {
-          return caseState.caseInfo.id === currentCase.id ? runningCase(caseState) : caseState
-        }),
-      }
-    })
-
+  const runOne = async (currentCase: VerificationCaseSpecification): Promise<void> => {
     const requestSource = createCancellationTokenSource()
-    activeRequestSource = requestSource
-    activeCaseId = currentCase.id
+    requestSources.set(currentCase.id, requestSource)
     let outcome: VerifyOutcome
     try {
       outcome = await executeVerify(
@@ -609,51 +583,37 @@ export function runAllVerifications(
       )
     } finally {
       requestSource.dispose()
-      if (activeRequestSource === requestSource) {
-        activeRequestSource = null
-        activeCaseId = null
-      }
+      requestSources.delete(currentCase.id)
     }
     if (cancelled || skipped.has(currentCase.id)) {
       return
     }
-
-    updateCase(currentCase.id, (caseState) => {
-      return applyVerifyOutcome(caseState, outcome, options.portfolioId)
+    setState((previous) => {
+      return {
+        ...previous,
+        cases: previous.cases.map((caseState) => {
+          return caseState.caseInfo.id === currentCase.id ? applyVerifyOutcome(caseState, outcome, options.portfolioId) : caseState
+        }),
+      }
     })
-
     maybeDispatchAutoValidation(client, currentCase, outcome, setState, options)
   }
 
   const runAll = async (): Promise<void> => {
     try {
-      for (let i = 0; i < cases.length; i++) {
-        if (cancelled) {
-          setState((previous) => {
-            return { ...previous, phase: 'cancelled', message: 'Verification cancelled', progress: undefined }
-          })
-          return
-        }
-        await runOne(i)
-      }
-      if (!cancelled) {
-        setState((previous) => {
-          return { ...previous, phase: 'done', message: deriveBatchMessage(previous.cases), progress: undefined }
-        })
-      }
+      await Promise.all(cases.map(runOne))
+      setState((previous) => {
+        return cancelled
+          ? { ...previous, phase: 'cancelled', message: 'Verification cancelled', progress: undefined }
+          : { ...previous, phase: 'done', message: deriveBatchMessage(previous.cases), progress: undefined }
+      })
     } catch (error) {
-      if (cancelled) {
-        setState((previous) => {
-          return { ...previous, phase: 'cancelled', message: 'Verification cancelled', progress: undefined }
-        })
-      } else {
-        setState((previous) => ({
-          ...previous,
-          phase: 'error',
-          message: error instanceof Error ? error.message : String(error),
-          progress: undefined,
-        }))
-      }
+      setState((previous) => ({
+        ...previous,
+        phase: cancelled ? 'cancelled' : 'error',
+        message: cancelled ? 'Verification cancelled' : error instanceof Error ? error.message : String(error),
+        progress: undefined,
+      }))
     } finally {
       removeListener()
     }

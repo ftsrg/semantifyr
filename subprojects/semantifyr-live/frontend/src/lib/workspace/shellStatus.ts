@@ -168,24 +168,27 @@ function serverBusyStatus(wait: ServerWait): ShellStatus {
   }
 }
 
-// a single run names its case, Verify all its position among the cases; a case sent and not yet reported reads as verifying, so the line does not flicker
+// names a case the server runs, or one sent and not yet reported, so the line does not flicker; Verify all says how many are done
 function runningStatus(verification: VerificationState, timing: RunTiming | null): ShellStatus {
-  const reportedRunning = verification.cases.findIndex((caseState) => {
+  const reportedRunning = verification.cases.filter((caseState) => {
     return caseState.status === 'running' && caseState.serverState === 'Running'
   })
-  const index = reportedRunning === -1
-    ? verification.cases.findIndex((caseState) => {
-      return caseState.status === 'running'
-    })
-    : reportedRunning
-  const running = verification.cases[index]
-  if (!running) {
+  const named = reportedRunning[0] ?? verification.cases.find((caseState) => {
+    return caseState.status === 'running'
+  })
+  if (!named) {
     return { kind: 'busy', text: verification.message ?? 'Verifying...' }
   }
   const single = timing !== null && timing.caseId !== null
-  const position = single ? '' : `, ${index + 1} of ${verification.cases.length}`
-  const progress = verification.progress ? ` - ${verification.progress}` : ''
-  return { kind: 'busy', text: 'Verifying ', caseName: caseRowOf(running).name, after: `${position}${progress}` }
+  const more = reportedRunning.length > 1 ? ` and ${reportedRunning.length - 1} more` : ''
+  if (single) {
+    const progress = verification.progress ? ` - ${verification.progress}` : ''
+    return { kind: 'busy', text: 'Verifying ', caseName: caseRowOf(named).name, after: `${more}${progress}` }
+  }
+  const done = verification.cases.filter((caseState) => {
+    return caseState.status !== 'running' && caseState.status !== 'queued'
+  }).length
+  return { kind: 'busy', text: 'Verifying ', caseName: caseRowOf(named).name, after: `${more}, ${done} of ${verification.cases.length} done` }
 }
 
 function closingStatus(verification: VerificationState, timing: RunTiming): ShellStatus | null {

@@ -133,12 +133,12 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     },
   },
   'running': {
-    seed: { verification: discovered([{ caseInfo: BARRIER, status: 'running', serverState: 'Running' }, { caseInfo: TWO_TRAINS, status: 'queued' }], 'running') },
+    seed: { verification: discovered([{ caseInfo: BARRIER, status: 'running', serverState: 'Running' }, { caseInfo: TWO_TRAINS, status: 'running', serverState: 'Queued' }], 'running') },
     expectState: () => {
       expect(count('.results-header .button-cancel')).toBe(1)
-      expect(count('.case-row.status-running')).toBe(1)
-      expect(count('.case-row.status-queued')).toBe(1)
-      expect(text('[data-testid=status-message]')).toContain('Verifying')
+      expect(count(`.case-row.status-running[data-case="${BARRIER.id}"]`)).toBe(1)
+      expect(count(`.case-row.status-queued[data-case="${TWO_TRAINS.id}"]`)).toBe(1)
+      expect(text('[data-testid=status-message]')).toBe(`Verifying ${BARRIER.id}, 0 of 2 done`)
     },
   },
   'server-busy': {

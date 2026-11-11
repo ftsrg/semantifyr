@@ -44,7 +44,7 @@ function captureStates(): {
 const noopProgress = (_: (parameters: unknown) => void) => () => {};
 
 describe('runAllVerifications', () => {
-  it('walks queued -> running -> verdict for each case and folds in metrics + backendId', async () => {
+  it('sends every case at once and folds in each verdict with its metrics + backendId', async () => {
     const responses = [passedResult, failedResult];
     const sendRequest = vi.fn<LspClient['sendRequest']>(async () => responses.shift() ?? null);
     const client: LspClient = { sendRequest, sendNotification: () => {} };
@@ -77,8 +77,8 @@ describe('runAllVerifications', () => {
       arguments: [{ uri: 'file:///workspace/snippet.oxsts', range: sampleCase('a').location.range, portfolio: 'smart-full' }],
     });
 
-    // The first batch transition should mark all cases queued.
-    expect(states[0]!.cases.every((verificationCase) => verificationCase.status === 'queued')).toBe(true);
+    expect(states[0]!.cases.every((verificationCase) => verificationCase.status === 'running')).toBe(true);
+    expect(sendRequest).toHaveBeenCalledTimes(2);
   });
 
   it('reports "All cases passed" when every verdict is passed', async () => {
