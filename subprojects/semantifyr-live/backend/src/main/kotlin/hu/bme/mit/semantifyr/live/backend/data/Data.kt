@@ -75,6 +75,16 @@ data class FlavorsResponse(
     val flavors: List<FlavorResponse>,
 )
 
+// each library's files by their path under the library's root
+@Serializable
+data class LibrariesResponse(
+    val builtin: List<String>,
+    // by flavor, the files a session of the flavor has under its Library directory
+    val semantic: Map<String, List<String>>,
+    // the SysML v2 standard library the SysML worker loads
+    val sysml: List<String>,
+)
+
 @Serializable
 data class AdminStatusResponse(
     val sessions: List<SessionInfo>,

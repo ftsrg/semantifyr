@@ -6,10 +6,14 @@
 
 package hu.bme.mit.semantifyr.live.backend.server
 
+import hu.bme.mit.semantifyr.live.backend.BackendConfig
+import hu.bme.mit.semantifyr.live.backend.ServerConfig
 import hu.bme.mit.semantifyr.live.backend.ServerStatus
+import hu.bme.mit.semantifyr.live.backend.SessionManagerConfig
 import hu.bme.mit.semantifyr.live.backend.data.FlavorsResponse
 import hu.bme.mit.semantifyr.live.backend.data.HealthResponse
 import hu.bme.mit.semantifyr.live.backend.data.InfoResponse
+import hu.bme.mit.semantifyr.live.backend.data.LibrariesResponse
 import hu.bme.mit.semantifyr.live.backend.data.PortfoliosResponse
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionManager
 import hu.bme.mit.semantifyr.live.backend.testing.handler
@@ -25,12 +29,19 @@ import io.ktor.http.contentType
 import io.ktor.server.testing.testApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import java.nio.file.Files
+import java.nio.file.Path
 
 class ApiRoutesHandlerTest {
 
-    private fun createHandler(activeSessions: Int = 3, maxSessions: Int = 64): ApiRoutesHandler {
+    private fun createHandler(
+        activeSessions: Int = 3,
+        maxSessions: Int = 64,
+        config: BackendConfig = BackendConfig(),
+    ): ApiRoutesHandler {
         val sessionManager = mock<SessionManager>()
         whenever(sessionManager.activeSessionsCount).thenReturn(activeSessions)
         whenever(sessionManager.maxSessions).thenReturn(maxSessions)
@@ -38,7 +49,7 @@ class ApiRoutesHandlerTest {
             it.markStartNow()
         }
 
-        return testInjector {
+        return testInjector(config) {
             bind(SessionManager::class.java).toInstance(sessionManager)
             bind(ServerStatus::class.java).toInstance(serverStatus)
         }.handler<ApiRoutesHandler>()
@@ -175,5 +186,43 @@ class ApiRoutesHandlerTest {
             header(HttpHeaders.Origin, "https://ftsrg.mit.bme.hu")
         }
         assertThat(info.headers[HttpHeaders.AccessControlAllowOrigin]).isNull()
+    }
+
+    @Test
+    fun `libraries endpoint lists every model file of each library`(@TempDir tmp: Path) = testApplication {
+        val semanticLibraries = tmp.resolve("semantic-libraries")
+        val webRoot = tmp.resolve("web")
+        val files = listOf(
+            "semantic-libraries/gamma/Statecharts.oxsts",
+            "semantic-libraries/gamma/Ports.oxsts",
+            "semantic-libraries/sysmlv2/States.oxsts",
+            "web/sysml-worker/library/Verification.sysml",
+            "web/sysml-worker/library/Kernel Libraries/Kernel Data Type Library/ScalarValues.kerml",
+            "web/sysml-worker/library/Kernel Libraries/Kernel Data Type Library/.meta.json",
+        )
+        for (file in files) {
+            val path = tmp.resolve(file)
+            Files.createDirectories(path.parent)
+            Files.writeString(path, "")
+        }
+        val handler = createHandler(
+            config = BackendConfig(
+                server = ServerConfig(webRootDirectory = webRoot.toString()),
+                sessionManager = SessionManagerConfig(semanticLibrariesDirectory = semanticLibraries.toString()),
+            ),
+        )
+        installSemantifyrApp {
+            with(handler) {
+                configure()
+            }
+        }
+
+        val libraries = jsonClient().get("/api/libraries").body<LibrariesResponse>()
+
+        assertThat(libraries.builtin).containsExactly("semantifyr.oxsts")
+        assertThat(libraries.semantic).containsOnlyKeys("oxsts-with-gamma-library", "oxsts-with-sysmlv2-library", "gamma")
+        assertThat(libraries.semantic["gamma"]).containsExactly("Ports.oxsts", "Statecharts.oxsts")
+        assertThat(libraries.semantic["oxsts-with-sysmlv2-library"]).containsExactly("States.oxsts")
+        assertThat(libraries.sysml).containsExactly("Kernel Libraries/Kernel Data Type Library/ScalarValues.kerml", "Verification.sysml")
     }
 }

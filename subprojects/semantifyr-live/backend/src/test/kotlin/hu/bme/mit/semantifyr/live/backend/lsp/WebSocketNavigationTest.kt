@@ -30,6 +30,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.lsp4j.CodeLens
 import org.eclipse.lsp4j.CodeLensParams
 import org.eclipse.lsp4j.DefinitionParams
+import org.eclipse.lsp4j.Hover
+import org.eclipse.lsp4j.HoverParams
 import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.Location
 import org.eclipse.lsp4j.Position
@@ -166,6 +168,32 @@ class WebSocketNavigationTest {
             val builtinText = readDocument(id = 3, uri = definition.uri)
             assertThat(builtinText).isNotNull
             assertThat(builtinText!!.lines()[definition.range.start.line]).contains("extern datatype bool")
+        }
+    }
+
+    @Test
+    fun `definition and hover answer in the builtin library's read-only document`(@TempDir tmp: Path) = testApplication {
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(testInjector(config(tmp)))
+        }
+        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
+            openModel()
+            send(Frame.Text(LspWire.request(id = 2, method = "textDocument/definition", params = DefinitionParams(TextDocumentIdentifier(modelUri), positionOf("bool")))))
+            val builtinUri = awaitResponseFor(id = 2).resultAs(Array<Location>::class.java).single().uri
+            val builtinLines = readDocument(id = 3, uri = builtinUri)!!.lines()
+            val tagLine = builtinLines.indexOfFirst {
+                it.startsWith("annotation Tag(")
+            }
+            val stringPosition = Position(tagLine, builtinLines[tagLine].lastIndexOf("string"))
+
+            send(Frame.Text(LspWire.request(id = 4, method = "textDocument/definition", params = DefinitionParams(TextDocumentIdentifier(builtinUri), stringPosition))))
+            val definition = awaitResponseFor(id = 4).resultAs(Array<Location>::class.java).single()
+            send(Frame.Text(LspWire.request(id = 5, method = "textDocument/hover", params = HoverParams(TextDocumentIdentifier(builtinUri), stringPosition))))
+            val hover = awaitResponseFor(id = 5).resultAs(Hover::class.java)
+
+            assertThat(definition.uri).isEqualTo(builtinUri)
+            assertThat(builtinLines[definition.range.start.line]).isEqualTo("extern datatype string")
+            assertThat(hover.contents.right.value).contains("string")
         }
     }
 }
