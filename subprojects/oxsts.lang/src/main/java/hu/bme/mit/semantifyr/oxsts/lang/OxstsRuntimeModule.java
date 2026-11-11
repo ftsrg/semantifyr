@@ -17,6 +17,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.resource.OxstsResourceDescriptionManager;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.OxstsGlobalScopeProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.OxstsLocalScopeProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.serializer.SerializerGrammarAnalyses;
 import org.eclipse.xtext.conversion.IValueConverterService;
 import org.eclipse.xtext.conversion.impl.AbstractIDValueConverter;
 import org.eclipse.xtext.formatting2.FormatterPreferenceKeys;
@@ -81,6 +82,11 @@ public class OxstsRuntimeModule extends AbstractOxstsRuntimeModule {
         binder.bind(Boolean.class)
                 .annotatedWith(Names.named(CompositeEValidator.USE_EOBJECT_VALIDATOR))
                 .toInstance(false);
+    }
+
+    @SuppressWarnings("unused")
+    public void configureSerializerGrammarAnalyses(Binder binder) {
+        binder.bind(SerializerGrammarAnalyses.class).asEagerSingleton();
     }
 
     @SuppressWarnings("unused")
