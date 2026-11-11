@@ -186,6 +186,26 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       expect(count('.case-row.status-running, .case-row.status-queued')).toBe(0)
     },
   },
+  'about': {
+    seed: { verification: discovered([notRun(BARRIER), notRun(TWO_TRAINS)]) },
+    act: async () => {
+      const about = [...document.querySelectorAll<HTMLElement>('.toolbar .button')].find((button) => {
+        return button.innerText.trim() === 'About'
+      })
+      about!.click()
+      await expect.poll(() => {
+        return count('.dialog')
+      }).toBe(1)
+    },
+    expectState: () => {
+      const about = text('.dialog')
+      expect(about).toContain('research prototype')
+      expect(about).toContain('deletes the folder when the session ends')
+      expect(about).toContain('network address of each session')
+      expect(about).not.toContain('collects no personal data')
+      expect(about).not.toContain('only while it verifies')
+    },
+  },
   'gamma': {
     seed: { flavorId: 'gamma', verification: discovered([notRun(caseOf('BarrierDownWhileTrainInCrossing', 90, 'file:///workspace/snippet.gamma'))]) },
     expectState: () => {

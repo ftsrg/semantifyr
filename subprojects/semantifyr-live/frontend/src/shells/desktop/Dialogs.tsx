@@ -62,11 +62,11 @@ export function AboutDialog({ className, children }: TriggerProps): React.JSX.El
             </div>
             <div className="dialog-section">
               <span className="section-label">Nothing is stored</span>
-              <p>No model and no result is stored anywhere: the server keeps your model only while it verifies it, and a reload starts afresh. The browser keeps your display preferences, such as the theme and the portfolios, and the site&apos;s own files so that it loads fast. A shared link carries the model and its results in the link itself.</p>
+              <p>No model and no result is kept beyond your visit. While the page is open, the server holds your model and what its verifications write in a working folder of your session, and deletes the folder when the session ends, as you close or reload the page; after a crash, when the server starts again. The browser keeps your display preferences, such as the theme and the portfolios, and the site&apos;s own files so that it loads fast. A shared link carries the model and its results in the link itself.</p>
             </div>
             <div className="dialog-section">
               <span className="section-label">Privacy</span>
-              <p>Live collects no personal data. The server counts sessions and runs for its own metrics, without the content of any model.</p>
+              <p>The server&apos;s log records the network address of each session, when it started and ended and the errors it met, and its operators see the addresses of the open sessions. The server&apos;s metrics count sessions and runs, without any model or address. Live sets no cookies and uses no analytics.</p>
             </div>
             <div className="dialog-links">
               <a className="button button-outline button-small" href={HOME} target="_blank" rel="noreferrer">
