@@ -306,6 +306,55 @@ describe('the text of a trace', () => {
   })
 })
 
+describe('the documents menu', () => {
+  const ENTRIES: Readonly<Record<string, readonly string[]>> = {
+    sysml: ['Trace of the selected case', 'OXSTS of the model', 'OXSTS of the trace', 'Library', 'OXSTS semantic library'],
+    gamma: ['Trace of the selected case', 'OXSTS of the model', 'OXSTS of the trace', 'OXSTS semantic library'],
+    oxsts: ['Trace of the selected case', 'Library'],
+  }
+  for (const [languageName, entries] of Object.entries(ENTRIES)) {
+    it(`opens the selected case's trace texts in ${languageName} as the trace area's Open does`, async () => {
+      await page.viewport(1440, 900)
+      const language = LANGUAGES[languageName]!
+      const { live, shell } = seedWithTrace(language, caseState(language, { validated: false, recorded: true }))
+      const container = document.createElement('div')
+      document.body.append(container)
+      const root = createRoot(container)
+      onTestFinished(() => {
+        root.unmount()
+        container.remove()
+      })
+      root.render(<ShellRoot live={live} shell={shell} colorMode="light" trace={CaseTrace} />)
+      await expect.poll(() => {
+        return document.querySelector('.monaco-editor .view-line') && document.querySelector('.case-trace')
+      }, { timeout: 60_000 }).toBeTruthy()
+      document.querySelector<HTMLElement>('[aria-label="Read-only documents"]')!.click()
+      await expect.poll(() => {
+        return [...document.querySelectorAll<HTMLElement>('.documents-menu .menu-item-label')].map((label) => {
+          return label.innerText
+        })
+      }).toEqual(entries)
+      expect(count('.documents-menu .menu-item.is-disabled')).toBe(0)
+      const menu = document.querySelector('.documents-menu')!.getBoundingClientRect()
+      for (const detail of document.querySelectorAll('.documents-menu .menu-item-detail')) {
+        expect(detail.getBoundingClientRect().right, 'a file name inside the menu').toBeLessThanOrEqual(menu.right)
+        expect(detail.scrollWidth, 'a file name ends in an ellipsis').toBeGreaterThanOrEqual(detail.clientWidth)
+      }
+      const traceEntry = document.querySelector<HTMLElement>('.documents-menu [data-document=witness]')!
+      const fileName = traceEntry.querySelector<HTMLElement>('.menu-item-detail')!.innerText
+      expect(fileName).toBe(`${language.caseName}.witness.oxsts`)
+      await page.screenshot({ path: `../../build/screens/trace-documents-${languageName}-light.png` })
+      traceEntry.click()
+      await expect.poll(() => {
+        return text('.tab.is-readonly[aria-selected=true]')
+      }).toContain(fileName)
+      await expect.poll(() => {
+        return text('section.editor .view-lines')
+      }, { timeout: 30_000 }).toContain('witness of example::levelcrossing')
+    })
+  }
+})
+
 describe('the trace area', () => {
   for (const colorMode of ['light', 'dark'] as const) {
     for (const [name, state] of Object.entries(STATES_BY_NAME)) {

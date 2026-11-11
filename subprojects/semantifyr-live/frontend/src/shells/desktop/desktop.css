@@ -275,7 +275,7 @@
 .documents-menu { width: 320px; }
 .documents-menu .menu-item { grid-template-columns: 18px 1fr; align-items: start; padding: var(--space-4); }
 .documents-menu .menu-item .icon { margin-top: 2px; }
-.documents-menu .menu-item-detail { grid-column: 2; font-family: var(--font-mono); font-size: 11px; }
+.documents-menu .menu-item-detail { grid-column: 2; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-mono); font-size: 11px; }
 .documents-menu .menu-item.is-disabled { opacity: 0.5; pointer-events: none; }
 
 .connection-popover { width: 300px; padding: var(--space-5); display: grid; gap: var(--space-4); }

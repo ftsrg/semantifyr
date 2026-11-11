@@ -12,6 +12,7 @@ import type { VerificationTrace } from '@semantifyr/editor-common'
 import type { LanguageRuntime } from '../lib/language/types'
 import { openDerivedDocument, whenMonacoReady } from '../lib/session/monaco'
 import { traceUriOf } from '../lib/session/readOnlyDocuments'
+import type { ReadOnlyDocument } from '../lib/workspace/documentTabs'
 import { useLive } from '../lib/workspace/liveContext'
 import type { Live } from '../lib/workspace/live'
 import { Icon } from '../ui/icons'
@@ -77,6 +78,25 @@ async function readText(runtime: LanguageRuntime | null, fileUri: string): Promi
     return await runtime?.api.readDocument(fileUri) ?? null
   } catch {
     return null
+  }
+}
+
+export function traceTabOf(source: TraceTextSource, text: string): ReadOnlyDocument {
+  return {
+    id: source.tabId,
+    label: source.label,
+    uri: traceUriOf(source.fileUri),
+    languageId: source.languageId,
+    banner: source.banner,
+    text,
+  }
+}
+
+// opens the text as the read-only tab the trace area's Open opens
+export async function openTraceText(live: Live, runtime: LanguageRuntime | null, source: TraceTextSource): Promise<void> {
+  const text = await readText(runtime, source.fileUri)
+  if (text !== null) {
+    live.tabs.open(traceTabOf(source, text))
   }
 }
 
@@ -159,14 +179,7 @@ function TextBody({ source, context }: { source: TraceTextSource | null, context
               className="button button-small button-outline frame-open"
               title="Open in the editor as a read-only tab"
               onClick={() => {
-                openTab({
-                  id: source.tabId,
-                  label: source.label,
-                  uri: traceUriOf(source.fileUri),
-                  languageId: source.languageId,
-                  banner: source.banner,
-                  text: text.text,
-                })
+                openTab(traceTabOf(source, text.text))
               }}
             >
               <Icon name="external" size="tiny" />

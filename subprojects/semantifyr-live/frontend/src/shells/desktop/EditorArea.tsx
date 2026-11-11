@@ -15,9 +15,12 @@ import { fileNameOf } from '../../lib/session/readOnlyDocuments'
 import { bindTabbedEditor } from '../../lib/session/tabbedEditor'
 import { useStore } from '../../lib/stores/useStore'
 import type { ResolvedColorMode } from '../../lib/util/colorMode'
+import { caseRowOf } from '../../lib/workspace/caseRows'
 import { libraryTabOf, MODEL_OXSTS_TAB_ID, modelOxstsTabOf } from '../../lib/workspace/libraryTabs'
 import type { DocumentRecord, Live } from '../../lib/workspace/live'
-import { useLive } from '../../lib/workspace/liveContext'
+import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
+import { traceLanguageOf, type TraceView } from '../../trace/registry'
+import { openTraceText } from '../../trace/TextView'
 import { Icon } from '../../ui/icons'
 import { LanguageMark } from '../../ui/marks'
 import { documentLabel, useAddressedModel, useCurrentDocument, useFlavor } from '../hooks'
@@ -55,9 +58,46 @@ function useModelOxstsTab(live: Live, runtime: LanguageRuntime | null, modelLabe
   }, [live, runtime, open, modelLabel])
 }
 
+// the selected case's trace text and the OXSTS of its trace, the documents the trace area's Open opens
+function TraceEntry({ view, label, runtime }: { view: TraceView | undefined, label: string, runtime: LanguageRuntime }): React.JSX.Element | null {
+  const live = useLive()
+  const verification = useCurrentVerification(live)
+  const selection = useStore(live.selection)
+  if (!view?.source) {
+    return null
+  }
+  const selected = verification.cases.find((caseState) => {
+    return caseState.caseInfo.id === selection
+  })
+  const trace = selected?.trace ?? null
+  const source = selected && trace ? view.source({ trace, caseName: caseRowOf(selected).name, runtime }) : null
+  return (
+    <Menu.Item
+      className={`menu-item${source ? '' : ' is-disabled'}`}
+      disabled={!source}
+      data-document={view.id}
+      onClick={() => {
+        if (source) {
+          void openTraceText(live, runtime, source)
+        }
+      }}
+    >
+      <Icon name="lock" size="small" />
+      <span className="menu-item-label">{label}</span>
+      <span className="menu-item-detail" title={source?.label}>{source ? source.label : 'select a case with a trace'}</span>
+    </Menu.Item>
+  )
+}
+
 function DocumentsMenu({ runtime, flavor, modelLabel }: { runtime: LanguageRuntime, flavor: LiveFlavor, modelLabel: string }): React.JSX.Element {
   const live = useLive()
   const hasModelOxsts = flavor.languageId !== 'oxsts'
+  const traceViews = traceLanguageOf(flavor.languageId).views
+  const viewOf = (id: string): TraceView | undefined => {
+    return traceViews.find((view) => {
+      return view.id === id
+    })
+  }
   return (
     <Menu.Root>
       <Menu.Trigger className="button button-icon" title="Read-only documents" aria-label="Read-only documents">
@@ -68,6 +108,7 @@ function DocumentsMenu({ runtime, flavor, modelLabel }: { runtime: LanguageRunti
           <Menu.Popup className="menu documents-menu">
             <Menu.Group>
               <Menu.GroupLabel className="menu-heading">Open read-only</Menu.GroupLabel>
+              <TraceEntry view={viewOf('own')} label="Trace of the selected case" runtime={runtime} />
               {hasModelOxsts
                 ? (
                   <Menu.Item
@@ -83,6 +124,7 @@ function DocumentsMenu({ runtime, flavor, modelLabel }: { runtime: LanguageRunti
                   </Menu.Item>
                 )
                 : null}
+              <TraceEntry view={viewOf('witness')} label={viewOf('own') ? 'OXSTS of the trace' : 'Trace of the selected case'} runtime={runtime} />
               {runtime.libraryDocuments.map((library) => {
                 return (
                   <Menu.Item
