@@ -105,6 +105,9 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       expect(count('.embed-case.is-open')).toBe(1)
       expect(text('.embed-trace .trace-views [aria-pressed=true]')).toBe('SysML trace')
       expect(text('.embed-trace [data-testid=run-details]')).toContain('decided by Theta')
+      // the trace text is as tall as it is, every line drawn, and wraps instead of scrolling sideways
+      expect(count('.embed-trace .trace-editor .line-numbers')).toBe(14)
+      expect(document.querySelector('.embed-trace .trace-editor .view-lines')!.scrollWidth).toBeLessThanOrEqual(document.querySelector('.embed-trace .trace-editor')!.clientWidth)
     },
   },
   'trace-steps': {

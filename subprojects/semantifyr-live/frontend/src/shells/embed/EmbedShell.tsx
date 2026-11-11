@@ -166,11 +166,12 @@ function useCasesListed(): boolean {
   return catalog === 'ready' && initialized
 }
 
-function CaseTraceArea({ caseState, row, flavor, slot }: { caseState: VerificationCaseState, row: CaseRow, flavor: LiveFlavor, slot: TraceSlot | undefined }): React.JSX.Element {
+// in a growing frame the trace text is as tall as it is and wraps; a fixed frame scrolls it in its area
+function CaseTraceArea({ caseState, row, flavor, slot, growing }: { caseState: VerificationCaseState, row: CaseRow, flavor: LiveFlavor, slot: TraceSlot | undefined, growing: boolean }): React.JSX.Element {
   const Slot = slot
   return (
     <div className={`embed-trace status-${row.status}${row.outdated ? ' is-outdated' : ''}`} aria-label={`Trace of ${row.name}`}>
-      {Slot ? <Slot caseState={caseState} flavor={flavor} /> : null}
+      {Slot ? <Slot caseState={caseState} flavor={flavor} growing={growing} wrapping={growing} /> : null}
     </div>
   )
 }
@@ -189,7 +190,7 @@ function FixedTrace({ slot }: { slot: TraceSlot | undefined }): React.JSX.Elemen
     return null
   }
   const row = caseRowOf(caseState)
-  return row.hasTrace ? <CaseTraceArea caseState={caseState} row={row} flavor={flavor} slot={slot} /> : null
+  return row.hasTrace ? <CaseTraceArea caseState={caseState} row={row} flavor={flavor} slot={slot} growing={false} /> : null
 }
 
 function Cases({ slot, inlineTrace }: { slot: TraceSlot | undefined, inlineTrace: boolean }): React.JSX.Element {
@@ -224,7 +225,7 @@ function Cases({ slot, inlineTrace }: { slot: TraceSlot | undefined, inlineTrace
                 live.selectCase(open ? null : row.id)
               }}
             />
-            {open && inlineTrace ? <CaseTraceArea caseState={caseState} row={row} flavor={flavor} slot={slot} /> : null}
+            {open && inlineTrace ? <CaseTraceArea caseState={caseState} row={row} flavor={flavor} slot={slot} growing /> : null}
           </div>
         )
       })}

@@ -137,7 +137,7 @@ export function ModelPane({ colorMode, hidden }: { colorMode: ResolvedColorMode,
       <ModelBar />
       <BackToModel />
       <div className="pane-editor">
-        <ModelEditor colorMode={colorMode} verdictMarks />
+        <ModelEditor colorMode={colorMode} verdictMarks wrapping />
       </div>
     </section>
   )
@@ -367,7 +367,7 @@ export function TracePane({ slot }: { slot: TraceSlot | undefined }): React.JSX.
         </div>
       </div>
       <div className="trace-body">
-        {Slot ? <Slot caseState={caseState} flavor={flavor} /> : null}
+        {Slot ? <Slot caseState={caseState} flavor={flavor} wrapping /> : null}
       </div>
     </section>
   )

@@ -34,6 +34,8 @@ export interface TabbedEditorOptions {
   // the model takes no typing while this holds, and no on-screen keyboard opens on it
   modelLocked?: ReadableStore<boolean>
   verdictMarks?: boolean
+  // the lines of every document wrap instead of scrolling sideways
+  wrapping?: boolean
   // the height the model's text takes, for a host that grows with it
   onContentHeight?: (height: number) => void
 }
@@ -101,7 +103,7 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
       return
     }
     const verdictMarks = options.verdictMarks !== false
-    editor.updateOptions({ glyphMargin: verdictMarks, lineNumbersMinChars: 3, fontSize: 13, lineHeight: 20 })
+    editor.updateOptions({ glyphMargin: verdictMarks, lineNumbersMinChars: 3, fontSize: 13, lineHeight: 20, wordWrap: options.wrapping === true ? 'on' : 'off' })
 
     const modelLocked = (): boolean => {
       return options.modelLocked?.get() ?? false

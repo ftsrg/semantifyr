@@ -35,6 +35,8 @@ type TraceText =
   | { state: 'missing' }
   | { state: 'ready', text: string, model: TextModel }
 
+const SCROLLBAR: monacoEditor.IEditorScrollbarOptions = { verticalScrollbarSize: 8, horizontalScrollbarSize: 8, alwaysConsumeMouseWheel: false }
+
 const EDITOR_OPTIONS: monacoEditor.IStandaloneEditorConstructionOptions = {
   readOnly: true,
   readOnlyMessage: { value: 'Read-only.' },
@@ -49,7 +51,7 @@ const EDITOR_OPTIONS: monacoEditor.IStandaloneEditorConstructionOptions = {
   renderLineHighlight: 'none',
   overviewRulerLanes: 0,
   stickyScroll: { enabled: false },
-  scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8, alwaysConsumeMouseWheel: false },
+  scrollbar: SCROLLBAR,
   padding: { top: 6, bottom: 6 },
 }
 
@@ -146,18 +148,32 @@ function useTraceText(source: TraceTextSource | null, runtime: LanguageRuntime |
   return text
 }
 
-function InlineEditor({ model }: { model: TextModel }): React.JSX.Element {
+function InlineEditor({ model, growing, wrapping }: { model: TextModel, growing: boolean, wrapping: boolean }): React.JSX.Element {
   const host = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    if (!host.current) {
+    const element = host.current
+    if (!element) {
       return
     }
-    const created = monacoEditor.create(host.current, { ...EDITOR_OPTIONS, model })
+    const created = monacoEditor.create(element, {
+      ...EDITOR_OPTIONS,
+      model,
+      wordWrap: wrapping ? 'on' : 'off',
+      scrollbar: growing ? { ...SCROLLBAR, vertical: 'hidden', handleMouseWheel: false } : SCROLLBAR,
+    })
+    const fit = (): void => {
+      element.style.height = `${created.getContentHeight()}px`
+    }
+    const contentSize = growing ? created.onDidContentSizeChange(fit) : null
+    if (growing) {
+      fit()
+    }
     return () => {
+      contentSize?.dispose()
       created.dispose()
     }
-  }, [model])
-  return <div ref={host} className="trace-editor" />
+  }, [model, growing, wrapping])
+  return <div ref={host} className={`trace-editor${growing ? ' is-growing' : ''}`} />
 }
 
 function TextBody({ source, context }: { source: TraceTextSource | null, context: TraceViewProps }): React.JSX.Element {
@@ -188,7 +204,7 @@ function TextBody({ source, context }: { source: TraceTextSource | null, context
           )
           : null}
       </div>
-      {text.state === 'ready' ? <InlineEditor model={text.model} /> : <div className="trace-editor is-loading" />}
+      {text.state === 'ready' ? <InlineEditor model={text.model} growing={context.growing} wrapping={context.wrapping} /> : <div className="trace-editor is-loading" />}
     </div>
   )
 }

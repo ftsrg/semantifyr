@@ -21,6 +21,7 @@ import { modelLockOf } from './touch'
 
 interface EditorOptions {
   verdictMarks: boolean
+  wrapping?: boolean
   onContentHeight?: (height: number) => void
 }
 
@@ -46,6 +47,7 @@ function EditorHost({ document, flavor, colorMode, options }: { document: Docume
       },
       modelLocked: modelLockOf(shell),
       verdictMarks: mountedOptions.verdictMarks,
+      wrapping: mountedOptions.wrapping === true,
       ...(mountedOptions.onContentHeight ? { onContentHeight: mountedOptions.onContentHeight } : {}),
     })
     return () => {
@@ -57,7 +59,7 @@ function EditorHost({ document, flavor, colorMode, options }: { document: Docume
 }
 
 // the model in the one editor of the embed and the phone, which have no tabs
-export function ModelEditor({ colorMode, verdictMarks, onContentHeight }: { colorMode: ResolvedColorMode } & EditorOptions): React.JSX.Element | null {
+export function ModelEditor({ colorMode, verdictMarks, wrapping, onContentHeight }: { colorMode: ResolvedColorMode } & EditorOptions): React.JSX.Element | null {
   const live = useLive()
   const flavor = useFlavor(live)
   const document = useCurrentDocument(live)
@@ -71,7 +73,7 @@ export function ModelEditor({ colorMode, verdictMarks, onContentHeight }: { colo
   if (!flavor || !document) {
     return null
   }
-  return <EditorHost key={flavor.id} document={document} flavor={flavor} colorMode={colorMode} options={{ verdictMarks, ...(onContentHeight ? { onContentHeight } : {}) }} />
+  return <EditorHost key={flavor.id} document={document} flavor={flavor} colorMode={colorMode} options={{ verdictMarks, wrapping: wrapping === true, ...(onContentHeight ? { onContentHeight } : {}) }} />
 }
 
 // a read-only document the editor opened, a library's definition or a trace's text, and the way back

@@ -23,6 +23,8 @@ export interface TraceViewProps {
   runtime: LanguageRuntime | null
   // opens a textual view as a read-only tab, null in a shell without tabs
   openTab: ((document: ReadOnlyDocument) => void) | null
+  growing: boolean
+  wrapping: boolean
 }
 
 export type TraceLayout =

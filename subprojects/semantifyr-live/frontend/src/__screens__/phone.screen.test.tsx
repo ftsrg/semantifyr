@@ -60,6 +60,13 @@ function count(selector: string): number {
   return document.querySelectorAll(selector).length
 }
 
+// the lines of the editor in the element wrap within its width
+function wrapped(selector: string): boolean {
+  const editor = document.querySelector(`${selector} .monaco-editor`)
+  const lines = document.querySelector(`${selector} .monaco-editor .view-lines`)
+  return editor !== null && lines !== null && lines.scrollWidth <= editor.clientWidth
+}
+
 function visiblePanes(): string[] {
   return [...document.querySelectorAll<HTMLElement>('.phone .pane')].filter((pane) => {
     return !pane.hidden
@@ -95,6 +102,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       expect(text('.model-bar-name')).toBe('level-crossing.sysml')
       expect(count('.phone-bar .button-primary')).toBe(1)
       expect(text('.model-chooser')).toContain('Level crossing')
+      expect(wrapped('.pane-model')).toBe(true)
     },
   },
   'initializing': {
@@ -164,6 +172,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       expect(text('.trace-head-title')).toContain(TRACED.caseInfo.id)
       expect(text('.pane-trace .trace-views [aria-pressed=true]')).toBe('SysML trace')
       expect(text('.pane-trace [data-testid=run-details]')).toContain('decided by Theta')
+      expect(wrapped('.pane-trace .trace-frame')).toBe(true)
     },
   },
   ...Object.fromEntries([

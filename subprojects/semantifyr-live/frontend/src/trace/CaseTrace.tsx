@@ -43,7 +43,7 @@ function ViewSelector({ views, active, choose }: { views: readonly TraceView[], 
   )
 }
 
-function TraceOfCase({ caseState, flavor, readOnlyTabs }: TraceSlotProps): React.JSX.Element | null {
+function TraceOfCase({ caseState, flavor, readOnlyTabs, growing, wrapping }: TraceSlotProps): React.JSX.Element | null {
   const live = useLive()
   const shell = useShell()
   const runtime = useRuntime(live)
@@ -90,6 +90,8 @@ function TraceOfCase({ caseState, flavor, readOnlyTabs }: TraceSlotProps): React
           expandedStep={expandedStep}
           expandStep={setExpandedStep}
           runtime={runtime}
+          growing={growing === true}
+          wrapping={wrapping === true}
           openTab={readOnlyTabs === true
             ? (document) => {
               live.tabs.open(document)

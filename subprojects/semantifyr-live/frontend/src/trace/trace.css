@@ -34,3 +34,5 @@
 .case-trace .trace-frame-bar { flex: none; min-width: 0; }
 .case-trace .trace-frame-bar > .icon, .case-trace .trace-frame-bar > span:not(.mono) { flex: none; white-space: nowrap; }
 .trace-editor { flex: 1; min-height: 0; }
+.trace-editor.is-growing { flex: none; }
+.case-trace .trace-frame:has(> .trace-editor.is-growing) { flex: none; min-height: 0; }

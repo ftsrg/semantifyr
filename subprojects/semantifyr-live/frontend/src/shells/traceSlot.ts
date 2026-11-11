@@ -14,6 +14,10 @@ export interface TraceSlotProps {
   flavor: LiveFlavor
   // a shell with read-only tabs; without them no view offers to open as one
   readOnlyTabs?: boolean
+  // a text view is as tall as its text, for a frame that grows with it
+  growing?: boolean
+  // the lines of a text view wrap instead of scrolling sideways
+  wrapping?: boolean
 }
 
 // What the trace area shows under the selected case's name; the shell draws the area and the name
