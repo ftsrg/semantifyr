@@ -226,6 +226,8 @@ function expectLayout(colorMode: ResolvedColorMode, waiting: boolean): void {
     }
   }
   expect(getComputedStyle(document.body).backgroundColor).toBe(BACKGROUNDS[colorMode])
+  // bracket pairs take the tokens' colours, none of their own
+  expect(count('.monaco-editor [class*=bracket-highlighting]')).toBe(0)
 }
 
 describe('the desktop shell', () => {

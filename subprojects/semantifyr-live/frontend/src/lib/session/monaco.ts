@@ -36,6 +36,8 @@ import languageConfiguration from '../../vscode/imported/language-configuration.
 
 const EDITOR_USER_CONFIG = {
   'editor.guides.bracketPairsHorizontal': 'active',
+  // bracket pairs take no colours of their own: the editor's colours are the tokens'
+  'editor.bracketPairColorization.enabled': false,
   'editor.wordBasedSuggestions': 'off',
   'editor.experimental.asyncTokenization': true,
   'editor.fontSize': 15,
