@@ -114,6 +114,8 @@ export function createServedLanguage(id: string, flavors: readonly LiveFlavor[])
         colorMode: context.colorMode,
         steps: initializationStepsOf(id, context.backendUrl),
         libraryDocuments: libraryDocumentsStore(flavor.id, context.backendUrl),
+        // a model of another language than OXSTS has an OXSTS the session is given to navigate in
+        ...(compiled ? { readOnlyAddresses: { servesOxsts: true } } : {}),
         ...(compiled ? { modelOxsts: compiled.store } : {}),
         onDispose: () => {
           compiled?.dispose()

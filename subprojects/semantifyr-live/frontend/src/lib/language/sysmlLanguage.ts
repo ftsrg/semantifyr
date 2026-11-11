@@ -19,7 +19,6 @@ import {
   type SysmlMapping,
 } from '../session/sysmlBridge'
 import { createStore } from '../stores/store'
-import { MODEL_OXSTS_TAB_ID } from '../workspace/libraryTabs'
 import { libraryDocumentsStore, readSysmlLibrary, SYSML_LIBRARY_PREFIX } from './libraries'
 import { initializationStepsOf } from './presentation'
 import { createServedRuntime, type ServedRuntime } from './servedRuntime'
@@ -141,9 +140,8 @@ export function createSysmlLanguage(id: string, flavors: readonly LiveFlavor[]):
         libraryDocuments: libraryDocumentsStore(flavor.id, context.backendUrl),
         // the OXSTS of the model is the document the bridge keeps open in the session
         readOnlyAddresses: {
-          derivedServerUri: (uri) => {
-            return uri.path.startsWith(`/${MODEL_OXSTS_TAB_ID}/`) ? SYSML_OXSTS_URI : null
-          },
+          servesOxsts: true,
+          modelOxstsUri: SYSML_OXSTS_URI,
         },
         readOtherLibrary: (uri) => {
           return uri.startsWith(SYSML_LIBRARY_PREFIX) ? readSysmlLibrary(uri, window.location.origin) : undefined

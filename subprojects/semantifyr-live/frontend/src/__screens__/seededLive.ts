@@ -14,7 +14,7 @@ import { createLanguageRegistry } from '../lib/language/registry'
 import type { DerivedDocument, LanguageRuntime } from '../lib/language/types'
 import type { ProblemEntry } from '../lib/session/problems'
 import { connectionConnected, INITIAL_CONNECTION, type ConnectionState } from '../lib/stores/connection'
-import { finishThrough, initializationOf, startStep, type InitializationState } from '../lib/stores/initialization'
+import { failStep, finishThrough, initializationOf, startStep, type InitializationState } from '../lib/stores/initialization'
 import { createSettingsStore, type Settings } from '../lib/stores/settings'
 import { constantStore, createStore } from '../lib/stores/store'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
@@ -32,6 +32,8 @@ export interface Seed {
   connection?: ConnectionState
   // the step running, every step before it done; null when initialization is over
   initializingAt?: string | null
+  // the step running fails with this reason
+  initializationFailure?: string
   pending?: boolean
   verification?: VerificationState
   selection?: string | null
@@ -133,7 +135,7 @@ const LIBRARY_LISTING: LibrariesResponse = {
 
 export const CONNECTED = connectionConnected(INITIAL_CONNECTION, Date.now())
 
-function initialization(languageId: string, runningStep: string | null): InitializationState {
+function initialization(languageId: string, runningStep: string | null, failure: string | undefined): InitializationState {
   const steps = initializationOf(initializationStepsOf(languageId, BACKEND))
   const now = Date.now()
   if (runningStep === null) {
@@ -144,7 +146,8 @@ function initialization(languageId: string, runningStep: string | null): Initial
   })
   const before = steps.steps[index - 1]
   const finished = before ? finishThrough(steps, before.id, now - 6000) : steps
-  return startStep(finished, runningStep, now - 6000)
+  const started = startStep(finished, runningStep, now - 6000)
+  return failure === undefined ? started : failStep(started, runningStep, now - 1000, failure)
 }
 
 function runtimeOf(flavor: LiveFlavor, connection: ConnectionState, steps: InitializationState, modelOxsts: string | undefined): LanguageRuntime {
@@ -192,7 +195,7 @@ export function seedLive(seed: Seed): Seeded {
   }
   const ready = (seed.catalog ?? 'ready') === 'ready'
   const connection = seed.connection ?? CONNECTED
-  const steps = initialization(flavor.languageId, seed.initializingAt ?? null)
+  const steps = initialization(flavor.languageId, seed.initializingAt ?? null, seed.initializationFailure)
   const runtime = runtimeOf(flavor, connection, steps, seed.modelOxsts)
   const key = documentKey(flavor.id, example.id, false)
   const text = seed.text ?? example.code

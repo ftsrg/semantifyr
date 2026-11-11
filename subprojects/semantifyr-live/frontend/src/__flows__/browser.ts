@@ -73,3 +73,29 @@ export async function verifyAll(cases: Locator, verifyButton: Locator): Promise<
 export function token(page: Page, line: string, text: string): Locator {
   return page.locator('.view-line', { hasText: line }).locator('span > span').filter({ hasText: text }).last()
 }
+
+// puts the cursor on the first occurrence of `text` in the document shown, `offset` characters into it
+export async function cursorAt(page: Page, text: string, offset: number): Promise<void> {
+  await page.locator('section.editor .view-lines').first().click()
+  await page.keyboard.press('Control+Home')
+  await page.keyboard.press('Control+f')
+  await page.keyboard.type(text)
+  await page.keyboard.press('Enter')
+  await page.keyboard.press('Escape')
+  await page.keyboard.press('ArrowLeft')
+  for (let step = 0; step < offset; step++) {
+    await page.keyboard.press('ArrowRight')
+  }
+}
+
+// the tab shown and the text of the line the cursor is on
+export async function shownPlace(page: Page): Promise<{ tab: string, line: string }> {
+  return page.evaluate(() => {
+    const tab = document.querySelector('.tabs [role="tab"][aria-selected="true"]')?.textContent ?? ''
+    const top = document.querySelector<HTMLElement>('section.editor .view-overlays .current-line')?.parentElement?.style.top
+    const line = [...document.querySelectorAll<HTMLElement>('section.editor .view-line')].find((candidate) => {
+      return candidate.style.top === top
+    })?.textContent ?? ''
+    return { tab, line: line.replace(/\u00a0/g, ' ').trim() }
+  })
+}

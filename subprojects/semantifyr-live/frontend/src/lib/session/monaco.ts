@@ -242,10 +242,15 @@ const WORKSPACE_PATH = '/workspace/';
 // the servers take a document only under a workspace file address, so a trace document goes under one no file of the session has
 const TRACE_SERVER_PATH = '/workspace/.live-trace/';
 
+// the OXSTS of a model of another language goes to the session under an address no file of the session has
+const DERIVED_SERVER_PATH = '/workspace/.live-derived/';
+
 // how a client names the read-only documents of the page to its server, and back
 export interface ReadOnlyAddresses {
-  // the server's address of a derived document it holds under another name, as the OXSTS a SysML model maps to
-  derivedServerUri?: (uri: vscode.Uri) => string | null;
+  // the session serves the OXSTS of the model and of its traces, for a language that is not OXSTS
+  servesOxsts?: boolean;
+  // the address the session already holds the OXSTS of the model by, as SysML's bridge keeps it; absent, the document is sent under an address of its own
+  modelOxstsUri?: string;
 }
 
 function addressesOf(readOnly: ReadOnlyAddresses): { code2Protocol: (uri: vscode.Uri) => string; protocol2Code: (value: string) => vscode.Uri } {
@@ -258,7 +263,7 @@ function addressesOf(readOnly: ReadOnlyAddresses): { code2Protocol: (uri: vscode
         return serverUriOfLibrary(uri.toString());
       }
       if (uri.scheme === DERIVED_SCHEME) {
-        return readOnly.derivedServerUri?.(uri) ?? uri.toString();
+        return readOnly.modelOxstsUri ?? vscode.Uri.file(`${DERIVED_SERVER_PATH}${uri.path.slice(1)}`).toString();
       }
       return uri.toString();
     },
@@ -267,34 +272,38 @@ function addressesOf(readOnly: ReadOnlyAddresses): { code2Protocol: (uri: vscode
       if (uri.scheme === 'file' && uri.path.startsWith(TRACE_SERVER_PATH)) {
         return uri.with({ scheme: TRACE_SCHEME, path: `${WORKSPACE_PATH}${uri.path.slice(TRACE_SERVER_PATH.length)}` });
       }
+      if (uri.scheme === 'file' && uri.path.startsWith(DERIVED_SERVER_PATH)) {
+        return uri.with({ scheme: DERIVED_SCHEME, path: `/${uri.path.slice(DERIVED_SERVER_PATH.length)}` });
+      }
       // a library file opens as its read-only document, which no client syncs
       return toLibraryUri(uri);
     },
   };
 }
 
-function isUnsynced(uri: vscode.Uri): boolean {
-  return uri.scheme === LIBRARY_SCHEME || uri.scheme === DERIVED_SCHEME;
+// the server reads a library file from what it loaded, and may hold the OXSTS of the model already, so neither is sent to it
+function readOnlyDocumentsOf(readOnly: ReadOnlyAddresses): Middleware {
+  const isUnsynced = (uri: vscode.Uri): boolean => {
+    return uri.scheme === LIBRARY_SCHEME || (uri.scheme === DERIVED_SCHEME && readOnly.modelOxstsUri !== undefined);
+  };
+  return {
+    didOpen: async (document, next) => {
+      if (!isUnsynced(document.uri)) {
+        await next(document);
+      }
+    },
+    didChange: async (event, next) => {
+      if (!isUnsynced(event.document.uri)) {
+        await next(event);
+      }
+    },
+    didClose: async (document, next) => {
+      if (!isUnsynced(document.uri)) {
+        await next(document);
+      }
+    },
+  };
 }
-
-// the server reads a library file from what it loaded and holds a derived document under its own name, so neither is sent to it
-const READ_ONLY_DOCUMENTS: Middleware = {
-  didOpen: async (document, next) => {
-    if (!isUnsynced(document.uri)) {
-      await next(document);
-    }
-  },
-  didChange: async (event, next) => {
-    if (!isUnsynced(event.document.uri)) {
-      await next(event);
-    }
-  },
-  didClose: async (document, next) => {
-    if (!isUnsynced(document.uri)) {
-      await next(document);
-    }
-  },
-};
 
 function documentSelectorOf(languageId: string, readOnly: ReadOnlyAddresses): { language: string; scheme: string }[] {
   const libraryLanguage = languageId === 'sysml' ? 'sysml' : 'oxsts';
@@ -302,8 +311,7 @@ function documentSelectorOf(languageId: string, readOnly: ReadOnlyAddresses): { 
     { language: languageId, scheme: 'file' },
     { language: languageId, scheme: TRACE_SCHEME },
     { language: libraryLanguage, scheme: LIBRARY_SCHEME },
-    // a session that holds the OXSTS of a model of another language serves its OXSTS witnesses too
-    ...(readOnly.derivedServerUri ? [{ language: 'oxsts', scheme: DERIVED_SCHEME }, { language: 'oxsts', scheme: TRACE_SCHEME }] : []),
+    ...(readOnly.servesOxsts === true ? [{ language: 'oxsts', scheme: DERIVED_SCHEME }, { language: 'oxsts', scheme: TRACE_SCHEME }] : []),
   ];
 }
 
@@ -601,7 +609,7 @@ export async function connectWorkerLanguageClient(
     },
     clientOptions: {
       documentSelector: documentSelectorOf(languageId, {}),
-      middleware: READ_ONLY_DOCUMENTS,
+      middleware: readOnlyDocumentsOf({}),
       uriConverters: addressesOf({}),
       workspaceFolder: {
         index: 0,
@@ -649,7 +657,7 @@ export async function connectLanguageClient(
     },
     clientOptions: {
       documentSelector: documentSelectorOf(languageId, readOnly),
-      middleware: READ_ONLY_DOCUMENTS,
+      middleware: readOnlyDocumentsOf(readOnly),
       uriConverters: addressesOf(readOnly),
       workspaceFolder: {
         index: 0,

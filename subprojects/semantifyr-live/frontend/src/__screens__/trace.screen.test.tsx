@@ -307,12 +307,25 @@ describe('the text of a trace', () => {
 })
 
 describe('the documents menu', () => {
-  const ENTRIES: Readonly<Record<string, readonly string[]>> = {
-    sysml: ['Trace of the selected case', 'OXSTS of the model', 'OXSTS of the trace', 'Library', 'OXSTS semantic library'],
-    gamma: ['Trace of the selected case', 'OXSTS of the model', 'OXSTS of the trace', 'OXSTS semantic library'],
-    oxsts: ['Trace of the selected case', 'Library'],
+  // the headings of the groups and the first entries under each
+  const ENTRIES: Readonly<Record<string, { headings: readonly string[], first: readonly string[], filtered: boolean }>> = {
+    sysml: {
+      headings: ['Selected case', 'Model', 'SysML v2 standard library', 'OXSTS library', 'Semantic library, in OXSTS'],
+      first: ['Trace of the selected case', 'OXSTS of the trace', 'OXSTS of the model', 'Collections.kerml', 'ScalarValues.kerml'],
+      filtered: true,
+    },
+    gamma: {
+      headings: ['Selected case', 'Model', 'OXSTS library', 'Semantic library, in OXSTS'],
+      first: ['Trace of the selected case', 'OXSTS of the trace', 'OXSTS of the model', 'semantifyr.oxsts', 'Actions.oxsts'],
+      filtered: false,
+    },
+    oxsts: {
+      headings: ['Selected case', 'OXSTS library'],
+      first: ['Trace of the selected case', 'semantifyr.oxsts'],
+      filtered: false,
+    },
   }
-  for (const [languageName, entries] of Object.entries(ENTRIES)) {
+  for (const [languageName, { headings, first, filtered }] of Object.entries(ENTRIES)) {
     it(`opens the selected case's trace texts in ${languageName} as the trace area's Open does`, async () => {
       await page.viewport(1440, 900)
       const language = LANGUAGES[languageName]!
@@ -332,8 +345,14 @@ describe('the documents menu', () => {
       await expect.poll(() => {
         return [...document.querySelectorAll<HTMLElement>('.documents-menu .menu-item-label')].map((label) => {
           return label.innerText
-        })
-      }).toEqual(entries)
+        }).slice(0, first.length)
+      }).toEqual(first)
+      expect([...document.querySelectorAll<HTMLElement>('.documents-group > .menu-heading')].map((heading) => {
+        return heading.innerText.toLowerCase()
+      })).toEqual(headings.map((heading) => {
+        return heading.toLowerCase()
+      }))
+      expect(count('.documents-menu .documents-filter')).toBe(filtered ? 1 : 0)
       expect(count('.documents-menu .menu-item.is-disabled')).toBe(0)
       const menu = document.querySelector('.documents-menu')!.getBoundingClientRect()
       for (const detail of document.querySelectorAll('.documents-menu .menu-item-detail')) {
