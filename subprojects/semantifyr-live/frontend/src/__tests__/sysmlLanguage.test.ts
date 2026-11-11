@@ -10,7 +10,7 @@ import { fakeModelDocuments } from './helpers/live'
 import { servedFlavors } from './fixtures/flavors'
 
 const workers = vi.hoisted(() => {
-  return { started: 0 }
+  return { started: 0, connecting: Promise.resolve() }
 })
 
 vi.mock('vscode', () => {
@@ -24,6 +24,7 @@ vi.mock('../lib/session/monaco', () => {
       return () => {}
     },
     connectLanguageClient: async () => {
+      await workers.connecting
       return {
         getLanguageClient: () => undefined,
         dispose: async () => {},
@@ -61,6 +62,38 @@ describe('the SysML language', () => {
     })).toEqual(['sysml'])
   })
 
+  it('maps the model once its worker is up, and not before', async () => {
+    let connect = (): void => {}
+    workers.connecting = new Promise((resolve) => {
+      connect = resolve
+    })
+    const warn = vi.spyOn(console, 'warn')
+    const unit = createLanguageRegistry(liveFlavors([])).unitOf('sysml')!
+    const models = fakeModelDocuments()
+    const runtime = unit.start(unit.flavors[0]!, {
+      backendUrl: 'http://localhost:8080',
+      documentUri: 'file:///workspace/snippet.sysml',
+      colorMode: 'dark' as const,
+      modelDocuments: models,
+    })
+
+    models.open('file:///workspace/snippet.sysml', 'part def Train;')
+    await new Promise((resolve) => {
+      setTimeout(resolve, 400)
+    })
+    connect()
+    await vi.waitFor(() => {
+      expect(runtime.connection.get().status).toBe('connected')
+    })
+
+    expect(warn.mock.calls.filter(([message]) => {
+      return String(message).includes('SysML mapping failed')
+    })).toEqual([])
+    warn.mockRestore()
+    workers.connecting = Promise.resolve()
+    await runtime.dispose()
+  })
+
   it('starts its worker once for the visit, however many runtimes it starts', async () => {
     const registry = createLanguageRegistry(liveFlavors([]))
     const unit = registry.unitOf('sysml')!
@@ -72,6 +105,7 @@ describe('the SysML language', () => {
       modelDocuments: fakeModelDocuments(),
     }
 
+    const before = workers.started
     const first = unit.start(flavor, context)
     await vi.waitFor(() => {
       expect(first.connection.get().status).toBe('connected')
@@ -82,7 +116,7 @@ describe('the SysML language', () => {
       expect(second.connection.get().status).toBe('connected')
     })
 
-    expect(workers.started).toBe(1)
+    expect(workers.started).toBe(before + 1)
     expect(second.initialization.get().steps.find((step) => {
       return step.id === 'server'
     })?.state).toBe('done')

@@ -106,7 +106,11 @@ export function createSysmlLanguage(id: string, flavors: readonly LiveFlavor[]):
         }
       }
 
+      // the worker starts once the session connects, and maps the model then
       const scheduleMappingRefresh = (): void => {
+        if (!worker?.isStarted()) {
+          return
+        }
         if (mappingTimer) {
           clearTimeout(mappingTimer)
         }
