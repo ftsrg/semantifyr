@@ -12,8 +12,23 @@ class Constraint : Expression {
     }
 }
 
+class ConstraintReferenceExpression : Expression {
+    refers expression: Expression[0..1]
+
+    redefine prop evaluate(): any {
+        return expression.evaluate()
+    }
+}
+
 class Requirement : Constraint {
-    contains verifyRequirement: Constraint
+    // a case without verify checks its objective's own constraint
+    contains verifyRequirement: Constraint[1] {
+        redefine contains requiredConstraint: ConstraintReferenceExpression {
+            redefine refers expression: Expression[0..1] = objectiveConstraint
+        }
+    }
+
+    refers objectiveConstraint: Expression[0..1] = requiredConstraint
 
     redefine prop evaluate(): bool {
         return verifyRequirement.evaluate()

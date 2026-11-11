@@ -44,6 +44,19 @@ class BooleanAttribute : Attribute {
     }
 }
 
+class DerivedAttribute : Attribute {
+    contains expression: Expression
+
+    redefine prop evaluate(): any {
+        return expression.evaluate()
+    }
+
+    // the mapper refuses an assignment to a bound attribute
+    redefine tran set(value: any) {
+        assume(false)
+    }
+}
+
 class AttributeReferenceExpression : Expression {
     refers attribute: Attribute
     redefine prop evaluate(): any {

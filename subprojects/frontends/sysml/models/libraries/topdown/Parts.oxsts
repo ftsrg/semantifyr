@@ -45,8 +45,20 @@ class Part {
             // do nothing, if no transition is enabled
             inline exhibitState?.assumeNoTransitionEnabled()
         }
+
+        inline for (port in ports) {
+            inline port.assumeRequiredConsumption()
+            inline port.resetConsumption()
+        }
     }
 
+    tran executeFlows() {
+        inline for (flow in flows) {
+            inline flow.main()
+        }
+    }
+
+    // the flows run once after initialization, so the items sent during it arrive in the first step
     redefine init {
         inline for (attribute in attributes) {
             inline attribute.init()
@@ -58,20 +70,12 @@ class Part {
         inline for (part in parts) {
             inline part.init()
         }
+
+        inline executeFlows()
     }
 
     redefine tran {
-        inline resetOutputEvents()
-
-        inline for (part in parts) {
-            inline part.main()
-        }
-
-        inline executeExhibitState()
-
-        inline for (flow in flows) {
-            inline flow.main()
-        }
+        inline executeMainComponent()
 
         inline resetInputEvents()
     }
@@ -85,9 +89,7 @@ class Part {
 
         inline executeExhibitState()
 
-        inline for (flow in flows) {
-            inline flow.main()
-        }
+        inline executeFlows()
     }
 }
 

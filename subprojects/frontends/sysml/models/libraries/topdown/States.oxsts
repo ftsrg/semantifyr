@@ -32,11 +32,12 @@ abstract class AbstractState : StateNode {
 
     abstract tran fireTransitions()
     abstract tran assumeNoTransitionEnabled()
+    abstract tran deferTransitions()
     abstract tran activateRecursive()
     abstract tran deactivateRecursive(deactivate: bool)
     abstract tran passTime()
 
-    abstract tran enterRecursive(commonState: StateNode)
+    abstract tran enterRecursive(commonState: StateNode, child: AbstractState[0..1])
     abstract tran exitRecursive(commonState: StateNode, child: AbstractState[0..1])
 
     abstract tran activate()
@@ -49,7 +50,6 @@ abstract class AbstractState : StateNode {
     }
 
     redefine tran findCommonState(transition: Transition, candidate: AbstractState[0..1]) {
-        // an empty left side compares equal to any instance at compile time
         inline if (candidate == parent) {
             inline transition.performWithin(candidate as AbstractState)
         } else {
@@ -64,6 +64,7 @@ abstract class AbstractState : StateNode {
 
 class State : AbstractState {
     contains start: EntryState[1]
+    contains done: DoneState[1] opposite owner
 
     contains transitions: Transition[0..*] opposite parentState
 
@@ -82,9 +83,9 @@ class State : AbstractState {
             // inline assumeNoInnerTransitionEnabled()
             inline fireLocalTransitions()
         } or {
-            inline fireInnerTransitions()
             // specifies top-down transition priority
             inline assumeNoLocalTransitionEnabled()
+            inline fireInnerTransitions()
         }
     }
     tran fireLocalTransitions() {
@@ -117,6 +118,17 @@ class State : AbstractState {
         }
     }
 
+    redefine tran deferTransitions() {
+        inline for (transition in transitions) {
+            if (transition.isEnabled()) {
+                inline transition.acceptAction.requireConsumption()
+            }
+        }
+        inline for (state in states) {
+            inline state.deferTransitions()
+        }
+    }
+
     redefine tran activateRecursive() {
         inline start.enter(self)
     }
@@ -140,15 +152,16 @@ class State : AbstractState {
         }
     }
 
-    redefine tran enterRecursive(commonState: StateNode) {
+    redefine tran enterRecursive(commonState: StateNode, child: AbstractState[0..1]) {
         inline if (parent != nothing) {
             inline if (commonState != parent) {
-                inline parent.enterRecursive(commonState)
+                inline parent.enterRecursive(commonState, self)
             }
 
             inline activate()
         }
     }
+    @Trace
     redefine tran enter(commonState: StateNode) {
         inline enterRecursive(commonState)
         inline activateRecursive()
@@ -163,6 +176,7 @@ class State : AbstractState {
             }
         }
     }
+    @Trace
     redefine tran exit(commonState: StateNode) {
         inline deactivateRecursive(false)
         inline exitRecursive(commonState)
@@ -185,6 +199,29 @@ class State : AbstractState {
             inline parent.setActiveState(nothing)
         }
     }
+
+    tran complete() {
+    }
+}
+
+class ExhibitedState : State {
+    var performing: bool := false
+
+    redefine prop isActive(): bool {
+        return performing
+    }
+
+    redefine tran activate() {
+        performing := true
+
+        inline entryAction.main()
+    }
+
+    redefine tran complete() {
+        inline exitAction.main()
+
+        performing := false
+    }
 }
 
 class Transition {
@@ -204,6 +241,7 @@ class Transition {
     @Trace
     tran fire() {
         assume(isEnabled())
+        inline acceptAction.consume()
         inline performTransition()
     }
 
@@ -231,8 +269,6 @@ class Transition {
 }
 
 class ParallelState : AbstractState {
-    contains start: EntryState[1]
-
     redefine tran setActiveState(state: AbstractState) {
     }
 
@@ -240,6 +276,7 @@ class ParallelState : AbstractState {
         return isActive()
     }
 
+    // a region may leave its enabled item transitions to another region, which then has to consume the item
     redefine tran fireTransitions() {
         var anyStateExecuted: bool := false
 
@@ -249,7 +286,7 @@ class ParallelState : AbstractState {
 
                 inline state.fireTransitions()
             } or {
-                inline state.assumeNoTransitionEnabled()
+                inline state.deferTransitions()
             }
         }
 
@@ -262,8 +299,15 @@ class ParallelState : AbstractState {
         }
     }
 
+    redefine tran deferTransitions() {
+        inline for (state in states) {
+            inline state.deferTransitions()
+        }
+    }
+
     redefine tran activateRecursive() {
         inline for (state in states) {
+            inline state.activate()
             inline state.activateRecursive()
         }
     }
@@ -284,13 +328,24 @@ class ParallelState : AbstractState {
         }
     }
 
-    redefine tran enterRecursive(commonState: StateNode) {
+    // entering one region enters the whole parallel state
+    redefine tran enterRecursive(commonState: StateNode, child: AbstractState[0..1]) {
         inline if (commonState != parent) {
-            inline parent?.enterRecursive(commonState)
+            inline parent?.enterRecursive(commonState, self)
         }
 
         inline activate()
+
+        inline if (child != nothing) {
+            inline for (state in states) {
+                inline if (state != child) {
+                    inline state.activate()
+                    inline state.activateRecursive()
+                }
+            }
+        }
     }
+    @Trace
     redefine tran enter(commonState: StateNode) {
         inline enterRecursive(commonState)
         inline activateRecursive()
@@ -310,6 +365,7 @@ class ParallelState : AbstractState {
             inline parent?.exitRecursive(commonState, self)
         }
     }
+    @Trace
     redefine tran exit(commonState: StateNode) {
         inline exitRecursive(commonState)
     }
@@ -335,6 +391,20 @@ class ParallelState : AbstractState {
     }
 }
 
+class ExhibitedParallelState : ParallelState {
+    var performing: bool := false
+
+    redefine prop isActive(): bool {
+        return performing
+    }
+
+    redefine tran activate() {
+        performing := true
+
+        inline entryAction.main()
+    }
+}
+
 class EntryState : StateNode {
     redefine prop isActive(): bool {
         return false
@@ -355,9 +425,38 @@ class EntryState : StateNode {
     }
 
     redefine tran findCommonState(transition: Transition, candidate: AbstractState[0..1]) {
+    }
+}
 
+// reaching done ends an exhibited state's performance and leaves any other state without an active substate
+class DoneState : StateNode {
+    container owner: State[1] opposite done
+
+    redefine prop isActive(): bool {
+        return false
     }
 
+    redefine tran enter(commonState: StateNode) {
+        inline if (commonState != owner) {
+            inline owner.enterRecursive(commonState)
+        }
+
+        inline owner.complete()
+    }
+
+    redefine tran exit(commonState: StateNode) {
+    }
+
+    redefine tran performOutgoing(transition: Transition) {
+    }
+
+    redefine tran findCommonState(transition: Transition, candidate: AbstractState[0..1]) {
+        inline if (candidate == owner) {
+            inline transition.performWithin(owner)
+        } else {
+            inline owner.findCommonState(transition, candidate)
+        }
+    }
 }
 
 class IsStateActiveExpression : Expression {
