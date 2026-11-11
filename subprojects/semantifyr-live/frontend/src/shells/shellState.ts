@@ -22,6 +22,8 @@ export interface ShellState {
   editing: Store<boolean>
   // the trace view chosen per language
   traceViews: Store<ReadonlyMap<string, string>>
+  // the width of a fixed embed's results column, null for the even split; a frame differs from page to page, so it is never stored
+  embedResultsWidth: Store<number | null>
 }
 
 export function createShellState(): ShellState {
@@ -32,6 +34,7 @@ export function createShellState(): ShellState {
     filter: createStore<CountFilter | null>(null),
     editing: createStore(false),
     traceViews: createStore<ReadonlyMap<string, string>>(new Map()),
+    embedResultsWidth: createStore<number | null>(null),
   }
 }
 

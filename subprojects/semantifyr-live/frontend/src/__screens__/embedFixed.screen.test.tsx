@@ -6,7 +6,7 @@
 
 import { createRoot } from 'react-dom/client'
 import { describe, expect, it, onTestFinished, vi } from 'vitest'
-import { page } from 'vitest/browser'
+import { cdp, page, userEvent } from 'vitest/browser'
 
 import { connectionLost, INITIAL_CONNECTION } from '../lib/stores/connection'
 import type { ResolvedColorMode } from '../lib/util/colorMode'
@@ -80,8 +80,35 @@ interface ScreenState {
   frame: Frame
   view: 'embed' | 'edit-only'
   seed: Seed | (() => Seeded)
+  act?: () => Promise<void>
   expectState: () => void
 }
+
+// a real pointer, which the splitter captures, in the coordinates of the page that frames the test
+async function mouse(type: 'mousePressed' | 'mouseMoved' | 'mouseReleased', x: number, y: number, clickCount = 1): Promise<void> {
+  const offset = window.frameElement?.getBoundingClientRect() ?? { left: 0, top: 0 }
+  await cdp().send('Input.dispatchMouseEvent', { type, x: offset.left + x, y: offset.top + y, button: 'left', buttons: type === 'mouseReleased' ? 0 : 1, clickCount })
+}
+
+async function drag(fromX: number, toX: number): Promise<void> {
+  const y = window.innerHeight / 2
+  await mouse('mousePressed', fromX, y)
+  for (const step of [0.25, 0.5, 0.75, 1]) {
+    await mouse('mouseMoved', fromX + (toX - fromX) * step, y)
+  }
+  await mouse('mouseReleased', toX, y)
+}
+
+function splitterX(): number {
+  const splitter = box('.embed > .splitter')
+  return splitter.left + splitter.width / 2
+}
+
+function columns(): { editor: number, results: number } {
+  return { editor: Math.round(box('.embed-editor').width), results: Math.round(box('.embed-strip').width) }
+}
+
+const SPLITS: { editor: number, results: number }[] = []
 
 function text(selector: string): string {
   return (document.querySelector<HTMLElement>(selector)?.innerText ?? '').replace(/\u00a0/g, ' ')
@@ -239,6 +266,50 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       }
     },
   },
+  'slide-split': {
+    frame: SLIDE,
+    view: 'embed',
+    seed: traced,
+    act: async () => {
+      SPLITS.length = 0
+      await drag(splitterX(), 700)
+      SPLITS.push(columns())
+      await drag(splitterX(), 50)
+      SPLITS.push(columns())
+      await drag(splitterX(), 1130)
+      SPLITS.push(columns())
+      const x = splitterX()
+      const y = window.innerHeight / 2
+      await mouse('mouseMoved', x, y)
+      await mouse('mousePressed', x, y, 1)
+      await mouse('mouseReleased', x, y, 1)
+      await mouse('mousePressed', x, y, 2)
+      await mouse('mouseReleased', x, y, 2)
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100)
+      })
+      SPLITS.push(columns())
+      document.querySelector<HTMLElement>('.embed > .splitter')!.focus()
+      await userEvent.keyboard('{ArrowLeft}')
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100)
+      })
+      SPLITS.push(columns())
+    },
+    expectState: () => {
+      const [dragged, widest, narrowest, reset, keyed] = SPLITS
+      expect(document.querySelector('.embed > .splitter')!.getAttribute('role')).toBe('separator')
+      expect(dragged!.editor, 'the editor ends at the drop').toBeGreaterThanOrEqual(695)
+      expect(dragged!.editor).toBeLessThanOrEqual(705)
+      expect(widest!.editor, 'the editor keeps its minimum').toBeGreaterThanOrEqual(279)
+      expect(widest!.editor).toBeLessThanOrEqual(282)
+      expect(narrowest!.results, 'the results keep their minimum').toBeGreaterThanOrEqual(319)
+      expect(narrowest!.results).toBeLessThanOrEqual(322)
+      expect(Math.abs(reset!.editor - reset!.results), 'a double click restores the even split').toBeLessThanOrEqual(2)
+      expect(keyed!.results - reset!.results, 'the left arrow widens the results').toBe(16)
+      expectTraceAndModel(SLIDE)
+    },
+  },
   'narrow-trace': {
     frame: NARROW,
     view: 'embed',
@@ -289,6 +360,7 @@ describe('the embed in a fixed frame', () => {
         await expect.poll(() => {
           return document.querySelector('.monaco-editor .view-line')
         }, { timeout: 60_000 }).toBeTruthy()
+        await screen.act?.()
         await new Promise((resolve) => {
           setTimeout(resolve, 600)
         })

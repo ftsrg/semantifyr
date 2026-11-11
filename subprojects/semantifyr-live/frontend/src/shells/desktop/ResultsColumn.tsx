@@ -21,6 +21,7 @@ import { LanguageMark, ValidationMark, VerdictMark } from '../../ui/marks'
 import { useFlavor, useNow } from '../hooks'
 import { useShell } from '../shellContext'
 import { verifyAll, type CountFilter } from '../shellState'
+import { clamp, ColumnSplitter, KEYBOARD_STEP, useDrag } from '../splitter'
 import type { TraceSlot } from '../traceSlot'
 import { SharedNotice, useCaseRows } from './keeping'
 import { SettingsPopover } from './SettingsPopover'
@@ -38,7 +39,6 @@ const COUNT_GROUPS: readonly { group: CountFilter, status: RowStatus, label: str
 const COLUMN_MINIMUM = 360
 const COLUMN_MAXIMUM = 900
 const LIST_MINIMUM = 40
-const KEYBOARD_STEP = 16
 
 function groupOf(status: RowStatus): CountFilter | null {
   switch (status) {
@@ -405,27 +405,7 @@ function TraceArea({ rows, slot }: { rows: readonly CaseRow[], slot: TraceSlot |
   )
 }
 
-function useDrag(onMove: (event: PointerEvent) => void, onEnd: () => void): (event: React.PointerEvent) => void {
-  return (event) => {
-    event.preventDefault()
-    const move = (moveEvent: PointerEvent): void => {
-      onMove(moveEvent)
-    }
-    const stop = (): void => {
-      window.removeEventListener('pointermove', move)
-      window.removeEventListener('pointerup', stop)
-      onEnd()
-    }
-    window.addEventListener('pointermove', move)
-    window.addEventListener('pointerup', stop)
-  }
-}
-
-function clamp(value: number, minimum: number, maximum: number): number {
-  return Math.min(maximum, Math.max(minimum, value))
-}
-
-function ColumnSplitter({ column }: { column: React.RefObject<HTMLElement | null> }): React.JSX.Element {
+function ResultsSplitter({ column }: { column: React.RefObject<HTMLElement | null> }): React.JSX.Element {
   const live = useLive()
   const width = useRef(0)
   const startDrag = useDrag((event) => {
@@ -434,34 +414,19 @@ function ColumnSplitter({ column }: { column: React.RefObject<HTMLElement | null
   }, () => {
     changeSettings(live.settings, { resultsColumnWidth: width.current })
   })
-  const resize = (by: number): void => {
-    const current = column.current?.getBoundingClientRect().width ?? COLUMN_MINIMUM
-    changeSettings(live.settings, { resultsColumnWidth: clamp(Math.round(current + by), COLUMN_MINIMUM, COLUMN_MAXIMUM) })
-  }
   return (
-    <div
-      className="splitter splitter-vertical"
-      role="separator"
-      aria-orientation="vertical"
-      aria-label="Width of the results column"
-      tabIndex={0}
-      title="Drag to resize; double-click to reset"
-      onPointerDown={startDrag}
-      onDoubleClick={() => {
+    <ColumnSplitter
+      label="Width of the results column"
+      startDrag={startDrag}
+      reset={() => {
         column.current?.parentElement?.style.removeProperty('--results-width')
         changeSettings(live.settings, { resultsColumnWidth: 0 })
       }}
-      onKeyDown={(event) => {
-        if (event.key === 'ArrowLeft') {
-          resize(KEYBOARD_STEP)
-        }
-        if (event.key === 'ArrowRight') {
-          resize(-KEYBOARD_STEP)
-        }
+      resize={(by) => {
+        const current = column.current?.getBoundingClientRect().width ?? COLUMN_MINIMUM
+        changeSettings(live.settings, { resultsColumnWidth: clamp(Math.round(current + by), COLUMN_MINIMUM, COLUMN_MAXIMUM) })
       }}
-    >
-      <span />
-    </div>
+    />
   )
 }
 
@@ -583,7 +548,7 @@ export function ResultsColumn({ trace }: { trace: TraceSlot | undefined }): Reac
           </>
         )
         : <Initialization />}
-      <ColumnSplitter column={column} />
+      <ResultsSplitter column={column} />
     </aside>
   )
 }

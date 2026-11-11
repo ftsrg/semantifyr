@@ -83,7 +83,8 @@
 @media (min-width: 760px) {
   .embed.is-fixed:not(.is-edit-only) {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(400px, 50%);
+    position: relative;
+    grid-template-columns: minmax(280px, 1fr) minmax(320px, var(--embed-results-width, 1fr));
     grid-template-rows: auto auto minmax(0, 1fr);
     grid-template-areas:
       "error error"
@@ -93,6 +94,7 @@
   .embed.is-fixed > .embed-address-error { grid-area: error; }
   .embed.is-fixed > .readonly-banner { grid-area: back; }
   .embed.is-fixed:not(.is-edit-only) > .embed-editor { grid-area: editor; min-height: 0; }
+  .embed.is-fixed > .splitter { grid-area: results; }
   .embed.is-fixed > .embed-strip { grid-area: results; display: flex; flex-direction: column; overflow: hidden; border-top: 0; border-left: 1px solid var(--border); }
   .embed.is-fixed .strip-bar { flex: none; position: static; }
   .embed.is-fixed .embed-cases { flex: 0 1 auto; min-height: 41px; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
@@ -114,4 +116,8 @@
   .embed.is-fixed .strip-bar > .button:first-child { grid-area: verify; }
   .embed.is-fixed .strip-bar > .open-live { grid-area: live; }
   .embed.is-fixed .strip-bar > .strip-status { grid-area: status; }
+}
+.embed > .splitter { display: none; }
+@media (min-width: 760px) {
+  .embed.is-fixed > .splitter { display: grid; }
 }

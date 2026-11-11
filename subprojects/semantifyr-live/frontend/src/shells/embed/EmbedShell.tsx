@@ -25,6 +25,7 @@ import { useFlavor } from '../hooks'
 import { BackToModel, ModelEditor } from '../modelEditor'
 import { useShell } from '../shellContext'
 import { verifyAll } from '../shellState'
+import { clamp, ColumnSplitter, useDrag } from '../splitter'
 import { StatusContent, useStatusLine } from '../statusLine'
 import { EditControl } from '../touch'
 import type { TraceSlot } from '../traceSlot'
@@ -281,6 +282,57 @@ function Strip({ slot, fixed }: { slot: TraceSlot | undefined, fixed: boolean })
   )
 }
 
+const EDITOR_MINIMUM = 280
+const RESULTS_MINIMUM = 320
+
+// in a frame too narrow for both minimums the even split stays
+function resultsWidth(embed: HTMLElement, wanted: number): number | null {
+  const frame = embed.getBoundingClientRect().width
+  return frame < EDITOR_MINIMUM + RESULTS_MINIMUM ? null : Math.round(clamp(wanted, RESULTS_MINIMUM, frame - EDITOR_MINIMUM))
+}
+
+function EmbedSplitter({ root }: { root: React.RefObject<HTMLDivElement | null> }): React.JSX.Element {
+  const shell = useShell()
+  const width = useRef<number | null>(null)
+  const drag = useDrag((event) => {
+    const embed = root.current
+    if (!embed) {
+      return
+    }
+    width.current = resultsWidth(embed, embed.getBoundingClientRect().right - event.clientX)
+    if (width.current !== null) {
+      embed.style.setProperty('--embed-results-width', `${width.current}px`)
+    }
+  }, () => {
+    if (width.current !== null) {
+      shell.embedResultsWidth.set(width.current)
+    }
+  })
+  // a press without a move, as in a double click, leaves the split as it is
+  const startDrag = (event: React.PointerEvent<HTMLElement>): void => {
+    width.current = null
+    drag(event)
+  }
+  return (
+    <ColumnSplitter
+      label="Width of the results"
+      startDrag={startDrag}
+      reset={() => {
+        root.current?.style.removeProperty('--embed-results-width')
+        shell.embedResultsWidth.set(null)
+      }}
+      resize={(by) => {
+        const embed = root.current
+        const current = embed?.querySelector('.embed-strip')?.getBoundingClientRect().width
+        const next = embed && current !== undefined ? resultsWidth(embed, current + by) : null
+        if (next !== null) {
+          shell.embedResultsWidth.set(next)
+        }
+      }}
+    />
+  )
+}
+
 // the frame's page is told the embed's height whenever it changes, so the frame grows with the trace
 function useReportedHeight(reported: boolean): React.RefObject<HTMLDivElement | null> {
   const root = useRef<HTMLDivElement>(null)
@@ -320,6 +372,8 @@ export default function EmbedShell({ colorMode, trace }: Props): React.JSX.Eleme
     setContentHeight(height)
   }, [])
   const root = useReportedHeight(!fixed)
+  const shell = useShell()
+  const split = useStore(shell.embedResultsWidth)
   useLayoutEffect(() => {
     document.documentElement.dataset.shell = 'embed'
     return () => {
@@ -329,7 +383,13 @@ export default function EmbedShell({ colorMode, trace }: Props): React.JSX.Eleme
   const editOnly = view === 'edit-only'
   const fitted = editOnly && !fixed
   return (
-    <div ref={root} className={`embed${editOnly ? ' is-edit-only' : ''}${fixed ? ' is-fixed' : ''}`} data-language={languageId} data-testid="embed-shell">
+    <div
+      ref={root}
+      className={`embed${editOnly ? ' is-edit-only' : ''}${fixed ? ' is-fixed' : ''}`}
+      data-language={languageId}
+      data-testid="embed-shell"
+      style={split === null ? undefined : { '--embed-results-width': `${split}px` } as React.CSSProperties}
+    >
       <AddressError />
       <BackToModel />
       <div className="embed-editor" style={fitted && contentHeight !== null ? { height: contentHeight } : undefined}>
@@ -337,6 +397,7 @@ export default function EmbedShell({ colorMode, trace }: Props): React.JSX.Eleme
         <EditControl className="embed-edit-control" />
       </div>
       {editOnly ? null : <Strip slot={trace} fixed={fixed} />}
+      {fixed && !editOnly ? <EmbedSplitter root={root} /> : null}
     </div>
   )
 }

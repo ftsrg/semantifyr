@@ -310,12 +310,5 @@
 .dialog-links { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 .dialog-footer { display: flex; justify-content: space-between; align-items: center; padding: var(--space-5) var(--space-8); border-top: 1px solid var(--border-faint); background: var(--surface-panel); color: var(--text-tertiary); font-size: var(--text-small); }
 
-.splitter { position: absolute; z-index: 6; display: grid; place-items: center; }
-.splitter span { display: block; border-radius: 2px; background: var(--border-strong); opacity: 0.55; transition: opacity var(--duration-fast), background var(--duration-fast); }
-.splitter:hover span { opacity: 1; background: var(--text-tertiary); }
-.splitter-vertical { top: 0; bottom: 0; left: -4px; width: 8px; cursor: col-resize; }
-.splitter-vertical span { width: 3px; height: 28px; }
-.splitter-horizontal { position: relative; flex: none; height: 8px; margin: -4px 0; cursor: row-resize; }
-.splitter-horizontal span { width: 28px; height: 3px; }
 .theme-switch .segmented-option { padding: 0 var(--space-3); }
 .case-row.is-waiting .case-actions { opacity: 1; }
