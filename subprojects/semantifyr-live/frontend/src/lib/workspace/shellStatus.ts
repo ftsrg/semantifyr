@@ -173,7 +173,7 @@ function restStatus(verification: VerificationState, unsaved: boolean): ShellSta
 export function shellStatus(input: ShellStatusInput): ShellStatus {
   const { connection, initialization, verification, timing } = input
   if (input.catalog === 'waiting') {
-    return { kind: 'warning', text: 'The server is not answering. Retrying. The editor works; verifying needs a session.' }
+    return { kind: 'warning', text: 'The server is not answering. Retrying. Editing and verifying start once it answers.' }
   }
   if (verification.phase === 'running') {
     return runningStatus(verification, timing)

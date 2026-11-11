@@ -193,7 +193,7 @@ function Initialization(): React.JSX.Element {
     return step.state === 'failed'
   })
   const note = waiting
-    ? 'The server is not answering. The editor works; the verification cases are known once a session is up.'
+    ? 'The server is not answering. The model can be edited and its verification cases are known once it answers.'
     : failed ? 'The verification cases are known only after initialization.' : presentation.initializationNote
   return (
     <div className="phone-init" data-language={languageId}>

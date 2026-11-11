@@ -159,8 +159,10 @@ function Initialization(): React.JSX.Element {
   })
   const retrying = secondsToRetry(connection, now)
   const trouble = waiting ? 'The server is not answering.' : connection.refused ? 'The server refused the session: it is at capacity.' : retrying === null ? null : 'The connection was lost.'
-  const note = trouble !== null
-    ? `${trouble} The editor works; the verification cases are known once a session is up.`
+  const note = waiting
+    ? 'The server is not answering. The model can be edited and its verification cases are known once it answers.'
+    : trouble !== null
+      ? `${trouble} The editor works; the verification cases are known once a session is up.`
     : failed ? 'The verification cases are known only after initialization.' : presentation.initializationNote
   const failedWord = waiting ? 'retrying' : retrying ? `retrying in ${retrying} s` : retrying === 0 ? 'retrying' : 'failed'
   return (

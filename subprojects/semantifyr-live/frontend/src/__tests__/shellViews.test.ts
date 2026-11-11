@@ -154,7 +154,7 @@ describe('the status line', () => {
     const terminated = shellStatus({ ...statusInput(), connection: connectionLost(INITIAL_CONNECTION, 'failed', 'Session terminated', { terminated: true }) })
     expect(terminated).toMatchObject({ kind: 'warning', text: 'Session terminated. Not reconnecting until you ask.', action: 'reconnect' })
     expect(statusOf({ connection: connectionLost(INITIAL_CONNECTION, 'disconnected', null) })).toBe('Disconnected. The editor keeps working; verifying needs the connection.')
-    expect(statusOf({ catalog: 'waiting' })).toBe('The server is not answering. Retrying. The editor works; verifying needs a session.')
+    expect(statusOf({ catalog: 'waiting' })).toBe('The server is not answering. Retrying. Editing and verifying start once it answers.')
   })
 })
 
