@@ -4,16 +4,27 @@
   "tags": [
     "semantifyr"
   ],
-  "timezone": "browser",
+  "schemaVersion": 41,
   "editable": false,
   "graphTooltip": 1,
-  "refresh": "30s",
-  "schemaVersion": 41,
-  "version": 1,
+  "timezone": "browser",
   "time": {
     "from": "now-6h",
     "to": "now"
   },
+  "refresh": "30s",
+  "links": [
+    {
+      "type": "dashboards",
+      "tags": [
+        "semantifyr"
+      ],
+      "asDropdown": false,
+      "includeVars": true,
+      "keepTime": true,
+      "title": "Semantifyr"
+    }
+  ],
   "templating": {
     "list": [
       {
@@ -30,59 +41,83 @@
         },
         "definition": "label_values(semantifyr_live_sessions_active, instance)",
         "refresh": 2,
-        "multi": true,
-        "includeAll": true,
-        "allValue": ".*",
+        "multi": false,
+        "includeAll": false,
         "current": {
           "selected": true,
-          "text": [
-            "All"
-          ],
-          "value": [
-            "$__all"
-          ]
+          "text": "semantifyr-live",
+          "value": "semantifyr-live"
         },
         "sort": 1
       }
     ]
   },
-  "annotations": {
-    "list": []
-  },
   "panels": [
     {
       "type": "row",
-      "title": "Sessions and verifications",
-      "collapsed": false,
       "id": 1,
+      "title": "Is the service healthy right now",
+      "collapsed": false,
       "gridPos": {
-        "h": 1,
-        "w": 24,
         "x": 0,
-        "y": 0
+        "y": 0,
+        "w": 24,
+        "h": 1
       },
       "panels": []
     },
     {
       "type": "stat",
-      "title": "Open sessions",
       "id": 2,
+      "title": "Open sessions and their limit",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
-        "h": 4,
-        "w": 6,
         "x": 0,
-        "y": 1
+        "y": 1,
+        "w": 5,
+        "h": 4
       },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "semantifyr_live_sessions_active{instance=\"$instance\"}",
+          "legendFormat": "open",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "semantifyr_live_sessions_limit{instance=\"$instance\"}",
+          "legendFormat": "limit",
+          "refId": "B",
+          "instant": true,
+          "range": false
+        }
+      ],
       "fieldConfig": {
         "defaults": {
           "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
           "color": {
-            "mode": "fixed",
-            "fixedColor": "text"
+            "mode": "thresholds"
           }
         },
         "overrides": []
@@ -97,42 +132,75 @@
         },
         "colorMode": "none",
         "graphMode": "none",
-        "textMode": "auto",
+        "textMode": "value_and_name",
         "justifyMode": "auto",
-        "orientation": "auto"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum(semantifyr_live_sessions_active{instance=~\"$instance\"})",
-          "legendFormat": "{{instance}}",
-          "refId": "A"
-        }
-      ]
+        "orientation": "auto",
+        "showPercentChange": false
+      }
     },
     {
       "type": "stat",
-      "title": "Running verifications",
       "id": 3,
+      "title": "Verifications: running, permits, queued",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
-        "h": 4,
+        "x": 5,
+        "y": 1,
         "w": 6,
-        "x": 6,
-        "y": 1
+        "h": 4
       },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "semantifyr_live_verifications_running{instance=\"$instance\"}",
+          "legendFormat": "running",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "semantifyr_live_verifications_limit{instance=\"$instance\"}",
+          "legendFormat": "permits",
+          "refId": "B",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "semantifyr_live_verifications_queued{instance=\"$instance\"}",
+          "legendFormat": "queued",
+          "refId": "C",
+          "instant": true,
+          "range": false
+        }
+      ],
       "fieldConfig": {
         "defaults": {
           "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
           "color": {
-            "mode": "fixed",
-            "fixedColor": "text"
+            "mode": "thresholds"
           }
         },
         "overrides": []
@@ -147,42 +215,61 @@
         },
         "colorMode": "none",
         "graphMode": "none",
-        "textMode": "auto",
+        "textMode": "value_and_name",
         "justifyMode": "auto",
-        "orientation": "auto"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum(semantifyr_live_verifications_running{instance=~\"$instance\"})",
-          "legendFormat": "{{instance}}",
-          "refId": "A"
-        }
-      ]
+        "orientation": "auto",
+        "showPercentChange": false
+      }
     },
     {
       "type": "stat",
-      "title": "Queued verifications",
       "id": 4,
+      "title": "Permit wait, p95 of 5 minutes",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 12,
-        "y": 1
+        "x": 11,
+        "y": 1,
+        "w": 4,
+        "h": 4
       },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(semantifyr_live_verification_queue_seconds_bucket{instance=\"$instance\"}[5m])))",
+          "legendFormat": "p95",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
       "fieldConfig": {
         "defaults": {
-          "unit": "none",
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 60
+              }
+            ]
+          },
           "color": {
-            "mode": "fixed",
-            "fixedColor": "text"
+            "mode": "thresholds"
           }
         },
         "overrides": []
@@ -195,45 +282,83 @@
           "fields": "",
           "values": false
         },
-        "colorMode": "none",
+        "colorMode": "value",
         "graphMode": "none",
-        "textMode": "auto",
+        "textMode": "value",
         "justifyMode": "auto",
-        "orientation": "auto"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum(semantifyr_live_verifications_queued{instance=~\"$instance\"})",
-          "legendFormat": "{{instance}}",
-          "refId": "A"
-        }
-      ]
+        "orientation": "auto",
+        "showPercentChange": false
+      }
     },
     {
       "type": "stat",
-      "title": "Theta processes",
       "id": 5,
+      "title": "Problems in the last hour",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 18,
-        "y": 1
+        "x": 15,
+        "y": 1,
+        "w": 5,
+        "h": 4
       },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(semantifyr_live_verification_seconds_count{instance=\"$instance\",verdict=~\"timeout|errored\"}[1h])) or vector(0)",
+          "legendFormat": "timeouts and errors",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(semantifyr_live_sessions_rejected_total{instance=\"$instance\"}[1h])) or vector(0)",
+          "legendFormat": "rejected sessions",
+          "refId": "B",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(ktor_http_server_requests_seconds_count{instance=\"$instance\",status=~\"5..|429\"}[1h])) or vector(0)",
+          "legendFormat": "HTTP 5xx and 429",
+          "refId": "C",
+          "instant": true,
+          "range": false
+        }
+      ],
       "fieldConfig": {
         "defaults": {
           "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          },
           "color": {
-            "mode": "fixed",
-            "fixedColor": "text"
-          }
+            "mode": "thresholds"
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -245,67 +370,28 @@
           "fields": "",
           "values": false
         },
-        "colorMode": "none",
+        "colorMode": "value",
         "graphMode": "none",
-        "textMode": "auto",
+        "textMode": "value_and_name",
         "justifyMode": "auto",
-        "orientation": "auto"
+        "orientation": "auto",
+        "showPercentChange": false
       },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum(semantifyr_live_theta_processes{instance=~\"$instance\"})",
-          "legendFormat": "{{instance}}",
-          "refId": "A"
-        }
-      ]
+      "description": "Timed out or errored verifications, sessions refused at the session limit, and HTTP answers 5xx or 429 (handshake rate limit)."
     },
     {
-      "type": "timeseries",
-      "title": "Open sessions",
+      "type": "stat",
       "id": 6,
+      "title": "CPU and memory of the limit",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 5
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "none",
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 0,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            }
-          },
-          "min": 0,
-          "decimals": 0
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
+        "x": 20,
+        "y": 1,
+        "w": 4,
+        "h": 4
       },
       "targets": [
         {
@@ -313,782 +399,255 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "semantifyr_live_sessions_active{instance=~\"$instance\"}",
-          "legendFormat": "{{instance}} open",
-          "refId": "A"
+          "expr": "rate(semantifyr_live_container_cpu_usage_seconds_total{instance=\"$instance\"}[1m]) / semantifyr_live_container_cpu_limit_cores{instance=\"$instance\"}",
+          "legendFormat": "CPU",
+          "refId": "A",
+          "instant": true,
+          "range": false
         },
         {
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "semantifyr_live_sessions_limit{instance=~\"$instance\"}",
-          "legendFormat": "{{instance}} limit",
-          "refId": "B"
-        }
-      ]
-    },
-    {
-      "type": "timeseries",
-      "title": "Verifications",
-      "id": 7,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 5
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "none",
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 0,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            }
-          },
-          "min": 0,
-          "decimals": 0
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "semantifyr_live_verifications_running{instance=~\"$instance\"}",
-          "legendFormat": "{{instance}} running",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "semantifyr_live_verifications_queued{instance=~\"$instance\"}",
-          "legendFormat": "{{instance}} queued",
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "semantifyr_live_verifications_limit{instance=~\"$instance\"}",
-          "legendFormat": "{{instance}} limit",
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "semantifyr_live_theta_processes{instance=~\"$instance\"}",
-          "legendFormat": "{{instance}} Theta processes",
-          "refId": "D"
-        }
-      ]
-    },
-    {
-      "type": "timeseries",
-      "title": "Verdicts per backend",
-      "id": 8,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 13
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "none",
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 10,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "mode": "normal",
-              "group": "A"
-            }
-          },
-          "min": 0
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum by (kind, backend, verdict) (increase(semantifyr_live_verification_seconds_count{instance=~\"$instance\"}[$__rate_interval]))",
-          "legendFormat": "{{kind}} {{backend}} {{verdict}}",
-          "refId": "A"
+          "expr": "semantifyr_live_container_memory_working_set_bytes{instance=\"$instance\"} / semantifyr_live_container_memory_limit_bytes{instance=\"$instance\"}",
+          "legendFormat": "memory",
+          "refId": "B",
+          "instant": true,
+          "range": false
         }
       ],
-      "description": "Backend none: stopped by the live timeout"
-    },
-    {
-      "type": "timeseries",
-      "title": "Timeouts, cancellations and rejected sessions",
-      "id": 9,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 13
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "none",
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 0,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            }
-          },
-          "min": 0
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum by (kind) (increase(semantifyr_live_verification_seconds_count{instance=~\"$instance\",verdict=\"timeout\"}[$__rate_interval]))",
-          "legendFormat": "{{kind}} timeout",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum by (kind, state) (increase(semantifyr_live_verification_cancellations_total{instance=~\"$instance\"}[$__rate_interval]))",
-          "legendFormat": "{{kind}} cancelled while {{state}}",
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum(increase(semantifyr_live_sessions_rejected_total{instance=~\"$instance\"}[$__rate_interval]))",
-          "legendFormat": "sessions rejected at the limit",
-          "refId": "C"
-        }
-      ]
-    },
-    {
-      "type": "timeseries",
-      "title": "Verification duration (p50, p95)",
-      "id": 10,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 21
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "s",
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 0,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            }
-          },
-          "min": 0
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "histogram_quantile(0.5, sum by (le, backend) (rate(semantifyr_live_verification_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
-          "legendFormat": "{{backend}} p50",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "histogram_quantile(0.95, sum by (le, backend) (rate(semantifyr_live_verification_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
-          "legendFormat": "{{backend}} p95",
-          "refId": "B"
-        }
-      ],
-      "description": "From permit to result"
-    },
-    {
-      "type": "timeseries",
-      "title": "Queue wait (p50, p95)",
-      "id": 11,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 21
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "s",
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 0,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            }
-          },
-          "min": 0
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "histogram_quantile(0.5, sum by (le) (rate(semantifyr_live_verification_queue_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
-          "legendFormat": "p50",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(semantifyr_live_verification_queue_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
-          "legendFormat": "p95",
-          "refId": "B"
-        }
-      ],
-      "description": "From request to permit"
-    },
-    {
-      "type": "timeseries",
-      "title": "Open sessions by kind",
-      "id": 20,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 29
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "none",
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 30,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "mode": "normal",
-              "group": "A"
-            }
-          },
-          "min": 0,
-          "decimals": 0
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum by (kind) (semantifyr_live_sessions_active_by_kind{instance=~\"$instance\"})",
-          "legendFormat": "{{kind}}",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "type": "row",
-      "title": "HTTP",
-      "collapsed": false,
-      "id": 12,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 37
-      },
-      "panels": []
-    },
-    {
-      "type": "timeseries",
-      "title": "Requests by status",
-      "id": 13,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 38
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "reqps",
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 0,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            }
-          },
-          "min": 0
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum by (status) (rate(ktor_http_server_requests_seconds_count{instance=~\"$instance\"}[$__rate_interval]))",
-          "legendFormat": "{{status}}",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "type": "timeseries",
-      "title": "Mean latency by route",
-      "id": 14,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 38
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "s",
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 0,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            }
-          },
-          "min": 0
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum by (route) (rate(ktor_http_server_requests_seconds_sum{instance=~\"$instance\",route!~\"/ws/.*\"}[$__rate_interval])) / sum by (route) (rate(ktor_http_server_requests_seconds_count{instance=~\"$instance\",route!~\"/ws/.*\"}[$__rate_interval]))",
-          "legendFormat": "{{route}}",
-          "refId": "A"
-        }
-      ],
-      "description": "WebSocket sessions left out"
-    },
-    {
-      "type": "row",
-      "title": "JVM",
-      "collapsed": false,
-      "id": 15,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 46
-      },
-      "panels": []
-    },
-    {
-      "type": "timeseries",
-      "title": "Heap",
-      "id": 16,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 47
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes",
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 0,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            }
-          },
-          "min": 0
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum by (instance) (jvm_memory_used_bytes{instance=~\"$instance\",area=\"heap\"})",
-          "legendFormat": "{{instance}} used",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum by (instance) (jvm_memory_committed_bytes{instance=~\"$instance\",area=\"heap\"})",
-          "legendFormat": "{{instance}} committed",
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum by (instance) (jvm_memory_max_bytes{instance=~\"$instance\",area=\"heap\"})",
-          "legendFormat": "{{instance}} max",
-          "refId": "C"
-        }
-      ]
-    },
-    {
-      "type": "timeseries",
-      "title": "CPU",
-      "id": 17,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 47
-      },
       "fieldConfig": {
         "defaults": {
           "unit": "percentunit",
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 0,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            }
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.7
+              },
+              {
+                "color": "red",
+                "value": 0.9
+              }
+            ]
           },
-          "min": 0
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
+          "color": {
+            "mode": "thresholds"
           },
-          "expr": "process_cpu_usage{instance=~\"$instance\"}",
-          "legendFormat": "{{instance}} process",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "system_cpu_usage{instance=~\"$instance\"}",
-          "legendFormat": "{{instance}} system",
-          "refId": "B"
-        }
-      ]
-    },
-    {
-      "type": "timeseries",
-      "title": "GC pause time per second",
-      "id": 18,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 55
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "s",
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 0,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            }
-          },
-          "min": 0
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum by (instance, gc) (rate(jvm_gc_pause_seconds_sum{instance=~\"$instance\"}[$__rate_interval]))",
-          "legendFormat": "{{instance}} {{gc}}",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "type": "timeseries",
-      "title": "Threads",
-      "id": 19,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 55
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "none",
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 0,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            }
-          },
-          "min": 0,
           "decimals": 0
         },
         "overrides": []
       },
       "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "showPercentChange": false
+      }
+    },
+    {
+      "type": "row",
+      "id": 7,
+      "title": "Are people waiting, and how long",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "id": 8,
+      "title": "Verifications running and queued against the permits",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "semantifyr_live_verifications_running{instance=\"$instance\"}",
+          "legendFormat": "running",
+          "refId": "A",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "semantifyr_live_verifications_queued{instance=\"$instance\"}",
+          "legendFormat": "queued",
+          "refId": "B",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "semantifyr_live_verifications_limit{instance=\"$instance\"}",
+          "legendFormat": "permits",
+          "refId": "L",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisSoftMin": 0
+          },
+          "decimals": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "L"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    10,
+                    10
+                  ]
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "id": 9,
+      "title": "Wait for a permit (p50, p95)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 6,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(semantifyr_live_verification_queue_seconds_bucket{instance=\"$instance\"}[$__rate_interval])))",
+          "legendFormat": "p50",
+          "refId": "A",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(semantifyr_live_verification_queue_seconds_bucket{instance=\"$instance\"}[$__rate_interval])))",
+          "legendFormat": "p95",
+          "refId": "B",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisSoftMin": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
@@ -1099,26 +658,1120 @@
           "sort": "desc"
         }
       },
+      "description": "From the request to the permit, for every verification and witness validation that got one."
+    },
+    {
+      "type": "timeseries",
+      "id": 10,
+      "title": "Share of time all permits were taken",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 12,
+        "h": 8
+      },
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "jvm_threads_live_threads{instance=~\"$instance\"}",
-          "legendFormat": "{{instance}} live",
-          "refId": "A"
+          "expr": "rate(semantifyr_live_verifications_saturated_seconds_total{instance=\"$instance\"}[$__rate_interval])",
+          "legendFormat": "all permits taken",
+          "refId": "A",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisSoftMin": 0
+          },
+          "max": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "id": 11,
+      "title": "Open sessions against the limit",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 14,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (kind) (semantifyr_live_sessions_active_by_kind{instance=\"$instance\"})",
+          "legendFormat": "{{kind}}",
+          "refId": "A",
+          "range": true
         },
         {
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "jvm_threads_peak_threads{instance=~\"$instance\"}",
-          "legendFormat": "{{instance}} peak",
-          "refId": "B"
+          "expr": "semantifyr_live_sessions_limit{instance=\"$instance\"}",
+          "legendFormat": "limit",
+          "refId": "L",
+          "range": true
         }
-      ]
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 25,
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "axisSoftMin": 0
+          },
+          "decimals": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "L"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    10,
+                    10
+                  ]
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "id": 12,
+      "title": "Problems per minute",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (verdict) (increase(semantifyr_live_verification_seconds_count{instance=\"$instance\",verdict=~\"timeout|errored\"}[1m]))",
+          "legendFormat": "{{verdict}}",
+          "refId": "A",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (state) (increase(semantifyr_live_verification_cancellations_total{instance=\"$instance\"}[1m]))",
+          "legendFormat": "cancelled while {{state}}",
+          "refId": "B",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "increase(semantifyr_live_sessions_rejected_total{instance=\"$instance\"}[1m])",
+          "legendFormat": "rejected sessions",
+          "refId": "C",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (status) (increase(ktor_http_server_requests_seconds_count{instance=\"$instance\",status=~\"5..|429\"}[1m]))",
+          "legendFormat": "HTTP {{status}}",
+          "refId": "D",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "min": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "axisSoftMin": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "Cancellations are mostly the editor superseding a queued run of a case, not failures."
+    },
+    {
+      "type": "row",
+      "id": 13,
+      "title": "Could the permits be raised: while all permits were taken, over the selected range",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 30,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "id": 14,
+      "title": "Time all permits were taken",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 31,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "increase(semantifyr_live_verifications_saturated_seconds_total{instance=\"$instance\"}[$__range])",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "showPercentChange": false
+      }
+    },
+    {
+      "type": "stat",
+      "id": 15,
+      "title": "Free CPU",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 31,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "avg_over_time((semantifyr_live_container_cpu_limit_cores{instance=\"$instance\"} - rate(semantifyr_live_container_cpu_usage_seconds_total{instance=\"$instance\"}[1m]) and on(instance) (semantifyr_live_verifications_running{instance=\"$instance\"} >= on(instance) semantifyr_live_verifications_limit{instance=\"$instance\"}))[$__range:15s])",
+          "legendFormat": "average",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "min_over_time((semantifyr_live_container_cpu_limit_cores{instance=\"$instance\"} - rate(semantifyr_live_container_cpu_usage_seconds_total{instance=\"$instance\"}[1m]) and on(instance) (semantifyr_live_verifications_running{instance=\"$instance\"} >= on(instance) semantifyr_live_verifications_limit{instance=\"$instance\"}))[$__range:15s])",
+          "legendFormat": "lowest",
+          "refId": "B",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cores",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "description": "Container CPU limit minus its use. Only the moments when every permit was taken count."
+    },
+    {
+      "type": "stat",
+      "id": 16,
+      "title": "CPU per running verification",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 31,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "avg_over_time((rate(semantifyr_live_container_cpu_usage_seconds_total{instance=\"$instance\"}[1m]) / on(instance) semantifyr_live_verifications_running{instance=\"$instance\"} and on(instance) (semantifyr_live_verifications_running{instance=\"$instance\"} >= on(instance) semantifyr_live_verifications_limit{instance=\"$instance\"}))[$__range:15s])",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cores",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "description": "The container's CPU use divided by the running verifications, averaged. Only the moments when every permit was taken count."
+    },
+    {
+      "type": "stat",
+      "id": 17,
+      "title": "More verifications the free CPU could run",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 31,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "avg_over_time((semantifyr_live_container_cpu_limit_cores{instance=\"$instance\"} - rate(semantifyr_live_container_cpu_usage_seconds_total{instance=\"$instance\"}[1m]) and on(instance) (semantifyr_live_verifications_running{instance=\"$instance\"} >= on(instance) semantifyr_live_verifications_limit{instance=\"$instance\"}))[$__range:15s]) / avg_over_time((rate(semantifyr_live_container_cpu_usage_seconds_total{instance=\"$instance\"}[1m]) / on(instance) semantifyr_live_verifications_running{instance=\"$instance\"} and on(instance) (semantifyr_live_verifications_running{instance=\"$instance\"} >= on(instance) semantifyr_live_verifications_limit{instance=\"$instance\"}))[$__range:15s])",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": -1000
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "description": "Average free CPU divided by the CPU of one running verification. Below 1, raising the permits only makes every verification slower."
+    },
+    {
+      "type": "stat",
+      "id": 18,
+      "title": "Host CPU idle, average",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "avg_over_time((sum(rate(node_cpu_seconds_total{instance=\"host\",mode=\"idle\"}[1m])) and on() (semantifyr_live_verifications_running{instance=\"$instance\"} >= on(instance) semantifyr_live_verifications_limit{instance=\"$instance\"}))[$__range:15s])",
+          "legendFormat": "average",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cores",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "description": "Both instances and the observability stack share the host."
+    },
+    {
+      "type": "stat",
+      "id": 19,
+      "title": "Free memory, lowest",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 35,
+        "w": 5,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "min_over_time((semantifyr_live_container_memory_limit_bytes{instance=\"$instance\"} - semantifyr_live_container_memory_working_set_bytes{instance=\"$instance\"} and on(instance) (semantifyr_live_verifications_running{instance=\"$instance\"} >= on(instance) semantifyr_live_verifications_limit{instance=\"$instance\"}))[$__range:15s])",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "description": "Container memory limit minus its working set. Only the moments when every permit was taken count."
+    },
+    {
+      "type": "stat",
+      "id": 20,
+      "title": "Engine memory per verification, highest",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 9,
+        "y": 35,
+        "w": 5,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "max_over_time((sum by (instance) (semantifyr_live_engine_memory_resident_bytes{instance=\"$instance\"}) / on(instance) semantifyr_live_verifications_running{instance=\"$instance\"} and on(instance) (semantifyr_live_verifications_running{instance=\"$instance\"} >= on(instance) semantifyr_live_verifications_limit{instance=\"$instance\"}))[$__range:15s])",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "description": "Resident memory of the solver processes divided by the running verifications. The backend's own heap is bounded by its maximum and does not grow with the permits."
+    },
+    {
+      "type": "stat",
+      "id": 21,
+      "title": "More verifications the free memory could hold",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 14,
+        "y": 35,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "min_over_time((semantifyr_live_container_memory_limit_bytes{instance=\"$instance\"} - semantifyr_live_container_memory_working_set_bytes{instance=\"$instance\"} and on(instance) (semantifyr_live_verifications_running{instance=\"$instance\"} >= on(instance) semantifyr_live_verifications_limit{instance=\"$instance\"}))[$__range:15s]) / max_over_time((sum by (instance) (semantifyr_live_engine_memory_resident_bytes{instance=\"$instance\"}) / on(instance) semantifyr_live_verifications_running{instance=\"$instance\"} and on(instance) (semantifyr_live_verifications_running{instance=\"$instance\"} >= on(instance) semantifyr_live_verifications_limit{instance=\"$instance\"}))[$__range:15s])",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": -1000
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "description": "Lowest free memory divided by the highest engine memory of one verification."
+    },
+    {
+      "type": "stat",
+      "id": 22,
+      "title": "Heap used at its highest",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 35,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "max_over_time((sum by (instance) (jvm_memory_used_bytes{instance=\"$instance\",area=\"heap\"}) / on(instance) sum by (instance) (jvm_memory_max_bytes{instance=\"$instance\",area=\"heap\"}))[$__range:15s])",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.8
+              },
+              {
+                "color": "red",
+                "value": 0.95
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "showPercentChange": false
+      },
+      "description": "Of the backend's maximum heap, where the models are compiled."
+    },
+    {
+      "type": "timeseries",
+      "id": 23,
+      "title": "Container CPU against its limit",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 39,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "rate(process_cpu_time_ns_total{instance=\"$instance\"}[$__rate_interval]) / 1e9",
+          "legendFormat": "backend JVM",
+          "refId": "A",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "clamp_min(rate(semantifyr_live_container_cpu_usage_seconds_total{instance=\"$instance\"}[$__rate_interval]) - on(instance) rate(process_cpu_time_ns_total{instance=\"$instance\"}[$__rate_interval]) / 1e9, 0)",
+          "legendFormat": "engine processes",
+          "refId": "B",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "semantifyr_live_container_cpu_limit_cores{instance=\"$instance\"}",
+          "legendFormat": "limit",
+          "refId": "L",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cores",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 25,
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "axisSoftMin": 0
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "L"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    10,
+                    10
+                  ]
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "The engines' child processes are the container's CPU beyond the JVM's own."
+    },
+    {
+      "type": "timeseries",
+      "id": 24,
+      "title": "Container memory against its limit",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 39,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (instance) (jvm_memory_used_bytes{instance=\"$instance\",area=\"heap\"})",
+          "legendFormat": "backend heap used",
+          "refId": "A",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (instance) (semantifyr_live_engine_memory_resident_bytes{instance=\"$instance\"})",
+          "legendFormat": "engine processes",
+          "refId": "B",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "semantifyr_live_container_memory_working_set_bytes{instance=\"$instance\"}",
+          "legendFormat": "working set",
+          "refId": "C",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "semantifyr_live_container_memory_limit_bytes{instance=\"$instance\"}",
+          "legendFormat": "limit",
+          "refId": "L",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisSoftMin": 0
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "L"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    10,
+                    10
+                  ]
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
     }
   ]
 }
