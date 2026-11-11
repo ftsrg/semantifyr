@@ -240,4 +240,28 @@ class VerificationManagerTest {
         first.join()
         assertThat(gauge("semantifyr.live.verifications.running")).isEqualTo(0.0)
     }
+
+    @Test
+    fun `the saturation counter adds up the time every permit was taken`() {
+        val registry = SimpleMeterRegistry()
+        val manager = manager(concurrency = 2, registry = registry)
+        val saturated = registry.get("semantifyr.live.verifications.saturated").functionCounter()
+
+        val first = manager.enqueue("first")
+        Thread.sleep(20)
+        assertThat(saturated.count()).isZero()
+
+        val second = manager.enqueue("second")
+        val queued = manager.enqueue("third")
+        Thread.sleep(50)
+        manager.abandon(first)
+        Thread.sleep(20)
+        assertThat(saturated.count()).isGreaterThanOrEqualTo(0.07)
+
+        manager.abandon(second)
+        manager.abandon(queued)
+        val total = saturated.count()
+        Thread.sleep(20)
+        assertThat(saturated.count()).isEqualTo(total)
+    }
 }

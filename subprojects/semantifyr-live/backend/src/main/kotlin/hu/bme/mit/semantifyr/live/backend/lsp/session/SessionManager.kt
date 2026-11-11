@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap
 class SessionManager @Inject constructor(
     private val backendConfig: BackendConfig,
     private val languageServiceRegistry: LanguageServiceRegistry,
-    registry: MeterRegistry,
+    private val registry: MeterRegistry,
 ) : AutoCloseable {
 
     private val logger by loggerFactory()
@@ -125,7 +125,7 @@ class SessionManager @Inject constructor(
                     stageLibraryOnDisk(sessionContext)
                     loadLibraryFiles(sessionContext, sessionDocumentManager)
 
-                    val connector = WebSocketLspConnector(sessionContext.webSocketSession, sessionLanguageServer)
+                    val connector = WebSocketLspConnector(sessionContext.webSocketSession, sessionLanguageServer, registry)
                     val launchContext = currentMdcContextBlocking() + currentSessionScopeElement()
                     try {
                         sessionRunContext.coroutineScope.async(launchContext) {

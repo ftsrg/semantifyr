@@ -77,7 +77,8 @@ class MetricsHandlerTest {
             "semantifyr_live_verifications_queued 0",
             "semantifyr_live_verifications_running 0",
             "semantifyr_live_verifications_limit 4",
-            "semantifyr_live_theta_processes",
+            "semantifyr_live_engine_processes{engine=\"theta\"} 0",
+            "semantifyr_live_engine_memory_resident_bytes{engine=\"spin\"} 0",
         )
     }
 
@@ -120,16 +121,20 @@ class MetricsHandlerTest {
 
     @Test
     @EnabledOnOs(OS.LINUX)
-    fun `the Theta gauge counts descendant processes running the Theta jar`(@TempDir tmp: Path) {
+    fun `the engine gauges count the process tree of each engine child and its resident memory`(@TempDir directory: Path) {
         val injector = injector()
         injector.handler<MetricsHandler>()
-        val gauge = injector.getInstance(MeterRegistry::class.java).get("semantifyr.live.theta.processes").gauge()
-        val jar = Files.createFile(tmp.resolve("theta-xsts-cli.jar"))
-        val before = gauge.value()
+        val registry = injector.getInstance(MeterRegistry::class.java)
+        val processes = registry.get("semantifyr.live.engine.processes").tag("engine", "theta").gauge()
+        val resident = registry.get("semantifyr.live.engine.memory.resident").tag("engine", "theta").gauge()
+        val script = Files.createFile(directory.resolve("theta-xsts-cli"))
+        val before = processes.value()
 
-        val process = ProcessBuilder("sh", "-c", "sleep 60; :", jar.toString()).start()
+        val process = ProcessBuilder("sh", "-c", "sleep 60; :", script.toString()).start()
         try {
-            assertThat(gauge.value()).isEqualTo(before + 1)
+            assertThat(processes.value()).isEqualTo(before + 2)
+            assertThat(resident.value()).isGreaterThan(0.0)
+            assertThat(registry.get("semantifyr.live.engine.processes").tag("engine", "spin").gauge().value()).isZero()
         } finally {
             process.descendants().forEach {
                 it.destroy()
@@ -137,6 +142,6 @@ class MetricsHandlerTest {
             process.destroy()
             process.waitFor(10, TimeUnit.SECONDS)
         }
-        assertThat(gauge.value()).isEqualTo(before)
+        assertThat(processes.value()).isEqualTo(before)
     }
 }

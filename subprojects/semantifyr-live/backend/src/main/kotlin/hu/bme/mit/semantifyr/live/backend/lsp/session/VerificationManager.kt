@@ -11,10 +11,14 @@ import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
+import io.micrometer.core.instrument.FunctionCounter
 import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.TimeSource
 
 @Singleton
 class VerificationManager @Inject constructor(
@@ -31,6 +35,10 @@ class VerificationManager @Inject constructor(
     private var waiting = 0
 
     private val sessionQueues = LinkedHashMap<String, ArrayDeque<PermitRequest>>()
+
+    private var saturatedBefore = Duration.ZERO
+
+    private var saturatedSince: TimeSource.Monotonic.ValueTimeMark? = null
 
     val availablePermits: Int
         get() {
@@ -63,13 +71,39 @@ class VerificationManager @Inject constructor(
         Gauge.builder("semantifyr.live.verifications.limit") {
             maxPermits
         }.register(registry)
+        FunctionCounter.builder("semantifyr.live.verifications.saturated", this) {
+            it.saturatedSeconds()
+        }.baseUnit("seconds").register(registry)
+    }
+
+    private fun saturatedSeconds(): Double {
+        val saturated = synchronized(lock) {
+            val current = saturatedSince?.elapsedNow() ?: Duration.ZERO
+            saturatedBefore + current
+        }
+        return saturated.toDouble(DurationUnit.SECONDS)
+    }
+
+    private fun takePermit() {
+        freePermits--
+        if (freePermits == 0) {
+            saturatedSince = TimeSource.Monotonic.markNow()
+        }
+    }
+
+    private fun returnPermit() {
+        saturatedSince?.let {
+            saturatedBefore += it.elapsedNow()
+        }
+        saturatedSince = null
+        freePermits++
     }
 
     fun enqueue(sessionId: String): PermitRequest {
         val request = PermitRequest(sessionId)
         synchronized(lock) {
             if (freePermits > 0 && sessionQueues.isEmpty()) {
-                freePermits--
+                takePermit()
                 grant(request)
             } else {
                 sessionQueues.getOrPut(sessionId) {
@@ -139,7 +173,7 @@ class VerificationManager @Inject constructor(
     private fun releasePermit() {
         val longestWaiting = sessionQueues.entries.firstOrNull()
         if (longestWaiting == null) {
-            freePermits++
+            returnPermit()
             return
         }
         val sessionId = longestWaiting.key

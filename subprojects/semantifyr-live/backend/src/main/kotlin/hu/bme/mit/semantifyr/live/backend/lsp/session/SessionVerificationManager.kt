@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.live.backend.lsp.session
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
+import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationMetrics
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
@@ -318,6 +319,44 @@ class SessionVerificationManager @Inject constructor(
             .serviceLevelObjectives(*durationBuckets)
             .register(registry)
             .record((entry.runningSince ?: entry.startedAt).elapsedNow().toJavaDuration())
+        val metrics = when (result) {
+            is VerificationCaseResult -> result.metrics()
+            is WitnessValidationResult -> result.metrics()
+            else -> null
+        }
+        if (metrics != null && backendId != null) {
+            recordPhases(entry, backendId, metrics)
+        }
+    }
+
+    private fun recordPhases(
+        entry: Entry,
+        backendId: String,
+        metrics: VerificationMetrics,
+    ) {
+        val compilation = metrics.compilation()
+        val compilationDuration = compilation.createDuration
+            .plus(compilation.instantiationDuration)
+            .plus(compilation.inliningDuration)
+            .plus(compilation.flatteningDuration)
+        val phases = mapOf(
+            "create" to compilation.createDuration,
+            "instantiation" to compilation.instantiationDuration,
+            "inlining" to compilation.inliningDuration,
+            "flattening" to compilation.flatteningDuration,
+            "preparation" to maxOf(metrics.preparationDuration().minus(compilationDuration), Duration.ZERO),
+            "engine" to metrics.verificationDuration(),
+            "back_annotation" to metrics.backAnnotationDuration(),
+        )
+        for ((phase, duration) in phases) {
+            Timer.builder("semantifyr.live.verification.phase")
+                .tag("kind", entry.kind.name.lowercase())
+                .tag("backend", backendId)
+                .tag("phase", phase)
+                .serviceLevelObjectives(*durationBuckets)
+                .register(registry)
+                .record(duration)
+        }
     }
 
     private fun recordCancelled(entry: Entry) {
