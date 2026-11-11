@@ -73,12 +73,39 @@ jobs:
       - name: Gradle build
         shell: bash
         run: ./gradlew build --continue -Pwebsite.apiDocs=$WEBSITE_API_DOCS
-      - name: Install Chromium for the live screen tests
+      - name: Install the browsers for the live screen and UI tests
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: npx playwright install --with-deps chromium
-      - name: Run the live screen tests
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: npx playwright install --with-deps chromium firefox webkit
+      - name: Run the live screen tests on Chromium
+        if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
+        env:
+          TEST_BROWSER: chromium
         run: npm run screens -w @ftsrg/semantifyr-live-frontend
+      - name: Run the live UI tests on Chromium
+        if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
+        env:
+          TEST_BROWSER: chromium
+        run: npm run ui -w @ftsrg/semantifyr-live-frontend
+      - name: Run the live screen tests on Firefox
+        if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
+        env:
+          TEST_BROWSER: firefox
+        run: npm run screens -w @ftsrg/semantifyr-live-frontend
+      - name: Run the live UI tests on Firefox
+        if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
+        env:
+          TEST_BROWSER: firefox
+        run: npm run ui -w @ftsrg/semantifyr-live-frontend
+      - name: Run the live screen tests on WebKit
+        if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
+        env:
+          TEST_BROWSER: webkit
+        run: npm run screens -w @ftsrg/semantifyr-live-frontend
+      - name: Run the live UI tests on WebKit
+        if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
+        env:
+          TEST_BROWSER: webkit
+        run: npm run ui -w @ftsrg/semantifyr-live-frontend
       - name: Upload the live screens
         if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
         uses: actions/upload-artifact@v7
@@ -86,9 +113,6 @@ jobs:
           name: live-screens
           path: subprojects/semantifyr-live/frontend/build/screens/
           if-no-files-found: warn
-      - name: Run the live UI tests
-        if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
-        run: npm run ui -w @ftsrg/semantifyr-live-frontend
       - name: Upload the evidence of failed live UI tests
         if: ${{ matrix.os == 'ubuntu-latest' && failure() }}
         uses: actions/upload-artifact@v7
@@ -252,12 +276,29 @@ jobs:
         env:
           SEMANTIFYR_LIVE_URL: http://localhost:8080
         run: npm run smoke -w @ftsrg/semantifyr-live-frontend
-      - name: Install Chromium for the live flows
-        run: npx playwright install --with-deps chromium
-      - name: Run the live flows on the image
+      - name: Install the browsers for the live flows
+        id: browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+      - name: Run the live flows on the image on Chromium
+        if: ${{ !cancelled() && steps.browsers.outcome == 'success' }}
         timeout-minutes: 15
         env:
           SEMANTIFYR_LIVE_URL: http://localhost:8080
+          TEST_BROWSER: chromium
+        run: npm run flows -w @ftsrg/semantifyr-live-frontend
+      - name: Run the live flows on the image on Firefox
+        if: ${{ !cancelled() && steps.browsers.outcome == 'success' }}
+        timeout-minutes: 15
+        env:
+          SEMANTIFYR_LIVE_URL: http://localhost:8080
+          TEST_BROWSER: firefox
+        run: npm run flows -w @ftsrg/semantifyr-live-frontend
+      - name: Run the live flows on the image on WebKit
+        if: ${{ !cancelled() && steps.browsers.outcome == 'success' }}
+        timeout-minutes: 15
+        env:
+          SEMANTIFYR_LIVE_URL: http://localhost:8080
+          TEST_BROWSER: webkit
         run: npm run flows -w @ftsrg/semantifyr-live-frontend
       - name: Upload the evidence of failed live flows
         if: ${{ failure() }}
