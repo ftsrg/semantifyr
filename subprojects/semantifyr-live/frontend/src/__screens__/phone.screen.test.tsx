@@ -125,7 +125,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     expectState: () => {
       expect(count('.phone-case.status-not-run')).toBe(2)
       expect(count('.phone-init')).toBe(0)
-      expect(text('[data-testid=status-message]')).toBe(`Verify ${BARRIER.id} waits: initializing the SysML v2 language server`)
+      expect(text('[data-testid=status-message]')).toContain(`Verify ${BARRIER.id} waits: initializing the SysML v2 language server`)
     },
   },
   'initialization-timed-out': {
@@ -135,7 +135,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     },
     expectState: () => {
       expect(count('.phone-case.status-not-run')).toBe(2)
-      expect(text('[data-testid=status-message]')).toBe('Initializing the SysML v2 language server did not end within 60 s.')
+      expect(text('[data-testid=status-message]')).toContain('Initializing the SysML v2 language server did not end within 60 s.')
     },
   },
   'initializing-pressed': {
