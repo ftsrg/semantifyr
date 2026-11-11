@@ -857,16 +857,6 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (state) (increase(semantifyr_live_verification_cancellations_total{instance=\"$instance\"}[1m]))",
-          "legendFormat": "cancelled while {{state}}",
-          "refId": "B",
-          "range": true
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
           "expr": "increase(semantifyr_live_sessions_rejected_total{instance=\"$instance\"}[1m])",
           "legendFormat": "rejected sessions",
           "refId": "C",
@@ -898,7 +888,8 @@
               "group": "A"
             },
             "axisSoftMin": 0
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -913,7 +904,7 @@
           "sort": "desc"
         }
       },
-      "description": "Cancellations are mostly the editor superseding a queued run of a case, not failures."
+      "description": "Cancellations are on the verifications dashboard: they are mostly the editor superseding a queued run, not failures."
     },
     {
       "type": "row",
@@ -1146,7 +1137,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "avg_over_time((semantifyr_live_container_cpu_limit_cores{instance=\"$instance\"} - rate(semantifyr_live_container_cpu_usage_seconds_total{instance=\"$instance\"}[1m]) and on(instance) (semantifyr_live_verifications_running{instance=\"$instance\"} >= on(instance) semantifyr_live_verifications_limit{instance=\"$instance\"}))[$__range:15s]) / avg_over_time((rate(semantifyr_live_container_cpu_usage_seconds_total{instance=\"$instance\"}[1m]) / on(instance) semantifyr_live_verifications_running{instance=\"$instance\"} and on(instance) (semantifyr_live_verifications_running{instance=\"$instance\"} >= on(instance) semantifyr_live_verifications_limit{instance=\"$instance\"}))[$__range:15s])",
+          "expr": "sum by (instance) (avg_over_time((semantifyr_live_container_cpu_limit_cores{instance=\"$instance\"} - rate(semantifyr_live_container_cpu_usage_seconds_total{instance=\"$instance\"}[1m]) and on(instance) (semantifyr_live_verifications_running{instance=\"$instance\"} >= on(instance) semantifyr_live_verifications_limit{instance=\"$instance\"}))[$__range:15s])) / on(instance) sum by (instance) (avg_over_time((rate(semantifyr_live_container_cpu_usage_seconds_total{instance=\"$instance\"}[1m]) / on(instance) semantifyr_live_verifications_running{instance=\"$instance\"} and on(instance) (semantifyr_live_verifications_running{instance=\"$instance\"} >= on(instance) semantifyr_live_verifications_limit{instance=\"$instance\"}))[$__range:15s]))",
           "legendFormat": "",
           "refId": "A",
           "instant": true,
@@ -1404,7 +1395,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "min_over_time((semantifyr_live_container_memory_limit_bytes{instance=\"$instance\"} - semantifyr_live_container_memory_working_set_bytes{instance=\"$instance\"} and on(instance) (semantifyr_live_verifications_running{instance=\"$instance\"} >= on(instance) semantifyr_live_verifications_limit{instance=\"$instance\"}))[$__range:15s]) / max_over_time((sum by (instance) (semantifyr_live_engine_memory_resident_bytes{instance=\"$instance\"}) / on(instance) semantifyr_live_verifications_running{instance=\"$instance\"} and on(instance) (semantifyr_live_verifications_running{instance=\"$instance\"} >= on(instance) semantifyr_live_verifications_limit{instance=\"$instance\"}))[$__range:15s])",
+          "expr": "sum by (instance) (min_over_time((semantifyr_live_container_memory_limit_bytes{instance=\"$instance\"} - semantifyr_live_container_memory_working_set_bytes{instance=\"$instance\"} and on(instance) (semantifyr_live_verifications_running{instance=\"$instance\"} >= on(instance) semantifyr_live_verifications_limit{instance=\"$instance\"}))[$__range:15s])) / on(instance) max_over_time((sum by (instance) (semantifyr_live_engine_memory_resident_bytes{instance=\"$instance\"}) / on(instance) semantifyr_live_verifications_running{instance=\"$instance\"} and on(instance) (semantifyr_live_verifications_running{instance=\"$instance\"} >= on(instance) semantifyr_live_verifications_limit{instance=\"$instance\"}))[$__range:15s])",
           "legendFormat": "",
           "refId": "A",
           "instant": true,

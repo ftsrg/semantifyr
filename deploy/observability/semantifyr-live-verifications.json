@@ -292,6 +292,7 @@
         "defaults": {
           "unit": "percentunit",
           "min": 0,
+          "decimals": 1,
           "color": {
             "mode": "palette-classic"
           }
