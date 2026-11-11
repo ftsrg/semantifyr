@@ -121,6 +121,53 @@ class VerificationManagerTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
+    fun `once saturated the waiting sessions take turns in the order they started waiting`() = runTest {
+        val manager = manager(concurrency = 2)
+        val order = mutableListOf<String>()
+        val releases = mutableMapOf<String, CompletableDeferred<Unit>>()
+        val names = listOf(
+            "a1",
+            "a2",
+            "a3",
+            "a4",
+            "a5",
+            "b1",
+            "b2",
+            "c1",
+            "c2",
+        )
+        for (name in names) {
+            val request = manager.enqueue(name.take(1))
+            releases[name] = CompletableDeferred()
+            launch {
+                manager.withPermit(request) {
+                    order += name
+                    releases.getValue(name).await()
+                }
+            }
+        }
+        runCurrent()
+        assertThat(order).containsExactly("a1", "a2")
+
+        for (name in names) {
+            releases.getValue(name).complete(Unit)
+            runCurrent()
+        }
+        assertThat(order).containsExactly(
+            "a1",
+            "a2",
+            "a3",
+            "b1",
+            "c1",
+            "a4",
+            "b2",
+            "c2",
+            "a5",
+        )
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
     fun `within a session the permits go in arrival order`() = runTest {
         val manager = manager(concurrency = 1)
         val order = mutableListOf<Int>()

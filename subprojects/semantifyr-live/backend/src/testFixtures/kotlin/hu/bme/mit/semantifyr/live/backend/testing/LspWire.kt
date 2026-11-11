@@ -265,3 +265,28 @@ suspend fun DefaultClientWebSocketSession.awaitResponseCollectingNotifications(
     }
     return response to collected
 }
+
+suspend fun DefaultClientWebSocketSession.awaitResponsesCollectingNotifications(
+    ids: Set<Int>,
+    method: String,
+    timeout: Duration = 30.seconds,
+): Pair<Map<Int, JsonObject>, List<JsonObject>> {
+    val responses = mutableMapOf<Int, JsonObject>()
+    val collected = mutableListOf<JsonObject>()
+    withTimeout(timeout) {
+        while (responses.size < ids.size) {
+            val frame = incoming.receive() as? Frame.Text ?: continue
+            val obj = gson.fromJson(frame.readText(), JsonObject::class.java)
+            val id = obj.idAsInt()
+            if (id in ids && obj.lspMethod() == null) {
+                responses[checkNotNull(id)] = obj
+                continue
+            }
+            if (obj.lspMethod() == method) {
+                collected += obj
+            }
+            ackIfRequest(obj)
+        }
+    }
+    return responses to collected
+}
