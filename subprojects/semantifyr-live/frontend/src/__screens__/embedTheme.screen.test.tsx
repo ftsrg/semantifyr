@@ -5,17 +5,9 @@
  */
 
 import { createRoot } from 'react-dom/client'
-import { describe, expect, it, onTestFinished, vi } from 'vitest'
+import { describe, expect, it, onTestFinished } from 'vitest'
 
 import ShellApp from '../shells/ShellApp'
-
-vi.mock('../shells/UpdatePrompt', () => {
-  return {
-    UpdatePrompt: () => {
-      return null
-    },
-  }
-})
 
 // Goal: an embedded frame shows the colour mode its address names, whatever the system prefers, and stores nothing of it
 

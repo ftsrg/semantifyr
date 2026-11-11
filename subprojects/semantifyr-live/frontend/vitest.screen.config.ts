@@ -6,10 +6,26 @@
 
 import react from '@vitejs/plugin-react';
 import { playwright } from '@vitest/browser-playwright';
-import { defineConfig } from 'vitest/config';
+import { defineConfig, type Plugin } from 'vitest/config';
 
 // a local Chromium instead of Playwright's download, as on a developer machine
 const executablePath = process.env.SCREEN_TEST_CHROMIUM;
+
+const PWA_REGISTER = 'virtual:pwa-register/react';
+const PWA_REGISTER_STUB = '\0pwa-register-stub';
+
+// the screens run without the service worker plugin; an unresolved import fails the dependency scan, and the
+// bundler then optimises dependencies in the middle of a cold run and reloads the tests
+const serviceWorkerStub: Plugin = {
+  name: 'service-worker-stub',
+  enforce: 'pre',
+  resolveId: (id) => {
+    return id === PWA_REGISTER ? PWA_REGISTER_STUB : null;
+  },
+  load: (id) => {
+    return id === PWA_REGISTER_STUB ? 'export function useRegisterSW() { return { needRefresh: [false, () => {}], offlineReady: [false, () => {}], updateServiceWorker: () => Promise.resolve() } }' : null;
+  },
+};
 
 export default defineConfig({
   define: {
@@ -20,6 +36,7 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    serviceWorkerStub,
   ],
   optimizeDeps: {
     exclude: [
