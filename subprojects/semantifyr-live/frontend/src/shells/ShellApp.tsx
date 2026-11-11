@@ -18,14 +18,14 @@ import { createSettingsStore, createSystemColorModeStore, resolveColorMode, type
 import type { ReadableStore, Store } from '../lib/stores/store'
 import { useStore } from '../lib/stores/useStore'
 import type { ResolvedColorMode } from '../lib/util/colorMode'
-import { frameColorMode, libraryOf, readAddress } from '../lib/workspace/address'
+import { frameColorMode, historyChangeOf, libraryOf, readAddress } from '../lib/workspace/address'
 import { createLive, type Live } from '../lib/workspace/live'
 import { CaseTrace } from '../trace/CaseTrace'
 import { ShellRoot } from './ShellRoot'
 import { createShellState } from './shellState'
 import { UpdatePrompt } from './UpdatePrompt'
 
-// the address follows the visitor's switches of language and example in place, so Back leaves the page and never shows another model than its address
+// the address follows the visitor's switches of language and example, and Back and Forward open the address they land on
 function useAddress(live: Live): void {
   useEffect(() => {
     let first = true
@@ -49,10 +49,19 @@ function useAddress(live: Live): void {
         view: address.view ?? undefined,
         frame: address.frame ?? undefined,
       }).then((url) => {
-        window.history.replaceState(null, '', url)
+        switch (historyChangeOf(window.location.href, url, document.shared)) {
+          case 'push':
+            window.history.pushState(null, '', url)
+            break
+          case 'replace':
+            window.history.replaceState(null, '', url)
+            break
+          case null:
+            break
+        }
       })
     })
-    // a link of another fragment opens in the same page
+    // Back, Forward and a link of another fragment open their address in the same page
     const follow = (): void => {
       live.openAddress(window.location.href)
     }

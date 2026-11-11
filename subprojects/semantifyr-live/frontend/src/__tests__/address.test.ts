@@ -9,7 +9,7 @@ import { encodeCompressedBase64Url, liveEditorUrl } from '@semantifyr/editor-com
 
 import { findExample } from '../examples'
 import type { LspClient } from '../lib/verification/engine'
-import { fixedFrame, frameColorMode, readAddress, resolveAddress } from '../lib/workspace/address'
+import { fixedFrame, frameColorMode, historyChangeOf, readAddress, resolveAddress } from '../lib/workspace/address'
 import { servedFlavors } from './fixtures/flavors'
 import { createTestLive, fakeRegistry, fakeRuntime, testFlavors, type TestLive } from './helpers/live'
 
@@ -60,6 +60,16 @@ describe('an address', () => {
     expect(await resolved('/kerml/level-crossing')).toMatchObject({ flavor: { id: 'sysml' }, example: { id: 'level-crossing' }, problem: { kind: 'language', requested: 'kerml' } })
     expect(await resolved('/oxsts/crossroads?library=uml')).toMatchObject({ flavor: { id: 'oxsts' }, example: { id: 'basics' }, problem: { kind: 'library', requested: 'uml' } })
     expect(await resolved('/gamma/level-crosing')).toMatchObject({ flavor: { id: 'gamma' }, example: { id: 'level-crossing' }, problem: { kind: 'example', requested: 'level-crosing' } })
+  })
+
+  it('takes a path longer than a language and an example for an unknown example', async () => {
+    expect(await resolved('/sysml/level-crossing/extra')).toMatchObject({ flavor: { id: 'sysml' }, example: { id: 'level-crossing' }, problem: { kind: 'example', requested: 'level-crossing/extra' } })
+  })
+
+  it('is a history entry of its own for a switch to an example, and takes the entry of a file or a shared model', () => {
+    expect(historyChangeOf('https://live.example/sysml/level-crossing', 'https://live.example/gamma/level-crossing', false)).toBe('push')
+    expect(historyChangeOf('https://live.example/sysml/level-crossing', 'https://live.example/sysml', true)).toBe('replace')
+    expect(historyChangeOf('https://live.example/sysml/level-crossing#case=a', 'https://live.example/sysml/level-crossing', false)).toBeNull()
   })
 
   it('gives only an embedded frame a fixed size', () => {

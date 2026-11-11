@@ -135,9 +135,11 @@ function viewOf(value: string | null): LiveEditorView | null {
 }
 
 export function parseLiveEditorUrl(location: LiveEditorLocation): LiveEditorAddress {
-    const [language, example] = location.pathname.split("/").filter((segment) => {
+    const [language, ...rest] = location.pathname.split("/").filter((segment) => {
         return segment !== "";
     });
+    // a path longer than a language and an example names an example that does not exist
+    const example = rest.length === 0 ? undefined : rest.join("/");
     const query = new URLSearchParams(location.search);
     const fragment = new URLSearchParams(location.hash.replace(/^#/, ""));
     return {

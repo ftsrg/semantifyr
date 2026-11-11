@@ -53,6 +53,10 @@ function parsed(url: string) {
 }
 
 describe("liveEditorUrl and parseLiveEditorUrl", () => {
+    it("read a path longer than a language and an example as one example name", () => {
+        expect(parsed("https://live.semantifyr.org/sysml/level-crossing/extra")).toMatchObject({ language: "sysml", example: "level-crossing/extra" });
+    });
+
     it("round-trip a link with every part", async () => {
         const url = await liveEditorUrl("https://live.semantifyr.org/", {
             language: "oxsts",

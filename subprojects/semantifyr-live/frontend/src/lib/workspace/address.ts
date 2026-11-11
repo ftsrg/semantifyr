@@ -48,6 +48,21 @@ export function addressedModel(address: LiveEditorAddress, defaultLanguageId: st
   return { languageId, flavorId, library: withLibrary?.[1], examples, example, compressedModel }
 }
 
+export type HistoryChange =
+  | 'push'
+  | 'replace'
+
+// A switch to an example is an entry of its own, so Back returns to the model before it; a file or a shared model takes the entry it opened in
+export function historyChangeOf(current: string, next: string, shared: boolean): HistoryChange | null {
+  const withoutFragment = (address: string): string => {
+    return address.replace(/#.*$/, '')
+  }
+  if (withoutFragment(current) === withoutFragment(next)) {
+    return null
+  }
+  return shared ? 'replace' : 'push'
+}
+
 export interface InitialDocument {
   flavor: LiveFlavor
   example: LiveExample
