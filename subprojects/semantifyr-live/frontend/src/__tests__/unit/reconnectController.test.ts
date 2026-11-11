@@ -13,7 +13,7 @@ import {
   type ReconnectInfo,
   type ReconnectStatus,
   type SocketClose,
-} from '../lib/session/reconnectController'
+} from '../../lib/session/reconnectController'
 
 const BACKOFF = [1000, 2000, 4000] as const
 

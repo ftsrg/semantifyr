@@ -6,10 +6,10 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { deploymentLinks, filterSessions, sessionsPerFlavor } from '../admin/adminView'
-import type { FlavorInfo } from '../lib/api'
-import { servedFlavors } from './fixtures/flavors'
-import { fakeSession } from './fixtures/sessions'
+import { deploymentLinks, filterSessions, sessionsPerFlavor } from '../../admin/adminView'
+import type { FlavorInfo } from '../../lib/api'
+import { servedFlavors } from '../fixtures/flavors'
+import { fakeSession } from '../fixtures/sessions'
 
 // Goal: what the filter matches, the per-flavour count and the sibling hosts of the deployment
 

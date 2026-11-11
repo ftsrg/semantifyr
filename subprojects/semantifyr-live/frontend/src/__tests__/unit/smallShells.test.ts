@@ -6,8 +6,8 @@
 
 import { beforeAll, describe, expect, it } from 'vitest'
 
-import { chooseShell } from '../shells/route'
-import { createShellState } from '../shells/shellState'
+import { chooseShell } from '../../shells/route'
+import { createShellState } from '../../shells/shellState'
 
 describe('the address and the width choose the shell', () => {
   it('opens the embed on either embed view, whatever the width', () => {
@@ -38,7 +38,7 @@ describe('on touch input the model is read-only until the edit control is presse
   })
 
   it('locks the model until editing, and locks it again when done', async () => {
-    const { modelLockOf } = await import('../shells/touch')
+    const { modelLockOf } = await import('../../shells/touch')
     const shell = createShellState()
     const lock = modelLockOf(shell)
     const unsubscribe = lock.subscribe(() => {})
@@ -52,7 +52,7 @@ describe('on touch input the model is read-only until the edit control is presse
   })
 
   it('edits at once once a hardware keyboard or a mouse shows itself', async () => {
-    const { modelLockOf, touchInput } = await import('../shells/touch')
+    const { modelLockOf, touchInput } = await import('../../shells/touch')
     const shell = createShellState()
     const lock = modelLockOf(shell)
     const unsubscribe = lock.subscribe(() => {})

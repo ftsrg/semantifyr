@@ -6,8 +6,8 @@
 
 import { describe, expect, it } from 'vitest'
 import { VerificationStatus, type VerificationCaseResult } from '@semantifyr/editor-common'
-import { createSysmlBridge, mapperProblems, SYSML_OXSTS_URI } from '../lib/session/sysmlBridge'
-import type { LspClient } from '../lib/verification/engine'
+import { createSysmlBridge, mapperProblems, SYSML_OXSTS_URI } from '../../lib/session/sysmlBridge'
+import type { LspClient } from '../../lib/verification/engine'
 
 const fileUri = 'file:///workspace/snippet.sysml'
 const sysmlRange = { start: { line: 4, character: 0 }, end: { line: 9, character: 1 } }

@@ -11,9 +11,9 @@ import {
   runAllVerifications,
   verifySingleCase,
   type LspClient,
-} from '../lib/verification/engine';
-import { wrapClientWithMetrics } from '../lib/session/lspMetrics';
-import { sampleCase } from './fixtures/cases';
+} from '../../lib/verification/engine';
+import { wrapClientWithMetrics } from '../../lib/session/lspMetrics';
+import { sampleCase } from '../fixtures/cases';
 
 describe('LSP cancellation plumbing', () => {
   it('createCancellationTokenSource produces a token that vscode-jsonrpc recognises', () => {

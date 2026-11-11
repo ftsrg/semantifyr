@@ -12,7 +12,7 @@ import {
   readPersistedBool,
   readPersistedSize,
   readPersistedString,
-} from '../lib/util/persistence'
+} from '../../lib/util/persistence'
 
 const KEY = 'persistence-test-key'
 

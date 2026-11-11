@@ -10,9 +10,9 @@ import {
   runAllVerifications,
   type LspClient,
   type VerificationState,
-} from '../lib/verification/engine'
-import { sampleCase } from './fixtures/cases'
-import { failedResult, passedResult } from './fixtures/verification-results'
+} from '../../lib/verification/engine'
+import { sampleCase } from '../fixtures/cases'
+import { failedResult, passedResult } from '../fixtures/verification-results'
 
 function holder(initial: VerificationState): {
   state: () => VerificationState

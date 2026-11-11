@@ -6,9 +6,9 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { createAdminStore } from '../admin/adminStore'
-import { ApiError, type AdminConfigResponse, type AdminStatusResponse, type InfoResponse, type LiveServerApi } from '../lib/api'
-import { fakeSession } from './fixtures/sessions'
+import { createAdminStore } from '../../admin/adminStore'
+import { ApiError, type AdminConfigResponse, type AdminStatusResponse, type InfoResponse, type LiveServerApi } from '../../lib/api'
+import { fakeSession } from '../fixtures/sessions'
 
 // Goal: the page's state follows the server: the polling and its pause, the refusal, the acting calls and their notices
 

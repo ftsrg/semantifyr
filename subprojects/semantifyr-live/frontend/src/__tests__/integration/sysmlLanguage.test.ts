@@ -5,9 +5,9 @@
  */
 
 import { describe, expect, it, vi } from 'vitest'
-import { liveFlavors } from '../examples'
-import { fakeModelDocuments } from './helpers/live'
-import { servedFlavors } from './fixtures/flavors'
+import { liveFlavors } from '../../examples'
+import { fakeModelDocuments } from '../helpers/live'
+import { servedFlavors } from '../fixtures/flavors'
 
 const workers = vi.hoisted(() => {
   return { started: 0, connecting: Promise.resolve(), sockets: [] as string[] }
@@ -17,7 +17,7 @@ vi.mock('vscode', () => {
   return {}
 })
 
-vi.mock('../lib/session/monaco', () => {
+vi.mock('../../lib/session/monaco', () => {
   return {
     initializeMonaco: async () => {},
     onDiagnosticsOf: () => {
@@ -42,7 +42,7 @@ vi.mock('../lib/session/monaco', () => {
   }
 })
 
-const { createLanguageRegistry } = await import('../lib/language/registry')
+const { createLanguageRegistry } = await import('../../lib/language/registry')
 
 describe('the SysML language', () => {
   it('is one unit of the registry beside a served unit per backend language, the library flavors under OXSTS', () => {

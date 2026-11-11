@@ -10,9 +10,9 @@ import {
   findFlavor,
   importedSysmlv2Manifest,
   liveFlavors,
-} from '../examples';
-import { SYSML_FLAVOR_INFO } from '../lib/session/sysmlBridge';
-import { servedFlavors } from './fixtures/flavors';
+} from '../../examples';
+import { SYSML_FLAVOR_INFO } from '../../lib/session/sysmlBridge';
+import { servedFlavors } from '../fixtures/flavors';
 
 const servedLiveFlavors = liveFlavors(servedFlavors);
 

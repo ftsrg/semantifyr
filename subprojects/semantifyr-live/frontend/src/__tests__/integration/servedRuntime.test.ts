@@ -5,12 +5,12 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { LanguageClientCallbacks } from '../lib/session/monaco'
-import { CloseCode } from '../lib/session/reconnectController'
-import type { ConnectionState } from '../lib/stores/connection'
-import { InitializationSteps } from '../lib/stores/initialization'
-import { liveFlavors } from '../examples'
-import { servedFlavors } from './fixtures/flavors'
+import type { LanguageClientCallbacks } from '../../lib/session/monaco'
+import { CloseCode } from '../../lib/session/reconnectController'
+import type { ConnectionState } from '../../lib/stores/connection'
+import { InitializationSteps } from '../../lib/stores/initialization'
+import { liveFlavors } from '../../examples'
+import { servedFlavors } from '../fixtures/flavors'
 
 const connections = vi.hoisted(() => {
   return {
@@ -21,7 +21,7 @@ const connections = vi.hoisted(() => {
   }
 })
 
-vi.mock('../lib/session/monaco', () => {
+vi.mock('../../lib/session/monaco', () => {
   return {
     initializeMonaco: async () => {},
     onDiagnosticsOf: (_uri: string, listener: () => void) => {
@@ -54,7 +54,7 @@ vi.mock('../lib/session/monaco', () => {
   }
 })
 
-const { createServedRuntime } = await import('../lib/language/servedRuntime')
+const { createServedRuntime } = await import('../../lib/language/servedRuntime')
 
 type Status = Pick<ConnectionState, 'status' | 'reason'>
 

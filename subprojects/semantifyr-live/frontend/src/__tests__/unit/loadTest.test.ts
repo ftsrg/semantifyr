@@ -8,11 +8,11 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { VerificationStatus, type VerificationCaseResult } from '@semantifyr/editor-common'
-import { declaredCases, tutorialStepModels } from '../__load__/models.ts'
-import { distribution, failures, summarize } from '../__load__/stats.ts'
-import { validateResult, type CaseRun, type RunningTracker, type StudentRun, type ValidationRun } from '../__load__/student.ts'
-import type { LspClient } from '../lib/verification/engine.ts'
-import { servedFlavors } from './fixtures/flavors.ts'
+import { declaredCases, tutorialStepModels } from '../../__load__/models.ts'
+import { distribution, failures, summarize } from '../../__load__/stats.ts'
+import { validateResult, type CaseRun, type RunningTracker, type StudentRun, type ValidationRun } from '../../__load__/student.ts'
+import type { LspClient } from '../../lib/verification/engine.ts'
+import { servedFlavors } from '../fixtures/flavors.ts'
 
 function caseRun(overrides: Partial<CaseRun>): CaseRun {
   return {

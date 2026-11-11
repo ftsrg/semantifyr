@@ -5,86 +5,25 @@
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { LibrariesResponse, VerificationCaseResult, VerificationCaseSpecification } from '@semantifyr/editor-common'
-import { libraryDocumentsOf } from '../lib/language/libraries'
-import type { LspClient } from '../lib/verification/engine'
-import { followTraceTabs } from '../trace/traceTabs'
-import { traceTabOf } from '../trace/TextView'
-import { createTestLive, type TestLive } from './helpers/live'
-import { failedResult, passedResult, sampleTrace } from './fixtures/verification-results'
+import type { VerificationCaseResult, VerificationCaseSpecification } from '@semantifyr/editor-common'
+import type { LspClient } from '../../lib/verification/engine'
+import { followTraceTabs } from '../../trace/traceTabs'
+import { traceTabOf } from '../../trace/TextView'
+import { createTestLive, type TestLive } from '../helpers/live'
+import { failedResult, passedResult, sampleTrace } from '../fixtures/verification-results'
 
-// Goal: the read-only documents offered are every file of the libraries of the language, and an open trace text shows the last trace of its case and nothing older
+// Goal: an open trace text shows the last trace of its case and nothing older
 
 vi.mock('vscode', () => {
   return {}
 })
 
-vi.mock('../lib/session/monaco', () => {
+vi.mock('../../lib/session/monaco', () => {
   return {}
 })
 
 vi.mock('monaco-editor', () => {
   return {}
-})
-
-const LISTING: LibrariesResponse = {
-  builtin: [
-    'semantifyr.oxsts',
-  ],
-  semantic: {
-    'oxsts-with-gamma-library': [
-      'Ports.oxsts',
-      'Statecharts.oxsts',
-    ],
-    'oxsts-with-sysmlv2-library': [
-      'States.oxsts',
-    ],
-    'gamma': [
-      'Ports.oxsts',
-      'Statecharts.oxsts',
-    ],
-  },
-  sysml: [
-    'Kernel Libraries/Kernel Data Type Library/ScalarValues.kerml',
-    'Systems Library/States.sysml',
-  ],
-}
-
-describe('the library documents of a language', () => {
-  it('lists every file of the standard, the builtin and the semantic library of SysML', () => {
-    expect(libraryDocumentsOf('sysml', LISTING).map((library) => {
-      return `${library.kind} ${library.uri} ${library.languageId}`
-    })).toEqual([
-      'standard-library file:///sysml-library/Kernel%20Libraries/Kernel%20Data%20Type%20Library/ScalarValues.kerml sysml',
-      'standard-library file:///sysml-library/Systems%20Library/States.sysml sysml',
-      'library file:///workspace/.semantifyr/builtin/semantifyr.oxsts oxsts',
-      'semantic-library file:///workspace/Library/States.oxsts oxsts',
-    ])
-  })
-
-  it('lists the builtin and the Gamma library for Gamma, and the builtin library alone for plain OXSTS', () => {
-    expect(libraryDocumentsOf('gamma', LISTING).map((library) => {
-      return library.uri
-    })).toEqual([
-      'file:///workspace/.semantifyr/builtin/semantifyr.oxsts',
-      'file:///workspace/Library/Ports.oxsts',
-      'file:///workspace/Library/Statecharts.oxsts',
-    ])
-    expect(libraryDocumentsOf('oxsts', LISTING).map((library) => {
-      return library.uri
-    })).toEqual([
-      'file:///workspace/.semantifyr/builtin/semantifyr.oxsts',
-    ])
-  })
-
-  it('offers each library by its entry file while the server lists none', () => {
-    expect(libraryDocumentsOf('oxsts-with-gamma-library', null).map((library) => {
-      return library.uri
-    })).toEqual([
-      'file:///workspace/.semantifyr/builtin/semantifyr.oxsts',
-      'file:///workspace/Library/Statecharts.oxsts',
-    ])
-  })
 })
 
 const CASE: VerificationCaseSpecification = {

@@ -4,20 +4,19 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { encodeCompressedBase64Url, liveEditorUrl } from '@semantifyr/editor-common'
 
-import { findExample } from '../examples'
-import type { LspClient } from '../lib/verification/engine'
-import { fixedFrame, frameColorMode, historyChangeOf, readAddress, resolveAddress } from '../lib/workspace/address'
-import { servedFlavors } from './fixtures/flavors'
-import { createTestLive, fakeRegistry, fakeRuntime, testFlavors, type TestLive } from './helpers/live'
+import { findExample } from '../../examples'
+import type { LspClient } from '../../lib/verification/engine'
+import { fixedFrame, frameColorMode, historyChangeOf, readAddress, resolveAddress } from '../../lib/workspace/address'
+import { fakeRegistry, fakeRuntime, testFlavors } from '../helpers/live'
 
 vi.mock('vscode', () => {
   return {}
 })
 
-vi.mock('../lib/session/monaco', () => {
+vi.mock('../../lib/session/monaco', () => {
   return {}
 })
 
@@ -110,29 +109,5 @@ describe('an address', () => {
     const link = await liveEditorUrl('https://live.semantifyr.org/', { language: 'oxsts', example: 'crossroads', library: 'gamma', case: 'a', verdicts: [['a', 'passed']] })
 
     expect(await resolved(link)).toMatchObject({ flavor: { id: 'oxsts-with-gamma-library' }, example: { id: 'crossroads' }, shared: false, results: { selectedCase: 'a' } })
-  })
-})
-
-describe('a page that moves to another address in place', () => {
-  let open: TestLive | null = null
-
-  afterEach(async () => {
-    await open?.live.dispose()
-    open = null
-  })
-
-  it('opens the model the new address names', async () => {
-    open = createTestLive(silent, servedFlavors)
-    open.live.start('/oxsts/basics')
-    await vi.waitFor(() => {
-      expect(open!.live.workspace.get().runtime).not.toBeNull()
-    })
-
-    open.live.openAddress(`/oxsts#model=${await encodeCompressedBase64Url('package linked')}`)
-
-    await vi.waitFor(() => {
-      expect(open!.live.currentText()).toBe('package linked')
-    })
-    expect(open.live.documents.get().get(open.live.workspace.get().documentKey!)?.shared).toBe(true)
   })
 })

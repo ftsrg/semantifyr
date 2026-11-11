@@ -6,9 +6,9 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { VerificationCaseSpecification } from '@semantifyr/editor-common'
-import { finishStep, initializationOf, InitializationSteps, isInitialized, startStep, type InitializationState } from '../lib/stores/initialization'
-import type { LspClient } from '../lib/verification/engine'
-import { createTestLive, type TestLive } from './helpers/live'
+import { finishStep, initializationOf, InitializationSteps, isInitialized, startStep, type InitializationState } from '../../lib/stores/initialization'
+import type { LspClient } from '../../lib/verification/engine'
+import { createTestLive, type TestLive } from '../helpers/live'
 
 // Goal: a session's initialization always ends with the cases listed or with the reason they are not, whatever the session answers to the discovery
 
@@ -16,7 +16,7 @@ vi.mock('vscode', () => {
   return {}
 })
 
-vi.mock('../lib/session/monaco', () => {
+vi.mock('../../lib/session/monaco', () => {
   return {}
 })
 

@@ -5,8 +5,8 @@
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { createStore } from '../lib/stores/store'
-import { changeSettings, createSettingsStore, nextTheme } from '../lib/stores/settings'
+import { createStore } from '../../lib/stores/store'
+import { changeSettings, createSettingsStore, nextTheme } from '../../lib/stores/settings'
 import {
   currentStep,
   failStep,
@@ -14,7 +14,7 @@ import {
   initializationOf,
   isInitialized,
   startStep,
-} from '../lib/stores/initialization'
+} from '../../lib/stores/initialization'
 
 describe('createStore', () => {
   it('notifies a subscriber of a change and not of a set to the same value', () => {

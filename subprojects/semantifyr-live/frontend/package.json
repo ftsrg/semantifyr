@@ -7,6 +7,8 @@
     "typecheck:watch": "tsc --watch",
     "lint": "eslint",
     "test": "vitest run",
+    "test:unit": "vitest run src/__tests__/unit",
+    "test:integration": "vitest run src/__tests__/integration",
     "test:watch": "vitest",
     "smoke": "vitest run --config vitest.smoke.config.ts",
     "screens": "vitest run --config vitest.screen.config.ts",

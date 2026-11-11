@@ -7,24 +7,24 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { VerificationCaseSpecification } from '@semantifyr/editor-common'
 
-import { editorColorsFrom, toHexColor } from '../lib/session/editorTheme'
-import { fileUriOfLibrary, isLibraryFileUri, libraryUriOf } from '../lib/session/readOnlyDocuments'
-import { connectionConnected, connectionLost, INITIAL_CONNECTION } from '../lib/stores/connection'
-import { finishThrough, initializationOf, InitializationSteps, startStep } from '../lib/stores/initialization'
-import { createDemandStore } from '../lib/stores/store'
-import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
-import { caseRowOf, countsOf, countsPhrase } from '../lib/workspace/caseRows'
-import { connectionView } from '../lib/workspace/connectionView'
-import { createDocumentTabs } from '../lib/workspace/documentTabs'
-import { libraryTabOf } from '../lib/workspace/libraryTabs'
-import { portfolioChoices, portfolioName } from '../lib/workspace/portfolioChoices'
-import { CLOSING_LINE_MS, shellStatus, stepTimeText, type ShellStatusInput } from '../lib/workspace/shellStatus'
+import { editorColorsFrom, toHexColor } from '../../lib/session/editorTheme'
+import { fileUriOfLibrary, isLibraryFileUri, libraryUriOf } from '../../lib/session/readOnlyDocuments'
+import { connectionConnected, connectionLost, INITIAL_CONNECTION } from '../../lib/stores/connection'
+import { finishThrough, initializationOf, InitializationSteps, startStep } from '../../lib/stores/initialization'
+import { createDemandStore } from '../../lib/stores/store'
+import type { VerificationCaseState, VerificationState } from '../../lib/verification/engine'
+import { caseRowOf, countsOf, countsPhrase } from '../../lib/workspace/caseRows'
+import { connectionView } from '../../lib/workspace/connectionView'
+import { createDocumentTabs } from '../../lib/workspace/documentTabs'
+import { libraryTabOf } from '../../lib/workspace/libraryTabs'
+import { portfolioChoices, portfolioName } from '../../lib/workspace/portfolioChoices'
+import { CLOSING_LINE_MS, shellStatus, stepTimeText, type ShellStatusInput } from '../../lib/workspace/shellStatus'
 
 vi.mock('vscode', () => {
   return {}
 })
 
-vi.mock('../lib/session/monaco', () => {
+vi.mock('../../lib/session/monaco', () => {
   return {}
 })
 

@@ -6,17 +6,17 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { VerificationCaseResult, VerificationCaseSpecification } from '@semantifyr/editor-common'
-import type { LspClient, VerificationState } from '../lib/verification/engine'
-import { NO_VERIFICATION } from '../lib/workspace/verification'
-import { createTestLive, testFlavors, type TestLive } from './helpers/live'
-import { failedResult, passedResult } from './fixtures/verification-results'
-import { servedFlavors } from './fixtures/flavors'
+import type { LspClient, VerificationState } from '../../lib/verification/engine'
+import { NO_VERIFICATION } from '../../lib/workspace/verification'
+import { createTestLive, testFlavors, type TestLive } from '../helpers/live'
+import { failedResult, passedResult } from '../fixtures/verification-results'
+import { servedFlavors } from '../fixtures/flavors'
 
 vi.mock('vscode', () => {
   return {}
 })
 
-vi.mock('../lib/session/monaco', () => {
+vi.mock('../../lib/session/monaco', () => {
   return {}
 })
 

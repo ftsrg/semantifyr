@@ -5,7 +5,7 @@
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { isPageOutdated } from '../lib/util/outdated';
+import { isPageOutdated } from '../../lib/util/outdated';
 
 function servePage(html: string, status = 200): ReturnType<typeof vi.fn> {
   const fetchMock = vi.fn(() => Promise.resolve(new Response(html, { status })));

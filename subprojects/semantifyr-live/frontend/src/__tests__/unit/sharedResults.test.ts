@@ -6,16 +6,16 @@
 
 import { describe, expect, it } from 'vitest'
 
-import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
-import { caseRowOf } from '../lib/workspace/caseRows'
+import type { VerificationCaseState, VerificationState } from '../../lib/verification/engine'
+import { caseRowOf } from '../../lib/workspace/caseRows'
 import {
   compareWithShared,
   rowsWithSharedVerdicts,
   sharedResultsOf,
   verdictsOf,
   type SharedResults,
-} from '../lib/workspace/sharedResults'
-import { sampleCase } from './fixtures/cases'
+} from '../../lib/workspace/sharedResults'
+import { sampleCase } from '../fixtures/cases'
 
 // Goal: the results part of a link carries the case verdicts and nothing else, and a receiver sees the sharer's verdicts
 // only until its own run gives a case a result, flagging the results that differ
