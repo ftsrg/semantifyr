@@ -182,9 +182,7 @@ function Bottom({ pane, onPane, onProblems }: { pane: Pane, onPane: (pane: Pane)
         {tab('trace', 'diagram', 'Trace')}
         <VerifyButton
           onRun={() => {
-            if (pane === 'trace') {
-              onPane('results')
-            }
+            onPane('results')
           }}
         />
       </nav>

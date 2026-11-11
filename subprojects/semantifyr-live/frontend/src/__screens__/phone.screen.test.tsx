@@ -129,6 +129,16 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       expect(count('.phone-bar .button-cancel')).toBe(1)
     },
   },
+  'verify-all': {
+    seed: { verification: NOT_RUN },
+    act: async () => {
+      await tap('.phone-bar .button-primary')
+    },
+    expectState: () => {
+      expect(visiblePanes()).toEqual(['Results'])
+      expect(count('.phone-case')).toBe(2)
+    },
+  },
   'results': {
     seed: { verification: RESULTS, selection: BARRIER.id },
     act: async () => {
