@@ -59,7 +59,7 @@ class SysMLLibraryRuleTests {
     ) {
         val outputDirectory = artifactRoot.resolve(variant.name.lowercase())
         val extractionDirectory = outputDirectory.resolve("library").createDirectories()
-        val library = ClasspathBasedOxstsLibrary(javaClass.classLoader, variant.resourcePrefix, extractionDirectory)
+        val library = ClasspathBasedOxstsLibrary(javaClass.classLoader, variant.name.lowercase(), extractionDirectory)
         val context = loader.startContext()
             .loadLibraryPaths(listOf(library.extractedLibraryPath))
             .loadModelPaths(listOf(fixture))
