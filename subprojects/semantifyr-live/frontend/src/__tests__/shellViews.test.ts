@@ -113,7 +113,20 @@ describe('the status line', () => {
     const timing = { key: 'k', caseId: null, startedAt: 6_300, finishedAt: 10_000 }
     expect(statusOf({ verification: done, timing })).toBe('Done in 3.7 s: 1 failed, 1 passed')
     expect(statusOf({ verification: done, timing, now: 10_000 + CLOSING_LINE_MS })).toBe('Ready: 2 verification cases')
-    expect(statusOf({ verification: done, timing: { ...timing, caseId: 'example::b' } })).toBe('Done in 3.7 s: passed')
+    expect(statusOf({ verification: done, timing: { ...timing, caseId: 'example::b' } })).toBe('Done in 3.7 s: 1 passed')
+  })
+
+  it('names the case of a single run without a position', () => {
+    const running: VerificationState = { phase: 'running', discovery: 'discovered', cases: [result('a', 'stale'), result('b', 'running')] }
+    const timing = { key: 'k', caseId: 'example::b', startedAt: 6_300, finishedAt: null }
+    expect(shellStatus({ ...statusInput(), verification: running, timing })).toMatchObject({ kind: 'busy', caseName: 'b', after: '' })
+  })
+
+  it('says the results are outdated before it says the model is unsaved', () => {
+    const outdated: VerificationState = { phase: 'done', discovery: 'discovered', cases: [result('a', 'failed', { outdated: true }), result('b', 'passed', { outdated: true })] }
+    expect(shellStatus({ ...statusInput(), verification: outdated, unsaved: true })).toMatchObject({ text: 'The model changed: 2 results are outdated' })
+    const fresh: VerificationState = { phase: 'done', discovery: 'discovered', cases: [result('a', 'failed')] }
+    expect(shellStatus({ ...statusInput(), verification: fresh, unsaved: true })).toMatchObject({ unsaved: true })
   })
 
   it('says why Verify all did not run, and what initializes', () => {

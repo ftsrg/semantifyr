@@ -41,6 +41,8 @@ export interface ShellStatus {
   text: string
   // a case name the line names, set in code
   caseName?: string
+  // the line says how the unsaved model is saved
+  unsaved?: boolean
   // the text after the case name
   after?: string
   action?: StatusAction
@@ -57,6 +59,8 @@ export interface ShellStatusInput {
   // Verify all was pressed with errors in the model
   blockedErrors: number | null
   now: number
+  // the model has edits no file holds
+  unsaved?: boolean
 }
 
 function lowerFirst(text: string): string {
@@ -118,7 +122,8 @@ function connectionStatus(connection: ConnectionState, now: number): ShellStatus
   }
 }
 
-function runningStatus(verification: VerificationState): ShellStatus {
+// a single run names its case, Verify all its position among the cases
+function runningStatus(verification: VerificationState, timing: RunTiming | null): ShellStatus {
   const index = verification.cases.findIndex((caseState) => {
     return caseState.status === 'running'
   })
@@ -126,10 +131,8 @@ function runningStatus(verification: VerificationState): ShellStatus {
   if (!running) {
     return { kind: 'busy', text: verification.message ?? 'Verifying...' }
   }
-  const waiting = verification.cases.filter((caseState) => {
-    return caseState.status === 'queued' || caseState.status === 'running'
-  }).length
-  const position = waiting > 1 || index > 0 ? `, ${index + 1} of ${verification.cases.length}` : ''
+  const single = timing !== null && timing.caseId !== null
+  const position = single ? '' : `, ${index + 1} of ${verification.cases.length}`
   const progress = verification.progress ? ` - ${verification.progress}` : ''
   return { kind: 'busy', text: 'Verifying ', caseName: caseRowOf(running).name, after: `${position}${progress}` }
 }
@@ -142,26 +145,26 @@ function closingStatus(verification: VerificationState, timing: RunTiming): Shel
     return null
   }
   const time = formatSeconds(timing.finishedAt - timing.startedAt)
-  if (timing.caseId !== null) {
-    const verified = verification.cases.find((caseState) => {
-      return caseState.caseInfo.id === timing.caseId
-    })
-    const word = verified ? caseRowOf(verified).word.toLowerCase() : 'done'
-    return { kind: 'done', text: `Done in ${time}: ${word}` }
-  }
-  const counts = countsOf(verification.cases.map(caseRowOf))
-  return { kind: 'done', text: `Done in ${time}: ${countsPhrase(counts)}` }
+  const verified = verification.cases.filter((caseState) => {
+    return timing.caseId === null || caseState.caseInfo.id === timing.caseId
+  })
+  const phrase = countsPhrase(countsOf(verified.map(caseRowOf)))
+  return { kind: 'done', text: phrase === '' ? `Done in ${time}` : `Done in ${time}: ${phrase}` }
 }
 
-function restStatus(verification: VerificationState): ShellStatus {
-  if (verification.discovery !== 'discovered' && verification.cases.length === 0) {
-    return { kind: 'idle', text: 'Ready' }
-  }
+// outdated results say more than unsaved edits, which the tab's mark shows anyway
+function restStatus(verification: VerificationState, unsaved: boolean): ShellStatus {
   const outdated = verification.cases.filter((caseState) => {
     return caseState.outdated === true
   }).length
   if (outdated > 0) {
     return { kind: 'idle', text: `The model changed: ${plural(outdated, 'result')} ${outdated === 1 ? 'is' : 'are'} outdated` }
+  }
+  if (unsaved) {
+    return { kind: 'idle', text: 'Unsaved changes.', unsaved: true }
+  }
+  if (verification.discovery !== 'discovered' && verification.cases.length === 0) {
+    return { kind: 'idle', text: 'Ready' }
   }
   const count = verification.cases.length
   return { kind: 'idle', text: count === 0 ? 'Ready: no verification cases' : `Ready: ${plural(count, 'verification case')}` }
@@ -173,7 +176,7 @@ export function shellStatus(input: ShellStatusInput): ShellStatus {
     return { kind: 'warning', text: 'The server is not answering. Retrying. The editor works; verifying needs a session.' }
   }
   if (verification.phase === 'running') {
-    return runningStatus(verification)
+    return runningStatus(verification, timing)
   }
   const connectionProblem = connectionStatus(connection, input.now)
   if (connectionProblem) {
@@ -193,5 +196,5 @@ export function shellStatus(input: ShellStatusInput): ShellStatus {
       return closing
     }
   }
-  return restStatus(verification)
+  return restStatus(verification, input.unsaved ?? false)
 }

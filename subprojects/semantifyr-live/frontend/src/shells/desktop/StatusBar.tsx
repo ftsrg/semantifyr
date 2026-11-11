@@ -59,6 +59,7 @@ function StatusMessage(): React.JSX.Element {
     timing,
     blockedErrors: blocked ? errors : null,
     now,
+    unsaved,
   })
   const act = (): void => {
     if (status.action === 'connect' || status.action === 'reconnect') {
@@ -73,7 +74,7 @@ function StatusMessage(): React.JSX.Element {
     <span className={`status-message is-${status.kind}`} role="status" data-testid="status-message">
       <StatusIcon status={status} />
       <span>
-        {unsaved && status.kind === 'idle' ? <UnsavedLine /> : status.text}
+        {status.unsaved === true ? <UnsavedLine /> : status.text}
         {status.caseName !== undefined ? <span className="case-ref">{status.caseName}</span> : null}
         {status.after}
         {status.action !== undefined
@@ -101,7 +102,7 @@ function ProblemCounts(): React.JSX.Element {
   const warnings = listed.length - errors
   return (
     <Popover.Root>
-      <Popover.Trigger className={`problem-counts${listed.length > 0 ? ' has-problems' : ''}`} title="Problems in the model" aria-label={`Problems in the model: ${errors} errors, ${warnings} warnings`}>
+      <Popover.Trigger className={`problem-counts${listed.length > 0 ? ' has-problems' : ''}`} title="Problems in the model" aria-label={`Problems in the model: ${errors} ${errors === 1 ? 'error' : 'errors'}, ${warnings} ${warnings === 1 ? 'warning' : 'warnings'}`}>
         <Icon name="error" size="small" />
         <span>{errors}</span>
         <Icon name="alert" size="small" />
@@ -146,7 +147,8 @@ export function StatusBar(): React.JSX.Element {
   })
   const flavor = useFlavor(live)
   const language = useLanguage(live)
-  const flavour = flavor && flavor.id !== flavor.languageId ? `, ${flavourText(flavor).label.toLowerCase()}` : ''
+  const flavourLabel = flavor ? flavourText(flavor).label : ''
+  const flavour = flavor && flavor.id !== flavor.languageId ? `, ${flavourLabel.charAt(0).toLowerCase()}${flavourLabel.slice(1)}` : ''
   return (
     <footer className="statusbar">
       <StatusMessage />
