@@ -6,7 +6,7 @@
 
 import type { ConnectionState } from '../stores/connection'
 import { areCasesKnown, currentStep, isInitialized, type InitializationState, type InitializationStep } from '../stores/initialization'
-import type { VerificationCaseState, VerificationState } from '../verification/engine'
+import type { RunningInterval, VerificationCaseState, VerificationState } from '../verification/engine'
 import { caseRowOf, countsOf, countsPhrase, formatSeconds } from './caseRows'
 import type { CatalogStatus } from './live'
 import type { QueuedVerification, RunTiming } from './verification'
@@ -168,7 +168,41 @@ function serverBusyStatus(wait: ServerWait): ShellStatus {
   }
 }
 
-// names a case the server runs, or one sent and not yet reported, so the line does not flicker; Verify all says how many are done
+// the time the server ran at least one of them: the length of the union of the intervals
+export function runningTimeOf(intervals: readonly RunningInterval[]): number | null {
+  const [first, ...rest] = [...intervals].sort((left, right) => {
+    return left.start - right.start
+  })
+  if (first === undefined) {
+    return null
+  }
+  let total = 0
+  let { start, end } = first
+  for (const interval of rest) {
+    if (interval.start > end) {
+      total += end - start
+      start = interval.start
+    }
+    end = Math.max(end, interval.end)
+  }
+  return total + end - start
+}
+
+function casesOfRun(verification: VerificationState, timing: RunTiming | null): VerificationCaseState[] {
+  return verification.cases.filter((caseState) => {
+    return timing?.caseId == null || caseState.caseInfo.id === timing.caseId
+  })
+}
+
+function cancelledInRun(caseState: VerificationCaseState, timing: RunTiming | null): boolean {
+  return caseState.cancelledAt !== undefined && caseState.cancelledAt >= (timing?.startedAt ?? 0)
+}
+
+function cancelledPhrase(count: number): string {
+  return count === 0 ? '' : `${count} cancelled`
+}
+
+// names a case the server runs, or one sent and not yet reported, so the line does not flicker; Verify all says how many are done and cancelled
 function runningStatus(verification: VerificationState, timing: RunTiming | null): ShellStatus {
   const reportedRunning = verification.cases.filter((caseState) => {
     return caseState.status === 'running' && caseState.serverState === 'Running'
@@ -185,12 +219,19 @@ function runningStatus(verification: VerificationState, timing: RunTiming | null
     const progress = verification.progress ? ` - ${verification.progress}` : ''
     return { kind: 'busy', text: 'Verifying ', caseName: caseRowOf(named).name, after: `${more}${progress}` }
   }
-  const done = verification.cases.filter((caseState) => {
-    return caseState.status !== 'running' && caseState.status !== 'queued'
+  const cancelled = verification.cases.filter((caseState) => {
+    return cancelledInRun(caseState, timing)
   }).length
-  return { kind: 'busy', text: 'Verifying ', caseName: caseRowOf(named).name, after: `${more}, ${done} of ${verification.cases.length} done` }
+  const done = verification.cases.filter((caseState) => {
+    return caseState.status !== 'running' && caseState.status !== 'queued' && !cancelledInRun(caseState, timing)
+  }).length
+  const counted = [`${done} of ${verification.cases.length} done`, cancelledPhrase(cancelled)].filter((part) => {
+    return part !== ''
+  }).join(', ')
+  return { kind: 'busy', text: 'Verifying ', caseName: caseRowOf(named).name, after: `${more}, ${counted}` }
 }
 
+// the run's time is the server's running time, never the wait in its queue
 function closingStatus(verification: VerificationState, timing: RunTiming): ShellStatus | null {
   if (verification.phase === 'cancelled') {
     return { kind: 'done', text: 'Verification cancelled' }
@@ -198,12 +239,21 @@ function closingStatus(verification: VerificationState, timing: RunTiming): Shel
   if (verification.phase !== 'done' || timing.finishedAt === null) {
     return null
   }
-  const time = formatSeconds(timing.finishedAt - timing.startedAt)
-  const verified = verification.cases.filter((caseState) => {
-    return timing.caseId === null || caseState.caseInfo.id === timing.caseId
+  const verified = casesOfRun(verification, timing)
+  const ran = runningTimeOf(verified.flatMap((caseState) => {
+    return caseState.ranDuring !== undefined && caseState.ranDuring.start >= timing.startedAt ? [caseState.ranDuring] : []
+  }))
+  const cancelled = verified.filter((caseState) => {
+    return cancelledInRun(caseState, timing)
   })
-  const phrase = countsPhrase(countsOf(verified.map(caseRowOf)))
-  return { kind: 'done', text: phrase === '' ? `Done in ${time}` : `Done in ${time}: ${phrase}` }
+  const answered = verified.filter((caseState) => {
+    return !cancelledInRun(caseState, timing)
+  })
+  const phrase = [countsPhrase(countsOf(answered.map(caseRowOf))), cancelledPhrase(cancelled.length)].filter((part) => {
+    return part !== ''
+  }).join(', ')
+  const done = ran === null ? 'Done' : `Done in ${formatSeconds(ran)}`
+  return { kind: 'done', text: phrase === '' ? done : `${done}: ${phrase}` }
 }
 
 // outdated results say more than unsaved edits, which the tab's mark shows anyway

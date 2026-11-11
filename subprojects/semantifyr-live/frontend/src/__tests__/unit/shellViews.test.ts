@@ -18,7 +18,7 @@ import { connectionView } from '../../lib/workspace/connectionView'
 import { createDocumentTabs } from '../../lib/workspace/documentTabs'
 import { libraryTabOf } from '../../lib/workspace/libraryTabs'
 import { portfolioChoices, portfolioName } from '../../lib/workspace/portfolioChoices'
-import { CLOSING_LINE_MS, shellStatus, stepTimeText, type ShellStatusInput } from '../../lib/workspace/shellStatus'
+import { CLOSING_LINE_MS, runningTimeOf, shellStatus, stepTimeText, type ShellStatusInput } from '../../lib/workspace/shellStatus'
 
 vi.mock('vscode', () => {
   return {}
@@ -106,8 +106,8 @@ describe('a case row', () => {
   })
 
   it('times a result by the server\'s metrics, else from when the server ran it', () => {
-    expect(caseRowOf({ caseInfo: caseAt('a', 1), status: 'timeout', resultStatus: 'timeout', ranMilliseconds: 60_400 })).toMatchObject({ time: '60 s' })
-    expect(caseRowOf(result('a', 'passed', { ranMilliseconds: 60_400 }))).toMatchObject({ time: '2.9 s' })
+    expect(caseRowOf({ caseInfo: caseAt('a', 1), status: 'timeout', resultStatus: 'timeout', ranDuring: { start: 1_000, end: 61_400 } })).toMatchObject({ time: '60 s' })
+    expect(caseRowOf(result('a', 'passed', { ranDuring: { start: 1_000, end: 61_400 } }))).toMatchObject({ time: '2.9 s' })
   })
 
   it('marks a validation validating only while the server runs it', () => {
@@ -129,15 +129,37 @@ describe('a case row', () => {
 })
 
 describe('the status line', () => {
-  it('reports a run with how many cases are done, closes it on its time and counts, and returns to rest', () => {
+  it('reports a run with how many cases are done, closes it on the time the server ran its cases and its counts, and returns to rest', () => {
     const running: VerificationState = { phase: 'running', discovery: 'discovered', cases: [result('a', 'running'), result('b', 'passed')] }
     expect(shellStatus({ ...statusInput(), verification: running })).toMatchObject({ kind: 'busy', caseName: 'a', after: ', 1 of 2 done' })
 
-    const done: VerificationState = { phase: 'done', discovery: 'discovered', cases: [result('a', 'failed'), result('b', 'passed')] }
+    const done: VerificationState = { phase: 'done', discovery: 'discovered', cases: [result('a', 'failed', { ranDuring: { start: 7_000, end: 8_000 } }), result('b', 'passed', { ranDuring: { start: 7_500, end: 9_200 } })] }
     const timing = { key: 'k', caseId: null, startedAt: 6_300, finishedAt: 10_000 }
-    expect(statusOf({ verification: done, timing })).toBe('Done in 3.7 s: 1 failed, 1 passed')
+    expect(statusOf({ verification: done, timing })).toBe('Done in 2.2 s: 1 failed, 1 passed')
     expect(statusOf({ verification: done, timing, now: 10_000 + CLOSING_LINE_MS })).toBe('Ready: 2 verification cases')
-    expect(statusOf({ verification: done, timing: { ...timing, caseId: 'example::b' } })).toBe('Done in 3.7 s: 1 passed')
+    expect(statusOf({ verification: done, timing: { ...timing, caseId: 'example::b' } })).toBe('Done in 1.7 s: 1 passed')
+  })
+
+  it('times a run by the union of its cases\' running intervals, a gap where everything waited not counted, and not at all when nothing ran', () => {
+    expect(runningTimeOf([{ start: 0, end: 3_000 }, { start: 1_000, end: 2_000 }, { start: 2_500, end: 4_000 }])).toBe(4_000)
+    expect(runningTimeOf([{ start: 0, end: 1_000 }, { start: 5_000, end: 6_500 }])).toBe(2_500)
+    expect(runningTimeOf([])).toBeNull()
+
+    const neverRan: VerificationState = { phase: 'done', discovery: 'discovered', cases: [{ caseInfo: caseAt('a', 1), status: 'errored', resultStatus: 'errored' }] }
+    expect(statusOf({ verification: neverRan, timing: { key: 'k', caseId: null, startedAt: 6_300, finishedAt: 10_000 } })).toBe('Done: 1 error')
+  })
+
+  it('counts the cases cancelled in a run apart from the done ones, while it runs and when it closes', () => {
+    const timing = { key: 'k', caseId: null, startedAt: 6_300, finishedAt: null }
+    const withoutCancel: VerificationState = { phase: 'running', discovery: 'discovered', cases: [result('a', 'running', { serverState: 'Running' }), result('b', 'passed'), result('c', 'queued')] }
+    expect(shellStatus({ ...statusInput(), verification: withoutCancel, timing })).toMatchObject({ caseName: 'a', after: ', 1 of 3 done' })
+    const cancelledC = { caseInfo: caseAt('c', 1), status: 'stale' as const, message: 'Verification cancelled', cancelledAt: 7_000 }
+    const cancelledB = result('b', 'passed', { cancelledAt: 7_000 })
+    const withCancel: VerificationState = { ...withoutCancel, cases: [result('a', 'running', { serverState: 'Running' }), cancelledB, cancelledC] }
+    expect(shellStatus({ ...statusInput(), verification: withCancel, timing })).toMatchObject({ caseName: 'a', after: ', 0 of 3 done, 2 cancelled' })
+
+    const closed: VerificationState = { phase: 'done', discovery: 'discovered', cases: [result('a', 'failed', { ranDuring: { start: 7_000, end: 9_000 } }), cancelledB, cancelledC] }
+    expect(statusOf({ verification: closed, timing: { ...timing, finishedAt: 10_000 } })).toBe('Done in 2.0 s: 1 failed, 2 cancelled')
   })
 
   it('names the case of a single run without a position', () => {

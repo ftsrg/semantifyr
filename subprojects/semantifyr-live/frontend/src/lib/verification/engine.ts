@@ -75,8 +75,10 @@ export interface VerificationCaseState {
   validationServerState?: ServerState
   // when the server was first reported running the case, by the page's clock
   runningSince?: number
-  // the time from runningSince to the result, for a result whose metrics give none
-  ranMilliseconds?: number
+  // from runningSince to the result or the cancel of the run that left this state
+  ranDuring?: RunningInterval
+  // when the case was cancelled, by the page's clock
+  cancelledAt?: number
   metrics?: VerificationMetrics
   backendId?: string
   portfolioId?: string
@@ -88,6 +90,11 @@ export interface VerificationCaseState {
   // the model was edited after the result shown was verified
   outdated?: boolean
   editedDuringRun?: boolean
+}
+
+export interface RunningInterval {
+  start: number
+  end: number
 }
 
 export type VerificationPhase = 'idle' | 'running' | 'done' | 'error' | 'cancelled'
@@ -129,16 +136,21 @@ interface ProgressParams {
 type StateUpdater = (next: VerificationState | ((previous: VerificationState) => VerificationState)) => void
 
 function runningCase(caseState: VerificationCaseState): VerificationCaseState {
-  const { serverState: _serverState, runningSince: _runningSince, ...rest } = caseState
+  const { serverState: _serverState, runningSince: _runningSince, ranDuring: _ranDuring, cancelledAt: _cancelledAt, ...rest } = caseState
   return { ...rest, status: 'running', editedDuringRun: false }
 }
 
+function ranDuringOf(caseState: VerificationCaseState, end: number): { ranDuring?: RunningInterval } {
+  return caseState.runningSince === undefined ? {} : { ranDuring: { start: caseState.runningSince, end } }
+}
+
 function cancelledCase(caseState: VerificationCaseState): VerificationCaseState {
+  const now = Date.now()
   if (caseState.resultStatus === undefined) {
-    return { caseInfo: caseState.caseInfo, status: 'stale', message: 'Verification cancelled' }
+    return { caseInfo: caseState.caseInfo, status: 'stale', message: 'Verification cancelled', cancelledAt: now, ...ranDuringOf(caseState, now) }
   }
   const { editedDuringRun: _editedDuringRun, serverState: _serverState, runningSince: _runningSince, ...result } = caseState
-  return { ...result, status: caseState.resultStatus }
+  return { ...result, status: caseState.resultStatus, cancelledAt: now, ...ranDuringOf(caseState, now) }
 }
 
 function isWaiting(caseState: VerificationCaseState): boolean {
@@ -346,10 +358,9 @@ function applyVerifyOutcome(
   outcome: VerifyOutcome,
   portfolioId: string | undefined,
 ): VerificationCaseState {
-  const { runningSince } = caseState
   return {
     caseInfo: caseState.caseInfo,
-    ...(outcome.metrics?.totalDuration === undefined && runningSince !== undefined ? { ranMilliseconds: Date.now() - runningSince } : {}),
+    ...ranDuringOf(caseState, Date.now()),
     status: outcome.status,
     resultStatus: outcome.status,
     outdated: caseState.editedDuringRun === true,

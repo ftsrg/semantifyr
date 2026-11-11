@@ -257,7 +257,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     view: 'embed',
     seed: justDone,
     expectState: () => {
-      expect(text('[data-testid=status-message]')).toMatch(/Done in 2\.7 s: 1 failed, 1 passed/)
+      expect(text('[data-testid=status-message]')).toMatch(/Done in 2\.9 s: 1 failed, 1 passed/)
       expectStatusLines(2)
       for (const caseInfo of [BARRIER, TWO_TRAINS]) {
         const name = `.embed-case[data-case="${caseInfo.id}"] .case-name`

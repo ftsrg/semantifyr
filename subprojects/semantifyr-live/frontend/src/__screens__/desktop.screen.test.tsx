@@ -158,7 +158,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       expect(count('.case-row.status-failed')).toBe(1)
       expect(count('.case-row.status-passed')).toBe(1)
       expect(text('.trace-title')).toContain(BARRIER.id)
-      expect(text('[data-testid=status-message]')).toContain('1 failed, 1 passed')
+      expect(text('[data-testid=status-message]')).toBe('Done in 2.9 s: 1 failed, 1 passed')
     },
   },
   'outdated': {

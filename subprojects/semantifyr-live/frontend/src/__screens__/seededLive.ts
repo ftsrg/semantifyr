@@ -17,6 +17,7 @@ import { connectionConnected, INITIAL_CONNECTION, type ConnectionState } from '.
 import { failStep, finishStep, initializationOf, InitializationSteps, startStep, type InitializationState } from '../lib/stores/initialization'
 import { createSettingsStore, type Settings } from '../lib/stores/settings'
 import { constantStore, createStore } from '../lib/stores/store'
+import { isoDurationToMs } from '../lib/util/duration'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
 import { createDocumentTabs, type ReadOnlyDocument } from '../lib/workspace/documentTabs'
 import { documentKey, documentUri, type AddressProblem, type Catalog, type DocumentRecord, type Live } from '../lib/workspace/live'
@@ -188,6 +189,17 @@ function runtimeOf(flavor: LiveFlavor, connection: ConnectionState, steps: Initi
 }
 
 // a Live over stores set to one state, with actions that do nothing
+// a seeded run's cases ran together from its start, each for the time its metrics give
+function ranFromStart(state: VerificationState, startedAt: number): VerificationState {
+  return {
+    ...state,
+    cases: state.cases.map((caseState) => {
+      const duration = caseState.metrics?.totalDuration
+      return duration === undefined ? caseState : { ...caseState, ranDuring: { start: startedAt, end: startedAt + isoDurationToMs(duration) } }
+    }),
+  }
+}
+
 export function seedLive(seed: Seed): Seeded {
   const registry = createLanguageRegistry(liveFlavors(servedFlavors))
   const flavor = registry.flavorOf(seed.flavorId ?? 'sysml') ?? registry.flavors[0]
@@ -212,7 +224,7 @@ export function seedLive(seed: Seed): Seeded {
   }
   const verification = new Map<string, VerificationState>()
   if (seed.verification) {
-    verification.set(key, seed.verification)
+    verification.set(key, seed.timing ? ranFromStart(seed.verification, seed.timing.startedAt) : seed.verification)
   }
   const shell = createShellState()
   shell.verifyBlocked.set(seed.verifyBlocked ?? false)

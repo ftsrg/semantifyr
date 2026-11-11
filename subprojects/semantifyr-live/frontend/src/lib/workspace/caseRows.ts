@@ -147,7 +147,8 @@ function timeOf(caseState: VerificationCaseState): string | null {
   if (duration !== undefined) {
     return formatSeconds(isoDurationToMs(duration))
   }
-  return caseState.ranMilliseconds === undefined ? null : formatSeconds(caseState.ranMilliseconds)
+  const ran = caseState.ranDuring
+  return ran === undefined || caseState.cancelledAt !== undefined ? null : formatSeconds(ran.end - ran.start)
 }
 
 export function caseRowOf(caseState: VerificationCaseState): CaseRow {
