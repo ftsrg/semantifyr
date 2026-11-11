@@ -8,7 +8,7 @@ import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
 import { editorKeysOf } from '../testBrowser'
-import { LIVE_URL, SLOW, test, token, verifyAll } from './browser'
+import { clickToken, LIVE_URL, SLOW, test, verifyAll } from './browser'
 
 function results(page: Page) {
   return {
@@ -41,10 +41,10 @@ describe('the SysML v2 language server of the fork, in the page', () => {
   test('hovers a name, completes one and goes to a definition in the standard library', async ({ flow }) => {
     const page = await flow.open('/sysml/level-crossing')
     await expect.poll(async () => {
-      return results(page).cases.count()
-    }, { timeout: SLOW }).toBeGreaterThan(0)
+      return page.getByTestId('status-message').first().innerText()
+    }, { timeout: SLOW }).toMatch(/^Ready/)
 
-    await token(page, 'port sensors : ~Sensors;', 'Sensors').click()
+    await clickToken(page, 'port sensors : ~Sensors;', 'Sensors')
     const { command } = await editorKeysOf(page)
     await page.keyboard.press(`${command}+k`)
     await page.keyboard.press(`${command}+i`)
@@ -62,7 +62,7 @@ describe('the SysML v2 language server of the fork, in the page', () => {
     }, { timeout: 30_000 }).toEqual(expect.arrayContaining([expect.stringContaining('Sensors')]))
     await page.keyboard.press('Escape')
 
-    await token(page, 'private import ScalarValues::Integer;', 'Integer').click()
+    await clickToken(page, 'private import ScalarValues::Integer;', 'Integer')
     await page.keyboard.press('F12')
     await expect.poll(async () => {
       return page.locator('.tabs [role="tab"][aria-selected="true"]').innerText()

@@ -86,7 +86,29 @@ export async function verifyAll(cases: Locator, verifyButton: Locator): Promise<
   })).toEqual([])
 }
 
-// a token of the model's text, by the line that holds it
-export function token(page: Page, line: string, text: string): Locator {
-  return page.locator('.view-line', { hasText: line }).locator('span > span').filter({ hasText: text }).last()
+// the span a token sits in depends on how far the highlighting has split the line, so the click goes to the name's own text range
+export async function clickToken(page: Page, line: string, text: string): Promise<void> {
+  const center = await page.locator('.view-line', { hasText: line }).first().evaluate((element, name) => {
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT)
+    const nodes: Text[] = []
+    while (walker.nextNode()) {
+      nodes.push(walker.currentNode as Text)
+    }
+    const content = nodes.map((node) => {
+      return node.data
+    }).join('').replaceAll('\u00a0', ' ')
+    let offset = content.lastIndexOf(name)
+    const range = document.createRange()
+    for (const node of nodes) {
+      if (offset < node.length) {
+        range.setStart(node, offset)
+        range.setEnd(node, offset + name.length)
+        break
+      }
+      offset -= node.length
+    }
+    const box = range.getBoundingClientRect()
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+  }, text)
+  await page.mouse.click(center.x, center.y)
 }
