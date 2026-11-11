@@ -33,13 +33,13 @@ describe('the admin page', () => {
     const page = await opened(ui)
     const [full, embed] = adminFixture().status.sessions
 
-    await page.getByRole('textbox', { name: 'Filter sessions' }).fill(embed!.kind)
+    await page.getByLabel('Filter sessions').fill(embed!.kind)
 
     await expect.poll(async () => {
       return sessionRows(page).count()
     }).toBe(1)
     expect(await sessionRows(page).innerText()).toContain(embed!.sessionId.slice(0, 8))
-    await page.getByRole('textbox', { name: 'Filter sessions' }).fill('no-such-session')
+    await page.getByLabel('Filter sessions').fill('no-such-session')
     await expect.poll(async () => {
       return page.getByTestId('sessions-unmatched').innerText()
     }).toContain('No session matches')
@@ -52,7 +52,7 @@ describe('the admin page', () => {
 
     await row.getByRole('button', { name: 'Kill', exact: true }).click()
     expect(calls(ui, 'DELETE', /^\/api\/admin\/sessions\//)).toBe(0)
-    await row.getByRole('button', { name: 'Kill session' }).click()
+    await page.getByRole('button', { name: 'Kill session' }).click()
 
     await expect.poll(async () => {
       return calls(ui, 'DELETE', /^\/api\/admin\/sessions\//)
@@ -69,7 +69,7 @@ describe('the admin page', () => {
     })
 
     await sessionRows(page).nth(running).locator('.admin-session-toggle').click()
-    await page.getByRole('list', { name: 'Verifications' }).getByRole('button', { name: 'Cancel' }).click()
+    await page.getByRole('list', { name: 'Verifications' }).getByRole('button', { name: 'Cancel' }).first().click()
 
     await expect.poll(async () => {
       return ui.backend.restCalls.filter((call) => {
