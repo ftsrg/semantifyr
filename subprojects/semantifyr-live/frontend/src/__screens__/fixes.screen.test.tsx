@@ -7,7 +7,7 @@
 import * as vscode from 'vscode'
 import { createRoot } from 'react-dom/client'
 import { describe, expect, it, onTestFinished } from 'vitest'
-import { page } from 'vitest/browser'
+import { page, server } from 'vitest/browser'
 
 import { toVscodeDiagnostics } from '../lib/session/problems'
 import { connectionLost, INITIAL_CONNECTION } from '../lib/stores/connection'
@@ -159,7 +159,7 @@ describe('the fixes of the desktop shell', () => {
           setTimeout(resolve, 600)
         })
         screen.expectState()
-        await page.screenshot({ path: `../../build/screens/fixes-${state}-${colorMode}.png` })
+        await page.screenshot({ path: `../../build/screens/${server.browser}/fixes-${state}-${colorMode}.png` })
       })
     }
   }

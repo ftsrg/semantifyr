@@ -6,7 +6,7 @@
 
 import { createRoot } from 'react-dom/client'
 import { describe, expect, it, onTestFinished } from 'vitest'
-import { cdp, page, userEvent } from 'vitest/browser'
+import { commands, page, server, userEvent } from 'vitest/browser'
 
 import { connectionLost, INITIAL_CONNECTION } from '../lib/stores/connection'
 import type { ResolvedColorMode } from '../lib/util/colorMode'
@@ -15,6 +15,7 @@ import { documentKey } from '../lib/workspace/live'
 import { ShellRoot } from '../shells/ShellRoot'
 import { CaseTrace } from '../trace/CaseTrace'
 import { caseOf, finished, seedLive, type Seed, type Seeded } from './seededLive'
+import type { MouseAction } from '../../vitest.screen.config'
 import { caseState, LANGUAGES, seedWithTrace } from './traces'
 
 // Goal: an embed in a frame of a fixed size fills it and never grows: the document does not scroll, the open trace and the model
@@ -84,10 +85,16 @@ interface ScreenState {
   expectState: () => void
 }
 
+declare module 'vitest/browser' {
+  interface BrowserCommands {
+    mouse: (type: MouseAction, x: number, y: number, clickCount: number) => Promise<void>
+  }
+}
+
 // a real pointer, which the splitter captures, in the coordinates of the page that frames the test
-async function mouse(type: 'mousePressed' | 'mouseMoved' | 'mouseReleased', x: number, y: number, clickCount = 1): Promise<void> {
+async function mouse(type: MouseAction, x: number, y: number, clickCount = 1): Promise<void> {
   const offset = window.frameElement?.getBoundingClientRect() ?? { left: 0, top: 0 }
-  await cdp().send('Input.dispatchMouseEvent', { type, x: offset.left + x, y: offset.top + y, button: 'left', buttons: type === 'mouseReleased' ? 0 : 1, clickCount })
+  await commands.mouse(type, offset.left + x, offset.top + y, clickCount)
 }
 
 async function drag(fromX: number, toX: number): Promise<void> {
@@ -369,7 +376,7 @@ describe('the embed in a fixed frame', () => {
             expect(element.scrollWidth, `${selector} clipped`).toBeLessThanOrEqual(element.clientWidth + 1)
           }
         }
-        await page.screenshot({ path: `../../build/screens/embed-fixed-${state}-${colorMode}.png`, element: embed })
+        await page.screenshot({ path: `../../build/screens/${server.browser}/embed-fixed-${state}-${colorMode}.png`, element: embed })
       })
     }
   }

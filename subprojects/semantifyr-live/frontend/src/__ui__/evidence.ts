@@ -8,6 +8,8 @@ import { mkdirSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import type { BrowserContext } from 'playwright'
 
+import { TEST_BROWSER } from '../testBrowser'
+
 const EVIDENCE = resolve(import.meta.dirname, '../../build/evidence')
 
 function folderName(name: string): string {
@@ -18,13 +20,13 @@ export async function recordEvidence(context: BrowserContext): Promise<void> {
   await context.tracing.start({ screenshots: true, snapshots: true })
 }
 
-// a failed test leaves its trace and a screenshot of each page under build/evidence/<level>/<test>, a passing one nothing
+// a failed test leaves its trace and a screenshot of each page under build/evidence/<engine>/<level>/<test>, a passing one nothing
 export async function keepEvidence(context: BrowserContext, level: string, test: string, failed: boolean): Promise<void> {
   if (!failed) {
     await context.tracing.stop()
     return
   }
-  const folder = join(EVIDENCE, level, folderName(test))
+  const folder = join(EVIDENCE, TEST_BROWSER, level, folderName(test))
   mkdirSync(folder, { recursive: true })
   let index = 0
   for (const page of context.pages()) {

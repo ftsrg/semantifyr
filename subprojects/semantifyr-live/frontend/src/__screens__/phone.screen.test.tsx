@@ -6,7 +6,7 @@
 
 import { createRoot } from 'react-dom/client'
 import { beforeAll, describe, expect, it, onTestFinished } from 'vitest'
-import { page } from 'vitest/browser'
+import { page, server } from 'vitest/browser'
 
 import type { PortfolioInfo } from '@semantifyr/editor-common'
 import type { ResolvedColorMode } from '../lib/util/colorMode'
@@ -289,7 +289,7 @@ describe('the phone shell', () => {
         })
         screen.expectState()
         expectLayout()
-        await page.screenshot({ path: `../../build/screens/phone-${state}-${colorMode}.png` })
+        await page.screenshot({ path: `../../build/screens/${server.browser}/phone-${state}-${colorMode}.png` })
       })
     }
   }

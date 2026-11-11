@@ -6,7 +6,7 @@
 
 import { createRoot } from 'react-dom/client'
 import { describe, expect, it, onTestFinished } from 'vitest'
-import { page } from 'vitest/browser'
+import { page, server } from 'vitest/browser'
 
 import { AdminPage } from '../admin/AdminPage'
 import { createAdminStore, type AdminStore } from '../admin/adminStore'
@@ -347,7 +347,7 @@ async function showState(state: string, colorMode: ResolvedColorMode, picture: s
     await pause(2500)
     expect(screen.server.statusRequests(), 'requests while paused').toBe(before)
   }
-  await page.screenshot({ path: `../../build/screens/${picture}.png` })
+  await page.screenshot({ path: `../../build/screens/${server.browser}/${picture}.png` })
 }
 
 describe('the admin page', () => {

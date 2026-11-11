@@ -6,7 +6,7 @@
 
 import { createRoot } from 'react-dom/client'
 import { describe, expect, it, onTestFinished } from 'vitest'
-import { page } from 'vitest/browser'
+import { page, server } from 'vitest/browser'
 
 import type { ResolvedColorMode } from '../lib/util/colorMode'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
@@ -169,7 +169,7 @@ describe('keeping work in the desktop shell', () => {
         const documentRoot = document.documentElement
         expect(documentRoot.scrollWidth, 'horizontal overflow').toBeLessThanOrEqual(documentRoot.clientWidth)
         expect(getComputedStyle(document.body).backgroundColor).toBe(BACKGROUNDS[colorMode])
-        await page.screenshot({ path: `../../build/screens/keeping-${state}-${colorMode}.png` })
+        await page.screenshot({ path: `../../build/screens/${server.browser}/keeping-${state}-${colorMode}.png` })
       })
     }
   }

@@ -7,9 +7,9 @@
 import react from '@vitejs/plugin-react';
 import { playwright } from '@vitest/browser-playwright';
 import { defineConfig, type Plugin } from 'vitest/config';
+import type { BrowserCommand } from 'vitest/node';
 
-// a local Chromium instead of Playwright's download, as on a developer machine
-const executablePath = process.env.SCREEN_TEST_CHROMIUM;
+import { LAUNCH_OPTIONS, TEST_BROWSER } from './src/testBrowser';
 
 const PWA_REGISTER = 'virtual:pwa-register/react';
 const PWA_REGISTER_STUB = '\0pwa-register-stub';
@@ -25,6 +25,19 @@ const serviceWorkerStub: Plugin = {
   load: (id) => {
     return id === PWA_REGISTER_STUB ? 'export function useRegisterSW() { return { needRefresh: [false, () => {}], offlineReady: [false, () => {}], updateServiceWorker: () => Promise.resolve() } }' : null;
   },
+};
+
+export type MouseAction = 'mousePressed' | 'mouseMoved' | 'mouseReleased';
+
+// a pointer of the engine's own input, in the coordinates of the page that frames the test
+const mouse: BrowserCommand<[type: MouseAction, x: number, y: number, clickCount: number]> = async (context, type, x, y, clickCount) => {
+  await context.page.mouse.move(x, y);
+  if (type === 'mousePressed') {
+    await context.page.mouse.down({ clickCount });
+  }
+  if (type === 'mouseReleased') {
+    await context.page.mouse.up({ clickCount });
+  }
 };
 
 export default defineConfig({
@@ -55,10 +68,13 @@ export default defineConfig({
     browser: {
       enabled: true,
       headless: true,
-      provider: playwright(executablePath ? { launchOptions: { executablePath } } : {}),
+      provider: playwright({ launchOptions: LAUNCH_OPTIONS }),
+      commands: {
+        mouse,
+      },
       instances: [
         {
-          browser: 'chromium',
+          browser: TEST_BROWSER,
           viewport: { width: 1440, height: 900 },
         },
       ],

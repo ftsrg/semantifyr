@@ -6,7 +6,7 @@
 
 import { createRoot } from 'react-dom/client'
 import { describe, expect, it, onTestFinished } from 'vitest'
-import { page, userEvent } from 'vitest/browser'
+import { page, server, userEvent } from 'vitest/browser'
 
 import type { VerificationState } from '../lib/verification/engine'
 import { ShellRoot } from '../shells/ShellRoot'
@@ -69,7 +69,7 @@ describe('the read-only documents and the margin', () => {
     })
 
     await expect.poll(marks, { timeout: 30_000 }).toEqual(['verdict-glyph-passed'])
-    await page.screenshot({ path: '../../build/screens/readonly-marks-light.png' })
+    await page.screenshot({ path: `../../build/screens/${server.browser}/readonly-marks-light.png` })
   })
 
   it('filters the long list of the SysML library files', async () => {
@@ -90,7 +90,7 @@ describe('the read-only documents and the margin', () => {
         return label.innerText
       })
     }).toEqual(['ScalarValues.kerml'])
-    await page.screenshot({ path: '../../build/screens/readonly-documents-filter-light.png' })
+    await page.screenshot({ path: `../../build/screens/${server.browser}/readonly-documents-filter-light.png` })
   })
 
   it('says why the cases are not listed when the discovery failed', async () => {
@@ -102,6 +102,6 @@ describe('the read-only documents and the margin', () => {
     }).toBe('The verification cases could not be listed. The server did not list the verification cases within 30 s.')
     expect(document.querySelector('.initialization-step.is-failed')?.textContent).toContain('Finding the verification cases')
     expect(text('.statusbar')).toContain('The verification cases could not be listed.')
-    await page.screenshot({ path: '../../build/screens/readonly-discovery-failed-light.png' })
+    await page.screenshot({ path: `../../build/screens/${server.browser}/readonly-discovery-failed-light.png` })
   })
 })

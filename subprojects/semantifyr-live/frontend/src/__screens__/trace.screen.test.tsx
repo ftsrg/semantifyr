@@ -6,7 +6,7 @@
 
 import { createRoot } from 'react-dom/client'
 import { afterAll, describe, expect, it, onTestFinished, vi } from 'vitest'
-import { page } from 'vitest/browser'
+import { page, server } from 'vitest/browser'
 
 import { initializeMonaco } from '../lib/session/monaco'
 import { LiveContext } from '../lib/workspace/liveContext'
@@ -362,7 +362,7 @@ describe('the documents menu', () => {
       const traceEntry = document.querySelector<HTMLElement>('.documents-menu [data-document=witness]')!
       const fileName = traceEntry.querySelector<HTMLElement>('.menu-item-detail')!.innerText
       expect(fileName).toBe(`${language.caseName}.witness.oxsts`)
-      await page.screenshot({ path: `../../build/screens/trace-documents-${languageName}-light.png` })
+      await page.screenshot({ path: `../../build/screens/${server.browser}/trace-documents-${languageName}-light.png` })
       traceEntry.click()
       await expect.poll(() => {
         return text('.tab.is-readonly[aria-selected=true]')
@@ -395,7 +395,7 @@ describe('the trace area', () => {
         await settle(state)
         await state.expectState()
         expectLayout()
-        await page.screenshot({ path: `../../build/screens/trace-${name}-${colorMode}.png` })
+        await page.screenshot({ path: `../../build/screens/${server.browser}/trace-${name}-${colorMode}.png` })
       })
     }
 
@@ -431,7 +431,7 @@ describe('the trace area', () => {
         await state.expectState()
         expectLayout()
         expect(count('.frame-open'), 'no tab to open').toBe(0)
-        await page.screenshot({ path: `../../build/screens/trace-phone-${name}-${colorMode}.png` })
+        await page.screenshot({ path: `../../build/screens/${server.browser}/trace-phone-${name}-${colorMode}.png` })
       })
     }
   }

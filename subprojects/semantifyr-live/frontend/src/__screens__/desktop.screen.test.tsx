@@ -7,7 +7,7 @@
 import * as vscode from 'vscode'
 import { createRoot } from 'react-dom/client'
 import { describe, expect, it, onTestFinished } from 'vitest'
-import { page } from 'vitest/browser'
+import { page, server } from 'vitest/browser'
 
 import { toVscodeDiagnostics, type ProblemEntry } from '../lib/session/problems'
 import { connectionLost } from '../lib/stores/connection'
@@ -286,7 +286,7 @@ describe('the desktop shell', () => {
         })
         screen.expectState()
         expectLayout(colorMode, waiting)
-        await page.screenshot({ path: `../../build/screens/desktop-${state}-${colorMode}.png` })
+        await page.screenshot({ path: `../../build/screens/${server.browser}/desktop-${state}-${colorMode}.png` })
       })
     }
   }

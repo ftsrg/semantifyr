@@ -6,7 +6,7 @@
 
 import { createRoot } from 'react-dom/client'
 import { describe, expect, it, onTestFinished } from 'vitest'
-import { page } from 'vitest/browser'
+import { page, server } from 'vitest/browser'
 
 import type { ResolvedColorMode } from '../lib/util/colorMode'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
@@ -142,7 +142,7 @@ describe('the desktop shell on a tablet', () => {
               expect(element.scrollWidth, `${selector} clipped`).toBeLessThanOrEqual(element.clientWidth + 1)
             }
           }
-          await page.screenshot({ path: `../../build/screens/tablet-${orientation}-${state}-${colorMode}.png` })
+          await page.screenshot({ path: `../../build/screens/${server.browser}/tablet-${orientation}-${state}-${colorMode}.png` })
         })
       }
     }

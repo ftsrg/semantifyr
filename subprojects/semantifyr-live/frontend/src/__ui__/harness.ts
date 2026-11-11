@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { chromium, type Browser, type BrowserContext, type Locator, type Page } from 'playwright'
+import type { Browser, BrowserContext, Locator, Page } from 'playwright'
 import { expect, inject, test as base } from 'vitest'
 
+import { launchTestBrowser } from '../testBrowser'
 import { keepEvidence, recordEvidence } from './evidence'
 import { MockBackend } from './mock/backend'
 
@@ -36,8 +37,7 @@ export const test = base.extend<{ ui: Ui, browser: Browser }>({
     // vitest reads the fixtures a fixture needs from the pattern of its first parameter, and this one needs none
     // eslint-disable-next-line no-empty-pattern
     async ({}, provide) => {
-      const executablePath = process.env.SCREEN_TEST_CHROMIUM
-      const browser = await chromium.launch(executablePath ? { executablePath } : {})
+      const browser = await launchTestBrowser()
       await provide(browser)
       await browser.close()
     },
