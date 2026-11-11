@@ -200,6 +200,10 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     act: async () => {
       await tapTab('Results')
       await tap('.phone-case.status-failed')
+      // the trace's editor wraps its lines once it has measured its pane, which a slower engine does after the settling time
+      await expect.poll(() => {
+        return wrapped('.pane-trace .trace-frame')
+      }).toBe(true)
     },
     expectState: () => {
       expect(visiblePanes()).toEqual(['Trace'])
