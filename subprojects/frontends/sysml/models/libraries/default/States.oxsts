@@ -426,7 +426,6 @@ class EntryState : StateNode {
     }
 }
 
-// reaching done ends an exhibited state's performance and leaves any other state without an active substate
 class DoneState : StateNode {
     container owner: State[1] opposite done
 
@@ -434,6 +433,7 @@ class DoneState : StateNode {
         return false
     }
 
+    // reaching done ends an exhibited state's performance and leaves any other state without an active substate
     redefine tran enter(commonState: StateNode) {
         inline if (commonState != owner) {
             inline owner.enterRecursive(commonState)

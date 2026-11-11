@@ -2,8 +2,8 @@ package semantifyr::sysml::ports
 
 import semantifyr::sysml::items
 
-// a port queues its arrived items, oldest first, up to capacity, and drops an item arriving at a full queue
 abstract class Port {
+    // a port queues its arrived items, oldest first, up to capacity, and drops an item arriving at a full queue
     refers capacity: int = 2
 
     // the multiplicity is a literal, so it repeats capacity
