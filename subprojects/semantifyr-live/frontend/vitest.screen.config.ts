@@ -9,7 +9,7 @@ import { playwright } from '@vitest/browser-playwright';
 import { defineConfig, type Plugin } from 'vitest/config';
 import type { BrowserCommand } from 'vitest/node';
 
-import { LAUNCH_OPTIONS, TEST_BROWSER } from './src/testBrowser';
+import { LAUNCH_OPTIONS, TEST_BROWSER } from './src/testBrowser.ts';
 
 const PWA_REGISTER = 'virtual:pwa-register/react';
 const PWA_REGISTER_STUB = '\0pwa-register-stub';
