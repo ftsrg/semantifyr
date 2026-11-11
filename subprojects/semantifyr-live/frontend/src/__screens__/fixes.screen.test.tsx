@@ -4,10 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import * as vscode from 'vscode'
 import { createRoot } from 'react-dom/client'
 import { describe, expect, it, onTestFinished } from 'vitest'
 import { page, userEvent } from 'vitest/browser'
 
+import { toVscodeDiagnostics } from '../lib/session/problems'
 import { connectionLost, INITIAL_CONNECTION } from '../lib/stores/connection'
 import type { ResolvedColorMode } from '../lib/util/colorMode'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
@@ -55,7 +57,53 @@ interface ScreenState {
   expectState: () => void
 }
 
+const SHARED_VERDICTS = {
+  selectedCase: BARRIER.id,
+  verdicts: new Map([
+    [BARRIER.id, 'failed' as const],
+    [TWO_TRAINS.id, 'passed' as const],
+  ]),
+}
+
 const STATES: Readonly<Record<string, ScreenState>> = {
+  'validating': {
+    seed: {
+      selection: BARRIER.id,
+      verification: discovered([{ ...finished(BARRIER, 'failed', 2.9), witnessValidation: undefined, validating: true }, finished(TWO_TRAINS, 'passed', 0.8)], 'done'),
+    },
+    expectState: () => {
+      expect(document.querySelector(`.case-row[data-case="${BARRIER.id}"] .validation-mark.is-validating`)).not.toBeNull()
+      expect(document.querySelector(`.case-row[data-case="${BARRIER.id}"] [aria-label^="Validate"]`)).toBeNull()
+      expect(document.querySelector(`.case-row[data-case="${TWO_TRAINS.id}"] [aria-label^="Validate again"]`)).not.toBeNull()
+    },
+  },
+  'flavour-and-one-error': {
+    seed: { flavorId: 'oxsts-with-gamma-library', verification: discovered([], 'idle') },
+    act: async () => {
+      const diagnostics = vscode.languages.createDiagnosticCollection('fixes')
+      diagnostics.set(vscode.Uri.parse('file:///workspace/snippet.oxsts'), toVscodeDiagnostics([
+        { severity: 'error', startLine: 0, startColumn: 0, endLine: 0, endColumn: 3, message: 'broken', source: 'oxsts' },
+      ]))
+      onTestFinished(() => {
+        diagnostics.dispose()
+      })
+    },
+    expectState: () => {
+      expect(text('.status-language')).toBe('OXSTS, with the Gamma library')
+      expect(document.querySelector('.problem-counts')?.getAttribute('aria-label')).toBe('Problems in the model: 1 error, 0 warnings')
+    },
+  },
+  'opened-from-a-link-and-verified': {
+    seed: {
+      sharedResults: SHARED_VERDICTS,
+      selection: BARRIER.id,
+      verification: discovered([finished(BARRIER, 'failed', 2.9), finished(TWO_TRAINS, 'passed', 0.8)], 'done'),
+    },
+    expectState: () => {
+      expect(text('.orientation-text')).toContain('Level crossing.')
+      expect(text('.orientation-text')).not.toContain('Press')
+    },
+  },
   'server-not-answering-gamma': {
     seed: { catalog: 'waiting', location: '/gamma/crossroads' },
     expectState: () => {

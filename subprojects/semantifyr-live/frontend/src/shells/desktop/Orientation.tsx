@@ -22,9 +22,9 @@ export function addressProblemText(live: Live, problem: AddressProblem): string 
   const exampleLabel = (flavor ? findExample(flavor, problem.exampleId)?.label : undefined) ?? problem.exampleId
   switch (problem.kind) {
     case 'results':
-      return `The results in the link could not be read. Opened the ${exampleLabel} without them.`
+      return `The results in the link could not be read. Opened ${exampleLabel} without them.`
     case 'model':
-      return `The model in the link could not be read. Opened the ${exampleLabel} in its place.`
+      return `The model in the link could not be read. Opened ${exampleLabel} in its place.`
     case 'language':
       return `The address names the language "${problem.requested}", which Live does not have. Opened ${languageName} with the ${exampleLabel} in its place.`
     case 'library':
@@ -79,6 +79,10 @@ export function Orientation(): React.JSX.Element {
   const visible = document !== null && flavor !== null && !document.shared && !dismissed.has(document.key)
   const example = visible ? findExample(flavor, document.example.id) : undefined
   const count = verification.discovery === 'discovered' ? verification.cases.length : null
+  // once the model was verified, by the visitor or by the link that opened it, the button needs no pointing at
+  const verified = verification.phase !== 'idle' || verification.cases.some((caseState) => {
+    return caseState.resultStatus !== undefined
+  })
   return (
     <>
       <AddressError />
@@ -88,9 +92,16 @@ export function Orientation(): React.JSX.Element {
             <span className="orientation-mark" />
             <span className="orientation-text">
               <strong>{`${example.label}.`}</strong>
-              {` ${example.description}${casesSentence(count)} Press `}
-              <strong>Verify all</strong>
-              {count === 1 ? ' to check it.' : ' to check them.'}
+              {` ${example.description}${casesSentence(count)}`}
+              {verified
+                ? null
+                : (
+                  <>
+                    {' Press '}
+                    <strong>Verify all</strong>
+                    {count === 1 ? ' to check it.' : ' to check them.'}
+                  </>
+                )}
             </span>
             <button
               type="button"
