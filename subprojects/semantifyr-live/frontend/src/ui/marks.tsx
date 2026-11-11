@@ -167,9 +167,9 @@ function languageShape(languageId: string): React.JSX.Element {
         </>
       )
     case 'gamma':
-      return <path className="fill" transform="translate(2.7 15) scale(.000959 -.000959)" strokeWidth="1043" d={GAMMA_PATH} />
+      return <path className="solid" transform="translate(2.7 15) scale(.000959 -.000959)" d={GAMMA_PATH} />
     default:
-      return <path className="fill" transform="translate(.6 .25) scale(.0334)" strokeWidth="40" d={FLAME_PATH} />
+      return <path className="solid" transform="translate(.6 .25) scale(.0334)" d={FLAME_PATH} />
   }
 }
 

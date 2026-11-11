@@ -122,6 +122,7 @@ code, .mono { font-family: var(--font-mono); font-feature-settings: "calt" 0; }
 
 .language-mark { width: 14px; height: 14px; flex: none; color: var(--language); overflow: visible; }
 .language-mark .fill { fill: var(--language-soft); }
+.language-mark .solid { fill: currentColor; stroke: none; }
 
 .segmented {
   display: inline-flex;
