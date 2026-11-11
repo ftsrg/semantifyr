@@ -232,7 +232,7 @@ function Initialization(): React.JSX.Element {
 
 function CaseRowView({ row, selected, onOpen }: { row: CaseRow, selected: boolean, onOpen: (row: CaseRow) => void }): React.JSX.Element {
   const live = useLive()
-  const waiting = row.status === 'running' || row.status === 'queued'
+  const waiting = row.waiting
   return (
     <div
       className={`phone-case status-${row.status}${row.outdated ? ' is-outdated' : ''}${selected ? ' is-selected' : ''}`}

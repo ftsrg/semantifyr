@@ -78,6 +78,20 @@ describe('a case row', () => {
     expect(caseRowOf(result('a', 'running', { outdated: true }))).toMatchObject({ outdated: false, validation: null, time: null })
   })
 
+  it('keeps the verdict of a case run again, with its trace and its count, until the new one arrives', () => {
+    const trace = { callTrace: { initializedStep: { traces: [] }, steps: [] }, witnessState: { initializedStep: { values: [] }, steps: [] }, witnessUri: null }
+    const rows = [
+      result('a', 'failed', { status: 'running', trace }),
+      result('b', 'passed', { status: 'queued' }),
+      { caseInfo: caseAt('c', 1), status: 'queued' as const },
+    ].map(caseRowOf)
+
+    expect(rows[0]).toMatchObject({ status: 'failed', word: 'Failed', time: '2.9 s', hasTrace: true, waiting: true, rerun: 'running' })
+    expect(rows[1]).toMatchObject({ status: 'passed', waiting: true, rerun: 'queued' })
+    expect(rows[2]).toMatchObject({ status: 'queued', waiting: true, rerun: null })
+    expect(countsOf(rows)).toEqual({ passed: 1, failed: 1, inconclusive: 0, error: 0, waiting: 1, total: 3 })
+  })
+
   it('counts the verdicts and the waiting cases, and says the failed first', () => {
     const counts = countsOf([
       result('a', 'passed'),

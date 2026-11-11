@@ -75,7 +75,7 @@ export function verdictsOf(entries: readonly (readonly [string, string])[]): Rea
 }
 
 function finished(row: CaseRow): boolean {
-  return row.status !== 'not-run' && row.status !== 'running' && row.status !== 'queued'
+  return !row.waiting && row.status !== 'not-run' && row.status !== 'running' && row.status !== 'queued'
 }
 
 // Until the run ends a case without a result of its own shows the sharer's verdict; after it, a result that differs is flagged

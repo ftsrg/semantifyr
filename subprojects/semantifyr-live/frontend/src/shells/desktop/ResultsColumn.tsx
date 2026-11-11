@@ -12,7 +12,7 @@ import { initializationStepsOf, presentationOf } from '../../lib/language/presen
 import { initializationOf, isInitialized } from '../../lib/stores/initialization'
 import { changeSettings } from '../../lib/stores/settings'
 import { useStore } from '../../lib/stores/useStore'
-import { countsOf, type CaseCounts, type CaseRow, type RowStatus } from '../../lib/workspace/caseRows'
+import { countsOf, STATUS_WORDS, type CaseCounts, type CaseRow, type RowStatus } from '../../lib/workspace/caseRows'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import type { Live } from '../../lib/workspace/live'
 import { stepTimeText } from '../../lib/workspace/shellStatus'
@@ -24,6 +24,8 @@ import { verifyAll, type CountFilter } from '../shellState'
 import type { TraceSlot } from '../traceSlot'
 import { SharedNotice, useCaseRows } from './keeping'
 import { SettingsPopover } from './SettingsPopover'
+
+import './rerun.css'
 
 const COUNT_GROUPS: readonly { group: CountFilter, status: RowStatus, label: string }[] = [
   { group: 'passed', status: 'passed', label: 'Passed' },
@@ -246,6 +248,14 @@ function CaseRowView({ row, selected, canValidate }: { row: CaseRow, selected: b
         {row.validation !== null ? <ValidationMark state={row.validation} detail={row.validationMessage} /> : null}
         <span className="verdict-word">{row.word}</span>
         {row.time !== null ? <span className="case-time">{row.time}</span> : null}
+        {row.rerun !== null
+          ? (
+            <span className={`rerun-tag status-${row.rerun}`}>
+              <VerdictMark status={row.rerun} />
+              {STATUS_WORDS[row.rerun]}
+            </span>
+          )
+          : null}
       </span>
       <span className="case-actions">
         {waiting

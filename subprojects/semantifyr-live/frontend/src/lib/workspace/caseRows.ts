@@ -34,6 +34,8 @@ export interface CaseRow {
   hasTrace: boolean
   // the case is queued or running, whatever verdict the row shows
   waiting: boolean
+  // running or queued while the row shows the verdict of the last run, null otherwise
+  rerun: 'running' | 'queued' | null
   // the verdict shown is the sharer's, until the run gives the case its own
   shared: boolean
   // the sharer's verdict, as a word, when the run's came out differently
@@ -66,8 +68,8 @@ export function formatSeconds(milliseconds: number): string {
   return seconds < 10 ? `${seconds.toFixed(1)} s` : `${Math.round(seconds)} s`
 }
 
-function statusOf(caseState: VerificationCaseState): RowStatus {
-  switch (caseState.status) {
+function statusOf(status: VerificationCaseState['status']): RowStatus {
+  switch (status) {
     case 'passed':
       return 'passed'
     case 'failed':
@@ -88,8 +90,8 @@ function statusOf(caseState: VerificationCaseState): RowStatus {
   }
 }
 
-function messageOf(caseState: VerificationCaseState): string | null {
-  switch (caseState.status) {
+function messageOf(caseState: VerificationCaseState, status: VerificationCaseState['status']): string | null {
+  switch (status) {
     case 'stale':
       return caseState.message === CANCELLED_MESSAGE ? 'cancelled' : null
     case 'cancelled':
@@ -121,22 +123,38 @@ function validationOf(caseState: VerificationCaseState): ValidationMark | null {
   }
 }
 
+function isWaiting(status: RowStatus): status is 'running' | 'queued' {
+  return status === 'running' || status === 'queued'
+}
+
+// a case run again shows the verdict it had until the new one arrives
+function shownStatusOf(caseState: VerificationCaseState): VerificationCaseState['status'] {
+  const kept = caseState.resultStatus
+  if (!isWaiting(statusOf(caseState.status)) || kept === undefined || statusOf(kept) === 'not-run') {
+    return caseState.status
+  }
+  return kept
+}
+
 export function caseRowOf(caseState: VerificationCaseState): CaseRow {
-  const status = statusOf(caseState)
-  const finished = status !== 'not-run' && status !== 'running' && status !== 'queued'
+  const shown = shownStatusOf(caseState)
+  const status = statusOf(shown)
+  const own = statusOf(caseState.status)
+  const finished = status !== 'not-run' && !isWaiting(status)
   const duration = caseState.metrics?.totalDuration
   return {
     id: caseState.caseInfo.id,
     name: caseState.caseInfo.label.split('::').at(-1) ?? caseState.caseInfo.label,
     status,
     word: STATUS_WORDS[status],
-    message: messageOf(caseState),
+    message: messageOf(caseState, shown),
     time: finished && duration !== undefined ? formatSeconds(isoDurationToMs(duration)) : null,
     outdated: finished && caseState.outdated === true,
     validation: finished ? validationOf(caseState) : null,
     validationMessage: caseState.validationMessage ?? null,
     hasTrace: finished && caseState.trace !== undefined,
-    waiting: status === 'running' || status === 'queued',
+    waiting: isWaiting(own),
+    rerun: finished && isWaiting(own) ? own : null,
     shared: false,
     differs: null,
   }
