@@ -16,22 +16,23 @@ This is the entry-level tutorial for Semantifyr. It walks through modeling a sma
 
 ## Requirements
 
-A browser is enough. Every step of this tutorial ends in a complete model: the **Open this step in the editor** button below a code block loads the model of that step into a live editor embedded in this page, where you can edit it and verify its cases. The same editor runs standalone at [live.semantifyr.org/oxsts](https://live.semantifyr.org/oxsts). See [Getting Started](../../getting-started.md) for the other ways to run Semantifyr.
+A browser is enough. Every step of this tutorial ends in a complete model: the **Verify** button in the corner of a code block loads the model of that step into a live editor embedded in this page, where you can edit it and verify its cases; for a step whose model has no verification case yet, the button is **Edit**. The same editor runs standalone at [live.semantifyr.org/oxsts](https://live.semantifyr.org/oxsts). See [Getting Started](../../getting-started.md) for the other ways to run Semantifyr.
 
 :::tip Finished example
-The completed model is at the end of this page under [Snapshot](#snapshot), where **Edit and verify here** opens it in the embedded editor. The standalone live editor also offers it in its model picker as *Tutorial: Basics*.
+The completed model is at the end of this page under [Snapshot](#snapshot), where **Verify** opens it in the embedded editor. The standalone live editor also offers it in its example menu as *Tutorial: Basics*.
 :::
 
 ## The Live Editor
 
-The editor has two parts, which the embedded one stacks, the results under the editor:
+The editor embedded in this page has the model on top and the verification below it:
 
 - The **editor** is a Monaco-based code editor with syntax highlighting, diagnostics (red underlines for errors), and content assist (triggered with `Ctrl+Space`). The language server validates the model as you type.
-- The **results** column lists the verification cases of the model and updates as you type. Its header counts the cases that *Passed*, *Failed*, were *Inconclusive* or ended in an *Error*, and holds **Verify all**; a case that has not run says *Not run*. The play button in a case's row verifies that case alone. Below the cases, the **trace** of the selected case shows how the verdict came about, in three views: *Steps* lists the state changes of each step, *Calls* the traced calls of each step, and *Witness* the witness as a read-only OXSTS model that **Open** moves to a tab of its own. *Calls* fills only for calls of transitions marked [`@Trace`](../../language/standard-library.md#trace), which the finished model of each tutorial marks on the transition that changes the state and the models of the steps in between do not; the [SysML v2 tutorial](../sysml-v2.md#reading-the-witness) reads such a trace, the calls its semantic library traces. A trace whose witness a second verification confirmed is marked *validated*.
+- The strip under the editor holds **Verify all**, which verifies every case of the model and turns into **Cancel** while they run, a status line, and **Open in Live**, which opens the model and its results in the full live editor in a new tab.
+- Under the strip, every verification case of the model has a line, which follows your edits: its name and its verdict, *Passed*, *Failed*, *Inconclusive* or *Error*, or *Not run* before it has run, and the time the run took. A case with a trace says **Trace** at the end of its line; a click on the line opens the trace below it, which shows how the verdict came about, in three views: *Steps* lists the state changes of each step, *Calls* the traced calls of each step, and *Witness* the witness as a read-only OXSTS model. After **Verify all** the trace of the first failed case opens by itself. *Calls* fills only for calls of transitions marked [`@Trace`](../../language/standard-library.md#trace), which the finished model of each tutorial marks on the transition that changes the state and the models of the steps in between do not; the [SysML v2 tutorial](../sysml-v2.md#reading-the-witness) reads such a trace, the calls its semantic library traces. A trace whose witness a second verification confirmed is marked *validated*.
 
-A step whose model has no verification case opens a lighter view, the editor alone.
+A step whose model has no verification case opens the editor alone.
 
-The standalone editor adds a toolbar with a language picker (SysML v2, Gamma and OXSTS) and an example picker, **Open** and **Save** for files, **Share**, which encodes your model into a link, and a theme switch, and puts the results to the right of the editor.
+The full live editor, behind **Open in Live** and at [live.semantifyr.org](https://live.semantifyr.org), puts the cases in a column to the right of the editor. The column's header counts the cases that *Passed*, *Failed*, were *Inconclusive* or ended in an *Error* and holds **Verify all**, the play button in a case's row verifies that case alone, and the trace of the selected case sits below the cases, where **Open** moves a textual view to a read-only tab beside the model. Its toolbar has the language switch (SysML v2, Gamma and OXSTS), the example menu, **Open** and **Save** for files, **Share**, which puts your model and its results into a link, **About**, and the theme.
 
 ## The Traffic Light
 
@@ -69,9 +70,9 @@ The anonymous `prop` is the property the verifier checks. Its body uses a tempor
 
 The `@Tag` annotation attaches a free-form label to a verification case. The tutorial models carry `expect-pass` or `expect-fail`, the verdict we expect, and Semantifyr's own test suite checks every tutorial model against these tags. Your own models do not need them.
 
-**Task:** Open the step in the editor. The results column lists `TrafficLight`. Press **Verify all**, or the play button in its row.
+**Task:** Open the step in the editor. The case lines list `TrafficLight`. Press **Verify all**.
 
-**Check:** While the verification runs, the row shows that it is running. When it finishes, the row says *Passed*: the property holds. The trace under the cases lists the witness: in *Steps*, an execution that drives `color` from `Red` through `Green` to `Yellow`, which proves the `EF` property.
+**Check:** While the verification runs, the case's line shows that it is running. When it finishes, the line says *Passed*: the property holds, and the trace opens below it with the witness: in *Steps*, an execution that drives `color` from `Red` through `Green` to `Yellow`, which proves the `EF` property.
 
 ## Helper Transitions
 
@@ -109,9 +110,9 @@ The crucial question for any intersection is whether the two lights can ever be 
 
 This is an `AG` safety property: on every execution, the two lights are never green at the same time. The tag already gives away what we expect.
 
-**Task:** Open the step in the editor. The results column now lists `GreenColorIsReachable` and `IntersectionNeverBothGreen`. Press **Verify all** to verify both.
+**Task:** Open the step in the editor. The case lines now list `GreenColorIsReachable` and `IntersectionNeverBothGreen`. Press **Verify all** to verify both.
 
-**Check:** `GreenColorIsReachable` passes, and `IntersectionNeverBothGreen` fails. A failed safety property comes with a counterexample: select its row and read *Steps* in the trace to see the steps that drive both lights to `Green`, one after the other.
+**Check:** `GreenColorIsReachable` passes, and `IntersectionNeverBothGreen` fails. A failed safety property comes with a counterexample, whose trace opens below the failed case's line: read *Steps* to see the steps that drive both lights to `Green`, one after the other.
 
 ## Fixing the Intersection
 

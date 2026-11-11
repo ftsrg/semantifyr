@@ -15,10 +15,10 @@ This is the second tutorial in the Traffic Light series. It refactors the basic 
 
 ## Requirements
 
-A browser is enough. As in [Direct Modeling](direct-modeling.md), every step ends in a complete model that the **Open this step in the editor** button loads into a live editor embedded in this page; the [Direct Modeling](direct-modeling.md#the-live-editor) tutorial describes the editor. See [Getting Started](../../getting-started.md) for the other ways to run Semantifyr.
+A browser is enough. As in [Direct Modeling](direct-modeling.md), every step ends in a complete model that the **Verify** or **Edit** button in the corner of a code block loads into a live editor embedded in this page; the [Direct Modeling](direct-modeling.md#the-live-editor) tutorial describes the editor. See [Getting Started](../../getting-started.md) for the other ways to run Semantifyr.
 
 :::tip Finished example
-The completed model is at the end of this page under [Snapshot](#snapshot), where **Edit and verify here** opens it in the embedded editor. The standalone live editor also offers it in its model picker as *Tutorial: Intermediate*.
+The completed model is at the end of this page under [Snapshot](#snapshot), where **Verify** opens it in the embedded editor. The standalone live editor also offers it in its example menu as *Tutorial: Intermediate*.
 :::
 
 In the Direct Modeling tutorial the entire state machine lived inside a single class: a `LightColor` enum, a `var color`, and a main transition that hard-coded the cycle as a `choice` of guarded branches. That works for one specific traffic light, but it does not scale: every new state or transition forces another branch in the `choice`, and the host has no way to query the structure of its own state machine. By the end of this tutorial the `LightColor` enum and the `assumeColor`, `setColor` and `isColor` helpers will be gone, replaced by a small reusable `Statechart` base class that any state-based system could extend.
@@ -101,7 +101,7 @@ The `redefine init` of the verification case inlines the light's `init`. This is
 
 **Task:** Open the step and verify `GreenColorIsReachable` again.
 
-**Check:** It passes. In the *Steps* view of the trace, `root.light.activeState` holds `root.light.red` in the *Init* step, the initial state `init` produces, and `root.light.green` after the first step.
+**Check:** It passes. In the *Steps* view of the trace, the *Start* step, the initial state `init` produces, shows `root.light.activeState` at `red`, and step 1 changes it to `green`.
 
 ## The Intersection
 

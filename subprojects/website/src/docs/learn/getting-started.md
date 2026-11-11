@@ -15,7 +15,7 @@ The fastest way to try Semantifyr. The **in-browser live editor** is a lightweig
 
 [Open the live editor](https://live.semantifyr.org)
 
-Sessions are ephemeral. Use **Share** in the toolbar to save your work as a shareable link.
+Sessions are ephemeral. **Save** in the toolbar writes your model to a file, and **Share** puts the model and its results into a link.
 
 ## Option B: Use the JupyterHub environment (full IDE, no installation)
 

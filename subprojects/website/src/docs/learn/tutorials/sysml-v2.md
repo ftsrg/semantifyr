@@ -57,28 +57,28 @@ The third claims that the lamp is only ever lit while the switch is on. Before y
 
 <CodeBlock language="sysmlv2">{selectDeclarations(room, ['LampLitOnlyWhileSwitchOnViolated'])}</CodeBlock>
 
-The complete model is one file. Open it in the editor below:
+The complete model is one file. **Verify** in the corner of the code block below opens it in an editor on this page:
 
 <LiveEmbed code={room} language="sysml" />
 
 ## Verifying
 
-The editor loads the SysML v2 standard library in the background, which takes about 15 seconds, and then lists the three cases in the results column. **Verify all** runs them all, and each case has its own run button. Each case is verified by the live editor's portfolio of backends and takes a few seconds.
+The editor loads the SysML v2 standard library in the background, which takes about 15 seconds, and then lists the three cases, a line each, under **Verify all**, which runs them all. Each case is verified by the live editor's portfolio of backends and takes a few seconds.
 
 Expect `LampLitReachable` to pass and both `Violated` cases to fail.
 
-The model is yours to edit, as one file. The cases follow your edits, and a construct the translator does not support gets a diagnostic on that construct and keeps the model from being verified. *OXSTS of the model*, in the read-only documents menu, opens the translation of the current file, an OXSTS model that instantiates the classes of the SysML v2 semantic library.
+The model is yours to edit, as one file. The cases follow your edits, and a construct the translator does not support gets a diagnostic on that construct and keeps the model from being verified. **Open in Live** opens the model in the full live editor, where *OXSTS of the model*, in the read-only documents menu, opens the translation of the current file, an OXSTS model that instantiates the classes of the SysML v2 semantic library.
 
 ## Reading the Witness
 
-A case with a witness shows its trace under the cases when you select its row, in four views:
+A case with a witness says **Trace** at the end of its line, and a click on the line opens its trace below it, in four views:
 
-- *Calls*: per step, the traced calls of the semantic library: the transitions that fired and the items that were sent.
-- *OXSTS steps*: the values of the model's state in every step of the witness, starting from the initial state that initialization produces. State names are paths from the verified instance, `root`.
-- *OXSTS witness*: the witness as an OXSTS model.
 - *SysML trace*: the witness as a SysML v2 model, a part definition `<case>Trace` that specializes the verified part definition and declares the states, transitions and sends of this execution in time order ([SysML v2 traces](../../develop/sysml-trace.md)).
+- *OXSTS steps*: the values of the model's state in every step of the witness, starting from the initial state that initialization produces. State names are paths from the verified instance, `root`, shortened to their last segments, with the whole path on hover.
+- *Calls*: per step, the traced calls of the semantic library: the transitions that fired and the items that were sent.
+- *OXSTS witness*: the witness as an OXSTS model.
 
-A failed `mustAlways` requirement has a counterexample. Select `LampLitOnlyWhileSwitchOnViolated`. The shortest counterexample has two steps:
+After **Verify all** the trace of the first failed case opens by itself. A failed `mustAlways` requirement has a counterexample. Open the trace of `LampLitOnlyWhileSwitchOnViolated` and read it in *Calls* and *OXSTS steps*. The shortest counterexample has two steps:
 
 1. The button is pressed: `root.system.switch.Behaviour.turnOn` fires and the switch's output sends a `Toggle`. Afterwards the switch is `On`, the lamp is still `Dark`, and the toggle waits on `root.system.lamp.input`.
 2. The button is pressed again: `turnOff` fires and sends a second `Toggle`, while the lamp accepts the first one and `root.system.lamp.Behaviour.lightUp` fires. Afterwards the switch is `Off` and the lamp is `Lit`.
