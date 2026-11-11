@@ -67,6 +67,7 @@ export function useKeepingEvents(): void {
     const save = (event: KeyboardEvent): void => {
       if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === 's') {
         event.preventDefault()
+        event.stopPropagation()
         if (suggestedName !== null) {
           void (event.shiftKey ? saveDocumentAs : saveDocument)(live, fileAccess(), suggestedName)
         }
@@ -77,10 +78,11 @@ export function useKeepingEvents(): void {
         event.preventDefault()
       }
     }
-    window.addEventListener('keydown', save)
+    // before the editor, which stops the keys it handles
+    window.addEventListener('keydown', save, true)
     window.addEventListener('beforeunload', leave)
     return () => {
-      window.removeEventListener('keydown', save)
+      window.removeEventListener('keydown', save, true)
       window.removeEventListener('beforeunload', leave)
     }
   }, [live, suggestedName])
