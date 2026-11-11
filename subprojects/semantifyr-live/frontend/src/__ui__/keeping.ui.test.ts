@@ -9,6 +9,7 @@ import { join } from 'node:path'
 import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
+import { TEST_BROWSER } from '../testBrowser'
 import { casesListed, editor, results, statesOf, test } from './harness'
 
 const BASICS = readFileSync(join(import.meta.dirname, '../snippets/imported/tutorial/basics.oxsts'), 'utf-8')
@@ -56,9 +57,24 @@ function stubPickers(): void {
   })
 }
 
+const NO_PICKERS = `${TEST_BROWSER} has no File System Access pickers, it opens and saves through the fallback`
+
 function withoutPickers(): void {
   Object.defineProperty(window, 'showOpenFilePicker', { value: undefined })
   Object.defineProperty(window, 'showSaveFilePicker', { value: undefined })
+}
+
+// the file input's dialog, kept in window.fileDialog for the test to choose a file; Playwright's Firefox fires cancel before change when it fills a real one
+function withFileDialog(): void {
+  Object.defineProperty(window, 'showOpenFilePicker', { value: undefined })
+  const click = HTMLInputElement.prototype.click
+  HTMLInputElement.prototype.click = function clickOrOpenDialog(this: HTMLInputElement) {
+    if (this.type !== 'file') {
+      click.call(this)
+      return
+    }
+    Object.assign(window, { fileDialog: this })
+  }
 }
 
 async function diskOf(page: Page): Promise<Disk> {
@@ -85,7 +101,8 @@ const unsavedMark = (page: Page) => {
 }
 
 describe('opening a file', () => {
-  test('through Open takes the picked file as the model, named by the file', async ({ ui }) => {
+  test('through Open takes the picked file as the model, named by the file', async ({ ui, skip }) => {
+    skip(TEST_BROWSER !== 'chromium', NO_PICKERS)
     const page = await ui.open('/oxsts/level-crossing', { before: stubPickers })
     await casesListed(page)
 
@@ -96,6 +113,24 @@ describe('opening a file', () => {
     }).toBe('mine.oxsts - OXSTS - Semantifyr Live')
     await casesListed(page)
     expect(await results(page).rows.count()).toBe(2)
+  })
+
+  test('through Open, where the browser has no file picker, takes the file chosen in the file dialog', async ({ ui }) => {
+    const page = await ui.open('/oxsts/level-crossing', { before: withFileDialog })
+    await casesListed(page)
+
+    await page.locator('.toolbar').getByRole('button', { name: 'Open' }).click()
+    await page.evaluate((text) => {
+      const transfer = new DataTransfer()
+      transfer.items.add(new File([text], 'mine.oxsts'))
+      const dialog = (window as unknown as { fileDialog: HTMLInputElement }).fileDialog
+      dialog.files = transfer.files
+      dialog.dispatchEvent(new Event('change'))
+    }, BASICS)
+
+    await expect.poll(async () => {
+      return page.title()
+    }).toBe('mine.oxsts - OXSTS - Semantifyr Live')
   })
 
   test('by a drop opens the dropped file in its language', async ({ ui }) => {
@@ -121,7 +156,8 @@ describe('opening a file', () => {
 })
 
 describe('saving', () => {
-  test('with Ctrl+S from inside the editor writes the edits back into the opened file and clears the unsaved mark', async ({ ui }) => {
+  test('with Ctrl+S from inside the editor writes the edits back into the opened file and clears the unsaved mark', async ({ ui, skip }) => {
+    skip(TEST_BROWSER !== 'chromium', NO_PICKERS)
     const page = await ui.open('/oxsts/level-crossing', { before: stubPickers })
     await casesListed(page)
     await openFile(page, 'mine.oxsts', BASICS)
@@ -144,7 +180,8 @@ describe('saving', () => {
     }).toBe(0)
   })
 
-  test('with Save as asks for a place under the suggested name and saves there', async ({ ui }) => {
+  test('with Save as asks for a place under the suggested name and saves there', async ({ ui, skip }) => {
+    skip(TEST_BROWSER !== 'chromium', NO_PICKERS)
     const page = await ui.open('/oxsts/basics', { before: stubPickers })
     await casesListed(page)
     await typeAtTheEnd(page, '\n// edited\n')
