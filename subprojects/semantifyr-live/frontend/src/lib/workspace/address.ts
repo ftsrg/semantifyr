@@ -43,7 +43,7 @@ export function addressedModel(address: LiveEditorAddress, defaultLanguageId: st
   })
   const flavorId = withLibrary?.[0] ?? languageId
   const examples = bundledExamplesOf(flavorId)
-  const compressedModel = address.language === languageId ? address.compressedModel : null
+  const compressedModel = address.compressedModel
   const example = compressedModel !== null && address.example === null ? null : findExample({ examples }, address.example) ?? examples[0] ?? null
   return { languageId, flavorId, library: withLibrary?.[1], examples, example, compressedModel }
 }
