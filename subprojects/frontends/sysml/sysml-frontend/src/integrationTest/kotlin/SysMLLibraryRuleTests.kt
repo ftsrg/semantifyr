@@ -19,7 +19,7 @@ import org.junit.jupiter.params.provider.MethodSource
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 
-// the fixture is written in the shape the mapper is to emit for constructs it does not map yet, so its cases are listed here
+// the fixture runs the library rules on every variant in the shape the mapper emits; the corpus runs them on the default only
 class SysMLLibraryRuleTests {
     companion object {
         private val injector = OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()

@@ -25,7 +25,7 @@ class SysMLCrossroadsTraceTest {
 
         val trace = helper.checkSysMLTrace(frontend, entry)
 
-        assertThat(trace).isNotNull().content().contains("part def ${CASE}Trace :> CrossroadSystem")
+        assertThat(trace).isNotNull().content().contains("package ${CASE}Trace {")
     }
 
     companion object {

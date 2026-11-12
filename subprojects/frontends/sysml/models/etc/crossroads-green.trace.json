@@ -2,26 +2,87 @@
     "initializedStep": {
         "traces": [
             {
-                "self": "root.system.trafficLightA.lightControl",
-                "calledTransition": "semantifyr::sysml::ports::Port::setOutgoingItem",
+                "self": "root.system.controller.Behaviour.Operating",
+                "calledTransition": "semantifyr::sysml::states::State::enter",
                 "arguments": [
                     {
-                        "parameter": "item",
-                        "value": "semantifyr::sysml::model::global_YellowL"
+                        "parameter": "commonState",
+                        "value": "root.system.controller.Behaviour"
                     }
                 ],
-                "innerTraces": null
+                "innerTraces": [
+                    {
+                        "self": "root.system.controller.Behaviour.Operating.BothYellow",
+                        "calledTransition": "semantifyr::sysml::states::State::enter",
+                        "arguments": [
+                            {
+                                "parameter": "commonState",
+                                "value": "root.system.controller.Behaviour.Operating"
+                            }
+                        ],
+                        "innerTraces": null
+                    }
+                ]
             },
             {
-                "self": "root.system.trafficLightB.lightControl",
-                "calledTransition": "semantifyr::sysml::ports::Port::setOutgoingItem",
+                "self": "root.system.trafficLightA.Behaviour.Normal",
+                "calledTransition": "semantifyr::sysml::states::State::enter",
                 "arguments": [
                     {
-                        "parameter": "item",
-                        "value": "semantifyr::sysml::model::global_YellowL"
+                        "parameter": "commonState",
+                        "value": "root.system.trafficLightA.Behaviour"
                     }
                 ],
-                "innerTraces": null
+                "innerTraces": [
+                    {
+                        "self": "root.system.trafficLightA.Behaviour.Normal.Yellow",
+                        "calledTransition": "semantifyr::sysml::states::State::enter",
+                        "arguments": [
+                            {
+                                "parameter": "commonState",
+                                "value": "root.system.trafficLightA.Behaviour.Normal"
+                            }
+                        ],
+                        "innerTraces": [
+                            {
+                                "self": "root.system.trafficLightA.Behaviour.Normal.Yellow.entryAction",
+                                "calledTransition": "semantifyr::sysml::actions::SendItemAction::send",
+                                "arguments": [],
+                                "innerTraces": null
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "self": "root.system.trafficLightB.Behaviour.Normal",
+                "calledTransition": "semantifyr::sysml::states::State::enter",
+                "arguments": [
+                    {
+                        "parameter": "commonState",
+                        "value": "root.system.trafficLightB.Behaviour"
+                    }
+                ],
+                "innerTraces": [
+                    {
+                        "self": "root.system.trafficLightB.Behaviour.Normal.Yellow",
+                        "calledTransition": "semantifyr::sysml::states::State::enter",
+                        "arguments": [
+                            {
+                                "parameter": "commonState",
+                                "value": "root.system.trafficLightB.Behaviour.Normal"
+                            }
+                        ],
+                        "innerTraces": [
+                            {
+                                "self": "root.system.trafficLightB.Behaviour.Normal.Yellow.entryAction",
+                                "calledTransition": "semantifyr::sysml::actions::SendItemAction::send",
+                                "arguments": [],
+                                "innerTraces": null
+                            }
+                        ]
+                    }
+                ]
             }
         ]
     },
@@ -39,28 +100,40 @@
         {
             "traces": [
                 {
-                    "self": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage2",
+                    "self": "root.system.controller.Behaviour.Operating.transition1",
                     "calledTransition": "semantifyr::sysml::states::Transition::fire",
                     "arguments": [],
                     "innerTraces": [
                         {
-                            "self": "root.system.controller.controlA",
-                            "calledTransition": "semantifyr::sysml::ports::Port::setOutgoingItem",
+                            "self": "root.system.controller.Behaviour.Operating.BothYellow",
+                            "calledTransition": "semantifyr::sysml::states::State::exit",
                             "arguments": [
                                 {
-                                    "parameter": "item",
-                                    "value": "semantifyr::sysml::model::global_Toggle"
+                                    "parameter": "commonState",
+                                    "value": "root.system.controller.Behaviour.Operating"
                                 }
                             ],
                             "innerTraces": null
                         },
                         {
-                            "self": "root.system.controller.controlB",
-                            "calledTransition": "semantifyr::sysml::ports::Port::setOutgoingItem",
+                            "self": "root.system.controller.Behaviour.Operating.transition1.action.send1",
+                            "calledTransition": "semantifyr::sysml::actions::SendItemAction::send",
+                            "arguments": [],
+                            "innerTraces": null
+                        },
+                        {
+                            "self": "root.system.controller.Behaviour.Operating.transition1.action.send2",
+                            "calledTransition": "semantifyr::sysml::actions::SendItemAction::send",
+                            "arguments": [],
+                            "innerTraces": null
+                        },
+                        {
+                            "self": "root.system.controller.Behaviour.Operating.BothRed",
+                            "calledTransition": "semantifyr::sysml::states::State::enter",
                             "arguments": [
                                 {
-                                    "parameter": "item",
-                                    "value": "semantifyr::sysml::model::global_Toggle"
+                                    "parameter": "commonState",
+                                    "value": "root.system.controller.Behaviour.Operating"
                                 }
                             ],
                             "innerTraces": null
@@ -78,35 +151,116 @@
         {
             "traces": [
                 {
-                    "self": "root.system.trafficLightA.Behaviour.Normal.UnnamedTransitionUsage12",
+                    "self": "root.system.trafficLightA.Behaviour.Normal.transition1",
                     "calledTransition": "semantifyr::sysml::states::Transition::fire",
                     "arguments": [],
                     "innerTraces": [
                         {
-                            "self": "root.system.trafficLightA.lightControl",
-                            "calledTransition": "semantifyr::sysml::ports::Port::setOutgoingItem",
+                            "self": "root.system.trafficLightA.Behaviour.Normal.Yellow",
+                            "calledTransition": "semantifyr::sysml::states::State::exit",
                             "arguments": [
                                 {
-                                    "parameter": "item",
-                                    "value": "semantifyr::sysml::model::global_RedL"
+                                    "parameter": "commonState",
+                                    "value": "root.system.trafficLightA.Behaviour.Normal"
                                 }
                             ],
                             "innerTraces": null
+                        },
+                        {
+                            "self": "root.system.trafficLightA.Behaviour.Normal.Red",
+                            "calledTransition": "semantifyr::sysml::states::State::enter",
+                            "arguments": [
+                                {
+                                    "parameter": "commonState",
+                                    "value": "root.system.trafficLightA.Behaviour.Normal"
+                                }
+                            ],
+                            "innerTraces": [
+                                {
+                                    "self": "root.system.trafficLightA.Behaviour.Normal.Red.entryAction",
+                                    "calledTransition": "semantifyr::sysml::actions::SendItemAction::send",
+                                    "arguments": [],
+                                    "innerTraces": null
+                                }
+                            ]
                         }
                     ]
                 },
                 {
-                    "self": "root.system.trafficLightB.Behaviour.Normal.UnnamedTransitionUsage12",
+                    "self": "root.system.trafficLightB.Behaviour.Normal.transition1",
                     "calledTransition": "semantifyr::sysml::states::Transition::fire",
                     "arguments": [],
                     "innerTraces": [
                         {
-                            "self": "root.system.trafficLightB.lightControl",
-                            "calledTransition": "semantifyr::sysml::ports::Port::setOutgoingItem",
+                            "self": "root.system.trafficLightB.Behaviour.Normal.Yellow",
+                            "calledTransition": "semantifyr::sysml::states::State::exit",
                             "arguments": [
                                 {
-                                    "parameter": "item",
-                                    "value": "semantifyr::sysml::model::global_RedL"
+                                    "parameter": "commonState",
+                                    "value": "root.system.trafficLightB.Behaviour.Normal"
+                                }
+                            ],
+                            "innerTraces": null
+                        },
+                        {
+                            "self": "root.system.trafficLightB.Behaviour.Normal.Red",
+                            "calledTransition": "semantifyr::sysml::states::State::enter",
+                            "arguments": [
+                                {
+                                    "parameter": "commonState",
+                                    "value": "root.system.trafficLightB.Behaviour.Normal"
+                                }
+                            ],
+                            "innerTraces": [
+                                {
+                                    "self": "root.system.trafficLightB.Behaviour.Normal.Red.entryAction",
+                                    "calledTransition": "semantifyr::sysml::actions::SendItemAction::send",
+                                    "arguments": [],
+                                    "innerTraces": null
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "self": "root",
+                    "calledTransition": "semantifyr::sysml::verification::VerificationCaseDefinition::passTime",
+                    "arguments": [],
+                    "innerTraces": null
+                }
+            ]
+        },
+        {
+            "traces": [
+                {
+                    "self": "root.system.controller.Behaviour.Operating.transition2",
+                    "calledTransition": "semantifyr::sysml::states::Transition::fire",
+                    "arguments": [],
+                    "innerTraces": [
+                        {
+                            "self": "root.system.controller.Behaviour.Operating.BothRed",
+                            "calledTransition": "semantifyr::sysml::states::State::exit",
+                            "arguments": [
+                                {
+                                    "parameter": "commonState",
+                                    "value": "root.system.controller.Behaviour.Operating"
+                                }
+                            ],
+                            "innerTraces": null
+                        },
+                        {
+                            "self": "root.system.controller.Behaviour.Operating.transition2.action.send1",
+                            "calledTransition": "semantifyr::sysml::actions::SendItemAction::send",
+                            "arguments": [],
+                            "innerTraces": null
+                        },
+                        {
+                            "self": "root.system.controller.Behaviour.Operating.TrafficOnA",
+                            "calledTransition": "semantifyr::sysml::states::State::enter",
+                            "arguments": [
+                                {
+                                    "parameter": "commonState",
+                                    "value": "root.system.controller.Behaviour.Operating"
                                 }
                             ],
                             "innerTraces": null
@@ -124,48 +278,80 @@
         {
             "traces": [
                 {
-                    "self": "root.system.controller.Behaviour.Operating.UnnamedTransitionUsage3",
+                    "self": "root.system.controller.Behaviour.transition1",
                     "calledTransition": "semantifyr::sysml::states::Transition::fire",
                     "arguments": [],
                     "innerTraces": [
                         {
-                            "self": "root.system.controller.controlA",
-                            "calledTransition": "semantifyr::sysml::ports::Port::setOutgoingItem",
+                            "self": "root.system.controller.Behaviour.Operating",
+                            "calledTransition": "semantifyr::sysml::states::State::exit",
                             "arguments": [
                                 {
-                                    "parameter": "item",
-                                    "value": "semantifyr::sysml::model::global_Toggle"
+                                    "parameter": "commonState",
+                                    "value": "root.system.controller.Behaviour"
                                 }
                             ],
                             "innerTraces": null
+                        },
+                        {
+                            "self": "root.system.controller.Behaviour.Interrupted",
+                            "calledTransition": "semantifyr::sysml::states::State::enter",
+                            "arguments": [
+                                {
+                                    "parameter": "commonState",
+                                    "value": "root.system.controller.Behaviour"
+                                }
+                            ],
+                            "innerTraces": [
+                                {
+                                    "self": "root.system.controller.Behaviour.Interrupted.entryAction.send1",
+                                    "calledTransition": "semantifyr::sysml::actions::SendItemAction::send",
+                                    "arguments": [],
+                                    "innerTraces": null
+                                },
+                                {
+                                    "self": "root.system.controller.Behaviour.Interrupted.entryAction.send2",
+                                    "calledTransition": "semantifyr::sysml::actions::SendItemAction::send",
+                                    "arguments": [],
+                                    "innerTraces": null
+                                }
+                            ]
                         }
                     ]
                 },
                 {
-                    "self": "root",
-                    "calledTransition": "semantifyr::sysml::verification::VerificationCaseDefinition::passTime",
-                    "arguments": [],
-                    "innerTraces": null
-                }
-            ]
-        },
-        {
-            "traces": [
-                {
-                    "self": "root.system.trafficLightA.Behaviour.Normal.UnnamedTransitionUsage13",
+                    "self": "root.system.trafficLightA.Behaviour.Normal.transition2",
                     "calledTransition": "semantifyr::sysml::states::Transition::fire",
                     "arguments": [],
                     "innerTraces": [
                         {
-                            "self": "root.system.trafficLightA.lightControl",
-                            "calledTransition": "semantifyr::sysml::ports::Port::setOutgoingItem",
+                            "self": "root.system.trafficLightA.Behaviour.Normal.Red",
+                            "calledTransition": "semantifyr::sysml::states::State::exit",
                             "arguments": [
                                 {
-                                    "parameter": "item",
-                                    "value": "semantifyr::sysml::model::global_GreenL"
+                                    "parameter": "commonState",
+                                    "value": "root.system.trafficLightA.Behaviour.Normal"
                                 }
                             ],
                             "innerTraces": null
+                        },
+                        {
+                            "self": "root.system.trafficLightA.Behaviour.Normal.Green",
+                            "calledTransition": "semantifyr::sysml::states::State::enter",
+                            "arguments": [
+                                {
+                                    "parameter": "commonState",
+                                    "value": "root.system.trafficLightA.Behaviour.Normal"
+                                }
+                            ],
+                            "innerTraces": [
+                                {
+                                    "self": "root.system.trafficLightA.Behaviour.Normal.Green.entryAction",
+                                    "calledTransition": "semantifyr::sysml::actions::SendItemAction::send",
+                                    "arguments": [],
+                                    "innerTraces": null
+                                }
+                            ]
                         }
                     ]
                 },
