@@ -24,7 +24,7 @@ dependencies {
     testImplementation(testFixtures(project(":compiler")))
 }
 
-val sysmlCommit = "9c1fa0b073de4fd229dceb288b9d52fda071ec80" // feat: mapped a transition without first in a state's body as leaving its owning state and refused its effect form, which SysIDE reads as a do action
+val sysmlCommit = "29b4b65f498f7b8fbe44f0acd6658bac63039bbc" // feat: emitted require and verify as members subsetting requiredConstraints and verifiedRequirements, and read the transition right after any entry action as the initial one
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 
