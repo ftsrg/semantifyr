@@ -123,6 +123,30 @@ val bundleCli = tasks.register<Sync>("bundleCli") {
     into(project.layout.buildDirectory.dir("cli-bundle"))
 }
 
+val sysmlConstructsDir = layout.buildDirectory.dir("sysml-constructs")
+
+// the website's table of SysML constructs comes from the translation's own registry
+val sysmlConstructs = tasks.register<NodeTask>("sysmlConstructs") {
+    inputs.files(bundleCli)
+    val targetFile = sysmlConstructsDir.map { it.file("constructs.tsv") }
+    outputs.file(targetFile)
+    script = layout.buildDirectory.file("cli-bundle/cli.cjs")
+    args = provider {
+        listOf(
+            "constructs",
+            "-o",
+            targetFile.get().asFile.absolutePath,
+        )
+    }
+}
+
+configurations.consumable("sysmlConstructsElements") {
+    attributes(semantifyrArtifact("sysml-constructs"))
+    outgoing.artifact(sysmlConstructsDir) {
+        builtBy(sysmlConstructs)
+    }
+}
+
 val assembleFork = tasks.register<PnpmTask>("assembleFork") {
     dependsOn(tasks.pnpmInstall)
     mustRunAfter(buildCli, bundleExtension)
@@ -227,6 +251,7 @@ tasks.test {
         examplesSourceDir.file("Verification.sysml"),
         layout.projectDirectory.file("../models/etc/crossroads-green.trace.sysml"),
         layout.projectDirectory.file("../models/etc/crossroads-green.trace.json"),
+        layout.projectDirectory.file("../models/etc/crossroads-green.witness.json"),
         layout.projectDirectory.file("../models/etc/crossroads-green.witness.oxsts"),
     ).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("../models/libraries/default")).withPathSensitivity(PathSensitivity.RELATIVE)

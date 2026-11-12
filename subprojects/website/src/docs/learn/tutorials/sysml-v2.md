@@ -85,7 +85,7 @@ After **Verify all** the trace of the first failed case opens by itself. A faile
 
 The requirement fails because the parts communicate asynchronously: the lamp follows the switch one step later. Whether that is a defect of the design or of the requirement is for the engineer to decide.
 
-The *SysML trace* view tells the same story in SysML v2: `LampLitOnlyWhileSwitchOnViolatedTrace` specializes `Room`, its `switch` and `lamp` redefine the room's parts, and their exhibited states hold the occurred states and the fired transitions: `turnOn1` and `turnOff1` with the toggles they send, and `lightUp1`. Snapshots order the reactions, `step1` and `step2`, and time slices the second after each, `dwell1` and `dwell2`. Since the trace refines `Room`, any SysML v2 tool reads it next to the model.
+The *SysML trace* view tells the same story in SysML v2: the package `LampLitOnlyWhileSwitchOnViolatedTrace` holds a verification usage of the case with the verdict `fail` and a part definition `Run` that specializes `Room`, whose `switch` and `lamp` redefine the room's parts. Their exhibited states hold the occurred states and the fired transitions, each with its trigger and the toggles its effect sent, and every leaf state names the first and last tick it lasted. Time slices order the run: `init`, a zero-duration `stepK` for each step in which a transition fired, and a `dwellK` for the tick that ends step K. Since the trace refines `Room`, any SysML v2 tool reads it next to the model.
 
 The verifier finds a witness for `LampLitReachable` the same way: an execution in which the lamp lights up. A passing `mustAlways` requirement or a failing `eventually` requirement has no witness, since no single execution proves it.
 
@@ -128,7 +128,7 @@ For each case, the command prints its name, `PASSED` or `FAILED` with the time i
 
 ### The Artifacts
 
-`--artifact-directory ../room-artifacts` keeps the translated model in `compiled/default/room.oxsts` and the artifacts of every case in a directory named after the model file and the qualified name of the case, shortened with a hash when longer than 64 characters. Next to the backend's working files, the compiler's intermediate models (`pipeline/`) and the run's measurements (`report.json`), a case with a witness has four files:
+`--artifact-directory ../room-artifacts` keeps the translated model in `compiled/default/room.oxsts`, with its name map `room.names.json` beside it, and the artifacts of every case in a directory named after the model file and the qualified name of the case, shortened with a hash when longer than 64 characters. Next to the backend's working files, the compiler's intermediate models (`pipeline/`) and the run's measurements (`report.json`), a case with a witness has four files:
 
 - `witness.json`: the values of the model's state in every step of the witness: `initializedStep`, the initial state that initialization produces, then one entry per step. State names are paths from the verified instance, `root`.
 - `trace.json`: per step, the traced calls of the semantic library: the transitions that fired, the states entered and left, and the send actions that ran.
