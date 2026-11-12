@@ -253,7 +253,7 @@ object Gamma : MetaPackage(
     }
 
     object VerificationCaseDeclaration : MetaClass(NamedElement) {
-        val component by contains { ComponentInstance }
+        val component by refers { ComponentDeclaration }
         val expression by contains { Expression }
     }
 
@@ -277,7 +277,7 @@ object Gamma : MetaPackage(
         val time by attribute(EInt)
     }
 
-    object RaiseEventAct : MetaClass(Act, Expression) {
+    object RaiseEventAct : MetaClass(Act, InstanceElementExpression) {
         val port by refers { PortDeclaration }
         val event by refers { EventDeclaration }
         val arguments by contains(MANY) { Expression }

@@ -11,20 +11,25 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.BooleanOp
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.BooleanOperator
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.CascadeComponentDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComparisonOperator
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EF
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventDirection
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ExecutionTrace
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.FiredTransitionExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaRoot
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GuardEvaluation
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.NegationOperator
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Persistency
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RaiseEventAct
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RecordType
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SchedulingOrder
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SetTimeoutAction
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ShallowHistoryState
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StateReferenceExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StatechartDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeUnit
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TransitionPriority
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VariableReferenceExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.tests.InjectWithGamma
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.xtext.EcoreUtil2
@@ -211,9 +216,14 @@ class GammaGrammarTest {
                     }
                     assert {
                         state machine->inner.Main.Idle;
-                        variable self.count = 1;
+                        state Main.Idle;
+                        variable count = 1;
+                        variable machine.count = 1;
                         transition machine from Idle to Busy when control.start;
+                        transition from Idle to Busy;
+                        transition First;
                         raise control.done;
+                        raise machine->inner.control.done;
                     }
                 }
             """,
@@ -221,6 +231,36 @@ class GammaGrammarTest {
 
         assertThat(trace.steps).hasSize(2)
         assertThat(trace.steps.last().acts).hasSize(3)
-        assertThat(trace.steps.last().asserts).hasSize(4)
+        val asserts = trace.steps.last().asserts
+        assertThat(asserts).hasSize(9)
+        assertThat((asserts[1] as StateReferenceExpression).instance).isNull()
+        assertThat(((asserts[2] as ComparisonOperator).left as VariableReferenceExpression).instance).isNull()
+        assertThat((asserts[5] as FiredTransitionExpression).instance).isNull()
+        assertThat((asserts[6] as FiredTransitionExpression).instance).isNull()
+        assertThat((asserts[7] as RaiseEventAct).instance).isNull()
+        assertThat((asserts[8] as RaiseEventAct).instance.child.instance).isNotNull
+    }
+
+    @Test
+    fun `a verification case names its component and holds the property expression`() {
+        val gammaPackage = parse(
+            """
+                package test
+                statechart Machine {
+                    region Main {
+                        initial Start
+                        state Idle
+                    }
+                    transition from Start to Idle
+                }
+                verification case IdleReachable of Machine {
+                    EF state Main.Idle
+                }
+            """,
+        ) as GammaModelPackage
+
+        val verificationCase = gammaPackage.verificationCases.single()
+        assertThat(verificationCase.component.name).isEqualTo("Machine")
+        assertThat(((verificationCase.expression as EF).body as StateReferenceExpression).instance).isNull()
     }
 }

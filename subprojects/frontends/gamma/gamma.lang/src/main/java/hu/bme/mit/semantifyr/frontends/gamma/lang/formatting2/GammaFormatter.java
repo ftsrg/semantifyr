@@ -93,6 +93,7 @@ public class GammaFormatter extends AbstractJavaFormatter {
     protected void format(RaiseEventAct raiseEventAct, IFormattableDocument document) {
         document.append(regionFor(raiseEventAct).keyword("raise"), this::oneSpace);
         formatNavigation(raiseEventAct, document);
+        document.format(raiseEventAct.getInstance());
     }
 
     protected void format(StateReferenceExpression stateReference, IFormattableDocument document) {

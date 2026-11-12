@@ -48,7 +48,7 @@ interface HandleItem {
 
 const EXTENSIONS_OF_LANGUAGE: Readonly<Record<string, readonly string[]>> = {
   sysml: ['.sysml', '.kerml'],
-  gamma: ['.gamma', '.get'],
+  gamma: ['.gamma', '.gcd', '.get'],
   oxsts: ['.oxsts'],
 }
 

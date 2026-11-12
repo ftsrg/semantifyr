@@ -88,8 +88,8 @@ public class GammaScopeProvider extends AbstractGammaScopeProvider {
             return Scopes.scopeFor(GammaUtils.getInstances(GammaUtils.getParentComponent(instanceReference)));
         }
 
-        if (reference == GammaPackage.Literals.RAISE_EVENT_ACT__PORT) {
-            var component = GammaUtils.getTracedComponent(context);
+        if (reference == GammaPackage.Literals.RAISE_EVENT_ACT__PORT && context instanceof RaiseEventAct act) {
+            var component = GammaUtils.getReferencedComponent(act);
             if (component == null) {
                 return IScope.NULLSCOPE;
             }
