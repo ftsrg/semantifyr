@@ -15,6 +15,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableReadExpressions
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableWrites
+import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AbstractForOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
@@ -46,11 +47,15 @@ data class ConeOfInfluenceInfo(
 
 class ConeOfInfluenceAnalysis @Inject constructor(
     private val metaCompileTimeExpressionEvaluatorProvider: MetaCompileTimeExpressionEvaluatorProvider,
+    private val builtinAnnotationHandler: BuiltinAnnotationHandler,
 ) : Analysis<ConeOfInfluenceInfo> {
 
     override fun compute(input: EvaluableCompilationContext): ConeOfInfluenceInfo {
         val evaluator = metaCompileTimeExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
-        return ConeOfInfluenceComputation(input.inlinedOxsts, evaluator).compute()
+        val observedVariables = input.inlinedOxsts.variables.filter {
+            builtinAnnotationHandler.isNonOptimizable(it)
+        }.toSet()
+        return ConeOfInfluenceComputation(input.inlinedOxsts, evaluator, observedVariables).compute()
     }
 
 }
@@ -58,6 +63,7 @@ class ConeOfInfluenceAnalysis @Inject constructor(
 class ConeOfInfluenceComputation(
     private val inlinedOxsts: InlinedOxsts,
     private val evaluator: MetaConstantExpressionEvaluator,
+    private val observedVariables: Set<VariableDeclaration> = emptySet(),
 ) {
 
     fun compute(): ConeOfInfluenceInfo {
@@ -68,7 +74,8 @@ class ConeOfInfluenceComputation(
 
         val variableWorklist = Worklist<VariableDeclaration>()
 
-        for (variable in variablesReadsIn(inlinedOxsts.property.expression)) {
+        // a tracer is read by the trace, so the guards of its writes decide what the trace reports
+        for (variable in variablesReadsIn(inlinedOxsts.property.expression) + observedVariables) {
             if (relevantVariables.add(variable)) {
                 variableWorklist.add(variable)
             }
