@@ -249,7 +249,8 @@ public class GammaValidator extends AbstractGammaValidator {
         var transitions = new LinkedHashMap<String, List<Transition>>();
         for (var transition : statechart.getTransitions()) {
             if (transition.getName() != null) {
-                transitions.computeIfAbsent(transition.getName(), ignored -> new ArrayList<>())
+                transitions
+                        .computeIfAbsent(transition.getName(), ignored -> new ArrayList<>())
                         .add(transition);
             }
         }

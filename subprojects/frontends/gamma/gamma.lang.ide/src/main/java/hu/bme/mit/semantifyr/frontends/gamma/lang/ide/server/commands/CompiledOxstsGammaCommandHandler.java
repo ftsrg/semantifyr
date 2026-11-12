@@ -60,7 +60,8 @@ public class CompiledOxstsGammaCommandHandler extends AbstractCommandHandler<Str
             return CompiledOxstsResult.errored("The document holds no Gamma model");
         }
         try {
-            return CompiledOxstsResult.compiled(new GammaToOxstsSerializer(new GammaNameMap()).transformToOxsts(gammaModel));
+            return CompiledOxstsResult.compiled(
+                    new GammaToOxstsSerializer(new GammaNameMap()).transformToOxsts(gammaModel));
         } catch (RuntimeException e) {
             LOGGER.info("LSP gamma.compiled.oxsts: {} does not compile", arguments.getURI(), e);
             return CompiledOxstsResult.errored("The model does not compile: " + e.getMessage());
