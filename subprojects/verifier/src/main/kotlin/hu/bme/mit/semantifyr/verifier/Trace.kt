@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr.verifier
 
+import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.witness.CallTrace
 import hu.bme.mit.semantifyr.verifier.witness.WitnessState
@@ -14,4 +16,6 @@ class Trace(
     val backAnnotatedModel: InlinedOxsts,
     val witnessState: WitnessState,
     val callTrace: CallTrace,
+    val inlinedWitness: InlinedWitness? = null,
+    val transitionCallTraces: TransitionCallTraceMap? = null,
 )

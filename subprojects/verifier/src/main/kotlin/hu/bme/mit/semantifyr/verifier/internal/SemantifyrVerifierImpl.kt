@@ -331,7 +331,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         )
         val witnessState = callTraceTransformer.transformWitnessState(classWitness)
         val callTrace = callTraceTransformer.transformCallTrace(classWitness, compilation.transitionCallTraces)
-        return Trace(backAnnotatedModel, witnessState, callTrace)
+        return Trace(backAnnotatedModel, witnessState, callTrace, witness, compilation.transitionCallTraces)
     }
 
     private suspend inline fun <T> runInTimeout(

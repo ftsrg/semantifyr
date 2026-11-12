@@ -11,6 +11,7 @@ plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
     id("hu.bme.mit.semantifyr.gradle.conventions.integration")
     id("hu.bme.mit.semantifyr.gradle.conventions.nightly")
+    id("hu.bme.mit.semantifyr.gradle.conventions.sysml-crossroads")
     kotlin("jvm")
 }
 
@@ -83,4 +84,8 @@ configurations.consumable("compiledExamplesElements") {
     outgoing.artifact(compiledExamplesDir) {
         builtBy(compileGammaExamples)
     }
+}
+
+tasks.named("nightlyTest") {
+    inputs.files(compileGammaExampleCrossroads)
 }
