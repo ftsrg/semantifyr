@@ -59,7 +59,7 @@ class ExhibitedMachine : Part {
 class ExhibitedStateActiveUntilDoneTestCase : VerificationCaseDefinition {
     contains system: ExhibitedMachine[1] redefines subject
     redefine contains objective: Requirement[1] {
-        redefine contains requiredConstraint: MustAlways {
+        contains constraint: MustAlways subsets requiredConstraints {
             redefine contains body: OrOperatorExpression {
                 redefine contains left: AttributeReferenceExpression {
                     redefine refers attribute: Attribute = system.finished
@@ -77,7 +77,7 @@ class ExhibitedStateActiveUntilDoneTestCase : VerificationCaseDefinition {
 class ExhibitedStateInactiveAfterDoneTestCase : VerificationCaseDefinition {
     contains system: ExhibitedMachine[1] redefines subject
     redefine contains objective: Requirement[1] {
-        redefine contains requiredConstraint: MustAlways {
+        contains constraint: MustAlways subsets requiredConstraints {
             redefine contains body: OrOperatorExpression {
                 redefine contains left: UnaryNotExpression {
                     redefine contains operand: AttributeReferenceExpression {
@@ -99,7 +99,7 @@ class ExhibitedStateInactiveAfterDoneTestCase : VerificationCaseDefinition {
 class ExhibitedStateReachesDoneTestCase : VerificationCaseDefinition {
     contains system: ExhibitedMachine[1] redefines subject
     redefine contains objective: Requirement[1] {
-        redefine contains requiredConstraint: Eventually {
+        contains constraint: Eventually subsets requiredConstraints {
             redefine contains body: EqualityOperatorExpression {
                 redefine contains left: IsStateActiveExpression {
                     redefine refers state: AbstractState = system.Behaviour
@@ -117,7 +117,7 @@ class ExhibitedStateReachesDoneTestCase : VerificationCaseDefinition {
 class ExhibitedStateEntryPrecedesDescentTestCase : VerificationCaseDefinition {
     contains system: ExhibitedMachine[1] redefines subject
     redefine contains objective: Requirement[1] {
-        redefine contains requiredConstraint: MustAlways {
+        contains constraint: MustAlways subsets requiredConstraints {
             redefine contains body: OrOperatorExpression {
                 redefine contains left: UnaryNotExpression {
                     redefine contains operand: IsStateActiveExpression {
@@ -214,7 +214,7 @@ class AppendDigitAction : Action {
 class RegionEntryReachesTargetTestCase : VerificationCaseDefinition {
     contains system: RegionEntryMachine[1] redefines subject
     redefine contains objective: Requirement[1] {
-        redefine contains requiredConstraint: Eventually {
+        contains constraint: Eventually subsets requiredConstraints {
             redefine contains body: IsStateActiveExpression {
                 redefine refers state: AbstractState = system.Behaviour.Running.Left.Target
             }
@@ -227,7 +227,7 @@ class RegionEntryReachesTargetTestCase : VerificationCaseDefinition {
 class RegionEntryEntersSiblingRegionTestCase : VerificationCaseDefinition {
     contains system: RegionEntryMachine[1] redefines subject
     redefine contains objective: Requirement[1] {
-        redefine contains requiredConstraint: MustAlways {
+        contains constraint: MustAlways subsets requiredConstraints {
             redefine contains body: OrOperatorExpression {
                 redefine contains left: UnaryNotExpression {
                     redefine contains operand: IsStateActiveExpression {
@@ -247,7 +247,7 @@ class RegionEntryEntersSiblingRegionTestCase : VerificationCaseDefinition {
 class RegionEntryRunsEntriesInOrderTestCase : VerificationCaseDefinition {
     contains system: RegionEntryMachine[1] redefines subject
     redefine contains objective: Requirement[1] {
-        redefine contains requiredConstraint: MustAlways {
+        contains constraint: MustAlways subsets requiredConstraints {
             redefine contains body: OrOperatorExpression {
                 redefine contains left: UnaryNotExpression {
                     redefine contains operand: IsStateActiveExpression {
@@ -322,7 +322,7 @@ class DerivedMachine : Part {
 class DerivedAttributeFollowsItsExpressionTestCase : VerificationCaseDefinition {
     contains system: DerivedMachine[1] redefines subject
     redefine contains objective: Requirement[1] {
-        redefine contains requiredConstraint: MustAlways {
+        contains constraint: MustAlways subsets requiredConstraints {
             redefine contains body: EqualityOperatorExpression {
                 redefine contains left: AttributeReferenceExpression {
                     redefine refers attribute: Attribute = system.doubled
@@ -345,7 +345,7 @@ class DerivedAttributeFollowsItsExpressionTestCase : VerificationCaseDefinition 
 class DerivedAttributeChangesTestCase : VerificationCaseDefinition {
     contains system: DerivedMachine[1] redefines subject
     redefine contains objective: Requirement[1] {
-        redefine contains requiredConstraint: Eventually {
+        contains constraint: Eventually subsets requiredConstraints {
             redefine contains body: EqualityOperatorExpression {
                 redefine contains left: AttributeReferenceExpression {
                     redefine refers attribute: Attribute = system.doubled

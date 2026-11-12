@@ -5,33 +5,24 @@ import semantifyr::sysml::states
 import semantifyr::sysml::expressions
 
 class Constraint : Expression {
-    contains requiredConstraint: Expression
+    contains requiredConstraints: Expression[0..*]
+
+    // the mapper emits at most one required constraint
+    refers requiredConstraint: Expression[0..1] = requiredConstraints
 
     redefine prop evaluate(): bool {
         return requiredConstraint.evaluate() as bool
     }
 }
 
-class ConstraintReferenceExpression : Expression {
-    refers expression: Expression[0..1]
-
-    redefine prop evaluate(): any {
-        return expression.evaluate()
-    }
-}
-
 class Requirement : Constraint {
-    // a case without verify checks its objective's own constraint
-    contains verifyRequirement: Constraint[1] {
-        redefine contains requiredConstraint: ConstraintReferenceExpression {
-            redefine refers expression: Expression[0..1] = objectiveConstraint
-        }
-    }
+    contains verifiedRequirements: Constraint[0..*]
 
-    refers objectiveConstraint: Expression[0..1] = requiredConstraint
+    // a case without verify checks its objective's own constraint
+    refers checkedConstraint: Expression[0..1] = if (verifiedRequirements == nothing) then requiredConstraint else verifiedRequirements
 
     redefine prop evaluate(): bool {
-        return verifyRequirement.evaluate()
+        return checkedConstraint.evaluate() as bool
     }
 }
 
