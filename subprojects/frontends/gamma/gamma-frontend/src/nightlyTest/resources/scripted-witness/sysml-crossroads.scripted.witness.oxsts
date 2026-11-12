@@ -1,0 +1,128 @@
+witness of semantifyr::sysml::model::TrafficLightABehaviorNormalGreenUnreachableViolated
+
+var step: int := 0
+
+contains root: semantifyr::sysml::model::TrafficLightABehaviorNormalGreenUnreachableViolated
+
+init {
+    assume(step == 0)
+    inline root.init()
+    step := 1
+}
+
+tran {
+    assume(step == 1)
+    inline root.system.controller.control.havocIncomingItem()
+    inline root.system.controller.control.resetOutgoingItem()
+    inline root.system.controller.control.resetOutgoingItem()
+    inline root.system.controller.controlA.resetOutgoingItem()
+    inline root.system.controller.controlB.resetOutgoingItem()
+    inline root.system.controller.control.resetIncomingItem()
+    inline root.system.controller.controlA.resetIncomingItem()
+    inline root.system.controller.controlB.resetIncomingItem()
+    inline root.system.trafficLightA.control.resetOutgoingItem()
+    inline root.system.trafficLightA.lightControl.resetOutgoingItem()
+    inline root.system.trafficLightA.control.resetIncomingItem()
+    inline root.system.trafficLightA.lightControl.resetIncomingItem()
+    inline root.system.trafficLightB.control.resetOutgoingItem()
+    inline root.system.trafficLightB.lightControl.resetOutgoingItem()
+    inline root.system.trafficLightB.control.resetIncomingItem()
+    inline root.system.trafficLightB.lightControl.resetIncomingItem()
+    inline root.passTime()
+    step := 2
+} or {
+    assume(step == 2)
+    inline root.system.controller.control.havocIncomingItem()
+    inline root.system.controller.control.resetOutgoingItem()
+    inline root.system.controller.control.resetOutgoingItem()
+    inline root.system.controller.controlA.resetOutgoingItem()
+    inline root.system.controller.controlB.resetOutgoingItem()
+    inline root.system.controller.Behaviour.Operating.UnnamedTransitionUsage2.fire()
+    inline root.system.controller.control.resetIncomingItem()
+    inline root.system.controller.controlA.resetIncomingItem()
+    inline root.system.controller.controlB.resetIncomingItem()
+    inline root.system.trafficLightA.control.resetOutgoingItem()
+    inline root.system.trafficLightA.lightControl.resetOutgoingItem()
+    inline root.system.trafficLightA.control.resetIncomingItem()
+    inline root.system.trafficLightA.lightControl.resetIncomingItem()
+    inline root.system.trafficLightB.control.resetOutgoingItem()
+    inline root.system.trafficLightB.lightControl.resetOutgoingItem()
+    inline root.system.trafficLightB.control.resetIncomingItem()
+    inline root.system.trafficLightB.lightControl.resetIncomingItem()
+    inline root.system.UnnamedFlowUsage0.transfer()
+    inline root.system.UnnamedFlowUsage1.transfer()
+    inline root.passTime()
+    step := 3
+} or {
+    assume(step == 3)
+    inline root.system.controller.control.havocIncomingItem()
+    inline root.system.controller.control.resetOutgoingItem()
+    inline root.system.controller.control.resetOutgoingItem()
+    inline root.system.controller.controlA.resetOutgoingItem()
+    inline root.system.controller.controlB.resetOutgoingItem()
+    inline root.system.controller.control.resetIncomingItem()
+    inline root.system.controller.controlA.resetIncomingItem()
+    inline root.system.controller.controlB.resetIncomingItem()
+    inline root.system.trafficLightA.control.resetOutgoingItem()
+    inline root.system.trafficLightA.lightControl.resetOutgoingItem()
+    inline root.system.trafficLightA.Behaviour.Normal.UnnamedTransitionUsage12.fire()
+    inline root.system.trafficLightA.control.resetIncomingItem()
+    inline root.system.trafficLightA.lightControl.resetIncomingItem()
+    inline root.system.trafficLightB.control.resetOutgoingItem()
+    inline root.system.trafficLightB.lightControl.resetOutgoingItem()
+    inline root.system.trafficLightB.Behaviour.Normal.UnnamedTransitionUsage12.fire()
+    inline root.system.trafficLightB.control.resetIncomingItem()
+    inline root.system.trafficLightB.lightControl.resetIncomingItem()
+    inline root.passTime()
+    step := 4
+} or {
+    assume(step == 4)
+    inline root.system.controller.control.havocIncomingItem()
+    inline root.system.controller.control.resetOutgoingItem()
+    inline root.system.controller.control.resetOutgoingItem()
+    inline root.system.controller.controlA.resetOutgoingItem()
+    inline root.system.controller.controlB.resetOutgoingItem()
+    inline root.system.controller.Behaviour.Operating.UnnamedTransitionUsage3.fire()
+    inline root.system.controller.control.resetIncomingItem()
+    inline root.system.controller.controlA.resetIncomingItem()
+    inline root.system.controller.controlB.resetIncomingItem()
+    inline root.system.trafficLightA.control.resetOutgoingItem()
+    inline root.system.trafficLightA.lightControl.resetOutgoingItem()
+    inline root.system.trafficLightA.control.resetIncomingItem()
+    inline root.system.trafficLightA.lightControl.resetIncomingItem()
+    inline root.system.trafficLightB.control.resetOutgoingItem()
+    inline root.system.trafficLightB.lightControl.resetOutgoingItem()
+    inline root.system.trafficLightB.control.resetIncomingItem()
+    inline root.system.trafficLightB.lightControl.resetIncomingItem()
+    inline root.system.UnnamedFlowUsage0.transfer()
+    inline root.passTime()
+    step := 5
+} or {
+    assume(step == 5)
+    inline root.system.controller.control.havocIncomingItem()
+    inline root.system.controller.control.resetOutgoingItem()
+    inline root.system.controller.control.resetOutgoingItem()
+    inline root.system.controller.controlA.resetOutgoingItem()
+    inline root.system.controller.controlB.resetOutgoingItem()
+    inline root.system.controller.Behaviour.UnnamedTransitionUsage8.fire()
+    inline root.system.controller.control.resetIncomingItem()
+    inline root.system.controller.controlA.resetIncomingItem()
+    inline root.system.controller.controlB.resetIncomingItem()
+    inline root.system.trafficLightA.control.resetOutgoingItem()
+    inline root.system.trafficLightA.lightControl.resetOutgoingItem()
+    inline root.system.trafficLightA.Behaviour.Normal.UnnamedTransitionUsage13.fire()
+    inline root.system.trafficLightA.control.resetIncomingItem()
+    inline root.system.trafficLightA.lightControl.resetIncomingItem()
+    inline root.system.trafficLightB.control.resetOutgoingItem()
+    inline root.system.trafficLightB.lightControl.resetOutgoingItem()
+    inline root.system.trafficLightB.control.resetIncomingItem()
+    inline root.system.trafficLightB.lightControl.resetIncomingItem()
+    inline root.system.UnnamedFlowUsage0.transfer()
+    inline root.system.UnnamedFlowUsage1.transfer()
+    inline root.passTime()
+    step := 6
+}
+
+prop {
+    AG (step != 6)
+}
