@@ -24,7 +24,7 @@ dependencies {
     testImplementation(testFixtures(project(":compiler")))
 }
 
-val sysmlCommit = "6556e118c96d075b4a7a140f521c20abc3fb1aa0" // fix: a document opened during startup no longer cancels the unvalidated standard library build
+val sysmlCommit = "136a484413e4c8bc1576ebd8addc254df5fc9350" // feat: rewrote the Semantifyr mapper with a construct registry and a name map, and the trace generator to read the witness, the trace and the name map
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 
