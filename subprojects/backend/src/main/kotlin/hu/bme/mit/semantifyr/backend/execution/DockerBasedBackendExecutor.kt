@@ -21,6 +21,7 @@ import kotlinx.coroutines.withContext
 import org.apache.commons.io.output.NullOutputStream
 import java.io.File
 import java.io.FileOutputStream
+import java.time.Duration
 
 abstract class DockerBasedBackendExecutor(
     protected val image: String,
@@ -33,6 +34,8 @@ abstract class DockerBasedBackendExecutor(
         val httpClient = ApacheDockerHttpClient.Builder()
             .dockerHost(config.dockerHost)
             .sslConfig(config.sslConfig)
+            // the default of three minutes is spent spinning on a Windows host whose Docker is not running
+            .connectionTimeout(Duration.ofSeconds(10))
             .build()
         DockerClientImpl.getInstance(config, httpClient)
     }
