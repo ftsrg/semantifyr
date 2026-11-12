@@ -68,10 +68,8 @@ class GammaTraceGenerator @Inject constructor(
             it.name = "${verificationCase.name}Trace"
             it.verificationCase = verificationCase
             it.steps += createInitializationStep(callTrace.initializedStep, witnessState.initializedStep, paths)
-            var timeAdvanced = false
             for ((index, step) in callTrace.steps.withIndex()) {
-                it.steps += createStep(step, witnessState.steps[index], paths, timeAdvanced)
-                timeAdvanced = advancesTime(step, paths)
+                it.steps += createStep(step, witnessState.steps[index], paths)
             }
         }
 
@@ -100,18 +98,16 @@ class GammaTraceGenerator @Inject constructor(
         }
     }
 
-    // the library advances time after a step, which in Gamma's order is an elapse before the next one
     private fun createStep(
         callTraceStep: CallTraceStep,
         witnessStateStep: WitnessStateStep,
         paths: InstancePaths,
-        timeAdvanced: Boolean,
     ): Step {
         return factory.createStep().also { step ->
             step.acts += flatten(callTraceStep.traces).mapNotNull {
                 createInputAct(it, paths)
             }
-            if (timeAdvanced) {
+            if (advancesTime(callTraceStep, paths)) {
                 step.acts += factory.createTimeElapseAct().also {
                     it.time = TIME_ADVANCE_MILLISECONDS
                 }

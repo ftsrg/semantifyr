@@ -78,7 +78,7 @@ The Gamma semantic library marks four transitions with `@Trace`: `Transition::fi
 
 - a fired `Transition::fire` to a `transition` assert;
 - `Port::raiseInputEvent` to a `raise` act and `Port::setOutputEvent` to a `raise` assert, as the called transition says, each on the port of the traced component the inner port is bound to; a raise on a port bound to none is not written;
-- `passTime` at the root to `elapse 1000` at the start of the next step;
+- `passTime` at the root to `elapse 1000` in the same step, before `schedule`;
 - the active state of every region and the value of every statechart variable in the witness to `state` and `variable` asserts.
 
 Input events are traced because the library resets them within the step, so no state between steps shows them. Output events are traced because the optimizer removes outputs that nothing reads. The Gamma language's serializer and formatter write the trace.
