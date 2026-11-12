@@ -197,7 +197,7 @@ class LiveVerificationTest {
                     .isEqualTo(WitnessValidationStatus.VALID)
                 assertThat(validation.verdict()).isEqualTo("passed")
                 assertThat(validation.portfolioId()).isEqualTo("smart-full")
-                val verificationDirectory = caseDirectoryName("model", selectedCase)
+                val verificationDirectory = "model._Simple._LeaderStatechartIdleReachable"
                 assertThat(artifactsOnDisk(tmp, "Simple.LeaderStatechartIdleReachable")).contains(
                     "verification/$verificationDirectory/report.json",
                     "verification/$verificationDirectory/witness.oxsts",
