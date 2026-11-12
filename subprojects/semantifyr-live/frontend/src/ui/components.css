@@ -85,7 +85,7 @@ code, .mono { font-family: var(--font-mono); font-feature-settings: "calt" 0; }
 
 .separator { width: 1px; height: 20px; background: var(--border); flex: none; }
 
-.logo { display: block; height: 21px; width: auto; color: var(--text-primary); }
+.logo { display: block; height: 21px; width: auto; color: var(--text-primary); user-select: none; }
 .logo .logo-flame { fill: var(--logo-flame); }
 .logo text { font-family: "Semantifyr Logo", "Open Sans", sans-serif; font-weight: 700; font-size: 527px; fill: currentColor; }
 
