@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC "-//Uppaal Team//DTD Flat System 1.6//EN" "http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd">
+<nta>
+<declaration>clock x, y;
+bool armedB = true;
+int countA = 0;
+int aAtB = -1;
+bool lateA = false;</declaration>
+<template>
+<name>Model</name>
+<location id="start"><name>Start</name><committed/></location>
+<location id="running"><name>Running</name><urgent/></location>
+<location id="delaying"><name>Delaying</name></location>
+<init ref="start"/>
+<transition><source ref="start"/><target ref="running"/><label kind="assignment">x = 0, y = 0, armedB = true, countA = 0, aAtB = -1, lateA = false</label></transition>
+<transition><source ref="running"/><target ref="delaying"/></transition>
+<transition><source ref="delaying"/><target ref="running"/><label kind="guard">armedB &amp;&amp; x == 2 &amp;&amp; x &lt;= 2 &amp;&amp; y &lt;= 4</label><label kind="assignment">x = 0, countA = countA &lt; 3 ? countA + 1 : 3</label></transition>
+<transition><source ref="delaying"/><target ref="running"/><label kind="guard">!armedB &amp;&amp; x == 2 &amp;&amp; x &lt;= 2</label><label kind="assignment">x = 0, countA = countA &lt; 3 ? countA + 1 : 3</label></transition>
+<transition><source ref="delaying"/><target ref="running"/><label kind="guard">armedB &amp;&amp; y == 4 &amp;&amp; x &lt;= 2 &amp;&amp; y &lt;= 4</label><label kind="assignment">armedB = false, aAtB = countA</label></transition>
+<transition><source ref="delaying"/><target ref="running"/><label kind="guard">armedB &amp;&amp; x &lt; 2 &amp;&amp; y &lt; 4</label></transition>
+<transition><source ref="delaying"/><target ref="running"/><label kind="guard">!armedB &amp;&amp; x &lt; 2</label></transition>
+</template>
+<system>system Model;</system>
+</nta>

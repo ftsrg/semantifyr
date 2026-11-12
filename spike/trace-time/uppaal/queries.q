@@ -1,0 +1,6 @@
+E<> (Model.Running && countA >= 1)
+E<> (Model.Running && aAtB == 0)
+E<> (Model.Running && aAtB == 2)
+E<> (Model.Running && aAtB == 1 && countA >= 2)
+A[] (Model.Running imply x <= 2)
+E<> (Model.Running && lateA)

@@ -1,0 +1,65 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::loadLibrary has been called by hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory in an unnamed module (file:/home/armin/work/ftsrg/semantifyr/subprojects/frontends/sysml/sysml-cli/build/theta-xsts-cli/jars/theta-xsts-cli.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+Iteration 1
+| Checking abstraction...
+|  |  (Re)initializing ARG...WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper (file:/home/armin/work/ftsrg/semantifyr/subprojects/frontends/sysml/sysml-cli/build/theta-xsts-cli/jars/theta-xsts-cli.jar)
+WARNING: Please consider reporting this to the maintainers of class com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+done
+|  |  Building ARG...done
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 1...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision DID change in this iteration
+Iteration 2
+| Checking abstraction...
+|  |  Building ARG...done
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 1...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision DID change in this iteration
+Iteration 3
+| Checking abstraction...
+|  |  Building ARG...done
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 2...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision DID change in this iteration
+Iteration 4
+| Checking abstraction...
+|  |  Building ARG...done
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 1...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision DID change in this iteration
+Iteration 5
+| Checking abstraction...
+|  |  Building ARG...done
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 1...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision DID change in this iteration
+Iteration 6
+| Checking abstraction...
+|  |  Building ARG...done
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Checking trace...done, result: (ExprTraceStatus Feasible)
+Refining abstraction done, result: (RefinerResult Unsafe)
+! Precision did NOT change in this iteration
+(SafetyResult Unsafe Trace length: 11)
+(SafetyResult Unsafe Trace length: 11)

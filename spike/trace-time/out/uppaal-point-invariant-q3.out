@@ -1,0 +1,76 @@
+Options for the verification:
+  Generating shortest trace
+  Search order is breadth first
+  Using conservative space optimisation
+  Seed is 1794522991
+  State space representation uses minimal constraint systems with future testing
+  Using HashMap + Compress integers for discrete state storage
+[2K
+Verifying formula 1 at /home/armin/work/ftsrg/semantifyr/.claude/worktrees/spike-trace-time/spike/trace-time/out/uppaal-point-invariant-q3.q:1
+[2K -- Formula is satisfied.
+ -- Showing witness trace:
+
+State:
+( Model.Start )
+armedB=1 countA=0 aAtB=-1 lateA=0 x=0 y=0
+
+Transition:
+  Model.Start->Model.Running { 1, tau, x := 0, y := 0, armedB := true, countA := 0, aAtB := -1, lateA := false }
+
+State:
+( Model.Running )
+armedB=1 countA=0 aAtB=-1 lateA=0 x=0 y=0
+
+Transition:
+  Model.Running->Model.Delaying { 1, tau, 1 }
+
+State:
+( Model.Delaying )
+armedB=1 countA=0 aAtB=-1 lateA=0 x=0 y=0
+
+Delay: 2
+
+State:
+( Model.Delaying )
+armedB=1 countA=0 aAtB=-1 lateA=0 x=2 y=2
+
+Transition:
+  Model.Delaying->Model.Running { x == 2, tau, x := 0, countA := countA < 3 ? countA + 1 : 3 }
+
+State:
+( Model.Running )
+armedB=1 countA=1 aAtB=-1 lateA=0 x=0 y=2
+
+Transition:
+  Model.Running->Model.Delaying { 1, tau, 1 }
+
+State:
+( Model.Delaying )
+armedB=1 countA=1 aAtB=-1 lateA=0 x=0 y=2
+
+Delay: 2
+
+State:
+( Model.Delaying )
+armedB=1 countA=1 aAtB=-1 lateA=0 x=2 y=4
+
+Transition:
+  Model.Delaying->Model.Running { x == 2, tau, x := 0, countA := countA < 3 ? countA + 1 : 3 }
+
+State:
+( Model.Running )
+armedB=1 countA=2 aAtB=-1 lateA=0 x=0 y=4
+
+Transition:
+  Model.Running->Model.Delaying { 1, tau, 1 }
+
+State:
+( Model.Delaying )
+armedB=1 countA=2 aAtB=-1 lateA=0 x=0 y=4
+
+Transition:
+  Model.Delaying->Model.Running { armedB && y == 4, tau, armedB := false, aAtB := countA }
+
+State:
+( Model.Running )
+armedB=0 countA=2 aAtB=2 lateA=0 x=0 y=4

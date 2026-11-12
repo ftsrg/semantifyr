@@ -1,0 +1,45 @@
+var x : integer = 0
+var y : integer = 0
+var d : integer = 0
+var armedB : boolean = true
+var countA : integer = 0
+var aAtB : integer = -1
+var lateA : boolean = false
+ctrl var initialized : boolean = false
+
+trans {
+    havoc d;
+    assume d >= 0;
+    x := x + d;
+    y := y + d;
+    assume x < 3 && (!armedB || y <= 4);
+    choice {
+        assume x > 2 && x < 3;
+        if (x > 2) lateA := true;
+        x := 0;
+        countA := if countA < 3 then countA + 1 else 3;
+    } or {
+        assume armedB && y == 4;
+        armedB := false;
+        aAtB := countA;
+    } or {
+        assume !(x > 2 && x < 3) && !(armedB && y == 4);
+    }
+}
+
+init {
+    x := 0;
+    y := 0;
+    d := 0;
+    armedB := true;
+    countA := 0;
+    aAtB := -1;
+    lateA := false;
+    initialized := true;
+}
+
+env {}
+
+prop {
+    !initialized || !(aAtB == 0)
+}

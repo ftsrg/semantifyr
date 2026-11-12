@@ -1,0 +1,3 @@
+prop {
+    !initialized || !(aAtB == 1 && countA >= 2)
+}

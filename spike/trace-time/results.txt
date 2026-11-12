@@ -1,0 +1,72 @@
+uppaal closed q1 reachable 88ms errors=0 delays: 1 1
+uppaal closed q2 unreachable 62ms errors=0 delays:
+uppaal closed q3 reachable 43ms errors=0 delays: 1 1 1 1 0
+uppaal closed q4 reachable 71ms errors=0 delays: 1 1 1 1 0
+uppaal closed q5 violated 117ms errors=0 delays: 1 1 0.5 1 1
+uppaal closed q6 reachable 44ms errors=0 delays: 0.5 1 1
+uppaal closed-invariant q1 reachable 73ms errors=0 delays: 1 1
+uppaal closed-invariant q2 unreachable 29ms errors=0 delays:
+uppaal closed-invariant q3 reachable 29ms errors=0 delays: 1 1 1 1 0
+uppaal closed-invariant q4 reachable 43ms errors=0 delays: 1 1 1 1 0
+uppaal closed-invariant q5 violated 22ms errors=0 delays: 1 1 0.5 1 1
+uppaal closed-invariant q6 reachable 28ms errors=0 delays: 0.5 1 1
+uppaal point q1 reachable 26ms errors=0 delays: 2
+uppaal point q2 unreachable 23ms errors=0 delays:
+uppaal point q3 reachable 25ms errors=0 delays: 2 2 0
+uppaal point q4 reachable 25ms errors=0 delays: 2 2 0
+uppaal point q5 holds 48ms errors=0 delays:
+uppaal point q6 unreachable 66ms errors=0 delays:
+uppaal point-invariant q1 reachable 60ms errors=0 delays: 2
+uppaal point-invariant q2 unreachable 25ms errors=0 delays:
+uppaal point-invariant q3 reachable 23ms errors=0 delays: 2 2 0
+uppaal point-invariant q4 reachable 42ms errors=0 delays: 2 2 0
+uppaal point-invariant q5 holds 31ms errors=0 delays:
+uppaal point-invariant q6 unreachable 32ms errors=0 delays:
+uppaal window q1 reachable 28ms errors=0 delays: 2.5
+uppaal window q2 unreachable 47ms errors=0 delays:
+uppaal window q3 unreachable 34ms errors=0 delays:
+uppaal window q4 reachable 28ms errors=0 delays: 2.5 1.5 1
+uppaal window q5 holds 41ms errors=0 delays:
+uppaal window q6 reachable 23ms errors=0 delays: 2.5
+uppaal window-invariant q1 reachable 25ms errors=0 delays: 2.5
+uppaal window-invariant q2 unreachable 37ms errors=0 delays:
+uppaal window-invariant q3 unreachable 59ms errors=0 delays:
+uppaal window-invariant q4 reachable 78ms errors=0 delays: 2.5 1.5 1
+uppaal window-invariant q5 holds 38ms errors=0 delays:
+uppaal window-invariant q6 reachable 73ms errors=0 delays: 2.5
+theta closed q1 reachable 5876ms delays: 1 1
+theta closed q2 unreachable 6428ms delays:
+theta closed q3 reachable 6585ms delays: 1 1 1 1 1
+theta closed q4 timeout 120s
+theta closed q5 holds 3674ms delays:
+theta closed q6 reachable 4802ms delays: 1 1 1 1 1
+theta closed-unsaturated q1 reachable 3463ms delays: 1 1
+theta closed-unsaturated q2 timeout 120s
+theta closed-unsaturated q3 reachable 2436ms delays: 1 1 1 1 1
+theta closed-unsaturated q4 timeout 120s
+theta closed-unsaturated q5 timeout 120s
+theta closed-unsaturated q6 reachable 1737ms delays: 1 1 1 1 1
+theta point q1 reachable 1730ms delays: 2
+theta point q2 unreachable 2074ms delays:
+theta point q3 reachable 1759ms delays: 2 2 0
+theta point q4 timeout 120s
+theta point q5 holds 2740ms delays:
+theta point q6 unreachable 2862ms delays:
+theta point-unsaturated q1 reachable 2716ms delays: 2
+theta point-unsaturated q2 unreachable 4064ms delays:
+theta point-unsaturated q3 reachable 4015ms delays: 2 2 0
+theta point-unsaturated q4 timeout 120s
+theta point-unsaturated q5 holds 2307ms delays:
+theta point-unsaturated q6 unreachable 3083ms delays:
+theta window q1 unreachable 3039ms delays:
+theta window q2 unreachable 3569ms delays:
+theta window q3 unreachable 3271ms delays:
+theta window q4 unreachable 2989ms delays:
+theta window q5 holds 2706ms delays:
+theta window q6 unreachable 2560ms delays:
+theta window-unsaturated q1 unreachable 1828ms delays:
+theta window-unsaturated q2 unreachable 1857ms delays:
+theta window-unsaturated q3 unreachable 2231ms delays:
+theta window-unsaturated q4 unreachable 1705ms delays:
+theta window-unsaturated q5 holds 1552ms delays:
+theta window-unsaturated q6 unreachable 2273ms delays:

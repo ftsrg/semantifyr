@@ -1,0 +1,23 @@
+Timer A: clock x, deadline 2, periodic (fires, x := 0, countA counts up to 3). Timer B: clock y, deadline 4, one-shot (fires, armedB := false, aAtB := countA). A step fires one enabled timer; it idles only when none is enabled. lateA is set when A fires with x > 2.
+closed: A at x >= 2, B at y >= 4, the delay at most 1 (the scheduler bound).
+point: A at x == 2, B at y == 4, urgency x <= 2 and (armedB implies y <= 4).
+window: A at x > 2 and x < 3, urgency x < 3; B as in point.
+
+q1 E<> countA >= 1: A fires at all.
+q2 E<> aAtB == 0: B fires before A's first firing.
+q3 E<> aAtB == 2: A fires twice before B.
+q4 E<> aAtB == 1 && countA >= 2: B between A's first and second firing.
+q5 A[] x <= 2: no step ends with x above 2.
+q6 E<> lateA: A fires after x passed 2.
+
+closed dense: q1 reachable, q2 unreachable (A must fire at its first step with x in [2,3], B needs t >= 4), q3 reachable, q4 reachable, q5 violated (A at 2, idle at 3.9, B at 4.8 with x = 2.8), q6 reachable (idle at 1.5, A at 2.5).
+closed integer: q1 reachable, q2 unreachable, q3 reachable, q4 reachable, q5 holds (delays 0 or 1 visit every integer instant, so a step happens at x = 2 and B can end a step only with x = 2), q6 reachable (B at 4 with x = 2, then A after a delay of 1 with x = 3).
+closed: q5 differs, its target x > 2 being open, outside the property side of the digitization condition; the model side holds.
+
+point dense and integer: q1 reachable, q2 unreachable, q3 reachable only with a delay of 0 (A at 4, then B at 4), q4 reachable only with a delay of 0 (B at 4, then A at 4), q5 holds, q6 unreachable.
+
+window dense: q1 reachable (A in (2,3)), q2 unreachable, q3 unreachable (A's second firing after 4, B exactly at 4), q4 reachable, q5 holds (idle only with x <= 2, B at 4 with x in (1,2)), q6 reachable.
+window integer: x never leaves {0, 1, 2} and time stops at 2 (idle steps with a delay of 0): q1 unreachable, q2 unreachable, q3 unreachable, q4 unreachable, q5 holds, q6 unreachable.
+window: q1, q4 and q6 differ.
+
+Saturation: x at its greatest compared constant plus 1 (closed 3, point 3, window 4), y at 5; no verdict changes.
