@@ -13,6 +13,8 @@ step {
         reset
     }
     assert {
+        raise trafficLightA.lightControl.yellow;
+        raise trafficLightB.lightControl.yellow;
         state controller.Main.Operating;
         state controller.OperatingRegion.BothYellow;
         state trafficLightA.Main.Normal;
@@ -29,6 +31,8 @@ step {
     }
     assert {
         transition controller from BothYellow to BothRed;
+        raise controller.controlA.toggle;
+        raise controller.controlB.toggle;
         state controller.Main.Operating;
         state controller.OperatingRegion.BothRed;
         state trafficLightA.Main.Normal;
@@ -45,7 +49,9 @@ step {
     }
     assert {
         transition trafficLightA from Yellow to Red;
+        raise trafficLightA.lightControl.red;
         transition trafficLightB from Yellow to Red;
+        raise trafficLightB.lightControl.red;
         state controller.Main.Operating;
         state controller.OperatingRegion.BothRed;
         state trafficLightA.Main.Normal;
@@ -62,6 +68,7 @@ step {
     }
     assert {
         transition controller from BothRed to TrafficOnA;
+        raise controller.controlA.toggle;
         state controller.Main.Operating;
         state controller.OperatingRegion.TrafficOnA;
         state trafficLightA.Main.Normal;
@@ -78,6 +85,7 @@ step {
     }
     assert {
         transition trafficLightA from Red to Green;
+        raise trafficLightA.lightControl.green;
         state controller.Main.Operating;
         state controller.OperatingRegion.TrafficOnA;
         state trafficLightA.Main.Normal;

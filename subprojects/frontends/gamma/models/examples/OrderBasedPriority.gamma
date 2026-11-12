@@ -1,0 +1,35 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package OrderBasedPriority
+
+interface Control {
+    in event go
+}
+
+@TransitionPriority = order-based
+statechart Machine [
+    port control : provides Control
+] {
+    region Main {
+        initial MainInitial
+        state Idle
+        state First
+        state Second
+    }
+
+    transition from MainInitial to Idle
+    transition from Idle to First when control.go
+    transition from Idle to Second when control.go
+}
+
+verification case FirstDeclaredFires of Machine {
+    EF state Main.First
+}
+
+verification case SecondDeclaredNeverFires of Machine {
+    AG not state Main.Second
+}

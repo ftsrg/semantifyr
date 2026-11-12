@@ -25,6 +25,13 @@ class GammaVerificationTests {
         private val CROSSROADS = MODELS_ROOT.resolve("Crossroads.gamma")
         private val SPACECRAFT = MODELS_ROOT.resolve("Spacecraft.gamma")
         private val LEVEL_CROSSING = MODELS_ROOT.resolve("LevelCrossing.gamma")
+        private val MAPPED_CONSTRUCTS = listOf(
+            "OrderBasedPriority.gamma",
+            "ValueBasedPriority.gamma",
+            "BeginningOfStepGuards.gamma",
+            "CrossRegionTransition.gamma",
+            "MillisecondTimeout.gamma",
+        )
 
         private fun argumentsFor(sourcePath: java.nio.file.Path): Stream<Arguments> {
             return helper.discoverAsArguments(sourcePath)
@@ -48,6 +55,13 @@ class GammaVerificationTests {
         @JvmStatic
         fun `Spacecraft Model Verification Cases Should Pass`(): Stream<Arguments> {
             return argumentsFor(SPACECRAFT)
+        }
+
+        @JvmStatic
+        fun `Mapped Construct Cases Reach Gamma's Verdict`(): Stream<Arguments> {
+            return MAPPED_CONSTRUCTS.stream().flatMap {
+                argumentsFor(MODELS_ROOT.resolve(it))
+            }
         }
     }
 
@@ -74,6 +88,12 @@ class GammaVerificationTests {
     @ParameterizedTest
     @MethodSource
     suspend fun `Spacecraft Model Verification Cases Should Pass`(gammaVerificationCase: GammaVerificationCase) {
+        assertPasses(gammaVerificationCase)
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    suspend fun `Mapped Construct Cases Reach Gamma's Verdict`(gammaVerificationCase: GammaVerificationCase) {
         assertPasses(gammaVerificationCase)
     }
 

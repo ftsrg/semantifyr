@@ -16,7 +16,6 @@ import com.github.ajalt.clikt.parameters.types.path
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.cli.common.CommandExit
 import hu.bme.mit.semantifyr.cli.common.ExitCode
-import hu.bme.mit.semantifyr.cli.common.checkInputFile
 import hu.bme.mit.semantifyr.frontends.gamma.GammaCompiler
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
@@ -46,7 +45,7 @@ class GammaCompileCommand(
             "compile model=$model output=$outputPath"
         }
 
-        checkInputFile("Model", model, GAMMA_FILE_SUFFIX)
+        checkGammaModel(model)
         val target = outputPath ?: model.resolveSibling("${model.nameWithoutExtension}.oxsts")
         val gammaModel = readGammaModel(gammaInjector, model)
 

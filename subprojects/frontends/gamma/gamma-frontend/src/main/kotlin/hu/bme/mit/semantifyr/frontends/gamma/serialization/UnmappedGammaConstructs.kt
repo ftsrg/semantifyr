@@ -14,8 +14,6 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventDirection
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventParameterReferenceExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.FiredTransitionExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GuardEvaluation
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ImportStatement
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.InitialState
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.InstanceElementExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.IntegerType
@@ -25,12 +23,11 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Persistency
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RaiseEventAct
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RaiseEventAction
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RecordAccessExpression
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SetTimeoutAction
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Region
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ShallowHistoryState
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StateNode
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StatechartDeclaration
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeUnit
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Transition
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TransitionPriority
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TypeDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VariableDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclaration
@@ -79,9 +76,6 @@ object UnmappedGammaConstructs {
 
     private fun describe(element: EObject): String? {
         return when (element) {
-            is ImportStatement -> {
-                "the import of another package"
-            }
             is TypeDeclaration -> {
                 "the type declaration '${element.name}'"
             }
@@ -98,9 +92,6 @@ object UnmappedGammaConstructs {
             is CascadeComponentDeclaration -> {
                 "the cascade composite '${element.name}'"
             }
-            is StatechartDeclaration -> {
-                describe(element)
-            }
             is VariableDeclaration -> {
                 describe(element)
             }
@@ -109,13 +100,6 @@ object UnmappedGammaConstructs {
             }
             is Transition -> {
                 describe(element)
-            }
-            is SetTimeoutAction -> {
-                if (element.unit == TimeUnit.MILLISECOND) {
-                    "a timeout set in milliseconds"
-                } else {
-                    null
-                }
             }
             is RaiseEventAction -> {
                 if (element.arguments.isNotEmpty()) {
@@ -131,7 +115,7 @@ object UnmappedGammaConstructs {
                 "the record field access '${element.field?.name}'"
             }
             is RaiseEventAct -> {
-                "a raised event in a property"
+                "a raised event in a property, for which the library has no expression"
             }
             is FiredTransitionExpression -> {
                 "a fired transition in a property"
@@ -162,16 +146,6 @@ object UnmappedGammaConstructs {
         return null
     }
 
-    private fun describe(statechart: StatechartDeclaration): String? {
-        if (statechart.transitionPriority != TransitionPriority.OFF) {
-            return "the transition priority ${statechart.transitionPriority.name.lowercase().replace('_', '-')} of '${statechart.name}'"
-        }
-        if (statechart.guardEvaluation != GuardEvaluation.ON_THE_FLY) {
-            return "the guard evaluation ${statechart.guardEvaluation.name.lowercase().replace('_', '-')} of '${statechart.name}'"
-        }
-        return null
-    }
-
     private fun describe(variable: VariableDeclaration): String? {
         if (variable.type !is IntegerType && variable.type !is BooleanType) {
             return "the type of variable '${variable.name}'"
@@ -186,12 +160,43 @@ object UnmappedGammaConstructs {
         if (transition.to is ShallowHistoryState) {
             return "a transition to the history node '${transition.to.name}'"
         }
-        if (transition.from?.eContainer() != transition.to?.eContainer()) {
-            return "a transition from '${transition.from?.name}' to '${transition.to?.name}' across regions"
+        if (transition.from is InitialState) {
+            if (transition.trigger != null || transition.guard != null || transition.actions.isNotEmpty()) {
+                return "an initial transition with a trigger, guard or action"
+            }
+            if (transition.from.eContainer() != transition.to.eContainer()) {
+                return "an initial transition to '${transition.to.name}' in another region"
+            }
         }
-        if (transition.from is InitialState && (transition.trigger != null || transition.guard != null || transition.actions.isNotEmpty())) {
-            return "an initial transition with a trigger, guard or action"
+        if (isBetweenOrthogonalRegions(transition)) {
+            return "a transition from '${transition.from.name}' to '${transition.to.name}' between orthogonal regions"
         }
         return null
+    }
+
+    // Gamma's validator rejects a transition whose ends lie in orthogonal regions, where no lowest common region holds both
+    private fun isBetweenOrthogonalRegions(transition: Transition): Boolean {
+        val sourceAncestors = ancestors(transition.from)
+        val targetAncestors = ancestors(transition.to)
+        val commonRegion = targetAncestors.filterIsInstance<Region>().firstOrNull {
+            it in sourceAncestors
+        } ?: return true
+        val sourceSide = sourceAncestors.getOrElse(sourceAncestors.indexOf(commonRegion) - 1) {
+            transition.from
+        }
+        val targetSide = targetAncestors.getOrElse(targetAncestors.indexOf(commonRegion) - 1) {
+            transition.to
+        }
+        return sourceSide == targetSide && sourceSide != transition.from && targetSide != transition.to
+    }
+
+    private fun ancestors(stateNode: StateNode): List<EObject> {
+        val ancestors = mutableListOf<EObject>()
+        var current = stateNode.eContainer()
+        while (current !is StatechartDeclaration) {
+            ancestors += current
+            current = current.eContainer()
+        }
+        return ancestors
     }
 }

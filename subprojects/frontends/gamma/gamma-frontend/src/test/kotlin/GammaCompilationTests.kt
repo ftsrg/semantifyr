@@ -36,7 +36,7 @@ class GammaCompilationTests {
         val compiled = compileSimple(temporaryDirectory)
 
         val text = compiled.readText()
-        assertThat(text).startsWith("package Simple")
+        assertThat(text).startsWith("package _Simple")
     }
 
     @Test
@@ -60,17 +60,17 @@ class GammaCompilationTests {
     fun `compile emits each statechart as an OXSTS Statechart class`(@TempDir temporaryDirectory: Path) {
         val text = compileSimple(temporaryDirectory).readText()
 
-        assertThat(text).contains("class LeaderStatechart : Statechart")
-        assertThat(text).contains("class WorkerStatechart : Statechart")
+        assertThat(text).contains("class _LeaderStatechart : Statechart")
+        assertThat(text).contains("class _WorkerStatechart : Statechart")
     }
 
     @Test
     fun `compile emits the sync component with channels and bindings`(@TempDir temporaryDirectory: Path) {
         val text = compileSimple(temporaryDirectory).readText()
 
-        assertThat(text).contains("class System : SyncComponent")
-        assertThat(text).contains("contains leader: LeaderStatechart subsets components")
-        assertThat(text).contains("contains worker: WorkerStatechart subsets components")
+        assertThat(text).contains("class _System : SyncComponent")
+        assertThat(text).contains("contains _leader: _Simple::_LeaderStatechart subsets components")
+        assertThat(text).contains("contains _worker: _Simple::_WorkerStatechart subsets components")
         assertThat(text).contains("subsets channels")
     }
 
@@ -90,7 +90,7 @@ class GammaCompilationTests {
         )
         for (name in caseNames) {
             assertThat(text).contains("@VerificationCase")
-            assertThat(text).contains("class $name : GammaVerificationCase")
+            assertThat(text).contains("class _$name : GammaVerificationCase")
         }
     }
 
@@ -104,7 +104,7 @@ class GammaCompilationTests {
         gammaCompiler.compile(gammaModel, nested)
 
         assertThat(Files.isRegularFile(nested)).isTrue()
-        assertThat(nested.readText()).contains("package Simple")
+        assertThat(nested.readText()).contains("package _Simple")
     }
 
     @Test

@@ -6,7 +6,6 @@
 
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVerificationCase
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComparisonOperator
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ExecutionTrace
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Expression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.FiredTransitionExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaUtils
@@ -16,12 +15,12 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StateReferenceExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StatechartDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Step
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VariableReferenceExpression
+import hu.bme.mit.semantifyr.frontends.gamma.serialization.markName
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaFrontendTestHelper
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaTestEngine
 import hu.bme.mit.semantifyr.verifier.witness.WitnessStateStep
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.emf.ecore.EObject
-import org.eclipse.xtext.EcoreUtil2
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -116,17 +115,16 @@ class GammaTraceTests {
     }
 
     private fun elementPath(expression: InstanceElementExpression, element: EObject): String {
-        val trace = EcoreUtil2.getContainerOfType(expression, ExecutionTrace::class.java)
-        val instances = listOf(trace.verificationCase.component.name) + GammaUtils.getInstancePath(expression).map {
-            it.name
+        val instances = GammaUtils.getInstancePath(expression).map {
+            markName(it.name)
         }
         val containment = mutableListOf<String>()
         var current = element
         while (current !is StatechartDeclaration) {
-            containment.add(0, (current as NamedElement).name)
+            containment.add(0, markName((current as NamedElement).name))
             current = current.eContainer()
         }
-        return (listOf("root") + instances + containment).joinToString(".")
+        return (listOf("root", "component") + instances + containment).joinToString(".")
     }
 
     private fun sourceText(expression: Expression): String {

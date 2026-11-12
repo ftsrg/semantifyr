@@ -169,7 +169,7 @@ class GammaTraceLanguageServerTest {
         var result = (CompiledOxstsResult) executeCommand("gamma.compiled.oxsts", new JsonPrimitive(uri(model)));
 
         assertThat(result.status()).isEqualTo(CompiledOxstsResult.COMPILED);
-        assertThat(result.oxsts()).startsWith("package Simple");
+        assertThat(result.oxsts()).startsWith("package _Simple");
         assertThat(result.message()).isNull();
     }
 

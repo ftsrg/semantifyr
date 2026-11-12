@@ -19,7 +19,6 @@ import com.google.inject.Injector
 import hu.bme.mit.semantifyr.cli.common.CaseOutcome
 import hu.bme.mit.semantifyr.cli.common.CommandExit
 import hu.bme.mit.semantifyr.cli.common.ExitCode
-import hu.bme.mit.semantifyr.cli.common.checkInputFile
 import hu.bme.mit.semantifyr.cli.common.options.ArtifactOptionGroup
 import hu.bme.mit.semantifyr.cli.common.options.BackendOptionGroup
 import hu.bme.mit.semantifyr.cli.common.options.CompilationOptionGroup
@@ -68,7 +67,7 @@ class GammaVerifyCommand(
             "verify model=$model portfolio=${portfolio.id} environment=${backendOptions.resolved} timeout=${backendOptions.timeout}"
         }
 
-        checkInputFile("Model", model, GAMMA_FILE_SUFFIX)
+        checkGammaModel(model)
         artifactOptions.checkOutputDirectory()
         backendOptions.checkAvailable()
 
