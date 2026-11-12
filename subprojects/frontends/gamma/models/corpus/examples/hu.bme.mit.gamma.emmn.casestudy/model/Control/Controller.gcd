@@ -1,9 +1,0 @@
-package emmn::control
-
-import emmn::interfaces
-
-statechart Controller() [
-	port OperationsManager : requires OperationsManager
-	port SatelliteManager : provides SatelliteManager
-	port MQTT : provides MQTT
-] {}

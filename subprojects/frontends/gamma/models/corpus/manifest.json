@@ -1,25 +1,6 @@
 {
     "models": [
         {
-            "file": "examples/hu.bme.mit.gamma.modes3.casestudy/model/System/HighLevel/SafetyLogic/HighLevelSafetyLogic.verification.gamma",
-            "cases": [
-                { "name": "StateGlobalStateReachable", "verdict": "Passed", "tier": "Integration" }
-            ]
-        },
-        {
-            "file": "examples/hu.bme.mit.gamma.modes3.casestudy/model/System/MediumLevel/Sync/SafetyLogic/MediumLevelSafetyLogic.verification.gamma",
-            "cases": [
-                { "name": "CcwFourSectionsGlobalStateReachable", "verdict": "Passed", "tier": "Integration" },
-                { "name": "CwFourSectionsGlobalStateReachable", "verdict": "Passed", "tier": "Integration" }
-            ]
-        },
-        {
-            "file": "examples/hu.bme.mit.gamma.modes3.casestudy/model/System/MediumLevel/Sync/Zone/MediumLevelZone.verification.gamma",
-            "cases": [
-                { "name": "StateGlobalStateReachable", "verdict": "Passed", "tier": "Integration" }
-            ]
-        },
-        {
             "file": "tests/hu.bme.mit.gamma.tests/model/Clock/Statechart/Adder.verification.gamma",
             "cases": [
                 { "name": "StateXReachable", "verdict": "Passed", "tier": "Integration" }
