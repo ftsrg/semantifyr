@@ -26,7 +26,7 @@ function traceOf(...traces: TraceEntry[]): VerificationTrace {
 
 function show(trace: VerificationTrace): HTMLElement {
   const { container } = render(
-    <CallsView trace={trace} caseName="Case" verdict="failed" expandedStep={null} expandStep={() => {}} runtime={null} openTab={null} />,
+    <CallsView trace={trace} caseName="Case" verdict="failed" expandedStep={null} expandStep={() => {}} runtime={null} openTab={null} growing={false} wrapping={false} />,
   )
   return container
 }
@@ -39,7 +39,7 @@ function lifelines(container: HTMLElement): number[] {
 
 function arrowLabel(container: HTMLElement, transition: string): Element {
   const label = [...container.querySelectorAll('.call-arrow-label')].find((text) => {
-    return text.textContent?.startsWith(transition.slice(0, 8))
+    return text.textContent.startsWith(transition.slice(0, 8))
   })
   expect(label, transition).toBeDefined()
   return label!
