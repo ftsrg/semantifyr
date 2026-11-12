@@ -21,19 +21,19 @@ abstract class Component {
 
     tran resetInputEvents() {
         inline for (port in ports) {
-            inline port.resetInputEvent()
+            inline port.resetInputEvents()
         }
     }
 
     tran havocInputEvents() {
         inline for (port in ports) {
-            inline port.havocInputEvent()
+            inline port.havocInputEvents()
         }
     }
 
     tran resetOutputEvents() {
         inline for (port in ports) {
-            inline port.resetOutputEvent()
+            inline port.resetOutputEvents()
         }
     }
 
@@ -48,14 +48,9 @@ class Channel {
     refers inputPort: Port[1]
     refers outputPort: Port[1]
 
-    tran doTransferEvent() {
-        inline outputPort.setInputEvent(inputPort.outputEvent as Event)
-    }
-
     redefine tran {
-        if (inputPort.hasOutput()) {
-            inline doTransferEvent()
-        }
+        inline inputPort.transferOutputEvents(outputPort)
+        inline outputPort.transferOutputEvents(inputPort)
     }
 }
 
@@ -79,12 +74,15 @@ class SyncComponent : CompositeComponent {
         inline for (component in components) {
             inline component.init()
         }
+
+        inline for (channel in channels) {
+            inline channel.main()
+        }
     }
 
     redefine tran schedule() {
-        inline resetOutputEvents()
-
         inline for (component in components) {
+            inline component.resetOutputEvents()
             inline component.main()
         }
 
