@@ -1,0 +1,377 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package gamma::library::semantics
+
+import semantifyr::gamma::expressions
+import semantifyr::gamma::variables
+import semantifyr::gamma::statecharts
+import semantifyr::gamma::triggers
+import semantifyr::gamma::actions
+import semantifyr::gamma::events
+import semantifyr::gamma::ports
+
+class Resuming : Statechart {
+    contains control: ProvidedPort subsets ports {
+        redefine contains interface: Control
+    }
+
+    contains left: BooleanVariable subsets variables
+
+    contains Main: Region subsets regions {
+        contains Working: State subsets states {
+            contains markLeft: AssignmentAction subsets exitActions {
+                redefine refers variable: Variable = left
+                redefine contains expression: LiteralBooleanExpression {
+                    redefine refers value: bool = true
+                }
+            }
+
+            contains Progress: Region subsets regions {
+                contains First: State subsets states
+                contains Second: State subsets states {
+                    contains Detail: Region subsets regions {
+                        contains Coarse: State subsets states
+                        contains Fine: State subsets states
+
+                        contains entryToCoarse: EntryTransition subsets entryTransitions {
+                            redefine refers to: State = Coarse
+                        }
+                        contains coarseToFine: Transition subsets transitions {
+                            redefine refers from: State = Coarse
+                            redefine refers to: State = Fine
+                            redefine contains trigger: EventTrigger {
+                                redefine refers port: Port = control
+                                redefine refers event: Event = control.interface.start
+                            }
+                            redefine contains guard: Guard {
+                                redefine contains expression: UnaryNotExpression {
+                                    redefine contains body: VariableExpression {
+                                        redefine refers variable: Variable = left
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                contains history: ShallowHistory subsets shallowHistory {
+                    redefine refers to: State = First
+                }
+                contains firstToSecond: Transition subsets transitions {
+                    redefine refers from: State = First
+                    redefine refers to: State = Second
+                    redefine contains trigger: EventTrigger {
+                        redefine refers port: Port = control
+                        redefine refers event: Event = control.interface.start
+                    }
+                    redefine contains guard: Guard {
+                        redefine contains expression: UnaryNotExpression {
+                            redefine contains body: VariableExpression {
+                                redefine refers variable: Variable = left
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        contains Paused: State subsets states
+
+        contains entryToWorking: EntryTransition subsets entryTransitions {
+            redefine refers to: State = Working
+        }
+        contains workingToPaused: Transition subsets transitions {
+            redefine refers from: State = Working
+            redefine refers to: State = Paused
+            redefine contains trigger: EventTrigger {
+                redefine refers port: Port = control
+                redefine refers event: Event = control.interface.stop
+            }
+        }
+        contains pausedToWorking: Transition subsets transitions {
+            redefine refers from: State = Paused
+            redefine refers to: State = Working
+            redefine contains trigger: EventTrigger {
+                redefine refers port: Port = control
+                redefine refers event: Event = control.interface.stop
+            }
+        }
+    }
+}
+
+class RestartingOrResuming : Statechart {
+    contains control: ProvidedPort subsets ports {
+        redefine contains interface: Control
+    }
+
+    contains left: BooleanVariable subsets variables
+
+    contains Main: Region subsets regions {
+        contains Working: State subsets states {
+            contains markLeft: AssignmentAction subsets exitActions {
+                redefine refers variable: Variable = left
+                redefine contains expression: LiteralBooleanExpression {
+                    redefine refers value: bool = true
+                }
+            }
+
+            contains Progress: Region subsets regions {
+                contains First: State subsets states
+                contains Second: State subsets states {
+                    contains Detail: Region subsets regions {
+                        contains Coarse: State subsets states
+                        contains Fine: State subsets states
+
+                        contains entryToCoarse: EntryTransition subsets entryTransitions {
+                            redefine refers to: State = Coarse
+                        }
+                        contains coarseToFine: Transition subsets transitions {
+                            redefine refers from: State = Coarse
+                            redefine refers to: State = Fine
+                            redefine contains trigger: EventTrigger {
+                                redefine refers port: Port = control
+                                redefine refers event: Event = control.interface.start
+                            }
+                            redefine contains guard: Guard {
+                                redefine contains expression: UnaryNotExpression {
+                                    redefine contains body: VariableExpression {
+                                        redefine refers variable: Variable = left
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                contains entryToFirst: EntryTransition subsets entryTransitions {
+                    redefine refers to: State = First
+                }
+                contains history: ShallowHistory subsets shallowHistory {
+                    redefine refers to: State = First
+                }
+                contains firstToSecond: Transition subsets transitions {
+                    redefine refers from: State = First
+                    redefine refers to: State = Second
+                    redefine contains trigger: EventTrigger {
+                        redefine refers port: Port = control
+                        redefine refers event: Event = control.interface.start
+                    }
+                    redefine contains guard: Guard {
+                        redefine contains expression: UnaryNotExpression {
+                            redefine contains body: VariableExpression {
+                                redefine refers variable: Variable = left
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        contains Paused: State subsets states
+
+        contains entryToWorking: EntryTransition subsets entryTransitions {
+            redefine refers to: State = Working
+        }
+        contains workingToPaused: Transition subsets transitions {
+            redefine refers from: State = Working
+            redefine refers to: State = Paused
+            redefine contains trigger: EventTrigger {
+                redefine refers port: Port = control
+                redefine refers event: Event = control.interface.stop
+            }
+        }
+        contains pausedToWorking: Transition subsets transitions {
+            redefine refers from: State = Paused
+            redefine refers to: State = Working
+            redefine contains trigger: EventTrigger {
+                redefine refers port: Port = control
+                redefine refers event: Event = control.interface.stop
+            }
+        }
+    }
+}
+
+class ResumingPastTheInitialNode : Statechart {
+    contains control: ProvidedPort subsets ports {
+        redefine contains interface: Control
+    }
+
+    contains left: BooleanVariable subsets variables
+
+    contains Main: Region subsets regions {
+        contains Working: State subsets states {
+            contains markLeft: AssignmentAction subsets exitActions {
+                redefine refers variable: Variable = left
+                redefine contains expression: LiteralBooleanExpression {
+                    redefine refers value: bool = true
+                }
+            }
+
+            contains Progress: Region subsets regions {
+                contains First: State subsets states
+                contains Second: State subsets states {
+                    contains Detail: Region subsets regions {
+                        contains Coarse: State subsets states
+                        contains Fine: State subsets states
+
+                        contains entryToCoarse: EntryTransition subsets entryTransitions {
+                            redefine refers to: State = Coarse
+                        }
+                        contains coarseToFine: Transition subsets transitions {
+                            redefine refers from: State = Coarse
+                            redefine refers to: State = Fine
+                            redefine contains trigger: EventTrigger {
+                                redefine refers port: Port = control
+                                redefine refers event: Event = control.interface.start
+                            }
+                            redefine contains guard: Guard {
+                                redefine contains expression: UnaryNotExpression {
+                                    redefine contains body: VariableExpression {
+                                        redefine refers variable: Variable = left
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                contains entryToFirst: EntryTransition subsets entryTransitions {
+                    redefine refers to: State = First
+                }
+                contains history: ShallowHistory subsets shallowHistory {
+                    redefine refers to: State = First
+                }
+                contains firstToSecond: Transition subsets transitions {
+                    redefine refers from: State = First
+                    redefine refers to: State = Second
+                    redefine contains trigger: EventTrigger {
+                        redefine refers port: Port = control
+                        redefine refers event: Event = control.interface.start
+                    }
+                    redefine contains guard: Guard {
+                        redefine contains expression: UnaryNotExpression {
+                            redefine contains body: VariableExpression {
+                                redefine refers variable: Variable = left
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        contains Paused: State subsets states
+
+        contains entryToWorking: EntryTransition subsets entryTransitions {
+            redefine refers to: State = Working
+        }
+        contains workingToPaused: Transition subsets transitions {
+            redefine refers from: State = Working
+            redefine refers to: State = Paused
+            redefine contains trigger: EventTrigger {
+                redefine refers port: Port = control
+                redefine refers event: Event = control.interface.stop
+            }
+        }
+        contains pausedToWorking: Transition subsets transitions {
+            redefine refers from: State = Paused
+            redefine refers to: ShallowHistory = Main.Working.Progress.history
+            redefine contains trigger: EventTrigger {
+                redefine refers port: Port = control
+                redefine refers event: Event = control.interface.stop
+            }
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ShallowHistoryRestoresTheLastState : LibraryCase {
+    contains machine: Resuming redefines component
+
+    redefine prop {
+        return EF (machine.left.variable && machine.Main.Working.Progress.Second.isActive())
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ShallowHistoryRestoredStatesInnerStateUnreachable : LibraryCase {
+    contains machine: Resuming redefines component
+
+    redefine prop {
+        return EF (machine.left.variable && machine.Main.Working.Progress.Second.Detail.Fine.isActive())
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class InitialNodeBeatsTheHistoryNodeRestoredStateUnreachable : LibraryCase {
+    contains machine: RestartingOrResuming redefines component
+
+    redefine prop {
+        return EF (machine.left.variable && machine.Main.Working.Progress.Second.isActive())
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class TransitionToTheHistoryNodePassesTheInitialNode : LibraryCase {
+    contains machine: ResumingPastTheInitialNode redefines component
+
+    redefine prop {
+        return EF (machine.left.variable && machine.Main.Working.Progress.Second.isActive())
+    }
+}
+
+class LateHistory : Statechart {
+    contains control: ProvidedPort subsets ports {
+        redefine contains interface: Control
+    }
+
+    contains Main: Region subsets regions {
+        contains Idle: State subsets states
+        contains Working: State subsets states {
+            contains Progress: Region subsets regions {
+                contains First: State subsets states
+                contains Second: State subsets states
+
+                contains history: ShallowHistory subsets shallowHistory {
+                    redefine refers to: State = Second
+                }
+            }
+        }
+
+        contains entryToIdle: EntryTransition subsets entryTransitions {
+            redefine refers to: State = Idle
+        }
+        contains idleToWorking: Transition subsets transitions {
+            redefine refers from: State = Idle
+            redefine refers to: State = Working
+            redefine contains trigger: EventTrigger {
+                redefine refers port: Port = control
+                redefine refers event: Event = control.interface.start
+            }
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class NeverActiveHistoryRegionTakesTheNodesTransition : LibraryCase {
+    contains machine: LateHistory redefines component
+
+    redefine prop {
+        return EF machine.Main.Working.Progress.Second.isActive()
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class NeverActiveHistoryRegionFirstDeclaredStateUnreachable : LibraryCase {
+    contains machine: LateHistory redefines component
+
+    redefine prop {
+        return EF machine.Main.Working.Progress.First.isActive()
+    }
+}
