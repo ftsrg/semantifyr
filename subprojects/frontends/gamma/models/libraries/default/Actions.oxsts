@@ -19,10 +19,19 @@ abstract class Action {
 class RaiseEventAction : Action {
     refers port: Port[1]
     refers event: Event[1]
+    contains arguments: Argument[0..*]
 
     redefine tran {
+        inline for (argument in arguments) {
+            inline argument.parameter.set(argument.expression.evaluate())
+        }
         inline port.setOutputEvent(event)
     }
+}
+
+class Argument {
+    refers parameter: Parameter[1]
+    contains expression: Expression[1]
 }
 
 class SetTimeoutAction : Action {
