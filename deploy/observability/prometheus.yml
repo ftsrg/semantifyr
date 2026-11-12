@@ -15,3 +15,9 @@ scrape_configs:
       - targets: ["semantifyr-live-staging:8081"]
         labels:
           instance: semantifyr-live-staging
+
+  - job_name: host
+    static_configs:
+      - targets: ["node-exporter:9100"]
+        labels:
+          instance: host

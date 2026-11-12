@@ -47,6 +47,7 @@ export const importedSysmlv2Manifest = import.meta.glob<SysmlCorpusManifest>('./
 });
 
 export interface LiveExample {
+  // the example's name in the address, lower-case with hyphens
   id: string;
   flavor: string;
   label: string;
@@ -60,6 +61,8 @@ export interface LiveFlavor extends FlavorInfo {
 
 interface ImportedDescriptor {
   id: string;
+  // the source's file name without its extension
+  file: string;
   label: string;
   description: string;
 }
@@ -67,43 +70,61 @@ interface ImportedDescriptor {
 const TUTORIAL_OXSTS: readonly ImportedDescriptor[] = [
   {
     id: 'basics',
+    file: 'basics',
     label: 'Tutorial: Basics',
     description:
       'Final state from the "Direct Modeling" tutorial.',
   },
   {
     id: 'intermediate',
+    file: 'intermediate',
     label: 'Tutorial: Intermediate',
     description:
       'Final state from the "Building a Library" tutorial.',
   },
   {
     id: 'advanced',
+    file: 'advanced',
     label: 'Tutorial: Advanced',
     description:
       'Final state from the "Advanced Tutorial".',
+  },
+  {
+    id: 'level-crossing',
+    file: 'level-crossing',
+    label: 'Level crossing',
+    description: 'Two tracks, a controller and a barrier; the controller forgets a second train.',
   },
 ];
 
 const SYSMLV2_IMPORTED: readonly ImportedDescriptor[] = Object.values(importedSysmlv2Manifest).flatMap((manifest) =>
   manifest.models.flatMap((model) =>
-    model.example ? [{ id: model.file.replace(/\.sysml$/, ''), ...model.example }] : [],
+    model.example ? [{ id: model.file.replace(/\.sysml$/, '').replaceAll('_', '-'), file: model.file.replace(/\.sysml$/, ''), ...model.example }] : [],
   ),
 );
 
 const GAMMA_IMPORTED: readonly ImportedDescriptor[] = [
   {
-    id: 'Spacecraft',
+    id: 'level-crossing',
+    file: 'LevelCrossing',
+    label: 'Level crossing',
+    description: 'Two tracks, a controller and a barrier; the controller forgets a second train.',
+  },
+  {
+    id: 'spacecraft',
+    file: 'Spacecraft',
     label: 'Spacecraft',
     description: 'Small spacecraft with battery, thermal, and orbit-control subsystems.',
   },
   {
-    id: 'Crossroads',
+    id: 'crossroads',
+    file: 'Crossroads',
     label: 'Crossroads',
     description: 'Two coordinated traffic lights at an intersection.',
   },
   {
-    id: 'Simple',
+    id: 'leader-worker',
+    file: 'Simple',
     label: 'Leader-worker',
     description: 'Two statecharts coordinating via channel-bound events.',
   },
@@ -122,7 +143,7 @@ function buildTutorialOxstsExamples(): LiveExample[] {
   return TUTORIAL_OXSTS.flatMap((descriptor) => {
     const example = loadOrSkip(
       importedTutorialOxsts,
-      `./snippets/imported/tutorial/${descriptor.id}.oxsts`,
+      `./snippets/imported/tutorial/${descriptor.file}.oxsts`,
       (code) => ({
         id: descriptor.id,
         flavor: 'oxsts' as const,
@@ -139,7 +160,7 @@ function buildImportedGammaExamples(): LiveExample[] {
   return GAMMA_IMPORTED.flatMap((descriptor) => {
     const example = loadOrSkip(
       importedGammaSources,
-      `./snippets/imported/gamma/${descriptor.id}.gamma`,
+      `./snippets/imported/gamma/${descriptor.file}.gamma`,
       (code) => ({
         id: descriptor.id,
         flavor: 'gamma' as const,
@@ -156,9 +177,9 @@ function buildImportedSysmlv2LibraryExamples(): LiveExample[] {
   return SYSMLV2_IMPORTED.flatMap((descriptor) => {
     const example = loadOrSkip(
       importedSysmlv2Compiled,
-      `./snippets/imported/sysmlv2/${descriptor.id}.oxsts`,
+      `./snippets/imported/sysmlv2/${descriptor.file}.oxsts`,
       (code) => ({
-        id: `${descriptor.id}-sysmlv2-library`,
+        id: descriptor.id,
         flavor: 'oxsts-with-sysmlv2-library' as const,
         label: descriptor.label,
         description: descriptor.description,
@@ -173,7 +194,7 @@ function buildImportedSysmlv2Examples(): LiveExample[] {
   return SYSMLV2_IMPORTED.flatMap((descriptor) => {
     const example = loadOrSkip(
       importedSysmlv2Sources,
-      `./snippets/imported/sysmlv2/${descriptor.id}.sysml`,
+      `./snippets/imported/sysmlv2/${descriptor.file}.sysml`,
       (code) => ({
         id: descriptor.id,
         flavor: 'sysml' as const,
@@ -190,9 +211,9 @@ function buildImportedGammaLibraryExamples(): LiveExample[] {
   return GAMMA_IMPORTED.flatMap((descriptor) => {
     const example = loadOrSkip(
       importedGammaCompiled,
-      `./snippets/imported/gamma/${descriptor.id}.oxsts`,
+      `./snippets/imported/gamma/${descriptor.file}.oxsts`,
       (code) => ({
-        id: `${descriptor.id}-gamma-library`,
+        id: descriptor.id,
         flavor: 'oxsts-with-gamma-library' as const,
         label: `${descriptor.label} (Gamma library)`,
         description: `Semantifyr form of the ${descriptor.label} Gamma model.`,
@@ -203,14 +224,15 @@ function buildImportedGammaLibraryExamples(): LiveExample[] {
   });
 }
 
-const blank = (flavor: string, libraryName: string | null): LiveExample => ({
+// a Gamma model names its package; an empty OXSTS or SysML file is valid as it is
+const blank = (flavor: string, libraryName: string | null, code = ''): LiveExample => ({
   id: 'blank',
   flavor,
   label: 'Blank',
   description: libraryName
     ? `Empty file with the ${libraryName} library preloaded.`
     : 'Empty file, start from scratch.',
-  code: '',
+  code,
 });
 
 const oxstsExamples: LiveExample[] = [
@@ -229,7 +251,7 @@ const oxstsWithSysmlv2LibraryExamples: LiveExample[] = [
 
 const gammaExamples: LiveExample[] = [
   ...buildImportedGammaExamples(),
-  blank('gamma', null),
+  blank('gamma', null, 'package model\n'),
 ];
 
 const sysmlExamples: LiveExample[] = [
@@ -245,8 +267,12 @@ const BUNDLED_EXAMPLES: Readonly<Record<string, LiveExample[]>> = {
   [SYSML_FLAVOR_INFO.id]: sysmlExamples,
 };
 
+export function bundledExamplesOf(flavorId: string): LiveExample[] {
+  return BUNDLED_EXAMPLES[flavorId] ?? [blank(flavorId, null)];
+}
+
 function withExamples(info: FlavorInfo): LiveFlavor {
-  return { ...info, examples: BUNDLED_EXAMPLES[info.id] ?? [blank(info.id, null)] };
+  return { ...info, examples: bundledExamplesOf(info.id) };
 }
 
 // The served flavors keep the server's order; the client-only SysML flavor comes last.
@@ -265,7 +291,7 @@ export function findFlavor(flavors: readonly LiveFlavor[], id: string | null | u
   });
 }
 
-export function findExample(flavor: LiveFlavor, id: string | null | undefined): LiveExample | undefined {
+export function findExample(flavor: Pick<LiveFlavor, 'examples'>, id: string | null | undefined): LiveExample | undefined {
   return flavor.examples.find((example) => {
     return example.id === id;
   });

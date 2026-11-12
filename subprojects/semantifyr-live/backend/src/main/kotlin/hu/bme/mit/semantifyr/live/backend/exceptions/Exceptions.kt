@@ -20,3 +20,8 @@ class SessionLimitReachedException(
     message: String,
     cause: Throwable? = null,
 ) : RuntimeException(message, cause)
+
+class SyntaxErrorException(
+    message: String,
+    cause: Throwable? = null,
+) : RuntimeException(message, cause)

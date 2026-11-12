@@ -186,6 +186,13 @@ class SessionDocumentManager @Inject constructor(
         }
     }
 
+    fun findLibraryByClient(clientUri: String): XtextResource? {
+        if (findByClient(clientUri) != null) {
+            return null
+        }
+        return findResourceByClient(clientUri) as? XtextResource
+    }
+
     fun serverToClient(serverUri: String): String {
         return serverUri.replace(serverPrefix, CLIENT_PREFIX)
     }

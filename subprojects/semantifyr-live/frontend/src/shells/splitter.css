@@ -1,0 +1,13 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+.splitter { position: absolute; z-index: 6; display: grid; place-items: center; }
+.splitter span { display: block; border-radius: 2px; background: var(--border-strong); opacity: 0.55; transition: opacity var(--duration-fast), background var(--duration-fast); }
+.splitter:hover span { opacity: 1; background: var(--text-tertiary); }
+.splitter-vertical { top: 0; bottom: 0; left: -4px; width: 8px; cursor: col-resize; }
+.splitter-vertical span { width: 3px; height: 28px; }
+.splitter-horizontal { position: relative; flex: none; height: 8px; margin: -4px 0; cursor: row-resize; }
+.splitter-horizontal span { width: 28px; height: 3px; }

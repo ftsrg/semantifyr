@@ -71,8 +71,10 @@ import org.eclipse.lsp4j.WorkspaceEdit
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.jsonrpc.messages.Either3
 import org.eclipse.lsp4j.services.TextDocumentService
+import org.eclipse.xtext.ide.server.Document
 import org.eclipse.xtext.ide.server.codeActions.ICodeActionService2
 import org.eclipse.xtext.ide.server.rename.IRenameService2
+import org.eclipse.xtext.resource.XtextResource
 import org.eclipse.xtext.util.CancelIndicator
 import java.util.concurrent.CompletableFuture
 
@@ -92,36 +94,53 @@ class SessionTextDocumentService @Inject constructor(
 
     override fun didOpen(params: DidOpenTextDocumentParams) {
         val clientUri = params.textDocument.uri
-        sessionRequestManager.runWrite {
-            try {
-                if (sessionDocumentManager.existsOnDisk(clientUri)) {
-                    sessionDocumentManager.openExistingByClient(clientUri)
-                } else {
-                    sessionDocumentManager.openByClient(clientUri, params.textDocument.text)
+        sessionRequestManager.runWrite(
+            {
+                try {
+                    if (sessionDocumentManager.existsOnDisk(clientUri)) {
+                        sessionDocumentManager.openExistingByClient(clientUri)
+                    } else {
+                        sessionDocumentManager.openByClient(clientUri, params.textDocument.text)
+                    }
+                    true
+                } catch (e: WorkspaceUriException) {
+                    logger.warn(e) { "Rejected didOpen sessionId=$sessionId clientUri=$clientUri" }
+                    false
                 }
-                sessionDocumentManager.validateAll(sessionClient.get(), it)
-            } catch (e: WorkspaceUriException) {
-                logger.warn(e) { "Rejected didOpen sessionId=$sessionId clientUri=$clientUri" }
-            }
-        }
+            },
+            { cancelIndicator, opened ->
+                if (opened) {
+                    sessionDocumentManager.validateAll(sessionClient.get(), cancelIndicator)
+                }
+            },
+        )
     }
 
     override fun didChange(params: DidChangeTextDocumentParams) {
-        val document = sessionDocumentManager.findByClient(params.textDocument.uri)
-
-        if (document == null) {
-            logger.warn { "didChange for unknown file sessionId=$sessionId clientUri=${params.textDocument.uri}" }
-            return
-        }
-
-        sessionRequestManager.runWrite {
-            document.applyChanges(params.contentChanges)
-            sessionDocumentManager.validateAll(sessionClient.get(), it)
-        }
+        val clientUri = params.textDocument.uri
+        sessionRequestManager.runWrite(
+            {
+                val document = sessionDocumentManager.findByClient(clientUri)
+                if (document == null) {
+                    logger.warn { "didChange for unknown file sessionId=$sessionId clientUri=$clientUri" }
+                } else {
+                    document.applyChanges(params.contentChanges)
+                }
+            },
+            { cancelIndicator, _ ->
+                sessionDocumentManager.validateAll(sessionClient.get(), cancelIndicator)
+            },
+        )
     }
 
     override fun didClose(params: DidCloseTextDocumentParams) {
-        sessionDocumentManager.closeByClient(params.textDocument.uri)
+        sessionRequestManager.runWrite(
+            {
+                sessionDocumentManager.closeByClient(params.textDocument.uri)
+            },
+            { _, _ ->
+            },
+        )
     }
 
     override fun didSave(params: DidSaveTextDocumentParams) {
@@ -143,8 +162,8 @@ class SessionTextDocumentService @Inject constructor(
     }
 
     override fun hover(params: HoverParams): CompletableFuture<Hover?> {
-        return readDocument(params.textDocument.uri, null) { file, cancelIndicator ->
-            languageServices.hoverService.hover(file.xtextDocument(), file.resource, params, cancelIndicator)
+        return readDocumentOrLibrary(params.textDocument.uri, null) { services, document, resource, cancelIndicator ->
+            services.hoverService.hover(document, resource, params, cancelIndicator)
         }
     }
 
@@ -162,10 +181,10 @@ class SessionTextDocumentService @Inject constructor(
     override fun definition(
         params: DefinitionParams,
     ): CompletableFuture<Either<MutableList<out Location>, MutableList<out LocationLink>>> {
-        return readDocument(params.textDocument.uri, Either.forLeft(mutableListOf())) { file, cancelIndicator ->
-            val raw = languageServices.richDocumentSymbolService.getDefinitions(
-                file.xtextDocument(),
-                file.resource,
+        return readDocumentOrLibrary(params.textDocument.uri, Either.forLeft(mutableListOf())) { services, document, resource, cancelIndicator ->
+            val raw = services.richDocumentSymbolService.getDefinitions(
+                document,
+                resource,
                 params,
                 sessionDocumentManager.referenceResourceAccess(),
                 cancelIndicator,
@@ -178,10 +197,10 @@ class SessionTextDocumentService @Inject constructor(
     }
 
     override fun references(params: ReferenceParams): CompletableFuture<MutableList<out Location>> {
-        return readDocument(params.textDocument.uri, mutableListOf()) { file, cancelIndicator ->
-            val raw = languageServices.richDocumentSymbolService.getReferences(
-                file.xtextDocument(),
-                file.resource,
+        return readDocumentOrLibrary(params.textDocument.uri, mutableListOf()) { services, document, resource, cancelIndicator ->
+            val raw = services.richDocumentSymbolService.getReferences(
+                document,
+                resource,
                 params,
                 sessionDocumentManager.referenceResourceAccess(),
                 sessionDocumentManager.referenceIndex(),
@@ -196,18 +215,18 @@ class SessionTextDocumentService @Inject constructor(
     override fun documentHighlight(
         params: DocumentHighlightParams,
     ): CompletableFuture<MutableList<out DocumentHighlight>> {
-        return readDocument(params.textDocument.uri, mutableListOf()) { file, cancelIndicator ->
-            languageServices.documentHighlightService
-                .getDocumentHighlights(file.xtextDocument(), file.resource, params, cancelIndicator)
+        return readDocumentOrLibrary(params.textDocument.uri, mutableListOf()) { services, document, resource, cancelIndicator ->
+            services.documentHighlightService
+                .getDocumentHighlights(document, resource, params, cancelIndicator)
                 .orEmpty()
                 .toMutableList()
         }
     }
 
     override fun foldingRange(params: FoldingRangeRequestParams): CompletableFuture<MutableList<FoldingRange>> {
-        return readDocument(params.textDocument.uri, mutableListOf()) { file, cancelIndicator ->
-            languageServices.foldingRangeService
-                .createFoldingRanges(file.xtextDocument(), file.resource, cancelIndicator)
+        return readDocumentOrLibrary(params.textDocument.uri, mutableListOf()) { services, document, resource, cancelIndicator ->
+            services.foldingRangeService
+                .createFoldingRanges(document, resource, cancelIndicator)
                 .orEmpty()
                 .toMutableList()
         }
@@ -216,10 +235,10 @@ class SessionTextDocumentService @Inject constructor(
     override fun documentSymbol(
         params: DocumentSymbolParams,
     ): CompletableFuture<MutableList<Either<SymbolInformation, DocumentSymbol>>> {
-        return readDocument(params.textDocument.uri, mutableListOf()) { file, cancelIndicator ->
-            val symbols = languageServices.documentSymbolService.getSymbols(
-                file.xtextDocument(),
-                file.resource,
+        return readDocumentOrLibrary(params.textDocument.uri, mutableListOf()) { services, document, resource, cancelIndicator ->
+            val symbols = services.documentSymbolService.getSymbols(
+                document,
+                resource,
                 params,
                 cancelIndicator,
             )
@@ -230,13 +249,18 @@ class SessionTextDocumentService @Inject constructor(
     }
 
     override fun semanticTokensFull(params: SemanticTokensParams): CompletableFuture<SemanticTokens?> {
-        return readDocument(params.textDocument.uri, null) { file, cancelIndicator ->
-            languageServices.semanticTokensService.semanticTokensFull(
-                file.xtextDocument(),
-                file.resource,
-                params,
-                cancelIndicator,
-            )
+        return readDocumentOrLibrary(params.textDocument.uri, null) { services, document, resource, cancelIndicator ->
+            // the tokens of another language than the session's do not fit the legend the session announced
+            if (services !== languageServices) {
+                null
+            } else {
+                services.semanticTokensService.semanticTokensFull(
+                    document,
+                    resource,
+                    params,
+                    cancelIndicator,
+                )
+            }
         }
     }
 
@@ -459,6 +483,30 @@ class SessionTextDocumentService @Inject constructor(
             }
             block(document, it)
         }
+    }
+
+    // a library file is no open document: its read-only document is answered from the resource the session loaded; a document is answered by the services of its own language, as the OXSTS a Gamma model compiles to
+    private inline fun <T> readDocumentOrLibrary(
+        clientUri: String,
+        empty: T,
+        crossinline block: (LanguageServices, Document, XtextResource, CancelIndicator) -> T,
+    ): CompletableFuture<T> {
+        return sessionRequestManager.runRead {
+            val document = sessionDocumentManager.findByClient(clientUri)
+            if (document != null) {
+                return@runRead block(languageServicesOf(document.resource), document.xtextDocument(), document.resource, it)
+            }
+            val library = sessionDocumentManager.findLibraryByClient(clientUri) ?: return@runRead empty
+            val text = library.parseResult?.rootNode?.text ?: return@runRead empty
+            block(languageServicesOf(library), Document(0, text), library, it)
+        }
+    }
+
+    private fun languageServicesOf(resource: XtextResource): LanguageServices {
+        if (resource.languageName == languageServices.languageName) {
+            return languageServices
+        }
+        return resource.resourceServiceProvider.get(LanguageServices::class.java)
     }
 
     private fun toClientLocation(location: Location): Location {

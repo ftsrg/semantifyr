@@ -1,0 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+.rerun-tag { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--text-tertiary); font-size: var(--text-small); font-weight: var(--weight-medium); }
+.rerun-tag .verdict-mark { width: 13px; height: 13px; }

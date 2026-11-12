@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVerificationCase
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaFrontendTestHelper
 import hu.bme.mit.semantifyr.portfolios.Portfolios
@@ -23,6 +24,7 @@ class GammaVerificationTests {
         private val SIMPLE = MODELS_ROOT.resolve("Simple.gamma")
         private val CROSSROADS = MODELS_ROOT.resolve("Crossroads.gamma")
         private val SPACECRAFT = MODELS_ROOT.resolve("Spacecraft.gamma")
+        private val LEVEL_CROSSING = MODELS_ROOT.resolve("LevelCrossing.gamma")
 
         private fun argumentsFor(sourcePath: java.nio.file.Path): Stream<Arguments> {
             return helper.discoverAsArguments(sourcePath)
@@ -36,6 +38,11 @@ class GammaVerificationTests {
         @JvmStatic
         fun `Crossroads Model Verification Cases Should Pass`(): Stream<Arguments> {
             return argumentsFor(CROSSROADS)
+        }
+
+        @JvmStatic
+        fun `Level Crossing Cases Reach Their Expected Verdict`(): Stream<Arguments> {
+            return argumentsFor(LEVEL_CROSSING)
         }
 
         @JvmStatic
@@ -68,5 +75,20 @@ class GammaVerificationTests {
     @MethodSource
     suspend fun `Spacecraft Model Verification Cases Should Pass`(gammaVerificationCase: GammaVerificationCase) {
         assertPasses(gammaVerificationCase)
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    suspend fun `Level Crossing Cases Reach Their Expected Verdict`(gammaVerificationCase: GammaVerificationCase) {
+        val expectedVerdict = if (gammaVerificationCase.qualifiedName.endsWith("BarrierDownWhileTrainInCrossing")) {
+            VerificationVerdict.Failed
+        } else {
+            VerificationVerdict.Passed
+        }
+        val frontend = helper.buildFrontend(
+            portfolio = Portfolios.SmartFull,
+            outputDirectory = artifactRoot,
+        )
+        helper.checkVerificationCase(frontend, gammaVerificationCase, expectedVerdict)
     }
 }

@@ -24,7 +24,7 @@ dependencies {
     testImplementation(testFixtures(project(":compiler")))
 }
 
-val sysmlCommit = "95c1913746755b203ae81e3bdf8f9790a99e5e27" // feat: added a validate command that checks a file in its directory's workspace
+val sysmlCommit = "6556e118c96d075b4a7a140f521c20abc3fb1aa0" // fix: a document opened during startup no longer cancels the unvalidated standard library build
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 

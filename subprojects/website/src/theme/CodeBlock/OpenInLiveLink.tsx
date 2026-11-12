@@ -21,7 +21,7 @@ export default function OpenInLiveLink({ language, code }: Props): React.JSX.Ele
 
   useEffect(() => {
     let active = true;
-    void liveEditorUrl(`${normalizeBaseUrl(liveBackendUrl).http}/`, { flavor: language, code }).then((url) => {
+    void liveEditorUrl(`${normalizeBaseUrl(liveBackendUrl).http}/`, { language, model: code }).then((url) => {
       if (active) {
         setHref(url);
       }

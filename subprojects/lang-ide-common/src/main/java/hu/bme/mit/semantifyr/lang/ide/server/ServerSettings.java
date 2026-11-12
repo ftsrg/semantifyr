@@ -55,7 +55,11 @@ public class ServerSettings {
             new ServerSettingsPayload.Artifacts(ArtifactsLocation.TEMPORARY, ArtifactsPreset.ALL),
             new ServerSettingsPayload.Optimization(OptimizationLevel.ALL));
 
+    private record ThetaEnvironment(ServerSettingsPayload.Theta theta, ExecutionEnvironment environment) {}
+
     private final AtomicReference<ServerSettingsPayload> effective = new AtomicReference<>(DEFAULTS);
+
+    private final AtomicReference<ThetaEnvironment> executionEnvironment = new AtomicReference<>();
 
     private Path temporaryArtifactDirectory;
 
@@ -132,6 +136,14 @@ public class ServerSettings {
 
     public ExecutionEnvironment resolveExecutionEnvironment() {
         ServerSettingsPayload.Theta theta = effective.get().theta();
+        return executionEnvironment
+                .updateAndGet(current -> current != null && current.theta().equals(theta)
+                        ? current
+                        : new ThetaEnvironment(theta, buildExecutionEnvironment(theta)))
+                .environment();
+    }
+
+    private static ExecutionEnvironment buildExecutionEnvironment(ServerSettingsPayload.Theta theta) {
         String image = theta.dockerImage();
         return switch (theta.executor()) {
             case SHELL ->

@@ -6,20 +6,28 @@
 
 import * as vscode from 'vscode';
 import {
+  FileSystemProviderCapabilities,
+  FileSystemProviderError,
+  FileSystemProviderErrorCode,
   RegisteredFileSystemProvider,
   RegisteredMemoryFile,
+  registerCustomProvider,
   registerFileSystemOverlay,
 } from '@codingame/monaco-vscode-files-service-override';
+import type { OpenEditor } from '@codingame/monaco-vscode-editor-service-override';
+import { getService, ITextModelService } from '@codingame/monaco-vscode-api/services';
 import { configureDefaultWorkerFactory } from 'monaco-languageclient/workerFactory';
 import { MonacoVscodeApiWrapper, type MonacoVscodeApiConfig, type ExtensionConfig } from 'monaco-languageclient/vscodeApiWrapper';
 import { LanguageClientWrapper, LcWebSocket, LcWorker, type LanguageClientConfig } from 'monaco-languageclient/lcwrapper';
 import { EditorApp, type EditorAppConfig } from 'monaco-languageclient/editorApp';
-import type { editor } from 'monaco-editor';
-import type { MessageTransports } from 'vscode-languageclient';
+import { editor, Uri, type IDisposable } from 'monaco-editor';
+import type { MessageTransports, Middleware } from 'vscode-languageclient';
 
 import { normalizeBaseUrl, type NavigateToParams } from '@semantifyr/editor-common';
 import type { ResolvedColorMode } from '../util/colorMode';
 import { observeSocketClose, type SocketClose } from './reconnectController';
+import type { ModelDocuments } from './modelDocuments';
+import { DERIVED_SCHEME, fileUriOfLibrary, isLibraryFileUri, LIBRARY_SCHEME, libraryUriOf, serverUriOfLibrary, TRACE_SCHEME } from './readOnlyDocuments';
 
 // Synced from :semantifyr-vscode by the cloneVscodeLanguageAssets Gradle task.
 import oxstsGrammar from '../../vscode/imported/syntaxes/oxsts.tmLanguage.json';
@@ -29,8 +37,11 @@ import languageConfiguration from '../../vscode/imported/language-configuration.
 
 const EDITOR_USER_CONFIG = {
   'editor.guides.bracketPairsHorizontal': 'active',
+  // bracket pairs take no colours of their own: the editor's colours are the tokens'
+  'editor.bracketPairColorization.enabled': false,
   'editor.wordBasedSuggestions': 'off',
-  'editor.experimental.asyncTokenization': true,
+  // the worker tokenizer of a newly shown model applies two answers out of order when the model changes between them, and throws on a state it lost
+  'editor.experimental.asyncTokenization': false,
   'editor.fontSize': 15,
   'editor.fontFamily': "'JetBrains Mono', monospace",
   'editor.fontLigatures': true,
@@ -42,6 +53,8 @@ const EDITOR_OPTIONS: editor.IStandaloneEditorConstructionOptions = {
   minimap: { enabled: false },
   scrollBeyondLastLine: false,
   fontSize: 15,
+  // an embed in a frame of fixed height scrolls on once its editor reaches an end
+  scrollbar: { alwaysConsumeMouseWheel: false },
 } as const;
 
 const LANGUAGE_DEFS = [
@@ -127,13 +140,199 @@ function buildSemantifyrExtension(): ExtensionConfig {
   };
 }
 
-let apiWrapperPromise: Promise<MonacoVscodeApiWrapper> | null = null;
+const derivedTexts = new Map<string, string>();
 
-async function ensureVscodeApi(initialColorMode: ResolvedColorMode): Promise<MonacoVscodeApiWrapper> {
+const keptModels = new Map<string, Promise<IDisposable>>();
+
+// The extension host lets go of a document it opened three minutes later, and the model goes with it unless something holds it
+export async function openKeptDocument(uri: string): Promise<vscode.TextDocument> {
+  const opened = await vscode.workspace.openTextDocument(vscode.Uri.parse(uri));
+  const key = opened.uri.toString();
+  if (!keptModels.has(key)) {
+    keptModels.set(key, getService(ITextModelService).then((models) => {
+      return models.createModelReference(Uri.parse(key));
+    }));
+  }
+  await keptModels.get(key);
+  return opened;
+}
+
+// A document the page derives is opened through the editor's services, which then own its model for the visit
+export async function openDerivedDocument(uri: string, text: string): Promise<vscode.TextDocument> {
+  derivedTexts.set(uri, text);
+  return openKeptDocument(uri);
+}
+
+type LibraryReader = (fileUri: string) => Promise<string | null>;
+
+const NO_LIBRARY: LibraryReader = () => {
+  return Promise.resolve(null);
+};
+
+let libraryReader = NO_LIBRARY;
+let editorOpener: OpenEditor | null = null;
+
+// Reads a library file a definition leads into, through the current language's session
+export function setLibraryReader(reader: LibraryReader): () => void {
+  libraryReader = reader;
+  return () => {
+    if (libraryReader === reader) {
+      libraryReader = NO_LIBRARY;
+    }
+  };
+}
+
+// Opens a document the editor navigates to; without one, navigation stays in the current document
+export function setEditorOpener(opener: OpenEditor): () => void {
+  editorOpener = opener;
+  return () => {
+    if (editorOpener === opener) {
+      editorOpener = null;
+    }
+  };
+}
+
+class LibraryFileSystemProvider extends RegisteredFileSystemProvider {
+  constructor() {
+    super(true);
+    // without the stream capability the file service reads through readFile, which reads the file in first
+    this.capabilities = FileSystemProviderCapabilities.FileReadWrite | FileSystemProviderCapabilities.PathCaseSensitive | FileSystemProviderCapabilities.Readonly;
+  }
+
+  private readonly reads = new Map<string, Promise<void>>();
+
+  // the file service stats and reads at once, so both wait for one read
+  private ensureRegistered(resource: vscode.Uri): Promise<void> {
+    const key = resource.toString();
+    let read = this.reads.get(key);
+    if (!read) {
+      read = this.register(resource);
+      this.reads.set(key, read);
+      read.catch(() => {
+        this.reads.delete(key);
+      });
+    }
+    return read;
+  }
+
+  private async register(resource: vscode.Uri): Promise<void> {
+    const text = await libraryReader(fileUriOfLibrary(resource.toString()));
+    if (text === null) {
+      throw FileSystemProviderError.create('library file not found', FileSystemProviderErrorCode.FileNotFound);
+    }
+    this.registerFile(new RegisteredMemoryFile(resource, text));
+  }
+
+  override async stat(resource: vscode.Uri): ReturnType<RegisteredFileSystemProvider['stat']> {
+    await this.ensureRegistered(resource);
+    return super.stat(resource);
+  }
+
+  override async readFile(resource: vscode.Uri): Promise<Uint8Array> {
+    await this.ensureRegistered(resource);
+    return super.readFile(resource);
+  }
+}
+
+function toLibraryUri(uri: vscode.Uri): vscode.Uri {
+  const text = uri.toString();
+  return isLibraryFileUri(text) ? vscode.Uri.parse(libraryUriOf(text)) : uri;
+}
+
+const WORKSPACE_PATH = '/workspace/';
+// the servers take a document only under a workspace file address, so a trace document goes under one no file of the session has
+const TRACE_SERVER_PATH = '/workspace/.live-trace/';
+
+// the OXSTS of a model of another language goes to the session under an address no file of the session has
+const DERIVED_SERVER_PATH = '/workspace/.live-derived/';
+
+// how a client names the read-only documents of the page to its server, and back
+export interface ReadOnlyAddresses {
+  // the session serves the OXSTS of the model and of its traces, for a language that is not OXSTS
+  servesOxsts?: boolean;
+  // the address the session already holds the OXSTS of the model by, as SysML's bridge keeps it; absent, the document is sent under an address of its own
+  modelOxstsUri?: string;
+}
+
+function addressesOf(readOnly: ReadOnlyAddresses): { code2Protocol: (uri: vscode.Uri) => string; protocol2Code: (value: string) => vscode.Uri } {
+  return {
+    code2Protocol: (uri) => {
+      if (uri.scheme === TRACE_SCHEME && uri.path.startsWith(WORKSPACE_PATH)) {
+        return vscode.Uri.file(`${TRACE_SERVER_PATH}${uri.path.slice(WORKSPACE_PATH.length)}`).toString();
+      }
+      if (uri.scheme === LIBRARY_SCHEME) {
+        return serverUriOfLibrary(uri.toString());
+      }
+      if (uri.scheme === DERIVED_SCHEME) {
+        return readOnly.modelOxstsUri ?? vscode.Uri.file(`${DERIVED_SERVER_PATH}${uri.path.slice(1)}`).toString();
+      }
+      return uri.toString();
+    },
+    protocol2Code: (value) => {
+      const uri = vscode.Uri.parse(value);
+      if (uri.scheme === 'file' && uri.path.startsWith(TRACE_SERVER_PATH)) {
+        return uri.with({ scheme: TRACE_SCHEME, path: `${WORKSPACE_PATH}${uri.path.slice(TRACE_SERVER_PATH.length)}` });
+      }
+      if (uri.scheme === 'file' && uri.path.startsWith(DERIVED_SERVER_PATH)) {
+        return uri.with({ scheme: DERIVED_SCHEME, path: `/${uri.path.slice(DERIVED_SERVER_PATH.length)}` });
+      }
+      // a library file opens as its read-only document, which no client syncs
+      return toLibraryUri(uri);
+    },
+  };
+}
+
+// the server reads a library file from what it loaded, and may hold the OXSTS of the model already, so neither is sent to it
+function readOnlyDocumentsOf(readOnly: ReadOnlyAddresses): Middleware {
+  const isUnsynced = (uri: vscode.Uri): boolean => {
+    return uri.scheme === LIBRARY_SCHEME || (uri.scheme === DERIVED_SCHEME && readOnly.modelOxstsUri !== undefined);
+  };
+  return {
+    didOpen: async (document, next) => {
+      if (!isUnsynced(document.uri)) {
+        await next(document);
+      }
+    },
+    didChange: async (event, next) => {
+      if (!isUnsynced(event.document.uri)) {
+        await next(event);
+      }
+    },
+    didClose: async (document, next) => {
+      if (!isUnsynced(document.uri)) {
+        await next(document);
+      }
+    },
+  };
+}
+
+function documentSelectorOf(languageId: string, readOnly: ReadOnlyAddresses): { language: string; scheme: string }[] {
+  const libraryLanguage = languageId === 'sysml' ? 'sysml' : 'oxsts';
+  return [
+    { language: languageId, scheme: 'file' },
+    { language: languageId, scheme: TRACE_SCHEME },
+    { language: libraryLanguage, scheme: LIBRARY_SCHEME },
+    ...(readOnly.servesOxsts === true ? [{ language: 'oxsts', scheme: DERIVED_SCHEME }, { language: 'oxsts', scheme: TRACE_SCHEME }] : []),
+  ];
+}
+
+let apiWrapperPromise: Promise<MonacoVscodeApiWrapper> | null = null;
+let markMonacoReady: () => void = () => {};
+// Monaco's editor API is touched only once the VS Code services are up, or it starts the standalone ones
+const monacoReady = new Promise<void>((resolve) => {
+  markMonacoReady = resolve;
+});
+
+export async function initializeMonaco(initialColorMode: ResolvedColorMode): Promise<MonacoVscodeApiWrapper> {
   if (apiWrapperPromise) return apiWrapperPromise;
   const vscodeApiConfig: MonacoVscodeApiConfig = {
     $type: 'extended',
-    viewsConfig: { $type: 'EditorService' },
+    viewsConfig: {
+      $type: 'EditorService',
+      openEditorFunc: async (modelReference, options, sideBySide) => {
+        return editorOpener ? editorOpener(modelReference, options, sideBySide) : undefined;
+      },
+    },
     userConfiguration: {
       json: JSON.stringify({
         'workbench.colorTheme': themeIdFor(initialColorMode),
@@ -146,29 +345,46 @@ async function ensureVscodeApi(initialColorMode: ResolvedColorMode): Promise<Mon
     extensions: [buildSemantifyrExtension()],
   };
   apiWrapperPromise = (async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-assignment -- monaco-vscode-api declares the file enums in several modules
+    registerCustomProvider(LIBRARY_SCHEME, new LibraryFileSystemProvider());
     const wrapper = new MonacoVscodeApiWrapper(vscodeApiConfig);
     await wrapper.start();
+    const derivedContent: vscode.TextDocumentContentProvider = {
+      provideTextDocumentContent: (uri) => {
+        return derivedTexts.get(uri.toString()) ?? '';
+      },
+    };
+    vscode.workspace.registerTextDocumentContentProvider(DERIVED_SCHEME, derivedContent);
+    vscode.workspace.registerTextDocumentContentProvider(TRACE_SCHEME, derivedContent);
+    markMonacoReady();
     return wrapper;
   })();
   return apiWrapperPromise;
 }
 
-export async function applyColorTheme(colorMode: ResolvedColorMode): Promise<void> {
-  if (!apiWrapperPromise) {
-    return
-  }
-  try {
-    await apiWrapperPromise
-    await vscode.workspace
-      .getConfiguration()
-      .update('workbench.colorTheme', themeIdFor(colorMode), vscode.ConfigurationTarget.Global)
-  } catch (error) {
-    console.warn('semantifyr-live: applyColorTheme failed', error)
-  }
+export function whenMonacoReady(): Promise<void> {
+  return monacoReady;
 }
 
-export function createFileUri(fileName: string): vscode.Uri {
-  return vscode.Uri.file(`/workspace/${fileName}`);
+export function onDiagnosticsOf(uri: string, listener: () => void): () => void {
+  let subscription: { dispose: () => void } | null = null;
+  let disposed = false;
+  void monacoReady.then(() => {
+    if (disposed) {
+      return;
+    }
+    subscription = vscode.languages.onDidChangeDiagnostics((event) => {
+      if (event.uris.some((changed) => {
+        return changed.toString() === uri;
+      })) {
+        listener();
+      }
+    });
+  });
+  return () => {
+    disposed = true;
+    subscription?.dispose();
+  };
 }
 
 export interface EditorInstance {
@@ -183,7 +399,7 @@ export async function createEditor(
   language: string,
   initialCode: string,
 ): Promise<EditorInstance> {
-  await ensureVscodeApi(colorMode);
+  await initializeMonaco(colorMode);
 
   const fileSystemProvider = new RegisteredFileSystemProvider(false);
   fileSystemProvider.registerFile(new RegisteredMemoryFile(fileUri, initialCode));
@@ -207,48 +423,92 @@ export async function createEditor(
   return { editorApp, fsOverlay };
 }
 
-export interface SecondaryEditorHandle {
-  dispose: () => void;
-}
+export function createModelDocuments(): ModelDocuments {
+  const replacing = new Set<string>();
+  let ready = false;
 
-export async function createSecondaryEditor(
-  host: HTMLElement,
-  fileUri: vscode.Uri,
-  language: string,
-  initialContent: string,
-  options: { readOnly?: boolean } = {},
-): Promise<SecondaryEditorHandle> {
-  if (!apiWrapperPromise) {
-    throw new Error('createSecondaryEditor called before the primary editor is up');
-  }
-  await apiWrapperPromise;
-
-  const fileSystemProvider = new RegisteredFileSystemProvider(false);
-  fileSystemProvider.registerFile(new RegisteredMemoryFile(fileUri, initialContent));
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-assignment -- monaco-vscode-api declares the file enums in several modules
-  const fsOverlay = registerFileSystemOverlay(1, fileSystemProvider);
-
-  const editorAppConfig: EditorAppConfig = {
-    codeResources: {
-      modified: { text: initialContent, uri: fileUri.path, enforceLanguageId: language },
-    },
-    editorOptions: { ...EDITOR_OPTIONS, readOnly: options.readOnly ?? false },
+  const modelOf = (uri: string): editor.ITextModel | null => {
+    return ready ? editor.getModel(Uri.parse(uri)) : null;
   };
-  const editorApp = new EditorApp(editorAppConfig);
-  await editorApp.start(host);
+
+  const afterInitialization = (action: () => void): void => {
+    if (ready) {
+      action();
+      return;
+    }
+    void monacoReady.then(() => {
+      ready = true;
+      action();
+    });
+  };
+
+  const onDidCreate = (uri: string, listener: (model: editor.ITextModel) => void): IDisposable => {
+    return editor.onDidCreateModel((model) => {
+      if (model.uri.toString() === uri) {
+        listener(model);
+      }
+    });
+  };
 
   return {
-    dispose: () => {
-      try {
-        void editorApp.dispose();
-      } catch {
-        /* ignore */
+    isOpen: (uri) => {
+      return modelOf(uri) !== null;
+    },
+    read: (uri) => {
+      return modelOf(uri)?.getValue() ?? null;
+    },
+    replace: (uri, text) => {
+      const model = modelOf(uri);
+      if (!model || model.getValue() === text) {
+        return;
       }
+      replacing.add(uri);
       try {
-        fsOverlay.dispose();
-      } catch {
-        /* ignore */
+        model.setValue(text);
+      } finally {
+        replacing.delete(uri);
       }
+    },
+    onDidOpen: (uri, listener) => {
+      let disposed = false;
+      let subscription: IDisposable | null = null;
+      afterInitialization(() => {
+        if (!disposed) {
+          subscription = onDidCreate(uri, () => {
+            listener();
+          });
+        }
+      });
+      return () => {
+        disposed = true;
+        subscription?.dispose();
+      };
+    },
+    onDidChange: (uri, listener) => {
+      let disposed = false;
+      let created: IDisposable | null = null;
+      let changed: IDisposable | null = null;
+      const attach = (model: editor.ITextModel): void => {
+        changed?.dispose();
+        changed = model.onDidChangeContent(() => {
+          listener({ replaced: replacing.has(uri) });
+        });
+      };
+      afterInitialization(() => {
+        if (disposed) {
+          return;
+        }
+        const current = modelOf(uri);
+        if (current) {
+          attach(current);
+        }
+        created = onDidCreate(uri, attach);
+      });
+      return () => {
+        disposed = true;
+        created?.dispose();
+        changed?.dispose();
+      };
     },
   };
 }
@@ -261,7 +521,7 @@ async function handleNavigateTo(params: NavigateToParams): Promise<void> {
   const locations = params.locations.map(
     (loc) =>
       new vscode.Location(
-        vscode.Uri.parse(loc.uri),
+        toLibraryUri(vscode.Uri.parse(loc.uri)),
         new vscode.Range(
           loc.range.start.line,
           loc.range.start.character,
@@ -287,23 +547,61 @@ export interface LanguageClientCallbacks {
   onProgress: (params: unknown) => void;
   onStopped: () => void;
   onClose: (close: SocketClose) => void;
+  onOpen?: () => void;
 }
 
-// LcWebSocket.start overwrites the onclose its reader installed, so the close code reaches the client through no handler
+// LcWebSocket.start installs the onclose that stops the client, so the close code reaches the client through no handler of its own
 class CloseObservingWebSocket extends LcWebSocket {
   private readonly onClose: (close: SocketClose) => void;
+  private readonly onOpen: () => void;
 
-  constructor(onClose: (close: SocketClose) => void) {
+  constructor(onClose: (close: SocketClose) => void, onOpen: () => void) {
     super();
     this.onClose = onClose;
+    this.onOpen = onOpen;
+    let disposeClient: () => unknown = () => {};
+    // the wrapper disposes its client when the socket closes, which fails on a socket already closed; the runtime tears the client down itself
+    Object.defineProperty(this, 'disconnected', {
+      get: () => {
+        return () => {
+          void Promise.resolve(disposeClient()).catch((error: unknown) => {
+            console.warn('semantifyr-live: the language client of a closed socket could not be disposed', error);
+          });
+        };
+      },
+      set: (handler: () => unknown) => {
+        disposeClient = handler;
+      },
+    });
   }
 
   override async init(...parameters: Parameters<LcWebSocket['init']>): Promise<MessageTransports> {
     const transports = await super.init(...parameters);
     const { webSocket } = this as unknown as { webSocket: WebSocket };
-    observeSocketClose(webSocket, this.onClose);
+    webSocket.addEventListener('open', () => {
+      this.onOpen();
+    });
     return transports;
   }
+
+  override start(): Promise<void> {
+    const started = super.start();
+    const { webSocket } = this as unknown as { webSocket: WebSocket | undefined };
+    if (webSocket) {
+      observeSocketClose(webSocket, this.onClose);
+    }
+    return started;
+  }
+}
+
+// the session tells the server its kind and the language of its editor, which the admin page lists
+export function socketAddress(wsBaseUrl: string, flavorId: string, sessionKind: string | undefined, sessionLanguage: string): string {
+  const query = new URLSearchParams();
+  if (sessionKind !== undefined) {
+    query.set('kind', sessionKind);
+  }
+  query.set('language', sessionLanguage);
+  return `${wsBaseUrl}/ws/lsp/${encodeURIComponent(flavorId)}?${query.toString()}`;
 }
 
 const LSP_STATE_STOPPED = 1;
@@ -325,7 +623,9 @@ export async function connectWorkerLanguageClient(
       },
     },
     clientOptions: {
-      documentSelector: [languageId],
+      documentSelector: documentSelectorOf(languageId, {}),
+      middleware: readOnlyDocumentsOf({}),
+      uriConverters: addressesOf({}),
       workspaceFolder: {
         index: 0,
         name: 'workspace',
@@ -355,6 +655,9 @@ export async function connectLanguageClient(
   flavorId: string,
   languageId: string,
   callbacks: LanguageClientCallbacks,
+  sessionKind: string | undefined,
+  sessionLanguage: string,
+  readOnly: ReadOnlyAddresses = {},
 ): Promise<LanguageClientWrapper> {
   const { ws: wsBaseUrl } = normalizeBaseUrl(backendUrl);
   const languageClientConfig: LanguageClientConfig = {
@@ -362,13 +665,15 @@ export async function connectLanguageClient(
     connection: {
       options: {
         $family: 'WebSocket',
-        realization: () => new CloseObservingWebSocket(callbacks.onClose),
-        webSocketUrl: `${wsBaseUrl}/ws/lsp/${encodeURIComponent(flavorId)}`,
+        realization: () => new CloseObservingWebSocket(callbacks.onClose, callbacks.onOpen ?? (() => {})),
+        webSocketUrl: socketAddress(wsBaseUrl, flavorId, sessionKind, sessionLanguage),
         disposeResources: true,
       },
     },
     clientOptions: {
-      documentSelector: [languageId],
+      documentSelector: documentSelectorOf(languageId, readOnly),
+      middleware: readOnlyDocumentsOf(readOnly),
+      uriConverters: addressesOf(readOnly),
       workspaceFolder: {
         index: 0,
         name: 'workspace',

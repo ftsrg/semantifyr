@@ -121,6 +121,53 @@ class VerificationManagerTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
+    fun `once saturated the waiting sessions take turns in the order they started waiting`() = runTest {
+        val manager = manager(concurrency = 2)
+        val order = mutableListOf<String>()
+        val releases = mutableMapOf<String, CompletableDeferred<Unit>>()
+        val names = listOf(
+            "a1",
+            "a2",
+            "a3",
+            "a4",
+            "a5",
+            "b1",
+            "b2",
+            "c1",
+            "c2",
+        )
+        for (name in names) {
+            val request = manager.enqueue(name.take(1))
+            releases[name] = CompletableDeferred()
+            launch {
+                manager.withPermit(request) {
+                    order += name
+                    releases.getValue(name).await()
+                }
+            }
+        }
+        runCurrent()
+        assertThat(order).containsExactly("a1", "a2")
+
+        for (name in names) {
+            releases.getValue(name).complete(Unit)
+            runCurrent()
+        }
+        assertThat(order).containsExactly(
+            "a1",
+            "a2",
+            "a3",
+            "b1",
+            "c1",
+            "a4",
+            "b2",
+            "c2",
+            "a5",
+        )
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
     fun `within a session the permits go in arrival order`() = runTest {
         val manager = manager(concurrency = 1)
         val order = mutableListOf<Int>()
@@ -192,5 +239,29 @@ class VerificationManagerTest {
         release.complete(Unit)
         first.join()
         assertThat(gauge("semantifyr.live.verifications.running")).isEqualTo(0.0)
+    }
+
+    @Test
+    fun `the saturation counter adds up the time every permit was taken`() {
+        val registry = SimpleMeterRegistry()
+        val manager = manager(concurrency = 2, registry = registry)
+        val saturated = registry.get("semantifyr.live.verifications.saturated").functionCounter()
+
+        val first = manager.enqueue("first")
+        Thread.sleep(20)
+        assertThat(saturated.count()).isZero()
+
+        val second = manager.enqueue("second")
+        val queued = manager.enqueue("third")
+        Thread.sleep(50)
+        manager.abandon(first)
+        Thread.sleep(20)
+        assertThat(saturated.count()).isGreaterThanOrEqualTo(0.07)
+
+        manager.abandon(second)
+        manager.abandon(queued)
+        val total = saturated.count()
+        Thread.sleep(20)
+        assertThat(saturated.count()).isEqualTo(total)
     }
 }

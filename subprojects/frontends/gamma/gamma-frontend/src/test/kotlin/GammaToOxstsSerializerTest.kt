@@ -225,7 +225,7 @@ class GammaToOxstsSerializerTest {
             "}",
             "contains Busy: State subsets states {",
             "}",
-            "contains transition1: EntryTransition subsets entryTransitions {",
+            "contains entry_to_Idle: EntryTransition subsets entryTransitions {",
             "redefine refers to: State = Idle",
             "}",
             "}",
@@ -257,13 +257,13 @@ class GammaToOxstsSerializerTest {
 
         assertThat(lines).containsSequence(
             "contains Idle: State subsets states {",
-            "contains action1: AssignmentAction subsets entryActions {",
+            "contains entry_assign_count: AssignmentAction subsets entryActions {",
             "redefine refers variable: Variable = count",
             "redefine contains expression: LiteralIntegerExpression {",
             "redefine refers value: int = 1",
             "}",
             "}",
-            "contains action2: RaiseEventAction subsets exitActions {",
+            "contains exit_raise_control_done: RaiseEventAction subsets exitActions {",
             "redefine refers port: Port = control",
             "redefine refers event: Event = control.interface.done",
             "}",
@@ -295,7 +295,7 @@ class GammaToOxstsSerializerTest {
             "contains Inner: Region subsets regions {",
             "contains Nested: State subsets states {",
             "}",
-            "contains transition1: EntryTransition subsets entryTransitions {",
+            "contains entry_to_Nested: EntryTransition subsets entryTransitions {",
             "redefine refers to: State = Nested",
             "}",
             "}",
@@ -304,11 +304,41 @@ class GammaToOxstsSerializerTest {
     }
 
     @Test
+    fun `transitions between the same states are told apart by their triggers`() {
+        val lines = statechartLines(
+            """
+                transition Idle to Busy when event control.start
+                transition Idle to Busy when timeout delay
+            """,
+        )
+
+        assertThat(lines).contains(
+            "contains Idle_to_Busy_on_control_start: Transition subsets transitions {",
+            "contains Idle_to_Busy_on_delay: Transition subsets transitions {",
+        )
+    }
+
+    @Test
+    fun `transitions that still collide are numbered in model order`() {
+        val lines = statechartLines(
+            """
+                transition Idle to Busy
+                transition Idle to Busy
+            """,
+        )
+
+        assertThat(lines).contains(
+            "contains Idle_to_Busy: Transition subsets transitions {",
+            "contains Idle_to_Busy_2: Transition subsets transitions {",
+        )
+    }
+
+    @Test
     fun `a transition refers to its source and target states`() {
         val lines = statechartLines("transition Idle to Busy")
 
         assertThat(lines).containsSequence(
-            "contains transition2: Transition subsets transitions {",
+            "contains Idle_to_Busy: Transition subsets transitions {",
             "redefine refers from: State = Idle",
             "redefine refers to: State = Busy",
             "}",
@@ -364,7 +394,7 @@ class GammaToOxstsSerializerTest {
         val lines = statechartLines("transition Idle to Busy / raise control.done;")
 
         assertThat(lines).containsSequence(
-            "contains action1: RaiseEventAction subsets actions {",
+            "contains raise_control_done: RaiseEventAction subsets actions {",
             "redefine refers port: Port = control",
             "redefine refers event: Event = control.interface.done",
             "}",
@@ -376,7 +406,7 @@ class GammaToOxstsSerializerTest {
         val lines = statechartLines("transition Idle to Busy / set delay := 2 s;")
 
         assertThat(lines).containsSequence(
-            "contains action1: SetTimeoutAction subsets actions {",
+            "contains set_delay: SetTimeoutAction subsets actions {",
             "redefine refers timeout: Timeout = delay",
             "redefine contains expression: LiteralIntegerExpression {",
             "redefine refers value: int = 2",
@@ -390,7 +420,7 @@ class GammaToOxstsSerializerTest {
         val lines = statechartLines("transition Idle to Busy / assign flag := true;")
 
         assertThat(lines).containsSequence(
-            "contains action1: AssignmentAction subsets actions {",
+            "contains assign_flag: AssignmentAction subsets actions {",
             "redefine refers variable: Variable = flag",
             "redefine contains expression: LiteralBooleanExpression {",
             "redefine refers value: bool = true",
@@ -519,7 +549,7 @@ class GammaToOxstsSerializerTest {
         val lines = systemLines(system)
 
         assertThat(lines).containsSequence(
-            "contains channel1: Channel subsets channels {",
+            "contains leader_workerControl_to_worker_control: Channel subsets channels {",
             "redefine refers inputPort: Port = leader.workerControl",
             "redefine refers outputPort: Port = worker.control",
             "}",

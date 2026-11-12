@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.live.backend.lsp.language
 
 import com.google.inject.Inject
 import com.google.inject.Provider
+import com.google.inject.name.Named
 import hu.bme.mit.semantifyr.lang.ide.server.callhierarchy.CallHierarchyService
 import hu.bme.mit.semantifyr.lang.ide.server.hierarchy.TypeHierarchyService
 import hu.bme.mit.semantifyr.lang.ide.server.inlayhints.InlayHintService
@@ -23,6 +24,7 @@ import org.eclipse.lsp4j.ServerCapabilities
 import org.eclipse.lsp4j.SignatureHelpOptions
 import org.eclipse.lsp4j.TextDocumentSyncKind
 import org.eclipse.lsp4j.jsonrpc.messages.Either
+import org.eclipse.xtext.Constants
 import org.eclipse.xtext.ide.server.codeActions.ICodeActionService2
 import org.eclipse.xtext.ide.server.codelens.ICodeLensService
 import org.eclipse.xtext.ide.server.commands.IExecutableCommandService
@@ -58,6 +60,8 @@ class LanguageServices @Inject constructor(
     val formattingService: FormattingService,
     val renameService: IRenameService2,
     val builtinLibrary: BuiltinLibrary,
+    @param:Named(Constants.LANGUAGE_NAME)
+    val languageName: String,
 ) {
 
     // Xtext's stock rename reads the file from disk into a fresh resource set, which a session does not keep current.

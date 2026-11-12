@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap
 class SessionManager @Inject constructor(
     private val backendConfig: BackendConfig,
     private val languageServiceRegistry: LanguageServiceRegistry,
-    registry: MeterRegistry,
+    private val registry: MeterRegistry,
 ) : AutoCloseable {
 
     private val logger by loggerFactory()
@@ -60,6 +60,13 @@ class SessionManager @Inject constructor(
         Gauge.builder("semantifyr.live.sessions.limit") {
             maxSessions
         }.register(registry)
+        for (kind in SessionKind.entries) {
+            Gauge.builder("semantifyr.live.sessions.active.by.kind") {
+                activeSessions.values.count {
+                    it.sessionContext.kind == kind
+                }
+            }.tag("kind", kind.id).register(registry)
+        }
     }
 
     fun getSessionInfos(): List<SessionInfo> {
@@ -72,6 +79,8 @@ class SessionManager @Inject constructor(
         webSocketSession: WebSocketServerSession,
         remoteIp: String,
         flavor: Flavor,
+        kind: SessionKind,
+        languageId: String,
     ) {
         if (!globalGate.tryAcquire()) {
             rejectedSessions.increment()
@@ -79,7 +88,7 @@ class SessionManager @Inject constructor(
             throw SessionLimitReachedException("Global session limit reached, please try again later.")
         }
         try {
-            doRunSession(webSocketSession, remoteIp, flavor)
+            doRunSession(webSocketSession, remoteIp, flavor, kind, languageId)
         } finally {
             globalGate.release()
         }
@@ -89,8 +98,10 @@ class SessionManager @Inject constructor(
         webSocketSession: WebSocketServerSession,
         remoteIp: String,
         flavor: Flavor,
+        kind: SessionKind,
+        languageId: String,
     ) {
-        val sessionContext = createSessionContext(webSocketSession, remoteIp, flavor)
+        val sessionContext = createSessionContext(webSocketSession, remoteIp, flavor, kind, languageId)
         val injector = languageServiceRegistry.injectorFor(flavor)
         withSessionScope(sessionContext) {
             withContext(MdcContext("sessionId" to sessionContext.sessionId)) {
@@ -108,13 +119,13 @@ class SessionManager @Inject constructor(
                     sessionInfoBuilder = sessionInfoBuilder,
                 )
                 activeSessions[sessionContext.sessionId] = active
-                logger.info { "Created session=${sessionContext.sessionId} for ip=$remoteIp flavor=${flavor.id}" }
+                logger.info { "Created session=${sessionContext.sessionId} for ip=$remoteIp flavor=${flavor.id} kind=${kind.id} language=$languageId" }
 
                 try {
                     stageLibraryOnDisk(sessionContext)
                     loadLibraryFiles(sessionContext, sessionDocumentManager)
 
-                    val connector = WebSocketLspConnector(sessionContext.webSocketSession, sessionLanguageServer)
+                    val connector = WebSocketLspConnector(sessionContext.webSocketSession, sessionLanguageServer, registry)
                     val launchContext = currentMdcContextBlocking() + currentSessionScopeElement()
                     try {
                         sessionRunContext.coroutineScope.async(launchContext) {
@@ -167,6 +178,8 @@ class SessionManager @Inject constructor(
         webSocketSession: WebSocketServerSession,
         remoteIp: String,
         flavor: Flavor,
+        kind: SessionKind,
+        languageId: String,
     ): SessionContext {
         val sessionId = UUID.randomUUID().toString()
         val workingDirectoryPath = backendConfig.sessionManager.rootWorkPath.resolve("sessions").resolve(sessionId)
@@ -175,6 +188,8 @@ class SessionManager @Inject constructor(
             sessionId = sessionId,
             remoteIp = remoteIp,
             flavor = flavor,
+            kind = kind,
+            languageId = languageId,
             workingDirectoryPath = workingDirectoryPath,
             webSocketSession = webSocketSession,
         )

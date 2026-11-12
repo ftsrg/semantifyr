@@ -16,10 +16,8 @@ import io.ktor.server.application.*
 import io.ktor.server.metrics.micrometer.MicrometerMetrics
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.micrometer.core.instrument.Gauge
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 
-private const val THETA_JAR = "theta-xsts-cli.jar"
 private val prometheusTextFormat = ContentType.parse("text/plain; version=0.0.4; charset=utf-8")
 
 @Singleton
@@ -30,10 +28,12 @@ class MetricsHandler @Inject constructor(
 
     private val logger by loggerFactory()
 
+    // the counters hold their source weakly, so the handler keeps it
+    private val containerMetrics = ContainerMetrics.ofCurrentProcess()
+
     init {
-        Gauge.builder("semantifyr.live.theta.processes") {
-            countThetaProcesses()
-        }.register(registry)
+        EngineProcessMetrics().bindTo(registry)
+        containerMetrics?.bindTo(registry)
     }
 
     fun Application.configure() {
@@ -60,11 +60,5 @@ class MetricsHandler @Inject constructor(
                 }
             }
         }
-    }
-
-    private fun countThetaProcesses(): Long {
-        return ProcessHandle.current().descendants().filter {
-            it.info().commandLine().orElse("").contains(THETA_JAR)
-        }.count()
     }
 }

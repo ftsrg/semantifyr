@@ -17,7 +17,7 @@ import {
 
 import { SemantifyrLiveMethods, type ReadDocumentParams, type ReadDocumentResult, type VerificationsChangedParams } from '../api/lspExtensions'
 import type { CancellationToken, LspClient } from '../verification/engine'
-import type { ProblemEntry } from './liveEditorSession'
+import type { ProblemEntry } from './problems'
 
 export const SYSML_FLAVOR_ID = 'sysml'
 export const SYSML_OXSTS_FLAVOR_ID = 'oxsts-with-sysmlv2-library'
@@ -38,7 +38,6 @@ export const SYSML_FLAVOR_INFO: FlavorInfo = {
   discoveryCommand: DISCOVER_COMMAND,
   validateWitnessCommand: VALIDATE_COMMAND,
   validateWitnessByCase: false,
-  peekCompiledOutput: true,
 }
 
 interface ServerDiagnostic {
@@ -129,7 +128,10 @@ export interface SysmlBridgeOptions {
 export interface SysmlBridge {
   client: LspClient
   readMapping: () => Promise<SysmlMapping>
+  // keeps the OXSTS of the model open in the session, where its read-only document navigates
+  showOxsts: (text: string) => void
   translateNotification: (method: string, params: unknown) => unknown
+  witnessUriOf: (traceUri: string) => string | undefined
 }
 
 export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
@@ -166,9 +168,9 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
       openedOn = client
       sentText = text
       version = 1
-      client.sendNotification('textDocument/didOpen', {
+      void Promise.resolve(client.sendNotification('textDocument/didOpen', {
         textDocument: { uri: SYSML_OXSTS_URI, languageId: 'oxsts', version, text },
-      })
+      })).catch(() => {})
       return
     }
     if (text === sentText) {
@@ -176,10 +178,10 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
     }
     sentText = text
     version += 1
-    client.sendNotification('textDocument/didChange', {
+    void Promise.resolve(client.sendNotification('textDocument/didChange', {
       textDocument: { uri: SYSML_OXSTS_URI, version },
       contentChanges: [{ text }],
-    })
+    })).catch(() => {})
   }
 
   const liftTrace = async (
@@ -276,12 +278,25 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
     })
   }
 
+  const traceUriOf = (witnessUri: string): string | undefined => {
+    return [...witnessUris].find(([, candidate]) => {
+      return candidate === witnessUri
+    })?.[0]
+  }
+
+  // a validation names the OXSTS witness, which the page knows by the case's trace
+  const translateLocation = (location: Location): Location | undefined => {
+    if (location.uri === SYSML_OXSTS_URI) {
+      return verifiedCaseLocations.get(rangeKey(location.range))
+    }
+    const traceUri = traceUriOf(location.uri)
+    return traceUri === undefined ? undefined : { ...location, uri: traceUri }
+  }
+
   const translateActive = (params: VerificationsChangedParams | null): VerificationsChangedParams => {
     return {
       active: params?.active?.map((item) => {
-        const location = item.location?.uri === SYSML_OXSTS_URI
-          ? verifiedCaseLocations.get(rangeKey(item.location.range))
-          : undefined
+        const location = item.location ? translateLocation(item.location) : undefined
         return location ? { ...item, location } : item
       }) ?? [],
     }
@@ -335,14 +350,23 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
     client: {
       sendRequest,
       sendNotification: (method, params) => {
-        oxstsClient().sendNotification(method, params)
+        return oxstsClient().sendNotification(method, params)
       },
     },
     readMapping,
+    showOxsts: (text) => {
+      const client = options.getOxstsClient()
+      if (client) {
+        syncOxsts(client, text)
+      }
+    },
     translateNotification: (method, params) => {
       return method === SemantifyrLiveMethods.VERIFICATIONS_CHANGED
         ? translateActive(params as VerificationsChangedParams | null)
         : params
+    },
+    witnessUriOf: (traceUri) => {
+      return witnessUris.get(traceUri)
     },
   }
 }

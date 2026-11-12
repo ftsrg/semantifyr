@@ -38,7 +38,7 @@ data class FlavorResponse(
     val discoveryCommand: String,
     val validateWitnessCommand: String?,
     val validateWitnessByCase: Boolean,
-    val peekCompiledOutput: Boolean,
+    val compiledOxstsCommand: String?,
 ) {
     companion object {
         fun fromFlavor(flavor: Flavor) = FlavorResponse(
@@ -51,7 +51,7 @@ data class FlavorResponse(
             discoveryCommand = flavor.discoveryCommand,
             validateWitnessCommand = flavor.validateWitnessCommand,
             validateWitnessByCase = flavor.validateWitnessByCase,
-            peekCompiledOutput = flavor.peekCompiledOutput,
+            compiledOxstsCommand = flavor.compiledOxstsCommand,
         )
     }
 }
@@ -75,9 +75,30 @@ data class FlavorsResponse(
     val flavors: List<FlavorResponse>,
 )
 
+// each library's files by their path under the library's root
+@Serializable
+data class LibrariesResponse(
+    val builtin: List<String>,
+    // by flavor, the files a session of the flavor has under its Library directory
+    val semantic: Map<String, List<String>>,
+    // the SysML v2 standard library the SysML worker loads
+    val sysml: List<String>,
+)
+
 @Serializable
 data class AdminStatusResponse(
     val sessions: List<SessionInfo>,
+    val load: AdminLoadResponse,
+)
+
+@Serializable
+data class AdminLoadResponse(
+    val activeSessions: Int,
+    val maxSessions: Int,
+    val runningVerifications: Int,
+    val queuedVerifications: Int,
+    val verificationPermits: Int,
+    val uptime: Duration,
 )
 
 @Serializable
@@ -106,7 +127,11 @@ data class SessionInfo(
     val sessionId: String,
     val remoteIp: String,
     val flavorId: String,
+    val kind: String,
+    val languageId: String,
     val uptime: Duration,
+    val runningCount: Int,
+    val queuedCount: Int,
     val workingDirectory: String,
     val activeVerifications: List<ActiveVerificationInfo>,
 )
@@ -121,6 +146,7 @@ data class AdminConfigResponse(
     val server: AdminServerConfigResponse,
     val sessionManager: AdminSessionManagerConfigResponse,
     val verification: AdminVerificationConfigResponse,
+    val portfolios: List<AdminPortfolioResponse>,
 )
 
 @Serializable
@@ -145,4 +171,10 @@ data class AdminSessionManagerConfigResponse(
 data class AdminVerificationConfigResponse(
     val concurrency: Int,
     val timeout: Duration,
+)
+
+@Serializable
+data class AdminPortfolioResponse(
+    val id: String,
+    val engines: List<String>,
 )

@@ -17,10 +17,10 @@ This is the third tutorial in the Traffic Light series. It extends the small `St
 
 ## Requirements
 
-A browser is enough. As in the previous tutorials, every step ends in a complete model that the **Open this step in the editor** button loads into a live editor embedded in this page; the [Direct Modeling](direct-modeling.md#the-live-editor) tutorial describes the editor. See [Getting Started](../../getting-started.md) for the other ways to run Semantifyr.
+A browser is enough. As in the previous tutorials, every step ends in a complete model that the **Verify** or **Edit** button in the corner of a code block loads into a live editor embedded in this page; the [Direct Modeling](direct-modeling.md#the-live-editor) tutorial describes the editor. See [Getting Started](../../getting-started.md) for the other ways to run Semantifyr.
 
 :::tip Finished example
-The completed model is at the end of this page under [Snapshot](#snapshot), where **Edit and verify here** opens it in the embedded editor. The standalone live editor also offers it in its model picker as *Tutorial: Advanced*.
+The completed model is at the end of this page under [Snapshot](#snapshot), where **Verify** opens it in the embedded editor. The standalone live editor also offers it in its example menu as *Tutorial: Advanced*.
 :::
 
 The tutorial starts from the final model of Building a Library. Each step is a separate file with its own package below `example::trafficlight::advanced`:
@@ -53,7 +53,7 @@ The intersection and the two verification cases from Building a Library now ask 
 
 **Task:** Open the step in the editor and verify all cases.
 
-**Check:** `GreenColorIsReachable` and `IntersectionNeverBothGreen` pass, but `NeverGreenInStandby` fails. Open its witness and switch to *State*: in the last state, the light's `activeState` is `standby` while `operating.activeState` still holds `green`.
+**Check:** `GreenColorIsReachable` and `IntersectionNeverBothGreen` pass, but `NeverGreenInStandby` fails. Its trace opens below its line; read *Steps*: in the last state, the light's `activeState` is `standby` while `operating.activeState` still holds `green`.
 
 ## Keeping Parents and Children Consistent
 
@@ -93,9 +93,9 @@ Add a case that checks that the lamp shows green only while the green state is a
 
 Only entry actions write the lamp, so the case checks that every state that can follow `green` switches the lamp, including `standby`.
 
-**Task:** Open the step and verify all cases. Then make `standby` a plain state (`contains standby: State subsets states`) and verify `GreenLampOnlyInGreen` again.
+**Task:** Open the step and verify all cases. Then make `standby` a plain state (`contains standby: State subsets states`) and press **Verify all** again.
 
-**Check:** All cases pass. Without its entry action, `standby` leaves the lamp as it was: `GreenLampOnlyInGreen` fails, and its witness ends with the light in standby and the lamp showing green.
+**Check:** All cases pass. Without its entry action, `standby` leaves the lamp as it was: `GreenLampOnlyInGreen` fails, and its trace ends with the light in standby and the lamp showing green.
 
 ## Events and Triggers
 
@@ -165,3 +165,5 @@ The production libraries build on the same patterns: Gamma's `Statecharts.oxsts`
 The complete final model:
 
 <LiveEmbed code={advanced} />
+
+In the finished model, `Transition`'s main transition carries `@Trace`, so the trace lists the transitions that fired in the *Calls* view.

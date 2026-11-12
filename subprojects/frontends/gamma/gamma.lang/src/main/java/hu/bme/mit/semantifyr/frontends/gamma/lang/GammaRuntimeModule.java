@@ -10,6 +10,7 @@ import com.google.inject.Binder;
 import com.google.inject.name.Names;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.scoping.EmptyGlobalScopeProvider;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.scoping.GammaLocalScopeProvider;
+import hu.bme.mit.semantifyr.frontends.gamma.lang.serializer.SerializerGrammarAnalyses;
 import org.eclipse.xtext.formatting2.FormatterPreferenceKeys;
 import org.eclipse.xtext.formatting2.FormatterRequest;
 import org.eclipse.xtext.preferences.MapBasedPreferenceValues;
@@ -29,6 +30,11 @@ public class GammaRuntimeModule extends AbstractGammaRuntimeModule {
         binder.bind(IScopeProvider.class)
                 .annotatedWith(Names.named(AbstractDeclarativeScopeProvider.NAMED_DELEGATE))
                 .to(GammaLocalScopeProvider.class);
+    }
+
+    @SuppressWarnings("unused")
+    public void configureSerializerGrammarAnalyses(Binder binder) {
+        binder.bind(SerializerGrammarAnalyses.class).asEagerSingleton();
     }
 
     @SuppressWarnings("unused")

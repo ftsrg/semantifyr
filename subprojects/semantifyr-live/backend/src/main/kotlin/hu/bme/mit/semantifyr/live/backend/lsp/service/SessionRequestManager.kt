@@ -19,6 +19,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.future
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runInterruptible
 import org.eclipse.lsp4j.ExecuteCommandParams
 import org.eclipse.xtext.util.CancelIndicator
@@ -34,8 +35,13 @@ class SessionRequestManager @Inject constructor(
     private val sessionLanguageServerAccessFactory: SessionLanguageServerAccessFactory,
 ) : LockingRequestManager(NoopExecutor, languageServices.operationCanceledManager) {
 
+    private class PendingWrite(
+        val job: Job,
+        val validation: Job,
+    )
+
     @Volatile
-    private var pendingWrite: Job? = null
+    private var pendingWrite: PendingWrite? = null
 
     fun executeCommand(params: ExecuteCommandParams): CompletableFuture<Any?> {
         return runRead {
@@ -46,7 +52,7 @@ class SessionRequestManager @Inject constructor(
 
     @Synchronized
     override fun <V> runRead(cancellable: Functions.Function1<in CancelIndicator, out V>): CompletableFuture<V> {
-        val previousWrite = pendingWrite
+        val previousWrite = pendingWrite?.job
         val coroutineContext = currentMdcContextBlocking() + currentSessionScopeElement()
         return sessionRunContext.coroutineScope.future(coroutineContext) {
             joinIgnoringCancellation(previousWrite)
@@ -61,35 +67,53 @@ class SessionRequestManager @Inject constructor(
         }
     }
 
-    @Synchronized
     override fun <U, V> runWrite(
         nonCancellable: Functions.Function0<out U>,
         cancellable: Functions.Function2<in CancelIndicator, in U, out V>,
     ): CompletableFuture<V> {
+        throw UnsupportedOperationException("A write is a mutation followed by a validation a newer write supersedes")
+    }
+
+    @Synchronized
+    fun <U> runWrite(
+        mutation: () -> U,
+        validation: (CancelIndicator, U) -> Unit,
+    ): CompletableFuture<U> {
         val previousWrite = pendingWrite
-        previousWrite?.cancel()
+        previousWrite?.validation?.cancel()
+        val validationJob = Job()
         val coroutineContext = currentMdcContextBlocking() + currentSessionScopeElement()
         val deferred = sessionRunContext.coroutineScope.async(coroutineContext) {
-            joinIgnoringCancellation(previousWrite)
+            joinIgnoringCancellation(previousWrite?.job)
             runInterruptible {
                 lockProvider.acquireWriteLock()
                 try {
-                    val intermediate = nonCancellable.apply()
-                    cancellable.apply(coroutineScopeCancelIndicator(), intermediate)
+                    val result = mutation()
+                    if (validationJob.isActive) {
+                        validation(validationCancelIndicator(validationJob), result)
+                    }
+                    result
                 } finally {
                     lockProvider.releaseWriteLock()
                 }
             }
         }
-        pendingWrite = deferred
+        pendingWrite = PendingWrite(deferred, validationJob)
         deferred.invokeOnCompletion {
+            validationJob.cancel()
             synchronized(this) {
-                if (pendingWrite === deferred) {
+                if (pendingWrite?.job === deferred) {
                     pendingWrite = null
                 }
             }
         }
         return deferred.asCompletableFuture()
+    }
+
+    private fun validationCancelIndicator(validationJob: Job): CancelIndicator {
+        return CancelIndicator {
+            !validationJob.isActive || !sessionRunContext.coroutineScope.isActive
+        }
     }
 
     private suspend fun joinIgnoringCancellation(job: Job?) {
@@ -101,14 +125,6 @@ class SessionRequestManager @Inject constructor(
         } catch (_: CancellationException) {
         }
     }
-}
-
-inline fun <V> SessionRequestManager.runWrite(
-    crossinline cancellable: (CancelIndicator) -> V,
-): CompletableFuture<V> {
-    return runWrite({}, { cancelIndicator, _ ->
-        cancellable(cancelIndicator)
-    })
 }
 
 private object NoopExecutor : AbstractExecutorService() {

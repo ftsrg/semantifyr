@@ -12,9 +12,9 @@ import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandGson
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationTrace
+import hu.bme.mit.semantifyr.live.backend.exceptions.SyntaxErrorException
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionRequestManager
-import hu.bme.mit.semantifyr.live.backend.lsp.service.runWrite
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import kotlinx.coroutines.future.await
@@ -39,6 +39,7 @@ class LiveVerificationExecutor : VerificationExecutor {
         params: ExecuteCommandParams,
     ): Any? {
         ensureDocumentAvailable(sessionRequestManager, sessionDocumentManager, params)
+        rejectSyntaxErrors(sessionRequestManager, sessionDocumentManager, params)
         val result = sessionRequestManager.executeCommand(params).await()
         return rewriteWitnessUri(sessionDocumentManager, result)
     }
@@ -53,9 +54,27 @@ class LiveVerificationExecutor : VerificationExecutor {
         if (sessionDocumentManager.find(uri) != null || !sessionDocumentManager.existsOnDisk(uri)) {
             return
         }
-        sessionRequestManager.runWrite {
-            sessionDocumentManager.openExistingByClient(uri)
-        }.await()
+        sessionRequestManager.runWrite(
+            {
+                sessionDocumentManager.openExistingByClient(uri)
+            },
+            { _, _ ->
+            },
+        ).await()
+    }
+
+    private suspend fun rejectSyntaxErrors(
+        sessionRequestManager: SessionRequestManager,
+        sessionDocumentManager: SessionDocumentManager,
+        params: ExecuteCommandParams,
+    ) {
+        val argument = params.arguments?.firstOrNull() as? JsonElement ?: return
+        val uri = CommandGson.INSTANCE.fromJson(argument, VerificationCaseRequest::class.java)?.uri() ?: return
+        val document = sessionDocumentManager.find(uri) ?: return
+        val syntaxError = sessionRequestManager.runRead {
+            document.resource.errors.firstOrNull()
+        }.await() ?: return
+        throw SyntaxErrorException("The model has a syntax error at line ${syntaxError.line}, column ${syntaxError.column}: ${syntaxError.message}")
     }
 
     private fun rewriteWitnessUri(sessionDocumentManager: SessionDocumentManager, result: Any?): Any? {

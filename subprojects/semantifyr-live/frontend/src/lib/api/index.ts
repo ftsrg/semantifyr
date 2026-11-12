@@ -7,6 +7,8 @@
 export type {
   ActiveVerificationInfo,
   AdminConfigResponse,
+  AdminLoadResponse,
+  AdminPortfolioResponse,
   AdminServerConfigResponse,
   AdminSessionManagerConfigResponse,
   AdminStatusResponse,
@@ -19,7 +21,7 @@ export type {
   VerificationState,
 } from './types'
 
-export { createApi, type LiveServerApi } from './rest'
+export { ApiError, createApi, type LiveServerApi } from './rest'
 
 export {
   SemantifyrLiveApi,

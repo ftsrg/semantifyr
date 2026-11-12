@@ -26,6 +26,7 @@ class Transition {
         return from.isActive()
     }
 
+    @Trace
     redefine tran {
         assume(isEnabled())
         inline to.activate()

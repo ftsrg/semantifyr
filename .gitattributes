@@ -11,3 +11,5 @@
 
 # Binary files should be left untouched
 *.jar           binary
+*.png           binary
+*.ico           binary

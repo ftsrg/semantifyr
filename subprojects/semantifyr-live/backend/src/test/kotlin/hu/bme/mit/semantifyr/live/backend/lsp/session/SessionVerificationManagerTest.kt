@@ -6,8 +6,10 @@
 
 package hu.bme.mit.semantifyr.live.backend.lsp.session
 
+import hu.bme.mit.semantifyr.compiler.pipeline.context.CompilationMetrics
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
+import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationMetrics
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationStatus
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationTrace
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult
@@ -18,6 +20,7 @@ import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionLanguageClient
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SharedExecutorProvider
 import hu.bme.mit.semantifyr.live.backend.testing.LspWire
+import hu.bme.mit.semantifyr.verifier.CompilationMetricsDto
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.future.await
@@ -28,8 +31,11 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
+import java.time.Duration
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.milliseconds
 
 class SessionVerificationManagerTest {
 
@@ -38,6 +44,8 @@ class SessionVerificationManagerTest {
     private val witnessUri = "file:///workspace/.artifacts/snippet.CaseA/witness.oxsts"
 
     private val executorProvider = SharedExecutorProvider()
+
+    private val registry = SimpleMeterRegistry()
 
     private val manager = SessionVerificationManager(
         BackendConfig(verification = VerificationConfig(concurrency = 1)),
@@ -49,7 +57,7 @@ class SessionVerificationManagerTest {
         SessionClient().apply {
             attach(mock<SessionLanguageClient>())
         },
-        SimpleMeterRegistry(),
+        registry,
     )
 
     @AfterEach
@@ -207,5 +215,50 @@ class SessionVerificationManagerTest {
         release.complete(Unit)
         assertThat(verification.await()).isEqualTo(result(VerificationKind.Verify))
         assertThat(validation.await()).isEqualTo(result(VerificationKind.Validate))
+    }
+
+    @Test
+    suspend fun `a finished verification records the time of each phase by backend`() {
+        val compilation = CompilationMetricsDto.fromMetrics(
+            CompilationMetrics(
+                createDuration = 1.milliseconds,
+                instantiationDuration = 2.milliseconds,
+                inliningDuration = 3.milliseconds,
+                flatteningDuration = 4.milliseconds,
+            ),
+        )
+        val metrics = VerificationMetrics(
+            Duration.ofMillis(100),
+            Duration.ofMillis(30),
+            Duration.ofMillis(50),
+            Duration.ofMillis(20),
+            compilation,
+        )
+        val result = VerificationCaseResult(VerificationStatus.PASSED, null, "theta-full", "smart-full", metrics, null)
+
+        launch(VerificationKind.Verify, documentUri, 1) {
+            result
+        }.await()
+
+        val phaseMilliseconds = { phase: String ->
+            registry.get("semantifyr.live.verification.phase")
+                .tags("kind", "verify", "backend", "theta-full", "phase", phase)
+                .timer()
+                .totalTime(TimeUnit.MILLISECONDS)
+        }
+        assertThat(phaseMilliseconds("instantiation")).isEqualTo(2.0)
+        assertThat(phaseMilliseconds("flattening")).isEqualTo(4.0)
+        assertThat(phaseMilliseconds("preparation")).isEqualTo(20.0)
+        assertThat(phaseMilliseconds("engine")).isEqualTo(50.0)
+        assertThat(phaseMilliseconds("back_annotation")).isEqualTo(20.0)
+    }
+
+    @Test
+    suspend fun `a timed out verification records no phases`() {
+        launch(VerificationKind.Verify, documentUri, 1) {
+            VerificationCaseResult.timedOut("timeout", "smart-full")
+        }.await()
+
+        assertThat(registry.find("semantifyr.live.verification.phase").timers()).isEmpty()
     }
 }

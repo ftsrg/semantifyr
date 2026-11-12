@@ -1,0 +1,120 @@
+{
+ "whoami": {
+  "user": "recorder"
+ },
+ "config": {
+  "server": {
+   "port": 18840,
+   "pingPeriod": "PT30S",
+   "pingTimeout": "PT15S",
+   "webRootDirectory": "/opt/semantifyr/staging/web",
+   "wsHandshakesPerPeriod": 120,
+   "wsHandshakeRatePeriod": "PT1M",
+   "maxWsFrameSize": 4194304
+  },
+  "sessionManager": {
+   "maxSessionsGlobal": 256,
+   "semanticLibrariesDirectory": "/opt/semantifyr/staging/semantic-libraries",
+   "rootWorkDirectory": "/tmp/semantifyr"
+  },
+  "verification": {
+   "concurrency": 4,
+   "timeout": "PT5M"
+  },
+  "portfolios": [
+   {
+    "id": "smart-full",
+    "engines": [
+     "nuxmv",
+     "spin",
+     "theta",
+     "uppaal"
+    ]
+   },
+   {
+    "id": "all-agree-full",
+    "engines": [
+     "nuxmv",
+     "spin",
+     "theta",
+     "uppaal"
+    ]
+   },
+   {
+    "id": "theta-full",
+    "engines": [
+     "theta"
+    ]
+   },
+   {
+    "id": "nuxmv-ic3-invar",
+    "engines": [
+     "nuxmv"
+    ]
+   },
+   {
+    "id": "spin-safe-dfs",
+    "engines": [
+     "spin"
+    ]
+   },
+   {
+    "id": "uppaal-default",
+    "engines": [
+     "uppaal"
+    ]
+   }
+  ]
+ },
+ "status": {
+  "sessions": [
+   {
+    "sessionId": "c26a84e4-8d64-4d98-9ee8-7a0842b8059f",
+    "remoteIp": "0:0:0:0:0:0:0:1",
+    "flavorId": "oxsts",
+    "kind": "full",
+    "languageId": "oxsts",
+    "uptime": "PT9.784592928S",
+    "runningCount": 2,
+    "queuedCount": 0,
+    "workingDirectory": "/tmp/semantifyr/sessions/c26a84e4-8d64-4d98-9ee8-7a0842b8059f",
+    "activeVerifications": [
+     {
+      "verificationId": "3f6bc614-277c-4985-81bd-732ddca646c0",
+      "portfolioId": "smart-full",
+      "kind": "Validate",
+      "state": "Running",
+      "elapsed": "PT0.457898939S"
+     },
+     {
+      "verificationId": "5ec1eb65-0649-46f3-8a17-0c9f06e7d2bf",
+      "portfolioId": "smart-full",
+      "kind": "Verify",
+      "state": "Running",
+      "elapsed": "PT0.457587821S"
+     }
+    ]
+   },
+   {
+    "sessionId": "419d62ae-af20-42c8-a5d9-b8eb65b4930f",
+    "remoteIp": "0:0:0:0:0:0:0:1",
+    "flavorId": "gamma",
+    "kind": "embed",
+    "languageId": "gamma",
+    "uptime": "PT8.844919661S",
+    "runningCount": 0,
+    "queuedCount": 0,
+    "workingDirectory": "/tmp/semantifyr/sessions/419d62ae-af20-42c8-a5d9-b8eb65b4930f",
+    "activeVerifications": []
+   }
+  ],
+  "load": {
+   "activeSessions": 2,
+   "maxSessions": 256,
+   "runningVerifications": 2,
+   "queuedVerifications": 0,
+   "verificationPermits": 4,
+   "uptime": "PT25M10.727262748S"
+  }
+ }
+}

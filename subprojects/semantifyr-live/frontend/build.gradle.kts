@@ -99,6 +99,11 @@ val cloneVscodeLanguageAssets = tasks.register<Sync>("cloneVscodeLanguageAssets"
     into(importedVscodeDir)
 }
 
+val cloneSysmlWorker = tasks.register<Sync>("cloneSysmlWorker") {
+    from(sysmlWorkerFiles)
+    into(layout.buildDirectory.dir("sysml-worker"))
+}
+
 val cloneBrandingAssets = tasks.register<Sync>("cloneBrandingAssets") {
     from(brandingDir) {
         include("favicon.ico")
@@ -205,7 +210,7 @@ tasks.register<NpmTask>("loadTest") {
 
 tasks {
     assemble {
-        dependsOn(npmAssemble)
+        dependsOn(npmAssemble, cloneSysmlWorker)
     }
 
     check {

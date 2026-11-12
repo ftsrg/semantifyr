@@ -211,6 +211,32 @@ class WebSocketSessionTest {
     }
 
     @Test
+    fun `a session names its kind in the admin status and the metrics`(@TempDir tmp: Path) = testApplication {
+        val signedIn = mock<ProxyUserResolver> {
+            on { resolve(any(), any()) } doReturn "octocat"
+        }
+        val injector = testInjector(config(tmp)) {
+            bind(ProxyUserResolver::class.java).toInstance(signedIn)
+        }
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(injector)
+        }
+        val client = jsonClient(webSockets = true)
+        client.webSocket("/ws/lsp/oxsts?kind=embed") {
+            send(Frame.Text(LspWire.initializeRequest()))
+            awaitResponseFor(id = 1)
+
+            val status = client.get("/api/admin/status").body<AdminStatusResponse>()
+            assertThat(status.sessions.single().kind).isEqualTo("embed")
+            val registry = injector.getInstance(MeterRegistry::class.java)
+            val countsByKind = listOf("full", "embed", "edit-only").associateWith {
+                registry.get("semantifyr.live.sessions.active.by.kind").tag("kind", it).gauge().value()
+            }
+            assertThat(countsByKind).containsExactlyInAnyOrderEntriesOf(mapOf("full" to 0.0, "embed" to 1.0, "edit-only" to 0.0))
+        }
+    }
+
+    @Test
     fun `discover over websocket returns the verification cases`(@TempDir tmp: Path) = testApplication {
         installSemantifyrApp(webSockets = true) {
             installSemantifyrLiveBackend(testInjector(config(tmp)))

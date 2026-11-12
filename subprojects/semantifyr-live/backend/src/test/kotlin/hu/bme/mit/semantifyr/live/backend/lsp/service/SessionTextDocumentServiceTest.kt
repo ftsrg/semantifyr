@@ -67,13 +67,15 @@ class SessionTextDocumentServiceTest {
         }
 
         fun runWritesInline() {
-            whenever(requestManager.runWrite<Any?, Any?>(any(), any())) doAnswer {
+            whenever(requestManager.runWrite<Any?>(any(), any())) doAnswer {
                 @Suppress("UNCHECKED_CAST")
-                val nonCancellable = it.arguments[0] as Functions.Function0<Any?>
+                val mutation = it.arguments[0] as () -> Any?
 
                 @Suppress("UNCHECKED_CAST")
-                val cancellable = it.arguments[1] as Functions.Function2<CancelIndicator, Any?, Any?>
-                CompletableFuture.completedFuture(cancellable.apply(CancelIndicator.NullImpl, nonCancellable.apply()))
+                val validation = it.arguments[1] as (CancelIndicator, Any?) -> Unit
+                val result = mutation()
+                validation(CancelIndicator.NullImpl, result)
+                CompletableFuture.completedFuture(result)
             }
         }
     }
@@ -87,8 +89,8 @@ class SessionTextDocumentServiceTest {
     }
 
     @Test
-    fun `didChange for an unknown document is a no-op`() {
-        val fixture = Fixture()
+    fun `didChange for an unknown document changes nothing`() {
+        val fixture = Fixture().apply { runWritesInline() }
         fixture.service.didChange(
             DidChangeTextDocumentParams(
                 VersionedTextDocumentIdentifier(unknownUri, 2),
@@ -96,12 +98,11 @@ class SessionTextDocumentServiceTest {
             ),
         )
         verify(fixture.documents).findByClient(unknownUri)
-        verify(fixture.requestManager, never()).runWrite<Any?, Any?>(any(), any())
     }
 
     @Test
     fun `didClose delegates to closeByClient`() {
-        val fixture = Fixture()
+        val fixture = Fixture().apply { runWritesInline() }
         fixture.service.didClose(DidCloseTextDocumentParams(TextDocumentIdentifier(unknownUri)))
         verify(fixture.documents).closeByClient(unknownUri)
     }

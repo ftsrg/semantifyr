@@ -26,7 +26,16 @@ export interface FlavorInfo {
     discoveryCommand: string;
     validateWitnessCommand: string | null;
     validateWitnessByCase: boolean;
-    peekCompiledOutput: boolean;
+    compiledOxstsCommand?: string | null;
+}
+
+// each library's files by their path under the library's root
+export interface LibrariesResponse {
+    builtin: string[];
+    // by flavor, the files a session of the flavor has under its Library directory
+    semantic: Record<string, string[]>;
+    // the SysML v2 standard library the SysML worker loads
+    sysml: string[];
 }
 
 export interface FlavorsResponse {

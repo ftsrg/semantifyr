@@ -28,6 +28,7 @@ import io.ktor.server.routing.*
 class ApiRoutesHandler @Inject constructor(
     private val sessionManager: SessionManager,
     private val serverStatus: ServerStatus,
+    private val libraryListing: LibraryListing,
 ) {
 
     fun Application.configure() {
@@ -56,6 +57,9 @@ class ApiRoutesHandler @Inject constructor(
                         },
                     ),
                 )
+            }
+            get("/api/libraries") {
+                call.respond(libraryListing.libraries)
             }
             crossOriginGet("/api/portfolios") {
                 call.respond(

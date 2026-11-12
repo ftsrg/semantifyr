@@ -1,0 +1,136 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package example::levelcrossing
+
+enum TrackState {
+    Free,
+    Approaching,
+    Near,
+    InCrossing,
+}
+
+enum BarrierState {
+    Up,
+    Down,
+}
+
+class Track {
+    var state: TrackState := TrackState::Free
+    var trainApproaching: bool := false
+    var trainLeft: bool := false
+
+    @Trace
+    tran move(from: TrackState, to: TrackState) {
+        assume(state == from)
+        state := to
+    }
+
+    redefine tran {
+        trainApproaching := false
+        trainLeft := false
+        choice {
+            inline move(TrackState::Free, TrackState::Approaching)
+            trainApproaching := true
+        } or {
+            inline move(TrackState::Approaching, TrackState::Near)
+        } or {
+            inline move(TrackState::Near, TrackState::InCrossing)
+        } or {
+            inline move(TrackState::InCrossing, TrackState::Free)
+            trainLeft := true
+        } or {
+            assume(true)
+        }
+    }
+}
+
+enum ControllerState {
+    Idle,
+    TrainPresent,
+}
+
+class Controller {
+    var state: ControllerState := ControllerState::Idle
+    var lower: bool := false
+    var lift: bool := false
+
+    tran step(trackA: Track, trackB: Track) {
+        lower := state == ControllerState::Idle && (trackA.trainApproaching || trackB.trainApproaching)
+        lift := state == ControllerState::TrainPresent && (trackA.trainLeft || trackB.trainLeft)
+        if (lower) {
+            inline sendLower()
+        } else {
+            if (lift) {
+                inline sendLift()
+            }
+        }
+    }
+
+    @Trace
+    tran sendLower() {
+        state := ControllerState::TrainPresent
+    }
+
+    @Trace
+    tran sendLift() {
+        state := ControllerState::Idle
+    }
+}
+
+class Barrier {
+    var state: BarrierState := BarrierState::Up
+
+    tran step(lower: bool, lift: bool) {
+        if (lower) {
+            inline lowerBarrier()
+        } else {
+            if (lift) {
+                inline liftBarrier()
+            }
+        }
+    }
+
+    @Trace
+    tran lowerBarrier() {
+        state := BarrierState::Down
+    }
+
+    @Trace
+    tran liftBarrier() {
+        state := BarrierState::Up
+    }
+}
+
+class LevelCrossing {
+    contains trackA: Track
+    contains trackB: Track
+    contains controller: Controller
+    contains barrier: Barrier
+
+    redefine tran {
+        inline barrier.step(controller.lower, controller.lift)
+        inline controller.step(trackA, trackB)
+        inline trackA.main()
+        inline trackB.main()
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class BarrierDownWhileTrainInCrossing : LevelCrossing {
+    prop {
+        return AG (!(trackA.state == TrackState::InCrossing || trackB.state == TrackState::InCrossing) || barrier.state == BarrierState::Down)
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class TwoTrainsCanBeInTheCrossing : LevelCrossing {
+    prop {
+        return EF (trackA.state == TrackState::InCrossing && trackB.state == TrackState::InCrossing)
+    }
+}

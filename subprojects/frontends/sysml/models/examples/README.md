@@ -16,6 +16,7 @@ The artifacts produced by Semantifyr will reside in the `./out` directory.
 | aircraft_engine.sysml      | -                                                                                                            | Large flat state machine (13 states), boolean guard, structurally unreachable state                                                        |
 | autonomous_driving.sysml   | Paper: "Automatic Formal Verification of SysML State Machine Diagrams for Vehicular Control Systems"         | Model based on paper "Automatic Formal Verification of SysML State Machine Diagrams for Vehicular Control Systems" from Clemson University |
 | orion_protocol.sysml       | Prolan                                                                                                       | Bidirectional protocol, `accept when true`, timed keep-alive, cross-hierarchy transitions                                                  |
+| level_crossing.sysml       | -                                                                                                            | Two tracks, a controller and a barrier; the controller forgets a second train                                                              |
 
 The verification cases were either added as natural "state reachability" properties, or were derived as safety properties from the model.
 

@@ -7,7 +7,9 @@
 package hu.bme.mit.semantifyr.live.backend.server
 
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
+import hu.bme.mit.semantifyr.live.backend.PortfolioRegistry
 import hu.bme.mit.semantifyr.live.backend.ServerConfig
+import hu.bme.mit.semantifyr.live.backend.ServerStatus
 import hu.bme.mit.semantifyr.live.backend.data.ActiveVerificationInfo
 import hu.bme.mit.semantifyr.live.backend.data.AdminConfigResponse
 import hu.bme.mit.semantifyr.live.backend.data.AdminStatusResponse
@@ -16,10 +18,12 @@ import hu.bme.mit.semantifyr.live.backend.data.SessionInfo
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
 import hu.bme.mit.semantifyr.live.backend.data.VerificationState
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionManager
+import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationManager
 import hu.bme.mit.semantifyr.live.backend.testing.handler
 import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrApp
 import hu.bme.mit.semantifyr.live.backend.testing.jsonClient
 import hu.bme.mit.semantifyr.live.backend.testing.testInjector
+import hu.bme.mit.semantifyr.portfolios.Portfolios
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -51,6 +55,12 @@ class AdminHandlerTest {
 
     private val sessionManager = mock<SessionManager>()
 
+    private val verificationManager = mock<VerificationManager>()
+
+    private val serverStatus = ServerStatus().also {
+        it.markStartNow()
+    }
+
     private fun signedIn(user: String?): ProxyUserResolver {
         return mock {
             on { resolve(any(), any()) } doReturn user
@@ -63,6 +73,11 @@ class AdminHandlerTest {
         proxyUserResolver: ProxyUserResolver? = signedIn("octocat"),
     ): AdminHandler {
         whenever(sessionManager.getSessionInfos()).thenReturn(sessionInfos)
+        whenever(sessionManager.activeSessionsCount).thenReturn(sessionInfos.size)
+        whenever(sessionManager.maxSessions).thenReturn(64)
+        whenever(verificationManager.runningCount).thenReturn(2)
+        whenever(verificationManager.queuedCount).thenReturn(5)
+        whenever(verificationManager.maxPermits).thenReturn(4)
         whenever(sessionManager.cancelSession("test-session")).thenReturn(true)
         whenever(sessionManager.cancelSession("nonexistent")).thenReturn(false)
         whenever(sessionManager.cancelVerification("req-1")).thenReturn(true)
@@ -70,6 +85,8 @@ class AdminHandlerTest {
 
         return testInjector(config) {
             bind(SessionManager::class.java).toInstance(sessionManager)
+            bind(VerificationManager::class.java).toInstance(verificationManager)
+            bind(ServerStatus::class.java).toInstance(serverStatus)
             if (proxyUserResolver != null) {
                 bind(ProxyUserResolver::class.java).toInstance(proxyUserResolver)
             }
@@ -132,8 +149,12 @@ class AdminHandlerTest {
         val testSession = SessionInfo(
             sessionId = "test-session",
             remoteIp = "127.0.0.1",
-            flavorId = "oxsts",
+            flavorId = "oxsts-with-sysmlv2-library",
+            kind = "embed",
+            languageId = "sysml",
             uptime = 30.seconds,
+            runningCount = 1,
+            queuedCount = 0,
             workingDirectory = "/tmp/test",
             activeVerifications = listOf(
                 ActiveVerificationInfo(verificationId = "req-1", portfolioId = "smart-full", kind = VerificationKind.Verify, state = VerificationState.Running),
@@ -148,7 +169,17 @@ class AdminHandlerTest {
         assertThat(status.sessions).hasSize(1)
         assertThat(status.sessions[0].sessionId).isEqualTo("test-session")
         assertThat(status.sessions[0].remoteIp).isEqualTo("127.0.0.1")
-        assertThat(status.sessions[0].flavorId).isEqualTo("oxsts")
+        assertThat(status.sessions[0].flavorId).isEqualTo("oxsts-with-sysmlv2-library")
+        assertThat(status.sessions[0].kind).isEqualTo("embed")
+        assertThat(status.sessions[0].languageId).isEqualTo("sysml")
+        assertThat(status.sessions[0].runningCount).isEqualTo(1)
+        assertThat(status.sessions[0].queuedCount).isEqualTo(0)
+        assertThat(status.load.activeSessions).isEqualTo(1)
+        assertThat(status.load.maxSessions).isEqualTo(64)
+        assertThat(status.load.runningVerifications).isEqualTo(2)
+        assertThat(status.load.queuedVerifications).isEqualTo(5)
+        assertThat(status.load.verificationPermits).isEqualTo(4)
+        assertThat(status.load.uptime.isPositive()).isTrue
         assertThat(status.sessions[0].activeVerifications).hasSize(1)
         assertThat(status.sessions[0].activeVerifications[0].verificationId).isEqualTo("req-1")
         assertThat(status.sessions[0].activeVerifications[0].portfolioId).isEqualTo("smart-full")
@@ -165,6 +196,20 @@ class AdminHandlerTest {
         assertThat(config.sessionManager.maxSessionsGlobal).isEqualTo(256)
         assertThat(config.verification.concurrency).isEqualTo(4)
         assertThat(config.server.port).isEqualTo(8080)
+        assertThat(config.verification.timeout.isPositive()).isTrue
+        val thetaPortfolio = config.portfolios.single {
+            it.id == Portfolios.ThetaFull.id
+        }
+        assertThat(thetaPortfolio.engines).isNotEmpty
+        assertThat(
+            config.portfolios.map {
+                it.id
+            },
+        ).containsExactlyElementsOf(
+            PortfolioRegistry.entries.map {
+                it.portfolio.id
+            },
+        )
     }
 
     @Test

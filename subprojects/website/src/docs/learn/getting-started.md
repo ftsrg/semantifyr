@@ -11,11 +11,11 @@ There are three ways to start using Semantifyr today, and a fourth is planned. P
 
 ## Option A: Try in the browser (no installation)
 
-The fastest way to try Semantifyr. The **in-browser live editor** is a lightweight Monaco-based editor connected to the Semantifyr language server. It supports syntax highlighting, diagnostics, content assist, inlay hints for parameter names, loop variable types, default multiplicities and computed constants, and an integrated verification panel where you can discover, run, and inspect verification cases individually. Its SysML v2 flavor edits one SysML v2 file with the standard and verification libraries loaded in the background; the language server runs in your browser, and a failing case shows its trace as a SysML v2 model.
+The fastest way to try Semantifyr. The **in-browser live editor** is a lightweight Monaco-based editor connected to the Semantifyr language server. It supports syntax highlighting, diagnostics, content assist, inlay hints for parameter names, loop variable types, default multiplicities and computed constants, and the verification cases of the model, which **Verify all** or a case's own run button verifies, each with its verdict and its trace. Its SysML v2 language edits one SysML v2 file with the standard and verification libraries at hand; the language server runs in your browser, and a failing case shows its trace as a SysML v2 model.
 
 [Open the live editor](https://live.semantifyr.org)
 
-Sessions are ephemeral. Use the **Copy link** button in the toolbar to save your work as a shareable URL.
+Sessions are ephemeral. **Save** in the toolbar writes your model to a file, and **Share** puts the model and its results into a link.
 
 ## Option B: Use the JupyterHub environment (full IDE, no installation)
 

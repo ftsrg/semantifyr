@@ -7,6 +7,7 @@
 import { describe, expect, it } from "vitest";
 import {
     decodeCompressedBase64Url,
+    decodeLiveVerdicts,
     encodeCompressedBase64Url,
     liveEditorUrl,
     normalizeBaseUrl,
@@ -47,60 +48,138 @@ describe("encodeCompressedBase64Url and decodeCompressedBase64Url", () => {
     });
 });
 
+function parsed(url: string) {
+    return parseLiveEditorUrl(new URL(url));
+}
+
 describe("liveEditorUrl and parseLiveEditorUrl", () => {
-    it("round-trip a link with every parameter", async () => {
-        const url = new URL(await liveEditorUrl("https://live.semantifyr.org/", {
-            flavor: "gamma",
-            example: "crossroads",
-            code: "package demo\nclass Foo {}",
-            embed: true,
-        }));
-
-        const parameters = parseLiveEditorUrl(url.search);
-
-        expect(url.origin + url.pathname).toBe("https://live.semantifyr.org/");
-        expect(parameters).toEqual({
-            flavor: "gamma",
-            example: "crossroads",
-            compressedCode: url.searchParams.get("code"),
-            embed: true,
-        });
-        expect(await decodeCompressedBase64Url(parameters.compressedCode ?? "")).toBe("package demo\nclass Foo {}");
+    it("read a path longer than a language and an example as one example name", () => {
+        expect(parsed("https://live.semantifyr.org/sysml/level-crossing/extra")).toMatchObject({ language: "sysml", example: "level-crossing/extra" });
     });
 
-    it("leave out the parameters the link does not set", async () => {
-        const url = new URL(await liveEditorUrl("https://live.semantifyr.org/", {
-            flavor: "oxsts",
-        }));
+    it("round-trip a link with every part", async () => {
+        const url = await liveEditorUrl("https://live.semantifyr.org/", {
+            language: "oxsts",
+            example: "crossroads",
+            library: "gamma",
+            view: "embed",
+            model: "package demo\nclass Foo {}",
+            case: "crossroads.GreenCase",
+            verdicts: [
+                ["crossroads.GreenCase", "failed"],
+                ["crossroads.SafeCase", "passed"],
+            ],
+        });
 
-        expect([...url.searchParams.keys()]).toEqual([
-            "mode",
+        const address = parsed(url);
+
+        expect(new URL(url).pathname).toBe("/oxsts/crossroads");
+        expect(address).toMatchObject({
+            language: "oxsts",
+            example: "crossroads",
+            library: "gamma",
+            view: "embed",
+            case: "crossroads.GreenCase",
+        });
+        expect(await decodeCompressedBase64Url(address.compressedModel ?? "")).toBe("package demo\nclass Foo {}");
+        expect(await decodeLiveVerdicts(address.compressedVerdicts ?? "")).toEqual([
+            ["crossroads.GreenCase", "failed"],
+            ["crossroads.SafeCase", "passed"],
         ]);
-        expect(parseLiveEditorUrl(url.search)).toEqual({
-            flavor: "oxsts",
-            example: null,
-            compressedCode: null,
-            embed: false,
-        });
     });
 
-    it("replace the link parameters of the base and keep the others", async () => {
-        const url = new URL(await liveEditorUrl("https://live.semantifyr.org/?backend=http://localhost:18080&mode=gamma&code=abc&embed=1", {
-            flavor: "oxsts",
-            example: "basics",
+    it("carry what the visitor made in the fragment and nothing of it in the path or the query", async () => {
+        const url = new URL(await liveEditorUrl("https://live.semantifyr.org/", {
+            language: "sysml",
+            model: "part def Train;",
+            case: "Safe",
         }));
 
-        expect(url.searchParams.get("backend")).toBe("http://localhost:18080");
-        expect(parseLiveEditorUrl(url.search)).toEqual({
-            flavor: "oxsts",
-            example: "basics",
-            compressedCode: null,
-            embed: false,
+        expect(url.pathname).toBe("/sysml");
+        expect(url.search).toBe("");
+        expect([...new URLSearchParams(url.hash.slice(1)).keys()]).toEqual([
+            "model",
+            "case",
+        ]);
+    });
+
+    it("leave out the parts the link does not set", async () => {
+        const url = await liveEditorUrl("https://live.semantifyr.org/", {
+            language: "gamma",
+        });
+
+        expect(url).toBe("https://live.semantifyr.org/gamma");
+        expect(parsed(url)).toEqual({
+            language: "gamma",
+            example: null,
+            library: null,
+            view: null,
+            theme: null,
+            frame: null,
+            compressedModel: null,
+            case: null,
+            compressedVerdicts: null,
         });
     });
 
-    it("read only embed=1 as embedded", () => {
-        expect(parseLiveEditorUrl("?embed=true").embed).toBe(false);
-        expect(parseLiveEditorUrl("embed=1").embed).toBe(true);
+    it("replace the parts of the base the link names and keep its other query parameters", async () => {
+        const url = await liveEditorUrl("https://live.semantifyr.org/gamma/crossroads?backend=http://localhost:18080&view=embed&library=gamma#model=abc", {
+            language: "oxsts",
+            example: "basics",
+        });
+
+        expect(new URL(url).searchParams.get("backend")).toBe("http://localhost:18080");
+        expect(parsed(url)).toMatchObject({
+            language: "oxsts",
+            example: "basics",
+            library: null,
+            view: null,
+            theme: null,
+            frame: null,
+            compressedModel: null,
+        });
+    });
+
+    it("read the bare address as naming nothing, and an unknown view as the full editor", () => {
+        expect(parsed("https://live.semantifyr.org/")).toMatchObject({ language: null, example: null });
+        expect(parsed("https://live.semantifyr.org/sysml/level-crossing/?view=dark")).toMatchObject({ language: "sysml", example: "level-crossing", view: null });
+        expect(parsed("https://live.semantifyr.org/oxsts?view=edit-only").view).toBe("edit-only");
+    });
+
+    it("carry the theme of a frame, and read nothing but light and dark", async () => {
+        const url = await liveEditorUrl("https://live.semantifyr.org/", { language: "oxsts", view: "embed", theme: "dark" });
+
+        expect(url).toBe("https://live.semantifyr.org/oxsts?view=embed&theme=dark");
+        expect(parsed(url).theme).toBe("dark");
+        expect(parsed("https://live.semantifyr.org/oxsts?theme=sepia").theme).toBeNull();
+    });
+
+    it("carry a fixed frame, and read nothing else as one", async () => {
+        const url = await liveEditorUrl("https://live.semantifyr.org/", { language: "gamma", example: "level-crossing", view: "embed", frame: "fixed" });
+
+        expect(url).toBe("https://live.semantifyr.org/gamma/level-crossing?view=embed&frame=fixed");
+        expect(parsed(url).frame).toBe("fixed");
+        expect(parsed("https://live.semantifyr.org/gamma?view=embed&frame=grow").frame).toBeNull();
+        expect(parsed(await liveEditorUrl(url, { language: "gamma" })).frame).toBeNull();
+    });
+
+    it("do not read today's mode, example, code and embed parameters", () => {
+        expect(parsed("https://live.semantifyr.org/?mode=gamma&example=Crossroads&code=abc&embed=1")).toEqual({
+            language: null,
+            example: null,
+            library: null,
+            view: null,
+            theme: null,
+            frame: null,
+            compressedModel: null,
+            case: null,
+            compressedVerdicts: null,
+        });
+    });
+
+    it("decode garbled or misshapen verdicts to null", async () => {
+        expect(await decodeLiveVerdicts("garbled")).toBeNull();
+        expect(await decodeLiveVerdicts(await encodeCompressedBase64Url(JSON.stringify({ a: "passed" })))).toBeNull();
+        expect(await decodeLiveVerdicts(await encodeCompressedBase64Url(JSON.stringify([["a", 1]])))).toBeNull();
     });
 });

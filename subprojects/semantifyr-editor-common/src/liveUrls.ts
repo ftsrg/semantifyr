@@ -26,50 +26,161 @@ export function normalizeBaseUrl(url: string): LiveServerUrls {
     return { ws: `wss://${base}`, http: `https://${base}` };
 }
 
+export type LiveEditorView =
+    | "embed"
+    | "edit-only";
+
+const VIEWS: readonly LiveEditorView[] = [
+    "embed",
+    "edit-only",
+];
+
+export type LiveEditorTheme =
+    | "light"
+    | "dark";
+
+const THEMES: readonly LiveEditorTheme[] = [
+    "light",
+    "dark",
+];
+
+// a fixed frame keeps the size its page gives it; without one the embed grows with its content
+export type LiveEditorFrame =
+    | "fixed";
+
+const FRAMES: readonly LiveEditorFrame[] = [
+    "fixed",
+];
+
+// The path names the model, the query how it is shown, the fragment what the visitor made, which a browser never sends to the server
 export interface LiveEditorLink {
-    flavor: string;
+    language: string;
     example?: string | undefined;
-    code?: string | undefined;
-    embed?: boolean | undefined;
+    library?: string | undefined;
+    view?: LiveEditorView | undefined;
+    theme?: LiveEditorTheme | undefined;
+    frame?: LiveEditorFrame | undefined;
+    model?: string | undefined;
+    case?: string | undefined;
+    verdicts?: readonly (readonly [string, string])[] | undefined;
 }
 
-export interface LiveEditorParameters {
-    flavor: string | null;
+export interface LiveEditorAddress {
+    language: string | null;
     example: string | null;
-    compressedCode: string | null;
-    embed: boolean;
+    library: string | null;
+    view: LiveEditorView | null;
+    theme: LiveEditorTheme | null;
+    frame: LiveEditorFrame | null;
+    compressedModel: string | null;
+    case: string | null;
+    compressedVerdicts: string | null;
 }
 
-// Keeps the parameters of the base URL that are not part of the link, such as live's ?backend=.
+export interface LiveEditorLocation {
+    pathname: string;
+    search: string;
+    hash: string;
+}
+
+// Keeps the query parameters of the base URL that are not part of the link
 export async function liveEditorUrl(base: string, link: LiveEditorLink): Promise<string> {
     const url = new URL(base);
-    url.searchParams.set("mode", link.flavor);
-    if (link.example === undefined) {
-        url.searchParams.delete("example");
-    } else {
-        url.searchParams.set("example", link.example);
+    url.pathname = [link.language, link.example].filter((segment) => {
+        return segment !== undefined;
+    }).map((segment) => {
+        return `/${encodeURIComponent(segment)}`;
+    }).join("");
+    setOrDelete(url.searchParams, "library", link.library);
+    setOrDelete(url.searchParams, "view", link.view);
+    setOrDelete(url.searchParams, "theme", link.theme);
+    setOrDelete(url.searchParams, "frame", link.frame);
+    const fragment = new URLSearchParams();
+    if (link.model !== undefined) {
+        fragment.set("model", await encodeCompressedBase64Url(link.model));
     }
-    if (link.code === undefined) {
-        url.searchParams.delete("code");
-    } else {
-        url.searchParams.set("code", await encodeCompressedBase64Url(link.code));
+    if (link.case !== undefined) {
+        fragment.set("case", link.case);
     }
-    if (link.embed === true) {
-        url.searchParams.set("embed", "1");
-    } else {
-        url.searchParams.delete("embed");
+    if (link.verdicts !== undefined && link.verdicts.length > 0) {
+        fragment.set("verdicts", await encodeCompressedBase64Url(JSON.stringify(link.verdicts)));
     }
+    url.hash = fragment.toString();
     return url.toString();
 }
 
-export function parseLiveEditorUrl(search: string): LiveEditorParameters {
-    const parameters = new URLSearchParams(search);
+function setOrDelete(parameters: URLSearchParams, name: string, value: string | undefined): void {
+    if (value === undefined) {
+        parameters.delete(name);
+    } else {
+        parameters.set(name, value);
+    }
+}
+
+function decodedSegment(segment: string | undefined): string | null {
+    if (segment === undefined) {
+        return null;
+    }
+    try {
+        return decodeURIComponent(segment);
+    } catch {
+        return segment;
+    }
+}
+
+function viewOf(value: string | null): LiveEditorView | null {
+    return VIEWS.find((view) => {
+        return view === value;
+    }) ?? null;
+}
+
+export function parseLiveEditorUrl(location: LiveEditorLocation): LiveEditorAddress {
+    const [language, ...rest] = location.pathname.split("/").filter((segment) => {
+        return segment !== "";
+    });
+    // a path longer than a language and an example names an example that does not exist
+    const example = rest.length === 0 ? undefined : rest.join("/");
+    const query = new URLSearchParams(location.search);
+    const fragment = new URLSearchParams(location.hash.replace(/^#/, ""));
     return {
-        flavor: parameters.get("mode"),
-        example: parameters.get("example"),
-        compressedCode: parameters.get("code"),
-        embed: parameters.get("embed") === "1",
+        language: decodedSegment(language),
+        example: decodedSegment(example),
+        library: query.get("library"),
+        view: viewOf(query.get("view")),
+        theme: THEMES.find((theme) => {
+            return theme === query.get("theme");
+        }) ?? null,
+        frame: FRAMES.find((frame) => {
+            return frame === query.get("frame");
+        }) ?? null,
+        compressedModel: fragment.get("model"),
+        case: fragment.get("case"),
+        compressedVerdicts: fragment.get("verdicts"),
     };
+}
+
+// null when the verdicts cannot be read; the names of the verdicts are the reader's to check
+export async function decodeLiveVerdicts(compressed: string): Promise<[string, string][] | null> {
+    const text = await decodeCompressedBase64Url(compressed);
+    if (text === null) {
+        return null;
+    }
+    try {
+        const entries: unknown = JSON.parse(text);
+        if (!Array.isArray(entries)) {
+            return null;
+        }
+        const verdicts: [string, string][] = [];
+        for (const entry of entries as unknown[]) {
+            if (!Array.isArray(entry) || typeof entry[0] !== "string" || typeof entry[1] !== "string") {
+                return null;
+            }
+            verdicts.push([entry[0], entry[1]]);
+        }
+        return verdicts;
+    } catch {
+        return null;
+    }
 }
 
 function bytesToBase64Url(bytes: Uint8Array): string {

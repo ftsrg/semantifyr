@@ -32,15 +32,24 @@ data class Flavor(
     val validateWitnessCommand: String? = null,
     val validateWitnessByCase: Boolean = false,
     val discoveryCommand: String,
-    val peekCompiledOutput: Boolean = false,
+    val compiledOxstsCommand: String? = null,
     val navigationCommands: List<String> = emptyList(),
+    // the editor languages a session of this flavor serves; the SysML v2 library flavor serves the OXSTS a SysML model maps to
+    val editorLanguageIds: List<String> = listOf(language.id),
 ) {
+    fun sessionLanguageOf(requested: String?): String {
+        return editorLanguageIds.firstOrNull {
+            it == requested
+        } ?: language.id
+    }
+
     val commands: List<String>
         get() {
             return listOfNotNull(
                 discoveryCommand,
                 verificationCommand,
                 validateWitnessCommand,
+                compiledOxstsCommand,
             ) + navigationCommands
         }
 }
@@ -54,8 +63,8 @@ object FlavorRegistry {
     val flavors = listOf(
         Flavor(
             id = "oxsts",
-            displayName = "Semantifyr",
-            description = "The core Semantifyr modelling language, no extra libraries.",
+            displayName = "OXSTS",
+            description = "The OXSTS modelling language, no extra libraries.",
             fileName = "snippet.oxsts",
             language = Language.Oxsts,
             workspaceLayout = WorkspaceLayout.SingleFile,
@@ -66,8 +75,8 @@ object FlavorRegistry {
         ),
         Flavor(
             id = "oxsts-with-gamma-library",
-            displayName = "Semantifyr with Gamma library",
-            description = "Semantifyr with the Gamma statechart library available to import.",
+            displayName = "OXSTS with the Gamma library",
+            description = "OXSTS with the Gamma statechart library available to import.",
             fileName = "snippet.oxsts",
             language = Language.Oxsts,
             workspaceLayout = WorkspaceLayout.WithLibrary(
@@ -81,8 +90,8 @@ object FlavorRegistry {
         ),
         Flavor(
             id = "oxsts-with-sysmlv2-library",
-            displayName = "Semantifyr with SysML v2 library",
-            description = "Semantifyr with the SysML v2 library available to import.",
+            displayName = "OXSTS with the SysML v2 library",
+            description = "OXSTS with the SysML v2 library available to import.",
             fileName = "snippet.oxsts",
             language = Language.Oxsts,
             workspaceLayout = WorkspaceLayout.WithLibrary(
@@ -93,11 +102,15 @@ object FlavorRegistry {
             validateWitnessCommand = "oxsts.case.validateWitness",
             discoveryCommand = "oxsts.case.discover",
             navigationCommands = oxstsNavigationCommands,
+            editorLanguageIds = listOf(
+                Language.Oxsts.id,
+                "sysml",
+            ),
         ),
         Flavor(
             id = "gamma",
             displayName = "Gamma",
-            description = "Gamma statechart source, compiled to Semantifyr before verification.",
+            description = "Gamma statechart source, compiled to OXSTS before verification.",
             fileName = "snippet.gamma",
             language = Language.Gamma,
             workspaceLayout = WorkspaceLayout.WithLibrary(
@@ -108,7 +121,7 @@ object FlavorRegistry {
             validateWitnessCommand = "gamma.witness.validate",
             validateWitnessByCase = true,
             discoveryCommand = "gamma.case.discover",
-            peekCompiledOutput = true,
+            compiledOxstsCommand = "gamma.compiled.oxsts",
         ),
     )
 

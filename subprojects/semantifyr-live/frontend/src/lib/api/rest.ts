@@ -32,15 +32,24 @@ function withBase(httpBase: string, path: string): string {
   return `${httpBase}${path}`
 }
 
+export class ApiError extends Error {
+  readonly status: number
+
+  constructor(status: number, message: string) {
+    super(message)
+    this.status = status
+  }
+}
+
 async function expectOk<T>(response: Response): Promise<T> {
   if (response.status === 401) {
-    throw new Error('Signed out, reload to sign in')
+    throw new ApiError(401, 'Signed out, reload to sign in')
   }
   if (response.status === 403) {
-    throw new Error('Not signed in through the proxy')
+    throw new ApiError(403, 'Not signed in through the proxy')
   }
   if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`)
+    throw new ApiError(response.status, `HTTP ${response.status}`)
   }
   return response.json() as Promise<T>
 }

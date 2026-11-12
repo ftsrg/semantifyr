@@ -9,3 +9,4 @@ export * from "./client.ts";
 export * from "./live.ts";
 export * from "./liveUrls.ts";
 export * from "./witness.ts";
+export * from "./trace.ts";
