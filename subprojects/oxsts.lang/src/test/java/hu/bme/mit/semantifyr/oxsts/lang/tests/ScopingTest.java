@@ -191,12 +191,19 @@ public class ScopingTest {
             """);
 
         parsedPackage.assertNoResourceErrors();
-        var from = parsedPackage.classByName("Host").featureByName("controller").innerFeatures().getFirst();
+        var from = parsedPackage
+                .classByName("Host")
+                .featureByName("controller")
+                .innerFeatures()
+                .getFirst();
         var binding = (ElementReference) from.expression();
 
         assertThat(binding.getElement())
                 .as("the nested binding is evaluated on the controller, so `start` must be the behaviour's start")
-                .isSameAs(parsedPackage.classByName("Behaviour").featureByName("start").eObject());
+                .isSameAs(parsedPackage
+                        .classByName("Behaviour")
+                        .featureByName("start")
+                        .eObject());
     }
 
     @Test
