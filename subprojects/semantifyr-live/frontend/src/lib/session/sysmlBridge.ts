@@ -45,10 +45,12 @@ interface ServerDiagnostic {
   message: string
   severity?: number
   source?: string
+  code?: string
 }
 
 export interface SysmlMapping {
   oxsts?: string
+  nameMap?: unknown
   diagnostics: ServerDiagnostic[]
 }
 
@@ -84,6 +86,7 @@ export function mapperProblems(mapping: SysmlMapping): ProblemEntry[] {
         endColumn: diagnostic.range.end.character,
         message: diagnostic.message,
         source: 'semantifyr',
+        code: diagnostic.code,
       }
     })
 }
@@ -187,6 +190,7 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
   const liftTrace = async (
     caseName: string,
     result: VerificationCaseResult,
+    nameMap: unknown,
   ): Promise<VerificationCaseResult> => {
     if (!result.trace) {
       return result
@@ -203,7 +207,9 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
         (await executeCommand(workerClient(), 'syside.semantifyr.sysml.trace', {
           uri: options.fileUri,
           caseName,
+          witness: result.trace.witnessState,
           trace: result.trace.callTrace,
+          nameMap,
         })) as string,
       )
     } catch (error) {
@@ -244,7 +250,7 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
       { ...request, uri: SYSML_OXSTS_URI, range: target.location.range },
       token,
     )) as VerificationCaseResult
-    return liftTrace(caseName, result)
+    return liftTrace(caseName, result, mapping.nameMap)
   }
 
   const validate = async (
