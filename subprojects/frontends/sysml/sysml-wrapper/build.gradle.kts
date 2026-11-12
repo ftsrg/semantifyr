@@ -24,7 +24,7 @@ dependencies {
     testImplementation(testFixtures(project(":compiler")))
 }
 
-val sysmlCommit = "29b4b65f498f7b8fbe44f0acd6658bac63039bbc" // feat: emitted require and verify as members subsetting requiredConstraints and verifiedRequirements, and read the transition right after any entry action as the initial one
+val sysmlCommit = "927757ac1b9fe9937ef33c86c24452e7a7785ca9" // fix: accept when read as a selection in the construct registry
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 
