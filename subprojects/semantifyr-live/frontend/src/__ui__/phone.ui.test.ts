@@ -7,9 +7,10 @@
 import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
-import { test } from './harness'
+import { casesListed, results, test } from './harness'
 
 const PHONE = { width: 390, height: 844, touch: true }
+const TABLET = { width: 1024, height: 768, touch: true }
 
 function phone(page: Page) {
   return {
@@ -88,7 +89,7 @@ describe('touch input', () => {
   for (const [shell, viewport] of [
     ['phone', PHONE],
     ['phone with a pen', { ...PHONE, before: penDigitizer }],
-    ['tablet', { width: 1024, height: 768, touch: true }],
+    ['tablet', TABLET],
   ] as const) {
     test(`locks the model of the ${shell} until Edit is pressed, and again when Done`, async ({ ui }) => {
       const page = await ui.open('/oxsts/basics', viewport)
@@ -111,4 +112,29 @@ describe('touch input', () => {
       expect(await phone(page).lines.innerText()).not.toContain('again')
     })
   }
+
+  test('keeps the on-screen keyboard closed over read-only documents until a hardware keyboard shows itself', async ({ ui }) => {
+    const page = await ui.open('/oxsts/level-crossing?library=gamma', TABLET)
+    await casesListed(page)
+    await results(page).verifyAll.tap()
+    await expect.poll(async () => {
+      return page.locator('section.trace .case-trace').count()
+    }).toBe(1)
+    await page.locator('section.trace .trace-views button[data-view="witness"]').tap()
+    const traceText = page.locator('section.trace .trace-editor textarea.inputarea')
+    await expect.poll(async () => {
+      return traceText.getAttribute('readonly')
+    }).toBe('true')
+    await page.locator('section.trace .frame-open').tap()
+    const tabText = page.locator('section.editor.is-readonly textarea.inputarea')
+    await expect.poll(async () => {
+      return tabText.getAttribute('readonly')
+    }).toBe('true')
+
+    await page.keyboard.press('Shift')
+
+    await expect.poll(async () => {
+      return [await traceText.getAttribute('readonly'), await tabText.getAttribute('readonly')]
+    }).toEqual([null, null])
+  })
 })

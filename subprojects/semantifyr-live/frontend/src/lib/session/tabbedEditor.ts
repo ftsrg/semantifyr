@@ -15,7 +15,7 @@ import { caseRowOf } from '../workspace/caseRows'
 import type { DocumentTabsState, ReadOnlyDocument } from '../workspace/documentTabs'
 import { libraryTabOf } from '../workspace/libraryTabs'
 import type { Live } from '../workspace/live'
-import { createEditor, openDerivedDocument, openKeptDocument, setEditorOpener, type EditorInstance } from './monaco'
+import { createEditor, openDerivedDocument, openKeptDocument, setEditorOpener, typingOptionsOf, type EditorInstance } from './monaco'
 import { problemsOf } from './problems'
 import { LIBRARY_SCHEME } from './readOnlyDocuments'
 
@@ -33,6 +33,8 @@ export interface TabbedEditorOptions {
   onCursor: (position: CursorPosition | null) => void
   // the model takes no typing while this holds, and no on-screen keyboard opens on it
   modelLocked?: ReadableStore<boolean>
+  // the read-only documents raise no on-screen keyboard while this holds
+  touchInput?: ReadableStore<boolean>
   verdictMarks?: boolean
   // the lines of every document wrap instead of scrolling sideways
   wrapping?: boolean
@@ -121,25 +123,32 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
     const modelLocked = (): boolean => {
       return options.modelLocked?.get() ?? false
     }
+    const takesText = (target: TextModel): boolean => {
+      return target === model ? !modelLocked() : !(options.touchInput?.get() ?? false)
+    }
     let wasLocked = false
     let everLocked = false
     const applyLock = (): void => {
       const locked = modelLocked()
       everLocked ||= locked
-      if (editor.getModel() === model) {
-        // the text area honours the read-only flag on a phone, the EditContext does not
-        editor.updateOptions({ readOnly: locked, domReadOnly: locked, readOnlyMessage: readOnlyMessageOf(locked), ...(locked ? { editContext: false } : {}) })
+      const shown = editor.getModel()
+      if (shown === model) {
+        editor.updateOptions({ readOnly: locked, readOnlyMessage: readOnlyMessageOf(locked), ...typingOptionsOf(takesText(model)) })
         if (wasLocked && !locked) {
           editor.focus()
         }
         if (!wasLocked && locked && document.activeElement instanceof HTMLElement && editor.hasTextFocus()) {
           document.activeElement.blur()
         }
+      } else if (shown) {
+        editor.updateOptions(typingOptionsOf(takesText(shown)))
       }
       wasLocked = locked
     }
-    if (options.modelLocked) {
-      cleanups.push(options.modelLocked.subscribe(applyLock))
+    for (const store of [options.modelLocked, options.touchInput]) {
+      if (store) {
+        cleanups.push(store.subscribe(applyLock))
+      }
     }
     applyLock()
     // on touch the on-screen keyboard shrinks the editor; the cursor stays in sight above it
@@ -314,7 +323,7 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
       editor.updateOptions({ stickyScroll: { enabled: false } })
       editor.setModel(target)
       const locked = target === model && modelLocked()
-      editor.updateOptions({ readOnly: readOnly || locked, domReadOnly: locked, readOnlyMessage: readOnlyMessageOf(locked) })
+      editor.updateOptions({ readOnly: readOnly || locked, readOnlyMessage: readOnlyMessageOf(locked), ...typingOptionsOf(takesText(target)) })
       const saved = viewStates.get(target.uri.toString())
       if (saved) {
         editor.restoreViewState(saved)

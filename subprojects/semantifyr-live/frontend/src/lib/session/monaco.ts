@@ -543,6 +543,11 @@ async function handleNavigateTo(params: NavigateToParams): Promise<void> {
   }
 }
 
+// the text area honours the read-only flag on a phone, the EditContext does not
+export function typingOptionsOf(takesText: boolean): editor.IEditorOptions {
+  return takesText ? { domReadOnly: false } : { domReadOnly: true, editContext: false };
+}
+
 export interface LanguageClientCallbacks {
   onProgress: (params: unknown) => void;
   onStopped: () => void;
