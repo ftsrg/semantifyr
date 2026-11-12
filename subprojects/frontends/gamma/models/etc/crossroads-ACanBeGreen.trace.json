@@ -18,7 +18,7 @@
                 "arguments": [
                     {
                         "parameter": "event",
-                        "value": "root.system.trafficLightA.lightControl.interface.yellow"
+                        "value": "root.system.trafficLightB.lightControl.interface.yellow"
                     }
                 ],
                 "innerTraces": null
@@ -29,15 +29,22 @@
         {
             "traces": [
                 {
+                    "self": "root.system.controller.control",
+                    "calledTransition": "semantifyr::gamma::ports::Port::raiseInputEvent",
+                    "arguments": [
+                        {
+                            "parameter": "event",
+                            "value": "root.system.controller.control.interface.toggle"
+                        }
+                    ],
+                    "innerTraces": null
+                },
+                {
                     "self": "root",
                     "calledTransition": "semantifyr::gamma::verification::GammaVerificationCase::passTime",
                     "arguments": [],
                     "innerTraces": null
-                }
-            ]
-        },
-        {
-            "traces": [
+                },
                 {
                     "self": "root.system.controller.Main.Operating.OperatingRegion.BothYellow_to_BothRed",
                     "calledTransition": "semantifyr::gamma::statecharts::Transition::fire",
@@ -49,7 +56,7 @@
                             "arguments": [
                                 {
                                     "parameter": "event",
-                                    "value": "root.system.controller.control.interface.toggle"
+                                    "value": "root.system.controller.controlA.interface.toggle"
                                 }
                             ],
                             "innerTraces": null
@@ -60,18 +67,12 @@
                             "arguments": [
                                 {
                                     "parameter": "event",
-                                    "value": "root.system.controller.control.interface.toggle"
+                                    "value": "root.system.controller.controlB.interface.toggle"
                                 }
                             ],
                             "innerTraces": null
                         }
                     ]
-                },
-                {
-                    "self": "root",
-                    "calledTransition": "semantifyr::gamma::verification::GammaVerificationCase::passTime",
-                    "arguments": [],
-                    "innerTraces": null
                 }
             ]
         },
@@ -86,6 +87,12 @@
                             "value": "root.system.controller.control.interface.toggle"
                         }
                     ],
+                    "innerTraces": null
+                },
+                {
+                    "self": "root",
+                    "calledTransition": "semantifyr::gamma::verification::GammaVerificationCase::passTime",
+                    "arguments": [],
                     "innerTraces": null
                 },
                 {
@@ -117,18 +124,12 @@
                             "arguments": [
                                 {
                                     "parameter": "event",
-                                    "value": "root.system.trafficLightA.lightControl.interface.red"
+                                    "value": "root.system.trafficLightB.lightControl.interface.red"
                                 }
                             ],
                             "innerTraces": null
                         }
                     ]
-                },
-                {
-                    "self": "root",
-                    "calledTransition": "semantifyr::gamma::verification::GammaVerificationCase::passTime",
-                    "arguments": [],
-                    "innerTraces": null
                 }
             ]
         },
@@ -143,6 +144,12 @@
                             "value": "root.system.controller.control.interface.toggle"
                         }
                     ],
+                    "innerTraces": null
+                },
+                {
+                    "self": "root",
+                    "calledTransition": "semantifyr::gamma::verification::GammaVerificationCase::passTime",
+                    "arguments": [],
                     "innerTraces": null
                 },
                 {
@@ -156,18 +163,12 @@
                             "arguments": [
                                 {
                                     "parameter": "event",
-                                    "value": "root.system.controller.control.interface.toggle"
+                                    "value": "root.system.controller.controlA.interface.toggle"
                                 }
                             ],
                             "innerTraces": null
                         }
                     ]
-                },
-                {
-                    "self": "root",
-                    "calledTransition": "semantifyr::gamma::verification::GammaVerificationCase::passTime",
-                    "arguments": [],
-                    "innerTraces": null
                 }
             ]
         },
@@ -182,6 +183,12 @@
                             "value": "root.system.controller.control.interface.toggle"
                         }
                     ],
+                    "innerTraces": null
+                },
+                {
+                    "self": "root",
+                    "calledTransition": "semantifyr::gamma::verification::GammaVerificationCase::passTime",
+                    "arguments": [],
                     "innerTraces": null
                 },
                 {
@@ -201,12 +208,6 @@
                             "innerTraces": null
                         }
                     ]
-                },
-                {
-                    "self": "root",
-                    "calledTransition": "semantifyr::gamma::verification::GammaVerificationCase::passTime",
-                    "arguments": [],
-                    "innerTraces": null
                 }
             ]
         }

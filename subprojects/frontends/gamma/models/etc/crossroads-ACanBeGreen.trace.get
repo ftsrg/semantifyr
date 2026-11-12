@@ -23,19 +23,7 @@ step {
 }
 step {
     act {
-        schedule component
-    }
-    assert {
-        state controller.Main.Operating;
-        state controller.OperatingRegion.BothYellow;
-        state trafficLightA.Main.Normal;
-        state trafficLightA.NormalRegion.Yellow;
-        state trafficLightB.Main.Normal;
-        state trafficLightB.NormalRegion.Yellow;
-    }
-}
-step {
-    act {
+        raise control.toggle
         elapse 1000
         schedule component
     }
