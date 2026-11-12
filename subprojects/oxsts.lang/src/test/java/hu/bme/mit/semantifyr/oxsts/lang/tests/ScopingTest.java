@@ -152,6 +152,28 @@ public class ScopingTest {
     }
 
     @Test
+    void bindingResolvesNamesInTheHolderNotInTheBoundFeaturesType() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Lamp {
+                contains lamp: Lamp[0..1]
+            }
+            class Room {
+                contains lamp: Lamp[1]
+                refers light: Lamp[0..1] = lamp
+            }
+            """);
+
+        parsedPackage.assertNoResourceErrors();
+        var room = parsedPackage.classByName("Room");
+        var binding = (ElementReference) room.featureByName("light").expression();
+
+        assertThat(binding.getElement())
+                .as("the binding is evaluated on the room, so `lamp` must be the room's lamp, not the lamp's lamp")
+                .isSameAs(room.featureByName("lamp").eObject());
+    }
+
+    @Test
     void enumLiteralReferenceResolvesAcrossTypes() {
         var parsedPackage = parseHelper.parse("""
             package test
