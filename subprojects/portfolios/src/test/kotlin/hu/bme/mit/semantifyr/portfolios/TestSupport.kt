@@ -133,6 +133,25 @@ class SlowBackend<T : BackendConfig>(
     }
 }
 
+class OneConfigurationBackend<T : BackendConfig>(
+    override val id: String,
+    private val decidingConfig: T,
+    override val executorKey: ExecutorKey<BackendExecutor> = AvailableKey,
+) : VerificationBackend<T>() {
+
+    override suspend fun verify(
+        parentInjector: Injector,
+        config: T,
+        request: BackendVerificationRequest,
+        environment: ExecutionEnvironment,
+    ): BackendVerificationResult {
+        if (config != decidingConfig) {
+            delay(10_000)
+        }
+        return judgedResult(id, VerificationVerdict.Passed, config, request)
+    }
+}
+
 private fun judgedResult(
     id: String,
     verdict: VerificationVerdict,
