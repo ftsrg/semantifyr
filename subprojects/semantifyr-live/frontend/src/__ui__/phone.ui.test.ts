@@ -113,7 +113,7 @@ describe('touch input', () => {
     })
   }
 
-  test('keeps the on-screen keyboard closed over read-only documents until a hardware keyboard shows itself', async ({ ui }) => {
+  test('keeps the on-screen keyboard closed over read-only documents, tapped or not, until a mouse shows itself', async ({ ui }) => {
     const page = await ui.open('/oxsts/level-crossing?library=gamma', TABLET)
     await casesListed(page)
     await results(page).verifyAll.tap()
@@ -131,7 +131,11 @@ describe('touch input', () => {
       return tabText.getAttribute('readonly')
     }).toBe('true')
 
-    await page.keyboard.press('Shift')
+    await page.locator('section.editor .view-lines').first().tap()
+    await page.locator('section.trace .trace-editor .view-lines').tap()
+    expect([await traceText.getAttribute('readonly'), await tabText.getAttribute('readonly')], 'a tap sends compatibility mouse moves').toEqual(['true', 'true'])
+
+    await page.mouse.move(200, 200)
 
     await expect.poll(async () => {
       return [await traceText.getAttribute('readonly'), await tabText.getAttribute('readonly')]

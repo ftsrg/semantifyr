@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { beforeAll, describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { chooseShell } from '../../shells/route'
 import { createShellState } from '../../shells/shellState'
@@ -58,6 +58,9 @@ describe('on touch input the model is read-only until the edit control is presse
     const unsubscribe = lock.subscribe(() => {})
     window.dispatchEvent(Object.assign(new Event('pointermove'), { pointerType: 'pen' }))
     expect(lock.get(), 'a pen is no mouse').toBe(true)
+    window.dispatchEvent(new MouseEvent('mousemove'))
+    window.dispatchEvent(Object.assign(new MouseEvent('mousemove'), { mozInputSource: 5 }))
+    expect(lock.get(), 'a tap sends compatibility mouse moves').toBe(true)
     for (const field of [document.createElement('input'), document.createElement('textarea')]) {
       document.body.append(field)
       field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
@@ -82,6 +85,18 @@ describe('on touch input the model is read-only until the edit control is presse
     lockedTextArea.remove()
     expect(lock.get(), 'no on-screen keyboard opens over the locked model').toBe(false)
     expect(touchInput().get()).toBe(false)
+    unsubscribe()
+  })
+
+  it('edits at once once a mouse moves where the browser sends it no pointer move', async () => {
+    vi.resetModules()
+    const { modelLockOf } = await import('../../shells/touch')
+    const shell = createShellState()
+    const lock = modelLockOf(shell)
+    const unsubscribe = lock.subscribe(() => {})
+    expect(lock.get()).toBe(true)
+    window.dispatchEvent(Object.assign(new MouseEvent('mousemove'), { mozInputSource: 1 }))
+    expect(lock.get()).toBe(false)
     unsubscribe()
   })
 })

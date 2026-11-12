@@ -16,6 +16,7 @@ import './touch.css'
 
 // the page's input is touch alone until a mouse or a hardware keyboard shows itself
 const touchOnly = createStore(false)
+const MOZ_SOURCE_MOUSE = 1
 let watching = false
 
 function watchInput(): void {
@@ -32,6 +33,12 @@ function watchInput(): void {
   coarse.addEventListener('change', detect)
   window.addEventListener('pointermove', (event) => {
     if (event.pointerType === 'mouse') {
+      touchOnly.set(false)
+    }
+  }, { passive: true })
+  // Firefox may send a mouse no pointermove; its mozInputSource tells a mouse from a tap's compatibility events
+  window.addEventListener('mousemove', (event) => {
+    if ((event as MouseEvent & { mozInputSource?: number }).mozInputSource === MOZ_SOURCE_MOUSE) {
       touchOnly.set(false)
     }
   }, { passive: true })
