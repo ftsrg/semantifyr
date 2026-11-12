@@ -58,7 +58,7 @@ services:
       - host-metrics
 
   grafana:
-    image: grafana/grafana:13.2.5
+    image: grafana/grafana:13.3.0
     restart: unless-stopped
     environment:
       GF_SERVER_ROOT_URL: https://grafana.semantifyr.org/
