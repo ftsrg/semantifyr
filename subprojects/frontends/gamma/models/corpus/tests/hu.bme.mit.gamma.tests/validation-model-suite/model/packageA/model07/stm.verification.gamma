@@ -1,0 +1,31 @@
+package package_a_7_verification
+
+import "stm.gcd"
+
+verification case StateS0Reachable {
+    component system : statemachine
+    property {
+        EF isActive(system.Main.S0)
+    }
+}
+
+verification case StateS1Reachable {
+    component system : statemachine
+    property {
+        EF isActive(system.Main.S1)
+    }
+}
+
+verification case StateS2Reachable {
+    component system : statemachine
+    property {
+        EF isActive(system.Main.S2)
+    }
+}
+
+verification case StateS3Reachable {
+    component system : statemachine
+    property {
+        EF isActive(system.Main.S3)
+    }
+}

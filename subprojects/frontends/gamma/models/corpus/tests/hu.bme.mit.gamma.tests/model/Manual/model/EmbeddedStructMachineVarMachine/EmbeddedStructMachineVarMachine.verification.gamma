@@ -1,0 +1,24 @@
+package EmbeddedStructMachineVarMachine_verification
+
+import "EmbeddedStructMachineVarMachine.gcd"
+
+verification case StateEmbeddedStructMachineVarMachineStateReachable {
+    component system : EmbeddedStructMachineVarMachine
+    property {
+        EF isActive(system.EmbeddedStructMachineVarMachine_.EmbeddedStructMachineVarMachine__State)
+    }
+}
+
+verification case OuterAndNestedFieldsCountTogether {
+    component system : EmbeddedStructMachineVarMachine
+    property {
+        EF (system.outer.cnt = 1 and system.outer.inner.cnt = 1)
+    }
+}
+
+verification case NestedFieldAheadOfOuterField {
+    component system : EmbeddedStructMachineVarMachine
+    property {
+        EF (system.outer.cnt = 1 and system.outer.inner.cnt = 2)
+    }
+}

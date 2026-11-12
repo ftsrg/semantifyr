@@ -1,0 +1,24 @@
+package package_c_30_verification
+
+import "stm.gcd"
+
+verification case StateS0Reachable {
+    component system : statemachine
+    property {
+        EF isActive(system.Main.S0)
+    }
+}
+
+verification case TransitionFromS0ToS0Fires {
+    component system : statemachine
+    property {
+        EF (isActive(system.Main.S0) and system.output.b)
+    }
+}
+
+verification case SelfTransitionOutputsAllVisible {
+    component system : statemachine
+    property {
+        EF (system.output.a and system.output.b and system.output.x)
+    }
+}

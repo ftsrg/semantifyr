@@ -1,0 +1,17 @@
+package eightsections_verification
+
+import "MediumLevelSafetyLogic.gcd"
+
+verification case CcwFourSectionsGlobalStateReachable {
+    component system : MediumLevelSafetyLogic
+    property {
+        EF isActive(system.ccwFourSections.mainRegion.GlobalState)
+    }
+}
+
+verification case CwFourSectionsGlobalStateReachable {
+    component system : MediumLevelSafetyLogic
+    property {
+        EF isActive(system.cwFourSections.mainRegion.GlobalState)
+    }
+}

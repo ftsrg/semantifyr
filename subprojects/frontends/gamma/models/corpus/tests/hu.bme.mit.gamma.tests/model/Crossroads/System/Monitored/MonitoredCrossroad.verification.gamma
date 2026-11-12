@@ -1,0 +1,185 @@
+package monitoredcrossroad_verification
+
+import "MonitoredCrossroad.gcd"
+
+verification case CrossroadControllerOperatingReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.crossroad.controller.main_region.Operating)
+    }
+}
+
+verification case CrossroadControllerInitReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.crossroad.controller.main_region.Operating.operating.Init)
+    }
+}
+
+verification case CrossroadControllerGReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.crossroad.controller.main_region.Operating.operating.Init.r.G_)
+    }
+}
+
+verification case CrossroadControllerSecondaryPreparesReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.crossroad.controller.main_region.Operating.operating.SecondaryPrepares)
+    }
+}
+
+verification case CrossroadControllerPriorityPreparesReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.crossroad.controller.main_region.Operating.operating.PriorityPrepares)
+    }
+}
+
+verification case CrossroadControllerPriorityReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.crossroad.controller.main_region.Operating.operating.Priority)
+    }
+}
+
+verification case CrossroadControllerSecondaryReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.crossroad.controller.main_region.Operating.operating.Secondary)
+    }
+}
+
+verification case CrossroadPriorInterruptedReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.crossroad.prior.Main_region.Interrupted)
+    }
+}
+
+verification case CrossroadPriorBlackReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.crossroad.prior.Main_region.Interrupted.interrupted.Black)
+    }
+}
+
+verification case CrossroadPriorBlinkingYellowReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.crossroad.prior.Main_region.Interrupted.interrupted.BlinkingYellow)
+    }
+}
+
+verification case CrossroadPriorNormalReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.crossroad.prior.Main_region.Normal)
+    }
+}
+
+verification case CrossroadPriorYellowReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.crossroad.prior.Main_region.Normal.normal.Yellow)
+    }
+}
+
+verification case CrossroadPriorRedReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.crossroad.prior.Main_region.Normal.normal.Red)
+    }
+}
+
+verification case CrossroadPriorGreenReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.crossroad.prior.Main_region.Normal.normal.Green)
+    }
+}
+
+verification case CrossroadSecondInterruptedReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.crossroad.second.Main_region.Interrupted)
+    }
+}
+
+verification case CrossroadSecondBlackReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.crossroad.second.Main_region.Interrupted.interrupted.Black)
+    }
+}
+
+verification case CrossroadSecondBlinkingYellowReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.crossroad.second.Main_region.Interrupted.interrupted.BlinkingYellow)
+    }
+}
+
+verification case CrossroadSecondNormalReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.crossroad.second.Main_region.Normal)
+    }
+}
+
+verification case CrossroadSecondYellowReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.crossroad.second.Main_region.Normal.normal.Yellow)
+    }
+}
+
+verification case CrossroadSecondRedReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.crossroad.second.Main_region.Normal.normal.Red)
+    }
+}
+
+verification case CrossroadSecondGreenReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.crossroad.second.Main_region.Normal.normal.Green)
+    }
+}
+
+verification case MonitorErrorReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.monitor.main_region.Error)
+    }
+}
+
+verification case MonitorOtherReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.monitor.main_region.Other)
+    }
+}
+
+verification case MonitorRedReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.monitor.main_region.Red)
+    }
+}
+
+verification case MonitorGreenReachable {
+    component system : MonitoredCrossroad
+    property {
+        EF isActive(system.monitor.main_region.Green)
+    }
+}
+
+verification case BothLightsShowGreen {
+    component system : MonitoredCrossroad
+    property {
+        EF (system.priorityOutput.displayGreen and system.secondaryOutput.displayGreen)
+    }
+}

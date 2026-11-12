@@ -1,0 +1,10 @@
+package clocks_verification
+
+import "Adder.gcd"
+
+verification case StateXReachable {
+    component system : Adder
+    property {
+        EF isActive(system.main._X)
+    }
+}

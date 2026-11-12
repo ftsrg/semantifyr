@@ -1,0 +1,52 @@
+package package_e_20_verification
+
+import "stm.gcd"
+
+verification case StateC1Reachable {
+    component system : statemachine
+    property {
+        EF isActive(system.Main.C1)
+    }
+}
+
+verification case StateS1Reachable {
+    component system : statemachine
+    property {
+        EF isActive(system.Main.C1.R1.S1)
+    }
+}
+
+verification case StateS2Reachable {
+    component system : statemachine
+    property {
+        EF isActive(system.Main.C1.R1.S2)
+    }
+}
+
+verification case StateS3Reachable {
+    component system : statemachine
+    property {
+        EF isActive(system.Main.C1.R1.S3)
+    }
+}
+
+verification case StateS4Reachable {
+    component system : statemachine
+    property {
+        EF isActive(system.Main.C1.R2.S4)
+    }
+}
+
+verification case StateS5Reachable {
+    component system : statemachine
+    property {
+        EF isActive(system.Main.S5)
+    }
+}
+
+verification case ExitedCompositeLeavesNoOrthogonalStateActive {
+    component system : statemachine
+    property {
+        EF (isActive(system.Main.S5) and isActive(system.Main.C1.R2.S4))
+    }
+}

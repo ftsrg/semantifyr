@@ -1,0 +1,10 @@
+package medium_level_four_sections_verification
+
+import "MediumLevelZone.gcd"
+
+verification case StateGlobalStateReachable {
+    component system : MediumLevelZone
+    property {
+        EF isActive(system.mainRegion.GlobalState)
+    }
+}
