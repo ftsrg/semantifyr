@@ -86,6 +86,15 @@ configurations.consumable("compiledExamplesElements") {
     }
 }
 
+val syncSysmlExamples = tasks.register<Sync>("syncSysmlExamples") {
+    from(configurations.named("sysmlCompiledExamplesFiles"))
+    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/libraries/default")) {
+        into("library")
+    }
+    into(layout.buildDirectory.dir("sysml-examples"))
+}
+
 tasks.named("nightlyTest") {
-    inputs.files(compileGammaExampleCrossroads)
+    inputs.files(compileGammaExamples)
+    inputs.files(syncSysmlExamples)
 }

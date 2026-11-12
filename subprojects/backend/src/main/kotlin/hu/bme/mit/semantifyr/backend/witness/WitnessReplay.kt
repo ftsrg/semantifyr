@@ -4,12 +4,10 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.verifier.witness
+package hu.bme.mit.semantifyr.backend.witness
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.transformation.BackendExpressionVisitor
-import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
-import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.ExpressionEvaluationSerializer
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
@@ -19,6 +17,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.serializer.ExpressionSerializer
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticBinaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp
@@ -43,27 +42,41 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralReal
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.RangeExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
+import org.eclipse.emf.ecore.EObject
+
+enum class ReplayOutcome {
+    Accepted,
+    Rejected,
+    Undecided,
+}
 
 class ReplayStep(
     val index: Int,
+    val outcome: ReplayOutcome,
     val exploredPaths: Int,
     val choicePoints: Int,
-    val failure: String?,
+    val reason: String?,
 )
 
 class WitnessReplayResult(
     val steps: List<ReplayStep>,
+    val exercised: Set<String>,
 ) {
     val exploredPaths = steps.sumOf {
         it.exploredPaths
     }
+    val mostPathsInStep = steps.maxOfOrNull {
+        it.exploredPaths
+    } ?: 0
     val firstFailure = steps.firstOrNull {
-        it.failure != null
+        it.outcome != ReplayOutcome.Accepted
     }
+    val outcome = firstFailure?.outcome ?: ReplayOutcome.Accepted
 }
 
 class WitnessReplay @Inject constructor(
@@ -73,8 +86,19 @@ class WitnessReplay @Inject constructor(
     private val oxstsQualifiedNameProvider: OxstsQualifiedNameProvider,
 ) {
 
-    private class Continuation(
+    private sealed interface Work
+
+    private class Execute(
         val operation: Operation,
+    ) : Work
+
+    private class Bind(
+        val variable: VariableDeclaration,
+        val value: Any,
+    ) : Work
+
+    private class Continuation(
+        val work: Work,
         val next: Continuation?,
     )
 
@@ -83,44 +107,49 @@ class WitnessReplay @Inject constructor(
         val reason: String,
     )
 
-    fun replay(witness: InlinedWitness, traces: TransitionCallTraceMap): WitnessReplayResult {
+    private class Undecided(
+        val reason: String,
+    ) : Exception(reason)
+
+    fun replay(witness: InlinedWitness, traces: TransitionCallTraceMap?): WitnessReplayResult {
         val inlinedOxsts = witness.inlinedOxsts
         val states = listOf(witness.initializedState) + witness.transitionStates
-        val initialValuation = declaredValuation(inlinedOxsts)
+        val exercised = mutableSetOf<String>()
+        val initialValuation = declaredValuation(inlinedOxsts, exercised)
         val steps = mutableListOf<ReplayStep>()
         for ((index, state) in states.withIndex()) {
             val source = if (index == 0) {
                 initialValuation
             } else {
-                valuationOf(states[index - 1])
+                valuationOf(states[index - 1], exercised)
             }
             val transition = if (index == 0) {
                 inlinedOxsts.initTransition
             } else {
                 inlinedOxsts.mainTransition
             }
-            val step = StepSearch(index, valuationOf(state), traces).run(transition, source)
+            val step = StepSearch(index, valuationOf(state, exercised), traces, exercised).run(transition, source)
             steps += step
-            if (step.failure != null) {
+            if (step.outcome != ReplayOutcome.Accepted) {
                 break
             }
         }
-        return WitnessReplayResult(steps)
+        return WitnessReplayResult(steps, exercised)
     }
 
-    private fun declaredValuation(inlinedOxsts: InlinedOxsts): Map<VariableDeclaration, Any> {
+    private fun declaredValuation(inlinedOxsts: InlinedOxsts, exercised: MutableSet<String>): Map<VariableDeclaration, Any> {
         val valuation = mutableMapOf<VariableDeclaration, Any>()
         for (variable in inlinedOxsts.variables) {
             val initializer = variable.expression
             if (initializer != null) {
-                valuation[variable] = Evaluator(valuation).evaluate(initializer)
+                valuation[variable] = Evaluator(valuation, exercised).evaluate(initializer)
             }
         }
         return valuation
     }
 
-    private fun valuationOf(state: WitnessState): Map<VariableDeclaration, Any> {
-        val evaluator = Evaluator(emptyMap())
+    private fun valuationOf(state: WitnessState, exercised: MutableSet<String>): Map<VariableDeclaration, Any> {
+        val evaluator = Evaluator(emptyMap(), exercised)
         return state.values.associate {
             it.variable to evaluator.evaluate(it.value)
         }
@@ -129,26 +158,32 @@ class WitnessReplay @Inject constructor(
     private inner class StepSearch(
         private val index: Int,
         private val target: Map<VariableDeclaration, Any>,
-        private val traces: TransitionCallTraceMap,
+        private val traces: TransitionCallTraceMap?,
+        private val exercised: MutableSet<String>,
     ) {
         private val writtenAfter = mutableMapOf<Operation, Set<VariableDeclaration>>()
         private var exploredPaths = 0
         private var choicePoints = 0
         private var furthest: Pruned? = null
+        private var furthestTracer: Pruned? = null
+        private var undecided: String? = null
 
         fun run(transition: TransitionDeclaration, source: Map<VariableDeclaration, Any>): ReplayStep {
             for (branch in transition.branches) {
                 collectWrittenAfter(branch, emptySet())
             }
             val accepted = transition.branches.any {
-                search(Continuation(it, null), HashMap(source), 0)
+                search(Continuation(Execute(it), null), HashMap(source), 0)
             }
-            val failure = if (accepted) {
-                null
-            } else {
-                furthest?.reason ?: "no branch of the transition"
+            val undecidedReason = undecided
+            return when {
+                accepted -> ReplayStep(index, ReplayOutcome.Accepted, exploredPaths, choicePoints, null)
+                undecidedReason != null -> ReplayStep(index, ReplayOutcome.Undecided, exploredPaths, choicePoints, undecidedReason)
+                else -> {
+                    val reason = furthestTracer?.reason ?: furthest?.reason ?: "no branch of the transition"
+                    ReplayStep(index, ReplayOutcome.Rejected, exploredPaths, choicePoints, reason)
+                }
             }
-            return ReplayStep(index, exploredPaths, choicePoints, failure)
         }
 
         private fun collectWrittenAfter(operation: Operation, after: Set<VariableDeclaration>): Set<VariableDeclaration> {
@@ -172,6 +207,11 @@ class WitnessReplay @Inject constructor(
                         written
                     }
                 }
+                is ForOperation -> {
+                    // a later iteration writes what the body writes, so the body is analysed with its own writes after it
+                    val bodyWrites = collectWrittenAfter(operation.body, after)
+                    collectWrittenAfter(operation.body, bodyWrites) + operation.loopVariable
+                }
                 is AssignmentOperation -> {
                     writtenAfter[operation] = after
                     after + variableOf(operation.reference)
@@ -180,9 +220,6 @@ class WitnessReplay @Inject constructor(
                     writtenAfter[operation] = after
                     after + variableOf(operation.reference)
                 }
-                is ForOperation -> {
-                    error("Runtime for is not replayed")
-                }
                 else -> {
                     after
                 }
@@ -190,19 +227,36 @@ class WitnessReplay @Inject constructor(
         }
 
         private fun search(start: Continuation?, state: MutableMap<VariableDeclaration, Any>, startDepth: Int): Boolean {
+            try {
+                return searchOrThrow(start, state, startDepth)
+            } catch (exception: Undecided) {
+                exploredPaths++
+                undecided = exception.reason
+                return false
+            }
+        }
+
+        private fun searchOrThrow(start: Continuation?, state: MutableMap<VariableDeclaration, Any>, startDepth: Int): Boolean {
             var current = start
             var depth = startDepth
             while (true) {
                 if (current == null) {
                     return accept(state, depth)
                 }
-                val operation = current.operation
+                val work = current.work
                 current = current.next
                 depth++
+                if (work is Bind) {
+                    state[work.variable] = work.value
+                    continue
+                }
+                val operation = (work as Execute).operation
+                exercised += operation.eClass().name
+                val evaluator = Evaluator(state, exercised)
                 when (operation) {
                     is SequenceOperation -> {
                         current = operation.steps.foldRight(current) { step, next ->
-                            Continuation(step, next)
+                            Continuation(Execute(step), next)
                         }
                     }
                     is ChoiceOperation -> {
@@ -211,41 +265,60 @@ class WitnessReplay @Inject constructor(
                         }
                         val next = current
                         return operation.branches.any {
-                            search(Continuation(it, next), HashMap(state), depth)
+                            search(Continuation(Execute(it), next), HashMap(state), depth)
                         }
                     }
                     is IfOperation -> {
-                        val guard = Evaluator(state).evaluate(operation.guard) as Boolean
-                        val branch = if (guard) {
+                        val branch = if (evaluator.evaluate(operation.guard) as Boolean) {
                             operation.body
                         } else {
                             operation.`else`
                         }
                         if (branch != null) {
-                            current = Continuation(branch, current)
+                            current = Continuation(Execute(branch), current)
+                        }
+                    }
+                    is ForOperation -> {
+                        val range = operation.rangeExpression as RangeExpression
+                        val from = evaluator.evaluate(range.left) as Int
+                        val to = evaluator.evaluate(range.right) as Int
+                        val last = if (range.isExclusive) {
+                            to - 1
+                        } else {
+                            to
+                        }
+                        for (iteration in last downTo from) {
+                            current = Continuation(Bind(operation.loopVariable, iteration), Continuation(Execute(operation.body), current))
                         }
                     }
                     is AssumptionOperation -> {
-                        if (!(Evaluator(state).evaluate(operation.expression) as Boolean)) {
-                            return prune(depth, "the assumption ${expressionSerializer.serialize(operation.expression)} fails")
+                        if (!(evaluator.evaluate(operation.expression) as Boolean)) {
+                            return prune(depth, "the assumption ${expressionSerializer.serialize(operation.expression)} fails", false)
                         }
                     }
                     is AssignmentOperation -> {
                         val variable = variableOf(operation.reference)
-                        val value = Evaluator(state).evaluate(operation.expression)
+                        val value = assigned(state, operation.reference, evaluator.evaluate(operation.expression), evaluator)
                         val expected = target[variable]
                         if (variable !in writtenAfter.getValue(operation) && expected != null && expected != value) {
-                            return prune(depth, mismatch(variable, expected, value))
+                            return prune(depth, mismatch(variable, expected, value), isTracer(variable))
                         }
                         state[variable] = value
                     }
                     is HavocOperation -> {
                         val variable = variableOf(operation.reference)
                         val expected = target[variable]
-                        if (variable !in writtenAfter.getValue(operation)) {
-                            state[variable] = expected ?: error("The witness has no value for the havoced ${variable.name}")
+                        if (operation.reference !is ElementReference) {
+                            throw Undecided("the havoc of an element of ${variable.name} is not replayed")
+                        }
+                        if (variable !in writtenAfter.getValue(operation) && expected != null) {
+                            state[variable] = expected
                         } else {
-                            val candidates = domainOf(variable) ?: error("The havoced ${variable.name} is written again and its domain cannot be enumerated")
+                            val candidates = domainOf(variable) ?: if (expected == null) {
+                                throw Undecided("the witness holds no value for the havoced ${variable.name}")
+                            } else {
+                                throw Undecided("the havoced integer ${variable.name} is written again in the step, so the witness does not hold the havoced value")
+                            }
                             choicePoints++
                             val next = current
                             return candidates.any {
@@ -258,13 +331,25 @@ class WitnessReplay @Inject constructor(
                     is LocalVarDeclarationOperation -> {
                         val initializer = operation.expression
                         if (initializer != null) {
-                            state[operation] = Evaluator(state).evaluate(initializer)
+                            state[operation] = evaluator.evaluate(initializer)
                         }
                     }
                     else -> {
                         error("Unexpected operation in a flattened model: ${operation.eClass().name}")
                     }
                 }
+            }
+        }
+
+        private fun assigned(state: Map<VariableDeclaration, Any>, reference: Expression, value: Any, evaluator: Evaluator): Any {
+            if (reference !is IndexingSuffixExpression) {
+                return value
+            }
+            val variable = variableOf(reference)
+            val array = state[variable] as? List<*> ?: error("${variable.name} is written by index before it has a value")
+            val index = evaluator.evaluate(reference.index) as Int
+            return array.toMutableList().also {
+                it[index] = value
             }
         }
 
@@ -279,20 +364,31 @@ class WitnessReplay @Inject constructor(
             val reason = differing.joinToString("; ") {
                 mismatch(it.key, it.value, state[it.key])
             }
-            return prune(depth, "the path ends in a different state: $reason")
+            val tracer = differing.any {
+                isTracer(it.key)
+            }
+            return prune(depth, "the path ends in a different state: $reason", tracer)
         }
 
-        private fun prune(depth: Int, reason: String): Boolean {
+        private fun prune(depth: Int, reason: String, tracer: Boolean): Boolean {
             exploredPaths++
             val previous = furthest
             if (previous == null || depth > previous.depth) {
                 furthest = Pruned(depth, reason)
             }
+            val previousTracer = furthestTracer
+            if (tracer && (previousTracer == null || depth > previousTracer.depth)) {
+                furthestTracer = Pruned(depth, reason)
+            }
             return false
         }
 
+        private fun isTracer(variable: VariableDeclaration): Boolean {
+            return TransitionTracerNames.isTracerName(variable.name)
+        }
+
         private fun mismatch(variable: VariableDeclaration, expected: Any, found: Any?): String {
-            if (TransitionTracerNames.isTracerName(variable.name)) {
+            if (isTracer(variable)) {
                 val call = describeCall(variable)
                 return if (expected == true) {
                     "the recorded call $call could not fire"
@@ -304,7 +400,7 @@ class WitnessReplay @Inject constructor(
         }
 
         private fun describeCall(tracer: VariableDeclaration): String {
-            val trace = traces.getTransitionCallTrace(tracer)
+            val trace = traces?.getTransitionCallTrace(tracer) ?: return tracer.name
             val self = expressionEvaluationSerializer.serialize(trace.self)
             val transition = oxstsQualifiedNameProvider.getFullyQualifiedNameString(trace.transitionDeclaration)
             return "$self.$transition (${tracer.name})"
@@ -315,15 +411,25 @@ class WitnessReplay @Inject constructor(
         return when (value) {
             null -> "unset"
             is EnumLiteral -> value.name
+            is List<*> -> value.joinToString(", ", "[", "]") {
+                format(it)
+            }
             else -> value.toString()
         }
     }
 
     private fun variableOf(reference: Expression): VariableDeclaration {
-        return (reference as ElementReference).element as VariableDeclaration
+        return when (reference) {
+            is ElementReference -> reference.element as VariableDeclaration
+            is IndexingSuffixExpression -> variableOf(reference.primary)
+            else -> error("Unexpected reference: ${reference.eClass().name}")
+        }
     }
 
     private fun domainOf(variable: VariableDeclaration): List<Any>? {
+        if (variable.typeSpecification?.multiplicity != null) {
+            return null
+        }
         return when (val domain = variable.typeSpecification?.domain) {
             is EnumDeclaration -> domain.literals
             is DataTypeDeclaration -> {
@@ -342,13 +448,19 @@ class WitnessReplay @Inject constructor(
 
     private class Evaluator(
         private val state: Map<VariableDeclaration, Any>,
+        private val exercised: MutableSet<String>,
     ) : BackendExpressionVisitor<Any>() {
 
         fun evaluate(expression: Expression): Any {
             return visit(expression)
         }
 
+        private fun note(element: EObject) {
+            exercised += element.eClass().name
+        }
+
         override fun visit(expression: ComparisonOperator): Any {
+            note(expression)
             val left = visit(expression.left)
             val right = visit(expression.right)
             return when (expression.op) {
@@ -363,6 +475,7 @@ class WitnessReplay @Inject constructor(
         }
 
         override fun visit(expression: ArithmeticBinaryOperator): Any {
+            note(expression)
             val left = visit(expression.left) as Int
             val right = visit(expression.right) as Int
             return when (expression.op) {
@@ -375,6 +488,7 @@ class WitnessReplay @Inject constructor(
         }
 
         override fun visit(expression: BooleanOperator): Any {
+            note(expression)
             val left = visit(expression.left) as Boolean
             return when (expression.op) {
                 BooleanOp.AND -> left && visit(expression.right) as Boolean
@@ -385,6 +499,7 @@ class WitnessReplay @Inject constructor(
         }
 
         override fun visit(expression: ArithmeticUnaryOperator): Any {
+            note(expression)
             val body = visit(expression.body) as Int
             return when (expression.op) {
                 UnaryOp.PLUS -> body
@@ -394,10 +509,12 @@ class WitnessReplay @Inject constructor(
         }
 
         override fun visit(expression: NegationOperator): Any {
+            note(expression)
             return !(visit(expression.body) as Boolean)
         }
 
         override fun visit(expression: IfThenElse): Any {
+            note(expression)
             return if (visit(expression.guard) as Boolean) {
                 visit(expression.then)
             } else {
@@ -410,14 +527,24 @@ class WitnessReplay @Inject constructor(
         }
 
         override fun visit(expression: LiteralInteger): Any {
+            note(expression)
             return expression.value
         }
 
         override fun visit(expression: LiteralBoolean): Any {
+            note(expression)
             return expression.isValue
         }
 
+        override fun visit(expression: ArrayLiteral): Any {
+            note(expression)
+            return expression.values.map {
+                visit(it)
+            }
+        }
+
         override fun visit(expression: ElementReference): Any {
+            note(expression)
             return when (val element = expression.element) {
                 is EnumLiteral -> element
                 is VariableDeclaration -> state[element] ?: error("${element.name} is read before it has a value")
@@ -426,7 +553,10 @@ class WitnessReplay @Inject constructor(
         }
 
         override fun visit(expression: IndexingSuffixExpression): Any {
-            error("Indexing is not replayed")
+            note(expression)
+            val array = visit(expression.primary) as List<*>
+            val index = visit(expression.index) as Int
+            return array[index] ?: error("Index $index has no value")
         }
     }
 }
