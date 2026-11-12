@@ -1,0 +1,24 @@
+package GuardMachine_verification
+
+import "GuardMachineWrapper.gcd"
+
+verification case GuardMachineGuardMachineStateReachable {
+    component system : GuardMachineWrapper
+    property {
+        EF isActive(system.guardMachine.GuardMachine_.GuardMachine__State)
+    }
+}
+
+verification case NegativeParameterDecrementsCounter {
+    component system : GuardMachineWrapper
+    property {
+        EF system.guardMachine.cnt = -1
+    }
+}
+
+verification case PositiveParameterIncrementsCounter {
+    component system : GuardMachineWrapper
+    property {
+        EF system.guardMachine.cnt = 1
+    }
+}

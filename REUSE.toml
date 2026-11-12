@@ -24,3 +24,10 @@ path = "subprojects/semantifyr-live/frontend/src/__ui__/mock/fixtures/**"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 The Semantifyr Authors"
 SPDX-License-Identifier = "EPL-2.0"
+
+# Copied unchanged from https://github.com/ftsrg/gamma at commit 7f8695a4d; each file's path below models/corpus is its path in that repository.
+[[annotations]]
+path = "subprojects/frontends/gamma/models/corpus/**/*.gcd"
+precedence = "override"
+SPDX-FileCopyrightText = "The Gamma contributors"
+SPDX-License-Identifier = "EPL-1.0"

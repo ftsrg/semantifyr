@@ -1,0 +1,17 @@
+package StructRecieverGuardMachine_verification
+
+import "StructRecieverGuardMachine.gcd"
+
+verification case StateStructRecieverGuardMachineStateReachable {
+    component system : StructRecieverGuardMachine
+    property {
+        EF isActive(system.StructRecieverGuardMachine_.StructRecieverGuardMachine__State)
+    }
+}
+
+verification case PositiveAndNegativeRecordFieldsCounted {
+    component system : StructRecieverGuardMachine
+    property {
+        EF (system.posCnt = 1 and system.negCnt = 1)
+    }
+}

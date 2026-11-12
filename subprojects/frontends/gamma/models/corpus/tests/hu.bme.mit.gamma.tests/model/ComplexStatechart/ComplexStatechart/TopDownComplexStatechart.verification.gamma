@@ -1,0 +1,80 @@
+package complex_verification
+
+import "TopDownComplexStatechart.gcd"
+
+verification case StateAReachable {
+    component system : TopDown
+    property {
+        EF isActive(system.main.A_)
+    }
+}
+
+verification case StateAAReachable {
+    component system : TopDown
+    property {
+        EF isActive(system.main.A_.A.AA)
+    }
+}
+
+verification case StateABReachable {
+    component system : TopDown
+    property {
+        EF isActive(system.main.A_.A.AB)
+    }
+}
+
+verification case StateABAAReachable {
+    component system : TopDown
+    property {
+        EF isActive(system.main.A_.A.AB.ABA.ABAA)
+    }
+}
+
+verification case StateABABReachable {
+    component system : TopDown
+    property {
+        EF isActive(system.main.A_.A.AB.ABA.ABAB)
+    }
+}
+
+verification case StateABBAReachable {
+    component system : TopDown
+    property {
+        EF isActive(system.main.A_.A.AB.ABB.ABBA)
+    }
+}
+
+verification case StateABBBReachable {
+    component system : TopDown
+    property {
+        EF isActive(system.main.A_.A.AB.ABB.ABBB)
+    }
+}
+
+verification case StateBAReachable {
+    component system : TopDown
+    property {
+        EF isActive(system.main.A_.B.BA)
+    }
+}
+
+verification case StateBBReachable {
+    component system : TopDown
+    property {
+        EF isActive(system.main.A_.B.BB)
+    }
+}
+
+verification case StateBReachable {
+    component system : TopDown
+    property {
+        EF isActive(system.main.B_)
+    }
+}
+
+verification case StateCReachable {
+    component system : TopDown
+    property {
+        EF isActive(system.main.C_)
+    }
+}

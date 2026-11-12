@@ -1,0 +1,52 @@
+package Controller_verification
+
+import "Controller.gcd"
+
+verification case StateOperatingReachable {
+    component system : Controller
+    property {
+        EF isActive(system.main_region.Operating)
+    }
+}
+
+verification case StatePriorityReachable {
+    component system : Controller
+    property {
+        EF isActive(system.main_region.Operating.operating.Priority)
+    }
+}
+
+verification case StateInitReachable {
+    component system : Controller
+    property {
+        EF isActive(system.main_region.Operating.operating.Init)
+    }
+}
+
+verification case StatePriorityPreparesReachable {
+    component system : Controller
+    property {
+        EF isActive(system.main_region.Operating.operating.PriorityPrepares)
+    }
+}
+
+verification case StateSecondaryReachable {
+    component system : Controller
+    property {
+        EF isActive(system.main_region.Operating.operating.Secondary)
+    }
+}
+
+verification case StateSecondaryPreparesReachable {
+    component system : Controller
+    property {
+        EF isActive(system.main_region.Operating.operating.SecondaryPrepares)
+    }
+}
+
+verification case StateInterruptedReachable {
+    component system : Controller
+    property {
+        EF isActive(system.main_region.Interrupted)
+    }
+}

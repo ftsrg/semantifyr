@@ -1,0 +1,52 @@
+package trafficlightctrl_verification
+
+import "TrafficLightCtrl.gcd"
+
+verification case StateInterruptedReachable {
+    component system : TrafficLightCtrl
+    property {
+        EF isActive(system.main_region.Interrupted)
+    }
+}
+
+verification case StateBlinkingYellowReachable {
+    component system : TrafficLightCtrl
+    property {
+        EF isActive(system.main_region.Interrupted.interrupted.BlinkingYellow)
+    }
+}
+
+verification case StateBlackReachable {
+    component system : TrafficLightCtrl
+    property {
+        EF isActive(system.main_region.Interrupted.interrupted.Black)
+    }
+}
+
+verification case StateNormalReachable {
+    component system : TrafficLightCtrl
+    property {
+        EF isActive(system.main_region.Normal)
+    }
+}
+
+verification case StateRedReachable {
+    component system : TrafficLightCtrl
+    property {
+        EF isActive(system.main_region.Normal.normal.Red)
+    }
+}
+
+verification case StateGreenReachable {
+    component system : TrafficLightCtrl
+    property {
+        EF isActive(system.main_region.Normal.normal.Green)
+    }
+}
+
+verification case StateYellowReachable {
+    component system : TrafficLightCtrl
+    property {
+        EF isActive(system.main_region.Normal.normal.Yellow)
+    }
+}

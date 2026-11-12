@@ -1,0 +1,31 @@
+package monitor_verification
+
+import "Monitor.gcd"
+
+verification case StateErrorReachable {
+    component system : Monitor
+    property {
+        EF isActive(system.main_region.Error)
+    }
+}
+
+verification case StateOtherReachable {
+    component system : Monitor
+    property {
+        EF isActive(system.main_region.Other)
+    }
+}
+
+verification case StateRedReachable {
+    component system : Monitor
+    property {
+        EF isActive(system.main_region.Red)
+    }
+}
+
+verification case StateGreenReachable {
+    component system : Monitor
+    property {
+        EF isActive(system.main_region.Green)
+    }
+}

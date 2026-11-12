@@ -1,0 +1,31 @@
+package normal_verification
+
+import "Normal.gcd"
+
+verification case StatePriorityPreparesReachable {
+    component system : NormalPhase
+    property {
+        EF isActive(system.Operating.PriorityPrepares)
+    }
+}
+
+verification case StateSecondaryReachable {
+    component system : NormalPhase
+    property {
+        EF isActive(system.Operating.Secondary)
+    }
+}
+
+verification case StateSecondaryPreparesReachable {
+    component system : NormalPhase
+    property {
+        EF isActive(system.Operating.SecondaryPrepares)
+    }
+}
+
+verification case StatePriorityReachable {
+    component system : NormalPhase
+    property {
+        EF isActive(system.Operating.Priority)
+    }
+}

@@ -1,0 +1,31 @@
+package package_f_31_verification
+
+import "stm.gcd"
+
+verification case StateS0Reachable {
+    component system : statemachine
+    property {
+        EF isActive(system.Main.S0)
+    }
+}
+
+verification case StateS1Reachable {
+    component system : statemachine
+    property {
+        EF isActive(system.Main.S1)
+    }
+}
+
+verification case ExitThenTransitionThenEntryActions {
+    component system : statemachine
+    property {
+        EF system.i = 4
+    }
+}
+
+verification case EntryBeforeTransitionActionValue {
+    component system : statemachine
+    property {
+        EF system.i = 3
+    }
+}

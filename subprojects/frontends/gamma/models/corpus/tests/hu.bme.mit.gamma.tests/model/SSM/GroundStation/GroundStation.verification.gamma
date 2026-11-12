@@ -1,0 +1,24 @@
+package groundstation_verification
+
+import "GroundStation.gcd"
+
+verification case StateIdleReachable {
+    component system : GroundStation
+    property {
+        EF isActive(system.Main.Idle)
+    }
+}
+
+verification case StateOperationReachable {
+    component system : GroundStation
+    property {
+        EF isActive(system.Main.Operation)
+    }
+}
+
+verification case StateWaitingReachable {
+    component system : GroundStation
+    property {
+        EF isActive(system.Main.Operation.ReceiveData.Waiting)
+    }
+}

@@ -1,0 +1,24 @@
+package StructRecieverMachine_verification
+
+import "StructRecieverMachine.gcd"
+
+verification case StateStructRecieverMachineStateReachable {
+    component system : StructRecieverMachine
+    property {
+        EF isActive(system.StructRecieverMachine_.StructRecieverMachine__State)
+    }
+}
+
+verification case RecordParameterAddedToBoth {
+    component system : StructRecieverMachine
+    property {
+        EF (system.cnt = 5 and system.ss.val = 5)
+    }
+}
+
+verification case RecordParameterAddedUnequally {
+    component system : StructRecieverMachine
+    property {
+        EF (system.cnt = 1 and system.ss.val = 2)
+    }
+}
