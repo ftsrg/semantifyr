@@ -150,7 +150,7 @@ class LiveVerificationTest {
                 assertThat(verifyResult.status()).isEqualTo("passed")
                 val traceUri = verifyResult.trace()?.witnessUri()
                     ?: error("verify produced no trace URI: $verifyResult")
-                assertThat(traceUri).startsWith("file:///workspace/").endsWith("/trace.gamma")
+                assertThat(traceUri).startsWith("file:///workspace/").endsWith("/trace.get")
 
                 send(Frame.Text(LspWire.request(id = 4, method = SemantifyrLiveMethods.READ_DOCUMENT, params = ReadDocumentParams(traceUri))))
                 val traceText = awaitResponseFor(id = 4).resultAs(ReadDocumentResult::class.java).text
@@ -201,7 +201,7 @@ class LiveVerificationTest {
                 assertThat(artifactsOnDisk(tmp, "Simple.LeaderStatechartIdleReachable")).contains(
                     "verification/$verificationDirectory/report.json",
                     "verification/$verificationDirectory/witness.oxsts",
-                    "verification/$verificationDirectory/trace.gamma",
+                    "verification/$verificationDirectory/trace.get",
                     "verification/$verificationDirectory/validation/report.json",
                 )
             }

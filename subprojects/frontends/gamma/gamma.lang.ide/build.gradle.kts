@@ -25,3 +25,9 @@ tasks.withType<Test>().configureEach {
     inputs.dir(layout.projectDirectory.dir("../models/examples")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("../models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
 }
+
+tasks.named("test") {
+    inputs.file(layout.projectDirectory.file("../../../semantifyr-vscode/syntaxes/gamma.tmLanguage.json"))
+        .withPropertyName("gammaTextMateGrammar")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}

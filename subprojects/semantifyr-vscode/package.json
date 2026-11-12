@@ -145,7 +145,8 @@
       {
         "id": "gamma",
         "extensions": [
-          ".gamma"
+          ".gamma",
+          ".get"
         ],
         "aliases": [
           "Gamma",

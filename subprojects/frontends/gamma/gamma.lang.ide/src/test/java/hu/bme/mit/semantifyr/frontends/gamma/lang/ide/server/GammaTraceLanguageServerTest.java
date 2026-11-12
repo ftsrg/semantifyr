@@ -83,8 +83,7 @@ class GammaTraceLanguageServerTest {
     @Test
     void aTraceNextToItsModelLinksAgainstTheModelInTheIndex() throws Exception {
         var model = copy(MODELS.resolve("examples/Crossroads.gamma"), "Crossroads.gamma");
-        var trace =
-                copy(MODELS.resolve("etc/crossroads-ACanBeGreen.trace.gamma"), "Crossroads-ACanBeGreen.trace.gamma");
+        var trace = copy(MODELS.resolve("etc/crossroads-ACanBeGreen.trace.get"), "Crossroads-ACanBeGreen.get");
 
         initialize();
 
@@ -96,8 +95,8 @@ class GammaTraceLanguageServerTest {
     void anOpenedTraceLinksAgainstTheModelInTheIndex() throws Exception {
         copy(MODELS.resolve("examples/Crossroads.gamma"), "Crossroads.gamma");
         initialize();
-        var trace = workspace.resolve("trace.gamma");
-        var text = Files.readString(MODELS.resolve("etc/crossroads-ACanBeGreen.trace.gamma"));
+        var trace = workspace.resolve("trace.get");
+        var text = Files.readString(MODELS.resolve("etc/crossroads-ACanBeGreen.trace.get"));
 
         languageServer.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri(trace), "gamma", 1, text)));
 
@@ -107,8 +106,7 @@ class GammaTraceLanguageServerTest {
     @Test
     void aTraceFollowsTheCaseItTracesWhenTheModelChanges() throws Exception {
         var model = copy(MODELS.resolve("examples/Crossroads.gamma"), "Crossroads.gamma");
-        var trace =
-                copy(MODELS.resolve("etc/crossroads-ACanBeGreen.trace.gamma"), "Crossroads-ACanBeGreen.trace.gamma");
+        var trace = copy(MODELS.resolve("etc/crossroads-ACanBeGreen.trace.get"), "Crossroads-ACanBeGreen.get");
         initialize();
         client.awaitDiagnostics(model);
         client.awaitDiagnostics(trace);
@@ -126,12 +124,11 @@ class GammaTraceLanguageServerTest {
     @Test
     void aTraceOfAnUnknownCaseReportsAnError() throws Exception {
         copy(MODELS.resolve("examples/Crossroads.gamma"), "Crossroads.gamma");
-        var trace = workspace.resolve("Unknown.trace.gamma");
+        var trace = workspace.resolve("Unknown.get");
         Files.writeString(trace, """
-                package Crossroads
+                import Crossroads
 
-                trace UnknownTrace of NoSuchCase {
-                }
+                trace UnknownTrace of NoSuchCase
                 """);
 
         initialize();

@@ -51,3 +51,9 @@ tasks.named("generateXtextLanguage") {
 tasks.clean {
     delete(emfGenDirectory)
 }
+
+tasks.named("test") {
+    inputs.dir(layout.projectDirectory.dir("../models/corpus"))
+        .withPropertyName("gammaCorpus")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}
