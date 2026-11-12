@@ -153,7 +153,7 @@ describe('a single run', () => {
   })
 
   test('runs a case not run from its margin mark, and a mark of a result selects its case', async ({ ui }) => {
-    const page = await ui.open(LEVEL_CROSSING, { height: 5200 })
+    const page = await ui.open(LEVEL_CROSSING, { height: 5800 })
     await casesListed(page)
     const { marks } = editor(page)
     await expect.poll(async () => {
