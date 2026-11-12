@@ -26,7 +26,7 @@
       "patterns": [
         {
           "name": "keyword.control.xsts",
-          "match": "\\b(package|import|type|record|interface|extends|in|out|inout|transient|persistent|event|sync|cascade|execute|component|provides|requires|port|bind|channel|statechart|var|timeout|region|initial|shallow|history|state|entry|exit|transition|from|to|when|raise|set|ms|s|verification|case|property|trace|of|step|act|assert|reset|schedule|elapse|variable|self|and|or|not|AG|EF)\\b"
+          "match": "\\b(package|import|type|record|interface|extends|in|out|inout|transient|persistent|event|sync|cascade|execute|component|provides|requires|port|bind|channel|statechart|var|timeout|region|initial|shallow|history|state|entry|exit|transition|from|to|when|raise|set|ms|s|verification|case|trace|of|step|act|assert|reset|schedule|elapse|variable|and|or|not|AG|EF)\\b"
         }
       ]
     },

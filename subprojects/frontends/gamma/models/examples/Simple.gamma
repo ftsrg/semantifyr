@@ -56,66 +56,34 @@ sync System[
     channel [ leader.workerControl ] -o)- [ worker.control ]
 }
 
-verification case LeaderStatechartIdleReachable {
-    component system : System
-
-    property {
-        EF state leader.Main.Idle
-    }
+verification case LeaderStatechartIdleReachable of System {
+    EF state leader.Main.Idle
 }
 
-verification case LeaderStatechartOperationalReachable {
-    component system : System
-
-    property {
-        EF state leader.Main.Operational
-    }
+verification case LeaderStatechartOperationalReachable of System {
+    EF state leader.Main.Operational
 }
 
-verification case LeaderStatechartStoppedReachable {
-    component system : System
-
-    property {
-        EF state leader.Main.Stopped
-    }
+verification case LeaderStatechartStoppedReachable of System {
+    EF state leader.Main.Stopped
 }
 
-verification case LeaderStatechartUnreachable {
-    component system : System
-
-    property {
-        AG not state leader.Main.Unreachable
-    }
+verification case LeaderStatechartUnreachable of System {
+    AG not state leader.Main.Unreachable
 }
 
-verification case WorkerStatechartIdleReachable {
-    component system : System
-
-    property {
-        EF state worker.Main.Idle
-    }
+verification case WorkerStatechartIdleReachable of System {
+    EF state worker.Main.Idle
 }
 
-verification case WorkerStatechartOperationalReachable {
-    component system : System
-
-    property {
-        EF state worker.Main.Operational
-    }
+verification case WorkerStatechartOperationalReachable of System {
+    EF state worker.Main.Operational
 }
 
-verification case WorkerStatechartStoppedReachable {
-    component system : System
-
-    property {
-        EF state worker.Main.Stopped
-    }
+verification case WorkerStatechartStoppedReachable of System {
+    EF state worker.Main.Stopped
 }
 
-verification case WorkerStatechartUnreachable {
-    component system : System
-
-    property {
-        AG not state worker.Main.Unreachable
-    }
+verification case WorkerStatechartUnreachable of System {
+    AG not state worker.Main.Unreachable
 }

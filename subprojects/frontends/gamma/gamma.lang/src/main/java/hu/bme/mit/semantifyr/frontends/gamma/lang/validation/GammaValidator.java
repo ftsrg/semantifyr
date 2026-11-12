@@ -33,9 +33,11 @@ public class GammaValidator extends AbstractGammaValidator {
     public static final String TIMEOUT_SET_TO_DIFFERENT_VALUES = "Gamma.TIMEOUT_SET_TO_DIFFERENT_VALUES";
     public static final String NON_POSITIVE_TIME = "Gamma.NON_POSITIVE_TIME";
     public static final String DUPLICATE_STATE_NAME = "Gamma.DUPLICATE_STATE_NAME";
+    public static final String DUPLICATE_TRANSITION_ID = "Gamma.DUPLICATE_TRANSITION_ID";
     public static final String INDISTINGUISHABLE_TRANSITIONS = "Gamma.INDISTINGUISHABLE_TRANSITIONS";
     public static final String INEFFECTIVE_PRIORITY = "Gamma.INEFFECTIVE_PRIORITY";
     public static final String INVALID_TRACE_EVENT = "Gamma.INVALID_TRACE_EVENT";
+    public static final String INNER_INPUT_EVENT = "Gamma.INNER_INPUT_EVENT";
     public static final String INVALID_TRACE_VALUE = "Gamma.INVALID_TRACE_VALUE";
     public static final String UNKNOWN_TRACE_TRANSITION = "Gamma.UNKNOWN_TRACE_TRANSITION";
     public static final String AMBIGUOUS_TRACE_TRANSITION = "Gamma.AMBIGUOUS_TRACE_TRANSITION";
@@ -243,6 +245,29 @@ public class GammaValidator extends AbstractGammaValidator {
     }
 
     @Check
+    public void checkTransitionIdUniqueness(StatechartDeclaration statechart) {
+        var transitions = new LinkedHashMap<String, List<Transition>>();
+        for (var transition : statechart.getTransitions()) {
+            if (transition.getName() != null) {
+                transitions.computeIfAbsent(transition.getName(), ignored -> new ArrayList<>())
+                        .add(transition);
+            }
+        }
+        for (var entry : transitions.entrySet()) {
+            if (entry.getValue().size() < 2) {
+                continue;
+            }
+            for (var transition : entry.getValue()) {
+                error(
+                        "Duplicate transition id '" + entry.getKey() + "' in statechart '" + statechart.getName() + "'",
+                        transition,
+                        GammaPackage.Literals.NAMED_ELEMENT__NAME,
+                        DUPLICATE_TRANSITION_ID);
+            }
+        }
+    }
+
+    @Check
     public void checkTransitionsDistinguishable(StatechartDeclaration statechart) {
         var transitions = statechart.getTransitions();
         for (var transition : transitions) {
@@ -267,13 +292,14 @@ public class GammaValidator extends AbstractGammaValidator {
     @Check
     public void checkPriorityHasEffect(Transition transition) {
         var statechart = EcoreUtil2.getContainerOfType(transition, StatechartDeclaration.class);
-        if (statechart == null || statechart.getTransitionPriority() != TransitionPriority.OFF) {
+        if (statechart == null || statechart.getTransitionPriority() == TransitionPriority.VALUE_BASED) {
             return;
         }
-        if (!NodeModelUtils.findNodesForFeature(transition, GammaPackage.Literals.TRANSITION__PRIORITY)
-                .isEmpty()) {
+        if (transition.getPriority() != 0) {
+            var setting = statechart.getTransitionPriority().getLiteral();
             warning(
-                    "The transition priority of '" + statechart.getName() + "' is off, so this priority has no effect",
+                    "The transition priority of '" + statechart.getName() + "' is " + setting
+                            + ", not value-based, so this priority has no effect",
                     transition,
                     GammaPackage.Literals.TRANSITION__PRIORITY,
                     INEFFECTIVE_PRIORITY);
@@ -288,7 +314,12 @@ public class GammaValidator extends AbstractGammaValidator {
             return;
         }
         if (raiseEventAct.eContainingFeature() == GammaPackage.Literals.STEP__ACTS) {
-            if (!GammaUtils.isInputEvent(port, event)) {
+            if (raiseEventAct.getInstance() != null) {
+                error(
+                        "An input is raised on a port of the traced component",
+                        GammaPackage.Literals.INSTANCE_ELEMENT_EXPRESSION__INSTANCE,
+                        INNER_INPUT_EVENT);
+            } else if (!GammaUtils.isInputEvent(port, event)) {
                 error(
                         "'" + event.getName() + "' is not an input event of port '" + port.getName() + "'",
                         GammaPackage.Literals.RAISE_EVENT_ACT__EVENT,

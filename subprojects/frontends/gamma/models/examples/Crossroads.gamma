@@ -145,252 +145,159 @@ sync CrossroadSystem [
 
 // CentralController verification cases
 
-verification case ControllerOperatingReachable {
-    component system : CrossroadSystem
-    property {
-        EF state controller.Main.Operating
-    }
+verification case ControllerOperatingReachable of CrossroadSystem {
+    EF state controller.Main.Operating
 }
 
-verification case ControllerOperatingBothYellowReachable {
-    component system : CrossroadSystem
-    property {
-        EF state controller.OperatingRegion.BothYellow
-    }
+verification case ControllerOperatingBothYellowReachable of CrossroadSystem {
+    EF state controller.OperatingRegion.BothYellow
 }
 
-verification case ControllerOperatingBothRedReachable {
-    component system : CrossroadSystem
-    property {
-        EF state controller.OperatingRegion.BothRed
-    }
+verification case ControllerOperatingBothRedReachable of CrossroadSystem {
+    EF state controller.OperatingRegion.BothRed
 }
 
-verification case ControllerOperatingStoppingAReachable {
-    component system : CrossroadSystem
-    property {
-        EF state controller.OperatingRegion.StoppingA
-    }
+verification case ControllerOperatingStoppingAReachable of CrossroadSystem {
+    EF state controller.OperatingRegion.StoppingA
 }
 
-verification case ControllerOperatingStoppingBReachable {
-    component system : CrossroadSystem
-    property {
-        EF state controller.OperatingRegion.StoppingB
-    }
+verification case ControllerOperatingStoppingBReachable of CrossroadSystem {
+    EF state controller.OperatingRegion.StoppingB
 }
 
-verification case ControllerOperatingTrafficOnAReachable {
-    component system : CrossroadSystem
-    property {
-        EF state controller.OperatingRegion.TrafficOnA
-    }
+verification case ControllerOperatingTrafficOnAReachable of CrossroadSystem {
+    EF state controller.OperatingRegion.TrafficOnA
 }
 
-verification case ControllerOperatingTrafficOnBReachable {
-    component system : CrossroadSystem
-    property {
-        EF state controller.OperatingRegion.TrafficOnB
-    }
+verification case ControllerOperatingTrafficOnBReachable of CrossroadSystem {
+    EF state controller.OperatingRegion.TrafficOnB
 }
 
-verification case ControllerInterruptedReachable {
-    component system : CrossroadSystem
-    property {
-        EF state controller.Main.Interrupted
-    }
+verification case ControllerInterruptedReachable of CrossroadSystem {
+    EF state controller.Main.Interrupted
 }
 
 // TrafficLightController A verification cases
 
-verification case ANormalReachable {
-    component system : CrossroadSystem
-    property {
-        EF state trafficLightA.Main.Normal
-    }
+verification case ANormalReachable of CrossroadSystem {
+    EF state trafficLightA.Main.Normal
 }
 
-verification case AInterruptedReachable {
-    component system : CrossroadSystem
-    property {
-        EF state trafficLightA.Main.Interrupted
-    }
+verification case AInterruptedReachable of CrossroadSystem {
+    EF state trafficLightA.Main.Interrupted
 }
 
-verification case ACanBeYellow {
-    component system : CrossroadSystem
-    property {
-        EF state trafficLightA.NormalRegion.Yellow
-    }
+verification case ACanBeYellow of CrossroadSystem {
+    EF state trafficLightA.NormalRegion.Yellow
 }
 
-verification case ACanBeRed {
-    component system : CrossroadSystem
-    property {
-        EF state trafficLightA.NormalRegion.Red
-    }
+verification case ACanBeRed of CrossroadSystem {
+    EF state trafficLightA.NormalRegion.Red
 }
 
-verification case ACanBeGreen {
-    component system : CrossroadSystem
-    property {
-        EF state trafficLightA.NormalRegion.Green
-    }
+verification case ACanBeGreen of CrossroadSystem {
+    EF state trafficLightA.NormalRegion.Green
 }
 
-verification case ACanBeBlinkingYellow {
-    component system : CrossroadSystem
-    property {
-        EF state trafficLightA.InterruptedRegion.BlinkingYellow
-    }
+verification case ACanBeBlinkingYellow of CrossroadSystem {
+    EF state trafficLightA.InterruptedRegion.BlinkingYellow
 }
 
-verification case ACanBeBlinkingBlack {
-    component system : CrossroadSystem
-    property {
-        EF state trafficLightA.InterruptedRegion.Black
-    }
+verification case ACanBeBlinkingBlack of CrossroadSystem {
+    EF state trafficLightA.InterruptedRegion.Black
 }
 
 // TrafficLightController B verification cases
 
-verification case BNormalReachable {
-    component system : CrossroadSystem
-    property {
-        EF state trafficLightB.Main.Normal
-    }
+verification case BNormalReachable of CrossroadSystem {
+    EF state trafficLightB.Main.Normal
 }
 
-verification case BInterruptedReachable {
-    component system : CrossroadSystem
-    property {
-        EF state trafficLightB.Main.Interrupted
-    }
+verification case BInterruptedReachable of CrossroadSystem {
+    EF state trafficLightB.Main.Interrupted
 }
 
-verification case BCanBeYellow {
-    component system : CrossroadSystem
-    property {
-        EF state trafficLightB.NormalRegion.Yellow
-    }
+verification case BCanBeYellow of CrossroadSystem {
+    EF state trafficLightB.NormalRegion.Yellow
 }
 
-verification case BCanBeRed {
-    component system : CrossroadSystem
-    property {
-        EF state trafficLightB.NormalRegion.Red
-    }
+verification case BCanBeRed of CrossroadSystem {
+    EF state trafficLightB.NormalRegion.Red
 }
 
-verification case BCanBeGreen {
-    component system : CrossroadSystem
-    property {
-        EF state trafficLightB.NormalRegion.Green
-    }
+verification case BCanBeGreen of CrossroadSystem {
+    EF state trafficLightB.NormalRegion.Green
 }
 
-verification case BCanBeBlinkingYellow {
-    component system : CrossroadSystem
-    property {
-        EF state trafficLightB.InterruptedRegion.BlinkingYellow
-    }
+verification case BCanBeBlinkingYellow of CrossroadSystem {
+    EF state trafficLightB.InterruptedRegion.BlinkingYellow
 }
 
-verification case BCanBeBlinkingBlack {
-    component system : CrossroadSystem
-    property {
-        EF state trafficLightB.InterruptedRegion.Black
-    }
+verification case BCanBeBlinkingBlack of CrossroadSystem {
+    EF state trafficLightB.InterruptedRegion.Black
 }
 
 // Combined safety verification cases
 
-verification case ReachableRedRed {
-    component system : CrossroadSystem
-    property { 
-        EF (
-            state trafficLightA.NormalRegion.Red 
-            and state trafficLightB.NormalRegion.Red 
-        )
-    }
+verification case ReachableRedRed of CrossroadSystem {
+    EF (
+        state trafficLightA.NormalRegion.Red
+        and state trafficLightB.NormalRegion.Red
+    )
 }
 
-verification case ReachableRedGreen {
-    component system : CrossroadSystem
-    property { 
-        EF (
-            state trafficLightA.NormalRegion.Red 
-            and state trafficLightB.NormalRegion.Green 
-        )
-    }
+verification case ReachableRedGreen of CrossroadSystem {
+    EF (
+        state trafficLightA.NormalRegion.Red
+        and state trafficLightB.NormalRegion.Green
+    )
 }
 
-verification case ReachableRedYellow {
-    component system : CrossroadSystem
-    property { 
-        EF (
-            state trafficLightA.NormalRegion.Red 
-            and state trafficLightB.NormalRegion.Yellow 
-        )
-    }
+verification case ReachableRedYellow of CrossroadSystem {
+    EF (
+        state trafficLightA.NormalRegion.Red
+        and state trafficLightB.NormalRegion.Yellow
+    )
 }
 
-verification case ReachableGreenRed {
-    component system : CrossroadSystem
-    property { 
-        EF (
-            state trafficLightA.NormalRegion.Green 
-            and state trafficLightB.NormalRegion.Red 
-        )
-    }
+verification case ReachableGreenRed of CrossroadSystem {
+    EF (
+        state trafficLightA.NormalRegion.Green
+        and state trafficLightB.NormalRegion.Red
+    )
 }
 
-verification case UnreachableGreenGreen {
-    component system : CrossroadSystem
-    property { 
-        AG not (
-            state trafficLightA.NormalRegion.Green 
-            and state trafficLightB.NormalRegion.Green 
-        )
-    }
+verification case UnreachableGreenGreen of CrossroadSystem {
+    AG not (
+        state trafficLightA.NormalRegion.Green
+        and state trafficLightB.NormalRegion.Green
+    )
 }
 
-verification case UnreachableGreenYellow {
-    component system : CrossroadSystem
-    property { 
-        AG not (
-            state trafficLightA.NormalRegion.Green 
-            and state trafficLightB.NormalRegion.Yellow 
-        )
-    }
+verification case UnreachableGreenYellow of CrossroadSystem {
+    AG not (
+        state trafficLightA.NormalRegion.Green
+        and state trafficLightB.NormalRegion.Yellow
+    )
 }
 
-verification case ReachableYellowRed {
-    component system : CrossroadSystem
-    property { 
-        EF (
-            state trafficLightA.NormalRegion.Yellow 
-            and state trafficLightB.NormalRegion.Red 
-        )
-    }
+verification case ReachableYellowRed of CrossroadSystem {
+    EF (
+        state trafficLightA.NormalRegion.Yellow
+        and state trafficLightB.NormalRegion.Red
+    )
 }
 
-verification case UnreachableYellowGreen {
-    component system : CrossroadSystem
-    property {
-        AG not (
-            state trafficLightA.NormalRegion.Yellow
-            and state trafficLightB.NormalRegion.Green
-        )
-    }
+verification case UnreachableYellowGreen of CrossroadSystem {
+    AG not (
+    state trafficLightA.NormalRegion.Yellow
+    and state trafficLightB.NormalRegion.Green
+    )
 }
 
-verification case ReachableYellowYellow {
-    component system : CrossroadSystem
-    property { 
-        EF (
-            state trafficLightA.NormalRegion.Yellow 
-            and state trafficLightB.NormalRegion.Yellow 
-        )
-    }
+verification case ReachableYellowYellow of CrossroadSystem {
+    EF (
+        state trafficLightA.NormalRegion.Yellow
+        and state trafficLightB.NormalRegion.Yellow
+    )
 }

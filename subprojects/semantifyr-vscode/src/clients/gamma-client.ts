@@ -31,7 +31,7 @@ export async function startGammaClient(context: ExtensionContext, witnesses: Wit
 
     const gammaTestController = new VerificationTestController(client, {
         languageId: 'gamma',
-        fileGlob: '**/*.gamma',
+        fileGlob: '**/*.{gamma,gcd}',
         controllerId: 'gamma.verification',
         controllerLabel: 'Gamma Verification Cases',
         discoverCommand: 'gamma.case.discover',

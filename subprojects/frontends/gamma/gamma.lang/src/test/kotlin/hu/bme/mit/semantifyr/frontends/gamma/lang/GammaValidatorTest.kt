@@ -121,11 +121,29 @@ class GammaValidatorTest {
     }
 
     @Test
-    fun `a priority has no effect under priority off`() {
+    fun `transition ids are unique within a statechart`() {
+        val model = statechart(
+            """
+                @(First)
+                transition from Idle to Busy when control.start
+                @(First)
+                transition from Busy to Idle when control.start
+            """,
+        )
+
+        validationTestHelper.assertError(model, GammaPackage.Literals.TRANSITION, GammaValidator.DUPLICATE_TRANSITION_ID)
+    }
+
+    @Test
+    fun `a non-zero priority has an effect only under value-based priority`() {
         val off = statechart("transition (2) from Idle to Busy when control.start")
+        val orderBased = statechart("transition (2) from Idle to Busy when control.start", annotation = "@TransitionPriority = order-based")
+        val zero = statechart("transition (0) from Idle to Busy when control.start")
         val valueBased = statechart("transition (2) from Idle to Busy when control.start", annotation = "@TransitionPriority = value-based")
 
         validationTestHelper.assertWarning(off, GammaPackage.Literals.TRANSITION, GammaValidator.INEFFECTIVE_PRIORITY)
+        validationTestHelper.assertWarning(orderBased, GammaPackage.Literals.TRANSITION, GammaValidator.INEFFECTIVE_PRIORITY)
+        validationTestHelper.assertNoIssue(zero, GammaPackage.Literals.TRANSITION, GammaValidator.INEFFECTIVE_PRIORITY)
         validationTestHelper.assertNoIssue(valueBased, GammaPackage.Literals.TRANSITION, GammaValidator.INEFFECTIVE_PRIORITY)
     }
 

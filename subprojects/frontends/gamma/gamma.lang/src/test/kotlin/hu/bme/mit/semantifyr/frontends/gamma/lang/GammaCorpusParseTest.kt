@@ -13,8 +13,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.emf.common.util.URI
 import org.eclipse.xtext.EcoreUtil2
 import org.eclipse.xtext.diagnostics.Severity
-import org.eclipse.xtext.resource.IResourceFactory
-import org.eclipse.xtext.resource.IResourceServiceProvider
 import org.eclipse.xtext.resource.XtextResource
 import org.eclipse.xtext.resource.XtextResourceSet
 import org.eclipse.xtext.util.CancelIndicator
@@ -34,17 +32,9 @@ class GammaCorpusParseTest {
     @Inject
     private lateinit var resourceSetProvider: Provider<XtextResourceSet>
 
-    @Inject
-    private lateinit var resourceFactory: IResourceFactory
-
-    @Inject
-    private lateinit var resourceServiceProvider: IResourceServiceProvider
-
     @Test
     fun `every in-set corpus file parses, links and validates without errors`() {
-        IResourceServiceProvider.Registry.INSTANCE.extensionToFactoryMap[GAMMA_EXTENSION] = resourceServiceProvider
         val resourceSet = resourceSetProvider.get()
-        resourceSet.resourceFactoryRegistry.extensionToFactoryMap[GAMMA_EXTENSION] = resourceFactory
         val files = Files.walk(CORPUS).use { paths ->
             paths.filter {
                 it.extension == GAMMA_EXTENSION

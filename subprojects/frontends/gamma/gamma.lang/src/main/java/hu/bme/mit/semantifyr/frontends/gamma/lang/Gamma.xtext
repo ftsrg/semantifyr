@@ -276,9 +276,8 @@ AssignableExpression returns Expression:
 ;
 
 VerificationCaseDeclaration:
-    'verification' 'case' name=ID '{'
-        component=ComponentInstance
-        'property' '{' expression=PropertyExpression '}'
+    'verification' 'case' name=ID 'of' component=[ComponentDeclaration] '{'
+        expression=PropertyExpression
     '}'
 ;
 
@@ -315,7 +314,11 @@ TimeElapseAct:
 ;
 
 RaiseEventAct:
-    'raise' port=[PortDeclaration] '.' event=[EventDeclaration]
+    'raise'
+    (
+        => (instance=ComponentInstanceReference '.' port=[PortDeclaration] '.' event=[EventDeclaration])
+        | port=[PortDeclaration] '.' event=[EventDeclaration]
+    )
     ('(' (arguments+=Expression (',' arguments+=Expression)*)? ')')?
 ;
 
@@ -462,17 +465,32 @@ ComponentInstanceReference:
 ;
 
 StateReferenceExpression:
-    'state' (instance=ComponentInstanceReference | 'self') '.' region=[Region] '.' state=[State]
+    'state'
+    (
+        => (instance=ComponentInstanceReference '.' region=[Region] '.' state=[State])
+        | region=[Region] '.' state=[State]
+    )
 ;
 
 VariableReferenceExpression:
-    'variable' (instance=ComponentInstanceReference | 'self') '.' variable=[VariableDeclaration]
+    'variable'
+    (
+        => (instance=ComponentInstanceReference '.' variable=[VariableDeclaration])
+        | variable=[VariableDeclaration]
+    )
 ;
 
 FiredTransitionExpression:
-    'transition' (instance=ComponentInstanceReference | 'self')
+    'transition'
     (
-        '.' transition=[Transition]
+        => (
+            instance=ComponentInstanceReference
+            (
+                '.' transition=[Transition]
+                | 'from' from=[State] 'to' to=[State] ('when' trigger=Trigger)?
+            )
+        )
+        | transition=[Transition]
         | 'from' from=[State] 'to' to=[State] ('when' trigger=Trigger)?
     )
 ;

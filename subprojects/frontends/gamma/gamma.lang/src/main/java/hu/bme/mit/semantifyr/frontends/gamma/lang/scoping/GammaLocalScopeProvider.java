@@ -112,10 +112,6 @@ public class GammaLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
             return scopeFor(componentDeclaration.eContents(), reference, containerScope);
         }
 
-        if (context instanceof VerificationCaseDeclaration verificationCaseDeclaration) {
-            return scopeFor(verificationCaseDeclaration.eContents(), reference, containerScope);
-        }
-
         return containerScope;
     }
 

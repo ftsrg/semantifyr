@@ -95,10 +95,10 @@ public class GammaUtils {
             }
             verificationCase = executionTrace.getVerificationCase();
         }
-        if (verificationCase == null || verificationCase.eIsProxy() || verificationCase.getComponent() == null) {
+        if (verificationCase == null || verificationCase.eIsProxy()) {
             return null;
         }
-        return resolved(verificationCase.getComponent().getComponent());
+        return resolved(verificationCase.getComponent());
     }
 
     public static ComponentDeclaration getReferencedComponent(InstanceElementExpression expression) {

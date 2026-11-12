@@ -88,16 +88,10 @@ sync LevelCrossing [
     channel [ controller.barrier ] -o)- [ barrier.controller ]
 }
 
-verification case BarrierDownWhileTrainInCrossing {
-    component system : LevelCrossing
-    property {
-        AG ((not state trackA.Main.InCrossing and not state trackB.Main.InCrossing) or state barrier.Main.Down)
-    }
+verification case BarrierDownWhileTrainInCrossing of LevelCrossing {
+    AG ((not state trackA.Main.InCrossing and not state trackB.Main.InCrossing) or state barrier.Main.Down)
 }
 
-verification case TwoTrainsCanBeInTheCrossing {
-    component system : LevelCrossing
-    property {
-        EF (state trackA.Main.InCrossing and state trackB.Main.InCrossing)
-    }
+verification case TwoTrainsCanBeInTheCrossing of LevelCrossing {
+    EF (state trackA.Main.InCrossing and state trackB.Main.InCrossing)
 }
