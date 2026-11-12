@@ -12,7 +12,7 @@ Semantifyr verifies a SysML v2 model against its SysML v2 semantic library, an a
 
 - **Selection**: the standard admits several runs and the library keeps some of them.
 - **Scope**: the construct is outside the subset.
-- **Contradiction**: the library admits a run the standard excludes. There are exactly two, listed [below](#declared-contradictions).
+- **Contradiction**: the library admits a run the standard excludes. There is exactly one, stated [below](#declared-contradiction).
 
 Each assumption below names its kind and its enforcement today: a diagnostic of the translator, the library itself, or a convention the model has to keep.
 
@@ -64,19 +64,16 @@ Initialization builds the part tree, sets the initial values of the attributes a
 
 ### Time
 
-- Time is discrete, one tick per step. `after d` fires `d` after its source state was entered: the tick is the largest duration in seconds, minutes, hours or days that divides every `after` duration of the model, one second when it has none, and `d` a count of ticks. `at` and non-literal durations are scope. `when c` is enabled in every step its condition holds, a declared contradiction.
+- Time is discrete, one tick per step. `after d` fires `d` after its source state was entered: the tick is the largest duration in seconds, minutes, hours or days that divides every `after` duration of the model, one second when it has none, and `d` a count of ticks. `at` and non-literal durations are scope. `when c` is enabled in every step its condition holds. The standard sends its change signal when `c` turns from false to true, or at once when `c` holds at its first evaluation, and the signal stays acceptable until the source state is left, so the library fires only where a signal is pending and drops the runs that fire after `c` has turned false again. Selection. Library.
 
 ### Verification
 
 - The verified part is closed: the environment may put any item on any of its ports in every step. `mustAlways` holds when the condition holds in every reachable state between steps; `eventually` passes when one run reaches the condition, under some choice of the environment. Selection.
 - A requirement holds one `require constraint` and a verification case verifies one requirement; a case without `verify` checks its objective's own `require constraint`. `assume`, `assert constraint` in a part and a second `require` or `verify` are scope; `assume`, a second `require` or `verify`, an objective with both its own `require` and a `verify`, and a temporal operator below the root of a constraint, negations aside, are diagnostics; a constraint without a temporal operator is read as `mustAlways`.
 
-## Declared Contradictions
+## Declared Contradiction
 
-The library admits two kinds of runs the standard excludes:
-
-- `accept when c` is level-triggered: it is enabled in every step its condition holds, where the standard's change trigger fires only when the condition changes from false to true.
-- An item of another type crosses a `flow of X`, where in SysML v2 the flow carries `X` and its specializations only, since ports and flows are untyped.
+The library admits one kind of run the standard excludes: an item of another type crosses a `flow of X`, where in SysML v2 the flow carries `X` and its specializations only, since ports and flows are untyped.
 
 ## The Dropped Item
 
@@ -93,6 +90,10 @@ An item definition may specialize another with `:>`, and the translator accepts 
 - `fifo`: every port queues its arrived items in arrival order across steps and state changes until a transition accepts the oldest one, up to two items per port; an item arriving at a full port is dropped and the port keeps two. This departs from the standard under its defaults, `isTriggerDuring` and `isDispatch` true, which admit it only when a model sets them false; it follows Gamma's queue semantics.
 
 The frontend selects a variant for a whole model; the `semantifyr-sysml` command line verifies with `default`.
+
+## What a Verdict Covers
+
+A selection narrows the runs a verdict ranges over. A passed `mustAlways` and a failed `eventually` hold over the runs the library keeps, and a run the standard admits outside them may break them; a passed `eventually` and a failed `mustAlways` hold under the standard as well, since every run the library keeps is one the standard admits within the subset. For example, `mustAlways(not isStateActive(S) or entered)`, where the entry action of `S` sets `entered`, passes because the entry action completes in the step that activates `S`; the standard has `S` active while its entry action runs, and that run breaks the invariant.
 
 ## Constructs
 
