@@ -23,14 +23,13 @@ function watchInput(): void {
     return
   }
   watching = true
+  // not any-pointer: a phone's pen digitizer reports a fine pointer among any
   const coarse = window.matchMedia('(pointer: coarse)')
-  const fine = window.matchMedia('(any-pointer: fine)')
   const detect = (): void => {
-    touchOnly.set(coarse.matches && !fine.matches)
+    touchOnly.set(coarse.matches)
   }
   detect()
   coarse.addEventListener('change', detect)
-  fine.addEventListener('change', detect)
   window.addEventListener('pointermove', (event) => {
     if (event.pointerType === 'mouse') {
       touchOnly.set(false)
@@ -41,6 +40,14 @@ function watchInput(): void {
 export function touchInput(): ReadableStore<boolean> {
   watchInput()
   return touchOnly
+}
+
+// an on-screen keyboard is up only over an element that takes text
+function takesText(target: EventTarget | null): boolean {
+  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+    return !target.readOnly
+  }
+  return target instanceof HTMLElement && (target.isContentEditable || (target as { editContext?: unknown }).editContext != null)
 }
 
 const LOCKS = new WeakMap<ShellState, ReadableStore<boolean>>()
@@ -55,9 +62,9 @@ export function modelLockOf(shell: ShellState): ReadableStore<boolean> {
   const locked = (): boolean => {
     return touchOnly.get() && !shell.editing.get()
   }
-  // no on-screen keyboard is up while the model is locked, so a key then comes from a hardware keyboard
+  // the locked model takes no text, so a named key outside every field that does comes from a hardware keyboard
   const keyPressed = (event: KeyboardEvent): void => {
-    if (locked() && event.key !== 'Unidentified' && event.key !== 'Process') {
+    if (locked() && event.key !== 'Unidentified' && event.key !== 'Process' && !takesText(event.target)) {
       touchOnly.set(false)
     }
   }

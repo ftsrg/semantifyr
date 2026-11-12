@@ -22,6 +22,18 @@ function phone(page: Page) {
   }
 }
 
+// Playwright cannot emulate any-pointer; a Samsung phone's pen digitizer reports a fine pointer among any
+function penDigitizer(): void {
+  const matchMedia = window.matchMedia.bind(window)
+  window.matchMedia = (query) => {
+    const list = matchMedia(query)
+    if (query === '(any-pointer: fine)') {
+      Object.defineProperty(list, 'matches', { value: true })
+    }
+    return list
+  }
+}
+
 async function ready(page: Page): Promise<void> {
   await expect.poll(async () => {
     return phone(page).lines.innerText()
@@ -75,6 +87,7 @@ describe('the phone', () => {
 describe('touch input', () => {
   for (const [shell, viewport] of [
     ['phone', PHONE],
+    ['phone with a pen', { ...PHONE, before: penDigitizer }],
     ['tablet', { width: 1024, height: 768, touch: true }],
   ] as const) {
     test(`locks the model of the ${shell} until Edit is pressed, and again when Done`, async ({ ui }) => {

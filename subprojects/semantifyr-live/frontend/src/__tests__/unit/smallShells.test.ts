@@ -22,14 +22,14 @@ describe('the address and the width choose the shell', () => {
 })
 
 describe('on touch input the model is read-only until the edit control is pressed', () => {
-  // a phone: a coarse pointer and no fine one
+  // a phone whose pen digitizer reports a fine pointer among any
   beforeAll(() => {
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
       writable: true,
       value: (query: string) => {
         return {
-          matches: query === '(pointer: coarse)',
+          matches: query === '(pointer: coarse)' || query === '(any-pointer: fine)',
           addEventListener: () => {},
           removeEventListener: () => {},
         }
@@ -51,6 +51,22 @@ describe('on touch input the model is read-only until the edit control is presse
     unsubscribe()
   })
 
+  it('keeps the model locked under a pen and under keys typed into a field', async () => {
+    const { modelLockOf } = await import('../../shells/touch')
+    const shell = createShellState()
+    const lock = modelLockOf(shell)
+    const unsubscribe = lock.subscribe(() => {})
+    window.dispatchEvent(Object.assign(new Event('pointermove'), { pointerType: 'pen' }))
+    expect(lock.get(), 'a pen is no mouse').toBe(true)
+    for (const field of [document.createElement('input'), document.createElement('textarea')]) {
+      document.body.append(field)
+      field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+      field.remove()
+    }
+    expect(lock.get(), 'an on-screen keyboard names Enter in a field').toBe(true)
+    unsubscribe()
+  })
+
   it('edits at once once a hardware keyboard or a mouse shows itself', async () => {
     const { modelLockOf, touchInput } = await import('../../shells/touch')
     const shell = createShellState()
@@ -59,8 +75,12 @@ describe('on touch input the model is read-only until the edit control is presse
     expect(lock.get()).toBe(true)
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Unidentified' }))
     expect(lock.get(), 'an on-screen keyboard names no key').toBe(true)
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'a' }))
-    expect(lock.get()).toBe(false)
+    const lockedTextArea = document.createElement('textarea')
+    lockedTextArea.readOnly = true
+    document.body.append(lockedTextArea)
+    lockedTextArea.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true }))
+    lockedTextArea.remove()
+    expect(lock.get(), 'no on-screen keyboard opens over the locked model').toBe(false)
     expect(touchInput().get()).toBe(false)
     unsubscribe()
   })
