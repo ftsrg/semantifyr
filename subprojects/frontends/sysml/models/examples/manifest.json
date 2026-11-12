@@ -72,7 +72,21 @@
                 { "name": "InitSendArrivesTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
                 { "name": "UnacceptedItemIsDroppedTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
                 { "name": "ObjectiveConstraintReachableTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
-                { "name": "ObjectiveConstraintCheckedViolated", "verdict": "Failed", "tier": "Integration", "engines": ["theta"] }
+                { "name": "ObjectiveConstraintCheckedViolated", "verdict": "Failed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "ExhibitedStateActiveUntilDoneTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "ExhibitedStateInactiveAfterDoneTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "ExhibitedStateReachesDoneTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "ExhibitedStateStaysActiveViolated", "verdict": "Failed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "CrossRegionEntryReachesTargetTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "CrossRegionEntryEntersSiblingRegionTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "CrossRegionEntryRunsEntriesInOrderTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "CrossRegionEntryInitialDescentViolated", "verdict": "Failed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "DerivedAttributeFollowsItsExpressionTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "DerivedAttributeChangesTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "DerivedAttributeConstantViolated", "verdict": "Failed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "UnvaluedAttributeMayStartAboveZeroTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "UnvaluedAttributeMayStartBelowZeroTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "InitialValueHoldsViolated", "verdict": "Failed", "tier": "Integration", "engines": ["theta"] }
             ]
         },
         {

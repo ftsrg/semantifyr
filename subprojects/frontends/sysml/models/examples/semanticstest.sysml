@@ -17,7 +17,7 @@ port def PortMOut { out item m : MessageM; }
 // Verifies that a state's entry action fires when the state is activated.
 
 part def EntryActionModel {
-    attribute entered : Boolean default false;
+    attribute entered : Boolean := false;
 
     exhibit state Behaviour {
         state S1 {
@@ -50,7 +50,7 @@ verification def EntryFlagAlwaysSetWhileStateIsActiveTestCase {
 // Verifies that a state's exit action fires when the state is left.
 
 part def ExitActionModel {
-    attribute exited : Boolean default false;
+    attribute exited : Boolean := false;
     port input : PortE;
 
     exhibit state Behaviour {
@@ -86,7 +86,7 @@ verification def ExitFlagAlwaysSetWhenSuccessorIsActiveTestCase {
 // Verifies that a transition's do-action fires when the transition is taken.
 
 part def TransitionDoActionModel {
-    attribute actionFired : Boolean default false;
+    attribute actionFired : Boolean := false;
     port input : PortE;
 
     exhibit state Behaviour {
@@ -157,7 +157,7 @@ verification def CompositeActiveAlwaysImpliesSubstateActiveTestCase {
 // and reaches the target state, even when the active inner state has no own transitions.
 
 part def HierarchicalExitModel {
-    attribute outerExited : Boolean default false;
+    attribute outerExited : Boolean := false;
     port input : PortE;
 
     exhibit state Behaviour {
@@ -205,8 +205,8 @@ verification def ExitActionAlwaysFiredWhenDoneIsActiveTestCase {
 // transition and an enclosing transition accept the same event, the inner one fires.
 
 part def TransitionPriorityModel {
-    attribute innerFired : Boolean default false;
-    attribute outerFired : Boolean default false;
+    attribute innerFired : Boolean := false;
+    attribute outerFired : Boolean := false;
     port input : PortE;
 
     exhibit state Behaviour {
@@ -385,7 +385,7 @@ verification def WaitingAndDoneAreMutuallyExclusiveTestCase {
 // Uses a self-transition loop to increment a counter until the exit guard is satisfied.
 
 part def GuardedTransitionModel {
-    attribute counter : Integer default 0;
+    attribute counter : Integer := 0;
 
     exhibit state Behaviour {
         state Counting;
@@ -448,7 +448,7 @@ part def SenderPartModel {
 }
 
 part def ReceiverPartModel {
-    attribute received : Boolean default false;
+    attribute received : Boolean := false;
     port input : ~PortMOut;
     exhibit state Behaviour {
         state Idle;
@@ -502,10 +502,10 @@ verification def ReceivedFlagAlwaysSetWhenGotIsActiveTestCase {
 // target state is correctly activated.
 
 part def CrossHierarchyTransitionModel {
-    attribute middleExited : Boolean default false;
-    attribute outerExited : Boolean default false;
-    attribute otherEntered : Boolean default false;
-    attribute deepEntered : Boolean default false;
+    attribute middleExited : Boolean := false;
+    attribute outerExited : Boolean := false;
+    attribute otherEntered : Boolean := false;
+    attribute deepEntered : Boolean := false;
     port input : PortE;
 
     exhibit state Behaviour {
@@ -593,10 +593,10 @@ verification def OuterAndOtherAreMutuallyExclusiveTestCase {
 // on each ancestor up to (but not including) the commonState.
 
 part def ExitActionOrderModel {
-    attribute step : Integer default 0;
-    attribute innerExitStep : Integer default 0;
-    attribute middleExitStep : Integer default 0;
-    attribute outerExitStep : Integer default 0;
+    attribute step : Integer := 0;
+    attribute innerExitStep : Integer := 0;
+    attribute middleExitStep : Integer := 0;
+    attribute outerExitStep : Integer := 0;
     port input : PortE;
 
     exhibit state Behaviour {
@@ -662,10 +662,10 @@ verification def OuterNeverExitsBeforeMiddleTestCase {
 // way back DOWN. activateRecursive() then fires the start transition into the next level.
 
 part def EntryActionOrderModel {
-    attribute step : Integer default 0;
-    attribute targetEntryStep : Integer default 0;
-    attribute middleEntryStep : Integer default 0;
-    attribute innerEntryStep : Integer default 0;
+    attribute step : Integer := 0;
+    attribute targetEntryStep : Integer := 0;
+    attribute middleEntryStep : Integer := 0;
+    attribute innerEntryStep : Integer := 0;
     port input : PortE;
 
     exhibit state Behaviour {
@@ -857,7 +857,7 @@ verification def DoneAndNestedParallelSubstatesAreMutuallyExclusiveTestCase {
 // fires without any external event or timeout, executing its do-action.
 
 part def SpontaneousTransitionModel {
-    attribute transitioned : Boolean default false;
+    attribute transitioned : Boolean := false;
 
     exhibit state Behaviour {
         state S1;
@@ -908,7 +908,7 @@ verification def SpontaneousDoActionAlwaysFiredWhenTargetIsActiveTestCase {
 // counter reaches 3, an `accept when counter >= 3` transition exits.
 
 part def GuardedSpontaneousTransitionModel {
-    attribute counter : Integer default 0;
+    attribute counter : Integer := 0;
 
     exhibit state Behaviour {
         state Incrementing;
@@ -960,7 +960,7 @@ verification def GuardedSpontaneousDoneNotReachableBeforeThresholdTestCase {
 // A transition from a state inside one region of a parallel state to a state outside it leaves the whole parallel state, as the keep-alive timeouts of orion_protocol do.
 
 part def ParallelStateRegionExitModel {
-    attribute parallelExited : Boolean default false;
+    attribute parallelExited : Boolean := false;
     port input : PortE;
 
     exhibit state Behaviour {
@@ -1005,8 +1005,8 @@ verification def RegionTransitionLeavesEveryRegionTestCase {
 // Leaving a parallel state fires the exit actions of its regions, and leaving a state fires no exit action of a parallel substate that is not active.
 
 part def ParallelRegionExitActionModel {
-    attribute regionExited : Boolean default false;
-    attribute idleExited : Boolean default false;
+    attribute regionExited : Boolean := false;
+    attribute idleExited : Boolean := false;
     port input : PortE;
 
     exhibit state Behaviour {
@@ -1062,7 +1062,7 @@ verification def InactiveParallelStateExitActionNeverFiresTestCase {
 // The exhibited state is entered when its part starts, so its own entry action fires before its initial substate is entered.
 
 part def ExhibitedStateEntryActionModel {
-    attribute entered : Boolean default false;
+    attribute entered : Boolean := false;
 
     exhibit state Behaviour {
         entry action { assign entered := true; }
@@ -1090,7 +1090,7 @@ verification def ExhibitedStateEntryActionPrecedesSubstateTestCase {
 }
 
 part def ParallelExitOrderModel {
-    attribute order : Integer default 0;
+    attribute order : Integer := 0;
     port input : PortE;
 
     exhibit state Behaviour {
@@ -1142,7 +1142,7 @@ verification def ParallelExitRunsExitsBeforeEffectTestCase {
 }
 
 part def RegionEntryActionModel {
-    attribute regionEntered : Boolean default false;
+    attribute regionEntered : Boolean := false;
 
     exhibit state Behaviour {
         state Running parallel {
@@ -1287,5 +1287,189 @@ verification def ObjectiveConstraintCheckedViolated {
     subject system : EntryActionModel;
     objective {
         require constraint { mustAlways(system.entered == false) }
+    }
+}
+
+part def ExhibitedDoneModel {
+    port input : PortE;
+    attribute finished : Boolean := false;
+
+    exhibit state Behaviour {
+        entry; then Running;
+        state Running;
+        transition first Running accept : EventE via input do assign finished := true then done;
+    }
+}
+
+verification def ExhibitedStateActiveUntilDoneTestCase {
+    subject system : ExhibitedDoneModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(system.finished or isStateActive(system.Behaviour)) }
+        }
+    }
+}
+
+verification def ExhibitedStateInactiveAfterDoneTestCase {
+    subject system : ExhibitedDoneModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not system.finished or not isStateActive(system.Behaviour)) }
+        }
+    }
+}
+
+verification def ExhibitedStateReachesDoneTestCase {
+    subject system : ExhibitedDoneModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(isStateActive(system.Behaviour) == false) }
+        }
+    }
+}
+
+verification def ExhibitedStateStaysActiveViolated {
+    subject system : ExhibitedDoneModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(isStateActive(system.Behaviour)) }
+        }
+    }
+}
+
+part def CrossRegionEntryModel {
+    port input : PortE;
+    attribute order : Integer := 0;
+
+    exhibit state Behaviour {
+        entry; then Idle;
+        state Idle;
+        state Running parallel {
+            entry assign order := order * 10 + 1;
+            state Left {
+                entry assign order := order * 10 + 4;
+                transition first start then Initial;
+                state Initial {
+                    entry assign order := order * 10 + 9;
+                }
+                state Target {
+                    entry assign order := order * 10 + 5;
+                }
+            }
+            state Right {
+                entry assign order := order * 10 + 2;
+                transition first start then Sibling;
+                state Sibling {
+                    entry assign order := order * 10 + 3;
+                }
+            }
+        }
+        transition first Idle accept : EventE via input then Running.Left.Target;
+    }
+}
+
+verification def CrossRegionEntryReachesTargetTestCase {
+    subject system : CrossRegionEntryModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(isStateActive(system.Behaviour.Running.Left.Target)) }
+        }
+    }
+}
+
+verification def CrossRegionEntryEntersSiblingRegionTestCase {
+    subject system : CrossRegionEntryModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not isStateActive(system.Behaviour.Running.Left.Target) or isStateActive(system.Behaviour.Running.Right.Sibling)) }
+        }
+    }
+}
+
+verification def CrossRegionEntryRunsEntriesInOrderTestCase {
+    subject system : CrossRegionEntryModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not isStateActive(system.Behaviour.Running.Left.Target) or system.order == 12345) }
+        }
+    }
+}
+
+verification def CrossRegionEntryInitialDescentViolated {
+    subject system : CrossRegionEntryModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not isStateActive(system.Behaviour.Running.Left.Target) or system.order == 12495) }
+        }
+    }
+}
+
+part def DerivedAttributeModel {
+    attribute counter : Integer := 0;
+    attribute doubled : Integer = counter * 2;
+
+    exhibit state Behaviour {
+        entry; then Counting;
+        state Counting;
+        transition first Counting if counter < 3 do assign counter := counter + 1 then Counting;
+    }
+}
+
+verification def DerivedAttributeFollowsItsExpressionTestCase {
+    subject system : DerivedAttributeModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(system.doubled == system.counter * 2) }
+        }
+    }
+}
+
+verification def DerivedAttributeChangesTestCase {
+    subject system : DerivedAttributeModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(system.doubled == 6) }
+        }
+    }
+}
+
+verification def DerivedAttributeConstantViolated {
+    subject system : DerivedAttributeModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(system.doubled == 0) }
+        }
+    }
+}
+
+part def UnvaluedAttributeModel {
+    attribute level : Integer;
+    attribute initial : Integer := 7;
+}
+
+verification def UnvaluedAttributeMayStartAboveZeroTestCase {
+    subject system : UnvaluedAttributeModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(system.level > 0) }
+        }
+    }
+}
+
+verification def UnvaluedAttributeMayStartBelowZeroTestCase {
+    subject system : UnvaluedAttributeModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(system.level < 0) }
+        }
+    }
+}
+
+verification def InitialValueHoldsViolated {
+    subject system : UnvaluedAttributeModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(system.initial == 8) }
+        }
     }
 }

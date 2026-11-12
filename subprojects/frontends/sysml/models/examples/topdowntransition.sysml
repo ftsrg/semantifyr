@@ -11,8 +11,8 @@ port def VarPortE { in item e : VarEventE; }
 port def VarPortF { in item f : VarEventF; }
 
 part def TransitionPriorityTopDownModel {
-    attribute innerFired : Boolean default false;
-    attribute outerFired : Boolean default false;
+    attribute innerFired : Boolean := false;
+    attribute outerFired : Boolean := false;
     port input : VarPortE;
 
     exhibit state Behaviour {
