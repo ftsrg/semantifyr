@@ -76,6 +76,7 @@
                 { "name": "ExhibitedStateActiveUntilDoneTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
                 { "name": "ExhibitedStateInactiveAfterDoneTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
                 { "name": "ExhibitedStateReachesDoneTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "ExhibitedStateExitActionRunsAtDoneTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
                 { "name": "ExhibitedStateStaysActiveViolated", "verdict": "Failed", "tier": "Integration", "engines": ["theta"] },
                 { "name": "CrossRegionEntryReachesTargetTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
                 { "name": "CrossRegionEntryEntersSiblingRegionTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
@@ -86,7 +87,11 @@
                 { "name": "DerivedAttributeConstantViolated", "verdict": "Failed", "tier": "Integration", "engines": ["theta"] },
                 { "name": "UnvaluedAttributeMayStartAboveZeroTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
                 { "name": "UnvaluedAttributeMayStartBelowZeroTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
-                { "name": "InitialValueHoldsViolated", "verdict": "Failed", "tier": "Integration", "engines": ["theta"] }
+                { "name": "UnvaluedBooleanMayStartTrueTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "UnvaluedBooleanMayStartFalseTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "InitialValueHoldsViolated", "verdict": "Failed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "LastItemOnOneSlotIsAcceptedTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "EarlierItemOnOneSlotIsNeverAcceptedTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] }
             ]
         },
         {

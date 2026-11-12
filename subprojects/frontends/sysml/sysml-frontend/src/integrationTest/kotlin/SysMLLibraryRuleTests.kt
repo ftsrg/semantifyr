@@ -34,6 +34,7 @@ class SysMLLibraryRuleTests {
             "ExhibitedStateInactiveAfterDoneTestCase",
             "ExhibitedStateReachesDoneTestCase",
             "ExhibitedStateEntryPrecedesDescentTestCase",
+            "ExhibitedStateExitActionRunsAtDoneTestCase",
             "RegionEntryReachesTargetTestCase",
             "RegionEntryEntersSiblingRegionTestCase",
             "RegionEntryRunsEntriesInOrderTestCase",

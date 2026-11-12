@@ -12,6 +12,7 @@ item def MessageM;
 port def PortE { in item e : EventE; }
 port def PortFG { in item f : EventF; in item g : EventG; }
 port def PortMOut { out item m : MessageM; }
+port def PortEFOut { out item e : EventE; out item f : EventF; }
 
 // ── 1. EntryActionModel ───────────────────────────────────────────────────────────
 // Verifies that a state's entry action fires when the state is activated.
@@ -1063,10 +1064,13 @@ verification def InactiveParallelStateExitActionNeverFiresTestCase {
 
 part def ExhibitedStateEntryActionModel {
     attribute entered : Boolean := false;
+    attribute enteredBeforeS1 : Boolean := false;
 
     exhibit state Behaviour {
         entry action { assign entered := true; }
-        state S1;
+        state S1 {
+            entry action { assign enteredBeforeS1 := entered; }
+        }
         transition first start then S1;
     }
 }
@@ -1084,7 +1088,7 @@ verification def ExhibitedStateEntryActionPrecedesSubstateTestCase {
     subject system : ExhibitedStateEntryActionModel;
     objective {
         verify requirement {
-            require constraint { mustAlways(not (isStateActive(system.Behaviour.S1) and system.entered == false)) }
+            require constraint { mustAlways(not isStateActive(system.Behaviour.S1) or system.enteredBeforeS1) }
         }
     }
 }
@@ -1293,8 +1297,10 @@ verification def ObjectiveConstraintCheckedViolated {
 part def ExhibitedDoneModel {
     port input : PortE;
     attribute finished : Boolean := false;
+    attribute exited : Boolean := false;
 
     exhibit state Behaviour {
+        exit action { assign exited := true; }
         entry; then Running;
         state Running;
         transition first Running accept : EventE via input do assign finished := true then done;
@@ -1324,6 +1330,15 @@ verification def ExhibitedStateReachesDoneTestCase {
     objective {
         verify requirement {
             require constraint { eventually(isStateActive(system.Behaviour) == false) }
+        }
+    }
+}
+
+verification def ExhibitedStateExitActionRunsAtDoneTestCase {
+    subject system : ExhibitedDoneModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(isStateActive(system.Behaviour) or system.exited) }
         }
     }
 }
@@ -1444,6 +1459,7 @@ verification def DerivedAttributeConstantViolated {
 
 part def UnvaluedAttributeModel {
     attribute level : Integer;
+    attribute flag : Boolean;
     attribute initial : Integer := 7;
 }
 
@@ -1465,11 +1481,79 @@ verification def UnvaluedAttributeMayStartBelowZeroTestCase {
     }
 }
 
+verification def UnvaluedBooleanMayStartTrueTestCase {
+    subject system : UnvaluedAttributeModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(system.flag == true) }
+        }
+    }
+}
+
+verification def UnvaluedBooleanMayStartFalseTestCase {
+    subject system : UnvaluedAttributeModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(system.flag == false) }
+        }
+    }
+}
+
 verification def InitialValueHoldsViolated {
     subject system : UnvaluedAttributeModel;
     objective {
         verify requirement {
             require constraint { mustAlways(system.initial == 8) }
+        }
+    }
+}
+
+part def DoubleSenderModel {
+    port output : PortEFOut;
+
+    exhibit state Behaviour {
+        entry; then Idle;
+        state Idle;
+        state Sent {
+            entry send new EventF() via output;
+        }
+        transition first Idle do action { send new EventE() via output; } then Sent;
+    }
+}
+
+part def SlotReceiverModel {
+    port input : ~PortEFOut;
+
+    exhibit state Behaviour {
+        entry; then Waiting;
+        state Waiting;
+        state GotE;
+        state GotF;
+        transition first Waiting accept : EventE via input then GotE;
+        transition first Waiting accept : EventF via input then GotF;
+    }
+}
+
+part def LastWinsModel {
+    part sender : DoubleSenderModel;
+    part receiver : SlotReceiverModel;
+    flow from sender.output to receiver.input;
+}
+
+verification def LastItemOnOneSlotIsAcceptedTestCase {
+    subject system : LastWinsModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(isStateActive(system.receiver.Behaviour.GotF)) }
+        }
+    }
+}
+
+verification def EarlierItemOnOneSlotIsNeverAcceptedTestCase {
+    subject system : LastWinsModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not isStateActive(system.receiver.Behaviour.GotE)) }
         }
     }
 }

@@ -25,6 +25,16 @@ class ExhibitedMachine : Part {
             redefine refers value: bool = false
         }
     }
+    contains enteredBeforeRunning: BooleanAttribute subsets attributes {
+        redefine contains initialValue: LiteralBooleanExpression {
+            redefine refers value: bool = false
+        }
+    }
+    contains exited: BooleanAttribute subsets attributes {
+        redefine contains initialValue: LiteralBooleanExpression {
+            redefine refers value: bool = false
+        }
+    }
     contains Behaviour: ExhibitedState redefines exhibitState {
         redefine contains entryAction: AssignmentAction {
             redefine refers attribute: Attribute = entered
@@ -32,7 +42,20 @@ class ExhibitedMachine : Part {
                 redefine refers value: bool = true
             }
         }
-        contains Running: State subsets states
+        redefine contains exitAction: AssignmentAction {
+            redefine refers attribute: Attribute = exited
+            redefine contains expression: LiteralBooleanExpression {
+                redefine refers value: bool = true
+            }
+        }
+        contains Running: State subsets states {
+            redefine contains entryAction: AssignmentAction {
+                redefine refers attribute: Attribute = enteredBeforeRunning
+                redefine contains expression: AttributeReferenceExpression {
+                    redefine refers attribute: Attribute = entered
+                }
+            }
+        }
         contains enterRunning: Transition subsets transitions {
             redefine refers from: StateNode = start
             redefine refers to: StateNode = Running
@@ -125,7 +148,25 @@ class ExhibitedStateEntryPrecedesDescentTestCase : VerificationCaseDefinition {
                     }
                 }
                 redefine contains right: AttributeReferenceExpression {
-                    redefine refers attribute: Attribute = system.entered
+                    redefine refers attribute: Attribute = system.enteredBeforeRunning
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ExhibitedStateExitActionRunsAtDoneTestCase : VerificationCaseDefinition {
+    contains system: ExhibitedMachine[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains constraint: MustAlways subsets requiredConstraints {
+            redefine contains body: OrOperatorExpression {
+                redefine contains left: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.Behaviour
+                }
+                redefine contains right: AttributeReferenceExpression {
+                    redefine refers attribute: Attribute = system.exited
                 }
             }
         }
