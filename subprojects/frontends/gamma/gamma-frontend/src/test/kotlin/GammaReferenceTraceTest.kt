@@ -13,7 +13,7 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RaiseEventAct
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.tests.InjectWithGamma
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
-import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaNameStore
+import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaNameMap
 import hu.bme.mit.semantifyr.frontends.gamma.trace.GammaTraceGenerator
 import hu.bme.mit.semantifyr.verifier.witness.CallTrace
 import hu.bme.mit.semantifyr.verifier.witness.TraceEntry
@@ -69,9 +69,9 @@ class GammaReferenceTraceTest {
 
     @Test
     fun `the trace generated from the reference trace json serializes to the hand-written trace`() {
-        val (verificationCase, nameStore) = compileReferenceCase()
+        val (verificationCase, nameMap) = compileReferenceCase()
 
-        val generated = gammaTraceGenerator.generate(verificationCase, referenceCallTrace(), referenceWitnessState(), nameStore)
+        val generated = gammaTraceGenerator.generate(verificationCase, referenceCallTrace(), referenceWitnessState(), nameMap)
         val generatedText = serializer.serialize(generated, SaveOptions.newBuilder().format().options)
         val generatedTrace = temporaryDirectory.resolve("trace.get")
         generatedTrace.writeText(generatedText)
@@ -84,10 +84,10 @@ class GammaReferenceTraceTest {
 
     @Test
     fun `the called transition decides whether a traced raise is an act or an assertion`() {
-        val (verificationCase, nameStore) = compileReferenceCase()
+        val (verificationCase, nameMap) = compileReferenceCase()
         val callTrace = referenceCallTrace().withCalledTransition(RAISE_INPUT_EVENT, SET_OUTPUT_EVENT)
 
-        val generated = gammaTraceGenerator.generate(verificationCase, callTrace, referenceWitnessState(), nameStore)
+        val generated = gammaTraceGenerator.generate(verificationCase, callTrace, referenceWitnessState(), nameMap)
 
         val lastStep = generated.steps.last()
         assertThat(lastStep.acts).noneMatch {
@@ -101,22 +101,38 @@ class GammaReferenceTraceTest {
     }
 
     @Test
+    fun `an output an inner instance raises is asserted on that instance's port`() {
+        val (verificationCase, nameMap) = compileReferenceCase()
+
+        val generated = gammaTraceGenerator.generate(verificationCase, referenceCallTrace(), referenceWitnessState(), nameMap)
+
+        val raises = generated.steps.flatMap {
+            it.asserts
+        }.filterIsInstance<RaiseEventAct>()
+        assertThat(
+            raises.map {
+                listOf(it.instance?.instance?.name, it.port.name, it.event.name)
+            },
+        ).contains(listOf("controller", "controlA", "toggle"))
+    }
+
+    @Test
     fun `a traced port call that raises no event is rejected`() {
-        val (verificationCase, nameStore) = compileReferenceCase()
+        val (verificationCase, nameMap) = compileReferenceCase()
         val callTrace = referenceCallTrace().withCalledTransition(RAISE_INPUT_EVENT, "semantifyr::gamma::ports::Port::setInputEvent")
 
         assertThatThrownBy {
-            gammaTraceGenerator.generate(verificationCase, callTrace, referenceWitnessState(), nameStore)
+            gammaTraceGenerator.generate(verificationCase, callTrace, referenceWitnessState(), nameMap)
         }.hasMessageContaining("is not an event raise")
     }
 
     private fun compileReferenceCase(): CompiledReferenceCase {
         val crossroads = read(CROSSROADS).single() as GammaModelPackage
-        val nameStore = gammaCompiler.compile(crossroads, temporaryDirectory.resolve("model.oxsts"))
+        val nameMap = gammaCompiler.compile(crossroads, temporaryDirectory.resolve("model.oxsts"))
         val verificationCase = crossroads.verificationCases.single {
             it.name == "ACanBeGreen"
         }
-        return CompiledReferenceCase(verificationCase, nameStore)
+        return CompiledReferenceCase(verificationCase, nameMap)
     }
 
     private fun referenceCallTrace(): CallTrace {
@@ -157,7 +173,7 @@ class GammaReferenceTraceTest {
 
     private data class CompiledReferenceCase(
         val verificationCase: VerificationCaseDeclaration,
-        val nameStore: GammaNameStore,
+        val nameMap: GammaNameMap,
     )
 
     companion object {

@@ -28,7 +28,7 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Transition
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.UnaryOp
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VariableDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclaration
-import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaNameStore
+import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaNameMap
 import hu.bme.mit.semantifyr.verifier.witness.CallTrace
 import hu.bme.mit.semantifyr.verifier.witness.CallTraceStep
 import hu.bme.mit.semantifyr.verifier.witness.TraceEntry
@@ -54,12 +54,12 @@ class GammaTraceGenerator @Inject constructor(
         verificationCase: VerificationCaseDeclaration,
         callTrace: CallTrace,
         witnessState: WitnessState,
-        nameStore: GammaNameStore,
+        nameMap: GammaNameMap,
     ): ExecutionTrace {
         require(callTrace.steps.size == witnessState.steps.size) {
             "Trace has ${callTrace.steps.size} steps but the witness has ${witnessState.steps.size}"
         }
-        val paths = InstancePaths(verificationCase, nameStore)
+        val paths = InstancePaths(verificationCase, nameMap)
 
         val executionTrace = factory.createExecutionTrace().also {
             it.imports += factory.createImportStatement().also { importStatement ->
@@ -151,11 +151,10 @@ class GammaTraceGenerator @Inject constructor(
                 when (entry.calledTransition) {
                     RAISE_INPUT_EVENT -> null
                     SET_OUTPUT_EVENT -> {
-                        paths.tracedPort(receiver)?.let { port ->
-                            factory.createRaiseEventAct().also {
-                                it.port = port
-                                it.event = resolveEvent(entry, paths)
-                            }
+                        factory.createRaiseEventAct().also {
+                            it.instance = createInstanceReference(receiver)
+                            it.port = element
+                            it.event = resolveEvent(entry, paths)
                         }
                     }
                     else -> error("Traced call '${entry.calledTransition}' on port '${entry.self}' is not an event raise")
@@ -231,7 +230,7 @@ class GammaTraceGenerator @Inject constructor(
         val value: String,
     )
 
-    // the first instance of a path is the traced case's own, which a trace names as the component it traces
+    // a path starts at the case's component, in whose scope a trace names everything
     private fun createInstanceReference(path: List<EObject>): ComponentInstanceReference? {
         val instances = path.drop(1).takeWhile {
             it is ComponentInstance
@@ -273,14 +272,14 @@ class GammaTraceGenerator @Inject constructor(
 
     private class InstancePaths(
         private val verificationCase: VerificationCaseDeclaration,
-        private val nameStore: GammaNameStore,
+        private val nameMap: GammaNameMap,
     ) {
         fun resolveOrNull(path: String): List<EObject>? {
             val names = path.split('.')
             if (names.first() != ROOT_FEATURE) {
                 return null
             }
-            return nameStore.resolveOrNull(verificationCase, names.drop(1))
+            return nameMap.resolveOrNull(verificationCase, names.drop(1))
         }
 
         fun resolve(path: String): List<EObject> {
@@ -289,11 +288,16 @@ class GammaTraceGenerator @Inject constructor(
 
         // a port of an inner instance is named on the traced component through the bindings that reach it
         fun tracedPort(path: List<EObject>): PortDeclaration? {
-            val instances = path.dropLast(1).filterIsInstance<ComponentInstance>()
+            val instances = path.filterIsInstance<ComponentInstance>()
             var port = path.last() as PortDeclaration
-            for (index in instances.lastIndex downTo 1) {
+            for (index in instances.lastIndex downTo 0) {
                 val instance = instances[index]
-                val composite = instances[index - 1].component as? CompositeComponentDeclaration ?: return null
+                val container = if (index == 0) {
+                    path.first()
+                } else {
+                    instances[index - 1].component
+                }
+                val composite = container as? CompositeComponentDeclaration ?: return null
                 val binding = composite.bindings.firstOrNull {
                     it.boundPort.instance == instance && it.boundPort.port == port
                 } ?: return null

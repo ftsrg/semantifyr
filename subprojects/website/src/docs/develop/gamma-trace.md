@@ -21,6 +21,8 @@ step {
         reset
     }
     assert {
+        raise trafficLightA.lightControl.yellow;
+        raise trafficLightB.lightControl.yellow;
         state controller.Main.Operating;
         state controller.OperatingRegion.BothYellow;
         state trafficLightA.Main.Normal;
@@ -32,9 +34,9 @@ step {
 ```
 
 - `import` names the case's package by its qualified name, as a Gamma model imports a package.
-- `trace <name> of <case>` names the traced verification case; the traced component is the case's component.
-- Instances are named from the traced component down, `controller` here, nested ones as `outer->inner`, and `self` names the traced component itself.
-- The first step is initialization: the `reset` act and the state reached.
+- `trace <name> of <case>` names the traced verification case; the traced component is the case's component, in whose scope every name of the trace resolves, as in the case's property.
+- Instances are named from the traced component down, `controller` here, nested ones as `outer->inner`; an element of the traced component itself is named without an instance, `state Main.Idle`.
+- The first step is initialization: the `reset` act, the outputs the entry actions raised and the state reached.
 
 The last step of the pair:
 
@@ -47,6 +49,7 @@ step {
     }
     assert {
         transition trafficLightA from Red to Green;
+        raise trafficLightA.lightControl.green;
         state controller.Main.Operating;
         state controller.OperatingRegion.TrafficOnA;
         state trafficLightA.Main.Normal;
@@ -59,7 +62,7 @@ step {
 
 Acts:
 
-- `raise <port>.<event>`: the environment raises an input event of a port of the traced component.
+- `raise <port>.<event>`: the environment raises an input event of a port of the traced component; an act names no instance.
 - `elapse <milliseconds>`: time advances before the step.
 - `schedule component`: the component takes one step.
 
@@ -67,23 +70,23 @@ Asserts, each closed by `;`:
 
 - `state <instance>.<region>.<state>`: a state is active.
 - `variable <instance>.<variable> = <value>`: a statechart variable has a value.
-- `raise <port>.<event>`: the traced component raised an output event of its port.
+- `raise <instance>.<port>.<event>`: an instance raised an output event of its port, `raise <port>.<event>` the traced component itself.
 - `transition <instance> from <state> to <state>`: a transition fired, followed by `when <trigger>` when another transition shares its source and target; a transition with an `@(id)` is named `transition <instance>.<id>`.
 
 The validator checks that an act raises an input event and an assert an output event of its port, that a fired transition exists and is unambiguous, and that a value matches its variable's type; scoping checks that every name belongs to the instance it follows.
 
 ## Generation
 
-The Gamma semantic library marks four transitions with `@Trace`: `Transition::fire`, `Port::raiseInputEvent(event)`, `Port::setOutputEvent(event)` and `GammaVerificationCase::passTime`. A verify run writes, step by step, the traced calls to `trace.json` and the state to `witness.json`, both named by their path from the root instance. `GammaTraceGenerator` resolves each path through the names the Gamma compiler recorded when it emitted the OXSTS model, so it never decodes OXSTS names, and maps:
+The Gamma semantic library marks four transitions with `@Trace`: `Transition::fire`, `Port::raiseInputEvent(event)`, `Port::setOutputEvent(event)` and `GammaVerificationCase::passTime`. A verify run writes, step by step, the traced calls to `trace.json` and the state to `witness.json`, both named by their path from the root instance. `GammaTraceGenerator` resolves each path through the name map the Gamma compiler filled when it emitted the OXSTS model in the same verify run, so it never decodes OXSTS names, and maps:
 
 - a fired `Transition::fire` to a `transition` assert;
-- `Port::raiseInputEvent` to a `raise` act and `Port::setOutputEvent` to a `raise` assert, as the called transition says, each on the port of the traced component the inner port is bound to; a raise on a port bound to none is not written;
+- `Port::raiseInputEvent` to a `raise` act on the port of the traced component the inner port is bound to, and `Port::setOutputEvent` to a `raise` assert on the port of the instance that raised it, as the called transition says;
 - `passTime` at the root to `elapse 1000` in the same step, before `schedule`;
 - the active state of every region and the value of every statechart variable in the witness to `state` and `variable` asserts.
 
 Input events are traced because the library resets them within the step, so no state between steps shows them. Output events are traced because the optimizer removes outputs that nothing reads. The Gamma language's serializer and formatter write the trace.
 
-Not in the trace: outputs of ports the traced component does not expose, timers and port variables. The time step is fixed at one second.
+Not in the trace: negations of the output events not raised, timers and port variables. The time step is fixed at one second.
 
 ## Validation
 

@@ -1,0 +1,43 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package BeginningOfStepGuards
+
+interface Control {
+    in event go
+}
+
+@GuardEvaluation = beginning-of-step
+statechart Machine [
+    port control : provides Control
+] {
+    var written : boolean := false
+
+    region Writer {
+        initial WriterInitial
+        state Waiting
+        state Written
+    }
+
+    region Reader {
+        initial ReaderInitial
+        state Idle
+        state Seen
+    }
+
+    transition from WriterInitial to Waiting
+    transition from ReaderInitial to Idle
+    transition from Waiting to Written when control.go / written := true;
+    transition from Idle to Seen when control.go [written]
+}
+
+verification case GuardReadsTheValueAtTheStepStart of Machine {
+    EF (state Writer.Written and state Reader.Idle)
+}
+
+verification case GuardSeesTheWriteInTheNextStep of Machine {
+    EF state Reader.Seen
+}

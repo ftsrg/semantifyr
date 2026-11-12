@@ -57,10 +57,10 @@ class LiveCompiledOxstsTest {
 
                 val compiled = compiledOxsts(id = 2)
                 assertThat(compiled.status()).isEqualTo(CompiledOxstsResult.COMPILED)
-                assertThat(compiled.oxsts()).startsWith("package Simple")
+                assertThat(compiled.oxsts()).startsWith("package _Simple")
 
                 send(Frame.Text(LspWire.didChangeNotification(documentUri, 2, modelSource.replace("package Simple", "package Renamed"))))
-                assertThat(compiledOxsts(id = 3).oxsts()).startsWith("package Renamed")
+                assertThat(compiledOxsts(id = 3).oxsts()).startsWith("package _Renamed")
             }
         }
     }

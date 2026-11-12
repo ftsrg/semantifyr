@@ -6,9 +6,8 @@
 
 package hu.bme.mit.semantifyr.frontends.gamma.lang.ide.server.commands;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage;
+import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaNameMap;
 import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaToOxstsSerializer;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
@@ -23,9 +22,6 @@ import org.slf4j.LoggerFactory;
 public class CompiledOxstsGammaCommandHandler extends AbstractCommandHandler<String, Resource> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CompiledOxstsGammaCommandHandler.class);
-
-    @Inject
-    private Provider<GammaToOxstsSerializer> serializerProvider;
 
     @Override
     public String getId() {
@@ -64,7 +60,7 @@ public class CompiledOxstsGammaCommandHandler extends AbstractCommandHandler<Str
             return CompiledOxstsResult.errored("The document holds no Gamma model");
         }
         try {
-            return CompiledOxstsResult.compiled(serializerProvider.get().transformToOxsts(gammaModel));
+            return CompiledOxstsResult.compiled(new GammaToOxstsSerializer(new GammaNameMap()).transformToOxsts(gammaModel));
         } catch (RuntimeException e) {
             LOGGER.info("LSP gamma.compiled.oxsts: {} does not compile", arguments.getURI(), e);
             return CompiledOxstsResult.errored("The model does not compile: " + e.getMessage());

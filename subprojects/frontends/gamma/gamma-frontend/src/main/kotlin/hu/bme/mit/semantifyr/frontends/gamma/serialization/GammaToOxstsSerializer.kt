@@ -29,8 +29,10 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventTrigger
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Expression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaUtils
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GuardEvaluation
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.InitialState
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.InstanceElementExpression
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.InstancePortReference
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.IntegerType
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.InterfaceDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.LiteralBoolean
@@ -46,13 +48,16 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Region
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SchedulingOrder
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SetTimeoutAction
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.State
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StateNode
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StateReferenceExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StatechartDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SyncComponentDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TemporalOperator
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeUnit
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeoutDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeoutTrigger
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Transition
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TransitionPriority
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Trigger
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Type
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.UnaryOp
@@ -65,12 +70,13 @@ import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 
-class GammaToOxstsSerializer {
-    val nameStore = GammaNameStore()
+class GammaToOxstsSerializer(
+    private val nameMap: GammaNameMap,
+) {
 
     fun transformToOxsts(gammaPackage: GammaModelPackage) = buildIndented {
         UnmappedGammaConstructs.check(gammaPackage)
-        appendLine("package ${gammaPackage.name}")
+        appendLine("package ${markQualifiedName(gammaPackage.name)}")
         appendLine()
         appendLine("import semantifyr::gamma::expressions")
         appendLine("import semantifyr::gamma::variables")
@@ -81,6 +87,9 @@ class GammaToOxstsSerializer {
         appendLine("import semantifyr::gamma::events")
         appendLine("import semantifyr::gamma::ports")
         appendLine("import semantifyr::gamma::verification")
+        for (importStatement in gammaPackage.imports) {
+            appendLine("import ${markQualifiedName(importStatement.importedPackage.name)}")
+        }
         appendLine()
 
         for (interfaceDeclaration in gammaPackage.interfaces) {
@@ -97,7 +106,7 @@ class GammaToOxstsSerializer {
     }
 
     private fun IndentingStringBuilder.serialize(interfaceDeclaration: InterfaceDeclaration) {
-        appendIndent("class ${interfaceDeclaration.name} : Interface") {
+        appendIndent("class ${markName(interfaceDeclaration.name)} : Interface") {
             for (event in interfaceDeclaration.events) {
                 serialize(event)
             }
@@ -113,7 +122,7 @@ class GammaToOxstsSerializer {
     }
 
     private fun IndentingStringBuilder.serialize(event: EventDeclaration) {
-        val name = nameStore.declare(event.eContainer(), event, event.name)
+        val name = nameMap.declare(event.eContainer(), event, markName(event.name))
         appendIndent("contains $name: Event subsets ${getEventDirection(event)}") {
             appendLine("@Shared")
             appendLine("redefine contains declaration: EventDeclaration")
@@ -127,7 +136,7 @@ class GammaToOxstsSerializer {
     }
 
     private fun IndentingStringBuilder.serialize(component: SyncComponentDeclaration) {
-        appendIndent("class ${component.name} : SyncComponent") {
+        appendIndent("class ${markName(component.name)} : SyncComponent") {
             val unboundPorts = mutableSetOf<PortDeclaration>()
             unboundPorts += component.ports
             unboundPorts -= component.bindings.map { it.port }.toSet()
@@ -158,40 +167,67 @@ class GammaToOxstsSerializer {
     }
 
     private fun IndentingStringBuilder.serialize(port: PortDeclaration) {
-        val name = nameStore.declare(port.eContainer(), port, port.name)
+        val name = nameMap.declare(port.eContainer(), port, markName(port.name))
         appendIndent("contains $name: ${getPortType(port)} subsets ports") {
-            val interfaceName = nameStore.declare(port, port.`interface`, "interface")
-            appendLine("redefine contains $interfaceName: ${port.`interface`.name}")
+            val interfaceName = nameMap.declare(port, port.`interface`, "interface")
+            appendLine("redefine contains $interfaceName: ${qualifiedClassName(port.`interface`)}")
         }
     }
 
     private fun IndentingStringBuilder.serialize(portBinding: PortBinding) {
-        val name = nameStore.declare(portBinding.eContainer(), portBinding.port, portBinding.port.name)
-        appendLine(
-            "refers $name: Port subsets ports = ${portBinding.boundPort.instance.name}.${portBinding.boundPort.port.name}",
-        )
+        val name = nameMap.declare(portBinding.eContainer(), portBinding.port, markName(portBinding.port.name))
+        appendLine("refers $name: Port subsets ports = ${instancePortPath(portBinding.boundPort)}")
     }
 
     private fun IndentingStringBuilder.serialize(instance: ComponentInstance) {
-        val name = nameStore.declareTyped(instance.eContainer(), instance, instance.name, instance.component)
-        appendLine("contains $name: ${instance.component.name} subsets components")
+        val name = nameMap.declareTyped(instance.eContainer(), instance, markName(instance.name), instance.component)
+        appendLine("contains $name: ${qualifiedClassName(instance.component)} subsets components")
     }
 
     private fun IndentingStringBuilder.serialize(channel: Channel) {
-        val name = nameStore.declareGenerated(channel.eContainer(), channel, deriveName(channel))
+        val name = nameMap.declareGenerated(channel.eContainer(), channel, deriveName(channel))
         appendIndent("contains $name: Channel subsets channels") {
-            appendLine("redefine refers inputPort: Port = ${channel.providedPort.instance.name}.${channel.providedPort.port.name}")
-            appendLine("redefine refers outputPort: Port = ${channel.requiredPort.instance.name}.${channel.requiredPort.port.name}")
+            appendLine("redefine refers inputPort: Port = ${instancePortPath(channel.providedPort)}")
+            appendLine("redefine refers outputPort: Port = ${instancePortPath(channel.requiredPort)}")
+        }
+    }
+
+    private fun instancePortPath(reference: InstancePortReference): String {
+        return "${markName(reference.instance.name)}.${markName(reference.port.name)}"
+    }
+
+    private fun qualifiedClassName(element: NamedElement): String {
+        val gammaPackage = EcoreUtil2.getContainerOfType(element, GammaModelPackage::class.java)
+        return "${markQualifiedName(gammaPackage.name)}::${markName(element.name)}"
+    }
+
+    private fun getRegionSchedule(schedulingOrder: SchedulingOrder): String {
+        return when (schedulingOrder) {
+            SchedulingOrder.TOP_DOWN -> "TopDown"
+            SchedulingOrder.BOTTOM_UP -> "BottomUp"
+        }
+    }
+
+    private fun getTransitionPriority(transitionPriority: TransitionPriority): String {
+        return when (transitionPriority) {
+            TransitionPriority.OFF -> "Off"
+            TransitionPriority.ORDER_BASED -> "OrderBased"
+            TransitionPriority.VALUE_BASED -> "ValueBased"
+        }
+    }
+
+    private fun getGuardEvaluation(guardEvaluation: GuardEvaluation): String {
+        return when (guardEvaluation) {
+            GuardEvaluation.ON_THE_FLY -> "OnTheFly"
+            GuardEvaluation.BEGINNING_OF_STEP -> "BeginningOfStep"
         }
     }
 
     private fun IndentingStringBuilder.serialize(statechart: StatechartDeclaration) {
-        appendIndent("class ${statechart.name} : Statechart") {
-            if (statechart.schedulingOrder == SchedulingOrder.BOTTOM_UP) {
-                appendLine("redefine refers regionSchedule: RegionSchedule = RegionSchedule::BottomUp")
-            } else if (statechart.schedulingOrder == SchedulingOrder.TOP_DOWN) {
-                appendLine("redefine refers regionSchedule: RegionSchedule = RegionSchedule::TopDown")
-            }
+        appendIndent("class ${markName(statechart.name)} : Statechart") {
+            appendLine("redefine refers regionSchedule: RegionSchedule = RegionSchedule::${getRegionSchedule(statechart.schedulingOrder)}")
+            appendLine("redefine refers transitionPriority: TransitionPriority = TransitionPriority::${getTransitionPriority(statechart.transitionPriority)}")
+            appendLine("redefine refers guardEvaluation: GuardEvaluation = GuardEvaluation::${getGuardEvaluation(statechart.guardEvaluation)}")
 
             for (port in statechart.ports) {
                 serialize(port)
@@ -228,7 +264,7 @@ class GammaToOxstsSerializer {
     }
 
     private fun IndentingStringBuilder.serialize(variable: VariableDeclaration) {
-        val name = nameStore.declare(variable.eContainer(), variable, variable.name)
+        val name = nameMap.declare(variable.eContainer(), variable, markName(variable.name))
         appendIndent("contains $name: ${getTypeReferenceName(variable.type)}Variable subsets variables") {
             if (variable.default != null) {
                 val default = serializeInline(variable.default)
@@ -239,12 +275,26 @@ class GammaToOxstsSerializer {
     }
 
     private fun IndentingStringBuilder.serialize(timeout: TimeoutDeclaration) {
-        val name = nameStore.declare(timeout.eContainer(), timeout, timeout.name)
-        appendLine("contains $name: Timeout subsets timeouts")
+        val name = nameMap.declare(timeout.eContainer(), timeout, markName(timeout.name))
+        if (isSetInMilliseconds(timeout)) {
+            appendIndent("contains $name: Timeout subsets timeouts") {
+                appendLine("redefine refers deltaTime: int = $MILLISECONDS_PER_STEP")
+            }
+        } else {
+            appendLine("contains $name: Timeout subsets timeouts")
+        }
+    }
+
+    // the validator lets a timeout be set to one value only, so its settings share one unit
+    private fun isSetInMilliseconds(timeout: TimeoutDeclaration): Boolean {
+        val statechart = EcoreUtil2.getContainerOfType(timeout, StatechartDeclaration::class.java)
+        return EcoreUtil2.getAllContentsOfType(statechart, SetTimeoutAction::class.java).any {
+            it.timeout == timeout && it.unit == TimeUnit.MILLISECOND
+        }
     }
 
     private fun IndentingStringBuilder.serialize(region: Region) {
-        val name = nameStore.declare(region.eContainer(), region, region.name)
+        val name = nameMap.declare(region.eContainer(), region, markName(region.name))
         appendIndent("contains $name: Region subsets regions") {
             for (state in region.stateNodes.filterIsInstance<State>()) {
                 serialize(state)
@@ -257,7 +307,7 @@ class GammaToOxstsSerializer {
     }
 
     private fun IndentingStringBuilder.serialize(state: State) {
-        val name = nameStore.declare(state.eContainer(), state, state.name)
+        val name = nameMap.declare(state.eContainer(), state, markName(state.name))
         appendIndent("contains $name: State subsets states") {
             for (action in state.entryActions) {
                 serialize(action, "entryActions")
@@ -289,17 +339,26 @@ class GammaToOxstsSerializer {
     }
 
     private fun IndentingStringBuilder.serializeEntryTransition(region: Region, transition: Transition) {
-        val name = nameStore.declareGenerated(region, transition, "entry_to_${transition.to.name}")
+        val name = nameMap.declareGenerated(region, transition, "entry_to_${transition.to.name}")
         appendIndent("contains $name: EntryTransition subsets entryTransitions") {
-            appendLine("redefine refers to: State = ${transition.to.name}")
+            appendLine("redefine refers to: State = ${markName(transition.to.name)}")
         }
     }
 
     private fun IndentingStringBuilder.serializeStateTransition(region: Region, transition: Transition) {
-        val name = nameStore.declareGenerated(region, transition, deriveName(region, transition))
+        val name = if (transition.name != null) {
+            nameMap.declare(region, transition, markName(transition.name))
+        } else {
+            nameMap.declareGenerated(region, transition, deriveName(region, transition))
+        }
         appendIndent("contains $name: Transition subsets transitions") {
-            appendLine("redefine refers from: State = ${transition.from.name}")
-            appendLine("redefine refers to: State = ${transition.to.name}")
+            appendLine("redefine refers from: State = ${markName(transition.from.name)}")
+            appendLine("redefine refers to: State = ${targetPath(transition).joinToString(".")}")
+
+            val statechart = EcoreUtil2.getContainerOfType(transition, StatechartDeclaration::class.java)
+            if (statechart.transitionPriority == TransitionPriority.VALUE_BASED && transition.priority != 0) {
+                appendLine("redefine refers priority: int = ${transition.priority}")
+            }
 
             if (transition.guard != null) {
                 appendIndent("redefine contains guard: Guard") {
@@ -323,16 +382,47 @@ class GammaToOxstsSerializer {
         else -> error("Unknown trigger type: $trigger")
     }
 
+    // a target in another region is named from the lowest region holding both ends, which the transition's own scope reaches
+    private fun targetPath(transition: Transition): List<String> {
+        val sourceRegions = ancestorRegions(transition.from)
+        val path = mutableListOf(markName(transition.to.name))
+        var region = transition.to.eContainer() as Region
+        while (region !in sourceRegions) {
+            val state = region.eContainer() as State
+            path.add(0, markName(region.name))
+            path.add(0, markName(state.name))
+            region = state.eContainer() as Region
+        }
+        return path
+    }
+
+    private fun ancestorRegions(stateNode: StateNode): Set<Region> {
+        val regions = mutableSetOf<Region>()
+        var current: EObject = stateNode.eContainer()
+        while (current is Region) {
+            regions += current
+            current = current.eContainer()
+            if (current is State) {
+                current = current.eContainer()
+            }
+        }
+        return regions
+    }
+
     private fun IndentingStringBuilder.serialize(trigger: EventTrigger) {
         appendIndent("redefine contains trigger: EventTrigger") {
-            appendLine("redefine refers port: Port = ${trigger.port.name}")
-            appendLine("redefine refers event: Event = ${trigger.port.name}.interface.${trigger.event.name}")
+            appendLine("redefine refers port: Port = ${markName(trigger.port.name)}")
+            appendLine("redefine refers event: Event = ${eventPath(trigger.port, trigger.event)}")
         }
+    }
+
+    private fun eventPath(port: PortDeclaration, event: EventDeclaration): String {
+        return "${markName(port.name)}.interface.${markName(event.name)}"
     }
 
     private fun IndentingStringBuilder.serialize(trigger: TimeoutTrigger) {
         appendIndent("redefine contains trigger: TimeoutTrigger") {
-            appendLine("redefine refers timeout: Timeout = ${trigger.timeout.name}")
+            appendLine("redefine refers timeout: Timeout = ${markName(trigger.timeout.name)}")
         }
     }
 
@@ -351,17 +441,18 @@ class GammaToOxstsSerializer {
         else -> error("Unknown action type: $action")
     }
 
+    // a generated name starts with a lowercase word, so it never equals a marked Gamma name
     private fun deriveName(channel: Channel): String {
         val provided = "${channel.providedPort.instance.name}_${channel.providedPort.port.name}"
         val required = "${channel.requiredPort.instance.name}_${channel.requiredPort.port.name}"
-        return "${provided}_to_$required"
+        return "channel_${provided}_to_$required"
     }
 
     private fun deriveName(region: Region, transition: Transition): String {
-        val base = "${transition.from.name}_to_${transition.to.name}"
+        val base = "transition_${transition.from.name}_to_${transition.to.name}"
         val siblings = transitionsOf(region)
         val collides = siblings.any {
-            it !== transition && "${it.from.name}_to_${it.to.name}" == base
+            it !== transition && it.name == null && it.from == transition.from && it.to == transition.to
         }
         if (!collides || transition.trigger == null) {
             return base
@@ -398,10 +489,10 @@ class GammaToOxstsSerializer {
         action: RaiseEventAction,
         subsets: String,
     ) {
-        val name = nameStore.declareGenerated(action.eContainer(), action, deriveName(action, subsets))
+        val name = nameMap.declareGenerated(action.eContainer(), action, deriveName(action, subsets))
         appendIndent("contains $name: RaiseEventAction subsets $subsets") {
-            appendLine("redefine refers port: Port = ${action.port.name}")
-            appendLine("redefine refers event: Event = ${action.port.name}.interface.${action.event.name}")
+            appendLine("redefine refers port: Port = ${markName(action.port.name)}")
+            appendLine("redefine refers event: Event = ${eventPath(action.port, action.event)}")
         }
     }
 
@@ -409,9 +500,9 @@ class GammaToOxstsSerializer {
         action: SetTimeoutAction,
         subsets: String,
     ) {
-        val name = nameStore.declareGenerated(action.eContainer(), action, deriveName(action, subsets))
+        val name = nameMap.declareGenerated(action.eContainer(), action, deriveName(action, subsets))
         appendIndent("contains $name: SetTimeoutAction subsets $subsets") {
-            appendLine("redefine refers timeout: Timeout = ${action.timeout.name}")
+            appendLine("redefine refers timeout: Timeout = ${markName(action.timeout.name)}")
             serialize(action.value, "expression")
         }
     }
@@ -420,9 +511,9 @@ class GammaToOxstsSerializer {
         action: AssignmentAction,
         subsets: String,
     ) {
-        val name = nameStore.declareGenerated(action.eContainer(), action, deriveName(action, subsets))
+        val name = nameMap.declareGenerated(action.eContainer(), action, deriveName(action, subsets))
         appendIndent("contains $name: AssignmentAction subsets $subsets") {
-            appendLine("redefine refers variable: Variable = ${assignedVariable(action).name}")
+            appendLine("redefine refers variable: Variable = ${markName(assignedVariable(action).name)}")
             serialize(action.expression, "expression")
         }
     }
@@ -433,10 +524,10 @@ class GammaToOxstsSerializer {
 
     private fun IndentingStringBuilder.serialize(verificationCase: VerificationCaseDeclaration) {
         appendLine("@VerificationCase")
-        appendIndent("class ${verificationCase.name} : GammaVerificationCase") {
+        appendIndent("class ${markName(verificationCase.name)} : GammaVerificationCase") {
             val component = verificationCase.component
-            val name = nameStore.declareTyped(verificationCase, component, component.name, component.component)
-            appendLine("contains $name: ${component.component.name} redefines component")
+            nameMap.declareTyped(verificationCase, component, CASE_COMPONENT, component)
+            appendLine("redefine contains $CASE_COMPONENT: ${qualifiedClassName(component)}")
 
             serialize(verificationCase.expression, "propertyExpression")
         }
@@ -619,7 +710,7 @@ class GammaToOxstsSerializer {
         redefines: String,
     ) {
         appendIndent("redefine contains $redefines: VariableExpression") {
-            appendLine("redefine refers variable: Variable = ${expression.declaration.name}")
+            appendLine("redefine refers variable: Variable = ${markName(expression.declaration.name)}")
         }
     }
 
@@ -627,16 +718,15 @@ class GammaToOxstsSerializer {
         expression: VariableReferenceExpression,
         redefines: String,
     ) {
-        val path = instancePath(expression) + expression.variable.name
+        val path = instancePath(expression) + markName(expression.variable.name)
         appendIndent("redefine contains $redefines: VariableExpression") {
             appendLine("redefine refers variable: Variable = ${path.joinToString(".")}")
         }
     }
 
     private fun instancePath(expression: InstanceElementExpression): List<String> {
-        val verificationCase = EcoreUtil2.getContainerOfType(expression, VerificationCaseDeclaration::class.java)
-        return listOf(verificationCase.component.name) + GammaUtils.getInstancePath(expression).map {
-            it.name
+        return listOf(CASE_COMPONENT) + GammaUtils.getInstancePath(expression).map {
+            markName(it.name)
         }
     }
 
@@ -644,7 +734,7 @@ class GammaToOxstsSerializer {
         val path = mutableListOf<String>()
         var current = element
         while (current !is StatechartDeclaration) {
-            path.add(0, (current as NamedElement).name)
+            path.add(0, markName((current as NamedElement).name))
             current = current.eContainer()
         }
         return path
@@ -653,5 +743,10 @@ class GammaToOxstsSerializer {
     private fun serializeInline(expression: Expression): String {
         val node = NodeModelUtils.getNode(expression)
         return NodeModelUtils.getTokenText(node)
+    }
+
+    companion object {
+        private const val CASE_COMPONENT = "component"
+        private const val MILLISECONDS_PER_STEP = 1000
     }
 }
