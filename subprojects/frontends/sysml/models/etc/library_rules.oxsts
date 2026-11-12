@@ -16,10 +16,14 @@ global containment global_Signal: Signal[1]
 class ExhibitedMachine : Part {
     contains input: NormalPort subsets ports
     contains entered: BooleanAttribute subsets attributes {
-        redefine refers defaultValue: bool = false
+        redefine contains initialValue: LiteralBooleanExpression {
+            redefine refers value: bool = false
+        }
     }
     contains finished: BooleanAttribute subsets attributes {
-        redefine refers defaultValue: bool = false
+        redefine contains initialValue: LiteralBooleanExpression {
+            redefine refers value: bool = false
+        }
     }
     contains Behaviour: ExhibitedState redefines exhibitState {
         redefine contains entryAction: AssignmentAction {
@@ -131,7 +135,9 @@ class ExhibitedStateEntryPrecedesDescentTestCase : VerificationCaseDefinition {
 class RegionEntryMachine : Part {
     contains input: NormalPort subsets ports
     contains order: IntegerAttribute subsets attributes {
-        redefine refers defaultValue: int = 0
+        redefine contains initialValue: LiteralIntegerExpression {
+            redefine refers value: int = 0
+        }
     }
     contains Behaviour: ExhibitedState redefines exhibitState {
         contains Idle: State subsets states
@@ -263,7 +269,9 @@ class RegionEntryRunsEntriesInOrderTestCase : VerificationCaseDefinition {
 
 class DerivedMachine : Part {
     contains counter: IntegerAttribute subsets attributes {
-        redefine refers defaultValue: int = 0
+        redefine contains initialValue: LiteralIntegerExpression {
+            redefine refers value: int = 0
+        }
     }
     contains doubled: DerivedAttribute subsets attributes {
         redefine contains expression: MultiplicationOperatorExpression {

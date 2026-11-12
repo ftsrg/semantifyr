@@ -94,12 +94,12 @@ class Part {
 }
 
 class Flow {
-    refers inputPort: Port[1]
-    refers outputPort: Port[1]
+    refers source: Port[1]
+    refers target: Port[1]
 
     redefine tran {
-        if (inputPort.hasOutgoing()) {
-            inline outputPort.setIncomingItem(inputPort.outgoingItem as Item)
+        if (source.hasOutgoing()) {
+            inline target.setIncomingItem(source.outgoingItem as Item)
         }
     }
 }

@@ -9,12 +9,17 @@ abstract class Attribute {
 }
 
 class IntegerAttribute : Attribute {
-    refers defaultValue: int = 0
+    contains initialValue: Expression[0..1]
 
-    var value: int := defaultValue
+    var value: int := 0
 
+    // an attribute without an initial value starts at any value
     redefine init {
-        value := defaultValue
+        inline if (initialValue != nothing) {
+            value := initialValue.evaluate() as int
+        } else {
+            havoc(value)
+        }
     }
 
     redefine prop evaluate(): int {
@@ -27,12 +32,17 @@ class IntegerAttribute : Attribute {
 }
 
 class BooleanAttribute : Attribute {
-    refers defaultValue: bool = false
+    contains initialValue: Expression[0..1]
 
-    var value: bool := defaultValue
+    var value: bool := false
 
+    // an attribute without an initial value starts at any value
     redefine init {
-        value := defaultValue
+        inline if (initialValue != nothing) {
+            value := initialValue.evaluate() as bool
+        } else {
+            havoc(value)
+        }
     }
 
     redefine prop evaluate(): bool {
