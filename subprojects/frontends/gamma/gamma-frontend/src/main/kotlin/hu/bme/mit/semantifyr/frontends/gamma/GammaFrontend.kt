@@ -169,7 +169,7 @@ class GammaFrontend @Inject private constructor(
                 "Witness resource has no file URI, got '$witnessUri'"
             }
             val witnessPath = Path.of(witnessUri.toFileString())
-            val gammaTracePath = witnessPath.resolveSibling("trace.gamma")
+            val gammaTracePath = witnessPath.resolveSibling("trace.get")
             writeGammaTrace(gammaVerificationCase, it, nameStore, gammaTracePath)
             GammaWitness(it, witnessPath, outputPath, gammaTracePath)
         }

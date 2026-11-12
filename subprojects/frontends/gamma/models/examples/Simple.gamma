@@ -21,10 +21,12 @@ statechart LeaderStatechart [
         state Stopped
         state Unreachable
 
-        entry transition to Idle
-        transition Idle to Operational when event control.start / raise workerControl.start;
-        transition Operational to Stopped when event control.stop / raise workerControl.stop;
+        initial MainInitial
     }
+
+    transition from MainInitial to Idle
+    transition from Idle to Operational when control.start / raise workerControl.start;
+    transition from Operational to Stopped when control.stop / raise workerControl.stop;
 }
 
 statechart WorkerStatechart [
@@ -36,27 +38,29 @@ statechart WorkerStatechart [
         state Stopped
         state Unreachable
 
-        entry transition to Idle
-        transition Idle to Operational when event control.start
-        transition Operational to Stopped when event control.stop
+        initial MainInitial
     }
+
+    transition from MainInitial to Idle
+    transition from Idle to Operational when control.start
+    transition from Operational to Stopped when control.stop
 }
 
-sync component System[
+sync System[
     port control : requires Control
 ] {
     component leader : LeaderStatechart
     component worker : WorkerStatechart
 
     bind control -> leader.control
-    channel [ leader.workerControl ] -> [ worker.control ]
+    channel [ leader.workerControl ] -o)- [ worker.control ]
 }
 
 verification case LeaderStatechartIdleReachable {
     component system : System
 
     property {
-        EF isActive (system.leader.Main.Idle)
+        EF state leader.Main.Idle
     }
 }
 
@@ -64,7 +68,7 @@ verification case LeaderStatechartOperationalReachable {
     component system : System
 
     property {
-        EF isActive (system.leader.Main.Operational)
+        EF state leader.Main.Operational
     }
 }
 
@@ -72,7 +76,7 @@ verification case LeaderStatechartStoppedReachable {
     component system : System
 
     property {
-        EF isActive (system.leader.Main.Stopped)
+        EF state leader.Main.Stopped
     }
 }
 
@@ -80,16 +84,15 @@ verification case LeaderStatechartUnreachable {
     component system : System
 
     property {
-        AG not isActive (system.leader.Main.Unreachable)
+        AG not state leader.Main.Unreachable
     }
 }
-
 
 verification case WorkerStatechartIdleReachable {
     component system : System
 
     property {
-        EF isActive (system.worker.Main.Idle)
+        EF state worker.Main.Idle
     }
 }
 
@@ -97,7 +100,7 @@ verification case WorkerStatechartOperationalReachable {
     component system : System
 
     property {
-        EF isActive (system.worker.Main.Operational)
+        EF state worker.Main.Operational
     }
 }
 
@@ -105,7 +108,7 @@ verification case WorkerStatechartStoppedReachable {
     component system : System
 
     property {
-        EF isActive (system.worker.Main.Stopped)
+        EF state worker.Main.Stopped
     }
 }
 
@@ -113,6 +116,6 @@ verification case WorkerStatechartUnreachable {
     component system : System
 
     property {
-        AG not isActive (system.worker.Main.Unreachable)
+        AG not state worker.Main.Unreachable
     }
 }

@@ -5,7 +5,7 @@
  */
 
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.FiredTransitionAssertion
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.FiredTransitionExpression
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaFrontendTestHelper
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaTestEngine
 import org.assertj.core.api.Assertions.assertThat
@@ -32,6 +32,6 @@ class GammaLevelCrossingTraceTest {
         val gammaTrace = helper.readGammaTrace(gammaVerificationCase, witness!!)
         val witnessState = witness.trace.witnessState
         assertThat(gammaTrace.steps).hasSize(1 + witnessState.steps.size)
-        assertThat(gammaTrace.steps.flatMap { it.asserts }.filterIsInstance<FiredTransitionAssertion>()).isNotEmpty()
+        assertThat(gammaTrace.steps.flatMap { it.asserts }.filterIsInstance<FiredTransitionExpression>()).isNotEmpty()
     }
 }

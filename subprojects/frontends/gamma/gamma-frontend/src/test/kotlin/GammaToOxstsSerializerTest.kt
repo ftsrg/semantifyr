@@ -5,19 +5,31 @@
  */
 
 import com.google.inject.Inject
+import com.google.inject.Provider
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.lang.tests.InjectWithGamma
 import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaToOxstsSerializer
+import hu.bme.mit.semantifyr.frontends.gamma.serialization.UnmappedGammaConstructException
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.util.EcoreUtil
+import org.eclipse.xtext.resource.XtextResourceSet
 import org.eclipse.xtext.testing.util.ParseHelper
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
+import java.util.stream.Stream
 
 @InjectWithGamma
 class GammaToOxstsSerializerTest {
 
     @Inject
     private lateinit var parseHelper: ParseHelper<GammaModelPackage>
+
+    @Inject
+    private lateinit var resourceSetProvider: Provider<XtextResourceSet>
 
     private fun oxstsLines(source: String): List<String> {
         val gammaPackage = parseHelper.parse(source)
@@ -40,15 +52,16 @@ class GammaToOxstsSerializerTest {
                 statechart Machine [
                     port control : provides Control
                 ] {
-                    var count : Integer := 0
-                    var flag : Boolean
+                    var count : integer := 0
+                    var flag : boolean
                     timeout delay
                     region Main {
                         state Idle
                         state Busy
-                        entry transition to Idle
-                        $body
+                        initial MainInitial
                     }
+                    transition from MainInitial to Idle
+                    $body
                 }
             """,
         )
@@ -65,19 +78,21 @@ class GammaToOxstsSerializerTest {
                     port control : requires Control,
                     port workerControl : provides Control
                 ] {
-                    var count : Integer := 0
+                    var count : integer := 0
                     region Main {
+                        initial MainInitial
                         state Idle
-                        entry transition to Idle
                     }
+                    transition from MainInitial to Idle
                 }
                 statechart Worker [
                     port control : requires Control
                 ] {
                     region Main {
+                        initial MainInitial
                         state Idle
-                        entry transition to Idle
                     }
+                    transition from MainInitial to Idle
                 }
                 $system
                 $verificationCases
@@ -86,14 +101,14 @@ class GammaToOxstsSerializerTest {
     }
 
     private val system = """
-        sync component System [
+        sync System [
             port control : requires Control,
             port spare : provides Control
         ] {
             component leader : Leader
             component worker : Worker
             bind control -> leader.control
-            channel [ leader.workerControl ] -> [ worker.control ]
+            channel [ leader.workerControl ] -o)- [ worker.control ]
         }
     """
 
@@ -247,14 +262,15 @@ class GammaToOxstsSerializerTest {
                 statechart Machine [
                     port control : provides Control
                 ] {
-                    var count : Integer := 0
+                    var count : integer := 0
                     region Main {
+                        initial MainInitial
                         state Idle {
-                            entry / assign count := 1;
+                            entry / count := 1;
                             exit / raise control.done;
                         }
-                        entry transition to Idle
                     }
+                    transition from MainInitial to Idle
                 }
             """,
         )
@@ -285,11 +301,13 @@ class GammaToOxstsSerializerTest {
                         state Outer {
                             region Inner {
                                 state Nested
-                                entry transition to Nested
+                                initial InnerInitial
                             }
                         }
-                        entry transition to Outer
+                        initial MainInitial
                     }
+                    transition from InnerInitial to Nested
+                    transition from MainInitial to Outer
                 }
             """,
         )
@@ -311,8 +329,8 @@ class GammaToOxstsSerializerTest {
     fun `transitions between the same states are told apart by their triggers`() {
         val lines = statechartLines(
             """
-                transition Idle to Busy when event control.start
-                transition Idle to Busy when timeout delay
+                transition from Idle to Busy when control.start
+                transition from Idle to Busy when timeout delay
             """,
         )
 
@@ -326,8 +344,8 @@ class GammaToOxstsSerializerTest {
     fun `transitions that still collide are numbered in model order`() {
         val lines = statechartLines(
             """
-                transition Idle to Busy
-                transition Idle to Busy
+                transition from Idle to Busy
+                transition from Idle to Busy
             """,
         )
 
@@ -339,7 +357,7 @@ class GammaToOxstsSerializerTest {
 
     @Test
     fun `a transition refers to its source and target states`() {
-        val lines = statechartLines("transition Idle to Busy")
+        val lines = statechartLines("transition from Idle to Busy")
 
         assertThat(lines).containsSequence(
             "contains Idle_to_Busy: Transition subsets transitions {",
@@ -351,7 +369,7 @@ class GammaToOxstsSerializerTest {
 
     @Test
     fun `an event trigger refers to the port and the event of its interface`() {
-        val lines = statechartLines("transition Idle to Busy when event control.start")
+        val lines = statechartLines("transition from Idle to Busy when control.start")
 
         assertThat(lines).containsSequence(
             "redefine refers to: State = Busy",
@@ -364,7 +382,7 @@ class GammaToOxstsSerializerTest {
 
     @Test
     fun `a timeout trigger refers to the timeout`() {
-        val lines = statechartLines("transition Busy to Idle when timeout delay")
+        val lines = statechartLines("transition from Busy to Idle when timeout delay")
 
         assertThat(lines).containsSequence(
             "redefine refers to: State = Idle",
@@ -376,7 +394,7 @@ class GammaToOxstsSerializerTest {
 
     @Test
     fun `a guard contains its expression`() {
-        val lines = statechartLines("transition Idle to Busy [ count < 3 ]")
+        val lines = statechartLines("transition from Idle to Busy [ count < 3 ]")
 
         assertThat(lines).containsSequence(
             "redefine refers to: State = Busy",
@@ -395,7 +413,7 @@ class GammaToOxstsSerializerTest {
 
     @Test
     fun `a raise event action refers to the port and the event of its interface`() {
-        val lines = statechartLines("transition Idle to Busy / raise control.done;")
+        val lines = statechartLines("transition from Idle to Busy / raise control.done;")
 
         assertThat(lines).containsSequence(
             "contains raise_control_done: RaiseEventAction subsets actions {",
@@ -407,7 +425,7 @@ class GammaToOxstsSerializerTest {
 
     @Test
     fun `a set timeout action refers to the timeout and contains its value`() {
-        val lines = statechartLines("transition Idle to Busy / set delay := 2 s;")
+        val lines = statechartLines("transition from Idle to Busy / set delay := 2 s;")
 
         assertThat(lines).containsSequence(
             "contains set_delay: SetTimeoutAction subsets actions {",
@@ -421,7 +439,7 @@ class GammaToOxstsSerializerTest {
 
     @Test
     fun `an assignment action refers to the variable and contains its value`() {
-        val lines = statechartLines("transition Idle to Busy / assign flag := true;")
+        val lines = statechartLines("transition from Idle to Busy / flag := true;")
 
         assertThat(lines).containsSequence(
             "contains assign_flag: AssignmentAction subsets actions {",
@@ -435,7 +453,7 @@ class GammaToOxstsSerializerTest {
 
     @Test
     fun `arithmetic operators contain their operands`() {
-        val lines = statechartLines("transition Idle to Busy / assign count := count + 1 - 2 * 3 / 4;")
+        val lines = statechartLines("transition from Idle to Busy / count := count + 1 - 2 * 3 / 4;")
 
         assertThat(lines).containsSequence(
             "redefine contains expression: MinusOperatorExpression {",
@@ -466,7 +484,7 @@ class GammaToOxstsSerializerTest {
 
     @Test
     fun `unary operators contain their body`() {
-        val lines = statechartLines("transition Idle to Busy / assign count := - + count;")
+        val lines = statechartLines("transition from Idle to Busy / count := - + count;")
 
         assertThat(lines).containsSequence(
             "redefine contains expression: UnaryMinusExpression {",
@@ -481,7 +499,7 @@ class GammaToOxstsSerializerTest {
 
     @Test
     fun `boolean operators and negation contain their operands`() {
-        val lines = statechartLines("transition Idle to Busy / assign flag := flag and not flag or false;")
+        val lines = statechartLines("transition from Idle to Busy / flag := flag and not flag or false;")
 
         assertThat(lines).containsSequence(
             "redefine contains expression: OrOperatorExpression {",
@@ -506,8 +524,8 @@ class GammaToOxstsSerializerTest {
     fun `comparison operators contain their operands`() {
         val lines = statechartLines(
             """
-                transition Idle to Busy / assign flag := count < 1; assign flag := count <= 1; assign flag := count > 1;
-                    assign flag := count >= 1; assign flag := count == 1; assign flag := count != 1;
+                transition from Idle to Busy / flag := count < 1; flag := count <= 1; flag := count > 1;
+                    flag := count >= 1; flag := count == 1; flag := count != 1;
             """,
         )
 
@@ -568,7 +586,7 @@ class GammaToOxstsSerializerTest {
                 verification case LeaderIdleReachable {
                     component system : System
                     property {
-                        EF isActive (system.leader.Main.Idle)
+                        EF state leader.Main.Idle
                     }
                 }
             """,
@@ -595,7 +613,7 @@ class GammaToOxstsSerializerTest {
                 verification case LeaderCountStaysSmall {
                     component system : System
                     property {
-                        AG system.leader.count < 2
+                        AG variable leader.count < 2
                     }
                 }
             """,
@@ -608,5 +626,170 @@ class GammaToOxstsSerializerTest {
             "redefine refers variable: Variable = system.leader.count",
             "}",
         )
+    }
+
+    @Test
+    fun `a state atom names the state by its containment path in the instance`() {
+        val lines = oxstsLines(
+            """
+                package test
+                statechart Machine {
+                    region Main {
+                        initial MainInitial
+                        state Outer {
+                            region Inner {
+                                initial InnerInitial
+                                state Nested
+                            }
+                        }
+                    }
+                    transition from MainInitial to Outer
+                    transition from InnerInitial to Nested
+                }
+                sync System {
+                    component machine : Machine
+                }
+                verification case NestedReachable {
+                    component system : System
+                    property {
+                        EF state machine.Inner.Nested
+                    }
+                }
+            """,
+        )
+
+        assertThat(lines).contains("redefine refers state: State = system.machine.Main.Outer.Inner.Nested")
+    }
+
+    @Test
+    fun `the actions of a block are serialized in order`() {
+        val lines = statechartLines("transition from Idle to Busy when control.start / { count := 1; raise control.done; }")
+
+        assertThat(lines).containsSubsequence(
+            "contains assign_count: AssignmentAction subsets actions {",
+            "contains raise_control_done: RaiseEventAction subsets actions {",
+        )
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("unmappedConstructs")
+    fun `a construct the serializer does not map yet is a located diagnostic`(construct: String, source: String) {
+        val resourceSet = resourceSetProvider.get()
+        parseHelper.parse("package other", URI.createURI("other.gamma"), resourceSet)
+        val gammaPackage = parseHelper.parse(source.trimIndent(), URI.createURI("test.gamma"), resourceSet)
+        EcoreUtil.resolveAll(gammaPackage)
+        assertThat(gammaPackage.eResource().errors).isEmpty()
+
+        assertThatThrownBy {
+            GammaToOxstsSerializer().transformToOxsts(gammaPackage)
+        }.isInstanceOf(UnmappedGammaConstructException::class.java).hasMessageContaining(construct).hasMessageContaining("is not mapped to OXSTS yet").hasMessageMatching("(?s).*:\\d+: .*")
+    }
+
+    companion object {
+        private fun statechart(declarations: String = "", annotation: String = "", body: String = ""): String {
+            return """
+                package test
+                interface Control {
+                    in event start
+                }
+                $annotation
+                statechart Machine [
+                    port control : provides Control
+                ] {
+                    $declarations
+                    region Main {
+                        initial MainInitial
+                        state Idle
+                        state Busy
+                        $body
+                    }
+                    transition from MainInitial to Idle
+                }
+            """
+        }
+
+        @JvmStatic
+        fun unmappedConstructs(): Stream<Arguments> {
+            return Stream.of(
+                Arguments.of(
+                    "the import of another package",
+                    """
+                        package test
+                        import other
+                    """,
+                ),
+                Arguments.of(
+                    "the type declaration 'Point'",
+                    """
+                        package test
+                        type Point : record {
+                            x : integer
+                        }
+                    """,
+                ),
+                Arguments.of(
+                    "the interface inheritance of 'Extended'",
+                    """
+                        package test
+                        interface Base {
+                            in event start
+                        }
+                        interface Extended extends Base {
+                        }
+                    """,
+                ),
+                Arguments.of(
+                    "the inout event 'ping'",
+                    """
+                        package test
+                        interface Control {
+                            inout event ping
+                        }
+                    """,
+                ),
+                Arguments.of(
+                    "the parameters of event 'start'",
+                    """
+                        package test
+                        interface Control {
+                            in event start(value : integer)
+                        }
+                    """,
+                ),
+                Arguments.of(
+                    "the persistent event 'start'",
+                    """
+                        package test
+                        interface Control {
+                            in persistent event start
+                        }
+                    """,
+                ),
+                Arguments.of(
+                    "the cascade composite 'System'",
+                    """
+                        package test
+                        cascade System {
+                        }
+                    """,
+                ),
+                Arguments.of(
+                    "the shallow history node 'History'",
+                    statechart(body = "shallow history History"),
+                ),
+                Arguments.of(
+                    "the transition priority order-based of 'Machine'",
+                    statechart(annotation = "@TransitionPriority = order-based"),
+                ),
+                Arguments.of(
+                    "the transition priority value-based of 'Machine'",
+                    statechart(annotation = "@TransitionPriority = value-based"),
+                ),
+                Arguments.of(
+                    "the guard evaluation beginning-of-step of 'Machine'",
+                    statechart(annotation = "@GuardEvaluation = beginning-of-step"),
+                ),
+            )
+        }
     }
 }

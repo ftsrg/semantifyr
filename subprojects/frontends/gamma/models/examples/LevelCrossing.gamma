@@ -22,18 +22,19 @@ statechart Track [
     port controller : provides TrackReports
 ] {
     region Main {
-        entry transition to Free
+        initial MainInitial
 
         state Free
         state Approaching
         state Near
         state InCrossing
-
-        transition Free to Approaching when event sensors.approach / raise controller.trainApproaching;
-        transition Approaching to Near when event sensors.near
-        transition Near to InCrossing when event sensors.enter
-        transition InCrossing to Free when event sensors.leave / raise controller.trainLeft;
     }
+
+    transition from MainInitial to Free
+    transition from Free to Approaching when sensors.approach / raise controller.trainApproaching;
+    transition from Approaching to Near when sensors.near
+    transition from Near to InCrossing when sensors.enter
+    transition from InCrossing to Free when sensors.leave / raise controller.trainLeft;
 }
 
 statechart Controller [
@@ -42,33 +43,35 @@ statechart Controller [
     port barrier : provides BarrierCommands
 ] {
     region Main {
-        entry transition to Idle
+        initial MainInitial
 
         state Idle
         state TrainPresent
-
-        transition Idle to TrainPresent when event trackA.trainApproaching / raise barrier.lower;
-        transition Idle to TrainPresent when event trackB.trainApproaching / raise barrier.lower;
-        transition TrainPresent to Idle when event trackA.trainLeft / raise barrier.lift;
-        transition TrainPresent to Idle when event trackB.trainLeft / raise barrier.lift;
     }
+
+    transition from MainInitial to Idle
+    transition from Idle to TrainPresent when trackA.trainApproaching / raise barrier.lower;
+    transition from Idle to TrainPresent when trackB.trainApproaching / raise barrier.lower;
+    transition from TrainPresent to Idle when trackA.trainLeft / raise barrier.lift;
+    transition from TrainPresent to Idle when trackB.trainLeft / raise barrier.lift;
 }
 
 statechart Barrier [
     port controller : requires BarrierCommands
 ] {
     region Main {
-        entry transition to Up
+        initial MainInitial
 
         state Up
         state Down
-
-        transition Up to Down when event controller.lower
-        transition Down to Up when event controller.lift
     }
+
+    transition from MainInitial to Up
+    transition from Up to Down when controller.lower
+    transition from Down to Up when controller.lift
 }
 
-sync component LevelCrossing [
+sync LevelCrossing [
     port trackASensors : requires Sensors,
     port trackBSensors : requires Sensors
 ] {
@@ -80,21 +83,21 @@ sync component LevelCrossing [
     bind trackASensors -> trackA.sensors
     bind trackBSensors -> trackB.sensors
 
-    channel [ trackA.controller ] -> [ controller.trackA ]
-    channel [ trackB.controller ] -> [ controller.trackB ]
-    channel [ controller.barrier ] -> [ barrier.controller ]
+    channel [ trackA.controller ] -o)- [ controller.trackA ]
+    channel [ trackB.controller ] -o)- [ controller.trackB ]
+    channel [ controller.barrier ] -o)- [ barrier.controller ]
 }
 
 verification case BarrierDownWhileTrainInCrossing {
     component system : LevelCrossing
     property {
-        AG ((!isActive (system.trackA.Main.InCrossing) && !isActive (system.trackB.Main.InCrossing)) || isActive (system.barrier.Main.Down))
+        AG ((not state trackA.Main.InCrossing and not state trackB.Main.InCrossing) or state barrier.Main.Down)
     }
 }
 
 verification case TwoTrainsCanBeInTheCrossing {
     component system : LevelCrossing
     property {
-        EF (isActive (system.trackA.Main.InCrossing) && isActive (system.trackB.Main.InCrossing))
+        EF (state trackA.Main.InCrossing and state trackB.Main.InCrossing)
     }
 }

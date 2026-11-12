@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import com.google.inject.Provider
 import hu.bme.mit.semantifyr.compiler.reader.ResourceSetLoader
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaRoot
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import org.eclipse.emf.common.util.URI
@@ -28,10 +29,10 @@ class GammaReader @Inject constructor(
     private val logger by loggerFactory()
 
     fun readGammaFile(file: File): GammaModelPackage {
-        return readGammaFiles(listOf(file)).single()
+        return readGammaFiles(listOf(file)).single() as GammaModelPackage
     }
 
-    fun readGammaFiles(files: List<File>): List<GammaModelPackage> {
+    fun readGammaFiles(files: List<File>): List<GammaRoot> {
         logger.info { "Reading Gamma sources $files" }
         val resourceSet = resourceSetProvider.get()
         val resources = files.map {
@@ -40,7 +41,7 @@ class GammaReader @Inject constructor(
         resourceSetLoader.resolveAllAndValidate(resourceSet)
 
         return resources.map {
-            it.contents.single() as GammaModelPackage
+            it.contents.single() as GammaRoot
         }
     }
 

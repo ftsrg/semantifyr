@@ -21,20 +21,22 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComparisonOperator
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComponentDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComponentInstance
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EF
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ElementReferenceExpression
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EntryTransition
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Block
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.DirectReferenceExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventDirection
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventTrigger
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Expression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaUtils
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.InitialState
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.InstanceElementExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.IntegerType
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.InterfaceDeclaration
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.IsStateActiveExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.LiteralBoolean
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.LiteralExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.LiteralInteger
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.NavigationSuffixExpression
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.NamedElement
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.NegationOperator
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.PortBinding
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.PortDeclaration
@@ -44,7 +46,7 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Region
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SchedulingOrder
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SetTimeoutAction
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.State
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StateTransition
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StateReferenceExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StatechartDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SyncComponentDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TemporalOperator
@@ -52,18 +54,22 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeoutDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeoutTrigger
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Transition
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Trigger
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TypeReference
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Type
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.UnaryOp
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VariableDeclaration
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VariableReferenceExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclaration
 import hu.bme.mit.semantifyr.utils.text.IndentingStringBuilder
 import hu.bme.mit.semantifyr.utils.text.buildIndented
+import org.eclipse.emf.ecore.EObject
+import org.eclipse.xtext.EcoreUtil2
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 
 class GammaToOxstsSerializer {
     val nameStore = GammaNameStore()
 
     fun transformToOxsts(gammaPackage: GammaModelPackage) = buildIndented {
+        UnmappedGammaConstructs.check(gammaPackage)
         appendLine("package ${gammaPackage.name}")
         appendLine()
         appendLine("import semantifyr::gamma::expressions")
@@ -102,6 +108,7 @@ class GammaToOxstsSerializer {
         return when (event.direction) {
             EventDirection.IN -> "inputEvents"
             EventDirection.OUT -> "outputEvents"
+            EventDirection.INOUT -> error("Inout event '${event.name}' has no OXSTS mapping")
         }
     }
 
@@ -204,7 +211,7 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun getTypeReferenceName(typeReference: TypeReference): String {
+    private fun getTypeReferenceName(typeReference: Type): String {
         return when (typeReference) {
             is IntegerType -> "Integer"
             is BooleanType -> "Boolean"
@@ -212,7 +219,7 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun getTypeReferenceOxstsName(typeReference: TypeReference): String {
+    private fun getTypeReferenceOxstsName(typeReference: Type): String {
         return when (typeReference) {
             is IntegerType -> "int"
             is BooleanType -> "bool"
@@ -239,12 +246,12 @@ class GammaToOxstsSerializer {
     private fun IndentingStringBuilder.serialize(region: Region) {
         val name = nameStore.declare(region.eContainer(), region, region.name)
         appendIndent("contains $name: Region subsets regions") {
-            for (state in region.states) {
+            for (state in region.stateNodes.filterIsInstance<State>()) {
                 serialize(state)
             }
 
-            for (transition in region.transitions) {
-                serialize(transition)
+            for (transition in transitionsOf(region)) {
+                serialize(region, transition)
             }
         }
     }
@@ -266,21 +273,30 @@ class GammaToOxstsSerializer {
         }
     }
 
-    private fun IndentingStringBuilder.serialize(transition: Transition) = when (transition) {
-        is EntryTransition -> serialize(transition)
-        is StateTransition -> serialize(transition)
-        else -> error("Unknown State type $transition")
+    private fun transitionsOf(region: Region): List<Transition> {
+        val statechart = EcoreUtil2.getContainerOfType(region, StatechartDeclaration::class.java)
+        return statechart.transitions.filter {
+            it.from.eContainer() == region
+        }
     }
 
-    private fun IndentingStringBuilder.serialize(transition: EntryTransition) {
-        val name = nameStore.declareGenerated(transition.eContainer(), transition, "entry_to_${transition.to.name}")
+    private fun IndentingStringBuilder.serialize(region: Region, transition: Transition) {
+        if (transition.from is InitialState) {
+            serializeEntryTransition(region, transition)
+        } else {
+            serializeStateTransition(region, transition)
+        }
+    }
+
+    private fun IndentingStringBuilder.serializeEntryTransition(region: Region, transition: Transition) {
+        val name = nameStore.declareGenerated(region, transition, "entry_to_${transition.to.name}")
         appendIndent("contains $name: EntryTransition subsets entryTransitions") {
             appendLine("redefine refers to: State = ${transition.to.name}")
         }
     }
 
-    private fun IndentingStringBuilder.serialize(transition: StateTransition) {
-        val name = nameStore.declareGenerated(transition.eContainer(), transition, deriveName(transition))
+    private fun IndentingStringBuilder.serializeStateTransition(region: Region, transition: Transition) {
+        val name = nameStore.declareGenerated(region, transition, deriveName(region, transition))
         appendIndent("contains $name: Transition subsets transitions") {
             appendLine("redefine refers from: State = ${transition.from.name}")
             appendLine("redefine refers to: State = ${transition.to.name}")
@@ -323,7 +339,12 @@ class GammaToOxstsSerializer {
     private fun IndentingStringBuilder.serialize(
         action: Action,
         subsets: String,
-    ) = when (action) {
+    ): Unit = when (action) {
+        is Block -> {
+            for (inner in action.actions) {
+                serialize(inner, subsets)
+            }
+        }
         is RaiseEventAction -> serialize(action, subsets)
         is SetTimeoutAction -> serialize(action, subsets)
         is AssignmentAction -> serialize(action, subsets)
@@ -336,9 +357,9 @@ class GammaToOxstsSerializer {
         return "${provided}_to_$required"
     }
 
-    private fun deriveName(transition: StateTransition): String {
+    private fun deriveName(region: Region, transition: Transition): String {
         val base = "${transition.from.name}_to_${transition.to.name}"
-        val siblings = (transition.eContainer() as Region).transitions.filterIsInstance<StateTransition>()
+        val siblings = transitionsOf(region)
         val collides = siblings.any {
             it !== transition && "${it.from.name}_to_${it.to.name}" == base
         }
@@ -367,7 +388,7 @@ class GammaToOxstsSerializer {
         val derived = when (action) {
             is RaiseEventAction -> "raise_${action.port.name}_${action.event.name}"
             is SetTimeoutAction -> "set_${action.timeout.name}"
-            is AssignmentAction -> "assign_${action.variable.name}"
+            is AssignmentAction -> "assign_${assignedVariable(action).name}"
             else -> error("Unknown action type: $action")
         }
         return "$prefix$derived"
@@ -401,9 +422,13 @@ class GammaToOxstsSerializer {
     ) {
         val name = nameStore.declareGenerated(action.eContainer(), action, deriveName(action, subsets))
         appendIndent("contains $name: AssignmentAction subsets $subsets") {
-            appendLine("redefine refers variable: Variable = ${action.variable.name}")
+            appendLine("redefine refers variable: Variable = ${assignedVariable(action).name}")
             serialize(action.expression, "expression")
         }
+    }
+
+    private fun assignedVariable(action: AssignmentAction): VariableDeclaration {
+        return (action.reference as DirectReferenceExpression).declaration as VariableDeclaration
     }
 
     private fun IndentingStringBuilder.serialize(verificationCase: VerificationCaseDeclaration) {
@@ -428,9 +453,9 @@ class GammaToOxstsSerializer {
         is ComparisonOperator -> serialize(expression, redefines)
         is LiteralExpression -> serialize(expression, redefines)
         is NegationOperator -> serialize(expression, redefines)
-        is IsStateActiveExpression -> serialize(expression, redefines)
-        is ElementReferenceExpression -> serializeVariableReference(expression, redefines)
-        is NavigationSuffixExpression -> serializeVariableReference(expression, redefines)
+        is StateReferenceExpression -> serialize(expression, redefines)
+        is DirectReferenceExpression -> serializeVariableReference(expression, redefines)
+        is VariableReferenceExpression -> serializeVariableReference(expression, redefines)
         else -> error("Unknown type of expression: $expression")
     }
 
@@ -580,30 +605,49 @@ class GammaToOxstsSerializer {
     }
 
     private fun IndentingStringBuilder.serialize(
-        expression: IsStateActiveExpression,
+        expression: StateReferenceExpression,
         redefines: String,
     ) {
+        val path = instancePath(expression) + containmentPath(expression.state)
         appendIndent("redefine contains $redefines: IsStateActiveExpression") {
-            appendLine("redefine refers state: State = ${serializeInline(expression.expression)}")
+            appendLine("redefine refers state: State = ${path.joinToString(".")}")
         }
     }
 
     private fun IndentingStringBuilder.serializeVariableReference(
-        expression: ElementReferenceExpression,
+        expression: DirectReferenceExpression,
         redefines: String,
     ) {
         appendIndent("redefine contains $redefines: VariableExpression") {
-            appendLine("redefine refers variable: Variable = ${serializeInline(expression)}")
+            appendLine("redefine refers variable: Variable = ${expression.declaration.name}")
         }
     }
 
     private fun IndentingStringBuilder.serializeVariableReference(
-        expression: NavigationSuffixExpression,
+        expression: VariableReferenceExpression,
         redefines: String,
     ) {
+        val path = instancePath(expression) + expression.variable.name
         appendIndent("redefine contains $redefines: VariableExpression") {
-            appendLine("redefine refers variable: Variable = ${serializeInline(expression)}")
+            appendLine("redefine refers variable: Variable = ${path.joinToString(".")}")
         }
+    }
+
+    private fun instancePath(expression: InstanceElementExpression): List<String> {
+        val verificationCase = EcoreUtil2.getContainerOfType(expression, VerificationCaseDeclaration::class.java)
+        return listOf(verificationCase.component.name) + GammaUtils.getInstancePath(expression).map {
+            it.name
+        }
+    }
+
+    private fun containmentPath(element: EObject): List<String> {
+        val path = mutableListOf<String>()
+        var current = element
+        while (current !is StatechartDeclaration) {
+            path.add(0, (current as NamedElement).name)
+            current = current.eContainer()
+        }
+        return path
     }
 
     private fun serializeInline(expression: Expression): String {

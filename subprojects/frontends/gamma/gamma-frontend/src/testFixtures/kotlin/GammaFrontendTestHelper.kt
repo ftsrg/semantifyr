@@ -77,7 +77,7 @@ class GammaFrontendTestHelper {
     ): ExecutionTrace {
         val modelFile = File(gammaVerificationCase.declaration.eResource().uri.toFileString())
         val (_, gammaTrace) = gammaReader.readGammaFiles(listOf(modelFile, witness.gammaTracePath.toFile()))
-        return gammaTrace.traces.single()
+        return gammaTrace as ExecutionTrace
     }
 
     fun discoverAsArguments(sourcePath: Path): Stream<Arguments> {
