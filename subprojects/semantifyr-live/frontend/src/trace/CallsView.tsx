@@ -20,6 +20,10 @@ const CHARACTER_WIDTH = 6.7
 const LIFELINE_LENGTH = 22
 const SELF_LOOP = 14
 const NESTED_OFFSET = 5
+const ARROW_MARGIN = 14
+const WIDEST_ARROW = 2 * COLUMN
+const LABEL_PADDING = 4
+const LABEL_RISE = 6
 
 interface PlacedCall {
   call: TraceCall
@@ -66,24 +70,71 @@ function titleOf(call: TraceCall): string {
   return `${call.self}\n${call.calledTransition}${argumentsText}`
 }
 
-function labelX(placed: PlacedCall, enclosing: PlacedCall | undefined): number {
-  const right = placed.center + placed.offset + 4
-  return enclosing?.center === placed.center ? right + SELF_LOOP + 6 : right + 7
+function selfLabelX(placed: PlacedCall): number {
+  return placed.center + placed.offset + 4 + SELF_LOOP + 6
 }
 
-// the environment takes the first column, the instances the ones after it
-function layout(steps: readonly { number: number, step: TraceCallStep }[], lifelines: readonly string[]): Diagram {
-  const columns = new Map(lifelines.map((id, index) => {
-    return [id, GUTTER + ENVIRONMENT_COLUMN + COLUMN * (index + 0.5)]
+function cut(text: string, width: number): string {
+  const fitting = Math.max(Math.floor(width / CHARACTER_WIDTH), 1)
+  return text.length <= fitting ? text : `${text.slice(0, fitting - 1)}…`
+}
+
+interface ArrowSpan {
+  first: number
+  last: number
+  width: number
+}
+
+// the environment's lifeline first, then the instances'; neighbours part to fit the text on the arrows between them, up to the widest arrow
+function lifelinePositions(steps: readonly { step: TraceCallStep }[], lifelines: readonly string[]): number[] {
+  const indices = new Map(lifelines.map((id, index) => {
+    return [id, index + 1]
   }))
-  let width = GUTTER + ENVIRONMENT_COLUMN + COLUMN * lifelines.length
+  const gaps = lifelines.map((_, index) => {
+    return index === 0 ? ENVIRONMENT_COLUMN / 2 + COLUMN / 2 : COLUMN
+  })
+  const spans = steps.flatMap(({ step }) => {
+    return step.calls.flatMap((call): ArrowSpan[] => {
+      const caller = call.enclosing === null ? 0 : indices.get(step.calls[call.enclosing]?.self ?? '') ?? 0
+      const callee = indices.get(call.self) ?? 0
+      if (caller === callee) {
+        return []
+      }
+      const width = Math.min(labelOf(call).length * CHARACTER_WIDTH + 2 * ARROW_MARGIN, WIDEST_ARROW)
+      return [{ first: Math.min(caller, callee), last: Math.max(caller, callee), width }]
+    })
+  }).sort((first, second) => {
+    return (first.last - first.first) - (second.last - second.first)
+  })
+  for (const span of spans) {
+    const room = gaps.slice(span.first, span.last).reduce((sum, gap) => {
+      return sum + gap
+    }, 0)
+    if (room < span.width) {
+      gaps[span.last - 1] = (gaps[span.last - 1] ?? 0) + span.width - room
+    }
+  }
+  const positions = [GUTTER + ENVIRONMENT_COLUMN / 2]
+  for (const gap of gaps) {
+    positions.push((positions.at(-1) ?? 0) + gap)
+  }
+  return positions
+}
+
+function layout(steps: readonly { number: number, step: TraceCallStep }[], lifelines: readonly string[]): Diagram {
+  const positions = lifelinePositions(steps, lifelines)
+  const environment = positions[0] ?? GUTTER
+  const columns = new Map(lifelines.map((id, index) => {
+    return [id, positions[index + 1] ?? environment]
+  }))
+  let width = (positions.at(-1) ?? environment) + COLUMN / 2
   let y = 0
   const bands = steps.map(({ number, step }) => {
     const top = y
     let cursor = top + BAND_PADDING
     const placed: PlacedCall[] = []
     for (const call of step.calls) {
-      const center = columns.get(call.self) ?? GUTTER
+      const center = columns.get(call.self) ?? environment
       const enclosing = call.enclosing === null ? undefined : placed[call.enclosing]
       const offset = enclosing?.center === center ? enclosing.offset + NESTED_OFFSET : 0
       placed.push({ call, center, offset, middle: cursor + ROW / 2, bottom: 0 })
@@ -96,16 +147,18 @@ function layout(steps: readonly { number: number, step: TraceCallStep }[], lifel
       }
       entry.bottom = (placed[last]?.middle ?? entry.middle) + ROW / 2 - 3
       const enclosing = entry.call.enclosing === null ? undefined : placed[entry.call.enclosing]
-      width = Math.max(width, labelX(entry, enclosing) + labelOf(entry.call).length * CHARACTER_WIDTH + 16)
+      if (enclosing?.center === entry.center) {
+        width = Math.max(width, selfLabelX(entry) + labelOf(entry.call).length * CHARACTER_WIDTH + 16)
+      }
     })
     cursor += BAND_PADDING
     y = cursor
     return { number, top, bottom: cursor, calls: placed }
   })
   return {
-    environment: GUTTER + ENVIRONMENT_COLUMN / 2,
+    environment,
     lifelines: lifelines.map((id) => {
-      return { id, x: columns.get(id) ?? GUTTER }
+      return { id, x: columns.get(id) ?? environment }
     }),
     bands,
     width: Math.ceil(width),
@@ -128,6 +181,7 @@ function Arrow({ placed, caller, fromEnvironment }: { placed: PlacedCall, caller
     const right = to + SELF_LOOP
     return (
       <g className={className}>
+        <text x={selfLabelX(placed)} y={placed.middle - 1}>{labelOf(placed.call)}</text>
         <path d={`M${from} ${y - 12} H${right} V${y} H${to + 7}`} />
         <path className="arrowhead" d={`M${to} ${y} l7 -3.5 v7z`} />
       </g>
@@ -138,6 +192,7 @@ function Arrow({ placed, caller, fromEnvironment }: { placed: PlacedCall, caller
   const to = placed.center - 4 * direction
   return (
     <g className={className}>
+      <text className="call-arrow-label" x={(from + to) / 2} y={y - LABEL_RISE}>{cut(labelOf(placed.call), Math.abs(to - from) - 2 * LABEL_PADDING)}</text>
       <path d={`M${from} ${y} H${to - 7 * direction}`} />
       <path className="arrowhead" d={`M${to} ${y} l${-7 * direction} -3.5 v7z`} />
     </g>
@@ -202,7 +257,6 @@ export function CallsView({ trace }: TraceViewProps): React.JSX.Element {
                 <g key={`${band.number}-${index}`} className="call">
                   <title>{titleOf(placed.call)}</title>
                   <rect className="activation" x={placed.center + placed.offset - 4} y={placed.middle - 11} width="8" height={Math.max(22, placed.bottom - placed.middle + 11)} rx="2" />
-                  <text x={labelX(placed, enclosing)} y={placed.middle - 1}>{labelOf(placed.call)}</text>
                   <Arrow placed={placed} caller={caller} fromEnvironment={!enclosing} />
                 </g>
               )

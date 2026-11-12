@@ -506,6 +506,7 @@ code, .mono { font-family: var(--font-mono); font-feature-settings: "calt" 0; }
 .call:hover .activation { stroke: var(--text-primary); fill: var(--surface-selected); }
 .call text { fill: var(--text-secondary); font-family: var(--font-mono); font-size: 11px; paint-order: stroke; stroke: var(--surface-panel); stroke-width: 4px; stroke-linejoin: round; }
 .call:hover text { fill: var(--text-primary); }
+.call-arrow-label { text-anchor: middle; }
 .call-arrow path { stroke: var(--text-secondary); stroke-width: 1.2; fill: none; stroke-linejoin: round; }
 .call-arrow .arrowhead { fill: var(--text-secondary); stroke: none; }
 .call-arrow.from-environment path { stroke: var(--text-tertiary); }
