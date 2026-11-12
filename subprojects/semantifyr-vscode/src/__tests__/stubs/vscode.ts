@@ -320,7 +320,7 @@ export const state = {
 
 function languageOf(uri: Uri): string {
     const extension = /\.([^./]+)$/.exec(uri.path)?.[1] ?? '';
-    return { oxsts: 'oxsts', gamma: 'gamma', md: 'markdown' }[extension] ?? 'plaintext';
+    return { oxsts: 'oxsts', gamma: 'gamma', get: 'gamma', md: 'markdown' }[extension] ?? 'plaintext';
 }
 
 export function openDocument(uri: Uri): TextDocument {

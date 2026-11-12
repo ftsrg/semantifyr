@@ -44,7 +44,8 @@ public class GammaScopeProvider extends AbstractGammaScopeProvider {
             return Scopes.scopeFor(GammaUtils.getEvents(trigger.getPort()));
         }
 
-        if (reference == GammaPackage.Literals.RAISE_EVENT_ACTION__EVENT && context instanceof RaiseEventAction action) {
+        if (reference == GammaPackage.Literals.RAISE_EVENT_ACTION__EVENT
+                && context instanceof RaiseEventAction action) {
             return Scopes.scopeFor(GammaUtils.getEvents(action.getPort()));
         }
 
@@ -65,14 +66,16 @@ public class GammaScopeProvider extends AbstractGammaScopeProvider {
             }
         }
 
-        if (reference == GammaPackage.Literals.RECORD_ACCESS_EXPRESSION__FIELD && context instanceof RecordAccessExpression access) {
+        if (reference == GammaPackage.Literals.RECORD_ACCESS_EXPRESSION__FIELD
+                && context instanceof RecordAccessExpression access) {
             if (GammaUtils.getType(access.getOperand()) instanceof RecordType recordType) {
                 return Scopes.scopeFor(recordType.getFields());
             }
             return IScope.NULLSCOPE;
         }
 
-        if (reference == GammaPackage.Literals.INSTANCE_PORT_REFERENCE__PORT && context instanceof InstancePortReference portReference) {
+        if (reference == GammaPackage.Literals.INSTANCE_PORT_REFERENCE__PORT
+                && context instanceof InstancePortReference portReference) {
             var instance = portReference.getInstance();
             if (instance == null || instance.eIsProxy() || instance.getComponent() == null) {
                 return IScope.NULLSCOPE;
@@ -80,7 +83,8 @@ public class GammaScopeProvider extends AbstractGammaScopeProvider {
             return Scopes.scopeFor(instance.getComponent().getPorts());
         }
 
-        if (reference == GammaPackage.Literals.COMPONENT_INSTANCE_REFERENCE__INSTANCE && context instanceof ComponentInstanceReference instanceReference) {
+        if (reference == GammaPackage.Literals.COMPONENT_INSTANCE_REFERENCE__INSTANCE
+                && context instanceof ComponentInstanceReference instanceReference) {
             return Scopes.scopeFor(GammaUtils.getInstances(GammaUtils.getParentComponent(instanceReference)));
         }
 
@@ -101,7 +105,8 @@ public class GammaScopeProvider extends AbstractGammaScopeProvider {
 
         var firedTransition = EcoreUtil2.getContainerOfType(context, FiredTransitionExpression.class);
         if (firedTransition != null
-                && (reference == GammaPackage.Literals.TIMEOUT_TRIGGER__TIMEOUT || reference == GammaPackage.Literals.EVENT_TRIGGER__PORT)) {
+                && (reference == GammaPackage.Literals.TIMEOUT_TRIGGER__TIMEOUT
+                        || reference == GammaPackage.Literals.EVENT_TRIGGER__PORT)) {
             if (!(GammaUtils.getReferencedComponent(firedTransition) instanceof StatechartDeclaration statechart)) {
                 return IScope.NULLSCOPE;
             }
@@ -115,7 +120,8 @@ public class GammaScopeProvider extends AbstractGammaScopeProvider {
     }
 
     protected IScope getInstanceElementScope(InstanceElementExpression expression, EReference reference) {
-        if (reference == GammaPackage.Literals.STATE_REFERENCE_EXPRESSION__STATE && expression instanceof StateReferenceExpression stateReference) {
+        if (reference == GammaPackage.Literals.STATE_REFERENCE_EXPRESSION__STATE
+                && expression instanceof StateReferenceExpression stateReference) {
             var region = stateReference.getRegion();
             if (region == null || region.eIsProxy()) {
                 return IScope.NULLSCOPE;

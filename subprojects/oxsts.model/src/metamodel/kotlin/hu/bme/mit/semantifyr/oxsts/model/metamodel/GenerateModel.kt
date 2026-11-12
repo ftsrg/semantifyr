@@ -18,7 +18,11 @@ fun main(args: Array<String>) {
     generateModel(Oxsts, File(args[0]).absoluteFile, File(args[1]).absoluteFile)
 }
 
-fun generateModel(metaPackage: MetaPackage, sourceDirectory: File, modelDirectory: File) {
+fun generateModel(
+    metaPackage: MetaPackage,
+    sourceDirectory: File,
+    modelDirectory: File,
+) {
     val ePackage = metaPackage.toEPackage()
 
     EcorePlugin.getPlatformResourceMap()["emf-gen"] = URI.createFileURI("$sourceDirectory/")

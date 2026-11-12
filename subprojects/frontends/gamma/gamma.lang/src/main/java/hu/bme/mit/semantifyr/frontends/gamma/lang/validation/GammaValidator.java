@@ -27,7 +27,6 @@ import org.eclipse.xtext.validation.Check;
 
 public class GammaValidator extends AbstractGammaValidator {
 
-
     public static final String INVALID_FILE_CONTENT = "Gamma.INVALID_FILE_CONTENT";
     public static final String AMBIGUOUS_REFERENCE = "Gamma.AMBIGUOUS_REFERENCE";
     public static final String TRIGGERLESS_TRANSITION = "Gamma.TRIGGERLESS_TRANSITION";
@@ -63,20 +62,31 @@ public class GammaValidator extends AbstractGammaValidator {
         }
         var isTraceFile = TRACE_FILE_EXTENSION.equals(resource.getURI().fileExtension());
         if (isTraceFile && gammaRoot instanceof GammaModelPackage) {
-            error("A .get file holds an execution trace", gammaRoot, GammaPackage.Literals.NAMED_ELEMENT__NAME, INVALID_FILE_CONTENT);
+            error(
+                    "A .get file holds an execution trace",
+                    gammaRoot,
+                    GammaPackage.Literals.NAMED_ELEMENT__NAME,
+                    INVALID_FILE_CONTENT);
         }
         if (!isTraceFile && gammaRoot instanceof ExecutionTrace) {
-            error("An execution trace is a .get file of its own", gammaRoot, GammaPackage.Literals.NAMED_ELEMENT__NAME, INVALID_FILE_CONTENT);
+            error(
+                    "An execution trace is a .get file of its own",
+                    gammaRoot,
+                    GammaPackage.Literals.NAMED_ELEMENT__NAME,
+                    INVALID_FILE_CONTENT);
         }
     }
 
     @Check
     public void checkAmbiguousImport(EObject element) {
-        if (!(EcoreUtil2.getRootContainer(element) instanceof GammaRoot gammaRoot) || gammaRoot.getImports().size() < 2) {
+        if (!(EcoreUtil2.getRootContainer(element) instanceof GammaRoot gammaRoot)
+                || gammaRoot.getImports().size() < 2) {
             return;
         }
         for (var reference : element.eClass().getEAllReferences()) {
-            if (reference.isContainment() || reference.isContainer() || reference.isMany()
+            if (reference.isContainment()
+                    || reference.isContainer()
+                    || reference.isMany()
                     || reference == GammaPackage.Literals.IMPORT_STATEMENT__IMPORTED_PACKAGE) {
                 continue;
             }
@@ -98,7 +108,8 @@ public class GammaValidator extends AbstractGammaValidator {
             if (candidates.size() < 2 || !candidates.contains(qualifiedNameProvider.getFullyQualifiedName(target))) {
                 continue;
             }
-            var names = candidates.stream().map(qualifiedNameConverter::toString).toList();
+            var names =
+                    candidates.stream().map(qualifiedNameConverter::toString).toList();
             error(
                     "Ambiguous reference '%s': the imports declare %s".formatted(text, String.join(" and ", names)),
                     element,
@@ -107,7 +118,8 @@ public class GammaValidator extends AbstractGammaValidator {
         }
     }
 
-    private LinkedHashSet<QualifiedName> getImportedCandidates(GammaRoot gammaRoot, EReference reference, QualifiedName name) {
+    private LinkedHashSet<QualifiedName> getImportedCandidates(
+            GammaRoot gammaRoot, EReference reference, QualifiedName name) {
         var index = resourceDescriptionsProvider.getResourceDescriptions(gammaRoot.eResource());
         var candidates = new LinkedHashSet<QualifiedName>();
         for (var importStatement : gammaRoot.getImports()) {
@@ -116,7 +128,8 @@ public class GammaValidator extends AbstractGammaValidator {
                 continue;
             }
             var importedName = qualifiedNameProvider.getFullyQualifiedName(importedPackage);
-            for (var description : index.getExportedObjects(reference.getEReferenceType(), importedName.append(name), false)) {
+            for (var description :
+                    index.getExportedObjects(reference.getEReferenceType(), importedName.append(name), false)) {
                 candidates.add(description.getQualifiedName());
             }
         }
@@ -128,7 +141,11 @@ public class GammaValidator extends AbstractGammaValidator {
         // the validator base class declares its own State
         if (transition.getFrom() instanceof hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.State
                 && transition.getTrigger() == null) {
-            error("A transition leaving a state needs a trigger", transition, GammaPackage.Literals.TRANSITION__FROM, TRIGGERLESS_TRANSITION);
+            error(
+                    "A transition leaving a state needs a trigger",
+                    transition,
+                    GammaPackage.Literals.TRANSITION__FROM,
+                    TRIGGERLESS_TRANSITION);
         }
     }
 
@@ -137,13 +154,16 @@ public class GammaValidator extends AbstractGammaValidator {
         var settings = new LinkedHashMap<TimeoutDeclaration, List<SetTimeoutAction>>();
         for (var action : EcoreUtil2.getAllContentsOfType(statechart, SetTimeoutAction.class)) {
             if (action.getTimeout() != null && !action.getTimeout().eIsProxy()) {
-                settings.computeIfAbsent(action.getTimeout(), ignored -> new ArrayList<>()).add(action);
+                settings.computeIfAbsent(action.getTimeout(), ignored -> new ArrayList<>())
+                        .add(action);
             }
         }
         for (var entry : settings.entrySet()) {
             var actions = entry.getValue();
             var first = actions.getFirst();
-            var allEqual = actions.stream().allMatch(it -> it.getUnit() == first.getUnit() && EcoreUtil.equals(it.getValue(), first.getValue()));
+            var allEqual = actions.stream()
+                    .allMatch(
+                            it -> it.getUnit() == first.getUnit() && EcoreUtil.equals(it.getValue(), first.getValue()));
             if (allEqual) {
                 continue;
             }
@@ -161,7 +181,11 @@ public class GammaValidator extends AbstractGammaValidator {
     public void checkPositiveTime(SetTimeoutAction action) {
         var value = evaluateInteger(action.getValue());
         if (value != null && value <= 0) {
-            error("A time value must be positive, it is " + value, action, GammaPackage.Literals.SET_TIMEOUT_ACTION__VALUE, NON_POSITIVE_TIME);
+            error(
+                    "A time value must be positive, it is " + value,
+                    action,
+                    GammaPackage.Literals.SET_TIMEOUT_ACTION__VALUE,
+                    NON_POSITIVE_TIME);
         }
     }
 
@@ -200,7 +224,8 @@ public class GammaValidator extends AbstractGammaValidator {
         var states = new LinkedHashMap<String, List<hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.State>>();
         for (var state : GammaUtils.getAllStates(statechart)) {
             if (state.getName() != null) {
-                states.computeIfAbsent(state.getName(), ignored -> new ArrayList<>()).add(state);
+                states.computeIfAbsent(state.getName(), ignored -> new ArrayList<>())
+                        .add(state);
             }
         }
         for (var entry : states.entrySet()) {
@@ -224,10 +249,11 @@ public class GammaValidator extends AbstractGammaValidator {
             if (transition.getName() != null) {
                 continue;
             }
-            var hasTwin = transitions.stream().anyMatch(other -> other != transition
-                    && other.getFrom() == transition.getFrom()
-                    && other.getTo() == transition.getTo()
-                    && GammaUtils.isSameTrigger(other.getTrigger(), transition.getTrigger()));
+            var hasTwin = transitions.stream()
+                    .anyMatch(other -> other != transition
+                            && other.getFrom() == transition.getFrom()
+                            && other.getTo() == transition.getTo()
+                            && GammaUtils.isSameTrigger(other.getTrigger(), transition.getTrigger()));
             if (hasTwin) {
                 warning(
                         "Another transition shares this one's source, target and trigger, name it with @(id)",
@@ -244,7 +270,8 @@ public class GammaValidator extends AbstractGammaValidator {
         if (statechart == null || statechart.getTransitionPriority() != TransitionPriority.OFF) {
             return;
         }
-        if (!NodeModelUtils.findNodesForFeature(transition, GammaPackage.Literals.TRANSITION__PRIORITY).isEmpty()) {
+        if (!NodeModelUtils.findNodesForFeature(transition, GammaPackage.Literals.TRANSITION__PRIORITY)
+                .isEmpty()) {
             warning(
                     "The transition priority of '" + statechart.getName() + "' is off, so this priority has no effect",
                     transition,
@@ -262,17 +289,24 @@ public class GammaValidator extends AbstractGammaValidator {
         }
         if (raiseEventAct.eContainingFeature() == GammaPackage.Literals.STEP__ACTS) {
             if (!GammaUtils.isInputEvent(port, event)) {
-                error("'" + event.getName() + "' is not an input event of port '" + port.getName() + "'", GammaPackage.Literals.RAISE_EVENT_ACT__EVENT, INVALID_TRACE_EVENT);
+                error(
+                        "'" + event.getName() + "' is not an input event of port '" + port.getName() + "'",
+                        GammaPackage.Literals.RAISE_EVENT_ACT__EVENT,
+                        INVALID_TRACE_EVENT);
             }
         } else if (!GammaUtils.isOutputEvent(port, event)) {
-            error("'" + event.getName() + "' is not an output event of port '" + port.getName() + "'", GammaPackage.Literals.RAISE_EVENT_ACT__EVENT, INVALID_TRACE_EVENT);
+            error(
+                    "'" + event.getName() + "' is not an output event of port '" + port.getName() + "'",
+                    GammaPackage.Literals.RAISE_EVENT_ACT__EVENT,
+                    INVALID_TRACE_EVENT);
         }
     }
 
     @Check
     public void checkVariableValue(ComparisonOperator comparison) {
         if (!(comparison.getLeft() instanceof VariableReferenceExpression reference)
-                || !(comparison.getRight() instanceof LiteralExpression || comparison.getRight() instanceof ArithmeticUnaryOperator)) {
+                || !(comparison.getRight() instanceof LiteralExpression
+                        || comparison.getRight() instanceof ArithmeticUnaryOperator)) {
             return;
         }
         var variable = reference.getVariable();
@@ -304,7 +338,8 @@ public class GammaValidator extends AbstractGammaValidator {
                     UNKNOWN_TRACE_TRANSITION);
         } else if (transitions.size() > 1) {
             error(
-                    "More than one transition from '" + from.getName() + "' to '" + to.getName() + "' matches, name the trigger or the transition",
+                    "More than one transition from '" + from.getName() + "' to '" + to.getName()
+                            + "' matches, name the trigger or the transition",
                     GammaPackage.Literals.FIRED_TRANSITION_EXPRESSION__TO,
                     AMBIGUOUS_TRACE_TRANSITION);
         }

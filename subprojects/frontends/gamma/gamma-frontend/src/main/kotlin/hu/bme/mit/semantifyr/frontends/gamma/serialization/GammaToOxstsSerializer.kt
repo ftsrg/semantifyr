@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ArithmeticBinaryOperator
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ArithmeticOp
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ArithmeticUnaryOperator
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.AssignmentAction
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Block
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.BooleanOp
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.BooleanOperator
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.BooleanType
@@ -20,9 +21,8 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComparisonOp
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComparisonOperator
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComponentDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComponentInstance
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EF
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Block
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.DirectReferenceExpression
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EF
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventDirection
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventTrigger

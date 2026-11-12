@@ -61,7 +61,8 @@ public class GammaUtils {
         return events;
     }
 
-    private static void collectInterfaces(InterfaceDeclaration interfaceDeclaration, Set<InterfaceDeclaration> interfaces) {
+    private static void collectInterfaces(
+            InterfaceDeclaration interfaceDeclaration, Set<InterfaceDeclaration> interfaces) {
         if (interfaceDeclaration == null || interfaceDeclaration.eIsProxy() || !interfaces.add(interfaceDeclaration)) {
             return;
         }
@@ -149,10 +150,15 @@ public class GammaUtils {
 
     public static Type getType(Expression expression) {
         var type = switch (expression) {
-            case DirectReferenceExpression reference when reference.getDeclaration() != null -> reference.getDeclaration().getType();
-            case EventParameterReferenceExpression reference when reference.getParameter() != null -> reference.getParameter().getType();
-            case VariableReferenceExpression reference when reference.getVariable() != null -> reference.getVariable().getType();
-            case RecordAccessExpression access when access.getField() != null -> access.getField().getType();
+            case DirectReferenceExpression reference
+            when reference.getDeclaration() != null ->
+                reference.getDeclaration().getType();
+            case EventParameterReferenceExpression reference
+            when reference.getParameter() != null -> reference.getParameter().getType();
+            case VariableReferenceExpression reference
+            when reference.getVariable() != null -> reference.getVariable().getType();
+            case RecordAccessExpression access
+            when access.getField() != null -> access.getField().getType();
             case null, default -> null;
         };
         return resolveType(type);

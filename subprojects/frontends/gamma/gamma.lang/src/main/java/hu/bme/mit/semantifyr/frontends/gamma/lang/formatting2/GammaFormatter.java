@@ -133,7 +133,8 @@ public class GammaFormatter extends AbstractJavaFormatter {
     }
 
     protected void format(BooleanOperator booleanOperator, IFormattableDocument document) {
-        document.surround(regionFor(booleanOperator).feature(GammaPackage.Literals.BOOLEAN_OPERATOR__OP), this::oneSpace);
+        document.surround(
+                regionFor(booleanOperator).feature(GammaPackage.Literals.BOOLEAN_OPERATOR__OP), this::oneSpace);
         document.format(booleanOperator.getLeft());
         document.format(booleanOperator.getRight());
     }

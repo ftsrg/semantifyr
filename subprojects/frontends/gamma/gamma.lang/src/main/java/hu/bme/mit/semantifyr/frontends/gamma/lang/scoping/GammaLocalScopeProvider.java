@@ -88,7 +88,8 @@ public class GammaLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
             if (importedName == null) {
                 continue;
             }
-            scope = SelectableBasedScope.createScope(scope, new TrimPrefixSelectable(index, importedName), type, ignoreCase);
+            scope = SelectableBasedScope.createScope(
+                    scope, new TrimPrefixSelectable(index, importedName), type, ignoreCase);
         }
         return scope;
     }

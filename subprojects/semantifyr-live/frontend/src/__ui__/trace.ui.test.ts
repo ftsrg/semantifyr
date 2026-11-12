@@ -85,7 +85,7 @@ describe('the views of a trace', () => {
 
     await expect.poll(async () => {
       return editor(page).selectedTab.innerText()
-    }).toMatch(/\.trace\.gamma$/)
+    }).toMatch(/\.trace\.get$/)
     const tab = editor(page).selectedTab
     await tab.click({ button: 'middle' })
     await expect.poll(async () => {

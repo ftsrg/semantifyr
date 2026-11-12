@@ -682,7 +682,11 @@ class GammaToOxstsSerializerTest {
     }
 
     companion object {
-        private fun statechart(declarations: String = "", annotation: String = "", body: String = ""): String {
+        private fun statechart(
+            declarations: String = "",
+            annotation: String = "",
+            body: String = "",
+        ): String {
             return """
                 package test
                 interface Control {
