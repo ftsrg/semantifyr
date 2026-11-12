@@ -24,7 +24,7 @@ dependencies {
     testImplementation(testFixtures(project(":compiler")))
 }
 
-val sysmlCommit = "136a484413e4c8bc1576ebd8addc254df5fc9350" // feat: rewrote the Semantifyr mapper with a construct registry and a name map, and the trace generator to read the witness, the trace and the name map
+val sysmlCommit = "9c1fa0b073de4fd229dceb288b9d52fda071ec80" // feat: mapped a transition without first in a state's body as leaving its owning state and refused its effect form, which SysIDE reads as a do action
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 
