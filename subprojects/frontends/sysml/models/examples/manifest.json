@@ -126,7 +126,7 @@
         },
         {
             "file": "door_access.sysml",
-            "example": { "label": "Door access", "description": "Door-access model with parallel state regions." },
+            "example": { "label": "Door access", "description": "Sequential cyclic workflow with do-actions on transitions." },
             "cases": [
                 { "name": "LockedReachable", "verdict": "Passed", "tier": "Smoke", "engines": ["spin", "uppaal"] },
                 { "name": "CheckingReachable", "verdict": "Passed", "tier": "Integration", "engines": ["spin", "uppaal"] },
