@@ -5,15 +5,23 @@
  */
 
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVerificationCase
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ActiveStateAssertion
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComparisonOperator
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ExecutionTrace
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Expression
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.FiredTransitionAssertion
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.FiredTransitionExpression
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaUtils
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.InstanceElementExpression
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.NamedElement
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StateReferenceExpression
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StatechartDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Step
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VariableValueAssertion
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VariableReferenceExpression
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaFrontendTestHelper
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaTestEngine
 import hu.bme.mit.semantifyr.verifier.witness.WitnessStateStep
 import org.assertj.core.api.Assertions.assertThat
+import org.eclipse.emf.ecore.EObject
+import org.eclipse.xtext.EcoreUtil2
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -51,7 +59,7 @@ class GammaTraceTests {
             val witnessStep = witnessSteps[index] ?: continue
             assertThat(assertedStates(step))
                 .describedAs("Active states in step $index of ${gammaVerificationCase.qualifiedName}")
-                .isEqualTo(activeLeafStates(witnessStep))
+                .isEqualTo(activeStates(witnessStep))
             for ((variable, value) in assertedVariables(step)) {
                 val witnessValues = witnessStep.values.filter {
                     it.variable.substringBeforeLast('.') == variable
@@ -71,53 +79,54 @@ class GammaTraceTests {
         description: String,
     ) {
         val currentStates = assertedStates(step)
-        for (transition in step.asserts.filterIsInstance<FiredTransitionAssertion>()) {
-            val source = instancePath(transition.from)
-            val target = "${source.substringBeforeLast('.')}.${transition.to.name}"
+        for (firedTransition in step.asserts.filterIsInstance<FiredTransitionExpression>()) {
+            val transition = firedTransition.transition
+            val source = elementPath(firedTransition, transition?.from ?: firedTransition.from)
+            val target = elementPath(firedTransition, transition?.to ?: firedTransition.to)
             assertThat(previousStates)
-                .describedAs("The source of the transition $source to ${transition.to.name} is active before $description")
-                .anyMatch {
-                    isWithin(it, source)
-                }
+                .describedAs("The source of the transition $source to $target is active before $description")
+                .contains(source)
             assertThat(currentStates)
-                .describedAs("The target of the transition $source to ${transition.to.name} is active after $description")
-                .anyMatch {
-                    isWithin(it, target)
-                }
+                .describedAs("The target of the transition $source to $target is active after $description")
+                .contains(target)
         }
     }
 
-    private fun isWithin(leafState: String, state: String): Boolean {
-        return leafState == state || leafState.startsWith("$state.")
-    }
-
     private fun assertedStates(step: Step): Set<String> {
-        return step.asserts.filterIsInstance<ActiveStateAssertion>().map {
-            instancePath(it.state)
+        return step.asserts.filterIsInstance<StateReferenceExpression>().map {
+            elementPath(it, it.state)
         }.toSet()
     }
 
     private fun assertedVariables(step: Step): Map<String, String> {
-        return step.asserts.filterIsInstance<VariableValueAssertion>().associate {
-            instancePath(it.variable) to sourceText(it.value)
+        return step.asserts.filterIsInstance<ComparisonOperator>().filter {
+            it.left is VariableReferenceExpression
+        }.associate {
+            val reference = it.left as VariableReferenceExpression
+            elementPath(reference, reference.variable) to sourceText(it.right)
         }
     }
 
-    private fun activeLeafStates(witnessStep: WitnessStateStep): Set<String> {
-        val activeStates = witnessStep.values.filter {
+    private fun activeStates(witnessStep: WitnessStateStep): Set<String> {
+        return witnessStep.values.filter {
             it.variable.endsWith(".activeState") && it.value != "nothing"
         }.map {
             it.value
-        }
-        return activeStates.filter { state ->
-            activeStates.none {
-                it.startsWith("$state.")
-            }
         }.toSet()
     }
 
-    private fun instancePath(path: Expression): String {
-        return "root.${sourceText(path)}"
+    private fun elementPath(expression: InstanceElementExpression, element: EObject): String {
+        val trace = EcoreUtil2.getContainerOfType(expression, ExecutionTrace::class.java)
+        val instances = listOf(trace.verificationCase.component.name) + GammaUtils.getInstancePath(expression).map {
+            it.name
+        }
+        val containment = mutableListOf<String>()
+        var current = element
+        while (current !is StatechartDeclaration) {
+            containment.add(0, (current as NamedElement).name)
+            current = current.eContainer()
+        }
+        return (listOf("root") + instances + containment).joinToString(".")
     }
 
     private fun sourceText(expression: Expression): String {

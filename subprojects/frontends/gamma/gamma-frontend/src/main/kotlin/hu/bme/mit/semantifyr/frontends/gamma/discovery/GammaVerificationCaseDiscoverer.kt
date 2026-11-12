@@ -10,12 +10,10 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVerificationCase
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclaration
-import org.eclipse.xtext.naming.IQualifiedNameConverter
 import org.eclipse.xtext.naming.IQualifiedNameProvider
 
 class GammaVerificationCaseDiscoverer @Inject constructor(
     private val qualifiedNameProvider: IQualifiedNameProvider,
-    private val qualifiedNameConverter: IQualifiedNameConverter,
 ) {
 
     fun discover(gammaModel: GammaModelPackage): List<GammaVerificationCase> {
@@ -30,8 +28,8 @@ class GammaVerificationCaseDiscoverer @Inject constructor(
 
     private fun qualifiedNameOf(declaration: VerificationCaseDeclaration): String {
         val qualifiedName = qualifiedNameProvider.getFullyQualifiedName(declaration) ?: error("Cannot compute qualified name for verification case '${declaration.name}'")
-        val name = qualifiedNameConverter.toString(qualifiedName)
-        return name
+        // the name is a directory of the verify run, so it avoids the colons of the Gamma qualified name
+        return qualifiedName.toString(".")
     }
 
 }

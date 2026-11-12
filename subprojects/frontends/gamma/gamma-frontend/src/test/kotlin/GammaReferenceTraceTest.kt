@@ -6,12 +6,10 @@
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.frontends.gamma.GammaCompiler
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ElementReferenceExpression
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Expression
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ExecutionTrace
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.NavigationSuffixExpression
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaRoot
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RaiseEventAct
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RaisedEventAssertion
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.tests.InjectWithGamma
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
@@ -26,7 +24,6 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtext.resource.SaveOptions
 import org.eclipse.xtext.serializer.ISerializer
-import org.eclipse.xtext.util.SimpleAttributeResolver
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
@@ -56,13 +53,13 @@ class GammaReferenceTraceTest {
     fun `the hand-written reference trace validates against the crossroads model`() {
         val (_, reference) = read(CROSSROADS, REFERENCE_TRACE)
 
-        assertThat(reference.traces.single().steps).hasSize(6)
+        assertThat((reference as ExecutionTrace).steps).hasSize(6)
     }
 
     @Test
     fun `the reference trace round-trips through parse and serialize`() {
         val (_, reference) = read(CROSSROADS, REFERENCE_TRACE)
-        val serializedTrace = temporaryDirectory.resolve("trace.gamma")
+        val serializedTrace = temporaryDirectory.resolve("trace.get")
         serializedTrace.writeText(serializer.serialize(reference, SaveOptions.newBuilder().format().options))
 
         val (_, original, reparsed) = read(CROSSROADS, REFERENCE_TRACE, serializedTrace)
@@ -76,7 +73,7 @@ class GammaReferenceTraceTest {
 
         val generated = gammaTraceGenerator.generate(verificationCase, referenceCallTrace(), referenceWitnessState(), nameStore)
         val generatedText = serializer.serialize(generated, SaveOptions.newBuilder().format().options)
-        val generatedTrace = temporaryDirectory.resolve("trace.gamma")
+        val generatedTrace = temporaryDirectory.resolve("trace.get")
         generatedTrace.writeText(generatedText)
 
         val (_, reference, reparsed) = read(CROSSROADS, REFERENCE_TRACE, generatedTrace)
@@ -92,15 +89,15 @@ class GammaReferenceTraceTest {
 
         val generated = gammaTraceGenerator.generate(verificationCase, callTrace, referenceWitnessState(), nameStore)
 
-        val lastStep = generated.traces.single().steps.last()
+        val lastStep = generated.steps.last()
         assertThat(lastStep.acts).noneMatch {
             it is RaiseEventAct
         }
         assertThat(
-            lastStep.asserts.filterIsInstance<RaisedEventAssertion>().map {
-                names(it.event)
+            lastStep.asserts.filterIsInstance<RaiseEventAct>().map {
+                listOf(it.port.name, it.event.name)
             },
-        ).contains(listOf("system", "controller", "control", "toggle"))
+        ).contains(listOf("control", "toggle"))
     }
 
     @Test
@@ -114,7 +111,7 @@ class GammaReferenceTraceTest {
     }
 
     private fun compileReferenceCase(): CompiledReferenceCase {
-        val crossroads = read(CROSSROADS).single()
+        val crossroads = read(CROSSROADS).single() as GammaModelPackage
         val nameStore = gammaCompiler.compile(crossroads, temporaryDirectory.resolve("model.oxsts"))
         val verificationCase = crossroads.verificationCases.single {
             it.name == "ACanBeGreen"
@@ -150,15 +147,7 @@ class GammaReferenceTraceTest {
         )
     }
 
-    private fun names(path: Expression): List<String> {
-        return when (path) {
-            is ElementReferenceExpression -> listOf(SimpleAttributeResolver.NAME_RESOLVER.apply(path.element))
-            is NavigationSuffixExpression -> names(path.primary) + SimpleAttributeResolver.NAME_RESOLVER.apply(path.member)
-            else -> error("Unknown path: $path")
-        }
-    }
-
-    private fun read(vararg paths: Path): List<GammaModelPackage> {
+    private fun read(vararg paths: Path): List<GammaRoot> {
         return gammaReader.readGammaFiles(
             paths.map {
                 it.toFile()
@@ -174,7 +163,7 @@ class GammaReferenceTraceTest {
     companion object {
         private val CROSSROADS = Path("build", "test-models", "Crossroads.gamma")
         private val PAIR = Path("..", "models", "etc")
-        private val REFERENCE_TRACE = PAIR.resolve("crossroads-ACanBeGreen.trace.gamma")
+        private val REFERENCE_TRACE = PAIR.resolve("crossroads-ACanBeGreen.trace.get")
         private val REFERENCE_TRACE_JSON = PAIR.resolve("crossroads-ACanBeGreen.trace.json")
         private val REFERENCE_WITNESS_JSON = PAIR.resolve("crossroads-ACanBeGreen.witness.json")
         private const val RAISE_INPUT_EVENT = "semantifyr::gamma::ports::Port::raiseInputEvent"
