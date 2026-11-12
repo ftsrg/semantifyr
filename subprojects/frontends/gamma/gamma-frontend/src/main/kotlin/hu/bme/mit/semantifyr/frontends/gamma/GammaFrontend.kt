@@ -12,9 +12,9 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ExecutionTrace
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclaration
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ExecutionTrace
 import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaNameMap
 import hu.bme.mit.semantifyr.frontends.gamma.serialization.markName
 import hu.bme.mit.semantifyr.frontends.gamma.serialization.markQualifiedName

@@ -5,17 +5,24 @@
  */
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.frontends.gamma.GammaCompiler
 import hu.bme.mit.semantifyr.frontends.gamma.discovery.GammaVerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.frontends.gamma.lang.tests.InjectWithGamma
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
+import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaFrontendTestHelper
+import hu.bme.mit.semantifyr.verifier.FakeBackend
+import hu.bme.mit.semantifyr.verifier.FakeConfig
+import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.createDirectories
 import kotlin.io.path.readText
+import kotlin.io.path.writeText
 
 @InjectWithGamma
 class GammaCompilationTests {
@@ -124,6 +131,52 @@ class GammaCompilationTests {
                 "Simple.WorkerStatechartStoppedReachable",
                 "Simple.WorkerStatechartUnreachable",
             )
+    }
+
+    @Test
+    suspend fun `a case of a model importing another package compiles with that package and reaches the verifier`(@TempDir temporaryDirectory: Path) {
+        val workspace = temporaryDirectory.resolve("workspace").createDirectories()
+        workspace.resolve("Control.gamma").writeText(
+            """
+                package library::control
+                interface Control {
+                    in event start
+                }
+            """.trimIndent(),
+        )
+        workspace.resolve("Machine.gcd").writeText(
+            """
+                package test::machine
+                import library::control
+                statechart Machine [
+                    port Control : provides Control
+                ] {
+                    region Main {
+                        initial MainInitial
+                        state Idle
+                        state Busy
+                    }
+                    transition from MainInitial to Idle
+                    transition from Idle to Busy when Control.start
+                }
+                verification case BusyReachable of Machine {
+                    EF state Main.Busy
+                }
+            """.trimIndent(),
+        )
+        val helper = GammaFrontendTestHelper()
+        val frontend = helper.buildFrontend(
+            portfolio = SingleBackendPortfolio(FakeBackend.verdict("fake", VerificationVerdict.Passed), FakeConfig()),
+            outputDirectory = temporaryDirectory.resolve("artifacts"),
+        )
+
+        val gammaVerificationCase = helper.discover(workspace.resolve("Machine.gcd")).single()
+
+        helper.checkVerificationCase(frontend, gammaVerificationCase)
+
+        val caseDirectory = temporaryDirectory.resolve("artifacts").resolve(gammaVerificationCase.qualifiedName)
+        assertThat(caseDirectory.resolve("model.oxsts").readText()).contains("import _library::_control")
+        assertThat(caseDirectory.resolve("imports").resolve("Control.oxsts").readText()).startsWith("package _library::_control")
     }
 
     private fun compileSimple(temporaryDirectory: Path): Path {

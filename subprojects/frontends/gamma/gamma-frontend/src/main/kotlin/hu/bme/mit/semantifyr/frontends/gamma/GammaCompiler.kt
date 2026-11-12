@@ -85,7 +85,11 @@ class GammaCompiler {
         return reached.drop(1)
     }
 
-    private fun write(gammaModel: GammaModelPackage, outputPath: Path, nameMap: GammaNameMap) {
+    private fun write(
+        gammaModel: GammaModelPackage,
+        outputPath: Path,
+        nameMap: GammaNameMap,
+    ) {
         logger.info { "Compiling Gamma package '${gammaModel.name}' to '$outputPath'" }
         val output = GammaToOxstsSerializer(nameMap).transformToOxsts(gammaModel)
         outputPath.parent?.createDirectories()
