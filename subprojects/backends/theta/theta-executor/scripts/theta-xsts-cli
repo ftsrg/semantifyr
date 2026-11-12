@@ -13,7 +13,6 @@ if [ -n "$JAVA_HOME" ]; then
     JAVA="$JAVA_HOME/bin/java"
 fi
 if [ "$1" = "--version" ]; then
-    LD_LIBRARY_PATH="$SCRIPTDIR/lib" DYLD_LIBRARY_PATH="$SCRIPTDIR/lib" "$JAVA" "-Djava.library.path=$SCRIPTDIR/lib" -jar "$SCRIPTDIR/jars/theta-xsts-cli.jar" CEGAR --version
-    exit
+    LD_LIBRARY_PATH="$SCRIPTDIR/lib" DYLD_LIBRARY_PATH="$SCRIPTDIR/lib" exec "$JAVA" "-Djava.library.path=$SCRIPTDIR/lib" -jar "$SCRIPTDIR/jars/theta-xsts-cli.jar" CEGAR --version
 fi
-LD_LIBRARY_PATH="$SCRIPTDIR/lib" DYLD_LIBRARY_PATH="$SCRIPTDIR/lib" "$JAVA" ${THETA_JAVA_OPTS:--Xss512M -Xms1G -Xmx4G} "-Djava.library.path=$SCRIPTDIR/lib" -jar "$SCRIPTDIR/jars/theta-xsts-cli.jar" "$@"
+LD_LIBRARY_PATH="$SCRIPTDIR/lib" DYLD_LIBRARY_PATH="$SCRIPTDIR/lib" exec "$JAVA" ${THETA_JAVA_OPTS:--Xss512M -Xms1G -Xmx4G} "-Djava.library.path=$SCRIPTDIR/lib" -jar "$SCRIPTDIR/jars/theta-xsts-cli.jar" "$@"

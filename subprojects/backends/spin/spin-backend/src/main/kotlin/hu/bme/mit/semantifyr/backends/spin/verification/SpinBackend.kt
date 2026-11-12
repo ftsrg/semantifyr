@@ -37,6 +37,8 @@ import hu.bme.mit.semantifyr.backends.spin.transformation.SpinOperationVisitor
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.warn
 import java.io.File
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 
 class SpinBackend : VerificationBackend<SpinConfig>() {
     override val id = "spin"
@@ -88,8 +90,10 @@ class SpinVerificationContext @AssistedInject constructor(
     private val artifactManager = SpinArtifactManager(request.artifactOutputPath)
 
     override suspend fun prepare(): SpinArtifacts {
+        currentCoroutineContext().ensureActive()
         logger.info { "[$backendId] generating Promela model" }
         val artifacts = spinModelTransformer.transform(request.inlinedOxsts)
+        currentCoroutineContext().ensureActive()
         artifactManager.modelFile.apply {
             parentFile?.mkdirs()
         }.writeText(artifacts.promela)

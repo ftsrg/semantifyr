@@ -6,10 +6,14 @@
 
 package hu.bme.mit.semantifyr.backend.execution
 
+import kotlin.random.Random
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.job
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -190,6 +194,70 @@ class ShellBasedBackendExecutorTest {
         }
 
         assertThat(workingDirectory.resolve("produced.txt")).doesNotExist()
+    }
+
+    private fun launcher(name: String, body: String): StubExecutor {
+        val script = temporaryDirectory.resolve(name).apply {
+            writeText("#!/bin/bash\n$body\n")
+            setExecutable(true)
+        }
+        return StubExecutor(script.absolutePath)
+    }
+
+    private fun liveProcessesWithArgument(argument: String): List<ProcessHandle> {
+        return ProcessHandle.allProcesses().filter {
+            it.isAlive && it.info().arguments().orElse(emptyArray()).contains(argument)
+        }.toList()
+    }
+
+    @Test
+    @DisabledOnOs(OS.WINDOWS, disabledReason = "the launchers are shell scripts")
+    suspend fun `a run cancelled before it starts spawns no process`() {
+        val workingDirectory = workingDirectory()
+
+        coroutineScope {
+            val run = async(start = CoroutineStart.UNDISPATCHED) {
+                currentCoroutineContext().job.cancel()
+                launcher("started.sh", "touch started.txt").run(emptyList(), workingDirectory)
+            }
+            run.join()
+        }
+
+        assertThat(workingDirectory.resolve("started.txt")).doesNotExist()
+    }
+
+    @Test
+    @DisabledOnOs(OS.WINDOWS, disabledReason = "the launchers are shell scripts")
+    suspend fun `a run cancelled at once leaves no live descendant`() {
+        val executor = launcher("launcher.sh", "exec sleep \"\$1\"")
+        val workingDirectory = workingDirectory()
+        val base = 3600 + Random.nextInt(1000)
+
+        fun marker(iteration: Int): String {
+            return "$base.$iteration"
+        }
+
+        try {
+            repeat(300) {
+                coroutineScope {
+                    val run = async(start = CoroutineStart.UNDISPATCHED) {
+                        executor.run(listOf(marker(it)), workingDirectory)
+                    }
+                    run.cancelAndJoin()
+                }
+            }
+
+            val survivors = (0..<300).flatMap {
+                liveProcessesWithArgument(marker(it))
+            }
+            assertThat(survivors).isEmpty()
+        } finally {
+            (0..<300).flatMap {
+                liveProcessesWithArgument(marker(it))
+            }.forEach {
+                it.destroyForcibly()
+            }
+        }
     }
 
     @Test

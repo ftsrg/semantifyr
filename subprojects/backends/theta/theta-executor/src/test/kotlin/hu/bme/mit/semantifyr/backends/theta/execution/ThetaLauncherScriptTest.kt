@@ -16,6 +16,8 @@ import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
+import kotlin.io.path.exists
+import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 class ThetaLauncherScriptTest {
@@ -68,5 +70,25 @@ class ThetaLauncherScriptTest {
     @Test
     fun `without JAVA_HOME the launcher runs the JVM on PATH`() {
         assertThat(runLauncher(null)).isEqualTo("PATH java\n")
+    }
+
+    @Test
+    fun `the JVM replaces the launcher process`() {
+        val pidFile = directory.resolve("java.pid")
+        val java = javaHome.resolve("bin").resolve("java")
+        java.writeText("#!/bin/sh\necho \$\$ > \"$pidFile\"\nexec sleep 30\n")
+        val processBuilder = ProcessBuilder(Path("scripts/theta-xsts-cli").toAbsolutePath().toString(), "model.xsts")
+        processBuilder.environment()["JAVA_HOME"] = javaHome.toString()
+        val process = processBuilder.start()
+        try {
+            val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(30)
+            while ((!pidFile.exists() || pidFile.readText().isBlank()) && System.nanoTime() < deadline) {
+                Thread.sleep(10)
+            }
+            assertThat(pidFile.readText().trim()).isEqualTo(process.pid().toString())
+            assertThat(process.toHandle().children().count()).isZero()
+        } finally {
+            process.destroyForcibly()
+        }
     }
 }
