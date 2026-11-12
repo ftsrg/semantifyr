@@ -43,33 +43,34 @@ class ExecutionEnvironmentTest {
     }
 
     @Test
-    fun `an unavailable executor is probed again`() {
+    fun `an unavailable executor is probed once`() {
         val executor = CountingExecutor(available = false)
         val key = ExecutorKey("counting") {
             executor
         }
         val environment = ExecutionEnvironment.builder().build()
 
-        repeat(2) {
+        repeat(3) {
             assertThat(environment.availability(key)).isInstanceOf(AvailabilityReport.Unavailable::class.java)
         }
 
-        assertThat(executor.probes.get()).isEqualTo(2)
+        assertThat(executor.probes.get()).isEqualTo(1)
     }
 
     @Test
-    fun `a factory that fails is retried`() {
+    fun `a factory that fails is asked once and its report repeats`() {
         val attempts = AtomicInteger()
-        val key = ExecutorKey<BackendExecutor>("flaky") {
-            check(attempts.incrementAndGet() > 1) {
-                "not yet"
-            }
-            CountingExecutor(available = true)
+        val key = ExecutorKey<BackendExecutor>("failing") {
+            attempts.incrementAndGet()
+            error("no executor")
         }
         val environment = ExecutionEnvironment.builder().build()
 
-        assertThat(environment.availability(key)).isInstanceOf(AvailabilityReport.Unavailable::class.java)
-        assertThat(environment.availability(key)).isEqualTo(AvailabilityReport.Available)
+        val first = environment.availability(key)
+
+        assertThat(first).isInstanceOf(AvailabilityReport.Unavailable::class.java)
+        assertThat(environment.availability(key)).isSameAs(first)
+        assertThat(attempts.get()).isEqualTo(1)
     }
 
     @Test
