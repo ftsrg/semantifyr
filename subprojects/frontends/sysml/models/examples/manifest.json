@@ -236,7 +236,8 @@
                 { "name": "UnreachableGreenYellow", "verdict": "Passed", "tier": "Nightly", "engines": ["nuxmv", "uppaal"] },
                 { "name": "ReachableYellowRed", "verdict": "Passed", "tier": "Nightly", "engines": ["nuxmv", "uppaal"] },
                 { "name": "UnreachableYellowGreen", "verdict": "Passed", "tier": "Nightly", "engines": ["nuxmv", "uppaal"] },
-                { "name": "ReachableYellowYellow", "verdict": "Passed", "tier": "Nightly", "engines": ["nuxmv", "uppaal"] }
+                { "name": "ReachableYellowYellow", "verdict": "Passed", "tier": "Nightly", "engines": ["nuxmv", "uppaal"] },
+                { "name": "TrafficLightAReturnsToNormalAfterInterruptionTestCase", "verdict": "Passed", "tier": "Nightly", "engines": ["nuxmv", "uppaal"] }
             ]
         },
         {
