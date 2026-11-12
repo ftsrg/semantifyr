@@ -1,6 +1,6 @@
-package normal
+package tutorialContractFinish::normal
 
-import "model/Interfaces/Interfaces.gcd"
+import tutorialContractFinish::Interfaces
 
 @TransitionPriority = order-based
 statechart NormalPhase [

@@ -1,5 +1,5 @@
-package package_a_7
-import "Interfaces.gcd"
+package validation::package_a_7
+import validation::interfaces
 
 @TransitionPriority = order-based // To allow for testing
 statechart statemachine [

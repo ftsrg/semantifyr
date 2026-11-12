@@ -1,4 +1,4 @@
-package Interfaces
+package tutorialContractFinish::Interfaces
 //// Do not modify these interfaces !
 interface LightCommands {
 	out event displayRed

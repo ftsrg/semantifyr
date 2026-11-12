@@ -1,4 +1,4 @@
-package interfaces
+package complexStatechart::interfaces
 
 interface Execute {
 	out event exec

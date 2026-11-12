@@ -1,7 +1,7 @@
-package synccrossroads
-import "Interfaces/Interfaces.gcd"
-import "Controller/Controller.gcd"
-import "TrafficLight/TrafficLightCtrl.gcd"
+package crossroads::synccrossroads
+import crossroads::interfaces
+import crossroads::controller
+import crossroads::trafficlightctrl
 
 sync Crossroad() [
 // Component ports

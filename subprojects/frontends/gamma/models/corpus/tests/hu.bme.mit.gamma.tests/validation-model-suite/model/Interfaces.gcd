@@ -1,4 +1,4 @@
-package interfaces
+package validation::interfaces
 
 interface InputEvents {
 	in event e

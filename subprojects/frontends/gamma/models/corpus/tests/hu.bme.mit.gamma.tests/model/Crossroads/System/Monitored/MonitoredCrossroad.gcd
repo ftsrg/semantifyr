@@ -1,8 +1,8 @@
-package monitoredcrossroad
+package crossroads::monitoredcrossroad
 
-import "Interfaces/Interfaces.gcd"
-import "Monitor/Monitor.gcd"
-import "Synchronous/Crossroad.gcd"
+import crossroads::interfaces
+import crossroads::monitor
+import crossroads::synccrossroads
 
 sync MonitoredCrossroad [
 	// Component ports

@@ -1,5 +1,5 @@
-package controller
-import "/hu.bme.mit.gamma.tests/model/Crossroads/Interfaces/Interfaces.gcd"
+package crossroads::controller
+import crossroads::interfaces
 @TransitionPriority = order-based
 statechart Controller [
 	port PriorityControl : provides Control

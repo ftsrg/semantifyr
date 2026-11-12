@@ -1,4 +1,4 @@
-package MachineVarMachine
+package manual::MachineVarMachine
 interface portA {
 	out event message_int(message_intValue : integer)
 }

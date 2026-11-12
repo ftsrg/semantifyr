@@ -1,4 +1,4 @@
-package StructRecieverMachine
+package manual::StructRecieverMachine
 type SampleStruct : record {
 	val : integer
 }

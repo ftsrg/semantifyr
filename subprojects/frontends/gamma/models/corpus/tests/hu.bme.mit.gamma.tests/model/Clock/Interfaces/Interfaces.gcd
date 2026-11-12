@@ -1,4 +1,4 @@
-package clocks
+package clock::clocks
 
 interface ExecuteClock {
 	out event ^execute

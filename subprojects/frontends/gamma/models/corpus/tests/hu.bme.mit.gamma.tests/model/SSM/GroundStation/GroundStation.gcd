@@ -1,6 +1,6 @@
-package groundstation
+package sSM::groundstation
 
-import "Interfaces/Interfaces.gcd"
+import sSM::interfaces
 
 @TransitionPriority = order-based
 statechart GroundStation [

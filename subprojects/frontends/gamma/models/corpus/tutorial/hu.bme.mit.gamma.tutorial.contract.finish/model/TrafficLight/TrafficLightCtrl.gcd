@@ -1,5 +1,5 @@
-package trafficlightctrl
-import "/hu.bme.mit.gamma.tutorial.contract.finish/model/Interfaces/Interfaces.gcd"
+package tutorialContractFinish::trafficlightctrl
+import tutorialContractFinish::Interfaces
 @TransitionPriority = order-based
 statechart TrafficLightCtrl [
 	port PoliceInterrupt : requires PoliceInterrupt

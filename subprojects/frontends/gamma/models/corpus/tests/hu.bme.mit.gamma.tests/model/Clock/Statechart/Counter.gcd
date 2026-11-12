@@ -1,6 +1,6 @@
-package clocks
+package clock::clocks
 
-import "Interfaces/Interfaces.gcd"
+
 
 @TransitionPriority = order-based
 statechart Counter [

@@ -1,6 +1,6 @@
-package complex
+package complexStatechart::complex
 
-import "Interfaces/Interfaces.gcd"
+import complexStatechart::interfaces
 
 @RegionSchedule = top-down
 statechart TopDown [

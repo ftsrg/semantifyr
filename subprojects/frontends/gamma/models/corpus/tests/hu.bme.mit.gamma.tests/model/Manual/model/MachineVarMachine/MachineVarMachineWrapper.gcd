@@ -1,7 +1,7 @@
-package MachineVarMachine
+package manual::MachineVarMachine
 
-import "/model/MachineVarMachine/MachineVarMachineDeclarations.gcd"
-import "/model/MachineVarMachine/MachineVarMachine.gcd"
+
+
 
 cascade MachineVarMachineWrapper [
 	port portA : requires portA

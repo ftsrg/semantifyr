@@ -1,4 +1,4 @@
-package Interfaces
+package tutorialExtra::Interfaces
 interface LightCommands {
 	out event displayNone
 	out event displayYellow

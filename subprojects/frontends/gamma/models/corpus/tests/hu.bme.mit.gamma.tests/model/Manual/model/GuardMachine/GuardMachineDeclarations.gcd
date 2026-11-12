@@ -1,4 +1,4 @@
-package GuardMachine
+package manual::GuardMachine
 interface portA {
 	out event message_int(message_intValue : integer)
 }

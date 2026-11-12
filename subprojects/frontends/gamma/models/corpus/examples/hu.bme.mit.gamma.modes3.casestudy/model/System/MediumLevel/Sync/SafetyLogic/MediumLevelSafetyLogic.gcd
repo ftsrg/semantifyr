@@ -1,6 +1,6 @@
-package eightsections
-import "Interface/Interfaces"
-import "Zone/MediumLevelZone"
+package modes3::eightsections
+import modes3::Interfaces
+import modes3::medium_level_four_sections
 sync MediumLevelSafetyLogic [
 	port Train1 : requires Train
 	port Train2 : requires Train

@@ -1,5 +1,5 @@
-package controller
-import "/hu.bme.mit.gamma.tutorial.contract.finish/model/Interfaces/Interfaces.gcd"
+package tutorialContractFinish::controller
+import tutorialContractFinish::Interfaces
 @TransitionPriority = order-based
 statechart Controller [
 	port PoliceInterrupt : requires PoliceInterrupt

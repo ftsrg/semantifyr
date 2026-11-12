@@ -1,7 +1,7 @@
-package casccrossroads
-import "Interfaces/Interfaces.gcd"
-import "Controller/Controller.gcd"
-import "TrafficLight/TrafficLightCtrl.gcd"
+package crossroads::casccrossroads
+import crossroads::interfaces
+import crossroads::controller
+import crossroads::trafficlightctrl
 
 cascade Crossroad() [
 // Component ports

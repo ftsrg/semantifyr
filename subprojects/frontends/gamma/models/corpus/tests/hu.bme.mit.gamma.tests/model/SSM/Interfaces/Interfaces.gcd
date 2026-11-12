@@ -1,4 +1,4 @@
-package interfaces
+package sSM::interfaces
 
 interface DataSource {
 	out event data//(payload : integer)

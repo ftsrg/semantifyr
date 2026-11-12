@@ -1,6 +1,5 @@
-package EmbeddedStructMachineVarMachine
-import
-	"/model/EmbeddedStructMachineVarMachine/EmbeddedStructMachineVarMachineDeclarations.gcd"
+package manual::EmbeddedStructMachineVarMachine
+
 @TransitionPriority = order-based
 statechart EmbeddedStructMachineVarMachine [
 	port portA : requires portA

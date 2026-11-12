@@ -1,4 +1,4 @@
-package StructMachineVarMachine
+package manual::StructMachineVarMachine
 type SampleStruct : record {
 	cnt : integer
 }

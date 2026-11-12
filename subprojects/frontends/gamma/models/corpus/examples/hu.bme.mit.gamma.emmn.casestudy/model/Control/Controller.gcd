@@ -1,6 +1,6 @@
-package control
+package emmn::control
 
-import "Interfaces/Interfaces.gcd"
+import emmn::interfaces
 
 statechart Controller() [
 	port OperationsManager : requires OperationsManager

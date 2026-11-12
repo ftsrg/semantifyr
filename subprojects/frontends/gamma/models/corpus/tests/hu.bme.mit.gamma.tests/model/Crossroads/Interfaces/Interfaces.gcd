@@ -1,4 +1,4 @@
-package interfaces
+package crossroads::interfaces
 interface Control {
 	out event toggle
 }

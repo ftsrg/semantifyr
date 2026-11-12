@@ -1,4 +1,4 @@
-package interfaces
+package emmn::interfaces
 
 interface OperationsManager {
 	out event initTracking

@@ -1,5 +1,5 @@
-package monitor
-import "/hu.bme.mit.gamma.tutorial.extra/model/Interfaces/Interfaces.gcd"
+package tutorialExtra::monitor
+import tutorialExtra::Interfaces
 @TransitionPriority = order-based
 statechart Monitor [
 	port LightInputs : requires LightCommands

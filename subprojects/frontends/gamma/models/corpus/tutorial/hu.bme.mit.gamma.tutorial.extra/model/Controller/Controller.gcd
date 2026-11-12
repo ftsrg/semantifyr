@@ -1,5 +1,5 @@
-package Controller
-import "Interfaces"
+package tutorialExtra::Controller
+import tutorialExtra::Interfaces
 statechart Controller [
 	port SecondaryControl : provides Control,
 	port PriorityControl : provides Control,

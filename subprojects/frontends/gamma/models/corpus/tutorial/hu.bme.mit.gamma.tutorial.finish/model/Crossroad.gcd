@@ -1,8 +1,8 @@
-package tutorial
+package tutorialFinish::tutorial
 
-import "Interfaces/Interfaces.gcd"
-import "Controller/Controller.gcd"
-import "TrafficLight/TrafficLightCtrl.gcd"
+import tutorialFinish::Interfaces
+import tutorialFinish::Controller
+import tutorialFinish::TrafficLightCtrl
 
 sync Crossroad [
 	// Component ports

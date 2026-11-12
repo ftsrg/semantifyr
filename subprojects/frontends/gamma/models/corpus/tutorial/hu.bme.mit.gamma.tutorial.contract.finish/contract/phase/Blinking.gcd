@@ -1,5 +1,5 @@
-package crossroads
-import "/model/Interfaces/Interfaces.gcd"
+package tutorialContractFinish::crossroads
+import tutorialContractFinish::Interfaces
 @TransitionPriority = order-based
 statechart BlinkingPhase [
 	port priorityOutput : provides LightCommands

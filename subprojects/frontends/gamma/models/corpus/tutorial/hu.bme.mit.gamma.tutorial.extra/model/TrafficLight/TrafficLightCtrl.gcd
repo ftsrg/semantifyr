@@ -1,5 +1,5 @@
-package TrafficLightCtrl
-import "Interfaces"
+package tutorialExtra::TrafficLightCtrl
+import tutorialExtra::Interfaces
 statechart TrafficLightCtrl [
 	port LightCommands : provides LightCommands,
 	port Control : requires Control,

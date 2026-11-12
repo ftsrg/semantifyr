@@ -1,5 +1,5 @@
-package high_level_eight_sections
-import "Interface/Interfaces.gcd"
+package modes3::high_level_eight_sections
+import modes3::Interfaces
 statechart HighLevelSafetyLogic [
 	port Train1 : requires Train
 	port SectionControl1 : provides SectionControl

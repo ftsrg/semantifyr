@@ -1,5 +1,5 @@
-package Controller
-import "Interfaces"
+package tutorialFinish::Controller
+import tutorialFinish::Interfaces
 statechart Controller [
 	port PoliceInterrupt : requires PoliceInterrupt
 	port PriorityPolice : provides PoliceInterrupt

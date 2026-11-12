@@ -1,5 +1,5 @@
-package TrafficLightCtrl
-import "Interfaces"
+package tutorialStart::TrafficLightCtrl
+import tutorialStart::Interfaces
 statechart TrafficLightCtrl [
 	port Control : requires Control
 	port PoliceInterrupt : requires PoliceInterrupt

@@ -1,5 +1,5 @@
-package medium_level_four_sections
-import "Interface/Interfaces"
+package modes3::medium_level_four_sections
+import modes3::Interfaces
 statechart MediumLevelZone [
 	port Train1 : requires Train
 	port SectionControl1 : provides SectionControl

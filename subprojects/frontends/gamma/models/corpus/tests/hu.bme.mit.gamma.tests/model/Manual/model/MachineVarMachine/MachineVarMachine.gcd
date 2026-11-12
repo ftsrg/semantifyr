@@ -1,6 +1,5 @@
-package MachineVarMachine
-import
-	"/model/MachineVarMachine/MachineVarMachineDeclarations.gcd"
+package manual::MachineVarMachine
+
 @TransitionPriority = order-based
 statechart MachineVarMachine [
 	port portA : requires portA

@@ -1,6 +1,6 @@
-package environment
+package tutorialContractFinish::environment
 
-import "/model/Interfaces/Interfaces.gcd"
+import tutorialContractFinish::Interfaces
 
 @TransitionPriority = order-based
 statechart Environment [

@@ -1,6 +1,6 @@
-package clocks
+package clock::clocks
 
-import "Interfaces/Interfaces.gcd"
+
 
 statechart Adder [
 	port Execute : requires ExecuteClock

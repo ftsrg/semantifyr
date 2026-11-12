@@ -1,6 +1,5 @@
-package StructRecieverMachine
-import
-	"/model/StructRecieverMachine/StructRecieverMachineDeclarations.gcd"
+package manual::StructRecieverMachine
+
 @TransitionPriority = order-based
 statechart StructRecieverMachine [
 	port portA : requires portA

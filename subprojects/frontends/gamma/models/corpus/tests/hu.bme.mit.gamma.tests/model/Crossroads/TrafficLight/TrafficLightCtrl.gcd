@@ -1,5 +1,5 @@
-package trafficlightctrl
-import "/hu.bme.mit.gamma.tests/model/Crossroads/Interfaces/Interfaces.gcd"
+package crossroads::trafficlightctrl
+import crossroads::interfaces
 @TransitionPriority = order-based
 statechart TrafficLightCtrl [
 	port LightCommands : provides LightCommands

@@ -1,6 +1,5 @@
-package GuardMachine
-import
-	"/model/GuardMachine/GuardMachineDeclarations.gcd"
+package manual::GuardMachine
+
 @TransitionPriority = order-based
 statechart GuardMachine [
 	port portA : requires portA

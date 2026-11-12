@@ -1,4 +1,4 @@
-package EmbeddedStructMachineVarMachine
+package manual::EmbeddedStructMachineVarMachine
 type InnerStruct : record {
 	cnt : integer
 }

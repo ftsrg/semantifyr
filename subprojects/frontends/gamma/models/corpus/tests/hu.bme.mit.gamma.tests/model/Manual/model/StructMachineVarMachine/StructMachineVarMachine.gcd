@@ -1,6 +1,5 @@
-package StructMachineVarMachine
-import
-	"/model/StructMachineVarMachine/StructMachineVarMachineDeclarations.gcd"
+package manual::StructMachineVarMachine
+
 @TransitionPriority = order-based
 statechart StructMachineVarMachine [
 	port portA : requires portA

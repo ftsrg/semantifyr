@@ -1,5 +1,5 @@
-package package_d_13
-import "Interfaces.gcd"
+package validation::package_d_13
+import validation::interfaces
 
 statechart statemachine [
 	port input : provides InputEvents

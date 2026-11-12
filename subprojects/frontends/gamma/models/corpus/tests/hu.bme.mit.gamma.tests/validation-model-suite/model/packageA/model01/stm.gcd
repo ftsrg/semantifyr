@@ -1,4 +1,4 @@
-package package_a_1
+package validation::package_a_1
 
 statechart statemachine [] {
 	region Main {

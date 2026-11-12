@@ -1,8 +1,8 @@
-package monitoredcrossroad
+package tutorialExtra::monitoredcrossroad
 
-import "Interfaces/Interfaces.gcd"
-import "Monitor/Monitor.gcd"
-import "Crossroad.gcd"
+import tutorialExtra::Interfaces
+import tutorialExtra::monitor
+import tutorialExtra::tutorial
 
 sync MonitoredCrossroad [
 		// Component ports

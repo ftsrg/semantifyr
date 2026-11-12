@@ -1,4 +1,4 @@
-package Interfaces
+package template::Interfaces
 interface LightCommands {
 	out event displayRed
 	out event displayYellow

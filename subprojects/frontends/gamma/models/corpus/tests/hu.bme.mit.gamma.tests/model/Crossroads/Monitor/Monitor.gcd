@@ -1,5 +1,5 @@
-package monitor
-import "/hu.bme.mit.gamma.tests/model/Crossroads/Interfaces/Interfaces.gcd"
+package crossroads::monitor
+import crossroads::interfaces
 @TransitionPriority = order-based
 statechart Monitor [
 	port LightInputs : requires LightCommands

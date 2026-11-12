@@ -1,4 +1,4 @@
-package Interfaces
+package modes3::Interfaces
 interface NewProtocol {
 	out event go
 	out event occupied
