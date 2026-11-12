@@ -117,7 +117,7 @@ class GammaToOxstsSerializerTest {
     }
 
     @Test
-    fun `an interface contains its events as shared events of their direction`() {
+    fun `an interface contains its events of their direction with a shared declaration each`() {
         val lines = oxstsLines(
             """
                 package test
@@ -130,10 +130,14 @@ class GammaToOxstsSerializerTest {
 
         assertThat(lines).containsSequence(
             "class Control : Interface {",
+            "contains start: Event subsets inputEvents {",
             "@Shared",
-            "contains start: Event subsets inputEvents",
+            "redefine contains declaration: EventDeclaration",
+            "}",
+            "contains done: Event subsets outputEvents {",
             "@Shared",
-            "contains done: Event subsets outputEvents",
+            "redefine contains declaration: EventDeclaration",
+            "}",
             "}",
         )
     }

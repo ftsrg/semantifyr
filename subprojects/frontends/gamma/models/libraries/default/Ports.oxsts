@@ -14,61 +14,56 @@ class Port {
     refers inputEvents: Event[0..*]
     refers outputEvents: Event[0..*]
 
-    var inputEvent: inputEvents[0..1] := nothing
-    var outputEvent: outputEvents[0..1] := nothing
-
-    prop hasInput(): bool {
-        return inputEvent != nothing
-    }
-
-    prop hasOutput(): bool {
-        return outputEvent != nothing
-    }
-
     prop hasInputEvent(event: Event): bool {
-        return inputEvent == event
-    }
-
-    tran assumeHasInputEvent(event: Event) {
-        assume(hasInputEvent(event))
+        return event.isRaised
     }
 
     tran setInputEvent(event: Event) {
-        inputEvent := event
+        event.isRaised := true
     }
 
     @Trace
     tran setOutputEvent(event: Event) {
-        outputEvent := event
+        event.isRaised := true
     }
 
-    tran resetInputEvent() {
-        inputEvent := nothing
+    tran resetInputEvents() {
+        inline for (event in inputEvents) {
+            event.isRaised := false
+        }
     }
 
-    tran resetOutputEvent() {
-        outputEvent := nothing
+    tran resetOutputEvents() {
+        inline for (event in outputEvents) {
+            event.isRaised := false
+        }
     }
 
-    tran havocInputEvent() {
-        choice {
-            inputEvent := nothing
-        } or {
-            inline for choice (event in inputEvents) {
+    tran havocInputEvents() {
+        inline for (event in inputEvents) {
+            choice {
+                event.isRaised := false
+            } or {
                 inline raiseInputEvent(event)
-            } else {
-                assume(false)
             }
         }
     }
 
     @Trace
     tran raiseInputEvent(event: Event) {
-        inputEvent := event
+        event.isRaised := true
     }
 
-    tran havocOutputEvent() {
-        havoc(outputEvent)
+    tran transferOutputEvents(target: Port) {
+        inline for (event in outputEvents) {
+            inline for (targetEvent in target.inputEvents) {
+                inline if (event.declaration == targetEvent.declaration) {
+                    if (event.isRaised) {
+                        inline target.setInputEvent(targetEvent)
+                    }
+                }
+            }
+        }
     }
 }
 

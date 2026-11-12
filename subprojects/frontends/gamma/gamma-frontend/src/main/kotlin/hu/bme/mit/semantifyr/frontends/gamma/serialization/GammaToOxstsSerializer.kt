@@ -107,8 +107,10 @@ class GammaToOxstsSerializer {
 
     private fun IndentingStringBuilder.serialize(event: EventDeclaration) {
         val name = nameStore.declare(event.eContainer(), event, event.name)
-        appendLine("@Shared")
-        appendLine("contains $name: Event subsets ${getEventDirection(event)}")
+        appendIndent("contains $name: Event subsets ${getEventDirection(event)}") {
+            appendLine("@Shared")
+            appendLine("redefine contains declaration: EventDeclaration")
+        }
     }
 
     private fun IndentingStringBuilder.serialize(component: ComponentDeclaration) = when (component) {

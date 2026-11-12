@@ -12,10 +12,10 @@ class GammaVerificationCase {
     }
 
     redefine tran {
-        inline component.havocInputEvents()
-        inline component.main()
         inline component.resetOutputEvents()
+        inline component.havocInputEvents()
         inline passTime()
+        inline component.main()
     }
 
     @Trace

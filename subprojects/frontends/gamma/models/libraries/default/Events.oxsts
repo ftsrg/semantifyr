@@ -6,7 +6,14 @@
 
 package semantifyr::gamma::events
 
-class Event
+class EventDeclaration
+
+class Event {
+    // shared by every port's instance of the event, so a channel matches the instances of one event
+    contains declaration: EventDeclaration
+
+    var isRaised: bool := false
+}
 
 class Timeout {
     refers deltaTime: int = 1
