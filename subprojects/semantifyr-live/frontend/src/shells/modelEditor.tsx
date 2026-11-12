@@ -17,7 +17,7 @@ import { useLive, useRuntime } from '../lib/workspace/liveContext'
 import { Icon } from '../ui/icons'
 import { useCurrentDocument, useFlavor } from './hooks'
 import { useShell } from './shellContext'
-import { modelLockOf } from './touch'
+import { modelLockOf, touchInput } from './touch'
 
 interface EditorOptions {
   verdictMarks: boolean
@@ -46,6 +46,7 @@ function EditorHost({ document, flavor, colorMode, options }: { document: Docume
         shell.cursor.set(position)
       },
       modelLocked: modelLockOf(shell),
+      touchInput: touchInput(),
       verdictMarks: mountedOptions.verdictMarks,
       wrapping: mountedOptions.wrapping === true,
       ...(mountedOptions.onContentHeight ? { onContentHeight: mountedOptions.onContentHeight } : {}),

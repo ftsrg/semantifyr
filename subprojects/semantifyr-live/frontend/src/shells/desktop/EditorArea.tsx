@@ -23,7 +23,7 @@ import { DocumentsMenu } from './DocumentsMenu'
 import { documentLabel, useAddressedModel, useCurrentDocument, useFlavor } from '../hooks'
 import { useShell } from '../shellContext'
 import { DropTarget, UnsavedMark, useFileDrop, useKeepingEvents } from './keeping'
-import { EditControl, modelLockOf } from '../touch'
+import { EditControl, modelLockOf, touchInput } from '../touch'
 
 // keeps the open OXSTS tab on the model's current OXSTS, which the runtime computes while the tab is open
 function useModelOxstsTab(live: Live, runtime: LanguageRuntime | null, modelLabel: string | null): void {
@@ -174,6 +174,7 @@ function EditorHost({ document, flavor, colorMode }: { document: DocumentRecord,
         shell.cursor.set(position)
       },
       modelLocked: modelLockOf(shell),
+      touchInput: touchInput(),
     })
     return () => {
       void binding.dispose()

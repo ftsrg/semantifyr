@@ -7,9 +7,10 @@
 import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
-import { test } from './harness'
+import { casesListed, results, test } from './harness'
 
 const PHONE = { width: 390, height: 844, touch: true }
+const TABLET = { width: 1024, height: 768, touch: true }
 
 function phone(page: Page) {
   return {
@@ -19,6 +20,18 @@ function phone(page: Page) {
     },
     verify: page.locator('.phone-verify'),
     lines: page.locator('.view-lines').first(),
+  }
+}
+
+// Playwright cannot emulate any-pointer; a Samsung phone's pen digitizer reports a fine pointer among any
+function penDigitizer(): void {
+  const matchMedia = window.matchMedia.bind(window)
+  window.matchMedia = (query) => {
+    const list = matchMedia(query)
+    if (query === '(any-pointer: fine)') {
+      Object.defineProperty(list, 'matches', { value: true })
+    }
+    return list
   }
 }
 
@@ -75,7 +88,8 @@ describe('the phone', () => {
 describe('touch input', () => {
   for (const [shell, viewport] of [
     ['phone', PHONE],
-    ['tablet', { width: 1024, height: 768, touch: true }],
+    ['phone with a pen', { ...PHONE, before: penDigitizer }],
+    ['tablet', TABLET],
   ] as const) {
     test(`locks the model of the ${shell} until Edit is pressed, and again when Done`, async ({ ui }) => {
       const page = await ui.open('/oxsts/basics', viewport)
@@ -98,4 +112,33 @@ describe('touch input', () => {
       expect(await phone(page).lines.innerText()).not.toContain('again')
     })
   }
+
+  test('keeps the on-screen keyboard closed over read-only documents, tapped or not, until a mouse shows itself', async ({ ui }) => {
+    const page = await ui.open('/oxsts/level-crossing?library=gamma', TABLET)
+    await casesListed(page)
+    await results(page).verifyAll.tap()
+    await expect.poll(async () => {
+      return page.locator('section.trace .case-trace').count()
+    }).toBe(1)
+    await page.locator('section.trace .trace-views button[data-view="witness"]').tap()
+    const traceText = page.locator('section.trace .trace-editor textarea.inputarea')
+    await expect.poll(async () => {
+      return traceText.getAttribute('readonly')
+    }).toBe('true')
+    await page.locator('section.trace .frame-open').tap()
+    const tabText = page.locator('section.editor.is-readonly textarea.inputarea')
+    await expect.poll(async () => {
+      return tabText.getAttribute('readonly')
+    }).toBe('true')
+
+    await page.locator('section.editor .view-lines').first().tap()
+    await page.locator('section.trace .trace-editor .view-lines').tap()
+    expect([await traceText.getAttribute('readonly'), await tabText.getAttribute('readonly')], 'a tap sends compatibility mouse moves').toEqual(['true', 'true'])
+
+    await page.mouse.move(200, 200)
+
+    await expect.poll(async () => {
+      return [await traceText.getAttribute('readonly'), await tabText.getAttribute('readonly')]
+    }).toEqual([null, null])
+  })
 })

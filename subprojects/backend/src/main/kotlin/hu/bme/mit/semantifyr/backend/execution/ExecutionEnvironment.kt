@@ -26,8 +26,7 @@ class ExecutionEnvironment private constructor(
 
     private val executors = ConcurrentHashMap<ExecutorKey<*>, BackendExecutor>()
 
-    // only positive probes are kept, so a backend installed or recovering later is picked up
-    private val availableKeys = ConcurrentHashMap.newKeySet<ExecutorKey<*>>()
+    private val reports = ConcurrentHashMap<ExecutorKey<*>, Lazy<AvailabilityReport>>()
 
     operator fun <T : BackendExecutor> get(key: ExecutorKey<T>): T {
         @Suppress("UNCHECKED_CAST")
@@ -37,9 +36,14 @@ class ExecutionEnvironment private constructor(
     }
 
     fun availability(key: ExecutorKey<*>): AvailabilityReport {
-        if (key in availableKeys) {
-            return AvailabilityReport.Available
-        }
+        return reports.computeIfAbsent(key) {
+            lazy {
+                probe(key)
+            }
+        }.value
+    }
+
+    private fun probe(key: ExecutorKey<*>): AvailabilityReport {
         val available = runCatching {
             get(key).isAvailable()
         }.getOrElse {
@@ -49,7 +53,6 @@ class ExecutionEnvironment private constructor(
             )
         }
         return if (available) {
-            availableKeys += key
             AvailabilityReport.Available
         } else {
             AvailabilityReport.Unavailable(

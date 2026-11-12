@@ -10,10 +10,11 @@ import { editor as monacoEditor, Uri } from 'monaco-editor'
 import type { VerificationTrace } from '@semantifyr/editor-common'
 
 import type { LanguageRuntime } from '../lib/language/types'
-import { openDerivedDocument, whenMonacoReady } from '../lib/session/monaco'
+import { openDerivedDocument, typingOptionsOf, whenMonacoReady } from '../lib/session/monaco'
 import { traceUriOf } from '../lib/session/readOnlyDocuments'
 import type { ReadOnlyDocument, TraceOfTab } from '../lib/workspace/documentTabs'
 import type { Live } from '../lib/workspace/live'
+import { touchInput } from '../shells/touch'
 import { Icon } from '../ui/icons'
 import type { TraceSourceContext, TraceView, TraceViewProps } from './registry'
 
@@ -155,7 +156,14 @@ function InlineEditor({ model, growing, wrapping }: { model: TextModel, growing:
     if (growing) {
       fit()
     }
+    const touch = touchInput()
+    const applyTyping = (): void => {
+      created.updateOptions(typingOptionsOf(!touch.get()))
+    }
+    applyTyping()
+    const unsubscribeTouch = touch.subscribe(applyTyping)
     return () => {
+      unsubscribeTouch()
       contentSize?.dispose()
       created.dispose()
     }
