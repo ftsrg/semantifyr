@@ -266,11 +266,15 @@ configurations.consumable("compiledExamplesElements") {
     }
 }
 
+val corpusWorkspace = files(appendFurtherCases).asFileTree.matching {
+    include("**/*.sysml", "**/*.kerml")
+}
+
 // the models with further cases, compiled with them for the tests that take a further case
 val compileSysmlCorpusTasks = corpusModels(examplesSourceDir).filter {
     examplesSourceDir.file("${it.name}.further-cases").asFile.isFile
 }.map {
-    sysmlCompileTask("compileSysmlCorpus_${it.name}", corpusDir, files(appendFurtherCases), it.name, compiledCorpusDir)
+    sysmlCompileTask("compileSysmlCorpus_${it.name}", corpusDir, corpusWorkspace, it.name, compiledCorpusDir)
 }
 
 val compileSysmlCorpus = tasks.register("compileSysmlCorpus") {

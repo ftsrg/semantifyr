@@ -17,7 +17,7 @@ import org.gradle.api.tasks.TaskAction
 
 private const val FURTHER_CASES_EXTENSION = "further-cases"
 
-// a served model holds the cases live serves, and its corpus's other cases sit beside it in a fragment that the tests read appended to the model
+// sysml-2ls translates one root namespace per document, so a model's further cases cannot sit in a second file that imports it
 @CacheableTask
 abstract class AppendFurtherCases : DefaultTask() {
     @get:InputDirectory
