@@ -41,7 +41,7 @@ class Counter {
 // hide-end
 ```
 
-A parameter may hold an instance, and the body reads its members. An argument that is a variable reads the members of the instance the variable holds. Two parameters of one property cannot share a name (`OXSTS.DUPLICATE_NAME`).
+A parameter may hold an instance, and the body reads its members. A parameter whose lower bound is 0, such as `[0..1]`, may be left out of a call. An argument that is a variable reads the members of the instance the variable holds. Two parameters of one property cannot share a name (`OXSTS.DUPLICATE_NAME`).
 
 ```oxsts
 // hide-start
@@ -128,7 +128,7 @@ class Pair {
 // hide-end
 ```
 
-See [Expressions / Property Invocation](expressions.md#property-invocation-).
+The arguments bind as [Calls and Arguments](expressions.md#calls-and-arguments) gives, and the call's value is the body's with each parameter replaced by its argument.
 
 ## The Verification Property
 
@@ -141,7 +141,7 @@ class Counter {
 }
 
 // hide-end
-class Reaches10 {
+class StaysBelow100 {
   contains counter: Counter
 
   prop {

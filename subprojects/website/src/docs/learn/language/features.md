@@ -52,7 +52,7 @@ class Display {
 
 ## `container`
 
-A `container` feature is the **reverse** of a `contains` feature: the child pointing back to its owning parent. A `container` must always be paired with the corresponding `contains` via `opposite`. A validation rule enforces this pairing.
+A `container` feature is the **reverse** of a `contains` feature: the child pointing back to its owning parent. A `container` must always be paired with the corresponding `contains` via `opposite` (`OXSTS.INCORRECT_OPPOSITE`).
 
 ```oxsts
 class Tree {
@@ -112,12 +112,19 @@ The infinity literal `*` is allowed in ranges (`0..*`); a bare `[*]` is rejected
 
 ## `opposite`
 
-`opposite` declares a bidirectional relationship: navigating in one direction automatically populates the other. A validation rule enforces that opposite features point to each other and that `container`/`contains` pairs match.
+`opposite` declares a bidirectional relationship: an instance is in one feature of another exactly when that other is in the opposite feature of the first, so navigating either way finds the same link. The two features name each other as `opposite`, and the opposite of a `container` is a `contains` and that of a `contains` a `container` (`OXSTS.INCORRECT_OPPOSITE`).
 
 ```oxsts
 class Tree {
   contains children: Tree[0..*] opposite parent
   container parent: Tree[0..1] opposite children
+}
+```
+
+```oxsts issue=OXSTS.INCORRECT_OPPOSITE
+class Tree {
+  contains children: Tree[0..*] opposite parent
+  container parent: Tree[0..1]
 }
 ```
 
@@ -237,6 +244,7 @@ class Event
 
 // hide-end
 global containment globalEvent: Event[1]
+global reference currentEvent: Event = globalEvent
 ```
 
 Top-level features currently support only the `subsets` modifier. This restriction may be relaxed in future versions.

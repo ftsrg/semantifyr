@@ -33,7 +33,13 @@ class Room {
 }
 ```
 
-A name declared in two files of one package is a warning at the declaration that does not win: within each file its own declaration wins, and every other file resolves the name to the first file declaring it.
+A name declared in two files of one package is a warning at the declaration that does not win (`OXSTS.DECLARED_IN_ANOTHER_FILE`): within each file its own declaration wins, and every other file resolves the name to the first file declaring it.
+
+```oxsts issue=OXSTS.DECLARED_IN_ANOTHER_FILE
+package example::house
+
+class Lamp { }
+```
 
 ## Files Without a Package
 
@@ -64,7 +70,7 @@ import example::library
 
 Without an `import`, symbols from another package can still be referenced by their fully qualified name (for example, `example::library::Foo`).
 
-A simple name declared by two imported packages, or by an imported package and the current one, is ambiguous: the reference is an error that names both declarations. Write the qualified name of the one you mean. In a file without a package, the file's own declarations take precedence over imported ones.
+A simple name declared by two imported packages, or by an imported package and the current one, is ambiguous: the reference is an error that names both declarations (`OXSTS.AMBIGUOUS_REFERENCE`). Write the qualified name of the one you mean. In a file without a package, the file's own declarations take precedence over imported ones.
 
 ```oxsts
 package example::lights
@@ -86,6 +92,17 @@ import example::signals
 
 class Street {
     contains lamp: example::lights::Lamp
+}
+```
+
+```oxsts issue=OXSTS.AMBIGUOUS_REFERENCE
+package example::corner
+
+import example::lights
+import example::signals
+
+class Corner {
+    contains lamp: Lamp
 }
 ```
 

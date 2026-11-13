@@ -5,7 +5,7 @@ sidebar_position: 0
 
 # Language Reference
 
-Semantifyr is a **declarative-operational** language for writing the [semantic libraries](../index.md) used by the verification framework. A Semantifyr model is a collection of classes, features, transitions, and properties that the compiler unfolds into a flat transition system and hands to a model checker.
+Semantifyr is a **declarative-operational** language for writing the [semantic libraries](../index.md) used by the verification framework. A Semantifyr model is a collection of classes, features, transitions, and properties that the compiler unfolds into a flat transition system and hands to a backend, the model checker that verifies it.
 
 This is the **language reference**. Each page covers a single construct and is designed for **quick lookup**. Pages are self-contained and may be read in any order. For a guided walk-through of a complete Semantifyr workflow, see the [Traffic Light tutorials](../tutorials/trafficlight/) instead. [Status](status.mdx) lists the constructs the compiler supports, rejects or plans.
 
@@ -19,10 +19,11 @@ Semantifyr borrows familiar object-oriented vocabulary, but every concept has a 
 - [**Transitions**](transitions.md) describe how state changes over time. 
 - [**Properties**](properties.md) are pure functions returning a value. 
 - [**Inline operations**](inline-operations.md) are *compile-time* macros that expand library behavior across the structure of a concrete model.
+- [**Lexical structure**](lexical-structure.md) gives the names, comments and literals, and [**Types**](types.md) the type of every expression and when a value fits where it is used.
 
 ## Two Evaluation Phases
 
-A pervasive distinction throughout the language is **compile-time vs runtime**. Some constructs (feature multiplicities, feature bindings, the guards and ranges of `inline` constructs) are evaluated **once**, during model unfolding. Others (variable initializers, transition bodies, ordinary `if` and `for`) are evaluated by the **model checker** as it explores the state space. Knowing which phase a piece of code lives in is essential for reading and writing Semantifyr.
+A pervasive distinction throughout the language is **compile-time vs runtime**. Some expressions are evaluated **once**, while the compiler unfolds a case: feature multiplicities and bindings, the guards and ranges of `inline` constructs, the arguments of annotations, and the initializers of the variables of classes and records, which give each variable its value before `init` runs. The rest, transition bodies, ordinary `if` and `for`, local variables and properties, is evaluated by the **backend** as it explores the state space. Where the compiler needs a value, the validator rejects an expression that reads the state (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`). Knowing which phase a piece of code lives in is essential for reading and writing Semantifyr.
 
 ## Conventions
 

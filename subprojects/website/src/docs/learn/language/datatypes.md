@@ -9,14 +9,13 @@ This page describes the **data values** Semantifyr can represent: primitives, en
 
 ## Primitive Datatypes
 
-The [standard library](standard-library.md) declares the following primitive datatypes:
+The [standard library](standard-library.md#datatypes) declares the primitive datatypes, and its page describes each. `int` holds the mathematical integers and `real` the real numbers, with no fixed width. A model may declare variables of every datatype, and it validates and compiles with them; whether a backend can check it is on the pages of the backends, [Theta](../backends/theta.mdx), [nuXmv](../backends/nuxmv.mdx), [Spin](../backends/spin.mdx) and [Uppaal](../backends/uppaal.mdx), and none of the four checks a variable of type `real`, `string` or `any` today.
 
-| Type | Description |
-|------|-------------|
-| `int` | Integer numbers |
-| `bool` | Boolean values: `true` or `false` |
-| `real` | Real numbers |
-| `string` | Sequences of characters |
+A datatype is declared with `extern datatype`, which the standard library alone may do: a model cannot add one (`OXSTS.DATA_TYPE_NOT_IN_BUILTIN`).
+
+```oxsts issue=OXSTS.DATA_TYPE_NOT_IN_BUILTIN
+extern datatype byte
+```
 
 ## Enumerations
 
