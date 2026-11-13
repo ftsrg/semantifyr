@@ -32,7 +32,7 @@ function infoWordsOf(code: Code, where: string): InfoWords {
   for (const word of (code.meta ?? '').split(/\s+/)) {
     const [key, value] = word.split('=', 2);
     // issue is the fence test's alone
-    if (word === '' || key === 'issue' || key === 'fragment') {
+    if (word === '' || key === 'issue') {
       continue;
     }
     if (key === 'run' || key === 'edit') {

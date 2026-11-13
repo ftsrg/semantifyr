@@ -11,19 +11,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
+import hu.bme.mit.semantifyr.website.DocumentationFences.Fence;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.TreeSet;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.xtext.diagnostics.Diagnostic;
 import org.eclipse.xtext.diagnostics.Severity;
 import org.eclipse.xtext.resource.XtextResourceSet;
@@ -37,26 +31,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-// remarkFences reads the same words and markers and builds the same model of a fence
+// the fence's model is the one DocumentationFences builds as remarkFences does
 @InjectWithOxsts
 public class DocumentationFenceTest {
 
-    private static final Path DOCUMENTATION = Path.of("src/docs");
-
-    private static final Pattern OPENING_FENCE = Pattern.compile("^(\\s*)```oxsts(\\s.*)?$");
-
-    private static final Pattern PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+([\\w:]+)", Pattern.MULTILINE);
-
-    private static final String HIDE_START = "// hide-start";
-
-    private static final String HIDE_END = "// hide-end";
-
-    private static final Set<String> FLAGS = Set.of("run", "edit", "open", "hidden", "continue", "fragment");
-
-    private static final Set<String> KEYS = Set.of("continue", "checkpoint", "issue");
-
     @Inject
-    private ParseHelper<OxstsModelPackage> parseHelper;
+    private ParseHelper<EObject> parseHelper;
 
     @Inject
     private Provider<XtextResourceSet> resourceSetProvider;
@@ -64,112 +44,18 @@ public class DocumentationFenceTest {
     @Inject
     private IResourceValidator resourceValidator;
 
-    record ModelLine(String text, int pageLine) {}
-
-    record Fence(Path page, int line, List<ModelLine> model, boolean continued, String issue, boolean fragment) {
-
-        String location() {
-            return DOCUMENTATION.relativize(page) + ":" + line;
-        }
-
-        String text() {
-            return model.stream().map(ModelLine::text).collect(Collectors.joining("\n", "", "\n"));
-        }
-
-        boolean declaresPackage() {
-            return PACKAGE_DECLARATION.matcher(text()).find();
-        }
-
-        String locationOf(Issue issue) {
-            var index = issue.getLineNumber() - 1;
-            var pageLine = index >= 0 && index < model.size() ? model.get(index).pageLine() : line;
-            return DOCUMENTATION.relativize(page) + ":" + pageLine;
-        }
-    }
-
     static Stream<Arguments> fencesValidate() throws IOException {
-        try (var paths = Files.walk(DOCUMENTATION)) {
-            var pages = paths.filter(path -> {
-                        var name = path.getFileName().toString();
-                        return name.endsWith(".md") || name.endsWith(".mdx");
-                    })
-                    .sorted()
-                    .toList();
-            var arguments = new ArrayList<Arguments>();
-            for (var page : pages) {
-                for (var fence : fences(page)) {
-                    if (!fence.fragment()) {
-                        arguments.add(Arguments.of(Named.of(fence.location(), fence)));
-                    }
-                }
-            }
-            return arguments.stream();
-        }
+        return DocumentationFences.allFences().stream().map(fence -> {
+            return Arguments.of(Named.of(fence.location(), fence));
+        });
     }
 
-    // a continued fence's model is the model it continues, a blank line and its own lines without the markers
-    private static List<Fence> fences(Path page) throws IOException {
-        var lines = Files.readAllLines(page);
-        var fences = new ArrayList<Fence>();
-        var checkpoints = new HashMap<String, List<ModelLine>>();
-        List<ModelLine> previous = null;
-        var index = 0;
-        while (index < lines.size()) {
-            var opening = OPENING_FENCE.matcher(lines.get(index));
-            if (!opening.matches()) {
-                index++;
-                continue;
-            }
-            var openingLine = index + 1;
-            var location = DOCUMENTATION.relativize(page) + ":" + openingLine;
-            var indentation = opening.group(1).length();
-            var infoWords = opening.group(2) == null ? "" : opening.group(2).strip();
-            String continues = null;
-            String checkpoint = null;
-            String issue = null;
-            var fragment = false;
-            for (var word : infoWords.isEmpty() ? new String[0] : infoWords.split("\\s+")) {
-                var separator = word.indexOf('=');
-                var key = separator < 0 ? word : word.substring(0, separator);
-                var value = separator < 0 ? null : word.substring(separator + 1);
-                var known = value == null ? FLAGS.contains(key) : KEYS.contains(key) && !value.isEmpty();
-                if (!known) {
-                    throw new IllegalStateException("unknown word " + word + " of the oxsts fence at " + location);
-                }
-                switch (key) {
-                    case "continue" -> continues = value == null ? "" : value;
-                    case "checkpoint" -> checkpoint = value;
-                    case "issue" -> issue = value.equals("syntax") ? Diagnostic.SYNTAX_DIAGNOSTIC : value;
-                    case "fragment" -> fragment = true;
-                    default -> {}
-                }
-            }
-            var model = new ArrayList<ModelLine>();
-            if (continues != null) {
-                var continued = continues.isEmpty() ? previous : checkpoints.get(continues);
-                if (continued == null) {
-                    throw new IllegalStateException("the oxsts fence at " + location + " continues nothing");
-                }
-                model.addAll(continued);
-                model.add(new ModelLine("", openingLine));
-            }
-            index++;
-            while (index < lines.size() && !lines.get(index).trim().equals("```")) {
-                var line = lines.get(index);
-                var text = line.length() >= indentation ? line.substring(indentation) : line.strip();
-                if (!text.strip().equals(HIDE_START) && !text.strip().equals(HIDE_END)) {
-                    model.add(new ModelLine(text, index + 1));
-                }
-                index++;
-            }
-            index++;
-            previous = List.copyOf(model);
-            if (checkpoint != null) {
-                checkpoints.put(checkpoint, previous);
-            }
-            fences.add(new Fence(page, openingLine, previous, continues != null, issue, fragment));
-        }
-        return fences;
+    private static String locationOf(Fence fence, Issue issue) {
+        var index = issue.getLineNumber() - 1;
+        var pageLine = index >= 0 && index < fence.model().size()
+                ? fence.model().get(index).pageLine()
+                : fence.line();
+        return DocumentationFences.DOCUMENTATION.relativize(fence.page()) + ":" + pageLine;
     }
 
     @ParameterizedTest(name = "{0}")
@@ -177,10 +63,9 @@ public class DocumentationFenceTest {
     void fencesValidate(Fence fence) throws Exception {
         var resourceSet = resourceSetProvider.get();
         if (!fence.continued()) {
-            for (var sibling : fences(fence.page())) {
+            for (var sibling : DocumentationFences.fences(fence.page())) {
                 if (sibling.line() != fence.line()
                         && !sibling.continued()
-                        && !sibling.fragment()
                         && sibling.issue() == null
                         && sibling.declaresPackage()) {
                     parseHelper.parse(sibling.text(), resourceSet);
@@ -204,7 +89,7 @@ public class DocumentationFenceTest {
         }
         var described = issues.stream()
                 .map(issue -> {
-                    return fence.locationOf(issue) + " " + issue.getCode() + " " + issue.getMessage();
+                    return locationOf(fence, issue) + " " + issue.getCode() + " " + issue.getMessage();
                 })
                 .toList();
 
@@ -222,7 +107,11 @@ public class DocumentationFenceTest {
                     .as(
                             "the issue codes of the oxsts fence at %s, which names %s: %s",
                             fence.location(), fence.issue(), described)
-                    .containsExactly(fence.issue());
+                    .containsExactly(expectedCode(fence.issue()));
         }
+    }
+
+    private static String expectedCode(String issue) {
+        return issue.equals(DocumentationFences.SYNTAX) ? Diagnostic.SYNTAX_DIAGNOSTIC : issue;
     }
 }
