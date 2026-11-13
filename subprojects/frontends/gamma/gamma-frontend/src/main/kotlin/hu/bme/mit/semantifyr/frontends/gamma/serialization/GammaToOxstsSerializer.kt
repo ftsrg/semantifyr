@@ -550,6 +550,9 @@ class GammaToOxstsSerializer(
         appendIndent("class ${queueClassName(adapter, queue).substringAfterLast("::")} : MessageQueue") {
             appendLine("redefine refers capacity: int = $capacity")
             appendLine("redefine refers priority: int = ${queue.priority}")
+            if (queue.discardsOldest) {
+                appendLine("redefine refers discardsOldest: bool = true")
+            }
             appendLine()
             for (message in queue.messages) {
                 val identifier = message.identifier
@@ -649,7 +652,7 @@ class GammaToOxstsSerializer(
                 valuesName(message, it) to defaultValue(it.type)
             }
         }
-        appendIndent("tran $SHIFT_TRANSITION()") {
+        appendIndent("redefine tran $SHIFT_TRANSITION()") {
             appendIndent("inline for (index in 0..<capacity - 1)") {
                 for ((array, _) in arrays) {
                     appendLine("$array[index] := $array[index + 1]")
@@ -725,6 +728,7 @@ class GammaToOxstsSerializer(
                     continue
                 }
                 appendIndent("inline if (clock == $CLOCK_REFERENCE${message.identifier})") {
+                    appendLine("inline dropOldestWhenFull()")
                     appendIndent("if (!isFull())") {
                         appendLine("inline $ENQUEUE_TRANSITION${message.identifier}()")
                     }

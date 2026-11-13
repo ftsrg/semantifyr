@@ -15,7 +15,6 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComponentInstance
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.CompositeComponentDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ControlFunction
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ControlSpecification
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.DiscardStrategy
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventParameterReferenceExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Expression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.FieldAssignment
@@ -188,9 +187,6 @@ object UnmappedGammaConstructs {
     }
 
     private fun describe(queue: MessageQueue): String? {
-        if (queue.discardStrategy == DiscardStrategy.OLDEST) {
-            return "the discard strategy of the oldest message in queue '${queue.name}'"
-        }
         if (GammaUtils.evaluateInteger(queue.capacity) == null) {
             return "the capacity of queue '${queue.name}' other than a constant"
         }
@@ -238,7 +234,7 @@ object UnmappedGammaConstructs {
         return "the asynchronous composite '${instance.component.name}' inside the asynchronous composite '${container.name}'"
     }
 
-    // a composite decides per adapter instance which queues the environment fills, and Gamma's dispatch handles one target per raise
+    // a composite decides per adapter instance which queues the environment fills
     private fun describeAsynchronousComposition(component: ComponentDeclaration): List<UnmappedGammaConstruct> {
         if (component !is CompositeComponentDeclaration || !GammaUtils.isAsynchronous(component)) {
             return emptyList()
@@ -260,18 +256,6 @@ object UnmappedGammaConstructs {
                         "the queue '${queue.name}' of '${instance.name}' storing messages of the environment and $others",
                     )
                 }
-            }
-        }
-        val targets = AsynchronousMapping.dispatchesOf(component).groupBy {
-            Triple(it.sourceInstance, it.sourcePort, it.event)
-        }
-        for ((source, dispatches) in targets) {
-            if (dispatches.size > 1) {
-                constructs += UnmappedGammaConstruct(
-                    source.first,
-                    "the event '${source.third.name}' of '${source.first.name}.${source.second.name}' reaching more than one queue",
-                    "is refused",
-                )
             }
         }
         return constructs

@@ -1,0 +1,83 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package SeveralQueues
+
+interface Go {
+    in event go
+}
+
+interface Values {
+    out event value(amount : integer)
+}
+
+@Asynchronous
+statechart Sender capacity (1) [
+    port control : provides Go,
+    port values : provides Values
+] {
+    region Main {
+        initial MainInitial
+        state Idle
+        state Sent
+    }
+
+    transition from MainInitial to Idle
+    transition from Idle to Sent when control.go / raise values.value(3);
+}
+
+@TransitionPriority = order-based
+statechart Receiver [
+    port values : requires Values
+] {
+    region Main {
+        initial MainInitial
+        state Waiting
+        state Three
+        state Other
+        state Again
+    }
+
+    transition from MainInitial to Waiting
+    transition from Waiting to Three when values.value [values.value::amount = 3]
+    transition from Waiting to Other when values.value
+    transition from Three to Again when values.value
+    transition from Other to Again when values.value
+}
+
+adapter Buffered of component receiver : Receiver {
+    when any / run
+    queue messages (priority = 1, capacity = 1) {
+        values.any
+    }
+}
+
+async Fanout [
+    port control : provides Go
+] {
+    component sender : Sender
+    component left : Buffered
+    component right : Buffered
+    bind control -> sender.control
+    channel [ sender.values ] -o)- [ left.values ]
+    channel [ sender.values ] -o)- [ right.values ]
+}
+
+verification case AnOutputReachingTwoQueuesIsServedFromBoth of Fanout {
+    EF ((state left -> receiver.Main.Three or state left -> receiver.Main.Other) and (state right -> receiver.Main.Three or state right -> receiver.Main.Other))
+}
+
+verification case AnOutputReachingTwoQueuesServedTwiceFromOneUnreachable of Fanout {
+    EF (state left -> receiver.Main.Again or state right -> receiver.Main.Again)
+}
+
+verification case AnOutputReachingTwoQueuesCarriesItsValueToBoth of Fanout {
+    EF (state left -> receiver.Main.Three and state right -> receiver.Main.Three)
+}
+
+verification case AnOutputReachingTwoQueuesWithoutItsValueInOneUnreachable of Fanout {
+    EF (state left -> receiver.Main.Other or state right -> receiver.Main.Other)
+}

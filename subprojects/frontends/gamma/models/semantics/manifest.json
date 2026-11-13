@@ -148,7 +148,9 @@
                 { "name": "MessagesAreReceivedInTheirOrder", "verdict": "Passed", "tier": "Integration" },
                 { "name": "MessagesAreReceivedInReverseUnreachable", "verdict": "Failed", "tier": "Integration" },
                 { "name": "AFullQueueDropsTheIncomingMessage", "verdict": "Passed", "tier": "Integration" },
-                { "name": "AFullQueueDropsTheOldestMessageUnreachable", "verdict": "Failed", "tier": "Integration" }
+                { "name": "AFullQueueDropsTheOldestMessageUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "AFullQueueDiscardingTheOldestKeepsTheNewestMessage", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AFullQueueDiscardingTheOldestKeepingItUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
@@ -186,6 +188,15 @@
                 { "name": "TwoTurnsInACycleServeTwoMessages", "verdict": "Passed", "tier": "Integration" },
                 { "name": "OneTurnInACycleServesTwoMessagesUnreachable", "verdict": "Failed", "tier": "Integration" },
                 { "name": "ALaterTurnSeesTheTimeoutUp", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "SeveralQueues.gamma",
+            "cases": [
+                { "name": "AnOutputReachingTwoQueuesIsServedFromBoth", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AnOutputReachingTwoQueuesServedTwiceFromOneUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "AnOutputReachingTwoQueuesCarriesItsValueToBoth", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AnOutputReachingTwoQueuesWithoutItsValueInOneUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {

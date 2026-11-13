@@ -16,8 +16,10 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComponentInstance
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.CompositeComponentDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ControlFunction
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ControlSpecification
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.DiscardStrategy
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaUtils
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.InstancePortReference
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.MessageQueue
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.MessageReference
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.MessageTrigger
@@ -52,6 +54,7 @@ class QueueMapping(
     val capacity: Int,
     val priority: Int,
     val rank: Int,
+    val discardsOldest: Boolean,
     val messages: List<QueuedMessage>,
 ) {
     val storesClocks: Boolean
@@ -89,6 +92,11 @@ class AdapterMapping(
         }
     }
 }
+
+private class DispatchTarget(
+    val end: InstancePortReference,
+    val queue: QueueMapping,
+)
 
 class DispatchMapping(
     val sourceInstance: ComponentInstance,
@@ -137,7 +145,7 @@ object AsynchronousMapping {
             QueuedMessage(index + 1, port, event, null, port, event, MessageControl.RUN)
         }
         val queues = if (capacity > 0) {
-            listOf(QueueMapping(statechart, name, capacity, 1, 0, messages))
+            listOf(QueueMapping(statechart, name, capacity, 1, 0, false, messages))
         } else {
             emptyList()
         }
@@ -205,7 +213,8 @@ object AsynchronousMapping {
             }
             messages += QueuedMessage(messages.size + 1, null, null, clock, null, null, control)
         }
-        return QueueMapping(queue, queue.name, capacityOf(queue), queue.priority, rank, messages)
+        val discardsOldest = queue.discardStrategy == DiscardStrategy.OLDEST
+        return QueueMapping(queue, queue.name, capacityOf(queue), queue.priority, rank, discardsOldest, messages)
     }
 
     private fun inputEventsOf(reference: MessageReference): List<Pair<PortDeclaration, EventDeclaration>> {
@@ -319,34 +328,50 @@ object AsynchronousMapping {
         }
     }
 
+    // an output reaching several queues is delivered to each with its values and reset once, after the last
     fun dispatchesOf(composite: CompositeComponentDeclaration): List<DispatchMapping> {
         val dispatches = mutableListOf<DispatchMapping>()
         for (instance in adapterInstances(composite)) {
             for (port in GammaUtils.getAllPorts(instance.component)) {
                 for (event in GammaUtils.getOutputEvents(port)) {
-                    for (channel in composite.channels) {
-                        val ends = listOf(
-                            channel.providedPort to channel.requiredPort,
-                            channel.requiredPort to channel.providedPort,
-                        )
-                        for ((source, target) in ends) {
-                            if (source.instance != instance || source.port != port) {
-                                continue
-                            }
-                            if (!isAdapter(target.instance.component) || !GammaUtils.isInputEvent(target.port, event)) {
-                                continue
-                            }
-                            val queue = adapterOf(target.instance.component).queueStoring(target.port, event) ?: continue
-                            val message = queue.messages.first {
-                                it.port == target.port && it.event == event
-                            }
-                            val resetsSource = !isBound(composite, instance, port)
-                            dispatches += DispatchMapping(instance, port, event, target.instance, target.port, queue, message, resetsSource)
+                    val targets = targetsOf(composite, instance, port, event)
+                    val resetsSource = !isBound(composite, instance, port)
+                    for ((index, target) in targets.withIndex()) {
+                        val message = target.queue.messages.first {
+                            it.port == target.end.port && it.event == event
                         }
+                        val resets = resetsSource && index == targets.lastIndex
+                        dispatches += DispatchMapping(instance, port, event, target.end.instance, target.end.port, target.queue, message, resets)
                     }
                 }
             }
         }
         return dispatches
+    }
+
+    private fun targetsOf(
+        composite: CompositeComponentDeclaration,
+        instance: ComponentInstance,
+        port: PortDeclaration,
+        event: EventDeclaration,
+    ): List<DispatchTarget> {
+        val targets = mutableListOf<DispatchTarget>()
+        for (channel in composite.channels) {
+            val ends = listOf(
+                channel.providedPort to channel.requiredPort,
+                channel.requiredPort to channel.providedPort,
+            )
+            for ((source, target) in ends) {
+                if (source.instance != instance || source.port != port) {
+                    continue
+                }
+                if (!isAdapter(target.instance.component) || !GammaUtils.isInputEvent(target.port, event)) {
+                    continue
+                }
+                val queue = adapterOf(target.instance.component).queueStoring(target.port, event) ?: continue
+                targets += DispatchTarget(target, queue)
+            }
+        }
+        return targets
     }
 }

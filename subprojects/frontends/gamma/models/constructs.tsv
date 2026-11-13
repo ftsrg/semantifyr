@@ -47,14 +47,15 @@ Composition	`initial execute` of a cascade composite	out			The library has no su
 Composition	Broadcast channels, component parameters and arguments	out			Future work.
 Composition	Asynchronous adapters and their message queues, served by descending priority, one message per turn, first in first out	carried	models/semantics/QueuePriority.gamma	queue high (priority = 2, capacity = 1)	
 Composition	A full queue drops the incoming message	carried	models/semantics/Queues.gamma	AFullQueueDropsTheIncomingMessage	
-Composition	The discard strategy of the oldest message	planned			The mapper refuses it with a diagnostic until it is decided.
+Composition	A full queue with `discard = oldest` drops its oldest message and takes the incoming one	carried	models/semantics/Queues.gamma	discard = oldest	
 Composition	Control specifications `run`, `reset-queue`, `reset-queues` and `reset-other-queues` on `any`, an event, a port's events or a clock	carried	models/semantics/ControlSpecifications.gamma	when signals.second / reset-other-queues	
 Composition	The `reset` control function	planned			The mapper refuses it with a diagnostic.
 Composition	Clocks	departure	models/semantics/Clocks.gamma	clock ticker (rate = 2 s)	A clock counts the fixed delta of every step, as timeouts do.
 Composition	Asynchronous and scheduled-asynchronous composites and the execution list	carried	models/semantics/ScheduledAsynchronous.gamma	execute buffered, buffered	
 Composition	Asynchronous statecharts, unfolded into Gamma's default adapter	carried	models/semantics/AsynchronousStatechart.gamma	@Asynchronous	
 Composition	An event passing to another event, `->`	carried	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaGrammarTest.kt	control.any -> signals.any	
-Composition	An asynchronous composite inside an asynchronous composite, a queue holding messages of the environment and of other components or clock ticks, an output event reaching several queues	out			The mapper refuses them with a diagnostic.
+Composition	An output event reaching several queues, delivered to each with its parameter values	departure	models/semantics/SeveralQueues.gamma	channel [ sender.values ] -o)- [ right.values ]	Gamma's transformation resets the parameters after the first queue, so a later queue receives the event with default values, and of several simple channels from one port it serves only the first.
+Composition	An asynchronous composite inside an asynchronous composite, a queue holding messages of the environment and of other components or clock ticks	out			The mapper refuses them with a diagnostic.
 Composition	Event parameters of record type in a queued message	planned			Waits for arrays of records in OXSTS.
 Composition	The queue size and overflow atoms of a property, `initial execute` of a scheduled-asynchronous composite	out			Future work.
 Composition	The `full-step` control function	out			The mapper refuses it with a diagnostic, since Gamma's analysis consumes the message without running the component where its code generator runs it to completion.
