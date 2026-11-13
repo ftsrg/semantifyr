@@ -1,6 +1,7 @@
 package semantifyr::gamma::ports
 
 import semantifyr::gamma::events
+import semantifyr::gamma::expressions
 
 class Interface {
     contains events: Event[0..*]
@@ -78,4 +79,13 @@ class RequiredPort : Port {
 class ProvidedPort : Port {
     redefine refers inputEvents: Event[0..*] = interface.inputEvents
     redefine refers outputEvents: Event[0..*] = interface.outputEvents
+}
+
+class IsEventRaisedExpression : Expression {
+    refers port: Port
+    refers event: Event
+
+    redefine prop evaluate(): bool {
+        return event.isRaised
+    }
 }
