@@ -6,12 +6,14 @@
 
 package gamma::library::semantics
 
+import semantifyr::gamma::expressions
 import semantifyr::gamma::statecharts
 import semantifyr::gamma::components
 import semantifyr::gamma::triggers
 import semantifyr::gamma::actions
 import semantifyr::gamma::events
 import semantifyr::gamma::ports
+import semantifyr::gamma::verification
 
 class TwoInputs : Statechart {
     contains control: ProvidedPort subsets ports {
@@ -139,6 +141,37 @@ class OutputEventIsResetAtTheNextStep : LibraryCase {
 
     redefine prop {
         return EF (machine.Main.Finished.isActive() && !machine.control.interface.done.isRaised)
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class RaisedEventExpressionReadsTheRaisedOutput : GammaVerificationCase {
+    contains machine: TwoOutputs redefines component
+
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsEventRaisedExpression {
+            redefine refers port: Port = machine.control
+            redefine refers event: Event = machine.control.interface.done
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class RaisedEventExpressionBeforeTheRaiseUnreachable : GammaVerificationCase {
+    contains machine: TwoOutputs redefines component
+
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: AndOperatorExpression {
+            redefine contains left: IsEventRaisedExpression {
+                redefine refers port: Port = machine.control
+                redefine refers event: Event = machine.control.interface.done
+            }
+            redefine contains right: IsStateActiveExpression {
+                redefine refers state: State = machine.Main.Idle
+            }
+        }
     }
 }
 
