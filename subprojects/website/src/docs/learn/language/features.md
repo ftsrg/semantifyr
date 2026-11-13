@@ -219,7 +219,7 @@ class Machine {
 
 ## Feature Binding
 
-A feature can be bound to a compile-time expression with `=`, whose value fits the feature's type (`OXSTS.TYPE_MISMATCH`). The bound value cannot depend on runtime state (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`). A bound feature holds the instances or the value its expression gives, on each instance of its class.
+A feature can be bound to a compile-time expression with `=`, whose value fits the feature's type (`OXSTS.TYPE_MISMATCH`). The bound value cannot depend on runtime state (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`). A bound feature holds the instances or the value its expression gives, on each instance of its class. The expression is evaluated on the instance that holds the feature, so its names resolve there and never among the members of the feature's own type; in a nested block that is the instance of the enclosing feature.
 
 ```oxsts
 // hide-start

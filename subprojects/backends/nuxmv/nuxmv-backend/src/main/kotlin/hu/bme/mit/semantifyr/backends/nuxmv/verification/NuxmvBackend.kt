@@ -37,6 +37,8 @@ import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvModelTransformer
 import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvOperationVisitor
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.warn
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 
 class NuxmvBackend : VerificationBackend<NuxmvConfig>() {
     override val id = "nuxmv"
@@ -97,8 +99,10 @@ class NuxmvVerificationContext @AssistedInject constructor(
     private val artifactManager = NuxmvArtifactManager(request.artifactOutputPath)
 
     override suspend fun prepare(): NuxmvArtifacts {
+        currentCoroutineContext().ensureActive()
         logger.info { "[$backendId] generating SMV model and command files" }
         val artifacts = nuxmvModelTransformer.transform(request.inlinedOxsts)
+        currentCoroutineContext().ensureActive()
 
         artifactManager.modelFile.apply {
             parentFile?.mkdirs()

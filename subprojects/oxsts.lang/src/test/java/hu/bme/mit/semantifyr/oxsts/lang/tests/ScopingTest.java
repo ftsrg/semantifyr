@@ -152,6 +152,61 @@ public class ScopingTest {
     }
 
     @Test
+    void bindingResolvesNamesInTheHolderNotInTheBoundFeaturesType() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Lamp {
+                contains lamp: Lamp[0..1]
+            }
+            class Room {
+                contains lamp: Lamp[1]
+                refers light: Lamp[0..1] = lamp
+            }
+            """);
+
+        parsedPackage.assertNoResourceErrors();
+        var room = parsedPackage.classByName("Room");
+        var binding = (ElementReference) room.featureByName("light").expression();
+
+        assertThat(binding.getElement())
+                .as("the binding is evaluated on the room, so `lamp` must be the room's lamp, not the lamp's lamp")
+                .isSameAs(room.featureByName("lamp").eObject());
+    }
+
+    @Test
+    void bindingInANestedBlockResolvesNamesInTheEnclosingFeaturesDomain() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Node {
+            }
+            class Behaviour {
+                contains start: Node[1]
+                refers from: Node[0..1]
+            }
+            class Host {
+                contains controller: Behaviour {
+                    redefine refers from: Node[0..1] = start
+                }
+            }
+            """);
+
+        parsedPackage.assertNoResourceErrors();
+        var from = parsedPackage
+                .classByName("Host")
+                .featureByName("controller")
+                .innerFeatures()
+                .getFirst();
+        var binding = (ElementReference) from.expression();
+
+        assertThat(binding.getElement())
+                .as("the nested binding is evaluated on the controller, so `start` must be the behaviour's start")
+                .isSameAs(parsedPackage
+                        .classByName("Behaviour")
+                        .featureByName("start")
+                        .eObject());
+    }
+
+    @Test
     void enumLiteralReferenceResolvesAcrossTypes() {
         var parsedPackage = parseHelper.parse("""
             package test

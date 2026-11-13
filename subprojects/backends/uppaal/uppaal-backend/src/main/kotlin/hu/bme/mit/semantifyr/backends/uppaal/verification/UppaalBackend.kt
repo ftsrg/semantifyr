@@ -38,6 +38,8 @@ import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalOperationVisit
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalOverApproximationCapabilityChecker
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalVariableTransformer
 import hu.bme.mit.semantifyr.logging.info
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 
 class UppaalBackend : VerificationBackend<UppaalConfig>() {
     override val id = "uppaal"
@@ -97,8 +99,10 @@ class UppaalVerificationContext @AssistedInject constructor(
     private val artifactManager = UppaalArtifactManager(request.artifactOutputPath)
 
     override suspend fun prepare(): UppaalArtifacts {
+        currentCoroutineContext().ensureActive()
         logger.info { "[$backendId] generating Uppaal XML and query files" }
         val artifacts = uppaalModelTransformer.transform(request.inlinedOxsts)
+        currentCoroutineContext().ensureActive()
         artifactManager.modelFile.apply {
             parentFile?.mkdirs()
         }.writeText(artifacts.modelXml)

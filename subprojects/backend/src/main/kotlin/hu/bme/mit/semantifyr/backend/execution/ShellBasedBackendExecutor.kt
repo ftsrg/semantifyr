@@ -13,6 +13,8 @@ import hu.bme.mit.semantifyr.utils.process.destroyTree
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -42,7 +44,7 @@ abstract class ShellBasedBackendExecutor : BackendExecutor {
                 .redirectError(ProcessBuilder.Redirect.DISCARD)
                 .start()
             if (!process.waitFor(timeoutSeconds, TimeUnit.SECONDS)) {
-                process.destroyForcibly()
+                process.destroyTree()
                 false
             } else {
                 process.exitValue() == expectedExitCode
@@ -70,6 +72,8 @@ abstract class ShellBasedBackendExecutor : BackendExecutor {
         val errorRedirect = errorFile?.let {
             ProcessBuilder.Redirect.appendTo(it)
         } ?: ProcessBuilder.Redirect.DISCARD
+
+        currentCoroutineContext().ensureActive()
 
         val process = buildProcess(binaryName, arguments)
             .directory(workingDirectory)

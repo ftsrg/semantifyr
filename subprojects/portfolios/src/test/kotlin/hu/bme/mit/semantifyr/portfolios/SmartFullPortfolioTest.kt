@@ -10,6 +10,7 @@ import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backends.theta.ThetaConfig
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.verifier.ProgressContext
@@ -89,6 +90,23 @@ class SmartFullPortfolioTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(result.metadata.backendId).isEqualTo("nuxmv")
+    }
+
+    @Test
+    suspend fun `with Theta and Spin on two permits Theta's explicit configuration runs once Spin's leg is done`(
+        @TempDir output: Path,
+    ) {
+        val portfolio = SmartFullPortfolio(
+            theta = OneConfigurationBackend("theta", ThetaConfig.CegarExpl),
+            uppaal = PassingBackend("uppaal", UnavailableKey),
+            nuxmv = PassingBackend("nuxmv", UnavailableKey),
+            spin = PassingBackend("spin"),
+        )
+
+        val result = portfolio.verify(parentInjector, stubRequest(output), LimitedConcurrencyGate(maxConcurrency = 2), ExecutionEnvironment.Empty, ProgressContext.Silent)
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(result.metadata.backendId).isEqualTo("theta")
     }
 
     @Test
