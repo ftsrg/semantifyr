@@ -5,6 +5,7 @@
  */
 
 import com.github.gradle.node.npm.task.NpmTask
+import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
 
@@ -95,10 +96,20 @@ tasks.npmInstall {
 val brandingDir = rootProject.layout.projectDirectory.dir("branding")
 val importedBrandingDir = project.layout.projectDirectory.dir("static-imported-branding")
 
+val renderBrandingPictures = registerRenderPictures(
+    "renderBrandingPictures",
+    layout.buildDirectory.dir("branding").get(),
+    listOf(
+        "favicon.ico=semantifyr-logo@16,32,48",
+        "img/logo-192.png=semantifyr-logo@192",
+        "img/logo-512.png=semantifyr-logo@512",
+        "img/apple-touch-icon.png=semantifyr-logo@180",
+        "img/social-card.png=social-card@1200",
+    ),
+)
+
 val cloneBrandingAssets = tasks.register<Sync>("cloneBrandingAssets") {
-    from(brandingDir) {
-        include("favicon.ico")
-    }
+    from(renderBrandingPictures)
     from(brandingDir) {
         include("semantifyr-logo.svg")
         rename { "logo.svg" }
@@ -112,21 +123,6 @@ val cloneBrandingAssets = tasks.register<Sync>("cloneBrandingAssets") {
     from(brandingDir) {
         include("semantifyr-full-dark.svg")
         rename { "logo-full-dark.svg" }
-        into("img")
-    }
-    from(brandingDir) {
-        include("semantifyr-logo-192.png")
-        rename { "logo-192.png" }
-        into("img")
-    }
-    from(brandingDir) {
-        include("semantifyr-logo-512.png")
-        rename { "logo-512.png" }
-        into("img")
-    }
-    from(brandingDir) {
-        include("semantifyr-logo-180.png")
-        rename { "apple-touch-icon.png" }
         into("img")
     }
     into(importedBrandingDir)

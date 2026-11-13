@@ -5,6 +5,7 @@
  */
 
 import com.github.gradle.node.npm.task.NpmTask
+import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
 
@@ -38,6 +39,16 @@ dependencies {
 
     theta(project(":theta-executor"))
 }
+
+val renderIcons = registerRenderPictures(
+    "renderIcons",
+    layout.projectDirectory.dir("icons"),
+    listOf(
+        "icon.png=semantifyr-logo@128",
+        "semantifyr-file-icon.png=semantifyr-logo@128+104",
+        "gamma-file-icon.png=gamma@128+104",
+    ),
+)
 
 val cloneDistribution = tasks.register<Sync>("cloneDistribution") {
     from(languageServersFiles)
@@ -122,9 +133,7 @@ val bundleExtension = tasks.register<NpmTask>("bundleExtension") {
     inputs.file(project.layout.projectDirectory.file("eslint.config.js"))
     inputs.file(project.layout.projectDirectory.file("language-configuration.json"))
     inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
-    inputs.file(project.layout.projectDirectory.file("icons/icon.png"))
-    inputs.file(project.layout.projectDirectory.file("icons/semantifyr-file-icon.png"))
-    inputs.file(project.layout.projectDirectory.file("icons/gamma-file-icon.png"))
+    inputs.files(renderIcons)
     inputs.file(project.layout.projectDirectory.file("README.md"))
     inputs.file(project.layout.projectDirectory.file("CHANGELOG.md"))
     inputs.file(rootProject.layout.projectDirectory.file("tsconfig.base.json"))
@@ -150,7 +159,7 @@ tasks {
     }
 
     clean {
-        delete("dist", "build")
+        delete("dist", "build", "icons")
     }
 }
 

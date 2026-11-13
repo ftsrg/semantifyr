@@ -219,6 +219,8 @@ jobs:
         with:
           # reuse skips every directory under one named subprojects, taking it for Meson's
           args: --include-meson-subprojects lint
+      - name: No raster pictures committed
+        run: .github/scripts/refuse-tracked-pictures.sh
 
   live-image:
     name: Live Image
