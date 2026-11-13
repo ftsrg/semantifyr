@@ -20,6 +20,7 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
     inputs.dir(project.layout.projectDirectory.dir("src"))
     inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
     inputs.file(project.layout.projectDirectory.file("eslint.config.js"))
+    inputs.file(project.layout.projectDirectory.file("vitest.config.ts"))
     inputs.file(project.layout.projectDirectory.file("package.json"))
     inputs.file(rootProject.layout.projectDirectory.file("tsconfig.base.json"))
     inputs.file(rootProject.layout.projectDirectory.file("eslint.config.base.js"))
