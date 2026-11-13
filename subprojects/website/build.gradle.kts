@@ -156,7 +156,14 @@ fun NpmTask.configureSharedInputs() {
     inputs.file(rootProject.layout.projectDirectory.file("oxsts-test-models/constructs/constructs.tsv")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(rootProject.layout.projectDirectory.file("subprojects/semantifyr-vscode/syntaxes/oxsts.tmLanguage.json")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(tasks.npmInstall).withPathSensitivity(PathSensitivity.RELATIVE)
+    // the builds keep their own caches under node_modules/.cache, which say nothing of the result
+    dependsOn(tasks.npmInstall)
+    val installed = tasks.npmInstall.map {
+        it.outputs.files.asFileTree.matching {
+            exclude("**/.cache/**")
+        }
+    }
+    inputs.files(installed).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneBrandingAssets).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(editorCommonFiles).withPathSensitivity(PathSensitivity.RELATIVE)
 }
