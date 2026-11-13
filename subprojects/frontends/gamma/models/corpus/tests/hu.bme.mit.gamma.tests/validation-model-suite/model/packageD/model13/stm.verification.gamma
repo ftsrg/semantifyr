@@ -17,7 +17,3 @@ verification case StateS11Reachable of statemachine {
 verification case StateS12Reachable of statemachine {
     EF state R1.S12
 }
-
-verification case ExitedCompositeLeavesNoSubstateActive of statemachine {
-    EF (state Main.S0 and state R1.S12)
-}

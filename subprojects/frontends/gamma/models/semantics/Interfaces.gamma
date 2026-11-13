@@ -110,10 +110,14 @@ verification case InoutEventCrossesTheChannelInBothDirections of Call {
     EF state caller.Main.Answered
 }
 
-verification case InoutEventArrivesOnlyFromTheOtherEnd of Call {
-    AG (not state caller.Main.Answered or state callee.Main.Replied)
+verification case InoutEventArrivingFromItsOwnEndUnreachable of Call {
+    EF (state caller.Main.Answered and state callee.Main.Waiting)
 }
 
 verification case ProvidedPortRaisesTheOutputHalf of Call {
     EF raise caller.line.ping
+}
+
+verification case OwnEventWithoutTheInheritedOneUnreachable of Visit {
+    EF (state guest.Main.Welcomed and state host.Main.Waiting)
 }

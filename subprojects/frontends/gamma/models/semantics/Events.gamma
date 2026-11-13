@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package SeveralEventsOnOnePort
+package Events
 
 interface Control {
     in event start
@@ -23,16 +23,26 @@ statechart Sender [
         initial MainInitial
         state Idle
         state Sent
+        state Done
     }
 
     transition from MainInitial to Idle
     transition from Idle to Sent when control.start / raise output.first; raise output.second;
+    transition from Sent to Done when control.start
 }
 
-verification case BothEventsAreRaisedInOneStep of Sender {
+verification case BothEventsOfAPortAreRaisedInOneStep of Sender {
     EF (raise output.first and raise output.second)
 }
 
-verification case OneEventRaisedWithoutTheOtherUnreachable of Sender {
+verification case OneEventOfAPortRaisedWithoutTheOtherUnreachable of Sender {
     EF (raise output.first and not raise output.second)
+}
+
+verification case OutputIsVisibleAfterTheStepThatRaisedIt of Sender {
+    EF (state Main.Sent and raise output.first)
+}
+
+verification case OutputKeptBeyondTheNextStepUnreachable of Sender {
+    EF (state Main.Done and raise output.first)
 }

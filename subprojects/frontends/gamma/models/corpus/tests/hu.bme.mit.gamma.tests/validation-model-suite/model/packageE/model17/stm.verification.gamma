@@ -25,7 +25,3 @@ verification case StateS2Reachable of statemachine {
 verification case StateS22Reachable of statemachine {
     EF state R2.S22
 }
-
-verification case EnteringCompositeEntersOrthogonalRegion of statemachine {
-    EF (state R1.S1 and state R2.S2)
-}

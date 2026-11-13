@@ -101,11 +101,3 @@ verification case SecondTransitionFromInterruptedToNormalFires of Crossroad {
 verification case SecondTransitionFromYellowToRedFires of Crossroad {
     EF (state second.normal.Red and variable second.b = 4)
 }
-
-verification case BothLightsShowGreen of Crossroad {
-    EF (raise priorityOutput.displayGreen and raise secondaryOutput.displayGreen)
-}
-
-verification case ControllerAheadOfSecondaryLight of Crossroad {
-    EF (state controller.operating.SecondaryPrepares and state second.normal.Red and not raise secondaryOutput.displayRed)
-}

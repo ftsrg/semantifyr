@@ -79,3 +79,7 @@ verification case ReplyInTheSameCycleWithoutASecondRunViolated of Conversation {
 verification case InstanceListedTwiceRunsTwiceInACycle of RepeatedConversation {
     AG (not state answerer.Main.Asked or state asker.Main.Answered)
 }
+
+verification case LaterInstanceMissingTheEventOfItsCycleUnreachable of Conversation {
+    EF (state asker.Main.Sent and state answerer.Main.Waiting)
+}

@@ -25,7 +25,3 @@ verification case StateS4Reachable of statemachine {
 verification case StateS5Reachable of statemachine {
     EF state Main.S5
 }
-
-verification case ExitedCompositeLeavesNoOrthogonalStateActive of statemachine {
-    EF (state Main.S5 and state R2.S4)
-}

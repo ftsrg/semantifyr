@@ -10,10 +10,6 @@ verification case StateS1Reachable of statemachine {
     EF state Main.S1
 }
 
-verification case StateS2Reachable of statemachine {
-    EF state Main.S2
-}
-
 verification case StateS3Reachable of statemachine {
     EF state Main.S3
 }

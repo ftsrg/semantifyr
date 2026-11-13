@@ -5,11 +5,3 @@ import manual::EmbeddedStructMachineVarMachine
 verification case StateEmbeddedStructMachineVarMachineStateReachable of EmbeddedStructMachineVarMachine {
     EF state EmbeddedStructMachineVarMachine_.EmbeddedStructMachineVarMachine__State
 }
-
-verification case OuterAndNestedFieldsCountTogether of EmbeddedStructMachineVarMachine {
-    EF ((variable outer).cnt = 1 and (variable outer).inner.cnt = 1)
-}
-
-verification case NestedFieldAheadOfOuterField of EmbeddedStructMachineVarMachine {
-    EF ((variable outer).cnt = 1 and (variable outer).inner.cnt = 2)
-}

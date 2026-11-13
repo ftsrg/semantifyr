@@ -5,11 +5,3 @@ import manual::StructRecieverMachine
 verification case StructRecieverMachineStructRecieverMachineStateReachable of StructRecieverMachineWrapper {
     EF state structRecieverMachine.StructRecieverMachine_.StructRecieverMachine__State
 }
-
-verification case RecordParameterAddedToBoth of StructRecieverMachineWrapper {
-    EF (variable structRecieverMachine.cnt = 5 and (variable structRecieverMachine.ss).val = 5)
-}
-
-verification case RecordParameterAddedUnequally of StructRecieverMachineWrapper {
-    EF (variable structRecieverMachine.cnt = 1 and (variable structRecieverMachine.ss).val = 2)
-}

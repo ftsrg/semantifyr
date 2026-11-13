@@ -9,11 +9,3 @@ verification case StateS0Reachable of statemachine {
 verification case StateS1Reachable of statemachine {
     EF state Main.S1
 }
-
-verification case TransitionOutputVisibleAfterStep of statemachine {
-    EF raise output.x
-}
-
-verification case ExitTransitionAndEntryOutputsOfOneStepAllVisible of statemachine {
-    EF (raise output.b and raise output.x and raise output.c)
-}

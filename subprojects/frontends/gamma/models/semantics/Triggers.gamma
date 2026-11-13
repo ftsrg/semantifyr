@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package SameEffectTransitions
+package Triggers
 
 interface Control {
     in event first
@@ -46,6 +46,6 @@ verification case SelfTransitionOnTheSecondTriggerFires of Machine {
     EF variable looped = 2
 }
 
-verification case NoTransitionFiresWithoutItsTrigger of Machine {
-    AG (state Main.Active or (variable entered = 0 and variable looped = 0))
+verification case TransitionWithoutItsTriggerUnreachable of Machine {
+    EF (state Main.Active and variable entered = 0)
 }

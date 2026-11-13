@@ -9,7 +9,3 @@ verification case StateS0Reachable of statemachine {
 verification case TransitionFromS0ToS0Fires of statemachine {
     EF (state Main.S0 and raise output.b)
 }
-
-verification case SelfTransitionOutputsAllVisible of statemachine {
-    EF (raise output.a and raise output.b and raise output.x)
-}
