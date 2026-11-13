@@ -4,11 +4,11 @@ sidebar_position: 1
 ---
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
-import step1 from '@oxsts-test-models/tutorial/basics-step1.oxsts';
-import step2 from '@oxsts-test-models/tutorial/basics-step2.oxsts';
-import step3 from '@oxsts-test-models/tutorial/basics-step3.oxsts';
-import step4 from '@oxsts-test-models/tutorial/basics-step4.oxsts';
-import basics from '@oxsts-test-models/tutorial/basics.oxsts';
+import step1 from '@oxsts-tutorial-models/basics-step1.oxsts';
+import step2 from '@oxsts-tutorial-models/basics-step2.oxsts';
+import step3 from '@oxsts-tutorial-models/basics-step3.oxsts';
+import step4 from '@oxsts-tutorial-models/basics-step4.oxsts';
+import basics from '@oxsts-tutorial-models/basics.oxsts';
 
 # Direct Modeling
 

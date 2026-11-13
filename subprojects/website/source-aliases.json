@@ -1,5 +1,6 @@
 {
-  "@oxsts-test-models": "../../oxsts-test-models",
+  "@oxsts-tutorial-models": "../../oxsts-test-models/tutorial",
+  "@oxsts-constructs": "../../oxsts-test-models/constructs",
   "@oxsts-library": "../oxsts.lang/src/main/resources/hu/bme/mit/semantifyr/oxsts/lang/library",
   "@sysml-tutorial-models": "../frontends/sysml/models/tutorial",
   "@sysml-reference-trace": "../frontends/sysml/models/etc",

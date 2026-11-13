@@ -4,10 +4,10 @@ sidebar_position: 2
 ---
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
-import step1 from '@oxsts-test-models/tutorial/intermediate-step1.oxsts';
-import step2 from '@oxsts-test-models/tutorial/intermediate-step2.oxsts';
-import step3 from '@oxsts-test-models/tutorial/intermediate-step3.oxsts';
-import intermediate from '@oxsts-test-models/tutorial/intermediate.oxsts';
+import step1 from '@oxsts-tutorial-models/intermediate-step1.oxsts';
+import step2 from '@oxsts-tutorial-models/intermediate-step2.oxsts';
+import step3 from '@oxsts-tutorial-models/intermediate-step3.oxsts';
+import intermediate from '@oxsts-tutorial-models/intermediate.oxsts';
 
 # Building a Library
 
