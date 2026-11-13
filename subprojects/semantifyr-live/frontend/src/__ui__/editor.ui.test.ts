@@ -114,10 +114,10 @@ describe('going to a definition from inside a read-only document', () => {
     await casesListed(page)
     await page.locator('.results-header .model-oxsts-button').click()
     await expect.poll(async () => {
-      return page.locator('section.editor .view-line', { hasText: 'class Track : Statechart' }).count()
+      return page.locator('section.editor .view-line', { hasText: 'class _Track : Statechart' }).count()
     }).toBe(1)
 
-    await page.locator('section.editor .view-line', { hasText: 'class Track : Statechart' }).click()
+    await page.locator('section.editor .view-line', { hasText: 'class _Track : Statechart' }).click()
     await page.keyboard.press('F12')
 
     await expect.poll(async () => {

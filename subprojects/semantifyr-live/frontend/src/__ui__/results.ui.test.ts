@@ -13,8 +13,8 @@ import { casesListed, editor, results, statesOf, test, type Ui } from './harness
 import type { CaseRequest } from './mock/session'
 
 const LEVEL_CROSSING = '/oxsts/level-crossing?library=gamma'
-const BARRIER = 'BarrierDownWhileTrainInCrossing'
-const TWO_TRAINS = 'TwoTrainsCanBeInTheCrossing'
+const BARRIER = '_BarrierDownWhileTrainInCrossing'
+const TWO_TRAINS = '_TwoTrainsCanBeInTheCrossing'
 
 interface Gate {
   passed: Promise<void>
