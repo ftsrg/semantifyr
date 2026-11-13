@@ -189,7 +189,6 @@
 .trace-scroll { flex: 1; min-height: 0; overflow: auto; padding: 0 var(--space-5) var(--space-7) var(--space-3); scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
 .trace.is-calls .trace-scroll { overflow: hidden; padding: 0 var(--space-3) var(--space-3) var(--space-3); }
 .trace-views { justify-self: start; max-width: 100%; }
-.trace.is-outdated .trace-scroll > *:not(.outdated-banner) { opacity: 0.5; filter: saturate(0.6); }
 .outdated-banner {
   display: flex;
   align-items: center;
