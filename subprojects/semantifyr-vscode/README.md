@@ -6,7 +6,7 @@
 
 # Semantifyr for VS Code
 
-Edit and verify OXSTS and Gamma models with [Semantifyr](https://ftsrg.mit.bme.hu/semantifyr/), a framework to support the declarative definition of engineering model semantics. The extension runs Semantifyr's language servers in VS Code, lists the verification cases of your models in the Testing view, runs them on the backends you have installed, and opens the witness and the trace of a case beside the model.
+Edit and verify OXSTS and Gamma models with [Semantifyr](https://semantifyr.org/), a framework to support the declarative definition of engineering model semantics. The extension runs Semantifyr's language servers in VS Code, lists the verification cases of your models in the Testing view, runs them on the backends you have installed, and opens the witness and the trace of a case beside the model.
 
 ## Features
 
@@ -28,7 +28,7 @@ This extension does not edit SysML v2, which has an extension of its own. Verify
 
 ## Settings
 
-The `semantifyr.*` settings choose the portfolio, the timeout, the witness validation, how Theta is run, the artifacts and the optimization; the [website](https://ftsrg.mit.bme.hu/semantifyr/) describes them.
+The `semantifyr.*` settings choose the portfolio, the timeout, the witness validation, how Theta is run, the artifacts and the optimization; the [website](https://semantifyr.org/) describes them.
 
 ## Status
 
@@ -36,7 +36,7 @@ Version 0.1.0 of a research prototype. Please report what you meet on the [issue
 
 ## Learn more
 
-- [Semantifyr website](https://ftsrg.mit.bme.hu/semantifyr/)
+- [Semantifyr website](https://semantifyr.org/)
 - [Source code](https://github.com/ftsrg/semantifyr)
 
 ## License

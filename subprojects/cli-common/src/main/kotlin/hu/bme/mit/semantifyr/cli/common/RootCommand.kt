@@ -23,7 +23,7 @@ import com.github.ajalt.clikt.parameters.types.choice
 import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.core.config.Configurator
 
-const val DOCUMENTATION_URL = "https://ftsrg.mit.bme.hu/semantifyr/"
+const val DOCUMENTATION_URL = "https://semantifyr.org/"
 
 abstract class RootCommand(
     name: String,
