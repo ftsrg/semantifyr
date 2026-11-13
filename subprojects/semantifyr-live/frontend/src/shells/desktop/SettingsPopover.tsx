@@ -10,6 +10,7 @@ import { Popover } from '@base-ui/react/popover'
 
 import { changeSettings } from '../../lib/stores/settings'
 import { useStore } from '../../lib/stores/useStore'
+import { ONE_BACKEND, VALIDATION } from '../../texts'
 import { portfolioChoices, portfolioName, type PortfolioChoice } from '../../lib/workspace/portfolioChoices'
 import { useLive } from '../../lib/workspace/liveContext'
 import { Icon } from '../../ui/icons'
@@ -84,8 +85,8 @@ export function SettingsPopover(): React.JSX.Element {
                   />
                 )
               })}
-              {choices.singleEngine.length > 0 ? <div className="menu-heading">Single engine</div> : null}
-              {choices.singleEngine.map((choice) => {
+              {choices.singleBackend.length > 0 ? <div className="menu-heading">{ONE_BACKEND}</div> : null}
+              {choices.singleBackend.map((choice) => {
                 return (
                   <PortfolioItem
                     key={choice.id}
@@ -109,8 +110,9 @@ export function SettingsPopover(): React.JSX.Element {
               }}
             >
               <span className="switch" />
-              <span>validate automatically</span>
+              <span>{VALIDATION.automatically}</span>
             </button>
+            <p className="settings-note">{VALIDATION.explained}</p>
           </Popover.Popup>
         </Popover.Positioner>
       </Popover.Portal>

@@ -13,7 +13,7 @@
    {
     "id": "oxsts",
     "displayName": "OXSTS",
-    "description": "The OXSTS modelling language, no extra libraries.",
+    "description": "Semantifyr's language for semantics",
     "languageId": "oxsts",
     "fileName": "snippet.oxsts",
     "verificationCommand": "oxsts.case.verify",
@@ -25,7 +25,7 @@
    {
     "id": "oxsts-with-gamma-library",
     "displayName": "OXSTS with the Gamma library",
-    "description": "OXSTS with the Gamma statechart library available to import.",
+    "description": "Gamma's semantics",
     "languageId": "oxsts",
     "fileName": "snippet.oxsts",
     "verificationCommand": "oxsts.case.verify",
@@ -37,7 +37,7 @@
    {
     "id": "oxsts-with-sysmlv2-library",
     "displayName": "OXSTS with the SysML v2 library",
-    "description": "OXSTS with the SysML v2 library available to import.",
+    "description": "SysML v2's semantics",
     "languageId": "oxsts",
     "fileName": "snippet.oxsts",
     "verificationCommand": "oxsts.case.verify",
@@ -49,7 +49,7 @@
    {
     "id": "gamma",
     "displayName": "Gamma",
-    "description": "Gamma statechart source, compiled to OXSTS before verification.",
+    "description": "The Gamma Statechart Composition Framework",
     "languageId": "gamma",
     "fileName": "snippet.gamma",
     "verificationCommand": "gamma.case.verify",
@@ -64,38 +64,38 @@
   "portfolios": [
    {
     "id": "smart",
-    "displayName": "Auto",
-    "description": "Races representative configurations of every backend in parallel and takes the first verdict its leg's soundness direction trusts.",
+    "displayName": "Smart",
+    "description": "Runs the installed backends side by side and takes the first trusted answer.",
     "available": true
    },
    {
     "id": "all-agree",
     "displayName": "All agree",
-    "description": "Runs one representative configuration per backend in parallel and requires the trusted verdicts to agree.",
+    "description": "Runs every installed backend and requires their trusted answers to agree.",
     "available": true
    },
    {
     "id": "theta",
     "displayName": "Theta",
-    "description": "Races the Theta CEGAR and k-induction configurations in parallel and takes the first verdict.",
+    "description": "Runs Theta's CEGAR and k-induction configurations side by side and takes the first answer.",
     "available": true
    },
    {
     "id": "nuxmv-ic3-invar",
     "displayName": "nuXmv",
-    "description": "Single nuxmv configuration: ic3-invar",
+    "description": "Runs the ic3-invar configuration of nuxmv alone.",
     "available": true
    },
    {
     "id": "spin-safe-dfs",
     "displayName": "Spin",
-    "description": "Single spin configuration: safe-dfs",
+    "description": "Runs the safe-dfs configuration of spin alone.",
     "available": true
    },
    {
     "id": "uppaal-default",
     "displayName": "Uppaal",
-    "description": "Single uppaal configuration: default",
+    "description": "Runs the default configuration of uppaal alone.",
     "available": true
    }
   ],

@@ -15,6 +15,7 @@ import { ShellRoot } from '../shells/ShellRoot'
 import { CaseTrace } from '../trace/CaseTrace'
 import { caseOf, finished, seedLive, type Seed, type Seeded } from './seededLive'
 import { caseState, LANGUAGES, seedWithTrace } from './traces'
+import { noCases } from '../texts'
 
 // Goal: every phone state the mockup draws lays out in the phone's viewport in both themes, one pane at a time,
 // with the real editor; the states that a tap opens are reached by the tap
@@ -26,10 +27,10 @@ const BARRIER = caseOf('BarrierDownWhileTrainInCrossingViolated', 97)
 const TWO_TRAINS = caseOf('TwoTrainsCanBeInTheCrossing', 112)
 
 const PORTFOLIOS: PortfolioInfo[] = [
-  { id: 'smart', displayName: 'Smart (full)', description: '', available: true },
-  { id: 'all-agree', displayName: 'All agree (full)', description: '', available: true },
-  { id: 'theta', displayName: 'Theta', description: '', available: true },
-  { id: 'spin', displayName: 'Spin', description: '', available: true },
+  { id: 'smart', displayName: 'Smart', description: 'Runs the installed backends side by side and takes the first trusted answer.', available: true },
+  { id: 'all-agree', displayName: 'All agree', description: 'Runs every installed backend and requires their trusted answers to agree.', available: true },
+  { id: 'theta', displayName: 'Theta', description: 'Runs Theta\'s CEGAR and k-induction configurations side by side and takes the first answer.', available: true },
+  { id: 'spin', displayName: 'Spin', description: 'Runs the safe-dfs configuration of spin alone.', available: true },
 ]
 
 const SYSML = LANGUAGES.sysml!
@@ -193,6 +194,15 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       expect(count('.phone-tab .tab-dot.status-failed')).toBe(1)
     },
   },
+  'no-cases': {
+    seed: { verification: { phase: 'idle', discovery: 'discovered', cases: [] } },
+    act: async () => {
+      await tapTab('Results')
+    },
+    expectState: () => {
+      expect(text('.pane-hint')).toBe(noCases('sysml'))
+    },
+  },
   'trace': {
     seed: () => {
       return seedWithTrace(SYSML, TRACED)
@@ -274,8 +284,8 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     },
     expectState: () => {
       expect(document.querySelector('.sheet-bottom .sheet-title')?.textContent).toBe('Verification portfolio')
-      expect(text('.portfolio-choice[aria-checked=true]')).toContain('Automatic')
-      expect(document.querySelector('.sheet-bottom')?.textContent).toContain('Single engine')
+      expect(text('.portfolio-choice[aria-checked=true]')).toContain('Smart')
+      expect(document.querySelector('.sheet-bottom')?.textContent).toContain('One backend')
     },
   },
 }

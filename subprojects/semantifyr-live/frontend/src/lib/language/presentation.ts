@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import { LANGUAGES } from '../../texts'
 import { InitializationSteps, type InitializationStepDefinition } from '../stores/initialization'
 
 export interface LanguagePresentation {
@@ -18,26 +19,9 @@ export const LANGUAGE_ORDER = [
   'oxsts',
 ]
 
-const PRESENTATIONS: Readonly<Record<string, LanguagePresentation>> = {
-  sysml: {
-    name: 'SysML v2',
-    detail: 'The OMG systems modeling language. Semantifyr verifies the behaviour of its parts.',
-  },
-  gamma: {
-    name: 'Gamma',
-    detail: 'Gamma statecharts composed into synchronous systems.',
-  },
-  oxsts: {
-    name: 'OXSTS',
-    detail: 'Semantifyr\'s own language of extended transition systems, which the other two compile to.',
-  },
-}
-
 export function presentationOf(languageId: string): LanguagePresentation {
-  return PRESENTATIONS[languageId] ?? {
-    name: languageId,
-    detail: '',
-  }
+  const texts = LANGUAGES[languageId]
+  return texts ? { name: texts.name, detail: texts.detail } : { name: languageId, detail: '' }
 }
 
 export function hostOf(backendUrl: string): string {

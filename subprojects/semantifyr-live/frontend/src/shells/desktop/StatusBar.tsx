@@ -11,11 +11,12 @@ import { LanguageMark, VerdictMark } from '@semantifyr/editor-common/marks'
 import { useStore } from '../../lib/stores/useStore'
 import { CLOSING_LINE_MS, shellStatus, type ShellStatus } from '../../lib/workspace/shellStatus'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
+import { tabFocusKey } from '../../lib/session/tabbedEditor'
+import { languageWithLibrary, NO_PROBLEMS, PROBLEMS, problemsLabel, tabHint } from '../../texts'
 import { Icon } from '../../ui/icons'
 import { useFlavor, useLanguage, useNow } from '../hooks'
 import { useShell } from '../shellContext'
 import { UnsavedLine } from './keeping'
-import { flavourText } from './Toolbar'
 
 function StatusIcon({ status }: { status: ShellStatus }): React.JSX.Element | null {
   switch (status.kind) {
@@ -104,7 +105,7 @@ function ProblemCounts(): React.JSX.Element {
   const warnings = listed.length - errors
   return (
     <Popover.Root>
-      <Popover.Trigger className={`problem-counts${listed.length > 0 ? ' has-problems' : ''}`} title="Problems in the model" aria-label={`Problems in the model: ${errors} ${errors === 1 ? 'error' : 'errors'}, ${warnings} ${warnings === 1 ? 'warning' : 'warnings'}`}>
+      <Popover.Trigger className={`problem-counts${listed.length > 0 ? ' has-problems' : ''}`} title={PROBLEMS} aria-label={problemsLabel(errors, warnings)}>
         <Icon name="error" size="small" />
         <span>{errors}</span>
         <Icon name="alert" size="small" />
@@ -113,8 +114,8 @@ function ProblemCounts(): React.JSX.Element {
       <Popover.Portal>
         <Popover.Positioner className="floating" side="top" align="end" sideOffset={6}>
           <Popover.Popup className="menu problems-popover">
-            <Popover.Title className="menu-heading">Problems in the model</Popover.Title>
-            {listed.length === 0 ? <div className="problems-empty">No problems.</div> : null}
+            <Popover.Title className="menu-heading">{PROBLEMS}</Popover.Title>
+            {listed.length === 0 ? <div className="problems-empty">{NO_PROBLEMS}</div> : null}
             {listed.map((problem, index) => {
               return (
                 <Popover.Close
@@ -149,19 +150,18 @@ export function StatusBar(): React.JSX.Element {
   })
   const flavor = useFlavor(live)
   const language = useLanguage(live)
-  const flavourLabel = flavor ? flavourText(flavor).label : ''
-  const flavour = flavor && flavor.id !== flavor.languageId ? `, ${flavourLabel.charAt(0).toLowerCase()}${flavourLabel.slice(1)}` : ''
   return (
     <footer className="statusbar">
       <StatusMessage />
       <span className="status-end">
         <ProblemCounts />
+        {readOnly || !cursor ? null : <span className="status-tab-hint">{tabHint(tabFocusKey())}</span>}
         <span>{readOnly ? 'Read-only' : cursor ? `Ln ${cursor.line}, Col ${cursor.column}` : ''}</span>
         {flavor && language
           ? (
             <span className="status-language" data-language={flavor.languageId}>
               <LanguageMark languageId={flavor.languageId} />
-              {`${language.presentation.name}${flavour}`}
+              {languageWithLibrary(language.presentation.name, flavor.id)}
             </span>
           )
           : null}

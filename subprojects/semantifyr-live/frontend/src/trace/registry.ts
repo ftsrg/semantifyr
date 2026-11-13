@@ -10,6 +10,7 @@ import type { VerdictStatus } from '@semantifyr/editor-common/marks'
 
 import type { LanguageRuntime } from '../lib/language/types'
 import type { ReadOnlyDocument } from '../lib/workspace/documentTabs'
+import { TRACE_BANNERS } from '../texts'
 import { CallsView } from './CallsView'
 import { StepsView } from './StepsView'
 import { textView, type TraceTextSource } from './TextView'
@@ -63,7 +64,7 @@ function witness(label: string, uriOf: (trace: VerificationTrace, runtime: Langu
         fileUri,
         label: `${context.caseName}.witness.oxsts`,
         languageId: 'oxsts',
-        banner: `The trace of ${context.caseName}, as the verifier returned it in OXSTS.`,
+        banner: TRACE_BANNERS.witness(context.caseName),
       }
       : null
   })
@@ -77,7 +78,7 @@ function languageTrace(label: string, languageId: string, fileName: (caseName: s
         fileUri: context.trace.witnessUri,
         label: fileName(context.caseName),
         languageId,
-        banner: `The trace of ${context.caseName}, written in ${languageName}.`,
+        banner: TRACE_BANNERS.own(context.caseName, languageName),
       }
       : null
   })

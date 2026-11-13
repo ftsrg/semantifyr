@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import { portfolioNames } from '@semantifyr/editor-common/terms'
+
+import { DEFAULT_PORTFOLIO_NAME } from '../../texts'
 import type { PortfolioInfo } from '../api/types'
 
 export interface PortfolioChoice {
@@ -13,41 +16,44 @@ export interface PortfolioChoice {
 }
 
 export interface PortfolioChoices {
-  // the portfolios over every engine, before the single-engine ones
+  // the portfolios over every backend, before the single-backend ones
   combined: PortfolioChoice[]
-  singleEngine: PortfolioChoice[]
+  singleBackend: PortfolioChoice[]
 }
 
-const COMBINED: Readonly<Record<string, { name: string, detail: string }>> = {
-  'smart': { name: 'Automatic', detail: 'tries every engine at once and takes the first trusted answer' },
-  'all-agree': { name: 'Cross-check', detail: 'runs every engine and requires them to agree' },
+const COMBINED: ReadonlySet<string> = new Set([
+  'smart',
+  'all-agree',
+])
+
+function choiceOf(portfolio: PortfolioInfo): PortfolioChoice {
+  return { id: portfolio.id, name: portfolio.displayName, detail: portfolio.description === '' ? null : portfolio.description }
 }
 
-// a portfolio whose engine the server does not have is not offered
+// a portfolio whose backend the server does not have is not offered
 export function portfolioChoices(portfolios: readonly PortfolioInfo[]): PortfolioChoices {
   const available = portfolios.filter((portfolio) => {
     return portfolio.available
   })
   return {
-    combined: available.flatMap((portfolio) => {
-      const combined = COMBINED[portfolio.id]
-      return combined ? [{ id: portfolio.id, name: combined.name, detail: combined.detail }] : []
-    }),
-    singleEngine: available
+    combined: available
       .filter((portfolio) => {
-        return COMBINED[portfolio.id] === undefined
+        return COMBINED.has(portfolio.id)
       })
-      .map((portfolio) => {
-        return { id: portfolio.id, name: portfolio.displayName, detail: null }
-      }),
+      .map(choiceOf),
+    singleBackend: available
+      .filter((portfolio) => {
+        return !COMBINED.has(portfolio.id)
+      })
+      .map(choiceOf),
   }
 }
 
 export function portfolioName(portfolios: readonly PortfolioInfo[], id: string | null | undefined): string {
   if (!id) {
-    return 'Automatic'
+    return DEFAULT_PORTFOLIO_NAME
   }
-  return COMBINED[id]?.name ?? portfolios.find((portfolio) => {
+  return portfolios.find((portfolio) => {
     return portfolio.id === id
-  })?.displayName ?? id
+  })?.displayName ?? portfolioNames[id] ?? id
 }

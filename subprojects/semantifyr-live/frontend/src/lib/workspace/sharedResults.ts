@@ -5,7 +5,8 @@
  */
 
 import type { VerificationCaseState, VerificationState } from '../verification/engine'
-import { STATUS_WORDS, type CaseRow } from './caseRows'
+import { VERDICT_WORDS } from '../../texts'
+import type { CaseRow } from './caseRows'
 
 export type SharedVerdict =
   | 'passed'
@@ -89,12 +90,12 @@ export function rowsWithSharedVerdicts(rows: readonly CaseRow[], results: Shared
       return row
     }
     if (finished(row)) {
-      return row.status === verdict ? row : { ...row, differs: STATUS_WORDS[verdict] }
+      return row.status === verdict ? row : { ...row, differs: VERDICT_WORDS[verdict] }
     }
     if (!running) {
       return row
     }
-    return { ...row, status: verdict, word: STATUS_WORDS[verdict], message: null, time: null, hasTrace: false, shared: true }
+    return { ...row, status: verdict, word: VERDICT_WORDS[verdict], message: null, time: null, hasTrace: false, shared: true }
   })
 }
 

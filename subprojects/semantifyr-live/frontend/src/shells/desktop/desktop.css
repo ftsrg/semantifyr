@@ -232,6 +232,7 @@
 .status-message .case-ref { font-family: var(--font-mono); font-size: 11px; color: var(--text-primary); }
 .status-message .button-link { color: inherit; }
 .status-end { display: flex; align-items: center; gap: var(--space-6); color: var(--text-tertiary); }
+.status-tab-hint { white-space: nowrap; }
 .status-language { display: inline-flex; align-items: center; gap: var(--space-3); color: var(--text-secondary); }
 .status-language .language-mark { width: 12px; height: 12px; }
 
@@ -273,6 +274,7 @@
 .portfolio-item .radio { margin-top: 3px; }
 .portfolio-item .menu-item-detail { grid-column: 2; }
 .settings-popover .menu-heading { margin-top: var(--space-2); }
+.settings-note { margin: 0; padding: var(--space-1) var(--space-4) var(--space-2); color: var(--text-tertiary); font-size: var(--text-small); line-height: 1.4; }
 .problems-popover { width: 420px; padding: var(--space-3); }
 .problem-item { grid-template-columns: 16px 1fr auto; align-items: start; padding: var(--space-3) var(--space-4); }
 .problem-item .icon { margin-top: 2px; }
@@ -323,8 +325,7 @@
 .dialog-product { color: var(--text-tertiary); font-size: 15px; font-weight: var(--weight-semibold); }
 .dialog-body { padding: var(--space-2) var(--space-8) var(--space-6); display: grid; gap: var(--space-6); }
 .dialog-lead { font-size: var(--text-strong); color: var(--text-primary); line-height: 1.55; margin: 0; }
-.dialog-section { display: grid; gap: var(--space-3); }
-.dialog-section p { margin: 0; color: var(--text-secondary); line-height: 1.55; }
+.dialog-body > .button-link { justify-self: start; }
 .dialog-links { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 .dialog-footer { display: flex; justify-content: space-between; align-items: center; padding: var(--space-5) var(--space-8); border-top: 1px solid var(--border-faint); background: var(--surface-panel); color: var(--text-tertiary); font-size: var(--text-small); }
 

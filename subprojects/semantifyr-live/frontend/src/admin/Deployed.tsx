@@ -57,7 +57,7 @@ export function Deployed({ store }: { store: AdminStore }): React.JSX.Element | 
         <h2 className="section-label">Deployed</h2>
       </div>
       <div className="admin-deployed-body">
-        <Group title="Backend">
+        <Group title="Server">
           <dl>
             <Fact label="Version" value={info.version} mono />
             <Fact label="Commit" value={info.commit} mono />

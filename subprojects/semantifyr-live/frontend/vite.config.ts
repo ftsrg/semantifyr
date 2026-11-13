@@ -9,6 +9,7 @@ import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { PAGE_DESCRIPTION, PRODUCT_NAME, SHORT_NAME } from './src/texts.ts';
 
 function getVersion(): string {
   const properties = readFileSync(new URL('../../../gradle.properties', import.meta.url), 'utf-8');
@@ -36,14 +37,20 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    {
+      name: 'live-texts',
+      transformIndexHtml: (html: string): string => {
+        return html.replaceAll('%LIVE_DESCRIPTION%', PAGE_DESCRIPTION).replaceAll('%LIVE_NAME%', PRODUCT_NAME);
+      },
+    },
     VitePWA({
       disable: process.env.VITEST === 'true',
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'logo-full-light.svg', 'logo-full-dark.svg'],
       manifest: {
-        name: 'Semantifyr Live',
-        short_name: 'Semantifyr',
-        description: 'Edit and verify Semantifyr models in your browser.',
+        name: PRODUCT_NAME,
+        short_name: SHORT_NAME,
+        description: PAGE_DESCRIPTION,
         lang: 'en',
         start_url: '/',
         scope: '/',

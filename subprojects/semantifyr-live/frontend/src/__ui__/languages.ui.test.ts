@@ -27,8 +27,8 @@ describe('the language switch', () => {
     await casesListed(page)
 
     await page.locator('.flavour-button').click()
-    expect(await page.getByRole('menuitem').locator('.menu-item-label').allInnerTexts()).toEqual(['Plain', 'With the Gamma library', 'With the SysML v2 library'])
-    await page.getByRole('menuitem', { name: /With the SysML v2 library/ }).click()
+    expect(await page.getByRole('menuitem').locator('.menu-item-label').allInnerTexts()).toEqual(['None', 'Gamma', 'SysML v2'])
+    await page.getByRole('menuitem', { name: /SysML v2's semantics/ }).click()
 
     await casesListed(page)
     expect((await ui.backend.openSession()).flavorId).toBe('oxsts-with-sysmlv2-library')
@@ -81,9 +81,9 @@ const LANGUAGES = [
 ]
 
 const FLAVOURS = [
-  'Plain',
-  'With the Gamma library',
-  'With the SysML v2 library',
+  'None',
+  'Gamma\'s semantics',
+  'SysML v2\'s semantics',
 ]
 
 const EXAMPLES = [

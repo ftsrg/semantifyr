@@ -14,13 +14,11 @@ import type { LspMetrics } from '../../lib/session/lspMetrics'
 import { useStore } from '../../lib/stores/useStore'
 import { formatDuration, formatIsoDuration } from '../../lib/util/duration'
 import { useLive } from '../../lib/workspace/liveContext'
+import { ABOUT, DEVELOPER, PRIVACY_URL, SHORT_NAME, SOURCE_CODE_URL, WEBSITE_URL } from '../../texts'
 import { Icon } from '../../ui/icons'
 import { Logo } from '../../ui/marks'
 import { useLanguage } from '../hooks'
 
-const HOME = 'https://semantifyr.org'
-const WEBSITE = 'https://ftsrg.mit.bme.hu/semantifyr'
-const SOURCE_CODE = 'https://github.com/ftsrg/semantifyr'
 const PAGE_START = Date.now()
 
 // the phone's menu draws the triggers as its own entries
@@ -46,40 +44,23 @@ export function AboutDialog({ className, children }: TriggerProps): React.JSX.El
           <div className="dialog-header">
             <span className="brand">
               <Logo />
-              <span className="dialog-product">Live</span>
+              <span className="dialog-product">{SHORT_NAME}</span>
             </span>
             <Dialog.Close className="button button-icon" aria-label="Close">
               <Icon name="close" />
             </Dialog.Close>
           </div>
           <div className="dialog-body">
-            <Dialog.Title className="dialog-lead">
-              Live checks a model against its verification cases with the Semantifyr toolchain: SysML v2, Gamma and OXSTS models are compiled to transition systems and handed to model checkers, and every result comes back in the model&apos;s own terms.
-            </Dialog.Title>
-            <div className="dialog-section">
-              <span className="section-label">Research prototype</span>
-              <p>Semantifyr is developed as a PhD project at the Budapest University of Technology and Economics. Live is a research prototype and comes with no guarantee of correctness or availability.</p>
-            </div>
-            <div className="dialog-section">
-              <span className="section-label">Your model is not kept</span>
-              <p>The text of your model is never logged and is not kept beyond your visit. While the page is open, the server holds your model and what its verifications write in a working folder of your session, and deletes the folder when the session ends, as you close or reload the page; after a crash, when the server starts again. The browser keeps your display preferences, such as the theme and the portfolios, and the site&apos;s own files so that it loads fast. A shared link carries the model and its results in the link itself.</p>
-            </div>
-            <div className="dialog-section">
-              <span className="section-label">Privacy</span>
-              <p>The server&apos;s log records the network address of each session, when it started and ended, the errors it met and the name and verdict of each case it ran, and its operators see the addresses of the open sessions. The server&apos;s metrics count sessions and runs, without any model or address. Live sets no cookies and uses no analytics.</p>
-            </div>
+            <Dialog.Title className="dialog-lead">{ABOUT.sentences.join(' ')}</Dialog.Title>
+            <a className="button-link" href={PRIVACY_URL} target="_blank" rel="noreferrer">{ABOUT.privacy}</a>
             <div className="dialog-links">
-              <a className="button button-outline button-small" href={HOME} target="_blank" rel="noreferrer">
+              <a className="button button-outline button-small" href={WEBSITE_URL} target="_blank" rel="noreferrer">
                 <Icon name="globe" size="tiny" />
-                semantifyr.org
+                {ABOUT.website}
               </a>
-              <a className="button button-outline button-small" href={WEBSITE} target="_blank" rel="noreferrer">
-                <Icon name="book" size="tiny" />
-                Documentation
-              </a>
-              <a className="button button-outline button-small" href={SOURCE_CODE} target="_blank" rel="noreferrer">
+              <a className="button button-outline button-small" href={SOURCE_CODE_URL} target="_blank" rel="noreferrer">
                 <Icon name="code" size="tiny" />
-                Source code
+                {ABOUT.sourceCode}
               </a>
             </div>
           </div>
@@ -173,7 +154,7 @@ function DeveloperBody(): React.JSX.Element {
       <Row label="Commit" value={__GIT_COMMIT__} mono />
       <Row label="Built" value={__BUILD_TIME__} />
       <Row label="Page uptime" value={formatDuration(Math.floor((now - PAGE_START) / 1000))} />
-      <span className="section-label">Backend</span>
+      <span className="section-label">{DEVELOPER.server}</span>
       {backend
         ? (
           <>

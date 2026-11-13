@@ -18,6 +18,7 @@ import type { VerificationCaseState } from '../../lib/verification/engine'
 import { fixedFrame } from '../../lib/workspace/address'
 import { caseRowOf, type CaseRow } from '../../lib/workspace/caseRows'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
+import { noCases, PRODUCT_NAME, SERVER_NOT_ANSWERING } from '../../texts'
 import { Icon } from '../../ui/icons'
 import { ValidationMark } from '../../ui/marks'
 import { addressProblemText } from '../desktop/Orientation'
@@ -79,7 +80,7 @@ function OpenInLive(): React.JSX.Element {
     <button
       type="button"
       className="button button-quiet open-live"
-      title="Opens Semantifyr Live with this model and its results in a new tab"
+      title={`Opens ${PRODUCT_NAME} with this model and its results in a new tab`}
       onClick={() => {
         // opened within the click, so no popup blocker stops it, and pointed at the link once it is built
         const opened = window.open('', '_blank')
@@ -227,12 +228,12 @@ function Cases({ slot, inlineTrace }: { slot: TraceSlot | undefined, inlineTrace
   const selection = useStore(live.selection)
   if (!listed || !flavor) {
     const text = catalog === 'waiting'
-      ? 'The server is not answering. The model can be edited and its verification cases are listed once it answers.'
+      ? SERVER_NOT_ANSWERING
       : `The verification cases are listed once ${flavor ? `the ${presentationOf(flavor.languageId).name}` : 'the'} language server has found them.`
     return <div className="embed-initializing">{text}</div>
   }
   if (verification.cases.length === 0) {
-    return <div className="embed-initializing">The model has no verification cases.</div>
+    return <div className="embed-initializing">{noCases(flavor.languageId)}</div>
   }
   return (
     <>

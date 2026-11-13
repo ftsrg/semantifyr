@@ -161,7 +161,7 @@ class SessionVerificationManager @Inject constructor(
                         recordFinished(entry, it)
                     }
                 } catch (e: Throwable) {
-                    val message = "Verification failed: ${e.message ?: e::class.simpleName}"
+                    val message = "Internal error: ${e.message ?: e::class.simpleName}"
                     logger.error(e) { message }
                     erroredResult(kind, portfolioId, message).also {
                         recordFinished(entry, it)

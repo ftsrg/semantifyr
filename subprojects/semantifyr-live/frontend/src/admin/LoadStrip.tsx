@@ -34,7 +34,7 @@ export function LoadStrip({ load }: { load: AdminLoadResponse }): React.JSX.Elem
       <Figure testId="load-sessions" label="Sessions" value={load.activeSessions} against={`of ${load.maxSessions}`} />
       <Figure testId="load-running" label="Verifications running" value={load.runningVerifications} against={`of ${load.verificationPermits} permits`} />
       <Figure testId="load-queued" label="Verifications queued" value={load.queuedVerifications} against={load.queuedVerifications === 0 ? '' : 'waiting for a permit'} />
-      <Figure testId="load-uptime" label="Backend uptime" value={durationLabel(load.uptime)} />
+      <Figure testId="load-uptime" label="Server uptime" value={durationLabel(load.uptime)} />
     </section>
   )
 }

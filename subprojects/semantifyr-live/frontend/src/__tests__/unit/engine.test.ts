@@ -70,7 +70,7 @@ describe('runAllVerifications', () => {
     expect(final.cases[0]!.backendId).toBe('theta-cegar');
     expect(final.cases[0]!.portfolioId).toBe('smart');
     expect(final.cases[1]!.trace).toBeDefined();
-    expect(final.message).toMatch(/some cases failed/i);
+    expect(final.message).toMatch(/not every case passed/i);
 
     expect(sendRequest.mock.calls[0]![1]).toEqual({
       command: 'oxsts.case.verify',
