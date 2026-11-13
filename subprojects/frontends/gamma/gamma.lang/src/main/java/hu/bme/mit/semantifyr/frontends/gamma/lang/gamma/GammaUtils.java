@@ -165,15 +165,11 @@ public class GammaUtils {
     }
 
     public static List<EventDeclaration> getInputEvents(PortDeclaration port) {
-        return getEvents(port).stream()
-                .filter(it -> isInputEvent(port, it))
-                .toList();
+        return getEvents(port).stream().filter(it -> isInputEvent(port, it)).toList();
     }
 
     public static List<EventDeclaration> getOutputEvents(PortDeclaration port) {
-        return getEvents(port).stream()
-                .filter(it -> isOutputEvent(port, it))
-                .toList();
+        return getEvents(port).stream().filter(it -> isOutputEvent(port, it)).toList();
     }
 
     public static List<ComponentInstance> getInstancePath(InstanceElementExpression expression) {

@@ -96,11 +96,13 @@ public class GammaScopeProvider extends AbstractGammaScopeProvider {
 
         if ((reference == GammaPackage.Literals.PORT_EVENT_REFERENCE__PORT
                         || reference == GammaPackage.Literals.ANY_PORT_EVENT_REFERENCE__PORT)
-                && EcoreUtil2.getContainerOfType(context, AsynchronousAdapterDeclaration.class) instanceof AsynchronousAdapterDeclaration adapter) {
+                && EcoreUtil2.getContainerOfType(context, AsynchronousAdapterDeclaration.class)
+                        instanceof AsynchronousAdapterDeclaration adapter) {
             return Scopes.scopeFor(GammaUtils.getAllPorts(adapter));
         }
 
-        if (reference == GammaPackage.Literals.PORT_EVENT_REFERENCE__EVENT && context instanceof PortEventReference eventReference) {
+        if (reference == GammaPackage.Literals.PORT_EVENT_REFERENCE__EVENT
+                && context instanceof PortEventReference eventReference) {
             return Scopes.scopeFor(GammaUtils.getEvents(eventReference.getPort()));
         }
 

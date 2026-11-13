@@ -320,15 +320,19 @@ class GammaGrammarTest {
         val adapter = gammaPackage.components[2] as AsynchronousAdapterDeclaration
         assertThat(adapter.wrappedComponent.name).isEqualTo("receiver")
         assertThat(adapter.clocks.single().unit).isEqualTo(TimeUnit.MILLISECOND)
-        assertThat(adapter.controlSpecifications.map {
-            it.controlFunction
-        }).containsExactly(
+        assertThat(
+            adapter.controlSpecifications.map {
+                it.controlFunction
+            },
+        ).containsExactly(
             ControlFunction.RUN_ONCE,
             ControlFunction.RESET_OTHER_MESSAGE_QUEUES,
         )
-        assertThat(adapter.messageQueues.map {
-            it.discardStrategy
-        }).containsExactly(
+        assertThat(
+            adapter.messageQueues.map {
+                it.discardStrategy
+            },
+        ).containsExactly(
             DiscardStrategy.INCOMING,
             DiscardStrategy.OLDEST,
         )

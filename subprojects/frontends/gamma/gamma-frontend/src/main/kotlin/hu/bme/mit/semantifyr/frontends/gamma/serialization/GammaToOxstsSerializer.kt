@@ -8,12 +8,12 @@ package hu.bme.mit.semantifyr.frontends.gamma.serialization
 
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.AG
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Action
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.AsynchronousAdapterDeclaration
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.AsynchronousCompositeComponentDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ArithmeticBinaryOperator
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ArithmeticOp
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ArithmeticUnaryOperator
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.AssignmentAction
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.AsynchronousAdapterDeclaration
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.AsynchronousCompositeComponentDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Block
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.BooleanOp
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.BooleanOperator
@@ -568,11 +568,13 @@ class GammaToOxstsSerializer(
                 }
             }
             appendLine()
-            appendLine("var $IDENTIFIERS: int[$capacity] := ${arrayLiteral(capacity, "0")}")
+            // a size of one reads as a multiplicity, so a queue of one message gets a second cell it never uses
+            val length = maxOf(capacity, 2)
+            appendLine("var $IDENTIFIERS: int[$length] := ${arrayLiteral(length, "0")}")
             for (message in queue.messages) {
                 for (parameter in storedParameters(message)) {
                     val type = oxstsType(parameter.type)
-                    appendLine("var ${valuesName(message, parameter)}: $type[$capacity] := ${arrayLiteral(capacity, defaultValue(parameter.type))}")
+                    appendLine("var ${valuesName(message, parameter)}: $type[$length] := ${arrayLiteral(length, defaultValue(parameter.type))}")
                 }
             }
             appendLine()
@@ -736,7 +738,7 @@ class GammaToOxstsSerializer(
         val dispatchNames = mutableMapOf<DispatchMapping, String>()
         val taken = mutableSetOf<String>()
         for (dispatch in dispatches) {
-            val derived = "$DISPATCH_CLASS${dispatch.sourceInstance.name}_${dispatch.sourcePort.name}_${dispatch.event.name}_to_${dispatch.targetInstance.name}_${dispatch.targetPort.name}"
+            val derived = "$DISPATCH_CLASS${component.name}_${dispatch.sourceInstance.name}_${dispatch.sourcePort.name}_${dispatch.event.name}_to_${dispatch.targetInstance.name}_${dispatch.targetPort.name}"
             var name = derived
             var number = 2
             while (!taken.add(name)) {

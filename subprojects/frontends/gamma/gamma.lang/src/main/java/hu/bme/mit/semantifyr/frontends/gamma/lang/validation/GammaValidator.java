@@ -213,9 +213,10 @@ public class GammaValidator extends AbstractGammaValidator {
     private List<Object> storedMessages(MessageReference reference) {
         return switch (reference) {
             case ClockTickReference clockTick when clockTick.getClock() != null -> List.of(clockTick.getClock());
-            case AnyPortEventReference anyPort -> GammaUtils.getInputEvents(anyPort.getPort()).stream()
-                    .map(it -> (Object) List.of(anyPort.getPort(), it))
-                    .toList();
+            case AnyPortEventReference anyPort ->
+                GammaUtils.getInputEvents(anyPort.getPort()).stream()
+                        .map(it -> (Object) List.of(anyPort.getPort(), it))
+                        .toList();
             case PortEventReference portEvent -> List.of(List.of(portEvent.getPort(), portEvent.getEvent()));
             case null, default -> List.of();
         };
@@ -243,7 +244,8 @@ public class GammaValidator extends AbstractGammaValidator {
                     .anyMatch(other -> other != queue && other.getPriority() == queue.getPriority());
             if (hasTwin) {
                 warning(
-                        "Another queue of adapter '" + adapter.getName() + "' has the same priority, the one declared first is served first",
+                        "Another queue of adapter '" + adapter.getName()
+                                + "' has the same priority, the one declared first is served first",
                         queue,
                         GammaPackage.Literals.MESSAGE_QUEUE__PRIORITY,
                         EQUAL_QUEUE_PRIORITIES);

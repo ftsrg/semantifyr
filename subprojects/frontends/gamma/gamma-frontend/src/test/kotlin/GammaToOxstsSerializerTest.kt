@@ -1536,8 +1536,8 @@ class GammaToOxstsSerializerTest {
             "redefine refers priority: int = 2",
         )
         assertThat(lines).contains(
-            "var identifiers: int[1] := [0]",
-            "var values_1_value: int[1] := [0]",
+            "var identifiers: int[2] := [0, 0]",
+            "var values_1_value: int[2] := [0, 0]",
             "var identifiers: int[2] := [0, 0]",
         )
         assertThat(lines).containsSequence(
@@ -1603,7 +1603,7 @@ class GammaToOxstsSerializerTest {
             "redefine refers environmental_high: bool = false",
         )
         assertThat(lines).containsSequence(
-            "contains dispatch_sender_replies_done_to_buffered_replies: _test::dispatch_sender_replies_done_to_buffered_replies subsets dispatches {",
+            "contains dispatch_System_sender_replies_done_to_buffered_replies: _test::dispatch_System_sender_replies_done_to_buffered_replies subsets dispatches {",
             "redefine refers source: AsynchronousAdapter = _sender",
             "redefine refers event: Event = _sender.wrapped._replies.interface._done",
             "redefine refers target: _test::queue_Buffered_low = _buffered._low",

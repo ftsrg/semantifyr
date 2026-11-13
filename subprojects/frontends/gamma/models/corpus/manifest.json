@@ -1,6 +1,48 @@
 {
     "models": [
         {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Asynchronous/Statechart/Adder.verification.gamma",
+            "cases": [
+                { "name": "StateAReachable", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Asynchronous/Statechart/Counter.verification.gamma",
+            "cases": [
+                { "name": "StateAReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateBReachable", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Asynchronous/Statechart/Subtractor.verification.gamma",
+            "cases": [
+                { "name": "StateAReachable", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Asynchronous/System/AsynchronousSystem.verification.gamma",
+            "cases": [
+                { "name": "StateAdderAReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateSubtractorAReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateCounterAReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateCounterBReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "CounterReadsTheInitialValueOfThePersistentParameter", "verdict": "Passed", "tier": "Integration" },
+                { "name": "CounterReturnsToA", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Clock/Adapter/Adder.verification.gamma",
+            "cases": [
+                { "name": "StateXReachable", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Clock/Adapter/Subtractor.verification.gamma",
+            "cases": [
+                { "name": "StateYReachable", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
             "file": "tests/hu.bme.mit.gamma.tests/model/Clock/Statechart/Adder.verification.gamma",
             "cases": [
                 { "name": "StateXReachable", "verdict": "Passed", "tier": "Integration" }
@@ -17,6 +59,17 @@
             "file": "tests/hu.bme.mit.gamma.tests/model/Clock/Statechart/Subtractor.verification.gamma",
             "cases": [
                 { "name": "StateYReachable", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Clock/System/ClockSystem.verification.gamma",
+            "cases": [
+                { "name": "StateAdderXReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateSubtractorYReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateCounterAReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateCounterBReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "CounterReturnsToA", "verdict": "Passed", "tier": "Integration" },
+                { "name": "CounterCountsTwo", "verdict": "Passed", "tier": "Integration" }
             ]
         },
         {
@@ -53,6 +106,18 @@
         },
         {
             "file": "tests/hu.bme.mit.gamma.tests/model/Crossroads/Controller/Controller.verification.gamma",
+            "cases": [
+                { "name": "StateOperatingReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateInitReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateGReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateSecondaryPreparesReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StatePriorityPreparesReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StatePriorityReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateSecondaryReachable", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Crossroads/Controller/ControllerAdapter.verification.gamma",
             "cases": [
                 { "name": "StateOperatingReachable", "verdict": "Passed", "tier": "Integration" },
                 { "name": "StateInitReachable", "verdict": "Passed", "tier": "Integration" },
@@ -136,6 +201,33 @@
             ]
         },
         {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Crossroads/System/ScheduledAsynchronous/Crossroad.verification.gamma",
+            "cases": [
+                { "name": "StateControllerOperatingReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateControllerInitReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateControllerGReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateControllerSecondaryPreparesReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateControllerPriorityPreparesReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateControllerPriorityReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateControllerSecondaryReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StatePriorInterruptedReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StatePriorBlackReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StatePriorBlinkingYellowReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StatePriorNormalReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StatePriorYellowReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StatePriorRedReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StatePriorGreenReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateSecondInterruptedReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateSecondBlackReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateSecondBlinkingYellowReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateSecondNormalReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateSecondYellowReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateSecondRedReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateSecondGreenReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "BothLightsShowGreen", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
             "file": "tests/hu.bme.mit.gamma.tests/model/Crossroads/System/Synchronous/Crossroad.verification.gamma",
             "cases": [
                 { "name": "ControllerOperatingReachable", "verdict": "Passed", "tier": "Integration" },
@@ -165,7 +257,31 @@
             ]
         },
         {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Crossroads/TrafficLight/AsynchronousTrafficLightCtrl.verification.gamma",
+            "cases": [
+                { "name": "StateInterruptedReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateBlackReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateBlinkingYellowReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateNormalReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateYellowReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateRedReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateGreenReachable", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
             "file": "tests/hu.bme.mit.gamma.tests/model/Crossroads/TrafficLight/TrafficLightCtrl.verification.gamma",
+            "cases": [
+                { "name": "StateInterruptedReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateBlackReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateBlinkingYellowReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateNormalReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateYellowReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateRedReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "StateGreenReachable", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Crossroads/TrafficLight/TrafficLightCtrlAdapter.verification.gamma",
             "cases": [
                 { "name": "StateInterruptedReachable", "verdict": "Passed", "tier": "Integration" },
                 { "name": "StateBlackReachable", "verdict": "Passed", "tier": "Integration" },

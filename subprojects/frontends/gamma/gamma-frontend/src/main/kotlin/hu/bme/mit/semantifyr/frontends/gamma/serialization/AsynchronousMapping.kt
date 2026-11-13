@@ -246,7 +246,11 @@ object AsynchronousMapping {
         }
     }
 
-    private fun matches(reference: MessageReference, port: PortDeclaration, event: EventDeclaration): Boolean {
+    private fun matches(
+        reference: MessageReference,
+        port: PortDeclaration,
+        event: EventDeclaration,
+    ): Boolean {
         return when (reference) {
             is AnyPortEventReference -> reference.port == port && GammaUtils.isInputEvent(port, event)
             is PortEventReference -> reference.port == port && reference.event == event
@@ -305,7 +309,11 @@ object AsynchronousMapping {
         }
     }
 
-    fun isBound(composite: CompositeComponentDeclaration, instance: ComponentInstance, port: PortDeclaration): Boolean {
+    fun isBound(
+        composite: CompositeComponentDeclaration,
+        instance: ComponentInstance,
+        port: PortDeclaration,
+    ): Boolean {
         return composite.bindings.any {
             it.boundPort.instance == instance && it.boundPort.port == port
         }
