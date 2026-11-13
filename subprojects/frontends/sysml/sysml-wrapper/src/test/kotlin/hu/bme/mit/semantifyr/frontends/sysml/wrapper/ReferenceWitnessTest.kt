@@ -30,8 +30,8 @@ class ReferenceWitnessTest {
     @Test
     fun `the crossroads reference witness reparses against the compiled crossroads model`() {
         val workspace = temporaryDirectory.resolve("workspace").createDirectories()
-        val model = MODELS.resolve("examples").resolve(MODEL).copyTo(workspace.resolve(MODEL))
-        MODELS.resolve("examples").resolve(VERIFICATION).copyTo(workspace.resolve(VERIFICATION))
+        val model = CORPUS.resolve(MODEL).copyTo(workspace.resolve(MODEL))
+        CORPUS.resolve(VERIFICATION).copyTo(workspace.resolve(VERIFICATION))
         val compiled = SysMLv2Compiler(temporaryDirectory.resolve("cache")).compile(model, temporaryDirectory.resolve("crossroads.oxsts"))
 
         val context = loader.startContext()
@@ -47,6 +47,9 @@ class ReferenceWitnessTest {
 
     companion object {
         private val MODELS = Path("..", "models")
+
+        // the reference case is a further case of crossroads, which the build appends to the model
+        private val CORPUS = Path("build", "corpus")
         private const val MODEL = "crossroads.sysml"
         private const val VERIFICATION = "Verification.sysml"
         private const val WITNESS = "crossroads-green.witness.oxsts"

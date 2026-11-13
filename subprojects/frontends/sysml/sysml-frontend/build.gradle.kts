@@ -5,6 +5,7 @@
  */
 
 import hu.bme.mit.semantifyr.gradle.conventions.readsServedExamples
+import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
@@ -35,8 +36,19 @@ val syncSysmlLibrary = tasks.register<Sync>("syncSysmlLibrary") {
     into(layout.buildDirectory.dir("libraries"))
 }
 
+// the corpus as the tests read it, each served model with its further cases appended
+val sysmlCorpus = configurations.dependencyScope("sysmlCorpus")
+val sysmlCorpusFiles = configurations.resolvable("sysmlCorpusFiles") {
+    extendsFrom(sysmlCorpus.get())
+    attributes(semantifyrArtifact("sysml-corpus"))
+}
+
+dependencies {
+    sysmlCorpus(project(":sysml-wrapper"))
+}
+
 val syncSysmlTestModels = tasks.register<Sync>("syncSysmlTestModels") {
-    from(layout.projectDirectory.dir("../models/examples"))
+    from(sysmlCorpusFiles)
     into(layout.buildDirectory.dir("test-models"))
 }
 

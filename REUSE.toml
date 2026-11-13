@@ -58,7 +58,9 @@ SPDX-License-Identifier = "EPL-1.0"
 path = [
     "subprojects/frontends/gamma/models/examples/Spacecraft.gamma",
     "subprojects/frontends/sysml/models/examples/crossroads.sysml",
+    "subprojects/frontends/sysml/models/examples/crossroads.further-cases",
     "subprojects/frontends/sysml/models/examples/compressedspacecraft.sysml",
+    "subprojects/frontends/sysml/models/examples/compressedspacecraft.further-cases",
 ]
 precedence = "override"
 SPDX-FileCopyrightText = [

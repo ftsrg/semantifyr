@@ -18,7 +18,10 @@ The artifacts produced by Semantifyr will reside in the `./out` directory.
 | autonomous_driving.sysml   | Model based on paper "Automatic Formal Verification of SysML State Machine Diagrams for Vehicular Control Systems" from Clemson University |
 | orion_protocol.sysml       | Bidirectional protocol, `accept when true`, timed keep-alive, cross-hierarchy transitions                                                  |
 | level_crossing.sysml       | Two tracks, a controller and a barrier; the controller forgets a second train                                                              |
+| landing_gear.sysml         | A landing gear behind bay doors after the ABZ 2014 case study, its controller reversing on the handle                                       |
 
 The verification cases were either added as natural "state reachability" properties, or were derived as safety properties from the model.
+
+A served model holds the cases live serves; its other cases are in `<model>.further-cases` beside it, which the build appends to the model for the tests.
 
 `manifest.json` lists every verification case with its expected verdict (`Unknown` cases are benchmarked, not asserted), the cheapest test tier that runs it and whether it is a falsification twin. The SysML frontend's tests and the vscode-server image read it, and `SysMLCorpusTest` fails when it drifts from the models. The models live serves, with their origins and rights, are in the examples registry, `subprojects/semantifyr-editor-common/src/examples/examples.json`.

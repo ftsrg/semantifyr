@@ -119,8 +119,17 @@
         {
             "file": "level_crossing.sysml",
             "cases": [
-                { "name": "BarrierDownWhileTrainInCrossingViolated", "verdict": "Failed", "tier": "Integration" },
+                { "name": "BarrierDownWhileTrainInCrossing", "verdict": "Failed", "tier": "Integration" },
                 { "name": "TwoTrainsCanBeInTheCrossing", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "landing_gear.sysml",
+            "cases": [
+                { "name": "GearCanBeRetracted", "verdict": "Passed", "tier": "Integration" },
+                { "name": "GearCanBeLoweredAgain", "verdict": "Passed", "tier": "Integration" },
+                { "name": "BayClosedInCruise", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "GearMovesOnlyWithDoorsOpen", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
@@ -199,6 +208,10 @@
         {
             "file": "crossroads.sysml",
             "cases": [
+                { "name": "ControllerInterruptedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "TrafficLightABehaviorInterruptedBlackReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "TrafficLightBBehaviorNormalGreenReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "UnreachableGreenGreen", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "ControllerOperatingReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "ControllerOperatingBothYellowReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "ControllerOperatingBothRedReachable", "verdict": "Passed", "tier": "Nightly" },
@@ -206,7 +219,6 @@
                 { "name": "ControllerOperatingStoppingAReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "ControllerOperatingTrafficOnBReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "ControllerOperatingStoppingBReachable", "verdict": "Passed", "tier": "Nightly" },
-                { "name": "ControllerInterruptedReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "ControllerInterruptedUnreachableViolated", "verdict": "Failed", "tier": "Integration", "falsification": true },
                 { "name": "TrafficLightABehaviorNormalReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "TrafficLightABehaviorNormalYellowReachable", "verdict": "Passed", "tier": "Nightly" },
@@ -215,11 +227,9 @@
                 { "name": "TrafficLightABehaviorNormalGreenUnreachableViolated", "verdict": "Failed", "tier": "Integration", "falsification": true },
                 { "name": "TrafficLightABehaviorInterruptedReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "TrafficLightABehaviorInterruptedYellowReachable", "verdict": "Passed", "tier": "Nightly" },
-                { "name": "TrafficLightABehaviorInterruptedBlackReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "TrafficLightBBehaviorNormalReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "TrafficLightBBehaviorNormalYellowReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "TrafficLightBBehaviorNormalRedReachable", "verdict": "Passed", "tier": "Nightly" },
-                { "name": "TrafficLightBBehaviorNormalGreenReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "TrafficLightBBehaviorInterruptedReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "TrafficLightBBehaviorInterruptedYellowReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "TrafficLightBBehaviorInterruptedBlackReachable", "verdict": "Passed", "tier": "Nightly" },
@@ -228,7 +238,6 @@
                 { "name": "UnreachableRedGreenViolated", "verdict": "Failed", "tier": "Integration", "falsification": true },
                 { "name": "ReachableRedYellow", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "ReachableGreenRed", "verdict": "Passed", "tier": "Nightly" },
-                { "name": "UnreachableGreenGreen", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "UnreachableGreenYellow", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "ReachableYellowRed", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "UnreachableYellowGreen", "verdict": "Passed", "tier": "Nightly" },
@@ -239,11 +248,13 @@
         {
             "file": "compressedspacecraft.sysml",
             "cases": [
+                { "name": "SpacecraftBehaviorCommunicationTransmittingReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "SpacecraftBatteryAlwaysAbove40", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "NeverTransmitsWhileRecharging", "verdict": "Failed", "tier": "Nightly" },
                 { "name": "StationBehaviorIdleReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "StationBehaviorOperationReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "StationBehaviorOperationWaitingReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "SpacecraftBehaviorCommunicationWaitingPingReachable", "verdict": "Passed", "tier": "Nightly" },
-                { "name": "SpacecraftBehaviorCommunicationTransmittingReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "SpacecraftBehaviorCommunicationTransmittingSendDataReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "SpacecraftBehaviorCommunicationTransmittingSendDataSendingReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "SpacecraftBehaviorCommunicationTransmittingConsumePowerReachable", "verdict": "Passed", "tier": "Nightly" },
@@ -277,8 +288,7 @@
                 { "name": "SpacecraftBatteryAlwaysAbove0", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "SpacecraftBatteryAlwaysAbove10", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "SpacecraftBatteryAlwaysAbove20", "verdict": "Passed", "tier": "Nightly" },
-                { "name": "SpacecraftBatteryAlwaysAbove30", "verdict": "Passed", "tier": "Nightly" },
-                { "name": "SpacecraftBatteryAlwaysAbove40", "verdict": "Passed", "tier": "Nightly" }
+                { "name": "SpacecraftBatteryAlwaysAbove30", "verdict": "Passed", "tier": "Nightly" }
             ]
         },
         {

@@ -1,3 +1,11 @@
+doc
+/*
+ * A spacecraft that sends its data to a ground station while it manages its battery.
+ * The station pings the spacecraft when it starts operating and every ten seconds after; the spacecraft then transmits while it has data and charge, and its battery recharges in a parallel region.
+ * The spacecraft starts a transmission only while it is not recharging; its charge and its data change in steps of ten.
+ * The cases ask whether a transmission starts, whether all data can arrive, whether the charge stays above its floor, and whether the spacecraft ever transmits while it recharges.
+ */
+
 private import ScalarValues::Integer;
 private import ScalarValues::Boolean;
 private import SI::s;
@@ -33,8 +41,6 @@ part def GroundStation {
         }
 
         transition first Operation accept after 10 [s] then Operation;
-
-        // transition first Operation accept : StopCommand via commandPort then Idle;
     }
 }
 
@@ -93,12 +99,6 @@ part def Spacecraft {
                 accept after 4 [s] 
                 if data <= 0 or batteryCharge <= 40
                 then WaitingPing;
-
-            transition 
-                first Transmitting
-                accept after 4 [s] 
-                if batteryCharge <= 40
-                then WaitingPing;
         }
 
         state Battery {
@@ -134,18 +134,14 @@ part def Spacecraft {
     }
 }
 
-item def Data {
-    // Internal attributes are not yet supported!
-    //attribute value: Integer;
-}
+item def Data;
 
-item def Command;
-item def PingCommand :> Command;
-item def StopCommand :> Command;
-item def StartCommand :> Command;
+item def PingCommand;
+item def StartCommand;
 
 port def CommandPort {
-    in item command: Command;
+    in item ping: PingCommand;
+    in item start: StartCommand;
 }
 port def DataPort {
     out item data: Data;
@@ -163,76 +159,6 @@ part def Mission {
     flow from spacecraft.dataPort to groundStation.dataPort;
 }
 
-verification def StationBehaviorIdleReachable {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    isStateActive(mission.groundStation.Behaviour.Idle)
-                )
-            }
-        }
-    }
-}
-
-verification def StationBehaviorOperationReachable {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    isStateActive(mission.groundStation.Behaviour.Operation)
-                )
-            }
-        }
-    }
-}
-
-verification def StationBehaviorOperationWaitingReachable {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    isStateActive(mission.groundStation.Behaviour.Operation.Waiting)
-                )
-            }
-        }
-    }
-}
-
-// verification def SpacecraftBehaviorCommunicationReachable {
-//     subject mission: Mission;
-
-//     objective {
-//         verify requirement {
-//             require constraint {
-//                 eventually(
-//                     isStateActive(mission.spacecraft.Behaviour.Communication)
-//                 )
-//             }
-//         }
-//     }
-// }
-
-verification def SpacecraftBehaviorCommunicationWaitingPingReachable {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    isStateActive(mission.spacecraft.Behaviour.Communication.WaitingPing)
-                )
-            }
-        }
-    }
-}
-
 verification def SpacecraftBehaviorCommunicationTransmittingReachable {
     subject mission: Mission;
 
@@ -241,496 +167,6 @@ verification def SpacecraftBehaviorCommunicationTransmittingReachable {
             require constraint {
                 eventually(
                     isStateActive(mission.spacecraft.Behaviour.Communication.Transmitting)
-                )
-            }
-        }
-    }
-}
-
-verification def SpacecraftBehaviorCommunicationTransmittingSendDataReachable {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    isStateActive(mission.spacecraft.Behaviour.Communication.Transmitting.SendData)
-                )
-            }
-        }
-    }
-}
-
-verification def SpacecraftBehaviorCommunicationTransmittingSendDataSendingReachable {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    isStateActive(mission.spacecraft.Behaviour.Communication.Transmitting.SendData.Sending)
-                )
-            }
-        }
-    }
-}
-
-verification def SpacecraftBehaviorCommunicationTransmittingConsumePowerReachable {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    isStateActive(mission.spacecraft.Behaviour.Communication.Transmitting.ConsumePower)
-                )
-            }
-        }
-    }
-}
-
-verification def SpacecraftBehaviorCommunicationTransmittingConsumePowerConsumingReachable {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    isStateActive(mission.spacecraft.Behaviour.Communication.Transmitting.ConsumePower.Consuming)
-                )
-            }
-        }
-    }
-}
-
-// verification def SpacecraftBehaviorBatteryReachable {
-//     subject mission: Mission;
-
-//     objective {
-//         verify requirement {
-//             require constraint {
-//                 eventually(
-//                     isStateActive(mission.spacecraft.Behaviour.Battery)
-//                 )
-//             }
-//         }
-//     }
-// }
-
-verification def SpacecraftBehaviorBatteryNotRechargingReachable {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    isStateActive(mission.spacecraft.Behaviour.Battery.NotRecharging)
-                )
-            }
-        }
-    }
-}
-
-verification def SpacecraftBehaviorBatteryRechargingReachable {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    isStateActive(mission.spacecraft.Behaviour.Battery.Recharging)
-                )
-            }
-        }
-    }
-}
-
-verification def GroundStationReceivedDataCanReach0 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    mission.groundStation.receivedData >= 0
-                )
-            }
-        }
-    }
-}
-
-verification def GroundStationReceivedDataCanReach10 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    mission.groundStation.receivedData >= 10
-                )
-            }
-        }
-    }
-}
-
-verification def GroundStationReceivedDataCanReach20 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    mission.groundStation.receivedData >= 20
-                )
-            }
-        }
-    }
-}
-
-verification def GroundStationReceivedDataCannotReach20Violated {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                not eventually(
-                    mission.groundStation.receivedData >= 20
-                )
-            }
-        }
-    }
-}
-
-verification def GroundStationReceivedDataCanReach30 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    mission.groundStation.receivedData >= 30
-                )
-            }
-        }
-    }
-}
-
-verification def GroundStationReceivedDataCanReach40 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    mission.groundStation.receivedData >= 40
-                )
-            }
-        }
-    }
-}
-
-verification def GroundStationReceivedDataCanReach50 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    mission.groundStation.receivedData >= 50
-                )
-            }
-        }
-    }
-}
-
-verification def GroundStationReceivedDataCanReach60 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    mission.groundStation.receivedData >= 60
-                )
-            }
-        }
-    }
-}
-
-verification def GroundStationReceivedDataCanReach70 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    mission.groundStation.receivedData >= 70
-                )
-            }
-        }
-    }
-}
-
-verification def GroundStationReceivedDataCanReach80 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    mission.groundStation.receivedData >= 80
-                )
-            }
-        }
-    }
-}
-
-verification def GroundStationReceivedDataCanReach90 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    mission.groundStation.receivedData >= 90
-                )
-            }
-        }
-    }
-}
-
-verification def GroundStationReceivedDataCanReach100 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    mission.groundStation.receivedData >= 100
-                )
-            }
-        }
-    }
-}
-
-verification def SpacecraftDataCanReach100 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    mission.spacecraft.data <= 100
-                )
-            }
-        }
-    }
-}
-
-verification def SpacecraftDataCanReach90 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    mission.spacecraft.data <= 90
-                )
-            }
-        }
-    }
-}
-
-verification def SpacecraftDataCanReach80 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    mission.spacecraft.data <= 80
-                )
-            }
-        }
-    }
-}
-
-verification def SpacecraftDataCanReach70 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    mission.spacecraft.data <= 70
-                )
-            }
-        }
-    }
-}
-
-verification def SpacecraftDataCanReach60 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    mission.spacecraft.data <= 60
-                )
-            }
-        }
-    }
-}
-
-verification def SpacecraftDataCannotReach60Violated {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                not eventually(
-                    mission.spacecraft.data <= 60
-                )
-            }
-        }
-    }
-}
-
-verification def SpacecraftDataCanReach50 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    mission.spacecraft.data <= 50
-                )
-            }
-        }
-    }
-}
-
-verification def SpacecraftDataCanReach40 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    mission.spacecraft.data <= 40
-                )
-            }
-        }
-    }
-}
-
-verification def SpacecraftDataCanReach30 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    mission.spacecraft.data <= 30
-                )
-            }
-        }
-    }
-}
-
-verification def SpacecraftDataCanReach20 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    mission.spacecraft.data <= 20
-                )
-            }
-        }
-    }
-}
-
-verification def SpacecraftDataCanReach10 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    mission.spacecraft.data <= 10
-                )
-            }
-        }
-    }
-}
-
-verification def SpacecraftDataCanReach0 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                eventually(
-                    mission.spacecraft.data <= 0
-                )
-            }
-        }
-    }
-}
-
-verification def SpacecraftBatteryAlwaysAbove0 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                mustAlways(
-                    mission.spacecraft.batteryCharge >= 0
-                )
-            }
-        }
-    }
-}
-
-verification def SpacecraftBatteryAlwaysAbove10 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                mustAlways(
-                    mission.spacecraft.batteryCharge >= 10
-                )
-            }
-        }
-    }
-}
-
-verification def SpacecraftBatteryAlwaysAbove20 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                mustAlways(
-                    mission.spacecraft.batteryCharge >= 20
-                )
-            }
-        }
-    }
-}
-
-verification def SpacecraftBatteryAlwaysAbove30 {
-    subject mission: Mission;
-
-    objective {
-        verify requirement {
-            require constraint {
-                mustAlways(
-                    mission.spacecraft.batteryCharge >= 30
                 )
             }
         }
@@ -746,6 +182,21 @@ verification def SpacecraftBatteryAlwaysAbove40 {
                 mustAlways(
                     mission.spacecraft.batteryCharge >= 40
                 )
+            }
+        }
+    }
+}
+
+verification def NeverTransmitsWhileRecharging {
+    subject mission: Mission;
+
+    objective {
+        verify requirement {
+            require constraint {
+                mustAlways(not(
+                    isStateActive(mission.spacecraft.Behaviour.Communication.Transmitting)
+                    and isStateActive(mission.spacecraft.Behaviour.Battery.Recharging)
+                ))
             }
         }
     }
