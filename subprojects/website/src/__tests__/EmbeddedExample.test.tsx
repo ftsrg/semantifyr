@@ -10,7 +10,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { decodeCompressedBase64Url } from '@semantifyr/editor-common';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { EmbeddedExample } from '../components/LiveEmbed/EmbeddedExample';
+import { EmbeddedExample, SHOWN_AFTER_LOAD_MS } from '../components/LiveEmbed/EmbeddedExample';
 
 // Goal: an embedded example holds no frame until pressed, opens in place once live shows the model, and closes back to its control
 
@@ -112,5 +112,41 @@ describe('an embedded example', () => {
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Edit' }));
     expect(screen.getByText('var value: int := 0').closest('[hidden]')).toBeNull();
     expect(scroll).toHaveBeenCalledOnce();
+  });
+
+  it('opens a while after the frame has loaded when live never says the model is shown', async () => {
+    example();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    const loading = await frame();
+    vi.useFakeTimers();
+    try {
+      fireEvent.load(loading);
+      act(() => {
+        vi.advanceTimersByTime(SHOWN_AFTER_LOAD_MS - 1);
+      });
+
+      expect(screen.getByRole('status').textContent).toBe('Opening the editor');
+
+      act(() => {
+        vi.advanceTimersByTime(1);
+      });
+
+      expect(screen.queryByRole('status')).toBeNull();
+      expect(screen.getByText('var value: int := 0').closest('[hidden]')).not.toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('opens on live\'s sign before the frame\'s load would open it', async () => {
+    example();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    const loading = await frame();
+    fireEvent.load(loading);
+    report(loading, 'semantifyr-live:shown');
+
+    expect(screen.queryByRole('status')).toBeNull();
   });
 });
