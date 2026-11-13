@@ -16,23 +16,23 @@ This is the entry-level tutorial for Semantifyr. It walks through modeling a sma
 
 ## Requirements
 
-A browser is enough. Every step of this tutorial ends in a complete model: the **Verify** button in the corner of a code block loads the model of that step into a live editor embedded in this page, where you can edit it and verify its cases; for a step whose model has no verification case yet, the button is **Edit**. The same editor runs standalone at [live.semantifyr.org/oxsts](https://live.semantifyr.org/oxsts). See [Getting Started](../../getting-started.md) for the other ways to run Semantifyr.
+A browser is enough. Every step of this tutorial ends in a complete model: the **Verify** button in the corner of a code block loads the model of that step into Live, embedded in this page, where you can edit it and verify its cases; for a step whose model has no verification case yet, the button is **Edit**. Live runs on its own at [live.semantifyr.org/oxsts](https://live.semantifyr.org/oxsts). See [Getting Started](../../getting-started.md) for the other ways to run Semantifyr.
 
 :::tip Finished example
-The completed model is at the end of this page under [Snapshot](#snapshot), where **Verify** opens it in the embedded editor. The standalone live editor also offers it in its example menu as *Tutorial: Basics*.
+The completed model is at the end of this page under [Snapshot](#snapshot), where **Verify** opens it in the embedded editor. Live also offers it in its example menu as *Tutorial: Basics*.
 :::
 
-## The Live Editor
+## Live
 
 The editor embedded in this page has the model on top and the verification below it:
 
 - The **editor** is a Monaco-based code editor with syntax highlighting, diagnostics (red underlines for errors), and content assist (triggered with `Ctrl+Space`). The language server validates the model as you type.
-- The strip under the editor holds **Verify all**, which verifies every case of the model and turns into **Cancel** while they run, a status line, and **Open in Live**, which opens the model and its results in the full live editor in a new tab.
+- The strip under the editor holds **Verify all**, which verifies every case of the model and turns into **Cancel** while they run, a status line, and **Open in Live**, which opens the model and its results in Live, in a new tab.
 - Under the strip, every verification case of the model has a line, which follows your edits: its name and its verdict, *Passed*, *Failed*, *Inconclusive* or *Error*, or *Not run* before it has run, *Queued* while it waits its turn and *Running* while the server runs it, and the time the server spent running it. When the server is busy with other people's verifications, the status line says so and names the case that waits. A case with a trace says **Trace** at the end of its line; a click on the line opens the trace below it, which shows how the verdict came about, in three views: *Steps* lists the state changes of each step, *Calls* the traced calls of each step, and *Witness* the witness as a read-only OXSTS model. After **Verify all** the trace of the first failed case opens by itself. *Calls* fills only for calls of transitions marked [`@Trace`](../../language/standard-library.md#trace), which the finished model of each tutorial marks on the transition that changes the state and the models of the steps in between do not; the [SysML v2 tutorial](../sysml-v2.md#reading-the-witness) reads such a trace, the calls its semantic library traces. A trace whose witness a second verification confirmed is marked *validated*.
 
 A step whose model has no verification case opens the editor alone.
 
-The full live editor, behind **Open in Live** and at [live.semantifyr.org](https://live.semantifyr.org), puts the cases in a column to the right of the editor. The column's header counts the cases that *Passed*, *Failed*, were *Inconclusive* or ended in an *Error* and holds **Verify all**, the play button in a case's row verifies that case alone, and the trace of the selected case sits below the cases, where **Open** moves a textual view to a read-only tab beside the model. Its toolbar has the language switch (SysML v2, Gamma and OXSTS), the example menu, **Open** and **Save** for files, **Share**, which puts your model and its results into a link, **About**, and the theme.
+Live itself, behind **Open in Live** and at [live.semantifyr.org](https://live.semantifyr.org), puts the cases in a column to the right of the editor. The column's header counts the cases that *Passed*, *Failed*, were *Inconclusive* or ended in an *Error* and holds **Verify all**, the play button in a case's row verifies that case alone, and the trace of the selected case sits below the cases, where **Open** moves a textual view to a read-only tab beside the model. Its toolbar has the language switch (SysML v2, Gamma and OXSTS), the example menu, **Open** and **Save** for files, **Share**, which puts your model and its results into a link, **About**, and the theme.
 
 ## The Traffic Light
 
@@ -112,7 +112,7 @@ This is an `AG` safety property: on every execution, the two lights are never gr
 
 **Task:** Open the step in the editor. The case lines now list `GreenColorIsReachable` and `IntersectionNeverBothGreen`. Press **Verify all** to verify both.
 
-**Check:** `GreenColorIsReachable` passes, and `IntersectionNeverBothGreen` fails. A failed safety property comes with a counterexample, whose trace opens below the failed case's line: read *Steps* to see the steps that drive both lights to `Green`, one after the other.
+**Check:** `GreenColorIsReachable` passes, and `IntersectionNeverBothGreen` fails. A failed safety property comes with a trace, which model checkers call a counterexample; it opens below the failed case's line: read *Steps* to see the steps that drive both lights to `Green`, one after the other.
 
 ## Fixing the Intersection
 

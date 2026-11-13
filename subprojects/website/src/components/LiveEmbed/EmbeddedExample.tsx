@@ -9,6 +9,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import CodeBlock from '@theme/CodeBlock';
 import { useColorMode } from '@docusaurus/theme-common';
 import { liveEditorUrl, normalizeBaseUrl, type LiveEditorLines, type LiveEditorView } from '@semantifyr/editor-common';
+import { terms } from '@semantifyr/editor-common/terms';
 import { FenceContext } from '@site/src/lib/fence';
 import { useLiveBackendUrl } from '@site/src/lib/live';
 import styles from './styles.module.css';
@@ -55,7 +56,7 @@ function EmbedFrame({ url, initialHeight, onShown }: FrameProps): React.JSX.Elem
     };
   }, [url, onShown]);
 
-  return <iframe ref={frame} className={styles.frame} style={{ height }} src={url} title="Semantifyr live editor" allow="clipboard-write" />;
+  return <iframe ref={frame} className={styles.frame} style={{ height }} src={url} title={terms.live.term} allow="clipboard-write" />;
 }
 
 function RunIcon(): React.JSX.Element {

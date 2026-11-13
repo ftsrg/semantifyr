@@ -7,7 +7,7 @@ sidebar_position: 0
 
 Guided walk-throughs of Semantifyr. The Traffic Light series builds a small state machine from scratch and progressively introduces the language constructs you will need to read and write real semantic libraries.
 
-If you are new to Semantifyr, start with [Direct Modeling](trafficlight/direct-modeling.md). The Traffic Light tutorials run in your browser with no setup: every step opens in a live editor embedded in the page.
+If you are new to Semantifyr, start with [Direct Modeling](trafficlight/direct-modeling.md). The Traffic Light tutorials run in your browser with no setup: every step opens in Live, embedded in the page.
 
 ## Traffic Light series
 
@@ -21,4 +21,4 @@ If you are new to Semantifyr, start with [Direct Modeling](trafficlight/direct-m
 
 | Tutorial | Description |
 |----------|-------------|
-| [Verifying SysML v2 Models](sysml-v2.md) | Model a switch and a lamp in SysML v2, verify requirements in the live editor, and read a counterexample. |
+| [Verifying SysML v2 Models](sysml-v2.md) | Model a switch and a lamp in SysML v2, verify requirements in Live, and read the trace of a failed one. |

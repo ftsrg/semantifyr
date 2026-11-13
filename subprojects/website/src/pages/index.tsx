@@ -6,6 +6,7 @@
 
 import React from 'react';
 import Link from '@docusaurus/Link';
+import { terms } from '@semantifyr/editor-common/terms';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import { useLiveBackendUrl } from '@site/src/lib/live';
 import Layout from '@theme/Layout';
@@ -116,7 +117,7 @@ function TryIt() {
         <div className={styles.cards}>
           <div className={styles.card}>
             <div className={styles.card__header}>
-              <h3 className={styles.card__title}>In-browser editor</h3>
+              <h3 className={styles.card__title}>{terms.live.term}</h3>
               <HealthDot status={liveHealth} />
             </div>
             <p className={styles.card__body}>
@@ -129,7 +130,7 @@ function TryIt() {
               href={liveUrl}
               className={clsx('button', 'button--primary', 'button--block', styles.card__button)}
             >
-              Open the live editor <OpenInNewIcon />
+              {`Open ${terms.live.short ?? terms.live.term} `}<OpenInNewIcon />
             </Link>
           </div>
           <div className={styles.card}>

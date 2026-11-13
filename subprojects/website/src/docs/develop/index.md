@@ -45,7 +45,7 @@ This runs the unit tests and the verification smoke tests, and assembles every a
 ./gradlew nightlyTest       # long-running cases and witness re-checks on all backends
 ```
 
-A suite whose backend is missing skips as a whole; CI checks its engines before the build, so a missing one fails the job instead. A case passes only with the expected verdict: Inconclusive, Not supported, Timeout and Errored fail it. Each backend's conformance suite runs the semantic cases that backend's capability checker accepts; a case the checker accepts but the backend does not decide within the suite's timeout is left out by name in the suite class, with its measured time or the backend's reported stop. The models carry only the expected verdict.
+A suite whose backend is missing skips as a whole; CI checks its backends before the build, so a missing one fails the job instead. A case passes only with the expected verdict: Inconclusive, Not supported, Timeout and Errored fail it. Each backend's conformance suite runs the semantic cases that backend's capability checker accepts; a case the checker accepts but the backend does not decide within the suite's timeout is left out by name in the suite class, with its measured time or the backend's reported stop. The models carry only the expected verdict.
 
 ## Where to start
 
@@ -63,12 +63,12 @@ The repository is organized under `subprojects/`:
 | CLI | `subprojects/semantifyr-cli/`, `subprojects/cli-common/` | The `semantifyr` command-line interface and what the launchers share |
 | Frontend CLIs | `subprojects/frontends/sysml/sysml-cli/`, `subprojects/frontends/gamma/gamma-cli/` | The `semantifyr-sysml` and `semantifyr-gamma` launchers |
 | VS Code extension | `subprojects/semantifyr-vscode/` | Extension packaging and launch configs |
-| Live editor | `subprojects/semantifyr-live/` | The browser-based editor frontend and backend |
+| Semantifyr Live | `subprojects/semantifyr-live/` | Live's frontend and its server |
 | Website | `subprojects/website/` | This documentation site |
 
-[SysML v2 traces](sysml-trace.md) describes the form of a SysML v2 counterexample written as a SysML v2 model, and [Gamma traces](gamma-trace.md) the form of a Gamma witness written as a Gamma execution trace.
+[SysML v2 traces](sysml-trace.md) describes the form of a SysML v2 trace written as a SysML v2 model, and [Gamma traces](gamma-trace.md) the form of a Gamma witness written as a Gamma execution trace.
 
-## Load testing the live editor
+## Load testing Live
 
 Before a class uses a live instance, simulate the class against it from a checkout, through npm (Node.js 22.18 or later) or Gradle:
 

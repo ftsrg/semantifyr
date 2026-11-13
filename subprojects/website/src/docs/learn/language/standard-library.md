@@ -46,7 +46,7 @@ Categorizes verification cases. For example, `@Tag(category = "slow")` marks lon
 
 <LibraryDeclaration library={library} name="Control" />
 
-Signals that a variable is important to track during verification. May affect how the model checker reports counterexamples.
+Signals that a variable is important to track during verification. May affect how the model checker reports witnesses.
 
 ### `@Shared`
 

@@ -209,6 +209,13 @@ val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
 
 val npmCheck = tasks.register<NpmTask>("npmCheck") {
     configureSharedInputs()
+    // the terms test reads live's texts too
+    inputs.files(
+        rootProject.fileTree("subprojects/semantifyr-live/frontend/src") {
+            exclude("snippets/**", "vscode/**", "__*__/**")
+        },
+    ).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(rootProject.layout.projectDirectory.file("subprojects/semantifyr-live/frontend/index.html")).withPathSensitivity(PathSensitivity.RELATIVE)
 
     npmCommand.set(listOf("run", "check"))
 

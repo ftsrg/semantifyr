@@ -7,6 +7,7 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
 import { liveEditorUrl, normalizeBaseUrl } from '@semantifyr/editor-common';
+import { terms } from '@semantifyr/editor-common/terms';
 import { useLiveBackendUrl } from '@site/src/lib/live';
 import styles from './styles.module.css';
 
@@ -38,7 +39,7 @@ export default function OpenInLiveLink({ language, code }: Props): React.JSX.Ele
   return (
     <div className={styles.openLinkContainer}>
       <a href={href} className={styles.openLink} target="_blank" rel="noopener noreferrer">
-        Open in live editor ↗
+        {`Open in ${terms.live.short ?? terms.live.term} ↗`}
       </a>
     </div>
   );
