@@ -38,7 +38,7 @@ class GammaLibrarySemanticTest {
         helper.checkTestModel(
             context,
             verificationCase,
-            verificationPortfolio = Portfolios.ThetaCegarExplPredCombined,
+            verificationPortfolio = Portfolios.SmartFull,
             outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(GammaLibrarySemanticTest::class.java),
         )
     }
