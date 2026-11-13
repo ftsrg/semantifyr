@@ -14,6 +14,8 @@ The trace is generated from the witness, its traced calls and the [name map](#th
 
 ## What the trace shows
 
+The SysML v2 library traces transition firing, state entry and exit, item sending, and the time advance at the root.
+
 - The active states, from the `activeState` values of the witness and an exhibited state's `performing` flag, and where the optimizer removed a flag, from the traced `enter` and `exit` of `State` and `ParallelState`, whose argument is the closest common state.
 - A state occurrence starts where its state turns active or is entered again, and ends where it turns inactive or is left.
 - The fired transitions, from the traced `Transition::fire` calls, and the sends, from the traced `SendItemAction::send` calls. A send belongs to the entry, exit or effect that holds its send action.
