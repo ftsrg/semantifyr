@@ -5,7 +5,7 @@
  */
 
 import type React from 'react';
-import Admonition from '@theme/Admonition';
+import { withCode } from '@site/src/lib/inlineCode';
 
 type Outcome = 'pass' | 'fail' | 'reject' | 'parse';
 
@@ -32,7 +32,7 @@ function parseConstructs(table: string): Construct[] {
   });
 }
 
-function findConstruct(table: string, name: string): Construct {
+export function findConstruct(table: string, name: string): Construct {
   const construct = parseConstructs(table).find((candidate) => candidate.name === name);
   if (construct === undefined) {
     throw new Error(`constructs.tsv lists no construct ${name}`);
@@ -52,24 +52,8 @@ function statusOf({ outcome }: Construct): string {
   }
 }
 
-function withCode(text: string): React.ReactNode[] {
-  return text.split('`').map((part, index) => (index % 2 === 1 ? <code key={index}>{part}</code> : part));
-}
-
 export function ConstructStatus({ table, construct }: { table: string; construct: string }): React.JSX.Element {
   return <>{statusOf(findConstruct(table, construct)).toLowerCase()}</>;
-}
-
-export function Planned({ table, construct, children }: { table: string; construct: string; children: React.ReactNode }): React.JSX.Element {
-  const { outcome } = findConstruct(table, construct);
-  if (outcome !== 'parse') {
-    throw new Error(`constructs.tsv says the parser no longer rejects ${construct} (${outcome}); update the page that marks it Planned`);
-  }
-  return (
-    <Admonition type="info" title="Planned">
-      {children}
-    </Admonition>
-  );
 }
 
 export default function ConstructTable({ table }: { table: string }): React.JSX.Element {

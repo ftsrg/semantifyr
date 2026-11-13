@@ -5,12 +5,12 @@
  */
 
 /*
- * The Semantifyr base library.
+ * The standard library, in scope in every file without an import, below the file's own package and its imports. It declares the primitive datatypes, `Anything`, the base class of every class, and the annotations the tools read.
  */
 package semantifyr
 
 /*
- * The any datatype is the base type of all other types.
+ * The supertype of every type.
  */
 extern datatype any
 
@@ -20,27 +20,22 @@ extern datatype any
 extern datatype int
 
 /*
- * Floating point numbers. Most verification backends do not support it.
+ * Real numbers.
  */
 extern datatype real
 
 /*
- * Boolean true or false values.
+ * The Boolean values `true` and `false`.
  */
 extern datatype bool
 
 /*
- * String datatypes. Most verification backends do not support it.
+ * Sequences of characters.
  */
 extern datatype string
 
 /*
- * The Control annotation signals that this variable might be important to track during verification.
- */
-annotation Control
-
-/*
- * Anything is the implicit supertype of all classes.
+ * The implicit supertype of every class. Its `init` and its main transition do nothing, and a class that declares its own replaces them, with or without `redefine`.
  */
 class Anything {
     // contains children: Anything[0..*] opposite parent;
@@ -59,31 +54,38 @@ class Anything {
 }
 
 /*
- * Classes annotated with VerificationCase can be verified with the Semantifyr toolchain. The optional summary string specifies how this verification case should be presented.
+ * Marks a class as a verification case, which the tools find and verify. The optional `summary` is the text the editors show for the case in place of its name.
  */
 annotation VerificationCase(summary: string[0..1])
 
 /*
- * Tags allow categorizing verification cases, e.g., into slow for long-running cases.
+ * Gives a verification case a category, such as `@Tag("slow")`, by which the command line selects and skips cases.
  */
 annotation Tag(category: string)
 
 /*
- * Instances contained in Containment features annotated with @Shared are shared across all instances of the containing class.
+ * Marks a variable that a backend may track from the start of its search. It is a hint for the backend's speed and changes neither the verdict nor the trace.
+ */
+annotation Control
+
+/*
+ * Marks a containment feature whose instance is created once in a model and shared by every instance of the class that declares the feature, instead of once for each.
  */
 annotation Shared
 
 /*
- * Calls to transitions annotated with @Trace will be traced back in the verification case witness, containing the bindings of it's parameters at the call site.
+ * Marks a transition whose calls the trace lists: each call that fired, in the step it fired in, with its receiver's path from the root instance, such as `root.kitchen.lamp`, and the values of its arguments at the call site.
+ * 
+ * The trace records the arguments as the compiler evaluates them, so every argument of a call to a traced transition must be evaluable at compile time (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`), and none may be a record (`OXSTS.UNSUPPORTED_FEATURE`).
  */
 annotation Trace
 
 /*
- * Variables annotated with @Clock allows time-aware backends to handle them in a more optimal way.
+ * Marks a variable as a clock, which a backend with clocks may represent as one. Like every variable, a clock carries an initializer.
  */
 annotation Clock
 
 /*
- * Variables annotated with @NonOptimizable are excluded from optimizer passes that could remove or fold them.
+ * Excludes a variable from the optimizer passes that could remove or fold it, so that it stays in the model a backend receives and in the witness.
  */
 annotation NonOptimizable
