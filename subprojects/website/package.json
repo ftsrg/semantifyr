@@ -28,11 +28,10 @@
     "lightningcss": "^1.29.3",
     "prism-react-renderer": "^2.4.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "shiki": "^4.6.0"
   },
   "devDependencies": {
-    "@codingame/monaco-vscode-api": "~37.6.1",
-    "@codingame/monaco-vscode-textmate-service-override": "~37.6.1",
     "@docusaurus/module-type-aliases": "^3.7.0",
     "@docusaurus/types": "^3.7.0",
     "@testing-library/react": "^16.3.0",

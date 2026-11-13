@@ -11,7 +11,7 @@ import Line from '@theme/CodeBlock/Line';
 import { useCodeBlockContext } from '@docusaurus/theme-common/internal';
 import type { WrapperProps } from '@docusaurus/types';
 import styles from '@docusaurus/theme-classic/lib/theme/CodeBlock/Content/styles.module.css';
-import { highlight, styleOf } from '@site/src/lib/highlight';
+import { highlight } from '@site/src/lib/highlight';
 
 type Props = WrapperProps<typeof ContentType>;
 
@@ -30,7 +30,7 @@ function linesOf(code: string, language: string | undefined): LineToken[][] {
   }
   return highlighted.map((line) => {
     return line.map((token) => {
-      return { content: token.text, types: ['plain'], style: styleOf(token.scopes) };
+      return { content: token.text, types: ['plain'], style: token.style };
     });
   });
 }
