@@ -1385,6 +1385,38 @@ class GammaToOxstsSerializerTest {
     }
 
     @Test
+    fun `a raise atom on a bound port of a composite names the event on the instance port the binding reaches`() {
+        val lines = oxstsLines(
+            """
+                package test
+                interface Control {
+                    out event done
+                }
+                statechart Machine [
+                    port control : provides Control
+                ] {
+                }
+                sync System [
+                    port output : provides Control
+                ] {
+                    component machine : Machine
+                    bind output -> machine.control
+                }
+                verification case Raised of System {
+                    EF raise output.done
+                }
+            """,
+        )
+
+        assertThat(lines).containsSequence(
+            "redefine contains body: IsEventRaisedExpression {",
+            "redefine refers port: Port = component._machine._control",
+            "redefine refers event: Event = component._machine._control.interface._done",
+            "}",
+        )
+    }
+
+    @Test
     fun `a port shadowed by a state of the same name is reached through the statechart`() {
         val lines = oxstsLines(
             """
