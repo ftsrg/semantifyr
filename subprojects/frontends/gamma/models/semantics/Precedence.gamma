@@ -1,0 +1,61 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package Precedence
+
+interface Control {
+    in event start
+}
+
+statechart Machine [
+    port control : provides Control
+] {
+    var first : boolean := true
+    var second : boolean := false
+    var third : boolean := false
+    var count : integer := 0
+
+    region AndOr {
+        initial AndOrInitial
+        state AndOrWaiting
+        state AndOrTaken
+    }
+
+    region NotEquality {
+        initial NotEqualityInitial
+        state NotEqualityWaiting
+        state NotEqualityTaken
+    }
+
+    region OrderingEquality {
+        initial OrderingEqualityInitial
+        state OrderingEqualityWaiting
+        state OrderingEqualityTaken
+    }
+
+    transition from AndOrInitial to AndOrWaiting
+    transition from NotEqualityInitial to NotEqualityWaiting
+    transition from OrderingEqualityInitial to OrderingEqualityWaiting
+    transition from AndOrWaiting to AndOrTaken when control.start [first or second and third]
+    transition from NotEqualityWaiting to NotEqualityTaken when control.start [not count = 1]
+    transition from OrderingEqualityWaiting to OrderingEqualityTaken when control.start [count < 1 = first]
+}
+
+verification case AndBindsTighterThanOr of Machine {
+    EF state AndOr.AndOrTaken
+}
+
+verification case NotBindsLooserThanEquality of Machine {
+    EF state NotEquality.NotEqualityTaken
+}
+
+verification case EqualityBindsLooserThanOrdering of Machine {
+    EF state OrderingEquality.OrderingEqualityTaken
+}
+
+verification case AndBindsTighterThanOrInAProperty of Machine {
+    AG (variable first or variable second and variable third)
+}
