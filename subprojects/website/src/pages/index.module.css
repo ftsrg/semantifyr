@@ -140,18 +140,6 @@
   line-height: 1.6;
 }
 
-.card__note {
-  flex: 1;
-  margin: 0 0 1.5rem;
-  padding: 0.75rem 1rem;
-  border-left: 3px solid var(--ifm-color-emphasis-400);
-  background: var(--ifm-color-emphasis-100);
-  color: var(--ifm-color-emphasis-700);
-  font-size: 0.92rem;
-  line-height: 1.5;
-  border-radius: 4px;
-}
-
 .card__header {
   display: flex;
   align-items: center;

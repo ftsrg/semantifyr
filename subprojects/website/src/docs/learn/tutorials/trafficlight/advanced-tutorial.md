@@ -141,7 +141,7 @@ Add a case that lets the emergency start and end at any step:
 
 <LiveEmbed code={step5} show={['EmergencyStopsTraffic']} />
 
-The parentheses around the conjunction only make the grouping visible: as in Java, `&&` binds tighter than `||` ([operator precedence](../../language/expressions.md#operator-precedence)), so the property reads the same without them, although for one release the validator warns on a mix of the two without parentheses.
+The parentheses around the conjunction only make the grouping visible: as in Java, `&&` binds tighter than `||` ([operator precedence](../../language/expressions.md#operator-precedence)), so the property reads the same without them, although the validator warns on a mix of the two without parentheses.
 
 **Task:** Open the step and verify all cases.
 

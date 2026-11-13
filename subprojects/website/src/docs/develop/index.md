@@ -3,6 +3,8 @@ title: Develop
 sidebar_position: 0
 ---
 
+import NodeVersion from '@site/src/components/NodeVersion';
+
 # Developing Semantifyr
 
 Semantifyr is open source. Contributions are welcome, whether that's a bug fix, a new frontend, a documentation improvement, or a discussion about an architectural change.
@@ -70,7 +72,7 @@ The repository is organized under `subprojects/`:
 
 ## Load testing Live
 
-Before a class uses a live instance, simulate the class against it from a checkout, through npm (Node.js 22.18 or later) or Gradle:
+Before a class uses a live instance, simulate the class against it from a checkout, through npm (Node.js <NodeVersion full /> or later) or Gradle:
 
 ```bash
 npm ci
