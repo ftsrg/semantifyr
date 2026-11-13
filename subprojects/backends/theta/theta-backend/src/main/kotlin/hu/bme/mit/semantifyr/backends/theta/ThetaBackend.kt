@@ -37,6 +37,8 @@ import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import java.nio.file.Path
 
 class ThetaBackend : VerificationBackend<ThetaConfig>() {
@@ -91,13 +93,16 @@ class ThetaVerificationContext @AssistedInject constructor(
     private val artifactManager = ThetaArtifactManager(request.artifactOutputPath)
 
     override suspend fun prepare(): XstsModel {
+        currentCoroutineContext().ensureActive()
         logger.info { "[$backendId] transforming InlinedOxsts -> XSTS" }
         val xsts = thetaModelTransformer.transform(request.inlinedOxsts, artifactManager.xstsUri)
+        currentCoroutineContext().ensureActive()
         xstsModelCreator.save(xsts)
         return xsts
     }
 
     override suspend fun run(artifacts: XstsModel): ThetaVerdict? {
+        currentCoroutineContext().ensureActive()
         val workingDir = artifactManager.xstsFile.parentFile
         val cexRelPath = artifactManager.cexFile.relativeTo(workingDir).path
         val command = config.parameters.split(" ") + listOf("--model", artifactManager.xstsFile.name, "--cexfile", cexRelPath)
