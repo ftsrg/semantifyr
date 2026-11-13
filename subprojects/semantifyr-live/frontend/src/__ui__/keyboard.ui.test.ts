@@ -52,6 +52,25 @@ async function editorLabel(page: Page): Promise<string> {
   })
 }
 
+// a caret inside a class shows the class's sticky header, a focus stop of its own between the text and the next control
+const LEFT = /^(sticky header, )?(?!editor$|sticky header$)[^,]+$/
+
+async function tabFromText(page: Page): Promise<string> {
+  const stops: string[] = []
+  for (let press = 0; press < 2; press++) {
+    await page.keyboard.press('Tab')
+    const onHeader = await page.evaluate(() => {
+      return (document.activeElement?.closest('.sticky-widget-lines') ?? null) !== null
+    })
+    const place = onHeader ? 'sticky header' : await focused(page)
+    stops.push(place)
+    if (place !== 'sticky header') {
+      break
+    }
+  }
+  return stops.join(', ')
+}
+
 describe('the keyboard', () => {
   test('reaches every control of the desktop shell, leaving the model by the key the editor names', async ({ ui }) => {
     const page = await ui.open('/gamma/level-crossing')
@@ -93,9 +112,7 @@ describe('the keyboard', () => {
     await page.locator('section.editor .view-lines').first().click()
     expect(await focused(page)).toBe('editor')
 
-    await page.keyboard.press('Tab')
-
-    expect(await focused(page)).not.toBe('editor')
+    expect(await tabFromText(page)).toMatch(LEFT)
   })
 
   for (const view of ['embed', 'edit-only']) {
@@ -108,9 +125,8 @@ describe('the keyboard', () => {
       await expect.poll(async () => {
         await page.locator('.view-lines').first().click()
         expect(await focused(page)).toBe('editor')
-        await page.keyboard.press('Tab')
-        return focused(page)
-      }).not.toBe('editor')
+        return tabFromText(page)
+      }).toMatch(LEFT)
     })
   }
 })
