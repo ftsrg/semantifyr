@@ -17,6 +17,8 @@ import hu.bme.mit.semantifyr.frontends.gamma.discovery.GammaVerificationCaseDisc
 import hu.bme.mit.semantifyr.frontends.gamma.lang.GammaStandaloneSetup
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EF
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ExecutionTrace
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaRoot
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.portfolios.Portfolios
@@ -27,9 +29,11 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Named
 import org.junit.jupiter.params.provider.Arguments
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.stream.Stream
 import kotlin.io.path.Path
+import kotlin.io.path.extension
 import kotlin.streams.asStream
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -48,10 +52,31 @@ class GammaFrontendTestHelper {
     private val gammaInjector = GammaStandaloneSetup().createInjectorAndDoEMFRegistration()
     private val oxstsInjector = OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
     private val gammaReader = gammaInjector.getInstance(GammaReader::class.java)
+    private val workspaces = mutableMapOf<Path, Map<Path, GammaRoot>>()
     private val gammaDiscoverer = gammaInjector.getInstance(GammaVerificationCaseDiscoverer::class.java)
 
     fun discover(sourcePath: Path): List<GammaVerificationCase> {
         val gammaModel = gammaReader.readGammaFile(sourcePath.toFile())
+        return gammaDiscoverer.discover(gammaModel)
+    }
+
+    fun discoverInWorkspace(
+        workspace: Path,
+        file: String,
+    ): List<GammaVerificationCase> {
+        val roots = workspaces.getOrPut(workspace.toAbsolutePath().normalize()) {
+            val files = Files.walk(workspace).use { paths ->
+                paths.filter {
+                    it.extension in WORKSPACE_EXTENSIONS
+                }.map {
+                    it.toFile()
+                }.toList()
+            }
+            files.zip(gammaReader.readGammaFiles(files)).associate { (workspaceFile, root) ->
+                workspaceFile.toPath().toAbsolutePath().normalize() to root
+            }
+        }
+        val gammaModel = roots.getValue(workspace.resolve(file).toAbsolutePath().normalize()) as GammaModelPackage
         return gammaDiscoverer.discover(gammaModel)
     }
 
@@ -141,6 +166,7 @@ class GammaFrontendTestHelper {
     }
 
     companion object {
+        private val WORKSPACE_EXTENSIONS = setOf("gamma", "gcd")
         private val EXAMPLES = listOf("Simple.gamma", "Crossroads.gamma", "Spacecraft.gamma")
 
         @JvmStatic

@@ -33,11 +33,11 @@ class GammaCorpusParseTest {
     private lateinit var resourceSetProvider: Provider<XtextResourceSet>
 
     @Test
-    fun `every in-set corpus file parses, links and validates without errors`() {
+    fun `every corpus model and case file parses, links and validates without errors`() {
         val resourceSet = resourceSetProvider.get()
         val files = Files.walk(CORPUS).use { paths ->
             paths.filter {
-                it.extension == GAMMA_EXTENSION
+                it.extension in GAMMA_EXTENSIONS
             }.sorted().toList()
         }
         val resources = files.associateWith {
@@ -59,7 +59,7 @@ class GammaCorpusParseTest {
     }
 
     companion object {
-        private const val GAMMA_EXTENSION = "gcd"
+        private val GAMMA_EXTENSIONS = setOf("gcd", "gamma")
         private val CORPUS: Path = Path("..", "models", "corpus")
     }
 }
