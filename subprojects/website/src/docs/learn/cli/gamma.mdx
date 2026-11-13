@@ -18,7 +18,7 @@ import compile from '@cli-reference/gamma-compile.txt';
 
 <CodeBlock language="text">{verify}</CodeBlock>
 
-`verify` compiles the model and verifies its cases with the options, output and [exit codes](index.mdx#exit-codes) of `semantifyr verify`. A case is named by its Gamma qualified name, such as `Simple.WorkerStatechartIdleReachable`; without `--case-name`, `verify` verifies every case of the model. Under the artifact directory, each case gets a directory named after it, holding the compiled model `model.oxsts` and the verification artifacts under `verification/`. For each case with a witness, `verify` writes the witness as a Gamma execution trace, `trace.gamma`, next to the case's `report.json` ([Gamma traces](../../develop/gamma-trace.md)).
+`verify` compiles the model and verifies its cases with the options, output and [exit codes](index.mdx#exit-codes) of `semantifyr verify`. A case is named by its Gamma qualified name, such as `Simple.WorkerStatechartIdleReachable`; without `--case-name`, `verify` verifies every case of the model. For each case with a witness, `verify` writes the witness as a Gamma execution trace, `trace.gamma`, next to the case's `report.json` ([Artifacts](artifacts.mdx), [Gamma traces](gamma-trace.mdx)).
 
 ## `compile`
 

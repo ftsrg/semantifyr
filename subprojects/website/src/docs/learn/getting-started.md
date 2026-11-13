@@ -45,6 +45,8 @@ The Semantifyr VS Code extension bundles the language servers and the compiler. 
 
 <VscodeSettings manifest={extension} />
 
+The extension sends the settings to the OXSTS and the Gamma language server when they start and again whenever one changes, so a change applies from the next verification without a restart; `semantifyr.verification.autoValidate` and `semantifyr.verification.validationPortfolio` stay in the extension, which asks for the validation. A portfolio is named by its id, as [Portfolios](cli/portfolios.mdx) lists them. The artifacts are laid out as [Artifacts](cli/artifacts.mdx) describes: under `workspace` each case directory is in the workspace's `.artifacts/` folder, which the *Testing* view leaves out, and under `temporary` in a folder of the language server's own, which it deletes when it exits, so the witnesses of earlier runs are gone after VS Code restarts.
+
 <Planned>
 Publication on the Visual Studio Marketplace is planned.
 </Planned>
