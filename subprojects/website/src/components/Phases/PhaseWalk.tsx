@@ -17,7 +17,7 @@ type View = 'side-by-side' | 'one-pane';
 
 export const STEP_MILLISECONDS = 3000;
 
-// Docusaurus' own breakpoint, below which the sidebar folds away
+// Docusaurus' own breakpoint, below which the sidebar folds away; walk.module.css repeats it, since a media query takes no variable
 const NARROW_SCREEN = '(max-width: 996px)';
 const LESS_MOTION = '(prefers-reduced-motion: reduce)';
 
@@ -35,6 +35,12 @@ interface ShownLine {
   mark: Mark;
 }
 
+interface ShownStep {
+  before: ShownLine[];
+  after: ShownLine[];
+  unified: ShownLine[];
+}
+
 function matches(query: string): boolean {
   return typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia(query).matches;
 }
@@ -45,8 +51,7 @@ function tokensOf(text: string): Token[][] {
   });
 }
 
-// the before and the after of a step and their difference, each line of each in its tokens
-function linesOf(step: WalkStep): { before: ShownLine[], after: ShownLine[], unified: ShownLine[] } {
+function linesOf(step: WalkStep): ShownStep {
   const beforeTokens = tokensOf(step.before.text);
   const afterTokens = tokensOf(step.after.text);
   const before: ShownLine[] = [];
@@ -69,7 +74,7 @@ function linesOf(step: WalkStep): { before: ShownLine[], after: ShownLine[], uni
   return { before, after, unified };
 }
 
-function unmarkedLinesOf(step: WalkStep): { before: ShownLine[], after: ShownLine[], unified: ShownLine[] } {
+function unmarkedLinesOf(step: WalkStep): ShownStep {
   const unmarked = (text: string): ShownLine[] => {
     return tokensOf(text).map((tokens) => {
       return { tokens, mark: 'same' };
@@ -79,18 +84,13 @@ function unmarkedLinesOf(step: WalkStep): { before: ShownLine[], after: ShownLin
   return { before: unmarked(step.before.text), after, unified: after };
 }
 
-const SIGNS: Readonly<Record<Mark, string>> = {
-  same: ' ',
-  added: '+',
-  removed: '-',
-};
-
 const SPOKEN: Readonly<Record<Mark, string>> = {
   same: '',
   added: 'Added: ',
   removed: 'Removed: ',
 };
 
+// the sign and the spoken word are drawn by the style sheet, so that a copy from a pane is the compiler's text alone
 function Line({ line, appearing }: { line: ShownLine, appearing: boolean }): React.JSX.Element {
   // the indentation stays outside the mark, so that a strike runs through the code alone
   const indentation = /^\s*/.exec(line.tokens.map((token) => {
@@ -105,9 +105,9 @@ function Line({ line, appearing }: { line: ShownLine, appearing: boolean }): Rea
   const marked = line.mark === 'added' ? <ins>{content}</ins> : line.mark === 'removed' ? <del>{content}</del> : content;
   return (
     <span className={clsx(styles.line, line.mark !== 'same' && styles[line.mark], appearing && line.mark === 'added' && styles.appearing)}>
-      <span className={styles.sign} aria-hidden="true">{SIGNS[line.mark]}</span>
+      <span className={styles.sign} aria-hidden="true" />
       {indentation}
-      {SPOKEN[line.mark] === '' ? null : <span className={styles.spoken}>{SPOKEN[line.mark]}</span>}
+      {line.mark === 'same' ? null : <span className={styles.spoken} data-spoken={SPOKEN[line.mark]} />}
       {marked}
       {'\n'}
     </span>
@@ -129,12 +129,14 @@ function Pane({ title, lines, appearing }: { title: string, lines: ShownLine[], 
   );
 }
 
-// the compiler's output for one model, a step at a time: side by side, or one pane that rewrites itself
 export default function PhaseWalk({ steps, label, marks = true }: Props): React.JSX.Element {
   const [index, setIndex] = useState(0);
-  const [view, setView] = useState<View>('side-by-side');
+  // null until the browser has been asked for its width: the server's markup holds both views, and the style sheet shows the one the width calls for
+  const [view, setView] = useState<View | null>(null);
   const [playing, setPlaying] = useState(false);
   const [lessMotion, setLessMotion] = useState(false);
+  // a line appears only on a step's change, never when the view is first decided
+  const [stepped, setStepped] = useState(false);
   const chosen = useRef(false);
   const last = steps.length - 1;
   const step = steps[Math.min(index, last)];
@@ -176,6 +178,7 @@ export default function PhaseWalk({ steps, label, marks = true }: Props): React.
       return undefined;
     }
     const timer = window.setTimeout(() => {
+      setStepped(true);
       setIndex(index + 1);
     }, STEP_MILLISECONDS);
     return () => {
@@ -183,8 +186,13 @@ export default function PhaseWalk({ steps, label, marks = true }: Props): React.
     };
   }, [playing, index, last]);
 
+  // Back and Next stay focusable at the ends, so that the focus of a keyboard's user stays in the walk
   const go = (target: number): void => {
+    if (target < 0 || target > last) {
+      return;
+    }
     setPlaying(false);
+    setStepped(true);
     setIndex(target);
   };
   const choose = (chosenView: View): void => {
@@ -202,23 +210,31 @@ export default function PhaseWalk({ steps, label, marks = true }: Props): React.
     setPlaying(true);
   };
 
+  const sideBySide = (
+    <div className={styles.sideBySide}>
+      <Pane title={step.before.file} lines={lines.before} appearing={false} />
+      <Pane title={step.after.file} lines={lines.after} appearing={false} />
+    </div>
+  );
+  const onePane = <Pane key={index} title={step.after.file} lines={lines.unified} appearing={stepped && !lessMotion} />;
+
   return (
-    <section className={styles.walk} aria-label={label}>
+    <section className={clsx(styles.walk, view === null && styles.undecided)} aria-label={label}>
       <div className={styles.toolbar}>
         <div className={styles.controls}>
-          <button type="button" className={styles.button} onClick={() => {
+          <button type="button" className={styles.button} aria-disabled={index === 0} onClick={() => {
             go(index - 1);
-          }} disabled={index === 0}>Back</button>
-          {steps.length > 1 ? <button type="button" className={styles.button} onClick={play} aria-pressed={playing}>{playing ? 'Pause' : 'Play'}</button> : null}
-          <button type="button" className={styles.button} onClick={() => {
+          }}>Back</button>
+          {steps.length > 1 ? <button type="button" className={styles.button} onClick={play}>{playing ? 'Pause' : 'Play'}</button> : null}
+          <button type="button" className={styles.button} aria-disabled={index === last} onClick={() => {
             go(index + 1);
-          }} disabled={index === last}>Next</button>
+          }}>Next</button>
         </div>
         <div className={styles.views} role="group" aria-label="View">
-          <button type="button" className={styles.button} aria-pressed={view === 'side-by-side'} onClick={() => {
+          <button type="button" className={clsx(styles.button, styles.wideChoice)} aria-pressed={view === null ? undefined : view === 'side-by-side'} onClick={() => {
             choose('side-by-side');
           }}>Side by side</button>
-          <button type="button" className={styles.button} aria-pressed={view === 'one-pane'} onClick={() => {
+          <button type="button" className={clsx(styles.button, styles.narrowChoice)} aria-pressed={view === null ? undefined : view === 'one-pane'} onClick={() => {
             choose('one-pane');
           }}>One pane</button>
         </div>
@@ -227,14 +243,14 @@ export default function PhaseWalk({ steps, label, marks = true }: Props): React.
         <strong>{`Step ${index + 1} of ${steps.length}. `}</strong>
         {withCode(step.caption)}
       </p>
-      {view === 'side-by-side'
+      {view === null
         ? (
-            <div className={styles.sideBySide}>
-              <Pane title={step.before.file} lines={lines.before} appearing={false} />
-              <Pane title={step.after.file} lines={lines.after} appearing={false} />
-            </div>
+            <>
+              <div className={styles.wideOnly}>{sideBySide}</div>
+              <div className={styles.narrowOnly}>{onePane}</div>
+            </>
           )
-        : <Pane key={index} title={step.after.file} lines={lines.unified} appearing={!lessMotion} />}
+        : view === 'side-by-side' ? sideBySide : onePane}
     </section>
   );
 }

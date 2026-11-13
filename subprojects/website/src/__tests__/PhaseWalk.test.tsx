@@ -7,12 +7,14 @@
 // @vitest-environment jsdom
 
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { hydrateRoot } from 'react-dom/client';
+import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import PhaseWalk, { STEP_MILLISECONDS } from '../components/Phases/PhaseWalk';
 import type { WalkStep } from '../components/Phases/walks';
 
-// Goal: the walk steps only when asked, keeps its step across the switch of views, opens in the view the screen's width calls for, marks a change by more than its colour and moves nothing for a visitor who asks for less motion
+// Goal: the walk steps only when asked, keeps its step and the focus, keeps its step across the switch of views, opens in the view the screen's width calls for from its first paint, marks a change by more than its colour without adding to a copy, and moves nothing for a visitor who asks for less motion
 
 const STEPS: WalkStep[] = [
   {
@@ -84,6 +86,29 @@ describe('a walk through a phase', () => {
     expect(screen.getByRole('button', { name: 'One pane' }).getAttribute('aria-pressed')).toBe('true');
   });
 
+  it('serves markup that holds both views for the style sheet to choose, and hydrates on a narrow screen without a mismatch', () => {
+    const element = <PhaseWalk steps={STEPS} label="The walk" />;
+    const container = document.createElement('div');
+    container.innerHTML = renderToString(element);
+    expect(container.querySelectorAll('figure')).toHaveLength(3);
+    expect(container.querySelector('[aria-pressed]')).toBeNull();
+    document.body.appendChild(container);
+
+    screenWith({ narrow: true });
+    const errors: unknown[] = [];
+    act(() => {
+      hydrateRoot(container, element, {
+        onRecoverableError: (error) => {
+          errors.push(error);
+        },
+      });
+    });
+
+    expect(errors).toEqual([]);
+    expect(container.querySelectorAll('figure')).toHaveLength(1);
+    container.remove();
+  });
+
   it('keeps its step when the view is switched', () => {
     screenWith({});
     walk();
@@ -95,17 +120,33 @@ describe('a walk through a phase', () => {
     expect(screen.getByText('two.oxsts')).toBeTruthy();
   });
 
-  it('marks a removed and an added line by a sign, a strike and a word, not by colour alone', () => {
+  it('marks a removed and an added line by a strike and a spoken word, and a copy of the line is its code alone', () => {
     screenWith({ narrow: true });
     walk();
     const removed = document.querySelector('del');
     expect(removed?.textContent).toBe('a');
-    expect(removed?.closest('span')?.textContent).toBe('-Removed: a\n');
+    expect(removed?.parentElement?.textContent).toBe('a\n');
+    expect(removed?.parentElement?.querySelector('[data-spoken]')?.getAttribute('data-spoken')).toBe('Removed: ');
 
     press('Next');
     const added = document.querySelector('ins');
     expect(added?.textContent).toBe('c');
-    expect(added?.closest('span')?.textContent).toBe('+Added: c\n');
+    expect(added?.parentElement?.textContent).toBe('c\n');
+    expect(added?.parentElement?.querySelector('[data-spoken]')?.getAttribute('data-spoken')).toBe('Added: ');
+  });
+
+  it('keeps Back and Next focusable at the ends, where they do nothing', () => {
+    screenWith({});
+    walk();
+    const back = screen.getByRole('button', { name: 'Back' });
+    back.focus();
+
+    press('Back');
+
+    expect(back.hasAttribute('disabled')).toBe(false);
+    expect(back.getAttribute('aria-disabled')).toBe('true');
+    expect(document.activeElement).toBe(back);
+    expect(announced()).toBe('Step 1 of 3. First a goes.');
   });
 
   it('plays only when asked, and pauses', () => {
@@ -145,7 +186,7 @@ describe('a walk through a phase', () => {
     });
 
     expect(announced()).toBe('Step 3 of 3. Last d comes.');
-    expect(screen.getByRole('button', { name: 'Play' }).getAttribute('aria-pressed')).toBe('false');
+    expect(screen.getByRole('button', { name: 'Play' }).hasAttribute('aria-pressed')).toBe(false);
   });
 
   it('lets a new line appear only for a visitor who has not asked for less motion', () => {

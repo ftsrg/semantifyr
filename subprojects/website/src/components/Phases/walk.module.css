@@ -33,18 +33,43 @@
   cursor: pointer;
 }
 
-.button:hover:not(:disabled) {
+.button:hover:not([aria-disabled='true']) {
   background: var(--surface-hover);
 }
 
-.button:disabled {
+.button[aria-disabled='true'] {
   color: var(--text-disabled);
   cursor: default;
 }
 
-.button[aria-pressed='true'] {
+.button[aria-pressed='true'],
+.undecided .wideChoice {
   border-color: var(--accent-ink);
   background: var(--accent-soft);
+}
+
+.narrowOnly {
+  display: none;
+}
+
+@media (max-width: 996px) {
+  .undecided .wideChoice {
+    border-color: var(--border-strong);
+    background: var(--surface-raised);
+  }
+
+  .undecided .narrowChoice {
+    border-color: var(--accent-ink);
+    background: var(--accent-soft);
+  }
+
+  .wideOnly {
+    display: none;
+  }
+
+  .narrowOnly {
+    display: block;
+  }
 }
 
 .caption {
@@ -111,7 +136,8 @@
   background: var(--verdict-passed-soft);
 }
 
-.added .sign {
+.added .sign::before {
+  content: '+';
   color: var(--verdict-passed);
   font-weight: var(--weight-semibold);
 }
@@ -120,7 +146,8 @@
   background: var(--verdict-failed-soft);
 }
 
-.removed .sign {
+.removed .sign::before {
+  content: '-';
   color: var(--verdict-failed);
   font-weight: var(--weight-semibold);
 }
@@ -131,6 +158,10 @@
 
 .line del {
   text-decoration: line-through;
+}
+
+.spoken::before {
+  content: attr(data-spoken);
 }
 
 .spoken {
