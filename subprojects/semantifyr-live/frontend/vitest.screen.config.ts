@@ -41,6 +41,8 @@ const mouse: BrowserCommand<[type: MouseAction, x: number, y: number, clickCount
 };
 
 export default defineConfig({
+  // out of node_modules, which Gradle fingerprints as the install's output: a run's results would make the next run stale
+  cacheDir: 'build/vite/screen',
   define: {
     __VERSION__: JSON.stringify('screen'),
     __BUILD_TIME__: JSON.stringify('screen'),

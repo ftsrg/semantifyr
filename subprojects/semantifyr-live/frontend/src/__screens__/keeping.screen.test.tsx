@@ -6,7 +6,7 @@
 
 import { createRoot } from 'react-dom/client'
 import { describe, expect, it, onTestFinished } from 'vitest'
-import { page, server } from 'vitest/browser'
+import { page, server, userEvent } from 'vitest/browser'
 
 import type { ResolvedColorMode } from '../lib/util/colorMode'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
@@ -173,4 +173,26 @@ describe('keeping work in the desktop shell', () => {
       })
     }
   }
+
+  it('keeps the save options button its width while its menu is open', async () => {
+    const { live, shell } = seedLive({ verification: discovered([{ caseInfo: BARRIER, status: 'stale' }, { caseInfo: TWO_TRAINS, status: 'stale' }], 'idle') })
+    const container = document.createElement('div')
+    document.body.append(container)
+    const root = createRoot(container)
+    onTestFinished(() => {
+      root.unmount()
+      container.remove()
+    })
+    root.render(<ShellRoot live={live} shell={shell} colorMode="light" />)
+    await expect.poll(() => {
+      return document.querySelector('.save-split [aria-label="Save options"]')
+    }).toBeTruthy()
+    const options = document.querySelector<HTMLElement>('.save-split [aria-label="Save options"]')!
+    const closed = options.getBoundingClientRect().width
+    await userEvent.click(options)
+    await expect.poll(() => {
+      return count('.save-menu')
+    }).toBe(1)
+    expect(options.getBoundingClientRect().width).toBe(closed)
+  })
 })

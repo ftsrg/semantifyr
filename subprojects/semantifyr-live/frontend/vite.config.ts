@@ -26,6 +26,8 @@ function getGitCommit(): string {
 const backendProxyTarget = process.env.VITE_BACKEND_PROXY_TARGET ?? 'http://localhost:18080';
 
 export default defineConfig({
+  // out of node_modules, which Gradle fingerprints as the install's output: a run's results would make the next run stale
+  cacheDir: 'build/vite/app',
   define: {
     __VERSION__: JSON.stringify(getVersion()),
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),

@@ -185,6 +185,45 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
     stampOnSuccess()
 }
 
+val testBrowser = providers.gradleProperty("testBrowser").orElse("chromium")
+
+fun NpmTask.runInTestBrowser(script: String, configuration: String) {
+    group = "verification"
+
+    configureSharedInputs()
+    inputs.file(project.layout.projectDirectory.file(configuration))
+    inputs.property("testBrowser", testBrowser)
+
+    npmCommand.set(listOf("run", script))
+    environment.put("TEST_BROWSER", testBrowser)
+
+    val buildDirectory = project.layout.buildDirectory
+    val taskName = name
+    val stamp = testBrowser.flatMap {
+        buildDirectory.file("$taskName-$it.stamp")
+    }
+    outputs.file(stamp)
+    doLast {
+        stamp.get().asFile.writeText("")
+    }
+}
+
+tasks.register<NpmTask>("screenTest") {
+    runInTestBrowser("screens", "vitest.screen.config.ts")
+    val buildDirectory = project.layout.buildDirectory
+    outputs.dir(
+        testBrowser.flatMap {
+            buildDirectory.dir("screens/$it")
+        },
+    )
+}
+
+tasks.register<NpmTask>("uiTest") {
+    runInTestBrowser("ui", "vitest.ui.config.ts")
+    inputs.files(npmAssemble)
+    inputs.files(cloneSysmlWorker)
+}
+
 tasks.register<NpmTask>("runDev") {
     group = "application"
 

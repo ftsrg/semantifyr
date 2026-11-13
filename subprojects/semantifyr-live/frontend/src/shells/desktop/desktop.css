@@ -38,8 +38,8 @@
 .example-button .chevron { color: var(--text-tertiary); }
 
 .save-split { display: inline-flex; }
-.save-split .button:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; padding-right: var(--space-3); }
-.save-split .button:last-child { width: 22px; padding: 0; justify-content: center; border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.save-split > .save-split-save { border-top-right-radius: 0; border-bottom-right-radius: 0; padding-right: var(--space-3); }
+.save-split > .save-split-options { width: 22px; padding: 0; justify-content: center; border-top-left-radius: 0; border-bottom-left-radius: 0; }
 
 .orientation {
   flex: none;
