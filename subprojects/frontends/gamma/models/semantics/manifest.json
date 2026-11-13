@@ -1,0 +1,132 @@
+{
+    "models": [
+        {
+            "file": "BeginningOfStepGuards.gamma",
+            "cases": [
+                { "name": "GuardReadsTheValueAtTheStepStart", "verdict": "Passed", "tier": "Integration" },
+                { "name": "GuardSeesTheWriteInTheNextStep", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "Cascade.gamma",
+            "cases": [
+                { "name": "LaterInstanceSeesTheEventInTheSameCycle", "verdict": "Passed", "tier": "Integration" },
+                { "name": "EarlierInstanceSeesTheReplyInALaterCycle", "verdict": "Passed", "tier": "Integration" },
+                { "name": "ReplyInTheSameCycleWithoutASecondRunViolated", "verdict": "Failed", "tier": "Integration" },
+                { "name": "InstanceListedTwiceRunsTwiceInACycle", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "Channels.gamma",
+            "cases": [
+                { "name": "RequiredPortsRaiseReachesTheProvidedPort", "verdict": "Passed", "tier": "Integration" },
+                { "name": "ProvidedPortsRaiseReachesTheRequiredPort", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "CrossRegionTransition.gamma",
+            "cases": [
+                { "name": "EnteringTheInnerTargetEntersItsParent", "verdict": "Passed", "tier": "Integration" },
+                { "name": "EnteringTheInnerTargetSkipsTheInitialState", "verdict": "Passed", "tier": "Integration" },
+                { "name": "LeavingTheInnerSourceExitsItsParent", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "ExitOrder.gamma",
+            "cases": [
+                { "name": "ParentEntersBeforeItsChild", "verdict": "Passed", "tier": "Integration" },
+                { "name": "ChildExitsBeforeItsParentThenTheTransitionActs", "verdict": "Passed", "tier": "Integration" },
+                { "name": "ParentExitingBeforeItsChildUnreachable", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "History.gamma",
+            "cases": [
+                { "name": "TransitionToTheHistoryNodeRestoresTheLastState", "verdict": "Passed", "tier": "Integration" },
+                { "name": "InitialNodeBeatsTheHistoryNodeRestoredStateUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "NeverActiveHistoryRegionTakesTheNodesTransition", "verdict": "Passed", "tier": "Integration" },
+                { "name": "NeverActiveHistoryRegionOtherStateUnreachable", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "Interfaces.gamma",
+            "cases": [
+                { "name": "InheritedEventCrossesTheChannel", "verdict": "Passed", "tier": "Integration" },
+                { "name": "OwnEventAnswersTheInheritedOne", "verdict": "Passed", "tier": "Integration" },
+                { "name": "InoutEventCrossesTheChannelInBothDirections", "verdict": "Passed", "tier": "Integration" },
+                { "name": "InoutEventArrivesOnlyFromTheOtherEnd", "verdict": "Passed", "tier": "Integration" },
+                { "name": "ProvidedPortRaisesTheOutputHalf", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "MillisecondTimeout.gamma",
+            "cases": [
+                { "name": "MillisecondsAndSecondsShareTheClock", "verdict": "Passed", "tier": "Integration" },
+                { "name": "TheShorterTimeoutIsUpFirst", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "OrderBasedPriority.gamma",
+            "cases": [
+                { "name": "FirstDeclaredFires", "verdict": "Passed", "tier": "Integration" },
+                { "name": "SecondDeclaredNeverFires", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "Parameters.gamma",
+            "cases": [
+                { "name": "TransientParameterIsResetWhenItsEventIsNotRaised", "verdict": "Passed", "tier": "Integration" },
+                { "name": "PersistentParameterKeepsItsValueWhenItsEventIsNotRaised", "verdict": "Passed", "tier": "Integration" },
+                { "name": "EnvironmentChoosesTheParameterWithTheRaise", "verdict": "Passed", "tier": "Integration" },
+                { "name": "RaisedArgumentCrossesTheChannel", "verdict": "Passed", "tier": "Integration" },
+                { "name": "RaisedArgumentReachesTheDisplay", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "Precedence.gamma",
+            "cases": [
+                { "name": "AndBindsTighterThanOr", "verdict": "Passed", "tier": "Integration" },
+                { "name": "NotBindsLooserThanEquality", "verdict": "Passed", "tier": "Integration" },
+                { "name": "EqualityBindsLooserThanOrdering", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AndBindsTighterThanOrInAProperty", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "Records.gamma",
+            "cases": [
+                { "name": "RecordVariableStartsFromItsInitialValue", "verdict": "Passed", "tier": "Integration" },
+                { "name": "FieldAndWholeRecordAssignment", "verdict": "Passed", "tier": "Integration" },
+                { "name": "NestedFieldAssignmentKeepsTheOtherFields", "verdict": "Passed", "tier": "Integration" },
+                { "name": "RecordAssignmentsReachTheEnd", "verdict": "Passed", "tier": "Integration" },
+                { "name": "RecordParameterFieldReachesAVariable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "RecordParameterFieldGuardBlocksSmallValueUnreachable", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "RegionOrder.gamma",
+            "cases": [
+                { "name": "LaterRegionWritesLast", "verdict": "Passed", "tier": "Integration" },
+                { "name": "EarlierRegionWritingLastUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "LaterRegionSeesTheEarlierRegionsWriteInTheSameStep", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "SameEffectTransitions.gamma",
+            "cases": [
+                { "name": "TransitionOnTheFirstTriggerFires", "verdict": "Passed", "tier": "Integration" },
+                { "name": "TransitionOnTheSecondTriggerFires", "verdict": "Passed", "tier": "Integration" },
+                { "name": "SelfTransitionOnTheFirstTriggerFires", "verdict": "Passed", "tier": "Integration" },
+                { "name": "SelfTransitionOnTheSecondTriggerFires", "verdict": "Passed", "tier": "Integration" },
+                { "name": "NoTransitionFiresWithoutItsTrigger", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "ValueBasedPriority.gamma",
+            "cases": [
+                { "name": "LowerPriorityNeverFires", "verdict": "Passed", "tier": "Integration" },
+                { "name": "HighestPriorityFires", "verdict": "Passed", "tier": "Integration" },
+                { "name": "EqualPrioritiesChooseNondeterministically", "verdict": "Passed", "tier": "Integration" }
+            ]
+        }
+    ]
+}

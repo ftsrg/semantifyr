@@ -1,0 +1,55 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package RegionOrder
+
+interface Control {
+    in event start
+}
+
+statechart Machine [
+    port control : provides Control
+] {
+    var last : integer
+    var seen : boolean
+
+    region First {
+        initial FirstInitial
+        state FirstWaiting
+        state FirstDone
+    }
+
+    region Second {
+        initial SecondInitial
+        state SecondWaiting
+        state SecondDone
+    }
+
+    region Reader {
+        initial ReaderInitial
+        state ReaderWaiting
+        state ReaderDone
+    }
+
+    transition from FirstInitial to FirstWaiting
+    transition from SecondInitial to SecondWaiting
+    transition from ReaderInitial to ReaderWaiting
+    transition from FirstWaiting to FirstDone when control.start / last := 1; seen := true;
+    transition from SecondWaiting to SecondDone when control.start / last := 2;
+    transition from ReaderWaiting to ReaderDone when control.start [seen]
+}
+
+verification case LaterRegionWritesLast of Machine {
+    AG (not state Second.SecondDone or variable last = 2)
+}
+
+verification case EarlierRegionWritingLastUnreachable of Machine {
+    EF (state Second.SecondDone and variable last = 1)
+}
+
+verification case LaterRegionSeesTheEarlierRegionsWriteInTheSameStep of Machine {
+    AG (not state First.FirstDone or state Reader.ReaderDone)
+}
