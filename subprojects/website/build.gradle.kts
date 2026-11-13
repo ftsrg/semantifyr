@@ -12,7 +12,11 @@ import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
     id("hu.bme.mit.semantifyr.gradle.conventions.nodejs")
+    kotlin("jvm")
+    kotlin("plugin.serialization")
 }
+
+val generate = sourceSets.create("generate")
 
 val editorCommon = configurations.dependencyScope("editorCommon")
 val editorCommonFiles = configurations.resolvable("editorCommonFiles") {
@@ -45,6 +49,11 @@ val apiDocsFiles = configurations.resolvable("apiDocsFiles") {
 }
 
 dependencies {
+    add(generate.implementationConfigurationName, project(":cli-common"))
+    add(generate.implementationConfigurationName, project(":verifier"))
+    add(generate.implementationConfigurationName, project(":semantifyr-live-backend"))
+    add(generate.implementationConfigurationName, libs.kotlinx.serialization.json)
+
     testImplementation(project(":oxsts.lang"))
     testImplementation(testFixtures(project(":oxsts.lang")))
 
@@ -101,6 +110,37 @@ val cliReference = listOf(
     cliReferenceTask("gamma-help", semantifyrGamma, "--help"),
     cliReferenceTask("gamma-verify", semantifyrGamma, "verify", "--help"),
     cliReferenceTask("gamma-compile", semantifyrGamma, "compile", "--help"),
+)
+
+val generatedReferenceDir = layout.buildDirectory.dir("generated-reference")
+
+// the live backend's build information changes with every build and says nothing of what the pages show
+normalization {
+    runtimeClasspath {
+        ignore("build-info.properties")
+    }
+}
+
+// written for the alias @generated-reference: what the pages show of a type, generated from it
+fun generatedReferenceTask(name: String) = tasks.register<JavaExec>("generatedReference_$name") {
+    val outputFile = generatedReferenceDir.map { it.file("$name.json") }
+    classpath = generate.runtimeClasspath
+    mainClass = "hu.bme.mit.semantifyr.website.GenerateReferenceKt"
+    args(name)
+    outputs.file(outputFile)
+    outputs.cacheIf { true }
+    doFirst {
+        standardOutput = outputFile.get().asFile.outputStream()
+    }
+    doLast {
+        standardOutput.close()
+    }
+}
+
+val generatedReference = listOf(
+    generatedReferenceTask("exit-codes"),
+    generatedReferenceTask("report-fields"),
+    generatedReferenceTask("live"),
 )
 
 tasks.npmInstall {
@@ -178,6 +218,8 @@ fun NpmTask.configureSharedInputs() {
     inputs.file(rootProject.layout.projectDirectory.file("eslint.config.base.js")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(rootProject.layout.projectDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(rootProject.layout.projectDirectory.file("package-lock.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(rootProject.layout.projectDirectory.file("gradle.properties")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(rootProject.layout.projectDirectory.file("subprojects/semantifyr-vscode/package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(rootProject.layout.projectDirectory.dir("subprojects/oxsts.lang/src/main/resources/hu/bme/mit/semantifyr/oxsts/lang/library")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(rootProject.layout.projectDirectory.file("oxsts-test-models/constructs/constructs.tsv")).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -195,10 +237,29 @@ fun NpmTask.configureSharedInputs() {
     inputs.files(editorCommonFiles).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
+// the state the site describes: the commit, and its tag when it is a release
+val siteCommit = providers.exec {
+    commandLine("git", "rev-parse", "HEAD")
+    isIgnoreExitValue = true
+}.standardOutput.asText.map {
+    it.trim()
+}
+val siteTag = providers.exec {
+    commandLine("git", "describe", "--exact-match", "--tags", "HEAD")
+    isIgnoreExitValue = true
+}.standardOutput.asText.map {
+    it.trim()
+}
+
 val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     configureSharedInputs()
     inputs.property("liveBackendUrl", providers.environmentVariable("SEMANTIFYR_LIVE_URL").orElse(""))
+    inputs.property("siteCommit", siteCommit)
+    inputs.property("siteTag", siteTag)
+    environment.put("SEMANTIFYR_SITE_COMMIT", siteCommit)
+    environment.put("SEMANTIFYR_SITE_TAG", siteTag)
     inputs.files(cliReference).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(generatedReference).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneSysmlConstructs).withPathSensitivity(PathSensitivity.RELATIVE)
 
     npmCommand.set(listOf("run", "assemble"))

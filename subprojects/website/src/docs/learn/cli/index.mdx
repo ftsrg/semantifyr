@@ -10,10 +10,14 @@ import compile from '@cli-reference/compile.txt';
 import list from '@cli-reference/list.txt';
 import metrics from '@cli-reference/metrics.txt';
 import portfolios from '@cli-reference/portfolios-help.txt';
+import exitCodes from '@generated-reference/exit-codes.json';
+import reportFields from '@generated-reference/report-fields.json';
+import ExitCodeTable from '@site/src/components/ExitCodeTable';
+import ReportFields from '@site/src/components/ReportFields';
 
 # Command Line
 
-The `semantifyr` command lists, compiles, measures and verifies the verification cases of OXSTS models. `semantifyr-sysml` for [SysML v2 models](sysml.mdx) and `semantifyr-gamma` for [Gamma models](gamma.mdx) share its verification options, output and exit codes. Each launcher comes in a release zip of its own with the Theta backend ([Getting Started](../getting-started.md#option-d-install-the-command-line-interface-for-scripts-and-ci)), or builds from source with `./gradlew :semantifyr-cli:installDist`, `:sysml-cli:installDist` or `:gamma-cli:installDist`; `semantifyr` is then `subprojects/semantifyr-cli/build/install/semantifyr/bin/semantifyr`. They need a Java 25 runtime and at least one verification backend.
+The `semantifyr` command lists, compiles, measures and verifies the verification cases of OXSTS models. `semantifyr-sysml` for [SysML v2 models](sysml.mdx) and `semantifyr-gamma` for [Gamma models](gamma.mdx) share its verification options, output and exit codes. Each launcher is built from source with `./gradlew :semantifyr-cli:installDist`, `:sysml-cli:installDist` or `:gamma-cli:installDist`, its distribution carrying the Theta backend ([Getting Started](../getting-started.md#option-c-install-the-command-line-interface-for-scripts-and-ci)); `semantifyr` is then `subprojects/semantifyr-cli/build/install/semantifyr/bin/semantifyr`. They need a Java 25 runtime and at least one verification backend.
 
 <CodeBlock language="text">{help}</CodeBlock>
 
@@ -41,7 +45,11 @@ With `--json` it prints one JSON object per case and line, as each case finishes
 {"case":"semantifyr::verification::smoke::CounterReachesThree","exitCode":4,"phase":"compilation","error":"Property body must have a temporal operator (`AG` or `EF`) at the top level."}
 ```
 
-`report.json` holds the rest: `verificationCase`, `portfolioId`, `optimization`, `timeout` and `result`, whose `verdict` is `Passed`, `Failed`, `Inconclusive`, `NotSupported`, `Timeout` or `Errored`, with the `message` of the backend, `metadata.backendId`, the backend configuration that answered, and `metrics`: the durations of the run, of the backend and of the compiler's phases, the optimizer's statistics and the model sizes.
+`report.json` holds the rest, in these fields:
+
+<ReportFields fields={reportFields} />
+
+`result.metadata.backendId` names the backend configuration that answered and `result.message` carries its message. `result.soundness` is the direction in which that configuration's verdicts can be trusted ([soundness directions](portfolios.mdx#soundness-directions)), and `result.isTrusted` says whether that direction backs this verdict.
 
 ### Verdicts
 
@@ -77,18 +85,6 @@ The portfolio ids are listed under [Portfolios](portfolios.mdx).
 
 ## Exit codes
 
-| Code | Meaning |
-| --- | --- |
-| 0 | Every selected case passed, or the command completed. |
-| 1 | Internal error: an unexpected exception, or the launcher could not start Java. |
-| 2 | Usage error: an unknown command or option, a missing or invalid value, conflicting options, an unknown portfolio. |
-| 3 | Input error: a model or library path does not exist, is not readable, or is not a model file of the launcher (`.oxsts`, `.sysml` or `.gamma`) or, where a directory is allowed, a directory holding one, or the case selection names or matches no case. |
-| 4 | Compilation error: the model does not parse, validate or translate, or a case does not compile. |
-| 5 | Failed: a property does not hold. |
-| 6 | Inconclusive or NotSupported: a backend could not decide a case. |
-| 7 | Timeout. |
-| 8 | Errored: a backend failed, or the portfolio has no available backend. |
-| 9 | Back-annotation error: a backend returned a witness that could not be back-annotated. |
-| 10 | Output error: the artifact directory cannot be created or written. |
+<ExitCodeTable codes={exitCodes} />
 
 Codes 2 to 4, code 10 and an unavailable portfolio stop the command before it verifies anything, or, in `compile` and `metrics`, at the case that does not compile. Every launcher's `verify` runs every case, including those after a case that does not compile, and exits with the highest of their codes: 0 means every case passed, 4 that some case did not compile and the rest passed, 5 that some case failed and the rest passed, failed or did not compile.
