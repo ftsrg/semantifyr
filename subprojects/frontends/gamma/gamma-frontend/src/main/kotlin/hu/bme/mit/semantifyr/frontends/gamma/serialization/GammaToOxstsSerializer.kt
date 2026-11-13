@@ -1101,10 +1101,22 @@ class GammaToOxstsSerializer(
         expression: RaiseEventAct,
         redefines: String,
     ) {
-        val path = instancePath(expression).joinToString(".")
+        // a bound port is a reference typed Port, so the event is named on the instance port the binding reaches
+        val path = instancePath(expression).toMutableList()
+        var component = GammaUtils.getReferencedComponent(expression)
+        var port = expression.port
+        while (component is CompositeComponentDeclaration) {
+            val binding = component.bindings.firstOrNull {
+                it.port == port
+            } ?: break
+            path += markName(binding.boundPort.instance.name)
+            component = binding.boundPort.instance.component
+            port = binding.boundPort.port
+        }
+        val portPath = (path + markName(port.name)).joinToString(".")
         appendIndent("redefine contains $redefines: IsEventRaisedExpression") {
-            appendLine("redefine refers port: Port = $path.${markName(expression.port.name)}")
-            appendLine("redefine refers event: Event = $path.${outputEventPath(expression.port, expression.event, markName(expression.port.name))}")
+            appendLine("redefine refers port: Port = $portPath")
+            appendLine("redefine refers event: Event = ${outputEventPath(port, expression.event, portPath)}")
         }
     }
 
