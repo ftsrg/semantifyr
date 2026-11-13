@@ -36,12 +36,36 @@ statechart Machine [
         state OrderingEqualityTaken
     }
 
+    region Regrouped {
+        initial RegroupedInitial
+        state RegroupedWaiting
+        state RegroupedTaken
+    }
+
+    region NegatedTrue {
+        initial NegatedTrueInitial
+        state NegatedTrueWaiting
+        state NegatedTrueTaken
+    }
+
+    region OrderingFalse {
+        initial OrderingFalseInitial
+        state OrderingFalseWaiting
+        state OrderingFalseTaken
+    }
+
     transition from AndOrInitial to AndOrWaiting
     transition from NotEqualityInitial to NotEqualityWaiting
     transition from OrderingEqualityInitial to OrderingEqualityWaiting
     transition from AndOrWaiting to AndOrTaken when control.start [first or second and third]
     transition from NotEqualityWaiting to NotEqualityTaken when control.start [not count = 1]
     transition from OrderingEqualityWaiting to OrderingEqualityTaken when control.start [count < 1 = first]
+    transition from RegroupedInitial to RegroupedWaiting
+    transition from NegatedTrueInitial to NegatedTrueWaiting
+    transition from OrderingFalseInitial to OrderingFalseWaiting
+    transition from RegroupedWaiting to RegroupedTaken when control.start [(first or second) and third]
+    transition from NegatedTrueWaiting to NegatedTrueTaken when control.start [not count = 0]
+    transition from OrderingFalseWaiting to OrderingFalseTaken when control.start [count < 1 = second]
 }
 
 verification case AndBindsTighterThanOr of Machine {
@@ -58,4 +82,20 @@ verification case EqualityBindsLooserThanOrdering of Machine {
 
 verification case AndBindsTighterThanOrInAProperty of Machine {
     AG (variable first or variable second and variable third)
+}
+
+verification case RegroupedOrBeforeAndUnreachable of Machine {
+    EF state Regrouped.RegroupedTaken
+}
+
+verification case NegatedTrueEqualityUnreachable of Machine {
+    EF state NegatedTrue.NegatedTrueTaken
+}
+
+verification case OrderingComparedWithFalseUnreachable of Machine {
+    EF state OrderingFalse.OrderingFalseTaken
+}
+
+verification case RegroupedOrBeforeAndInAPropertyViolated of Machine {
+    AG ((variable first or variable second) and variable third)
 }

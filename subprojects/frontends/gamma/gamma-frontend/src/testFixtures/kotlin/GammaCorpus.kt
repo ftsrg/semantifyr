@@ -9,17 +9,14 @@ package hu.bme.mit.semantifyr.frontends.gamma.testing
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.Path
-import kotlin.io.path.exists
 import kotlin.io.path.readText
 
 @Serializable
 enum class GammaCorpusVerdict {
     Passed,
     Failed,
-    Unknown,
 }
 
 @Serializable
@@ -40,7 +37,6 @@ data class GammaCorpusCase(
             return when (verdict) {
                 GammaCorpusVerdict.Passed -> VerificationVerdict.Passed
                 GammaCorpusVerdict.Failed -> VerificationVerdict.Failed
-                GammaCorpusVerdict.Unknown -> error("Corpus case $name has no expected verdict")
             }
         }
 }
@@ -76,15 +72,9 @@ object GammaCorpus {
         ignoreUnknownKeys = true
     }
 
-    val modelsRoot: Path = Path("..", "models")
+    val semantics: Path = Path("..", "models", "semantics")
 
-    fun manifestDirectories(root: Path = modelsRoot): List<Path> {
-        return Files.list(root).use { directories ->
-            directories.filter {
-                it.resolve(MANIFEST_FILE).exists()
-            }.sorted().toList()
-        }
-    }
+    val corpus: Path = Path("..", "models", "corpus")
 
     fun load(directory: Path): List<GammaCorpusEntry> {
         val manifest = json.decodeFromString<GammaCorpusManifest>(directory.resolve(MANIFEST_FILE).readText())
@@ -92,12 +82,6 @@ object GammaCorpus {
             model.cases.map {
                 GammaCorpusEntry(directory, model, it)
             }
-        }
-    }
-
-    fun entries(root: Path = modelsRoot): List<GammaCorpusEntry> {
-        return manifestDirectories(root).flatMap {
-            load(it)
         }
     }
 

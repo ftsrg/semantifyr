@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package MillisecondTimeout
+package Timeouts
 
 statechart Machine {
     timeout short
@@ -32,10 +32,10 @@ statechart Machine {
     transition from SlowWaiting to SlowDone when timeout long
 }
 
-verification case MillisecondsAndSecondsShareTheClock of Machine {
-    AG not (state Slow.SlowDone and state Fast.FastWaiting)
-}
-
 verification case TheShorterTimeoutIsUpFirst of Machine {
     EF (state Fast.FastDone and state Slow.SlowWaiting)
+}
+
+verification case TheLongerTimeoutUpFirstUnreachable of Machine {
+    EF (state Slow.SlowDone and state Fast.FastWaiting)
 }

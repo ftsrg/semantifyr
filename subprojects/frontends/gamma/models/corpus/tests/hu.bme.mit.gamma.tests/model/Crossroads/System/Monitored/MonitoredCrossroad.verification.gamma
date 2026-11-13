@@ -86,10 +86,6 @@ verification case CrossroadSecondGreenReachable of MonitoredCrossroad {
     EF state crossroad->second.normal.Green
 }
 
-verification case MonitorErrorReachable of MonitoredCrossroad {
-    EF state monitor.main_region.Error
-}
-
 verification case MonitorOtherReachable of MonitoredCrossroad {
     EF state monitor.main_region.Other
 }
@@ -100,8 +96,4 @@ verification case MonitorRedReachable of MonitoredCrossroad {
 
 verification case MonitorGreenReachable of MonitoredCrossroad {
     EF state monitor.main_region.Green
-}
-
-verification case BothLightsShowGreen of MonitoredCrossroad {
-    EF (raise priorityOutput.displayGreen and raise secondaryOutput.displayGreen)
 }

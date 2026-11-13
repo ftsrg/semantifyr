@@ -53,3 +53,7 @@ verification case EarlierRegionWritingLastUnreachable of Machine {
 verification case LaterRegionSeesTheEarlierRegionsWriteInTheSameStep of Machine {
     AG (not state First.FirstDone or state Reader.ReaderDone)
 }
+
+verification case LaterRegionMissingTheEarlierRegionsWriteUnreachable of Machine {
+    EF (state First.FirstDone and state Reader.ReaderWaiting)
+}

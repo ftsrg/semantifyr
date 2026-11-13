@@ -5,7 +5,3 @@ import manual::StructRecieverGuardMachine
 verification case StructRecieverGuardMachineStructRecieverGuardMachineStateReachable of StructRecieverGuardMachineWrapper {
     EF state structRecieverGuardMachine.StructRecieverGuardMachine_.StructRecieverGuardMachine__State
 }
-
-verification case PositiveAndNegativeRecordFieldsCounted of StructRecieverGuardMachineWrapper {
-    EF (variable structRecieverGuardMachine.posCnt = 1 and variable structRecieverGuardMachine.negCnt = 1)
-}

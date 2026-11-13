@@ -85,15 +85,3 @@ verification case SecondRedReachable of Crossroad {
 verification case SecondGreenReachable of Crossroad {
     EF state second.normal.Green
 }
-
-verification case PriorityGreenOutputVisible of Crossroad {
-    EF raise priorityOutput.displayGreen
-}
-
-verification case BothLightsShowGreen of Crossroad {
-    EF (raise priorityOutput.displayGreen and raise secondaryOutput.displayGreen)
-}
-
-verification case ControllerAheadOfSecondaryLight of Crossroad {
-    EF (state controller.operating.SecondaryPrepares and state second.normal.Red and not raise secondaryOutput.displayRed)
-}

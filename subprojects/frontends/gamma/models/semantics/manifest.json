@@ -1,42 +1,59 @@
 {
     "models": [
         {
-            "file": "BeginningOfStepGuards.gamma",
-            "cases": [
-                { "name": "GuardReadsTheValueAtTheStepStart", "verdict": "Passed", "tier": "Integration" },
-                { "name": "GuardSeesTheWriteInTheNextStep", "verdict": "Passed", "tier": "Integration" }
-            ]
-        },
-        {
             "file": "Cascade.gamma",
             "cases": [
                 { "name": "LaterInstanceSeesTheEventInTheSameCycle", "verdict": "Passed", "tier": "Integration" },
                 { "name": "EarlierInstanceSeesTheReplyInALaterCycle", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ReplyInTheSameCycleWithoutASecondRunViolated", "verdict": "Failed", "tier": "Integration" },
-                { "name": "InstanceListedTwiceRunsTwiceInACycle", "verdict": "Passed", "tier": "Integration" }
+                { "name": "InstanceListedTwiceRunsTwiceInACycle", "verdict": "Passed", "tier": "Integration" },
+                { "name": "LaterInstanceMissingTheEventOfItsCycleUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
             "file": "Channels.gamma",
             "cases": [
                 { "name": "RequiredPortsRaiseReachesTheProvidedPort", "verdict": "Passed", "tier": "Integration" },
-                { "name": "ProvidedPortsRaiseReachesTheRequiredPort", "verdict": "Passed", "tier": "Integration" }
+                { "name": "ProvidedPortsRaiseReachesTheRequiredPort", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AnswerWithoutAQuestionUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
-            "file": "CrossRegionTransition.gamma",
-            "cases": [
-                { "name": "EnteringTheInnerTargetEntersItsParent", "verdict": "Passed", "tier": "Integration" },
-                { "name": "EnteringTheInnerTargetSkipsTheInitialState", "verdict": "Passed", "tier": "Integration" },
-                { "name": "LeavingTheInnerSourceExitsItsParent", "verdict": "Passed", "tier": "Integration" }
-            ]
-        },
-        {
-            "file": "ExitOrder.gamma",
+            "file": "EntryAndExitOrder.gamma",
             "cases": [
                 { "name": "ParentEntersBeforeItsChild", "verdict": "Passed", "tier": "Integration" },
-                { "name": "ChildExitsBeforeItsParentThenTheTransitionActs", "verdict": "Passed", "tier": "Integration" },
-                { "name": "ParentExitingBeforeItsChildUnreachable", "verdict": "Failed", "tier": "Integration" }
+                { "name": "ChildEnteringBeforeItsParentUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "ChildExitsThenParentExitsThenTheTransitionActsThenTheTargetEnters", "verdict": "Passed", "tier": "Integration" },
+                { "name": "ParentExitingBeforeItsChildUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "TargetEnteringBeforeTheTransitionActsUnreachable", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "Events.gamma",
+            "cases": [
+                { "name": "BothEventsOfAPortAreRaisedInOneStep", "verdict": "Passed", "tier": "Integration" },
+                { "name": "OneEventOfAPortRaisedWithoutTheOtherUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "OutputIsVisibleAfterTheStepThatRaisedIt", "verdict": "Passed", "tier": "Integration" },
+                { "name": "OutputKeptBeyondTheNextStepUnreachable", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "GuardEvaluation.gamma",
+            "cases": [
+                { "name": "BeginningOfStepGuardMissesTheWriteOfItsStep", "verdict": "Passed", "tier": "Integration" },
+                { "name": "OnTheFlyGuardMissingTheWriteOfItsStepUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "GuardSeesTheExitActionOfAnEarlierStep", "verdict": "Passed", "tier": "Integration" },
+                { "name": "GuardSeeingTheExitActionOfItsOwnTransitionUnreachable", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "Hierarchy.gamma",
+            "cases": [
+                { "name": "EnteringTheInnerTargetEntersItsParent", "verdict": "Passed", "tier": "Integration" },
+                { "name": "EnteringTheInnerTargetThroughItsInitialStateUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "InnerSourceActiveAfterLeavingItUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "EnteringOneRegionEntersItsOrthogonalRegion", "verdict": "Passed", "tier": "Integration" },
+                { "name": "OrthogonalStateActiveAfterLeavingTheParentUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
@@ -54,22 +71,9 @@
                 { "name": "InheritedEventCrossesTheChannel", "verdict": "Passed", "tier": "Integration" },
                 { "name": "OwnEventAnswersTheInheritedOne", "verdict": "Passed", "tier": "Integration" },
                 { "name": "InoutEventCrossesTheChannelInBothDirections", "verdict": "Passed", "tier": "Integration" },
-                { "name": "InoutEventArrivesOnlyFromTheOtherEnd", "verdict": "Passed", "tier": "Integration" },
-                { "name": "ProvidedPortRaisesTheOutputHalf", "verdict": "Passed", "tier": "Integration" }
-            ]
-        },
-        {
-            "file": "MillisecondTimeout.gamma",
-            "cases": [
-                { "name": "MillisecondsAndSecondsShareTheClock", "verdict": "Passed", "tier": "Integration" },
-                { "name": "TheShorterTimeoutIsUpFirst", "verdict": "Passed", "tier": "Integration" }
-            ]
-        },
-        {
-            "file": "OrderBasedPriority.gamma",
-            "cases": [
-                { "name": "FirstDeclaredFires", "verdict": "Passed", "tier": "Integration" },
-                { "name": "SecondDeclaredNeverFires", "verdict": "Passed", "tier": "Integration" }
+                { "name": "InoutEventArrivingFromItsOwnEndUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "ProvidedPortRaisesTheOutputHalf", "verdict": "Passed", "tier": "Integration" },
+                { "name": "OwnEventWithoutTheInheritedOneUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
@@ -79,7 +83,11 @@
                 { "name": "PersistentParameterKeepsItsValueWhenItsEventIsNotRaised", "verdict": "Passed", "tier": "Integration" },
                 { "name": "EnvironmentChoosesTheParameterWithTheRaise", "verdict": "Passed", "tier": "Integration" },
                 { "name": "RaisedArgumentCrossesTheChannel", "verdict": "Passed", "tier": "Integration" },
-                { "name": "RaisedArgumentReachesTheDisplay", "verdict": "Passed", "tier": "Integration" }
+                { "name": "RaisedArgumentChangedOnTheChannelUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "TransientParameterKeptUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "PersistentParameterLosingItsValueUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "NegativeArgumentTakesItsGuardedTransition", "verdict": "Passed", "tier": "Integration" },
+                { "name": "NegativeArgumentTakingThePositiveTransitionUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
@@ -88,7 +96,11 @@
                 { "name": "AndBindsTighterThanOr", "verdict": "Passed", "tier": "Integration" },
                 { "name": "NotBindsLooserThanEquality", "verdict": "Passed", "tier": "Integration" },
                 { "name": "EqualityBindsLooserThanOrdering", "verdict": "Passed", "tier": "Integration" },
-                { "name": "AndBindsTighterThanOrInAProperty", "verdict": "Passed", "tier": "Integration" }
+                { "name": "AndBindsTighterThanOrInAProperty", "verdict": "Passed", "tier": "Integration" },
+                { "name": "RegroupedOrBeforeAndUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "NegatedTrueEqualityUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "OrderingComparedWithFalseUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "RegroupedOrBeforeAndInAPropertyViolated", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
@@ -99,7 +111,9 @@
                 { "name": "NestedFieldAssignmentKeepsTheOtherFields", "verdict": "Passed", "tier": "Integration" },
                 { "name": "RecordAssignmentsReachTheEnd", "verdict": "Passed", "tier": "Integration" },
                 { "name": "RecordParameterFieldReachesAVariable", "verdict": "Passed", "tier": "Integration" },
-                { "name": "RecordParameterFieldGuardBlocksSmallValueUnreachable", "verdict": "Failed", "tier": "Integration" }
+                { "name": "RecordParameterFieldGuardBlocksSmallValueUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "RecordVariableLosingItsInitialValueUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "NestedFieldAssignmentChangingAnotherFieldUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
@@ -107,40 +121,52 @@
             "cases": [
                 { "name": "LaterRegionWritesLast", "verdict": "Passed", "tier": "Integration" },
                 { "name": "EarlierRegionWritingLastUnreachable", "verdict": "Failed", "tier": "Integration" },
-                { "name": "LaterRegionSeesTheEarlierRegionsWriteInTheSameStep", "verdict": "Passed", "tier": "Integration" }
+                { "name": "LaterRegionSeesTheEarlierRegionsWriteInTheSameStep", "verdict": "Passed", "tier": "Integration" },
+                { "name": "LaterRegionMissingTheEarlierRegionsWriteUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
-            "file": "SameEffectTransitions.gamma",
+            "file": "RegionSchedule.gamma",
+            "cases": [
+                { "name": "BottomUpInnerTransitionFiresFirst", "verdict": "Passed", "tier": "Integration" },
+                { "name": "TopDownInnerTransitionUnreachable", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "SynchronousComposition.gamma",
+            "cases": [
+                { "name": "ReceiverSeesTheRaiseInTheNextCycle", "verdict": "Passed", "tier": "Integration" },
+                { "name": "ReceiverSeeingTheRaiseInItsCycleViolated", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "Timeouts.gamma",
+            "cases": [
+                { "name": "TheShorterTimeoutIsUpFirst", "verdict": "Passed", "tier": "Integration" },
+                { "name": "TheLongerTimeoutUpFirstUnreachable", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "TransitionPriority.gamma",
+            "cases": [
+                { "name": "OrderBasedFirstDeclaredFires", "verdict": "Passed", "tier": "Integration" },
+                { "name": "OrderBasedSecondDeclaredUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "PriorityOffSecondDeclaredFires", "verdict": "Passed", "tier": "Integration" },
+                { "name": "ValueBasedHighestPriorityFires", "verdict": "Passed", "tier": "Integration" },
+                { "name": "ValueBasedEqualPrioritiesBothFire", "verdict": "Passed", "tier": "Integration" },
+                { "name": "ValueBasedLowerPriorityUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "LowerWrittenPriorityFiresUnderPriorityOff", "verdict": "Passed", "tier": "Integration" },
+                { "name": "HigherWrittenPriorityBlocksTheLowerUnderPriorityOffViolated", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "Triggers.gamma",
             "cases": [
                 { "name": "TransitionOnTheFirstTriggerFires", "verdict": "Passed", "tier": "Integration" },
                 { "name": "TransitionOnTheSecondTriggerFires", "verdict": "Passed", "tier": "Integration" },
                 { "name": "SelfTransitionOnTheFirstTriggerFires", "verdict": "Passed", "tier": "Integration" },
                 { "name": "SelfTransitionOnTheSecondTriggerFires", "verdict": "Passed", "tier": "Integration" },
-                { "name": "NoTransitionFiresWithoutItsTrigger", "verdict": "Passed", "tier": "Integration" }
-            ]
-        },
-        {
-            "file": "SeveralEventsOnOnePort.gamma",
-            "cases": [
-                { "name": "BothEventsAreRaisedInOneStep", "verdict": "Passed", "tier": "Integration" },
-                { "name": "OneEventRaisedWithoutTheOtherUnreachable", "verdict": "Failed", "tier": "Integration" }
-            ]
-        },
-        {
-            "file": "ValueBasedPriority.gamma",
-            "cases": [
-                { "name": "LowerPriorityNeverFires", "verdict": "Passed", "tier": "Integration" },
-                { "name": "HighestPriorityFires", "verdict": "Passed", "tier": "Integration" },
-                { "name": "EqualPrioritiesChooseNondeterministically", "verdict": "Passed", "tier": "Integration" }
-            ]
-        },
-        {
-            "file": "WrittenPriorityUnderPriorityOff.gamma",
-            "cases": [
-                { "name": "LowerWrittenPriorityFires", "verdict": "Passed", "tier": "Integration" },
-                { "name": "HigherWrittenPriorityFires", "verdict": "Passed", "tier": "Integration" },
-                { "name": "HigherWrittenPriorityBlocksTheLowerViolated", "verdict": "Failed", "tier": "Integration" }
+                { "name": "TransitionWithoutItsTriggerUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         }
     ]

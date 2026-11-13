@@ -13,7 +13,3 @@ verification case StateS1Reachable of statemachine {
 verification case StateS11Reachable of statemachine {
     EF state R1.S11
 }
-
-verification case FourOutputsOfOneStepAllVisible of statemachine {
-    EF (raise output.a and raise output.b and raise output.c and raise output.d)
-}

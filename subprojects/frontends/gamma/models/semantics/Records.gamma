@@ -27,9 +27,9 @@ interface Positions {
 statechart Plotter [
     port control : provides Control
 ] {
-    var position : Point := #Point { x := 3 }
+    var position : Point := #Point { x := 3, y := 0 }
     var copy : Point
-    var box : Box := #Box { corner := #Point { y := -1 } }
+    var box : Box := #Box { corner := #Point { x := 0, y := -1 }, open := false }
 
     region Main {
         initial MainInitial
@@ -80,4 +80,12 @@ verification case RecordParameterFieldReachesAVariable of Tracker {
 
 verification case RecordParameterFieldGuardBlocksSmallValueUnreachable of Tracker {
     EF (state Main.Far and variable lastX = 3)
+}
+
+verification case RecordVariableLosingItsInitialValueUnreachable of Plotter {
+    EF (state Main.Middle and not (variable position).x = 3)
+}
+
+verification case NestedFieldAssignmentChangingAnotherFieldUnreachable of Plotter {
+    EF (state Main.Done and not (variable box).corner.y = -1)
 }

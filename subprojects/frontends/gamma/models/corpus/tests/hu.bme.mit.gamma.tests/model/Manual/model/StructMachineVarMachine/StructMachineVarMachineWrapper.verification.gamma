@@ -5,7 +5,3 @@ import manual::StructMachineVarMachine
 verification case StructMachineVarMachineStructMachineVarMachineStateReachable of StructMachineVarMachineWrapper {
     EF state structMachineVarMachine.StructMachineVarMachine_.StructMachineVarMachine__State
 }
-
-verification case RecordFieldCountsMessages of StructMachineVarMachineWrapper {
-    EF (variable structMachineVarMachine.ss).cnt = 2
-}

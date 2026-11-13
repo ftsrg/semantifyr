@@ -60,3 +60,7 @@ verification case RequiredPortsRaiseReachesTheProvidedPort of System {
 verification case ProvidedPortsRaiseReachesTheRequiredPort of System {
     EF state client.Main.Answered
 }
+
+verification case AnswerWithoutAQuestionUnreachable of System {
+    EF (state client.Main.Answered and state server.Main.Waiting)
+}

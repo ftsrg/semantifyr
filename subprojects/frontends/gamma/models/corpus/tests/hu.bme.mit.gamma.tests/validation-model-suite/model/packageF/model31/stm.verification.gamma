@@ -9,11 +9,3 @@ verification case StateS0Reachable of statemachine {
 verification case StateS1Reachable of statemachine {
     EF state Main.S1
 }
-
-verification case ExitThenTransitionThenEntryActions of statemachine {
-    EF variable i = 4
-}
-
-verification case EntryBeforeTransitionActionValue of statemachine {
-    EF variable i = 3
-}

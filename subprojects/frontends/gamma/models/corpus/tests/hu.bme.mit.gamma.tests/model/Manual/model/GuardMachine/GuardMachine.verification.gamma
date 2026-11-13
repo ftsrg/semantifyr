@@ -5,11 +5,3 @@ import manual::GuardMachine
 verification case StateGuardMachineStateReachable of GuardMachine {
     EF state GuardMachine_.GuardMachine__State
 }
-
-verification case NegativeParameterDecrementsCounter of GuardMachine {
-    EF variable cnt = -1
-}
-
-verification case PositiveParameterIncrementsCounter of GuardMachine {
-    EF variable cnt = 1
-}

@@ -19,6 +19,10 @@ interface Readings {
     out event reading(value : integer)
 }
 
+interface Values {
+    out event value(amount : integer)
+}
+
 @TransitionPriority = order-based
 statechart Probe [
     port control : provides Control,
@@ -71,6 +75,23 @@ statechart Display [
     transition from Waiting to Showing when input.reading / shown := input.reading::value;
 }
 
+statechart Counter [
+    port input : requires Values
+] {
+    var last : integer
+
+    region Main {
+        initial MainInitial
+        state Waiting
+        state Positive
+        state Negative
+    }
+
+    transition from MainInitial to Waiting
+    transition from Waiting to Positive when input.value [input.value::amount > 0] / last := input.value::amount;
+    transition from Waiting to Negative when input.value [input.value::amount < 0] / last := input.value::amount;
+}
+
 sync Monitoring [
     port control : provides Control
 ] {
@@ -96,6 +117,22 @@ verification case RaisedArgumentCrossesTheChannel of Monitoring {
     AG (not state display.Main.Showing or variable display.shown = 5)
 }
 
-verification case RaisedArgumentReachesTheDisplay of Monitoring {
-    EF state display.Main.Showing
+verification case RaisedArgumentChangedOnTheChannelUnreachable of Monitoring {
+    EF (state display.Main.Showing and not variable display.shown = 5)
+}
+
+verification case TransientParameterKeptUnreachable of Probe {
+    EF (state Main.Probed and not variable sampled = 0)
+}
+
+verification case PersistentParameterLosingItsValueUnreachable of Probe {
+    EF (state Main.Probed and not variable observed = variable kept)
+}
+
+verification case NegativeArgumentTakesItsGuardedTransition of Counter {
+    EF (state Main.Negative and variable last = -1)
+}
+
+verification case NegativeArgumentTakingThePositiveTransitionUnreachable of Counter {
+    EF (state Main.Positive and variable last = -1)
 }

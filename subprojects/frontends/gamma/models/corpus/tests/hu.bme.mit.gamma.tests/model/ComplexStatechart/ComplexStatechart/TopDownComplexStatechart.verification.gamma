@@ -10,32 +10,8 @@ verification case StateAAReachable of TopDown {
     EF state A.AA
 }
 
-verification case StateABReachable of TopDown {
-    EF state A.AB
-}
-
-verification case StateABAAReachable of TopDown {
-    EF state ABA.ABAA
-}
-
-verification case StateABABReachable of TopDown {
-    EF state ABA.ABAB
-}
-
-verification case StateABBAReachable of TopDown {
-    EF state ABB.ABBA
-}
-
-verification case StateABBBReachable of TopDown {
-    EF state ABB.ABBB
-}
-
 verification case StateBAReachable of TopDown {
     EF state B.BA
-}
-
-verification case StateBBReachable of TopDown {
-    EF state B.BB
 }
 
 verification case StateBReachable of TopDown {

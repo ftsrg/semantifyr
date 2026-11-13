@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package ExitOrder
+package EntryAndExitOrder
 
 interface Control {
     in event start
@@ -29,7 +29,9 @@ statechart Machine [
                 }
             }
         }
-        state Outside
+        state Outside {
+            entry / trail := trail * 10 + 4;
+        }
     }
 
     transition from MainInitial to Outer
@@ -41,10 +43,18 @@ verification case ParentEntersBeforeItsChild of Machine {
     AG variable entered = 12
 }
 
-verification case ChildExitsBeforeItsParentThenTheTransitionActs of Machine {
-    EF (state Main.Outside and variable trail = 213)
+verification case ChildEnteringBeforeItsParentUnreachable of Machine {
+    EF variable entered = 21
+}
+
+verification case ChildExitsThenParentExitsThenTheTransitionActsThenTheTargetEnters of Machine {
+    EF (state Main.Outside and variable trail = 2134)
 }
 
 verification case ParentExitingBeforeItsChildUnreachable of Machine {
-    EF variable trail = 123
+    EF variable trail = 1234
+}
+
+verification case TargetEnteringBeforeTheTransitionActsUnreachable of Machine {
+    EF variable trail = 2143
 }

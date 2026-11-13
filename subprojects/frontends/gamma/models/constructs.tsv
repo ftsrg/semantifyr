@@ -1,17 +1,17 @@
 area	construct	outcome	fixture	marker	detail
-Types and expressions	Integer and boolean types, variables with a literal initial value	carried	models/corpus/tests/hu.bme.mit.gamma.tests/model/Clock/Statechart/Counter.gcd	var	
-Types and expressions	Record types, nested records, record-typed variables and event parameters	carried	models/semantics/Records.gamma	#Point { x := 3 }	
+Types and expressions	Integer and boolean types, variables with a literal initial value	carried	models/semantics/Precedence.gamma	var first : boolean := true	
+Types and expressions	Record types, nested records, record-typed variables and event parameters	carried	models/semantics/Records.gamma	#Point { x := 3, y := 0 }	
 Types and expressions	Arithmetic, comparison and boolean operators with Gamma's precedence for `not`, equality, ordering, `and` and `or`	carried	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaGrammarTest.kt	not binds tighter than and	
 Types and expressions	Variables with a non-literal initial value	planned			The mapper refuses it with a diagnostic.
 Types and expressions	Enumeration, array, rational, decimal and subrange types, constants	out			Future work.
 Types and expressions	`xor`, `imply`, the conditional expression, `div`, `mod`, `forall`, `exists` and select expressions	out			Future work. `div` and `mod` wait for OXSTS operators.
 Types and expressions	Functions, procedures and lambdas	out			Future work.
-Statecharts	Regions, simple and composite states, nested regions	carried	models/corpus/tests/hu.bme.mit.gamma.tests/model/ComplexStatechart/ComplexStatechart/TopDownComplexStatechart.gcd	region	
-Statecharts	Initial pseudostates	carried	models/corpus/tests/hu.bme.mit.gamma.tests/model/Clock/Statechart/Counter.gcd	initial	
+Statecharts	Regions, simple and composite states, nested regions	carried	models/semantics/Hierarchy.gamma	region Inner	
+Statecharts	Initial pseudostates	carried	models/semantics/Hierarchy.gamma	initial MainInitial	
 Statecharts	Initial transitions with a trigger, a guard or an action	out			The mapper refuses them with a diagnostic.
 Statecharts	Transitions declared at the statechart level, between any two states of the statechart, exiting and entering up to the lowest common region	carried	models/etc/semantics/Hierarchy.oxsts	LeavingAStateExitsItsAncestorsUpToTheCommonRegion	
-Statecharts	Exit actions innermost first, entry actions outermost first, the orthogonal regions of an exited or entered ancestor	carried	models/semantics/ExitOrder.gamma	ChildExitsBeforeItsParentThenTheTransitionActs	
-Statecharts	Entry and exit actions	carried	models/corpus/tests/hu.bme.mit.gamma.tests/model/Crossroads/TrafficLight/TrafficLightCtrl.gcd	exit /	
+Statecharts	Exit actions innermost first, entry actions outermost first, the orthogonal regions of an exited or entered ancestor	carried	models/semantics/EntryAndExitOrder.gamma	ChildExitsThenParentExitsThenTheTransitionActsThenTheTargetEnters	
+Statecharts	Entry and exit actions	carried	models/semantics/EntryAndExitOrder.gamma	exit /	
 Statecharts	Shallow history, and a transition into the history node	carried	models/semantics/History.gamma	shallow history	
 Statecharts	Transition ids, `@(id)`, unique within a statechart	carried	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaValidatorTest.kt	transition ids are unique within a statechart	
 Statecharts	A transition leaving a state needs a trigger	carried	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaValidatorTest.kt	a transition leaving a state needs a trigger	The validator rejects it, as Gamma's does.
@@ -20,26 +20,26 @@ Statecharts	Choice and merge	out			Future work.
 Statecharts	Fork and join	out			Future work.
 Statecharts	Internal transitions	out			Future work.
 Statecharts	State and statechart invariants	out			Future work.
-Triggers, guards and actions	Event triggers and timeout triggers	carried	models/corpus/tests/hu.bme.mit.gamma.tests/model/Crossroads/TrafficLight/TrafficLightCtrl.gcd	timeout	
+Triggers, guards and actions	Event triggers and timeout triggers	carried	models/semantics/Timeouts.gamma	when timeout short	
 Triggers, guards and actions	A timeout is set to one value	carried	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaValidatorTest.kt	a timeout is set to one value	The validator rejects different values, as Gamma's does.
-Triggers, guards and actions	Guards, `raise`, `set` of a timeout and assignment	carried	models/corpus/tests/hu.bme.mit.gamma.tests/model/Clock/Statechart/Adder.gcd	raise	
+Triggers, guards and actions	Guards, `raise`, `set` of a timeout and assignment	carried	models/semantics/GuardEvaluation.gamma	when control.go [left]	
 Triggers, guards and actions	Complex triggers, `any`, `cycle`, the `else` guard	out			Future work.
 Triggers, guards and actions	Blocks, local variables, `if`, `switch`, loops, choice, `havoc`, `assert`, `deactivate`	out			Future work. Gamma's own transformation rejects `deactivate`.
-Variation points	Region schedule, top-down and bottom-up	carried	models/corpus/tests/hu.bme.mit.gamma.tests/model/ComplexStatechart/ComplexStatechart/BottomUpComplexStatechart.gcd	@RegionSchedule	
-Variation points	Transition priority off, order-based and value-based	carried	models/semantics/ValueBasedPriority.gamma	@TransitionPriority = value-based	
-Variation points	A written priority under priority off	departure	models/semantics/WrittenPriorityUnderPriorityOff.gamma	(1) from Idle to Low	The priority is ignored and the validator warns that it has no effect. Gamma's transformation honours it.
-Variation points	Guard evaluation, on-the-fly and beginning-of-step	carried	models/semantics/BeginningOfStepGuards.gamma	@GuardEvaluation = beginning-of-step	
-Variation points	Orthogonal regions in declaration order	carried	models/corpus/tests/hu.bme.mit.gamma.tests/model/ComplexStatechart/ComplexStatechart/TopDownComplexStatechart.gcd	region	
+Variation points	Region schedule, top-down and bottom-up	carried	models/semantics/RegionSchedule.gamma	@RegionSchedule = bottom-up	
+Variation points	Transition priority off, order-based and value-based	carried	models/semantics/TransitionPriority.gamma	@TransitionPriority = value-based	
+Variation points	A written priority under priority off	departure	models/semantics/TransitionPriority.gamma	(1) from Idle to Low	The priority is ignored and the validator warns that it has no effect. Gamma's transformation honours it.
+Variation points	Guard evaluation, on-the-fly and beginning-of-step	carried	models/semantics/GuardEvaluation.gamma	@GuardEvaluation = beginning-of-step	
+Variation points	Orthogonal regions in declaration order	carried	models/semantics/RegionOrder.gamma	region Second	
 Variation points	Unordered and parallel orthogonal regions	out			Future work.
 Variation points	Event persistency, transient and persistent parameters	carried	models/semantics/Parameters.gamma	in persistent event level	
-Ports and events	Interfaces, `in` and `out` events, provided and required ports	carried	models/corpus/tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageC/model11/stm.gcd	port	
-Ports and events	Several events raised on one port in one step	carried	models/semantics/SeveralEventsOnOnePort.gamma	raise output.first; raise output.second;	
-Ports and events	Output events kept until the next step	carried	models/semantics/Interfaces.gamma	ProvidedPortRaisesTheOutputHalf	
+Ports and events	Interfaces, `in` and `out` events, provided and required ports	carried	models/semantics/Channels.gamma	port server : requires Request	
+Ports and events	Several events raised on one port in one step	carried	models/semantics/Events.gamma	raise output.first; raise output.second;	
+Ports and events	Output events kept until the next step	carried	models/semantics/Events.gamma	OutputKeptBeyondTheNextStepUnreachable	
 Ports and events	Event parameters	carried	models/semantics/Parameters.gamma	raise output.reading(5)	
 Ports and events	Interface inheritance	carried	models/semantics/Interfaces.gamma	extends Greeting	
 Ports and events	`inout` events	carried	models/semantics/Interfaces.gamma	inout event ping	
 Ports and events	Internal events, interface variables and functions, port invariants, event priority	out			Future work.
-Composition	Synchronous composite components, port bindings and channels	carried	models/corpus/tests/hu.bme.mit.gamma.tests/model/Crossroads/System/Synchronous/Crossroad.gcd	channel	
+Composition	Synchronous composite components, port bindings and channels	carried	models/semantics/SynchronousComposition.gamma	sync Pair	
 Composition	A channel carries the events of both directions	carried	models/semantics/Channels.gamma	ProvidedPortsRaiseReachesTheRequiredPort	
 Composition	Cascade composite components and their execution list	carried	models/semantics/Cascade.gamma	execute asker, answerer, asker	
 Composition	`initial execute` of a cascade composite	out			The library has no support for it and the mapper refuses it.
@@ -48,10 +48,10 @@ Composition	Asynchronous adapters with message queues, capacities and priorities
 Composition	The `full-step` control function	out			Future work.
 Time	Timeouts in seconds and milliseconds	carried	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaGrammarTest.kt	a timeout is set in seconds or milliseconds	
 Time	Timeouts in nanoseconds, microseconds and hours	planned			The grammar does not have these units.
-Time	Time passing	departure	models/semantics/MillisecondTimeout.gamma	TheShorterTimeoutIsUpFirst	Every step advances time by a fixed delta of one second. Gamma adds a delay of a range the analysis constrains.
+Time	Time passing	departure	models/semantics/Timeouts.gamma	TheShorterTimeoutIsUpFirst	Every step advances time by a fixed delta of one second. Gamma adds a delay of a range the analysis constrains.
 Time	A havocked delay between steps	planned			The trace design decides time.
 Properties and cases	Verification cases, `verification case N of Component { property }`	departure	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaGrammarTest.kt	a verification case names its component	Gamma keeps properties in a separate property file. A case names its component in its header and holds the property expression as its body.
-Properties and cases	Atoms `state`, `variable` and `raise` over `and`, `or` and `not`, `AG` and `EF`	departure	models/corpus/tests/hu.bme.mit.gamma.tests/model/Crossroads/System/Cascade/Crossroad.verification.gamma	raise	The atoms resolve in the component's scope, without a named instance and without `self`.
+Properties and cases	Atoms `state`, `variable` and `raise` over `and`, `or` and `not`, `AG` and `EF`	departure	models/semantics/Events.gamma	EF (raise output.first and raise output.second)	The atoms resolve in the component's scope, without a named instance and without `self`.
 Properties and cases	Temporal operators beyond `AG` and `EF`, CTL* and LTL	out			Waits for the properties design.
 Trace	Gamma execution traces, acts `reset`, `raise`, `schedule` and `elapse`, asserts on states, variables and raised events	carried	gamma-frontend/src/test/kotlin/GammaTraceLanguageTest.kt	a raised event assertion names an output event	
 Trace	The header of a trace names a verification case	departure	gamma-frontend/src/test/kotlin/GammaTraceLanguageTest.kt	a trace of a case links every assertion to the traced component	Gamma's header names a component.

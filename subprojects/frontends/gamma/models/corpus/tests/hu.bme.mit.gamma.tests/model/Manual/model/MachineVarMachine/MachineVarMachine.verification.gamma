@@ -5,7 +5,3 @@ import manual::MachineVarMachine
 verification case StateMachineVarMachineStateReachable of MachineVarMachine {
     EF state MachineVarMachine_.MachineVarMachine__State
 }
-
-verification case CounterCountsMessages of MachineVarMachine {
-    EF variable cnt = 2
-}

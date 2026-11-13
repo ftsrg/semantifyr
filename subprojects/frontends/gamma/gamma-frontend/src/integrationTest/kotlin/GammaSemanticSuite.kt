@@ -6,7 +6,6 @@
 
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaCorpus
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaCorpusEntry
-import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaCorpusVerdict
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaFrontendTestHelper
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import org.junit.jupiter.params.ParameterizedTest
@@ -20,16 +19,14 @@ class GammaSemanticSuite {
         private val artifactRoot = GammaFrontendTestHelper.testArtifactRoot(GammaSemanticSuite::class.java)
 
         @JvmStatic
-        fun `Manifest Cases Reach Their Expected Verdict`(): List<GammaCorpusEntry> {
-            return GammaCorpus.entries().filter {
-                it.case.verdict != GammaCorpusVerdict.Unknown
-            }
+        fun `Semantic Cases Reach Their Expected Verdict`(): List<GammaCorpusEntry> {
+            return GammaCorpus.load(GammaCorpus.semantics)
         }
     }
 
     @ParameterizedTest(name = "{0}")
     @MethodSource
-    suspend fun `Manifest Cases Reach Their Expected Verdict`(entry: GammaCorpusEntry) {
+    suspend fun `Semantic Cases Reach Their Expected Verdict`(entry: GammaCorpusEntry) {
         val gammaVerificationCase = helper.discoverInWorkspace(entry.directory, entry.model.file).single {
             it.declaration.name == entry.case.name
         }

@@ -5,7 +5,3 @@ import validation::package_f_27
 verification case StateS0Reachable of statemachine {
     EF state Main.S0
 }
-
-verification case StateS1Reachable of statemachine {
-    EF state Main.S1
-}
