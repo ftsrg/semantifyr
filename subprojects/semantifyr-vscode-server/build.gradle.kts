@@ -5,7 +5,7 @@
  */
 
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
-import hu.bme.mit.semantifyr.gradle.conventions.sysmlCorpusModels
+import hu.bme.mit.semantifyr.gradle.conventions.sysmlCorpusFiles
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
@@ -72,11 +72,7 @@ val cloneSysMLTestModels = tasks.register<Sync>("cloneSysMLTestModels") {
     from(sysmlCorpusDir) {
         // the corpus models share its isStateActive and eventually
         include("Verification.sysml")
-        include(
-            sysmlCorpusModels(sysmlCorpusDir).map {
-                it.file
-            },
-        )
+        include(sysmlCorpusFiles(sysmlCorpusDir))
     }
     into("examples/sysml/TestModels")
 }

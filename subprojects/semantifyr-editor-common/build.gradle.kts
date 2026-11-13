@@ -6,6 +6,7 @@
 
 import com.github.gradle.node.npm.task.NpmTask
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
+import hu.bme.mit.semantifyr.gradle.conventions.servedExampleSources
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
 
 plugins {
@@ -27,6 +28,7 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
     inputs.file(rootProject.layout.projectDirectory.file("package.json"))
     inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
     inputs.files(tasks.npmInstall)
+    inputs.files(servedExampleSources()).withPathSensitivity(PathSensitivity.RELATIVE)
 
     npmCommand.set(listOf("run", "check"))
 

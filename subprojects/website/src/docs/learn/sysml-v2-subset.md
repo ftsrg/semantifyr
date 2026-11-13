@@ -3,6 +3,7 @@ title: SysML v2 Subset
 sidebar_position: 6
 ---
 
+import ServedExamples from '@site/src/components/ServedExamples';
 import SysmlConstructTable from '@site/src/components/SysmlConstructs';
 import constructs from '@sysml-constructs/constructs.tsv';
 
@@ -100,3 +101,9 @@ A selection narrows the runs a verdict ranges over. A passed `mustAlways` and a 
 Every SysML v2 construct the translator reads, generated from its registry: a supported construct is translated, one supported with a warning is translated and the translator says what the model should know, a refused one is a diagnostic located on it and no OXSTS is written.
 
 <SysmlConstructTable table={constructs} />
+
+## Examples in Live
+
+The SysML v2 models Live serves, each opening in Live by its own address:
+
+<ServedExamples />

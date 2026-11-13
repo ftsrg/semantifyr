@@ -4,6 +4,7 @@ sidebar_position: 3
 ---
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
+import ServedExamples, { ExampleLink } from '@site/src/components/ServedExamples';
 import step1 from '@oxsts-tutorial-models/advanced-step1.oxsts';
 import step2 from '@oxsts-tutorial-models/advanced-step2.oxsts';
 import step3 from '@oxsts-tutorial-models/advanced-step3.oxsts';
@@ -20,7 +21,7 @@ This is the third tutorial in the Traffic Light series. It extends the small `St
 A browser is enough. As in the previous tutorials, every step ends in a complete model that the **Verify** or **Edit** button in the corner of a code block loads into Live, embedded in this page; the [Direct Modeling](direct-modeling.md#live) tutorial describes it. See [Getting Started](../../getting-started.md) for the other ways to run Semantifyr.
 
 :::tip Finished example
-The completed model is at the end of this page under [Snapshot](#snapshot), where **Verify** opens it in the embedded editor. Live also offers it in its example menu as *Tutorial: Advanced*.
+The completed model is at the end of this page under [Snapshot](#snapshot), where **Verify** opens it in the embedded editor. In Live it is <ExampleLink language="oxsts" id="advanced" />.
 :::
 
 The tutorial starts from the final model of Building a Library. Each step is a separate file with its own package below `example::trafficlight::advanced`:
@@ -167,3 +168,9 @@ The complete final model:
 <LiveEmbed code={advanced} />
 
 In the finished model, `Transition`'s main transition carries `@Trace`, so the trace lists the transitions that fired in the *Calls* view.
+
+## The Models in Live
+
+Every step of this tutorial and its final model open in Live by their own address:
+
+<ServedExamples />

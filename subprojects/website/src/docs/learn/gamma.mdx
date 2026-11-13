@@ -3,6 +3,7 @@ title: Gamma
 sidebar_position: 6
 ---
 
+import ServedExamples from '@site/src/components/ServedExamples';
 import GammaConstructTable, { GammaDepartures } from '@site/src/components/GammaConstructs';
 import constructs from '@gamma-models/constructs.tsv';
 
@@ -23,3 +24,9 @@ A carried construct behaves as it does in Gamma. These are the declared differen
 Every construct and variation point of Gamma has one of four outcomes. Carried: the frontend verifies it. Carried with a departure: as carried, with a difference listed above. Planned: decided to be built. Out: not supported yet. This page is generated from the table that a test of the Gamma frontend checks against the models that use each construct.
 
 <GammaConstructTable table={constructs} />
+
+## Examples in Live
+
+The Gamma models Live serves, each opening in Live by its own address:
+
+<ServedExamples />

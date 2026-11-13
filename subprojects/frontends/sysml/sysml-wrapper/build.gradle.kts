@@ -7,7 +7,7 @@
 import com.github.gradle.node.pnpm.task.PnpmTask
 import com.github.gradle.node.task.NodeTask
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
-import hu.bme.mit.semantifyr.gradle.conventions.sysmlCorpusModels
+import hu.bme.mit.semantifyr.gradle.conventions.servedExamples
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
@@ -228,8 +228,8 @@ fun sysmlExampleTask(name: String) = tasks.register<NodeTask>("compileSysmlExamp
     }
 }
 
-val compileSysmlExampleTasks = sysmlCorpusModels(examplesSourceDir).filter {
-    it.isExample
+val compileSysmlExampleTasks = servedExamples("sysml").filter {
+    !it.hidden
 }.map {
     sysmlExampleTask(it.name)
 }

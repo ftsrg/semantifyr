@@ -5,10 +5,11 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { servedExamplesOf } from '@semantifyr/editor-common/examples';
 import {
   findExample,
   findFlavor,
-  importedSysmlv2Manifest,
+  listedExamples,
   liveFlavors,
 } from '../../examples';
 import { SYSML_FLAVOR_INFO } from '../../lib/session/sysmlBridge';
@@ -55,14 +56,18 @@ describe('liveFlavors', () => {
     ]);
   });
 
-  it('the sysml flavor offers the corpus examples as SysML source', () => {
+  it('the sysml flavor offers the registry\'s SysML examples as SysML source', () => {
     const flavor = findFlavor(servedLiveFlavors, 'sysml');
-    const expectedIds = Object.values(importedSysmlv2Manifest).flatMap((manifest) =>
-      manifest.models.flatMap((model) => (model.example ? [model.file.replace(/\.sysml$/, '').replaceAll('_', '-')] : [])),
-    );
 
     expect(flavor?.languageId).toBe('sysml');
-    expect(flavor?.examples.map((example) => example.id)).toEqual([...expectedIds, 'blank']);
+    expect(flavor?.examples.map((example) => {
+      return example.id;
+    })).toEqual([
+      ...servedExamplesOf('sysml').map((example) => {
+        return example.id;
+      }),
+      'blank',
+    ]);
     expect(flavor?.examples[0]?.code).toContain('verification def');
   });
 
@@ -123,18 +128,34 @@ describe('liveFlavors', () => {
   });
 });
 
-describe('SysML v2 corpus examples', () => {
-  it('registers every example of the corpus manifest with its compiled model', () => {
-    const manifests = Object.values(importedSysmlv2Manifest);
-    expect(manifests).toHaveLength(1);
-    const expected = manifests[0]!.models
-      .filter((model) => model.example)
-      .map((model) => model.file.replace(/\.sysml$/, '').replaceAll('_', '-'));
-    const registered = findFlavor(servedLiveFlavors, 'oxsts-with-sysmlv2-library')!
-      .examples.filter((example) => example.id !== 'blank')
-      .map((example) => example.id);
-    expect(expected.length).toBeGreaterThan(0);
-    expect(registered).toEqual(expected);
+describe('the registry\'s examples', () => {
+  it('a library offers the compiled form of each example its language\'s menu lists', () => {
+    for (const [flavorId, language] of [['oxsts-with-sysmlv2-library', 'sysml'], ['oxsts-with-gamma-library', 'gamma']] as const) {
+      const compiled = listedExamples(findFlavor(servedLiveFlavors, flavorId)!).map((example) => {
+        return example.id;
+      });
+      const listed = servedExamplesOf(language).filter((example) => {
+        return example.hidden !== true;
+      }).map((example) => {
+        return example.id;
+      });
+      expect(compiled).toEqual(listed);
+    }
+  });
+
+  it('a lesson\'s step opens by its address and the menu does not list it', () => {
+    const oxsts = findFlavor(servedLiveFlavors, 'oxsts')!;
+
+    expect(findExample(oxsts, 'basics-step1')?.code).toContain('package example::trafficlight::basics::step1');
+    expect(listedExamples(oxsts).map((example) => {
+      return example.id;
+    })).not.toContain('basics-step1');
+  });
+
+  it('shows no description for a model whose file has no comment at its top', () => {
+    const basics = findExample(findFlavor(servedLiveFlavors, 'oxsts')!, 'basics');
+
+    expect(basics?.description).toBeNull();
   });
 });
 

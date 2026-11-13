@@ -16,7 +16,7 @@ import type { ResolvedColorMode } from '../../lib/util/colorMode'
 import { caseRowOf, countsOf, type CaseCounts, type CaseRow } from '../../lib/workspace/caseRows'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import { stepTimeText } from '../../lib/workspace/shellStatus'
-import { casesSentence, noCases, SERVER_NOT_ANSWERING, VERDICT_WORDS, VERIFY_ALL_HELD } from '../../texts'
+import { casesSentence, EXAMPLE_PAGE, exampleRights, noCases, SERVER_NOT_ANSWERING, VERDICT_WORDS, VERIFY_ALL_HELD, websitePage } from '../../texts'
 import { Icon } from '../../ui/icons'
 import { ValidationMark } from '../../ui/marks'
 import { addressProblemText } from '../desktop/Orientation'
@@ -81,7 +81,7 @@ function Orientation(): React.JSX.Element | null {
       <span className="orientation-mark" />
       <span className="orientation-text">
         <strong>{`${example.label}.`}</strong>
-        {` ${example.description}${casesSentence(count)}`}
+        {casesSentence(count)}
         {verified
           ? null
           : (
@@ -91,6 +91,14 @@ function Orientation(): React.JSX.Element | null {
               {count === 1 ? ' to check it.' : ' to check them.'}
             </>
           )}
+        {example.served
+          ? (
+            <span className="orientation-source">
+              {` ${exampleRights(example.served.origin, example.served.holder, example.served.licence)} `}
+              <a href={websitePage(example.served.page)} target="_blank" rel="noreferrer">{EXAMPLE_PAGE}</a>
+            </span>
+          )
+          : null}
       </span>
       <button
         type="button"

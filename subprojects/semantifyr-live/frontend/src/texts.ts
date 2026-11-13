@@ -12,6 +12,11 @@ export const SHORT_NAME = terms.live.short ?? terms.live.term
 
 export const WEBSITE_URL = 'https://semantifyr.org'
 export const PRIVACY_URL = `${WEBSITE_URL}/learn/live-privacy`
+
+// a page of the website, by its path below the site's root
+export function websitePage(page: string): string {
+  return `${WEBSITE_URL}/${page}`
+}
 export const SOURCE_CODE_URL = 'https://github.com/ftsrg/semantifyr'
 
 export const PAGE_DESCRIPTION = 'Verify a SysML v2, Gamma or OXSTS model in your browser and read its traces in its own language.'
@@ -143,6 +148,25 @@ export const VERIFY_ALL_HELD = 'Verify all is pressed. Every case runs as soon a
 
 export const SHARED_MODEL = 'Shared model'
 export const BLANK_MODEL = 'Blank model'
+
+// a library's example is its language's example compiled into OXSTS
+export function compiledLabel(label: string, languageName: string): string {
+  return `${label} (${languageName} library)`
+}
+
+export function compiledDescription(languageName: string): string {
+  return `Compiled from the ${languageName} model.`
+}
+
+export const EXAMPLE_PAGE = 'About this example'
+
+export function aboutLanguage(languageName: string): string {
+  return `About ${languageName}`
+}
+
+export function exampleRights(origin: string, holder: string, licence: string): string {
+  return `Origin: ${origin}. Rights: ${holder}, ${licence}.`
+}
 export const PROBLEMS = 'Problems in the model'
 export const NO_PROBLEMS = 'No problems.'
 

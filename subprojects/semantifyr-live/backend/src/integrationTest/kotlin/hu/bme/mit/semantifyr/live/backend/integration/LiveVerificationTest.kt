@@ -213,7 +213,7 @@ class LiveVerificationTest {
         verifyFirstCase(
             tmp = tmp,
             flavor = "oxsts-with-gamma-library",
-            modelSource = stagedModel(StagedTestSupport.gammaLibraryModelsDirectory, "semantifyr.live.gammaLibraryModels", "Simple.oxsts"),
+            modelSource = stagedModel(StagedTestSupport.gammaLibraryModelsDirectory, "semantifyr.live.gammaLibraryModels", "LevelCrossing.oxsts"),
         )
     }
 
@@ -222,7 +222,7 @@ class LiveVerificationTest {
         verifyFirstCase(
             tmp = tmp,
             flavor = "oxsts-with-sysmlv2-library",
-            modelSource = stagedModel(StagedTestSupport.sysmlLibraryModelsDirectory, "semantifyr.live.sysmlLibraryModels", "door_access.oxsts"),
+            modelSource = stagedModel(StagedTestSupport.sysmlLibraryModelsDirectory, "semantifyr.live.sysmlLibraryModels", "level_crossing.oxsts"),
         )
     }
 

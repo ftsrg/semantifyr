@@ -105,13 +105,26 @@ export interface LiveEditorLocation {
 }
 
 // Keeps the query parameters of the base URL that are not part of the link
-export async function liveEditorUrl(base: string, link: LiveEditorLink): Promise<string> {
-    const url = new URL(base);
-    url.pathname = [link.language, link.example].filter((segment) => {
+function pathOf(segments: (string | undefined)[]): string {
+    return segments.filter((segment) => {
         return segment !== undefined;
     }).map((segment) => {
         return `/${encodeURIComponent(segment)}`;
     }).join("");
+}
+
+// an example's address, /<language>/<example>, which names it everywhere
+export function liveExampleUrl(base: string, language: string, example: string): string {
+    const url = new URL(base);
+    url.pathname = pathOf([language, example]);
+    url.search = "";
+    url.hash = "";
+    return url.toString();
+}
+
+export async function liveEditorUrl(base: string, link: LiveEditorLink): Promise<string> {
+    const url = new URL(base);
+    url.pathname = pathOf([link.language, link.example]);
     setOrDelete(url.searchParams, "library", link.library);
     setOrDelete(url.searchParams, "view", link.view);
     setOrDelete(url.searchParams, "theme", link.theme);

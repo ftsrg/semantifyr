@@ -9,7 +9,7 @@ import { Menu } from '@base-ui/react/menu'
 import { liveEditorUrl, parseLiveEditorUrl } from '@semantifyr/editor-common'
 import { LanguageMark } from '@semantifyr/editor-common/marks'
 
-import type { LiveExample, LiveFlavor } from '../../examples'
+import { languagePageOf, listedExamples, type LiveExample, type LiveFlavor } from '../../examples'
 import { LANGUAGE_ORDER, presentationOf } from '../../lib/language/presentation'
 import type { LanguageUnit } from '../../lib/language/types'
 import { changeSettings } from '../../lib/stores/settings'
@@ -17,7 +17,7 @@ import { useStore } from '../../lib/stores/useStore'
 import { documentKey, type Live } from '../../lib/workspace/live'
 import { useLive } from '../../lib/workspace/liveContext'
 import type { ColorModePreference } from '../../lib/util/colorMode'
-import { BLANK_MODEL, LIBRARY, libraryButton, libraryOf, SHARED_MODEL, THEMES } from '../../texts'
+import { aboutLanguage, BLANK_MODEL, LIBRARY, libraryButton, libraryOf, SHARED_MODEL, THEMES, websitePage } from '../../texts'
 import { Icon, type IconName } from '../../ui/icons'
 import { Logo } from '../../ui/marks'
 import { useAddressedModel, useCurrentDocument, useFlavor } from '../hooks'
@@ -173,10 +173,23 @@ function caseCountOf(live: ReturnType<typeof useLive>, flavor: LiveFlavor, examp
   return state?.discovery === 'discovered' ? state.cases.length : null
 }
 
+// the language the menu's examples are written in, with the website's page on it
+function LanguageIntro({ languageId }: { languageId: string }): React.JSX.Element {
+  const presentation = presentationOf(languageId)
+  const page = languagePageOf(languageId)
+  return (
+    <div className="language-intro">
+      <LanguageMark languageId={languageId} />
+      <span className="language-intro-name">{`${presentation.name} examples`}</span>
+      <span className="language-intro-detail">{presentation.detail}</span>
+      {page === null ? null : <a className="language-intro-page" href={websitePage(page)} target="_blank" rel="noreferrer">{aboutLanguage(presentation.name)}</a>}
+    </div>
+  )
+}
+
 function WaitingExampleMenu(): React.JSX.Element {
   const live = useLive()
   const model = useAddressedModel(live)
-  const presentation = presentationOf(model.languageId)
   const triggerLabel = model.example?.label ?? SHARED_MODEL
   return (
     <Menu.Root>
@@ -189,13 +202,11 @@ function WaitingExampleMenu(): React.JSX.Element {
       <Menu.Portal>
         <Menu.Positioner className="floating" side="bottom" align="start" sideOffset={6}>
           <Menu.Popup className="menu examples-menu" data-language={model.languageId}>
-            <div className="language-intro">
-              <LanguageMark languageId={model.languageId} />
-              <span className="language-intro-name">{`${presentation.name} examples`}</span>
-              <span className="language-intro-detail">{presentation.detail}</span>
-            </div>
+            <LanguageIntro languageId={model.languageId} />
             <Menu.Separator className="menu-divider" />
-            {model.examples.map((example) => {
+            {model.examples.filter((example) => {
+              return example.served?.hidden !== true
+            }).map((example) => {
               const current = example.id === model.example?.id
               return (
                 <Menu.Item
@@ -208,7 +219,7 @@ function WaitingExampleMenu(): React.JSX.Element {
                   <span>{current ? <span className="check"><Icon name="check" size="small" /></span> : null}</span>
                   <span className="menu-item-label">{example.id === 'blank' ? BLANK_MODEL : example.label}</span>
                   <span className="menu-item-meta" />
-                  <span className="menu-item-detail">{example.description}</span>
+                  {example.description === null ? null : <span className="menu-item-detail">{example.description}</span>}
                 </Menu.Item>
               )
             })}
@@ -233,10 +244,7 @@ function ExampleMenu(): React.JSX.Element | null {
   if (!flavor || !document) {
     return null
   }
-  const presentation = presentationOf(flavor.languageId)
-  const examples = flavor.examples.filter((example) => {
-    return example.id !== 'blank'
-  })
+  const examples = listedExamples(flavor)
   const blank = flavor.examples.find((example) => {
     return example.id === 'blank'
   })
@@ -254,11 +262,7 @@ function ExampleMenu(): React.JSX.Element | null {
       <Menu.Portal>
         <Menu.Positioner className="floating" side="bottom" align="start" sideOffset={6}>
           <Menu.Popup className="menu examples-menu" data-language={flavor.languageId}>
-            <div className="language-intro">
-              <LanguageMark languageId={flavor.languageId} />
-              <span className="language-intro-name">{`${presentation.name} examples`}</span>
-              <span className="language-intro-detail">{presentation.detail}</span>
-            </div>
+            <LanguageIntro languageId={flavor.languageId} />
             <Menu.Separator className="menu-divider" />
             {kept
               ? (
@@ -293,7 +297,7 @@ function ExampleMenu(): React.JSX.Element | null {
                   <span>{current ? <span className="check"><Icon name="check" size="small" /></span> : null}</span>
                   <span className="menu-item-label">{example.label}</span>
                   <span className="menu-item-meta">{count === null ? '' : `${count} ${count === 1 ? 'case' : 'cases'}`}</span>
-                  <span className="menu-item-detail">{example.description}</span>
+                  {example.description === null ? null : <span className="menu-item-detail">{example.description}</span>}
                 </Menu.Item>
               )
             })}

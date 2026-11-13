@@ -4,7 +4,9 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.conventions.readsServedExamples
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
+import hu.bme.mit.semantifyr.gradle.conventions.servedExamples
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.application")
@@ -30,6 +32,7 @@ dependencies {
     testFixturesApi(testFixtures(project(":gamma.lang")))
     testFixturesApi(testFixtures(project(":verifier")))
     testFixturesApi(project(":portfolios"))
+    testFixturesApi(testFixtures(project(":portfolios")))
 }
 
 val syncGammaLibrary = tasks.register<Sync>("syncGammaLibrary") {
@@ -47,6 +50,7 @@ tasks.processResources {
 }
 
 tasks.withType<Test>().configureEach {
+    readsServedExamples()
     inputs.files(syncGammaTestModels)
     inputs.dir(layout.projectDirectory.dir("../models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("../models/constructs.tsv")).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -70,16 +74,14 @@ fun gammaExampleTask(name: String) = tasks.register<JavaExec>("compileGammaExamp
     }
 }
 
-val compileGammaExampleCrossroads = gammaExampleTask("Crossroads")
-val compileGammaExampleLevelCrossing = gammaExampleTask("LevelCrossing")
-val compileGammaExampleSimple = gammaExampleTask("Simple")
-val compileGammaExampleSpacecraft = gammaExampleTask("Spacecraft")
+val compileGammaExampleTasks = servedExamples("gamma").filter {
+    !it.hidden
+}.map {
+    gammaExampleTask(it.name)
+}
 
 val compileGammaExamples = tasks.register("compileGammaExamples") {
-    inputs.files(compileGammaExampleCrossroads)
-    inputs.files(compileGammaExampleLevelCrossing)
-    inputs.files(compileGammaExampleSimple)
-    inputs.files(compileGammaExampleSpacecraft)
+    inputs.files(compileGammaExampleTasks)
 }
 
 configurations.consumable("compiledExamplesElements") {

@@ -4,6 +4,7 @@ sidebar_position: 1
 ---
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
+import ServedExamples, { ExampleLink } from '@site/src/components/ServedExamples';
 import step1 from '@oxsts-tutorial-models/basics-step1.oxsts';
 import step2 from '@oxsts-tutorial-models/basics-step2.oxsts';
 import step3 from '@oxsts-tutorial-models/basics-step3.oxsts';
@@ -19,7 +20,7 @@ This is the entry-level tutorial for Semantifyr. It walks through modeling a sma
 A browser is enough. Every step of this tutorial ends in a complete model: the **Verify** button in the corner of a code block loads the model of that step into Live, embedded in this page, where you can edit it and verify its cases; for a step whose model has no verification case yet, the button is **Edit**. Live runs on its own at [live.semantifyr.org/oxsts](https://live.semantifyr.org/oxsts). See [Getting Started](../../getting-started.md) for the other ways to run Semantifyr.
 
 :::tip Finished example
-The completed model is at the end of this page under [Snapshot](#snapshot), where **Verify** opens it in the embedded editor. Live also offers it in its example menu as *Tutorial: Basics*.
+The completed model is at the end of this page under [Snapshot](#snapshot), where **Verify** opens it in the embedded editor. In Live it is <ExampleLink language="oxsts" id="basics" />.
 :::
 
 ## Live
@@ -68,8 +69,6 @@ The main functionality of Semantifyr is exposed through classes _annotated_ with
 
 The anonymous `prop` is the property the verifier checks. Its body uses a temporal operator (see the [language reference](../../language/expressions.md#temporal-operators)): `EF` ("exists finally") is the reachability operator, so the property states that there is at least one execution of the system in which `color` takes the value `LightColor::Yellow`. Its sibling `AG` ("always globally") is the safety operator we will use later in this tutorial.
 
-The `@Tag` annotation attaches a free-form label to a verification case. The tutorial models carry `expect-pass` or `expect-fail`, the verdict we expect, and Semantifyr's own test suite checks every tutorial model against these tags. Your own models do not need them.
-
 **Task:** Open the step in the editor. The case lines list `TrafficLight`. Press **Verify all**.
 
 **Check:** While the verification runs, the case's line shows that it is running. When it finishes, the line says *Passed*: the property holds, and the trace opens below it with the witness: in *Steps*, an execution that drives `color` from `Red` through `Green` to `Yellow`, which proves the `EF` property.
@@ -92,7 +91,7 @@ The main transition now `inline`s these helpers in each branch of the `choice`. 
 
 Variables define the _state_ of the system, transitions define the _behavior_ of the system, and **features** define the _structure_ of the system. The simplest feature is a containment feature: every instance of the class owns a fixed number of instances of the feature's type.
 
-Take the verification case off the traffic light (remove `@VerificationCase`, the `@Tag` and the `prop` from `TrafficLight`, so that it goes back to a plain class) and add a separate verification case that contains a light:
+Take the verification case off the traffic light (remove `@VerificationCase` and the `prop` from `TrafficLight`, so that it goes back to a plain class) and add a separate verification case that contains a light:
 
 <LiveEmbed code={step4} show={['GreenColorIsReachable']} />
 
@@ -126,7 +125,7 @@ Next, guard each branch of the intersection's `choice` so that a light only step
 
 <LiveEmbed code={basics} show={['Intersection']} />
 
-Now a light can only take a step when the other light is not green. As soon as one light turns `Green`, the other one cannot move until the green light has moved on to `Yellow`. In the finished model, both verification cases carry `@Tag("expect-pass")`.
+Now a light can only take a step when the other light is not green. As soon as one light turns `Green`, the other one cannot move until the green light has moved on to `Yellow`.
 
 **Task:** Open the step and verify all cases again.
 
@@ -156,3 +155,9 @@ The complete final model:
 <LiveEmbed code={basics} />
 
 In the finished model, `setColor` carries `@Trace`, so the trace lists its calls in the *Calls* view.
+
+## The Models in Live
+
+Every step of this tutorial and its final model open in Live by their own address:
+
+<ServedExamples />

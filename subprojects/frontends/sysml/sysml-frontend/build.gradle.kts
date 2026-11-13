@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.conventions.readsServedExamples
+
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
@@ -22,6 +24,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
 
     testFixturesApi(project(":portfolios"))
+    testFixturesApi(testFixtures(project(":portfolios")))
     testFixturesApi(testFixtures(project(":verifier")))
     testFixturesImplementation(project(":logging"))
     testFixturesImplementation(libs.kotlinx.serialization.json)
@@ -42,6 +45,7 @@ tasks.processResources {
 }
 
 tasks.withType<Test>().configureEach {
+    readsServedExamples()
     inputs.files(syncSysmlTestModels)
     inputs.dir(layout.projectDirectory.dir("../models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("../models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)

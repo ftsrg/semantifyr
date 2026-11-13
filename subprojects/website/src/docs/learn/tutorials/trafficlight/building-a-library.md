@@ -4,6 +4,7 @@ sidebar_position: 2
 ---
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
+import ServedExamples, { ExampleLink } from '@site/src/components/ServedExamples';
 import step1 from '@oxsts-tutorial-models/intermediate-step1.oxsts';
 import step2 from '@oxsts-tutorial-models/intermediate-step2.oxsts';
 import step3 from '@oxsts-tutorial-models/intermediate-step3.oxsts';
@@ -18,7 +19,7 @@ This is the second tutorial in the Traffic Light series. It refactors the basic 
 A browser is enough. As in [Direct Modeling](direct-modeling.md), every step ends in a complete model that the **Verify** or **Edit** button in the corner of a code block loads into Live, embedded in this page; the [Direct Modeling](direct-modeling.md#live) tutorial describes it. See [Getting Started](../../getting-started.md) for the other ways to run Semantifyr.
 
 :::tip Finished example
-The completed model is at the end of this page under [Snapshot](#snapshot), where **Verify** opens it in the embedded editor. Live also offers it in its example menu as *Tutorial: Intermediate*.
+The completed model is at the end of this page under [Snapshot](#snapshot), where **Verify** opens it in the embedded editor. In Live it is <ExampleLink language="oxsts" id="intermediate" />.
 :::
 
 In the Direct Modeling tutorial the entire state machine lived inside a single class: a `LightColor` enum, a `var color`, and a main transition that hard-coded the cycle as a `choice` of guarded branches. That works for one specific traffic light, but it does not scale: every new state or transition forces another branch in the `choice`, and the host has no way to query the structure of its own state machine. By the end of this tutorial the `LightColor` enum and the `assumeColor`, `setColor` and `isColor` helpers will be gone, replaced by a small reusable `Statechart` base class that any state-based system could extend.
@@ -148,3 +149,9 @@ The complete final model:
 <LiveEmbed code={intermediate} />
 
 In the finished model, `Transition`'s main transition carries `@Trace`, so the trace lists the transitions that fired in the *Calls* view.
+
+## The Models in Live
+
+Every step of this tutorial and its final model open in Live by their own address:
+
+<ServedExamples />

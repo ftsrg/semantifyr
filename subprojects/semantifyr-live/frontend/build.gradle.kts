@@ -8,7 +8,8 @@ import com.github.gradle.node.npm.task.NpmTask
 import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
-import hu.bme.mit.semantifyr.gradle.conventions.sysmlCorpusModels
+import hu.bme.mit.semantifyr.gradle.conventions.ExampleDescriptions
+import hu.bme.mit.semantifyr.gradle.conventions.servedExamples
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.nodejs")
@@ -50,29 +51,20 @@ val importedVscodeDir = project.layout.projectDirectory.dir("src/vscode/imported
 val brandingDir = rootProject.layout.projectDirectory.dir("branding")
 val publicDir = project.layout.projectDirectory.dir("public")
 
+fun servedFiles(language: String) = servedExamples(language).map {
+    rootProject.layout.projectDirectory.file(it.file)
+}
+
 val cloneGammaTestModels = tasks.register<Sync>("cloneGammaTestModels") {
-    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/gamma/models/examples")) {
-        include("*.gamma")
-    }
+    from(servedFiles("gamma"))
     from(gammaCompiledExamplesFiles) {
         include("*.oxsts")
     }
     into(importedSnippetsDir.dir("gamma"))
 }
 
-val sysmlCorpusDir = rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/examples")
-
 val cloneSysmlv2TestModels = tasks.register<Sync>("cloneSysmlv2TestModels") {
-    from(sysmlCorpusDir) {
-        include("manifest.json")
-        include(
-            sysmlCorpusModels(sysmlCorpusDir).filter {
-                it.isExample
-            }.map {
-                it.file
-            },
-        )
-    }
+    from(servedFiles("sysml"))
     from(sysmlCompiledExamplesFiles) {
         include("*.oxsts")
     }
@@ -80,12 +72,18 @@ val cloneSysmlv2TestModels = tasks.register<Sync>("cloneSysmlv2TestModels") {
 }
 
 val cloneTutorialSnippets = tasks.register<Sync>("cloneTutorialSnippets") {
-    from(rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial"))
+    from(servedFiles("oxsts"))
     into(importedSnippetsDir.dir("tutorial"))
 }
 
+// live's menu shows the first line of a model's comment under its label
+val exampleDescriptions = tasks.register<ExampleDescriptions>("exampleDescriptions") {
+    models.from(servedFiles("sysml"), servedFiles("gamma"), servedFiles("oxsts"))
+    outputDirectory.set(importedSnippetsDir.dir("descriptions"))
+}
+
 val cloneTestModels = tasks.register("cloneTestModels") {
-    dependsOn(cloneGammaTestModels, cloneSysmlv2TestModels, cloneTutorialSnippets)
+    dependsOn(cloneGammaTestModels, cloneSysmlv2TestModels, cloneTutorialSnippets, exampleDescriptions)
 }
 
 val cloneVscodeLanguageAssets = tasks.register<Sync>("cloneVscodeLanguageAssets") {

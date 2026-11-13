@@ -3,6 +3,8 @@ title: Overview
 sidebar_position: 0
 ---
 
+import ServedExamples from '@site/src/components/ServedExamples';
+
 # Language Reference
 
 Semantifyr is a **declarative-operational** language for writing the [semantic libraries](../index.md) used by the verification framework. A Semantifyr model is a collection of classes, features, transitions, and properties that the compiler unfolds into a flat transition system and hands to a backend, the model checker that verifies it.
@@ -39,3 +41,9 @@ A pervasive distinction throughout the language is **compile-time vs runtime**. 
 - The **internals** of the Semantifyr compiler. See the [Developer Guide](../../develop/index.md).
 - The **frontends** that produce Semantifyr code from higher-level languages such as Gamma or SysML v2. They live in the [Semantifyr repository](https://github.com/ftsrg/semantifyr).
 - The input languages of the model checkers or model-checking algorithms.
+
+## Examples in Live
+
+The OXSTS model Live serves beside the tutorials' models, opening in Live by its own address:
+
+<ServedExamples />

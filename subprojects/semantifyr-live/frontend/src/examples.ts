@@ -5,43 +5,32 @@
  */
 
 import type { FlavorInfo } from '@semantifyr/editor-common';
+import { EXAMPLE_LANGUAGES, fileNameOf, servedExamplesOf, servedLanguages, type ExampleLanguage, type ServedExample } from '@semantifyr/editor-common/examples';
+import { presentationOf } from './lib/language/presentation';
 import { SYSML_FLAVOR_INFO } from './lib/session/sysmlBridge';
+import { BLANK_MODEL, compiledDescription, compiledLabel } from './texts';
 
-const importedTutorialOxsts = import.meta.glob('./snippets/imported/tutorial/*.oxsts', {
+const importedOxsts = import.meta.glob('./snippets/imported/tutorial/*.oxsts', {
   query: '?raw',
   import: 'default',
   eager: true,
 });
 
-const importedGammaSources = import.meta.glob('./snippets/imported/gamma/*.gamma', {
+const importedGamma = import.meta.glob('./snippets/imported/gamma/*', {
   query: '?raw',
   import: 'default',
   eager: true,
 });
 
-const importedGammaCompiled = import.meta.glob('./snippets/imported/gamma/*.oxsts', {
+const importedSysmlv2 = import.meta.glob('./snippets/imported/sysmlv2/*', {
   query: '?raw',
   import: 'default',
   eager: true,
 });
 
-const importedSysmlv2Sources = import.meta.glob('./snippets/imported/sysmlv2/*.sysml', {
+// the first line of the comment at the top of each model, which the build takes
+const importedDescriptions = import.meta.glob('./snippets/imported/descriptions/*.description', {
   query: '?raw',
-  import: 'default',
-  eager: true,
-});
-
-const importedSysmlv2Compiled = import.meta.glob('./snippets/imported/sysmlv2/*.oxsts', {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-});
-
-interface SysmlCorpusManifest {
-  models: { file: string; example?: { label: string; description: string } }[];
-}
-
-export const importedSysmlv2Manifest = import.meta.glob<SysmlCorpusManifest>('./snippets/imported/sysmlv2/manifest.json', {
   import: 'default',
   eager: true,
 });
@@ -51,224 +40,93 @@ export interface LiveExample {
   id: string;
   flavor: string;
   label: string;
-  description: string;
+  // the first line of the model's own comment, absent where it has none
+  description: string | null;
   code: string;
+  // the registry's entry, null for a blank model
+  served: ServedExample | null;
 }
 
 export interface LiveFlavor extends FlavorInfo {
   examples: LiveExample[];
 }
 
-interface ImportedDescriptor {
-  id: string;
-  // the source's file name without its extension
-  file: string;
-  label: string;
-  description: string;
+const IMPORTED: Readonly<Record<ExampleLanguage, { directory: string, files: Record<string, unknown> }>> = {
+  oxsts: { directory: 'tutorial', files: importedOxsts },
+  gamma: { directory: 'gamma', files: importedGamma },
+  sysml: { directory: 'sysmlv2', files: importedSysmlv2 },
+};
+
+function importedText(files: Record<string, unknown>, path: string): string | null {
+  const text = files[path];
+  return typeof text === 'string' ? text : null;
 }
 
-const TUTORIAL_OXSTS: readonly ImportedDescriptor[] = [
-  {
-    id: 'basics',
-    file: 'basics',
-    label: 'Tutorial: Basics',
-    description:
-      'Final state from the "Direct Modeling" tutorial.',
-  },
-  {
-    id: 'intermediate',
-    file: 'intermediate',
-    label: 'Tutorial: Intermediate',
-    description:
-      'Final state from the "Building a Library" tutorial.',
-  },
-  {
-    id: 'advanced',
-    file: 'advanced',
-    label: 'Tutorial: Advanced',
-    description:
-      'Final state from the "Advanced Tutorial".',
-  },
-  {
-    id: 'level-crossing',
-    file: 'level-crossing',
-    label: 'Level crossing',
-    description: 'Two tracks, a controller and a barrier; the controller forgets a second train.',
-  },
-];
-
-const SYSMLV2_IMPORTED: readonly ImportedDescriptor[] = Object.values(importedSysmlv2Manifest).flatMap((manifest) =>
-  manifest.models.flatMap((model) =>
-    model.example ? [{ id: model.file.replace(/\.sysml$/, '').replaceAll('_', '-'), file: model.file.replace(/\.sysml$/, ''), ...model.example }] : [],
-  ),
-);
-
-const GAMMA_IMPORTED: readonly ImportedDescriptor[] = [
-  {
-    id: 'level-crossing',
-    file: 'LevelCrossing',
-    label: 'Level crossing',
-    description: 'Two tracks, a controller and a barrier; the controller forgets a second train.',
-  },
-  {
-    id: 'spacecraft',
-    file: 'Spacecraft',
-    label: 'Spacecraft',
-    description: 'Small spacecraft with battery, thermal, and orbit-control subsystems.',
-  },
-  {
-    id: 'crossroads',
-    file: 'Crossroads',
-    label: 'Crossroads',
-    description: 'Two coordinated traffic lights at an intersection.',
-  },
-  {
-    id: 'leader-worker',
-    file: 'Simple',
-    label: 'Leader-worker',
-    description: 'Two statecharts coordinating via channel-bound events.',
-  },
-];
-
-function loadOrSkip<T>(
-  registry: Record<string, unknown>,
-  path: string,
-  build: (code: string) => T,
-): T | null {
-  const code = registry[path];
-  return typeof code === 'string' ? build(code) : null;
+function descriptionOf(served: ServedExample): string | null {
+  return importedText(importedDescriptions, `./snippets/imported/descriptions/${fileNameOf(served)}.description`)?.trim() ?? null;
 }
 
-function buildTutorialOxstsExamples(): LiveExample[] {
-  return TUTORIAL_OXSTS.flatMap((descriptor) => {
-    const example = loadOrSkip(
-      importedTutorialOxsts,
-      `./snippets/imported/tutorial/${descriptor.file}.oxsts`,
-      (code) => ({
-        id: descriptor.id,
-        flavor: 'oxsts' as const,
-        label: descriptor.label,
-        description: descriptor.description,
-        code,
-      }),
-    );
-    return example ? [example] : [];
+function sourceExamples(language: ExampleLanguage, flavor: string): LiveExample[] {
+  const { directory, files } = IMPORTED[language];
+  return servedExamplesOf(language).flatMap((served) => {
+    const code = importedText(files, `./snippets/imported/${directory}/${fileNameOf(served)}`);
+    return code === null ? [] : [{ id: served.id, flavor, label: served.label, description: descriptionOf(served), code, served }];
   });
 }
 
-function buildImportedGammaExamples(): LiveExample[] {
-  return GAMMA_IMPORTED.flatMap((descriptor) => {
-    const example = loadOrSkip(
-      importedGammaSources,
-      `./snippets/imported/gamma/${descriptor.file}.gamma`,
-      (code) => ({
-        id: descriptor.id,
-        flavor: 'gamma' as const,
-        label: descriptor.label,
-        description: descriptor.description,
-        code,
-      }),
-    );
-    return example ? [example] : [];
+// the library flavors show the compiled OXSTS of the examples live's menu lists for the library's language
+function compiledExamples(language: ExampleLanguage, flavor: string): LiveExample[] {
+  const { directory, files } = IMPORTED[language];
+  return servedExamplesOf(language).filter((served) => {
+    return served.hidden !== true;
+  }).flatMap((served) => {
+    const name = fileNameOf(served);
+    const code = importedText(files, `./snippets/imported/${directory}/${name.slice(0, name.lastIndexOf('.'))}.oxsts`);
+    return code === null ? [] : [{ id: served.id, flavor, label: compiledLabel(served.label, presentationOf(language).name), description: compiledDescription(presentationOf(language).name), code, served }];
   });
 }
 
-function buildImportedSysmlv2LibraryExamples(): LiveExample[] {
-  return SYSMLV2_IMPORTED.flatMap((descriptor) => {
-    const example = loadOrSkip(
-      importedSysmlv2Compiled,
-      `./snippets/imported/sysmlv2/${descriptor.file}.oxsts`,
-      (code) => ({
-        id: descriptor.id,
-        flavor: 'oxsts-with-sysmlv2-library' as const,
-        label: descriptor.label,
-        description: descriptor.description,
-        code,
-      }),
-    );
-    return example ? [example] : [];
-  });
+function blank(flavor: string, code = ''): LiveExample {
+  return { id: 'blank', flavor, label: BLANK_MODEL, description: null, code, served: null };
 }
-
-function buildImportedSysmlv2Examples(): LiveExample[] {
-  return SYSMLV2_IMPORTED.flatMap((descriptor) => {
-    const example = loadOrSkip(
-      importedSysmlv2Sources,
-      `./snippets/imported/sysmlv2/${descriptor.file}.sysml`,
-      (code) => ({
-        id: descriptor.id,
-        flavor: 'sysml' as const,
-        label: descriptor.label,
-        description: descriptor.description,
-        code,
-      }),
-    );
-    return example ? [example] : [];
-  });
-}
-
-function buildImportedGammaLibraryExamples(): LiveExample[] {
-  return GAMMA_IMPORTED.flatMap((descriptor) => {
-    const example = loadOrSkip(
-      importedGammaCompiled,
-      `./snippets/imported/gamma/${descriptor.file}.oxsts`,
-      (code) => ({
-        id: descriptor.id,
-        flavor: 'oxsts-with-gamma-library' as const,
-        label: `${descriptor.label} (Gamma library)`,
-        description: `Semantifyr form of the ${descriptor.label} Gamma model.`,
-        code,
-      }),
-    );
-    return example ? [example] : [];
-  });
-}
-
-// a Gamma model names its package; an empty OXSTS or SysML file is valid as it is
-const blank = (flavor: string, libraryName: string | null, code = ''): LiveExample => ({
-  id: 'blank',
-  flavor,
-  label: 'Blank',
-  description: libraryName
-    ? `Empty file with the ${libraryName} library preloaded.`
-    : 'Empty file, start from scratch.',
-  code,
-});
-
-const oxstsExamples: LiveExample[] = [
-  ...buildTutorialOxstsExamples(),
-];
-
-const oxstsWithGammaLibraryExamples: LiveExample[] = [
-  ...buildImportedGammaLibraryExamples(),
-  blank('oxsts-with-gamma-library', 'Gamma'),
-];
-
-const oxstsWithSysmlv2LibraryExamples: LiveExample[] = [
-  ...buildImportedSysmlv2LibraryExamples(),
-  blank('oxsts-with-sysmlv2-library', 'SysML v2'),
-];
-
-const gammaExamples: LiveExample[] = [
-  ...buildImportedGammaExamples(),
-  blank('gamma', null, 'package model\n'),
-];
-
-const sysmlExamples: LiveExample[] = [
-  ...buildImportedSysmlv2Examples(),
-  blank('sysml', null),
-];
 
 const BUNDLED_EXAMPLES: Readonly<Record<string, LiveExample[]>> = {
-  'oxsts': oxstsExamples,
-  'oxsts-with-gamma-library': oxstsWithGammaLibraryExamples,
-  'oxsts-with-sysmlv2-library': oxstsWithSysmlv2LibraryExamples,
-  'gamma': gammaExamples,
-  [SYSML_FLAVOR_INFO.id]: sysmlExamples,
+  'oxsts': [
+    ...sourceExamples('oxsts', 'oxsts'),
+    blank('oxsts', servedLanguages.oxsts.blank),
+  ],
+  'oxsts-with-gamma-library': [
+    ...compiledExamples('gamma', 'oxsts-with-gamma-library'),
+    blank('oxsts-with-gamma-library'),
+  ],
+  'oxsts-with-sysmlv2-library': [
+    ...compiledExamples('sysml', 'oxsts-with-sysmlv2-library'),
+    blank('oxsts-with-sysmlv2-library'),
+  ],
+  'gamma': [
+    ...sourceExamples('gamma', 'gamma'),
+    blank('gamma', servedLanguages.gamma.blank),
+  ],
+  [SYSML_FLAVOR_INFO.id]: [
+    ...sourceExamples('sysml', SYSML_FLAVOR_INFO.id),
+    blank(SYSML_FLAVOR_INFO.id, servedLanguages.sysml.blank),
+  ],
 };
 
 export function bundledExamplesOf(flavorId: string): LiveExample[] {
-  return BUNDLED_EXAMPLES[flavorId] ?? [blank(flavorId, null)];
+  return BUNDLED_EXAMPLES[flavorId] ?? [blank(flavorId)];
+}
+
+// the website's page on a language, for a language the registry knows
+export function languagePageOf(languageId: string): string | null {
+  return EXAMPLE_LANGUAGES.includes(languageId as ExampleLanguage) ? servedLanguages[languageId as ExampleLanguage].page : null;
+}
+
+// the examples live's menu lists: a lesson's step is opened by its address alone, and the blank model has a place of its own
+export function listedExamples(flavor: Pick<LiveFlavor, 'examples'>): LiveExample[] {
+  return flavor.examples.filter((example) => {
+    return example.served !== null && example.served.hidden !== true;
+  });
 }
 
 function withExamples(info: FlavorInfo): LiveFlavor {

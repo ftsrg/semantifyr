@@ -90,8 +90,8 @@ const EXAMPLES = [
   'Level crossing',
   'Tutorial: Basics',
   'Tutorial: Intermediate',
-  'Leader-worker',
-  'Door access',
+  'Spacecraft',
+  'Crossroads',
   'Blank model',
 ]
 
@@ -108,7 +108,6 @@ const LONG_EXAMPLES = new Set([
   'crossroads',
   'spacecraft',
   'compressedspacecraft',
-  'orion-protocol',
 ])
 
 // a fixed sequence, so a failure is replayed as it happened

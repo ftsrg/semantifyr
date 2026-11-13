@@ -1,0 +1,472 @@
+{
+  "languages": {
+    "sysml": {
+      "page": "learn/sysml-v2-subset",
+      "blank": ""
+    },
+    "gamma": {
+      "page": "learn/gamma",
+      "blank": "package model\n"
+    },
+    "oxsts": {
+      "page": "learn/language",
+      "blank": ""
+    }
+  },
+  "examples": [
+    {
+      "id": "level-crossing",
+      "language": "sysml",
+      "file": "subprojects/frontends/sysml/models/examples/level_crossing.sysml",
+      "label": "Level crossing",
+      "reason": "The smallest model: its first case fails and the trace shows why.",
+      "origin": "Made for Semantifyr's lecture on model checking",
+      "holder": "The Semantifyr Authors",
+      "licence": "EPL-2.0",
+      "page": "learn/sysml-v2-subset",
+      "cases": [
+        "BarrierDownWhileTrainInCrossingViolated",
+        "TwoTrainsCanBeInTheCrossing"
+      ]
+    },
+    {
+      "id": "crossroads",
+      "language": "sysml",
+      "file": "subprojects/frontends/sysml/models/examples/crossroads.sysml",
+      "label": "Crossroads",
+      "reason": "Two traffic lights under one controller, with timed transitions and items sent between its parts.",
+      "origin": "The Crossroads of the Gamma tutorial, rewritten in SysML v2 by Semantifyr",
+      "holder": "The contributors to the Gamma project",
+      "licence": "EPL-1.0",
+      "page": "learn/sysml-v2-subset",
+      "cases": [
+        "ControllerOperatingReachable",
+        "ControllerOperatingBothYellowReachable",
+        "ControllerOperatingBothRedReachable",
+        "ControllerOperatingTrafficOnAReachable",
+        "ControllerOperatingStoppingAReachable",
+        "ControllerOperatingTrafficOnBReachable",
+        "ControllerOperatingStoppingBReachable",
+        "ControllerInterruptedReachable",
+        "ControllerInterruptedUnreachableViolated",
+        "TrafficLightABehaviorNormalReachable",
+        "TrafficLightABehaviorNormalYellowReachable",
+        "TrafficLightABehaviorNormalRedReachable",
+        "TrafficLightABehaviorNormalGreenReachable",
+        "TrafficLightABehaviorNormalGreenUnreachableViolated",
+        "TrafficLightABehaviorInterruptedReachable",
+        "TrafficLightABehaviorInterruptedYellowReachable",
+        "TrafficLightABehaviorInterruptedBlackReachable",
+        "TrafficLightBBehaviorNormalReachable",
+        "TrafficLightBBehaviorNormalYellowReachable",
+        "TrafficLightBBehaviorNormalRedReachable",
+        "TrafficLightBBehaviorNormalGreenReachable",
+        "TrafficLightBBehaviorInterruptedReachable",
+        "TrafficLightBBehaviorInterruptedYellowReachable",
+        "TrafficLightBBehaviorInterruptedBlackReachable",
+        "ReachableRedRed",
+        "ReachableRedGreen",
+        "UnreachableRedGreenViolated",
+        "ReachableRedYellow",
+        "ReachableGreenRed",
+        "UnreachableGreenGreen",
+        "UnreachableGreenYellow",
+        "ReachableYellowRed",
+        "UnreachableYellowGreen",
+        "ReachableYellowYellow",
+        "TrafficLightAReturnsToNormalAfterInterruptionTestCase"
+      ]
+    },
+    {
+      "id": "compressedspacecraft",
+      "language": "sysml",
+      "file": "subprojects/frontends/sysml/models/examples/compressedspacecraft.sysml",
+      "label": "Spacecraft (compressed)",
+      "reason": "A spacecraft and a ground station exchanging data, with integer attributes for the battery and the data.",
+      "origin": "The Spacecraft of the Gamma repository's tests, rewritten in SysML v2 by Semantifyr",
+      "holder": "The contributors to the Gamma project",
+      "licence": "EPL-1.0",
+      "page": "learn/sysml-v2-subset",
+      "cases": [
+        "StationBehaviorIdleReachable",
+        "StationBehaviorOperationReachable",
+        "StationBehaviorOperationWaitingReachable",
+        "SpacecraftBehaviorCommunicationWaitingPingReachable",
+        "SpacecraftBehaviorCommunicationTransmittingReachable",
+        "SpacecraftBehaviorCommunicationTransmittingSendDataReachable",
+        "SpacecraftBehaviorCommunicationTransmittingSendDataSendingReachable",
+        "SpacecraftBehaviorCommunicationTransmittingConsumePowerReachable",
+        "SpacecraftBehaviorCommunicationTransmittingConsumePowerConsumingReachable",
+        "SpacecraftBehaviorBatteryNotRechargingReachable",
+        "SpacecraftBehaviorBatteryRechargingReachable",
+        "GroundStationReceivedDataCanReach0",
+        "GroundStationReceivedDataCanReach10",
+        "GroundStationReceivedDataCanReach20",
+        "GroundStationReceivedDataCannotReach20Violated",
+        "GroundStationReceivedDataCanReach30",
+        "GroundStationReceivedDataCanReach40",
+        "GroundStationReceivedDataCanReach50",
+        "GroundStationReceivedDataCanReach60",
+        "GroundStationReceivedDataCanReach70",
+        "GroundStationReceivedDataCanReach80",
+        "GroundStationReceivedDataCanReach90",
+        "GroundStationReceivedDataCanReach100",
+        "SpacecraftDataCanReach100",
+        "SpacecraftDataCanReach90",
+        "SpacecraftDataCanReach80",
+        "SpacecraftDataCanReach70",
+        "SpacecraftDataCanReach60",
+        "SpacecraftDataCannotReach60Violated",
+        "SpacecraftDataCanReach50",
+        "SpacecraftDataCanReach40",
+        "SpacecraftDataCanReach30",
+        "SpacecraftDataCanReach20",
+        "SpacecraftDataCanReach10",
+        "SpacecraftDataCanReach0",
+        "SpacecraftBatteryAlwaysAbove0",
+        "SpacecraftBatteryAlwaysAbove10",
+        "SpacecraftBatteryAlwaysAbove20",
+        "SpacecraftBatteryAlwaysAbove30",
+        "SpacecraftBatteryAlwaysAbove40"
+      ]
+    },
+    {
+      "id": "level-crossing",
+      "language": "gamma",
+      "file": "subprojects/frontends/gamma/models/examples/LevelCrossing.gamma",
+      "label": "Level crossing",
+      "reason": "The smallest model: its first case fails and the trace shows why.",
+      "origin": "Made for Semantifyr's lecture on model checking",
+      "holder": "The Semantifyr Authors",
+      "licence": "EPL-2.0",
+      "page": "learn/gamma",
+      "cases": [
+        "BarrierDownWhileTrainInCrossing",
+        "TwoTrainsCanBeInTheCrossing"
+      ]
+    },
+    {
+      "id": "spacecraft",
+      "language": "gamma",
+      "file": "subprojects/frontends/gamma/models/examples/Spacecraft.gamma",
+      "label": "Spacecraft",
+      "reason": "A spacecraft and a ground station exchanging data, with orthogonal regions, timeouts and a battery counter.",
+      "origin": "The Spacecraft of the Gamma repository's tests",
+      "holder": "The contributors to the Gamma project",
+      "licence": "EPL-1.0",
+      "page": "learn/gamma",
+      "cases": [
+        "Station_IdleReachable",
+        "Station_OperationReachable",
+        "Station_OperationReceiveDataWaitingReachable",
+        "Spacecraft_CommunicationWaitingPingReachable",
+        "Spacecraft_CommunicationTransmittingReachable",
+        "Spacecraft_CommunicationTransmittingSendDataSendingReachable",
+        "Spacecraft_CommunicationTransmittingConsumePowerConsumingReachable",
+        "Spacecraft_BatteryNotRechargingReachable",
+        "Spacecraft_BatteryRechargingReachable"
+      ]
+    },
+    {
+      "id": "crossroads",
+      "language": "gamma",
+      "file": "subprojects/frontends/gamma/models/examples/Crossroads.gamma",
+      "label": "Crossroads",
+      "reason": "Two traffic lights under one controller, composed of statecharts with ports and channels.",
+      "origin": "The Crossroads of the Gamma tutorial",
+      "holder": "The contributors to the Gamma project",
+      "licence": "EPL-1.0",
+      "page": "learn/gamma",
+      "cases": [
+        "ControllerOperatingReachable",
+        "ControllerOperatingBothYellowReachable",
+        "ControllerOperatingBothRedReachable",
+        "ControllerOperatingStoppingAReachable",
+        "ControllerOperatingStoppingBReachable",
+        "ControllerOperatingTrafficOnAReachable",
+        "ControllerOperatingTrafficOnBReachable",
+        "ControllerInterruptedReachable",
+        "ANormalReachable",
+        "AInterruptedReachable",
+        "ACanBeYellow",
+        "ACanBeRed",
+        "ACanBeGreen",
+        "ACanBeBlinkingYellow",
+        "ACanBeBlinkingBlack",
+        "BNormalReachable",
+        "BInterruptedReachable",
+        "BCanBeYellow",
+        "BCanBeRed",
+        "BCanBeGreen",
+        "BCanBeBlinkingYellow",
+        "BCanBeBlinkingBlack",
+        "ReachableRedRed",
+        "ReachableRedGreen",
+        "ReachableRedYellow",
+        "ReachableGreenRed",
+        "UnreachableGreenGreen",
+        "UnreachableGreenYellow",
+        "ReachableYellowRed",
+        "UnreachableYellowGreen",
+        "ReachableYellowYellow"
+      ]
+    },
+    {
+      "id": "basics",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/basics.oxsts",
+      "label": "Tutorial: Basics",
+      "reason": "The model the first lesson ends in.",
+      "origin": "Made for Semantifyr",
+      "holder": "The Semantifyr Authors",
+      "licence": "EPL-2.0",
+      "page": "learn/tutorials/trafficlight/direct-modeling",
+      "cases": [
+        "GreenColorIsReachable",
+        "IntersectionNeverBothGreen"
+      ]
+    },
+    {
+      "id": "intermediate",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/intermediate.oxsts",
+      "label": "Tutorial: Intermediate",
+      "reason": "The model the second lesson ends in.",
+      "origin": "Made for Semantifyr",
+      "holder": "The Semantifyr Authors",
+      "licence": "EPL-2.0",
+      "page": "learn/tutorials/trafficlight/building-a-library",
+      "cases": [
+        "GreenColorIsReachable",
+        "IntersectionNeverBothGreen"
+      ]
+    },
+    {
+      "id": "advanced",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/advanced.oxsts",
+      "label": "Tutorial: Advanced",
+      "reason": "The model the third lesson ends in.",
+      "origin": "Made for Semantifyr",
+      "holder": "The Semantifyr Authors",
+      "licence": "EPL-2.0",
+      "page": "learn/tutorials/trafficlight/advanced-tutorial",
+      "cases": [
+        "GreenColorIsReachable",
+        "IntersectionNeverBothGreen",
+        "NeverGreenInStandby",
+        "GreenLampOnlyInGreen",
+        "NoStandbyWithoutPause",
+        "EmergencyStopsTraffic"
+      ]
+    },
+    {
+      "id": "level-crossing",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/level-crossing.oxsts",
+      "label": "Level crossing",
+      "reason": "The smallest model: its first case fails and the trace shows why.",
+      "origin": "Made for Semantifyr's lecture on model checking",
+      "holder": "The Semantifyr Authors",
+      "licence": "EPL-2.0",
+      "page": "learn/language",
+      "cases": [
+        "BarrierDownWhileTrainInCrossing",
+        "TwoTrainsCanBeInTheCrossing"
+      ]
+    },
+    {
+      "id": "basics-step1",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/basics-step1.oxsts",
+      "label": "Direct Modeling, step 1",
+      "reason": "A step of the first lesson, run from its page.",
+      "origin": "Made for Semantifyr",
+      "holder": "The Semantifyr Authors",
+      "licence": "EPL-2.0",
+      "page": "learn/tutorials/trafficlight/direct-modeling",
+      "cases": [],
+      "hidden": true
+    },
+    {
+      "id": "basics-step2",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/basics-step2.oxsts",
+      "label": "Direct Modeling, step 2",
+      "reason": "A step of the first lesson, run from its page.",
+      "origin": "Made for Semantifyr",
+      "holder": "The Semantifyr Authors",
+      "licence": "EPL-2.0",
+      "page": "learn/tutorials/trafficlight/direct-modeling",
+      "cases": [
+        "TrafficLight"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "basics-step3",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/basics-step3.oxsts",
+      "label": "Direct Modeling, step 3",
+      "reason": "A step of the first lesson, run from its page.",
+      "origin": "Made for Semantifyr",
+      "holder": "The Semantifyr Authors",
+      "licence": "EPL-2.0",
+      "page": "learn/tutorials/trafficlight/direct-modeling",
+      "cases": [
+        "TrafficLight"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "basics-step4",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/basics-step4.oxsts",
+      "label": "Direct Modeling, step 4",
+      "reason": "A step of the first lesson, run from its page.",
+      "origin": "Made for Semantifyr",
+      "holder": "The Semantifyr Authors",
+      "licence": "EPL-2.0",
+      "page": "learn/tutorials/trafficlight/direct-modeling",
+      "cases": [
+        "GreenColorIsReachable",
+        "IntersectionNeverBothGreen"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "intermediate-step1",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/intermediate-step1.oxsts",
+      "label": "Building a Library, step 1",
+      "reason": "A step of the second lesson, run from its page.",
+      "origin": "Made for Semantifyr",
+      "holder": "The Semantifyr Authors",
+      "licence": "EPL-2.0",
+      "page": "learn/tutorials/trafficlight/building-a-library",
+      "cases": [],
+      "hidden": true
+    },
+    {
+      "id": "intermediate-step2",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/intermediate-step2.oxsts",
+      "label": "Building a Library, step 2",
+      "reason": "A step of the second lesson, run from its page.",
+      "origin": "Made for Semantifyr",
+      "holder": "The Semantifyr Authors",
+      "licence": "EPL-2.0",
+      "page": "learn/tutorials/trafficlight/building-a-library",
+      "cases": [
+        "GreenColorIsReachable"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "intermediate-step3",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/intermediate-step3.oxsts",
+      "label": "Building a Library, step 3",
+      "reason": "A step of the second lesson, run from its page.",
+      "origin": "Made for Semantifyr",
+      "holder": "The Semantifyr Authors",
+      "licence": "EPL-2.0",
+      "page": "learn/tutorials/trafficlight/building-a-library",
+      "cases": [
+        "GreenColorIsReachable"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "advanced-step1",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/advanced-step1.oxsts",
+      "label": "Advanced Tutorial, step 1",
+      "reason": "A step of the third lesson, run from its page.",
+      "origin": "Made for Semantifyr",
+      "holder": "The Semantifyr Authors",
+      "licence": "EPL-2.0",
+      "page": "learn/tutorials/trafficlight/advanced-tutorial",
+      "cases": [
+        "GreenColorIsReachable",
+        "IntersectionNeverBothGreen",
+        "NeverGreenInStandby"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "advanced-step2",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/advanced-step2.oxsts",
+      "label": "Advanced Tutorial, step 2",
+      "reason": "A step of the third lesson, run from its page.",
+      "origin": "Made for Semantifyr",
+      "holder": "The Semantifyr Authors",
+      "licence": "EPL-2.0",
+      "page": "learn/tutorials/trafficlight/advanced-tutorial",
+      "cases": [
+        "GreenColorIsReachable",
+        "IntersectionNeverBothGreen",
+        "NeverGreenInStandby"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "advanced-step3",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/advanced-step3.oxsts",
+      "label": "Advanced Tutorial, step 3",
+      "reason": "A step of the third lesson, run from its page.",
+      "origin": "Made for Semantifyr",
+      "holder": "The Semantifyr Authors",
+      "licence": "EPL-2.0",
+      "page": "learn/tutorials/trafficlight/advanced-tutorial",
+      "cases": [
+        "GreenColorIsReachable",
+        "IntersectionNeverBothGreen",
+        "NeverGreenInStandby",
+        "GreenLampOnlyInGreen"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "advanced-step4",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/advanced-step4.oxsts",
+      "label": "Advanced Tutorial, step 4",
+      "reason": "A step of the third lesson, run from its page.",
+      "origin": "Made for Semantifyr",
+      "holder": "The Semantifyr Authors",
+      "licence": "EPL-2.0",
+      "page": "learn/tutorials/trafficlight/advanced-tutorial",
+      "cases": [
+        "GreenColorIsReachable",
+        "IntersectionNeverBothGreen",
+        "NeverGreenInStandby",
+        "GreenLampOnlyInGreen",
+        "NoStandbyWithoutPause"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "advanced-step5",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/advanced-step5.oxsts",
+      "label": "Advanced Tutorial, step 5",
+      "reason": "A step of the third lesson, run from its page.",
+      "origin": "Made for Semantifyr",
+      "holder": "The Semantifyr Authors",
+      "licence": "EPL-2.0",
+      "page": "learn/tutorials/trafficlight/advanced-tutorial",
+      "cases": [
+        "GreenColorIsReachable",
+        "IntersectionNeverBothGreen",
+        "NeverGreenInStandby",
+        "GreenLampOnlyInGreen",
+        "NoStandbyWithoutPause",
+        "EmergencyStopsTraffic"
+      ],
+      "hidden": true
+    }
+  ]
+}

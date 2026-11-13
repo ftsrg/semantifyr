@@ -5,13 +5,14 @@
  */
 
 import type React from 'react'
+import type { ServedExample } from '@semantifyr/editor-common/examples'
 
 import { findExample } from '../../examples'
 import { presentationOf } from '../../lib/language/presentation'
 import { useStore } from '../../lib/stores/useStore'
 import type { AddressProblem, Live } from '../../lib/workspace/live'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
-import { casesSentence } from '../../texts'
+import { casesSentence, EXAMPLE_PAGE, exampleRights, websitePage } from '../../texts'
 import { Icon } from '../../ui/icons'
 import { useCurrentDocument, useFlavor } from '../hooks'
 import { useShell } from '../shellContext'
@@ -60,6 +61,20 @@ function AddressError(): React.JSX.Element | null {
   )
 }
 
+// where the example comes from, and the page that explains it
+function ExampleSource({ served }: { served: ServedExample | null }): React.JSX.Element {
+  if (served === null) {
+    return <span className="orientation-source" />
+  }
+  const rights = exampleRights(served.origin, served.holder, served.licence)
+  return (
+    <span className="orientation-source">
+      <span className="orientation-rights" title={rights}>{rights}</span>
+      <a href={websitePage(served.page)} target="_blank" rel="noreferrer">{EXAMPLE_PAGE}</a>
+    </span>
+  )
+}
+
 export function Orientation(): React.JSX.Element {
   const live = useLive()
   const shell = useShell()
@@ -83,7 +98,7 @@ export function Orientation(): React.JSX.Element {
             <span className="orientation-mark" />
             <span className="orientation-text">
               <strong>{`${example.label}.`}</strong>
-              {` ${example.description}${casesSentence(count)}`}
+              {casesSentence(count)}
               {verified
                 ? null
                 : (
@@ -94,6 +109,7 @@ export function Orientation(): React.JSX.Element {
                   </>
                 )}
             </span>
+            <ExampleSource served={example.served} />
             <button
               type="button"
               className="button button-icon"

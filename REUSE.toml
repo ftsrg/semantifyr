@@ -16,6 +16,8 @@ path = [
     "**/tsconfig*.json",
     "**/.gitignore",
     "subprojects/semantifyr-editor-common/src/terms/terms.json",
+    "subprojects/semantifyr-editor-common/src/examples/examples.json",
+    "oxsts-test-models/tutorial/**",
     ".nvmrc",
 ]
 SPDX-FileCopyrightText = "2023-2026 The Semantifyr Authors"
@@ -42,4 +44,26 @@ SPDX-License-Identifier = "OFL-1.1"
 path = "subprojects/frontends/gamma/models/corpus/**/*.gcd"
 precedence = "override"
 SPDX-FileCopyrightText = "The Gamma contributors"
+SPDX-License-Identifier = "EPL-1.0"
+
+[[annotations]]
+path = [
+    "subprojects/frontends/gamma/models/examples/Crossroads.gamma",
+    "subprojects/frontends/gamma/models/examples/Spacecraft.gamma",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "The Gamma contributors"
+SPDX-License-Identifier = "EPL-1.0"
+
+# rewritten in SysML v2 by the Semantifyr authors from the Gamma models above
+[[annotations]]
+path = [
+    "subprojects/frontends/sysml/models/examples/crossroads.sysml",
+    "subprojects/frontends/sysml/models/examples/compressedspacecraft.sysml",
+]
+precedence = "override"
+SPDX-FileCopyrightText = [
+    "The Gamma contributors",
+    "2023-2026 The Semantifyr Authors",
+]
 SPDX-License-Identifier = "EPL-1.0"

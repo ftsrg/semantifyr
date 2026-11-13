@@ -9,6 +9,8 @@ import hu.bme.mit.semantifyr.frontends.sysml.testing.CorpusTier
 import hu.bme.mit.semantifyr.frontends.sysml.testing.CorpusVerdict
 import hu.bme.mit.semantifyr.frontends.sysml.testing.SysMLCorpus
 import hu.bme.mit.semantifyr.frontends.sysml.testing.SysMLv2FrontendTestHelper
+import hu.bme.mit.semantifyr.portfolios.testing.ExampleLanguage
+import hu.bme.mit.semantifyr.portfolios.testing.ServedExamples
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
@@ -52,20 +54,6 @@ class SysMLCorpusTest {
     }
 
     @Test
-    fun `known verdicts follow the Violated suffix`() {
-        corpus.entries.filter {
-            it.case.verdict != CorpusVerdict.Unknown
-        }.forEach {
-            val suffixVerdict = if (it.case.name.endsWith("Violated")) {
-                CorpusVerdict.Failed
-            } else {
-                CorpusVerdict.Passed
-            }
-            assertThat(it.case.verdict).describedAs(it.toString()).isEqualTo(suffixVerdict)
-        }
-    }
-
-    @Test
     fun `falsification twins are expected to fail`() {
         corpus.entries.filter {
             it.case.falsification
@@ -75,14 +63,28 @@ class SysMLCorpusTest {
     }
 
     @Test
-    fun `examples compile without a library variant`() {
-        val examples = corpus.models.filter {
-            it.example != null
+    fun `served models compile without a library variant`() {
+        val served = ServedExamples.load().of(ExampleLanguage.Sysml).map {
+            it.path.name
         }
 
-        assertThat(examples).isNotEmpty()
-        examples.forEach {
+        assertThat(served).isNotEmpty()
+        corpus.models.filter {
+            it.file in served
+        }.forEach {
             assertThat(it.variant).describedAs(it.file).isEqualTo(SysMLv2Variant.Default)
+        }
+    }
+
+    @Test
+    fun `the tutorial and the library fixture list exactly the cases their files declare`() {
+        listOf(SysMLv2FrontendTestHelper.TUTORIAL_ROOT, SysMLv2FrontendTestHelper.ETC_ROOT).forEach { root ->
+            SysMLCorpus.load(root.resolve("manifest.json")).models.forEach { model ->
+                val names = model.cases.map {
+                    it.name
+                }
+                assertThat(names).describedAs(model.file).containsExactlyInAnyOrderElementsOf(declaredCases(root.resolve(model.file)))
+            }
         }
     }
 
