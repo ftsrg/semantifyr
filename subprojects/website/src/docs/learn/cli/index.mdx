@@ -53,7 +53,7 @@ With `--json` it prints one JSON object per case and line, as each case finishes
 
 `result.metadata.backendId` names the backend configuration that answered and `result.message` carries its message.
 
-`result.soundness` and `result.isTrusted` say how far the verdict can be trusted. `result.soundness` is the [soundness direction](portfolios.mdx#soundness-directions) of the backend configuration that answered: an exact configuration is trusted on every verdict, an over-approximating one on a verdict that needs no trace (a passed `AG`, a failed `EF`), an under-approximating one on a verdict that a trace backs (a failed `AG`, a passed `EF`). `result.isTrusted` says whether the portfolio trusted the answer. A portfolio reports `PASSED` or `FAILED` only for an answer it trusts, so `isTrusted` is true for those two verdicts and false for every other: an answer that its configuration's direction does not back becomes `INCONCLUSIVE`, with no witness and a message that names the backend, its verdict and its direction.
+`result.soundness` and `result.isTrusted` say how far the verdict can be trusted. `result.soundness` is the [soundness direction](portfolios.mdx#soundness-directions) of the backend configuration that answered: an exact configuration is trusted on every verdict, an over-approximating one on a verdict that needs no trace (a passed `AG`, a failed `EF`), an under-approximating one on a verdict that a trace backs (a failed `AG`, a passed `EF`). `result.isTrusted` says whether that direction backs the verdict, and a portfolio reports `PASSED` or `FAILED` only for an answer it backs. A portfolio of one backend configuration turns an answer it does not back into `INCONCLUSIVE`, with no witness and a message that names the backend, its verdict and its direction. A portfolio of several passes over such an answer, and when none of its configurations gives one it backs, it ends in `TIMEOUT`, `ERRORED`, `NOT_SUPPORTED` or `INCONCLUSIVE`, with a message that names each configuration's verdict.
 
 ### Verdicts
 
@@ -101,7 +101,7 @@ Under `~/.semantifyr` it unpacks what it carries, each into a folder named by th
 - `gamma/default/<digest>/`: the Gamma semantic library, unpacked by `semantifyr-gamma`.
 - `sysmlv2/default/<digest>/`: the SysML v2 semantic library, unpacked by `semantifyr-sysml verify`.
 - `sysml-cli/<digest>/`: the SysML v2 translator with the SysML v2 standard library, unpacked by `semantifyr-sysml`.
-- `sysml-cache/<translator digest>/`: the translations of `semantifyr-sysml`, an OXSTS file and its name map for each model, named after the model file and a digest of every `.sysml` and `.kerml` file in the model's directory, so a model is translated again only when one of those files or the translator changes.
+- `sysml-cache/<translator digest>/`: the translations of `semantifyr-sysml`, an OXSTS file and its name map for each model, named after the model file and a digest of every `.sysml` and `.kerml` file in the model's directory and below it, so a model is translated again only when one of those files or the translator changes.
 
 In the temporary directory, `verify` and `compile` without `--artifact-directory` write the artifacts into a new `semantifyr-<number>` directory, which they leave in place; `metrics` compiles in a `semantifyr-metrics-<number>` directory, which it deletes when it ends.
 
