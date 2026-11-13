@@ -331,7 +331,6 @@ tasks {
         inputs.files(sourceAliasDirectories)
             .withPropertyName("importedModels")
             .withPathSensitivity(PathSensitivity.RELATIVE)
-        inputs.file(phasesModel).withPropertyName("phasesModel").withPathSensitivity(PathSensitivity.RELATIVE)
     }
 
     assemble {

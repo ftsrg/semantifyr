@@ -25,7 +25,7 @@ const MAXIMUM_LINE_LENGTH = 60;
 
 // written by the phases Gradle task: the artifacts of the model's one case, with a frame after every single rewrite
 const artifacts = require.context('@phases', true, /\/pipeline\/.*\.oxsts$/);
-const models = require.context('@oxsts-test-models/phases', false, /\.oxsts$/);
+const models = require.context('@oxsts-phases-models', false, /\.oxsts$/);
 
 const STEP = /^pipeline\/steps\/\d+_([a-z]+)\.oxsts$/;
 
