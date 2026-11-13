@@ -1,0 +1,138 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+.chain {
+  container-type: inline-size;
+  margin: 0 0 var(--ifm-leading);
+}
+
+.horizontal {
+  display: none;
+  width: 100%;
+}
+
+.vertical {
+  display: block;
+  width: 100%;
+  max-width: 260px;
+  margin: 0 auto;
+}
+
+@container (min-width: 760px) {
+  .horizontal {
+    display: block;
+  }
+
+  .vertical {
+    display: none;
+  }
+}
+
+.tree {
+  max-width: 560px;
+  margin: 0 auto var(--ifm-leading);
+}
+
+.tree svg {
+  display: block;
+  width: 100%;
+}
+
+.phase rect,
+.instance rect {
+  fill: var(--surface-raised);
+  stroke: var(--accent-ink);
+  stroke-width: 1.5;
+}
+
+.end rect {
+  fill: var(--surface-panel);
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+
+.boxTitle {
+  fill: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: var(--weight-semibold);
+  text-anchor: middle;
+}
+
+.phase .boxTitle {
+  fill: var(--accent-ink);
+  text-decoration: underline;
+}
+
+.boxLine {
+  fill: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  text-anchor: middle;
+}
+
+.instance .boxTitle,
+.variable {
+  font-family: var(--font-mono);
+}
+
+.instance .boxLine {
+  fill: var(--syntax-type);
+  font-family: var(--font-mono);
+}
+
+.variable {
+  fill: var(--text-secondary);
+  font-size: 13px;
+  text-anchor: middle;
+}
+
+a:hover .phase rect {
+  fill: var(--accent-soft);
+}
+
+a:focus-visible {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 2px;
+}
+
+.arrow,
+.edge {
+  stroke: var(--text-tertiary);
+  stroke-width: 1.5;
+}
+
+.arrowHead {
+  fill: var(--text-tertiary);
+}
+
+.edgeLabelLeft,
+.edgeLabelRight {
+  fill: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.edgeLabelLeft {
+  text-anchor: end;
+}
+
+.edgeLabelRight {
+  text-anchor: start;
+}
+
+.orderDisc {
+  fill: var(--surface-inset);
+  stroke: var(--border-strong);
+}
+
+.order {
+  fill: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: var(--weight-semibold);
+  text-anchor: middle;
+}
