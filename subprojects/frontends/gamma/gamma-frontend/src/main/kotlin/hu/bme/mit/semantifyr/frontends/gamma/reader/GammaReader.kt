@@ -19,8 +19,9 @@ import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.xtext.EcoreUtil2
 import org.eclipse.xtext.resource.XtextResourceSet
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.absolutePathString
+import kotlin.io.path.extension
 
 class GammaReader @Inject constructor(
     private val resourceSetLoader: ResourceSetLoader,
@@ -29,22 +30,42 @@ class GammaReader @Inject constructor(
 
     private val logger by loggerFactory()
 
-    fun readGammaFile(file: File): GammaModelPackage {
-        return readGammaFiles(listOf(file)).single() as GammaModelPackage
+    fun readGammaFile(
+        file: File,
+        workspace: Path? = null,
+    ): GammaModelPackage {
+        return readGammaFiles(listOf(file), workspace).single() as GammaModelPackage
     }
 
-    // the Gamma models beside the read files are their workspace, which imports resolve in; only what the read files reach is validated
-    fun readGammaFiles(files: List<File>): List<GammaRoot> {
+    fun workspaceFiles(workspace: Path): List<File> {
+        return Files.walk(workspace).use { paths ->
+            paths.filter {
+                it.extension in MODEL_EXTENSIONS
+            }.map {
+                it.toFile()
+            }.toList()
+        }
+    }
+
+    // the Gamma models beside the read files, or under the given workspace, are what imports resolve in; only what the read files reach is validated
+    fun readGammaFiles(
+        files: List<File>,
+        workspace: Path? = null,
+    ): List<GammaRoot> {
         logger.info { "Reading Gamma sources $files" }
         val resourceSet = resourceSetProvider.get()
         val resources = files.map {
             loadFile(resourceSet, it.toPath())
         }
-        val workspaceFiles = files.mapNotNull {
-            it.absoluteFile.parentFile?.listFiles()?.toList()
-        }.flatten().filter {
-            it.extension in MODEL_EXTENSIONS
-        }.distinct()
+        val workspaceFiles = if (workspace != null) {
+            workspaceFiles(workspace)
+        } else {
+            files.mapNotNull {
+                it.absoluteFile.parentFile?.listFiles()?.toList()
+            }.flatten().filter {
+                it.extension in MODEL_EXTENSIONS
+            }.distinct()
+        }
         for (file in workspaceFiles) {
             loadFile(resourceSet, file.toPath())
         }
@@ -88,7 +109,7 @@ class GammaReader @Inject constructor(
         resourceSet: ResourceSet,
         path: Path,
     ): Resource {
-        val resource = resourceSet.getResource(URI.createFileURI(path.absolutePathString()), true)
+        val resource = resourceSet.getResource(URI.createFileURI(path.toAbsolutePath().normalize().toString()), true)
         resourceSet.resources += resource
         return resource
     }

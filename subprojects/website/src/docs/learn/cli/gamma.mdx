@@ -10,7 +10,7 @@ import compile from '@cli-reference/gamma-compile.txt';
 
 # Gamma on the Command Line
 
-`semantifyr-gamma` verifies Gamma models (`.gamma` or `.gcd` files, the language of the in-tree Gamma frontend, a [sub-language of Gamma](../gamma.mdx) in Gamma's syntax): statecharts, their composition and their verification cases. A verification case names its component and holds its property, `verification case IdleReachable of System { EF state worker.Main.Idle }`. The Gamma models in the model's directory are its workspace, in which its imports resolve. It compiles a model to OXSTS on top of the bundled Gamma semantic library. Its distribution, `semantifyr-gamma-<version>.zip`, carries Theta, the library in `libraries/gamma` and the example model `models/smoke/Simple.gamma`.
+`semantifyr-gamma` verifies Gamma models (`.gamma` or `.gcd` files, the language of the in-tree Gamma frontend, a [sub-language of Gamma](../gamma.mdx) in Gamma's syntax): statecharts, their composition and their verification cases. A verification case names its component and holds its property, `verification case IdleReachable of System { EF state worker.Main.Idle }`. The Gamma models in the model's directory are its workspace, in which its imports resolve; `--workspace <directory>` makes the `.gamma` and `.gcd` files of that directory, recursively, the workspace instead, for a model that imports from another directory. It compiles a model to OXSTS on top of the bundled Gamma semantic library. Its distribution, `semantifyr-gamma-<version>.zip`, carries Theta, the library in `libraries/gamma` and the example model `models/smoke/Simple.gamma`.
 
 <CodeBlock language="text">{help}</CodeBlock>
 

@@ -29,11 +29,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Named
 import org.junit.jupiter.params.provider.Arguments
 import java.io.File
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.stream.Stream
 import kotlin.io.path.Path
-import kotlin.io.path.extension
 import kotlin.streams.asStream
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -65,13 +63,7 @@ class GammaFrontendTestHelper {
         file: String,
     ): List<GammaVerificationCase> {
         val roots = workspaces.getOrPut(workspace.toAbsolutePath().normalize()) {
-            val files = Files.walk(workspace).use { paths ->
-                paths.filter {
-                    it.extension in WORKSPACE_EXTENSIONS
-                }.map {
-                    it.toFile()
-                }.toList()
-            }
+            val files = gammaReader.workspaceFiles(workspace)
             files.zip(gammaReader.readGammaFiles(files)).associate { (workspaceFile, root) ->
                 workspaceFile.toPath().toAbsolutePath().normalize() to root
             }
@@ -166,7 +158,6 @@ class GammaFrontendTestHelper {
     }
 
     companion object {
-        private val WORKSPACE_EXTENSIONS = setOf("gamma", "gcd")
         private val EXAMPLES = listOf("Simple.gamma", "Crossroads.gamma", "Spacecraft.gamma")
 
         @JvmStatic

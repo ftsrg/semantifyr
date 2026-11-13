@@ -47,9 +47,10 @@ class SemantifyrGammaCommand(
 internal fun readGammaModel(
     gammaInjector: Injector,
     model: Path,
+    workspace: Path?,
 ): GammaModelPackage {
     try {
-        return gammaInjector.getInstance(GammaReader::class.java).readGammaFile(model.toFile())
+        return gammaInjector.getInstance(GammaReader::class.java).readGammaFile(model.toFile(), workspace)
     } catch (exception: Exception) {
         throw CommandExit(ExitCode.Compilation, exception.message ?: exception::class.simpleName)
     }
