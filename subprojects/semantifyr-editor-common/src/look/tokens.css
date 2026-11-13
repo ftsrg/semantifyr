@@ -145,7 +145,7 @@
 
 :root[data-theme="dark"] {
   --accent: #b8513d;
-  --accent-hover: #cd6650;
+  --accent-hover: #aa4531;
   --accent-ink: #eb7f68;
   --accent-text: #fbf5ef;
   --accent-soft: rgba(194, 90, 69, 0.14);
@@ -170,7 +170,7 @@
 
   --text-primary: #efe9dd;
   --text-secondary: #c2bbac;
-  --text-tertiary: #a49d8f;
+  --text-tertiary: #aca597;
   --text-disabled: #5d5a53;
 
   --shadow-overlay: 0 0 0 1px rgba(0, 0, 0, 0.22), 0 14px 36px rgba(0, 0, 0, 0.34);

@@ -69,7 +69,6 @@
 .embed-initializing { padding: var(--space-5) var(--space-6); border-top: 1px solid var(--border-faint); color: var(--text-tertiary); font-size: var(--text-small); }
 
 .embed-trace { border-top: 1px solid var(--border-faint); }
-.embed-trace.is-outdated > * { opacity: 0.5; filter: saturate(0.6); }
 .embed .trace-head, .embed .step-item { font-size: 12.5px; }
 .embed .steps { padding-top: 0; padding-bottom: var(--space-2); }
 .embed .trace-text { max-height: 420px; overflow: auto; }

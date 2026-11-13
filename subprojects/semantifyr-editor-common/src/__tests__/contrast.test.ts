@@ -92,6 +92,14 @@ const TEXT_SURFACES: readonly Surface[] = [
 const TEXT = 4.5;
 const NON_TEXT = 3;
 
+const ADMONITIONS = [
+  'verdict-neutral',
+  'verdict-passed',
+  'language-sysml',
+  'attention',
+  'problem',
+] as const;
+
 const USES: readonly Use[] = [
   {
     foregrounds: [
@@ -181,6 +189,22 @@ const USES: readonly Use[] = [
   },
   {
     foregrounds: [
+      'text-primary',
+    ],
+    surfaces: ADMONITIONS.map((type) => {
+      return [`${type}-soft`, 'surface-editor'] as const;
+    }),
+    minimum: TEXT,
+  },
+  {
+    foregrounds: ADMONITIONS,
+    surfaces: ADMONITIONS.map((type) => {
+      return [`${type}-soft`, 'surface-editor'] as const;
+    }),
+    minimum: NON_TEXT,
+  },
+  {
+    foregrounds: [
       'verdict-glyph-on-disc',
     ],
     surfaces: [
@@ -198,12 +222,6 @@ const USES: readonly Use[] = [
     ],
     minimum: NON_TEXT,
   },
-];
-
-// pairs the contrast note gives no value for; each is the owner's to decide
-const UNDECIDED: readonly string[] = [
-  'dark accent-text on accent-hover',
-  'dark text-tertiary on surface-selected over surface-overlay',
 ];
 
 interface Pair {
@@ -252,23 +270,6 @@ function failing(pairs: readonly Pair[]): string[] {
 
 describe('the tokens meet level AA', () => {
   test('every text reaches 4.5 and every mark and ring 3 against the surface it sits on', () => {
-    expect(failing(PAIRS.filter((pair) => {
-      return !UNDECIDED.includes(pair.name);
-    }))).toEqual([]);
-  });
-
-  test('names only pairs it checks as undecided', () => {
-    const names = PAIRS.map((pair) => {
-      return pair.name;
-    });
-    expect(UNDECIDED.filter((name) => {
-      return !names.includes(name);
-    })).toEqual([]);
-  });
-
-  test.fails('the pairs the contrast note gives no value for pass too', () => {
-    expect(failing(PAIRS.filter((pair) => {
-      return UNDECIDED.includes(pair.name);
-    }))).toEqual([]);
+    expect(failing(PAIRS)).toEqual([]);
   });
 });

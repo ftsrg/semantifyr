@@ -164,3 +164,50 @@ html[data-theme='dark'] {
   width: auto;
 }
 
+
+.alert {
+  --ifm-alert-shadow: none;
+}
+
+.alert a {
+  text-decoration-color: currentColor;
+}
+
+.alert [class*='admonitionIcon'] svg {
+  fill: var(--ifm-alert-border-color);
+}
+
+.alert--secondary {
+  --ifm-alert-background-color: var(--verdict-neutral-soft);
+  --ifm-alert-background-color-highlight: var(--surface-inset);
+  --ifm-alert-foreground-color: var(--text-primary);
+  --ifm-alert-border-color: var(--verdict-neutral);
+}
+
+.alert--success {
+  --ifm-alert-background-color: var(--verdict-passed-soft);
+  --ifm-alert-background-color-highlight: var(--surface-inset);
+  --ifm-alert-foreground-color: var(--text-primary);
+  --ifm-alert-border-color: var(--verdict-passed);
+}
+
+.alert--info {
+  --ifm-alert-background-color: var(--language-sysml-soft);
+  --ifm-alert-background-color-highlight: var(--surface-inset);
+  --ifm-alert-foreground-color: var(--text-primary);
+  --ifm-alert-border-color: var(--language-sysml);
+}
+
+.alert--warning {
+  --ifm-alert-background-color: var(--attention-soft);
+  --ifm-alert-background-color-highlight: var(--surface-inset);
+  --ifm-alert-foreground-color: var(--text-primary);
+  --ifm-alert-border-color: var(--attention);
+}
+
+.alert--danger {
+  --ifm-alert-background-color: var(--problem-soft);
+  --ifm-alert-background-color-highlight: var(--surface-inset);
+  --ifm-alert-foreground-color: var(--text-primary);
+  --ifm-alert-border-color: var(--problem);
+}
