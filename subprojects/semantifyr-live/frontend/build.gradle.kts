@@ -5,6 +5,7 @@
  */
 
 import com.github.gradle.node.npm.task.NpmTask
+import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
 import hu.bme.mit.semantifyr.gradle.conventions.sysmlCorpusModels
@@ -104,10 +105,20 @@ val cloneSysmlWorker = tasks.register<Sync>("cloneSysmlWorker") {
     into(layout.buildDirectory.dir("sysml-worker"))
 }
 
+val renderBrandingPictures = registerRenderPictures(
+    "renderBrandingPictures",
+    layout.buildDirectory.dir("branding").get(),
+    listOf(
+        "favicon.ico=semantifyr-logo@16,32,48",
+        "pwa-192.png=semantifyr-logo@192",
+        "pwa-512.png=semantifyr-logo@512",
+        "apple-touch-icon.png=semantifyr-logo@180",
+        "social-card.png=social-card@1200",
+    ),
+)
+
 val cloneBrandingAssets = tasks.register<Sync>("cloneBrandingAssets") {
-    from(brandingDir) {
-        include("favicon.ico")
-    }
+    from(renderBrandingPictures)
     from(brandingDir) {
         include("semantifyr-logo.svg")
         rename { "pwa.svg" }
@@ -119,18 +130,6 @@ val cloneBrandingAssets = tasks.register<Sync>("cloneBrandingAssets") {
     from(brandingDir) {
         include("semantifyr-full-dark.svg")
         rename { "logo-full-dark.svg" }
-    }
-    from(brandingDir) {
-        include("semantifyr-logo-192.png")
-        rename { "pwa-192.png" }
-    }
-    from(brandingDir) {
-        include("semantifyr-logo-512.png")
-        rename { "pwa-512.png" }
-    }
-    from(brandingDir) {
-        include("semantifyr-logo-180.png")
-        rename { "apple-touch-icon.png" }
     }
     into(publicDir)
 }
@@ -154,6 +153,7 @@ fun NpmTask.configureSharedInputs() {
     inputs.files(editorCommonFiles)
     inputs.files(cloneTestModels)
     inputs.files(cloneVscodeLanguageAssets)
+    inputs.files(cloneBrandingAssets)
 }
 
 val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
@@ -162,7 +162,6 @@ val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     configureSharedInputs()
     inputs.dir(project.layout.projectDirectory.dir("public"))
     inputs.file(project.layout.projectDirectory.file("index.html"))
-    inputs.files(cloneBrandingAssets)
 
     npmCommand.set(listOf("run", "assemble"))
     outputs.dir(project.layout.projectDirectory.dir("dist"))
