@@ -2,7 +2,7 @@ area	construct	outcome	fixture	marker	detail
 Types and expressions	Integer and boolean types, variables with a literal initial value	carried	models/corpus/tests/hu.bme.mit.gamma.tests/model/Clock/Statechart/Counter.gcd	var	
 Types and expressions	Record types, nested records, record-typed variables and event parameters	carried	models/semantics/Records.gamma	#Point { x := 3 }	
 Types and expressions	Arithmetic, comparison and boolean operators with Gamma's precedence for `not`, equality, ordering, `and` and `or`	carried	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaGrammarTest.kt	not binds tighter than and	
-Types and expressions	Variables with a non-literal initial value	out			The mapper refuses it with a diagnostic.
+Types and expressions	Variables with a non-literal initial value	planned			The mapper refuses it with a diagnostic.
 Types and expressions	Enumeration, array, rational, decimal and subrange types, constants	out			Future work.
 Types and expressions	`xor`, `imply`, the conditional expression, `div`, `mod`, `forall`, `exists` and select expressions	out			Future work. `div` and `mod` wait for OXSTS operators.
 Types and expressions	Functions, procedures and lambdas	out			Future work.
