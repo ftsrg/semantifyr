@@ -265,7 +265,7 @@
             "none",
             "all"
           ],
-          "markdownDescription": "Compiler optimization preset. `none` disables all passes; `all` enables the default bundle."
+          "markdownDescription": "Compiler optimization preset. `none` turns off the optional passes, while the simplification of each inlined call and the normalization of the property still run; `all` enables the default bundle."
         }
       }
     }
