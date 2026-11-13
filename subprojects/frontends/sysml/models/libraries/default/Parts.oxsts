@@ -45,32 +45,37 @@ class Part {
             // do nothing, if no transition is enabled
             inline exhibitState?.assumeNoTransitionEnabled()
         }
+
+        inline for (port in ports) {
+            inline port.assumeRequiredConsumption()
+            inline port.resetConsumption()
+        }
     }
 
+    tran executeFlows() {
+        inline for (flow in flows) {
+            inline flow.main()
+        }
+    }
+
+    // the flows run once after initialization, so the items sent during it arrive in the first step
     redefine init {
         inline for (attribute in attributes) {
             inline attribute.init()
         }
 
+        inline exhibitState?.activate()
         inline exhibitState?.activateRecursive()
 
         inline for (part in parts) {
             inline part.init()
         }
+
+        inline executeFlows()
     }
 
     redefine tran {
-        inline resetOutputEvents()
-
-        inline for (part in parts) {
-            inline part.main()
-        }
-
-        inline executeExhibitState()
-
-        inline for (flow in flows) {
-            inline flow.main()
-        }
+        inline executeMainComponent()
 
         inline resetInputEvents()
     }
@@ -84,19 +89,17 @@ class Part {
 
         inline executeExhibitState()
 
-        inline for (flow in flows) {
-            inline flow.main()
-        }
+        inline executeFlows()
     }
 }
 
 class Flow {
-    refers inputPort: Port[1]
-    refers outputPort: Port[1]
+    refers source: Port[1]
+    refers target: Port[1]
 
     redefine tran {
-        if (inputPort.hasOutgoing()) {
-            inline outputPort.setIncomingItem(inputPort.outgoingItem as Item)
+        if (source.hasOutgoing()) {
+            inline target.setIncomingItem(source.outgoingItem as Item)
         }
     }
 }

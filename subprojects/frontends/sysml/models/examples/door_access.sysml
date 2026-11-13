@@ -13,7 +13,7 @@ port def AccessPort {
 }
 
 part def AccessController {
-    attribute step: Integer default 0;
+    attribute step: Integer := 0;
     port accessPort: AccessPort;
 
     exhibit state Behaviour {

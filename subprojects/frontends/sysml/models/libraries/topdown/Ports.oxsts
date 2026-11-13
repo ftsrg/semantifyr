@@ -6,6 +6,9 @@ abstract class Port {
     var incomingItem: Item[0..1] := nothing
     var outgoingItem: Item[0..1] := nothing
 
+    var consumed: bool := false
+    var consumptionRequired: bool := false
+
     prop hasIncoming(): bool {
         return incomingItem != nothing
     }
@@ -22,15 +25,35 @@ abstract class Port {
         return outgoingItem == item
     }
 
+    prop canConsume(item: Item): bool {
+        return incomingItem == item && !consumed
+    }
+
     tran assumeHasIncomingItem(item: Item) {
         assume(hasIncomingItem(item))
+    }
+
+    tran consumeIncomingItem() {
+        consumed := true
+    }
+
+    tran requireConsumption() {
+        consumptionRequired := true
+    }
+
+    tran assumeRequiredConsumption() {
+        assume(!consumptionRequired || consumed)
+    }
+
+    tran resetConsumption() {
+        consumed := false
+        consumptionRequired := false
     }
 
     tran setIncomingItem(item: Item) {
         incomingItem := item
     }
 
-    @Trace
     tran setOutgoingItem(item: Item) {
         outgoingItem := item
     }

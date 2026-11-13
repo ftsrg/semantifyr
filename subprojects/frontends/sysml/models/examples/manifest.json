@@ -56,7 +56,53 @@
                 { "name": "SpontaneousDoActionAlwaysFiredWhenTargetIsActiveTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["spin", "uppaal"] },
                 { "name": "GuardedSpontaneousTransitionReachesDoneTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta", "uppaal"] },
                 { "name": "GuardedSpontaneousCounterReachesThresholdTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta", "spin", "uppaal"] },
-                { "name": "GuardedSpontaneousDoneNotReachableBeforeThresholdTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta", "spin", "uppaal"] }
+                { "name": "GuardedSpontaneousDoneNotReachableBeforeThresholdTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta", "spin", "uppaal"] },
+                { "name": "RegionTransitionFiresParallelExitActionTestCase", "verdict": "Passed", "tier": "Integration" },
+                { "name": "RegionTransitionLeavesEveryRegionTestCase", "verdict": "Passed", "tier": "Integration" },
+                { "name": "RegionExitActionFiresWhenParallelStateExitsTestCase", "verdict": "Passed", "tier": "Integration" },
+                { "name": "InactiveParallelStateExitActionNeverFiresTestCase", "verdict": "Passed", "tier": "Integration" },
+                { "name": "ExhibitedStateEntryActionFiresTestCase", "verdict": "Passed", "tier": "Integration" },
+                { "name": "ExhibitedStateEntryActionPrecedesSubstateTestCase", "verdict": "Passed", "tier": "Integration" },
+                { "name": "ParallelExitReachesDoneTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "ParallelExitRunsExitsBeforeEffectTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "RegionEntryActionFiresTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "ItemFiresOneRegionPerStepTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "FirstRegionConsumesItemTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "SecondRegionConsumesItemTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "InitSendArrivesTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "UnacceptedItemIsDroppedTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "ObjectiveConstraintReachableTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "ObjectiveConstraintCheckedViolated", "verdict": "Failed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "ExhibitedStateActiveUntilDoneTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "ExhibitedStateInactiveAfterDoneTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "ExhibitedStateReachesDoneTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "ExhibitedStateExitActionRunsAtDoneTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "ExhibitedStateStaysActiveViolated", "verdict": "Failed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "CrossRegionEntryReachesTargetTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "CrossRegionEntryEntersSiblingRegionTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "CrossRegionEntryRunsEntriesInOrderTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "CrossRegionEntryInitialDescentViolated", "verdict": "Failed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "DerivedAttributeFollowsItsExpressionTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "DerivedAttributeChangesTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "DerivedAttributeConstantViolated", "verdict": "Failed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "UnvaluedAttributeMayStartAboveZeroTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "UnvaluedAttributeMayStartBelowZeroTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "UnvaluedBooleanMayStartTrueTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "UnvaluedBooleanMayStartFalseTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "InitialValueHoldsViolated", "verdict": "Failed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "LastItemOnOneSlotIsAcceptedTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "EarlierItemOnOneSlotIsNeverAcceptedTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] }
+            ]
+        },
+        {
+            "file": "fifoqueue.sysml",
+            "variant": "Fifo",
+            "conformance": true,
+            "cases": [
+                { "name": "QueuedItemIsAcceptedLaterTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "QueuedItemsAreAcceptedInArrivalOrderTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "QueuedItemsAreNeverAcceptedOutOfOrderTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] },
+                { "name": "FullQueueDropsNewestItemTestCase", "verdict": "Passed", "tier": "Integration", "engines": ["theta"] }
             ]
         },
         {
@@ -80,7 +126,7 @@
         },
         {
             "file": "door_access.sysml",
-            "example": { "label": "Door access", "description": "Door-access model with parallel state regions." },
+            "example": { "label": "Door access", "description": "Sequential cyclic workflow with do-actions on transitions." },
             "cases": [
                 { "name": "LockedReachable", "verdict": "Passed", "tier": "Smoke", "engines": ["spin", "uppaal"] },
                 { "name": "CheckingReachable", "verdict": "Passed", "tier": "Integration", "engines": ["spin", "uppaal"] },
@@ -190,7 +236,8 @@
                 { "name": "UnreachableGreenYellow", "verdict": "Passed", "tier": "Nightly", "engines": ["nuxmv", "uppaal"] },
                 { "name": "ReachableYellowRed", "verdict": "Passed", "tier": "Nightly", "engines": ["nuxmv", "uppaal"] },
                 { "name": "UnreachableYellowGreen", "verdict": "Passed", "tier": "Nightly", "engines": ["nuxmv", "uppaal"] },
-                { "name": "ReachableYellowYellow", "verdict": "Passed", "tier": "Nightly", "engines": ["nuxmv", "uppaal"] }
+                { "name": "ReachableYellowYellow", "verdict": "Passed", "tier": "Nightly", "engines": ["nuxmv", "uppaal"] },
+                { "name": "TrafficLightAReturnsToNormalAfterInterruptionTestCase", "verdict": "Passed", "tier": "Nightly", "engines": ["nuxmv", "uppaal"] }
             ]
         },
         {

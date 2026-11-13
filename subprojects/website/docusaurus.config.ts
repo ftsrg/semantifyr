@@ -80,6 +80,8 @@ export default {
             '@sysml-tutorial-models': path.resolve(__dirname, '../frontends/sysml/models/tutorial'),
             // written by the cliReference_* Gradle tasks
             '@cli-reference': path.resolve(__dirname, 'build/cli-reference'),
+            // written by the cloneSysmlConstructs Gradle task from the SysML translation's registry
+            '@sysml-constructs': path.resolve(__dirname, 'build/sysml-constructs'),
           },
         },
         module: {

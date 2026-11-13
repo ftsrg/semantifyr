@@ -11,4 +11,5 @@ enum class SysMLv2Variant(
 ) {
     Default("default"),
     TopDown("topdown"),
+    Fifo("fifo"),
 }

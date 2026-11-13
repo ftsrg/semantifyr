@@ -14,6 +14,7 @@ export interface ProblemEntry {
   endColumn: number
   message: string
   source: string
+  code?: string | undefined
 }
 
 function severityFromString(severity: ProblemEntry['severity']): vscode.DiagnosticSeverity {
@@ -52,6 +53,9 @@ export function toVscodeDiagnostics(entries: readonly ProblemEntry[]): vscode.Di
     )
     const diagnostic = new vscode.Diagnostic(range, entry.message, severityFromString(entry.severity))
     diagnostic.source = entry.source
+    if (entry.code !== undefined) {
+      diagnostic.code = entry.code
+    }
     return diagnostic
   })
 }

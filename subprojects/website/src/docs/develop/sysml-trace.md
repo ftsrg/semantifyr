@@ -5,68 +5,89 @@ sidebar_position: 1
 
 # SysML v2 traces
 
-A counterexample to a SysML v2 verification case is shown as a SysML v2 model: a part definition that specializes the system definition and declares the states, transitions and sends that occurred, ordered in time. The trace refines the system model, so SysML v2 tools read and check it like any other model.
+A witness of a SysML v2 verification case is shown as a SysML v2 model: a package `<Case>Trace` with a part definition `Run` that specializes the verified part's definition and states which states each part was in over which stretch of time, which transitions fired in which step, which items were sent, and how much time passed. Every declaration narrows the model, so the trace is a refinement of it, and a SysML v2 tool reads it next to the model.
 
-When a SysML v2 case has a witness, `SysMLv2Frontend.verify` runs the `trace` command of the bundled SysIDE fork on the case's `trace.json`, with the model file and the files next to it as the workspace, the same input the translation reads. The command generates the trace, validates it against the model, and writes `trace.sysml` next to `witness.oxsts` only when SysIDE reports no error; otherwise the case keeps its verdict and the log carries the errors. `semantifyr-sysml verify` takes a `.sysml` model through the same path. The JSON input of the generator is still under design.
+## Inputs
 
-The reference pair is `subprojects/frontends/sysml/models/etc/crossroads-green.*`, a counterexample to `TrafficLightABehaviorNormalGreenUnreachableViolated` of `models/examples/crossroads.sysml`. `ReferenceTraceTest` in `:sysml-wrapper` validates the SysML trace with the pinned SysIDE, and it also validates without errors or warnings in the OMG pilot implementation. The fork generates the same model from the pair's `trace.json`, except for the multiplicities below, and the nightly `SysMLTraceTests` checks that every witness of the SysML suites yields a trace. Citations below refer to the 2024-12 release, KerML 1.0 Beta 2.4 and SysML 2.0 Beta 2.4.
+`SysMLv2Frontend.verify` runs the `trace` command of the bundled SysIDE fork for every case with a witness, with three files: the case's `witness.json` and `trace.json` and the name map the translation wrote next to the OXSTS (`compiled/<variant>/<model>.names.json`). The command generates the trace, validates it against the model with SysIDE, and writes `trace.sysml` next to the witness only when it validates; otherwise the case keeps its verdict and the log carries the error, which names the place in the input it comes from (`trace.json.steps[3].traces[0].self: ...`).
 
-## Refinement
+The name map holds a hash of the model text, the tick, and one entry per translated element: its path in the SysML model (names joined by `::`, an unnamed element by its index `#n` among its owner's elements, an instance of a usage with multiplicity `[n]` by `[k]`), its path in the OXSTS, and for parts and subjects the class their features continue in. The generator refuses a name map whose hash does not match the model it is given, and checks the shape of all three files before it reads them.
 
-```sysmlv2
-part def TrafficLightABehaviorNormalGreenUnreachableViolatedTrace :> CrossroadSystem {
-    part controller :>> controller {
-        exhibit state Behaviour[1] :>> Behaviour {
-```
+The generator replays nothing of the library:
 
-- The trace definition specializes the system definition, so every trace instance is a system instance (KerML 7.3.3.3 Subclassification, SysML 7.6.2 Definitions).
-- Parts are named redefinitions of the system's parts: a redefining feature has the values of the redefined one (KerML 7.3.4.5 Redefinition). The name is the effective name an unnamed redefinition would get (SysML 7.6.5 Effective Names); SysIDE resolves feature chains only through the named form.
-- Exhibited states are redefined the same way; an exhibit state usage is referential and its part is the performer (SysML 7.18.4 Exhibit State Usages, 8.4.14.4).
+- The active states come from the `activeState` values of the witness, and an exhibited state's from its `performing` flag. Where the optimizer removed a flag, they come from the traced `enter` and `exit` of `State` and `ParallelState`, whose argument is the closest common state.
+- A state occurrence starts where its state turns active or is entered again, and ends where it turns inactive or is left.
+- The fired transitions are the traced `Transition::fire` calls, the sends the traced `SendItemAction::send` calls. A send belongs to the entry, exit or effect that holds its send action.
+- A traced `passTime` of the case is a dwell of one tick. Other traced calls are not shown.
 
-## Multiplicity
-
-Every occurrence the trace declares, and every connector, has multiplicity `[1]`. State, action, snapshot, time slice and connection usages default to `[0..*]` (SysML 7.6.3 Usages gives `[1..1]` only to attribute, item, part and port usages), and a connector without a lower bound holds with no link (KerML 8.4.4.6.1 Connectors). Without `[1]` the trace would assert nothing. The generator does not emit them yet.
-
-## States and transitions
+## Form
 
 ```sysmlv2
-state operating1[1] :> Operating {
-    state bothYellow1[1] :> BothYellow;
-    action toBothRed1[1] :> stateTransitions {
-        action sendToggle1[1] send new Toggle() via controlA;
-        action sendToggle2[1] send new Toggle() via controlB;
+package TrafficLightABehaviorNormalGreenUnreachableViolatedTrace {
+    private import Occurrences::HappensJustBefore;
+    private import Time::DurationOf;
+    private import SI::s;
+    private import VerificationCases::VerdictKind;
+
+    verification witness : TrafficLightABehaviorNormalGreenUnreachableViolated {
+        subject :>> system : Run;
+        return :>> verdict = VerdictKind::fail;
     }
-    state bothRed1[1] :> BothRed;
+
+    part def Run :> CrossroadSystem {
+        bind init.startShot = self.startShot;
+
+        timeslice init [1] {
+            assert constraint { DurationOf(init) == 0 [s] }
+            event controller.Behaviour.start [1];
+        }
+        succession : HappensJustBefore [1] first init then dwell1;
+        timeslice dwell1 [1] {
+            assert constraint { DurationOf(dwell1) == 1 [s] }
+        }
+        succession : HappensJustBefore [1] first dwell1 then step2;
+        timeslice step2 [1] {
+            assert constraint { DurationOf(step2) == 0 [s] }
+            event controller.Behaviour.operating1.bothYellowToBothRed1 [1];
+        }
+
+        part controller :>> controller {
+            exhibit state Behaviour :>> Behaviour [1] {
+                state operating1 [1] :> Operating {
+                    state bothYellow1 [1] :> BothYellow {
+                        event occurrence firstDwell [1] ::> dwell1;
+                        event occurrence lastDwell [1] ::> dwell1;
+                    }
+                    transition bothYellowToBothRed1 [1]
+                        first bothYellow1
+                        accept after 1[s]
+                        do action {
+                            action sendToggle1 [1] send new Toggle() via controlA;
+                        }
+                        then bothRed1;
+                    state bothRed1 [1] :> BothRed;
+                }
+            }
+        }
+    }
+}
 ```
 
-- An occurred state subsets the original inside the occurrence of its owning state. A state usage in a non-parallel state is one of its `exclusiveStates`, which do not overlap in time (SysML 8.4.14.2 State Usages, 9.2.11.2.1 StateAction). Only leaf states are declared; substates happen during their state, so the nesting implies the composite ones.
-- An occurred transition is an action subsetting `stateTransitions` of its owning state, the feature every transition of that state specializes (SysML 8.4.14.3 Transition Usages, 9.2.11.2.3 StateTransitionAction). It subsets the original transition instead when the original is named. Unnamed transitions between the same two states cannot be told apart in the trace; the source and target follow from the states around it.
-- A send is a send action nested in the transition occurrence of the firing that performed it, so it happens during the transition (SysML 7.17.7 Send Action Usages, 8.4.13.5). Sends during initialization are nested in an `action startup` of the sending part, since a part body cannot hold a send node (SysML 8.2.2.17).
-- The names the trace declares never hide a feature of the model: `startup`, `stepN` and `dwellN` become `startup_1`, `step0_1` and so on next to a model feature of the same name, and an occurrence name takes the next free index.
+- The verification usage `witness` redefines the subject to `Run` and binds the verdict: `fail` for a witness that breaks `mustAlways`, `pass` for one that reaches what `eventually` asks for, a negation flipping either (`VerificationCases::VerificationCase`).
+- `Run` specializes the system definition (SysML 7.6.2, 8.4.7), so its values are the system lives the witness is a prefix of.
+- The timeline is `init`, then `stepK` for a step in which a transition fired and `dwellK` for the tick that ends step K, each a `timeslice` with `[1]` asserting its `DurationOf` (SysML 7.9.3, 8.4.5.2; `Time::DurationOf`), consecutive ones ordered by `succession : HappensJustBefore [1]` (SysML 8.4.9.4). A reaction is a time slice of zero duration, not a snapshot: a fired transition orders the source's exit before the effect and the effect before the target's entry (SysML 8.4.14.3), which a snapshot cannot contain. `bind init.startShot = self.startShot` puts time 0 at the start of the run.
+- What happened in a reaction is an `event` usage in its slice: the start of every exhibited state in `init`, every fired transition in `stepK` (SysML 7.9.5, 8.4.5.3). An event occurrence usage subsets `timeEnclosedOccurrences`, so it states "happens during" without a connection; a `connection` typed by `HappensWhile` or `HappensDuring` has an empty type, since `HappensLink` is disjoint from `Occurrence` (SysML 8.3.13.4).
+- Parts and exhibited states redefine the model's under their names; a region of a parallel state is `state R :>> R [1]`; an instance of a part with multiplicity `[n]` subsets it, `part machines2 [1] :> machines`.
+- An entered state is a `[1]` occurrence subsetting its state inside the occurrence of its owner, numbered within that owner (`bothRed1`, `bothRed2`). A leaf occurrence states the dwells it lasts with `firstDwell` and `lastDwell`; one enclosing the first and the last dwell encloses every dwell between them.
+- A fired transition is a `[1]` transition usage in the occurrence of the state that declares it, with the source occurrence after `first`, the model's trigger and guard copied, the sends of its effect in `do action`, and the target occurrence after `then` (SysML 8.4.14.3). A named transition subsets its model transition; an unnamed one is named after its source and target and identified by its owner, ends, trigger and guard, which the translation warns about when two unnamed transitions share all of them.
+- Sends of an entry or exit action are the `entry action` or `exit action` of the state occurrence that performed them, never a redefinition of the model's (SysML 8.4.14.1).
+- Every declared occurrence, event, transition and succession has `[1]`: they default to `[0..*]` (SysML 7.6.3), and without a lower bound they assert nothing.
+- The names the trace declares stay apart from the model's features: a clash gets the next free index.
 
-## Time
+## Time and order
 
-```sysmlv2
-snapshot step0[1];
-timeslice dwell1[1] { assert constraint { DurationOf(dwell1) == 1 [s] } }
-snapshot step2[1];
+A dwell lasts one tick, the duration the translation computes from the model: the largest duration in seconds, minutes, hours or days that divides every literal `after` duration of the model, one second when it has none. Two transitions fired in one step are two events of the same slice, with no order between them, and a site traced twice in one step shows once: the witness and the trace files carry neither the order of the traced calls within a step nor the time a step advanced.
 
-connection : HappensWhile[1] connect step0 to self.startShot;
-succession : HappensJustBefore[1] first step0 then dwell1;
-succession : HappensJustBefore[1] first dwell1 then step2;
-connection : HappensWhile[1] connect step2 to controller.Behaviour.operating1.toBothRed1;
-connection : HappensDuring[1] connect dwell1 to controller.Behaviour.operating1.bothYellow1;
-```
+## Tests
 
-- A step of the counterexample is a reaction followed by one time advance. The reaction is a snapshot `stepN`, the advance a time slice `dwellN`, both portions of the trace instance (SysML 7.9.3 Time Slices and Snapshots, 8.4.5.2 Occurrence Usages). A snapshot takes no time, a time slice may (KerML 9.2.4.2.13 Occurrence). A step without a fired transition has no snapshot.
-- `step0` is initialization, the trace's first step: the witness has no step before it, and its state is the initial state. It coincides with the start of the trace instance, `self.startShot` (KerML 9.2.4.2.13).
-- Each dwell lasts one time step, asserted with `DurationOf` (SysML 7.20.3 Assert Constraint Usages, 9.8.8.2.4 DurationOf).
-- Snapshots and time slices alternate with `HappensJustBefore` successions: nothing happens between the two ends (SysML 7.13.5 Successions as Usages, KerML 9.2.4.2.4 HappensJustBefore). The library relates an occurrence's start snapshot, middle time slice and end snapshot the same way.
-- A transition occurrence coincides with the snapshot of its step, `HappensWhile`, so a firing takes no time (KerML 9.2.4.2.6 HappensWhile).
-- A dwell lies within each leaf state active during it, `HappensDuring` with the dwell first (KerML 9.2.4.2.3 HappensDuring).
-
-## Open points
-
-- A connection usage is typed by association structures and is a link object (SysML 8.3.13.4, 8.4.9.2), while `HappensWhile` and `HappensDuring` are associations disjoint from occurrences (KerML 9.2.4.2.5 HappensLink). Read literally, `connection : HappensWhile` has an empty type. SysML has no other connector usage, and the standard library writes the same form (`FlowConnections`, `Items::Touches`), so the trace follows the library.
-- An entry action belongs to its state, not to the transition entering it (SysML 9.2.11.2.1 StateAction). A send nested in a transition and the same send inherited from the target state's entry action are one send only if both are taken to happen at the step; the trace does not record whether a send came from an exit, an effect or an entry action.
-- `new Toggle()` follows the model and the current pilot grammar; the 2024-12 notation for constructing an instance is `Toggle()` (KerML 8.4.4.9.4 Invocation Expressions).
+The reference pair is `subprojects/frontends/sysml/models/etc/crossroads-green.*`, Theta's `cegar-pred-cart` counterexample of `TrafficLightABehaviorNormalGreenUnreachableViolated` of `models/examples/crossroads.sysml`; it is regenerated on that configuration, since a race may return another valid witness. The fork's golden test compares the trace generated from its witness and trace files with the reference text whole. `ReferenceTraceTest` in `:sysml-wrapper` validates the reference trace with the pinned SysIDE and generates it with the bundled command, the nightly `SysMLTraceTests` checks that every witness of the SysML suites yields a trace, and the reference trace validates in the OMG pilot implementation.

@@ -24,7 +24,7 @@ dependencies {
     testImplementation(testFixtures(project(":compiler")))
 }
 
-val sysmlCommit = "6556e118c96d075b4a7a140f521c20abc3fb1aa0" // fix: a document opened during startup no longer cancels the unvalidated standard library build
+val sysmlCommit = "49f5a4694e04dcab65718d5bce4efb2838bf2712" // fix: trace input takes a missing innerTraces as null
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 
@@ -121,6 +121,30 @@ val bundleCli = tasks.register<Sync>("bundleCli") {
         into("sysml.library")
     }
     into(project.layout.buildDirectory.dir("cli-bundle"))
+}
+
+val sysmlConstructsDir = layout.buildDirectory.dir("sysml-constructs")
+
+// the website's table of SysML constructs comes from the translation's own registry
+val sysmlConstructs = tasks.register<NodeTask>("sysmlConstructs") {
+    inputs.files(bundleCli)
+    val targetFile = sysmlConstructsDir.map { it.file("constructs.tsv") }
+    outputs.file(targetFile)
+    script = layout.buildDirectory.file("cli-bundle/cli.cjs")
+    args = provider {
+        listOf(
+            "constructs",
+            "-o",
+            targetFile.get().asFile.absolutePath,
+        )
+    }
+}
+
+configurations.consumable("sysmlConstructsElements") {
+    attributes(semantifyrArtifact("sysml-constructs"))
+    outgoing.artifact(sysmlConstructsDir) {
+        builtBy(sysmlConstructs)
+    }
 }
 
 val assembleFork = tasks.register<PnpmTask>("assembleFork") {
@@ -227,6 +251,7 @@ tasks.test {
         examplesSourceDir.file("Verification.sysml"),
         layout.projectDirectory.file("../models/etc/crossroads-green.trace.sysml"),
         layout.projectDirectory.file("../models/etc/crossroads-green.trace.json"),
+        layout.projectDirectory.file("../models/etc/crossroads-green.witness.json"),
         layout.projectDirectory.file("../models/etc/crossroads-green.witness.oxsts"),
     ).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("../models/libraries/default")).withPathSensitivity(PathSensitivity.RELATIVE)

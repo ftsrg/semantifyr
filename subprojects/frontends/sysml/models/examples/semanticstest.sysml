@@ -12,12 +12,13 @@ item def MessageM;
 port def PortE { in item e : EventE; }
 port def PortFG { in item f : EventF; in item g : EventG; }
 port def PortMOut { out item m : MessageM; }
+port def PortEFOut { out item e : EventE; out item f : EventF; }
 
 // ── 1. EntryActionModel ───────────────────────────────────────────────────────────
 // Verifies that a state's entry action fires when the state is activated.
 
 part def EntryActionModel {
-    attribute entered : Boolean default false;
+    attribute entered : Boolean := false;
 
     exhibit state Behaviour {
         state S1 {
@@ -50,7 +51,7 @@ verification def EntryFlagAlwaysSetWhileStateIsActiveTestCase {
 // Verifies that a state's exit action fires when the state is left.
 
 part def ExitActionModel {
-    attribute exited : Boolean default false;
+    attribute exited : Boolean := false;
     port input : PortE;
 
     exhibit state Behaviour {
@@ -86,7 +87,7 @@ verification def ExitFlagAlwaysSetWhenSuccessorIsActiveTestCase {
 // Verifies that a transition's do-action fires when the transition is taken.
 
 part def TransitionDoActionModel {
-    attribute actionFired : Boolean default false;
+    attribute actionFired : Boolean := false;
     port input : PortE;
 
     exhibit state Behaviour {
@@ -157,7 +158,7 @@ verification def CompositeActiveAlwaysImpliesSubstateActiveTestCase {
 // and reaches the target state, even when the active inner state has no own transitions.
 
 part def HierarchicalExitModel {
-    attribute outerExited : Boolean default false;
+    attribute outerExited : Boolean := false;
     port input : PortE;
 
     exhibit state Behaviour {
@@ -205,8 +206,8 @@ verification def ExitActionAlwaysFiredWhenDoneIsActiveTestCase {
 // transition and an enclosing transition accept the same event, the inner one fires.
 
 part def TransitionPriorityModel {
-    attribute innerFired : Boolean default false;
-    attribute outerFired : Boolean default false;
+    attribute innerFired : Boolean := false;
+    attribute outerFired : Boolean := false;
     port input : PortE;
 
     exhibit state Behaviour {
@@ -370,7 +371,7 @@ verification def TimeoutTransitionFiresAfterDelayTestCase {
     }
 }
 
-// Waiting and Done are mutually exclusive — the system cannot be in both simultaneously.
+// Waiting and Done are mutually exclusive: the system cannot be in both simultaneously.
 verification def WaitingAndDoneAreMutuallyExclusiveTestCase {
     subject system : TimeoutTransitionModel;
     objective {
@@ -385,7 +386,7 @@ verification def WaitingAndDoneAreMutuallyExclusiveTestCase {
 // Uses a self-transition loop to increment a counter until the exit guard is satisfied.
 
 part def GuardedTransitionModel {
-    attribute counter : Integer default 0;
+    attribute counter : Integer := 0;
 
     exhibit state Behaviour {
         state Counting;
@@ -448,7 +449,7 @@ part def SenderPartModel {
 }
 
 part def ReceiverPartModel {
-    attribute received : Boolean default false;
+    attribute received : Boolean := false;
     port input : ~PortMOut;
     exhibit state Behaviour {
         state Idle;
@@ -502,10 +503,10 @@ verification def ReceivedFlagAlwaysSetWhenGotIsActiveTestCase {
 // target state is correctly activated.
 
 part def CrossHierarchyTransitionModel {
-    attribute middleExited : Boolean default false;
-    attribute outerExited : Boolean default false;
-    attribute otherEntered : Boolean default false;
-    attribute deepEntered : Boolean default false;
+    attribute middleExited : Boolean := false;
+    attribute outerExited : Boolean := false;
+    attribute otherEntered : Boolean := false;
+    attribute deepEntered : Boolean := false;
     port input : PortE;
 
     exhibit state Behaviour {
@@ -574,7 +575,7 @@ verification def CrossHierarchyEntryActionsFireAtAllLevelsTestCase {
     }
 }
 
-// Outer and Other are mutually exclusive — the cross-hierarchy transition is atomic.
+// Outer and Other are mutually exclusive: the cross-hierarchy transition is atomic.
 verification def OuterAndOtherAreMutuallyExclusiveTestCase {
     subject system : CrossHierarchyTransitionModel;
     objective {
@@ -593,10 +594,10 @@ verification def OuterAndOtherAreMutuallyExclusiveTestCase {
 // on each ancestor up to (but not including) the commonState.
 
 part def ExitActionOrderModel {
-    attribute step : Integer default 0;
-    attribute innerExitStep : Integer default 0;
-    attribute middleExitStep : Integer default 0;
-    attribute outerExitStep : Integer default 0;
+    attribute step : Integer := 0;
+    attribute innerExitStep : Integer := 0;
+    attribute middleExitStep : Integer := 0;
+    attribute outerExitStep : Integer := 0;
     port input : PortE;
 
     exhibit state Behaviour {
@@ -662,10 +663,10 @@ verification def OuterNeverExitsBeforeMiddleTestCase {
 // way back DOWN. activateRecursive() then fires the start transition into the next level.
 
 part def EntryActionOrderModel {
-    attribute step : Integer default 0;
-    attribute targetEntryStep : Integer default 0;
-    attribute middleEntryStep : Integer default 0;
-    attribute innerEntryStep : Integer default 0;
+    attribute step : Integer := 0;
+    attribute targetEntryStep : Integer := 0;
+    attribute middleEntryStep : Integer := 0;
+    attribute innerEntryStep : Integer := 0;
     port input : PortE;
 
     exhibit state Behaviour {
@@ -842,7 +843,7 @@ verification def SequentialStateWithNestedParallelExitableTestCase {
     }
 }
 
-// Done and the nested parallel substates are mutually exclusive — all regions are deactivated on exit.
+// Done and the nested parallel substates are mutually exclusive: all regions are deactivated on exit.
 verification def DoneAndNestedParallelSubstatesAreMutuallyExclusiveTestCase {
     subject system : ParallelNestedInSequentialModel;
     objective {
@@ -857,7 +858,7 @@ verification def DoneAndNestedParallelSubstatesAreMutuallyExclusiveTestCase {
 // fires without any external event or timeout, executing its do-action.
 
 part def SpontaneousTransitionModel {
-    attribute transitioned : Boolean default false;
+    attribute transitioned : Boolean := false;
 
     exhibit state Behaviour {
         state S1;
@@ -908,7 +909,7 @@ verification def SpontaneousDoActionAlwaysFiredWhenTargetIsActiveTestCase {
 // counter reaches 3, an `accept when counter >= 3` transition exits.
 
 part def GuardedSpontaneousTransitionModel {
-    attribute counter : Integer default 0;
+    attribute counter : Integer := 0;
 
     exhibit state Behaviour {
         state Incrementing;
@@ -952,6 +953,607 @@ verification def GuardedSpontaneousDoneNotReachableBeforeThresholdTestCase {
     objective {
         verify requirement {
             require constraint { mustAlways(not (isStateActive(system.Behaviour.Done) and system.counter < 3)) }
+        }
+    }
+}
+
+// ── 18. ParallelStateRegionExitModel ──────────────────────────────────────────────
+// A transition from a state inside one region of a parallel state to a state outside it leaves the whole parallel state, as the keep-alive timeouts of orion_protocol do.
+
+part def ParallelStateRegionExitModel {
+    attribute parallelExited : Boolean := false;
+    port input : PortE;
+
+    exhibit state Behaviour {
+        state Running parallel {
+            exit action { assign parallelExited := true; }
+            state R1 {
+                state A;
+                transition first start then A;
+                transition first A accept : EventE via input then Done;
+            }
+            state R2 {
+                state C;
+                transition first start then C;
+            }
+        }
+        state Done;
+        transition first start then Running;
+    }
+}
+
+// The parallel state's exit action fires although the transition is declared in a region.
+verification def RegionTransitionFiresParallelExitActionTestCase {
+    subject system : ParallelStateRegionExitModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(system.parallelExited == true) }
+        }
+    }
+}
+
+// The other region is left too, so its state is never active together with Done.
+verification def RegionTransitionLeavesEveryRegionTestCase {
+    subject system : ParallelStateRegionExitModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (isStateActive(system.Behaviour.Done) and isStateActive(system.Behaviour.Running.R2.C))) }
+        }
+    }
+}
+
+// ── 19. ParallelRegionExitActionModel ─────────────────────────────────────────────
+// Leaving a parallel state fires the exit actions of its regions, and leaving a state fires no exit action of a parallel substate that is not active.
+
+part def ParallelRegionExitActionModel {
+    attribute regionExited : Boolean := false;
+    attribute idleExited : Boolean := false;
+    port input : PortE;
+
+    exhibit state Behaviour {
+        state Running parallel {
+            state R1 {
+                exit action { assign regionExited := true; }
+                state A;
+                transition first start then A;
+            }
+            state R2 {
+                state C;
+                transition first start then C;
+            }
+        }
+        state Other {
+            state Idle parallel {
+                exit action { assign idleExited := true; }
+                state R3 {
+                    state E;
+                    transition first start then E;
+                }
+            }
+            state Busy;
+            transition first start then Busy;
+        }
+        state Done;
+        transition first start then Running;
+        transition first Running accept : EventE via input then Other;
+        transition first Other accept : EventE via input then Done;
+    }
+}
+
+verification def RegionExitActionFiresWhenParallelStateExitsTestCase {
+    subject system : ParallelRegionExitActionModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(system.regionExited == true) }
+        }
+    }
+}
+
+// Idle is never entered, so leaving Other never fires Idle's exit action.
+verification def InactiveParallelStateExitActionNeverFiresTestCase {
+    subject system : ParallelRegionExitActionModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(system.idleExited == false) }
+        }
+    }
+}
+
+// ── 20. ExhibitedStateEntryActionModel ────────────────────────────────────────────
+// The exhibited state is entered when its part starts, so its own entry action fires before its initial substate is entered.
+
+part def ExhibitedStateEntryActionModel {
+    attribute entered : Boolean := false;
+    attribute enteredBeforeS1 : Boolean := false;
+
+    exhibit state Behaviour {
+        entry action { assign entered := true; }
+        state S1 {
+            entry action { assign enteredBeforeS1 := entered; }
+        }
+        transition first start then S1;
+    }
+}
+
+verification def ExhibitedStateEntryActionFiresTestCase {
+    subject system : ExhibitedStateEntryActionModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(system.entered == true) }
+        }
+    }
+}
+
+verification def ExhibitedStateEntryActionPrecedesSubstateTestCase {
+    subject system : ExhibitedStateEntryActionModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not isStateActive(system.Behaviour.S1) or system.enteredBeforeS1) }
+        }
+    }
+}
+
+part def ParallelExitOrderModel {
+    attribute order : Integer := 0;
+    port input : PortE;
+
+    exhibit state Behaviour {
+        state Running parallel {
+            exit action { assign order := order * 10 + 5; }
+            state R1 {
+                exit action { assign order := order * 10 + 2; }
+                state A {
+                    exit action { assign order := order * 10 + 1; }
+                }
+                transition first start then A;
+                transition
+                    first A
+                    accept : EventE via input
+                    do action { assign order := order * 10 + 6; }
+                    then Done;
+            }
+            state R2 {
+                exit action { assign order := order * 10 + 4; }
+                state C {
+                    exit action { assign order := order * 10 + 3; }
+                }
+                transition first start then C;
+            }
+        }
+        state Done {
+            entry action { assign order := order * 10 + 7; }
+        }
+        transition first start then Running;
+    }
+}
+
+verification def ParallelExitReachesDoneTestCase {
+    subject system : ParallelExitOrderModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(isStateActive(system.Behaviour.Done)) }
+        }
+    }
+}
+
+verification def ParallelExitRunsExitsBeforeEffectTestCase {
+    subject system : ParallelExitOrderModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not isStateActive(system.Behaviour.Done) or system.order == 1234567) }
+        }
+    }
+}
+
+part def RegionEntryActionModel {
+    attribute regionEntered : Boolean := false;
+
+    exhibit state Behaviour {
+        state Running parallel {
+            state R1 {
+                entry action { assign regionEntered := true; }
+                state A;
+                transition first start then A;
+            }
+            state R2 {
+                state C;
+                transition first start then C;
+            }
+        }
+        transition first start then Running;
+    }
+}
+
+verification def RegionEntryActionFiresTestCase {
+    subject system : RegionEntryActionModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(system.regionEntered == true) }
+        }
+    }
+}
+
+part def SharedItemModel {
+    port input : PortE;
+
+    exhibit state Behaviour {
+        state Running parallel {
+            state R1 {
+                state A;
+                state B;
+                transition first start then A;
+                transition first A accept : EventE via input then B;
+                transition first B then A;
+            }
+            state R2 {
+                state C;
+                state D;
+                transition first start then C;
+                transition first C accept : EventE via input then D;
+                transition first D then C;
+            }
+        }
+        transition first start then Running;
+    }
+}
+
+verification def ItemFiresOneRegionPerStepTestCase {
+    subject system : SharedItemModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (isStateActive(system.Behaviour.Running.R1.B) and isStateActive(system.Behaviour.Running.R2.D))) }
+        }
+    }
+}
+
+verification def FirstRegionConsumesItemTestCase {
+    subject system : SharedItemModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(isStateActive(system.Behaviour.Running.R1.B)) }
+        }
+    }
+}
+
+verification def SecondRegionConsumesItemTestCase {
+    subject system : SharedItemModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(isStateActive(system.Behaviour.Running.R2.D)) }
+        }
+    }
+}
+
+part def InitSenderModel {
+    port output : PortMOut;
+
+    exhibit state Behaviour {
+        state Sending {
+            entry action { send new MessageM() via output; }
+        }
+        transition first start then Sending;
+    }
+}
+
+part def InitSendModel {
+    part sender : InitSenderModel;
+    part receiver : ReceiverPartModel;
+    flow from sender.output to receiver.input;
+}
+
+verification def InitSendArrivesTestCase {
+    subject system : InitSendModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(isStateActive(system.receiver.Behaviour.Got)) }
+        }
+    }
+}
+
+part def LateReceiverModel {
+    port input : ~PortMOut;
+
+    exhibit state Behaviour {
+        state Idle;
+        state Waiting;
+        state Ready;
+        state Got;
+        transition first start then Idle;
+        transition first Idle then Waiting;
+        transition first Waiting then Ready;
+        transition first Ready accept : MessageM via input then Got;
+    }
+}
+
+part def LateReceiverFlowModel {
+    part sender : SenderPartModel;
+    part receiver : LateReceiverModel;
+    flow from sender.output to receiver.input;
+}
+
+verification def UnacceptedItemIsDroppedTestCase {
+    subject system : LateReceiverFlowModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not isStateActive(system.receiver.Behaviour.Got)) }
+        }
+    }
+}
+
+verification def ObjectiveConstraintReachableTestCase {
+    subject system : EntryActionModel;
+    objective {
+        require constraint { eventually(system.entered == true) }
+    }
+}
+
+verification def ObjectiveConstraintCheckedViolated {
+    subject system : EntryActionModel;
+    objective {
+        require constraint { mustAlways(system.entered == false) }
+    }
+}
+
+part def ExhibitedDoneModel {
+    port input : PortE;
+    attribute finished : Boolean := false;
+    attribute exited : Boolean := false;
+
+    exhibit state Behaviour {
+        exit action { assign exited := true; }
+        entry; then Running;
+        state Running;
+        transition first Running accept : EventE via input do assign finished := true then done;
+    }
+}
+
+verification def ExhibitedStateActiveUntilDoneTestCase {
+    subject system : ExhibitedDoneModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(system.finished or isStateActive(system.Behaviour)) }
+        }
+    }
+}
+
+verification def ExhibitedStateInactiveAfterDoneTestCase {
+    subject system : ExhibitedDoneModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not system.finished or not isStateActive(system.Behaviour)) }
+        }
+    }
+}
+
+verification def ExhibitedStateReachesDoneTestCase {
+    subject system : ExhibitedDoneModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(isStateActive(system.Behaviour) == false) }
+        }
+    }
+}
+
+verification def ExhibitedStateExitActionRunsAtDoneTestCase {
+    subject system : ExhibitedDoneModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(isStateActive(system.Behaviour) or system.exited) }
+        }
+    }
+}
+
+verification def ExhibitedStateStaysActiveViolated {
+    subject system : ExhibitedDoneModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(isStateActive(system.Behaviour)) }
+        }
+    }
+}
+
+part def CrossRegionEntryModel {
+    port input : PortE;
+    attribute order : Integer := 0;
+
+    exhibit state Behaviour {
+        entry; then Idle;
+        state Idle;
+        state Running parallel {
+            entry assign order := order * 10 + 1;
+            state Left {
+                entry assign order := order * 10 + 4;
+                transition first start then Initial;
+                state Initial {
+                    entry assign order := order * 10 + 9;
+                }
+                state Target {
+                    entry assign order := order * 10 + 5;
+                }
+            }
+            state Right {
+                entry assign order := order * 10 + 2;
+                transition first start then Sibling;
+                state Sibling {
+                    entry assign order := order * 10 + 3;
+                }
+            }
+        }
+        transition first Idle accept : EventE via input then Running.Left.Target;
+    }
+}
+
+verification def CrossRegionEntryReachesTargetTestCase {
+    subject system : CrossRegionEntryModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(isStateActive(system.Behaviour.Running.Left.Target)) }
+        }
+    }
+}
+
+verification def CrossRegionEntryEntersSiblingRegionTestCase {
+    subject system : CrossRegionEntryModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not isStateActive(system.Behaviour.Running.Left.Target) or isStateActive(system.Behaviour.Running.Right.Sibling)) }
+        }
+    }
+}
+
+verification def CrossRegionEntryRunsEntriesInOrderTestCase {
+    subject system : CrossRegionEntryModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not isStateActive(system.Behaviour.Running.Left.Target) or system.order == 12345) }
+        }
+    }
+}
+
+verification def CrossRegionEntryInitialDescentViolated {
+    subject system : CrossRegionEntryModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not isStateActive(system.Behaviour.Running.Left.Target) or system.order == 12495) }
+        }
+    }
+}
+
+part def DerivedAttributeModel {
+    attribute counter : Integer := 0;
+    attribute doubled : Integer = counter * 2;
+
+    exhibit state Behaviour {
+        entry; then Counting;
+        state Counting;
+        transition first Counting if counter < 3 do assign counter := counter + 1 then Counting;
+    }
+}
+
+verification def DerivedAttributeFollowsItsExpressionTestCase {
+    subject system : DerivedAttributeModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(system.doubled == system.counter * 2) }
+        }
+    }
+}
+
+verification def DerivedAttributeChangesTestCase {
+    subject system : DerivedAttributeModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(system.doubled == 6) }
+        }
+    }
+}
+
+verification def DerivedAttributeConstantViolated {
+    subject system : DerivedAttributeModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(system.doubled == 0) }
+        }
+    }
+}
+
+part def UnvaluedAttributeModel {
+    attribute level : Integer;
+    attribute flag : Boolean;
+    attribute initial : Integer := 7;
+}
+
+verification def UnvaluedAttributeMayStartAboveZeroTestCase {
+    subject system : UnvaluedAttributeModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(system.level > 0) }
+        }
+    }
+}
+
+verification def UnvaluedAttributeMayStartBelowZeroTestCase {
+    subject system : UnvaluedAttributeModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(system.level < 0) }
+        }
+    }
+}
+
+verification def UnvaluedBooleanMayStartTrueTestCase {
+    subject system : UnvaluedAttributeModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(system.flag == true) }
+        }
+    }
+}
+
+verification def UnvaluedBooleanMayStartFalseTestCase {
+    subject system : UnvaluedAttributeModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(system.flag == false) }
+        }
+    }
+}
+
+verification def InitialValueHoldsViolated {
+    subject system : UnvaluedAttributeModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(system.initial == 8) }
+        }
+    }
+}
+
+part def DoubleSenderModel {
+    port output : PortEFOut;
+
+    exhibit state Behaviour {
+        entry; then Idle;
+        state Idle;
+        state Sent {
+            entry send new EventF() via output;
+        }
+        transition first Idle do action { send new EventE() via output; } then Sent;
+    }
+}
+
+part def SlotReceiverModel {
+    port input : ~PortEFOut;
+
+    exhibit state Behaviour {
+        entry; then Waiting;
+        state Waiting;
+        state GotE;
+        state GotF;
+        transition first Waiting accept : EventE via input then GotE;
+        transition first Waiting accept : EventF via input then GotF;
+    }
+}
+
+part def LastWinsModel {
+    part sender : DoubleSenderModel;
+    part receiver : SlotReceiverModel;
+    flow from sender.output to receiver.input;
+}
+
+verification def LastItemOnOneSlotIsAcceptedTestCase {
+    subject system : LastWinsModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(isStateActive(system.receiver.Behaviour.GotF)) }
+        }
+    }
+}
+
+verification def EarlierItemOnOneSlotIsNeverAcceptedTestCase {
+    subject system : LastWinsModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not isStateActive(system.receiver.Behaviour.GotE)) }
         }
     }
 }

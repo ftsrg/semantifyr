@@ -19,6 +19,12 @@ import java.nio.file.StandardCopyOption
 import java.util.UUID
 import kotlin.io.path.extension
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.name
+
+// the translation writes its name map beside the OXSTS, which the trace generator reads
+fun nameMapPath(oxstsPath: Path): Path {
+    return oxstsPath.resolveSibling("${oxstsPath.name.removeSuffix(".oxsts")}.names.json")
+}
 
 class SysMLv2Compiler(
     private val cacheDirectory: Path = Path.of(System.getProperty("user.home"), ".semantifyr", "sysml-cache"),
@@ -49,15 +55,20 @@ class SysMLv2Compiler(
         }
 
         Files.createDirectories(outputPath.toAbsolutePath().parent)
-        val temporary = outputPath.resolveSibling(".tmp-${UUID.randomUUID()}.oxsts")
+        copyAtomically(nameMapPath(entry), nameMapPath(outputPath))
+        copyAtomically(entry, outputPath)
+        logger.debug { "Copied cached OXSTS '$entry' and its name map to '$outputPath'" }
+        return outputPath
+    }
+
+    private fun copyAtomically(source: Path, target: Path) {
+        val temporary = target.resolveSibling(".tmp-${UUID.randomUUID()}")
         try {
-            Files.copy(entry, temporary)
-            Files.move(temporary, outputPath, StandardCopyOption.ATOMIC_MOVE)
+            Files.copy(source, temporary)
+            Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE)
         } finally {
             runCatching { Files.deleteIfExists(temporary) }
         }
-        logger.debug { "Copied cached OXSTS '$entry' to '$outputPath'" }
-        return outputPath
     }
 
     private fun cacheEntry(sourcePath: Path): Path {
@@ -78,15 +89,19 @@ class SysMLv2Compiler(
     // the trace command validates the trace in the model's workspace and writes nothing when it does not validate
     fun trace(
         sourcePath: Path,
+        witnessPath: Path,
         tracePath: Path,
+        nameMapPath: Path,
         caseName: String,
         outputPath: Path,
     ): Path {
         require(Files.isRegularFile(sourcePath)) {
             "SysMLv2 source does not exist or is not a regular file: $sourcePath"
         }
-        require(Files.isRegularFile(tracePath)) {
-            "Trace does not exist or is not a regular file: $tracePath"
+        for (input in listOf(witnessPath, tracePath, nameMapPath)) {
+            require(Files.isRegularFile(input)) {
+                "Trace input does not exist or is not a regular file: $input"
+            }
         }
 
         logger.info { "Generating the SysMLv2 trace of '$caseName' from '$tracePath' via bundled CLI '$cliPath'" }
@@ -99,7 +114,9 @@ class SysMLv2Compiler(
                 "trace",
                 sourcePath.toString(),
                 sysmlLibraryPath.toString(),
+                witnessPath.toString(),
                 tracePath.toString(),
+                nameMapPath.toString(),
                 caseName,
                 "-o",
                 temporary.toString(),
@@ -140,9 +157,11 @@ class SysMLv2Compiler(
                 "-o",
                 temporary.toString(),
             )
+            moveIntoPlace(nameMapPath(temporary), nameMapPath(entry))
             moveIntoPlace(temporary, entry)
         } finally {
             runCatching { Files.deleteIfExists(temporary) }
+            runCatching { Files.deleteIfExists(nameMapPath(temporary)) }
         }
     }
 

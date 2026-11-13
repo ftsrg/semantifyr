@@ -7,7 +7,7 @@ port def AlertPort {
 }
 
 part def PowerManager {
-    attribute charge: Integer default 100;
+    attribute charge: Integer := 100;
     port alertPort: AlertPort;
 
     exhibit state Behaviour {

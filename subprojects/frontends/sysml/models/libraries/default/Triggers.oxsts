@@ -26,6 +26,13 @@ abstract class AcceptAction {
 
     tran initialize() {
     }
+
+    tran consume() {
+    }
+
+    tran requireConsumption() {
+        assume(false)
+    }
 }
 
 class AcceptItemAction : AcceptAction {
@@ -33,7 +40,15 @@ class AcceptItemAction : AcceptAction {
     refers payload: Item
 
     redefine prop isTriggered(): bool {
-        return viaPort.hasIncomingItem(payload)
+        return viaPort.canConsume(payload)
+    }
+
+    redefine tran consume() {
+        inline viaPort.consumeIncomingItem()
+    }
+
+    redefine tran requireConsumption() {
+        inline viaPort.requireConsumption()
     }
 }
 

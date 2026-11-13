@@ -31,11 +31,12 @@ class ReferenceTraceTest {
         SysMLv2Compiler(temporaryDirectory.resolve("cache")).validate(trace)
     }
 
+    // the fork's golden test compares the text whole, the command writes it only when SysIDE validates it
     @Test
-    fun `the bundled trace command generates the trace of the crossroads reference witness`() {
-        val generated = SysMLv2Compiler(temporaryDirectory.resolve("cache")).trace(crossroadsWorkspace(), TRACE_JSON, CASE, temporaryDirectory.resolve("out").resolve("trace.sysml"))
+    fun `the bundled trace command generates a valid trace of the reference witness`() {
+        val generated = generateTrace(CASE, temporaryDirectory.resolve("out").resolve("trace.sysml"))
 
-        assertThat(generated.readText()).contains("part def ${CASE}Trace :> CrossroadSystem")
+        assertThat(generated.readText()).contains("package ${CASE}Trace {")
     }
 
     @Test
@@ -43,9 +44,17 @@ class ReferenceTraceTest {
         val output = temporaryDirectory.resolve("out").resolve("trace.sysml")
 
         assertThatThrownBy {
-            SysMLv2Compiler(temporaryDirectory.resolve("cache")).trace(crossroadsWorkspace(), TRACE_JSON, "NoSuchCase", output)
-        }.isInstanceOf(IllegalStateException::class.java).hasMessageContaining("No verification case is named 'NoSuchCase'")
+            generateTrace("NoSuchCase", output)
+        }.isInstanceOf(IllegalStateException::class.java).hasMessageContaining("no verification case is named 'NoSuchCase'")
         assertThat(output.parent).isEmptyDirectory()
+    }
+
+    private fun generateTrace(caseName: String, output: Path): Path {
+        val compiler = SysMLv2Compiler(temporaryDirectory.resolve("cache"))
+        val model = crossroadsWorkspace()
+        val compiled = compiler.compile(model, temporaryDirectory.resolve("compiled").resolve("crossroads.oxsts"))
+        output.parent.createDirectories()
+        return compiler.trace(model, WITNESS_JSON, TRACE_JSON, nameMapPath(compiled), caseName, output)
     }
 
     private fun crossroadsWorkspace(): Path {
@@ -60,6 +69,7 @@ class ReferenceTraceTest {
         private const val VERIFICATION = "Verification.sysml"
         private const val TRACE = "crossroads-green.trace.sysml"
         private val TRACE_JSON = MODELS.resolve("etc").resolve("crossroads-green.trace.json")
+        private val WITNESS_JSON = MODELS.resolve("etc").resolve("crossroads-green.witness.json")
         private const val CASE = "TrafficLightABehaviorNormalGreenUnreachableViolated"
     }
 }

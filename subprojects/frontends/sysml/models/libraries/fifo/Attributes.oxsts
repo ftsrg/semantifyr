@@ -1,0 +1,75 @@
+package semantifyr::sysml::attributes
+
+import semantifyr::sysml::expressions
+
+abstract class Attribute {
+    abstract prop evaluate(): any
+
+    abstract tran set(value: any)
+}
+
+class IntegerAttribute : Attribute {
+    contains initialValue: Expression[0..1]
+
+    var value: int := 0
+
+    // an attribute without an initial value starts at any value
+    redefine init {
+        inline if (initialValue != nothing) {
+            value := initialValue.evaluate() as int
+        } else {
+            havoc(value)
+        }
+    }
+
+    redefine prop evaluate(): int {
+        return value
+    }
+
+    redefine tran set(value: int) {
+        self.value := value
+    }
+}
+
+class BooleanAttribute : Attribute {
+    contains initialValue: Expression[0..1]
+
+    var value: bool := false
+
+    // an attribute without an initial value starts at any value
+    redefine init {
+        inline if (initialValue != nothing) {
+            value := initialValue.evaluate() as bool
+        } else {
+            havoc(value)
+        }
+    }
+
+    redefine prop evaluate(): bool {
+        return value
+    }
+
+    redefine tran set(value: bool) {
+        self.value := value
+    }
+}
+
+class DerivedAttribute : Attribute {
+    contains expression: Expression
+
+    redefine prop evaluate(): any {
+        return expression.evaluate()
+    }
+
+    // the mapper refuses an assignment to a bound attribute
+    redefine tran set(value: any) {
+        assume(false)
+    }
+}
+
+class AttributeReferenceExpression : Expression {
+    refers attribute: Attribute
+    redefine prop evaluate(): any {
+        return attribute.evaluate()
+    }
+}
