@@ -32,6 +32,18 @@ async function traced(ui: Ui, address: string): Promise<Page> {
   return page
 }
 
+// the editor renders only the lines in view, each at its line's place, so they are read in the order of their place
+async function shownLines(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const lines = document.querySelector('section.editor .view-lines')
+    return [...(lines?.querySelectorAll<HTMLElement>('.view-line') ?? [])].sort((first, second) => {
+      return parseFloat(first.style.top) - parseFloat(second.style.top)
+    }).map((line) => {
+      return line.textContent.replaceAll('\u00a0', ' ')
+    })
+  })
+}
+
 function caseTrace(page: Page) {
   return page.locator('section.trace .case-trace')
 }
@@ -94,13 +106,20 @@ describe('the views of a trace', () => {
   })
 
   test('keep an open text tab readable once the server no longer has its document', async ({ ui }) => {
+    let witness = ''
+    ui.backend.answer('read', (request, recorded) => {
+      const text = recorded()
+      if (request.uri.endsWith('/witness.oxsts')) {
+        witness = text ?? ''
+      }
+      return text
+    })
     const page = await traced(ui, '/oxsts/level-crossing?library=gamma')
     await showView(page, 'witness')
     await caseTrace(page).locator('.frame-open').click()
     await expect.poll(async () => {
       return editor(page).selectedTab.innerText()
     }).toMatch(/\.witness\.oxsts$/)
-    const witness = await editor(page).lines.innerText()
     ui.backend.answer('read', () => {
       return null
     })
@@ -108,9 +127,11 @@ describe('the views of a trace', () => {
     await editor(page).tabs.first().click()
     await editor(page).tabs.nth(1).click()
 
+    expect(witness).toContain('witness of')
     await expect.poll(async () => {
-      return editor(page).lines.innerText()
-    }).toBe(witness)
+      const shown = await shownLines(page)
+      return shown.length > 0 && shown.join('\n') === witness.split('\n').slice(0, shown.length).join('\n')
+    }).toBe(true)
   })
 })
 
