@@ -7,7 +7,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type React from 'react';
 import clsx from 'clsx';
-import { highlight, styleOf, type Token } from '@site/src/lib/highlight';
+import { highlight, type Token } from '@site/src/lib/highlight';
 import { withCode } from '@site/src/lib/inlineCode';
 import { lineDiff } from '@site/src/lib/lineDiff';
 import type { WalkStep } from './walks';
@@ -47,7 +47,7 @@ function matches(query: string): boolean {
 
 function tokensOf(text: string): Token[][] {
   return highlight(text, 'oxsts') ?? text.split('\n').map((line) => {
-    return [{ text: line, scopes: [] }];
+    return [{ text: line, style: { color: 'inherit' } }];
   });
 }
 
@@ -100,7 +100,7 @@ function Line({ line, appearing }: { line: ShownLine, appearing: boolean }): Rea
   const content = line.tokens.map((token, index) => {
     const cut = Math.min(unindented, token.text.length);
     unindented -= cut;
-    return <span key={index} style={styleOf(token.scopes)}>{token.text.slice(cut)}</span>;
+    return <span key={index} style={token.style}>{token.text.slice(cut)}</span>;
   });
   const marked = line.mark === 'added' ? <ins>{content}</ins> : line.mark === 'removed' ? <del>{content}</del> : content;
   return (
