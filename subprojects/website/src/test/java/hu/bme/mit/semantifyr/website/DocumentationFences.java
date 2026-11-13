@@ -6,12 +6,15 @@
 
 package hu.bme.mit.semantifyr.website;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -30,8 +33,6 @@ final class DocumentationFences {
     private static final Pattern ANY_OPENING_FENCE = Pattern.compile("^\\s*```\\S*.*$");
 
     private static final Pattern PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+([\\w:]+)", Pattern.MULTILINE);
-
-    private static final Pattern ALIAS = Pattern.compile("\"(@[\\w-]+)\"\\s*:\\s*\"([^\"]+)\"");
 
     private static final Pattern IMPORT = Pattern.compile("^import\\s+\\w+\\s+from\\s+'(@[\\w-]+)/([^']+\\.oxsts)';?$");
 
@@ -85,10 +86,9 @@ final class DocumentationFences {
 
     // the OXSTS files the pages import through the source aliases, which their own tests check
     static List<Path> importedModels() throws IOException {
-        var aliases = new HashMap<String, Path>();
-        var alias = ALIAS.matcher(Files.readString(SOURCE_ALIASES));
-        while (alias.find()) {
-            aliases.put(alias.group(1), Path.of(alias.group(2)));
+        Map<String, String> aliases;
+        try (var reader = Files.newBufferedReader(SOURCE_ALIASES)) {
+            aliases = new Gson().fromJson(reader, new TypeToken<Map<String, String>>() {}.getType());
         }
         var models = new ArrayList<Path>();
         for (var page : pages()) {
@@ -102,7 +102,7 @@ final class DocumentationFences {
                     throw new IllegalStateException(
                             "no alias " + imported.group(1) + " in " + SOURCE_ALIASES + " for " + page);
                 }
-                var model = directory.resolve(imported.group(2)).normalize();
+                var model = Path.of(directory).resolve(imported.group(2)).normalize();
                 if (!models.contains(model)) {
                     models.add(model);
                 }

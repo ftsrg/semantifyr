@@ -4,12 +4,12 @@ sidebar_position: 3
 ---
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
-import step1 from '@oxsts-test-models/tutorial/advanced-step1.oxsts';
-import step2 from '@oxsts-test-models/tutorial/advanced-step2.oxsts';
-import step3 from '@oxsts-test-models/tutorial/advanced-step3.oxsts';
-import step4 from '@oxsts-test-models/tutorial/advanced-step4.oxsts';
-import step5 from '@oxsts-test-models/tutorial/advanced-step5.oxsts';
-import advanced from '@oxsts-test-models/tutorial/advanced.oxsts';
+import step1 from '@oxsts-tutorial-models/advanced-step1.oxsts';
+import step2 from '@oxsts-tutorial-models/advanced-step2.oxsts';
+import step3 from '@oxsts-tutorial-models/advanced-step3.oxsts';
+import step4 from '@oxsts-tutorial-models/advanced-step4.oxsts';
+import step5 from '@oxsts-tutorial-models/advanced-step5.oxsts';
+import advanced from '@oxsts-tutorial-models/advanced.oxsts';
 
 # Advanced Tutorial
 

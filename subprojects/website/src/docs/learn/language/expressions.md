@@ -4,7 +4,7 @@ sidebar_position: 4
 ---
 
 import Planned from '@site/src/components/Planned';
-import constructs from '@oxsts-test-models/constructs/constructs.tsv';
+import constructs from '@oxsts-constructs/constructs.tsv';
 
 # Expressions
 
