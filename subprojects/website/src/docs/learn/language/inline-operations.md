@@ -110,7 +110,7 @@ class Counters {
 }
 ```
 
-The instances of `counters` are those of the features that subset it, so a step of `Counters` increments the `value` of both `first` and `second`.
+The instances of `counters` are those of the features that subset it, so a step of `Counters` increments the `value` of both `first` and `second`, in the children's declaration order.
 
 ## `inline for choice`
 

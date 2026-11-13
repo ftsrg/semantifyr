@@ -1,0 +1,103 @@
+package crossroads::casccrossroads::Crossroad_verification
+
+import crossroads::casccrossroads
+
+verification case ControllerOperatingReachable of Crossroad {
+    EF state controller.main_region.Operating
+}
+
+verification case ControllerInitReachable of Crossroad {
+    EF state controller.operating.Init
+}
+
+verification case ControllerGReachable of Crossroad {
+    EF state controller.r.G_
+}
+
+verification case ControllerSecondaryPreparesReachable of Crossroad {
+    EF state controller.operating.SecondaryPrepares
+}
+
+verification case ControllerPriorityPreparesReachable of Crossroad {
+    EF state controller.operating.PriorityPrepares
+}
+
+verification case ControllerPriorityReachable of Crossroad {
+    EF state controller.operating.Priority
+}
+
+verification case ControllerSecondaryReachable of Crossroad {
+    EF state controller.operating.Secondary
+}
+
+verification case PriorInterruptedReachable of Crossroad {
+    EF state prior.Main_region.Interrupted
+}
+
+verification case PriorBlackReachable of Crossroad {
+    EF state prior.interrupted.Black
+}
+
+verification case PriorBlinkingYellowReachable of Crossroad {
+    EF state prior.interrupted.BlinkingYellow
+}
+
+verification case PriorNormalReachable of Crossroad {
+    EF state prior.Main_region.Normal
+}
+
+verification case PriorYellowReachable of Crossroad {
+    EF state prior.normal.Yellow
+}
+
+verification case PriorRedReachable of Crossroad {
+    EF state prior.normal.Red
+}
+
+verification case PriorGreenReachable of Crossroad {
+    EF state prior.normal.Green
+}
+
+verification case SecondInterruptedReachable of Crossroad {
+    EF state second.Main_region.Interrupted
+}
+
+verification case SecondBlackReachable of Crossroad {
+    EF state second.interrupted.Black
+}
+
+verification case SecondBlinkingYellowReachable of Crossroad {
+    EF state second.interrupted.BlinkingYellow
+}
+
+verification case SecondNormalReachable of Crossroad {
+    EF state second.Main_region.Normal
+}
+
+verification case SecondYellowReachable of Crossroad {
+    EF state second.normal.Yellow
+}
+
+verification case SecondRedReachable of Crossroad {
+    EF state second.normal.Red
+}
+
+verification case SecondGreenReachable of Crossroad {
+    EF state second.normal.Green
+}
+
+verification case PriorTransitionFromInterruptedToNormalFires of Crossroad {
+    EF (state prior.Main_region.Normal and variable prior.asd = 321)
+}
+
+verification case PriorTransitionFromYellowToRedFires of Crossroad {
+    EF (state prior.normal.Red and variable prior.b = 4)
+}
+
+verification case SecondTransitionFromInterruptedToNormalFires of Crossroad {
+    EF (state second.Main_region.Normal and variable second.asd = 321)
+}
+
+verification case SecondTransitionFromYellowToRedFires of Crossroad {
+    EF (state second.normal.Red and variable second.b = 4)
+}

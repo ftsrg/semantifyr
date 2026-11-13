@@ -9,21 +9,26 @@ package hu.bme.mit.semantifyr.frontends.gamma.trace
 import com.google.inject.Inject
 import com.google.inject.Provider
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Act
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Assertion
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.BooleanType
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComparisonOp
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComponentInstance
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComponentInstanceReference
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.CompositeComponentDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventDeclaration
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ExecutionTrace
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Expression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaFactory
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaUtils
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.PortDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Region
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StateTransition
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.State
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Step
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Transition
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.UnaryOp
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VariableDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclaration
-import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaNameStore
+import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaNameMap
 import hu.bme.mit.semantifyr.verifier.witness.CallTrace
 import hu.bme.mit.semantifyr.verifier.witness.CallTraceStep
 import hu.bme.mit.semantifyr.verifier.witness.TraceEntry
@@ -49,14 +54,17 @@ class GammaTraceGenerator @Inject constructor(
         verificationCase: VerificationCaseDeclaration,
         callTrace: CallTrace,
         witnessState: WitnessState,
-        nameStore: GammaNameStore,
-    ): GammaModelPackage {
+        nameMap: GammaNameMap,
+    ): ExecutionTrace {
         require(callTrace.steps.size == witnessState.steps.size) {
             "Trace has ${callTrace.steps.size} steps but the witness has ${witnessState.steps.size}"
         }
-        val paths = InstancePaths(verificationCase, nameStore)
+        val paths = InstancePaths(verificationCase, nameMap)
 
         val executionTrace = factory.createExecutionTrace().also {
+            it.imports += factory.createImportStatement().also { importStatement ->
+                importStatement.importedPackage = verificationCase.eContainer() as GammaModelPackage
+            }
             it.name = "${verificationCase.name}Trace"
             it.verificationCase = verificationCase
             it.steps += createInitializationStep(callTrace.initializedStep, witnessState.initializedStep, paths)
@@ -65,21 +73,17 @@ class GammaTraceGenerator @Inject constructor(
             }
         }
 
-        val gammaTrace = factory.createGammaModelPackage().also {
-            it.name = (verificationCase.eContainer() as GammaModelPackage).name
-            it.traces += executionTrace
-        }
-        addToResource(gammaTrace, verificationCase)
-        return gammaTrace
+        addToResource(executionTrace, verificationCase)
+        return executionTrace
     }
 
-    private fun addToResource(gammaTrace: GammaModelPackage, verificationCase: VerificationCaseDeclaration) {
+    private fun addToResource(executionTrace: ExecutionTrace, verificationCase: VerificationCaseDeclaration) {
         val resourceSet = resourceSetProvider.get()
         val modelDescription = resourceDescriptionManager.getResourceDescription(verificationCase.eResource())
         ResourceDescriptionsData.ResourceSetAdapter.installResourceDescriptionsData(resourceSet, ResourceDescriptionsData(listOf(modelDescription)))
         val resource = resourceFactory.createResource(URI.createURI(TRACE_RESOURCE_NAME))
         resourceSet.resources += resource
-        resource.contents += gammaTrace
+        resource.contents += executionTrace
     }
 
     private fun createInitializationStep(
@@ -99,22 +103,24 @@ class GammaTraceGenerator @Inject constructor(
         witnessStateStep: WitnessStateStep,
         paths: InstancePaths,
     ): Step {
-        val entries = flatten(callTraceStep.traces)
-        val advancesTime = entries.any {
-            paths.resolve(it.self).isEmpty()
-        }
         return factory.createStep().also { step ->
-            step.acts += entries.mapNotNull {
+            step.acts += flatten(callTraceStep.traces).mapNotNull {
                 createInputAct(it, paths)
             }
-            step.acts += factory.createScheduleAct()
-            if (advancesTime) {
+            if (advancesTime(callTraceStep, paths)) {
                 step.acts += factory.createTimeElapseAct().also {
-                    it.time = TIME_ADVANCE_SECONDS
+                    it.time = TIME_ADVANCE_MILLISECONDS
                 }
             }
+            step.acts += factory.createScheduleAct()
             step.asserts += createTraceAssertions(callTraceStep, paths)
             step.asserts += createStateAssertions(witnessStateStep, paths)
+        }
+    }
+
+    private fun advancesTime(callTraceStep: CallTraceStep, paths: InstancePaths): Boolean {
+        return flatten(callTraceStep.traces).any {
+            paths.resolve(it.self).isEmpty()
         }
     }
 
@@ -123,27 +129,33 @@ class GammaTraceGenerator @Inject constructor(
             return null
         }
         val receiver = paths.resolve(entry.self)
+        val port = paths.tracedPort(receiver) ?: error("Input on '${entry.self}' does not reach a port of the traced component")
         return factory.createRaiseEventAct().also {
-            it.event = createPath(receiver + resolveEvent(entry, paths))
+            it.port = port
+            it.event = resolveEvent(entry, paths)
         }
     }
 
-    private fun createTraceAssertions(callTraceStep: CallTraceStep, paths: InstancePaths): List<Assertion> {
+    private fun createTraceAssertions(callTraceStep: CallTraceStep, paths: InstancePaths): List<Expression> {
         return flatten(callTraceStep.traces).mapNotNull {
             createTraceAssertion(it, paths)
         }
     }
 
-    private fun createTraceAssertion(entry: TraceEntry, paths: InstancePaths): Assertion? {
+    private fun createTraceAssertion(entry: TraceEntry, paths: InstancePaths): Expression? {
         val receiver = paths.resolve(entry.self)
         return when (val element = receiver.lastOrNull()) {
             null -> null
-            is StateTransition -> createFiredTransitionAssertion(receiver.dropLast(1), element)
+            is Transition -> createFiredTransitionAssertion(receiver, element)
             is PortDeclaration -> {
                 when (entry.calledTransition) {
                     RAISE_INPUT_EVENT -> null
-                    SET_OUTPUT_EVENT -> factory.createRaisedEventAssertion().also {
-                        it.event = createPath(receiver + resolveEvent(entry, paths))
+                    SET_OUTPUT_EVENT -> {
+                        factory.createRaiseEventAct().also {
+                            it.instance = createInstanceReference(receiver)
+                            it.port = element
+                            it.event = resolveEvent(entry, paths)
+                        }
                     }
                     else -> error("Traced call '${entry.calledTransition}' on port '${entry.self}' is not an event raise")
                 }
@@ -152,11 +164,22 @@ class GammaTraceGenerator @Inject constructor(
         }
     }
 
-    private fun createFiredTransitionAssertion(regionPath: List<EObject>, transition: StateTransition): Assertion {
-        return factory.createFiredTransitionAssertion().also {
-            it.from = createPath(regionPath + transition.from)
-            it.to = transition.to
-            if (GammaUtils.findTransitions(transition.from, transition.to, null).size > 1) {
+    // a transition into a history node without an id has no fired-transition form, the asserted states show where it led
+    private fun createFiredTransitionAssertion(receiver: List<EObject>, transition: Transition): Expression? {
+        val from = transition.from as State
+        val to = transition.to
+        if (transition.name == null && to !is State) {
+            return null
+        }
+        return factory.createFiredTransitionExpression().also {
+            it.instance = createInstanceReference(receiver)
+            if (transition.name != null) {
+                it.transition = transition
+                return@also
+            }
+            it.from = from
+            it.to = to as State
+            if (GammaUtils.findTransitions(from, to, null).size > 1) {
                 it.trigger = EcoreUtil.copy(transition.trigger)
             }
         }
@@ -167,9 +190,9 @@ class GammaTraceGenerator @Inject constructor(
         return paths.resolve(argument.value).last() as? EventDeclaration ?: error("Traced event '${argument.value}' is not a Gamma event")
     }
 
-    private fun createStateAssertions(witnessStateStep: WitnessStateStep, paths: InstancePaths): List<Assertion> {
+    private fun createStateAssertions(witnessStateStep: WitnessStateStep, paths: InstancePaths): List<Expression> {
         val activeStates = mutableListOf<List<EObject>>()
-        val variableValues = mutableListOf<Pair<List<EObject>, String>>()
+        val variableValues = mutableListOf<VariableValue>()
         for (value in witnessStateStep.values) {
             val holder = paths.resolveOrNull(value.variable.substringBeforeLast('.')) ?: continue
             when (holder.lastOrNull()) {
@@ -179,29 +202,49 @@ class GammaTraceGenerator @Inject constructor(
                     }
                 }
                 is VariableDeclaration -> {
-                    variableValues += holder to value.value
+                    variableValues += VariableValue(holder, value.value)
                 }
             }
         }
 
-        val leafStates = activeStates.filter { state ->
-            activeStates.none {
-                it.size > state.size && it.subList(0, state.size) == state
+        val stateAssertions = activeStates.sortedWith(MODEL_ORDER).map { path ->
+            val state = path.last() as State
+            factory.createStateReferenceExpression().also {
+                it.instance = createInstanceReference(path)
+                it.region = state.eContainer() as Region
+                it.state = state
             }
         }
-
-        val stateAssertions = leafStates.sortedWith(MODEL_ORDER).map { state ->
-            factory.createActiveStateAssertion().also {
-                it.state = createPath(state)
-            }
-        }
-        val variableAssertions = variableValues.sortedWith(compareBy(MODEL_ORDER) { it.first }).map { (variable, value) ->
-            factory.createVariableValueAssertion().also {
-                it.variable = createPath(variable)
-                it.value = createValue(variable.last() as VariableDeclaration, value)
+        val variableAssertions = variableValues.sortedWith(compareBy(MODEL_ORDER) { it.path }).map { variableValue ->
+            val variable = variableValue.path.last() as VariableDeclaration
+            factory.createComparisonOperator().also {
+                it.left = factory.createVariableReferenceExpression().also { reference ->
+                    reference.instance = createInstanceReference(variableValue.path)
+                    reference.variable = variable
+                }
+                it.op = ComparisonOp.EQ
+                it.right = createValue(variable, variableValue.value)
             }
         }
         return stateAssertions + variableAssertions
+    }
+
+    private class VariableValue(
+        val path: List<EObject>,
+        val value: String,
+    )
+
+    // a path starts at the case's component, in whose scope a trace names everything
+    private fun createInstanceReference(path: List<EObject>): ComponentInstanceReference? {
+        val instances = path.drop(1).takeWhile {
+            it is ComponentInstance
+        }.filterIsInstance<ComponentInstance>()
+        return instances.foldRight(null as ComponentInstanceReference?) { instance, child ->
+            factory.createComponentInstanceReference().also {
+                it.instance = instance
+                it.child = child
+            }
+        }
     }
 
     private fun createValue(variable: VariableDeclaration, value: String): Expression {
@@ -225,18 +268,6 @@ class GammaTraceGenerator @Inject constructor(
         }
     }
 
-    private fun createPath(elements: List<EObject>): Expression {
-        val root: Expression = factory.createElementReferenceExpression().also {
-            it.element = elements.first()
-        }
-        return elements.drop(1).fold(root) { primary, member ->
-            factory.createNavigationSuffixExpression().also {
-                it.primary = primary
-                it.member = member
-            }
-        }
-    }
-
     private fun flatten(entries: List<TraceEntry>): List<TraceEntry> {
         return entries.flatMap {
             listOf(it) + flatten(it.innerTraces.orEmpty())
@@ -245,25 +276,45 @@ class GammaTraceGenerator @Inject constructor(
 
     private class InstancePaths(
         private val verificationCase: VerificationCaseDeclaration,
-        private val nameStore: GammaNameStore,
+        private val nameMap: GammaNameMap,
     ) {
         fun resolveOrNull(path: String): List<EObject>? {
             val names = path.split('.')
             if (names.first() != ROOT_FEATURE) {
                 return null
             }
-            return nameStore.resolveOrNull(verificationCase, names.drop(1))
+            return nameMap.resolveOrNull(verificationCase, names.drop(1))
         }
 
         fun resolve(path: String): List<EObject> {
             return resolveOrNull(path) ?: error("Instance path '$path' has no Gamma element")
         }
+
+        // a port of an inner instance is named on the traced component through the bindings that reach it
+        fun tracedPort(path: List<EObject>): PortDeclaration? {
+            val instances = path.filterIsInstance<ComponentInstance>()
+            var port = path.last() as PortDeclaration
+            for (index in instances.lastIndex downTo 0) {
+                val instance = instances[index]
+                val container = if (index == 0) {
+                    path.first()
+                } else {
+                    instances[index - 1].component
+                }
+                val composite = container as? CompositeComponentDeclaration ?: return null
+                val binding = composite.bindings.firstOrNull {
+                    it.boundPort.instance == instance && it.boundPort.port == port
+                } ?: return null
+                port = binding.port
+            }
+            return port
+        }
     }
 
     companion object {
         private const val ROOT_FEATURE = "root"
-        private const val TIME_ADVANCE_SECONDS = 1
-        private const val TRACE_RESOURCE_NAME = "trace.gamma"
+        private const val TIME_ADVANCE_MILLISECONDS = 1000
+        private const val TRACE_RESOURCE_NAME = "trace.get"
         private const val RAISE_INPUT_EVENT = "semantifyr::gamma::ports::Port::raiseInputEvent"
         private const val SET_OUTPUT_EVENT = "semantifyr::gamma::ports::Port::setOutputEvent"
 

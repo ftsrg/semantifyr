@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
@@ -44,8 +45,12 @@ class ThetaModelTransformer @Inject constructor(
 
         excludeDeclarationValuation(xsts)
 
-        xsts.enumDeclarations += inlinedOxsts.eAllContents().asSequence().filterIsInstance<VariableDeclaration>().map {
-            it.typeSpecification?.domain
+        xsts.enumDeclarations += inlinedOxsts.eAllContents().asSequence().mapNotNull {
+            when (it) {
+                is VariableDeclaration -> it.typeSpecification?.domain
+                is ElementReference -> it.element?.eContainer()
+                else -> null
+            }
         }.filterIsInstance<EnumDeclaration>().map {
             thetaDomainTransformer.transform(it)
         }.distinct()

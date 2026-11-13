@@ -1,6 +1,7 @@
 package semantifyr::gamma::ports
 
 import semantifyr::gamma::events
+import semantifyr::gamma::expressions
 
 class Interface {
     contains events: Event[0..*]
@@ -14,61 +15,58 @@ class Port {
     refers inputEvents: Event[0..*]
     refers outputEvents: Event[0..*]
 
-    var inputEvent: inputEvents[0..1] := nothing
-    var outputEvent: outputEvents[0..1] := nothing
-
-    prop hasInput(): bool {
-        return inputEvent != nothing
-    }
-
-    prop hasOutput(): bool {
-        return outputEvent != nothing
-    }
-
     prop hasInputEvent(event: Event): bool {
-        return inputEvent == event
-    }
-
-    tran assumeHasInputEvent(event: Event) {
-        assume(hasInputEvent(event))
+        return event.isRaised
     }
 
     tran setInputEvent(event: Event) {
-        inputEvent := event
+        event.isRaised := true
     }
 
     @Trace
     tran setOutputEvent(event: Event) {
-        outputEvent := event
+        event.isRaised := true
     }
 
-    tran resetInputEvent() {
-        inputEvent := nothing
+    tran resetInputEvents() {
+        inline for (event in inputEvents) {
+            inline event.reset()
+        }
     }
 
-    tran resetOutputEvent() {
-        outputEvent := nothing
+    tran resetOutputEvents() {
+        inline for (event in outputEvents) {
+            inline event.reset()
+        }
     }
 
-    tran havocInputEvent() {
-        choice {
-            inputEvent := nothing
-        } or {
-            inline for choice (event in inputEvents) {
+    tran havocInputEvents() {
+        inline for (event in inputEvents) {
+            choice {
+                inline event.reset()
+            } or {
                 inline raiseInputEvent(event)
-            } else {
-                assume(false)
+                inline event.havocParameters()
             }
         }
     }
 
     @Trace
     tran raiseInputEvent(event: Event) {
-        inputEvent := event
+        event.isRaised := true
     }
 
-    tran havocOutputEvent() {
-        havoc(outputEvent)
+    tran transferOutputEvents(target: Port) {
+        inline for (event in outputEvents) {
+            inline for (targetEvent in target.inputEvents) {
+                inline if (event.declaration == targetEvent.declaration) {
+                    if (event.isRaised) {
+                        inline target.setInputEvent(targetEvent)
+                        inline targetEvent.copyParametersFrom(event)
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -81,4 +79,13 @@ class RequiredPort : Port {
 class ProvidedPort : Port {
     redefine refers inputEvents: Event[0..*] = interface.inputEvents
     redefine refers outputEvents: Event[0..*] = interface.outputEvents
+}
+
+class IsEventRaisedExpression : Expression {
+    refers port: Port
+    refers event: Event
+
+    redefine prop evaluate(): bool {
+        return event.isRaised
+    }
 }

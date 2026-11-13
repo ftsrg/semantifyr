@@ -1,7 +1,10 @@
 {
   "scopeName": "source.gamma",
-  "name": "gammma",
+  "name": "gamma",
   "patterns": [
+    {
+      "include": "#annotations"
+    },
     {
       "include": "#keywords"
     },
@@ -23,7 +26,7 @@
       "patterns": [
         {
           "name": "keyword.control.xsts",
-          "match": "\\b(property|var|assign|and|or|package|sync|statechart|timeout|region|state|entry|exit|transition|when|in|event|out|raise|set|component|channel|port|interface|verification|reachable|case|requires|provides|to|bind|isActive|not|EF|AG|trace|of|step|act|assert|reset|schedule|elapse|variable)\\b"
+          "match": "\\b(package|import|type|record|interface|extends|in|out|inout|transient|persistent|event|sync|cascade|execute|component|provides|requires|port|bind|channel|statechart|var|timeout|region|initial|shallow|history|state|entry|exit|transition|from|to|when|raise|set|ms|s|verification|case|trace|of|step|act|assert|reset|schedule|elapse|variable|and|or|not|AG|EF)\\b"
         }
       ]
     },
@@ -31,7 +34,7 @@
       "patterns": [
         {
           "name": "keyword.operator.xsts",
-          "match": "(==|!=|<=|>=|<|>|\\+|-|&&|\\|\\|)"
+          "match": "(-o\\)-|->|::|==|!=|/=|<=|>=|<|>|=|\\+|-|\\*|/|!)"
         },
         {
           "name": "keyword.operator.assignment.xsts",
@@ -43,7 +46,7 @@
       "patterns": [
         {
           "name": "storage.type.xsts",
-          "match": "\\b(Integer|Boolean)\\b"
+          "match": "\\b(integer|boolean)\\b"
         }
       ]
     },
@@ -69,6 +72,18 @@
         {
           "name": "comment.line.double-slash.xsts",
           "match": "//.*$"
+        }
+      ]
+    },
+    "annotations": {
+      "patterns": [
+        {
+          "name": "storage.modifier.annotation.gamma",
+          "match": "@(RegionSchedule|TransitionPriority|GuardEvaluation)\\b|@\\("
+        },
+        {
+          "name": "constant.language.gamma",
+          "match": "\\b(top-down|bottom-up|off|order-based|value-based|on-the-fly|beginning-of-step)\\b"
         }
       ]
     }

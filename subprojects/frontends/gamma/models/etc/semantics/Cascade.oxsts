@@ -1,0 +1,221 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package gamma::library::semantics
+
+import semantifyr::gamma::expressions
+import semantifyr::gamma::variables
+import semantifyr::gamma::statecharts
+import semantifyr::gamma::components
+import semantifyr::gamma::triggers
+import semantifyr::gamma::actions
+import semantifyr::gamma::events
+import semantifyr::gamma::ports
+
+class CascadeConversation : CascadeComponent {
+    refers control: Port subsets ports = asker.control
+    contains asker: Asker subsets components
+    contains answerer: Answerer subsets components
+    contains channel: Channel subsets channels {
+        redefine refers inputPort: Port = answerer.link
+        redefine refers outputPort: Port = asker.link
+    }
+
+    contains askerStep: ExecutionStep subsets executionSteps {
+        redefine refers component: Component = asker
+    }
+    contains answererStep: ExecutionStep subsets executionSteps {
+        redefine refers component: Component = answerer
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class CascadeLaterInstanceSeesTheEventInTheSameCycle : LibraryCase {
+    contains conversation: CascadeConversation redefines component
+
+    redefine prop {
+        return AG (!conversation.asker.Main.Sent.isActive() || conversation.answerer.Main.Asked.isActive())
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class CascadeEarlierInstanceSeesTheEventInTheNextCycle : LibraryCase {
+    contains conversation: CascadeConversation redefines component
+
+    redefine prop {
+        return EF conversation.asker.Main.Answered.isActive()
+    }
+}
+
+class RepeatedConversation : CascadeComponent {
+    refers control: Port subsets ports = asker.control
+    contains asker: Asker subsets components
+    contains answerer: Answerer subsets components
+    contains channel: Channel subsets channels {
+        redefine refers inputPort: Port = answerer.link
+        redefine refers outputPort: Port = asker.link
+    }
+
+    contains firstAskerStep: ExecutionStep subsets executionSteps {
+        redefine refers component: Component = asker
+    }
+    contains answererStep: ExecutionStep subsets executionSteps {
+        redefine refers component: Component = answerer
+    }
+    contains secondAskerStep: ExecutionStep subsets executionSteps {
+        redefine refers component: Component = asker
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class CascadeInstanceListedTwiceRunsTwiceInACycle : LibraryCase {
+    contains conversation: RepeatedConversation redefines component
+
+    redefine prop {
+        return AG (!conversation.answerer.Main.Asked.isActive() || conversation.asker.Main.Answered.isActive())
+    }
+}
+
+class AskCounter : Statechart {
+    contains link: ProvidedPort subsets ports {
+        redefine contains interface: Link
+    }
+
+    contains asks: IntegerVariable subsets variables
+
+    contains Main: Region subsets regions {
+        contains Waiting: State subsets states
+
+        contains entryToWaiting: EntryTransition subsets entryTransitions {
+            redefine refers to: State = Waiting
+        }
+        contains countAsk: Transition subsets transitions {
+            redefine refers from: State = Waiting
+            redefine refers to: State = Waiting
+            redefine contains trigger: EventTrigger {
+                redefine refers port: Port = link
+                redefine refers event: Event = link.interface.ask
+            }
+            contains increment: AssignmentAction subsets actions {
+                redefine refers variable: Variable = asks
+                redefine contains expression: PlusOperatorExpression {
+                    redefine contains left: VariableExpression {
+                        redefine refers variable: Variable = asks
+                    }
+                    redefine contains right: LiteralIntegerExpression {
+                        redefine refers value: int = 1
+                    }
+                }
+            }
+        }
+    }
+}
+
+class CountedConversation : CascadeComponent {
+    refers control: Port subsets ports = asker.control
+    contains asker: Asker subsets components
+    contains counter: AskCounter subsets components
+    contains channel: Channel subsets channels {
+        redefine refers inputPort: Port = counter.link
+        redefine refers outputPort: Port = asker.link
+    }
+
+    contains askerStep: ExecutionStep subsets executionSteps {
+        redefine refers component: Component = asker
+    }
+    contains counterStep: ExecutionStep subsets executionSteps {
+        redefine refers component: Component = counter
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class CascadeChannelDeliversEachRaiseOnce : LibraryCase {
+    contains conversation: CountedConversation redefines component
+
+    redefine prop {
+        return AG conversation.counter.asks.variable <= 1
+    }
+}
+
+class Finisher : Statechart {
+    contains control: ProvidedPort subsets ports {
+        redefine contains interface: Control
+    }
+
+    contains Main: Region subsets regions {
+        contains Idle: State subsets states
+        contains Finished: State subsets states
+
+        contains entryToIdle: EntryTransition subsets entryTransitions {
+            redefine refers to: State = Idle
+        }
+        contains idleToFinished: Transition subsets transitions {
+            redefine refers from: State = Idle
+            redefine refers to: State = Finished
+            redefine contains trigger: EventTrigger {
+                redefine refers port: Port = control
+                redefine refers event: Event = control.interface.start
+            }
+            contains raiseDone: RaiseEventAction subsets actions {
+                redefine refers port: Port = control
+                redefine refers event: Event = control.interface.done
+            }
+        }
+    }
+}
+
+class TwiceFinishing : CascadeComponent {
+    refers control: Port subsets ports = finisher.control
+    contains finisher: Finisher subsets components
+
+    contains firstStep: ExecutionStep subsets executionSteps {
+        redefine refers component: Component = finisher
+    }
+    contains secondStep: ExecutionStep subsets executionSteps {
+        redefine refers component: Component = finisher
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class CascadeKeepsTheFirstRunsOutputs : LibraryCase {
+    contains system: TwiceFinishing redefines component
+
+    redefine prop {
+        return EF system.finisher.control.interface.done.isRaised
+    }
+}
+
+class SynchronousFinishing : SyncComponent {
+    refers control: Port subsets ports = finisher.control
+    contains finisher: Finisher subsets components
+}
+
+class TwiceSynchronousFinishing : CascadeComponent {
+    refers control: Port subsets ports = inner.control
+    contains inner: SynchronousFinishing subsets components
+
+    contains firstStep: ExecutionStep subsets executionSteps {
+        redefine refers component: Component = inner
+    }
+    contains secondStep: ExecutionStep subsets executionSteps {
+        redefine refers component: Component = inner
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class SynchronousCompositeResetsOutputsBeforeEachRunRaisedOutputUnreachable : LibraryCase {
+    contains system: TwiceSynchronousFinishing redefines component
+
+    redefine prop {
+        return EF system.inner.finisher.control.interface.done.isRaised
+    }
+}

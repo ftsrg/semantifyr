@@ -15,52 +15,30 @@ import semantifyr::gamma::events
 
 enum RegionSchedule {
     TopDown,
-    BottomUp
+    BottomUp,
+}
+
+enum TransitionPriority {
+    Off,
+    OrderBased,
+    ValueBased,
+}
+
+enum GuardEvaluation {
+    OnTheFly,
+    BeginningOfStep,
 }
 
 class TransitionScheduler {
     refers innerRegions: Region[0..*]
 
-    tran fireTransitions(regionSchedule: RegionSchedule) {
-        inline if (regionSchedule == RegionSchedule::BottomUp) {
-            inline fireTransitionsBottomUp()
-        } else {
-            inline fireTransitionsTopDown()
-        }
-    }
-
-    tran fireTransitionsTopDown() {
+    tran fireTransitions() {
         var anyRegionExecuted: bool := false
         inline for (region in innerRegions) {
             choice {
-                inline region.fireLocalTransitions()
+                inline region.fire()
                 anyRegionExecuted := true
             } or {
-                // fire state transitions if local transitions are not enabled (top-down)
-                inline region.assumeNoLocalTransitionEnabled()
-                inline region.fireInnerTransitions(RegionSchedule::TopDown)
-                anyRegionExecuted := true
-            } or {
-                // do nothing, if no transition is enabled
-                inline region.assumeNoTransitionEnabled()
-            }
-        }
-        assume(anyRegionExecuted) // at least one inner "parallel" region must be executed
-    }
-
-    tran fireTransitionsBottomUp() {
-        var anyRegionExecuted: bool := false
-        inline for (region in innerRegions) {
-            choice {
-                // fire state transitions if inner transitions are not enabled (bottom-up)
-                inline region.assumeNoInnerTransitionEnabled()
-                inline region.fireLocalTransitions()
-                anyRegionExecuted := true
-            } or {
-                inline region.fireInnerTransitions(RegionSchedule::BottomUp)
-                anyRegionExecuted := true
-            } or {
-                // do nothing, if no transition is enabled
                 inline region.assumeNoTransitionEnabled()
             }
         }
@@ -69,9 +47,12 @@ class TransitionScheduler {
 }
 
 class Statechart : Component {
-    contains regions: Region[0..*]
+    contains regions: Region[0..*] opposite parentStatechart
     contains variables: Variable[0..*]
-    refers regionSchedule: RegionSchedule = RegionSchedule::BottomUp
+
+    refers regionSchedule: RegionSchedule = RegionSchedule::TopDown
+    refers transitionPriority: TransitionPriority = TransitionPriority::Off
+    refers guardEvaluation: GuardEvaluation = GuardEvaluation::OnTheFly
 
     contains transitionScheduler: TransitionScheduler {
         redefine refers innerRegions: Region[0..*] = regions
@@ -84,10 +65,14 @@ class Statechart : Component {
     }
 
     redefine tran schedule() {
-        inline resetOutputEvents()
+        inline if (guardEvaluation == GuardEvaluation::BeginningOfStep) {
+            inline for (region in regions) {
+                inline region.saveGuards()
+            }
+        }
 
         choice {
-            inline transitionScheduler.fireTransitions(regionSchedule)
+            inline transitionScheduler.fireTransitions()
         } or {
             inline assumeNoTransitionEnabled()
             // only do nothing, if the statechart cannot do anything, i.e., no fireable transitions
@@ -106,37 +91,109 @@ class Statechart : Component {
 
 class Region {
     contains states: State[0..*] opposite parentRegion
+    container parentStatechart: Statechart[0..1] opposite regions
     container parentState: State[0..1] opposite regions
+
+    refers statechart: Statechart = if (parentState == nothing) then parentStatechart as Statechart else parentState.statechart
 
     contains abstractTransitions: AbstractTransition[0..*] opposite parentRegion
     contains transitions: Transition[0..*] subsets abstractTransitions
     contains entryTransitions: EntryTransition[0..*] subsets abstractTransitions
+    contains shallowHistory: ShallowHistory[0..1] opposite parentRegion
 
     @Control
     var activeState: states[0..1] := nothing
 
     tran activateRecursive() {
-        inline for (transition in entryTransitions) {
-            inline transition.main()
+        inline if (entryTransitions == nothing) {
+            inline for (history in shallowHistory) {
+                inline history.enterRegion()
+            }
+        } else {
+            inline for (transition in entryTransitions) {
+                inline transition.main()
+            }
         }
     }
-    tran deactivateRecursive() {
+
+    tran exitRecursive() {
         inline for (state in states) {
-            inline state.deactivateRecursive()
+            inline state.exitRecursive()
+        }
+    }
+
+    tran activateOrthogonalRegions() {
+        inline for (region in parentState.regions) {
+            inline if (region != self) {
+                inline region.activateRecursive()
+            }
+        }
+    }
+
+    tran exitOrthogonalRegions() {
+        inline for (region in parentState.regions) {
+            inline if (region != self) {
+                inline region.exitRecursive()
+            }
+        }
+    }
+
+    tran saveGuards() {
+        inline for (transition in transitions) {
+            inline transition.saveGuard()
+        }
+        inline for (state in states) {
+            inline for (region in state.regions) {
+                inline region.saveGuards()
+            }
+        }
+    }
+
+    tran fire() {
+        inline if (statechart.regionSchedule == RegionSchedule::BottomUp) {
+            choice {
+                // fire state transitions if inner transitions are not enabled (bottom-up)
+                inline assumeNoInnerTransitionEnabled()
+                inline fireLocalTransitions()
+            } or {
+                inline fireInnerTransitions()
+            }
+        } else {
+            choice {
+                inline fireLocalTransitions()
+            } or {
+                // fire inner transitions if local transitions are not enabled (top-down)
+                inline assumeNoLocalTransitionEnabled()
+                inline fireInnerTransitions()
+            }
         }
     }
 
     tran fireLocalTransitions() {
-        inline for choice (transition in transitions) {
-            inline transition.main()
+        inline if (statechart.transitionPriority == TransitionPriority::OrderBased) {
+            var fired: bool := false
+            inline for (transition in transitions) {
+                if (!fired && transition.isEnabled()) {
+                    fired := true
+                    inline transition.fire()
+                }
+            }
+            assume(fired)
         } else {
-            assume(false)
+            inline for choice (transition in transitions) {
+                inline if (statechart.transitionPriority == TransitionPriority::ValueBased) {
+                    inline transition.assumeNoHigherPriorityEnabled()
+                }
+                inline transition.main()
+            } else {
+                assume(false)
+            }
         }
     }
 
-    tran fireInnerTransitions(regionSchedule: RegionSchedule) {
+    tran fireInnerTransitions() {
         inline for choice (state in states) {
-            inline state.fireTransitions(regionSchedule)
+            inline state.fireTransitions()
         } else {
             assume(false)
         }
@@ -160,11 +217,18 @@ class Region {
     }
 }
 
-class State {
+abstract class TransitionTarget {
+    abstract tran receive(transition: Transition)
+
+    abstract tran enterFrom(top: State)
+}
+
+class State : TransitionTarget {
     container parentRegion: Region[1] opposite states
     contains regions: Region[0..*] opposite parentState
 
     refers parentState: State[0..1] = parentRegion.parentState // as pattern parentState
+    refers statechart: Statechart = parentRegion.statechart
     contains entryActions: Action[0..*]
     contains exitActions: Action[0..*]
 
@@ -175,64 +239,96 @@ class State {
     prop isActive(): bool {
         return parentRegion.activeState == self
     }
-    tran deactivateRecursive() {
-        inline for (region in regions) {
-            inline region.deactivateRecursive()
-        }
 
-        if (parentRegion.activeState == self) {
-            parentRegion.activeState := nothing
-
-            inline for (exitAction in exitActions) {
-                inline exitAction.main()
-            }
-        }
-    }
-    tran exitRecursive(commonRegion: Region) {
-        inline for (exitAction in exitActions) {
-            inline exitAction.main()
-        }
-
-        parentRegion.activeState := nothing
-
-        inline if (commonRegion != parentRegion) {
-            inline if (parentState != nothing) {
-                inline parentState.exitRecursive(commonRegion)
-            }
-        }
-    }
-    tran exit(commonRegion: Region) {
-        inline exitRecursive(commonRegion)
-
-        inline for (region in regions) {
-            inline region.deactivateRecursive()
-        }
-    }
-    tran enterRecursive(commonRegion: Region) {
-        inline if (commonRegion != parentRegion) {
-            inline if (parentState != nothing) {
-                inline parentState.enterRecursive(commonRegion)
-            }
-        }
-
+    tran enterOwn() {
         parentRegion.activeState := self
+        inline for (history in parentRegion.shallowHistory) {
+            history.lastState := nothing
+        }
 
         inline for (action in entryActions) {
             inline action.main()
         }
     }
-    tran enter(commonRegion: Region) {
-        inline enterRecursive(commonRegion)
+
+    tran enter() {
+        inline enterOwn()
 
         inline for (region in regions) {
             inline region.activateRecursive()
         }
     }
-    tran fireTransitions(regionSchedule: RegionSchedule) {
+
+    tran exitOwn() {
+        inline for (action in exitActions) {
+            inline action.main()
+        }
+
+        inline for (history in parentRegion.shallowHistory) {
+            history.lastState := self
+        }
+        parentRegion.activeState := nothing
+    }
+
+    tran exitRecursive() {
+        if (isActive()) {
+            inline for (region in regions) {
+                inline region.exitRecursive()
+            }
+
+            inline exitOwn()
+        }
+    }
+
+    // the order of the levels and their orthogonal regions is Gamma's, ExitActionRetriever and EntryActionRetriever
+    tran exitUpTo(top: State) {
+        inline exitRecursive()
+
+        inline if (self != top) {
+            inline parentRegion.exitOrthogonalRegions()
+            inline exitAncestorsUpTo(top)
+        }
+    }
+
+    tran exitAncestorsUpTo(top: State) {
+        inline if (self != top) {
+            inline if (parentState != top) {
+                inline parentState.parentRegion.exitOrthogonalRegions()
+            }
+            inline parentState.exitOwn()
+            inline parentState.exitAncestorsUpTo(top)
+        }
+    }
+
+    redefine tran receive(transition: Transition) {
+        inline transition.fireBetween(transition.from, self, self)
+    }
+
+    redefine tran enterFrom(top: State) {
+        inline if (self != top) {
+            inline enterAncestorsFrom(top)
+            inline enter()
+            inline parentRegion.activateOrthogonalRegions()
+        } else {
+            inline enter()
+        }
+    }
+
+    tran enterAncestorsFrom(top: State) {
+        inline if (self != top) {
+            inline parentState.enterAncestorsFrom(top)
+            inline if (parentState != top) {
+                inline parentState.parentRegion.activateOrthogonalRegions()
+            }
+            inline parentState.enterOwn()
+        }
+    }
+
+    tran fireTransitions() {
         inline if (regions == nothing) {
             assume(false)
         } else {
-            inline transitionScheduler.fireTransitions(regionSchedule)
+            inline transitionScheduler.fireTransitions()
         }
     }
 
@@ -254,13 +350,9 @@ class Guard {
 abstract class AbstractTransition {
     container parentRegion: Region[1] opposite abstractTransitions
 
-    refers to: State[1]
-
     abstract prop isEnabled(): bool
 
-    tran fire() {
-        inline to.enter(parentRegion)
-    }
+    abstract tran fire()
 
     redefine tran {
         assume(isEnabled())
@@ -269,13 +361,22 @@ abstract class AbstractTransition {
 }
 
 class EntryTransition : AbstractTransition {
+    refers to: State[1]
+
     redefine prop isEnabled(): bool {
         return true
+    }
+
+    redefine tran fire() {
+        inline to.enter()
     }
 }
 
 class Transition : AbstractTransition {
     refers from: State[1]
+    refers to: TransitionTarget[1]
+    refers statechart: Statechart = parentRegion.statechart
+    refers priority: int = 0
 
     contains trigger: Trigger[1]
     contains guard: Guard[1] { // default guard is true
@@ -286,17 +387,87 @@ class Transition : AbstractTransition {
 
     contains actions: Action[0..*]
 
+    var guardAtStepStart: bool := false
+
+    prop isTriggeredAndOpen(): bool {
+        return trigger.isTriggered() && guard.isOpen()
+    }
+
     redefine prop isEnabled(): bool {
-        return trigger.isTriggered() && from.isActive() && guard.isOpen()
+        return from.isActive() && (if (statechart.guardEvaluation == GuardEvaluation::BeginningOfStep) then guardAtStepStart else isTriggeredAndOpen())
+    }
+
+    tran saveGuard() {
+        guardAtStepStart := isTriggeredAndOpen()
+    }
+
+    tran assumeNoHigherPriorityEnabled() {
+        inline for (other in parentRegion.transitions) {
+            inline if (other.priority > priority) {
+                assume(!other.isEnabled())
+            }
+        }
     }
 
     @Trace
     redefine tran fire() {
-        inline from.exit(parentRegion)
-        inline for (action in actions) {
-            inline action.main()
+        inline to.receive(self)
+    }
+
+    tran fireBetween(sourceAncestor: State, targetAncestor: State, targetStart: State) {
+        inline if (sourceAncestor.parentRegion == targetAncestor.parentRegion) {
+            inline from.exitUpTo(sourceAncestor)
+            inline for (action in actions) {
+                inline action.main()
+            }
+            inline to.enterFrom(targetAncestor)
+        } else {
+            inline if (targetAncestor.parentState != nothing) {
+                inline fireBetween(sourceAncestor, targetAncestor.parentState as State, targetStart)
+            } else {
+                inline fireBetween(sourceAncestor.parentState as State, targetStart, targetStart)
+            }
         }
-        inline to.enter(parentRegion)
+    }
+}
+
+class ShallowHistory : TransitionTarget {
+    container parentRegion: Region[1] opposite shallowHistory
+
+    refers to: State[1]
+
+    @Control
+    var lastState: State[0..1] := nothing
+
+    tran enterRegion() {
+        if (lastState == nothing) {
+            inline to.enter()
+        } else {
+            inline for (state in parentRegion.states) {
+                if (lastState == state) {
+                    inline state.enter()
+                }
+            }
+        }
+    }
+
+    redefine tran receive(transition: Transition) {
+        inline transition.fireBetween(transition.from, parentRegion.parentState as State, parentRegion.parentState as State)
+    }
+
+    redefine tran enterFrom(top: State) {
+        inline parentRegion.parentState.enterAncestorsFrom(top)
+        inline parentRegion.parentState.enterOwn()
+        inline for (region in parentRegion.parentState.regions) {
+            inline if (region == parentRegion) {
+                inline enterRegion()
+            } else {
+                inline region.activateRecursive()
+            }
+        }
+        inline if (parentRegion.parentState != top) {
+            inline parentRegion.parentState.parentRegion.activateOrthogonalRegions()
+        }
     }
 }
 

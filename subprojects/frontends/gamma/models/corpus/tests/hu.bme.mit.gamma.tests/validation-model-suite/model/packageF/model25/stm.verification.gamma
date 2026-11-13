@@ -1,0 +1,11 @@
+package validation::package_f_25::stm_verification
+
+import validation::package_f_25
+
+verification case StateS0Reachable of statemachine {
+    EF state Main.S0
+}
+
+verification case TransitionFromS0ToS0Fires of statemachine {
+    EF (state Main.S0 and variable i = 1)
+}

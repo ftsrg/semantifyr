@@ -320,7 +320,7 @@ export const state = {
 
 function languageOf(uri: Uri): string {
     const extension = /\.([^./]+)$/.exec(uri.path)?.[1] ?? '';
-    return { oxsts: 'oxsts', gamma: 'gamma', md: 'markdown' }[extension] ?? 'plaintext';
+    return { oxsts: 'oxsts', gamma: 'gamma', get: 'gamma', md: 'markdown' }[extension] ?? 'plaintext';
 }
 
 export function openDocument(uri: Uri): TextDocument {
@@ -368,8 +368,8 @@ export const workspace = {
     }),
     findFiles: vi.fn(async (glob: string | RelativePattern) => {
         const pattern = typeof glob === 'string' ? glob : glob.pattern;
-        const extension = pattern.slice(pattern.lastIndexOf('.'));
-        return state.files.filter((uri) => uri.path.endsWith(extension));
+        const extensions = pattern.slice(pattern.lastIndexOf('.') + 1).replace(/^\{|\}$/g, '').split(',');
+        return state.files.filter((uri) => extensions.some((extension) => uri.path.endsWith(`.${extension}`)));
     }),
     openTextDocument: vi.fn(async (uri: Uri) => openDocument(uri)),
     registerTextDocumentContentProvider: vi.fn((scheme: string, provider: TextDocumentContentProvider) => {

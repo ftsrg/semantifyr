@@ -1,0 +1,123 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package Interfaces
+
+interface Control {
+    in event start
+}
+
+interface Greeting {
+    in event hello
+}
+
+interface Reply extends Greeting {
+    out event welcome
+}
+
+interface Duplex {
+    inout event ping
+}
+
+statechart Host [
+    port guests : provides Reply
+] {
+    region Main {
+        initial MainInitial
+        state Waiting
+        state Greeted
+    }
+
+    transition from MainInitial to Waiting
+    transition from Waiting to Greeted when guests.hello / raise guests.welcome;
+}
+
+statechart Guest [
+    port control : provides Control,
+    port host : requires Reply
+] {
+    region Main {
+        initial MainInitial
+        state Outside
+        state Knocked
+        state Welcomed
+    }
+
+    transition from MainInitial to Outside
+    transition from Outside to Knocked when control.start / raise host.hello;
+    transition from Knocked to Welcomed when host.welcome
+}
+
+sync Visit [
+    port control : provides Control
+] {
+    component host : Host
+    component guest : Guest
+    bind control -> guest.control
+    channel [ host.guests ] -o)- [ guest.host ]
+}
+
+statechart Caller [
+    port control : provides Control,
+    port line : provides Duplex
+] {
+    region Main {
+        initial MainInitial
+        state Idle
+        state Calling
+        state Answered
+    }
+
+    transition from MainInitial to Idle
+    transition from Idle to Calling when control.start / raise line.ping;
+    transition from Calling to Answered when line.ping
+}
+
+statechart Callee [
+    port line : requires Duplex
+] {
+    region Main {
+        initial MainInitial
+        state Waiting
+        state Replied
+    }
+
+    transition from MainInitial to Waiting
+    transition from Waiting to Replied when line.ping / raise line.ping;
+}
+
+sync Call [
+    port control : provides Control
+] {
+    component caller : Caller
+    component callee : Callee
+    bind control -> caller.control
+    channel [ caller.line ] -o)- [ callee.line ]
+}
+
+verification case InheritedEventCrossesTheChannel of Visit {
+    EF state host.Main.Greeted
+}
+
+verification case OwnEventAnswersTheInheritedOne of Visit {
+    EF state guest.Main.Welcomed
+}
+
+verification case InoutEventCrossesTheChannelInBothDirections of Call {
+    EF state caller.Main.Answered
+}
+
+verification case InoutEventArrivingFromItsOwnEndUnreachable of Call {
+    EF (state caller.Main.Answered and state callee.Main.Waiting)
+}
+
+verification case ProvidedPortRaisesTheOutputHalf of Call {
+    EF raise caller.line.ping
+}
+
+verification case OwnEventWithoutTheInheritedOneUnreachable of Visit {
+    EF (state guest.Main.Welcomed and state host.Main.Waiting)
+}

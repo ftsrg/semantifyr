@@ -57,7 +57,8 @@
   "main": "./dist/extension.cjs",
   "activationEvents": [
     "workspaceContains:**/*.oxsts",
-    "workspaceContains:**/*.gamma"
+    "workspaceContains:**/*.gamma",
+    "workspaceContains:**/*.gcd"
   ],
   "contributes": {
     "commands": [
@@ -81,7 +82,7 @@
       "explorer/context": [
         {
           "command": "semantifyr.gamma.compile",
-          "when": "resourceExtname == .gamma",
+          "when": "resourceExtname == .gamma || resourceExtname == .gcd",
           "group": "semantifyr"
         }
       ],
@@ -145,7 +146,9 @@
       {
         "id": "gamma",
         "extensions": [
-          ".gamma"
+          ".gamma",
+          ".gcd",
+          ".get"
         ],
         "aliases": [
           "Gamma",

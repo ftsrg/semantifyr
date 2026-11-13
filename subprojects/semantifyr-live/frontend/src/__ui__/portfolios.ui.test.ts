@@ -10,7 +10,7 @@ import { describe, expect } from 'vitest'
 import { casesListed, results, statesOf, test } from './harness'
 
 const LEVEL_CROSSING = '/oxsts/level-crossing?library=gamma'
-const BARRIER = 'BarrierDownWhileTrainInCrossing'
+const BARRIER = '_BarrierDownWhileTrainInCrossing'
 
 async function choose(page: Page, kind: 'Verification' | 'Validation', portfolio: string): Promise<void> {
   await page.getByRole('button', { name: 'Portfolios and validation' }).click()

@@ -115,7 +115,7 @@ const TRACE_LANGUAGES: Readonly<Record<string, TraceLanguage>> = {
   gamma: {
     views: [
       languageTrace('Gamma trace', 'gamma', (caseName) => {
-        return `${caseName}.trace.gamma`
+        return `${caseName}.trace.get`
       }, 'Gamma'),
       steps('OXSTS steps'),
       CALLS,

@@ -5,5 +5,6 @@
   "@oxsts-library": "../oxsts.lang/src/main/resources/hu/bme/mit/semantifyr/oxsts/lang/library",
   "@sysml-tutorial-models": "../frontends/sysml/models/tutorial",
   "@sysml-reference-trace": "../frontends/sysml/models/etc",
-  "@gamma-reference-trace": "../frontends/gamma/models/etc"
+  "@gamma-reference-trace": "../frontends/gamma/models/etc",
+  "@gamma-models/constructs.tsv": "../frontends/gamma/models/constructs.tsv"
 }

@@ -1,30 +1,23 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
 package hu.bme.mit.semantifyr.frontends.gamma.lang.gamma;
 
-import com.google.common.collect.Iterables;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.xtext.EcoreUtil2;
 
 public class GammaUtils {
 
-    public static EObject getPathElement(Expression path) {
-        return switch (path) {
-            case NavigationSuffixExpression navigation -> navigation.getMember();
-            case ElementReferenceExpression reference -> reference.getElement();
-            case null, default -> null;
-        };
-    }
-
-    public static List<StateTransition> findTransitions(State from, State to, Trigger trigger) {
-        var region = (Region) from.eContainer();
-        return region.getTransitions().stream()
-                .filter(StateTransition.class::isInstance)
-                .map(StateTransition.class::cast)
+    public static List<Transition> findTransitions(State from, State to, Trigger trigger) {
+        var statechart = EcoreUtil2.getContainerOfType(from, StatechartDeclaration.class);
+        return statechart.getTransitions().stream()
                 .filter(it -> it.getFrom() == from && it.getTo() == to)
                 .filter(it -> trigger == null || isSameTrigger(it.getTrigger(), trigger))
                 .toList();
@@ -37,10 +30,13 @@ public class GammaUtils {
         if (left instanceof EventTrigger leftEvent && right instanceof EventTrigger rightEvent) {
             return leftEvent.getPort() == rightEvent.getPort() && leftEvent.getEvent() == rightEvent.getEvent();
         }
-        return false;
+        return left == null && right == null;
     }
 
     public static boolean isInputEvent(PortDeclaration port, EventDeclaration event) {
+        if (event.getDirection() == EventDirection.INOUT) {
+            return true;
+        }
         var declaredIn = event.getDirection() == EventDirection.IN;
         if (port.getRealizationMode() == RealizationMode.PROVIDED) {
             return declaredIn;
@@ -48,49 +44,142 @@ public class GammaUtils {
         return !declaredIn;
     }
 
-    public static Iterable<EObject> getAllMembers(EObject declaration) {
-        return switch (declaration) {
-            case ComponentInstance decl -> getAllMembers(decl);
-            case PortDeclaration decl -> getAllMembers(decl);
-            case InterfaceDeclaration decl -> getAllMembers(decl);
-            case StatechartDeclaration decl -> getAllMembers(decl);
-            case SyncComponentDeclaration decl -> getAllMembers(decl);
-            case Region decl -> getAllMembers(decl);
-            case State decl -> getAllMembers(decl);
-            default -> List.of();
+    public static boolean isOutputEvent(PortDeclaration port, EventDeclaration event) {
+        if (event.getDirection() == EventDirection.INOUT) {
+            return true;
+        }
+        return !isInputEvent(port, event);
+    }
+
+    public static List<EventDeclaration> getAllEvents(InterfaceDeclaration interfaceDeclaration) {
+        var interfaces = new LinkedHashSet<InterfaceDeclaration>();
+        collectInterfaces(interfaceDeclaration, interfaces);
+        var events = new ArrayList<EventDeclaration>();
+        for (var collected : interfaces) {
+            events.addAll(collected.getEvents());
+        }
+        return events;
+    }
+
+    private static void collectInterfaces(
+            InterfaceDeclaration interfaceDeclaration, Set<InterfaceDeclaration> interfaces) {
+        if (interfaceDeclaration == null || interfaceDeclaration.eIsProxy() || !interfaces.add(interfaceDeclaration)) {
+            return;
+        }
+        for (var parent : interfaceDeclaration.getParents()) {
+            collectInterfaces(parent, interfaces);
+        }
+    }
+
+    public static List<EventDeclaration> getEvents(PortDeclaration port) {
+        if (port == null || port.eIsProxy()) {
+            return List.of();
+        }
+        return getAllEvents(port.getInterface());
+    }
+
+    public static List<Region> getAllRegions(StatechartDeclaration statechart) {
+        return EcoreUtil2.getAllContentsOfType(statechart, Region.class);
+    }
+
+    public static List<State> getAllStates(StatechartDeclaration statechart) {
+        return EcoreUtil2.getAllContentsOfType(statechart, State.class);
+    }
+
+    public static ComponentDeclaration getTracedComponent(EObject element) {
+        var verificationCase = EcoreUtil2.getContainerOfType(element, VerificationCaseDeclaration.class);
+        if (verificationCase == null) {
+            var executionTrace = EcoreUtil2.getContainerOfType(element, ExecutionTrace.class);
+            if (executionTrace == null) {
+                return null;
+            }
+            verificationCase = executionTrace.getVerificationCase();
+        }
+        if (verificationCase == null || verificationCase.eIsProxy()) {
+            return null;
+        }
+        return resolved(verificationCase.getComponent());
+    }
+
+    public static ComponentDeclaration getReferencedComponent(InstanceElementExpression expression) {
+        if (expression.getInstance() == null) {
+            return getTracedComponent(expression);
+        }
+        return getReferencedComponent(expression.getInstance());
+    }
+
+    public static ComponentDeclaration getReferencedComponent(ComponentInstanceReference reference) {
+        var current = reference;
+        while (current.getChild() != null) {
+            current = current.getChild();
+        }
+        var instance = current.getInstance();
+        if (instance == null || instance.eIsProxy()) {
+            return null;
+        }
+        return resolved(instance.getComponent());
+    }
+
+    public static ComponentDeclaration getParentComponent(ComponentInstanceReference reference) {
+        if (reference.eContainer() instanceof ComponentInstanceReference parent) {
+            var instance = parent.getInstance();
+            if (instance == null || instance.eIsProxy()) {
+                return null;
+            }
+            return resolved(instance.getComponent());
+        }
+        return getTracedComponent(reference);
+    }
+
+    public static List<ComponentInstance> getInstances(ComponentDeclaration component) {
+        if (component instanceof CompositeComponentDeclaration composite) {
+            return composite.getComponents();
+        }
+        return List.of();
+    }
+
+    public static List<ComponentInstance> getInstancePath(InstanceElementExpression expression) {
+        var instances = new ArrayList<ComponentInstance>();
+        var current = expression.getInstance();
+        while (current != null) {
+            instances.add(current.getInstance());
+            current = current.getChild();
+        }
+        return instances;
+    }
+
+    public static Type getType(Expression expression) {
+        var type = switch (expression) {
+            case DirectReferenceExpression reference
+            when reference.getDeclaration() != null ->
+                reference.getDeclaration().getType();
+            case EventParameterReferenceExpression reference
+            when reference.getParameter() != null -> reference.getParameter().getType();
+            case VariableReferenceExpression reference
+            when reference.getVariable() != null -> reference.getVariable().getType();
+            case RecordAccessExpression access
+            when access.getField() != null -> access.getField().getType();
+            case null, default -> null;
         };
+        return resolveType(type);
     }
 
-    public static Iterable<EObject> getAllMembers(ComponentInstance declaration) {
-        return getAllMembers(declaration.getComponent());
+    public static Type resolveType(Type type) {
+        var current = type;
+        var visited = new LinkedHashSet<TypeDeclaration>();
+        while (current instanceof TypeReference reference
+                && reference.getReference() != null
+                && !reference.getReference().eIsProxy()
+                && visited.add(reference.getReference())) {
+            current = reference.getReference().getType();
+        }
+        return current;
     }
 
-    public static Iterable<EObject> getAllMembers(PortDeclaration declaration) {
-        var inter = declaration.getInterface();
-        return getAllMembers(inter);
-    }
-
-    public static Iterable<EObject> getAllMembers(InterfaceDeclaration declaration) {
-        return Iterables.concat(declaration.getEvents());
-    }
-
-    public static Iterable<EObject> getAllMembers(StatechartDeclaration declaration) {
-        return Iterables.concat(
-                declaration.getRegions(),
-                declaration.getTimeouts(),
-                declaration.getVariables(),
-                declaration.getPorts());
-    }
-
-    public static Iterable<EObject> getAllMembers(SyncComponentDeclaration declaration) {
-        return Iterables.concat(declaration.getPorts(), declaration.getComponents());
-    }
-
-    public static Iterable<EObject> getAllMembers(Region declaration) {
-        return Iterables.concat(declaration.getStates(), declaration.getTransitions());
-    }
-
-    public static Iterable<EObject> getAllMembers(State declaration) {
-        return Iterables.concat(declaration.getRegions());
+    private static <T extends EObject> T resolved(T element) {
+        if (element == null || element.eIsProxy()) {
+            return null;
+        }
+        return element;
     }
 }

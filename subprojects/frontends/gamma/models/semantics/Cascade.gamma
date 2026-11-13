@@ -1,0 +1,85 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package Cascade
+
+interface Control {
+    in event start
+}
+
+interface Link {
+    in event ask
+    out event answer
+}
+
+statechart Asker [
+    port control : provides Control,
+    port link : requires Link
+] {
+    region Main {
+        initial MainInitial
+        state Idle
+        state Sent
+        state Answered
+    }
+
+    transition from MainInitial to Idle
+    transition from Idle to Sent when control.start / raise link.ask;
+    transition from Sent to Answered when link.answer
+}
+
+statechart Answerer [
+    port link : provides Link
+] {
+    region Main {
+        initial MainInitial
+        state Waiting
+        state Asked
+    }
+
+    transition from MainInitial to Waiting
+    transition from Waiting to Asked when link.ask / raise link.answer;
+}
+
+cascade Conversation [
+    port control : provides Control
+] {
+    component asker : Asker
+    component answerer : Answerer
+    bind control -> asker.control
+    channel [ answerer.link ] -o)- [ asker.link ]
+    execute asker, answerer
+}
+
+cascade RepeatedConversation [
+    port control : provides Control
+] {
+    component asker : Asker
+    component answerer : Answerer
+    bind control -> asker.control
+    channel [ answerer.link ] -o)- [ asker.link ]
+    execute asker, answerer, asker
+}
+
+verification case LaterInstanceSeesTheEventInTheSameCycle of Conversation {
+    AG (not state asker.Main.Sent or state answerer.Main.Asked)
+}
+
+verification case EarlierInstanceSeesTheReplyInALaterCycle of Conversation {
+    EF state asker.Main.Answered
+}
+
+verification case ReplyInTheSameCycleWithoutASecondRunViolated of Conversation {
+    AG (not state answerer.Main.Asked or state asker.Main.Answered)
+}
+
+verification case InstanceListedTwiceRunsTwiceInACycle of RepeatedConversation {
+    AG (not state answerer.Main.Asked or state asker.Main.Answered)
+}
+
+verification case LaterInstanceMissingTheEventOfItsCycleUnreachable of Conversation {
+    EF (state asker.Main.Sent and state answerer.Main.Waiting)
+}

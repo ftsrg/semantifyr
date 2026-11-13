@@ -6,7 +6,107 @@
 
 package semantifyr::gamma::events
 
-class Event
+import semantifyr::gamma::expressions
+
+class EventDeclaration
+
+class Event {
+    // shared by every port's instance of the event, so a channel matches the instances of one event
+    contains declaration: EventDeclaration
+    contains parameters: Parameter[0..*]
+
+    refers persistent: bool = false
+
+    var isRaised: bool := false
+
+    tran reset() {
+        isRaised := false
+        inline if (!persistent) {
+            inline for (parameter in parameters) {
+                inline parameter.reset()
+            }
+        }
+    }
+
+    tran havocParameters() {
+        inline for (parameter in parameters) {
+            inline parameter.havoc()
+        }
+    }
+
+    tran copyParametersFrom(source: Event) {
+        inline for (parameter in parameters) {
+            inline for (sourceParameter in source.parameters) {
+                inline if (parameter.declaration == sourceParameter.declaration) {
+                    inline parameter.set(sourceParameter.evaluate())
+                }
+            }
+        }
+    }
+}
+
+class ParameterDeclaration
+
+abstract class Parameter {
+    // shared like the event's declaration, so a channel matches the instances of one parameter
+    contains declaration: ParameterDeclaration
+
+    abstract prop evaluate(): any
+
+    abstract tran set(value: any)
+
+    abstract tran reset()
+
+    abstract tran havoc()
+}
+
+class IntegerParameter : Parameter {
+    var value: int := 0
+
+    redefine prop evaluate(): int {
+        return value
+    }
+
+    redefine tran set(value: int) {
+        self.value := value
+    }
+
+    redefine tran reset() {
+        value := 0
+    }
+
+    redefine tran havoc() {
+        havoc(value)
+    }
+}
+
+class BooleanParameter : Parameter {
+    var value: bool := false
+
+    redefine prop evaluate(): bool {
+        return value
+    }
+
+    redefine tran set(value: bool) {
+        self.value := value
+    }
+
+    redefine tran reset() {
+        value := false
+    }
+
+    redefine tran havoc() {
+        havoc(value)
+    }
+}
+
+class ParameterExpression : Expression {
+    refers parameter: Parameter
+
+    redefine prop evaluate(): any {
+        return parameter.evaluate()
+    }
+}
 
 class Timeout {
     refers deltaTime: int = 1

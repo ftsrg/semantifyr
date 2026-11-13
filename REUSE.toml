@@ -36,3 +36,10 @@ SPDX-License-Identifier = "OFL-1.1"
 path = "subprojects/semantifyr-editor-common/src/look/fonts/jetbrains-mono-*.woff2"
 SPDX-FileCopyrightText = "2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono)"
 SPDX-License-Identifier = "OFL-1.1"
+
+# Copied from https://github.com/ftsrg/gamma at commit 7f8695a4d with only the package and import lines rewritten to qualified names; each file's path below models/corpus is its path in that repository.
+[[annotations]]
+path = "subprojects/frontends/gamma/models/corpus/**/*.gcd"
+precedence = "override"
+SPDX-FileCopyrightText = "The Gamma contributors"
+SPDX-License-Identifier = "EPL-1.0"

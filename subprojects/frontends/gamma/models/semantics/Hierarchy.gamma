@@ -1,0 +1,79 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package Hierarchy
+
+interface Control {
+    in event go
+    in event stop
+}
+
+statechart Crossing [
+    port control : provides Control
+] {
+    region Main {
+        initial MainInitial
+        state Outside
+        state Parent {
+            region Inner {
+                initial InnerInitial
+                state First
+                state Second
+            }
+        }
+    }
+
+    transition from MainInitial to Outside
+    transition from InnerInitial to First
+    transition from Outside to Second when control.go
+    transition from Second to Outside when control.stop
+}
+
+statechart Orthogonal [
+    port control : provides Control
+] {
+    region Main {
+        initial MainInitial
+        state Idle
+        state Parent {
+            region Left {
+                initial LeftInitial
+                state LeftFirst
+                state LeftSecond
+            }
+            region Right {
+                initial RightInitial
+                state RightFirst
+            }
+        }
+    }
+
+    transition from MainInitial to Idle
+    transition from LeftInitial to LeftFirst
+    transition from RightInitial to RightFirst
+    transition from Idle to LeftSecond when control.go
+    transition from Parent to Idle when control.stop
+}
+
+verification case EnteringTheInnerTargetEntersItsParent of Crossing {
+    EF (state Main.Parent and state Inner.Second)
+}
+
+verification case EnteringTheInnerTargetThroughItsInitialStateUnreachable of Crossing {
+    EF state Inner.First
+}
+
+verification case InnerSourceActiveAfterLeavingItUnreachable of Crossing {
+    EF (state Main.Outside and state Inner.Second)
+}
+
+verification case EnteringOneRegionEntersItsOrthogonalRegion of Orthogonal {
+    EF (state Left.LeftSecond and state Right.RightFirst)
+}
+
+verification case OrthogonalStateActiveAfterLeavingTheParentUnreachable of Orthogonal {
+    EF (state Main.Idle and state Right.RightFirst)
+}

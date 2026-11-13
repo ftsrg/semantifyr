@@ -1,0 +1,15 @@
+package sSM::groundstation::GroundStation_verification
+
+import sSM::groundstation
+
+verification case StateIdleReachable of GroundStation {
+    EF state Main.Idle
+}
+
+verification case StateOperationReachable of GroundStation {
+    EF state Main.Operation
+}
+
+verification case StateWaitingReachable of GroundStation {
+    EF state ReceiveData.Waiting
+}

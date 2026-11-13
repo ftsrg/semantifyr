@@ -21,7 +21,7 @@ class DistributionTest : DistributionTestBase("semantifyr-gamma") {
         )
 
         assertThat(run.exitCode).describedAs(run.stderr).isZero()
-        assertThat(reportOf(run).resolveSibling("trace.gamma")).exists()
+        assertThat(reportOf(run).resolveSibling("trace.get")).exists()
     }
 
     @Test

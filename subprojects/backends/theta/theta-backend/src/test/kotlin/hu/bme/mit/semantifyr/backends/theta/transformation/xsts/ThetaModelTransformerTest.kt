@@ -159,6 +159,26 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
     }
 
     @Test
+    suspend fun `an enum whose literals no variable holds is declared`() {
+        val lines = xstsLines(
+            """
+                var counter : int := 0
+                init {
+                }
+                tran {
+                    assume(if test::colors::Color::Green == test::colors::Color::Green then counter < 2 else counter < 3)
+                    counter := counter + 1
+                }
+                prop {
+                    AG counter < 3
+                }
+            """,
+        )
+
+        assertThat(lines).contains("type test\$\$colors\$\$Color : { Red, Green")
+    }
+
+    @Test
     suspend fun `variables keep their types and initializers`() {
         val lines = xstsLines(
             """

@@ -1,0 +1,91 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package Records
+
+type Point : record {
+    x : integer,
+    y : integer
+}
+
+type Box : record {
+    corner : Point,
+    open : boolean
+}
+
+interface Control {
+    in event start
+}
+
+interface Positions {
+    in event moved(position : Point)
+}
+
+statechart Plotter [
+    port control : provides Control
+] {
+    var position : Point := #Point { x := 3, y := 0 }
+    var copy : Point
+    var box : Box := #Box { corner := #Point { x := 0, y := -1 }, open := false }
+
+    region Main {
+        initial MainInitial
+        state Start
+        state Middle
+        state Done
+    }
+
+    transition from MainInitial to Start
+    transition from Start to Middle when control.start / position.y := 2; box.corner.x := 5;
+    transition from Middle to Done when control.start [box.corner.x > 4] / position.x := 4; copy := position; box.open := true;
+}
+
+statechart Tracker [
+    port positions : provides Positions
+] {
+    var lastX : integer
+
+    region Main {
+        initial MainInitial
+        state Waiting
+        state Far
+    }
+
+    transition from MainInitial to Waiting
+    transition from Waiting to Far when positions.moved [positions.moved::position.x > 5] / lastX := positions.moved::position.x;
+}
+
+verification case RecordVariableStartsFromItsInitialValue of Plotter {
+    AG (not state Main.Middle or ((variable position).x = 3 and (variable position).y = 2))
+}
+
+verification case FieldAndWholeRecordAssignment of Plotter {
+    AG (not state Main.Done or ((variable copy).x = 4 and (variable copy).y = 2))
+}
+
+verification case NestedFieldAssignmentKeepsTheOtherFields of Plotter {
+    AG (not state Main.Done or ((variable box).corner.x = 5 and (variable box).corner.y = -1 and (variable box).open))
+}
+
+verification case RecordAssignmentsReachTheEnd of Plotter {
+    EF state Main.Done
+}
+
+verification case RecordParameterFieldReachesAVariable of Tracker {
+    EF (state Main.Far and variable lastX = 7)
+}
+
+verification case RecordParameterFieldGuardBlocksSmallValueUnreachable of Tracker {
+    EF (state Main.Far and variable lastX = 3)
+}
+
+verification case RecordVariableLosingItsInitialValueUnreachable of Plotter {
+    EF (state Main.Middle and not (variable position).x = 3)
+}
+
+verification case NestedFieldAssignmentChangingAnotherFieldUnreachable of Plotter {
+    EF (state Main.Done and not (variable box).corner.y = -1)
+}

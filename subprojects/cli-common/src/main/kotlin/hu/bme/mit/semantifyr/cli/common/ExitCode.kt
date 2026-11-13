@@ -17,7 +17,7 @@ enum class ExitCode(
     Success(0, "Every selected case passed, or the command completed."),
     Internal(1, "Internal error: an unexpected exception, or the launcher could not start Java."),
     Usage(2, "Usage error: an unknown command or option, a missing or invalid value, conflicting options, an unknown portfolio."),
-    Input(3, "Input error: a model or library path does not exist, is not readable, or is not a model file of the launcher (`.oxsts`, `.sysml` or `.gamma`) or, where a directory is allowed, a directory holding one, or the case selection names or matches no case."),
+    Input(3, "Input error: a model or library path does not exist, is not readable, or is not a model file of the launcher (`.oxsts`, `.sysml`, `.gamma` or `.gcd`) or, where a directory is allowed, a directory holding one, or the case selection names or matches no case."),
     Compilation(4, "Compilation error: the model does not parse, validate or translate, or a case does not compile."),
     Failed(5, "Failed: a property does not hold."),
     Undecided(6, "Inconclusive or NotSupported: a backend could not decide a case."),

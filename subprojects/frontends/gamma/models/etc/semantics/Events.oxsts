@@ -1,0 +1,344 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package gamma::library::semantics
+
+import semantifyr::gamma::expressions
+import semantifyr::gamma::statecharts
+import semantifyr::gamma::components
+import semantifyr::gamma::triggers
+import semantifyr::gamma::actions
+import semantifyr::gamma::events
+import semantifyr::gamma::ports
+import semantifyr::gamma::verification
+
+class TwoInputs : Statechart {
+    contains control: ProvidedPort subsets ports {
+        redefine contains interface: Control
+    }
+
+    contains First: Region subsets regions {
+        contains Waiting: State subsets states
+        contains Started: State subsets states
+        contains Stopped: State subsets states
+
+        contains entryToWaiting: EntryTransition subsets entryTransitions {
+            redefine refers to: State = Waiting
+        }
+        contains waitingToStarted: Transition subsets transitions {
+            redefine refers from: State = Waiting
+            redefine refers to: State = Started
+            redefine contains trigger: EventTrigger {
+                redefine refers port: Port = control
+                redefine refers event: Event = control.interface.start
+            }
+        }
+        contains startedToStopped: Transition subsets transitions {
+            redefine refers from: State = Started
+            redefine refers to: State = Stopped
+            redefine contains trigger: EventTrigger {
+                redefine refers port: Port = control
+                redefine refers event: Event = control.interface.stop
+            }
+        }
+    }
+
+    contains Second: Region subsets regions {
+        contains Waiting: State subsets states
+        contains Stopped: State subsets states
+        contains Started: State subsets states
+
+        contains entryToWaiting: EntryTransition subsets entryTransitions {
+            redefine refers to: State = Waiting
+        }
+        contains waitingToStopped: Transition subsets transitions {
+            redefine refers from: State = Waiting
+            redefine refers to: State = Stopped
+            redefine contains trigger: EventTrigger {
+                redefine refers port: Port = control
+                redefine refers event: Event = control.interface.stop
+            }
+        }
+        contains stoppedToStarted: Transition subsets transitions {
+            redefine refers from: State = Stopped
+            redefine refers to: State = Started
+            redefine contains trigger: EventTrigger {
+                redefine refers port: Port = control
+                redefine refers event: Event = control.interface.start
+            }
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class TwoInputEventsOnOnePortArriveInOneStep : LibraryCase {
+    contains machine: TwoInputs redefines component
+
+    redefine prop {
+        return EF (machine.First.Started.isActive() && machine.Second.Stopped.isActive())
+    }
+}
+
+class TwoOutputs : Statechart {
+    contains control: ProvidedPort subsets ports {
+        redefine contains interface: Control
+    }
+
+    contains Main: Region subsets regions {
+        contains Idle: State subsets states
+        contains Finished: State subsets states
+
+        contains entryToIdle: EntryTransition subsets entryTransitions {
+            redefine refers to: State = Idle
+        }
+        contains idleToFinished: Transition subsets transitions {
+            redefine refers from: State = Idle
+            redefine refers to: State = Finished
+            redefine contains trigger: EventTrigger {
+                redefine refers port: Port = control
+                redefine refers event: Event = control.interface.start
+            }
+            contains raiseDone: RaiseEventAction subsets actions {
+                redefine refers port: Port = control
+                redefine refers event: Event = control.interface.done
+            }
+            contains raiseFailed: RaiseEventAction subsets actions {
+                redefine refers port: Port = control
+                redefine refers event: Event = control.interface.failed
+            }
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class RaisedOutputEventIsInTheCheckedState : LibraryCase {
+    contains machine: TwoOutputs redefines component
+
+    redefine prop {
+        return EF machine.control.interface.done.isRaised
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class TwoOutputEventsOnOnePortAreBothRaised : LibraryCase {
+    contains machine: TwoOutputs redefines component
+
+    redefine prop {
+        return EF (machine.control.interface.done.isRaised && machine.control.interface.failed.isRaised)
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class OutputEventIsResetAtTheNextStep : LibraryCase {
+    contains machine: TwoOutputs redefines component
+
+    redefine prop {
+        return EF (machine.Main.Finished.isActive() && !machine.control.interface.done.isRaised)
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class RaisedEventExpressionReadsTheRaisedOutput : GammaVerificationCase {
+    contains machine: TwoOutputs redefines component
+
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsEventRaisedExpression {
+            redefine refers port: Port = machine.control
+            redefine refers event: Event = machine.control.interface.done
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class RaisedEventExpressionBeforeTheRaiseUnreachable : GammaVerificationCase {
+    contains machine: TwoOutputs redefines component
+
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: AndOperatorExpression {
+            redefine contains left: IsEventRaisedExpression {
+                redefine refers port: Port = machine.control
+                redefine refers event: Event = machine.control.interface.done
+            }
+            redefine contains right: IsStateActiveExpression {
+                redefine refers state: State = machine.Main.Idle
+            }
+        }
+    }
+}
+
+class Link : Interface {
+    contains ask: Event subsets inputEvents {
+        @Shared
+        redefine contains declaration: EventDeclaration
+    }
+    contains answer: Event subsets outputEvents {
+        @Shared
+        redefine contains declaration: EventDeclaration
+    }
+}
+
+class Answerer : Statechart {
+    contains link: ProvidedPort subsets ports {
+        redefine contains interface: Link
+    }
+
+    contains Main: Region subsets regions {
+        contains Waiting: State subsets states
+        contains Asked: State subsets states
+
+        contains entryToWaiting: EntryTransition subsets entryTransitions {
+            redefine refers to: State = Waiting
+        }
+        contains waitingToAsked: Transition subsets transitions {
+            redefine refers from: State = Waiting
+            redefine refers to: State = Asked
+            redefine contains trigger: EventTrigger {
+                redefine refers port: Port = link
+                redefine refers event: Event = link.interface.ask
+            }
+            contains raiseAnswer: RaiseEventAction subsets actions {
+                redefine refers port: Port = link
+                redefine refers event: Event = link.interface.answer
+            }
+        }
+    }
+}
+
+class Asker : Statechart {
+    contains control: ProvidedPort subsets ports {
+        redefine contains interface: Control
+    }
+    contains link: RequiredPort subsets ports {
+        redefine contains interface: Link
+    }
+
+    contains Main: Region subsets regions {
+        contains Idle: State subsets states
+        contains Sent: State subsets states
+        contains Answered: State subsets states
+
+        contains entryToIdle: EntryTransition subsets entryTransitions {
+            redefine refers to: State = Idle
+        }
+        contains idleToSent: Transition subsets transitions {
+            redefine refers from: State = Idle
+            redefine refers to: State = Sent
+            redefine contains trigger: EventTrigger {
+                redefine refers port: Port = control
+                redefine refers event: Event = control.interface.start
+            }
+            contains raiseAsk: RaiseEventAction subsets actions {
+                redefine refers port: Port = link
+                redefine refers event: Event = link.interface.ask
+            }
+        }
+        contains sentToAnswered: Transition subsets transitions {
+            redefine refers from: State = Sent
+            redefine refers to: State = Answered
+            redefine contains trigger: EventTrigger {
+                redefine refers port: Port = link
+                redefine refers event: Event = link.interface.answer
+            }
+        }
+    }
+}
+
+class Conversation : SyncComponent {
+    refers control: Port subsets ports = asker.control
+    contains answerer: Answerer subsets components
+    contains asker: Asker subsets components
+    contains channel: Channel subsets channels {
+        redefine refers inputPort: Port = answerer.link
+        redefine refers outputPort: Port = asker.link
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ChannelCarriesTheRequiredPortsEventsToTheProvidedPort : LibraryCase {
+    contains conversation: Conversation redefines component
+
+    redefine prop {
+        return EF conversation.answerer.Main.Asked.isActive()
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ChannelCarriesTheProvidedPortsEventsToTheRequiredPort : LibraryCase {
+    contains conversation: Conversation redefines component
+
+    redefine prop {
+        return EF conversation.asker.Main.Answered.isActive()
+    }
+}
+
+class Announcer : Statechart {
+    contains link: ProvidedPort subsets ports {
+        redefine contains interface: Link
+    }
+
+    contains Main: Region subsets regions {
+        contains Ready: State subsets states {
+            contains raiseAnswer: RaiseEventAction subsets entryActions {
+                redefine refers port: Port = link
+                redefine refers event: Event = link.interface.answer
+            }
+        }
+
+        contains entryToReady: EntryTransition subsets entryTransitions {
+            redefine refers to: State = Ready
+        }
+    }
+}
+
+class Listener : Statechart {
+    contains link: RequiredPort subsets ports {
+        redefine contains interface: Link
+    }
+
+    contains Main: Region subsets regions {
+        contains Waiting: State subsets states
+        contains Heard: State subsets states
+
+        contains entryToWaiting: EntryTransition subsets entryTransitions {
+            redefine refers to: State = Waiting
+        }
+        contains waitingToHeard: Transition subsets transitions {
+            redefine refers from: State = Waiting
+            redefine refers to: State = Heard
+            redefine contains trigger: EventTrigger {
+                redefine refers port: Port = link
+                redefine refers event: Event = link.interface.answer
+            }
+        }
+    }
+}
+
+class Announcement : SyncComponent {
+    contains announcer: Announcer subsets components
+    contains listener: Listener subsets components
+    contains channel: Channel subsets channels {
+        redefine refers inputPort: Port = announcer.link
+        redefine refers outputPort: Port = listener.link
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class OutputRaisedAtInitializationCrossesTheChannel : LibraryCase {
+    contains announcement: Announcement redefines component
+
+    redefine prop {
+        return EF announcement.listener.Main.Heard.isActive()
+    }
+}

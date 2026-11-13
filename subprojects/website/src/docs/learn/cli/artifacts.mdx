@@ -27,10 +27,10 @@ A case directory is named after the model file without its extension and the qua
 - `mapping.json` (`mapping`): the number that stands for each instance in the flattened model, the instance named by its path from the root instance, as `{"instances": [{"name": ..., "id": ...}]}`.
 - `pipeline/steps/` (`compilation-step`): the model after every pass of the compiler, numbered in the order they ran and named after the pass, such as `000000_expressioncallinlining.oxsts`.
 - The files of each backend run: the model the backend was given (`inlined.xsts` for Theta, `model.smv` for nuXmv, `model.pml` for Spin, `model.xml` and `model.q` for Uppaal) and what the backend printed. A portfolio that runs several backend configurations gives each a subdirectory of its own.
-- `witness.oxsts`, `witness.json` and `trace.json`, for a verdict with a witness: a failed `AG` property or a passed `EF` property, which an execution of the model shows. `semantifyr-sysml` writes `trace.sysml` beside them ([SysML v2 traces](sysml-trace.mdx)), `semantifyr-gamma` `trace.gamma` ([Gamma traces](gamma-trace.mdx)).
+- `witness.oxsts`, `witness.json` and `trace.json`, for a verdict with a witness: a failed `AG` property or a passed `EF` property, which an execution of the model shows. `semantifyr-sysml` writes `trace.sysml` beside them ([SysML v2 traces](sysml-trace.mdx)), `semantifyr-gamma` `trace.get` ([Gamma traces](gamma-trace.mdx)).
 - `validation/`: the case directory of the last [witness validation](#witness-validation), with the same files.
 
-`semantifyr-sysml` writes the translation of the model into `compiled/default/<model>.oxsts` at the top of the artifact directory, with its [name map](sysml-trace.mdx#the-name-map), `<model>.names.json`, beside it, and the case directories next to `compiled/`. `semantifyr-gamma` gives every case a directory named after its Gamma qualified name, holding the compiled model, `model.oxsts`, and the case directory under `verification/`.
+`semantifyr-sysml` writes the translation of the model into `compiled/default/<model>.oxsts` at the top of the artifact directory, with its [name map](sysml-trace.mdx#the-name-map), `<model>.names.json`, beside it, and the case directories next to `compiled/`. `semantifyr-gamma` gives every case a directory named after its Gamma qualified name, holding the compiled model, `model.oxsts`, one OXSTS package per imported Gamma package under `imports/`, and the case directory under `verification/`.
 
 ## Inlined models
 
