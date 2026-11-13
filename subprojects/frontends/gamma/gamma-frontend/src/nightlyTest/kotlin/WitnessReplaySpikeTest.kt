@@ -5,11 +5,17 @@
  */
 
 import hu.bme.mit.semantifyr.backend.witness.ReplayOutcome
+import hu.bme.mit.semantifyr.backend.witness.WitnessState
+import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
+import hu.bme.mit.semantifyr.backend.witness.linearInlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessReplay
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
@@ -163,7 +169,7 @@ class WitnessReplaySpikeTest {
                 "Spacecraft",
                 listOf(
                     "Spacecraft_CommunicationTransmittingSendDataSendingReachable",
-                    "Station_ReceivedDataCanReach20",
+                    "Spacecraft_BatteryRechargingReachable",
                 ),
                 everyBackend,
             ),
@@ -221,6 +227,49 @@ class WitnessReplaySpikeTest {
             run("semantic", resource, Selection(selection.model, cases, selection.backends))
         }
         write("semantic")
+    }
+
+    @Test
+    suspend fun `reports planted tracer faults by their calls`() {
+        val examples = Path("build", "sysml-examples")
+        val resource = load(examples.resolve("library"), examples.resolve("crossroads.oxsts"))
+        val caseClass = resource.allContents.asSequence().filterIsInstance<ClassDeclaration>().single {
+            it.name == "TrafficLightABehaviorNormalGreenUnreachableViolated"
+        }
+        val verifier = SemantifyrVerifier.builder()
+            .injector(injector)
+            .portfolio(Portfolios.ThetaCegarExpl)
+            .artifacts(ArtifactConfig.NONE)
+            .outputDirectory(outputDirectory.resolve("faults"))
+            .build()
+        val trace = checkNotNull(verifier.verify(VerificationCase(caseClass.name, caseClass)).trace)
+        val witness = checkNotNull(trace.inlinedWitness)
+        val states = listOf(witness.initializedState) + witness.transitionStates
+        val middle = states.size / 2
+        for (set in listOf(true, false)) {
+            val tracer = states[middle].values.first {
+                TransitionTracerNames.isTracerName(it.variable.name) && (it.value as LiteralBoolean).isValue == set
+            }
+            val faulty = states.mapIndexed { index, state ->
+                if (index == middle) {
+                    WitnessState(
+                        state.values.map {
+                            if (it == tracer) {
+                                WitnessStateValue(it.variable, OxstsFactory.createLiteralBoolean(!set))
+                            } else {
+                                it
+                            }
+                        },
+                    )
+                } else {
+                    state
+                }
+            }
+            val replayed = replay.replay(linearInlinedWitness(witness.inlinedOxsts, faulty), trace.transitionCallTraces)
+            val failure = replayed.firstFailure
+            lines += "flipped ${tracer.variable.name} to ${!set} in state $middle: ${replayed.outcome} at step ${failure?.index}: ${failure?.reason}"
+        }
+        write("faults")
     }
 
     private fun expectsWitness(classDeclaration: ClassDeclaration): Boolean {

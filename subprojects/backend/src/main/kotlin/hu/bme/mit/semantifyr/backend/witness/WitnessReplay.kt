@@ -79,6 +79,8 @@ class WitnessReplayResult(
     val outcome = firstFailure?.outcome ?: ReplayOutcome.Accepted
 }
 
+private const val LENIENT_PATH_LIMIT = 100_000
+
 class WitnessReplay @Inject constructor(
     private val builtinSymbolResolver: BuiltinSymbolResolver,
     private val expressionSerializer: ExpressionSerializer,
@@ -128,7 +130,12 @@ class WitnessReplay @Inject constructor(
             } else {
                 inlinedOxsts.mainTransition
             }
-            val step = StepSearch(index, valuationOf(state, exercised), traces, exercised).run(transition, source)
+            val target = valuationOf(state, exercised)
+            val step = StepSearch(index, target, traces, exercised, false).run(transition, source)
+            if (step.outcome == ReplayOutcome.Rejected) {
+                steps += StepSearch(index, target, traces, exercised, true).diagnose(transition, source, step)
+                break
+            }
             steps += step
             if (step.outcome != ReplayOutcome.Accepted) {
                 break
@@ -160,6 +167,7 @@ class WitnessReplay @Inject constructor(
         private val target: Map<VariableDeclaration, Any>,
         private val traces: TransitionCallTraceMap?,
         private val exercised: MutableSet<String>,
+        private val lenient: Boolean,
     ) {
         private val writtenAfter = mutableMapOf<Operation, Set<VariableDeclaration>>()
         private var exploredPaths = 0
@@ -167,6 +175,8 @@ class WitnessReplay @Inject constructor(
         private var furthest: Pruned? = null
         private var furthestTracer: Pruned? = null
         private var undecided: String? = null
+        private var closest: List<VariableDeclaration>? = null
+        private var closestState: Map<VariableDeclaration, Any>? = null
 
         fun run(transition: TransitionDeclaration, source: Map<VariableDeclaration, Any>): ReplayStep {
             for (branch in transition.branches) {
@@ -184,6 +194,20 @@ class WitnessReplay @Inject constructor(
                     ReplayStep(index, ReplayOutcome.Rejected, exploredPaths, choicePoints, reason)
                 }
             }
+        }
+
+        // without the early checks every path is run to its end, and the one ending closest to the recorded state names the fault
+        fun diagnose(transition: TransitionDeclaration, source: Map<VariableDeclaration, Any>, rejection: ReplayStep): ReplayStep {
+            run(transition, source)
+            val differing = closest ?: return rejection
+            val state = checkNotNull(closestState)
+            val ordered = differing.sortedByDescending {
+                isTracer(it)
+            }
+            val reason = ordered.joinToString("; ") {
+                mismatch(it, target.getValue(it), state[it])
+            }
+            return ReplayStep(index, ReplayOutcome.Rejected, rejection.exploredPaths, rejection.choicePoints, "the closest of $exploredPaths paths differs in ${differing.size}: $reason")
         }
 
         private fun collectWrittenAfter(operation: Operation, after: Set<VariableDeclaration>): Set<VariableDeclaration> {
@@ -300,7 +324,7 @@ class WitnessReplay @Inject constructor(
                         val variable = variableOf(operation.reference)
                         val value = assigned(state, operation.reference, evaluator.evaluate(operation.expression), evaluator)
                         val expected = target[variable]
-                        if (variable !in writtenAfter.getValue(operation) && expected != null && expected != value) {
+                        if (!lenient && variable !in writtenAfter.getValue(operation) && expected != null && expected != value) {
                             return prune(depth, mismatch(variable, expected, value), isTracer(variable))
                         }
                         state[variable] = value
@@ -356,6 +380,17 @@ class WitnessReplay @Inject constructor(
         private fun accept(state: Map<VariableDeclaration, Any>, depth: Int): Boolean {
             val differing = target.entries.filter {
                 state[it.key] != it.value
+            }
+            if (lenient) {
+                exploredPaths++
+                val previous = closest
+                if (previous == null || differing.size < previous.size) {
+                    closest = differing.map {
+                        it.key
+                    }
+                    closestState = HashMap(state)
+                }
+                return exploredPaths >= LENIENT_PATH_LIMIT
             }
             if (differing.isEmpty()) {
                 exploredPaths++
