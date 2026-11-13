@@ -141,6 +141,8 @@ export default {
             '@grammars': path.resolve(__dirname, 'build/grammars'),
             // written by the generatedReference_* Gradle tasks
             '@generated-reference': path.resolve(__dirname, 'build/generated-reference'),
+            // written by the phases Gradle task
+            '@phases': path.resolve(__dirname, 'build/phases'),
             '@vscode-extension': path.resolve(__dirname, '../semantifyr-vscode'),
           },
         },

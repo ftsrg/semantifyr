@@ -39,6 +39,7 @@ class ModelFileFormattingTest {
 
     private static final List<Path> MODEL_DIRECTORIES = List.of(
             Path.of("../../oxsts-test-models/tutorial"),
+            Path.of("../../oxsts-test-models/phases"),
             Path.of("../oxsts.lang/src/main/resources/hu/bme/mit/semantifyr/oxsts/lang/library"),
             Path.of("../frontends/gamma/models/libraries/default"),
             Path.of("../frontends/sysml/models/libraries/default"),
