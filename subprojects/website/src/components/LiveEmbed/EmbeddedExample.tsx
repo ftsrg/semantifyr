@@ -25,6 +25,8 @@ export interface EmbeddedExampleProps {
 
 type Phase = 'closed' | 'loading' | 'open';
 
+export const SHOWN_AFTER_LOAD_MS = 4000;
+
 interface FrameProps {
   url: string;
   initialHeight: number;
@@ -55,7 +57,28 @@ function EmbedFrame({ url, initialHeight, onShown }: FrameProps): React.JSX.Elem
     };
   }, [url, onShown]);
 
-  return <iframe ref={frame} className={styles.frame} style={{ height }} src={url} title="Semantifyr live editor" allow="clipboard-write" />;
+  // a live that never tells its page the model is shown opens a while after its page has loaded
+  const loaded = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    return () => {
+      window.clearTimeout(loaded.current);
+    };
+  }, []);
+
+  return (
+    <iframe
+      ref={frame}
+      className={styles.frame}
+      style={{ height }}
+      src={url}
+      title="Semantifyr live editor"
+      allow="clipboard-write"
+      onLoad={() => {
+        window.clearTimeout(loaded.current);
+        loaded.current = window.setTimeout(onShown, SHOWN_AFTER_LOAD_MS);
+      }}
+    />
+  );
 }
 
 function RunIcon(): React.JSX.Element {
