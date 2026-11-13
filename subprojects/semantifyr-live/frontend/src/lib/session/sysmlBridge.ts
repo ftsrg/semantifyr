@@ -31,7 +31,7 @@ const VALIDATE_COMMAND = 'sysml.witness.validate'
 export const SYSML_FLAVOR_INFO: FlavorInfo = {
   id: SYSML_FLAVOR_ID,
   displayName: 'SysML v2',
-  description: 'A SysML v2 model, with the standard and verification libraries loaded in the background.',
+  description: 'OMG\'s Systems Modeling Language',
   languageId: 'sysml',
   fileName: 'snippet.sysml',
   verificationCommand: VERIFY_COMMAND,

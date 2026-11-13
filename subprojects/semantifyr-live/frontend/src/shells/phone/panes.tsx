@@ -16,6 +16,7 @@ import type { ResolvedColorMode } from '../../lib/util/colorMode'
 import { caseRowOf, countsOf, type CaseCounts, type CaseRow } from '../../lib/workspace/caseRows'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import { stepTimeText } from '../../lib/workspace/shellStatus'
+import { casesSentence, noCases, SERVER_NOT_ANSWERING, VERDICT_WORDS, VERIFY_ALL_HELD } from '../../texts'
 import { Icon } from '../../ui/icons'
 import { ValidationMark } from '../../ui/marks'
 import { addressProblemText } from '../desktop/Orientation'
@@ -71,15 +72,25 @@ function Orientation(): React.JSX.Element | null {
     return null
   }
   const count = verification.discovery === 'discovered' ? verification.cases.length : null
-  const cases = count === null ? '' : count === 0 ? ' It has no verification cases yet.' : ` It has ${count} verification ${count === 1 ? 'case' : 'cases'}.`
+  // once the model was verified, by the visitor or by the link that opened it, the button needs no pointing at
+  const verified = verification.phase !== 'idle' || verification.cases.some((caseState) => {
+    return caseState.resultStatus !== undefined
+  })
   return (
     <div className="phone-orientation">
       <span className="orientation-mark" />
       <span className="orientation-text">
         <strong>{`${example.label}.`}</strong>
-        {` ${example.description}${cases} Press `}
-        <strong>Verify all</strong>
-        {count === 1 ? ' to check it.' : ' to check them.'}
+        {` ${example.description}${casesSentence(count)}`}
+        {verified
+          ? null
+          : (
+            <>
+              {' Press '}
+              <strong>Verify all</strong>
+              {count === 1 ? ' to check it.' : ' to check them.'}
+            </>
+          )}
       </span>
       <button
         type="button"
@@ -145,10 +156,10 @@ export function ModelPane({ colorMode, hidden }: { colorMode: ResolvedColorMode,
 }
 
 const COUNT_GROUPS: readonly { status: VerdictStatus & keyof CaseCounts, label: string }[] = [
-  { status: 'passed', label: 'Passed' },
-  { status: 'failed', label: 'Failed' },
-  { status: 'inconclusive', label: 'Inconclusive' },
-  { status: 'error', label: 'Error' },
+  { status: 'passed', label: VERDICT_WORDS.passed },
+  { status: 'failed', label: VERDICT_WORDS.failed },
+  { status: 'inconclusive', label: VERDICT_WORDS.inconclusive },
+  { status: 'error', label: VERDICT_WORDS.error },
 ]
 
 function Counts({ counts }: { counts: CaseCounts }): React.JSX.Element {
@@ -195,7 +206,7 @@ function Initialization(): React.JSX.Element {
   })
   const failed = failedStep !== undefined
   const note = waiting
-    ? 'The server is not answering. The model can be edited and its verification cases are known once it answers.'
+    ? SERVER_NOT_ANSWERING
     : failedStep?.reason ?? (failed ? 'The verification cases are listed once a session has found them.' : null)
   return (
     <div className="phone-init" data-language={languageId}>
@@ -224,7 +235,7 @@ function Initialization(): React.JSX.Element {
         ? (
           <div className="phone-init-pressed">
             <Icon name="clock" />
-            <span>Verify all is pressed. Every case runs as soon as initialization has finished.</span>
+            <span>{VERIFY_ALL_HELD}</span>
           </div>
         )
         : null}
@@ -298,6 +309,7 @@ function useCasesListed(): boolean {
 
 export function ResultsPane({ onPane }: { onPane: (pane: Pane) => void }): React.JSX.Element {
   const live = useLive()
+  const flavor = useFlavor(live)
   const verification = useCurrentVerification(live)
   const selection = useStore(live.selection)
   const listed = useCasesListed()
@@ -331,7 +343,7 @@ export function ResultsPane({ onPane }: { onPane: (pane: Pane) => void }): React
                   return <CaseRowView key={row.id} row={row} selected={row.id === selection} onOpen={open} />
                 })}
               </div>
-              {rows.length === 0 ? <p className="pane-hint">The model has no verification cases.</p> : null}
+              {rows.length === 0 ? <p className="pane-hint">{noCases(flavor?.languageId ?? '')}</p> : null}
             </>
           )
           : <Initialization />}

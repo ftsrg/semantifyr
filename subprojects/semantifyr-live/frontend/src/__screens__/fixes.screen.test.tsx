@@ -73,7 +73,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       })
     },
     expectState: () => {
-      expect(text('.status-language')).toBe('OXSTS, with the Gamma library')
+      expect(text('.status-language')).toBe('OXSTS, Gamma library')
       expect(document.querySelector('.problem-counts')?.getAttribute('aria-label')).toBe('Problems in the model: 1 error, 0 warnings')
     },
   },

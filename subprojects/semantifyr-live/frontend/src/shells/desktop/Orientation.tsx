@@ -11,6 +11,7 @@ import { presentationOf } from '../../lib/language/presentation'
 import { useStore } from '../../lib/stores/useStore'
 import type { AddressProblem, Live } from '../../lib/workspace/live'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
+import { casesSentence } from '../../texts'
 import { Icon } from '../../ui/icons'
 import { useCurrentDocument, useFlavor } from '../hooks'
 import { useShell } from '../shellContext'
@@ -57,16 +58,6 @@ function AddressError(): React.JSX.Element | null {
       </button>
     </div>
   )
-}
-
-function casesSentence(count: number | null): string {
-  if (count === null) {
-    return ''
-  }
-  if (count === 0) {
-    return ' It has no verification cases yet.'
-  }
-  return ` It has ${count} verification ${count === 1 ? 'case' : 'cases'}.`
 }
 
 export function Orientation(): React.JSX.Element {

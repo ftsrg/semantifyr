@@ -103,7 +103,7 @@ describe('the history of a visit', () => {
       return pathOf(page)
     }).toBe('/oxsts/intermediate')
     await page.locator('.flavour-button').click()
-    await page.getByRole('menuitem', { name: /With the Gamma library/ }).click()
+    await page.getByRole('menuitem', { name: /Gamma's semantics/ }).click()
     await expect.poll(async () => {
       return pathOf(page)
     }).toBe('/oxsts/level-crossing?library=gamma')

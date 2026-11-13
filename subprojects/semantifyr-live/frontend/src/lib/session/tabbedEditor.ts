@@ -18,6 +18,7 @@ import type { Live } from '../workspace/live'
 import { createEditor, openDerivedDocument, openKeptDocument, setEditorOpener, typingOptionsOf, type EditorInstance } from './monaco'
 import { problemsOf } from './problems'
 import { LIBRARY_SCHEME } from './readOnlyDocuments'
+import { tabHint } from '../../texts'
 
 export interface CursorPosition {
   line: number
@@ -70,7 +71,7 @@ interface Place {
 }
 
 // the key of the editor's Toggle Tab Key Moves Focus
-function tabFocusKey(): string {
+export function tabFocusKey(): string {
   return navigator.userAgent.includes('Macintosh') ? 'Control+Shift+M' : 'Control+M'
 }
 
@@ -188,7 +189,7 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
       if (options.tabLeaves === true || target !== model || modelLocked()) {
         return { tabFocusMode: true, ariaLabel: 'Editor content' }
       }
-      return { tabFocusMode: false, ariaLabel: `Editor content. Tab indents; ${tabFocusKey()} switches Tab to leave the editor.` }
+      return { tabFocusMode: false, ariaLabel: `Editor content. Tab indents; ${tabHint(tabFocusKey())}.` }
     }
     let wasLocked = false
     let everLocked = false

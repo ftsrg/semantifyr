@@ -46,7 +46,7 @@ describe('the portfolio settings', () => {
     const page = await ui.open(LEVEL_CROSSING)
     await casesListed(page)
     await page.getByRole('button', { name: 'Portfolios and validation' }).click()
-    await page.getByRole('switch', { name: 'validate automatically' }).click()
+    await page.getByRole('switch', { name: 'Validate automatically' }).click()
     await page.keyboard.press('Escape')
 
     await results(page).verifyAll.click()

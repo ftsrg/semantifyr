@@ -184,8 +184,8 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
     validated: true,
     view: 'own',
     expectState: () => {
-      expect(text('[data-testid=run-details]')).toContain('2.9 s, waited 30 s, Automatic, decided by Theta')
-      expect(text('[data-testid=run-details]')).toContain('validated, 0.6 s, waited 4.0 s, Automatic, decided by Spin')
+      expect(text('[data-testid=run-details]')).toContain('2.9 s, waited 30 s, Smart, decided by Theta')
+      expect(text('[data-testid=run-details]')).toContain('validated, 0.6 s, waited 4.0 s, Smart, decided by Spin')
     },
   },
   'run-details-not-validated': {
@@ -325,17 +325,17 @@ describe('the documents menu', () => {
   const ENTRIES: Readonly<Record<string, { headings: readonly string[], first: readonly string[], filtered: boolean }>> = {
     sysml: {
       headings: ['Selected case', 'Model', 'SysML v2 standard library', 'OXSTS library', 'Semantic library, in OXSTS'],
-      first: ['Trace of the selected case', 'OXSTS of the trace', 'OXSTS of the model', 'Collections.kerml', 'ScalarValues.kerml'],
+      first: ['Trace of the selected case', 'Witness of the selected case', 'OXSTS of the model', 'Collections.kerml', 'ScalarValues.kerml'],
       filtered: true,
     },
     gamma: {
       headings: ['Selected case', 'Model', 'OXSTS library', 'Semantic library, in OXSTS'],
-      first: ['Trace of the selected case', 'OXSTS of the trace', 'OXSTS of the model', 'semantifyr.oxsts', 'Actions.oxsts'],
+      first: ['Trace of the selected case', 'Witness of the selected case', 'OXSTS of the model', 'semantifyr.oxsts', 'Actions.oxsts'],
       filtered: false,
     },
     oxsts: {
       headings: ['Selected case', 'OXSTS library'],
-      first: ['Trace of the selected case', 'semantifyr.oxsts'],
+      first: ['Witness of the selected case', 'semantifyr.oxsts'],
       filtered: false,
     },
   }

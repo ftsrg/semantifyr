@@ -13,21 +13,15 @@ import type { VerificationCaseState } from '../lib/verification/engine'
 import { formatSeconds, waitedPhrase } from '../lib/workspace/caseRows'
 import { useLive } from '../lib/workspace/liveContext'
 import { portfolioName } from '../lib/workspace/portfolioChoices'
+import { BACKEND_NAMES } from '../texts'
 
-const ENGINE_NAMES: Readonly<Record<string, string>> = {
-  theta: 'Theta',
-  spin: 'Spin',
-  nuxmv: 'nuXmv',
-  uppaal: 'Uppaal',
-}
-
-// a backend is named by its engine, the part of its id before the configuration
-function engineOf(backendId: string | undefined): string | null {
+// a backend is named by the part of its id before the configuration
+function backendNameOf(backendId: string | undefined): string | null {
   if (!backendId) {
     return null
   }
-  const engine = backendId.split(':')[0] ?? backendId
-  return ENGINE_NAMES[engine] ?? engine
+  const backend = backendId.split(':')[0] ?? backendId
+  return BACKEND_NAMES[backend] ?? backend
 }
 
 function runLine(metrics: VerificationMetrics | undefined, portfolio: string, backendId: string | undefined, waited: number | undefined): string {
@@ -36,8 +30,8 @@ function runLine(metrics: VerificationMetrics | undefined, portfolio: string, ba
     waitedPhrase(waited),
     portfolio,
   ]
-  const engine = engineOf(backendId)
-  return [...parts, engine === null ? null : `decided by ${engine}`]
+  const backend = backendNameOf(backendId)
+  return [...parts, backend === null ? null : `decided by ${backend}`]
     .filter((part) => {
       return part !== null
     })

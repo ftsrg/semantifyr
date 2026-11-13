@@ -9,6 +9,7 @@ import { useEffect, useLayoutEffect, useState, useSyncExternalStore } from 'reac
 import { parseLiveEditorUrl } from '@semantifyr/editor-common'
 
 import { presentationOf } from '../lib/language/presentation'
+import { PRODUCT_NAME, SHARED_MODEL } from '../texts'
 import { applyEditorTheme } from '../lib/session/editorTheme'
 import { useStore } from '../lib/stores/useStore'
 import type { ResolvedColorMode } from '../lib/util/colorMode'
@@ -39,10 +40,10 @@ function useTitle(live: Live): void {
   const title = useStore(live.workspace, (workspace) => {
     const document = workspace.documentKey === null ? undefined : documents.get(workspace.documentKey)
     if (!workspace.flavor || !document) {
-      return 'Semantifyr Live'
+      return PRODUCT_NAME
     }
-    const name = document.file?.name ?? (document.shared ? 'Shared model' : document.example.label)
-    return `${name} - ${presentationOf(workspace.flavor.languageId).name} - Semantifyr Live`
+    const name = document.file?.name ?? (document.shared ? SHARED_MODEL : document.example.label)
+    return `${name} - ${presentationOf(workspace.flavor.languageId).name} - ${PRODUCT_NAME}`
   })
   useEffect(() => {
     document.title = title

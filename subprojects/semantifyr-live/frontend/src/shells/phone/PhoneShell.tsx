@@ -14,6 +14,7 @@ import { useStore } from '../../lib/stores/useStore'
 import type { ResolvedColorMode } from '../../lib/util/colorMode'
 import { caseRowOf } from '../../lib/workspace/caseRows'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
+import { problemsLabel, SHARED_MODEL } from '../../texts'
 import { Icon, type IconName } from '../../ui/icons'
 import { Logo } from '../../ui/marks'
 import { ConnectionIndicator } from '../desktop/ConnectionIndicator'
@@ -58,7 +59,7 @@ function Top({ onOverlay }: { onOverlay: (overlay: Overlay) => void }): React.JS
             <LanguageMark languageId={flavor.languageId} />
             <span className="model-chooser-text">
               <span className="model-chooser-language">{presentationOf(flavor.languageId).name}</span>
-              <span className="model-chooser-example">{document.shared ? 'Shared model' : document.example.label}</span>
+              <span className="model-chooser-example">{document.shared ? SHARED_MODEL : document.example.label}</span>
             </span>
             <Icon name="chevron-down" size="small" />
           </button>
@@ -126,7 +127,7 @@ function ProblemsButton({ onOpen }: { onOpen: () => void }): React.JSX.Element {
     <button
       type="button"
       className={`phone-problems${errors + warnings > 0 ? ' has-problems' : ''}`}
-      aria-label={`Problems in the model: ${errors} errors, ${warnings} warnings`}
+      aria-label={problemsLabel(errors, warnings)}
       onClick={onOpen}
     >
       <Icon name="error" size="small" />

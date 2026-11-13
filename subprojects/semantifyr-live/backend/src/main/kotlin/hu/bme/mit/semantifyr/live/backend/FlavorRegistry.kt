@@ -64,7 +64,7 @@ object FlavorRegistry {
         Flavor(
             id = "oxsts",
             displayName = "OXSTS",
-            description = "The OXSTS modelling language, no extra libraries.",
+            description = "Semantifyr's language for semantics",
             fileName = "snippet.oxsts",
             language = Language.Oxsts,
             workspaceLayout = WorkspaceLayout.SingleFile,
@@ -76,7 +76,7 @@ object FlavorRegistry {
         Flavor(
             id = "oxsts-with-gamma-library",
             displayName = "OXSTS with the Gamma library",
-            description = "OXSTS with the Gamma statechart library available to import.",
+            description = "Gamma's semantics",
             fileName = "snippet.oxsts",
             language = Language.Oxsts,
             workspaceLayout = WorkspaceLayout.WithLibrary(
@@ -91,7 +91,7 @@ object FlavorRegistry {
         Flavor(
             id = "oxsts-with-sysmlv2-library",
             displayName = "OXSTS with the SysML v2 library",
-            description = "OXSTS with the SysML v2 library available to import.",
+            description = "SysML v2's semantics",
             fileName = "snippet.oxsts",
             language = Language.Oxsts,
             workspaceLayout = WorkspaceLayout.WithLibrary(
@@ -110,7 +110,7 @@ object FlavorRegistry {
         Flavor(
             id = "gamma",
             displayName = "Gamma",
-            description = "Gamma statechart source, compiled to OXSTS before verification.",
+            description = "The Gamma Statechart Composition Framework",
             fileName = "snippet.gamma",
             language = Language.Gamma,
             workspaceLayout = WorkspaceLayout.WithLibrary(

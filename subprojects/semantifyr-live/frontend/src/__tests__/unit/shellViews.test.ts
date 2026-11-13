@@ -77,6 +77,11 @@ describe('a case row', () => {
     expect(caseRowOf({ caseInfo: caseAt('a', 1), status: 'stale', message: 'Verification cancelled' })).toMatchObject({ status: 'not-run', word: 'Not run', message: 'cancelled', time: null })
   })
 
+  it('says what an inconclusive and an errored case mean when the server sent no message', () => {
+    expect(caseRowOf(result('a', 'inconclusive'))).toMatchObject({ status: 'inconclusive', message: 'No backend decided the case.' })
+    expect(caseRowOf(result('a', 'errored'))).toMatchObject({ status: 'error', message: 'The verification stopped on an error, with no verdict.' })
+  })
+
   it('marks a result outdated and its validation, but not a case that waits', () => {
     expect(caseRowOf(result('a', 'passed', { outdated: true, witnessValidation: 'valid' }))).toMatchObject({ outdated: true, validation: 'validated' })
     expect(caseRowOf(result('a', 'passed', { validating: true, validationServerState: 'Running' }))).toMatchObject({ validation: 'validating' })
@@ -250,20 +255,21 @@ describe('the connection indicator', () => {
 })
 
 describe('the portfolios', () => {
-  it('offers Automatic and Cross-check, then the single engines the server has', () => {
+  it('offers Smart and All agree with the names and descriptions of the server, then the single-backend portfolios the server has', () => {
     const choices = portfolioChoices([
-      { id: 'smart', displayName: 'Auto', description: '', available: true },
+      { id: 'smart', displayName: 'Smart', description: 'Runs the installed backends side by side.', available: true },
       { id: 'all-agree', displayName: 'All agree', description: '', available: true },
       { id: 'theta', displayName: 'Theta', description: '', available: true },
       { id: 'nuxmv-ic3-invar', displayName: 'nuXmv', description: '', available: false },
     ])
-    expect(choices.combined.map((choice) => {
-      return choice.name
-    })).toEqual(['Automatic', 'Cross-check'])
-    expect(choices.singleEngine.map((choice) => {
+    expect(choices.combined).toEqual([
+      { id: 'smart', name: 'Smart', detail: 'Runs the installed backends side by side.' },
+      { id: 'all-agree', name: 'All agree', detail: null },
+    ])
+    expect(choices.singleBackend.map((choice) => {
       return choice.name
     })).toEqual(['Theta'])
-    expect(portfolioName([], null)).toBe('Automatic')
+    expect(portfolioName([], null)).toBe('Smart')
   })
 })
 

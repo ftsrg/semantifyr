@@ -458,19 +458,7 @@ function deriveCaseMessage(caseState: VerificationCaseState | undefined): string
 }
 
 function deriveBatchMessage(cases: readonly VerificationCaseState[]): string {
-  const hasFailures = cases.some((caseState) => caseState.status === 'failed')
-  const hasErrors = cases.some((caseState) => caseState.status === 'errored' || caseState.status === 'timeout')
-  const allPassed = cases.every((caseState) => caseState.status === 'passed')
-  if (allPassed) {
-    return 'All cases passed'
-  }
-  if (hasErrors && hasFailures) {
-    return 'Some cases failed, errored or timed out'
-  }
-  if (hasErrors) {
-    return 'Some cases errored or timed out'
-  }
-  return 'Some cases failed'
+  return cases.every((caseState) => caseState.status === 'passed') ? 'All cases passed' : 'Not every case passed'
 }
 
 interface ProgressDispatcher {

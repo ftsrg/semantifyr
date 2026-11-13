@@ -6,6 +6,7 @@
 
 import type { VerdictStatus } from '@semantifyr/editor-common/marks'
 
+import { CASE_MESSAGES, VERDICT_WORDS } from '../../texts'
 import { isoDurationToMs } from '../util/duration'
 import type { VerificationCaseState } from '../verification/engine'
 
@@ -43,16 +44,6 @@ export interface CaseCounts {
   error: number
   waiting: number
   total: number
-}
-
-export const STATUS_WORDS: Readonly<Record<VerdictStatus, string>> = {
-  'passed': 'Passed',
-  'failed': 'Failed',
-  'inconclusive': 'Inconclusive',
-  'error': 'Error',
-  'not-run': 'Not run',
-  'running': 'Running',
-  'queued': 'Queued',
 }
 
 const CANCELLED_MESSAGE = 'Verification cancelled'
@@ -97,16 +88,17 @@ function statusOf(status: VerificationCaseState['status']): VerdictStatus {
 function messageOf(caseState: VerificationCaseState, status: VerificationCaseState['status']): string | null {
   switch (status) {
     case 'stale':
-      return caseState.message === CANCELLED_MESSAGE ? 'cancelled' : null
+      return caseState.message === CANCELLED_MESSAGE ? CASE_MESSAGES.cancelled : null
     case 'cancelled':
-      return 'cancelled'
+      return CASE_MESSAGES.cancelled
     case 'timeout':
-      return caseState.message ?? 'timed out'
+      return caseState.message ?? CASE_MESSAGES.timeout
     case 'not_supported':
-      return caseState.message ?? 'not supported'
+      return caseState.message ?? CASE_MESSAGES.notSupported
     case 'inconclusive':
+      return caseState.message ?? CASE_MESSAGES.inconclusive
     case 'errored':
-      return caseState.message ?? null
+      return caseState.message ?? CASE_MESSAGES.error
     default:
       return null
   }
@@ -159,7 +151,7 @@ export function caseRowOf(caseState: VerificationCaseState): CaseRow {
     id: caseState.caseInfo.id,
     name: caseState.caseInfo.label.split('::').at(-1) ?? caseState.caseInfo.label,
     status,
-    word: STATUS_WORDS[status],
+    word: VERDICT_WORDS[status],
     message: messageOf(caseState, shown),
     time: finished ? timeOf(caseState) : null,
     outdated: finished && caseState.outdated === true,
