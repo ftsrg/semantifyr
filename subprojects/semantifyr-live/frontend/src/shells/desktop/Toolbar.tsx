@@ -182,7 +182,7 @@ function LanguageIntro({ languageId }: { languageId: string }): React.JSX.Elemen
       <LanguageMark languageId={languageId} />
       <span className="language-intro-name">{`${presentation.name} examples`}</span>
       <span className="language-intro-detail">{presentation.detail}</span>
-      {page === null ? null : <a className="language-intro-page" href={websitePage(page)} target="_blank" rel="noreferrer">{aboutLanguage(presentation.name)}</a>}
+      {page === null ? null : <a className="link language-intro-page" href={websitePage(page)} target="_blank" rel="noreferrer">{aboutLanguage(presentation.name)}</a>}
     </div>
   )
 }

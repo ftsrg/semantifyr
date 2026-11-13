@@ -161,7 +161,7 @@ function Chooser({ onClose }: { onClose: () => void }): React.JSX.Element | null
           : (
             <>
               {' '}
-              <a href={websitePage(languagePage)} target="_blank" rel="noreferrer">{aboutLanguage(presentation.name)}</a>
+              <a className="link" href={websitePage(languagePage)} target="_blank" rel="noreferrer">{aboutLanguage(presentation.name)}</a>
             </>
           )}
       </p>

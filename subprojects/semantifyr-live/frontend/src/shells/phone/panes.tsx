@@ -93,9 +93,9 @@ function Orientation(): React.JSX.Element | null {
           )}
         {example.served
           ? (
-            <span className="orientation-source">
+            <span className="phone-orientation-source">
               {` ${exampleRights(example.served.origin, example.served.holder, example.served.licence)} `}
-              <a href={websitePage(example.served.page)} target="_blank" rel="noreferrer">{EXAMPLE_PAGE}</a>
+              <a className="link" href={websitePage(example.served.page)} target="_blank" rel="noreferrer">{EXAMPLE_PAGE}</a>
             </span>
           )
           : null}

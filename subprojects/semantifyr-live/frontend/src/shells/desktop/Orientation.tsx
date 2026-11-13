@@ -70,7 +70,7 @@ function ExampleSource({ served }: { served: ServedExample | null }): React.JSX.
   return (
     <span className="orientation-source">
       <span className="orientation-rights" title={rights}>{rights}</span>
-      <a href={websitePage(served.page)} target="_blank" rel="noreferrer">{EXAMPLE_PAGE}</a>
+      <a className="link" href={websitePage(served.page)} target="_blank" rel="noreferrer">{EXAMPLE_PAGE}</a>
     </span>
   )
 }
