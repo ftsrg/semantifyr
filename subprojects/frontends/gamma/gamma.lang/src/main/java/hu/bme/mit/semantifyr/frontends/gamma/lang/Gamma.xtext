@@ -443,6 +443,7 @@ AccessExpression returns Expression:
 
 PrimaryExpression returns Expression:
     LiteralExpression
+    | RecordLiteralExpression
     | EventParameterReferenceExpression
     | DirectReferenceExpression
     | StateReferenceExpression
@@ -450,6 +451,14 @@ PrimaryExpression returns Expression:
     | FiredTransitionExpression
     | RaiseEventAct
     | '(' Expression ')'
+;
+
+RecordLiteralExpression:
+    '#' typeDeclaration=[TypeDeclaration] '{' fieldAssignments+=FieldAssignment (',' fieldAssignments+=FieldAssignment)* '}'
+;
+
+FieldAssignment:
+    field=[FieldDeclaration] ':=' value=Expression
 ;
 
 EventParameterReferenceExpression:
