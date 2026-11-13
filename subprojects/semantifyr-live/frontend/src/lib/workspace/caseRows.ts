@@ -4,17 +4,10 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import type { VerdictStatus } from '@semantifyr/editor-common/marks'
+
 import { isoDurationToMs } from '../util/duration'
 import type { VerificationCaseState } from '../verification/engine'
-
-export type RowStatus =
-  | 'passed'
-  | 'failed'
-  | 'inconclusive'
-  | 'error'
-  | 'not-run'
-  | 'running'
-  | 'queued'
 
 export type ValidationMark =
   | 'validation-queued'
@@ -25,7 +18,7 @@ export type ValidationMark =
 export interface CaseRow {
   id: string
   name: string
-  status: RowStatus
+  status: VerdictStatus
   word: string
   message: string | null
   time: string | null
@@ -52,7 +45,7 @@ export interface CaseCounts {
   total: number
 }
 
-export const STATUS_WORDS: Readonly<Record<RowStatus, string>> = {
+export const STATUS_WORDS: Readonly<Record<VerdictStatus, string>> = {
   'passed': 'Passed',
   'failed': 'Failed',
   'inconclusive': 'Inconclusive',
@@ -75,11 +68,11 @@ export function formatSeconds(milliseconds: number): string {
 }
 
 // a case sent to the server runs only once the server says so
-function ownStatusOf(caseState: VerificationCaseState): RowStatus {
+function ownStatusOf(caseState: VerificationCaseState): VerdictStatus {
   return caseState.status === 'running' && caseState.serverState !== 'Running' ? 'queued' : statusOf(caseState.status)
 }
 
-function statusOf(status: VerificationCaseState['status']): RowStatus {
+function statusOf(status: VerificationCaseState['status']): VerdictStatus {
   switch (status) {
     case 'passed':
       return 'passed'
@@ -134,7 +127,7 @@ function validationOf(caseState: VerificationCaseState): ValidationMark | null {
   }
 }
 
-function isWaiting(status: RowStatus): status is 'running' | 'queued' {
+function isWaiting(status: VerdictStatus): status is 'running' | 'queued' {
   return status === 'running' || status === 'queued'
 }
 

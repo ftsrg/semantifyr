@@ -84,7 +84,7 @@
 .phone-case-outcome { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-3); margin-top: 2px; font-size: 14px; }
 .phone-case-outcome .case-time { font-size: 13px; }
 .phone-case-side { display: flex; align-items: center; color: var(--text-tertiary); }
-.phone-case.is-outdated .verdict-mark, .phone-case.is-outdated .verdict-word { opacity: 0.5; }
+.phone-case.is-outdated .verdict-mark { opacity: 0.75; }
 .phone-case.is-selected { background: var(--surface-selected); }
 .phone-case-run { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: var(--radius-medium); background: transparent; color: var(--text-tertiary); cursor: pointer; }
 .phone-case-run .icon { width: 14px; height: 14px; }

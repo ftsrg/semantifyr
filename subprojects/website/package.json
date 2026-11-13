@@ -22,8 +22,6 @@
     "@docusaurus/plugin-sitemap": "^3.7.0",
     "@docusaurus/theme-classic": "^3.7.0",
     "@docusaurus/theme-common": "^3.7.0",
-    "@fontsource-variable/jetbrains-mono": "^5.2.5",
-    "@fontsource/open-sans": "^5.2.5",
     "@mdx-js/react": "^3.1.0",
     "@semantifyr/editor-common": "*",
     "clsx": "^2.1.1",
@@ -33,6 +31,8 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@codingame/monaco-vscode-api": "~37.6.1",
+    "@codingame/monaco-vscode-textmate-service-override": "~37.6.1",
     "@docusaurus/module-type-aliases": "^3.7.0",
     "@docusaurus/types": "^3.7.0",
     "@testing-library/react": "^16.3.0",

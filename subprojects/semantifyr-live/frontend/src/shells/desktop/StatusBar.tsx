@@ -6,12 +6,12 @@
 
 import type React from 'react'
 import { Popover } from '@base-ui/react/popover'
+import { LanguageMark, VerdictMark } from '@semantifyr/editor-common/marks'
 
 import { useStore } from '../../lib/stores/useStore'
 import { CLOSING_LINE_MS, shellStatus, type ShellStatus } from '../../lib/workspace/shellStatus'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import { Icon } from '../../ui/icons'
-import { LanguageMark, VerdictMark } from '../../ui/marks'
 import { useFlavor, useLanguage, useNow } from '../hooks'
 import { useShell } from '../shellContext'
 import { UnsavedLine } from './keeping'

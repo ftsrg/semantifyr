@@ -12,7 +12,8 @@ import type { VerificationState } from '../lib/verification/engine'
 import { ShellRoot } from '../shells/ShellRoot'
 import { caseOf, finished, seedLive, type Seed } from './seededLive'
 
-import '../ui/tokens.css'
+import '@semantifyr/editor-common/tokens.css'
+import '@semantifyr/editor-common/marks.css'
 import '../ui/components.css'
 import '../ui/base.css'
 

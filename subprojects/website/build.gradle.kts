@@ -32,6 +32,12 @@ val sysmlConstructsFiles = configurations.resolvable("sysmlConstructsFiles") {
     attributes(semantifyrArtifact("sysml-constructs"))
 }
 
+val sysmlWorker = configurations.dependencyScope("sysmlWorker")
+val sysmlWorkerFiles = configurations.resolvable("sysmlWorkerFiles") {
+    extendsFrom(sysmlWorker.get())
+    attributes(semantifyrArtifact("sysml-worker"))
+}
+
 val apiDocs = configurations.dependencyScope("apiDocs")
 val apiDocsFiles = configurations.resolvable("apiDocsFiles") {
     extendsFrom(apiDocs.get())
@@ -47,6 +53,7 @@ dependencies {
     cliDistribution(project(":sysml-cli"))
     cliDistribution(project(":gamma-cli"))
     sysmlConstructs(project(":sysml-wrapper"))
+    sysmlWorker(project(":sysml-wrapper"))
     if (providers.gradleProperty("website.apiDocs").getOrElse("false").toBoolean()) {
         apiDocs(project(":"))
     }
@@ -141,6 +148,17 @@ val cloneSysmlConstructs = tasks.register<Sync>("cloneSysmlConstructs") {
     into(layout.buildDirectory.dir("sysml-constructs"))
 }
 
+// written for the alias @grammars: the grammars live's editor loads
+val cloneGrammars = tasks.register<Sync>("cloneGrammars") {
+    from(rootProject.layout.projectDirectory.dir("subprojects/semantifyr-vscode/syntaxes")) {
+        include("*.tmLanguage.json")
+    }
+    from(sysmlWorkerFiles) {
+        include("sysml.tmLanguage.json")
+    }
+    into(layout.buildDirectory.dir("grammars"))
+}
+
 val cloneApiDocs = tasks.register<Sync>("cloneApiDocs") {
     from(apiDocsFiles)
     into(layout.buildDirectory.dir("api-static/api"))
@@ -164,7 +182,7 @@ fun NpmTask.configureSharedInputs() {
     inputs.dir(rootProject.layout.projectDirectory.dir("subprojects/oxsts.lang/src/main/resources/hu/bme/mit/semantifyr/oxsts/lang/library")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(rootProject.layout.projectDirectory.file("oxsts-test-models/constructs/constructs.tsv")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(rootProject.layout.projectDirectory.file("subprojects/semantifyr-vscode/syntaxes/oxsts.tmLanguage.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cloneGrammars).withPathSensitivity(PathSensitivity.RELATIVE)
     // the builds keep their own caches under node_modules/.cache, which say nothing of the result
     dependsOn(tasks.npmInstall)
     val installed = tasks.npmInstall.map {

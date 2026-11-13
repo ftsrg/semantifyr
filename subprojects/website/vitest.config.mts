@@ -18,6 +18,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@site': fileURLToPath(new URL('.', import.meta.url)),
+      // written by the cloneGrammars Gradle task
+      '@grammars': fileURLToPath(new URL('build/grammars', import.meta.url)),
       '@theme/CodeBlock': fileURLToPath(new URL('src/__tests__/stubs/CodeBlock.tsx', import.meta.url)),
     },
   },

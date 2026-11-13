@@ -5,10 +5,10 @@
  */
 
 import type React from 'react'
+import { LanguageMark } from '@semantifyr/editor-common/marks'
 
 import { useStore } from '../lib/stores/useStore'
 import { formatIsoDuration } from '../lib/util/duration'
-import { LanguageMark } from '../ui/marks'
 import type { AdminStore } from './adminStore'
 import { flavourRows, sessionsPerFlavor } from './adminView'
 

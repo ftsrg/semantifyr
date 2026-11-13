@@ -7,6 +7,7 @@
 import type React from 'react'
 import { useState } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
+import { LanguageMark } from '@semantifyr/editor-common/marks'
 
 import type { LiveExample, LiveFlavor } from '../../examples'
 import { LANGUAGE_ORDER, presentationOf } from '../../lib/language/presentation'
@@ -19,7 +20,6 @@ import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext
 import { portfolioChoices, portfolioName, type PortfolioChoice } from '../../lib/workspace/portfolioChoices'
 import { sharedResultsOf } from '../../lib/workspace/sharedResults'
 import { Icon, type IconName } from '../../ui/icons'
-import { LanguageMark } from '../../ui/marks'
 import { AboutDialog, DeveloperDialog } from '../desktop/Dialogs'
 import { pickFile } from '../desktop/keeping'
 import { shareLink } from '../desktop/SharePopover'

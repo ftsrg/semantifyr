@@ -65,7 +65,7 @@
 .embed-trace-hint { font-size: var(--text-small); }
 .embed-case .icon-chevron-down { transition: transform var(--duration-fast); }
 .embed-case.is-open .icon-chevron-down { transform: rotate(180deg); }
-.embed-case.is-outdated .verdict-mark, .embed-case.is-outdated .verdict-word { opacity: 0.5; }
+.embed-case.is-outdated .verdict-mark { opacity: 0.75; }
 .embed-initializing { padding: var(--space-5) var(--space-6); border-top: 1px solid var(--border-faint); color: var(--text-tertiary); font-size: var(--text-small); }
 
 .embed-trace { border-top: 1px solid var(--border-faint); }

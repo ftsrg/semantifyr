@@ -1,0 +1,23 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+.language-mark { flex: none; color: var(--language); overflow: visible; }
+
+.verdict-mark { flex: none; overflow: visible; }
+.verdict-mark .ring { fill: none; stroke: var(--status); stroke-width: 1.5; }
+.verdict-mark .disc { fill: var(--status); }
+.verdict-mark .glyph { fill: none; stroke: var(--status); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.verdict-mark .glyph-fill { fill: var(--status); }
+.verdict-mark .on-disc { stroke: var(--verdict-glyph-on-disc); stroke-width: 1.9; }
+.verdict-mark .spinner { stroke-width: 1.9; animation: verdict-mark-spin 0.9s linear infinite; transform-origin: 8px 8px; transform-box: view-box; }
+@keyframes verdict-mark-spin { to { transform: rotate(360deg); } }
+
+.status-passed { --status: var(--verdict-passed); --status-soft: var(--verdict-passed-soft); }
+.status-failed { --status: var(--verdict-failed); --status-soft: var(--verdict-failed-soft); }
+.status-inconclusive { --status: var(--verdict-inconclusive); --status-soft: var(--verdict-inconclusive-soft); }
+.status-error { --status: var(--problem); --status-soft: var(--problem-soft); }
+.status-not-run, .status-queued { --status: var(--verdict-pending); --status-soft: transparent; }
+.status-running { --status: var(--text-secondary); --status-soft: transparent; }

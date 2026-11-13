@@ -6,19 +6,20 @@
 
 import type React from 'react'
 import { useRef } from 'react'
+import { type VerdictStatus, LanguageMark, VerdictMark } from '@semantifyr/editor-common/marks'
 
 import { parseLiveEditorUrl } from '@semantifyr/editor-common'
 import { initializationStepsOf, presentationOf } from '../../lib/language/presentation'
 import { areCasesKnown, initializationOf } from '../../lib/stores/initialization'
 import { changeSettings } from '../../lib/stores/settings'
 import { useStore } from '../../lib/stores/useStore'
-import { countsOf, STATUS_WORDS, type CaseCounts, type CaseRow, type RowStatus } from '../../lib/workspace/caseRows'
+import { countsOf, STATUS_WORDS, type CaseCounts, type CaseRow } from '../../lib/workspace/caseRows'
 import { openModelOxsts } from '../../lib/workspace/libraryTabs'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import type { Live } from '../../lib/workspace/live'
 import { secondsToRetry, stepTimeText } from '../../lib/workspace/shellStatus'
 import { Icon } from '../../ui/icons'
-import { LanguageMark, ValidationMark, VerdictMark } from '../../ui/marks'
+import { ValidationMark } from '../../ui/marks'
 import { documentLabel, useCurrentDocument, useFlavor, useNow } from '../hooks'
 import { useShell } from '../shellContext'
 import { verifyAll, type CountFilter } from '../shellState'
@@ -29,7 +30,7 @@ import { SettingsPopover } from './SettingsPopover'
 
 import './rerun.css'
 
-const COUNT_GROUPS: readonly { group: CountFilter, status: RowStatus, label: string }[] = [
+const COUNT_GROUPS: readonly { group: CountFilter, status: VerdictStatus, label: string }[] = [
   { group: 'passed', status: 'passed', label: 'Passed' },
   { group: 'failed', status: 'failed', label: 'Failed' },
   { group: 'inconclusive', status: 'inconclusive', label: 'Inconclusive' },
@@ -41,7 +42,7 @@ const COLUMN_MINIMUM = 360
 const COLUMN_MAXIMUM = 900
 const LIST_MINIMUM = 40
 
-function groupOf(status: RowStatus): CountFilter | null {
+function groupOf(status: VerdictStatus): CountFilter | null {
   switch (status) {
     case 'running':
     case 'queued':

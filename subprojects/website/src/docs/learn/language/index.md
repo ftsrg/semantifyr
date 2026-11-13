@@ -26,7 +26,7 @@ A pervasive distinction throughout the language is **compile-time vs runtime**. 
 
 ## Conventions
 
-- Code samples are tagged with the `oxsts` language and use a syntax highlighter that mirrors the VS Code Semantifyr extension.
+- Code samples are tagged with the `oxsts` language and coloured by the grammar the live editor and the VS Code extension load.
 - In syntax descriptions, angle brackets denote placeholders, for example `<expression>`.
 - The [`semantifyr` standard library](standard-library.md) (`Anything`, the primitive datatypes, the standard annotations) is implicitly imported into every Semantifyr file.
 - Language keywords (`tran`, `inline`, `redefine`, and so on) are written in `code` font; conceptual terms (transition, feature, property) are written in plain text.

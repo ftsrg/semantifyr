@@ -4,10 +4,6 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import '@fontsource/jetbrains-mono/latin-400.css'
-import '@fontsource/jetbrains-mono/latin-ext-400.css'
-import '@fontsource/jetbrains-mono/latin-600.css'
-import '@fontsource/jetbrains-mono/latin-ext-600.css'
 import type React from 'react'
 import { useEffect, useState } from 'react'
 import { liveEditorUrl, parseLiveEditorUrl } from '@semantifyr/editor-common'

@@ -176,13 +176,11 @@
 }
 
 .health-dot--online {
-  background-color: #22c55e;
-  box-shadow: 0 0 4px 1px rgba(34, 197, 94, 0.4);
+  background-color: var(--verdict-passed);
 }
 
 .health-dot--offline {
-  background-color: #ef4444;
-  box-shadow: 0 0 4px 1px rgba(239, 68, 68, 0.35);
+  background-color: var(--problem);
 }
 
 /* Sections */
@@ -247,12 +245,12 @@
   height: 52px;
   line-height: 52px;
   border-radius: 50%;
-  background: var(--ifm-color-primary);
-  color: #fff;
+  background: var(--accent);
+  color: var(--accent-text);
   font-weight: 700;
   font-size: 1.25rem;
   margin: 0 auto 1rem;
-  box-shadow: 0 4px 14px rgba(192, 0, 0, 0.25);
+  box-shadow: var(--primary-shadow);
 }
 
 .pipeline__step h3 {

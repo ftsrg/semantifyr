@@ -6,6 +6,7 @@
 
 import type React from 'react'
 import { useEffect, useRef } from 'react'
+import { LanguageMark } from '@semantifyr/editor-common/marks'
 
 import type { LiveFlavor } from '../../examples'
 import type { LanguageRuntime } from '../../lib/language/types'
@@ -18,7 +19,6 @@ import type { DocumentRecord, Live } from '../../lib/workspace/live'
 import { useLive } from '../../lib/workspace/liveContext'
 import { useFollowedTraceTabs } from '../../trace/traceTabs'
 import { Icon } from '../../ui/icons'
-import { LanguageMark } from '../../ui/marks'
 import { DocumentsMenu } from './DocumentsMenu'
 import { documentLabel, useAddressedModel, useCurrentDocument, useFlavor } from '../hooks'
 import { useShell } from '../shellContext'

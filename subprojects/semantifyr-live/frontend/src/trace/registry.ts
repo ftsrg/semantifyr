@@ -6,9 +6,9 @@
 
 import type React from 'react'
 import type { VerificationTrace } from '@semantifyr/editor-common'
+import type { VerdictStatus } from '@semantifyr/editor-common/marks'
 
 import type { LanguageRuntime } from '../lib/language/types'
-import type { RowStatus } from '../lib/workspace/caseRows'
 import type { ReadOnlyDocument } from '../lib/workspace/documentTabs'
 import { CallsView } from './CallsView'
 import { StepsView } from './StepsView'
@@ -17,7 +17,7 @@ import { textView, type TraceTextSource } from './TextView'
 export interface TraceViewProps {
   trace: VerificationTrace
   caseName: string
-  verdict: RowStatus
+  verdict: VerdictStatus
   expandedStep: number | null
   expandStep: (step: number | null) => void
   runtime: LanguageRuntime | null

@@ -4,23 +4,22 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-@font-face {
-  font-family: "Live Sans";
-  src: local("Inter"), local("Inter Variable"), local("Adwaita Sans"), local("Segoe UI Variable Text"), local("SF Pro Text"), local("Noto Sans");
-  font-weight: 100 900;
-}
-
-@font-face {
-  font-family: "Live Mono";
-  src: local("JetBrains Mono"), local("JetBrainsMono-Regular"), local("SF Mono"), local("Cascadia Code"), local("Menlo"), local("DejaVu Sans Mono");
-  font-weight: 400;
-}
-
-@font-face {
-  font-family: "Live Mono";
-  src: local("JetBrains Mono SemiBold"), local("JetBrainsMono-SemiBold"), local("JetBrains Mono"), local("SF Mono Semibold"), local("Menlo Bold");
-  font-weight: 600;
-}
+@font-face { font-family: "Open Sans"; font-style: normal; font-weight: 400; font-display: swap; src: url("./fonts/open-sans-latin-400-normal.woff2") format("woff2"); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "Open Sans"; font-style: normal; font-weight: 400; font-display: swap; src: url("./fonts/open-sans-latin-ext-400-normal.woff2") format("woff2"); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: "Open Sans"; font-style: italic; font-weight: 400; font-display: swap; src: url("./fonts/open-sans-latin-400-italic.woff2") format("woff2"); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "Open Sans"; font-style: italic; font-weight: 400; font-display: swap; src: url("./fonts/open-sans-latin-ext-400-italic.woff2") format("woff2"); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: "Open Sans"; font-style: normal; font-weight: 500; font-display: swap; src: url("./fonts/open-sans-latin-500-normal.woff2") format("woff2"); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "Open Sans"; font-style: normal; font-weight: 500; font-display: swap; src: url("./fonts/open-sans-latin-ext-500-normal.woff2") format("woff2"); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: "Open Sans"; font-style: normal; font-weight: 600; font-display: swap; src: url("./fonts/open-sans-latin-600-normal.woff2") format("woff2"); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "Open Sans"; font-style: normal; font-weight: 600; font-display: swap; src: url("./fonts/open-sans-latin-ext-600-normal.woff2") format("woff2"); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: "Open Sans"; font-style: normal; font-weight: 700; font-display: swap; src: url("./fonts/open-sans-latin-700-normal.woff2") format("woff2"); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "Open Sans"; font-style: normal; font-weight: 700; font-display: swap; src: url("./fonts/open-sans-latin-ext-700-normal.woff2") format("woff2"); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: "JetBrains Mono"; font-style: normal; font-weight: 400; font-display: swap; src: url("./fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2"); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "JetBrains Mono"; font-style: normal; font-weight: 400; font-display: swap; src: url("./fonts/jetbrains-mono-latin-ext-400-normal.woff2") format("woff2"); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: "JetBrains Mono"; font-style: italic; font-weight: 400; font-display: swap; src: url("./fonts/jetbrains-mono-latin-400-italic.woff2") format("woff2"); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "JetBrains Mono"; font-style: italic; font-weight: 400; font-display: swap; src: url("./fonts/jetbrains-mono-latin-ext-400-italic.woff2") format("woff2"); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: "JetBrains Mono"; font-style: normal; font-weight: 600; font-display: swap; src: url("./fonts/jetbrains-mono-latin-600-normal.woff2") format("woff2"); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "JetBrains Mono"; font-style: normal; font-weight: 600; font-display: swap; src: url("./fonts/jetbrains-mono-latin-ext-600-normal.woff2") format("woff2"); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
 
 /* The subset of Open Sans Bold embedded in the official logo files. */
 @font-face {
@@ -30,8 +29,8 @@
 }
 
 :root {
-  --font-sans: "Live Sans", Inter, "Adwaita Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "Live Mono", "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-sans: "Open Sans", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 
   --text-micro: 10.5px;
   --text-small: 11.5px;
@@ -41,9 +40,9 @@
   --text-display: 20px;
   --text-code: 12.5px;
   --line-code: 20px;
-  --weight-regular: 420;
-  --weight-medium: 520;
-  --weight-semibold: 620;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
   --tracking-caps: 0.06em;
 
   --space-1: 2px;
@@ -73,6 +72,7 @@
 
   --accent: #c8341f;
   --accent-hover: #b52d1a;
+  --accent-ink: #c22e19;
   --accent-text: #ffffff;
   --accent-soft: rgba(200, 52, 31, 0.10);
   --primary-shadow: 0 1px 0 rgba(255, 255, 255, 0.18) inset, 0 1px 2px rgba(0, 0, 0, 0.18), 0 0 0 3px var(--accent-soft);
@@ -96,30 +96,30 @@
 
   --text-primary: #23211c;
   --text-secondary: #5f5b52;
-  --text-tertiary: #928d82;
+  --text-tertiary: #6b665c;
   --text-disabled: #bdb8ac;
 
   --shadow-overlay: 0 0 0 1px rgba(60, 50, 30, 0.06), 0 16px 40px rgba(60, 50, 30, 0.14), 0 2px 6px rgba(60, 50, 30, 0.08);
 
-  --verdict-passed: #0b7a6b;
+  --verdict-passed: #057466;
   --verdict-passed-soft: rgba(11, 122, 107, 0.09);
   --verdict-failed: #b0236c;
   --verdict-failed-soft: rgba(176, 35, 108, 0.08);
-  --verdict-inconclusive: #a3620b;
+  --verdict-inconclusive: #955904;
   --verdict-inconclusive-soft: rgba(163, 98, 11, 0.09);
-  --verdict-neutral: #77726a;
+  --verdict-neutral: #6b665e;
   --verdict-neutral-soft: rgba(119, 114, 106, 0.10);
   --verdict-pending: #a29d91;
   --verdict-glyph-on-disc: #ffffff;
 
-  --attention: #a3620b;
+  --attention: #955904;
   --attention-soft: rgba(163, 98, 11, 0.09);
-  --problem: #c4321f;
+  --problem: #c12f1c;
   --problem-soft: rgba(196, 50, 31, 0.08);
 
-  --language-sysml: #2f6fd6;
+  --language-sysml: #2969d0;
   --language-sysml-soft: rgba(47, 111, 214, 0.10);
-  --language-gamma: #188a12;
+  --language-gamma: #067e01;
   --language-gamma-soft: rgba(24, 138, 18, 0.10);
   --language-oxsts: #c00000;
   --language-oxsts-soft: rgba(192, 0, 0, 0.08);
@@ -127,25 +127,26 @@
   --syntax-keyword: #7b3fb8;
   --syntax-type: #0f766c;
   --syntax-name: #23211c;
-  --syntax-string: #9a6a12;
-  --syntax-number: #b2541a;
-  --syntax-comment: #a29d91;
+  --syntax-string: #906205;
+  --syntax-number: #ad5014;
+  --syntax-comment: #6f6b60;
   --syntax-operator: #6f6a60;
-  --syntax-punctuation: #9a958a;
+  --syntax-punctuation: #6f6b60;
   --syntax-function: #2f63b8;
 
   --editor-line-highlight: rgba(60, 50, 30, 0.035);
   --editor-selection: rgba(47, 111, 214, 0.14);
   --editor-step-highlight: rgba(60, 50, 30, 0.07);
-  --editor-gutter-text: #c4bfb3;
+  --editor-gutter-text: #6f6b60;
   --editor-gutter-active: #5f5b52;
 
   color-scheme: light;
 }
 
 :root[data-theme="dark"] {
-  --accent: #c25a45;
+  --accent: #b8513d;
   --accent-hover: #cd6650;
+  --accent-ink: #eb7f68;
   --accent-text: #fbf5ef;
   --accent-soft: rgba(194, 90, 69, 0.14);
   --primary-shadow: none;
@@ -169,32 +170,32 @@
 
   --text-primary: #efe9dd;
   --text-secondary: #c2bbac;
-  --text-tertiary: #8f887b;
+  --text-tertiary: #a49d8f;
   --text-disabled: #5d5a53;
 
   --shadow-overlay: 0 0 0 1px rgba(0, 0, 0, 0.22), 0 14px 36px rgba(0, 0, 0, 0.34);
 
   --verdict-passed: #5cb8a4;
   --verdict-passed-soft: rgba(92, 184, 164, 0.10);
-  --verdict-failed: #dc76a2;
+  --verdict-failed: #e47da9;
   --verdict-failed-soft: rgba(220, 118, 162, 0.10);
   --verdict-inconclusive: #d4a35a;
   --verdict-inconclusive-soft: rgba(212, 163, 90, 0.10);
-  --verdict-neutral: #9b968c;
+  --verdict-neutral: #a29d93;
   --verdict-neutral-soft: rgba(155, 150, 140, 0.11);
   --verdict-pending: #78746c;
   --verdict-glyph-on-disc: #1f1e1c;
 
   --attention: #d4a35a;
   --attention-soft: rgba(212, 163, 90, 0.10);
-  --problem: #e07862;
+  --problem: #e98069;
   --problem-soft: rgba(224, 120, 98, 0.10);
 
   --language-sysml: #7fa8e3;
   --language-sysml-soft: rgba(127, 168, 227, 0.12);
   --language-gamma: #78b863;
   --language-gamma-soft: rgba(120, 184, 99, 0.12);
-  --language-oxsts: #d9604c;
+  --language-oxsts: #ef745e;
   --language-oxsts-soft: rgba(217, 96, 76, 0.12);
 
   --syntax-keyword: #c5a5d8;
@@ -202,15 +203,15 @@
   --syntax-name: #e8e4da;
   --syntax-string: #d6b47c;
   --syntax-number: #dc9e78;
-  --syntax-comment: #7a766e;
+  --syntax-comment: #9f9b92;
   --syntax-operator: #a6a297;
-  --syntax-punctuation: #8a867d;
+  --syntax-punctuation: #9f9b91;
   --syntax-function: #9ab5dc;
 
   --editor-line-highlight: rgba(245, 238, 222, 0.03);
   --editor-selection: rgba(127, 168, 227, 0.16);
   --editor-step-highlight: rgba(245, 238, 222, 0.055);
-  --editor-gutter-text: #55524c;
+  --editor-gutter-text: #9e9a94;
   --editor-gutter-active: #c0bcb1;
 
   color-scheme: dark;

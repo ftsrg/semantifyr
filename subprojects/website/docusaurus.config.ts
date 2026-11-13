@@ -10,8 +10,17 @@ import type { Options as PagesOptions } from '@docusaurus/plugin-content-pages';
 import type { Options as ClassicThemeOptions } from '@docusaurus/theme-classic';
 import type { UserThemeConfig } from '@docusaurus/theme-common';
 import type { Config } from '@docusaurus/types';
-import { themes } from 'prism-react-renderer';
+import type { PrismTheme } from 'prism-react-renderer';
 import remarkFences from './src/plugins/remarkFences';
+
+// the code blocks take their colours from live's grammars in theme/CodeBlock/Content; the block itself from the tokens
+const codeBlockTheme: PrismTheme = {
+  plain: {
+    color: 'var(--syntax-name)',
+    backgroundColor: 'var(--surface-readonly)',
+  },
+  styles: [],
+};
 
 const liveBackendUrl = process.env.SEMANTIFYR_LIVE_URL ?? 'https://live.semantifyr.org';
 
@@ -87,6 +96,8 @@ export default {
             '@cli-reference': path.resolve(__dirname, 'build/cli-reference'),
             // written by the cloneSysmlConstructs Gradle task from the SysML translation's registry
             '@sysml-constructs': path.resolve(__dirname, 'build/sysml-constructs'),
+            // written by the cloneGrammars Gradle task
+            '@grammars': path.resolve(__dirname, 'build/grammars'),
           },
         },
         module: {
@@ -99,7 +110,11 @@ export default {
     [
       '@docusaurus/theme-classic',
       {
-        customCss: [require.resolve('./src/css/custom.css')],
+        customCss: [
+          require.resolve('@semantifyr/editor-common/tokens.css'),
+          require.resolve('@semantifyr/editor-common/marks.css'),
+          require.resolve('./src/css/custom.css'),
+        ],
       } satisfies ClassicThemeOptions,
     ],
   ],
@@ -108,9 +123,7 @@ export default {
       respectPrefersColorScheme: true,
     },
     prism: {
-      additionalLanguages: ['bash', 'java', 'kotlin'],
-      theme: themes.vsLight,
-      darkTheme: themes.vsDark,
+      theme: codeBlockTheme,
     },
     navbar: {
       hideOnScroll: true,

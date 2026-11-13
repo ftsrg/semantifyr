@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import type { VerdictStatus } from '@semantifyr/editor-common/marks'
+
 import type { CursorPosition } from '../lib/session/tabbedEditor'
 import { createStore, type Store } from '../lib/stores/store'
-import type { RowStatus } from '../lib/workspace/caseRows'
 import type { Live } from '../lib/workspace/live'
 
-export type CountFilter = Exclude<RowStatus, 'not-run' | 'running' | 'queued'> | 'waiting'
+export type CountFilter = Exclude<VerdictStatus, 'not-run' | 'running' | 'queued'> | 'waiting'
 
 // What only the shells show, kept for the visit and never stored
 export interface ShellState {

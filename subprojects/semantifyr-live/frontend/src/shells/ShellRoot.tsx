@@ -22,7 +22,8 @@ import { ShellContext } from './shellContext'
 import type { ShellState } from './shellState'
 import type { TraceSlot } from './traceSlot'
 
-import '../ui/tokens.css'
+import '@semantifyr/editor-common/tokens.css'
+import '@semantifyr/editor-common/marks.css'
 import '../ui/components.css'
 import '../ui/base.css'
 

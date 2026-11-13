@@ -6,6 +6,7 @@
 
 import type React from 'react'
 import { useEffect, useLayoutEffect, useState } from 'react'
+import { LanguageMark } from '@semantifyr/editor-common/marks'
 
 import { presentationOf } from '../../lib/language/presentation'
 import { isInitialized } from '../../lib/stores/initialization'
@@ -14,7 +15,7 @@ import type { ResolvedColorMode } from '../../lib/util/colorMode'
 import { caseRowOf } from '../../lib/workspace/caseRows'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import { Icon, type IconName } from '../../ui/icons'
-import { LanguageMark, Logo } from '../../ui/marks'
+import { Logo } from '../../ui/marks'
 import { ConnectionIndicator } from '../desktop/ConnectionIndicator'
 import { useKeepingEvents } from '../desktop/keeping'
 import { useCurrentDocument, useFlavor } from '../hooks'

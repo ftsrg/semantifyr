@@ -6,7 +6,8 @@
     "lib": ["ES2023", "DOM"],
     "types": [],
     "allowImportingTsExtensions": true,
-    "noEmit": true
+    "noEmit": true,
+    "jsx": "react-jsx"
   },
   "include": ["src/**/*", "vitest.config.ts"]
 }

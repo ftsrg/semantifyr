@@ -4,62 +4,84 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-@import '@fontsource/open-sans/400.css';
-@import '@fontsource/open-sans/600.css';
-@import '@fontsource/open-sans/700.css';
-@import '@fontsource/open-sans/400-italic.css';
-@import '@fontsource-variable/jetbrains-mono';
+/* Infima's look, taken from the tokens of the shared package; the dark selector outranks Infima's own dark rule */
+:root,
+html[data-theme='dark'] {
+  --ifm-font-family-base: var(--font-sans);
+  --ifm-font-family-monospace: var(--font-mono);
+  --ifm-font-color-base: var(--text-primary);
+  --ifm-heading-color: var(--text-primary);
 
-:root {
-  --ifm-font-family-base: 'Open Sans', system-ui, sans-serif;
-  --ifm-font-family-monospace: 'JetBrains Mono Variable', monospace;
+  --ifm-color-primary: var(--accent-ink);
+  --ifm-color-primary-dark: var(--accent-ink);
+  --ifm-color-primary-darker: var(--accent-ink);
+  --ifm-color-primary-darkest: var(--accent-ink);
+  --ifm-color-primary-light: var(--accent-ink);
+  --ifm-color-primary-lighter: var(--accent-ink);
+  --ifm-color-primary-lightest: var(--accent-ink);
+  --ifm-color-primary-contrast-background: var(--accent-soft);
+  --ifm-color-primary-contrast-foreground: var(--text-primary);
+  --ifm-link-color: var(--accent-ink);
+  --ifm-link-hover-color: var(--accent-ink);
 
-  --ifm-color-primary: #c00000;
-  --ifm-color-primary-dark: #ad0000;
-  --ifm-color-primary-darker: #a40000;
-  --ifm-color-primary-darkest: #870000;
-  --ifm-color-primary-light: #d51414;
-  --ifm-color-primary-lighter: #e02828;
-  --ifm-color-primary-lightest: #ec5858;
+  --ifm-background-color: var(--surface-editor);
+  --ifm-background-surface-color: var(--surface-raised);
+  --ifm-navbar-background-color: var(--surface-chrome);
+  --ifm-navbar-link-color: var(--text-primary);
+  --ifm-navbar-shadow: 0 1px 0 var(--border);
+  --ifm-footer-background-color: var(--surface-chrome);
+  --ifm-footer-color: var(--text-secondary);
+  --ifm-footer-title-color: var(--text-primary);
+  --ifm-footer-link-color: var(--text-secondary);
+  --ifm-toc-border-color: var(--border);
+  --ifm-hr-border-color: var(--border);
+  --ifm-table-border-color: var(--border);
+  --ifm-table-stripe-background: var(--surface-panel);
+  --ifm-menu-color: var(--text-secondary);
+  --ifm-menu-color-active: var(--accent-ink);
+  --ifm-menu-color-background-active: var(--surface-selected);
+  --ifm-menu-color-background-hover: var(--surface-hover);
+  --ifm-breadcrumb-item-background-active: var(--surface-selected);
+  --ifm-code-background: var(--surface-inset);
+  --ifm-pre-background: var(--surface-readonly);
+  --ifm-color-emphasis-700: var(--text-secondary);
+  --ifm-color-emphasis-600: var(--text-tertiary);
+  --docusaurus-highlighted-code-line-bg: var(--editor-step-highlight);
 
-  --ifm-background-color: #fafaf8;
-  --ifm-navbar-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08);
-
-  --semantifyr-hero-bg: linear-gradient(
-    135deg,
-    #fff5f3 0%,
-    #fafaf8 60%,
-    #ffffff 100%
-  );
-  --semantifyr-hero-fg: #1a1a1a;
-  --semantifyr-section-alt-bg: #fdf6f5;
-  --semantifyr-card-border: rgba(192, 0, 0, 0.12);
-  --semantifyr-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --semantifyr-card-shadow-hover: 0 6px 18px rgba(192, 0, 0, 0.1);
+  --semantifyr-hero-bg: var(--surface-chrome);
+  --semantifyr-hero-fg: var(--text-primary);
+  --semantifyr-section-alt-bg: var(--surface-panel);
+  --semantifyr-card-border: var(--border);
+  --semantifyr-card-shadow: none;
+  --semantifyr-card-shadow-hover: var(--shadow-overlay);
 }
 
-[data-theme='dark'] {
-  --ifm-color-primary: #ff5252;
-  --ifm-color-primary-dark: #f23939;
-  --ifm-color-primary-darker: #e02828;
-  --ifm-color-primary-darkest: #c00000;
-  --ifm-color-primary-light: #ff7373;
-  --ifm-color-primary-lighter: #ff8a8a;
-  --ifm-color-primary-lightest: #ffabab;
+:focus-visible {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 2px;
+}
 
-  --ifm-background-color: #161618;
+.button--primary {
+  --ifm-button-background-color: var(--accent);
+  --ifm-button-border-color: var(--accent);
+  --ifm-button-color: var(--accent-text);
+}
 
-  --semantifyr-hero-bg: linear-gradient(
-    135deg,
-    #1f1416 0%,
-    #161618 60%,
-    #161618 100%
-  );
-  --semantifyr-hero-fg: #f5f5f5;
-  --semantifyr-section-alt-bg: #1c1416;
-  --semantifyr-card-border: rgba(255, 82, 82, 0.18);
-  --semantifyr-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --semantifyr-card-shadow-hover: 0 6px 18px rgba(255, 82, 82, 0.18);
+.button--primary:hover,
+.button--primary:active {
+  --ifm-button-background-color: var(--accent-hover);
+  --ifm-button-border-color: var(--accent-hover);
+}
+
+.theme-doc-sidebar-container {
+  background: var(--surface-panel);
+}
+
+.verdict-mark,
+.language-mark {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
 }
 
 .navbar__items--right > * {
@@ -71,8 +93,8 @@
 }
 
 .navbar__link--try-now {
-  background-color: var(--ifm-color-primary);
-  color: #fff !important;
+  background-color: var(--accent);
+  color: var(--accent-text) !important;
   border-radius: 6px;
   padding: 6px 16px;
   margin: 0 0.5rem;
@@ -81,8 +103,8 @@
 }
 
 .navbar__link--try-now:hover {
-  background-color: var(--ifm-color-primary-dark);
-  color: #fff !important;
+  background-color: var(--accent-hover);
+  color: var(--accent-text) !important;
   text-decoration: none;
 }
 

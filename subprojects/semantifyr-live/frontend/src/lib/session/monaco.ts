@@ -73,47 +73,6 @@ function themeIdFor(colorMode: ResolvedColorMode): string {
   return colorMode === 'dark' ? 'Default Dark Modern' : 'Default Light Modern';
 }
 
-// Keep in sync with --accent / --accent-hover in styles.css.
-const BRAND = {
-  dark: { accent: '#ff5252', accentHover: '#e23e3e' },
-  light: { accent: '#c00000', accentHover: '#a30000' },
-} as const;
-
-function accentColorCustomizations(palette: { accent: string; accentHover: string }): Record<string, string> {
-  return {
-    'focusBorder': palette.accent,
-    'progressBar.background': palette.accent,
-    'textLink.foreground': palette.accent,
-    'textLink.activeForeground': palette.accentHover,
-    'editorLink.activeForeground': palette.accent,
-    'button.background': palette.accent,
-    'button.hoverBackground': palette.accentHover,
-    'list.highlightForeground': palette.accent,
-    'editorSuggestWidget.highlightForeground': palette.accent,
-    'editorSuggestWidget.focusHighlightForeground': palette.accent,
-    'inputOption.activeBorder': palette.accent,
-    'editorBracketMatch.border': palette.accent,
-  };
-}
-
-function keywordTokenCustomizations(accent: string): { textMateRules: { scope: string[]; settings: { foreground: string } }[] } {
-  return {
-    textMateRules: [
-      { scope: ['keyword.control'], settings: { foreground: accent } },
-    ],
-  };
-}
-
-const WORKBENCH_COLOR_CUSTOMIZATIONS = {
-  '[Default Dark Modern]': accentColorCustomizations(BRAND.dark),
-  '[Default Light Modern]': accentColorCustomizations(BRAND.light),
-} as const;
-
-const TOKEN_COLOR_CUSTOMIZATIONS = {
-  '[Default Dark Modern]': keywordTokenCustomizations(BRAND.dark.accent),
-  '[Default Light Modern]': keywordTokenCustomizations(BRAND.light.accent),
-} as const;
-
 function buildSemantifyrExtension(): ExtensionConfig {
   const files = new Map<string, string>([
     ['/language-configuration.json', JSON.stringify(languageConfiguration)],
@@ -336,8 +295,6 @@ export async function initializeMonaco(initialColorMode: ResolvedColorMode): Pro
     userConfiguration: {
       json: JSON.stringify({
         'workbench.colorTheme': themeIdFor(initialColorMode),
-        'workbench.colorCustomizations': WORKBENCH_COLOR_CUSTOMIZATIONS,
-        'editor.tokenColorCustomizations': TOKEN_COLOR_CUSTOMIZATIONS,
         ...EDITOR_USER_CONFIG,
       }),
     },

@@ -15,7 +15,8 @@ import { ShellRoot } from '../shells/ShellRoot'
 import { CaseTrace } from '../trace/CaseTrace'
 import { caseState, LANGUAGES, seedWithTrace } from './traces'
 
-import '../ui/tokens.css'
+import '@semantifyr/editor-common/tokens.css'
+import '@semantifyr/editor-common/marks.css'
 import '../ui/components.css'
 import '../ui/base.css'
 

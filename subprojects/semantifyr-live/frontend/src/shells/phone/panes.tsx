@@ -5,6 +5,7 @@
  */
 
 import type React from 'react'
+import { type VerdictStatus, LanguageMark, VerdictMark } from '@semantifyr/editor-common/marks'
 
 import { parseLiveEditorUrl } from '@semantifyr/editor-common'
 import { findExample } from '../../examples'
@@ -12,11 +13,11 @@ import { initializationStepsOf, presentationOf } from '../../lib/language/presen
 import { areCasesKnown, initializationOf } from '../../lib/stores/initialization'
 import { useStore } from '../../lib/stores/useStore'
 import type { ResolvedColorMode } from '../../lib/util/colorMode'
-import { caseRowOf, countsOf, type CaseCounts, type CaseRow, type RowStatus } from '../../lib/workspace/caseRows'
+import { caseRowOf, countsOf, type CaseCounts, type CaseRow } from '../../lib/workspace/caseRows'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import { stepTimeText } from '../../lib/workspace/shellStatus'
 import { Icon } from '../../ui/icons'
-import { LanguageMark, ValidationMark, VerdictMark } from '../../ui/marks'
+import { ValidationMark } from '../../ui/marks'
 import { addressProblemText } from '../desktop/Orientation'
 import { documentLabel, useCurrentDocument, useFlavor, useNow } from '../hooks'
 import { BackToModel, ModelEditor } from '../modelEditor'
@@ -143,7 +144,7 @@ export function ModelPane({ colorMode, hidden }: { colorMode: ResolvedColorMode,
   )
 }
 
-const COUNT_GROUPS: readonly { status: RowStatus & keyof CaseCounts, label: string }[] = [
+const COUNT_GROUPS: readonly { status: VerdictStatus & keyof CaseCounts, label: string }[] = [
   { status: 'passed', label: 'Passed' },
   { status: 'failed', label: 'Failed' },
   { status: 'inconclusive', label: 'Inconclusive' },
