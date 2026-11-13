@@ -172,10 +172,10 @@ export function caseState(language: Language, options: { validated: boolean, rec
     resultStatus: 'failed',
     metrics: { totalDuration: 'PT2.9S', preparationDuration: 'PT0S', verificationDuration: 'PT2.9S', backAnnotationDuration: 'PT0S' },
     backendId: 'theta:cegar',
-    portfolioId: 'smart-full',
+    portfolioId: 'smart',
     trace: traceOf(language.traceUri, options.recorded),
     ...(options.validated
-      ? { waited: 30_000, validationWaited: 4_000, witnessValidation: 'valid' as const, validationMetrics: { totalDuration: 'PT0.6S', preparationDuration: 'PT0S', verificationDuration: 'PT0.6S', backAnnotationDuration: 'PT0S' }, validationBackendId: 'spin:safe', validationPortfolioIdUsed: 'smart-full' }
+      ? { waited: 30_000, validationWaited: 4_000, witnessValidation: 'valid' as const, validationMetrics: { totalDuration: 'PT0.6S', preparationDuration: 'PT0S', verificationDuration: 'PT0.6S', backAnnotationDuration: 'PT0S' }, validationBackendId: 'spin:safe', validationPortfolioIdUsed: 'smart' }
       : {}),
   }
 }

@@ -62,6 +62,6 @@ class ThetaFullPortfolioTest {
         val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
-        assertThat(result.message).contains("no available Theta executor")
+        assertThat(result.message).contains("Theta cannot be run")
     }
 }

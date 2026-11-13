@@ -144,8 +144,8 @@ describe('the mock session', () => {
       },
     })
     const range = { start: { line: 1, character: 0 }, end: { line: 1, character: 4 } }
-    session.receive(encodeMessage(request(1, 'workspace/executeCommand', { command: 'oxsts.case.verify', arguments: [{ uri: URI, range, portfolio: 'theta-full' }] })))
-    session.receive(encodeMessage(request(2, 'workspace/executeCommand', { command: 'oxsts.case.verify', arguments: [{ uri: URI, range, portfolio: 'theta-full' }] })))
+    session.receive(encodeMessage(request(1, 'workspace/executeCommand', { command: 'oxsts.case.verify', arguments: [{ uri: URI, range, portfolio: 'theta' }] })))
+    session.receive(encodeMessage(request(2, 'workspace/executeCommand', { command: 'oxsts.case.verify', arguments: [{ uri: URI, range, portfolio: 'theta' }] })))
     await vi.waitFor(() => {
       expect(sent.filter((message) => {
         return 'method' in message && message.method === 'window/workDoneProgress/create'
@@ -168,7 +168,7 @@ describe('the mock session', () => {
       })
     })
     expect(changed.at(-1)).toEqual([])
-    expect(changed.flat()).toContain('theta-full')
+    expect(changed.flat()).toContain('theta')
   })
 
   it('closes with the code a test gives and sends nothing after', () => {

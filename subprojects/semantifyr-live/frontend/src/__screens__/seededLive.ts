@@ -230,7 +230,7 @@ export function seedLive(seed: Seed): Seeded {
   shell.verifyBlocked.set(seed.verifyBlocked ?? false)
   const live: Live = {
     settings,
-    catalog: constantStore<Catalog>({ status: seed.catalog ?? 'ready', registry: ready ? registry : null, portfolios: seed.portfolios ?? [], defaultPortfolioId: 'smart-full' }),
+    catalog: constantStore<Catalog>({ status: seed.catalog ?? 'ready', registry: ready ? registry : null, portfolios: seed.portfolios ?? [], defaultPortfolioId: 'smart' }),
     workspace: constantStore(ready ? { flavor, documentKey: key, runtime } : { flavor: null, documentKey: null, runtime: null }),
     documents: constantStore(new Map(ready ? [[key, record]] : [])),
     connection: constantStore(connection),
@@ -275,7 +275,7 @@ export function seedLive(seed: Seed): Seeded {
     validateWitness: () => {},
     selectCase: () => {},
     verificationPortfolioId: () => {
-      return 'smart-full'
+      return 'smart'
     },
   }
   return { live, shell }
@@ -302,7 +302,7 @@ export function finished(caseInfo: VerificationCaseSpecification, status: 'passe
     resultStatus: status,
     metrics: { totalDuration: `PT${seconds}S`, preparationDuration: 'PT0S', verificationDuration: `PT${seconds}S`, backAnnotationDuration: 'PT0S' },
     backendId: 'theta',
-    portfolioId: 'smart-full',
+    portfolioId: 'smart',
     trace: EMPTY_TRACE,
     witnessValidation: 'valid',
   }

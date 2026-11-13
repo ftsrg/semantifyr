@@ -62,7 +62,7 @@ class LiveVerificationTest {
                             id = 3,
                             command = "oxsts.case.verify",
                             arguments = listOf(
-                                VerificationCaseRequest(documentUri, selectedCase.location().range, "smart-full"),
+                                VerificationCaseRequest(documentUri, selectedCase.location().range, "smart"),
                             ),
                         ),
                     ),
@@ -81,7 +81,7 @@ class LiveVerificationTest {
                             id = 4,
                             command = "oxsts.case.validateWitness",
                             arguments = listOf(
-                                VerificationCaseRequest(witnessUri, LspWire.range(), "smart-full"),
+                                VerificationCaseRequest(witnessUri, LspWire.range(), "smart"),
                             ),
                         ),
                     ),
@@ -100,7 +100,7 @@ class LiveVerificationTest {
                             id = 6,
                             command = "oxsts.case.validateWitness",
                             arguments = listOf(
-                                VerificationCaseRequest(witnessUri, LspWire.range(), "smart-full"),
+                                VerificationCaseRequest(witnessUri, LspWire.range(), "smart"),
                             ),
                         ),
                     ),
@@ -141,7 +141,7 @@ class LiveVerificationTest {
                             id = 3,
                             command = "gamma.case.verify",
                             arguments = listOf(
-                                VerificationCaseRequest(documentUri, selectedCase.location().range, "smart-full"),
+                                VerificationCaseRequest(documentUri, selectedCase.location().range, "smart"),
                             ),
                         ),
                     ),
@@ -179,7 +179,7 @@ class LiveVerificationTest {
 
                 val cases = discoverCases(id = 2, command = "gamma.case.discover", documentUri = documentUri, flavor = "gamma")
                 val selectedCase = cases.pickByLabel("LeaderStatechartIdleReachable")
-                val request = VerificationCaseRequest(documentUri, selectedCase.location().range, "smart-full")
+                val request = VerificationCaseRequest(documentUri, selectedCase.location().range, "smart")
 
                 send(Frame.Text(LspWire.executeCommandRequest(id = 3, command = "gamma.witness.validate", arguments = listOf(request))))
                 val missing = awaitResponseFor(id = 3).resultAs(WitnessValidationResult::class.java)
@@ -196,7 +196,7 @@ class LiveVerificationTest {
                     .describedAs("witness validation: $validation")
                     .isEqualTo(WitnessValidationStatus.VALID)
                 assertThat(validation.verdict()).isEqualTo("passed")
-                assertThat(validation.portfolioId()).isEqualTo("smart-full")
+                assertThat(validation.portfolioId()).isEqualTo("smart")
                 val verificationDirectory = caseDirectoryName("model", selectedCase)
                 assertThat(artifactsOnDisk(tmp, "Simple.LeaderStatechartIdleReachable")).contains(
                     "verification/$verificationDirectory/report.json",

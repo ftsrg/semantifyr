@@ -252,9 +252,9 @@ describe('the connection indicator', () => {
 describe('the portfolios', () => {
   it('offers Automatic and Cross-check, then the single engines the server has', () => {
     const choices = portfolioChoices([
-      { id: 'smart-full', displayName: 'Auto', description: '', available: true },
-      { id: 'all-agree-full', displayName: 'All agree', description: '', available: true },
-      { id: 'theta-full', displayName: 'Theta', description: '', available: true },
+      { id: 'smart', displayName: 'Auto', description: '', available: true },
+      { id: 'all-agree', displayName: 'All agree', description: '', available: true },
+      { id: 'theta', displayName: 'Theta', description: '', available: true },
       { id: 'nuxmv-ic3-invar', displayName: 'nuXmv', description: '', available: false },
     ])
     expect(choices.combined.map((choice) => {

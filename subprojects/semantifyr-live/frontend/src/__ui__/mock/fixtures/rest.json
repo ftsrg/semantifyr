@@ -63,19 +63,19 @@
  "portfolios": {
   "portfolios": [
    {
-    "id": "smart-full",
+    "id": "smart",
     "displayName": "Auto",
     "description": "Races representative configurations of every backend in parallel and takes the first verdict its leg's soundness direction trusts.",
     "available": true
    },
    {
-    "id": "all-agree-full",
+    "id": "all-agree",
     "displayName": "All agree",
     "description": "Runs one representative configuration per backend in parallel and requires the trusted verdicts to agree.",
     "available": true
    },
    {
-    "id": "theta-full",
+    "id": "theta",
     "displayName": "Theta",
     "description": "Races the Theta CEGAR and k-induction configurations in parallel and takes the first verdict.",
     "available": true
@@ -99,7 +99,7 @@
     "available": true
    }
   ],
-  "defaultPortfolio": "smart-full"
+  "defaultPortfolio": "smart"
  },
  "libraries": {
   "builtin": [

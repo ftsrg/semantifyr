@@ -72,14 +72,14 @@ class SessionVerificationManagerTest {
         work: suspend () -> Any?,
     ): CompletableFuture<Any?> {
         return withSessionScope {
-            manager.launch(VerificationCaseRequest(uri, LspWire.range(startLine = line, endLine = line), "smart-full"), kind, work)
+            manager.launch(VerificationCaseRequest(uri, LspWire.range(startLine = line, endLine = line), "smart"), kind, work)
         }
     }
 
     private fun result(kind: VerificationKind): Any {
         return when (kind) {
-            VerificationKind.Verify -> VerificationCaseResult(VerificationStatus.PASSED, null, "theta-full", "smart-full", null, null)
-            VerificationKind.Validate -> WitnessValidationResult(WitnessValidationStatus.VALID, VerificationStatus.FAILED, null, "theta-full", "smart-full", null)
+            VerificationKind.Verify -> VerificationCaseResult(VerificationStatus.PASSED, null, "theta", "smart", null, null)
+            VerificationKind.Validate -> WitnessValidationResult(WitnessValidationStatus.VALID, VerificationStatus.FAILED, null, "theta", "smart", null)
         }
     }
 
@@ -181,7 +181,7 @@ class SessionVerificationManagerTest {
 
     @Test
     suspend fun `a verify drops the queued validation of the witness its case left`() {
-        val witnessResult = VerificationCaseResult(VerificationStatus.FAILED, null, "theta-full", "smart-full", null, VerificationTrace(null, null, witnessUri))
+        val witnessResult = VerificationCaseResult(VerificationStatus.FAILED, null, "theta", "smart", null, VerificationTrace(null, null, witnessUri))
         launch(VerificationKind.Verify, documentUri, 1) {
             witnessResult
         }.await()
@@ -234,7 +234,7 @@ class SessionVerificationManagerTest {
             Duration.ofMillis(20),
             compilation,
         )
-        val result = VerificationCaseResult(VerificationStatus.PASSED, null, "theta-full", "smart-full", metrics, null)
+        val result = VerificationCaseResult(VerificationStatus.PASSED, null, "theta", "smart", metrics, null)
 
         launch(VerificationKind.Verify, documentUri, 1) {
             result
@@ -242,7 +242,7 @@ class SessionVerificationManagerTest {
 
         val phaseMilliseconds = { phase: String ->
             registry.get("semantifyr.live.verification.phase")
-                .tags("kind", "verify", "backend", "theta-full", "phase", phase)
+                .tags("kind", "verify", "backend", "theta", "phase", phase)
                 .timer()
                 .totalTime(TimeUnit.MILLISECONDS)
         }
@@ -256,7 +256,7 @@ class SessionVerificationManagerTest {
     @Test
     suspend fun `a timed out verification records no phases`() {
         launch(VerificationKind.Verify, documentUri, 1) {
-            VerificationCaseResult.timedOut("timeout", "smart-full")
+            VerificationCaseResult.timedOut("timeout", "smart")
         }.await()
 
         assertThat(registry.find("semantifyr.live.verification.phase").timers()).isEmpty()

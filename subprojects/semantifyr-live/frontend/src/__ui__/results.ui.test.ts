@@ -438,7 +438,7 @@ describe('Verify all', () => {
     }).toEqual(['failed', 'passed'])
     expect(ui.backend.session().commands('oxsts.case.verify').map((argument) => {
       return (argument as { portfolio?: string }).portfolio
-    })).toEqual(['smart-full', 'smart-full'])
+    })).toEqual(['smart', 'smart'])
   })
 })
 

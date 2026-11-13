@@ -58,7 +58,7 @@ class SessionSemantifyrExtensionsTest {
             RunningVerification(
                 verificationId = "r-1",
                 location = Location("file:///x.oxsts", Range(Position(0, 0), Position(0, 0))),
-                portfolioId = "smart-full",
+                portfolioId = "smart",
                 kind = VerificationKind.Verify,
                 state = VerificationState.Running,
                 elapsed = Duration.ZERO,

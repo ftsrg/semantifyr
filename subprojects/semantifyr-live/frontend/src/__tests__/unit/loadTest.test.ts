@@ -201,7 +201,7 @@ describe('validateResult', () => {
       status: VerificationStatus.Failed,
       message: null,
       backendId: 'theta',
-      portfolioId: 'smart-full',
+      portfolioId: 'smart',
       metrics: null,
       trace: { callTrace: { steps: [] } as never, witnessState: { steps: [] } as never, witnessUri: witness },
     }
@@ -210,7 +210,7 @@ describe('validateResult', () => {
   function fakeClient(): LspClient & { sendRequest: ReturnType<typeof vi.fn> } {
     return {
       sendRequest: vi.fn(async () => {
-        return { status: 'valid', verdict: 'failed', message: null, backendId: 'theta', portfolioId: 'smart-full', metrics: { totalDuration: 'PT2S' } }
+        return { status: 'valid', verdict: 'failed', message: null, backendId: 'theta', portfolioId: 'smart', metrics: { totalDuration: 'PT2S' } }
       }),
       sendNotification: () => {},
     }
@@ -243,14 +243,14 @@ describe('validateResult', () => {
       verificationCase,
       result: resultWith(witnessUri),
       edited: true,
-      portfolio: 'smart-full',
+      portfolio: 'smart',
       timeoutMs: 1000,
     })
 
     expect(client.sendRequest).toHaveBeenCalledTimes(1)
     expect(client.sendRequest.mock.calls[0]![1]).toEqual({
       command: 'oxsts.case.validateWitness',
-      arguments: [{ uri: witnessUri, range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } }, portfolio: 'smart-full' }],
+      arguments: [{ uri: witnessUri, range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } }, portfolio: 'smart' }],
     })
     expect(running.keys).toEqual([
       `Validate ${witnessUri} 0:0`,
@@ -266,13 +266,13 @@ describe('validateResult', () => {
       verificationCase,
       result: resultWith(witnessUri),
       edited: false,
-      portfolio: 'smart-full',
+      portfolio: 'smart',
       timeoutMs: 1000,
     })
 
     expect(client.sendRequest.mock.calls[0]![1]).toEqual({
       command: 'gamma.witness.validate',
-      arguments: [{ ...verificationCase.location, portfolio: 'smart-full' }],
+      arguments: [{ ...verificationCase.location, portfolio: 'smart' }],
     })
   })
 
@@ -284,7 +284,7 @@ describe('validateResult', () => {
       verificationCase,
       result: resultWith(null),
       edited: false,
-      portfolio: 'smart-full',
+      portfolio: 'smart',
       timeoutMs: 1000,
     })
 

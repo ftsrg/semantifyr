@@ -37,9 +37,9 @@ class AllAgreeFullPortfolio(
     private val uppaal: VerificationBackend<UppaalConfig> = UppaalBackend(),
     private val spin: VerificationBackend<SpinConfig> = SpinBackend(),
 ) : VerificationPortfolio() {
-    override val id: String = "all-agree-full"
-    override val displayName: String = "All backends agree portfolio"
-    override val description: String = "Runs one representative configuration per backend in parallel and requires the trusted verdicts to agree."
+    override val id: String = "all-agree"
+    override val displayName: String = "All agree"
+    override val description: String = "Runs every installed backend and requires their trusted answers to agree."
 
     private val tasks: List<PortfolioTask<*>> = listOf(
         PortfolioTask(theta, ThetaConfig.CegarExplPredCombined, "theta-cegar-combined"),
@@ -59,9 +59,9 @@ class AllAgreeFullPortfolio(
             AvailabilityReport.Available
         } else {
             AvailabilityReport.Unavailable(
-                reason = "No verification backends are available on this system.",
+                reason = "No backend is installed.",
                 hints = listOf(
-                    "Install at least one of: theta-xsts-cli, Uppaal, nuXmv, or spin.",
+                    "Install at least one of Theta (theta-xsts-cli), nuXmv, Spin or Uppaal (verifyta).",
                 ),
             )
         }
@@ -87,7 +87,7 @@ class AllAgreeFullPortfolio(
                 ),
                 verdict = VerificationVerdict.Inconclusive,
                 metrics = BackendMetrics(),
-                message = "$id: no available backends",
+                message = "No backend is installed.",
             )
         }
         logger.info {

@@ -26,8 +26,8 @@ const BARRIER = caseOf('BarrierDownWhileTrainInCrossingViolated', 97)
 const TWO_TRAINS = caseOf('TwoTrainsCanBeInTheCrossing', 112)
 
 const PORTFOLIOS: PortfolioInfo[] = [
-  { id: 'smart-full', displayName: 'Smart (full)', description: '', available: true },
-  { id: 'all-agree-full', displayName: 'All agree (full)', description: '', available: true },
+  { id: 'smart', displayName: 'Smart (full)', description: '', available: true },
+  { id: 'all-agree', displayName: 'All agree (full)', description: '', available: true },
   { id: 'theta', displayName: 'Theta', description: '', available: true },
   { id: 'spin', displayName: 'Spin', description: '', available: true },
 ]

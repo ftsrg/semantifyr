@@ -51,7 +51,7 @@ jobs:
         run: >-
           npm run load-test -w @ftsrg/semantifyr-live-frontend --
           --url "$URL" --students "$STUDENTS" --ramp "$RAMP"
-          --portfolio smart-full --output "$GITHUB_WORKSPACE/load-test.json"
+          --portfolio smart --output "$GITHUB_WORKSPACE/load-test.json"
       - name: Upload the load test report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
