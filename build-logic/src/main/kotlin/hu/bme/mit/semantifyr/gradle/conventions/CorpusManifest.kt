@@ -10,10 +10,20 @@ import groovy.json.JsonSlurper
 import org.gradle.api.Project
 import org.gradle.api.file.Directory
 
-fun Project.sysmlCorpusFiles(corpusDirectory: Directory): List<String> {
+class CorpusModel(
+    val file: String,
+    val conformance: Boolean,
+) {
+    val name: String
+        get() = file.substringBeforeLast('.')
+}
+
+// the models a corpus manifest lists, the shape the corpora share
+fun Project.corpusModels(corpusDirectory: Directory): List<CorpusModel> {
     val manifest = providers.fileContents(corpusDirectory.file("manifest.json")).asText.get()
     val models = (JsonSlurper().parseText(manifest) as Map<*, *>)["models"] as List<*>
     return models.map {
-        (it as Map<*, *>)["file"] as String
+        val model = it as Map<*, *>
+        CorpusModel(model["file"] as String, model["conformance"] == true)
     }
 }

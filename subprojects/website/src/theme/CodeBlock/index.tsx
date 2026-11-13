@@ -60,7 +60,7 @@ export default function CodeBlockWrapper(props: Props): React.JSX.Element {
       <BrowserOnly>
         {() => (
           <Suspense fallback={null}>
-            <OpenInLiveLink language={language} code={code} />
+            <OpenInLiveLink language={language} code={code} address={fence?.address} />
           </Suspense>
         )}
       </BrowserOnly>

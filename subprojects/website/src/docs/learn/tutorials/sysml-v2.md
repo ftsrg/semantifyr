@@ -5,8 +5,9 @@ sidebar_position: 2
 
 import CodeBlock from '@theme/CodeBlock';
 import LiveEmbed, { selectDeclarations } from '@site/src/components/LiveEmbed';
-import room from '@sysml-tutorial-models/room.sysml';
+import room from '@served-examples/sysml/room';
 import NodeVersion from '@site/src/components/NodeVersion';
+import ServedExamples from '@site/src/components/ServedExamples';
 
 # Verifying SysML v2 Models
 
@@ -16,23 +17,23 @@ Semantifyr verifies SysML v2 models by translating them into OXSTS on top of a s
 
 The room has two parts. The **switch** reacts to presses of its button and tells the lamp to toggle; the **lamp** turns on and off whenever it is told to. The parts communicate through items sent over ports. Declare the items and the port definitions:
 
-<CodeBlock language="sysmlv2">{selectDeclarations(room, ['Press', 'ButtonPort', 'TogglePort'])}</CodeBlock>
+<CodeBlock language="sysmlv2">{selectDeclarations(room.text, ['Press', 'ButtonPort', 'TogglePort'])}</CodeBlock>
 
 `Press` and `Toggle` are item definitions without features: only their kind matters here. A `ButtonPort` receives presses, a `TogglePort` sends toggles. The `in` and `out` keywords give the direction of each item.
 
 The switch is a part with a button, an output and a state machine:
 
-<CodeBlock language="sysmlv2">{selectDeclarations(room, ['Switch'])}</CodeBlock>
+<CodeBlock language="sysmlv2">{selectDeclarations(room.text, ['Switch'])}</CodeBlock>
 
 The state machine starts in `Off`. The transition `turnOn` fires when a `Press` arrives on the button while the switch is `Off`; it sends a new `Toggle` through the output and moves to `On`. The transition `turnOff` does the same in the other direction. Naming the transitions is optional, but the names show up in the witness later.
 
 The lamp has an input port that is the conjugate (`~`) of `TogglePort`, so its `toggle` item flows in:
 
-<CodeBlock language="sysmlv2">{selectDeclarations(room, ['Lamp'])}</CodeBlock>
+<CodeBlock language="sysmlv2">{selectDeclarations(room.text, ['Lamp'])}</CodeBlock>
 
 Finally, the room puts the two parts together:
 
-<CodeBlock language="sysmlv2">{selectDeclarations(room, ['Room'])}</CodeBlock>
+<CodeBlock language="sysmlv2">{selectDeclarations(room.text, ['Room'])}</CodeBlock>
 
 The room's own `button` port is bound to the switch's button, and a flow connects the switch's output to the lamp's input.
 
@@ -42,25 +43,25 @@ The semantic library executes such a model in steps. In each step, the environme
 
 Requirements talk to the verifier through three calculation definitions, declared at the top of the file:
 
-<CodeBlock language="sysmlv2">{selectDeclarations(room, ['import', 'eventually', 'mustAlways', 'isStateActive'])}</CodeBlock>
+<CodeBlock language="sysmlv2">{selectDeclarations(room.text, ['import', 'eventually', 'mustAlways', 'isStateActive'])}</CodeBlock>
 
 Semantifyr recognizes them by their names: `eventually` (short name `EF`) states that some execution reaches a situation, `mustAlways` (short name `AG`) that every execution stays in one, and `isStateActive` asks whether a state is currently active. The SysML v2 example models in the repository keep these definitions in a separate `Verification.sysml` next to the models; this tutorial keeps them in the model file, so that one file is all you need.
 
 A verification case is a `verification def` whose subject is the system under verification and whose objective is a requirement over it. The first case asks whether the lamp can ever be lit:
 
-<CodeBlock language="sysmlv2">{selectDeclarations(room, ['LampLitReachable'])}</CodeBlock>
+<CodeBlock language="sysmlv2">{selectDeclarations(room.text, ['LampLitReachable'])}</CodeBlock>
 
 The second claims that the lamp is never lit, which is false; the repository's convention marks such expected failures with the `Violated` suffix:
 
-<CodeBlock language="sysmlv2">{selectDeclarations(room, ['LampNeverLitViolated'])}</CodeBlock>
+<CodeBlock language="sysmlv2">{selectDeclarations(room.text, ['LampNeverLitViolated'])}</CodeBlock>
 
 The third claims that the lamp is only ever lit while the switch is on. Before you run it, think about whether it holds:
 
-<CodeBlock language="sysmlv2">{selectDeclarations(room, ['LampLitOnlyWhileSwitchOnViolated'])}</CodeBlock>
+<CodeBlock language="sysmlv2">{selectDeclarations(room.text, ['LampLitOnlyWhileSwitchOnViolated'])}</CodeBlock>
 
 The complete model is one file. **Verify** in the corner of the code block below opens it in an editor on this page:
 
-<LiveEmbed code={room} language="sysml" />
+<LiveEmbed example={room} />
 
 ## Verifying
 
@@ -115,7 +116,7 @@ export SEMANTIFYR_HOME="$PWD/subprojects/frontends/sysml/sysml-cli/build/install
 
 Create an empty directory and save the complete model in it as `room.sysml`. The translator reads every `.sysml` file in the model's directory, so keep other models out of it.
 
-<CodeBlock language="sysmlv2" title="room.sysml">{room}</CodeBlock>
+<CodeBlock language="sysmlv2" title="room.sysml">{room.text}</CodeBlock>
 
 In the directory of `room.sysml`, verify the model:
 
@@ -132,3 +133,9 @@ For each case, the command prints its name, `PASSED` or `FAILED` with the time i
 `--artifact-directory ../room-artifacts` keeps the translated model in `compiled/default/room.oxsts`, with its name map `room.names.json` beside it, and the artifacts of every case in a directory of its own; a case with a witness has `witness.json`, `trace.json`, `witness.oxsts` and `trace.sysml` among them. [Artifacts](../cli/artifacts.mdx) describes each file.
 
 The trace above is in `trace.json` and `witness.json` in `../room-artifacts/room.LampLitOnlyWhileSwitchOnViolated/`, and `trace.sysml` next to them is the model of the *SysML trace* view.
+
+## The Model in Live
+
+The room opens in Live by its own address:
+
+<ServedExamples />

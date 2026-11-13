@@ -4,12 +4,12 @@ sidebar_position: 1
 ---
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
+import step1 from '@served-examples/oxsts/basics-step1';
+import step2 from '@served-examples/oxsts/basics-step2';
+import step3 from '@served-examples/oxsts/basics-step3';
+import step4 from '@served-examples/oxsts/basics-step4';
+import basics from '@served-examples/oxsts/basics';
 import ServedExamples, { ExampleLink } from '@site/src/components/ServedExamples';
-import step1 from '@oxsts-tutorial-models/basics-step1.oxsts';
-import step2 from '@oxsts-tutorial-models/basics-step2.oxsts';
-import step3 from '@oxsts-tutorial-models/basics-step3.oxsts';
-import step4 from '@oxsts-tutorial-models/basics-step4.oxsts';
-import basics from '@oxsts-tutorial-models/basics.oxsts';
 
 # Direct Modeling
 
@@ -41,7 +41,7 @@ Every Semantifyr file starts with its package. The language uses double colons `
 
 The simple traffic light has three possible colors: red, yellow, and green. Declare a top-level enumeration of the colors:
 
-<LiveEmbed code={step1} show={['package', 'LightColor']} />
+<LiveEmbed example={step1} show={['package', 'LightColor']} />
 
 Enums are one of the simplest user-definable types. In this case, the type `LightColor` specifies the `Red`, `Yellow`, and `Green` literal values.
 
@@ -51,7 +51,7 @@ The language supports semicolons `;`, however, their use is entirely optional.
 
 Next, declare the `TrafficLight` class:
 
-<LiveEmbed code={step1} show={['TrafficLight']} />
+<LiveEmbed example={step1} show={['TrafficLight']} />
 
 The class contains a single **variable** of type `LightColor` that starts with the value `LightColor::Red`, the qualified name of the `Red` **enum literal**. Variables specify the _state_ of the model.
 
@@ -65,7 +65,7 @@ Open the step in the editor and try content assist or introduce a typo to see a 
 
 The main functionality of Semantifyr is exposed through classes _annotated_ with `@VerificationCase`, similar to a `@Test` annotation in JUnit. To make the traffic light a verification case, annotate it and add a _property_ for the verifier to check:
 
-<LiveEmbed code={step2} show={['TrafficLight']} />
+<LiveEmbed example={step2} show={['TrafficLight']} />
 
 The anonymous `prop` is the property the verifier checks. Its body uses a temporal operator (see the [language reference](../../language/expressions.md#temporal-operators)): `EF` ("exists finally") is the reachability operator, so the property states that there is at least one execution of the system in which `color` takes the value `LightColor::Yellow`. Its sibling `AG` ("always globally") is the safety operator we will use later in this tutorial.
 
@@ -77,7 +77,7 @@ The anonymous `prop` is the property the verifier checks. Its body uses a tempor
 
 Transitions can also structure code by extracting it into reusable parts. Extract the color check and the color assignment into separate transitions:
 
-<LiveEmbed code={step3} show={['TrafficLight']} />
+<LiveEmbed example={step3} show={['TrafficLight']} />
 
 `assumeColor` is a parameterized transition that assumes the current color matches the given argument. The `color` parameter shadows the `color` variable, so the body uses `self.color` to refer to the variable; the `self` keyword always refers to the current instance. `setColor` assigns the parameter to the variable, with the same `self.color` qualifier for the same reason.
 
@@ -93,19 +93,19 @@ Variables define the _state_ of the system, transitions define the _behavior_ of
 
 Take the verification case off the traffic light (remove `@VerificationCase` and the `prop` from `TrafficLight`, so that it goes back to a plain class) and add a separate verification case that contains a light:
 
-<LiveEmbed code={step4} show={['GreenColorIsReachable']} />
+<LiveEmbed example={step4} show={['GreenColorIsReachable']} />
 
 Every `GreenColorIsReachable` instance contains exactly one `TrafficLight` instance, accessible through the `light` feature; `[1]` is the multiplicity. The case's main transition lets the light take a step by inlining the light's main transition, `light.main()`. See the [features reference](../../language/features.md) for more on containment.
 
 The benefit of the compositional approach is the ability to reuse parts of the model. A real intersection has more than one traffic light. Add a class that composes two lights:
 
-<LiveEmbed code={step4} show={['Intersection']} />
+<LiveEmbed example={step4} show={['Intersection']} />
 
 The intersection contains two named lights. Without a multiplicity, a feature holds exactly one instance, as if written `[1]`. The main transition of `Intersection` non-deterministically lets one light or the other take a step. Each light is its own complete state machine; the intersection chooses which one runs on a given step.
 
 The crucial question for any intersection is whether the two lights can ever be green at the same time. Add a verification case that asks exactly that:
 
-<LiveEmbed code={step4} show={['IntersectionNeverBothGreen']} />
+<LiveEmbed example={step4} show={['IntersectionNeverBothGreen']} />
 
 This is an `AG` safety property: on every execution, the two lights are never green at the same time. The tag already gives away what we expect.
 
@@ -117,13 +117,13 @@ This is an `AG` safety property: on every execution, the two lights are never gr
 
 To coordinate the lights, the intersection needs a way to ask whether a light is currently green. Add a property to `TrafficLight`, after the main transition:
 
-<LiveEmbed code={basics} show={['TrafficLight']} />
+<LiveEmbed example={basics} show={['TrafficLight']} />
 
 `isColor` is a named property that takes a color as a parameter and returns a `bool`. Properties are pure functions of the state; unlike transitions, they cannot change it. As with `assumeColor` and `setColor`, the parameter shadows the variable, so the body uses `self.color`.
 
 Next, guard each branch of the intersection's `choice` so that a light only steps when the other light is not green:
 
-<LiveEmbed code={basics} show={['Intersection']} />
+<LiveEmbed example={basics} show={['Intersection']} />
 
 Now a light can only take a step when the other light is not green. As soon as one light turns `Green`, the other one cannot move until the green light has moved on to `Yellow`.
 
@@ -152,7 +152,7 @@ The next tutorial in the series, [Building a Library](building-a-library.md), ex
 
 The complete final model:
 
-<LiveEmbed code={basics} />
+<LiveEmbed example={basics} />
 
 In the finished model, `setColor` carries `@Trace`, so the trace lists its calls in the *Calls* view.
 

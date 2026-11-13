@@ -8,7 +8,7 @@ import type React from 'react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import CodeBlock from '@theme/CodeBlock';
 import { useColorMode } from '@docusaurus/theme-common';
-import { liveEditorUrl, normalizeBaseUrl, type LiveEditorLines, type LiveEditorView } from '@semantifyr/editor-common';
+import { liveEditorUrl, liveExampleUrl, normalizeBaseUrl, type LiveEditorLines, type LiveEditorView } from '@semantifyr/editor-common';
 import { terms } from '@semantifyr/editor-common/terms';
 import { FenceContext } from '@site/src/lib/fence';
 import { useLiveBackendUrl } from '@site/src/lib/live';
@@ -17,6 +17,8 @@ import styles from './styles.module.css';
 
 export interface EmbeddedExampleProps {
   model: string;
+  // the registry's identifier of a served example, which opens by its address
+  example?: string | undefined;
   shown: string;
   lines?: LiveEditorLines | undefined;
   language: 'oxsts' | 'gamma' | 'sysml';
@@ -77,7 +79,7 @@ function EditIcon(): React.JSX.Element {
 }
 
 // closed it is the page's code block; on the press live's editor loads unseen over it and takes its place once it shows the model
-export function EmbeddedExample({ model, shown, lines, language, library, view, open = false }: EmbeddedExampleProps): React.JSX.Element {
+export function EmbeddedExample({ model, example, shown, lines, language, library, view, open = false }: EmbeddedExampleProps): React.JSX.Element {
   const liveBackendUrl = useLiveBackendUrl();
   const { colorMode } = useColorMode();
   const [phase, setPhase] = useState<Phase>('closed');
@@ -98,7 +100,7 @@ export function EmbeddedExample({ model, shown, lines, language, library, view, 
     }
     let active = true;
     const range = first === undefined || last === undefined ? undefined : { first, last };
-    void liveEditorUrl(`${normalizeBaseUrl(liveBackendUrl).http}/`, { language, library, view, theme: colorMode, lines: range, model }).then((address) => {
+    void liveEditorUrl(`${normalizeBaseUrl(liveBackendUrl).http}/`, { language, example, library, view, theme: colorMode, lines: range, model: example === undefined ? model : undefined }).then((address) => {
       if (active) {
         setUrl(address);
       }
@@ -106,7 +108,7 @@ export function EmbeddedExample({ model, shown, lines, language, library, view, 
     return () => {
       active = false;
     };
-  }, [opened, liveBackendUrl, language, library, view, colorMode, model, first, last]);
+  }, [opened, liveBackendUrl, language, example, library, view, colorMode, model, first, last]);
 
   // the block comes back where the editor's top was, and the focus to its control
   useLayoutEffect(() => {
@@ -125,9 +127,11 @@ export function EmbeddedExample({ model, shown, lines, language, library, view, 
   }, []);
 
   const verifies = view === 'embed';
+  const address = example === undefined ? undefined : liveExampleUrl(`${normalizeBaseUrl(liveBackendUrl).http}/`, language, example);
   const fence = useMemo(() => {
     return {
       model,
+      address,
       control: phase === 'closed'
         ? (
           <button
@@ -146,7 +150,7 @@ export function EmbeddedExample({ model, shown, lines, language, library, view, 
         )
         : phase === 'loading' ? <span className={styles.loadingLabel} role="status">Opening the editor</span> : null,
     };
-  }, [model, phase, verifies]);
+  }, [model, address, phase, verifies]);
 
   return (
     <div ref={block} className={`${styles.embed}${phase === 'loading' ? ` ${styles.loading}` : ''}`} aria-busy={phase === 'loading'}>

@@ -15,7 +15,6 @@ import org.gradle.api.tasks.testing.Test
 class ServedExample(
     val id: String,
     val language: String,
-    // the path from the repository's root
     val file: String,
     val hidden: Boolean,
 ) {
@@ -57,8 +56,10 @@ fun Project.servedExampleSources(): List<RegularFile> {
     }
 }
 
-// the tests find the registry and the files it names from the repository's root, which they get relative to their module
+// paths relative to the module, so that the test task stays relocatable for the build cache
 fun Test.readsServedExamples() {
+    val module = project.projectDir.toPath()
     inputs.file(project.servedExamplesFile).withPathSensitivity(PathSensitivity.RELATIVE)
-    systemProperty("semantifyr.repository", project.projectDir.toPath().relativize(project.rootDir.toPath()).joinToString("/"))
+    systemProperty("semantifyr.repository", module.relativize(project.rootDir.toPath()).joinToString("/"))
+    systemProperty("semantifyr.examples", module.relativize(project.servedExamplesFile.asFile.toPath()).joinToString("/"))
 }

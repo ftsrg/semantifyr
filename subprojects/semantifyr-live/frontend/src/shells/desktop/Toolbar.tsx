@@ -204,9 +204,9 @@ function WaitingExampleMenu(): React.JSX.Element {
           <Menu.Popup className="menu examples-menu" data-language={model.languageId}>
             <LanguageIntro languageId={model.languageId} />
             <Menu.Separator className="menu-divider" />
-            {model.examples.filter((example) => {
-              return example.served?.hidden !== true
-            }).map((example) => {
+            {[...listedExamples(model), ...model.examples.filter((example) => {
+              return example.served === null
+            })].map((example) => {
               const current = example.id === model.example?.id
               return (
                 <Menu.Item

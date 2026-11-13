@@ -38,7 +38,6 @@ fun descriptionOf(text: String): String? {
     }
 }
 
-// writes <file name>.description with the first line of each model's comment, and nothing for a model without one
 @CacheableTask
 abstract class ExampleDescriptions : DefaultTask() {
     @get:InputFiles

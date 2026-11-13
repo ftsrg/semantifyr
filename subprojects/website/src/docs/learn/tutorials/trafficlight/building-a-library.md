@@ -4,11 +4,11 @@ sidebar_position: 2
 ---
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
+import step1 from '@served-examples/oxsts/intermediate-step1';
+import step2 from '@served-examples/oxsts/intermediate-step2';
+import step3 from '@served-examples/oxsts/intermediate-step3';
+import intermediate from '@served-examples/oxsts/intermediate';
 import ServedExamples, { ExampleLink } from '@site/src/components/ServedExamples';
-import step1 from '@oxsts-tutorial-models/intermediate-step1.oxsts';
-import step2 from '@oxsts-tutorial-models/intermediate-step2.oxsts';
-import step3 from '@oxsts-tutorial-models/intermediate-step3.oxsts';
-import intermediate from '@oxsts-tutorial-models/intermediate.oxsts';
 
 # Building a Library
 
@@ -26,13 +26,13 @@ In the Direct Modeling tutorial the entire state machine lived inside a single c
 
 The design changes significantly, so this tutorial starts from a fresh file with its own package:
 
-<LiveEmbed code={step1} show={['package']} />
+<LiveEmbed example={step1} show={['package']} />
 
 ## States and Transitions
 
 The most basic building block is a `State`. A state knows whether it is currently active by consulting its containing statechart, and exposes an `activate` transition that other code can call to switch into it. Declare the `State` class:
 
-<LiveEmbed code={step1} show={['State']} />
+<LiveEmbed example={step1} show={['State']} />
 
 The `container` keyword declares the inverse of a `contains` feature. The `Statechart` class (which we add in the next section) will own its `State` instances through `contains states`, and each `State` knows its containing statechart through `container parent`. The `opposite` keyword wires the two directions together: the validator checks that opposite features name each other, so declaring one direction without the other is an error.
 
@@ -44,7 +44,7 @@ The `isActive` property reads "I am active if my parent's `activeState` is me". 
 
 Next, declare a `Transition` class below `State`:
 
-<LiveEmbed code={step1} show={['Transition']} />
+<LiveEmbed example={step1} show={['Transition']} />
 
 A transition is a first-class object with two references and the behavior "if I am enabled, activate my destination state". Modeling transitions as their own class lets the host hold a _collection_ of them and pick one to fire.
 
@@ -56,7 +56,7 @@ The main transition first assumes `isEnabled()`, then `inline`s the destination 
 
 Now declare the `Statechart` class that hosts states and transitions:
 
-<LiveEmbed code={step1} show={['Statechart']} />
+<LiveEmbed example={step1} show={['Statechart']} />
 
 The `Statechart` owns _any number_ of states and transitions through containment features with multiplicity `[0..*]` (zero or more). A generic statechart does not fix the count; concrete subclasses decide which instances actually appear.
 
@@ -74,7 +74,7 @@ When `activeState` is `nothing`, _no_ state is active, so every transition is di
 
 Now declare a `TrafficLight` class that extends `Statechart`:
 
-<LiveEmbed code={step2} show={['TrafficLight']} />
+<LiveEmbed example={step2} show={['TrafficLight']} />
 
 The `class TrafficLight : Statechart` syntax declares **inheritance**: `TrafficLight` extends `Statechart` and inherits all of its members (`states`, `transitions`, `activeState`, and the main transition). A class has at most one superclass.
 
@@ -86,7 +86,7 @@ Finally, `redefine init { activeState := red }` overrides the inherited `init` t
 
 Add a verification case that asks whether the light can turn green:
 
-<LiveEmbed code={step2} show={['GreenColorIsReachable']} />
+<LiveEmbed example={step2} show={['GreenColorIsReachable']} />
 
 **Task:** Open the step and verify `GreenColorIsReachable`.
 
@@ -96,7 +96,7 @@ Add a verification case that asks whether the light can turn green:
 
 Delegate the initialization to the light:
 
-<LiveEmbed code={step3} show={['GreenColorIsReachable']} />
+<LiveEmbed example={step3} show={['GreenColorIsReachable']} />
 
 The `redefine init` of the verification case inlines the light's `init`. This is the **init chain pattern**: the `init` of a class calls the `init` of each contained instance that needs one, so the whole hierarchy is initialized in one go.
 
@@ -108,13 +108,13 @@ The `redefine init` of the verification case inlines the light's `init`. This is
 
 Now declare the `Intersection` class. It composes two traffic lights and chains their initialization:
 
-<LiveEmbed code={intermediate} show={['Intersection']} />
+<LiveEmbed example={intermediate} show={['Intersection']} />
 
 The `redefine init` block initializes both lights, continuing the init chain. The main transition is the coordinated step from the Direct Modeling tutorial, but the guard now uses `green.isActive()` instead of the old `isColor(LightColor::Green)`: it navigates to the `green` state of the other light and asks whether it is currently active.
 
 Finally, add the safety case:
 
-<LiveEmbed code={intermediate} show={['IntersectionNeverBothGreen']} />
+<LiveEmbed example={intermediate} show={['IntersectionNeverBothGreen']} />
 
 Both verification cases follow the same pattern: a single `contains` feature for the system under verification, a `redefine init` that starts the init chain, a main transition that lets the system take a step, and a `prop` that queries the state instances directly through `isActive()`.
 
@@ -146,7 +146,7 @@ The next tutorial in the series, the [Advanced Tutorial](advanced-tutorial.md), 
 
 The complete final model:
 
-<LiveEmbed code={intermediate} />
+<LiveEmbed example={intermediate} />
 
 In the finished model, `Transition`'s main transition carries `@Trace`, so the trace lists the transitions that fired in the *Calls* view.
 

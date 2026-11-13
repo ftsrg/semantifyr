@@ -6,8 +6,8 @@
 
 import com.github.gradle.node.pnpm.task.PnpmTask
 import com.github.gradle.node.task.NodeTask
+import hu.bme.mit.semantifyr.gradle.conventions.corpusModels
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
-import hu.bme.mit.semantifyr.gradle.conventions.servedExamples
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
@@ -228,8 +228,9 @@ fun sysmlExampleTask(name: String) = tasks.register<NodeTask>("compileSysmlExamp
     }
 }
 
-val compileSysmlExampleTasks = servedExamples("sysml").filter {
-    !it.hidden
+// every model on the default library: live serves the compiled served models, and the live backend's tests take others
+val compileSysmlExampleTasks = corpusModels(examplesSourceDir).filter {
+    !it.conformance
 }.map {
     sysmlExampleTask(it.name)
 }

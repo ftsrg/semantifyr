@@ -4,10 +4,17 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { servedExamples } from '@semantifyr/editor-common/examples'
 import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
+import { BLANK_MODEL } from '../texts'
 import { casesListed, LIVE_URL, results, test } from './harness'
+
+const REPOSITORY = fileURLToPath(new URL('../../../../../', import.meta.url))
 
 describe('the language switch', () => {
   test('offers SysML v2, Gamma and OXSTS, and opens a session of the language chosen', async ({ ui }) => {
@@ -86,13 +93,14 @@ const FLAVOURS = [
   'SysML v2\'s semantics',
 ]
 
+// the labels live's menus list, and the blank model
 const EXAMPLES = [
-  'Level crossing',
-  'Tutorial: Basics',
-  'Tutorial: Intermediate',
-  'Spacecraft',
-  'Crossroads',
-  'Blank model',
+  ...new Set(servedExamples.filter((example) => {
+    return example.hidden !== true
+  }).map((example) => {
+    return example.label
+  })),
+  BLANK_MODEL,
 ]
 
 const WAITS = [
@@ -102,13 +110,14 @@ const WAITS = [
   2000,
 ]
 
-// the examples whose every case the tall page shows at once
-const LONG_EXAMPLES = new Set([
-  'advanced',
-  'crossroads',
-  'spacecraft',
-  'compressedspacecraft',
-])
+// the tall page's editor renders this many lines at most, so a longer model shows the marks of a part of its cases
+const LINES_SHOWN = 250
+
+const LONG_EXAMPLES = new Set(servedExamples.filter((example) => {
+  return readFileSync(join(REPOSITORY, example.file), 'utf-8').split('\n').length > LINES_SHOWN
+}).map((example) => {
+  return example.id
+}))
 
 // a fixed sequence, so a failure is replayed as it happened
 function stepsOf(count: number, seed: number): { step: Step, wait: number }[] {

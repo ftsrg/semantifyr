@@ -28,7 +28,6 @@ const importedSysmlv2 = import.meta.glob('./snippets/imported/sysmlv2/*', {
   eager: true,
 });
 
-// the first line of the comment at the top of each model, which the build takes
 const importedDescriptions = import.meta.glob('./snippets/imported/descriptions/*.description', {
   query: '?raw',
   import: 'default',
@@ -36,14 +35,12 @@ const importedDescriptions = import.meta.glob('./snippets/imported/descriptions/
 });
 
 export interface LiveExample {
-  // the example's name in the address, lower-case with hyphens
   id: string;
   flavor: string;
   label: string;
-  // the first line of the model's own comment, absent where it has none
   description: string | null;
   code: string;
-  // the registry's entry, null for a blank model
+  // null for a blank model
   served: ServedExample | null;
 }
 
@@ -123,7 +120,7 @@ export function languagePageOf(languageId: string): string | null {
 }
 
 // the examples live's menu lists: a lesson's step is opened by its address alone, and the blank model has a place of its own
-export function listedExamples(flavor: Pick<LiveFlavor, 'examples'>): LiveExample[] {
+export function listedExamples(flavor: { examples: readonly LiveExample[] }): LiveExample[] {
   return flavor.examples.filter((example) => {
     return example.served !== null && example.served.hidden !== true;
   });

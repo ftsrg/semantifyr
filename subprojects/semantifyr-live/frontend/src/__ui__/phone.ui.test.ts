@@ -7,7 +7,7 @@
 import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
-import { casesListed, results, test } from './harness'
+import { casesListed, results, servedExample, test, titleOf } from './harness'
 
 const PHONE = { width: 390, height: 844, touch: true }
 const TABLET = { width: 1024, height: 768, touch: true }
@@ -77,11 +77,11 @@ describe('the phone', () => {
     await page.getByRole('button', { name: 'Choose a model' }).click()
     const chooser = page.getByRole('dialog', { name: 'Choose a model' })
     await chooser.getByRole('group', { name: 'Language' }).getByRole('button', { name: /Gamma/ }).click()
-    await chooser.locator('.chooser-item', { hasText: 'Crossroads' }).click()
+    await chooser.locator('.chooser-item', { hasText: servedExample('gamma', 'crossroads').label }).click()
 
     await expect.poll(async () => {
       return page.title()
-    }).toBe('Crossroads - Gamma - Semantifyr Live')
+    }).toBe(titleOf('gamma', 'crossroads'))
   })
 })
 

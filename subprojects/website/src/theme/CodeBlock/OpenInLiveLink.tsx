@@ -14,13 +14,18 @@ import styles from './Buttons/styles.module.css';
 interface Props {
   language: string;
   code: string;
+  address?: string | undefined;
 }
 
-export default function OpenInLiveLink({ language, code }: Props): React.JSX.Element | null {
+export default function OpenInLiveLink({ language, code, address }: Props): React.JSX.Element | null {
   const liveBackendUrl = useLiveBackendUrl();
-  const [href, setHref] = useState<string | null>(null);
+  const [href, setHref] = useState<string | null>(address ?? null);
 
   useEffect(() => {
+    if (address !== undefined) {
+      setHref(address);
+      return;
+    }
     let active = true;
     void liveEditorUrl(`${normalizeBaseUrl(liveBackendUrl).http}/`, { language, model: code }).then((url) => {
       if (active) {
@@ -30,7 +35,7 @@ export default function OpenInLiveLink({ language, code }: Props): React.JSX.Ele
     return () => {
       active = false;
     };
-  }, [liveBackendUrl, language, code]);
+  }, [liveBackendUrl, language, code, address]);
 
   if (href === null) {
     return null;

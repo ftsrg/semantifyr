@@ -5,14 +5,14 @@
  */
 
 import type React from 'react'
-import type { ServedExample } from '@semantifyr/editor-common/examples'
+import { rightsOf, type ServedExample } from '@semantifyr/editor-common/examples'
 
 import { findExample } from '../../examples'
 import { presentationOf } from '../../lib/language/presentation'
 import { useStore } from '../../lib/stores/useStore'
 import type { AddressProblem, Live } from '../../lib/workspace/live'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
-import { casesSentence, EXAMPLE_PAGE, exampleRights, websitePage } from '../../texts'
+import { casesSentence, EXAMPLE_PAGE, websitePage } from '../../texts'
 import { Icon } from '../../ui/icons'
 import { useCurrentDocument, useFlavor } from '../hooks'
 import { useShell } from '../shellContext'
@@ -66,7 +66,7 @@ function ExampleSource({ served }: { served: ServedExample | null }): React.JSX.
   if (served === null) {
     return <span className="orientation-source" />
   }
-  const rights = exampleRights(served.origin, served.holder, served.licence)
+  const rights = rightsOf(served)
   return (
     <span className="orientation-source">
       <span className="orientation-rights" title={rights}>{rights}</span>

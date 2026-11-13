@@ -8,7 +8,7 @@ import type React from 'react';
 import { useLocation } from '@docusaurus/router';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { liveExampleUrl, normalizeBaseUrl } from '@semantifyr/editor-common';
-import { servedExamples, type ExampleLanguage, type ServedExample } from '@semantifyr/editor-common/examples';
+import { rightsOf, servedExamples, type ExampleLanguage, type ServedExample } from '@semantifyr/editor-common/examples';
 import { useLiveBackendUrl } from '@site/src/lib/live';
 
 function useExampleAddress(example: ServedExample): string {
@@ -26,9 +26,8 @@ function exampleOf(language: ExampleLanguage, id: string): ServedExample {
   return example;
 }
 
-// where an example comes from and under which terms, from the registry
 export function ExampleRights({ example }: { example: ServedExample }): React.JSX.Element {
-  return <>{`Origin: ${example.origin}. Rights: ${example.holder}, ${example.licence}.`}</>;
+  return <>{rightsOf(example)}</>;
 }
 
 // an example by its address in live, under its label

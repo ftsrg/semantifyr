@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.conventions.corpusModels
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
-import hu.bme.mit.semantifyr.gradle.conventions.sysmlCorpusFiles
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
@@ -72,7 +72,11 @@ val cloneSysMLTestModels = tasks.register<Sync>("cloneSysMLTestModels") {
     from(sysmlCorpusDir) {
         // the corpus models share its isStateActive and eventually
         include("Verification.sysml")
-        include(sysmlCorpusFiles(sysmlCorpusDir))
+        include(
+            corpusModels(sysmlCorpusDir).map {
+                it.file
+            },
+        )
     }
     into("examples/sysml/TestModels")
 }

@@ -36,7 +36,7 @@
       "label": "Crossroads",
       "reason": "Two traffic lights under one controller, with timed transitions and items sent between its parts.",
       "origin": "The Crossroads of the Gamma tutorial, rewritten in SysML v2 by Semantifyr",
-      "holder": "The contributors to the Gamma project",
+      "holder": "The contributors to the Gamma project and the Semantifyr Authors",
       "licence": "EPL-1.0",
       "page": "learn/sysml-v2-subset",
       "cases": [
@@ -84,7 +84,7 @@
       "label": "Spacecraft (compressed)",
       "reason": "A spacecraft and a ground station exchanging data, with integer attributes for the battery and the data.",
       "origin": "The Spacecraft of the Gamma repository's tests, rewritten in SysML v2 by Semantifyr",
-      "holder": "The contributors to the Gamma project",
+      "holder": "The contributors to the Gamma project and the Semantifyr Authors",
       "licence": "EPL-1.0",
       "page": "learn/sysml-v2-subset",
       "cases": [
@@ -131,6 +131,23 @@
       ]
     },
     {
+      "id": "room",
+      "language": "sysml",
+      "file": "subprojects/frontends/sysml/models/tutorial/room.sysml",
+      "label": "SysML v2 tutorial: Room",
+      "reason": "The model the SysML v2 tutorial builds and runs from its page.",
+      "origin": "Made for Semantifyr",
+      "holder": "The Semantifyr Authors",
+      "licence": "EPL-2.0",
+      "page": "learn/tutorials/sysml-v2",
+      "cases": [
+        "LampLitReachable",
+        "LampNeverLitViolated",
+        "LampLitOnlyWhileSwitchOnViolated"
+      ],
+      "hidden": true
+    },
+    {
       "id": "level-crossing",
       "language": "gamma",
       "file": "subprojects/frontends/gamma/models/examples/LevelCrossing.gamma",
@@ -151,8 +168,8 @@
       "file": "subprojects/frontends/gamma/models/examples/Spacecraft.gamma",
       "label": "Spacecraft",
       "reason": "A spacecraft and a ground station exchanging data, with orthogonal regions, timeouts and a battery counter.",
-      "origin": "The Spacecraft of the Gamma repository's tests",
-      "holder": "The contributors to the Gamma project",
+      "origin": "The Spacecraft of the Gamma repository's tests, rewritten in Gamma's syntax by Semantifyr",
+      "holder": "The contributors to the Gamma project and the Semantifyr Authors",
       "licence": "EPL-1.0",
       "page": "learn/gamma",
       "cases": [

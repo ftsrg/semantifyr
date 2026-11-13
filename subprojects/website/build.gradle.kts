@@ -6,8 +6,10 @@
 
 import com.github.gradle.node.npm.task.NpmTask
 import groovy.json.JsonSlurper
+import hu.bme.mit.semantifyr.gradle.conventions.readsServedExamples
 import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
+import hu.bme.mit.semantifyr.gradle.conventions.servedExampleSources
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
 
 plugins {
@@ -227,6 +229,7 @@ fun NpmTask.configureSharedInputs() {
     inputs.file(rootProject.layout.projectDirectory.file("subprojects/semantifyr-vscode/package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(sourceAliasesFile).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(sourceAliasDirectories).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(servedExampleSources()).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneGrammars).withPathSensitivity(PathSensitivity.RELATIVE)
     // the builds keep their own caches under node_modules/.cache, which say nothing of the result
     dependsOn(tasks.npmInstall)
@@ -330,6 +333,11 @@ tasks {
             .withPathSensitivity(PathSensitivity.RELATIVE)
         inputs.files(sourceAliasDirectories)
             .withPropertyName("importedModels")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        // and the served examples the pages embed
+        readsServedExamples()
+        inputs.files(servedExampleSources())
+            .withPropertyName("servedExamples")
             .withPathSensitivity(PathSensitivity.RELATIVE)
     }
 

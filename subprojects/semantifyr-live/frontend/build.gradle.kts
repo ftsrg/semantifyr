@@ -5,11 +5,12 @@
  */
 
 import com.github.gradle.node.npm.task.NpmTask
+import hu.bme.mit.semantifyr.gradle.conventions.ExampleDescriptions
 import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
-import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
-import hu.bme.mit.semantifyr.gradle.conventions.ExampleDescriptions
 import hu.bme.mit.semantifyr.gradle.conventions.servedExamples
+import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
+import org.gradle.api.file.RegularFile
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.nodejs")
@@ -51,14 +52,23 @@ val importedVscodeDir = project.layout.projectDirectory.dir("src/vscode/imported
 val brandingDir = rootProject.layout.projectDirectory.dir("branding")
 val publicDir = project.layout.projectDirectory.dir("public")
 
-fun servedFiles(language: String) = servedExamples(language).map {
-    rootProject.layout.projectDirectory.file(it.file)
+fun servedFiles(language: String): List<RegularFile> {
+    return servedExamples(language).map {
+        rootProject.layout.projectDirectory.file(it.file)
+    }
+}
+
+// live's libraries show the compiled form of the served models alone
+fun compiledFiles(language: String): List<String> {
+    return servedExamples(language).map {
+        "${it.name}.oxsts"
+    }
 }
 
 val cloneGammaTestModels = tasks.register<Sync>("cloneGammaTestModels") {
     from(servedFiles("gamma"))
     from(gammaCompiledExamplesFiles) {
-        include("*.oxsts")
+        include(compiledFiles("gamma"))
     }
     into(importedSnippetsDir.dir("gamma"))
 }
@@ -66,7 +76,7 @@ val cloneGammaTestModels = tasks.register<Sync>("cloneGammaTestModels") {
 val cloneSysmlv2TestModels = tasks.register<Sync>("cloneSysmlv2TestModels") {
     from(servedFiles("sysml"))
     from(sysmlCompiledExamplesFiles) {
-        include("*.oxsts")
+        include(compiledFiles("sysml"))
     }
     into(importedSnippetsDir.dir("sysmlv2"))
 }

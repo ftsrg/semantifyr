@@ -163,10 +163,6 @@ export const EXAMPLE_PAGE = 'About this example'
 export function aboutLanguage(languageName: string): string {
   return `About ${languageName}`
 }
-
-export function exampleRights(origin: string, holder: string, licence: string): string {
-  return `Origin: ${origin}. Rights: ${holder}, ${licence}.`
-}
 export const PROBLEMS = 'Problems in the model'
 export const NO_PROBLEMS = 'No problems.'
 

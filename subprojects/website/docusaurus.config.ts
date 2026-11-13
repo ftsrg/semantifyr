@@ -10,7 +10,8 @@ import type { Options as DocsOptions } from '@docusaurus/plugin-content-docs';
 import type { Options as PagesOptions } from '@docusaurus/plugin-content-pages';
 import type { Options as ClassicThemeOptions } from '@docusaurus/theme-classic';
 import type { UserThemeConfig } from '@docusaurus/theme-common';
-import type { Config } from '@docusaurus/types';
+import type { Config, Plugin } from '@docusaurus/types';
+import { servedExamples } from '@semantifyr/editor-common/examples';
 import type { PrismTheme } from 'prism-react-renderer';
 import remarkFences from './src/plugins/remarkFences';
 import sourceAliases from './source-aliases.json';
@@ -25,6 +26,28 @@ const codeBlockTheme: PrismTheme = {
 };
 
 const liveBackendUrl = process.env.SEMANTIFYR_LIVE_URL ?? 'https://live.semantifyr.org';
+
+// a page imports a served example by its address, @served-examples/<language>/<id>, and gets its text from the registry's file
+function servedExamplesPlugin(): Plugin {
+  let directory = '';
+  return {
+    name: 'served-examples',
+    async contentLoaded({ actions }) {
+      for (const example of servedExamples) {
+        const address = `${example.language}/${example.id}`;
+        const written = await actions.createData(`${address}.js`, [
+          `import text from ${JSON.stringify(path.resolve(__dirname, '../..', example.file))};`,
+          `export default { language: ${JSON.stringify(example.language)}, id: ${JSON.stringify(example.id)}, text };`,
+          '',
+        ].join('\n'));
+        directory = written.slice(0, -`${address}.js`.length);
+      }
+    },
+    configureWebpack() {
+      return { resolve: { alias: { '@served-examples': directory } } };
+    },
+  };
+}
 
 // the build's constants, which every page that states one takes from here: the version from gradle.properties
 function gradleProperty(name: string): string {
@@ -122,6 +145,7 @@ export default {
       {} satisfies PagesOptions,
     ],
     '@docusaurus/plugin-sitemap',
+    servedExamplesPlugin,
     () => ({
       name: 'raw-sources',
       configureWebpack: () => ({

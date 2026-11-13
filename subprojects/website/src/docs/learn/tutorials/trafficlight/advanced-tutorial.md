@@ -4,13 +4,13 @@ sidebar_position: 3
 ---
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
+import step1 from '@served-examples/oxsts/advanced-step1';
+import step2 from '@served-examples/oxsts/advanced-step2';
+import step3 from '@served-examples/oxsts/advanced-step3';
+import step4 from '@served-examples/oxsts/advanced-step4';
+import step5 from '@served-examples/oxsts/advanced-step5';
+import advanced from '@served-examples/oxsts/advanced';
 import ServedExamples, { ExampleLink } from '@site/src/components/ServedExamples';
-import step1 from '@oxsts-tutorial-models/advanced-step1.oxsts';
-import step2 from '@oxsts-tutorial-models/advanced-step2.oxsts';
-import step3 from '@oxsts-tutorial-models/advanced-step3.oxsts';
-import step4 from '@oxsts-tutorial-models/advanced-step4.oxsts';
-import step5 from '@oxsts-tutorial-models/advanced-step5.oxsts';
-import advanced from '@oxsts-tutorial-models/advanced.oxsts';
 
 # Advanced Tutorial
 
@@ -26,7 +26,7 @@ The completed model is at the end of this page under [Snapshot](#snapshot), wher
 
 The tutorial starts from the final model of Building a Library. Each step is a separate file with its own package below `example::trafficlight::advanced`:
 
-<LiveEmbed code={step1} show={['package']} />
+<LiveEmbed example={step1} show={['package']} />
 
 ## Composite States
 
@@ -34,7 +34,7 @@ A real traffic light does more than cycle its colors. At night or during mainten
 
 A composite state owns states of its own, keeps track of the active one, and is itself a state of its parent. `Statechart` already does the first two, so make `State` extend `Statechart`:
 
-<LiveEmbed code={step1} show={['State']} />
+<LiveEmbed example={step1} show={['State']} />
 
 Every state is now also a statechart: it inherits `states`, `transitions` and `activeState`, and a state without substates leaves them empty. The `parent` feature keeps its type `Statechart`, which now fits both levels: the parent of `operating` is the traffic light, and the parent of `red` is `operating`.
 
@@ -42,7 +42,7 @@ The `initial` reference names the substate to enter when the state itself is ent
 
 Now restructure the traffic light:
 
-<LiveEmbed code={step1} show={['TrafficLight']} />
+<LiveEmbed example={step1} show={['TrafficLight']} />
 
 The nested block of `operating` declares the three color states. Inside the block, `states` is the `states` feature of `operating`, so the colors become substates of `operating` rather than of the light. The block also binds `initial` to `red`.
 
@@ -50,7 +50,7 @@ The transitions stay in the traffic light, where the inherited main transition f
 
 The intersection and the two verification cases from Building a Library now ask for `operating.green` instead of `green`. Add a case that checks that the light is never green in standby:
 
-<LiveEmbed code={step1} show={['NeverGreenInStandby']} />
+<LiveEmbed example={step1} show={['NeverGreenInStandby']} />
 
 **Task:** Open the step in the editor and verify all cases.
 
@@ -60,7 +60,7 @@ The intersection and the two verification cases from Building a Library now ask 
 
 The trace shows the bookkeeping a hierarchy needs. A state asks only its parent whether it is active, and `operating` remembers its last color after the light has left it, so that color still counts as active. Worse, the color transitions keep firing in standby, because `redToGreen` only asks whether `red` is active. A substate can be active only while its parent is active. Make the check recursive:
 
-<LiveEmbed code={step2} show={['State', 'Statechart']} />
+<LiveEmbed example={step2} show={['State', 'Statechart']} />
 
 The traffic light is not a state of anything; while it runs, it is active, so `Statechart` declares `isActive` returning `true`. `State` redefines it: a state is active if its parent holds it as the active state and the parent itself is active. The call `parent.isActive()` is resolved for each state when the model is compiled, so the calls walk up the hierarchy and end at the traffic light.
 
@@ -74,23 +74,23 @@ The traffic light is not a state of anything; while it runs, it is active, so `S
 
 An entry action runs whenever a state becomes active, whichever transition enters it. Add an empty `entry` transition to `State` and call it from `activate`:
 
-<LiveEmbed code={step3} show={['State']} />
+<LiveEmbed example={step3} show={['State']} />
 
 `activate` runs the entry action after the state has become active and before its initial substate is entered, so a parent's entry action runs before its children's.
 
 Each state needs its own entry action, but a nested block holds features only: it can bind `initial` or `from`, but it cannot redefine a transition. Behavior that differs between states therefore goes into a subclass of `State`, and the data that differs between instances of that subclass goes into their nested blocks. Give the traffic light a lamp, and declare a `LampState` that switches the lamp to its color on entry:
 
-<LiveEmbed code={step3} show={['LightColor', 'Lamp', 'LampState']} />
+<LiveEmbed example={step3} show={['LightColor', 'Lamp', 'LampState']} />
 
 `LightColor` returns from the Direct Modeling tutorial, with an `Off` literal for a lamp that has not been switched on yet. `LampState` redefines `entry` to write its `color` to its `output` lamp; each instance binds both references.
 
-<LiveEmbed code={step3} show={['TrafficLight']} />
+<LiveEmbed example={step3} show={['TrafficLight']} />
 
 The traffic light contains the lamp, and each color is now a `LampState` that binds `output` to the light's lamp and `color` to its color. In standby the lamp shows yellow; the model does not track the flashing.
 
 Add a case that checks that the lamp shows green only while the green state is active:
 
-<LiveEmbed code={step3} show={['GreenLampOnlyInGreen']} />
+<LiveEmbed example={step3} show={['GreenLampOnlyInGreen']} />
 
 Only entry actions write the lamp, so the case checks that every state that can follow `green` switches the lamp, including `standby`.
 
@@ -102,21 +102,21 @@ Only entry actions write the lamp, so the case checks that every state that can 
 
 So far the light enters and leaves standby at any time. In a real controller an operator decides: the light receives a `pause` or a `resume` event, and the standby transitions fire only when their event is present. Declare the events and the triggers:
 
-<LiveEmbed code={step4} show={['Event', 'Trigger', 'EventTrigger']} />
+<LiveEmbed example={step4} show={['Event', 'Trigger', 'EventTrigger']} />
 
 An event belongs to a statechart, which holds at most one current event in the same way it holds one active state: `isPresent` reads "I am present if my parent's current event is me", the same shape as `isActive`. A `Trigger` decides whether a transition may fire. The base class always allows it, which keeps the color transitions as they are, and an `EventTrigger` allows it only while its event is present.
 
-<LiveEmbed code={step4} show={['Transition', 'Statechart']} />
+<LiveEmbed example={step4} show={['Transition', 'Statechart']} />
 
 Each transition contains a trigger, and `isEnabled` requires it. The statechart contains its events and a feature-typed variable `event` for the current one, which starts as `nothing`.
 
-<LiveEmbed code={step4} show={['TrafficLight']} />
+<LiveEmbed example={step4} show={['TrafficLight']} />
 
 The traffic light declares its two events. The nested blocks of the standby transitions use `redefine contains` to replace the inherited `Trigger` with an `EventTrigger`, and bind its `event` in a nested block of their own.
 
 Events come from outside the light, so the verification cases send them: before each step, [`havoc`](../../language/operations.md#havoc) on the light's `event` lets the light receive any of its events, or none, and the model checker explores every choice. Add a case whose environment never sends `pause`:
 
-<LiveEmbed code={step4} show={['NoStandbyWithoutPause']} />
+<LiveEmbed example={step4} show={['NoStandbyWithoutPause']} />
 
 The `assume` after the `havoc` removes the steps in which the event would be `pause`. The cases from the earlier steps now havoc the event of every light they contain before it steps, so their lights still reach standby.
 
@@ -128,19 +128,19 @@ The `assume` after the `havoc` removes the steps in which the event would be `pa
 
 The last pattern changes no class of the library and leaves the traffic light as it is. When an emergency vehicle approaches, every light of the intersection must turn red and stay red until the emergency is over, whatever state it is in. The emergency signal is not part of any light or intersection: one signal serves every intersection of a town. Declare it as a [global feature](../../language/features.md#top-level-global-features):
 
-<LiveEmbed code={step5} show={['Emergency', 'emergency']} />
+<LiveEmbed example={step5} show={['Emergency', 'emergency']} />
 
 A `global containment` declares an instance outside every class, in the universe around the system under verification. Any class of the package can refer to it by name, without a reference wired through the containment tree.
 
 The intersection consults the emergency before it lets a light take a step:
 
-<LiveEmbed code={step5} show={['Intersection']} />
+<LiveEmbed example={step5} show={['Intersection']} />
 
 During an emergency, the intersection activates the `operating` state of both lights instead of firing their transitions. Activating `operating` enters its initial state `red`, whose entry action switches the lamp to red, so the hierarchy and the lamp stay consistent even if the light was in standby. Unlike `inline if`, the [`if`](../../language/operations.md#if) operation is decided at runtime, in every step, by the current value of `emergency.active`.
 
 Add a case that lets the emergency start and end at any step:
 
-<LiveEmbed code={step5} show={['EmergencyStopsTraffic']} />
+<LiveEmbed example={step5} show={['EmergencyStopsTraffic']} />
 
 The parentheses around the conjunction only make the grouping visible: as in Java, `&&` binds tighter than `||` ([operator precedence](../../language/expressions.md#operator-precedence)), so the property reads the same without them, although the validator warns on a mix of the two without parentheses.
 
@@ -165,7 +165,7 @@ The production libraries build on the same patterns: Gamma's `Statecharts.oxsts`
 
 The complete final model:
 
-<LiveEmbed code={advanced} />
+<LiveEmbed example={advanced} />
 
 In the finished model, `Transition`'s main transition carries `@Trace`, so the trace lists the transitions that fired in the *Calls* view.
 

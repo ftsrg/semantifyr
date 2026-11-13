@@ -9,8 +9,8 @@ import { servedExamples, servedLanguages } from '@semantifyr/editor-common/examp
 import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
-import { aboutLanguage, EXAMPLE_PAGE, LANGUAGES, websitePage } from '../texts'
-import { casesListed, editor, test } from './harness'
+import { aboutLanguage, EXAMPLE_PAGE, websitePage } from '../texts'
+import { casesListed, editor, servedExample, test, titleOf } from './harness'
 
 function pathOf(page: Page): string {
   const url = new URL(page.url())
@@ -28,7 +28,7 @@ describe('the first screen', () => {
 
     await expect.poll(async () => {
       return page.title()
-    }).toBe('Level crossing - SysML v2 - Semantifyr Live')
+    }).toBe(titleOf('sysml', 'level-crossing'))
     const session = await ui.backend.openSession()
     expect(session.query.get('language')).toBe('sysml')
     expect(session.query.get('kind')).toBe('full')
@@ -41,7 +41,7 @@ describe('the first screen', () => {
 
     await expect.poll(async () => {
       return page.title()
-    }).toBe('Crossroads (Gamma library) - OXSTS - Semantifyr Live')
+    }).toBe(titleOf('gamma', 'crossroads', 'oxsts'))
     expect((await ui.backend.openSession()).flavorId).toBe('oxsts-with-gamma-library')
     await expect.poll(async () => {
       return page.locator('.flavour-button').innerText()
@@ -52,9 +52,9 @@ describe('the first screen', () => {
 
 describe('an address that names what Live does not have', () => {
   for (const [address, requested, opened] of [
-    ['/kerml/level-crossing', 'language "kerml"', 'Level crossing - SysML v2 - Semantifyr Live'],
-    ['/gamma/level-crosing', 'example "level-crosing"', 'Level crossing - Gamma - Semantifyr Live'],
-    ['/oxsts/crossroads?library=uml', 'library "uml"', 'Tutorial: Basics - OXSTS - Semantifyr Live'],
+    ['/kerml/level-crossing', 'language "kerml"', titleOf('sysml', 'level-crossing')],
+    ['/gamma/level-crosing', 'example "level-crosing"', titleOf('gamma', 'level-crossing')],
+    ['/oxsts/crossroads?library=uml', 'library "uml"', titleOf('oxsts', 'basics')],
   ] as const) {
     test(`says the ${requested} was not found and opens its replacement`, async ({ ui }) => {
       const page = await ui.open(address)
@@ -76,7 +76,7 @@ describe('an address that names what Live does not have', () => {
     }).toContain('The model in the link could not be read')
     await expect.poll(async () => {
       return page.title()
-    }).toBe('Tutorial: Basics - OXSTS - Semantifyr Live')
+    }).toBe(titleOf('oxsts', 'basics'))
   })
 
   test('opens a model of the fragment as a shared model', async ({ ui }) => {
@@ -100,7 +100,7 @@ describe('the history of a visit', () => {
     const page = await ui.open('/oxsts/basics')
     await casesListed(page)
 
-    await chooseExample(page, 'Tutorial: Intermediate')
+    await chooseExample(page, servedExample('oxsts', 'intermediate').label)
     await expect.poll(async () => {
       return pathOf(page)
     }).toBe('/oxsts/intermediate')
@@ -125,10 +125,10 @@ describe('the history of a visit', () => {
     }
 
     expect(visited).toEqual([
-      '/oxsts/level-crossing?library=gamma Level crossing (Gamma library) - OXSTS - Semantifyr Live',
-      '/oxsts/intermediate Tutorial: Intermediate - OXSTS - Semantifyr Live',
-      '/oxsts/basics Tutorial: Basics - OXSTS - Semantifyr Live',
-      '/oxsts/intermediate Tutorial: Intermediate - OXSTS - Semantifyr Live',
+      `/oxsts/level-crossing?library=gamma ${titleOf('gamma', 'level-crossing', 'oxsts')}`,
+      `/oxsts/intermediate ${titleOf('oxsts', 'intermediate')}`,
+      `/oxsts/basics ${titleOf('oxsts', 'basics')}`,
+      `/oxsts/intermediate ${titleOf('oxsts', 'intermediate')}`,
     ])
     await expect.poll(async () => {
       return editor(page).lines.innerText()
@@ -146,7 +146,7 @@ describe('the served examples', () => {
 
       await expect.poll(async () => {
         return page.title()
-      }).toBe(`${example.label} - ${LANGUAGES[example.language]?.name} - Semantifyr Live`)
+      }).toBe(titleOf(example.language, example.id))
       expect(await page.locator('.orientation.is-error').count()).toBe(0)
       expect(await page.locator('.orientation').getByRole('link', { name: EXAMPLE_PAGE }).getAttribute('href')).toBe(websitePage(example.page))
     })

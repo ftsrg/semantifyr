@@ -7,11 +7,31 @@
 import type { Browser, BrowserContext, Locator, Page } from 'playwright'
 import { expect, inject, test as base } from 'vitest'
 
+import { servedExamples, type ExampleLanguage, type ServedExample } from '@semantifyr/editor-common/examples'
+
+import { compiledLabel, LANGUAGES, PRODUCT_NAME } from '../texts'
 import { launchTestBrowser } from '../testBrowser'
 import { keepEvidence, recordEvidence } from './evidence'
 import { MockBackend } from './mock/backend'
 
 export const LIVE_URL = inject('liveUrl')
+
+export function servedExample(language: ExampleLanguage, id: string): ServedExample {
+  const example = servedExamples.find((candidate) => {
+    return candidate.language === language && candidate.id === id
+  })
+  if (example === undefined) {
+    throw new Error(`the registry serves no /${language}/${id}`)
+  }
+  return example
+}
+
+// the page's title for a served example, opened in its language or compiled under the library of its language
+export function titleOf(language: ExampleLanguage, id: string, shownIn: ExampleLanguage = language): string {
+  const label = servedExample(language, id).label
+  const shown = shownIn === language ? label : compiledLabel(label, LANGUAGES[language]?.name ?? language)
+  return `${shown} - ${LANGUAGES[shownIn]?.name ?? shownIn} - ${PRODUCT_NAME}`
+}
 
 export interface OpenOptions {
   width?: number

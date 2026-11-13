@@ -36,6 +36,9 @@ final class DocumentationFences {
 
     private static final Pattern IMPORT = Pattern.compile("^import\\s+\\w+\\s+from\\s+'(@[\\w-]+)/([^']+\\.oxsts)';?$");
 
+    private static final Pattern SERVED_IMPORT =
+            Pattern.compile("^import\\s+\\w+\\s+from\\s+'@served-examples/oxsts/([\\w-]+)';?$");
+
     private static final Pattern PAGE_COMMENT = Pattern.compile("<!--[\\s\\S]*?-->|\\{/\\*[\\s\\S]*?\\*/}");
 
     private static final String HIDE_START = "// hide-start";
@@ -84,15 +87,42 @@ final class DocumentationFences {
         return fences;
     }
 
-    // the OXSTS files the pages import through the source aliases, which their own tests check
+    record ServedExample(String language, String id, String file) {}
+
+    record ServedExamples(List<ServedExample> examples) {}
+
+    // the OXSTS files the pages import, through the source aliases or as served examples by their address, which their
+    // own tests check
     static List<Path> importedModels() throws IOException {
         Map<String, String> aliases;
         try (var reader = Files.newBufferedReader(SOURCE_ALIASES)) {
             aliases = new Gson().fromJson(reader, new TypeToken<Map<String, String>>() {}.getType());
         }
+        // build-logic's readsServedExamples names the registry and the repository's root
+        var repository = Path.of(System.getProperty("semantifyr.repository"));
+        ServedExamples registry;
+        try (var reader = Files.newBufferedReader(Path.of(System.getProperty("semantifyr.examples")))) {
+            registry = new Gson().fromJson(reader, ServedExamples.class);
+        }
         var models = new ArrayList<Path>();
         for (var page : pages()) {
             for (var line : Files.readAllLines(page)) {
+                var served = SERVED_IMPORT.matcher(line.strip());
+                if (served.matches()) {
+                    var example = registry.examples().stream()
+                            .filter(candidate -> {
+                                return "oxsts".equals(candidate.language())
+                                        && candidate.id().equals(served.group(1));
+                            })
+                            .findFirst()
+                            .orElseThrow(() -> new IllegalStateException(
+                                    "the registry serves no /oxsts/" + served.group(1) + " for " + page));
+                    var model = repository.resolve(example.file()).normalize();
+                    if (!models.contains(model)) {
+                        models.add(model);
+                    }
+                    continue;
+                }
                 var imported = IMPORT.matcher(line.strip());
                 if (!imported.matches()) {
                     continue;

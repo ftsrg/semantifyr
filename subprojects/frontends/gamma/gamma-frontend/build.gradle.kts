@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.conventions.corpusModels
 import hu.bme.mit.semantifyr.gradle.conventions.readsServedExamples
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
-import hu.bme.mit.semantifyr.gradle.conventions.servedExamples
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.application")
@@ -49,8 +49,11 @@ tasks.processResources {
     from(syncGammaLibrary)
 }
 
-tasks.withType<Test>().configureEach {
+tasks.named<Test>("integrationTest") {
     readsServedExamples()
+}
+
+tasks.withType<Test>().configureEach {
     inputs.files(syncGammaTestModels)
     inputs.dir(layout.projectDirectory.dir("../models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("../models/constructs.tsv")).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -74,9 +77,7 @@ fun gammaExampleTask(name: String) = tasks.register<JavaExec>("compileGammaExamp
     }
 }
 
-val compileGammaExampleTasks = servedExamples("gamma").filter {
-    !it.hidden
-}.map {
+val compileGammaExampleTasks = corpusModels(examplesSourceDir).map {
     gammaExampleTask(it.name)
 }
 

@@ -10,6 +10,8 @@ import { createContext, type ReactNode } from 'react';
 export interface FenceValue {
   model: string;
   control: ReactNode;
+  // a served example opens in the full live by its address, not by its text
+  address?: string | undefined;
 }
 
 export const FenceContext = createContext<FenceValue | null>(null);

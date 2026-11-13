@@ -5,6 +5,7 @@
  */
 
 import type React from 'react'
+import { rightsOf } from '@semantifyr/editor-common/examples'
 import { type VerdictStatus, LanguageMark, VerdictMark } from '@semantifyr/editor-common/marks'
 
 import { parseLiveEditorUrl } from '@semantifyr/editor-common'
@@ -16,7 +17,7 @@ import type { ResolvedColorMode } from '../../lib/util/colorMode'
 import { caseRowOf, countsOf, type CaseCounts, type CaseRow } from '../../lib/workspace/caseRows'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import { stepTimeText } from '../../lib/workspace/shellStatus'
-import { casesSentence, EXAMPLE_PAGE, exampleRights, noCases, SERVER_NOT_ANSWERING, VERDICT_WORDS, VERIFY_ALL_HELD, websitePage } from '../../texts'
+import { casesSentence, EXAMPLE_PAGE, noCases, SERVER_NOT_ANSWERING, VERDICT_WORDS, VERIFY_ALL_HELD, websitePage } from '../../texts'
 import { Icon } from '../../ui/icons'
 import { ValidationMark } from '../../ui/marks'
 import { addressProblemText } from '../desktop/Orientation'
@@ -94,7 +95,7 @@ function Orientation(): React.JSX.Element | null {
         {example.served
           ? (
             <span className="phone-orientation-source">
-              {` ${exampleRights(example.served.origin, example.served.holder, example.served.licence)} `}
+              {` ${rightsOf(example.served)} `}
               <a className="link" href={websitePage(example.served.page)} target="_blank" rel="noreferrer">{EXAMPLE_PAGE}</a>
             </span>
           )

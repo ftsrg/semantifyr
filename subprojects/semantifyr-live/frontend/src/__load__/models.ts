@@ -8,6 +8,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { basename, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { VerificationStatus } from '@semantifyr/editor-common'
+import type { CaseManifest } from '@semantifyr/editor-common/examples'
 
 export interface DeclaredCase {
   name: string
@@ -24,23 +25,14 @@ const tutorialDirectory = fileURLToPath(new URL('../../../../../oxsts-test-model
 
 const annotatedClass = /((?:@\w+(?:\([^)]*\))?\s*)+)class\s+(\w+)/g
 
-// the expected verdicts are the manifest's beside the model, in the shape the frontends' corpus manifests share
-interface CaseManifest {
-  models: {
-    file: string
-    cases: {
-      name: string
-      verdict: 'Passed' | 'Failed'
-    }[]
-  }[]
-}
-
-const MANIFEST_VERDICTS: Readonly<Record<'Passed' | 'Failed', VerificationStatus>> = {
+// a case of unknown verdict is benchmarked and expects nothing
+const MANIFEST_VERDICTS: Readonly<Record<'Passed' | 'Failed' | 'Unknown', VerificationStatus | null>> = {
   Passed: VerificationStatus.Passed,
   Failed: VerificationStatus.Failed,
+  Unknown: null,
 }
 
-export function expectedVerdicts(path: string): ReadonlyMap<string, VerificationStatus> {
+export function expectedVerdicts(path: string): ReadonlyMap<string, VerificationStatus | null> {
   const manifestPath = join(dirname(path), 'manifest.json')
   if (!existsSync(manifestPath)) {
     return new Map()
@@ -54,7 +46,7 @@ export function expectedVerdicts(path: string): ReadonlyMap<string, Verification
   }))
 }
 
-export function declaredCases(text: string, expected: ReadonlyMap<string, VerificationStatus>): DeclaredCase[] {
+export function declaredCases(text: string, expected: ReadonlyMap<string, VerificationStatus | null>): DeclaredCase[] {
   return [...text.matchAll(annotatedClass)].filter((match) => match[1]?.includes('@VerificationCase')).map((match) => {
     const name = match[2] ?? ''
     return { name, expected: expected.get(name) ?? null }

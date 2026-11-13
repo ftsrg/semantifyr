@@ -15,28 +15,35 @@ export const EXAMPLE_LANGUAGES = [
 export type ExampleLanguage = (typeof EXAMPLE_LANGUAGES)[number];
 
 export interface ServedLanguage {
-  // the website's page on the language, a path below the site's root
   page: string;
-  // the text of the language's blank model
   blank: string;
 }
 
 export interface ServedExample {
-  // the example's name in live's address, /<language>/<id>
   id: string;
   language: ExampleLanguage;
-  // the model's file, from the repository's root
   file: string;
   label: string;
   reason: string;
   origin: string;
   holder: string;
   licence: string;
-  // the website's page that explains the example
   page: string;
   cases: string[];
-  // a lesson's step that its page runs and live's menu does not list
+  // a lesson's step, which its page runs and live's menu does not list
   hidden?: boolean;
+}
+
+// the expected verdicts of the models beside it, in the shape the corpora share; a corpus may add keys of its own
+export interface CaseManifest {
+  models: {
+    file: string;
+    cases: {
+      name: string;
+      verdict: 'Passed' | 'Failed' | 'Unknown';
+      tier?: 'Smoke' | 'Integration' | 'Nightly';
+    }[];
+  }[];
 }
 
 function languageOf(value: string): ExampleLanguage {
@@ -63,4 +70,9 @@ export function servedExamplesOf(language: ExampleLanguage): ServedExample[] {
 
 export function fileNameOf(example: ServedExample): string {
   return example.file.slice(example.file.lastIndexOf('/') + 1);
+}
+
+// where an example comes from and under which terms, as live and the website say it
+export function rightsOf(example: ServedExample): string {
+  return `Origin: ${example.origin}. Rights: ${example.holder}, ${example.licence}.`;
 }

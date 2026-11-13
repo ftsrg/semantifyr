@@ -6,22 +6,24 @@
 
 import type React from 'react';
 import type { LiveEditorLines, LiveEditorView } from '@semantifyr/editor-common';
+import type { ExampleLanguage } from '@semantifyr/editor-common/examples';
 import { EmbeddedExample } from './EmbeddedExample';
 
+// a served example as a page imports it, by its address @served-examples/<language>/<id>
+export interface ServedText {
+  language: ExampleLanguage;
+  id: string;
+  text: string;
+}
+
 interface Props {
-  code: string;
-  language?: 'oxsts' | 'gamma' | 'sysml';
+  example: ServedText;
   library?: 'gamma' | 'sysml';
   view?: LiveEditorView;
   show?: string[];
 }
 
 const VERIFICATION_CASE = /@VerificationCase|\bverification\s+def\b/;
-
-function stripLicenseHeader(code: string): string {
-  const header = /^\/\*[\s\S]*?\*\/\s*/.exec(code);
-  return header?.[0].includes('SPDX-') ? code.slice(header[0].length) : code;
-}
 
 const DECLARATION_NAME = [
   /^(package|import)\s/,
@@ -37,12 +39,12 @@ interface Selection {
   lines: LiveEditorLines;
 }
 
-// relies on the models separating top-level declarations with blank lines; the lines are the selection's in the code without its licence header
+// relies on the models separating top-level declarations with blank lines
 function select(code: string, names: string[]): Selection {
   const blocks: { names: string[]; lines: string[]; first: number }[] = [];
   let current: { names: string[]; lines: string[]; first: number } | null = null;
   let depth = 0;
-  stripLicenseHeader(code).split('\n').forEach((line, index) => {
+  code.split('\n').forEach((line, index) => {
     if (depth === 0 && line.trim() === '') {
       current = null;
       return;
@@ -79,13 +81,15 @@ export function selectDeclarations(code: string, names: string[]): string {
   return select(code, names).text;
 }
 
-// a model file shown whole or by its declarations, which opens in live's editor at the declarations shown
-export default function LiveEmbed({ code, language = 'oxsts', library, view, show }: Props): React.JSX.Element {
-  const model = stripLicenseHeader(code);
-  const selection = show ? select(code, show) : null;
+// a served example shown whole or by its declarations, which opens in live's editor by its address at the declarations shown
+export default function LiveEmbed({ example, library, view, show }: Props): React.JSX.Element {
+  const model = example.text;
+  const language = example.language;
+  const selection = show ? select(model, show) : null;
   return (
     <EmbeddedExample
       model={model}
+      example={example.id}
       shown={selection?.text ?? model}
       lines={selection?.lines}
       language={language}

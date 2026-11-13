@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { existsSync, readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { dirname, extname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
-import { EXAMPLE_LANGUAGES, fileNameOf, servedExamples, type ExampleLanguage, type ServedExample } from '../examples/examples.ts';
+import { EXAMPLE_LANGUAGES, fileNameOf, servedExamples, type CaseManifest, type ExampleLanguage, type ServedExample } from '../examples/examples.ts';
 
 const REPOSITORY = fileURLToPath(new URL('../../../../', import.meta.url));
 
@@ -18,23 +18,34 @@ const DECLARED_CASE: Readonly<Record<ExampleLanguage, RegExp>> = {
   sysml: /^\s*verification\s+def\s+(\w+)/gm,
 };
 
-// the shape the corpus manifests share; a corpus may add keys of its own
-interface CaseManifest {
-  models: {
-    file: string;
-    cases: {
-      name: string;
-      verdict: string;
-    }[];
-  }[];
-}
+const LANGUAGE_OF_EXTENSION: Readonly<Record<string, ExampleLanguage>> = {
+  '.oxsts': 'oxsts',
+  '.gamma': 'gamma',
+  '.gcd': 'gamma',
+  '.sysml': 'sysml',
+};
 
-function declaredCases(example: ServedExample): string[] {
-  const text = readFileSync(join(REPOSITORY, example.file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
-  return [...text.matchAll(DECLARED_CASE[example.language])].map((match) => {
+// where the corpora keep their manifests
+const MODEL_ROOTS = [
+  'oxsts-test-models',
+  'subprojects/frontends/gamma/models',
+  'subprojects/frontends/sysml/models',
+];
+
+function declaredCases(file: string, language: ExampleLanguage): string[] {
+  const text = readFileSync(join(REPOSITORY, file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+  return [...text.matchAll(DECLARED_CASE[language])].map((match) => {
     return match[1]!;
   });
 }
+
+const manifests = MODEL_ROOTS.flatMap((root) => {
+  return readdirSync(join(REPOSITORY, root), { recursive: true, withFileTypes: true }).filter((entry) => {
+    return entry.isFile() && entry.name === 'manifest.json';
+  }).map((entry) => {
+    return relative(REPOSITORY, join(entry.parentPath, entry.name));
+  });
+});
 
 function manifestBeside(example: ServedExample): CaseManifest {
   return JSON.parse(readFileSync(join(REPOSITORY, dirname(example.file), 'manifest.json'), 'utf8')) as CaseManifest;
@@ -52,7 +63,7 @@ describe.each(servedExamples.map((example) => {
   });
 
   test('names the cases its file declares', () => {
-    expect(example.cases).toEqual(declaredCases(example));
+    expect(example.cases).toEqual(declaredCases(example.file, example.language));
   });
 
   test('names its origin, its rights holder and its licence', () => {
@@ -72,6 +83,20 @@ describe.each(servedExamples.map((example) => {
     });
     for (const verdict of verdicts) {
       expect(['Passed', 'Failed']).toContain(verdict);
+    }
+  });
+});
+
+describe.each(manifests)('the manifest %s', (manifest) => {
+  test('lists for each file the cases the file declares', () => {
+    const models = (JSON.parse(readFileSync(join(REPOSITORY, manifest), 'utf8')) as CaseManifest).models;
+    expect(models.length).toBeGreaterThan(0);
+    for (const model of models) {
+      const file = join(dirname(manifest), model.file);
+      const listed = model.cases.map((declaredCase) => {
+        return declaredCase.name;
+      });
+      expect(listed, file).toEqual(declaredCases(file, LANGUAGE_OF_EXTENSION[extname(file)]!));
     }
   });
 });
