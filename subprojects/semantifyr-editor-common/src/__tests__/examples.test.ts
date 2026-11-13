@@ -39,6 +39,54 @@ function declaredCases(file: string, language: ExampleLanguage): string[] {
   });
 }
 
+// a served model's further cases, which the build appends to it for the tests
+function furtherCasesOf(file: string): string {
+  return `${file.slice(0, file.length - extname(file).length)}.further-cases`;
+}
+
+function corpusCases(file: string, language: ExampleLanguage): string[] {
+  const fragment = furtherCasesOf(file);
+  if (!existsSync(join(REPOSITORY, fragment))) {
+    return declaredCases(file, language);
+  }
+  return [...declaredCases(file, language), ...declaredCases(fragment, language)];
+}
+
+// a case whose property is reachability: a passing one shows the run that reaches it
+const REACHABILITY: Readonly<Record<ExampleLanguage, RegExp>> = {
+  oxsts: /return\s+EF\b/,
+  gamma: /^\s*EF\b/m,
+  sysml: /require\s+constraint\s*\{\s*eventually\s*\(/,
+};
+
+function caseText(file: string, language: ExampleLanguage, name: string): string {
+  const text = readFileSync(join(REPOSITORY, file), 'utf8');
+  const starts = [...text.matchAll(DECLARED_CASE[language])].map((match) => {
+    return { name: match[1]!, index: match.index };
+  });
+  const position = starts.findIndex((start) => {
+    return start.name === name;
+  });
+  return text.slice(starts[position]!.index, starts[position + 1]?.index ?? text.length);
+}
+
+// a model describes itself in a comment at its top: `//` lines in OXSTS and Gamma, a `doc` comment in SysML v2
+const OPENING_COMMENT: Readonly<Record<ExampleLanguage, RegExp>> = {
+  oxsts: /^\s*\/\/ *\S/,
+  gamma: /^\s*\/\/ *\S/,
+  sysml: /^\s*doc\s*\/\*\s*\*?\s*\S/,
+};
+
+// the served models whose own lanes bring them to the checks of a served model
+const AWAITING_THEIR_LANE: readonly ExampleLanguage[] = [
+  'gamma',
+];
+
+// the lessons' models open with no comment yet; the lane on the lessons gives them one
+const AWAITING_THEIR_COMMENT: readonly ExampleLanguage[] = [
+  'oxsts',
+];
+
 const manifests = MODEL_ROOTS.flatMap((root) => {
   return readdirSync(join(REPOSITORY, root), { recursive: true, withFileTypes: true }).filter((entry) => {
     return entry.isFile() && entry.name === 'manifest.json';
@@ -87,6 +135,35 @@ describe.each(servedExamples.map((example) => {
   });
 });
 
+const listedModels = servedExamples.filter((example) => {
+  return example.hidden !== true && !AWAITING_THEIR_LANE.includes(example.language);
+});
+
+describe.each(listedModels.map((example) => {
+  return [address(example), example] as const;
+}))('the served model %s', (_, example) => {
+  test('has at most ten cases, so that a reader is not overwhelmed', () => {
+    expect(example.cases.length).toBeLessThanOrEqual(10);
+  });
+
+  test('has a case that gives a trace, a reachability case expected to pass or a case expected to fail', () => {
+    const model = manifestBeside(example).models.find((candidate) => {
+      return candidate.file === fileNameOf(example);
+    });
+    const tracing = example.cases.filter((name) => {
+      const verdict = model?.cases.find((candidate) => {
+        return candidate.name === name;
+      })?.verdict;
+      return verdict === 'Failed' || (verdict === 'Passed' && REACHABILITY[example.language].test(caseText(example.file, example.language, name)));
+    });
+    expect(tracing).not.toEqual([]);
+  });
+
+  test.skipIf(AWAITING_THEIR_COMMENT.includes(example.language))('opens with a comment that describes it', () => {
+    expect(readFileSync(join(REPOSITORY, example.file), 'utf8')).toMatch(OPENING_COMMENT[example.language]);
+  });
+});
+
 describe.each(manifests)('the manifest %s', (manifest) => {
   test('lists for each file the cases the file declares', () => {
     const models = (JSON.parse(readFileSync(join(REPOSITORY, manifest), 'utf8')) as CaseManifest).models;
@@ -96,7 +173,7 @@ describe.each(manifests)('the manifest %s', (manifest) => {
       const listed = model.cases.map((declaredCase) => {
         return declaredCase.name;
       });
-      expect(listed, file).toEqual(declaredCases(file, LANGUAGE_OF_EXTENSION[extname(file)]!));
+      expect(listed, file).toEqual(corpusCases(file, LANGUAGE_OF_EXTENSION[extname(file)]!));
     }
   });
 });
