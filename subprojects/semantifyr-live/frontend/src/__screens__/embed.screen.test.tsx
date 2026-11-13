@@ -52,6 +52,7 @@ const RESULTS = discovered([finished(BARRIER, 'failed', 2.9), finished(TWO_TRAIN
 
 interface ScreenState {
   view: 'embed' | 'edit-only'
+  lines?: string
   seed: Seed | (() => Seeded)
   act?: () => Promise<void>
   expectState: () => void
@@ -201,6 +202,22 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       expect(editor, 'the editor shows every line').toBeGreaterThanOrEqual(13 * 20)
     },
   },
+  'opened-at-lines': {
+    view: 'edit-only',
+    lines: '7-10',
+    seed: { text: EXCERPT },
+    expectState: () => {
+      const editor = document.querySelector('.embed-editor')!.getBoundingClientRect().height
+      expect(editor, 'the editor is as tall as the lines it opens at').toBe(4 * 20)
+      const numbered = [...document.querySelectorAll('.embed-editor .line-numbers')].filter((element) => {
+        const box = element.getBoundingClientRect()
+        return box.height > 0 && box.top >= document.querySelector('.embed-editor')!.getBoundingClientRect().top
+      }).map((element) => {
+        return element.textContent.trim()
+      })
+      expect(numbered.slice(0, 4), 'the editor is scrolled to the lines').toEqual(['7', '8', '9', '10'])
+    },
+  },
 }
 
 describe('the embed shell', () => {
@@ -212,7 +229,7 @@ describe('the embed shell', () => {
     for (const [state, screen] of Object.entries(STATES)) {
       it(`lays out ${state} in the ${colorMode} theme`, async () => {
         const address = `${window.location.pathname}${window.location.search}`
-        window.history.replaceState(null, '', `${window.location.pathname}?view=${screen.view}`)
+        window.history.replaceState(null, '', `${window.location.pathname}?view=${screen.view}${screen.lines === undefined ? '' : `&lines=${screen.lines}`}`)
         const { live, shell } = typeof screen.seed === 'function' ? screen.seed() : seedLive(screen.seed)
         const container = document.createElement('div')
         document.body.append(container)
