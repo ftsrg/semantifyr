@@ -12,6 +12,7 @@ function stub(name: string): string {
 }
 
 export default defineConfig({
+    cacheDir: 'build/vite/test',
     resolve: {
         alias: [
             { find: /^vscode$/, replacement: stub('vscode') },
