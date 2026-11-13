@@ -42,7 +42,7 @@ function example(view: 'embed' | 'edit-only' = 'edit-only'): void {
 }
 
 async function frame(): Promise<HTMLIFrameElement> {
-  return await screen.findByTitle<HTMLIFrameElement>('Semantifyr live editor');
+  return await screen.findByTitle<HTMLIFrameElement>('Semantifyr Live');
 }
 
 function report(from: HTMLIFrameElement, type: string): void {
@@ -57,7 +57,7 @@ describe('an embedded example', () => {
 
     expect(screen.getByText('var value: int := 0')).toBeTruthy();
     expect(screen.getByRole('button').textContent).toBe('Edit');
-    expect(screen.queryByTitle('Semantifyr live editor')).toBeNull();
+    expect(screen.queryByTitle('Semantifyr Live')).toBeNull();
   });
 
   it('offers Run where it verifies', () => {
@@ -107,7 +107,7 @@ describe('an embedded example', () => {
     report(await frame(), 'semantifyr-live:shown');
     fireEvent.click(screen.getByRole('button', { name: 'Close the editor' }));
 
-    expect(screen.queryByTitle('Semantifyr live editor')).toBeNull();
+    expect(screen.queryByTitle('Semantifyr Live')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Close the editor' })).toBeNull();
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Edit' }));
     expect(screen.getByText('var value: int := 0').closest('[hidden]')).toBeNull();

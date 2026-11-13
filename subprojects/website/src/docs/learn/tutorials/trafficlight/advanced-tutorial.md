@@ -17,10 +17,10 @@ This is the third tutorial in the Traffic Light series. It extends the small `St
 
 ## Requirements
 
-A browser is enough. As in the previous tutorials, every step ends in a complete model that the **Verify** or **Edit** button in the corner of a code block loads into a live editor embedded in this page; the [Direct Modeling](direct-modeling.md#the-live-editor) tutorial describes the editor. See [Getting Started](../../getting-started.md) for the other ways to run Semantifyr.
+A browser is enough. As in the previous tutorials, every step ends in a complete model that the **Verify** or **Edit** button in the corner of a code block loads into Live, embedded in this page; the [Direct Modeling](direct-modeling.md#live) tutorial describes it. See [Getting Started](../../getting-started.md) for the other ways to run Semantifyr.
 
 :::tip Finished example
-The completed model is at the end of this page under [Snapshot](#snapshot), where **Verify** opens it in the embedded editor. The standalone live editor also offers it in its example menu as *Tutorial: Advanced*.
+The completed model is at the end of this page under [Snapshot](#snapshot), where **Verify** opens it in the embedded editor. Live also offers it in its example menu as *Tutorial: Advanced*.
 :::
 
 The tutorial starts from the final model of Building a Library. Each step is a separate file with its own package below `example::trafficlight::advanced`:
@@ -57,7 +57,7 @@ The intersection and the two verification cases from Building a Library now ask 
 
 ## Keeping Parents and Children Consistent
 
-The counterexample shows the bookkeeping a hierarchy needs. A state asks only its parent whether it is active, and `operating` remembers its last color after the light has left it, so that color still counts as active. Worse, the color transitions keep firing in standby, because `redToGreen` only asks whether `red` is active. A substate can be active only while its parent is active. Make the check recursive:
+The trace shows the bookkeeping a hierarchy needs. A state asks only its parent whether it is active, and `operating` remembers its last color after the light has left it, so that color still counts as active. Worse, the color transitions keep firing in standby, because `redToGreen` only asks whether `red` is active. A substate can be active only while its parent is active. Make the check recursive:
 
 <LiveEmbed code={step2} show={['State', 'Statechart']} />
 

@@ -9,7 +9,7 @@ import room from '@sysml-tutorial-models/room.sysml';
 
 # Verifying SysML v2 Models
 
-Semantifyr verifies SysML v2 models by translating them into OXSTS on top of a semantic library that defines what SysML v2 parts, ports, items and state machines do. This tutorial models a room with a switch and a lamp, verifies three requirements in the live editor, and reads the counterexample of a requirement that does not hold. All you need is a browser; the [last section](#on-the-command-line) runs the same model from the command line.
+Semantifyr verifies SysML v2 models by translating them into OXSTS on top of a semantic library that defines what SysML v2 parts, ports, items and state machines do. This tutorial models a room with a switch and a lamp, verifies three requirements in Live, and reads the trace of a requirement that does not hold. All you need is a browser; the [last section](#on-the-command-line) runs the same model from the command line.
 
 ## The Model
 
@@ -63,11 +63,11 @@ The complete model is one file. **Verify** in the corner of the code block below
 
 ## Verifying
 
-The editor lists the three cases, a line each, under **Verify all**, which runs them all, once the SysML v2 language server in your browser has found them. The language server goes on initializing after that; a verification asked for meanwhile waits and starts by itself when it is done. Each case is verified by the live editor's portfolio of backends and takes a few seconds.
+The editor lists the three cases, a line each, under **Verify all**, which runs them all, once the SysML v2 language server in your browser has found them. The language server goes on initializing after that; a verification asked for meanwhile waits and starts by itself when it is done. Each case is verified by Live's portfolio and takes a few seconds.
 
 Expect `LampLitReachable` to pass and both `Violated` cases to fail.
 
-The model is yours to edit, as one file. The cases follow your edits, and a construct the translator does not support gets a diagnostic on that construct and keeps the model from being verified. **Open in Live** opens the model in the full live editor, where *OXSTS of the model*, in the read-only documents menu, opens the translation of the current file, an OXSTS model that instantiates the classes of the SysML v2 semantic library.
+The model is yours to edit, as one file. The cases follow your edits, and a construct the translator does not support gets a diagnostic on that construct and keeps the model from being verified. **Open in Live** opens the model in Live itself, where *OXSTS of the model*, in the read-only documents menu, opens the translation of the current file, an OXSTS model that instantiates the classes of the SysML v2 semantic library.
 
 ## Reading the Witness
 
@@ -78,7 +78,7 @@ A case with a witness says **Trace** at the end of its line, and a click on the 
 - *Calls*: per step, the traced calls of the semantic library: the transitions that fired, the states entered and left, and the send actions that ran.
 - *OXSTS witness*: the witness as an OXSTS model.
 
-After **Verify all** the trace of the first failed case opens by itself. A failed `mustAlways` requirement has a counterexample. Open the trace of `LampLitOnlyWhileSwitchOnViolated` and read it in *Calls* and *OXSTS steps*. The shortest counterexample has two steps:
+After **Verify all** the trace of the first failed case opens by itself. A failed `mustAlways` requirement has a trace. Open the trace of `LampLitOnlyWhileSwitchOnViolated` and read it in *Calls* and *OXSTS steps*. The shortest trace has two steps:
 
 1. The button is pressed: `root.system.switch.Behaviour.turnOn` fires and the switch's output sends a `Toggle`. Afterwards the switch is `On`, the lamp is still `Dark`, and the toggle waits on `root.system.lamp.input`.
 2. The button is pressed again: `turnOff` fires and sends a second `Toggle`, while the lamp accepts the first one and `root.system.lamp.Behaviour.lightUp` fires. Afterwards the switch is `Off` and the lamp is `Lit`.
@@ -135,4 +135,4 @@ For each case, the command prints its name, `PASSED` or `FAILED` with the time i
 - `witness.oxsts`: the witness as an OXSTS model that replays exactly this execution.
 - `trace.sysml`: the witness as a SysML v2 model, a part definition `<case>Trace` that specializes the verified part definition and declares the states, transitions and sends of this execution in time order ([SysML v2 traces](../../develop/sysml-trace.md)). SysIDE validates it against `room.sysml` before it is written; a witness the generator cannot express gets no `trace.sysml` and a warning in the log.
 
-The counterexample above is in `trace.json` and `witness.json` in `../room-artifacts/room.LampLitOnlyWhileSwitchOnViolated/`, and `trace.sysml` next to them is the model of the *SysML trace* view.
+The trace above is in `trace.json` and `witness.json` in `../room-artifacts/room.LampLitOnlyWhileSwitchOnViolated/`, and `trace.sysml` next to them is the model of the *SysML trace* view.

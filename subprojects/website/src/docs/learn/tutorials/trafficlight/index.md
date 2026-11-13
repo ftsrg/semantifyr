@@ -10,7 +10,7 @@ This tutorial series models the same example system, a small traffic-light inter
 The tutorials share the same example so you can compare the encodings side by side. They are designed to be read in order, but each one is self-contained and starts from a fresh file.
 
 :::tip Try it live
-Every step of a tutorial ends in a complete model that you can open in a live editor embedded in the page: a lightweight in-browser editor with syntax highlighting, diagnostics, content assist, and the verification cases with their verdicts and traces beside it. Each tutorial's **Snapshot** section holds the finished model.
+Every step of a tutorial ends in a complete model that you can open in Live, embedded in the page: a lightweight editor with syntax highlighting, diagnostics, content assist, and the verification cases with their verdicts and traces beside it. Each tutorial's **Snapshot** section holds the finished model.
 :::
 
 ## Tutorials
