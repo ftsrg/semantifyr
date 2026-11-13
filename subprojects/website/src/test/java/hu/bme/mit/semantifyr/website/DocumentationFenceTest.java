@@ -51,20 +51,9 @@ public class DocumentationFenceTest {
 
     private static final String HIDE_END = "// hide-end";
 
-    private static final Set<String> FLAGS = Set.of(
-            "run",
-            "edit",
-            "open",
-            "hidden",
-            "continue",
-            "fragment"
-    );
+    private static final Set<String> FLAGS = Set.of("run", "edit", "open", "hidden", "continue", "fragment");
 
-    private static final Set<String> KEYS = Set.of(
-            "continue",
-            "checkpoint",
-            "issue"
-    );
+    private static final Set<String> KEYS = Set.of("continue", "checkpoint", "issue");
 
     @Inject
     private ParseHelper<OxstsModelPackage> parseHelper;
@@ -75,8 +64,7 @@ public class DocumentationFenceTest {
     @Inject
     private IResourceValidator resourceValidator;
 
-    record ModelLine(String text, int pageLine) {
-    }
+    record ModelLine(String text, int pageLine) {}
 
     record Fence(Path page, int line, List<ModelLine> model, boolean continued, String issue, boolean fragment) {
 
@@ -85,9 +73,7 @@ public class DocumentationFenceTest {
         }
 
         String text() {
-            return model.stream()
-                    .map(ModelLine::text)
-                    .collect(Collectors.joining("\n", "", "\n"));
+            return model.stream().map(ModelLine::text).collect(Collectors.joining("\n", "", "\n"));
         }
 
         boolean declaresPackage() {
@@ -155,8 +141,7 @@ public class DocumentationFenceTest {
                     case "checkpoint" -> checkpoint = value;
                     case "issue" -> issue = value.equals("syntax") ? Diagnostic.SYNTAX_DIAGNOSTIC : value;
                     case "fragment" -> fragment = true;
-                    default -> {
-                    }
+                    default -> {}
                 }
             }
             var model = new ArrayList<ModelLine>();
@@ -193,7 +178,11 @@ public class DocumentationFenceTest {
         var resourceSet = resourceSetProvider.get();
         if (!fence.continued()) {
             for (var sibling : fences(fence.page())) {
-                if (sibling.line() != fence.line() && !sibling.continued() && !sibling.fragment() && sibling.issue() == null && sibling.declaresPackage()) {
+                if (sibling.line() != fence.line()
+                        && !sibling.continued()
+                        && !sibling.fragment()
+                        && sibling.issue() == null
+                        && sibling.declaresPackage()) {
                     parseHelper.parse(sibling.text(), resourceSet);
                 }
             }
@@ -230,7 +219,9 @@ public class DocumentationFenceTest {
                     })
                     .collect(Collectors.toCollection(TreeSet::new));
             assertThat(codes)
-                    .as("the issue codes of the oxsts fence at %s, which names %s: %s", fence.location(), fence.issue(), described)
+                    .as(
+                            "the issue codes of the oxsts fence at %s, which names %s: %s",
+                            fence.location(), fence.issue(), described)
                     .containsExactly(fence.issue());
         }
     }
