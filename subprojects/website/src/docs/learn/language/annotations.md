@@ -41,7 +41,7 @@ class Counter {
 
 ## With Arguments
 
-Annotation arguments bind as call arguments do ([Calls and Arguments](expressions.md#calls-and-arguments)). Arguments must be constants: annotations are read without an instance, so the validator rejects a reference to a feature or variable (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`).
+Annotation arguments are positional or named, every named one after all positional ones (`OXSTS.POSITIONAL_ARGUMENT_AFTER_NAMED`), each parameter bound at most once (`OXSTS.PARAMETER_BOUND_TWICE`), and each argument fitting its parameter's type, as for a call ([Calls and Arguments](expressions.md#calls-and-arguments)). Arguments must be constants: annotations are read without an instance, so the validator rejects a reference to a feature or variable (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`).
 
 ```oxsts
 @VerificationCase(summary = "Reaches the limit")
@@ -90,7 +90,7 @@ With parameters:
 annotation Description(text: string)
 ```
 
-A custom annotation may then be applied like any built-in.
+Its parameters are declared as a transition's are: two cannot share a name (`OXSTS.DUPLICATE_NAME`), and a required one comes before every optional one (`OXSTS.INVALID_CALL_ARGUMENTS_COUNT`). A custom annotation may then be applied like any built-in.
 
 ```oxsts continue
 // hide-start

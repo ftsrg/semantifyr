@@ -103,7 +103,7 @@ The verifier explores both branches non-deterministically.
 
 ## Abstract Transitions
 
-An `abstract` transition has no body. Concrete subclasses must redefine it.
+An `abstract` transition has no body. Only an abstract class declares one (`OXSTS.MEMBER_NOT_IN_ABSTRACT_CLASS`), and a concrete class that inherits it redefines it (`OXSTS.ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED`), as [Abstract Classes](classes.md#abstract-classes) gives.
 
 ```oxsts
 // hide-start
@@ -117,7 +117,7 @@ abstract class Transition {
 
 ## Redefining Transitions
 
-Override an inherited transition of the **same name** with `redefine`.
+Override an inherited transition of the **same name** with `redefine`. The redefinition takes as many parameters as the inherited transition (`OXSTS.REDEFINITION_SIGNATURE_MISMATCH`), and a `redefine` that no inherited transition answers is rejected (`OXSTS.REDEFINED_NOT_FOUND`), as [Redefining Members](classes.md#redefining-members) gives. A call resolves to the redefinition on the instance it names ([Inline Call](inline-operations.md#inline-call)).
 
 ```oxsts
 // hide-start

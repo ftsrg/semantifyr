@@ -9,7 +9,7 @@ Variables hold the **mutable state** of the system. Unlike [features](features.m
 
 ## Variable Declaration 
 
-A variable declaration consists of the `var` keyword, a name, a type and an initializer. Both are required: the validator rejects a variable without a type (`OXSTS.VARIABLE_WITH_IMPLICIT_TYPE`) and one without an initializer (`OXSTS.MISSING_INITIALIZER`). The loop variable of a `for` and the parameters of a transition or property take their values from the range and the arguments and have no initializer.
+A variable declaration consists of the `var` keyword, a name, a type and an initializer. Both are required: the validator rejects a variable without a type (`OXSTS.VARIABLE_WITH_IMPLICIT_TYPE`) and one without an initializer (`OXSTS.MISSING_INITIALIZER`). The loop variable of a `for` and the parameters of a transition or property take their values from the range and the arguments and have no initializer. The initializer's value fits the variable's type ([Assignability](types.md#assignability), `OXSTS.TYPE_MISMATCH`).
 
 ```oxsts
 // hide-start
@@ -50,7 +50,7 @@ When no execution of `init` is enabled, as with `init { assume(false) }`, the sy
 
 ## Multiplicity on the Type
 
-A variable type may include a multiplicity bracket. This is how optional values are declared. A bounded multiplicity above one declares a fixed-size array, such as `var slots: int[3] := [0, 0, 0]`, whose initializer gives every slot. An array of class or feature type, such as `var queue: Job[2] := [first, second]`, holds one instance per slot, and a call or a read through a slot, such as `inline queue[i].finish()` or `queue[i].done`, acts on the instance the slot holds. An array is read and written slot by slot (`slots[i]`), or as a whole: `slots := other`, `slots := [0, 0, 0]`, `havoc(slots)` and `slots == other` act on every slot.
+A variable type may include a multiplicity bracket. This is how optional values are declared. A bounded multiplicity above one declares a fixed-size array, such as `var slots: int[3] := [0, 0, 0]`, whose initializer gives every slot. An array of class or feature type, such as `var queue: Job[2] := [first, second]`, holds one instance per slot, and a call or a read through a slot, such as `inline queue[i].finish()` or `queue[i].done`, acts on the instance the slot holds. An array is read and written slot by slot (`slots[i]`), or as a whole: `slots := other`, `slots := [0, 0, 0]`, `havoc(slots)` and `slots == other` act on every slot. An array's upper bound is known at compile time: a variable of multiplicity `[]`, `[*]` or `[n..*]` is rejected (`OXSTS.TYPE_MISMATCH`), as is an array literal initializer with fewer values than the lower bound or more than the upper bound; one with at least the lower bound and fewer than the upper bound, such as two values for `int[2..3]`, leaves a slot without a value (`OXSTS.MISSING_INITIALIZER`).
 
 ```oxsts
 // hide-start

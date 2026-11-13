@@ -20,6 +20,7 @@ Semantifyr borrows familiar object-oriented vocabulary, but every concept has a 
 - [**Properties**](properties.md) are pure functions returning a value. 
 - [**Inline operations**](inline-operations.md) are *compile-time* macros that expand library behavior across the structure of a concrete model.
 - [**Lexical structure**](lexical-structure.md) gives the names, comments and literals, and [**Types**](types.md) the type of every expression and when a value fits where it is used.
+- [**Inlined models**](inlined-models.md) are the form in which the compiler writes a compiled case and a witness.
 
 ## Two Evaluation Phases
 

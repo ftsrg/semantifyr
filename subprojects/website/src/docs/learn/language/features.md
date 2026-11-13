@@ -7,6 +7,8 @@ sidebar_position: 8
 
 Features define the **structural relationships** between classes. Unlike [variables](variables.md) (which hold runtime state), features are resolved during instantiation and eliminated during flattening; they do not exist at runtime.
 
+A feature declaration is a kind, a name, `:` and a type with an optional [multiplicity](#multiplicities), then any of `subsets`, `opposite` and `redefines`, and either a [binding](#feature-binding), a block of [nested features](#nested-features) or nothing. Two members of one class cannot share a name (`OXSTS.DUPLICATE_NAME`). A feature of a record type is rejected (`OXSTS.UNSUPPORTED_FEATURE`); a record value is held by a variable.
+
 ## Feature Kinds
 
 | Kind | Meaning |
@@ -97,7 +99,7 @@ class IntContainer : Container {
 
 ## Multiplicities
 
-A feature's multiplicity specifies how many target values are permitted. The multiplicity bracket holds a compile-time expression. The default is `[1]`.
+A feature's multiplicity specifies how many target values are permitted. The multiplicity bracket holds an expression evaluated at compile time, which cannot read the state (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`). The default is `[1]`.
 
 | Syntax | Meaning |
 |--------|---------|
@@ -193,7 +195,7 @@ class Counter10Pair : CounterPair {
 
 ## Nested Features
 
-A feature declaration may include a block of nested feature declarations to redefine inner structure.
+A feature declaration may include a block of nested feature declarations to redefine inner structure. Two nested features of one block cannot share a name (`OXSTS.DUPLICATE_NAME`), and they redefine an inherited feature at most once (`OXSTS.DUPLICATE_REDEFINITION`).
 
 ```oxsts
 // hide-start
@@ -217,7 +219,7 @@ class Machine {
 
 ## Feature Binding
 
-A feature can be bound to a compile-time expression with `=`. The bound value cannot depend on runtime state.
+A feature can be bound to a compile-time expression with `=`, whose value fits the feature's type (`OXSTS.TYPE_MISMATCH`). The bound value cannot depend on runtime state (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`). A bound feature holds the instances or the value its expression gives, on each instance of its class.
 
 ```oxsts
 // hide-start

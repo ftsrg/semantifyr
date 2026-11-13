@@ -59,7 +59,7 @@ A body never writes a parameter: an assignment or a `havoc` whose target is a pa
 
 ## `inline if`
 
-`inline if (guard) { ... } else { ... }` evaluates its guard at compile time, for each instance whose transition holds it, and keeps the body of the branch the guard selects in its place; the other branch is dropped, and without an `else`, a false guard leaves nothing. The guard reads no state (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`).
+`inline if (guard) { ... } else { ... }` evaluates its guard at compile time, for each instance whose transition holds it, and keeps the body of the branch the guard selects in its place; the other branch is dropped, and without an `else`, a false guard leaves nothing. The guard is Boolean (`OXSTS.TYPE_MISMATCH`) and reads no state (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`).
 
 ```oxsts
 class Counter {
@@ -86,7 +86,7 @@ A step of `Counter` increments `value`; in `Frozen`, whose `maximum` is 0, the s
 
 ## `inline for` (sequence)
 
-`inline for [seq] (x in expr) { ... }` evaluates its range at compile time, for each instance whose transition holds it, and runs its body once for each value or instance of the range, in order, as one sequence, with `x` standing for that value or instance. The `seq` keyword is optional: `inline for (x in r)` and `inline for seq (x in r)` are equivalent. The range reads no state (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`).
+`inline for [seq] (x in expr) { ... }` evaluates its range at compile time, for each instance whose transition holds it, and runs its body once for each value or instance of the range, in order, as one sequence, with `x` standing for that value or instance. The `seq` keyword is optional: `inline for (x in r)` and `inline for seq (x in r)` are equivalent. The range reads no state (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`), and is what the range of a [`for`](operations.md#for) may be: an integer range, an expression of instances or one of several values (`OXSTS.TYPE_MISMATCH`). Its loop variable cannot be written ([Inline vs Runtime](#inline-vs-runtime)).
 
 ```oxsts
 class Counter {

@@ -13,7 +13,7 @@ Operations (and whole transitions) are atomic in nature, which means either the 
 
 ### Assignment
 
-`lhs := rhs;` updates a variable's value. The left-hand side may be a navigation expression. Only runtime variables can be written, and no loop variable: the validator rejects an assignment or havoc whose target is substituted at compile time, or is the loop variable of a [`for`](#for) or an [`inline for`](inline-operations.md) (`OXSTS.INCORRECT_ASSIGNMENT`).
+`lhs := rhs;` updates a variable's value. The left-hand side may be a navigation expression, an array slot or a record field. Only a variable can be written, and no loop variable or parameter: the validator rejects an assignment or havoc whose target is a feature or another declaration, is substituted at compile time, or is the loop variable of a [`for`](#for) or an [`inline for`](inline-operations.md) (`OXSTS.INCORRECT_ASSIGNMENT`). The value fits the variable's type ([Assignability](types.md#assignability), `OXSTS.TYPE_MISMATCH`).
 
 ```oxsts
 // hide-start
@@ -57,9 +57,29 @@ class Counter {
 
 Assignments always execute.
 
+```oxsts issue=OXSTS.INCORRECT_ASSIGNMENT
+class Counter {
+  refers limit: int = 10
+
+  redefine tran {
+    limit := 11
+  }
+}
+```
+
+```oxsts issue=OXSTS.TYPE_MISMATCH
+class Counter {
+  var value: int := 0
+
+  redefine tran {
+    value := true
+  }
+}
+```
+
 ### Havoc
 
-`havoc(reference);` non-deterministically picks a value of the reference's type. Used to model unknown environment inputs, and in `init` to give a variable an arbitrary initial value.
+`havoc(reference);` non-deterministically picks a value of the reference's type: any `int` or `bool`, any literal of an enumeration, any instance a [feature-typed variable](variables.md#feature-typed-variables) can hold, every field of a record and every slot of an array. Used to model unknown environment inputs, and in `init` to give a variable an arbitrary initial value. Its target is a variable, as an assignment's is (`OXSTS.INCORRECT_ASSIGNMENT`).
 
 ```oxsts
 // hide-start
@@ -85,7 +105,7 @@ Havocs are special assignments, and always execute.
 
 ### Assumption
 
-`assume(expr);` assumption states that the given `expr` expression **MUST** evaluate to true **IF** the operation is executed.
+`assume(expr);` lets an execution go on only where its Boolean condition holds (`OXSTS.TYPE_MISMATCH` for a condition that is not Boolean): where it does not hold, the branch the `assume` is on has no execution, and when every branch of a step is so, the step cannot be taken from that state.
 
 ```oxsts
 // hide-start
@@ -107,7 +127,15 @@ class Counter {
 // hide-end
 ```
 
-Is only executed if `expr` evaluates to _true_.
+```oxsts issue=OXSTS.TYPE_MISMATCH
+class Counter {
+  var value: int := 0
+
+  redefine tran {
+    assume(value)
+  }
+}
+```
 
 ## Composite Operations
 
@@ -178,7 +206,7 @@ This results in the selection of execution paths based on which assumptions eval
 
 ### `if`
 
-A runtime conditional. The guard is evaluated at runtime, and the specific body is executed accordingly.
+A runtime conditional. The guard is Boolean (`OXSTS.TYPE_MISMATCH`) and evaluated at runtime: the first body runs where it holds, the `else` body where it does not, and without an `else` nothing happens then. A guard known at compile time could be an [`inline if`](inline-operations.md#inline-if) (`OXSTS.COULD_BE_INLINE`).
 
 ```oxsts
 // hide-start
@@ -206,7 +234,7 @@ class Counter {
 
 ### `for`
 
-A runtime loop. Its range is an integer range, such as `1..count`, whose bounds may read the state, or an expression of instances, such as a feature; anything else is rejected (`OXSTS.TYPE_MISMATCH`). The loop variable takes each value of the range in turn, or holds each instance, so that a call or a member read through it acts on that instance; it cannot be written. A `for` whose range is known at compile time can be an [`inline for`](inline-operations.md#inline-for-sequence), which the validator hints at (`OXSTS.COULD_BE_INLINE`). Not every backend runs a runtime `for`: the pages of [Theta](../backends/theta.mdx), [nuXmv](../backends/nuxmv.mdx), [Spin](../backends/spin.mdx) and [Uppaal](../backends/uppaal.mdx) say which refuse it.
+A runtime loop. Its range is an integer range, such as `1..count`, whose bounds may read the state, an expression of instances, such as a feature, or an expression of several values, such as an array; a single value of a datatype or an enumeration, such as an `int` variable, is rejected (`OXSTS.TYPE_MISMATCH`). Over a range the loop variable takes each integer of the range in turn, and over a feature it holds each instance, so that a call or a member read through it acts on that instance; it cannot be written. A `for` whose range is known at compile time can be an [`inline for`](inline-operations.md#inline-for-sequence), which the validator hints at (`OXSTS.COULD_BE_INLINE`). Not every backend runs a runtime `for`: the pages of [Theta](../backends/theta.mdx), [nuXmv](../backends/nuxmv.mdx), [Spin](../backends/spin.mdx) and [Uppaal](../backends/uppaal.mdx) say which refuse it.
 
 ```oxsts
 // hide-start
@@ -232,7 +260,7 @@ class Counter {
 
 ### Local Variable
 
-Local variables allow the definition of temporary locals in the operation structure. A local variable may be a fixed-size array, such as `var values: int[3] := [1, 2, 3]`, indexed like a class array. A local variable carries an initializer like every variable. Two local variables of one sequence cannot share a name (`OXSTS.DUPLICATE_NAME`); a nested sequence may reuse an outer name, which it then shadows. A local variable of class or feature type, such as `var picked: Worker := first` or `var picked: workers := first`, holds one instance like a class variable, and a call or a read through it, such as `inline picked.finish()` or `picked.done`, acts on the instance it holds; a feature-typed local holds the instances of the feature on the instance whose transition declares it, and `havoc(picked)` chooses among the instances of its type.
+Local variables allow the definition of temporary locals in the operation structure. A local variable may be a fixed-size array, such as `var values: int[3] := [1, 2, 3]`, indexed like a class array. A local variable carries a type and an initializer like every [variable](variables.md#variable-declaration), and its initializer may read the state. Two local variables of one sequence cannot share a name (`OXSTS.DUPLICATE_NAME`); a nested sequence may reuse an outer name, which it then shadows. A local variable of class or feature type, such as `var picked: Worker := first` or `var picked: workers := first`, holds one instance like a class variable, and a call or a read through it, such as `inline picked.finish()` or `picked.done`, acts on the instance it holds; a feature-typed local holds the instances of the feature on the instance whose transition declares it, and `havoc(picked)` chooses among the instances of its type.
 
 ```oxsts
 // hide-start

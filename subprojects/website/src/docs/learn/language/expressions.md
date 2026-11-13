@@ -23,7 +23,7 @@ Expressions compute values. They appear in [property](properties.md) bodies, on 
 | Array | `[a, b, c]`, `[]` |
 | Record (see [Records](datatypes.md#records)) | `Point { x = 0, y = 0 }` |
 
-[Lexical Structure](lexical-structure.md#literals) gives the forms of the literals, and [Datatypes](datatypes.md) their types.
+[Lexical Structure](lexical-structure.md#literals) gives the forms of the literals, and [Datatypes](datatypes.md) their types. The values of an array literal share a type (`OXSTS.TYPE_MISMATCH`), and `[a, b, c]` has the multiplicity `[3]`.
 
 ## `self`
 
@@ -65,7 +65,7 @@ From **lowest** to **highest** precedence:
 | 11 | Call | `( )` |
 | 12 | Member and index | `.`, `?.`, `[ ]` |
 
-The binary operators are left-associative, and a range takes one `..` or `..<`. The guard and the branches of an if-then-else are whole expressions, so its `else` branch reaches as far to the right as it can: `if c then 1 else 2 + 3` is `if c then 1 else (2 + 3)`. A cast applies to a call or a chain of members and indices, so `-x as int` is `-(x as int)`. A call ends a chain of members and indices: `a.b.f()` calls `f` on `a.b`, and nothing but a cast follows the call.
+The binary operators are left-associative, and a range takes one `..` or `..<`. The guard and the branches of an if-then-else are whole expressions, so its `else` branch reaches as far to the right as it can: `if c then 1 else 2 + 3` is `if c then 1 else (2 + 3)`. A cast applies to a call or a chain of members and indices, so `-x as int` is `-(x as int)`. A call ends a chain of members and indices ([Calls and Arguments](#calls-and-arguments)).
 
 As in Java, `&&` binds tighter than `^^`, which binds tighter than `||`: `a || b && c` parses as `a || (b && c)`. The validator warns on an operand that is another of the three written without parentheses (`OXSTS.MIXED_BOOLEAN_OPERATORS`) and names the reading.
 
@@ -94,6 +94,29 @@ class Switch {
 | `^^` | Logical XOR |
 | `!` | Unary NOT |
 
+Their operands are Boolean (`OXSTS.TYPE_MISMATCH`), and so is their value. `^^` holds when exactly one of its operands holds.
+
+```oxsts
+class Switch {
+  var up: bool := false
+  var down: bool := false
+
+  prop {
+    return AG !(up && down) && ((up ^^ down) || !up)
+  }
+}
+```
+
+```oxsts issue=OXSTS.TYPE_MISMATCH
+class Switch {
+  var level: int := 0
+
+  prop {
+    return AG !level
+  }
+}
+```
+
 ## Comparison Operators
 
 | Operator | Description |
@@ -105,7 +128,7 @@ class Switch {
 | `==` | Equal |
 | `!=` | Not equal |
 
-`<`, `<=`, `>` and `>=` take numeric operands; ordering other values, such as enum literals (`Color::Red < Color::Green`), is rejected (`OXSTS.TYPE_MISMATCH`).
+`==` and `!=` take two values that compare ([Comparison and Joining](types.md#comparison-and-joining)), and `<`, `<=`, `>` and `>=` numeric operands, `int`, `real` or `any`; ordering other values, such as enum literals (`Color::Red < Color::Green`), is rejected (`OXSTS.TYPE_MISMATCH`).
 
 Evaluated at compile time, as in an `inline if` guard, `==` between instance expressions (features, `self`, navigations, `nothing`) compares the sets of instances the two sides denote: they are equal when they hold the same instances, in any order. `nothing` is the empty set, so an empty side equals only another empty side, and `!=` is the negation of `==`.
 
@@ -118,12 +141,53 @@ Evaluated at compile time, as in an `inline if` guard, `==` between instance exp
 | `*` | Multiplication |
 | `/` | Division |
 
+Their operands are numeric, `int`, `real` or `any` (`OXSTS.TYPE_MISMATCH`), and their value is an `int` for two `int` operands and a `real` when either is `real`.
+
+```oxsts
+class Counter {
+  var value: int := 0
+  var half: int := 0
+
+  redefine tran {
+    havoc(value)
+    assume(0 <= value && value <= 10)
+    half := value / 2 + value * 0 - 1
+  }
+}
+```
+
+```oxsts issue=OXSTS.TYPE_MISMATCH
+class Counter {
+  var on: bool := false
+  var value: int := 0
+
+  redefine tran {
+    value := value + on
+  }
+}
+```
+
 ## Ranges
 
 | Syntax | Description |
 |--------|-------------|
 | `a..b` | Inclusive range from `a` to `b` |
 | `a..<b` | Exclusive range from `a` to `b-1` |
+| `a..*` | Every integer from `a` on |
+
+```oxsts
+class Counters {
+  var total: int := 0
+
+  redefine tran {
+    inline for (index in 0..<3) {
+      total := total + index
+    }
+  }
+}
+```
+
+A range is an `int` range. `a..<a` is empty, and `a..<*` is unbounded like `a..*`. Ranges are the ranges of `for` and `inline for` and, in brackets, [multiplicities](features.md#multiplicities).
 
 ## Member Access (`.`)
 
@@ -173,7 +237,7 @@ class Child {
 
 ## Indexing (`[]`)
 
-Accesses an array element by index.
+`a[i]` is the slot `i` of the array `a`, counted from 0, and has the array's domain with the multiplicity `[1]`. The index is numeric, and indexing a value whose multiplicity's upper bound is at most one, such as an `int` variable, is rejected (both `OXSTS.TYPE_MISMATCH`). The index may read the state, and then the slot is chosen when the model runs. A slot is read and written like a variable.
 
 ```oxsts
 // hide-start
@@ -190,13 +254,23 @@ class Buffer {
 // hide-end
 ```
 
+```oxsts issue=OXSTS.TYPE_MISMATCH
+class Buffer {
+  var count: int := 0
+
+  prop first(): int {
+    return count[0]
+  }
+}
+```
+
 ## Calls and Arguments
 
-`f(arguments)` calls a [property](properties.md), and is then an expression whose value is the property's, or a [transition](transitions.md), which only an [inline call](inline-operations.md#inline-call) does. The callee is named like a member, by itself, through `self` or through a navigation, and calling anything else, such as a variable or a record, is rejected (`OXSTS.INCORRECT_CALLED_ELEMENT`).
+`f(arguments)` calls a [property](properties.md) or a [transition](transitions.md). A property call is an expression whose value is the property's; a transition call is what an [inline call](inline-operations.md#inline-call) runs. The callee is named like a member, by itself, through `self` or through a navigation, and calling anything else, such as a variable or a record, is rejected (`OXSTS.INCORRECT_CALLED_ELEMENT`). A call ends a chain of members and indices, and only a cast may follow it: `a.b.f()` calls `f` on `a.b`, while `a.f().b`, `f()()` and `a.f()[0]` are syntax errors, and a member of what a call gives is read through parentheses, `(a.f()).b`.
 
-The same rules bind the arguments of a property call, of an inline call and of an [annotation](annotations.md#with-arguments):
+These rules bind the arguments of a property call and of an inline call; the first, the second and the last bind the arguments of an [annotation](annotations.md#with-arguments) too:
 
-- An argument is positional or named, `name = value`. A positional argument binds the parameter at its position, a named one the parameter of its name, so a call resolved against an inherited declaration binds the parameters of its redefinition by name too.
+- An argument is positional or named, `name = value`. A positional argument binds the parameter at its position, a named one the parameter of its name.
 - Every named argument follows all positional ones (`OXSTS.POSITIONAL_ARGUMENT_AFTER_NAMED`), and a parameter is bound at most once, by position or by name (`OXSTS.PARAMETER_BOUND_TWICE`).
 - A parameter whose multiplicity has the lower bound 0, such as `[0..1]`, is optional and binds `nothing` when it is left out. Every other parameter must be bound, and a call has no more arguments than parameters (`OXSTS.INVALID_CALL_ARGUMENTS_COUNT`); a required parameter is declared before every optional one (`OXSTS.INVALID_CALL_ARGUMENTS_COUNT`, at the declaration).
 - Each argument fits its parameter's type ([Assignability](types.md#assignability)).
@@ -222,6 +296,42 @@ class Pair {
 
   prop bothAtLimit(): bool {
     return a.atLimit() && b.atLimit()
+  }
+}
+```
+
+```oxsts
+class Counter {
+  var value: int := 0
+}
+
+class Pair {
+  contains a: Counter
+
+  prop first(): Counter {
+    return a
+  }
+
+  prop firstValue(): int {
+    return (first()).value
+  }
+}
+```
+
+```oxsts issue=syntax
+class Counter {
+  var value: int := 0
+}
+
+class Pair {
+  contains a: Counter
+
+  prop first(): Counter {
+    return a
+  }
+
+  prop firstValue(): int {
+    return first().value
   }
 }
 ```
@@ -312,7 +422,7 @@ class Room {
 
 ## Temporal Operators
 
-Temporal operators denote logical formulae over the possible executions of the system.
+Temporal operators denote logical formulae over the possible executions of the system. Their body is Boolean (`OXSTS.TYPE_MISMATCH`).
 
 | Operator | Meaning |
 |----------|---------|
