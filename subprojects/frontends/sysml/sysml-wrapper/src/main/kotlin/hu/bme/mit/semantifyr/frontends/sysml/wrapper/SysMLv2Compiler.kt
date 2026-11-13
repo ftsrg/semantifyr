@@ -38,7 +38,7 @@ class SysMLv2Compiler(
 
     fun compile(sourcePath: Path, outputPath: Path): Path {
         require(Files.isRegularFile(sourcePath)) {
-            "SysMLv2 source does not exist or is not a regular file: $sourcePath"
+            "SysML v2 source does not exist or is not a regular file: $sourcePath"
         }
 
         val entry = cacheEntry(sourcePath)
@@ -113,13 +113,13 @@ class SysMLv2Compiler(
 
     fun validate(sourcePath: Path) {
         require(Files.isRegularFile(sourcePath)) {
-            "SysMLv2 source does not exist or is not a regular file: $sourcePath"
+            "SysML v2 source does not exist or is not a regular file: $sourcePath"
         }
 
         logger.info { "Validating SysMLv2 source '$sourcePath' via bundled CLI '$cliPath'" }
 
         runCli(
-            "SysMLv2 validation of '$sourcePath'",
+            "SysML v2 validation of '$sourcePath'",
             "validate",
             sourcePath.toString(),
             sysmlLibraryPath.toString(),
@@ -133,7 +133,7 @@ class SysMLv2Compiler(
         val temporary = entry.resolveSibling(".tmp-${UUID.randomUUID()}.oxsts")
         try {
             runCli(
-                "SysMLv2 compilation of '$sourcePath'",
+                "SysML v2 compilation of '$sourcePath'",
                 "compile",
                 sourcePath.toString(),
                 sysmlLibraryPath.toString(),
@@ -153,7 +153,7 @@ class SysMLv2Compiler(
             builder.start()
         } catch (exception: IOException) {
             throw IllegalStateException(
-                "Failed to launch the SysMLv2 node CLI ($cliPath). Ensure `node` is installed and on PATH.",
+                "Failed to launch the SysML v2 command line ($cliPath). Ensure `node` is installed and on PATH.",
                 exception,
             )
         }

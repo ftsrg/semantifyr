@@ -35,7 +35,7 @@ class SysMLCompileCommand : SuspendingCliktCommand("compile") {
         .help("Output file.")
 
     override fun help(context: Context): String {
-        return "Translate a SysML v2 model to OXSTS."
+        return "Compile a SysML v2 model to OXSTS."
     }
 
     override suspend fun run() {

@@ -13,7 +13,6 @@ import com.github.ajalt.clikt.parameters.options.defaultLazy
 import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.long
 import com.github.ajalt.clikt.parameters.types.path
 import com.github.ajalt.clikt.parameters.types.restrictTo
@@ -44,7 +43,7 @@ import kotlin.time.Duration.Companion.seconds
 
 class VerificationCaseSpecificationOptionGroup(
     private val verificationCaseDiscoverer: VerificationCaseDiscoverer,
-) : OptionGroup("Verification case specification") {
+) : OptionGroup("Case selection") {
     val caseNames by option("--case-name")
         .multiple()
         .help("Qualified name of a case, repeatable.")
@@ -84,22 +83,22 @@ enum class ArtifactPreset {
 class ArtifactOptionGroup : OptionGroup("Artifact options") {
     val artifactDirectory by option("-d", "--artifact-directory")
         .path(canBeFile = false, canBeDir = true)
-        .help("Directory of the artifacts.")
+        .help("Where each case's artifacts and report are written; a new temporary directory by default.")
 
     val artifactPreset by option("--artifacts")
-        .enum<ArtifactPreset>(ignoreCase = true)
-        .default(ArtifactPreset.All)
-        .help("Artifact preset.")
+        .kebabCaseEnum<ArtifactPreset>()
+        .default(ArtifactPreset.All, defaultForHelp = kebabCase(ArtifactPreset.All))
+        .help("Which artifacts are written: none, all, or debug, which also writes the model after every compiler pass and is slow.")
 
     val enableArtifacts by option("--enable-artifact")
-        .enum<ArtifactKind>(ignoreCase = true)
+        .kebabCaseEnum<ArtifactKind>()
         .multiple()
-        .help("Artifact kind to write, repeatable.")
+        .help("An artifact to write, repeatable.")
 
     val disableArtifacts by option("--disable-artifact")
-        .enum<ArtifactKind>(ignoreCase = true)
+        .kebabCaseEnum<ArtifactKind>()
         .multiple()
-        .help("Artifact kind to skip, repeatable.")
+        .help("An artifact to skip, repeatable.")
 
     val resolvedOutputDirectory by lazy {
         artifactDirectory ?: Files.createTempDirectory("semantifyr-")
@@ -143,24 +142,34 @@ class BackendOptionGroup(
     private val portfolios: () -> List<VerificationPortfolio>,
 ) : OptionGroup("Backend options") {
     val portfolio by option("--portfolio")
-        .convert("text") { id ->
-            portfolios().firstOrNull { it.id == id } ?: fail("unknown portfolio '$id'")
+        .convert("id") { id ->
+            val portfolios = portfolios()
+            portfolios.firstOrNull {
+                it.id == id
+            } ?: fail(
+                context.localization.invalidChoice(
+                    id,
+                    portfolios.map {
+                        it.id
+                    },
+                ),
+            )
         }
         .defaultLazy(defaultForHelp = Portfolios.Default.id) {
             portfolios().first {
                 it.id == Portfolios.Default.id
             }
         }
-        .help("Portfolio id.")
+        .help("The portfolio, the strategy for the backend runs; the portfolios command lists them.")
 
     val thetaExecutor by option("--theta-executor")
-        .enum<ThetaExecutor>(ignoreCase = true)
-        .default(ThetaExecutor.Auto)
-        .help("How to run Theta.")
+        .kebabCaseEnum<ThetaExecutor>()
+        .default(ThetaExecutor.Auto, defaultForHelp = kebabCase(ThetaExecutor.Auto))
+        .help("How to run Theta: shell runs theta-xsts-cli from PATH, docker runs its image, auto tries PATH first.")
 
     val thetaDockerImage by option("--theta-docker-image")
         .default(THETA_DEFAULT_IMAGE)
-        .help("Theta Docker image.")
+        .help("The Theta image Docker runs.")
 
     val timeoutSeconds by option("-t", "--timeout-seconds")
         .long()
@@ -199,19 +208,19 @@ enum class OptimizationPreset {
 
 class CompilationOptionGroup : OptionGroup("Compilation options") {
     val optimizationPreset by option("--optimization")
-        .enum<OptimizationPreset>(ignoreCase = true)
-        .default(OptimizationPreset.All)
-        .help("Optimization preset.")
+        .kebabCaseEnum<OptimizationPreset>()
+        .default(OptimizationPreset.All, defaultForHelp = kebabCase(OptimizationPreset.All))
+        .help("Which optimization passes run: none or all.")
 
     val enableOptimizations by option("--enable-optimization")
-        .enum<OptimizationPass>(ignoreCase = true)
+        .kebabCaseEnum<OptimizationPass>()
         .multiple()
-        .help("Optimization pass to run, repeatable.")
+        .help("An optimization pass to run, repeatable.")
 
     val disableOptimizations by option("--disable-optimization")
-        .enum<OptimizationPass>(ignoreCase = true)
+        .kebabCaseEnum<OptimizationPass>()
         .multiple()
-        .help("Optimization pass to skip, repeatable.")
+        .help("An optimization pass to skip, repeatable.")
 
     val resolved by lazy {
         val base = when (optimizationPreset) {

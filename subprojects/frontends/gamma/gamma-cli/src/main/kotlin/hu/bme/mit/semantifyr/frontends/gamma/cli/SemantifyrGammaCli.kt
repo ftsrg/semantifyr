@@ -10,6 +10,7 @@ import com.github.ajalt.clikt.parsers.CommandLineParser
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.cli.common.CommandExit
 import hu.bme.mit.semantifyr.cli.common.ExitCode
+import hu.bme.mit.semantifyr.cli.common.PortfoliosCommand
 import hu.bme.mit.semantifyr.cli.common.RootCommand
 import hu.bme.mit.semantifyr.cli.common.execute
 import hu.bme.mit.semantifyr.frontends.gamma.lang.GammaStandaloneSetup
@@ -25,10 +26,11 @@ class SemantifyrGammaCommand(
     oxstsInjector: Injector,
 ) : RootCommand(
     "semantifyr-gamma",
-    "Semantifyr for Gamma models.",
+    "Verify Gamma models with Semantifyr, a framework to support the declarative definition of engineering model semantics.",
     listOf(
         GammaVerifyCommand(gammaInjector, oxstsInjector),
         GammaCompileCommand(gammaInjector),
+        PortfoliosCommand(),
     ),
 )
 

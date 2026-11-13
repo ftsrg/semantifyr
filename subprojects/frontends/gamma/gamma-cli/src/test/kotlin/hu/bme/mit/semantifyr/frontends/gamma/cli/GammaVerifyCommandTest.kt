@@ -116,4 +116,12 @@ class GammaVerifyCommandTest {
         assertThat(result.statusCode).isZero()
         assertThat(result.stdout).startsWith("semantifyr-gamma version ")
     }
+
+    @Test
+    suspend fun `the launcher can list the portfolios`() {
+        val result = runGammaCli("--help")
+
+        assertThat(result.statusCode).isZero()
+        assertThat(result.stdout).containsPattern("\\n\\s+portfolios\\s+List the portfolios")
+    }
 }

@@ -17,9 +17,9 @@ The `semantifyr` command lists, compiles, measures and verifies the verification
 
 <CodeBlock language="text">{help}</CodeBlock>
 
-A model or library path is an `.oxsts` file or a directory, which is searched recursively for `.oxsts` files. `--log-level` before the command sets the level of the log on standard error, `WARN` by default.
+A model or library path is an `.oxsts` file or a directory, which is searched recursively for `.oxsts` files. `--log-level` before the command sets the level of the log on standard error, `warn` by default. At that level a warning or an error is one line, `warning: ` or `error: ` and its message; from `info` on, every line carries its time, its thread and its source.
 
-`--case-name` selects cases by qualified name and overrides the tag filters. Without it, a command takes the cases that carry one of the `--include-tag` tags, or every case when none is given, except those that carry an `--exclude-tag` tag. `--artifacts debug`, or `--enable-artifact CompilationStep`, also writes the model after every compiler pass into `pipeline/steps`, which is slow and meant for bisecting compiler regressions. The artifacts of a case go to a directory named after the model file and the qualified name of the case, with `::` written as `.` and every character other than letters, digits, `.`, `_` and `-` as `_`, shortened with a hash when longer than 64 characters. An artifact directory that cannot be created or written stops the command before it compiles anything.
+`--case-name` selects cases by qualified name and overrides the tag filters. Without it, a command takes the cases that carry one of the `--include-tag` tags, or every case when none is given, except those that carry an `--exclude-tag` tag. `--artifacts debug`, or `--enable-artifact compilation-step`, also writes the model after every compiler pass into `pipeline/steps`, which is slow and meant for bisecting compiler regressions. The artifacts of a case go to a directory named after the model file and the qualified name of the case, with `::` written as `.` and every character other than letters, digits, `.`, `_` and `-` as `_`, shortened with a hash when longer than 64 characters. An artifact directory that cannot be created or written stops the command before it compiles anything.
 
 ## `verify`
 

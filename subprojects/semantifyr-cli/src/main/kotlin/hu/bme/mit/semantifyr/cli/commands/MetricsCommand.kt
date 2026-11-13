@@ -42,7 +42,7 @@ class MetricsCommand @Inject constructor(
         .help("One JSON object per case, one per line.")
 
     override fun help(context: Context): String {
-        return "Print the model sizes of cases."
+        return "Print the size of each case's model before inlining, after inlining and after flattening."
     }
 
     override suspend fun run() {

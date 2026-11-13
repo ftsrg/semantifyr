@@ -11,8 +11,8 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.cli.commands.CompileCommand
 import hu.bme.mit.semantifyr.cli.commands.ListCommand
 import hu.bme.mit.semantifyr.cli.commands.MetricsCommand
-import hu.bme.mit.semantifyr.cli.commands.PortfoliosCommand
 import hu.bme.mit.semantifyr.cli.commands.VerifyCommand
+import hu.bme.mit.semantifyr.cli.common.PortfoliosCommand
 import hu.bme.mit.semantifyr.cli.common.RootCommand
 import hu.bme.mit.semantifyr.cli.common.execute
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
@@ -25,7 +25,7 @@ class SemantifyrCommand @Inject constructor(
     portfoliosCommand: PortfoliosCommand,
 ) : RootCommand(
     "semantifyr",
-    "Semantifyr for OXSTS models.",
+    "Verify OXSTS models with Semantifyr, a framework to support the declarative definition of engineering model semantics.",
     listOf(
         verifyCommand,
         compileCommand,

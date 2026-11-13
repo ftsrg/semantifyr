@@ -117,7 +117,7 @@ class SysMLv2Frontend private constructor(
             )
             logger.info { "SysMLv2 case '${case.qualifiedName}' wrote its SysML trace to '$tracePath'" }
         } catch (exception: Exception) {
-            logger.warn(exception) { "SysMLv2 case '${case.qualifiedName}' has no SysML trace" }
+            logger.warn(exception) { "Case ${case.qualifiedName} has no SysML v2 trace" }
         }
     }
 

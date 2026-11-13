@@ -113,11 +113,13 @@ class ListCommandTest {
     }
 
     @Test
-    suspend fun `a model the validator rejects is a compilation error`() {
-        val result = runCli("list", testModels.resolve("constructs/multiple_inheritance.oxsts").toString())
+    suspend fun `a model the validator rejects is a compilation error naming each issue at its place`() {
+        val model = testModels.resolve("constructs/multiple_inheritance.oxsts")
+
+        val result = runCli("list", model.toString())
 
         assertThat(result.statusCode).isEqualTo(4)
-        assertThat(result.stderr).contains("multiple_inheritance.oxsts")
+        assertThat(result.stderr).startsWith("error: ").containsPattern("multiple_inheritance\\.oxsts:\\d+:\\d+: .+ \\[OXSTS\\.\\w+]")
     }
 
     @Test
