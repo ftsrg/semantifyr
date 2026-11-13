@@ -3,7 +3,7 @@ doc
  * An aircraft's landing gear behind two bay doors, which a controller moves on the pilot's handle.
  * To retract the gear, the controller opens the doors, raises the gear and closes the doors; to extend it, it does the same the other way round.
  * The doors and the gear report when their sensors find a movement ended, and the pilot may move the handle back at any moment.
- * The cases ask whether the gear can be retracted and lowered again, and whether the gear ever moves while the doors are not fully open.
+ * The cases ask whether the gear can be retracted and lowered again, whether the doors are closed whenever the controller holds the gear up, and whether the gear ever moves while the doors are not fully open.
  */
 
 item def HandleUp;

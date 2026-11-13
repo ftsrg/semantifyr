@@ -3,7 +3,7 @@ doc
  * A spacecraft that sends its data to a ground station while it manages its battery.
  * The station pings the spacecraft when it starts operating and every ten seconds after; the spacecraft then transmits while it has data and charge, and its battery recharges in a parallel region.
  * The spacecraft starts a transmission only while it is not recharging; its charge and its data change in steps of ten.
- * The cases ask whether a transmission starts, whether all data can arrive, whether the charge stays above its floor, and whether the spacecraft ever transmits while it recharges.
+ * The cases ask whether a transmission starts, whether the charge stays above its floor, and whether the spacecraft ever transmits while it recharges.
  */
 
 private import ScalarValues::Integer;
