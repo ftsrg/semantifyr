@@ -36,6 +36,7 @@ abstract class MessageQueue {
     refers position: int
     refers rank: int
     refers environmental: bool = false
+    refers discardsOldest: bool = false
 
     var size: int := 0
 
@@ -50,11 +51,22 @@ abstract class MessageQueue {
     // pops the oldest message, gives its event and parameters to the wrapped component and applies its control specification
     abstract tran receive()
 
+    abstract tran shift()
+
     abstract tran clear()
 
     abstract tran receiveEnvironmentMessage()
 
     abstract tran receiveClockTick(clock: Clock)
+
+    // the environment never drops a message, as in Gamma, so only a dispatch and a clock tick call this
+    tran dropOldestWhenFull() {
+        inline if (discardsOldest) {
+            if (isFull()) {
+                inline shift()
+            }
+        }
+    }
 }
 
 abstract class AsynchronousAdapter : Component {
@@ -164,6 +176,7 @@ abstract class MessageDispatch {
 
     tran dispatch() {
         if (event.isRaised) {
+            inline target.dropOldestWhenFull()
             if (!target.isFull()) {
                 inline enqueue()
             }

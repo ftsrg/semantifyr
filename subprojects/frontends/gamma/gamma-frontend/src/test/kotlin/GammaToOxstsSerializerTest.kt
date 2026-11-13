@@ -1569,8 +1569,98 @@ class GammaToOxstsSerializerTest {
         )
         assertThat(lines).containsSequence(
             "inline if (clock == clock_2) {",
+            "inline dropOldestWhenFull()",
             "if (!isFull()) {",
             "inline enqueue_2()",
+        )
+    }
+
+    @Test
+    fun `a queue discarding the oldest message binds it and redefines the shift that drops it`() {
+        val lines = oxstsLines(
+            """
+                package test
+                interface Signals {
+                    in event first(value : integer)
+                }
+                statechart Receiver [
+                    port signals : provides Signals
+                ] {
+                }
+                adapter Buffered of component receiver : Receiver {
+                    when any / run
+                    queue messages (priority = 1, capacity = 2, discard = oldest) {
+                        signals.any
+                    }
+                }
+            """,
+        )
+
+        assertThat(lines).containsSequence(
+            "class queue_Buffered_messages : MessageQueue {",
+            "redefine refers capacity: int = 2",
+            "redefine refers priority: int = 1",
+            "redefine refers discardsOldest: bool = true",
+        )
+        assertThat(lines).containsSequence(
+            "redefine tran shift() {",
+            "inline for (index in 0..<capacity - 1) {",
+            "identifiers[index] := identifiers[index + 1]",
+            "values_1_value[index] := values_1_value[index + 1]",
+        )
+    }
+
+    @Test
+    fun `a queue discarding the incoming message leaves the library default`() {
+        val lines = asynchronousLines()
+
+        assertThat(lines).noneMatch {
+            it.contains("discardsOldest")
+        }
+    }
+
+    @Test
+    fun `an output reaching several queues is dispatched to each and reset by the last dispatch only`() {
+        val lines = oxstsLines(
+            """
+                package test
+                interface Signals {
+                    out event first(value : integer)
+                }
+                @Asynchronous
+                statechart Sender [
+                    port signals : provides Signals
+                ] {
+                }
+                @Asynchronous
+                statechart Receiver [
+                    port signals : requires Signals
+                ] {
+                }
+                async System {
+                    component sender : Sender
+                    component left : Receiver
+                    component right : Receiver
+                    channel [ sender.signals ] -o)- [ left.signals ]
+                    channel [ sender.signals ] -o)- [ right.signals ]
+                }
+            """,
+        )
+
+        assertThat(lines).containsSequence(
+            "contains dispatch_System_sender_signals_first_to_left_signals: _test::dispatch_System_sender_signals_first_to_left_signals subsets dispatches {",
+            "redefine refers source: AsynchronousAdapter = _sender",
+            "redefine refers event: Event = _sender.wrapped._signals.interface._first",
+            "redefine refers target: _test::queue_Receiver_ReceiverMessageQueue = _left.queue_ReceiverMessageQueue",
+            "redefine refers parameter_value: Parameter = _sender.wrapped._signals.interface._first._value",
+            "redefine refers resetsSource: bool = false",
+            "}",
+            "contains dispatch_System_sender_signals_first_to_right_signals: _test::dispatch_System_sender_signals_first_to_right_signals subsets dispatches {",
+            "redefine refers source: AsynchronousAdapter = _sender",
+            "redefine refers event: Event = _sender.wrapped._signals.interface._first",
+            "redefine refers target: _test::queue_Receiver_ReceiverMessageQueue = _right.queue_ReceiverMessageQueue",
+            "redefine refers parameter_value: Parameter = _sender.wrapped._signals.interface._first._value",
+            "}",
         )
     }
 
@@ -1756,25 +1846,6 @@ class GammaToOxstsSerializerTest {
                     """,
                 ),
                 Arguments.of(
-                    "the discard strategy of the oldest message in queue 'messages'",
-                    """
-                        package test
-                        interface Signals {
-                            in event first
-                        }
-                        statechart Receiver [
-                            port signals : provides Signals
-                        ] {
-                        }
-                        adapter Buffered of component receiver : Receiver {
-                            when any / run
-                            queue messages (priority = 1, capacity = 1, discard = oldest) {
-                                signals.any
-                            }
-                        }
-                    """,
-                ),
-                Arguments.of(
                     "the reset control function",
                     """
                         package test
@@ -1880,32 +1951,6 @@ class GammaToOxstsSerializerTest {
                             queue messages (priority = 1, capacity = 1) {
                                 signals.any
                             }
-                        }
-                    """,
-                ),
-                Arguments.of(
-                    "the event 'first' of 'sender.signals' reaching more than one queue",
-                    """
-                        package test
-                        interface Signals {
-                            out event first
-                        }
-                        @Asynchronous
-                        statechart Sender [
-                            port signals : provides Signals
-                        ] {
-                        }
-                        @Asynchronous
-                        statechart Receiver [
-                            port signals : requires Signals
-                        ] {
-                        }
-                        async System {
-                            component sender : Sender
-                            component left : Receiver
-                            component right : Receiver
-                            channel [ sender.signals ] -o)- [ left.signals ]
-                            channel [ sender.signals ] -o)- [ right.signals ]
                         }
                     """,
                 ),
