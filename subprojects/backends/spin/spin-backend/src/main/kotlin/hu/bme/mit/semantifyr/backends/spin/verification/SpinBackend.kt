@@ -36,9 +36,9 @@ import hu.bme.mit.semantifyr.backends.spin.transformation.SpinModelTransformer
 import hu.bme.mit.semantifyr.backends.spin.transformation.SpinOperationVisitor
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.warn
-import java.io.File
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import java.io.File
 
 class SpinBackend : VerificationBackend<SpinConfig>() {
     override val id = "spin"

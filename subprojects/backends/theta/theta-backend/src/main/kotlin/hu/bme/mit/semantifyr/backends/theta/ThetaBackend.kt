@@ -37,9 +37,9 @@ import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
-import java.nio.file.Path
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import java.nio.file.Path
 
 class ThetaBackend : VerificationBackend<ThetaConfig>() {
 

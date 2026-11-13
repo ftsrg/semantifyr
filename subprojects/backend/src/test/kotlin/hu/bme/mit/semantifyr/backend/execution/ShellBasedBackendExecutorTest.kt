@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr.backend.execution
 
-import kotlin.random.Random
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
@@ -22,6 +21,7 @@ import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
 import java.nio.file.Path
+import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
