@@ -1,0 +1,38 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package SeveralEventsOnOnePort
+
+interface Control {
+    in event start
+}
+
+interface Signals {
+    out event first
+    out event second
+}
+
+statechart Sender [
+    port control : provides Control,
+    port output : provides Signals
+] {
+    region Main {
+        initial MainInitial
+        state Idle
+        state Sent
+    }
+
+    transition from MainInitial to Idle
+    transition from Idle to Sent when control.start / raise output.first; raise output.second;
+}
+
+verification case BothEventsAreRaisedInOneStep of Sender {
+    EF (raise output.first and raise output.second)
+}
+
+verification case OneEventRaisedWithoutTheOtherUnreachable of Sender {
+    EF (raise output.first and not raise output.second)
+}

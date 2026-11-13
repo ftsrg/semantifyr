@@ -27,13 +27,13 @@ Triggers, guards and actions	Complex triggers, `any`, `cycle`, the `else` guard	
 Triggers, guards and actions	Blocks, local variables, `if`, `switch`, loops, choice, `havoc`, `assert`, `deactivate`	out			Future work. Gamma's own transformation rejects `deactivate`.
 Variation points	Region schedule, top-down and bottom-up	carried	models/corpus/tests/hu.bme.mit.gamma.tests/model/ComplexStatechart/ComplexStatechart/BottomUpComplexStatechart.gcd	@RegionSchedule	
 Variation points	Transition priority off, order-based and value-based	carried	models/semantics/ValueBasedPriority.gamma	@TransitionPriority = value-based	
-Variation points	A written priority under priority off	departure	models/semantics/SameEffectTransitions.gamma	TransitionOnTheSecondTriggerFires	The priority is ignored and the validator warns that it has no effect. Gamma's transformation honours it.
+Variation points	A written priority under priority off	departure	models/semantics/WrittenPriorityUnderPriorityOff.gamma	(1) from Idle to Low	The priority is ignored and the validator warns that it has no effect. Gamma's transformation honours it.
 Variation points	Guard evaluation, on-the-fly and beginning-of-step	carried	models/semantics/BeginningOfStepGuards.gamma	@GuardEvaluation = beginning-of-step	
 Variation points	Orthogonal regions in declaration order	carried	models/corpus/tests/hu.bme.mit.gamma.tests/model/ComplexStatechart/ComplexStatechart/TopDownComplexStatechart.gcd	region	
 Variation points	Unordered and parallel orthogonal regions	out			Future work.
 Variation points	Event persistency, transient and persistent parameters	carried	models/semantics/Parameters.gamma	in persistent event level	
 Ports and events	Interfaces, `in` and `out` events, provided and required ports	carried	models/corpus/tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageC/model11/stm.gcd	port	
-Ports and events	Several events raised on one port in one step	carried	models/semantics/SameEffectTransitions.gamma	in event second	
+Ports and events	Several events raised on one port in one step	carried	models/semantics/SeveralEventsOnOnePort.gamma	raise output.first; raise output.second;	
 Ports and events	Output events kept until the next step	carried	models/semantics/Interfaces.gamma	ProvidedPortRaisesTheOutputHalf	
 Ports and events	Event parameters	carried	models/semantics/Parameters.gamma	raise output.reading(5)	
 Ports and events	Interface inheritance	carried	models/semantics/Interfaces.gamma	extends Greeting	

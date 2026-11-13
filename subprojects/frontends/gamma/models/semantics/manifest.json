@@ -121,11 +121,26 @@
             ]
         },
         {
+            "file": "SeveralEventsOnOnePort.gamma",
+            "cases": [
+                { "name": "BothEventsAreRaisedInOneStep", "verdict": "Passed", "tier": "Integration" },
+                { "name": "OneEventRaisedWithoutTheOtherUnreachable", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
             "file": "ValueBasedPriority.gamma",
             "cases": [
                 { "name": "LowerPriorityNeverFires", "verdict": "Passed", "tier": "Integration" },
                 { "name": "HighestPriorityFires", "verdict": "Passed", "tier": "Integration" },
                 { "name": "EqualPrioritiesChooseNondeterministically", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "WrittenPriorityUnderPriorityOff.gamma",
+            "cases": [
+                { "name": "LowerWrittenPriorityFires", "verdict": "Passed", "tier": "Integration" },
+                { "name": "HigherWrittenPriorityFires", "verdict": "Passed", "tier": "Integration" },
+                { "name": "HigherWrittenPriorityBlocksTheLowerViolated", "verdict": "Failed", "tier": "Integration" }
             ]
         }
     ]
