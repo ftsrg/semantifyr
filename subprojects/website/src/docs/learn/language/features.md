@@ -147,7 +147,7 @@ contains state: State {
 
 ## Feature Binding
 
-A feature can be bound to a compile-time expression with `=`. The bound value cannot depend on runtime state.
+A feature can be bound to a compile-time expression with `=`. The bound value cannot depend on runtime state. The expression is evaluated on the instance that holds the feature, so its names resolve there and never among the members of the feature's own type; in a nested block that is the instance of the enclosing feature.
 
 ```oxsts fragment
 refers maximum: int = 10

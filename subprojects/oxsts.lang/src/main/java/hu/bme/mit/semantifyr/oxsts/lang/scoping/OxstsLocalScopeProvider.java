@@ -186,6 +186,11 @@ public class OxstsLocalScopeProvider extends AbstractGlobalScopeDelegatingScopeP
             return Scopes.scopeFor(operation.eContents().subList(0, index), containerScope);
         }
 
+        // a binding is evaluated on the holder, so the bound feature's own members are not in its scope
+        if (context instanceof FeatureDeclaration feature && child == feature.getExpression()) {
+            return containerScope;
+        }
+
         if (context instanceof DomainDeclaration declaration) {
             var memberCollection = domainMemberCollectionProvider
                     .getMemberCollection(declaration)
