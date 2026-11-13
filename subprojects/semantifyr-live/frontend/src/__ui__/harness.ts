@@ -155,7 +155,7 @@ export async function casesListed(page: Page): Promise<void> {
   }, { timeout: 150_000 }).toBe(true)
 }
 
-// Firefox reports a page left while the editor's worker still imports its module as uncaught errors in that page
+// Firefox and WebKit report a page left while the editor's worker still imports its module as uncaught errors in that page
 export async function editorWorkerLoaded(page: Page): Promise<void> {
   await expect.poll(async () => {
     const loaded = await Promise.all(page.workers().map(async (worker) => {
