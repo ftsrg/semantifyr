@@ -23,6 +23,10 @@ interface Values {
     out event value(amount : integer)
 }
 
+interface Samples {
+    in event sample(value : integer)
+}
+
 @TransitionPriority = order-based
 statechart Probe [
     port control : provides Control,
@@ -101,6 +105,25 @@ sync Monitoring [
     channel [ sensor.output ] -o)- [ display.input ]
 }
 
+@TransitionPriority = order-based
+statechart PairedProbe [
+    port first : provides Samples,
+    port second : provides Samples
+] {
+    var fromFirst : integer
+    var fromSecond : integer
+
+    region Main {
+        initial MainInitial
+        state Waiting
+        state Read
+    }
+
+    transition from MainInitial to Waiting
+    transition from Waiting to Waiting when second.sample
+    transition from Waiting to Read when first.sample / fromFirst := first.sample::value; fromSecond := second.sample::value;
+}
+
 verification case TransientParameterIsResetWhenItsEventIsNotRaised of Probe {
     AG (not state Main.Probed or variable sampled = 0)
 }
@@ -135,4 +158,12 @@ verification case NegativeArgumentTakesItsGuardedTransition of Counter {
 
 verification case NegativeArgumentTakingThePositiveTransitionUnreachable of Counter {
     EF (state Main.Positive and variable last = -1)
+}
+
+verification case EachPortOfAnEventHoldsItsOwnParameter of PairedProbe {
+    EF (state Main.Read and variable fromFirst = 7)
+}
+
+verification case OnePortsParameterSeenOnTheOtherPortUnreachable of PairedProbe {
+    EF (state Main.Read and not variable fromSecond = 0)
 }

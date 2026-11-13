@@ -9,7 +9,7 @@ Types and expressions	Functions, procedures and lambdas	out			Future work.
 Statecharts	Regions, simple and composite states, nested regions	carried	models/semantics/Hierarchy.gamma	region Inner	
 Statecharts	Initial pseudostates	carried	models/semantics/Hierarchy.gamma	initial MainInitial	
 Statecharts	Initial transitions with a trigger, a guard or an action	out			The mapper refuses them with a diagnostic.
-Statecharts	Transitions declared at the statechart level, between any two states of the statechart, exiting and entering up to the lowest common region	carried	models/etc/semantics/Hierarchy.oxsts	LeavingAStateExitsItsAncestorsUpToTheCommonRegion	
+Statecharts	Transitions declared at the statechart level, between any two states of the statechart, exiting and entering up to the lowest common region	carried	models/semantics/Hierarchy.gamma	transition from Outside to Second when control.go	
 Statecharts	Exit actions innermost first, entry actions outermost first, the orthogonal regions of an exited or entered ancestor	carried	models/semantics/EntryAndExitOrder.gamma	ChildExitsThenParentExitsThenTheTransitionActsThenTheTargetEnters	
 Statecharts	Entry and exit actions	carried	models/semantics/EntryAndExitOrder.gamma	exit /	
 Statecharts	Shallow history, and a transition into the history node	carried	models/semantics/History.gamma	shallow history	
