@@ -1,0 +1,29 @@
+# SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
+cff-version: 1.2.0
+message: To cite Semantifyr, please cite the paper that introduced its approach.
+title: Semantifyr
+abstract: A framework to support the declarative definition of engineering model semantics.
+type: software
+authors:
+  - name: The Semantifyr Authors
+repository-code: https://github.com/ftsrg/semantifyr
+url: https://ftsrg.mit.bme.hu/semantifyr/
+license: EPL-2.0
+preferred-citation:
+  type: conference-paper
+  title: "From Transpilers to Semantic Libraries: Formal Verification With Pluggable Semantics"
+  authors:
+    - family-names: Zavada
+      given-names: Ármin
+    - family-names: Marussy
+      given-names: Kristóf
+    - family-names: Molnár
+      given-names: Vince
+  collection-title: "Proceedings of the ACM/IEEE 27th International Conference on Model Driven Engineering Languages and Systems (MODELS Companion '24)"
+  publisher:
+    name: ACM
+  year: 2024
+  doi: 10.1145/3652620.3686251
