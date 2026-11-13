@@ -64,34 +64,6 @@ adapter FullQueue of component receiver : Receiver {
     }
 }
 
-adapter PrioritizedQueues of component receiver : Receiver {
-    when any / run
-    queue low (priority = 1, capacity = 1) {
-        signals.first
-    }
-    queue high (priority = 2, capacity = 1) {
-        signals.second
-    }
-}
-
-adapter RunOnSecond of component receiver : Receiver {
-    when signals.second / run
-    queue messages (priority = 1, capacity = 2) {
-        signals.any
-    }
-}
-
-adapter ResettingQueues of component receiver : Receiver {
-    when signals.first / run
-    when signals.second / reset-other-queues
-    queue low (priority = 1, capacity = 1) {
-        signals.first
-    }
-    queue high (priority = 2, capacity = 1) {
-        signals.second
-    }
-}
-
 async Ordered [
     port control : provides Go
 ] {
@@ -110,33 +82,6 @@ async Dropping [
     channel [ sender.signals ] -o)- [ receiver.signals ]
 }
 
-async Prioritized [
-    port control : provides Go
-] {
-    component sender : Sender
-    component receiver : PrioritizedQueues
-    bind control -> sender.control
-    channel [ sender.signals ] -o)- [ receiver.signals ]
-}
-
-async Controlled [
-    port control : provides Go
-] {
-    component sender : Sender
-    component receiver : RunOnSecond
-    bind control -> sender.control
-    channel [ sender.signals ] -o)- [ receiver.signals ]
-}
-
-async Resetting [
-    port control : provides Go
-] {
-    component sender : Sender
-    component receiver : ResettingQueues
-    bind control -> sender.control
-    channel [ sender.signals ] -o)- [ receiver.signals ]
-}
-
 verification case MessagesAreReceivedInTheirOrder of Ordered {
     EF state receiver -> receiver.Main.FirstThenSecond
 }
@@ -151,24 +96,4 @@ verification case AFullQueueDropsTheIncomingMessage of Dropping {
 
 verification case AFullQueueDropsTheOldestMessageUnreachable of Dropping {
     EF state receiver -> receiver.Main.GotSecond
-}
-
-verification case TheHigherPriorityQueueIsServedFirst of Prioritized {
-    EF state receiver -> receiver.Main.SecondThenFirst
-}
-
-verification case TheDeclaredFirstQueueIsServedFirstUnreachable of Prioritized {
-    EF state receiver -> receiver.Main.FirstThenSecond
-}
-
-verification case AMessageWithoutARunIsSeenAtTheNextRun of Controlled {
-    EF state receiver -> receiver.Main.GotFirst
-}
-
-verification case AMessageWithoutARunRunsTheComponentUnreachable of Controlled {
-    EF state receiver -> receiver.Main.FirstThenSecond
-}
-
-verification case AResetOfTheOtherQueuesDropsTheirMessagesUnreachable of Resetting {
-    EF state receiver -> receiver.Main.GotFirst
 }

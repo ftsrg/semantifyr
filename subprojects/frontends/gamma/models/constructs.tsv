@@ -8,7 +8,7 @@ Types and expressions	`xor`, `imply`, the conditional expression, `div`, `mod`, 
 Types and expressions	Functions, procedures and lambdas	out			Future work.
 Statecharts	Regions, simple and composite states, nested regions	carried	models/semantics/Hierarchy.gamma	region Inner	
 Statecharts	Initial pseudostates	carried	models/semantics/Hierarchy.gamma	initial MainInitial	
-Statecharts	Initial transitions with an action	carried	models/corpus/tests/hu.bme.mit.gamma.tests/model/Asynchronous/Statechart/Adder.gcd	from Initial to A / raise	
+Statecharts	Initial transitions with an action	carried	models/semantics/InitialTransitions.gamma	from MainInitial to Idle / started := true;	
 Statecharts	Initial transitions with a trigger or a guard	out			The mapper refuses them with a diagnostic.
 Statecharts	Transitions declared at the statechart level, between any two states of the statechart, exiting and entering up to the lowest common region	carried	models/etc/semantics/Hierarchy.oxsts	LeavingAStateExitsItsAncestorsUpToTheCommonRegion	
 Statecharts	Exit actions innermost first, entry actions outermost first, the orthogonal regions of an exited or entered ancestor	carried	models/semantics/EntryAndExitOrder.gamma	ChildExitsThenParentExitsThenTheTransitionActsThenTheTargetEnters	
@@ -45,10 +45,10 @@ Composition	A channel carries the events of both directions	carried	models/seman
 Composition	Cascade composite components and their execution list	carried	models/semantics/Cascade.gamma	execute asker, answerer, asker	
 Composition	`initial execute` of a cascade composite	out			The library has no support for it and the mapper refuses it.
 Composition	Broadcast channels, component parameters and arguments	out			Future work.
-Composition	Asynchronous adapters and their message queues, served by descending priority, one message per turn, first in first out	carried	models/semantics/Queues.gamma	queue high (priority = 2, capacity = 1)	
+Composition	Asynchronous adapters and their message queues, served by descending priority, one message per turn, first in first out	carried	models/semantics/QueuePriority.gamma	queue high (priority = 2, capacity = 1)	
 Composition	A full queue drops the incoming message	carried	models/semantics/Queues.gamma	AFullQueueDropsTheIncomingMessage	
 Composition	The discard strategy of the oldest message	planned			The mapper refuses it with a diagnostic until it is decided.
-Composition	Control specifications `run`, `reset-queue`, `reset-queues` and `reset-other-queues` on `any`, an event, a port's events or a clock	carried	models/semantics/Queues.gamma	when signals.second / reset-other-queues	
+Composition	Control specifications `run`, `reset-queue`, `reset-queues` and `reset-other-queues` on `any`, an event, a port's events or a clock	carried	models/semantics/ControlSpecifications.gamma	when signals.second / reset-other-queues	
 Composition	The `reset` control function	planned			The mapper refuses it with a diagnostic.
 Composition	Clocks	departure	models/semantics/Clocks.gamma	clock ticker (rate = 2 s)	A clock counts the fixed delta of every step, as timeouts do.
 Composition	Asynchronous and scheduled-asynchronous composites and the execution list	carried	models/semantics/ScheduledAsynchronous.gamma	execute buffered, buffered	

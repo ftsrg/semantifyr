@@ -33,6 +33,15 @@
             ]
         },
         {
+            "file": "ControlSpecifications.gamma",
+            "cases": [
+                { "name": "AMessageWithoutARunIsSeenAtTheNextRun", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AMessageWithoutARunRunsTheComponentUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "AResetMessageRunsNothing", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AResetOfTheOtherQueuesDropsTheirMessagesUnreachable", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
             "file": "EntryAndExitOrder.gamma",
             "cases": [
                 { "name": "ParentEntersBeforeItsChild", "verdict": "Passed", "tier": "Integration" },
@@ -80,6 +89,15 @@
             ]
         },
         {
+            "file": "InitialTransitions.gamma",
+            "cases": [
+                { "name": "InitialTransitionActionRunsAtInitialization", "verdict": "Passed", "tier": "Integration" },
+                { "name": "InitialTransitionActionSkippedUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "PersistentParameterRaisedAtInitializationIsReadLater", "verdict": "Passed", "tier": "Integration" },
+                { "name": "PersistentParameterRaisedAtInitializationLostUnreachable", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
             "file": "Interfaces.gamma",
             "cases": [
                 { "name": "InheritedEventCrossesTheChannel", "verdict": "Passed", "tier": "Integration" },
@@ -118,17 +136,19 @@
             ]
         },
         {
+            "file": "QueuePriority.gamma",
+            "cases": [
+                { "name": "TheHigherPriorityQueueIsServedFirst", "verdict": "Passed", "tier": "Integration" },
+                { "name": "TheDeclaredFirstQueueIsServedFirstUnreachable", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
             "file": "Queues.gamma",
             "cases": [
                 { "name": "MessagesAreReceivedInTheirOrder", "verdict": "Passed", "tier": "Integration" },
                 { "name": "MessagesAreReceivedInReverseUnreachable", "verdict": "Failed", "tier": "Integration" },
                 { "name": "AFullQueueDropsTheIncomingMessage", "verdict": "Passed", "tier": "Integration" },
-                { "name": "AFullQueueDropsTheOldestMessageUnreachable", "verdict": "Failed", "tier": "Integration" },
-                { "name": "TheHigherPriorityQueueIsServedFirst", "verdict": "Passed", "tier": "Integration" },
-                { "name": "TheDeclaredFirstQueueIsServedFirstUnreachable", "verdict": "Failed", "tier": "Integration" },
-                { "name": "AMessageWithoutARunIsSeenAtTheNextRun", "verdict": "Passed", "tier": "Integration" },
-                { "name": "AMessageWithoutARunRunsTheComponentUnreachable", "verdict": "Failed", "tier": "Integration" },
-                { "name": "AResetOfTheOtherQueuesDropsTheirMessagesUnreachable", "verdict": "Failed", "tier": "Integration" }
+                { "name": "AFullQueueDropsTheOldestMessageUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {

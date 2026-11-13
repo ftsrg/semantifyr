@@ -18,10 +18,6 @@ verification case StateCounterBReachable of AsynchronousSystem {
     EF state counter.main.B
 }
 
-verification case CounterReadsTheInitialValueOfThePersistentParameter of AsynchronousSystem {
-    EF (state counter.main.B and variable counter.a = 11)
-}
-
 verification case CounterReturnsToA of AsynchronousSystem {
     EF variable counter.rereachedA = true
 }

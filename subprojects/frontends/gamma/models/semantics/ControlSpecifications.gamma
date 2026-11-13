@@ -1,0 +1,103 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package ControlSpecifications
+
+interface Go {
+    in event go
+}
+
+interface Signals {
+    out event first
+    out event second
+}
+
+@Asynchronous
+statechart Sender capacity (1) [
+    port control : provides Go,
+    port signals : provides Signals
+] {
+    region Main {
+        initial MainInitial
+        state Idle
+        state Sent
+    }
+
+    transition from MainInitial to Idle
+    transition from Idle to Sent when control.go / raise signals.first; raise signals.second;
+}
+
+@TransitionPriority = order-based
+statechart Receiver [
+    port signals : requires Signals
+] {
+    region Main {
+        initial MainInitial
+        state Waiting
+        state GotFirst
+        state GotSecond
+        state FirstThenSecond
+        state SecondThenFirst
+    }
+
+    transition from MainInitial to Waiting
+    transition from Waiting to GotFirst when signals.first
+    transition from Waiting to GotSecond when signals.second
+    transition from GotFirst to FirstThenSecond when signals.second
+    transition from GotSecond to SecondThenFirst when signals.first
+}
+
+adapter RunOnSecond of component receiver : Receiver {
+    when signals.second / run
+    queue messages (priority = 1, capacity = 2) {
+        signals.any
+    }
+}
+
+adapter ResettingQueues of component receiver : Receiver {
+    when signals.first / run
+    when signals.second / reset-other-queues
+    queue low (priority = 1, capacity = 1) {
+        signals.first
+    }
+    queue high (priority = 2, capacity = 1) {
+        signals.second
+    }
+}
+
+async Controlled [
+    port control : provides Go
+] {
+    component sender : Sender
+    component receiver : RunOnSecond
+    bind control -> sender.control
+    channel [ sender.signals ] -o)- [ receiver.signals ]
+}
+
+async Resetting [
+    port control : provides Go
+] {
+    component sender : Sender
+    component receiver : ResettingQueues
+    bind control -> sender.control
+    channel [ sender.signals ] -o)- [ receiver.signals ]
+}
+
+verification case AMessageWithoutARunIsSeenAtTheNextRun of Controlled {
+    EF state receiver -> receiver.Main.GotFirst
+}
+
+verification case AMessageWithoutARunRunsTheComponentUnreachable of Controlled {
+    EF state receiver -> receiver.Main.FirstThenSecond
+}
+
+verification case AResetMessageRunsNothing of Resetting {
+    AG not state receiver -> receiver.Main.GotSecond
+}
+
+verification case AResetOfTheOtherQueuesDropsTheirMessagesUnreachable of Resetting {
+    EF state receiver -> receiver.Main.GotFirst
+}

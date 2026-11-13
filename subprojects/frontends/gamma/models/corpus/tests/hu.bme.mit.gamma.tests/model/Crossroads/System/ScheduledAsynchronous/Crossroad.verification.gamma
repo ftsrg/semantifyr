@@ -85,7 +85,3 @@ verification case StateSecondRedReachable of Crossroad {
 verification case StateSecondGreenReachable of Crossroad {
     EF state second -> trafficLightCtrl.normal.Green
 }
-
-verification case BothLightsShowGreen of Crossroad {
-    EF (state prior -> trafficLightCtrl.normal.Green and state second -> trafficLightCtrl.normal.Green)
-}

@@ -1,0 +1,82 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package InitialTransitions
+
+interface Control {
+    in event go
+}
+
+interface Values {
+    out persistent event init(value : integer)
+}
+
+statechart Starting [
+    port control : provides Control
+] {
+    var started : boolean := false
+
+    region Main {
+        initial MainInitial
+        state Idle
+        state Done
+    }
+
+    transition from MainInitial to Idle / started := true;
+    transition from Idle to Done when control.go
+}
+
+statechart Starter [
+    port output : provides Values
+] {
+    region Main {
+        initial MainInitial
+        state Idle
+    }
+
+    transition from MainInitial to Idle / raise output.init(10);
+}
+
+statechart Reader [
+    port control : provides Control,
+    port input : requires Values
+] {
+    var read : integer
+
+    region Main {
+        initial MainInitial
+        state Waiting
+        state Done
+    }
+
+    transition from MainInitial to Waiting
+    transition from Waiting to Done when control.go / read := input.init::value;
+}
+
+sync Startup [
+    port control : provides Control
+] {
+    component starter : Starter
+    component reader : Reader
+    bind control -> reader.control
+    channel [ starter.output ] -o)- [ reader.input ]
+}
+
+verification case InitialTransitionActionRunsAtInitialization of Starting {
+    AG variable started
+}
+
+verification case InitialTransitionActionSkippedUnreachable of Starting {
+    EF (state Main.Done and not variable started)
+}
+
+verification case PersistentParameterRaisedAtInitializationIsReadLater of Startup {
+    EF (state reader.Main.Done and variable reader.read = 10)
+}
+
+verification case PersistentParameterRaisedAtInitializationLostUnreachable of Startup {
+    EF (state reader.Main.Done and not variable reader.read = 10)
+}

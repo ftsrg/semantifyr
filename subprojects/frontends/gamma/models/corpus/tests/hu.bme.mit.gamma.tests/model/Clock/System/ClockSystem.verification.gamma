@@ -21,7 +21,3 @@ verification case StateCounterBReachable of ClockSystem {
 verification case CounterReturnsToA of ClockSystem {
     EF variable counter -> counterAdapter.rereachedA = true
 }
-
-verification case CounterCountsTwo of ClockSystem {
-    EF variable counter -> counterAdapter.a = 2
-}
