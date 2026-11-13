@@ -108,8 +108,7 @@ data class SessionManagerConfig(
 @Serializable
 data class VerificationConfig(
     val concurrency: Int = 4,
-    // the website states it as live's limit, and the deployment leaves it to this default
-    val timeout: Duration = 120.seconds,
+    val timeout: Duration = 5.minutes,
 ) {
     fun withEnv(env: Map<String, String?>) = copy(
         concurrency = env["SEMANTIFYR_LIVE_VERIFY_CONCURRENCY"]?.toIntOrNull() ?: concurrency,
