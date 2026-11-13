@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 
 class OptionalInliningTest : InliningTestBase() {
@@ -84,6 +85,29 @@ class OptionalInliningTest : InliningTestBase() {
                 }
             """,
         )
+    }
+
+    @Test
+    fun `a call through an absent instance without the optional navigation reports the empty holder`() {
+        prepare(
+            "Host",
+            leaf + """
+                @VerificationCase
+                class Host {
+                    contains leaf: Leaf[0..1]
+                    redefine tran {
+                        inline leaf.bump()
+                    }
+                    prop {
+                        return EF true
+                    }
+                }
+            """,
+        ) {
+            assertThatThrownBy { inlineAll(it) }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessageContaining("The holder of the call to 'bump' evaluates to nothing")
+        }
     }
 
     @Test

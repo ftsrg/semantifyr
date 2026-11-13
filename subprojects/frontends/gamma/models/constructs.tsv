@@ -10,7 +10,7 @@ Statecharts	Regions, simple and composite states, nested regions	carried	models/
 Statecharts	Initial pseudostates	carried	models/semantics/Hierarchy.gamma	initial MainInitial	
 Statecharts	Initial transitions with an action	carried	models/semantics/InitialTransitions.gamma	from MainInitial to Idle / started := true;	
 Statecharts	Initial transitions with a trigger or a guard	out			The mapper refuses them with a diagnostic.
-Statecharts	Transitions declared at the statechart level, between any two states of the statechart, exiting and entering up to the lowest common region	carried	models/etc/semantics/Hierarchy.oxsts	LeavingAStateExitsItsAncestorsUpToTheCommonRegion	
+Statecharts	Transitions declared at the statechart level, between any two states of the statechart, exiting and entering up to the lowest common region	carried	models/semantics/Hierarchy.gamma	transition from Outside to Second when control.go	
 Statecharts	Exit actions innermost first, entry actions outermost first, the orthogonal regions of an exited or entered ancestor	carried	models/semantics/EntryAndExitOrder.gamma	ChildExitsThenParentExitsThenTheTransitionActsThenTheTargetEnters	
 Statecharts	Entry and exit actions	carried	models/semantics/EntryAndExitOrder.gamma	exit /	
 Statecharts	Shallow history, and a transition into the history node	carried	models/semantics/History.gamma	shallow history	
@@ -68,6 +68,6 @@ Properties and cases	Temporal operators beyond `AG` and `EF`, CTL* and LTL	out		
 Trace	Gamma execution traces, acts `reset`, `raise`, `schedule` and `elapse`, asserts on states, variables and raised events	carried	gamma-frontend/src/test/kotlin/GammaTraceLanguageTest.kt	a raised event assertion names an output event	
 Trace	The header of a trace names a verification case	departure	gamma-frontend/src/test/kotlin/GammaTraceLanguageTest.kt	a trace of a case links every assertion to the traced component	Gamma's header names a component.
 Trace	The fired-transition assert	departure	gamma-frontend/src/test/kotlin/GammaTraceLanguageTest.kt	a fired transition must exist	Gamma's trace language has no transition assertion.
-Trace	A generated trace asserts no unraised event	departure	gamma-frontend/src/integrationTest/kotlin/GammaTraceTests.kt	Generated Traces Agree With The Witness	Gamma's back-annotation adds a negation for every unraised output event.
+Trace	A generated trace asserts no unraised event	departure	gamma-frontend/src/test/kotlin/GammaTraceGeneratorTest.kt	a generated trace asserts no unraised event	Gamma's back-annotation adds a negation for every unraised output event.
 Trace	The values of event parameters in a generated trace	planned			Waits for a traced call that records its runtime arguments.
 Trace	The `assign` act, `schedule` of an instance, a final cycle	out			Future work.

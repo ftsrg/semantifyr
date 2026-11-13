@@ -32,10 +32,54 @@ statechart Machine {
     transition from SlowWaiting to SlowDone when timeout long
 }
 
+statechart Delayed {
+    timeout tick
+    timeout delay
+    var seconds : integer := 0
+
+    region Clock {
+        initial ClockInitial
+        state Ticking {
+            entry / set tick := 1000 ms;
+        }
+    }
+
+    region Main {
+        initial MainInitial
+        state Waiting {
+            entry / set delay := 2000 ms;
+        }
+        state Done
+        state StillUp
+    }
+
+    transition from ClockInitial to Ticking
+    transition from Ticking to Ticking when timeout tick [seconds < 4] / seconds := seconds + 1;
+    transition from MainInitial to Waiting
+    transition from Waiting to Done when timeout delay
+    transition from Done to StillUp when timeout delay
+}
+
 verification case TheShorterTimeoutIsUpFirst of Machine {
     EF (state Fast.FastDone and state Slow.SlowWaiting)
 }
 
 verification case TheLongerTimeoutUpFirstUnreachable of Machine {
     EF (state Slow.SlowDone and state Fast.FastWaiting)
+}
+
+verification case TimeoutIsUpAfterItsValue of Delayed {
+    EF (state Main.Done and variable seconds = 2)
+}
+
+verification case TimeoutUpBeforeItsValueUnreachable of Delayed {
+    EF (state Main.Done and variable seconds = 1)
+}
+
+verification case TimeoutStaysUpOnceUp of Delayed {
+    EF (state Main.StillUp and variable seconds = 3)
+}
+
+verification case TimeoutResetOnceItFiredUnreachable of Delayed {
+    EF (state Main.Done and variable seconds = 3)
 }

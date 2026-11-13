@@ -8,6 +8,8 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVerificationCase
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaFrontendTestHelper
 import hu.bme.mit.semantifyr.portfolios.Portfolios
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -90,5 +92,22 @@ class GammaVerificationTests {
             outputDirectory = artifactRoot,
         )
         helper.checkVerificationCase(frontend, gammaVerificationCase, expectedVerdict)
+    }
+
+    @Test
+    suspend fun `A passing EF case returns its witness with a Gamma trace`() {
+        val gammaVerificationCase = helper.discover(SIMPLE).single {
+            it.qualifiedName.endsWith("LeaderStatechartIdleReachable")
+        }
+        val frontend = helper.buildFrontend(
+            portfolio = Portfolios.SmartFull,
+            outputDirectory = artifactRoot,
+        )
+
+        val witness = helper.checkVerificationCase(frontend, gammaVerificationCase).witness
+
+        assertThat(witness).describedAs("An EF case that passes has a witness").isNotNull()
+        assertThat(witness!!.gammaTracePath).exists()
+        assertThat(witness.gammaTrace.steps).hasSize(1 + witness.trace.witnessState.steps.size)
     }
 }

@@ -35,6 +35,9 @@ statechart Crossing [
 statechart Orthogonal [
     port control : provides Control
 ] {
+    var rightEntered : boolean := false
+    var rightExited : boolean := false
+
     region Main {
         initial MainInitial
         state Idle
@@ -46,7 +49,10 @@ statechart Orthogonal [
             }
             region Right {
                 initial RightInitial
-                state RightFirst
+                state RightFirst {
+                    entry / rightEntered := true;
+                    exit / rightExited := true;
+                }
             }
         }
     }
@@ -76,4 +82,20 @@ verification case EnteringOneRegionEntersItsOrthogonalRegion of Orthogonal {
 
 verification case OrthogonalStateActiveAfterLeavingTheParentUnreachable of Orthogonal {
     EF (state Main.Idle and state Right.RightFirst)
+}
+
+verification case EnteringOneRegionRunsTheOrthogonalRegionsEntryAction of Orthogonal {
+    EF (state Left.LeftSecond and variable rightEntered)
+}
+
+verification case OrthogonalRegionEnteredWithoutItsEntryActionUnreachable of Orthogonal {
+    EF (state Right.RightFirst and not variable rightEntered)
+}
+
+verification case LeavingTheParentRunsTheOrthogonalRegionsExitAction of Orthogonal {
+    EF (state Main.Idle and variable rightExited)
+}
+
+verification case OrthogonalRegionLeftWithoutItsExitActionUnreachable of Orthogonal {
+    EF (state Main.Idle and variable rightEntered and not variable rightExited)
 }

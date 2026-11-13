@@ -3,6 +3,9 @@
   "name": "gamma",
   "patterns": [
     {
+      "include": "#comments"
+    },
+    {
       "include": "#annotations"
     },
     {
@@ -16,9 +19,6 @@
     },
     {
       "include": "#literals"
-    },
-    {
-      "include": "#comments"
     }
   ],
   "repository": {

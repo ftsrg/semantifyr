@@ -12,11 +12,9 @@ import hu.bme.mit.semantifyr.frontends.gamma.GammaFrontend
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVariant
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVerificationCase
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVerificationResult
-import hu.bme.mit.semantifyr.frontends.gamma.GammaWitness
 import hu.bme.mit.semantifyr.frontends.gamma.discovery.GammaVerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.frontends.gamma.lang.GammaStandaloneSetup
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EF
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ExecutionTrace
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaRoot
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
@@ -28,7 +26,6 @@ import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Named
 import org.junit.jupiter.params.provider.Arguments
-import java.io.File
 import java.nio.file.Path
 import java.util.stream.Stream
 import kotlin.io.path.Path
@@ -86,15 +83,6 @@ class GammaFrontendTestHelper {
                 Arguments.of(Named.of(gammaVerificationCase.qualifiedName, gammaVerificationCase), it)
             }
         }.asStream()
-    }
-
-    fun readGammaTrace(
-        gammaVerificationCase: GammaVerificationCase,
-        witness: GammaWitness,
-    ): ExecutionTrace {
-        val modelFile = File(gammaVerificationCase.declaration.eResource().uri.toFileString())
-        val (_, gammaTrace) = gammaReader.readGammaFiles(listOf(modelFile, witness.gammaTracePath.toFile()))
-        return gammaTrace as ExecutionTrace
     }
 
     fun discoverAsArguments(sourcePath: Path): Stream<Arguments> {

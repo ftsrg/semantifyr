@@ -23,6 +23,7 @@ class PortfoliosTest {
     @Test
     fun `a racing portfolio lists each leg with its soundness direction`() {
         assertThat(Portfolios.SmartFull.legs).contains(
+            PortfolioLeg("theta:cegar-expl", SoundnessDirection.Exact),
             PortfolioLeg("theta:cegar-expl-pred-combined", SoundnessDirection.Exact),
             PortfolioLeg("nuxmv:bmc-invar", SoundnessDirection.Exact),
             PortfolioLeg("nuxmv:ic3-invar", SoundnessDirection.Exact),

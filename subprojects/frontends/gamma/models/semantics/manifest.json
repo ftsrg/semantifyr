@@ -14,7 +14,11 @@
                 { "name": "EarlierInstanceSeesTheReplyInALaterCycle", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ReplyInTheSameCycleWithoutASecondRunViolated", "verdict": "Failed", "tier": "Integration" },
                 { "name": "InstanceListedTwiceRunsTwiceInACycle", "verdict": "Passed", "tier": "Integration" },
-                { "name": "LaterInstanceMissingTheEventOfItsCycleUnreachable", "verdict": "Failed", "tier": "Integration" }
+                { "name": "LaterInstanceMissingTheEventOfItsCycleUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "RaiseIsDeliveredOnce", "verdict": "Passed", "tier": "Integration" },
+                { "name": "RaiseDeliveredTwiceUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "CascadeKeepsTheOutputOfAnEarlierRun", "verdict": "Passed", "tier": "Integration" },
+                { "name": "SynchronousCompositeRunTwiceKeepingTheOutputUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
@@ -22,7 +26,9 @@
             "cases": [
                 { "name": "RequiredPortsRaiseReachesTheProvidedPort", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ProvidedPortsRaiseReachesTheRequiredPort", "verdict": "Passed", "tier": "Integration" },
-                { "name": "AnswerWithoutAQuestionUnreachable", "verdict": "Failed", "tier": "Integration" }
+                { "name": "AnswerWithoutAQuestionUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "OutputRaisedAtInitializationCrossesTheChannel", "verdict": "Passed", "tier": "Integration" },
+                { "name": "OutputRaisedAtInitializationDeliveredTwiceUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
@@ -57,7 +63,9 @@
                 { "name": "BothEventsOfAPortAreRaisedInOneStep", "verdict": "Passed", "tier": "Integration" },
                 { "name": "OneEventOfAPortRaisedWithoutTheOtherUnreachable", "verdict": "Failed", "tier": "Integration" },
                 { "name": "OutputIsVisibleAfterTheStepThatRaisedIt", "verdict": "Passed", "tier": "Integration" },
-                { "name": "OutputKeptBeyondTheNextStepUnreachable", "verdict": "Failed", "tier": "Integration" }
+                { "name": "OutputKeptBeyondTheNextStepUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "BothInputEventsOfAPortArriveInOneStep", "verdict": "Passed", "tier": "Integration" },
+                { "name": "OneRegionTakingBothInputEventsOfAStepUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
@@ -76,7 +84,11 @@
                 { "name": "EnteringTheInnerTargetThroughItsInitialStateUnreachable", "verdict": "Failed", "tier": "Integration" },
                 { "name": "InnerSourceActiveAfterLeavingItUnreachable", "verdict": "Failed", "tier": "Integration" },
                 { "name": "EnteringOneRegionEntersItsOrthogonalRegion", "verdict": "Passed", "tier": "Integration" },
-                { "name": "OrthogonalStateActiveAfterLeavingTheParentUnreachable", "verdict": "Failed", "tier": "Integration" }
+                { "name": "OrthogonalStateActiveAfterLeavingTheParentUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "EnteringOneRegionRunsTheOrthogonalRegionsEntryAction", "verdict": "Passed", "tier": "Integration" },
+                { "name": "OrthogonalRegionEnteredWithoutItsEntryActionUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "LeavingTheParentRunsTheOrthogonalRegionsExitAction", "verdict": "Passed", "tier": "Integration" },
+                { "name": "OrthogonalRegionLeftWithoutItsExitActionUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
@@ -85,7 +97,9 @@
                 { "name": "TransitionToTheHistoryNodeRestoresTheLastState", "verdict": "Passed", "tier": "Integration" },
                 { "name": "InitialNodeBeatsTheHistoryNodeRestoredStateUnreachable", "verdict": "Failed", "tier": "Integration" },
                 { "name": "NeverActiveHistoryRegionTakesTheNodesTransition", "verdict": "Passed", "tier": "Integration" },
-                { "name": "NeverActiveHistoryRegionOtherStateUnreachable", "verdict": "Failed", "tier": "Integration" }
+                { "name": "NeverActiveHistoryRegionOtherStateUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "RestoredStateEntersItsRegionsAfresh", "verdict": "Passed", "tier": "Integration" },
+                { "name": "RestoredStatesInnerStateUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
@@ -119,7 +133,9 @@
                 { "name": "TransientParameterKeptUnreachable", "verdict": "Failed", "tier": "Integration" },
                 { "name": "PersistentParameterLosingItsValueUnreachable", "verdict": "Failed", "tier": "Integration" },
                 { "name": "NegativeArgumentTakesItsGuardedTransition", "verdict": "Passed", "tier": "Integration" },
-                { "name": "NegativeArgumentTakingThePositiveTransitionUnreachable", "verdict": "Failed", "tier": "Integration" }
+                { "name": "NegativeArgumentTakingThePositiveTransitionUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "EachPortOfAnEventHoldsItsOwnParameter", "verdict": "Passed", "tier": "Integration" },
+                { "name": "OnePortsParameterSeenOnTheOtherPortUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
@@ -199,7 +215,11 @@
             "file": "Timeouts.gamma",
             "cases": [
                 { "name": "TheShorterTimeoutIsUpFirst", "verdict": "Passed", "tier": "Integration" },
-                { "name": "TheLongerTimeoutUpFirstUnreachable", "verdict": "Failed", "tier": "Integration" }
+                { "name": "TheLongerTimeoutUpFirstUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "TimeoutIsUpAfterItsValue", "verdict": "Passed", "tier": "Integration" },
+                { "name": "TimeoutUpBeforeItsValueUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "TimeoutStaysUpOnceUp", "verdict": "Passed", "tier": "Integration" },
+                { "name": "TimeoutResetOnceItFiredUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {

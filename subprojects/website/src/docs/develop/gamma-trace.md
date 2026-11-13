@@ -92,7 +92,7 @@ Not in the trace: negations of the output events not raised, timers and port var
 
 - `GammaReferenceTraceTest` generates the trace from the pair's JSON files and checks that it serializes to the hand-written `trace.get`.
 - `GammaTraceLanguageTest` covers the validator's rules.
-- `GammaTraceTests` (integration) verifies every `EF` case of the three examples on Theta, nuXmv, Spin and Uppaal, and checks each generated trace: it parses, links and validates against the model, has one step per witness step, asserts the witness's active states and variable values, and every fired transition leaves a state active before its step and enters one active after it, which checks the traced calls against the witness state.
+- `GammaTraceGeneratorTest` generates traces from small fixed witnesses of the semantic models and checks the steps, the acts, the asserted states, variables, fired transitions and raised events, one point per test.
 - `GammaTraceLanguageServerTest` opens a trace next to its model in the language server, without errors, and checks that the trace relinks when the model changes.
 - `GammaWitnessTests` (nightly) re-verifies every engine's witness on all four engines.
 
