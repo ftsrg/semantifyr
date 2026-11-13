@@ -51,7 +51,12 @@
     "library": {
       "term": "Library",
       "meaning": "The semantic library an OXSTS model is written with: none, Gamma's semantics or SysML v2's semantics. The code calls the choice a flavor.",
-      "rejected": []
+      "rejected": [
+        "flavour",
+        "flavours",
+        "flavor",
+        "flavors"
+      ]
     }
   },
   "portfolios": {

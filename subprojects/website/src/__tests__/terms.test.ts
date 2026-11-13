@@ -79,6 +79,8 @@ function textsOfCode(source: string): Text[] {
       continue;
     }
     if (character === '\'' || character === '"' || character === '`') {
+      // a class name and an error thrown to the console are no text a reader meets
+      const context = code.slice(-20);
       flushCode();
       const start = line;
       let text = '';
@@ -89,6 +91,24 @@ function textsOfCode(source: string): Text[] {
           index += 2;
           continue;
         }
+        if (character === '`' && source[index] === '$' && source[index + 1] === '{') {
+          let depth = 1;
+          index += 2;
+          while (index < source.length && depth > 0) {
+            if (source[index] === '{') {
+              depth++;
+            }
+            if (source[index] === '}') {
+              depth--;
+            }
+            if (source[index] === '\n') {
+              line++;
+            }
+            index++;
+          }
+          text += ' ';
+          continue;
+        }
         if (source[index] === '\n') {
           line++;
         }
@@ -97,8 +117,8 @@ function textsOfCode(source: string): Text[] {
       }
       index++;
       codeLine = line;
-      // a module name or a class name is no text: user texts have a space or a capital
-      if (/\s|[A-Z]/.test(text) && !/^\.{0,2}\//.test(text)) {
+      // a module name is no text: user texts have a space or a capital
+      if (/\s|[A-Z]/.test(text) && !/^\.{0,2}\//.test(text) && !/(className=\{?|Error\()\s*$/.test(context)) {
         texts.push({ line: start, text });
       }
       continue;
