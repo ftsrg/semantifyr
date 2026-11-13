@@ -55,11 +55,27 @@ Generally Semantifyr is lenient with the use or absence of semicolons `;`.
 
 ## Abstract Classes
 
-`abstract class` cannot be instantiated directly, so it cannot be a `@VerificationCase` (`OXSTS.ABSTRACT_VERIFICATION_CASE`). An abstract class may declare abstract members (without bodies) that concrete subclasses must redefine. A concrete `@VerificationCase` declares or inherits the anonymous `prop` it checks (`OXSTS.MISSING_PROPERTY`).
+`abstract class` cannot be instantiated directly, so it cannot be a `@VerificationCase` (`OXSTS.ABSTRACT_VERIFICATION_CASE`). An abstract class may declare abstract members, transitions and properties without bodies; a concrete class may not (`OXSTS.MEMBER_NOT_IN_ABSTRACT_CLASS`), and a concrete class redefines every abstract member it inherits (`OXSTS.ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED`). A concrete `@VerificationCase` declares or inherits the anonymous `prop` it checks (`OXSTS.MISSING_PROPERTY`).
 
 ```oxsts
 abstract class Shape {
   abstract prop area(): int
+}
+```
+
+```oxsts issue=OXSTS.MEMBER_NOT_IN_ABSTRACT_CLASS
+class Shape {
+  abstract prop area(): int
+}
+```
+
+```oxsts issue=OXSTS.ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED
+abstract class Shape {
+  abstract prop area(): int
+}
+
+class Square : Shape {
+  var side: int := 1
 }
 ```
 
@@ -87,7 +103,7 @@ The grammar accepts several superclasses separated by commas, but a class has on
 
 ## Redefining Members
 
-`redefine` overrides an inherited member of the **same name**. A redefined [transition](transitions.md) or [property](properties.md) takes as many parameters as the inherited one (`OXSTS.REDEFINITION_SIGNATURE_MISMATCH`), and a redefined property's return type or feature's type must be assignable to the inherited one (`OXSTS.TYPE_MISMATCH`); parameter types may differ. Variables cannot be redefined. Two members of one class that redefine the same inherited member are rejected (`OXSTS.DUPLICATE_REDEFINITION`). Redefining is the primary mechanism by which semantic libraries specialize behavior.
+`redefine` overrides an inherited member of the **same name**. A redefined [transition](transitions.md) or [property](properties.md) takes as many parameters as the inherited one (`OXSTS.REDEFINITION_SIGNATURE_MISMATCH`), and a redefined property's return type or feature's type must be assignable to the inherited one (`OXSTS.TYPE_MISMATCH`); parameter types may differ. Variables cannot be redefined. Two members of one class that redefine the same inherited member are rejected (`OXSTS.DUPLICATE_REDEFINITION`). A `redefine` that no superclass member of its name answers is rejected (`OXSTS.REDEFINED_NOT_FOUND`), and a member that takes the name of an inherited one without `redefine` gets a warning (`OXSTS.ELEMENT_SHADOWED`); the anonymous `init`, `tran` and `prop` are the exception, as above. Redefining is the primary mechanism by which semantic libraries specialize behavior.
 
 ```oxsts
 // hide-start
@@ -149,6 +165,30 @@ class SendingState : State {
 // hide-start
 }
 // hide-end
+```
+
+```oxsts issue=OXSTS.REDEFINED_NOT_FOUND
+class Transition {
+  tran fire() {
+  }
+}
+
+class Jump : Transition {
+  redefine tran jump() {
+  }
+}
+```
+
+```oxsts issue=OXSTS.ELEMENT_SHADOWED
+class Transition {
+  tran fire() {
+  }
+}
+
+class Jump : Transition {
+  tran fire() {
+  }
+}
 ```
 
 ## `self`

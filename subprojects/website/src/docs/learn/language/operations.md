@@ -206,7 +206,7 @@ class Counter {
 
 ### `for`
 
-A runtime loop over a range. The loop variable takes each value in the range in turn and cannot be written. The expression can be any runtime expression.
+A runtime loop. Its range is an integer range, such as `1..count`, whose bounds may read the state, or an expression of instances, such as a feature; anything else is rejected (`OXSTS.TYPE_MISMATCH`). The loop variable takes each value of the range in turn, or holds each instance, so that a call or a member read through it acts on that instance; it cannot be written. A `for` whose range is known at compile time can be an [`inline for`](inline-operations.md#inline-for-sequence), which the validator hints at (`OXSTS.COULD_BE_INLINE`). Not every backend runs a runtime `for`: the pages of [Theta](../backends/theta.mdx), [nuXmv](../backends/nuxmv.mdx), [Spin](../backends/spin.mdx) and [Uppaal](../backends/uppaal.mdx) say which refuse it.
 
 ```oxsts
 // hide-start
@@ -221,7 +221,7 @@ class Counter {
 
   redefine tran {
 // hide-end
-    for (i in 1..10) {
+    for (i in 1..count) {
       value := value + 1
     }
 // hide-start

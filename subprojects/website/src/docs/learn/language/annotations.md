@@ -19,7 +19,7 @@ class Counter {
 
 // hide-end
 @VerificationCase
-class Reaches10 {
+class StaysBelow100 {
   contains counter: Counter
 
   prop {
@@ -41,7 +41,7 @@ class Counter {
 
 ## With Arguments
 
-Annotation arguments bind like call arguments: a named argument (`name = value`) binds the parameter of that name, a positional argument the parameter at its position, and every named argument follows all positional arguments. Arguments must be constants: annotations are read without an instance, so the validator rejects a reference to a feature or variable (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`).
+Annotation arguments bind as call arguments do ([Calls and Arguments](expressions.md#calls-and-arguments)). Arguments must be constants: annotations are read without an instance, so the validator rejects a reference to a feature or variable (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`).
 
 ```oxsts
 @VerificationCase(summary = "Reaches the limit")
@@ -109,14 +109,10 @@ class Counter {
 
 ## Standard Annotations
 
-See the [Standard Library](standard-library.md) for full details. A standard annotation on a declaration it does not apply to is rejected (`OXSTS.INCORRECT_ANNOTATION_TARGET`): `@VerificationCase` and `@Tag` apply to classes, `@Shared` to containment features, `@Trace` to transitions, and `@Control`, `@Clock` and `@NonOptimizable` to variables.
+The [Standard Library](standard-library.md#annotations) declares the standard annotations and describes each. A standard annotation on a declaration it does not apply to is rejected (`OXSTS.INCORRECT_ANNOTATION_TARGET`): `@VerificationCase` and `@Tag` apply to classes, `@Shared` to containment features, `@Trace` to transitions, and `@Control`, `@Clock` and `@NonOptimizable` to variables. The compiler reads no annotation it does not know, and a user-declared annotation is not checked against its target.
 
-| Annotation | Purpose |
-|------------|---------|
-| `@VerificationCase` | Marks a class as a verification target |
-| `@Tag` | Categorizes verification cases |
-| `@Control` | Marks a variable as important to track |
-| `@Shared` | Marks containment feature instances as shared across instances |
-| `@Trace` | Marks transitions to show in a trace |
-| `@Clock` | Marks a variable as a clock |
-| `@NonOptimizable` | Excludes a variable from optimization |
+```oxsts issue=OXSTS.INCORRECT_ANNOTATION_TARGET
+@Trace
+class Lamp {
+}
+```

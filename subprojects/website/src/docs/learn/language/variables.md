@@ -21,6 +21,15 @@ class Counter {
 // hide-end
 ```
 
+The initializer of a variable of a class or a record is evaluated when the model is compiled, once for each instance, and cannot read the state, such as another variable (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`); it may read constants and features, such as `refers limit: int = 10`. A [local variable](operations.md#local-variable)'s initializer is evaluated where the variable is declared, and may read the state.
+
+```oxsts issue=OXSTS.EXPRESSION_MODALITY_TOO_HIGH
+class Counter {
+  var value: int := 0
+  var previous: int := value
+}
+```
+
 ## Initial States
 
 The initializers give the declaration valuation, in which every variable holds the value of its initializer. The declaration valuation is not a state of the system: the initial states are the states the [`init`](transitions.md) transition reaches from it, and the property is checked on the initial states and on every state reachable from them. A variable that `init` assigns is observed only with the value `init` gives it.

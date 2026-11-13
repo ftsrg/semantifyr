@@ -8,7 +8,7 @@ import constructs from '@oxsts-test-models/constructs/constructs.tsv';
 
 # Expressions
 
-Expressions compute values. They appear in [property](properties.md) bodies, on the right-hand side of assignments, in [operation](operations.md) guards, in feature multiplicities, and in feature bindings.
+Expressions compute values. They appear in [property](properties.md) bodies, on the right-hand side of assignments, in [operation](operations.md) guards, in feature multiplicities, and in feature bindings. [Types](types.md) gives the type of each expression and when it fits where it is used.
 
 ## Literals
 
@@ -23,7 +23,7 @@ Expressions compute values. They appear in [property](properties.md) bodies, on 
 | Array | `[a, b, c]`, `[]` |
 | Record (see [Records](datatypes.md#records)) | `Point { x = 0, y = 0 }` |
 
-See [Datatypes](datatypes.md) for the corresponding types.
+[Lexical Structure](lexical-structure.md#literals) gives the forms of the literals, and [Datatypes](datatypes.md) their types.
 
 ## `self`
 
@@ -52,7 +52,7 @@ From **lowest** to **highest** precedence:
 
 | Level | Category | Operators |
 |-------|----------|-----------|
-| 1 | Temporal (top of expression only) | `AG`, `EF` |
+| 1 | Temporal (top of a property only) | `AG`, `EF` |
 | 2 | Boolean OR | `\|\|` |
 | 3 | Boolean XOR | `^^` |
 | 4 | Boolean AND | `&&` |
@@ -60,14 +60,30 @@ From **lowest** to **highest** precedence:
 | 6 | Range | `..`, `..<` |
 | 7 | Additive | `+`, `-` |
 | 8 | Multiplicative | `*`, `/` |
-| 9 | Unary | `!`, unary `+`, unary `-` |
-| 10 | Postfix / member | `.`, `?.`, `[ ]`, `( )` |
+| 9 | Unary and conditional | `!`, unary `+`, unary `-`, `if ... then ... else` |
+| 10 | Cast | `as` |
+| 11 | Call | `( )` |
+| 12 | Member and index | `.`, `?.`, `[ ]` |
 
-As in Java, `&&` binds tighter than `^^`, which binds tighter than `||`, and each is left-associative: `a || b && c` parses as `a || (b && c)`.
+The binary operators are left-associative, and a range takes one `..` or `..<`. The guard and the branches of an if-then-else are whole expressions, so its `else` branch reaches as far to the right as it can: `if c then 1 else 2 + 3` is `if c then 1 else (2 + 3)`. A cast applies to a call or a chain of members and indices, so `-x as int` is `-(x as int)`. A call ends a chain of members and indices: `a.b.f()` calls `f` on `a.b`, and nothing but a cast follows the call.
+
+As in Java, `&&` binds tighter than `^^`, which binds tighter than `||`: `a || b && c` parses as `a || (b && c)`. The validator warns on an operand that is another of the three written without parentheses (`OXSTS.MIXED_BOOLEAN_OPERATORS`) and names the reading.
 
 :::note
-Until November 2026 the three boolean operators shared one level and read left to right, so `a || b && c` meant `(a || b) && c`. The validator warns on an expression that mixes them without parentheses and names the reading it has now.
+Until November 2026 the three boolean operators shared one level and read left to right, so `a || b && c` meant `(a || b) && c`.
 :::
+
+```oxsts issue=OXSTS.MIXED_BOOLEAN_OPERATORS
+class Switch {
+  var up: bool := false
+  var down: bool := false
+  var locked: bool := false
+
+  prop {
+    return AG up || down && !locked
+  }
+}
+```
 
 ## Boolean Operators
 
@@ -174,32 +190,124 @@ class Buffer {
 // hide-end
 ```
 
-## Property Invocation (`()`)
+## Calls and Arguments
 
-A [property](properties.md) is invoked using the `()` invocation expression.
+`f(arguments)` calls a [property](properties.md), and is then an expression whose value is the property's, or a [transition](transitions.md), which only an [inline call](inline-operations.md#inline-call) does. The callee is named like a member, by itself, through `self` or through a navigation, and calling anything else, such as a variable or a record, is rejected (`OXSTS.INCORRECT_CALLED_ELEMENT`).
+
+The same rules bind the arguments of a property call, of an inline call and of an [annotation](annotations.md#with-arguments):
+
+- An argument is positional or named, `name = value`. A positional argument binds the parameter at its position, a named one the parameter of its name, so a call resolved against an inherited declaration binds the parameters of its redefinition by name too.
+- Every named argument follows all positional ones (`OXSTS.POSITIONAL_ARGUMENT_AFTER_NAMED`), and a parameter is bound at most once, by position or by name (`OXSTS.PARAMETER_BOUND_TWICE`).
+- A parameter whose multiplicity has the lower bound 0, such as `[0..1]`, is optional and binds `nothing` when it is left out. Every other parameter must be bound, and a call has no more arguments than parameters (`OXSTS.INVALID_CALL_ARGUMENTS_COUNT`); a required parameter is declared before every optional one (`OXSTS.INVALID_CALL_ARGUMENTS_COUNT`, at the declaration).
+- Each argument fits its parameter's type ([Assignability](types.md#assignability)).
+
+A property call's value is the value of the property's body with every parameter replaced by its argument, read against the instance the call names; an inline call passes its arguments by value ([Inline Call](inline-operations.md#inline-call)).
 
 ```oxsts
-// hide-start
 class Counter {
   var value: int := 0
-  refers a: Counter
-  refers b: Counter
 
-  prop maximum(): int {
-    return 10
+  prop exceeds(limit: int, margin: int[0..1]): bool {
+    return value > limit
   }
 
-// hide-end
   prop atLimit(): bool {
-    return value == maximum()
+    return !exceeds(10) && exceeds(limit = 9)
   }
+}
 
-  prop pairAtLimit(): bool {
+class Pair {
+  contains a: Counter
+  contains b: Counter
+
+  prop bothAtLimit(): bool {
     return a.atLimit() && b.atLimit()
   }
-// hide-start
 }
-// hide-end
+```
+
+```oxsts issue=OXSTS.PARAMETER_BOUND_TWICE
+class Counter {
+  var value: int := 0
+
+  prop exceeds(limit: int, margin: int[0..1]): bool {
+    return value > limit
+  }
+
+  prop atLimit(): bool {
+    return exceeds(10, limit = 9)
+  }
+}
+```
+
+```oxsts issue=OXSTS.INCORRECT_CALLED_ELEMENT
+record Point {
+  var x: int := 0
+}
+
+class Plotter {
+  var pen: Point := Point()
+}
+```
+
+## Casts (`as`)
+
+`expression as Type` gives an expression a narrower type, as a promise that its value fits that type. A cast is accepted when the named type fits the expression's own ([Assignability](types.md#assignability)): to a subclass, to a subsetting feature, from `any` to a datatype, to a smaller multiplicity such as from `[0..*]` to `[1]`, or to the same type. A cast that widens, such as from a class to its superclass or to `any`, or one between unrelated types, is rejected (`OXSTS.INVALID_CAST`). A cast changes nothing when the model runs: the compiler checks the same rule again and then drops it, so nothing checks the promise, and the value is used as it is.
+
+```oxsts
+abstract class Expression {
+  abstract prop evaluate(): any
+}
+
+class Guard {
+  contains condition: Expression
+
+  prop holds(): bool {
+    return condition.evaluate() as bool
+  }
+}
+```
+
+```oxsts issue=OXSTS.INVALID_CAST
+class Flag {
+  var on: bool := false
+
+  prop wide(): any {
+    return on as any
+  }
+}
+```
+
+## If-Then-Else
+
+`if guard then a else b` is `a` when the guard holds and `b` otherwise. The guard is Boolean, the `else` branch is required, and the two branches join ([Comparison and Joining](types.md#comparison-and-joining)); either is rejected otherwise (`OXSTS.TYPE_MISMATCH`). Its type is the joined type of the branches, so `if dark then lamp else nothing` holds at most one instance. Unlike the [`if` operation](operations.md#if), it is an expression and changes no state.
+
+```oxsts
+class Lamp
+
+class Room {
+  contains lamp: Lamp
+  var dark: bool := false
+  var level: int := 0
+  var lit: Lamp[0..1] := nothing
+
+  redefine tran {
+    havoc(dark)
+    level := if dark then 100 else 0
+    lit := if dark then lamp else nothing
+  }
+}
+```
+
+```oxsts issue=OXSTS.TYPE_MISMATCH
+class Room {
+  var dark: bool := false
+  var level: int := 0
+
+  redefine tran {
+    level := if dark then 100 else false
+  }
+}
 ```
 
 ## Temporal Operators
