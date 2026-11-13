@@ -7,10 +7,11 @@ import CodeBlock from '@theme/CodeBlock';
 import help from '@cli-reference/sysml-help.txt';
 import verify from '@cli-reference/sysml-verify.txt';
 import compile from '@cli-reference/sysml-compile.txt';
+import NodeVersion from '@site/src/components/NodeVersion';
 
 # SysML v2 on the Command Line
 
-`semantifyr-sysml` verifies SysML v2 models. Its distribution, `semantifyr-sysml-<version>.zip`, carries Theta, the SysML v2 semantic library in `libraries/sysmlv2` and the [tutorial](../tutorials/sysml-v2.md) model as `models/smoke/room.sysml`. It translates a model to OXSTS with the bundled SysIDE fork, which runs on Node.js, so it needs `node` (22 or newer) on `PATH`; without it, translating fails with exit code 4 and a message naming `node`. The translator reads every `.sysml` and `.kerml` file below the model's directory as the model's workspace, so keep other models and the artifact directory out of that directory. Translations are cached under `~/.semantifyr/sysml-cache`, keyed by the model and its workspace. The [SysML v2 tutorial](../tutorials/sysml-v2.md) walks through a run.
+`semantifyr-sysml` verifies SysML v2 models. Its distribution, `semantifyr-sysml-<version>.zip`, carries Theta, the SysML v2 semantic library in `libraries/sysmlv2` and the [tutorial](../tutorials/sysml-v2.md) model as `models/smoke/room.sysml`. It translates a model to OXSTS with the bundled SysIDE fork, which runs on Node.js, so it needs `node` (<NodeVersion /> or newer) on `PATH`; without it, translating fails with exit code 4 and a message naming `node`. The translator reads every `.sysml` and `.kerml` file below the model's directory as the model's workspace, so keep other models and the artifact directory out of that directory. Translations are cached under `~/.semantifyr/sysml-cache`, keyed by the model and its workspace. The [SysML v2 tutorial](../tutorials/sysml-v2.md) walks through a run.
 
 <CodeBlock language="text">{help}</CodeBlock>
 

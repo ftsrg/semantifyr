@@ -6,6 +6,7 @@ sidebar_position: 2
 import CodeBlock from '@theme/CodeBlock';
 import LiveEmbed, { selectDeclarations } from '@site/src/components/LiveEmbed';
 import room from '@sysml-tutorial-models/room.sysml';
+import NodeVersion from '@site/src/components/NodeVersion';
 
 # Verifying SysML v2 Models
 
@@ -96,8 +97,8 @@ The `semantifyr-sysml` command verifies the same model locally, with every insta
 ### Requirements
 
 - A Java 25 runtime found through `JAVA_HOME` or `PATH`.
-- Node.js 22 or newer on `PATH`: the SysML v2 front end, a fork of SysIDE, runs on Node.js.
-- The `semantifyr-sysml` command-line distribution ([Getting Started](../getting-started.md#option-d-install-the-command-line-interface-for-scripts-and-ci)), which verifies SysML v2 models ([reference](../cli/sysml.mdx)). It carries the translator from SysML v2 to OXSTS and the SysML v2 semantic library, so Node.js is the only prerequisite SysML v2 adds.
+- Node.js <NodeVersion /> or newer on `PATH`: the SysML v2 front end, a fork of SysIDE, runs on Node.js.
+- The `semantifyr-sysml` command-line distribution ([Getting Started](../getting-started.md#option-c-install-the-command-line-interface-for-scripts-and-ci)), which verifies SysML v2 models ([reference](../cli/sysml.mdx)). It carries the translator from SysML v2 to OXSTS and the SysML v2 semantic library, so Node.js is the only prerequisite SysML v2 adds.
 
 To build the distribution from a clone of the repository, which needs Git (the first build downloads its dependencies, the SysIDE fork among them, and takes several minutes):
 
@@ -108,7 +109,7 @@ cd semantifyr
 export SEMANTIFYR_HOME="$PWD/subprojects/frontends/sysml/sysml-cli/build/install/semantifyr-sysml"
 ```
 
-`SEMANTIFYR_HOME` now holds the same layout as the release zip: the launcher in `bin/`, Theta in `theta-xsts-cli/` and the semantic library in `libraries/`. If you use the [release zip](../getting-started.md#option-d-install-the-command-line-interface-for-scripts-and-ci) instead, point `SEMANTIFYR_HOME` at the unzipped `semantifyr-sysml-<version>` directory. The commands on this page are written for Linux and macOS shells; on Windows, use `bin\semantifyr-sysml.bat`.
+`SEMANTIFYR_HOME` now holds the launcher in `bin/`, Theta in `theta-xsts-cli/` and the semantic library in `libraries/`; an unzipped `semantifyr-sysml-<version>.zip` has the same layout. The commands on this page are written for Linux and macOS shells; on Windows, use `bin\semantifyr-sysml.bat`.
 
 ### Verifying Locally
 

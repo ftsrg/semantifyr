@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import type { Options as DocsOptions } from '@docusaurus/plugin-content-docs';
 import type { Options as PagesOptions } from '@docusaurus/plugin-content-pages';
@@ -24,6 +25,34 @@ const codeBlockTheme: PrismTheme = {
 
 const liveBackendUrl = process.env.SEMANTIFYR_LIVE_URL ?? 'https://live.semantifyr.org';
 
+// the build's constants, which every page that states one takes from here
+function gradleProperty(name: string): string {
+  const properties = readFileSync(path.resolve(__dirname, '../../gradle.properties'), 'utf8');
+  const value = new RegExp(`^${name}=(.*)$`, 'm').exec(properties)?.[1]?.trim();
+  if (value === undefined) {
+    throw new Error(`gradle.properties sets no ${name}`);
+  }
+  return value;
+}
+
+const version = gradleProperty('version');
+const nodeVersion = gradleProperty('nodeVersion');
+
+// the npmAssemble Gradle task passes the commit, and the tag when the commit is tagged
+const commit = process.env.SEMANTIFYR_SITE_COMMIT ?? '';
+const released = process.env.SEMANTIFYR_SITE_TAG === `v${version}`;
+
+// the one place the site says which state of the tool it describes
+function siteState(): string {
+  if (released) {
+    return `These pages describe Semantifyr ${version}.`;
+  }
+  if (commit === '') {
+    return 'These pages describe the development branch of Semantifyr.';
+  }
+  return `These pages describe the development branch of Semantifyr at commit <a href="https://github.com/ftsrg/semantifyr/commit/${commit}"><code>${commit.slice(0, 8)}</code></a>.`;
+}
+
 export default {
   title: 'Semantifyr',
   tagline:
@@ -36,6 +65,7 @@ export default {
   staticDirectories: ['static', 'static-imported-branding', 'build/api-static'],
   customFields: {
     liveBackendUrl,
+    nodeVersion,
   },
   headTags: [
     {
@@ -98,6 +128,9 @@ export default {
             '@sysml-constructs': path.resolve(__dirname, 'build/sysml-constructs'),
             // written by the cloneGrammars Gradle task
             '@grammars': path.resolve(__dirname, 'build/grammars'),
+            // written by the generatedReference_* Gradle tasks
+            '@generated-reference': path.resolve(__dirname, 'build/generated-reference'),
+            '@vscode-extension': path.resolve(__dirname, '../semantifyr-vscode'),
           },
         },
         module: {
@@ -213,7 +246,7 @@ export default {
           ],
         },
       ],
-      copyright: `Copyright &copy; 2023-2026 <a href="https://github.com/ftsrg/semantifyr/blob/main/CONTRIBUTORS.md" target="_blank">The Semantifyr Authors</a>. Available under the <a href="https://www.eclipse.org/legal/epl-2.0/">Eclipse Public License - v 2.0</a>.`,
+      copyright: `${siteState()}<br/>Copyright &copy; 2023-2026 <a href="https://github.com/ftsrg/semantifyr/blob/main/CONTRIBUTORS.md" target="_blank">The Semantifyr Authors</a>. Available under the <a href="https://www.eclipse.org/legal/epl-2.0/">Eclipse Public License - v 2.0</a>.`,
     },
   } satisfies UserThemeConfig,
   future: {

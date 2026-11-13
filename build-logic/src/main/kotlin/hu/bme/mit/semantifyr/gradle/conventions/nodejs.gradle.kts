@@ -14,7 +14,8 @@ plugins {
 }
 
 node {
-    version = "22.23.4"
+    // the website states it as the Node.js the tools need
+    version = providers.gradleProperty("nodeVersion")
     download = true
     // the Node.js repository is declared in settings, which forbids project repositories
     distBaseUrl = null

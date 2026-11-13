@@ -107,7 +107,6 @@ function HealthDot({ status }: { status: HealthStatus }): React.ReactNode {
 function TryIt() {
   const liveUrl = useLiveBackendUrl();
   const liveHealth = useHealthCheck(`${liveUrl}/api/health`);
-  const hubHealth = useHealthCheck('https://jupyter.semantifyr.org/hub/health');
 
   return (
     <section className={styles.section}>
@@ -130,30 +129,6 @@ function TryIt() {
               className={clsx('button', 'button--primary', 'button--block', styles.card__button)}
             >
               Open the live editor <OpenInNewIcon />
-            </Link>
-          </div>
-          <div className={styles.card}>
-            <div className={styles.card__header}>
-              <h3 className={styles.card__title}>JupyterHub environment</h3>
-              <HealthDot status={hubHealth} />
-            </div>
-            <p className={styles.card__body}>
-              A full-fledged VS Code environment with the Semantifyr extension,
-              multi-file project support, and integration with SysML v2 and the
-              Theta model checker backend.
-            </p>
-            <p className={styles.card__note}>
-              Access requires a user account.{' '}
-              <Link href="https://github.com/ftsrg/semantifyr/blob/main/CONTRIBUTORS.md">
-                Contact the maintainers
-              </Link>{' '}
-              if you don&apos;t have one yet.
-            </p>
-            <Link
-              href="https://jupyter.semantifyr.org"
-              className={clsx('button', 'button--primary', 'button--block', styles.card__button)}
-            >
-              Launch JupyterHub <OpenInNewIcon />
             </Link>
           </div>
         </div>

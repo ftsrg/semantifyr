@@ -3,7 +3,7 @@ title: Expressions
 sidebar_position: 4
 ---
 
-import { Planned } from '@site/src/components/Constructs';
+import Planned from '@site/src/components/Planned';
 import constructs from '@oxsts-test-models/constructs/constructs.tsv';
 
 # Expressions
@@ -66,7 +66,7 @@ From **lowest** to **highest** precedence:
 As in Java, `&&` binds tighter than `^^`, which binds tighter than `||`, and each is left-associative: `a || b && c` parses as `a || (b && c)`.
 
 :::note
-Until November 2026 the three boolean operators shared one level and read left to right, so `a || b && c` meant `(a || b) && c`. For one release the validator warns on an expression that mixes them without parentheses and names the reading it has now.
+Until November 2026 the three boolean operators shared one level and read left to right, so `a || b && c` meant `(a || b) && c`. The validator warns on an expression that mixes them without parentheses and names the reading it has now.
 :::
 
 ## Boolean Operators
