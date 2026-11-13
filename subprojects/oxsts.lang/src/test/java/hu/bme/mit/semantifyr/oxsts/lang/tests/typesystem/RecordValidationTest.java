@@ -228,7 +228,7 @@ public class RecordValidationTest {
             }
             """, CheckMode.ALL);
 
-        parsedPackage.assertHasValidationIssue(OxstsValidator.INCORRECT_CALLED_ELEMENT, "not callable");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.INCORRECT_CALLED_ELEMENT, "cannot be called");
     }
 
     @Test

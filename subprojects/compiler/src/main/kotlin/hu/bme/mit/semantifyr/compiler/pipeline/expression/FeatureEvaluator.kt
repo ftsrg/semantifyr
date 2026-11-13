@@ -63,7 +63,7 @@ class FeatureEvaluator(
     ): ExpressionEvaluation {
         val subSetters = featureSubSettersFinder.getSubSetters(instance.domain, featureDeclaration)
         if (subSetters.isEmpty()) {
-            sourceError(featureDeclaration, "Abstract feature '${featureDeclaration.name}' is neither redefined nor subsetted, so it can not be evaluated!")
+            sourceError(featureDeclaration, "Abstract feature '${featureDeclaration.name}' is neither redefined nor subsetted, so it cannot be evaluated")
         }
 
         val instances = mutableSetOf<Instance>()
@@ -118,7 +118,7 @@ class FeatureEvaluator(
         val opposite = oppositeHandler.getOppositeFeature(featureDeclaration)
 
         if (opposite == null) {
-            sourceError(featureDeclaration, "Only opposite derived features are supported right now!")
+            sourceError(featureDeclaration, "Only opposite derived features are supported")
         }
 
         return evaluateOppositeDerivedFeature(instance, opposite)

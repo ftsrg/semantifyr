@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
+import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
@@ -68,7 +69,7 @@ class ExpressionCallExpander @Inject constructor(
         )
 
         if (property.isAbstract) {
-            sourceError(property, "Abstract property can not be inlined!")
+            sourceError(property, "Property '${NamingUtil.getName(property)}' is abstract and '${containerInstance.domain.name}' does not redefine it")
         }
 
         // This trick ensures that the expression rewriter can rewrite the passed-in expression itself as well.
