@@ -40,7 +40,7 @@ part def Orion_Master_SM {
     port Send_StateMachine_Port: StateMachine_Interface_For_Orion;
     port Process_StateMachine_Port: StateMachine_Interface_For_Orion;
 
-    attribute is_Connected: Boolean default false;
+    attribute is_Connected: Boolean := false;
 
     exhibit state Behaviour {
         state Closed;

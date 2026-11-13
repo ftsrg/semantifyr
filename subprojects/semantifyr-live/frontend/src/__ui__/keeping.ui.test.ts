@@ -10,7 +10,7 @@ import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
 import { editorKeysOf, TEST_BROWSER } from '../testBrowser'
-import { casesListed, editor, results, statesOf, test } from './harness'
+import { casesListed, editor, editorWorkerLoaded, results, statesOf, test } from './harness'
 
 const BASICS = readFileSync(join(import.meta.dirname, '../snippets/imported/tutorial/basics.oxsts'), 'utf-8')
 
@@ -216,6 +216,7 @@ describe('leaving the page', () => {
   test('with edits not saved to a file brings the browser\'s warning, and without them none', async ({ ui }) => {
     const page = await ui.open('/oxsts/basics')
     await casesListed(page)
+    await editorWorkerLoaded(page)
     const dialogs: string[] = []
     page.on('dialog', (dialog) => {
       dialogs.push(dialog.type())
@@ -224,6 +225,7 @@ describe('leaving the page', () => {
 
     await page.reload()
     await casesListed(page)
+    await editorWorkerLoaded(page)
     expect(dialogs).toEqual([])
     await typeAtTheEnd(page, '\n// edited\n')
     await expect.poll(async () => {

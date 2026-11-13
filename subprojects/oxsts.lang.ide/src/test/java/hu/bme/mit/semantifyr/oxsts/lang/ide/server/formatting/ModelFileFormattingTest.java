@@ -42,7 +42,8 @@ class ModelFileFormattingTest {
             Path.of("../oxsts.lang/src/main/resources/hu/bme/mit/semantifyr/oxsts/lang/library"),
             Path.of("../frontends/gamma/models/libraries/default"),
             Path.of("../frontends/sysml/models/libraries/default"),
-            Path.of("../frontends/sysml/models/libraries/topdown"));
+            Path.of("../frontends/sysml/models/libraries/topdown"),
+            Path.of("../frontends/sysml/models/libraries/fifo"));
 
     private static Injector injector;
 

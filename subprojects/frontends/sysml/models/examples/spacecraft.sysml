@@ -7,7 +7,7 @@ part def GroundStation {
     port spacecraftCommandPort: ~CommandPort;
     port dataPort: ~DataPort;
     
-    attribute receivedData: Integer default 0;
+    attribute receivedData: Integer := 0;
 
     exhibit state Behaviour {
         transition first start then Idle;
@@ -42,9 +42,9 @@ part def Spacecraft {
     port commandPort: CommandPort;
     port dataPort: DataPort;
 
-    attribute batteryCharge: Integer default 100;
-    attribute recharging: Boolean default false;
-    attribute data: Integer default 100;
+    attribute batteryCharge: Integer := 100;
+    attribute recharging: Boolean := false;
+    attribute data: Integer := 100;
 
     exhibit state Behaviour parallel {
         state Communication {

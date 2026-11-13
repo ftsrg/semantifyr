@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.frontends.sysml.wrapper.SysMLv2Compiler
+import hu.bme.mit.semantifyr.frontends.sysml.wrapper.nameMapPath
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
@@ -109,9 +110,12 @@ class SysMLv2Frontend private constructor(
     private fun writeSysMLTrace(case: VerificationCase) {
         val tracePath = sysmlTracePath(case)
         try {
+            val artifacts = caseDirectory(sysmlConfiguration.outputDirectory, case)
             sharedSysMLv2Compiler.trace(
                 sourcePath = sysmlConfiguration.sourcePath,
-                tracePath = caseDirectory(sysmlConfiguration.outputDirectory, case).resolve("trace.json"),
+                witnessPath = artifacts.resolve("witness.json"),
+                tracePath = artifacts.resolve("trace.json"),
+                nameMapPath = nameMapPath(compiledOxstsPath),
                 caseName = case.qualifiedName.substringAfterLast("::"),
                 outputPath = tracePath,
             )

@@ -11,7 +11,7 @@ calc def <AG> mustAlways {
 }
 
 calc def isStateActive {
-    in s: SysML::StateUsage[1];
+    in state s[1];
     return : Boolean[1];
 }
 

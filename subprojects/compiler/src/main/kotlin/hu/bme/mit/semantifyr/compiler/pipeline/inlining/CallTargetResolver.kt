@@ -112,6 +112,10 @@ class CallTargetResolver @Inject constructor(
                 return CallTarget.MissingOptional(holderExpression)
             }
 
+            if (evaluator.evaluateInstancesOrNull(holderExpression)?.isEmpty() == true) {
+                sourceError(primary, "The holder of the call to '${targetDeclaration.name}' evaluates to nothing; navigate with '?.' where it may be absent")
+            }
+
             return CallTarget.DirectInstance(holderExpression, instance, targetDeclaration)
         }
 

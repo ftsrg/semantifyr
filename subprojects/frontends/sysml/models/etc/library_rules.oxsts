@@ -1,0 +1,400 @@
+package semantifyr::sysml::fixture
+
+import semantifyr::sysml::expressions
+import semantifyr::sysml::attributes
+import semantifyr::sysml::states
+import semantifyr::sysml::parts
+import semantifyr::sysml::ports
+import semantifyr::sysml::items
+import semantifyr::sysml::actions
+import semantifyr::sysml::triggers
+import semantifyr::sysml::verification
+
+class Signal : Item
+global containment global_Signal: Signal[1]
+
+class ExhibitedMachine : Part {
+    contains input: NormalPort subsets ports
+    contains entered: BooleanAttribute subsets attributes {
+        redefine contains initialValue: LiteralBooleanExpression {
+            redefine refers value: bool = false
+        }
+    }
+    contains finished: BooleanAttribute subsets attributes {
+        redefine contains initialValue: LiteralBooleanExpression {
+            redefine refers value: bool = false
+        }
+    }
+    contains enteredBeforeRunning: BooleanAttribute subsets attributes {
+        redefine contains initialValue: LiteralBooleanExpression {
+            redefine refers value: bool = false
+        }
+    }
+    contains exited: BooleanAttribute subsets attributes {
+        redefine contains initialValue: LiteralBooleanExpression {
+            redefine refers value: bool = false
+        }
+    }
+    contains Behaviour: ExhibitedState redefines exhibitState {
+        redefine contains entryAction: AssignmentAction {
+            redefine refers attribute: Attribute = entered
+            redefine contains expression: LiteralBooleanExpression {
+                redefine refers value: bool = true
+            }
+        }
+        redefine contains exitAction: AssignmentAction {
+            redefine refers attribute: Attribute = exited
+            redefine contains expression: LiteralBooleanExpression {
+                redefine refers value: bool = true
+            }
+        }
+        contains Running: State subsets states {
+            redefine contains entryAction: AssignmentAction {
+                redefine refers attribute: Attribute = enteredBeforeRunning
+                redefine contains expression: AttributeReferenceExpression {
+                    redefine refers attribute: Attribute = entered
+                }
+            }
+        }
+        contains enterRunning: Transition subsets transitions {
+            redefine refers from: StateNode = start
+            redefine refers to: StateNode = Running
+        }
+        contains finish: Transition subsets transitions {
+            redefine refers from: StateNode = Running
+            redefine refers to: StateNode = done
+            redefine contains acceptAction: AcceptItemAction {
+                redefine refers viaPort: Port = input
+                redefine refers payload: Item = global_Signal
+            }
+            redefine contains action: AssignmentAction {
+                redefine refers attribute: Attribute = finished
+                redefine contains expression: LiteralBooleanExpression {
+                    redefine refers value: bool = true
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ExhibitedStateActiveUntilDoneTestCase : VerificationCaseDefinition {
+    contains system: ExhibitedMachine[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains constraint: MustAlways subsets requiredConstraints {
+            redefine contains body: OrOperatorExpression {
+                redefine contains left: AttributeReferenceExpression {
+                    redefine refers attribute: Attribute = system.finished
+                }
+                redefine contains right: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.Behaviour
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ExhibitedStateInactiveAfterDoneTestCase : VerificationCaseDefinition {
+    contains system: ExhibitedMachine[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains constraint: MustAlways subsets requiredConstraints {
+            redefine contains body: OrOperatorExpression {
+                redefine contains left: UnaryNotExpression {
+                    redefine contains operand: AttributeReferenceExpression {
+                        redefine refers attribute: Attribute = system.finished
+                    }
+                }
+                redefine contains right: UnaryNotExpression {
+                    redefine contains operand: IsStateActiveExpression {
+                        redefine refers state: AbstractState = system.Behaviour
+                    }
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ExhibitedStateReachesDoneTestCase : VerificationCaseDefinition {
+    contains system: ExhibitedMachine[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains constraint: Eventually subsets requiredConstraints {
+            redefine contains body: EqualityOperatorExpression {
+                redefine contains left: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.Behaviour
+                }
+                redefine contains right: LiteralBooleanExpression {
+                    redefine refers value: bool = false
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ExhibitedStateEntryPrecedesDescentTestCase : VerificationCaseDefinition {
+    contains system: ExhibitedMachine[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains constraint: MustAlways subsets requiredConstraints {
+            redefine contains body: OrOperatorExpression {
+                redefine contains left: UnaryNotExpression {
+                    redefine contains operand: IsStateActiveExpression {
+                        redefine refers state: AbstractState = system.Behaviour.Running
+                    }
+                }
+                redefine contains right: AttributeReferenceExpression {
+                    redefine refers attribute: Attribute = system.enteredBeforeRunning
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ExhibitedStateExitActionRunsAtDoneTestCase : VerificationCaseDefinition {
+    contains system: ExhibitedMachine[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains constraint: MustAlways subsets requiredConstraints {
+            redefine contains body: OrOperatorExpression {
+                redefine contains left: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.Behaviour
+                }
+                redefine contains right: AttributeReferenceExpression {
+                    redefine refers attribute: Attribute = system.exited
+                }
+            }
+        }
+    }
+}
+
+class RegionEntryMachine : Part {
+    contains input: NormalPort subsets ports
+    contains order: IntegerAttribute subsets attributes {
+        redefine contains initialValue: LiteralIntegerExpression {
+            redefine refers value: int = 0
+        }
+    }
+    contains Behaviour: ExhibitedState redefines exhibitState {
+        contains Idle: State subsets states
+        contains Running: ParallelState subsets states {
+            redefine contains entryAction: AppendDigitAction {
+                redefine refers attribute: Attribute = order
+                redefine refers digit: int = 1
+            }
+            contains Left: State subsets states {
+                redefine contains entryAction: AppendDigitAction {
+                    redefine refers attribute: Attribute = order
+                    redefine refers digit: int = 4
+                }
+                contains Initial: State subsets states {
+                    redefine contains entryAction: AppendDigitAction {
+                        redefine refers attribute: Attribute = order
+                        redefine refers digit: int = 9
+                    }
+                }
+                contains Target: State subsets states {
+                    redefine contains entryAction: AppendDigitAction {
+                        redefine refers attribute: Attribute = order
+                        redefine refers digit: int = 5
+                    }
+                }
+                contains enterInitial: Transition subsets transitions {
+                    redefine refers from: StateNode = start
+                    redefine refers to: StateNode = Initial
+                }
+            }
+            contains Right: State subsets states {
+                redefine contains entryAction: AppendDigitAction {
+                    redefine refers attribute: Attribute = order
+                    redefine refers digit: int = 2
+                }
+                contains Sibling: State subsets states {
+                    redefine contains entryAction: AppendDigitAction {
+                        redefine refers attribute: Attribute = order
+                        redefine refers digit: int = 3
+                    }
+                }
+                contains enterSibling: Transition subsets transitions {
+                    redefine refers from: StateNode = start
+                    redefine refers to: StateNode = Sibling
+                }
+            }
+        }
+        contains enterIdle: Transition subsets transitions {
+            redefine refers from: StateNode = start
+            redefine refers to: StateNode = Idle
+        }
+        contains enterTarget: Transition subsets transitions {
+            redefine refers from: StateNode = Idle
+            redefine refers to: StateNode = Running.Left.Target
+            redefine contains acceptAction: AcceptItemAction {
+                redefine refers viaPort: Port = input
+                redefine refers payload: Item = global_Signal
+            }
+        }
+    }
+}
+
+class AppendDigitAction : Action {
+    refers attribute: Attribute
+    refers digit: int
+
+    redefine tran {
+        inline attribute.set((attribute.evaluate() as int) * 10 + digit)
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class RegionEntryReachesTargetTestCase : VerificationCaseDefinition {
+    contains system: RegionEntryMachine[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains constraint: Eventually subsets requiredConstraints {
+            redefine contains body: IsStateActiveExpression {
+                redefine refers state: AbstractState = system.Behaviour.Running.Left.Target
+            }
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class RegionEntryEntersSiblingRegionTestCase : VerificationCaseDefinition {
+    contains system: RegionEntryMachine[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains constraint: MustAlways subsets requiredConstraints {
+            redefine contains body: OrOperatorExpression {
+                redefine contains left: UnaryNotExpression {
+                    redefine contains operand: IsStateActiveExpression {
+                        redefine refers state: AbstractState = system.Behaviour.Running.Left.Target
+                    }
+                }
+                redefine contains right: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.Behaviour.Running.Right.Sibling
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class RegionEntryRunsEntriesInOrderTestCase : VerificationCaseDefinition {
+    contains system: RegionEntryMachine[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains constraint: MustAlways subsets requiredConstraints {
+            redefine contains body: OrOperatorExpression {
+                redefine contains left: UnaryNotExpression {
+                    redefine contains operand: IsStateActiveExpression {
+                        redefine refers state: AbstractState = system.Behaviour.Running.Left.Target
+                    }
+                }
+                redefine contains right: EqualityOperatorExpression {
+                    redefine contains left: AttributeReferenceExpression {
+                        redefine refers attribute: Attribute = system.order
+                    }
+                    redefine contains right: LiteralIntegerExpression {
+                        redefine refers value: int = 12345
+                    }
+                }
+            }
+        }
+    }
+}
+
+class DerivedMachine : Part {
+    contains counter: IntegerAttribute subsets attributes {
+        redefine contains initialValue: LiteralIntegerExpression {
+            redefine refers value: int = 0
+        }
+    }
+    contains doubled: DerivedAttribute subsets attributes {
+        redefine contains expression: MultiplicationOperatorExpression {
+            redefine contains left: AttributeReferenceExpression {
+                redefine refers attribute: Attribute = counter
+            }
+            redefine contains right: LiteralIntegerExpression {
+                redefine refers value: int = 2
+            }
+        }
+    }
+    contains Behaviour: ExhibitedState redefines exhibitState {
+        contains Counting: State subsets states
+        contains enterCounting: Transition subsets transitions {
+            redefine refers from: StateNode = start
+            redefine refers to: StateNode = Counting
+        }
+        contains increment: Transition subsets transitions {
+            redefine refers from: StateNode = Counting
+            redefine refers to: StateNode = Counting
+            redefine contains guard: Guard {
+                redefine contains expression: LessThanOperatorExpression {
+                    redefine contains left: AttributeReferenceExpression {
+                        redefine refers attribute: Attribute = counter
+                    }
+                    redefine contains right: LiteralIntegerExpression {
+                        redefine refers value: int = 3
+                    }
+                }
+            }
+            redefine contains action: AssignmentAction {
+                redefine refers attribute: Attribute = counter
+                redefine contains expression: PlusOperatorExpression {
+                    redefine contains left: AttributeReferenceExpression {
+                        redefine refers attribute: Attribute = counter
+                    }
+                    redefine contains right: LiteralIntegerExpression {
+                        redefine refers value: int = 1
+                    }
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class DerivedAttributeFollowsItsExpressionTestCase : VerificationCaseDefinition {
+    contains system: DerivedMachine[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains constraint: MustAlways subsets requiredConstraints {
+            redefine contains body: EqualityOperatorExpression {
+                redefine contains left: AttributeReferenceExpression {
+                    redefine refers attribute: Attribute = system.doubled
+                }
+                redefine contains right: MultiplicationOperatorExpression {
+                    redefine contains left: AttributeReferenceExpression {
+                        redefine refers attribute: Attribute = system.counter
+                    }
+                    redefine contains right: LiteralIntegerExpression {
+                        redefine refers value: int = 2
+                    }
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class DerivedAttributeChangesTestCase : VerificationCaseDefinition {
+    contains system: DerivedMachine[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains constraint: Eventually subsets requiredConstraints {
+            redefine contains body: EqualityOperatorExpression {
+                redefine contains left: AttributeReferenceExpression {
+                    redefine refers attribute: Attribute = system.doubled
+                }
+                redefine contains right: LiteralIntegerExpression {
+                    redefine refers value: int = 6
+                }
+            }
+        }
+    }
+}

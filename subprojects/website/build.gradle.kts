@@ -25,6 +25,12 @@ val cliDistributionFiles = configurations.resolvable("cliDistributionFiles") {
     attributes(semantifyrArtifact("application-distribution"))
 }
 
+val sysmlConstructs = configurations.dependencyScope("sysmlConstructs")
+val sysmlConstructsFiles = configurations.resolvable("sysmlConstructsFiles") {
+    extendsFrom(sysmlConstructs.get())
+    attributes(semantifyrArtifact("sysml-constructs"))
+}
+
 val apiDocs = configurations.dependencyScope("apiDocs")
 val apiDocsFiles = configurations.resolvable("apiDocsFiles") {
     extendsFrom(apiDocs.get())
@@ -39,6 +45,7 @@ dependencies {
     cliDistribution(project(":semantifyr-cli"))
     cliDistribution(project(":sysml-cli"))
     cliDistribution(project(":gamma-cli"))
+    sysmlConstructs(project(":sysml-wrapper"))
     if (providers.gradleProperty("website.apiDocs").getOrElse("false").toBoolean()) {
         apiDocs(project(":"))
     }
@@ -132,6 +139,12 @@ val cloneBrandingAssets = tasks.register<Sync>("cloneBrandingAssets") {
     into(importedBrandingDir)
 }
 
+// written for the alias @sysml-constructs
+val cloneSysmlConstructs = tasks.register<Sync>("cloneSysmlConstructs") {
+    from(sysmlConstructsFiles)
+    into(layout.buildDirectory.dir("sysml-constructs"))
+}
+
 val cloneApiDocs = tasks.register<Sync>("cloneApiDocs") {
     from(apiDocsFiles)
     into(layout.buildDirectory.dir("api-static/api"))
@@ -163,6 +176,7 @@ val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     configureSharedInputs()
     inputs.property("liveBackendUrl", providers.environmentVariable("SEMANTIFYR_LIVE_URL").orElse(""))
     inputs.files(cliReference)
+    inputs.files(cloneSysmlConstructs)
 
     npmCommand.set(listOf("run", "assemble"))
     inputs.files(cloneApiDocs)

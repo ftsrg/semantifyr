@@ -1,0 +1,97 @@
+package semantifyr::sysml::parts
+
+import semantifyr::sysml::attributes
+import semantifyr::sysml::ports
+import semantifyr::sysml::states
+import semantifyr::sysml::items
+
+class Part {
+    contains parts: Part[0..*]
+    contains attributes: Attribute[0..*]
+    contains ports: Port[0..*]
+    contains exhibitState: AbstractState[0..1]
+    contains flows: Flow[0..*]
+
+    tran havocInputEvents() {
+        inline for (port in ports) {
+            inline port.havocIncomingItem()
+        }
+    }
+
+    tran resetOutputEvents() {
+        inline for (port in ports) {
+            inline port.resetOutgoingItem()
+        }
+    }
+
+    tran passTime() {
+        inline for (part in parts) {
+            inline part.passTime()
+        }
+
+        inline exhibitState?.passTime()
+    }
+
+    tran executeExhibitState() {
+        choice {
+            inline exhibitState?.fireTransitions()
+        } or {
+            // do nothing, if no transition is enabled
+            inline exhibitState?.assumeNoTransitionEnabled()
+        }
+
+        inline for (port in ports) {
+            inline port.assumeRequiredConsumption()
+            inline port.resetConsumption()
+        }
+    }
+
+    tran executeFlows() {
+        inline for (flow in flows) {
+            inline flow.main()
+        }
+    }
+
+    // the flows run once after initialization, so the items sent during it arrive in the first step
+    redefine init {
+        inline for (attribute in attributes) {
+            inline attribute.init()
+        }
+
+        inline exhibitState?.activate()
+        inline exhibitState?.activateRecursive()
+
+        inline for (part in parts) {
+            inline part.init()
+        }
+
+        inline executeFlows()
+    }
+
+    redefine tran {
+        inline executeMainComponent()
+    }
+
+    tran executeMainComponent() {
+        inline resetOutputEvents()
+
+        inline for (part in parts) {
+            inline part.main()
+        }
+
+        inline executeExhibitState()
+
+        inline executeFlows()
+    }
+}
+
+class Flow {
+    refers source: Port[1]
+    refers target: Port[1]
+
+    redefine tran {
+        if (source.hasOutgoing()) {
+            inline target.setIncomingItem(source.outgoingItem as Item)
+        }
+    }
+}

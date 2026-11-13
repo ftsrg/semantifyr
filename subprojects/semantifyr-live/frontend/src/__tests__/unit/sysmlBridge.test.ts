@@ -13,6 +13,8 @@ const fileUri = 'file:///workspace/snippet.sysml'
 const sysmlRange = { start: { line: 4, character: 0 }, end: { line: 9, character: 1 } }
 const oxstsRange = { start: { line: 40, character: 0 }, end: { line: 60, character: 1 } }
 const callTrace = { steps: [] }
+const witnessState = { steps: [] }
+const nameMap = { modelHash: 'abc' }
 const witnessUri = 'file:///workspace/.artifacts/case/witness.oxsts'
 
 interface Command {
@@ -29,7 +31,7 @@ function failedResult(): VerificationCaseResult {
     metrics: null,
     trace: {
       callTrace: callTrace as never,
-      witnessState: { steps: [] } as never,
+      witnessState: witnessState as never,
       witnessUri,
     },
   }
@@ -45,7 +47,7 @@ function stubWorker(oxsts: string | null = 'mapped'): LspClient & { requests: Co
       requests.push(request)
       switch (request.command) {
         case 'syside.semantifyr.sysml.oxsts':
-          return Promise.resolve({ oxsts: oxsts ?? undefined, diagnostics: [] })
+          return Promise.resolve({ oxsts: oxsts ?? undefined, nameMap, diagnostics: [] })
         case 'syside.semantifyr.sysml.verificationCases':
           return Promise.resolve([{ name: 'LampNeverLit', range: sysmlRange }])
         case 'syside.semantifyr.sysml.trace':
@@ -125,11 +127,40 @@ describe('sysml bridge', () => {
     })
     expect(worker.requests.at(-1)).toEqual({
       command: 'syside.semantifyr.sysml.trace',
-      arguments: [{ uri: fileUri, caseName: 'LampNeverLit', trace: callTrace }],
+      arguments: [{ uri: fileUri, caseName: 'LampNeverLit', witness: witnessState, trace: callTrace, nameMap }],
     })
     const traceUri = result.trace?.witnessUri ?? ''
     expect(traceUri).toBe('file:///workspace/traces/LampNeverLit.trace.sysml')
     await expect(bridge.client.sendRequest('semantifyr/live/session/document/read', { uri: traceUri })).resolves.toEqual({ text: 'part def LampNeverLitTrace;' })
+  })
+
+  it('sends the name map of the mapping that was verified, not the current one', async () => {
+    const worker = stubWorker()
+    const stubbed = worker.sendRequest
+    let hashes = 0
+    worker.sendRequest = (method, params) => {
+      return (params as Command).command === 'syside.semantifyr.sysml.oxsts'
+        ? Promise.resolve({ oxsts: 'mapped', nameMap: { modelHash: `hash${++hashes}` }, diagnostics: [] })
+        : stubbed(method, params)
+    }
+    const oxsts = stubOxsts()
+    const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => worker, getOxstsClient: () => oxsts.client })
+    const verifying = oxsts.client.sendRequest
+    oxsts.client.sendRequest = async (method, params) => {
+      if ((params as Command).command === 'oxsts.case.verify') {
+        await bridge.readMapping()
+      }
+      return verifying(method, params)
+    }
+
+    await bridge.client.sendRequest('workspace/executeCommand', {
+      command: 'sysml.case.verify',
+      arguments: [{ uri: fileUri, range: sysmlRange }],
+    })
+
+    expect(worker.requests.at(-1)?.arguments).toEqual([
+      { uri: fileUri, caseName: 'LampNeverLit', witness: witnessState, trace: callTrace, nameMap: { modelHash: 'hash1' } },
+    ])
   })
 
   it('sends a full-text change for a changed mapping and reopens on a new session', async () => {
@@ -242,11 +273,11 @@ describe('sysml bridge', () => {
 
     expect(mapperProblems({
       diagnostics: [
-        { range, message: 'unsupported', severity: 2, source: 'semantifyr' },
+        { range, message: 'unsupported', severity: 2, source: 'semantifyr', code: 'unsupported-construct' },
         { range, message: 'parse error', severity: 1, source: 'sysml' },
       ],
     })).toEqual([
-      { severity: 'warning', startLine: 1, startColumn: 2, endLine: 1, endColumn: 8, message: 'unsupported', source: 'semantifyr' },
+      { severity: 'warning', startLine: 1, startColumn: 2, endLine: 1, endColumn: 8, message: 'unsupported', source: 'semantifyr', code: 'unsupported-construct' },
     ])
   })
 })

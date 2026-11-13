@@ -18,6 +18,11 @@ class SendItemAction : Action {
     refers payload: Item
 
     redefine tran {
+        inline send()
+    }
+
+    @Trace
+    tran send() {
         inline viaPort.setOutgoingItem(payload)
     }
 }
