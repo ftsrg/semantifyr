@@ -39,7 +39,6 @@ function declaredCases(file: string, language: ExampleLanguage): string[] {
   });
 }
 
-// a served model's further cases, which the build appends to it for the tests
 function furtherCasesOf(file: string): string {
   return `${file.slice(0, file.length - extname(file).length)}.further-cases`;
 }
@@ -52,12 +51,22 @@ function corpusCases(file: string, language: ExampleLanguage): string[] {
   return [...declaredCases(file, language), ...declaredCases(fragment, language)];
 }
 
-// a case whose property is reachability: a passing one shows the run that reaches it
-const REACHABILITY: Readonly<Record<ExampleLanguage, RegExp>> = {
-  oxsts: /return\s+EF\b/,
-  gamma: /^\s*EF\b/m,
-  sysml: /require\s+constraint\s*\{\s*eventually\s*\(/,
+// a property's negations and its root operator: a trace exists where the witness does, a reached EF or a broken AG
+const PROPERTY_ROOT: Readonly<Record<ExampleLanguage, RegExp>> = {
+  oxsts: /return\s+((?:!\s*)*)(EF|AG)\b/,
+  gamma: /^\s*((?:not\s+)*)(EF|AG)\b/m,
+  sysml: /require\s+constraint\s*\{\s*((?:not\s+)*)(eventually|mustAlways)\s*\(/,
 };
+
+function givesTrace(text: string, language: ExampleLanguage, verdict: string | undefined): boolean {
+  const root = PROPERTY_ROOT[language].exec(text);
+  if (root === null) {
+    return false;
+  }
+  const negated = (root[1]!.match(/!|not/g)?.length ?? 0) % 2 === 1;
+  const reachability = (root[2] === 'EF' || root[2] === 'eventually') !== negated;
+  return reachability ? verdict === 'Passed' : verdict === 'Failed';
+}
 
 function caseText(file: string, language: ExampleLanguage, name: string): string {
   const text = readFileSync(join(REPOSITORY, file), 'utf8');
@@ -74,18 +83,14 @@ function caseText(file: string, language: ExampleLanguage, name: string): string
 const OPENING_COMMENT: Readonly<Record<ExampleLanguage, RegExp>> = {
   oxsts: /^\s*\/\/ *\S/,
   gamma: /^\s*\/\/ *\S/,
-  sysml: /^\s*doc\s*\/\*\s*\*?\s*\S/,
+  sysml: /^\s*doc\s*\/\*[\s*]*[^\s*/]/,
 };
 
-// the served models whose own lanes bring them to the checks of a served model
-const AWAITING_THEIR_LANE: readonly ExampleLanguage[] = [
-  'gamma',
-];
+// Gamma's served models are brought to the checks of a served model by their own lane, which removes this line
+const AWAITING_THEIR_LANE: ExampleLanguage = 'gamma';
 
-// the lessons' models open with no comment yet; the lane on the lessons gives them one
-const AWAITING_THEIR_COMMENT: readonly ExampleLanguage[] = [
-  'oxsts',
-];
+// the lessons' models open with no comment yet; the lane on the lessons gives them one and removes this line
+const AWAITING_THEIR_COMMENT: ExampleLanguage = 'oxsts';
 
 const manifests = MODEL_ROOTS.flatMap((root) => {
   return readdirSync(join(REPOSITORY, root), { recursive: true, withFileTypes: true }).filter((entry) => {
@@ -136,7 +141,7 @@ describe.each(servedExamples.map((example) => {
 });
 
 const listedModels = servedExamples.filter((example) => {
-  return example.hidden !== true && !AWAITING_THEIR_LANE.includes(example.language);
+  return example.hidden !== true && example.language !== AWAITING_THEIR_LANE;
 });
 
 describe.each(listedModels.map((example) => {
@@ -154,12 +159,12 @@ describe.each(listedModels.map((example) => {
       const verdict = model?.cases.find((candidate) => {
         return candidate.name === name;
       })?.verdict;
-      return verdict === 'Failed' || (verdict === 'Passed' && REACHABILITY[example.language].test(caseText(example.file, example.language, name)));
+      return givesTrace(caseText(example.file, example.language, name), example.language, verdict);
     });
     expect(tracing).not.toEqual([]);
   });
 
-  test.skipIf(AWAITING_THEIR_COMMENT.includes(example.language))('opens with a comment that describes it', () => {
+  test.skipIf(example.language === AWAITING_THEIR_COMMENT)('opens with a comment that describes it', () => {
     expect(readFileSync(join(REPOSITORY, example.file), 'utf8')).toMatch(OPENING_COMMENT[example.language]);
   });
 });
