@@ -79,7 +79,7 @@ class Counter {
 
 ### Havoc
 
-`havoc(reference);` non-deterministically picks a value of the reference's type: any `int` or `bool`, any literal of an enumeration, any instance a [feature-typed variable](variables.md#feature-typed-variables) can hold, every field of a record and every slot of an array. Used to model unknown environment inputs, and in `init` to give a variable an arbitrary initial value. Its target is a variable, as an assignment's is (`OXSTS.INCORRECT_ASSIGNMENT`).
+`havoc(reference);` non-deterministically picks a value of the reference's type: any `int` or `bool`, any literal of an enumeration, any instance a [feature-typed variable](variables.md#feature-typed-variables) can hold, and `nothing` too where its lower bound is 0, every field of a record and every slot of an array. Used to model unknown environment inputs, and in `init` to give a variable an arbitrary initial value. Its target is a variable, as an assignment's is (`OXSTS.INCORRECT_ASSIGNMENT`).
 
 ```oxsts
 // hide-start
@@ -234,7 +234,7 @@ class Counter {
 
 ### `for`
 
-A runtime loop. Its range is an integer range, such as `1..count`, whose bounds may read the state, an expression of instances, such as a feature, or an expression of several values, such as an array; a single value of a datatype or an enumeration, such as an `int` variable, is rejected (`OXSTS.TYPE_MISMATCH`). Over a range the loop variable takes each integer of the range in turn, and over a feature it holds each instance, so that a call or a member read through it acts on that instance; it cannot be written. A `for` whose range is known at compile time can be an [`inline for`](inline-operations.md#inline-for-sequence), which the validator hints at (`OXSTS.COULD_BE_INLINE`). Not every backend runs a runtime `for`: the pages of [Theta](../backends/theta.mdx), [nuXmv](../backends/nuxmv.mdx), [Spin](../backends/spin.mdx) and [Uppaal](../backends/uppaal.mdx) say which refuse it.
+A runtime loop. Its range is an integer range, such as `1..count`, whose bounds may read the state, an expression of instances, such as a feature, or an expression of several values, such as an array; a single value of a datatype or an enumeration, such as an `int` variable, is rejected (`OXSTS.TYPE_MISMATCH`). Over a range the loop variable takes each integer of the range in turn, and over a feature it holds each instance, so that a call or a member read through it acts on that instance; it cannot be written. A `for` whose range is known at compile time can be an [`inline for`](inline-operations.md#inline-for-sequence), which the validator hints at (`OXSTS.COULD_BE_INLINE`). The pages of the backends, [Theta](../backends/theta.mdx), [nuXmv](../backends/nuxmv.mdx), [Spin](../backends/spin.mdx) and [Uppaal](../backends/uppaal.mdx), say what each does with it.
 
 ```oxsts
 // hide-start

@@ -71,6 +71,6 @@ class Gauge {
 
 ## Comparison and Joining
 
-`==` and `!=` compare two values when the domain of one fits the other's, whatever their multiplicities; two features whose domains do not fit are compared by their classes, and `nothing` compares with every value. `<`, `<=`, `>` and `>=` take numeric operands, `int`, `real` or `any`, and the Boolean operators Boolean ones (`OXSTS.TYPE_MISMATCH`). A record compares only by `==` and `!=`, and not with `nothing`, and an array only by `==` and `!=`, with an array of the same size (`OXSTS.TYPE_MISMATCH`).
+`==` and `!=` compare two values when the domain of one fits the other's, whatever their multiplicities; two features whose domains do not fit are compared by their classes, and `nothing` compares with every value. `<`, `<=`, `>` and `>=` take numeric operands, `int`, `real` or `any`, and the Boolean operators Boolean ones (`OXSTS.TYPE_MISMATCH`). A record compares only by `==` and `!=`, and not with `nothing`, and an array of datatype, enumeration or record values only by `==` and `!=`, with another such array of the same upper bound (`OXSTS.TYPE_MISMATCH`).
 
 The two branches of an [if-then-else](expressions.md#if-then-else) join when they compare and the multiplicity of one fits the other's. The joined type is the wider domain, two features meeting at their classes, with a multiplicity from the smaller lower bound to the larger upper bound, and a lower bound of 0 when a branch is `nothing`.

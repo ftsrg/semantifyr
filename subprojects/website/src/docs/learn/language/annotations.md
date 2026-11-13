@@ -109,7 +109,7 @@ class Counter {
 
 ## Standard Annotations
 
-The [Standard Library](standard-library.md#annotations) declares the standard annotations and describes each. A standard annotation on a declaration it does not apply to is rejected (`OXSTS.INCORRECT_ANNOTATION_TARGET`): `@VerificationCase` and `@Tag` apply to classes, `@Shared` to containment features, `@Trace` to transitions, and `@Control`, `@Clock` and `@NonOptimizable` to variables. The compiler reads no annotation it does not know, and a user-declared annotation is not checked against its target.
+The [Standard Library](standard-library.md#annotations) declares the standard annotations and describes each with the declarations it applies to. A standard annotation on a declaration it does not apply to is rejected (`OXSTS.INCORRECT_ANNOTATION_TARGET`). The compiler reads no annotation it does not know, and a user-declared annotation is not checked against its target.
 
 ```oxsts issue=OXSTS.INCORRECT_ANNOTATION_TARGET
 @Trace
