@@ -44,6 +44,8 @@ export interface TabbedEditorOptions {
   openAt?: LiveEditorLines
   // called once the model is shown, scrolled to its lines
   onShown?: () => void
+  // Tab moves the focus out of the model too, as in an embed
+  tabLeaves?: boolean
 }
 
 export interface TabbedEditor {
@@ -65,6 +67,11 @@ interface Place {
   tab: string | null
   line: number
   column: number
+}
+
+// the key of the editor's Toggle Tab Key Moves Focus
+function tabFocusKey(): string {
+  return navigator.userAgent.includes('Macintosh') ? 'Control+Shift+M' : 'Control+M'
 }
 
 function readOnlyMessageOf(modelLocked: boolean): { value: string } {
@@ -176,6 +183,13 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
     const takesText = (target: TextModel): boolean => {
       return target === model ? !modelLocked() : !(options.touchInput?.get() ?? false)
     }
+    // Tab leaves an embed and a document that takes no typing; the full editor's model keeps Tab for indenting and names the key that frees it
+    const keyboardOptionsOf = (target: TextModel): monacoEditor.IEditorOptions => {
+      if (options.tabLeaves === true || target !== model || modelLocked()) {
+        return { tabFocusMode: true, ariaLabel: 'Editor content' }
+      }
+      return { tabFocusMode: false, ariaLabel: `Editor content. Tab indents; ${tabFocusKey()} switches Tab to leave the editor.` }
+    }
     let wasLocked = false
     let everLocked = false
     const applyLock = (): void => {
@@ -183,7 +197,7 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
       everLocked ||= locked
       const shown = editor.getModel()
       if (shown === model) {
-        editor.updateOptions({ readOnly: locked, readOnlyMessage: readOnlyMessageOf(locked), ...typingOptionsOf(takesText(model)) })
+        editor.updateOptions({ readOnly: locked, readOnlyMessage: readOnlyMessageOf(locked), ...typingOptionsOf(takesText(model)), ...keyboardOptionsOf(model) })
         if (wasLocked && !locked) {
           editor.focus()
         }
@@ -389,7 +403,7 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
       editor.updateOptions({ stickyScroll: { enabled: false } })
       editor.setModel(target)
       const locked = target === model && modelLocked()
-      editor.updateOptions({ readOnly: readOnly || locked, readOnlyMessage: readOnlyMessageOf(locked), ...typingOptionsOf(takesText(target)) })
+      editor.updateOptions({ readOnly: readOnly || locked, readOnlyMessage: readOnlyMessageOf(locked), ...typingOptionsOf(takesText(target)), ...keyboardOptionsOf(target) })
       const saved = viewStates.get(target.uri.toString())
       if (saved) {
         editor.restoreViewState(saved)

@@ -40,6 +40,7 @@ const SCROLLBAR: monacoEditor.IEditorScrollbarOptions = { verticalScrollbarSize:
 const EDITOR_OPTIONS: monacoEditor.IStandaloneEditorConstructionOptions = {
   readOnly: true,
   readOnlyMessage: { value: 'Read-only.' },
+  tabFocusMode: true,
   automaticLayout: true,
   minimap: { enabled: false },
   scrollBeyondLastLine: false,

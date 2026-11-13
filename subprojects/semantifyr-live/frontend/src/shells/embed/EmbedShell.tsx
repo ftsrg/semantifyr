@@ -395,7 +395,7 @@ export default function EmbedShell({ colorMode, trace }: Props): React.JSX.Eleme
       <AddressError />
       <BackToModel />
       <div className="embed-editor" style={fitted && contentHeight !== null ? { height: contentHeight } : undefined}>
-        {languageId === undefined ? <AddressModel /> : <ModelEditor colorMode={colorMode} verdictMarks={!editOnly} onShown={reportShown} {...(fitted ? { onContentHeight: fit } : {})} {...(openAt ? { openAt } : {})} />}
+        {languageId === undefined ? <AddressModel /> : <ModelEditor colorMode={colorMode} verdictMarks={!editOnly} tabLeaves onShown={reportShown} {...(fitted ? { onContentHeight: fit } : {})} {...(openAt ? { openAt } : {})} />}
         <EditControl className="embed-edit-control" />
       </div>
       {editOnly ? null : <Strip slot={trace} fixed={fixed} />}
