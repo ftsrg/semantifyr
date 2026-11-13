@@ -121,13 +121,14 @@ part def TrafficLightController {
         }
 
         transition first Normal accept Police via control then Interrupted;
-        transition first Interrupted accept Police via control then Normal;
 
         state Interrupted {
             transition first start then Yellow;
 
+            // declared in the inner states, which fire before the flashing transitions of Interrupted
             state Yellow {
                 entry send new YellowL() via lightControl;
+                transition first Yellow accept Police via control then Normal;
             }
 
             transition first Yellow accept after 1 [s] then Black;
@@ -135,6 +136,7 @@ part def TrafficLightController {
 
             state Black {
                 entry send new NoneL() via lightControl;
+                transition first Black accept Police via control then Normal;
             }
         }
     }
@@ -638,6 +640,21 @@ verification def ReachableYellowYellow {
                     isStateActive(system.trafficLightA.Behaviour.Normal.Yellow)
                     and isStateActive(system.trafficLightB.Behaviour.Normal.Yellow)
                 )
+            }
+        }
+    }
+}
+
+verification def TrafficLightAReturnsToNormalAfterInterruptionTestCase {
+    subject system : CrossroadSystem;
+
+    objective {
+        verify requirement {
+            require constraint {
+                mustAlways( not(
+                    isStateActive(system.controller.Behaviour.Operating.TrafficOnA)
+                    and isStateActive(system.trafficLightA.Behaviour.Interrupted)
+                ) )
             }
         }
     }

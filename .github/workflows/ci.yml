@@ -78,34 +78,22 @@ jobs:
         run: npx playwright install --with-deps chromium firefox webkit
       - name: Run the live screen tests on Chromium
         if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
-        env:
-          TEST_BROWSER: chromium
-        run: npm run screens -w @ftsrg/semantifyr-live-frontend
+        run: ./gradlew :semantifyr-live-frontend:screenTest -PtestBrowser=chromium
       - name: Run the live UI tests on Chromium
         if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
-        env:
-          TEST_BROWSER: chromium
-        run: npm run ui -w @ftsrg/semantifyr-live-frontend
+        run: ./gradlew :semantifyr-live-frontend:uiTest -PtestBrowser=chromium
       - name: Run the live screen tests on Firefox
         if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
-        env:
-          TEST_BROWSER: firefox
-        run: npm run screens -w @ftsrg/semantifyr-live-frontend
+        run: ./gradlew :semantifyr-live-frontend:screenTest -PtestBrowser=firefox
       - name: Run the live UI tests on Firefox
         if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
-        env:
-          TEST_BROWSER: firefox
-        run: npm run ui -w @ftsrg/semantifyr-live-frontend
+        run: ./gradlew :semantifyr-live-frontend:uiTest -PtestBrowser=firefox
       - name: Run the live screen tests on WebKit
         if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
-        env:
-          TEST_BROWSER: webkit
-        run: npm run screens -w @ftsrg/semantifyr-live-frontend
+        run: ./gradlew :semantifyr-live-frontend:screenTest -PtestBrowser=webkit
       - name: Run the live UI tests on WebKit
         if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
-        env:
-          TEST_BROWSER: webkit
-        run: npm run ui -w @ftsrg/semantifyr-live-frontend
+        run: ./gradlew :semantifyr-live-frontend:uiTest -PtestBrowser=webkit
       - name: Upload the live screens
         if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
         uses: actions/upload-artifact@v7

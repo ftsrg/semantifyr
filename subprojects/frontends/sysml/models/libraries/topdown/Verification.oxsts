@@ -5,7 +5,10 @@ import semantifyr::sysml::states
 import semantifyr::sysml::expressions
 
 class Constraint : Expression {
-    contains requiredConstraint: Expression
+    contains requiredConstraints: Expression[0..*]
+
+    // the mapper emits at most one required constraint
+    refers requiredConstraint: Expression[0..1] = requiredConstraints
 
     redefine prop evaluate(): bool {
         return requiredConstraint.evaluate() as bool
@@ -13,10 +16,13 @@ class Constraint : Expression {
 }
 
 class Requirement : Constraint {
-    contains verifyRequirement: Constraint
+    contains verifiedRequirements: Constraint[0..*]
+
+    // a case without verify checks its objective's own constraint
+    refers checkedConstraint: Expression[0..1] = if (verifiedRequirements == nothing) then requiredConstraint else verifiedRequirements
 
     redefine prop evaluate(): bool {
-        return verifyRequirement.evaluate()
+        return checkedConstraint.evaluate() as bool
     }
 }
 

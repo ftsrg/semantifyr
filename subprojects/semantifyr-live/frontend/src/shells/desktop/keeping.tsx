@@ -204,7 +204,7 @@ export function SaveSplit(): React.JSX.Element {
     <span className="save-split">
       <button
         type="button"
-        className="button button-quiet"
+        className="button button-quiet save-split-save"
         onClick={() => {
           run(saveDocument)
         }}
@@ -213,7 +213,7 @@ export function SaveSplit(): React.JSX.Element {
         Save
       </button>
       <Menu.Root>
-        <Menu.Trigger className="button button-quiet" title="Save options" aria-label="Save options">
+        <Menu.Trigger className="button button-quiet save-split-options" title="Save options" aria-label="Save options">
           <Icon name="chevron-down" size="small" />
         </Menu.Trigger>
         <Menu.Portal>

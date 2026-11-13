@@ -96,6 +96,15 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
       // the environment calls the root once in every step, and every recorded call has its caller's arrow
       expect(count('.call-arrow.from-environment')).toBe(count('.band'))
       expect(count('.call-arrow:not(.from-environment)')).toBe(6)
+      expect(count('.call-arrow-label')).toBeGreaterThan(0)
+      for (const label of document.querySelectorAll('.call-arrow-label')) {
+        const [line, head] = [...label.parentElement!.querySelectorAll('path')].map((path) => {
+          return path.getBoundingClientRect()
+        })
+        const text = label.getBoundingClientRect()
+        expect(text.left, `${label.textContent} inside its arrow`).toBeGreaterThanOrEqual(Math.min(line!.left, head!.left) - 0.5)
+        expect(text.right, `${label.textContent} inside its arrow`).toBeLessThanOrEqual(Math.max(line!.right, head!.right) + 0.5)
+      }
     },
   },
   'sysml-witness': {

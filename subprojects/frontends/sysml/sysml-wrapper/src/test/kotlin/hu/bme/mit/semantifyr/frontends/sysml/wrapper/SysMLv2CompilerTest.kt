@@ -45,7 +45,10 @@ class SysMLv2CompilerTest {
         val model = writeModel("door.sysml", "part def Door;\n")
 
         SysMLv2Compiler(cacheDirectory).compile(model, temporaryDirectory.resolve("first.oxsts"))
-        Files.writeString(cacheEntries().single(), "cached")
+        val entry = cacheEntries().single {
+            it.toString().endsWith(".oxsts")
+        }
+        Files.writeString(entry, "cached")
 
         val second = SysMLv2Compiler(cacheDirectory).compile(model, temporaryDirectory.resolve("second.oxsts"))
         assertThat(second).hasContent("cached")
@@ -53,7 +56,8 @@ class SysMLv2CompilerTest {
         writeModel("window.sysml", "part def Window;\n")
         val third = SysMLv2Compiler(cacheDirectory).compile(model, temporaryDirectory.resolve("third.oxsts"))
         assertThat(Files.readString(third)).contains("class Door")
-        assertThat(cacheEntries()).hasSize(2)
+        assertThat(nameMapPath(third)).isRegularFile()
+        assertThat(cacheEntries()).hasSize(4)
     }
 
     @Test
