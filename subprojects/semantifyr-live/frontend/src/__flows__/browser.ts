@@ -86,29 +86,41 @@ export async function verifyAll(cases: Locator, verifyButton: Locator): Promise<
   })).toEqual([])
 }
 
-// the span a token sits in depends on how far the highlighting has split the line, so the click goes to the name's own text range
+// the click goes to the name's own text range, since highlighting splits a line into spans, measured in one turn of the page, since the editor replaces a line's element when it renders the line again
 export async function clickToken(page: Page, line: string, text: string): Promise<void> {
-  const center = await page.locator('.view-line', { hasText: line }).first().evaluate((element, name) => {
-    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT)
-    const nodes: Text[] = []
-    while (walker.nextNode()) {
-      nodes.push(walker.currentNode as Text)
-    }
-    const content = nodes.map((node) => {
-      return node.data
-    }).join('').replaceAll('\u00a0', ' ')
-    let offset = content.lastIndexOf(name)
-    const range = document.createRange()
-    for (const node of nodes) {
-      if (offset < node.length) {
-        range.setStart(node, offset)
-        range.setEnd(node, offset + name.length)
-        break
-      }
-      offset -= node.length
-    }
-    const box = range.getBoundingClientRect()
-    return { x: box.x + box.width / 2, y: box.y + box.height / 2 }
-  }, text)
+  let center = { x: 0, y: 0, width: 0 }
+  await expect.poll(async () => {
+    center = await page.evaluate(measureToken, { line, name: text })
+    return center.width
+  }, { timeout: 30_000 }).toBeGreaterThan(0)
   await page.mouse.click(center.x, center.y)
+}
+
+function measureToken({ line, name }: { line: string, name: string }): { x: number, y: number, width: number } {
+  const element = [...document.querySelectorAll('.view-line')].find((candidate) => {
+    return candidate.textContent.replaceAll('\u00a0', ' ').includes(line)
+  })
+  if (!element) {
+    return { x: 0, y: 0, width: 0 }
+  }
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT)
+  const nodes: Text[] = []
+  while (walker.nextNode()) {
+    nodes.push(walker.currentNode as Text)
+  }
+  const content = nodes.map((node) => {
+    return node.data
+  }).join('').replaceAll('\u00a0', ' ')
+  let offset = content.lastIndexOf(name)
+  const range = document.createRange()
+  for (const node of nodes) {
+    if (offset < node.length) {
+      range.setStart(node, offset)
+      range.setEnd(node, offset + name.length)
+      break
+    }
+    offset -= node.length
+  }
+  const box = range.getBoundingClientRect()
+  return { x: box.x + box.width / 2, y: box.y + box.height / 2, width: box.width }
 }

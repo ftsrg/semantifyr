@@ -18,10 +18,10 @@ dependencies {
     api(libs.guice.extensions.assistedinject)
 
     implementation(project(":logging"))
+    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
 
     testImplementation(testFixtures(project(":backend")))
-    testImplementation(libs.kotlinx.coroutines.core)
 }
 
 tasks.named("test") {
