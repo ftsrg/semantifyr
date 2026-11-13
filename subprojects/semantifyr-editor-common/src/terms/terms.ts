@@ -29,3 +29,11 @@ export const verdictWords: Readonly<Record<Verdict, string>> = {
   inconclusive: file.verdicts.inconclusive.word,
   error: file.verdicts.error.word,
 };
+
+export const verdictOfLauncherVerdict: Readonly<Record<string, Verdict>> = Object.fromEntries(
+  (Object.keys(file.verdicts) as Verdict[]).flatMap((verdict) => {
+    return file.verdicts[verdict].launcher.map((launcherVerdict) => {
+      return [launcherVerdict, verdict];
+    });
+  }),
+);

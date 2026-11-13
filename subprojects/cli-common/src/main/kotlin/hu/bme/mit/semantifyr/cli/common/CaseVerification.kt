@@ -101,7 +101,7 @@ suspend fun SuspendingCliktCommand.verifyCase(
     return exitCode
 }
 
-private fun verdictTag(verdict: VerificationVerdict): String {
+fun verdictTag(verdict: VerificationVerdict): String {
     return when (verdict) {
         VerificationVerdict.Passed -> "PASSED"
         VerificationVerdict.Failed -> "FAILED"

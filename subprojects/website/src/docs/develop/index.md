@@ -68,7 +68,7 @@ The repository is organized under `subprojects/`:
 | Semantifyr Live | `subprojects/semantifyr-live/` | Live's frontend and its server |
 | Website | `subprojects/website/` | This documentation site |
 
-[SysML v2 traces](sysml-trace.md) describes the form of a SysML v2 trace written as a SysML v2 model, and [Gamma traces](gamma-trace.md) the form of a Gamma witness written as a Gamma execution trace.
+[SysML v2 traces](sysml-trace.md) and [Gamma traces](gamma-trace.md) describe how the two frontends generate and test the trace files whose form the reference gives under [Artifacts](../learn/cli/artifacts.mdx).
 
 ## Load testing Live
 

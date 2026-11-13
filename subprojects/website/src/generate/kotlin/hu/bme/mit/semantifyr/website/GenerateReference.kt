@@ -6,8 +6,12 @@
 
 package hu.bme.mit.semantifyr.website
 
+import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.cli.common.ExitCode
+import hu.bme.mit.semantifyr.cli.common.verdictTag
 import hu.bme.mit.semantifyr.verifier.VerificationReport
+import hu.bme.mit.semantifyr.verifier.witness.CallTrace
+import hu.bme.mit.semantifyr.verifier.witness.WitnessState
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -116,8 +120,15 @@ private fun exitCodes(): String {
     return json.encodeToString(entries)
 }
 
-private fun reportFields(): String {
-    return json.encodeToString(fieldsOf(VerificationReport.serializer().descriptor, emptySet()))
+private fun verdicts(): String {
+    val tags = VerificationVerdict.entries.map {
+        verdictTag(it)
+    }
+    return json.encodeToString(tags)
+}
+
+private fun fieldsOf(descriptor: SerialDescriptor): String {
+    return json.encodeToString(fieldsOf(descriptor, emptySet()))
 }
 
 fun main(arguments: Array<String>) {
@@ -126,7 +137,16 @@ fun main(arguments: Array<String>) {
             exitCodes()
         }
         "report-fields" -> {
-            reportFields()
+            fieldsOf(VerificationReport.serializer().descriptor)
+        }
+        "trace-fields" -> {
+            fieldsOf(CallTrace.serializer().descriptor)
+        }
+        "witness-fields" -> {
+            fieldsOf(WitnessState.serializer().descriptor)
+        }
+        "verdicts" -> {
+            verdicts()
         }
         else -> {
             error("No reference $reference")
