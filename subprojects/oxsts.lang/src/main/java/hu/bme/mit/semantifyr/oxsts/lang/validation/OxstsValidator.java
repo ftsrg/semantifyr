@@ -134,7 +134,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     @Inject
     private ResourceDescriptionProvider resourceDescriptionProvider;
 
-    private static final String ISSUE_PREFIX = "OXSTS.";
+    public static final String ISSUE_PREFIX = "OXSTS.";
     public static final String DUPLICATE_NAME_ISSUE = ISSUE_PREFIX + "DUPLICATE_NAME";
     public static final String DATA_TYPE_NOT_IN_BUILTIN_ISSUE = ISSUE_PREFIX + "DATA_TYPE_NOT_IN_BUILTIN";
     public static final String REDEFINED_NOT_FOUND_ISSUE = ISSUE_PREFIX + "REDEFINED_NOT_FOUND";

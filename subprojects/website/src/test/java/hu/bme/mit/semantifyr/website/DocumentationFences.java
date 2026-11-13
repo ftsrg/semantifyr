@@ -21,18 +21,21 @@ final class DocumentationFences {
 
     static final Path DOCUMENTATION = Path.of("src/docs");
 
-    private static final Path CONFIGURATION = Path.of("docusaurus.config.ts");
+    private static final Path SOURCE_ALIASES = Path.of("source-aliases.json");
 
     static final String SYNTAX = "syntax";
 
     private static final Pattern OPENING_FENCE = Pattern.compile("^(\\s*)```oxsts(\\s.*)?$");
 
+    private static final Pattern ANY_OPENING_FENCE = Pattern.compile("^\\s*```\\S*.*$");
+
     private static final Pattern PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+([\\w:]+)", Pattern.MULTILINE);
 
-    private static final Pattern ALIAS =
-            Pattern.compile("^\\s*'(@[\\w-]+)':\\s*path\\.resolve\\(__dirname,\\s*'([^']+)'\\)");
+    private static final Pattern ALIAS = Pattern.compile("\"(@[\\w-]+)\"\\s*:\\s*\"([^\"]+)\"");
 
     private static final Pattern IMPORT = Pattern.compile("^import\\s+\\w+\\s+from\\s+'(@[\\w-]+)/([^']+\\.oxsts)';?$");
+
+    private static final Pattern PAGE_COMMENT = Pattern.compile("<!--[\\s\\S]*?-->|\\{/\\*[\\s\\S]*?\\*/}");
 
     private static final String HIDE_START = "// hide-start";
 
@@ -42,7 +45,7 @@ final class DocumentationFences {
 
     private static final Set<String> KEYS = Set.of("continue", "checkpoint", "issue");
 
-    record ModelLine(String text, int pageLine) {}
+    record ModelLine(String text, int pageLine, boolean shown) {}
 
     record Fence(Path page, int line, List<ModelLine> model, boolean continued, String issue) {
 
@@ -80,14 +83,12 @@ final class DocumentationFences {
         return fences;
     }
 
-    // the OXSTS files the pages import through the site's aliases, which their own tests check
+    // the OXSTS files the pages import through the source aliases, which their own tests check
     static List<Path> importedModels() throws IOException {
         var aliases = new HashMap<String, Path>();
-        for (var line : Files.readAllLines(CONFIGURATION)) {
-            var alias = ALIAS.matcher(line);
-            if (alias.find()) {
-                aliases.put(alias.group(1), Path.of(alias.group(2)));
-            }
+        var alias = ALIAS.matcher(Files.readString(SOURCE_ALIASES));
+        while (alias.find()) {
+            aliases.put(alias.group(1), Path.of(alias.group(2)));
         }
         var models = new ArrayList<Path>();
         for (var page : pages()) {
@@ -99,7 +100,7 @@ final class DocumentationFences {
                 var directory = aliases.get(imported.group(1));
                 if (directory == null) {
                     throw new IllegalStateException(
-                            "no alias " + imported.group(1) + " in " + CONFIGURATION + " for " + page);
+                            "no alias " + imported.group(1) + " in " + SOURCE_ALIASES + " for " + page);
                 }
                 var model = directory.resolve(imported.group(2)).normalize();
                 if (!models.contains(model)) {
@@ -108,6 +109,40 @@ final class DocumentationFences {
             }
         }
         return models;
+    }
+
+    // what a reader of the page sees: no hidden fence or hidden line, no info word and no comment of the page
+    static String shownText(Path page) throws IOException {
+        var lines = Files.readAllLines(page);
+        var shown = new ArrayList<String>();
+        var hiddenLines = new ArrayList<Integer>();
+        for (var fence : fences(page)) {
+            for (var modelLine : fence.model()) {
+                if (!modelLine.shown()) {
+                    hiddenLines.add(modelLine.pageLine());
+                }
+            }
+        }
+        var index = 0;
+        while (index < lines.size()) {
+            var line = lines.get(index);
+            if (!ANY_OPENING_FENCE.matcher(line).matches()) {
+                shown.add(line);
+                index++;
+                continue;
+            }
+            index++;
+            while (index < lines.size() && !lines.get(index).trim().equals("```")) {
+                var fenceLine = lines.get(index);
+                var marker = fenceLine.strip();
+                if (!hiddenLines.contains(index + 1) && !marker.equals(HIDE_START) && !marker.equals(HIDE_END)) {
+                    shown.add(fenceLine);
+                }
+                index++;
+            }
+            index++;
+        }
+        return PAGE_COMMENT.matcher(String.join("\n", shown)).replaceAll("");
     }
 
     // a continued fence's model is the model it continues, a blank line and its own lines without the markers
@@ -130,6 +165,7 @@ final class DocumentationFences {
             String continues = null;
             String checkpoint = null;
             String issue = null;
+            var hidden = false;
             for (var word : infoWords.isEmpty() ? new String[0] : infoWords.split("\\s+")) {
                 var separator = word.indexOf('=');
                 var key = separator < 0 ? word : word.substring(0, separator);
@@ -142,6 +178,7 @@ final class DocumentationFences {
                     case "continue" -> continues = value == null ? "" : value;
                     case "checkpoint" -> checkpoint = value;
                     case "issue" -> issue = value;
+                    case "hidden" -> hidden = true;
                     default -> {}
                 }
             }
@@ -152,14 +189,18 @@ final class DocumentationFences {
                     throw new IllegalStateException("the oxsts fence at " + location + " continues nothing");
                 }
                 model.addAll(continued);
-                model.add(new ModelLine("", openingLine));
+                model.add(new ModelLine("", openingLine, false));
             }
+            var hiding = false;
             index++;
             while (index < lines.size() && !lines.get(index).trim().equals("```")) {
                 var line = lines.get(index);
                 var text = line.length() >= indentation ? line.substring(indentation) : line.strip();
-                if (!text.strip().equals(HIDE_START) && !text.strip().equals(HIDE_END)) {
-                    model.add(new ModelLine(text, index + 1));
+                var marker = text.strip();
+                if (marker.equals(HIDE_START) || marker.equals(HIDE_END)) {
+                    hiding = marker.equals(HIDE_START);
+                } else {
+                    model.add(new ModelLine(text, index + 1, !hidden && !hiding));
                 }
                 index++;
             }

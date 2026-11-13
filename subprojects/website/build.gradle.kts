@@ -5,6 +5,7 @@
  */
 
 import com.github.gradle.node.npm.task.NpmTask
+import groovy.json.JsonSlurper
 import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
@@ -65,6 +66,14 @@ dependencies {
     if (providers.gradleProperty("website.apiDocs").getOrElse("false").toBoolean()) {
         apiDocs(project(":"))
     }
+}
+
+// the directories the pages import sources from, which the site's configuration and the test read too
+val sourceAliasesFile = layout.projectDirectory.file("source-aliases.json")
+
+@Suppress("UNCHECKED_CAST")
+val sourceAliasDirectories = (JsonSlurper().parse(sourceAliasesFile.asFile) as Map<String, String>).values.map {
+    layout.projectDirectory.dir(it)
 }
 
 val cliReferenceDir = layout.buildDirectory.dir("cli-reference")
@@ -216,12 +225,8 @@ fun NpmTask.configureSharedInputs() {
     inputs.file(rootProject.layout.projectDirectory.file(".nvmrc")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(rootProject.layout.projectDirectory.file("deploy/live/env.example")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(rootProject.layout.projectDirectory.file("subprojects/semantifyr-vscode/package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.dir(rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.dir(rootProject.layout.projectDirectory.dir("subprojects/oxsts.lang/src/main/resources/hu/bme/mit/semantifyr/oxsts/lang/library")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(rootProject.layout.projectDirectory.file("oxsts-test-models/constructs/constructs.tsv")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.dir(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.dir(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.dir(rootProject.layout.projectDirectory.dir("subprojects/frontends/gamma/models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(sourceAliasesFile).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(sourceAliasDirectories).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneGrammars).withPathSensitivity(PathSensitivity.RELATIVE)
     // the builds keep their own caches under node_modules/.cache, which say nothing of the result
     dependsOn(tasks.npmInstall)
@@ -272,15 +277,11 @@ tasks {
         inputs.dir(project.layout.projectDirectory.dir("src/docs"))
             .withPropertyName("documentation")
             .withPathSensitivity(PathSensitivity.RELATIVE)
-        // the completeness test reads the models the pages import through the site's aliases
-        inputs.file(project.layout.projectDirectory.file("docusaurus.config.ts"))
-            .withPropertyName("aliases")
+        // the completeness test reads the models the pages import through the source aliases
+        inputs.file(sourceAliasesFile)
+            .withPropertyName("sourceAliases")
             .withPathSensitivity(PathSensitivity.RELATIVE)
-        inputs.files(
-            rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial"),
-            rootProject.layout.projectDirectory.dir("subprojects/oxsts.lang/src/main/resources/hu/bme/mit/semantifyr/oxsts/lang/library"),
-            rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/etc"),
-        )
+        inputs.files(sourceAliasDirectories)
             .withPropertyName("importedModels")
             .withPathSensitivity(PathSensitivity.RELATIVE)
     }
