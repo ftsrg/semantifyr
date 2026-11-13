@@ -1,0 +1,90 @@
+{
+  "terms": {
+    "live": {
+      "term": "Semantifyr Live",
+      "short": "Live",
+      "meaning": "The tool in the browser that edits and verifies SysML v2, Gamma and OXSTS models, with its server.",
+      "rejected": [
+        "live editor",
+        "live editors",
+        "in-browser editor",
+        "standalone live editor"
+      ]
+    },
+    "backend": {
+      "term": "backend",
+      "meaning": "A model checker Semantifyr runs on: Theta, Spin, nuXmv or Uppaal.",
+      "rejected": [
+        "engine",
+        "engines"
+      ]
+    },
+    "server": {
+      "term": "server",
+      "meaning": "Live's own server, which holds the sessions and runs the verifications.",
+      "rejected": []
+    },
+    "portfolio": {
+      "term": "portfolio",
+      "meaning": "A strategy for the backend runs: which backends run under which configurations, how they run in parallel, and how the verdict is decided from their answers.",
+      "rejected": []
+    },
+    "trace": {
+      "term": "trace",
+      "meaning": "What a reader reads of a case: the steps of the model that show its verdict, in the model's own language. A failed case's trace is what the field calls a counterexample.",
+      "rejected": [
+        "counterexample",
+        "counterexamples"
+      ],
+      "explainedOn": "subprojects/website/src/docs/learn/tutorials/trafficlight/direct-modeling.md"
+    },
+    "witness": {
+      "term": "witness",
+      "meaning": "The backend's evidence behind a trace, back-annotated into OXSTS.",
+      "rejected": []
+    },
+    "validation": {
+      "term": "validation",
+      "meaning": "Verifying a case's witness again, to check the evidence a backend returned.",
+      "rejected": []
+    },
+    "library": {
+      "term": "Library",
+      "meaning": "The semantic library an OXSTS model is written with: none, Gamma's semantics or SysML v2's semantics. The code calls the choice a flavor.",
+      "rejected": []
+    }
+  },
+  "portfolios": {
+    "smart": "Smart",
+    "all-agree": "All agree",
+    "theta": "Theta"
+  },
+  "verdicts": {
+    "passed": {
+      "word": "Passed",
+      "launcher": [
+        "PASSED"
+      ]
+    },
+    "failed": {
+      "word": "Failed",
+      "launcher": [
+        "FAILED"
+      ]
+    },
+    "inconclusive": {
+      "word": "Inconclusive",
+      "launcher": [
+        "INCONCLUSIVE",
+        "TIMEOUT",
+        "NOT_SUPPORTED"
+      ]
+    },
+    "error": {
+      "word": "Error",
+      "launcher": [
+        "ERRORED"
+      ]
+    }
+  }
+}

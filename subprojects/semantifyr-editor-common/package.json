@@ -10,6 +10,7 @@
     "./marks": "./src/look/marks.tsx",
     "./marks.css": "./src/look/marks.css",
     "./syntax": "./src/look/syntax.ts",
+    "./terms": "./src/terms/terms.ts",
     "./tokens.css": "./src/look/tokens.css"
   },
   "files": [
