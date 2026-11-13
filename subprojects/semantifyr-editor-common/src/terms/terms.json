@@ -48,6 +48,25 @@
       "meaning": "Verifying a case's witness again, to check the evidence a backend returned.",
       "rejected": []
     },
+    "instantiation": {
+      "term": "instantiation",
+      "meaning": "The first phase of the compilation: from the model that wraps the case, breadth first, it gives every containment of multiplicity one of every instance reached an instance of its own, the instance tree.",
+      "rejected": []
+    },
+    "inlining": {
+      "term": "inlining",
+      "meaning": "The second phase of the compilation: it expands every inline operation and every property call for the instance it is called on, so that the case is one init, one transition and one property over instance paths.",
+      "rejected": [
+        "macro expansion"
+      ]
+    },
+    "flattening": {
+      "term": "flattening",
+      "meaning": "The third phase of the compilation: it turns every variable of every instance into one variable of the model, named by the instance's path, and leaves no instance, the transition system a backend checks.",
+      "rejected": [
+        "lowering"
+      ]
+    },
     "library": {
       "term": "Library",
       "meaning": "The semantic library an OXSTS model is written with: none, Gamma's semantics or SysML v2's semantics. The code calls the choice a flavor.",
