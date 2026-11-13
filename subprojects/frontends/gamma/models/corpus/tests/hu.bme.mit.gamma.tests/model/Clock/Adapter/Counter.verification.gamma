@@ -1,0 +1,11 @@
+package ^clock::clocks::CounterAdapter_verification
+
+import ^clock::clocks
+
+verification case StateAReachable of CounterAdapter {
+    EF state counterAdapter.main._A
+}
+
+verification case StateBReachable of CounterAdapter {
+    EF state counterAdapter.main._B
+}

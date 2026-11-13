@@ -1,0 +1,91 @@
+package crossroads::scheduled_crossroads::Crossroad_verification
+
+import crossroads::scheduled_crossroads
+
+verification case StateControllerOperatingReachable of Crossroad {
+    EF state controller -> control.main_region.Operating
+}
+
+verification case StateControllerInitReachable of Crossroad {
+    EF state controller -> control.operating.Init
+}
+
+verification case StateControllerGReachable of Crossroad {
+    EF state controller -> control.r.G_
+}
+
+verification case StateControllerSecondaryPreparesReachable of Crossroad {
+    EF state controller -> control.operating.SecondaryPrepares
+}
+
+verification case StateControllerPriorityPreparesReachable of Crossroad {
+    EF state controller -> control.operating.PriorityPrepares
+}
+
+verification case StateControllerPriorityReachable of Crossroad {
+    EF state controller -> control.operating.Priority
+}
+
+verification case StateControllerSecondaryReachable of Crossroad {
+    EF state controller -> control.operating.Secondary
+}
+
+verification case StatePriorInterruptedReachable of Crossroad {
+    EF state prior -> trafficLightCtrl.Main_region.Interrupted
+}
+
+verification case StatePriorBlackReachable of Crossroad {
+    EF state prior -> trafficLightCtrl.interrupted.Black
+}
+
+verification case StatePriorBlinkingYellowReachable of Crossroad {
+    EF state prior -> trafficLightCtrl.interrupted.BlinkingYellow
+}
+
+verification case StatePriorNormalReachable of Crossroad {
+    EF state prior -> trafficLightCtrl.Main_region.Normal
+}
+
+verification case StatePriorYellowReachable of Crossroad {
+    EF state prior -> trafficLightCtrl.normal.Yellow
+}
+
+verification case StatePriorRedReachable of Crossroad {
+    EF state prior -> trafficLightCtrl.normal.Red
+}
+
+verification case StatePriorGreenReachable of Crossroad {
+    EF state prior -> trafficLightCtrl.normal.Green
+}
+
+verification case StateSecondInterruptedReachable of Crossroad {
+    EF state second -> trafficLightCtrl.Main_region.Interrupted
+}
+
+verification case StateSecondBlackReachable of Crossroad {
+    EF state second -> trafficLightCtrl.interrupted.Black
+}
+
+verification case StateSecondBlinkingYellowReachable of Crossroad {
+    EF state second -> trafficLightCtrl.interrupted.BlinkingYellow
+}
+
+verification case StateSecondNormalReachable of Crossroad {
+    EF state second -> trafficLightCtrl.Main_region.Normal
+}
+
+verification case StateSecondYellowReachable of Crossroad {
+    EF state second -> trafficLightCtrl.normal.Yellow
+}
+
+verification case StateSecondRedReachable of Crossroad {
+    EF state second -> trafficLightCtrl.normal.Red
+}
+
+verification case StateSecondGreenReachable of Crossroad {
+    EF state second -> trafficLightCtrl.normal.Green
+}
+
+verification case BothLightsShowGreen of Crossroad {
+    EF (state prior -> trafficLightCtrl.normal.Green and state second -> trafficLightCtrl.normal.Green)
+}

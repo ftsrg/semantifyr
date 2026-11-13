@@ -1,0 +1,27 @@
+package ^clock::clocks::ClockSystem_verification
+
+import ^clock::clocks
+
+verification case StateAdderXReachable of ClockSystem {
+    EF state adder -> adderAdapter.main._X
+}
+
+verification case StateSubtractorYReachable of ClockSystem {
+    EF state subtractor -> subtractorAdapter.main._Y
+}
+
+verification case StateCounterAReachable of ClockSystem {
+    EF state counter -> counterAdapter.main._A
+}
+
+verification case StateCounterBReachable of ClockSystem {
+    EF state counter -> counterAdapter.main._B
+}
+
+verification case CounterReturnsToA of ClockSystem {
+    EF variable counter -> counterAdapter.rereachedA = true
+}
+
+verification case CounterCountsTwo of ClockSystem {
+    EF variable counter -> counterAdapter.a = 2
+}

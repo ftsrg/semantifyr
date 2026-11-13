@@ -56,6 +56,11 @@ class Port {
         event.isRaised := true
     }
 
+    // the environment's message to an adapter, which the adapter's queue stores
+    @Trace
+    tran receiveInputMessage(event: Event) {
+    }
+
     tran transferOutputEvents(target: Port) {
         inline for (event in outputEvents) {
             inline for (targetEvent in target.inputEvents) {

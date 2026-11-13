@@ -1,6 +1,6 @@
-package clock::clocks::Subtractor_verification
+package ^clock::clocks::Subtractor_verification
 
-import clock::clocks
+import ^clock::clocks
 
 verification case StateYReachable of Subtractor {
     EF state main._Y
