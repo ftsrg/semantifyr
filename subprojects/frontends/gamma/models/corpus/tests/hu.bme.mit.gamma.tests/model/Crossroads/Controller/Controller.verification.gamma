@@ -1,52 +1,31 @@
-package controller_verification
+package crossroads::controller::Controller_verification
 
-import "Controller.gcd"
+import crossroads::controller
 
-verification case StateOperatingReachable {
-    component system : Controller
-    property {
-        EF isActive(system.main_region.Operating)
-    }
+verification case StateOperatingReachable of Controller {
+    EF state main_region.Operating
 }
 
-verification case StateInitReachable {
-    component system : Controller
-    property {
-        EF isActive(system.main_region.Operating.operating.Init)
-    }
+verification case StateInitReachable of Controller {
+    EF state operating.Init
 }
 
-verification case StateGReachable {
-    component system : Controller
-    property {
-        EF isActive(system.main_region.Operating.operating.Init.r.G_)
-    }
+verification case StateGReachable of Controller {
+    EF state r.G_
 }
 
-verification case StateSecondaryPreparesReachable {
-    component system : Controller
-    property {
-        EF isActive(system.main_region.Operating.operating.SecondaryPrepares)
-    }
+verification case StateSecondaryPreparesReachable of Controller {
+    EF state operating.SecondaryPrepares
 }
 
-verification case StatePriorityPreparesReachable {
-    component system : Controller
-    property {
-        EF isActive(system.main_region.Operating.operating.PriorityPrepares)
-    }
+verification case StatePriorityPreparesReachable of Controller {
+    EF state operating.PriorityPrepares
 }
 
-verification case StatePriorityReachable {
-    component system : Controller
-    property {
-        EF isActive(system.main_region.Operating.operating.Priority)
-    }
+verification case StatePriorityReachable of Controller {
+    EF state operating.Priority
 }
 
-verification case StateSecondaryReachable {
-    component system : Controller
-    property {
-        EF isActive(system.main_region.Operating.operating.Secondary)
-    }
+verification case StateSecondaryReachable of Controller {
+    EF state operating.Secondary
 }

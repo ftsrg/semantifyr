@@ -1,17 +1,11 @@
-package StructMachineVarMachine_verification
+package manual::StructMachineVarMachine::StructMachineVarMachine_verification
 
-import "StructMachineVarMachine.gcd"
+import manual::StructMachineVarMachine
 
-verification case StateStructMachineVarMachineStateReachable {
-    component system : StructMachineVarMachine
-    property {
-        EF isActive(system.StructMachineVarMachine_.StructMachineVarMachine__State)
-    }
+verification case StateStructMachineVarMachineStateReachable of StructMachineVarMachine {
+    EF state StructMachineVarMachine_.StructMachineVarMachine__State
 }
 
-verification case RecordFieldCountsMessages {
-    component system : StructMachineVarMachine
-    property {
-        EF system.ss.cnt = 2
-    }
+verification case RecordFieldCountsMessages of StructMachineVarMachine {
+    EF (variable ss).cnt = 2
 }

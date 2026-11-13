@@ -1,10 +1,7 @@
-package clocks_verification
+package clock::clocks::Subtractor_verification
 
-import "Subtractor.gcd"
+import clock::clocks
 
-verification case StateYReachable {
-    component system : Subtractor
-    property {
-        EF isActive(system.main._Y)
-    }
+verification case StateYReachable of Subtractor {
+    EF state main._Y
 }

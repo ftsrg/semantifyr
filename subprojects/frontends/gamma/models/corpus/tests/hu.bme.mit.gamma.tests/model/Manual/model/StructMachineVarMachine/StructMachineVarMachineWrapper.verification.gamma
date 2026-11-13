@@ -1,17 +1,11 @@
-package StructMachineVarMachine_verification
+package manual::StructMachineVarMachine::StructMachineVarMachineWrapper_verification
 
-import "StructMachineVarMachineWrapper.gcd"
+import manual::StructMachineVarMachine
 
-verification case StructMachineVarMachineStructMachineVarMachineStateReachable {
-    component system : StructMachineVarMachineWrapper
-    property {
-        EF isActive(system.structMachineVarMachine.StructMachineVarMachine_.StructMachineVarMachine__State)
-    }
+verification case StructMachineVarMachineStructMachineVarMachineStateReachable of StructMachineVarMachineWrapper {
+    EF state structMachineVarMachine.StructMachineVarMachine_.StructMachineVarMachine__State
 }
 
-verification case RecordFieldCountsMessages {
-    component system : StructMachineVarMachineWrapper
-    property {
-        EF system.structMachineVarMachine.ss.cnt = 2
-    }
+verification case RecordFieldCountsMessages of StructMachineVarMachineWrapper {
+    EF (variable structMachineVarMachine.ss).cnt = 2
 }

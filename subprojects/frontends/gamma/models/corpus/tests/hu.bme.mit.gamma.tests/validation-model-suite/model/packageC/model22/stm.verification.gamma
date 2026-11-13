@@ -1,24 +1,15 @@
-package package_c_22_verification
+package validation::package_c_22::stm_verification
 
-import "stm.gcd"
+import validation::package_c_22
 
-verification case StateS0Reachable {
-    component system : statemachine
-    property {
-        EF isActive(system.Main.S0)
-    }
+verification case StateS0Reachable of statemachine {
+    EF state Main.S0
 }
 
-verification case TransitionFromS0ToS0Fires {
-    component system : statemachine
-    property {
-        EF (isActive(system.Main.S0) and system.output.b)
-    }
+verification case TransitionFromS0ToS0Fires of statemachine {
+    EF (state Main.S0 and raise output.b)
 }
 
-verification case SelfTransitionOutputsAllVisible {
-    component system : statemachine
-    property {
-        EF (system.output.a and system.output.b and system.output.x)
-    }
+verification case SelfTransitionOutputsAllVisible of statemachine {
+    EF (raise output.a and raise output.b and raise output.x)
 }

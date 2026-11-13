@@ -1,17 +1,11 @@
-package StructRecieverGuardMachine_verification
+package manual::StructRecieverGuardMachine::StructRecieverGuardMachineWrapper_verification
 
-import "StructRecieverGuardMachineWrapper.gcd"
+import manual::StructRecieverGuardMachine
 
-verification case StructRecieverGuardMachineStructRecieverGuardMachineStateReachable {
-    component system : StructRecieverGuardMachineWrapper
-    property {
-        EF isActive(system.structRecieverGuardMachine.StructRecieverGuardMachine_.StructRecieverGuardMachine__State)
-    }
+verification case StructRecieverGuardMachineStructRecieverGuardMachineStateReachable of StructRecieverGuardMachineWrapper {
+    EF state structRecieverGuardMachine.StructRecieverGuardMachine_.StructRecieverGuardMachine__State
 }
 
-verification case PositiveAndNegativeRecordFieldsCounted {
-    component system : StructRecieverGuardMachineWrapper
-    property {
-        EF (system.structRecieverGuardMachine.posCnt = 1 and system.structRecieverGuardMachine.negCnt = 1)
-    }
+verification case PositiveAndNegativeRecordFieldsCounted of StructRecieverGuardMachineWrapper {
+    EF (variable structRecieverGuardMachine.posCnt = 1 and variable structRecieverGuardMachine.negCnt = 1)
 }

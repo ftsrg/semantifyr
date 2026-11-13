@@ -1,17 +1,11 @@
-package MachineVarMachine_verification
+package manual::MachineVarMachine::MachineVarMachineWrapper_verification
 
-import "MachineVarMachineWrapper.gcd"
+import manual::MachineVarMachine
 
-verification case MachineVarMachineMachineVarMachineStateReachable {
-    component system : MachineVarMachineWrapper
-    property {
-        EF isActive(system.machineVarMachine.MachineVarMachine_.MachineVarMachine__State)
-    }
+verification case MachineVarMachineMachineVarMachineStateReachable of MachineVarMachineWrapper {
+    EF state machineVarMachine.MachineVarMachine_.MachineVarMachine__State
 }
 
-verification case CounterCountsMessages {
-    component system : MachineVarMachineWrapper
-    property {
-        EF system.machineVarMachine.cnt = 2
-    }
+verification case CounterCountsMessages of MachineVarMachineWrapper {
+    EF variable machineVarMachine.cnt = 2
 }

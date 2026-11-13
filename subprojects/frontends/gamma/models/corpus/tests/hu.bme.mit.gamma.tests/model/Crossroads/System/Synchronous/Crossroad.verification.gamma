@@ -1,171 +1,99 @@
-package synccrossroads_verification
+package crossroads::synccrossroads::Crossroad_verification
 
-import "Crossroad.gcd"
+import crossroads::synccrossroads
 
-verification case ControllerOperatingReachable {
-    component system : Crossroad
-    property {
-        EF isActive(system.controller.main_region.Operating)
-    }
+verification case ControllerOperatingReachable of Crossroad {
+    EF state controller.main_region.Operating
 }
 
-verification case ControllerInitReachable {
-    component system : Crossroad
-    property {
-        EF isActive(system.controller.main_region.Operating.operating.Init)
-    }
+verification case ControllerInitReachable of Crossroad {
+    EF state controller.operating.Init
 }
 
-verification case ControllerGReachable {
-    component system : Crossroad
-    property {
-        EF isActive(system.controller.main_region.Operating.operating.Init.r.G_)
-    }
+verification case ControllerGReachable of Crossroad {
+    EF state controller.r.G_
 }
 
-verification case ControllerSecondaryPreparesReachable {
-    component system : Crossroad
-    property {
-        EF isActive(system.controller.main_region.Operating.operating.SecondaryPrepares)
-    }
+verification case ControllerSecondaryPreparesReachable of Crossroad {
+    EF state controller.operating.SecondaryPrepares
 }
 
-verification case ControllerPriorityPreparesReachable {
-    component system : Crossroad
-    property {
-        EF isActive(system.controller.main_region.Operating.operating.PriorityPrepares)
-    }
+verification case ControllerPriorityPreparesReachable of Crossroad {
+    EF state controller.operating.PriorityPrepares
 }
 
-verification case ControllerPriorityReachable {
-    component system : Crossroad
-    property {
-        EF isActive(system.controller.main_region.Operating.operating.Priority)
-    }
+verification case ControllerPriorityReachable of Crossroad {
+    EF state controller.operating.Priority
 }
 
-verification case ControllerSecondaryReachable {
-    component system : Crossroad
-    property {
-        EF isActive(system.controller.main_region.Operating.operating.Secondary)
-    }
+verification case ControllerSecondaryReachable of Crossroad {
+    EF state controller.operating.Secondary
 }
 
-verification case PriorInterruptedReachable {
-    component system : Crossroad
-    property {
-        EF isActive(system.prior.Main_region.Interrupted)
-    }
+verification case PriorInterruptedReachable of Crossroad {
+    EF state prior.Main_region.Interrupted
 }
 
-verification case PriorBlackReachable {
-    component system : Crossroad
-    property {
-        EF isActive(system.prior.Main_region.Interrupted.interrupted.Black)
-    }
+verification case PriorBlackReachable of Crossroad {
+    EF state prior.interrupted.Black
 }
 
-verification case PriorBlinkingYellowReachable {
-    component system : Crossroad
-    property {
-        EF isActive(system.prior.Main_region.Interrupted.interrupted.BlinkingYellow)
-    }
+verification case PriorBlinkingYellowReachable of Crossroad {
+    EF state prior.interrupted.BlinkingYellow
 }
 
-verification case PriorNormalReachable {
-    component system : Crossroad
-    property {
-        EF isActive(system.prior.Main_region.Normal)
-    }
+verification case PriorNormalReachable of Crossroad {
+    EF state prior.Main_region.Normal
 }
 
-verification case PriorYellowReachable {
-    component system : Crossroad
-    property {
-        EF isActive(system.prior.Main_region.Normal.normal.Yellow)
-    }
+verification case PriorYellowReachable of Crossroad {
+    EF state prior.normal.Yellow
 }
 
-verification case PriorRedReachable {
-    component system : Crossroad
-    property {
-        EF isActive(system.prior.Main_region.Normal.normal.Red)
-    }
+verification case PriorRedReachable of Crossroad {
+    EF state prior.normal.Red
 }
 
-verification case PriorGreenReachable {
-    component system : Crossroad
-    property {
-        EF isActive(system.prior.Main_region.Normal.normal.Green)
-    }
+verification case PriorGreenReachable of Crossroad {
+    EF state prior.normal.Green
 }
 
-verification case SecondInterruptedReachable {
-    component system : Crossroad
-    property {
-        EF isActive(system.second.Main_region.Interrupted)
-    }
+verification case SecondInterruptedReachable of Crossroad {
+    EF state second.Main_region.Interrupted
 }
 
-verification case SecondBlackReachable {
-    component system : Crossroad
-    property {
-        EF isActive(system.second.Main_region.Interrupted.interrupted.Black)
-    }
+verification case SecondBlackReachable of Crossroad {
+    EF state second.interrupted.Black
 }
 
-verification case SecondBlinkingYellowReachable {
-    component system : Crossroad
-    property {
-        EF isActive(system.second.Main_region.Interrupted.interrupted.BlinkingYellow)
-    }
+verification case SecondBlinkingYellowReachable of Crossroad {
+    EF state second.interrupted.BlinkingYellow
 }
 
-verification case SecondNormalReachable {
-    component system : Crossroad
-    property {
-        EF isActive(system.second.Main_region.Normal)
-    }
+verification case SecondNormalReachable of Crossroad {
+    EF state second.Main_region.Normal
 }
 
-verification case SecondYellowReachable {
-    component system : Crossroad
-    property {
-        EF isActive(system.second.Main_region.Normal.normal.Yellow)
-    }
+verification case SecondYellowReachable of Crossroad {
+    EF state second.normal.Yellow
 }
 
-verification case SecondRedReachable {
-    component system : Crossroad
-    property {
-        EF isActive(system.second.Main_region.Normal.normal.Red)
-    }
+verification case SecondRedReachable of Crossroad {
+    EF state second.normal.Red
 }
 
-verification case SecondGreenReachable {
-    component system : Crossroad
-    property {
-        EF isActive(system.second.Main_region.Normal.normal.Green)
-    }
+verification case SecondGreenReachable of Crossroad {
+    EF state second.normal.Green
 }
 
-verification case PriorityGreenOutputVisible {
-    component system : Crossroad
-    property {
-        EF system.priorityOutput.displayGreen
-    }
+verification case PriorityGreenOutputVisible of Crossroad {
+    EF raise priorityOutput.displayGreen
 }
 
-verification case BothLightsShowGreen {
-    component system : Crossroad
-    property {
-        EF (system.priorityOutput.displayGreen and system.secondaryOutput.displayGreen)
-    }
+verification case BothLightsShowGreen of Crossroad {
+    EF (raise priorityOutput.displayGreen and raise secondaryOutput.displayGreen)
 }
 
-verification case ControllerAheadOfSecondaryLight {
-    component system : Crossroad
-    property {
-        EF (isActive(system.controller.main_region.Operating.operating.SecondaryPrepares) and isActive(system.second.Main_region.Normal.normal.Red) and not system.secondaryOutput.displayRed)
-    }
+verification case ControllerAheadOfSecondaryLight of Crossroad {
+    EF (state controller.operating.SecondaryPrepares and state second.normal.Red and not raise secondaryOutput.displayRed)
 }

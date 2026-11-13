@@ -1,38 +1,23 @@
-package package_e_21_verification
+package validation::package_e_21::stm_verification
 
-import "stm.gcd"
+import validation::package_e_21
 
-verification case StateC1Reachable {
-    component system : statemachine
-    property {
-        EF isActive(system.Main.C1)
-    }
+verification case StateC1Reachable of statemachine {
+    EF state Main.C1
 }
 
-verification case StateS11Reachable {
-    component system : statemachine
-    property {
-        EF isActive(system.Main.C1.R1.S11)
-    }
+verification case StateS11Reachable of statemachine {
+    EF state R1.S11
 }
 
-verification case StateS12Reachable {
-    component system : statemachine
-    property {
-        EF isActive(system.Main.C1.R1.S12)
-    }
+verification case StateS12Reachable of statemachine {
+    EF state R1.S12
 }
 
-verification case StateS13Reachable {
-    component system : statemachine
-    property {
-        EF isActive(system.Main.C1.R2.S13)
-    }
+verification case StateS13Reachable of statemachine {
+    EF state R2.S13
 }
 
-verification case StateS14Reachable {
-    component system : statemachine
-    property {
-        EF isActive(system.Main.C1.R2.S14)
-    }
+verification case StateS14Reachable of statemachine {
+    EF state R2.S14
 }
