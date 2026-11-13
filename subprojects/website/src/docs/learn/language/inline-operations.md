@@ -50,7 +50,7 @@ class Holder {
 
   redefine tran {
 // hide-end
-inline counter.increment()
+    inline counter.increment()
 // hide-start
   }
 }
@@ -92,10 +92,10 @@ class Pair {
   contains b: Counter
 
 // hide-end
-redefine tran {
-  a.value := a.value + 1
-  b.value := b.value + 1
-}
+  redefine tran {
+    a.value := a.value + 1
+    b.value := b.value + 1
+  }
 // hide-start
 }
 // hide-end
@@ -135,7 +135,7 @@ class Counter {
 
   redefine tran {
 // hide-end
-inline increment()
+    inline increment()
 // hide-start
   }
 }
@@ -163,9 +163,9 @@ class Counters {
 
   redefine tran {
 // hide-end
-inline for (counter in counters) {
-  inline counter.increment()
-}
+    inline for (counter in counters) {
+      inline counter.increment()
+    }
 // hide-start
   }
 }
@@ -200,9 +200,9 @@ class Counters {
 
   redefine tran {
 // hide-end
-inline for choice (counter in counters) {
-  inline counter.increment()
-}
+    inline for choice (counter in counters) {
+      inline counter.increment()
+    }
 // hide-start
   }
 }
@@ -238,11 +238,11 @@ class Counters {
 
   redefine tran {
 // hide-end
-inline for choice (counter in counters) {
-  inline counter.increment()
-} else {
-  assume(false)
-}
+    inline for choice (counter in counters) {
+      inline counter.increment()
+    } else {
+      assume(false)
+    }
 // hide-start
   }
 }

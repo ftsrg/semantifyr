@@ -17,9 +17,9 @@ class Counter {
   var value: int := 0
 
 // hide-end
-prop isPositive(): bool {
-  return value > 0
-}
+  prop isPositive(): bool {
+    return value > 0
+  }
 // hide-start
 }
 // hide-end
@@ -33,9 +33,9 @@ class Counter {
   var value: int := 0
 
 // hide-end
-prop isAtLeast(threshold: int): bool {
-  return value >= threshold
-}
+  prop isAtLeast(threshold: int): bool {
+    return value >= threshold
+  }
 // hide-start
 }
 // hide-end
@@ -51,9 +51,9 @@ class Worker {
 
 class Supervisor {
 // hide-end
-prop isDoneOf(worker: Worker[0..1]): bool {
-  return worker.done
-}
+  prop isDoneOf(worker: Worker[0..1]): bool {
+    return worker.done
+  }
 // hide-start
 }
 // hide-end
@@ -69,7 +69,7 @@ An `abstract` property has no body. Concrete subclasses must redefine it.
 // hide-start
 abstract class Limit {
 // hide-end
-abstract prop maximum(): int
+  abstract prop maximum(): int
 // hide-start
 }
 // hide-end
@@ -83,9 +83,9 @@ Override an inherited property of the **same name** with `redefine`. The redefin
 // hide-start
 class TenLimit : Limit {
 // hide-end
-redefine prop maximum(): int {
-  return 10
-}
+  redefine prop maximum(): int {
+    return 10
+  }
 // hide-start
 }
 // hide-end
@@ -105,9 +105,9 @@ class Counter {
   }
 
 // hide-end
-prop atLimit(): bool {
-  return value == maximum()
-}
+  prop atLimit(): bool {
+    return value == maximum()
+  }
 // hide-start
 }
 // hide-end
@@ -120,9 +120,9 @@ class Pair {
   contains b: Counter
 
 // hide-end
-prop pairAtLimit(): bool {
-  return a.atLimit() && b.atLimit()
-}
+  prop pairAtLimit(): bool {
+    return a.atLimit() && b.atLimit()
+  }
 // hide-start
 }
 // hide-end

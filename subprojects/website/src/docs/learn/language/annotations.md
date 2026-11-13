@@ -32,8 +32,8 @@ class Reaches10 {
 // hide-start
 class Counter {
 // hide-end
-@Control
-var value: int := 0
+  @Control
+  var value: int := 0
 // hide-start
 }
 // hide-end
@@ -98,10 +98,10 @@ class Counter {
   var value: int := 0
 
 // hide-end
-@Description(text = "Increments the counter by one")
-tran increment() {
-  value := value + 1
-}
+  @Description(text = "Increments the counter by one")
+  tran increment() {
+    value := value + 1
+  }
 // hide-start
 }
 // hide-end

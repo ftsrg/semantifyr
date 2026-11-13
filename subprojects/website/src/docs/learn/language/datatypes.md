@@ -39,9 +39,9 @@ class Light {
 
   redefine tran {
 // hide-end
-if (current == Color::Red) {
-  current := Color::Green
-}
+    if (current == Color::Red) {
+      current := Color::Green
+    }
 // hide-start
   }
 }

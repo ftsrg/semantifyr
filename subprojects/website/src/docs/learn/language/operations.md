@@ -28,7 +28,7 @@ class Counter {
 
   redefine tran {
 // hide-end
-value := value + 1
+    value := value + 1
 // hide-start
   }
 }
@@ -48,7 +48,7 @@ class Counter {
 
   redefine tran {
 // hide-end
-self.value := input
+    self.value := input
 // hide-start
   }
 }
@@ -74,7 +74,7 @@ class Counter {
 
   redefine tran {
 // hide-end
-havoc(input)
+    havoc(input)
 // hide-start
   }
 }
@@ -100,7 +100,7 @@ class Counter {
 
   redefine tran {
 // hide-end
-assume(value > 0)
+    assume(value > 0)
 // hide-start
   }
 }
@@ -130,10 +130,10 @@ class Counter {
 
   redefine tran {
 // hide-end
-{
-  value := value + 1
-  count := count + 1
-}
+    {
+      value := value + 1
+      count := count + 1
+    }
 // hide-start
   }
 }
@@ -159,11 +159,11 @@ class Counter {
 
   redefine tran {
 // hide-end
-choice {
-  value := value + 1
-} or {
-  value := value - 1
-}
+    choice {
+      value := value + 1
+    } or {
+      value := value - 1
+    }
 // hide-start
   }
 }
@@ -193,11 +193,11 @@ class Counter {
 
   redefine tran {
 // hide-end
-if (value < maximum()) {
-  value := value + 1
-} else {
-  value := 0
-}
+    if (value < maximum()) {
+      value := value + 1
+    } else {
+      value := 0
+    }
 // hide-start
   }
 }
@@ -221,9 +221,9 @@ class Counter {
 
   redefine tran {
 // hide-end
-for (i in 1..10) {
-  value := value + 1
-}
+    for (i in 1..10) {
+      value := value + 1
+    }
 // hide-start
   }
 }
@@ -247,13 +247,13 @@ class Counter {
 
   redefine tran {
 // hide-end
-var choiceTaken: bool := false
-choice {
-    choiceTaken := true
-} or {
-    choiceTaken := false
-}
-assume(choiceTaken)
+    var choiceTaken: bool := false
+    choice {
+        choiceTaken := true
+    } or {
+        choiceTaken := false
+    }
+    assume(choiceTaken)
 // hide-start
   }
 }
