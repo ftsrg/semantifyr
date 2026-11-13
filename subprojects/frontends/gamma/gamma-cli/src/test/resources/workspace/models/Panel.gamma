@@ -1,0 +1,7 @@
+package Panel
+
+import Switch
+
+verification case OffReachable of Toggle {
+    EF state Main.Off
+}

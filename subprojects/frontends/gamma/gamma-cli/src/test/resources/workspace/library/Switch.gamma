@@ -1,0 +1,12 @@
+package Switch
+
+statechart Toggle [
+] {
+    region Main {
+        state Off
+
+        initial MainInitial
+    }
+
+    transition from MainInitial to Off
+}

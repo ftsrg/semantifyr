@@ -36,6 +36,10 @@ class GammaCompileCommand(
         .path(canBeDir = false)
         .help("Output file.")
 
+    private val workspace by option("--workspace")
+        .path(mustExist = true, canBeFile = false)
+        .help("Directory whose Gamma files, recursively, imports resolve in.")
+
     override fun help(context: Context): String {
         return "Compile a Gamma model to OXSTS."
     }
@@ -47,7 +51,7 @@ class GammaCompileCommand(
 
         checkGammaModel(model)
         val target = outputPath ?: model.resolveSibling("${model.nameWithoutExtension}.oxsts")
-        val gammaModel = readGammaModel(gammaInjector, model)
+        val gammaModel = readGammaModel(gammaInjector, model, workspace)
 
         echo("Compiling $model to $target")
         try {

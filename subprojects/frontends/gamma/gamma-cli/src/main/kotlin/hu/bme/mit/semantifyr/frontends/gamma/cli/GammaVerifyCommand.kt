@@ -50,6 +50,10 @@ class GammaVerifyCommand(
         .multiple()
         .help("Qualified name of a case, repeatable.")
 
+    private val workspace by option("--workspace")
+        .path(mustExist = true, canBeFile = false)
+        .help("Directory whose Gamma files, recursively, imports resolve in.")
+
     private val backendOptions by BackendOptionGroup {
         portfolios
     }
@@ -71,7 +75,7 @@ class GammaVerifyCommand(
         artifactOptions.checkOutputDirectory()
         backendOptions.checkAvailable()
 
-        val gammaModel = readGammaModel(gammaInjector, model)
+        val gammaModel = readGammaModel(gammaInjector, model, workspace)
         val cases = selectCases(gammaInjector.getInstance(GammaVerificationCaseDiscoverer::class.java).discover(gammaModel))
 
         val frontend = GammaFrontend.builder()
