@@ -74,6 +74,17 @@ public class GammaScopeProvider extends AbstractGammaScopeProvider {
             return IScope.NULLSCOPE;
         }
 
+        if (reference == GammaPackage.Literals.FIELD_ASSIGNMENT__FIELD
+                && context.eContainer() instanceof RecordLiteralExpression literal) {
+            var typeDeclaration = literal.getTypeDeclaration();
+            if (typeDeclaration != null
+                    && !typeDeclaration.eIsProxy()
+                    && GammaUtils.resolveType(typeDeclaration.getType()) instanceof RecordType recordType) {
+                return Scopes.scopeFor(recordType.getFields());
+            }
+            return IScope.NULLSCOPE;
+        }
+
         if (reference == GammaPackage.Literals.INSTANCE_PORT_REFERENCE__PORT
                 && context instanceof InstancePortReference portReference) {
             var instance = portReference.getInstance();

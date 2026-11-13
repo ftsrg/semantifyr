@@ -368,6 +368,16 @@ object Gamma : MetaPackage(
         val value by attribute(EInt)
     }
 
+    object RecordLiteralExpression : MetaClass(Expression) {
+        val typeDeclaration by refers { TypeDeclaration }
+        val fieldAssignments by contains(MANY) { FieldAssignment }
+    }
+
+    object FieldAssignment : MetaClass() {
+        val field by refers { FieldDeclaration }
+        val value by contains { Expression }
+    }
+
     object DirectReferenceExpression : MetaClass(Expression) {
         val declaration by refers { ValueDeclaration }
     }
