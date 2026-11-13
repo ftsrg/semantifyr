@@ -105,8 +105,11 @@ function receiverOf(call: string): string {
   return call.slice(0, call.lastIndexOf('.'));
 }
 
-function captionOf(pass: string, before: Frame, after: Frame): string {
-  if (pass === 'operationcallinlining') {
+type Caption = (before: Frame, after: Frame) => string;
+
+// keyed by the pass name the compiler writes into a step's file name; a pass without a caption fails the build
+const CAPTIONS: Readonly<Record<string, Caption>> = {
+  operationcallinlining: (before, after) => {
     const call = changed(before.text, after.text, 'removed').find((line) => {
       return line.startsWith('inline ');
     });
@@ -118,15 +121,22 @@ function captionOf(pass: string, before: Frame, after: Frame): string {
     }
     const receiver = receiverOf(call.slice('inline '.length));
     return `\`${call}\` gives way to the body of the transition it calls, as the class of \`${receiver}\` defines it, its names written as paths from \`root\`.`;
-  }
-  if (pass === 'expressioncallinlining') {
+  },
+  expressioncallinlining: (before, after) => {
     const call = replacedCall(before.text, after.text);
     return `\`${call}\` gives way to the expression the property returns, as the class of \`${receiverOf(call)}\` defines it, its names written as paths from \`root\`.`;
-  }
-  if (pass === 'flattening') {
+  },
+  flattening: () => {
     return 'Every variable of every instance becomes one variable of the model, named by the path of its instance, and `contains root` goes: no instance is left.';
+  },
+};
+
+function captionOf(pass: string, before: Frame, after: Frame): string {
+  const caption = CAPTIONS[pass];
+  if (caption === undefined) {
+    throw new Error(`The walk has no caption for the step ${after.file}`);
   }
-  throw new Error(`The walk has no caption for the step ${after.file}`);
+  return caption(before, after);
 }
 
 function checked(phase: string, steps: WalkStep[]): WalkStep[] {
@@ -173,7 +183,7 @@ function walks(): { instantiation: WalkStep[], inlining: WalkStep[], flattening:
     throw new Error('No step of the compiler wrote the model inlining ends with');
   }
   const flattening = steps.slice(lastInlining + 1);
-  if (flattening.length !== 1 || flattening[0]?.pass !== 'flattening' || flattening[0].frame.text !== flattened.text) {
+  if (flattening.length !== 1 || flattening[0]?.frame.text !== flattened.text) {
     throw new Error(`After inlining the compiler wrote ${flattening.length} steps, the flattening's frame alone shows the flattening`);
   }
   return {

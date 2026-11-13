@@ -272,7 +272,7 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
     outputs.cacheIf { true }
 }
 
-// written for the alias @phases: the compiler's own output for the model of the pages on how the language works, a frame after every single rewrite included
+// written for the alias @phases
 val phasesModel = rootProject.layout.projectDirectory.file("oxsts-test-models/phases/room.oxsts")
 val phasesDir = layout.buildDirectory.dir("phases")
 
@@ -300,6 +300,13 @@ val phases = tasks.register<JavaExec>("phases") {
         outputDirectory.deleteRecursively()
         outputDirectory.mkdirs()
     }
+    doLast {
+        outputDirectory.walkTopDown().filter {
+            it.isFile
+        }.forEach {
+            it.writeText(it.readText().replace("\r\n", "\n"))
+        }
+    }
 }
 
 npmAssemble.configure {
@@ -307,7 +314,8 @@ npmAssemble.configure {
     inputs.file(phasesModel).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
-tasks.test {
+// the instance tree's test reads the model
+npmCheck.configure {
     inputs.file(phasesModel).withPropertyName("phasesModel").withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
@@ -323,6 +331,7 @@ tasks {
         inputs.files(sourceAliasDirectories)
             .withPropertyName("importedModels")
             .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.file(phasesModel).withPropertyName("phasesModel").withPathSensitivity(PathSensitivity.RELATIVE)
     }
 
     assemble {
