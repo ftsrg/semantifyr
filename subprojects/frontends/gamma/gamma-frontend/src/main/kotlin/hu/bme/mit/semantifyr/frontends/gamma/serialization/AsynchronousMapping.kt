@@ -33,6 +33,7 @@ import org.eclipse.emf.ecore.EObject
 enum class MessageControl {
     NONE,
     RUN,
+    RESET,
     CLEAR_QUEUE,
     CLEAR_QUEUES,
     CLEAR_OTHER_QUEUES,
@@ -288,6 +289,9 @@ object AsynchronousMapping {
         }
         if (clearsOthers) {
             return MessageControl.CLEAR_OTHER_QUEUES
+        }
+        if (ControlFunction.RESET in functions) {
+            return MessageControl.RESET
         }
         if (ControlFunction.RUN_ONCE in functions) {
             return MessageControl.RUN

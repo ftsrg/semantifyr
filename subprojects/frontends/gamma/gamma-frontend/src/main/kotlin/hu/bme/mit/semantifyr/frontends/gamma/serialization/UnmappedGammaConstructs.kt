@@ -181,7 +181,6 @@ object UnmappedGammaConstructs {
     private fun describe(specification: ControlSpecification): UnmappedGammaConstruct? {
         return when (specification.controlFunction) {
             ControlFunction.RUN_TO_COMPLETION -> UnmappedGammaConstruct(specification, "the full-step control function", "is refused")
-            ControlFunction.RESET -> UnmappedGammaConstruct(specification, "the reset control function")
             else -> null
         }
     }

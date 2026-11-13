@@ -116,6 +116,12 @@ abstract class AsynchronousAdapter : Component {
         inline wrapped.main()
     }
 
+    // Gamma's component reset is the wrapped component's initializing action: every variable assigned its initial value, every region deactivated, then the entry
+    tran resetComponent() {
+        inline wrapped.restore()
+        inline wrapped.init()
+    }
+
     tran clearQueues() {
         inline for (queue in queues) {
             inline queue.clear()

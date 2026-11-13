@@ -15,6 +15,21 @@ interface Signals {
     out event second
 }
 
+interface Commands {
+    in event advance
+    in event restart
+}
+
+interface Reports {
+    out event started
+}
+
+interface Measurements {
+    in event advance
+    in event restart
+    in persistent event level(value : integer)
+}
+
 @Asynchronous
 statechart Sender capacity (1) [
     port control : provides Go,
@@ -48,6 +63,122 @@ statechart Receiver [
     transition from Waiting to GotSecond when signals.second
     transition from GotFirst to FirstThenSecond when signals.second
     transition from GotSecond to SecondThenFirst when signals.first
+}
+
+statechart Counter [
+    port commands : provides Commands,
+    port reports : provides Reports
+] {
+    var count : integer := 1
+
+    region Main {
+        initial MainInitial
+        state Start {
+            entry / raise reports.started;
+        }
+        state Moved {
+            region Inner {
+                initial InnerInitial
+                state Deep
+            }
+        }
+        state Ran
+    }
+
+    transition from MainInitial to Start
+    transition from InnerInitial to Deep
+    transition from Start to Moved when commands.advance / count := count + 2;
+    transition from Start to Ran when commands.restart
+    transition from Moved to Ran when commands.restart
+}
+
+statechart Watcher [
+    port reports : requires Reports
+] {
+    region Main {
+        initial MainInitial
+        state Unstarted
+        state Once
+        state Twice
+    }
+
+    transition from MainInitial to Unstarted
+    transition from Unstarted to Once when reports.started
+    transition from Once to Twice when reports.started
+}
+
+statechart Remembering [
+    port commands : provides Commands
+] {
+    var moved : boolean := false
+
+    region Main {
+        initial MainInitial
+        state Start
+        state Outer {
+            region Inner {
+                initial InnerInitial
+                shallow history InnerHistory
+                state First
+                state Second
+            }
+        }
+    }
+
+    transition from MainInitial to Start
+    transition from InnerInitial to First
+    transition from InnerHistory to First
+    transition from Start to InnerHistory when commands.advance
+    transition from First to Second when commands.advance / moved := true;
+}
+
+statechart Probe [
+    port commands : provides Measurements
+] {
+    var observed : integer := 0
+    var sawLevel : boolean := false
+
+    region Main {
+        initial MainInitial
+        state Waiting
+        state Probed
+    }
+
+    transition from MainInitial to Waiting
+    transition from Waiting to Waiting when commands.level / sawLevel := true;
+    transition from Waiting to Probed when commands.advance / observed := commands.level::value;
+}
+
+adapter ResettingCounter of component counter : Counter {
+    when commands.advance / run
+    when commands.restart / reset
+    queue messages (priority = 1, capacity = 1) {
+        commands.any
+    }
+}
+
+adapter Watching of component watcher : Watcher {
+    when any / run
+    queue messages (priority = 1, capacity = 1) {
+        reports.any
+    }
+}
+
+adapter ResettingRemembering of component remembering : Remembering {
+    when commands.advance / run
+    when commands.restart / reset
+    queue messages (priority = 1, capacity = 1) {
+        commands.any
+    }
+}
+
+adapter ResettingProbe of component probe : Probe {
+    when commands.advance / run
+    when commands.level / run
+    when commands.restart / reset
+    queue messages (priority = 1, capacity = 1) {
+        commands.any
+    }
 }
 
 adapter RunOnSecond of component receiver : Receiver {
@@ -86,6 +217,29 @@ async Resetting [
     channel [ sender.signals ] -o)- [ receiver.signals ]
 }
 
+async CounterReset [
+    port commands : provides Commands
+] {
+    component counter : ResettingCounter
+    component watcher : Watching
+    bind commands -> counter.commands
+    channel [ counter.reports ] -o)- [ watcher.reports ]
+}
+
+async HistoryReset [
+    port commands : provides Commands
+] {
+    component remembering : ResettingRemembering
+    bind commands -> remembering.commands
+}
+
+async ParameterReset [
+    port commands : provides Measurements
+] {
+    component probe : ResettingProbe
+    bind commands -> probe.commands
+}
+
 verification case AMessageWithoutARunIsSeenAtTheNextRun of Controlled {
     EF state receiver -> receiver.Main.GotFirst
 }
@@ -100,4 +254,40 @@ verification case AResetMessageRunsNothing of Resetting {
 
 verification case AResetOfTheOtherQueuesDropsTheirMessagesUnreachable of Resetting {
     EF state receiver -> receiver.Main.GotFirst
+}
+
+verification case AResetEntersTheInitialStateAgainWithTheInitialValue of CounterReset {
+    EF (state watcher -> watcher.Main.Twice and state counter -> counter.Main.Start and variable counter -> counter.count = 1)
+}
+
+verification case AResetRestoresTheInitialValueOfAVariable of CounterReset {
+    AG (not state counter -> counter.Main.Start or variable counter -> counter.count = 1)
+}
+
+verification case AResetKeepingTheValueOfAVariableUnreachable of CounterReset {
+    EF (state counter -> counter.Main.Start and not variable counter -> counter.count = 1)
+}
+
+verification case AResetLeavesTheNestedStatesInactive of CounterReset {
+    AG (not state counter -> counter.Main.Start or not state counter -> counter.Inner.Deep)
+}
+
+verification case AResetMessageRunningTheComponentUnreachable of CounterReset {
+    EF state counter -> counter.Main.Ran
+}
+
+verification case AResetForgetsTheHistoryOfARegion of HistoryReset {
+    AG (not state remembering -> remembering.Inner.Second or variable remembering -> remembering.moved)
+}
+
+verification case AResetKeepingTheHistoryOfARegionUnreachable of HistoryReset {
+    EF (state remembering -> remembering.Inner.Second and not variable remembering -> remembering.moved)
+}
+
+verification case AResetForgetsAPersistentParameter of ParameterReset {
+    AG (not state probe -> probe.Main.Probed or variable probe -> probe.sawLevel or variable probe -> probe.observed = 0)
+}
+
+verification case AResetKeepingAPersistentParameterUnreachable of ParameterReset {
+    EF (state probe -> probe.Main.Probed and not variable probe -> probe.sawLevel and not variable probe -> probe.observed = 0)
 }

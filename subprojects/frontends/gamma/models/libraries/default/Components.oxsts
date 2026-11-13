@@ -42,6 +42,13 @@ abstract class Component {
             inline timeout.passTime()
         }
     }
+
+    // timeouts are left as Gamma's initializing action leaves them, a state sets its own when entered
+    tran restore() {
+        inline for (port in ports) {
+            inline port.restore()
+        }
+    }
 }
 
 class Channel {
@@ -97,6 +104,16 @@ abstract class CompositeComponent : Component {
 
         inline for (component in components) {
             inline component.passTime()
+        }
+    }
+
+    redefine tran restore() {
+        inline for (port in ports) {
+            inline port.restore()
+        }
+
+        inline for (component in components) {
+            inline component.restore()
         }
     }
 }

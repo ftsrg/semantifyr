@@ -174,6 +174,10 @@ class GammaToOxstsSerializer(
             appendIndent("redefine tran set(value: $qualifiedRecord)") {
                 appendLine("variable := value")
             }
+            appendLine()
+            appendIndent("redefine tran restore()") {
+                appendLine("variable := ${initializer(recordType, emptyList(), defaults)}")
+            }
         }
 
         for (field in recordType.fields) {
@@ -628,6 +632,7 @@ class GammaToOxstsSerializer(
                 val call = when (control) {
                     MessageControl.NONE -> continue
                     MessageControl.RUN -> "inline adapter.run()"
+                    MessageControl.RESET -> "inline adapter.resetComponent()"
                     MessageControl.CLEAR_QUEUE -> "inline clear()"
                     MessageControl.CLEAR_QUEUES -> "inline adapter.clearQueues()"
                     MessageControl.CLEAR_OTHER_QUEUES -> "inline adapter.clearOtherQueues(self)"

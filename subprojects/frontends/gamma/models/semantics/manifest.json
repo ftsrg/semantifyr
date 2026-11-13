@@ -44,7 +44,16 @@
                 { "name": "AMessageWithoutARunIsSeenAtTheNextRun", "verdict": "Passed", "tier": "Integration" },
                 { "name": "AMessageWithoutARunRunsTheComponentUnreachable", "verdict": "Failed", "tier": "Integration" },
                 { "name": "AResetMessageRunsNothing", "verdict": "Passed", "tier": "Integration" },
-                { "name": "AResetOfTheOtherQueuesDropsTheirMessagesUnreachable", "verdict": "Failed", "tier": "Integration" }
+                { "name": "AResetOfTheOtherQueuesDropsTheirMessagesUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "AResetEntersTheInitialStateAgainWithTheInitialValue", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AResetRestoresTheInitialValueOfAVariable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AResetKeepingTheValueOfAVariableUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "AResetLeavesTheNestedStatesInactive", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AResetMessageRunningTheComponentUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "AResetForgetsTheHistoryOfARegion", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AResetKeepingTheHistoryOfARegionUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "AResetForgetsAPersistentParameter", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AResetKeepingAPersistentParameterUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {

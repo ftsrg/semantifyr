@@ -81,6 +81,20 @@ class Statechart : Component {
         inline resetInputEvents()
     }
 
+    redefine tran restore() {
+        inline for (port in ports) {
+            inline port.restore()
+        }
+
+        inline for (variable in variables) {
+            inline variable.restore()
+        }
+
+        inline for (region in regions) {
+            inline region.restore()
+        }
+    }
+
     // TODO: would be easier to implement if we had ...any { } and ...all { } lambda functions that could compose expressions
     tran assumeNoTransitionEnabled() {
         inline for (region in regions) {
@@ -103,6 +117,18 @@ class Region {
 
     @Control
     var activeState: states[0..1] := nothing
+
+    tran restore() {
+        activeState := nothing
+        inline for (history in shallowHistory) {
+            inline history.restore()
+        }
+        inline for (state in states) {
+            inline for (region in state.regions) {
+                inline region.restore()
+            }
+        }
+    }
 
     tran activateRecursive() {
         inline if (entryTransitions == nothing) {
@@ -443,6 +469,10 @@ class ShallowHistory : TransitionTarget {
 
     @Control
     var lastState: State[0..1] := nothing
+
+    tran restore() {
+        lastState := nothing
+    }
 
     tran enterRegion() {
         if (lastState == nothing) {

@@ -40,6 +40,12 @@ class Port {
         }
     }
 
+    tran restore() {
+        inline for (event in interface.events) {
+            inline event.restore()
+        }
+    }
+
     tran havocInputEvents() {
         inline for (event in inputEvents) {
             choice {

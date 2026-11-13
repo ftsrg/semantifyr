@@ -49,7 +49,7 @@ Composition	Asynchronous adapters and their message queues, served by descending
 Composition	A full queue drops the incoming message	carried	models/semantics/Queues.gamma	AFullQueueDropsTheIncomingMessage	
 Composition	A full queue with `discard = oldest` drops its oldest message and takes the incoming one	carried	models/semantics/Queues.gamma	discard = oldest	
 Composition	Control specifications `run`, `reset-queue`, `reset-queues` and `reset-other-queues` on `any`, an event, a port's events or a clock	carried	models/semantics/ControlSpecifications.gamma	when signals.second / reset-other-queues	
-Composition	The `reset` control function	planned			The mapper refuses it with a diagnostic.
+Composition	The `reset` control function, the wrapped component's variables, events, parameters, regions and history back at their initial values and its statechart entered again in place of the run	carried	models/semantics/ControlSpecifications.gamma	when commands.restart / reset	
 Composition	Clocks	departure	models/semantics/Clocks.gamma	clock ticker (rate = 2 s)	A clock counts the fixed delta of every step, as timeouts do.
 Composition	Asynchronous and scheduled-asynchronous composites and the execution list	carried	models/semantics/ScheduledAsynchronous.gamma	execute buffered, buffered	
 Composition	Asynchronous statecharts, unfolded into Gamma's default adapter	carried	models/semantics/AsynchronousStatechart.gamma	@Asynchronous	

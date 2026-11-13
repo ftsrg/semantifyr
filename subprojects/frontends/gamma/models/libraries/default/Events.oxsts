@@ -28,6 +28,14 @@ class Event {
         }
     }
 
+    // a persistent parameter is restored too, as Gamma's component reset assigns every parameter its initial value
+    tran restore() {
+        isRaised := false
+        inline for (parameter in parameters) {
+            inline parameter.reset()
+        }
+    }
+
     tran havocParameters() {
         inline for (parameter in parameters) {
             inline parameter.havoc()

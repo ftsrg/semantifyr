@@ -1127,7 +1127,7 @@ class GammaToOxstsSerializerTest {
     }
 
     @Test
-    fun `a record type has a variable class whose initializer reads one default binding per leaf field`() {
+    fun `a record type has a variable class whose initializer and restore read one default binding per leaf field`() {
         val lines = oxstsLines(recordStatechart)
 
         assertThat(lines).containsSequence(
@@ -1144,6 +1144,10 @@ class GammaToOxstsSerializerTest {
             "",
             "redefine tran set(value: _test::_Box) {",
             "variable := value",
+            "}",
+            "",
+            "redefine tran restore() {",
+            "variable := _test::_Box { _corner = _test::_Point { _x = default_corner_x, _y = default_corner_y }, _open = default_open }",
             "}",
             "}",
         )
@@ -1576,6 +1580,45 @@ class GammaToOxstsSerializerTest {
     }
 
     @Test
+    fun `a reset message resets the wrapped component in place of a run and a queue reset replaces both`() {
+        val lines = oxstsLines(
+            """
+                package test
+                interface Signals {
+                    in event first
+                    in event second
+                    in event third
+                }
+                statechart Receiver [
+                    port signals : provides Signals
+                ] {
+                }
+                adapter Buffered of component receiver : Receiver {
+                    when signals.first / run
+                    when signals.second / reset
+                    when signals.third / reset
+                    when signals.third / reset-queue
+                    queue messages (priority = 1, capacity = 2) {
+                        signals.any
+                    }
+                }
+            """,
+        )
+
+        assertThat(lines).containsSequence(
+            "if (identifier == 1) {",
+            "inline adapter.run()",
+            "}",
+            "if (identifier == 2) {",
+            "inline adapter.resetComponent()",
+            "}",
+            "if (identifier == 3) {",
+            "inline clear()",
+            "}",
+        )
+    }
+
+    @Test
     fun `a queue discarding the oldest message binds it and redefines the shift that drops it`() {
         val lines = oxstsLines(
             """
@@ -1842,25 +1885,6 @@ class GammaToOxstsSerializerTest {
                             }
                             transition from MainInitial to Idle
                             transition from Idle to Idle when timeout delay / position := #Point { x := 1 };
-                        }
-                    """,
-                ),
-                Arguments.of(
-                    "the reset control function",
-                    """
-                        package test
-                        interface Signals {
-                            in event first
-                        }
-                        statechart Receiver [
-                            port signals : provides Signals
-                        ] {
-                        }
-                        adapter Buffered of component receiver : Receiver {
-                            when any / reset
-                            queue messages (priority = 1, capacity = 1) {
-                                signals.any
-                            }
                         }
                     """,
                 ),
