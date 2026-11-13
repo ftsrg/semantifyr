@@ -110,7 +110,7 @@
 .admin-count.is-zero .verdict-mark { opacity: 0.45; }
 
 .admin .button-danger { border-color: var(--problem); background: var(--problem-soft); color: var(--problem); }
-.admin .button-danger:hover { background: var(--problem); color: var(--accent-text); }
+.admin .button-danger:hover { background: var(--accent-hover); color: var(--accent-text); }
 
 .admin-details { display: grid; gap: var(--space-4); padding: var(--space-4) var(--space-6) var(--space-5) calc(var(--space-5) + 16px + var(--space-5)); border-top: 1px solid var(--border-faint); background: var(--surface-inset); }
 .admin-details .admin-empty { padding: var(--space-2) 0; }
