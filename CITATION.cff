@@ -10,7 +10,7 @@ type: software
 authors:
   - name: The Semantifyr Authors
 repository-code: https://github.com/ftsrg/semantifyr
-url: https://ftsrg.mit.bme.hu/semantifyr/
+url: https://semantifyr.org/
 license: EPL-2.0
 preferred-citation:
   type: conference-paper
