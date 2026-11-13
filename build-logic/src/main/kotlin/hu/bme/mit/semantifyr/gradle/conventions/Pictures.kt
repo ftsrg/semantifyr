@@ -20,7 +20,9 @@ fun Project.registerRenderPictures(
     val renderScript = brandingDirectory.file("render.mjs")
 
     return tasks.register(taskName, NodeTask::class.java) {
-        inputs.files(brandingDirectory.asFileTree.matching { include("*.svg") })
+        inputs.files(brandingDirectory.asFileTree.matching {
+            include("*.svg")
+        })
         inputs.file(renderScript)
         inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
         inputs.files(tasks.named("npmInstall"))
