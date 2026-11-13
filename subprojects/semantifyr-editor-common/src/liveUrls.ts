@@ -52,6 +52,25 @@ const FRAMES: readonly LiveEditorFrame[] = [
     "fixed",
 ];
 
+// the lines an embed opens scrolled to, counted from one, the last included
+export interface LiveEditorLines {
+    first: number;
+    last: number;
+}
+
+function linesOf(value: string | null): LiveEditorLines | null {
+    const match = /^(\d+)-(\d+)$/.exec(value ?? "");
+    if (!match) {
+        return null;
+    }
+    const first = Number(match[1]);
+    const last = Number(match[2]);
+    if (first < 1 || last < first) {
+        return null;
+    }
+    return { first, last };
+}
+
 // The path names the model, the query how it is shown, the fragment what the visitor made, which a browser never sends to the server
 export interface LiveEditorLink {
     language: string;
@@ -60,6 +79,7 @@ export interface LiveEditorLink {
     view?: LiveEditorView | undefined;
     theme?: LiveEditorTheme | undefined;
     frame?: LiveEditorFrame | undefined;
+    lines?: LiveEditorLines | undefined;
     model?: string | undefined;
     case?: string | undefined;
     verdicts?: readonly (readonly [string, string])[] | undefined;
@@ -72,6 +92,7 @@ export interface LiveEditorAddress {
     view: LiveEditorView | null;
     theme: LiveEditorTheme | null;
     frame: LiveEditorFrame | null;
+    lines: LiveEditorLines | null;
     compressedModel: string | null;
     case: string | null;
     compressedVerdicts: string | null;
@@ -95,6 +116,7 @@ export async function liveEditorUrl(base: string, link: LiveEditorLink): Promise
     setOrDelete(url.searchParams, "view", link.view);
     setOrDelete(url.searchParams, "theme", link.theme);
     setOrDelete(url.searchParams, "frame", link.frame);
+    setOrDelete(url.searchParams, "lines", link.lines === undefined ? undefined : `${link.lines.first}-${link.lines.last}`);
     const fragment = new URLSearchParams();
     if (link.model !== undefined) {
         fragment.set("model", await encodeCompressedBase64Url(link.model));
@@ -153,6 +175,7 @@ export function parseLiveEditorUrl(location: LiveEditorLocation): LiveEditorAddr
         frame: FRAMES.find((frame) => {
             return frame === query.get("frame");
         }) ?? null,
+        lines: linesOf(query.get("lines")),
         compressedModel: fragment.get("model"),
         case: fragment.get("case"),
         compressedVerdicts: fragment.get("verdicts"),

@@ -30,7 +30,7 @@ import { StatusContent, useStatusLine } from '../statusLine'
 import { EditControl } from '../touch'
 import type { TraceSlot } from '../traceSlot'
 import { AddressModel } from './AddressModel'
-import { reportHeight } from './height'
+import { reportHeight, reportShown } from './height'
 
 import './embed.css'
 
@@ -381,7 +381,8 @@ export default function EmbedShell({ colorMode, trace }: Props): React.JSX.Eleme
     }
   }, [])
   const editOnly = view === 'edit-only'
-  const fitted = editOnly && !fixed
+  const openAt = fixed ? null : address.lines
+  const fitted = (editOnly || openAt !== null) && !fixed
   return (
     <div
       ref={root}
@@ -393,7 +394,7 @@ export default function EmbedShell({ colorMode, trace }: Props): React.JSX.Eleme
       <AddressError />
       <BackToModel />
       <div className="embed-editor" style={fitted && contentHeight !== null ? { height: contentHeight } : undefined}>
-        {languageId === undefined ? <AddressModel /> : <ModelEditor colorMode={colorMode} verdictMarks={!editOnly} {...(fitted ? { onContentHeight: fit } : {})} />}
+        {languageId === undefined ? <AddressModel /> : <ModelEditor colorMode={colorMode} verdictMarks={!editOnly} onShown={reportShown} {...(fitted ? { onContentHeight: fit } : {})} {...(openAt ? { openAt } : {})} />}
         <EditControl className="embed-edit-control" />
       </div>
       {editOnly ? null : <Strip slot={trace} fixed={fixed} />}
