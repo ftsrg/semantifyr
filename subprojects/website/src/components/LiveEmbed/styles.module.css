@@ -15,6 +15,11 @@
   border: 0;
 }
 
+/* the code starts below the row of buttons, which is always shown here, so that no button covers a line */
+.embed pre > code {
+  padding-top: calc(var(--ifm-pre-padding) + 1.125rem + 0.8rem + 2px);
+}
+
 /* the height of the copy button beside it */
 .control {
   display: inline-flex;
