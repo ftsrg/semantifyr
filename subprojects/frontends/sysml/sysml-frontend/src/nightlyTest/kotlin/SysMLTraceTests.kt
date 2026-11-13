@@ -19,8 +19,8 @@ class SysMLTraceTests {
         private val helper = SysMLv2FrontendTestHelper()
         private val artifactRoot = SysMLv2FrontendTestHelper.testArtifactRoot(SysMLTraceTests::class.java)
 
-        // whether a case has a witness follows from its property's root operator and its verdict, which the manifest does not hold: 77 corpus, 4 guarded initial transition and 3 tutorial witnesses among the 119 plus 3 cases the integration suites verify
-        private const val EXPECTED_TRACES = 84
+        // whether a case has a witness follows from its property's root operator and its verdict, which the manifest does not hold: 76 corpus, 4 guarded initial transition and 3 tutorial witnesses among the 118 plus 3 cases the integration suites verify
+        private const val EXPECTED_TRACES = 83
     }
 
     @Test

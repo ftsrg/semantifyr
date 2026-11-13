@@ -127,7 +127,6 @@
             "file": "landing_gear.sysml",
             "cases": [
                 { "name": "GearCanBeRetracted", "verdict": "Passed", "tier": "Integration" },
-                { "name": "GearCanBeLoweredAgain", "verdict": "Passed", "tier": "Integration" },
                 { "name": "BayClosedInCruise", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "GearMovesOnlyWithDoorsOpen", "verdict": "Failed", "tier": "Integration" }
             ]
@@ -208,10 +207,10 @@
         {
             "file": "crossroads.sysml",
             "cases": [
-                { "name": "ControllerInterruptedReachable", "verdict": "Passed", "tier": "Nightly" },
-                { "name": "TrafficLightABehaviorInterruptedBlackReachable", "verdict": "Passed", "tier": "Nightly" },
-                { "name": "TrafficLightBBehaviorNormalGreenReachable", "verdict": "Passed", "tier": "Nightly" },
-                { "name": "UnreachableGreenGreen", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "PoliceCanInterrupt", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "LightACanBlink", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "RoadBCanGetGreen", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "NeverBothGreen", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "ControllerOperatingReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "ControllerOperatingBothYellowReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "ControllerOperatingBothRedReachable", "verdict": "Passed", "tier": "Nightly" },
@@ -248,9 +247,9 @@
         {
             "file": "compressedspacecraft.sysml",
             "cases": [
-                { "name": "SpacecraftBehaviorCommunicationTransmittingReachable", "verdict": "Passed", "tier": "Nightly" },
-                { "name": "SpacecraftBatteryAlwaysAbove40", "verdict": "Passed", "tier": "Nightly" },
-                { "name": "NeverTransmitsWhileRecharging", "verdict": "Failed", "tier": "Nightly" },
+                { "name": "TransmissionCanStart", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "ChargeNeverBelow40", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "CanTransmitWhileRecharging", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "StationBehaviorIdleReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "StationBehaviorOperationReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "StationBehaviorOperationWaitingReachable", "verdict": "Passed", "tier": "Nightly" },

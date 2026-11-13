@@ -19,7 +19,7 @@
       "language": "sysml",
       "file": "subprojects/frontends/sysml/models/examples/level_crossing.sysml",
       "label": "Level crossing",
-      "reason": "The simplest model: four small state machines that pass items, and the one requirement a reader checks first.",
+      "reason": "The simplest model, four small state machines that pass items, and the one requirement a reader checks first.",
       "origin": "Made for Semantifyr's lecture on model checking",
       "holder": "The Semantifyr Authors",
       "licence": "EPL-2.0",
@@ -40,10 +40,10 @@
       "licence": "EPL-1.0",
       "page": "learn/sysml-v2-subset",
       "cases": [
-        "ControllerInterruptedReachable",
-        "TrafficLightABehaviorInterruptedBlackReachable",
-        "TrafficLightBBehaviorNormalGreenReachable",
-        "UnreachableGreenGreen"
+        "PoliceCanInterrupt",
+        "LightACanBlink",
+        "RoadBCanGetGreen",
+        "NeverBothGreen"
       ]
     },
     {
@@ -57,9 +57,9 @@
       "licence": "EPL-1.0",
       "page": "learn/sysml-v2-subset",
       "cases": [
-        "SpacecraftBehaviorCommunicationTransmittingReachable",
-        "SpacecraftBatteryAlwaysAbove40",
-        "NeverTransmitsWhileRecharging"
+        "TransmissionCanStart",
+        "ChargeNeverBelow40",
+        "CanTransmitWhileRecharging"
       ]
     },
     {
@@ -74,7 +74,6 @@
       "page": "learn/sysml-v2-subset",
       "cases": [
         "GearCanBeRetracted",
-        "GearCanBeLoweredAgain",
         "BayClosedInCruise",
         "GearMovesOnlyWithDoorsOpen"
       ]

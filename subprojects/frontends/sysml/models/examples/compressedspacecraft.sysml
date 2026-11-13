@@ -3,7 +3,7 @@ doc
  * A spacecraft that sends its data to a ground station while it manages its battery.
  * The station pings the spacecraft when it starts operating and every ten seconds after; the spacecraft then transmits while it has data and charge, and its battery recharges in a parallel region.
  * The spacecraft starts a transmission only while it is not recharging; its charge and its data change in steps of ten.
- * The cases ask whether a transmission starts, whether the charge stays above its floor, and whether the spacecraft ever transmits while it recharges.
+ * The cases ask whether a transmission can start, whether the charge ever falls below 40, and whether the spacecraft can transmit while it recharges.
  */
 
 private import ScalarValues::Integer;
@@ -159,7 +159,7 @@ part def Mission {
     flow from spacecraft.dataPort to groundStation.dataPort;
 }
 
-verification def SpacecraftBehaviorCommunicationTransmittingReachable {
+verification def TransmissionCanStart {
     subject mission: Mission;
 
     objective {
@@ -173,7 +173,7 @@ verification def SpacecraftBehaviorCommunicationTransmittingReachable {
     }
 }
 
-verification def SpacecraftBatteryAlwaysAbove40 {
+verification def ChargeNeverBelow40 {
     subject mission: Mission;
 
     objective {
@@ -187,16 +187,16 @@ verification def SpacecraftBatteryAlwaysAbove40 {
     }
 }
 
-verification def NeverTransmitsWhileRecharging {
+verification def CanTransmitWhileRecharging {
     subject mission: Mission;
 
     objective {
         verify requirement {
             require constraint {
-                mustAlways(not(
+                eventually(
                     isStateActive(mission.spacecraft.Behaviour.Communication.Transmitting)
                     and isStateActive(mission.spacecraft.Behaviour.Battery.Recharging)
-                ))
+                )
             }
         }
     }

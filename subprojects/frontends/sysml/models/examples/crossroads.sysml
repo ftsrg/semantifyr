@@ -2,7 +2,7 @@ doc
 /*
  * Two traffic lights at a crossroads, cycled by one controller and interrupted by the police.
  * On a timer, the controller toggles each light from yellow to red, to green and back to yellow, so that the two roads get green in turn.
- * A police signal from outside interrupts the cycle and both lights blink yellow, until a second signal resumes it.
+ * A police signal from outside interrupts the cycle and both lights blink yellow, until a second signal restarts it.
  * The cases ask whether the police can interrupt, whether the lights blink, whether road B gets green, and whether both roads can be green at once.
  */
 
@@ -163,7 +163,7 @@ part def CrossroadSystem {
     flow from controller.controlB to trafficLightB.control;
 }
 
-verification def ControllerInterruptedReachable {
+verification def PoliceCanInterrupt {
     subject system : CrossroadSystem;
 
     objective {
@@ -177,7 +177,7 @@ verification def ControllerInterruptedReachable {
     }
 }
 
-verification def TrafficLightABehaviorInterruptedBlackReachable {
+verification def LightACanBlink {
     subject system : CrossroadSystem;
 
     objective {
@@ -191,7 +191,7 @@ verification def TrafficLightABehaviorInterruptedBlackReachable {
     }
 }
 
-verification def TrafficLightBBehaviorNormalGreenReachable {
+verification def RoadBCanGetGreen {
     subject system : CrossroadSystem;
 
     objective {
@@ -205,7 +205,7 @@ verification def TrafficLightBBehaviorNormalGreenReachable {
     }
 }
 
-verification def UnreachableGreenGreen {
+verification def NeverBothGreen {
     subject system : CrossroadSystem;
 
     objective {
