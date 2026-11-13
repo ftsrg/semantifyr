@@ -9,7 +9,7 @@ import BrowserOnly from '@docusaurus/BrowserOnly';
 import CodeBlock from '@theme-original/CodeBlock';
 import type CodeBlockType from '@theme/CodeBlock';
 import type { WrapperProps } from '@docusaurus/types';
-import { FenceContext } from '@site/src/lib/fence';
+import { FenceContext, OpenLinkContext } from '@site/src/lib/fence';
 
 const OpenInLiveLink = lazy(() => import('./OpenInLiveLink'));
 
@@ -55,18 +55,21 @@ export default function CodeBlockWrapper(props: Props): React.JSX.Element {
   const fence = useContext(FenceContext);
   const code = language !== null && open ? fence?.model ?? extractText((props as { children?: React.ReactNode }).children) : '';
 
+  const link = code && language
+    ? (
+      <BrowserOnly>
+        {() => (
+          <Suspense fallback={null}>
+            <OpenInLiveLink language={language} code={code} />
+          </Suspense>
+        )}
+      </BrowserOnly>
+    )
+    : null;
+
   return (
-    <>
+    <OpenLinkContext.Provider value={link}>
       <CodeBlock {...props} />
-      {code && language && (
-        <BrowserOnly>
-          {() => (
-            <Suspense fallback={null}>
-              <OpenInLiveLink language={language} code={code} />
-            </Suspense>
-          )}
-        </BrowserOnly>
-      )}
-    </>
+    </OpenLinkContext.Provider>
   );
 }

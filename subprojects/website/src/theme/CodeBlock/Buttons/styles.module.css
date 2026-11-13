@@ -4,16 +4,60 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-.buttons {
+/* lies over the block's corner and fades the first line out under it, so no text shows between the controls */
+.row {
   position: absolute;
-  top: calc(var(--ifm-pre-padding) / 2);
-  right: calc(var(--ifm-pre-padding) / 2);
+  top: 0;
+  right: 0;
   z-index: 1;
   display: flex;
+  align-items: center;
   column-gap: 0.2rem;
+  padding: calc(var(--ifm-pre-padding) / 2) calc(var(--ifm-pre-padding) / 2) calc(var(--ifm-pre-padding) / 2) 1.5rem;
+  background: linear-gradient(to right, transparent, var(--prism-background-color) 1.2rem);
+  border-radius: 0 var(--ifm-code-border-radius) 0 0;
 }
 
-/* the original group places itself in the block's corner; here it follows the control */
-.buttons .group {
+/* the original group places itself in the block's corner; here it follows the controls, and its buttons are always shown */
+.row .group {
   position: static;
+}
+
+.row .group button {
+  opacity: 1 !important;
+}
+
+[aria-busy='true'] .row > :not(:first-child) {
+  display: none;
+}
+
+.control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  height: calc(1.125rem + 0.8rem + 2px);
+  padding: 0 0.55rem 0 0.45rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: var(--ifm-global-radius);
+  background: var(--prism-background-color);
+  color: var(--ifm-color-emphasis-700);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.control:hover,
+.control:focus-visible {
+  border-color: var(--ifm-color-primary);
+  color: var(--ifm-color-primary);
+  text-decoration: none;
+}
+
+.controlIcon {
+  width: 0.85rem;
+  height: 0.85rem;
 }
