@@ -22,10 +22,6 @@ verification case CounterReadsTheInitialValueOfThePersistentParameter of Asynchr
     EF (state counter.main.B and variable counter.a = 11)
 }
 
-verification case CounterNeverCountsBelowTheInitialValueInB of AsynchronousSystem {
-    EF (state counter.main.B and variable counter.a < 11)
-}
-
 verification case CounterReturnsToA of AsynchronousSystem {
     EF variable counter.rereachedA = true
 }

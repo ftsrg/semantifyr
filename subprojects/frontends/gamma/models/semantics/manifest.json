@@ -1,6 +1,13 @@
 {
     "models": [
         {
+            "file": "AsynchronousStatechart.gamma",
+            "cases": [
+                { "name": "TheDefaultAdapterServesOneMessagePerCycleUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "TheDefaultAdapterServesTheNextMessageInALaterCycle", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
             "file": "BeginningOfStepGuards.gamma",
             "cases": [
                 { "name": "GuardReadsTheValueAtTheStepStart", "verdict": "Passed", "tier": "Integration" },
@@ -21,6 +28,13 @@
             "cases": [
                 { "name": "RequiredPortsRaiseReachesTheProvidedPort", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ProvidedPortsRaiseReachesTheRequiredPort", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "Clocks.gamma",
+            "cases": [
+                { "name": "AQueuedMessageIsSeenAtTheClockRun", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AClockTheQueueDoesNotStoreRunsTheComponentUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
@@ -92,6 +106,20 @@
             ]
         },
         {
+            "file": "Queues.gamma",
+            "cases": [
+                { "name": "MessagesAreReceivedInTheirOrder", "verdict": "Passed", "tier": "Integration" },
+                { "name": "MessagesAreReceivedInReverseUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "AFullQueueDropsTheIncomingMessage", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AFullQueueDropsTheOldestMessageUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "TheHigherPriorityQueueIsServedFirst", "verdict": "Passed", "tier": "Integration" },
+                { "name": "TheDeclaredFirstQueueIsServedFirstUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "AMessageWithoutARunIsSeenAtTheNextRun", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AMessageWithoutARunRunsTheComponentUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "AResetOfTheOtherQueuesDropsTheirMessagesUnreachable", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
             "file": "Records.gamma",
             "cases": [
                 { "name": "RecordVariableStartsFromItsInitialValue", "verdict": "Passed", "tier": "Integration" },
@@ -118,6 +146,14 @@
                 { "name": "SelfTransitionOnTheFirstTriggerFires", "verdict": "Passed", "tier": "Integration" },
                 { "name": "SelfTransitionOnTheSecondTriggerFires", "verdict": "Passed", "tier": "Integration" },
                 { "name": "NoTransitionFiresWithoutItsTrigger", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "ScheduledAsynchronous.gamma",
+            "cases": [
+                { "name": "TwoTurnsInACycleServeTwoMessages", "verdict": "Passed", "tier": "Integration" },
+                { "name": "OneTurnInACycleServesTwoMessagesUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "ALaterTurnSeesTheTimeoutUp", "verdict": "Passed", "tier": "Integration" }
             ]
         },
         {

@@ -82,7 +82,24 @@ object UnmappedGammaConstructs {
         }
         return gammaPackage.components.flatMap {
             describeAsynchronousComposition(it)
+        } + gammaPackage.verificationCases.mapNotNull {
+            describeAsynchronousRoot(it)
         }
+    }
+
+    // at the root every port is the environment's, and Gamma's transformation rejects a queue mixing them with clock ticks
+    private fun describeAsynchronousRoot(verificationCase: VerificationCaseDeclaration): UnmappedGammaConstruct? {
+        val component = verificationCase.component
+        if (component == null || !AsynchronousMapping.isAdapter(component)) {
+            return null
+        }
+        val queue = AsynchronousMapping.adapterOf(component).queues.firstOrNull {
+            it.storesClocks && it.portMessages.isNotEmpty()
+        } ?: return null
+        return UnmappedGammaConstruct(
+            verificationCase,
+            "the queue '${queue.name}' of '${component.name}' storing messages of the environment and clock ticks",
+        )
     }
 
     private fun describe(element: EObject): UnmappedGammaConstruct? {
@@ -233,9 +250,14 @@ object UnmappedGammaConstructs {
                     AsynchronousMapping.isBound(component, instance, it.port!!)
                 }
                 if (bound > 0 && (bound < queue.portMessages.size || queue.storesClocks)) {
+                    val others = if (queue.storesClocks) {
+                        "clock ticks"
+                    } else {
+                        "messages of other components"
+                    }
                     constructs += UnmappedGammaConstruct(
                         instance,
-                        "the queue '${queue.name}' of '${instance.name}' storing messages of the environment and of other components",
+                        "the queue '${queue.name}' of '${instance.name}' storing messages of the environment and $others",
                     )
                 }
             }
@@ -354,8 +376,8 @@ object UnmappedGammaConstructs {
 
     private fun describeEnds(transition: Transition): String? {
         if (transition.from is InitialState) {
-            if (transition.trigger != null || transition.guard != null || transition.actions.isNotEmpty()) {
-                return "an initial transition with a trigger, guard or action"
+            if (transition.trigger != null || transition.guard != null) {
+                return "an initial transition with a trigger or guard"
             }
             if (transition.from.eContainer() != transition.to.eContainer()) {
                 return "an initial transition to '${transition.to.name}' in another region"

@@ -1,0 +1,67 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package ScheduledAsynchronous
+
+interface Signals {
+    in event first
+    in event second
+}
+
+@TransitionPriority = order-based
+statechart Receiver [
+    port signals : provides Signals
+] {
+    timeout late
+    region Main {
+        initial MainInitial
+        state Waiting
+        state GotFirst {
+            entry / set late := 1 s;
+        }
+        state Both
+        state Late
+    }
+
+    transition from MainInitial to Waiting
+    transition from Waiting to GotFirst when signals.first
+    transition from GotFirst to Late when timeout late
+    transition from GotFirst to Both when signals.second
+}
+
+adapter Buffered of component receiver : Receiver {
+    when any / run
+    queue messages (priority = 1, capacity = 2) {
+        signals.any
+    }
+}
+
+scheduled-async Once [
+    port signals : provides Signals
+] {
+    component buffered : Buffered
+    bind signals -> buffered.signals
+}
+
+scheduled-async Twice [
+    port signals : provides Signals
+] {
+    component buffered : Buffered
+    bind signals -> buffered.signals
+    execute buffered, buffered
+}
+
+verification case TwoTurnsInACycleServeTwoMessages of Twice {
+    EF state buffered -> receiver.Main.Both
+}
+
+verification case OneTurnInACycleServesTwoMessagesUnreachable of Once {
+    EF state buffered -> receiver.Main.Both
+}
+
+verification case ALaterTurnSeesTheTimeoutUp of Once {
+    EF state buffered -> receiver.Main.Late
+}

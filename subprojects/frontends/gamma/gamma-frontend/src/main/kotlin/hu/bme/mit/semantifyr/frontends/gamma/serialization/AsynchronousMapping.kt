@@ -51,6 +51,7 @@ class QueueMapping(
     val name: String,
     val capacity: Int,
     val priority: Int,
+    val rank: Int,
     val messages: List<QueuedMessage>,
 ) {
     val storesClocks: Boolean
@@ -136,7 +137,7 @@ object AsynchronousMapping {
             QueuedMessage(index + 1, port, event, null, port, event, MessageControl.RUN)
         }
         val queues = if (capacity > 0) {
-            listOf(QueueMapping(statechart, name, capacity, 1, messages))
+            listOf(QueueMapping(statechart, name, capacity, 1, 0, messages))
         } else {
             emptyList()
         }
@@ -157,8 +158,12 @@ object AsynchronousMapping {
         val functioning = adapter.messageQueues.filter {
             capacityOf(it) > 0
         }
+        // Gamma serves the queues by descending priority, a stable sort keeping the declaration order among equal ones
+        val served = functioning.sortedByDescending {
+            it.priority
+        }
         val queues = functioning.map {
-            queueOf(adapter, it, functioning)
+            queueOf(adapter, it, functioning, served.indexOf(it))
         }
         return AdapterMapping(adapter, wrappedComponent, clocks, queues)
     }
@@ -172,6 +177,7 @@ object AsynchronousMapping {
         adapter: AsynchronousAdapterDeclaration,
         queue: MessageQueue,
         functioning: List<MessageQueue>,
+        rank: Int,
     ): QueueMapping {
         val storedEvents = LinkedHashSet<Pair<PortDeclaration, EventDeclaration>>()
         val storedClocks = LinkedHashSet<ClockDeclaration>()
@@ -199,7 +205,7 @@ object AsynchronousMapping {
             }
             messages += QueuedMessage(messages.size + 1, null, null, clock, null, null, control)
         }
-        return QueueMapping(queue, queue.name, capacityOf(queue), queue.priority, messages)
+        return QueueMapping(queue, queue.name, capacityOf(queue), queue.priority, rank, messages)
     }
 
     private fun inputEventsOf(reference: MessageReference): List<Pair<PortDeclaration, EventDeclaration>> {

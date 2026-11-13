@@ -448,6 +448,17 @@ class GammaToOxstsSerializer(
         return "${markQualifiedName(gammaPackage.name)}::$name"
     }
 
+    // an offered port is a reference typed Port, so its events are named on the port the adapter holds
+    private fun adapterPortPath(adapter: ComponentDeclaration, port: PortDeclaration): String {
+        if (adapter is AsynchronousAdapterDeclaration) {
+            if (port in adapter.ports) {
+                return markName(port.name)
+            }
+            return "${markName(adapter.wrappedComponent.name)}.${markName(port.name)}"
+        }
+        return "$WRAPPED_FEATURE.${markName(port.name)}"
+    }
+
     private fun environmentalFlag(queue: QueueMapping): String {
         return "$ENVIRONMENTAL_FLAG${queue.name}"
     }
@@ -486,8 +497,8 @@ class GammaToOxstsSerializer(
                 }
             }
 
-            for (queue in mapping.queues) {
-                serializeQueueFeature(component, wrappedFeature, queue)
+            for ((position, queue) in mapping.queues.withIndex()) {
+                serializeQueueFeature(component, wrappedFeature, queue, position)
             }
         }
 
@@ -501,15 +512,18 @@ class GammaToOxstsSerializer(
         adapter: ComponentDeclaration,
         wrappedFeature: String,
         queue: QueueMapping,
+        position: Int,
     ) {
         val flag = environmentalFlag(queue)
         appendLine("refers $flag: bool = ${!queue.storesClocks && queue.portMessages.isNotEmpty()}")
         appendIndent("contains ${queueFeatureName(adapter, queue)}: ${queueClassName(adapter, queue)} subsets queues") {
+            appendLine("redefine refers position: int = $position")
+            appendLine("redefine refers rank: int = ${queue.rank}")
             appendLine("redefine refers environmental: bool = $flag")
             for (message in queue.messages) {
                 val identifier = message.identifier
                 if (message.port != null && message.event != null) {
-                    val portPath = markName(message.port.name)
+                    val portPath = adapterPortPath(adapter, message.port)
                     appendLine("redefine refers $PORT_REFERENCE$identifier: Port = $portPath")
                     appendLine("redefine refers $SOURCE_REFERENCE$identifier: Event = ${inputEventPath(message.port, message.event, portPath)}")
                 }
@@ -785,7 +799,7 @@ class GammaToOxstsSerializer(
     private fun IndentingStringBuilder.serializeDispatchFeature(dispatch: DispatchMapping, name: String) {
         val source = markName(dispatch.sourceInstance.name)
         val target = markName(dispatch.targetInstance.name)
-        val eventPath = outputEventPath(dispatch.sourcePort, dispatch.event, "$source.${markName(dispatch.sourcePort.name)}")
+        val eventPath = outputEventPath(dispatch.sourcePort, dispatch.event, "$source.${adapterPortPath(dispatch.sourceInstance.component, dispatch.sourcePort)}")
         appendIndent("contains $name: ${markQualifiedName(gammaPackageOf(dispatch.sourceInstance).name)}::$name subsets dispatches") {
             appendLine("redefine refers source: AsynchronousAdapter = $source")
             appendLine("redefine refers event: Event = $eventPath")
@@ -1089,6 +1103,9 @@ class GammaToOxstsSerializer(
         val name = nameMap.declareGenerated(region, transition, "entry_to_${transition.to.name}")
         appendIndent("contains $name: EntryTransition subsets entryTransitions") {
             appendLine("redefine refers to: State = ${markName(transition.to.name)}")
+            for (action in transition.actions) {
+                serialize(action, "actions")
+            }
         }
     }
 

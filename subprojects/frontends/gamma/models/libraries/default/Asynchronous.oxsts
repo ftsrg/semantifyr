@@ -33,6 +33,8 @@ abstract class MessageQueue {
 
     refers capacity: int
     refers priority: int
+    refers position: int
+    refers rank: int
     refers environmental: bool = false
 
     var size: int := 0
@@ -82,19 +84,17 @@ abstract class AsynchronousAdapter : Component {
         }
     }
 
-    // one message per turn, from the non-empty queue of the highest priority, the first declared among equal ones
+    // one message per turn, served by rank: descending priority, the first declared first among equal ones
     tran receiveMessage() {
         var received: bool := false
-        inline for (queue in queues) {
-            var blocked: bool := received
-            inline for (other in queues) {
-                inline if (other.priority > queue.priority) {
-                    blocked := blocked || !other.isEmpty()
+        inline for (turn in queues) {
+            inline for (queue in queues) {
+                inline if (queue.rank == turn.position) {
+                    if (!received && !queue.isEmpty()) {
+                        received := true
+                        inline queue.receive()
+                    }
                 }
-            }
-            if (!blocked && !queue.isEmpty()) {
-                received := true
-                inline queue.receive()
             }
         }
     }
@@ -127,19 +127,23 @@ abstract class AsynchronousAdapter : Component {
         inline for (queue in queues) {
             inline if (queue.environmental) {
                 inline for (attempt in 1..queue.capacity) {
-                    var load: int := queue.size
-                    var constrained: bool := false
-                    inline for (other in queues) {
-                        inline if (other.priority > queue.priority) {
-                            load := load + other.size
-                            constrained := true
-                        }
-                    }
-                    if (!queue.isFull() && (!constrained || load < scheduleCount)) {
-                        inline queue.receiveEnvironmentMessage()
-                    }
+                    inline offerEnvironmentMessage(queue)
                 }
             }
+        }
+    }
+
+    tran offerEnvironmentMessage(queue: MessageQueue) {
+        var load: int := queue.size
+        var constrained: bool := false
+        inline for (other in queues) {
+            inline if (other.priority > queue.priority) {
+                load := load + other.size
+                constrained := true
+            }
+        }
+        if (!queue.isFull() && (!constrained || load < scheduleCount)) {
+            inline queue.receiveEnvironmentMessage()
         }
     }
 

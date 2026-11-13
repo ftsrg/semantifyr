@@ -77,16 +77,16 @@ The validator checks that an act raises an input event and an assert an output e
 
 ## Generation
 
-The Gamma semantic library marks four transitions with `@Trace`: `Transition::fire`, `Port::raiseInputEvent(event)`, `Port::setOutputEvent(event)` and `GammaVerificationCase::passTime`. A verify run writes, step by step, the traced calls to `trace.json` and the state to `witness.json`, both named by their path from the root instance. `GammaTraceGenerator` resolves each path through the name map the Gamma compiler filled when it emitted the OXSTS model in the same verify run, so it never decodes OXSTS names, and maps:
+The Gamma semantic library marks five transitions with `@Trace`: `Transition::fire`, `Port::raiseInputEvent(event)`, `Port::receiveInputMessage(event)`, `Port::setOutputEvent(event)` and `GammaVerificationCase::passTime`. A verify run writes, step by step, the traced calls to `trace.json` and the state to `witness.json`, both named by their path from the root instance. `GammaTraceGenerator` resolves each path through the name map the Gamma compiler filled when it emitted the OXSTS model in the same verify run, so it never decodes OXSTS names, and maps:
 
 - a fired `Transition::fire` to a `transition` assert;
-- `Port::raiseInputEvent` to a `raise` act on the port of the traced component the inner port is bound to, and `Port::setOutputEvent` to a `raise` assert on the port of the instance that raised it, as the called transition says;
+- `Port::raiseInputEvent`, and `Port::receiveInputMessage`, the environment's message to an adapter's queue, to a `raise` act on the port of the traced component the inner port is bound to, and `Port::setOutputEvent` to a `raise` assert on the port of the instance that raised it, as the called transition says;
 - `passTime` at the root to `elapse 1000` in the same step, before `schedule`;
 - the active state of every region and the value of every statechart variable in the witness to `state` and `variable` asserts.
 
 Input events are traced because the library resets them within the step, so no state between steps shows them. Output events are traced because the optimizer removes outputs that nothing reads. The Gamma language's serializer and formatter write the trace.
 
-Not in the trace: negations of the output events not raised, timers and port variables; the values of event parameters, since a traced call records no runtime argument, so a raise of an event with parameters is written without its arguments; the values of record-typed variables; the last state a shallow history node holds, which is not an active state; and the firing of a transition into a history node without an `@(id)`, which the `from`/`to` form cannot name, so only the states it entered show it. The time step is fixed at one second.
+Not in the trace: negations of the output events not raised, timers and port variables; the values of event parameters, since a traced call records no runtime argument, so a raise of an event with parameters is written without its arguments; the values of record-typed variables; the messages an adapter's queues hold and its clocks; the last state a shallow history node holds, which is not an active state; and the firing of a transition into a history node without an `@(id)`, which the `from`/`to` form cannot name, so only the states it entered show it. The time step is fixed at one second.
 
 ## Validation
 

@@ -363,11 +363,16 @@ abstract class AbstractTransition {
 class EntryTransition : AbstractTransition {
     refers to: State[1]
 
+    contains actions: Action[0..*]
+
     redefine prop isEnabled(): bool {
         return true
     }
 
     redefine tran fire() {
+        inline for (action in actions) {
+            inline action.main()
+        }
         inline to.enter()
     }
 }

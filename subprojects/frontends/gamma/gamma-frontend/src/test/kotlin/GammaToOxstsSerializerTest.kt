@@ -1481,6 +1481,139 @@ class GammaToOxstsSerializerTest {
         )
     }
 
+    private fun asynchronousLines(): List<String> {
+        return oxstsLines(
+            """
+                package test
+                interface Signals {
+                    in event first(value : integer)
+                    in event second
+                }
+                interface Replies {
+                    out event done
+                }
+                @Asynchronous
+                statechart Sender [
+                    port signals : provides Signals,
+                    port replies : provides Replies
+                ] {
+                }
+                statechart Receiver [
+                    port signals : provides Signals,
+                    port replies : requires Replies
+                ] {
+                }
+                adapter Buffered of component receiver : Receiver {
+                    clock ticker (rate = 3 ms)
+                    when ticker / run
+                    queue low (priority = 1, capacity = 2) {
+                        replies.any, ticker
+                    }
+                    queue high (priority = 2, capacity = 1) {
+                        signals.any
+                    }
+                }
+                scheduled-async System [
+                    port signals : provides Signals
+                ] {
+                    component sender : Sender
+                    component buffered : Buffered
+                    bind signals -> sender.signals
+                    channel [ sender.replies ] -o)- [ buffered.replies ]
+                    execute sender, buffered, buffered
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `a queue is a generated class whose storage has the capacity as a literal`() {
+        val lines = asynchronousLines()
+
+        assertThat(lines).containsSequence(
+            "class queue_Buffered_high : MessageQueue {",
+            "redefine refers capacity: int = 1",
+            "redefine refers priority: int = 2",
+        )
+        assertThat(lines).contains(
+            "var identifiers: int[1] := [0]",
+            "var values_1_value: int[1] := [0]",
+            "var identifiers: int[2] := [0, 0]",
+        )
+        assertThat(lines).containsSequence(
+            "tran enqueue_1(value_value: int) {",
+            "identifiers[size] := 1",
+            "values_1_value[size] := value_value",
+            "size := size + 1",
+        )
+    }
+
+    @Test
+    fun `queues are ranked by descending priority and a clock tick runs the component`() {
+        val lines = asynchronousLines()
+
+        assertThat(lines).containsSequence(
+            "contains _low: _test::queue_Buffered_low subsets queues {",
+            "redefine refers position: int = 0",
+            "redefine refers rank: int = 1",
+        )
+        assertThat(lines).containsSequence(
+            "contains _high: _test::queue_Buffered_high subsets queues {",
+            "redefine refers position: int = 1",
+            "redefine refers rank: int = 0",
+        )
+        assertThat(lines).containsSequence(
+            "inline shift()",
+            "if (identifier == 2) {",
+            "inline adapter.run()",
+        )
+        assertThat(lines).containsSequence(
+            "inline if (clock == clock_2) {",
+            "if (!isFull()) {",
+            "inline enqueue_2()",
+        )
+    }
+
+    @Test
+    fun `an asynchronous statechart is unfolded into Gamma's default adapter`() {
+        val lines = asynchronousLines()
+
+        assertThat(lines).containsSequence(
+            "class adapter_Sender : AsynchronousAdapter {",
+            "redefine contains wrapped: _test::_Sender",
+            "refers _signals: Port subsets ports = wrapped._signals",
+            "refers _replies: Port subsets ports = wrapped._replies",
+            "refers environmental_SenderMessageQueue: bool = true",
+            "contains queue_SenderMessageQueue: _test::queue_Sender_SenderMessageQueue subsets queues {",
+        )
+        assertThat(lines).contains("redefine refers capacity: int = 4")
+    }
+
+    @Test
+    fun `a composite binds per instance which queues the environment fills, how often it runs and where its outputs go`() {
+        val lines = asynchronousLines()
+
+        assertThat(lines).containsSequence(
+            "contains _sender: _test::adapter_Sender subsets adapters {",
+            "redefine refers environmental_SenderMessageQueue: bool = true",
+            "}",
+            "contains _buffered: _test::_Buffered subsets adapters {",
+            "redefine refers scheduleCount: int = 2",
+            "redefine refers environmental_low: bool = false",
+            "redefine refers environmental_high: bool = false",
+        )
+        assertThat(lines).containsSequence(
+            "contains dispatch_sender_replies_done_to_buffered_replies: _test::dispatch_sender_replies_done_to_buffered_replies subsets dispatches {",
+            "redefine refers source: AsynchronousAdapter = _sender",
+            "redefine refers event: Event = _sender.wrapped._replies.interface._done",
+            "redefine refers target: _test::queue_Buffered_low = _buffered._low",
+        )
+        assertThat(lines).containsSequence(
+            "contains execute_sender: AsynchronousExecutionStep subsets executionSteps {",
+            "redefine refers adapter: AsynchronousAdapter = _sender",
+        )
+    }
+
     @ParameterizedTest(name = "{0}")
     @MethodSource("unmappedConstructs")
     fun `a construct the serializer does not map yet is a located diagnostic`(construct: String, source: String) {
@@ -1532,7 +1665,7 @@ class GammaToOxstsSerializerTest {
                     """,
                 ),
                 Arguments.of(
-                    "an initial transition with a trigger, guard or action",
+                    "an initial transition with a trigger or guard",
                     """
                         package test
                         statechart Machine {
@@ -1541,7 +1674,7 @@ class GammaToOxstsSerializerTest {
                                 initial MainInitial
                                 state Idle
                             }
-                            transition from MainInitial to Idle / count := 1;
+                            transition from MainInitial to Idle [count = 0]
                         }
                     """,
                 ),
@@ -1622,12 +1755,160 @@ class GammaToOxstsSerializerTest {
                         }
                     """,
                 ),
+                Arguments.of(
+                    "the discard strategy of the oldest message in queue 'messages'",
+                    """
+                        package test
+                        interface Signals {
+                            in event first
+                        }
+                        statechart Receiver [
+                            port signals : provides Signals
+                        ] {
+                        }
+                        adapter Buffered of component receiver : Receiver {
+                            when any / run
+                            queue messages (priority = 1, capacity = 1, discard = oldest) {
+                                signals.any
+                            }
+                        }
+                    """,
+                ),
+                Arguments.of(
+                    "the reset control function",
+                    """
+                        package test
+                        interface Signals {
+                            in event first
+                        }
+                        statechart Receiver [
+                            port signals : provides Signals
+                        ] {
+                        }
+                        adapter Buffered of component receiver : Receiver {
+                            when any / reset
+                            queue messages (priority = 1, capacity = 1) {
+                                signals.any
+                            }
+                        }
+                    """,
+                ),
+                Arguments.of(
+                    "the asynchronous composite 'Inner' inside the asynchronous composite 'Outer'",
+                    """
+                        package test
+                        interface Signals {
+                            in event first
+                        }
+                        statechart Receiver [
+                            port signals : provides Signals
+                        ] {
+                        }
+                        adapter Buffered of component receiver : Receiver {
+                            when any / run
+                            queue messages (priority = 1, capacity = 1) {
+                                signals.any
+                            }
+                        }
+                        async Inner {
+                            component buffered : Buffered
+                        }
+                        async Outer {
+                            component inner : Inner
+                        }
+                    """,
+                ),
+                Arguments.of(
+                    "the queue 'messages' of 'Ticking' storing messages of the environment and clock ticks",
+                    """
+                        package test
+                        interface Signals {
+                            in event first
+                        }
+                        statechart Receiver [
+                            port signals : provides Signals
+                        ] {
+                        }
+                        adapter Ticking of component receiver : Receiver {
+                            clock ticker (rate = 1 s)
+                            when ticker / run
+                            queue messages (priority = 1, capacity = 1) {
+                                ticker, signals.any
+                            }
+                        }
+                        verification case Ticks of Ticking {
+                            EF true
+                        }
+                    """,
+                ),
+                Arguments.of(
+                    "the record-typed parameter of 'first' stored in the queue of statechart 'Receiver'",
+                    """
+                        package test
+                        type Point : record {
+                            x : integer
+                        }
+                        interface Signals {
+                            in event first(position : Point)
+                        }
+                        @Asynchronous
+                        statechart Receiver [
+                            port signals : provides Signals
+                        ] {
+                        }
+                    """,
+                ),
             )
         }
 
         @JvmStatic
         fun refusedConstructs(): Stream<Arguments> {
             return Stream.of(
+                Arguments.of(
+                    "the full-step control function",
+                    """
+                        package test
+                        interface Signals {
+                            in event first
+                        }
+                        statechart Receiver [
+                            port signals : provides Signals
+                        ] {
+                        }
+                        adapter Buffered of component receiver : Receiver {
+                            when any / full-step
+                            queue messages (priority = 1, capacity = 1) {
+                                signals.any
+                            }
+                        }
+                    """,
+                ),
+                Arguments.of(
+                    "the event 'first' of 'sender.signals' reaching more than one queue",
+                    """
+                        package test
+                        interface Signals {
+                            out event first
+                        }
+                        @Asynchronous
+                        statechart Sender [
+                            port signals : provides Signals
+                        ] {
+                        }
+                        @Asynchronous
+                        statechart Receiver [
+                            port signals : requires Signals
+                        ] {
+                        }
+                        async System {
+                            component sender : Sender
+                            component left : Receiver
+                            component right : Receiver
+                            channel [ sender.signals ] -o)- [ left.signals ]
+                            channel [ sender.signals ] -o)- [ right.signals ]
+                        }
+                    """,
+                ),
                 Arguments.of(
                     "a transition from 'Right' to the history node 'History' from an orthogonal region of its parent state",
                     """

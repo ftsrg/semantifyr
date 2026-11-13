@@ -7,21 +7,29 @@
 package hu.bme.mit.semantifyr.frontends.gamma.lang
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.AnyPortEventReference
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.AsynchronousAdapterDeclaration
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.AsynchronousCompositeComponentDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.BooleanOp
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.BooleanOperator
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.CascadeComponentDeclaration
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ClockTickReference
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComparisonOperator
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ControlFunction
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.DiscardStrategy
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EF
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventDirection
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ExecutionTrace
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.FiredTransitionExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaRoot
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaUtils
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GuardEvaluation
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.NegationOperator
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Persistency
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RaiseEventAct
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RecordType
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ScheduledAsynchronousCompositeComponentDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SchedulingOrder
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SetTimeoutAction
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ShallowHistoryState
@@ -262,5 +270,90 @@ class GammaGrammarTest {
         val verificationCase = gammaPackage.verificationCases.single()
         assertThat(verificationCase.component.name).isEqualTo("Machine")
         assertThat(((verificationCase.expression as EF).body as StateReferenceExpression).instance).isNull()
+    }
+
+    @Test
+    fun `adapters, queues, clocks and asynchronous composites take Gamma's syntax`() {
+        val gammaPackage = parse(
+            """
+                package test
+                interface Signals {
+                    in event first(value : integer)
+                    in event second
+                }
+                @Asynchronous
+                statechart Sender capacity (2) [
+                    port signals : provides Signals
+                ] {
+                }
+                statechart Receiver [
+                    port signals : provides Signals
+                ] {
+                }
+                adapter Buffered of component receiver : Receiver [
+                    port control : provides Signals
+                ] {
+                    clock ticker (rate = 3 ms)
+                    when ticker / run
+                    when signals.second / reset-other-queues
+                    queue high (priority = 2, capacity = 1) {
+                        ticker, signals.second
+                    }
+                    queue low (priority = 1, capacity = 2, discard = oldest) {
+                        signals.first, control.any -> signals.any
+                    }
+                }
+                async System {
+                    component sender : Sender
+                    component buffered : Buffered
+                }
+                scheduled-async Scheduled {
+                    component buffered : Buffered
+                    execute buffered, buffered
+                }
+            """,
+        ) as GammaModelPackage
+
+        val sender = gammaPackage.components[0] as StatechartDeclaration
+        assertThat(sender.isAsynchronous).isTrue
+        assertThat(GammaUtils.evaluateInteger(sender.capacity)).isEqualTo(2)
+        val adapter = gammaPackage.components[2] as AsynchronousAdapterDeclaration
+        assertThat(adapter.wrappedComponent.name).isEqualTo("receiver")
+        assertThat(adapter.clocks.single().unit).isEqualTo(TimeUnit.MILLISECOND)
+        assertThat(adapter.controlSpecifications.map {
+            it.controlFunction
+        }).containsExactly(
+            ControlFunction.RUN_ONCE,
+            ControlFunction.RESET_OTHER_MESSAGE_QUEUES,
+        )
+        assertThat(adapter.messageQueues.map {
+            it.discardStrategy
+        }).containsExactly(
+            DiscardStrategy.INCOMING,
+            DiscardStrategy.OLDEST,
+        )
+        val passing = adapter.messageQueues[1].eventPassings[1]
+        assertThat(passing.source).isInstanceOf(AnyPortEventReference::class.java)
+        assertThat((passing.target as AnyPortEventReference).port.name).isEqualTo("signals")
+        assertThat(adapter.messageQueues[0].eventPassings[0].source).isInstanceOf(ClockTickReference::class.java)
+        assertThat(gammaPackage.components[3]).isInstanceOf(AsynchronousCompositeComponentDeclaration::class.java)
+        assertThat((gammaPackage.components[4] as ScheduledAsynchronousCompositeComponentDeclaration).executionList).hasSize(2)
+    }
+
+    @Test
+    fun `a queue without a capacity does not parse`() {
+        val root = parseHelper.parse(
+            """
+                package test
+                statechart Receiver {
+                }
+                adapter Buffered of component receiver : Receiver {
+                    queue messages (priority = 1) {
+                    }
+                }
+            """.trimIndent(),
+        )
+
+        assertThat(root.eResource().errors).isNotEmpty
     }
 }
