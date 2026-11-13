@@ -121,7 +121,7 @@ sync SpaceMission [
 
     bind control -> station.control
 
-    channel [ station.connection ] -o)- [ spacecraft.connection ]
+    channel [ spacecraft.connection ] -o)- [ station.connection ]
 }
 
 verification case Station_IdleReachable of SpaceMission {
