@@ -125,7 +125,7 @@ class Holder {
   prop current(): int {
     return
 // hide-end
-counter.value
+    counter.value
 // hide-start
   }
 }
@@ -148,7 +148,7 @@ class Child {
 
   redefine tran {
 // hide-end
-inline parent?.notify()
+    inline parent?.notify()
 // hide-start
   }
 }
@@ -167,7 +167,7 @@ class Buffer {
   prop first(): int {
     return
 // hide-end
-items[0]
+    items[0]
 // hide-start
   }
 }
@@ -190,13 +190,13 @@ class Counter {
   }
 
 // hide-end
-prop atLimit(): bool {
-  return value == maximum()
-}
+  prop atLimit(): bool {
+    return value == maximum()
+  }
 
-prop pairAtLimit(): bool {
-  return a.atLimit() && b.atLimit()
-}
+  prop pairAtLimit(): bool {
+    return a.atLimit() && b.atLimit()
+  }
 // hide-start
 }
 // hide-end
@@ -222,9 +222,9 @@ class Bounded {
   contains counter: Counter
 
 // hide-end
-prop {
-  return AG counter.value < 100
-}
+  prop {
+    return AG counter.value < 100
+  }
 // hide-start
 }
 // hide-end
@@ -247,9 +247,9 @@ class Eventually {
   contains counter: Counter
 
 // hide-end
-prop {
-  return AF counter.value == 100
-}
+  prop {
+    return AF counter.value == 100
+  }
 // hide-start
 }
 // hide-end

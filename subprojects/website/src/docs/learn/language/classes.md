@@ -105,9 +105,9 @@ class Transition {
 
 class Jump : Transition {
 // hide-end
-redefine tran fire() {
-  inline target.activate()
-}
+  redefine tran fire() {
+    inline target.activate()
+  }
 // hide-start
 }
 // hide-end
@@ -125,9 +125,9 @@ class Literal : Expression {
   var value: int := 0
 
 // hide-end
-redefine prop evaluate(): int {
-  return value
-}
+  redefine prop evaluate(): int {
+    return value
+  }
 // hide-start
 }
 // hide-end
@@ -145,7 +145,7 @@ class State {
 
 class SendingState : State {
 // hide-end
-redefine contains entryAction: SendAction
+  redefine contains entryAction: SendAction
 // hide-start
 }
 // hide-end

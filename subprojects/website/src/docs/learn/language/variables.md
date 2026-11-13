@@ -15,7 +15,7 @@ A variable declaration consists of the `var` keyword, a name, a type and an init
 // hide-start
 class Counter {
 // hide-end
-var value: int := 0
+  var value: int := 0
 // hide-start
 }
 // hide-end
@@ -49,7 +49,7 @@ class Item
 
 class Slot {
 // hide-end
-var occupant: Item[0..1] := nothing
+  var occupant: Item[0..1] := nothing
 // hide-start
 }
 // hide-end

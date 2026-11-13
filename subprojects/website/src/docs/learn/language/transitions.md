@@ -28,9 +28,9 @@ class Counter {
   var value: int := 0
 
 // hide-end
-tran increment() {
-  value := value + 1
-}
+  tran increment() {
+    value := value + 1
+  }
 // hide-start
 }
 // hide-end
@@ -44,9 +44,9 @@ class Counter {
   var value: int := 0
 
 // hide-end
-tran setBy(amount: int) {
-  value := value + amount
-}
+  tran setBy(amount: int) {
+    value := value + amount
+  }
 // hide-start
 }
 // hide-end
@@ -89,11 +89,11 @@ class Counter {
   var value: int := 0
 
 // hide-end
-tran step() {
-  value := value + 1
-} or {
-  value := value - 1
-}
+  tran step() {
+    value := value + 1
+  } or {
+    value := value - 1
+  }
 // hide-start
 }
 // hide-end
@@ -109,7 +109,7 @@ An `abstract` transition has no body. Concrete subclasses must redefine it.
 // hide-start
 abstract class Transition {
 // hide-end
-abstract tran fire()
+  abstract tran fire()
 // hide-start
 }
 // hide-end
@@ -135,11 +135,11 @@ class BoundedCounter : Counter {
   }
 
 // hide-end
-redefine tran increment() {
-  if (value < maximum()) {
-    value := value + 1
+  redefine tran increment() {
+    if (value < maximum()) {
+      value := value + 1
+    }
   }
-}
 // hide-start
 }
 // hide-end
@@ -153,9 +153,9 @@ class Counter {
   var value: int := 0
 
 // hide-end
-redefine init {
-  value := 0
-}
+  redefine init {
+    value := 0
+  }
 // hide-start
 }
 // hide-end
@@ -175,9 +175,9 @@ class Parent {
   contains child: Counter
 
 // hide-end
-redefine tran {
-  inline child.main()
-}
+  redefine tran {
+    inline child.main()
+  }
 // hide-start
 }
 // hide-end

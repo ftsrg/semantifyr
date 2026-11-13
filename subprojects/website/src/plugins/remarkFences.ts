@@ -163,10 +163,19 @@ class Page {
     });
     const first = visible[0] ?? 0;
     const last = visible[visible.length - 1] ?? -1;
-    const shownText = shown.filter((index) => {
+    const shownLines = shown.filter((index) => {
       return index >= first && index <= last;
     }).map((index) => {
-      return own[index];
+      return own[index] ?? '';
+    });
+    // a member in a hidden class is indented in the model as a file has it, and shown without the class's indentation
+    const indentation = Math.min(...shownLines.filter((line) => {
+      return line.trim() !== '';
+    }).map((line) => {
+      return line.length - line.trimStart().length;
+    }));
+    const shownText = shownLines.map((line) => {
+      return line.slice(Number.isFinite(indentation) ? indentation : 0);
     }).join('\n');
     if (words.embed === null && !words.open && modelText === shownText) {
       return [code];

@@ -164,4 +164,16 @@ describe('remarkFences', () => {
     expect(root.children[1]).toMatchObject({ type: 'blockquote', children: [{ type: 'mdxJsxFlowElement', name: 'SemantifyrFence' }] });
     expect(root.children[2]).toEqual(sysml);
   });
+
+  it('shows the lines in a hidden class without the indentation the model gives them', () => {
+    const root = transformed(fence('', '// hide-start\nclass Counter {\n// hide-end\n  var value: int := 0\n\n  tran step() {\n  }\n// hide-start\n}\n// hide-end'));
+
+    expect(fences(root)).toEqual([
+      {
+        model: 'class Counter {\n  var value: int := 0\n\n  tran step() {\n  }\n}',
+        shown: 'var value: int := 0\n\ntran step() {\n}',
+        lines: '2-5',
+      },
+    ]);
+  });
 });

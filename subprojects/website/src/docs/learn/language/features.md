@@ -200,9 +200,9 @@ class State {
 
 class Machine {
 // hide-end
-contains state: State {
-  redefine contains entryAction: SetValueAction
-}
+  contains state: State {
+    redefine contains entryAction: SetValueAction
+  }
 // hide-start
 }
 // hide-end
@@ -216,7 +216,7 @@ A feature can be bound to a compile-time expression with `=`. The bound value ca
 // hide-start
 class Limit {
 // hide-end
-refers maximum: int = 10
+  refers maximum: int = 10
 // hide-start
 }
 // hide-end
