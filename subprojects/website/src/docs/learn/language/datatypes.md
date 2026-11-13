@@ -9,7 +9,7 @@ This page describes the **data values** Semantifyr can represent: primitives, en
 
 ## Primitive Datatypes
 
-The [standard library](standard-library.md#datatypes) declares the primitive datatypes, and its page describes each. `int` holds the mathematical integers and `real` the real numbers, with no fixed width. A model may declare variables of every datatype, and it validates and compiles with them; whether a backend can check it is on the pages of the backends, [Theta](../backends/theta.mdx), [nuXmv](../backends/nuxmv.mdx), [Spin](../backends/spin.mdx) and [Uppaal](../backends/uppaal.mdx), and none of the four checks a variable of type `real`, `string` or `any` today.
+The [standard library](standard-library.md#datatypes) declares the primitive datatypes, and its page describes each. `int` holds the mathematical integers and `real` the real numbers, with no fixed width. A model may declare variables of every datatype, and it validates and compiles with them. Which datatypes a backend checks is on the pages of the backends, [Theta](../backends/theta.mdx), [nuXmv](../backends/nuxmv.mdx), [Spin](../backends/spin.mdx) and [Uppaal](../backends/uppaal.mdx).
 
 A datatype is declared with `extern datatype`, which the standard library alone may do: a model cannot add one (`OXSTS.DATA_TYPE_NOT_IN_BUILTIN`).
 
@@ -19,7 +19,7 @@ extern datatype byte
 
 ## Enumerations
 
-An `enum` declares a type with a fixed set of named literals.
+An `enum` declares a type with a fixed set of named literals, which cannot share a name (`OXSTS.DUPLICATE_NAME`). A variable of an enumeration holds one of its literals, and two literals compare only by `==` and `!=`.
 
 ```oxsts
 enum Color {
@@ -49,7 +49,7 @@ class Light {
 
 ## Records
 
-A `record` declares a value type that groups named fields. Records have no identity: assignment copies every field, and two records are equal when all their fields are equal. Records have no inheritance and no behavior; they only carry data. A field is a primitive, an enumeration or another record, and every field carries an initializer, the default value of the field.
+A `record` declares a value type that groups named fields. Records have no identity: assignment copies every field, and two records are equal when all their fields are equal. Records have no inheritance and no behavior; they only carry data. Two fields of a record cannot share a name (`OXSTS.DUPLICATE_NAME`). A field is a primitive, an enumeration or another record, and every field carries an initializer, the default value of the field.
 
 ```oxsts
 record Point {
@@ -112,4 +112,4 @@ class Plotter {
 }
 ```
 
-The compiler flattens a record variable into one variable per field, nested records recursively, and the witness shows the state field by field, such as `root.pen.x`. The validator rejects arrays of records, array fields, fields of class or feature type, record-typed features, recursive records (`OXSTS.RECURSIVE_RECORD`), ordering comparisons such as `<` on records, a record literal in a position evaluated at compile time, such as an `inline if` guard, and a record argument of a [`@Trace`](standard-library.md#trace) call.
+The compiler flattens a record variable into one variable per field, nested records recursively, and the witness shows the state field by field, such as `root.pen.x`. The validator rejects a record that contains itself (`OXSTS.RECURSIVE_RECORD`); a comparison of a record with `<` or another ordering, or with `nothing` (`OXSTS.TYPE_MISMATCH`); a literal that gives one field twice (`OXSTS.DUPLICATE_NAME`) or a field a value that does not fit it (`OXSTS.TYPE_MISMATCH`); the name of a record where a value stands, as in `Point {}` (`OXSTS.TYPE_MISMATCH`); and a write to a field of a parameter or of a value that is no variable, such as a literal (`OXSTS.INCORRECT_ASSIGNMENT`). It rejects as not yet supported by the compiler (`OXSTS.UNSUPPORTED_FEATURE`) a record type with a multiplicity other than one, arrays of records among them, array fields, fields of class or feature type, record-typed features, a record literal in a position evaluated at compile time, such as an `inline if` guard, and a record argument of a [`@Trace`](standard-library.md#trace) call.

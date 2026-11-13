@@ -7,7 +7,7 @@ sidebar_position: 1
 
 ## Package Declaration
 
-A Semantifyr file may begin with a `package` declaration. Fully qualified names use `::` as a separator.
+A Semantifyr file may begin with a `package` declaration. Fully qualified names use `::` as a separator. Two declarations of one file cannot share a name (`OXSTS.DUPLICATE_NAME`).
 
 ```oxsts
 package example::library

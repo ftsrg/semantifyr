@@ -20,7 +20,7 @@ A class has one [`init`](transitions.md), one [implicit `tran`](transitions.md#t
 
 ## Class Declaration
 
-A class declaration consists of the `class` keyword, a name, an optional superclass, and a body in `{ }`. Members may appear in any order.
+A class declaration consists of the `class` keyword, a name, an optional superclass, and a body in `{ }`. Members may appear in any order, and two members of one class cannot share a name (`OXSTS.DUPLICATE_NAME`).
 
 ```oxsts
 class Counter {
@@ -49,9 +49,7 @@ Or without any.
 class Sentinel
 ```
 
-:::tip
-Generally Semantifyr is lenient with the use or absence of semicolons `;`.
-:::
+A semicolon may end a class without a body, and not one with a body ([Lexical Structure](lexical-structure.md)).
 
 ## Abstract Classes
 

@@ -9,7 +9,7 @@ Properties are **pure computations**: they return a value without changing any s
 
 ## Declaring a Property
 
-A property declaration consists of the `prop` keyword, a name, a parameter list, a return type, and a body containing exactly one `return` statement followed by an expression.
+A property declaration consists of the `prop` keyword, a name, a parameter list, a return type, and a body containing exactly one `return` statement followed by an expression, whose value fits the return type ([Assignability](types.md#assignability), `OXSTS.TYPE_MISMATCH`). Its value is the value of that expression in the state it is read in.
 
 ```oxsts
 // hide-start
@@ -63,7 +63,7 @@ The single-`return` restriction may be relaxed in future versions.
 
 ## Abstract Properties
 
-An `abstract` property has no body. Concrete subclasses must redefine it.
+An `abstract` property has no body. Only an abstract class declares one (`OXSTS.MEMBER_NOT_IN_ABSTRACT_CLASS`), and a concrete class that inherits it redefines it (`OXSTS.ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED`), as [Abstract Classes](classes.md#abstract-classes) gives.
 
 ```oxsts
 // hide-start
@@ -77,7 +77,7 @@ abstract class Limit {
 
 ## Redefining Properties
 
-Override an inherited property of the **same name** with `redefine`. The redefinition takes as many parameters as the inherited property, and its return type must be assignable to the inherited one.
+Override an inherited property of the **same name** with `redefine`. The redefinition takes as many parameters as the inherited property (`OXSTS.REDEFINITION_SIGNATURE_MISMATCH`), its return type must be assignable to the inherited one (`OXSTS.TYPE_MISMATCH`), and a `redefine` that no inherited property answers is rejected (`OXSTS.REDEFINED_NOT_FOUND`), as [Redefining Members](classes.md#redefining-members) gives.
 
 ```oxsts continue
 // hide-start
