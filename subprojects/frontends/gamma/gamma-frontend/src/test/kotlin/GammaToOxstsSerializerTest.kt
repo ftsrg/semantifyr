@@ -1385,6 +1385,40 @@ class GammaToOxstsSerializerTest {
     }
 
     @Test
+    fun `a port shadowed by a state of the same name is reached through the statechart`() {
+        val lines = oxstsLines(
+            """
+                package test
+                interface Alarm {
+                    out event error
+                }
+                statechart Monitor [
+                    port Error : provides Alarm
+                ] {
+                    timeout Busy
+                    region Main {
+                        initial MainInitial
+                        state Busy
+                        state Error
+                    }
+                    transition from MainInitial to Busy
+                    transition from Busy to Error when timeout Busy / raise Error.error;
+                }
+            """,
+        )
+
+        assertThat(lines).containsSequence(
+            "redefine contains trigger: TimeoutTrigger {",
+            "redefine refers timeout: Timeout = (statechart as _test::_Monitor)._Busy",
+            "}",
+            "contains raise_Error_error: RaiseEventAction subsets actions {",
+            "redefine refers port: Port = (statechart as _test::_Monitor)._Error",
+            "redefine refers event: Event = (statechart as _test::_Monitor)._Error.interface._error",
+            "}",
+        )
+    }
+
+    @Test
     fun `a raise atom reads whether the event is raised on the port of the instance`() {
         val lines = oxstsLines(
             """
