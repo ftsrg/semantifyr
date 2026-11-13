@@ -13,3 +13,5 @@ export interface FenceValue {
 }
 
 export const FenceContext = createContext<FenceValue | null>(null);
+
+export const OpenLinkContext = createContext<ReactNode>(null);

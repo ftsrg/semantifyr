@@ -15,40 +15,6 @@
   border: 0;
 }
 
-/* the code starts below the row of buttons, which is always shown here, so that no button covers a line */
-.embed pre > code {
-  padding-top: calc(var(--ifm-pre-padding) + 1.125rem + 0.8rem + 2px);
-}
-
-/* the height of the copy button beside it */
-.control {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  height: calc(1.125rem + 0.8rem + 2px);
-  padding: 0 0.55rem 0 0.45rem;
-  border: 1px solid var(--ifm-color-emphasis-300);
-  border-radius: var(--ifm-global-radius);
-  background: var(--prism-background-color);
-  color: var(--ifm-color-emphasis-700);
-  font-family: inherit;
-  font-size: 0.8rem;
-  font-weight: 500;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.control:hover,
-.control:focus-visible {
-  border-color: var(--ifm-color-primary);
-  color: var(--ifm-color-primary);
-}
-
-.controlIcon {
-  width: 0.85rem;
-  height: 0.85rem;
-}
-
 .loadingLabel {
   display: inline-flex;
   align-items: center;
@@ -63,10 +29,6 @@
 .loading :global(.theme-code-block) {
   opacity: 0.55;
   transition: opacity 150ms ease-in-out;
-}
-
-.loading :global(.theme-code-block) [class*='buttonGroup'] {
-  display: none;
 }
 
 .progress {

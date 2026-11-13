@@ -20,6 +20,9 @@ export default defineConfig({
       '@site': fileURLToPath(new URL('.', import.meta.url)),
       // written by the cloneGrammars Gradle task
       '@grammars': fileURLToPath(new URL('build/grammars', import.meta.url)),
+      '@docusaurus/BrowserOnly': fileURLToPath(new URL('src/__tests__/stubs/BrowserOnly.tsx', import.meta.url)),
+      '@theme-original/CodeBlock/Buttons': fileURLToPath(new URL('src/__tests__/stubs/Buttons.tsx', import.meta.url)),
+      '@theme-original/CodeBlock': fileURLToPath(new URL('src/__tests__/stubs/CodeBlock.tsx', import.meta.url)),
       '@theme/CodeBlock': fileURLToPath(new URL('src/__tests__/stubs/CodeBlock.tsx', import.meta.url)),
     },
   },

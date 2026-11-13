@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react';
 import { liveEditorUrl, normalizeBaseUrl } from '@semantifyr/editor-common';
 import { terms } from '@semantifyr/editor-common/terms';
 import { useLiveBackendUrl } from '@site/src/lib/live';
-import styles from './styles.module.css';
+import styles from './Buttons/styles.module.css';
 
 interface Props {
   language: string;
@@ -37,10 +37,11 @@ export default function OpenInLiveLink({ language, code }: Props): React.JSX.Ele
   }
 
   return (
-    <div className={styles.openLinkContainer}>
-      <a href={href} className={styles.openLink} target="_blank" rel="noopener noreferrer">
-        {`Open in ${terms.live.short ?? terms.live.term} ↗`}
-      </a>
-    </div>
+    <a href={href} className={styles.control} target="_blank" rel="noopener noreferrer">
+      <svg className={styles.controlIcon} viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M7 17L17 7M9 7h8v8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      {`Open in ${terms.live.short ?? terms.live.term}`}
+    </a>
   );
 }
