@@ -37,9 +37,9 @@ class SmartFullPortfolio(
     private val nuxmv: VerificationBackend<NuxmvConfig> = NuxmvBackend(),
     private val spin: VerificationBackend<SpinConfig> = SpinBackend(),
 ) : VerificationPortfolio() {
-    override val id: String = "smart-full"
-    override val displayName: String = "Race across all backends"
-    override val description: String = "Races representative configurations of every backend in parallel and takes the first verdict its leg's soundness direction trusts."
+    override val id: String = "smart"
+    override val displayName: String = "Smart"
+    override val description: String = "Runs the installed backends side by side and takes the first trusted answer."
 
     private val tasks: List<PortfolioTask<*>> = listOf(
         PortfolioTask(nuxmv, NuxmvConfig.BmcInvar, "nuxmv-bmc"),
@@ -65,9 +65,9 @@ class SmartFullPortfolio(
             AvailabilityReport.Available
         } else {
             AvailabilityReport.Unavailable(
-                reason = "No verification backends are available on this system.",
+                reason = "No backend is installed.",
                 hints = listOf(
-                    "Install at least one of: theta-xsts-cli, verifyta (Uppaal), nuXmv, or spin.",
+                    "Install at least one of Theta (theta-xsts-cli), nuXmv, Spin or Uppaal (verifyta).",
                 ),
             )
         }
@@ -93,7 +93,7 @@ class SmartFullPortfolio(
                 ),
                 verdict = VerificationVerdict.Inconclusive,
                 metrics = BackendMetrics(),
-                message = "$id: no available backends",
+                message = "No backend is installed.",
             )
         }
         logger.info {

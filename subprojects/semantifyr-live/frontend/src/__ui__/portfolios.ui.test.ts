@@ -38,7 +38,7 @@ describe('the portfolio settings', () => {
       return page.locator('.results .validation-mark.is-validated').count()
     }).toBe(2)
     const session = ui.backend.session()
-    expect(portfoliosOf(session.commands('oxsts.case.verify'))).toEqual(['theta-full', 'theta-full'])
+    expect(portfoliosOf(session.commands('oxsts.case.verify'))).toEqual(['theta', 'theta'])
     expect(portfoliosOf(session.commands('oxsts.case.validateWitness'))).toEqual(['spin-safe-dfs', 'spin-safe-dfs'])
   })
 
@@ -61,7 +61,7 @@ describe('the portfolio settings', () => {
     await expect.poll(async () => {
       return results(page).row(BARRIER).locator('.validation-mark').getAttribute('class')
     }).toContain('is-validated')
-    expect(portfoliosOf(ui.backend.session().commands('oxsts.case.validateWitness'))).toEqual(['smart-full'])
+    expect(portfoliosOf(ui.backend.session().commands('oxsts.case.validateWitness'))).toEqual(['smart'])
   })
 
   test('show a validation that fails on its row, which validates again when asked', async ({ ui }) => {

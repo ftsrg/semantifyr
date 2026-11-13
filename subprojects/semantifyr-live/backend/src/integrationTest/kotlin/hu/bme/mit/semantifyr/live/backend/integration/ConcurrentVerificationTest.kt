@@ -110,7 +110,7 @@ class ConcurrentVerificationTest {
                             LspWire.executeCommandRequest(
                                 id = requestId,
                                 command = "oxsts.case.verify",
-                                arguments = listOf(VerificationCaseRequest(documentUri, case.location().range, "smart-full")),
+                                arguments = listOf(VerificationCaseRequest(documentUri, case.location().range, "smart")),
                             ),
                         ),
                     )

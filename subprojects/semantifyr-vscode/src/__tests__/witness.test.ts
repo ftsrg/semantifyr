@@ -16,7 +16,7 @@ describe('renderTrace', () => {
         expect(renderTrace('Safe', result('failed', counterexample), counterexample)).toBe([
             '# Safe',
             '',
-            'Verdict: failed (backend theta-cegar-expl, portfolio theta-full)',
+            'Verdict: failed (backend theta-cegar-expl, portfolio theta)',
             '',
             `Witness: ${witnessUri}`,
             '',
@@ -62,24 +62,24 @@ describe('renderTrace', () => {
     it('appends the message of a passed verdict to the verdict line', () => {
         const document = renderTrace('Safe', result('passed', counterexample, resolutionNote), counterexample);
 
-        expect(document.split('\n')[2]).toBe(`Verdict: passed (backend theta-cegar-expl, portfolio theta-full) - ${resolutionNote}`);
+        expect(document.split('\n')[2]).toBe(`Verdict: passed (backend theta-cegar-expl, portfolio theta) - ${resolutionNote}`);
     });
 
     it.each([null, ''])('keeps the verdict line of a passed verdict with the message %j bare', (message) => {
         const document = renderTrace('Safe', result('passed', counterexample, message), counterexample);
 
-        expect(document.split('\n')[2]).toBe('Verdict: passed (backend theta-cegar-expl, portfolio theta-full)');
+        expect(document.split('\n')[2]).toBe('Verdict: passed (backend theta-cegar-expl, portfolio theta)');
     });
 
     it('adds the witness validation below the verdict', () => {
-        const validation: WitnessValidationResult = { status: 'invalid', verdict: 'passed', message: 'spurious', backendId: 'theta-bmc', portfolioId: 'smart-full', metrics: null };
+        const validation: WitnessValidationResult = { status: 'invalid', verdict: 'passed', message: 'spurious', backendId: 'theta-bmc', portfolioId: 'smart', metrics: null };
 
         const document = renderTrace('Safe', result('failed', counterexample), counterexample, validation);
 
         expect(document.split('\n').slice(2, 5)).toEqual([
-            'Verdict: failed (backend theta-cegar-expl, portfolio theta-full)',
+            'Verdict: failed (backend theta-cegar-expl, portfolio theta)',
             '',
-            'Validation: Witness invalid (backend theta-bmc, portfolio smart-full) - spurious',
+            'Validation: Witness invalid (backend theta-bmc, portfolio smart) - spurious',
         ]);
     });
 
@@ -227,7 +227,7 @@ describe('WitnessView validation', () => {
     }
 
     function validation(status: WitnessValidationResult['status'], message: string | null = null): WitnessValidationResult {
-        return { status, verdict: null, message, backendId: null, portfolioId: 'smart-full', metrics: null };
+        return { status, verdict: null, message, backendId: null, portfolioId: 'smart', metrics: null };
     }
 
     function traceDocument(): string {
@@ -240,15 +240,15 @@ describe('WitnessView validation', () => {
         await validateWitness({ test: item });
 
         expect(window.withProgress.mock.calls[0]![0]).toEqual({ location: 15, title: 'Validating the witness of ACanBeGreen', cancellable: true });
-        expect(window.showInformationMessage).toHaveBeenCalledWith('ACanBeGreen: Witness valid (portfolio smart-full)');
-        expect(traceDocument()).toContain('Validation: Witness valid (portfolio smart-full)');
+        expect(window.showInformationMessage).toHaveBeenCalledWith('ACanBeGreen: Witness valid (portfolio smart)');
+        expect(traceDocument()).toContain('Validation: Witness valid (portfolio smart)');
     });
 
     it.each([
-        ['invalid', 'showErrorMessage', 'ACanBeGreen: Witness invalid (portfolio smart-full) - spurious\n'],
-        ['errored', 'showErrorMessage', 'ACanBeGreen: Validation errored (portfolio smart-full) - spurious\n'],
-        ['inconclusive', 'showWarningMessage', 'ACanBeGreen: Validation inconclusive (portfolio smart-full) - spurious'],
-        ['timeout', 'showWarningMessage', 'ACanBeGreen: Validation timed out (portfolio smart-full) - spurious'],
+        ['invalid', 'showErrorMessage', 'ACanBeGreen: Witness invalid (portfolio smart) - spurious\n'],
+        ['errored', 'showErrorMessage', 'ACanBeGreen: Validation errored (portfolio smart) - spurious\n'],
+        ['inconclusive', 'showWarningMessage', 'ACanBeGreen: Validation inconclusive (portfolio smart) - spurious'],
+        ['timeout', 'showWarningMessage', 'ACanBeGreen: Validation timed out (portfolio smart) - spurious'],
     ] as const)('reports a %s witness through %s', async (status, method, text) => {
         view.record(item as never, result('failed', counterexample), async () => validation(status, 'spurious'));
 

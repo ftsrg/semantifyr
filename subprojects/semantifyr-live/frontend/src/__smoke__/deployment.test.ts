@@ -82,10 +82,10 @@ describe(`live deployment at ${url}`, () => {
   }
 
   it('verifies the smoke model over the language server socket', async () => {
-    await verifySmokeModel('smart-full');
+    await verifySmokeModel('smart');
   });
 
-  // smart-full answers with Theta first, so only a Spin portfolio shows that Spin can compile and run a search
+  // smart answers with Theta first, so only a Spin portfolio shows that Spin can compile and run a search
   it('verifies the smoke model on Spin alone', async () => {
     const results = await verifySmokeModel('spin-safe-dfs');
     for (const result of results) {

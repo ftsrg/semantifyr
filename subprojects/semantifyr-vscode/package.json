@@ -1,7 +1,7 @@
 {
   "name": "semantifyr",
   "displayName": "Semantifyr",
-  "description": "Language support and verification tooling for Semantifyr. Semantic library-driven formal verification of engineering models.",
+  "description": "Edit and verify OXSTS and Gamma models with Semantifyr, a framework to support the declarative definition of engineering model semantics.",
   "version": "0.0.0",
   "type": "module",
   "publisher": "ftsrg",
@@ -175,11 +175,11 @@
       "properties": {
         "semantifyr.portfolio": {
           "type": "string",
-          "default": "smart-full",
+          "default": "smart",
           "enum": [
-            "smart-full",
-            "all-agree-full",
-            "theta-full",
+            "smart",
+            "all-agree",
+            "theta",
             "theta-cegar-expl",
             "theta-cegar-expl-pred-combined",
             "theta-cegar-pred-cart",
@@ -206,7 +206,7 @@
             "spin-bitstate",
             "spin-hash-compact"
           ],
-          "markdownDescription": "Backend portfolio used when running verification. The default `smart-full` races every installed backend, so one is enough; `all-agree-full` is the cross-backend cross-check used by witness validation. The remaining entries pin one backend / configuration."
+          "markdownDescription": "The portfolio a verification runs, the strategy for the backend runs. The default `smart` runs the installed backends side by side and takes the first trusted answer, so one backend is enough; `all-agree` runs every installed backend and requires their trusted answers to agree; each other entry runs one configuration of one backend. A witness is validated on `semantifyr.verification.validationPortfolio`, which is this portfolio unless it names another."
         },
         "semantifyr.timeoutSeconds": {
           "type": "number",
@@ -222,7 +222,7 @@
         "semantifyr.verification.validationPortfolio": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Portfolio a witness validation runs on, by id as `semantifyr.portfolio` takes it. Empty: the verification portfolio, `semantifyr.portfolio`."
+          "markdownDescription": "The portfolio that validates a witness, by id as `semantifyr.portfolio` takes it. Empty uses `semantifyr.portfolio`."
         },
         "semantifyr.theta.executor": {
           "type": "string",
@@ -256,7 +256,7 @@
             "all",
             "debug"
           ],
-          "markdownDescription": "Artifact preset. `none` disables artifact emission, `all` writes the usual artifacts (models, witness, trace, mapping, report), `debug` additionally writes per-pass step dumps (slow; only for bisecting compiler regressions)."
+          "markdownDescription": "Which artifacts are written: `none`, `all` (the models, the witness, the trace, the mapping and the report), or `debug`, which also writes the model after every compiler pass and is slow."
         },
         "semantifyr.optimization.level": {
           "type": "string",

@@ -19,8 +19,8 @@ export interface PortfolioChoices {
 }
 
 const COMBINED: Readonly<Record<string, { name: string, detail: string }>> = {
-  'smart-full': { name: 'Automatic', detail: 'tries every engine at once and takes the first trusted answer' },
-  'all-agree-full': { name: 'Cross-check', detail: 'runs every engine and requires them to agree' },
+  'smart': { name: 'Automatic', detail: 'tries every engine at once and takes the first trusted answer' },
+  'all-agree': { name: 'Cross-check', detail: 'runs every engine and requires them to agree' },
 }
 
 // a portfolio whose engine the server does not have is not offered

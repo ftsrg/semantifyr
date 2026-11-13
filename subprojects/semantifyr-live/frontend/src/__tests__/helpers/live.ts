@@ -229,10 +229,10 @@ export function createTestLive(client: LspClient, served: readonly FlavorInfo[] 
       fetchPortfolios: async () => {
         return {
           portfolios: [
-            { id: 'smart-full', displayName: 'Smart full', description: '', available: true },
+            { id: 'smart', displayName: 'Smart full', description: '', available: true },
             { id: 'theta', displayName: 'Theta', description: '', available: true },
           ],
-          defaultPortfolio: 'smart-full',
+          defaultPortfolio: 'smart',
         }
       },
     },

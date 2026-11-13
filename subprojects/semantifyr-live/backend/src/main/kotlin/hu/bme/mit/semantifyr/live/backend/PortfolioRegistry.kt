@@ -17,7 +17,7 @@ object PortfolioRegistry {
     data class Entry(val displayName: String, val portfolio: VerificationPortfolio)
 
     val entries = listOf(
-        Entry("Auto", Portfolios.SmartFull),
+        Entry("Smart", Portfolios.SmartFull),
         Entry("All agree", Portfolios.AllAgree),
         Entry("Theta", Portfolios.ThetaFull),
         Entry("nuXmv", Portfolios.NuxmvIc3Invar),

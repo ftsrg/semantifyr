@@ -28,7 +28,7 @@ class ServerSettingsTest {
     void defaultsAreApplied() {
         ServerSettings settings = new ServerSettings();
         assertThat(settings.resolveTimeout()).isEqualTo(Duration.ofSeconds(300));
-        assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("smart-full");
+        assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("smart");
         assertThat(settings.resolveArtifactConfig()).isEqualTo(ArtifactConfig.ALL);
         assertThat(settings.resolveOptimizationConfig()).isSameAs(OptimizationConfig.Companion.getALL());
     }
@@ -38,7 +38,7 @@ class ServerSettingsTest {
         ServerSettings settings = new ServerSettings();
         settings.apply(JsonParser.parseString("""
                 {
-                  "portfolio": "theta-full",
+                  "portfolio": "theta",
                   "timeoutSeconds": 42,
                   "theta": {"executor": "docker", "dockerImage": "example:1"},
                   "artifacts": {"location": "workspace", "preset": "debug"},
@@ -46,7 +46,7 @@ class ServerSettingsTest {
                 }
                 """));
         assertThat(settings.resolveTimeout()).isEqualTo(Duration.ofSeconds(42));
-        assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("theta-full");
+        assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("theta");
         assertThat(settings.resolveArtifactConfig()).isEqualTo(ArtifactConfig.DEBUG);
         assertThat(settings.resolveOptimizationConfig()).isSameAs(OptimizationConfig.Companion.getNONE());
     }
@@ -57,7 +57,7 @@ class ServerSettingsTest {
         settings.apply(JsonParser.parseString("{\"timeoutSeconds\": 7}"));
         assertThat(settings.resolveTimeout()).isEqualTo(Duration.ofSeconds(7));
         // not part of the partial update, so still the default
-        assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("smart-full");
+        assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("smart");
     }
 
     @Test
@@ -95,9 +95,9 @@ class ServerSettingsTest {
     @Test
     void aTypedPayloadAppliesDirectly() {
         ServerSettings settings = new ServerSettings();
-        settings.apply(new ServerSettingsPayload("theta-full", 99L, null, null, null));
+        settings.apply(new ServerSettingsPayload("theta", 99L, null, null, null));
         assertThat(settings.resolveTimeout()).isEqualTo(Duration.ofSeconds(99));
-        assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("theta-full");
+        assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("theta");
         // fields the payload leaves null fall back to the built-in defaults
         assertThat(settings.resolveArtifactConfig()).isEqualTo(ArtifactConfig.ALL);
     }
@@ -105,10 +105,10 @@ class ServerSettingsTest {
     @Test
     void applyingAPayloadReplacesAllSettings() {
         ServerSettings settings = new ServerSettings();
-        settings.apply(new ServerSettingsPayload("theta-full", 99L, null, null, null));
+        settings.apply(new ServerSettingsPayload("theta", 99L, null, null, null));
         settings.apply(ServerSettingsPayload.withArtifactsLocation(ArtifactsLocation.WORKSPACE));
         // the second apply omits the portfolio / timeout, so they are back to the defaults
-        assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("smart-full");
+        assertThat(settings.resolvePortfolio(null).getId()).isEqualTo("smart");
         assertThat(settings.resolveTimeout()).isEqualTo(Duration.ofSeconds(300));
     }
 
@@ -117,7 +117,7 @@ class ServerSettingsTest {
         ServerSettings settings = new ServerSettings();
         ExecutionEnvironment environment = settings.resolveExecutionEnvironment();
 
-        settings.apply(new ServerSettingsPayload("theta-full", 99L, null, null, null));
+        settings.apply(new ServerSettingsPayload("theta", 99L, null, null, null));
 
         assertThat(settings.resolveExecutionEnvironment()).isSameAs(environment);
     }

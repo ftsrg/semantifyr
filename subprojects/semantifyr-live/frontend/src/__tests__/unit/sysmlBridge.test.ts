@@ -27,7 +27,7 @@ function failedResult(): VerificationCaseResult {
     status: VerificationStatus.Failed,
     message: null,
     backendId: 'theta',
-    portfolioId: 'smart-full',
+    portfolioId: 'smart',
     metrics: null,
     trace: {
       callTrace: callTrace as never,
@@ -92,7 +92,7 @@ function stubOxsts(result = failedResult()) {
 
 function verifyRequest(worker: LspClient, oxsts: LspClient) {
   const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => worker, getOxstsClient: () => oxsts })
-  const verifyArguments = { uri: fileUri, range: sysmlRange, portfolio: 'smart-full' }
+  const verifyArguments = { uri: fileUri, range: sysmlRange, portfolio: 'smart' }
   return {
     bridge,
     run: () => bridge.client.sendRequest('workspace/executeCommand', { command: 'sysml.case.verify', arguments: [verifyArguments] }) as Promise<VerificationCaseResult>,
@@ -123,7 +123,7 @@ describe('sysml bridge', () => {
     ])
     expect(oxsts.commands[1]).toEqual({
       command: 'oxsts.case.verify',
-      arguments: [{ uri: SYSML_OXSTS_URI, range: oxstsRange, portfolio: 'smart-full' }],
+      arguments: [{ uri: SYSML_OXSTS_URI, range: oxstsRange, portfolio: 'smart' }],
     })
     expect(worker.requests.at(-1)).toEqual({
       command: 'syside.semantifyr.sysml.trace',

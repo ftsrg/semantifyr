@@ -48,7 +48,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class WebSocketVerificationFlowTest {
 
-    private val cannedResult = VerificationCaseResult("passed", "ok", "theta-full", "smart-full", null, null)
+    private val cannedResult = VerificationCaseResult("passed", "ok", "theta", "smart", null, null)
 
     private val documentUri = "file:///workspace/snippet.oxsts"
 
@@ -71,7 +71,7 @@ class WebSocketVerificationFlowTest {
         }
     }
 
-    private fun verifyRequest(uri: String = documentUri, portfolio: String? = "smart-full"): VerificationCaseRequest {
+    private fun verifyRequest(uri: String = documentUri, portfolio: String? = "smart"): VerificationCaseRequest {
         return VerificationCaseRequest(uri, LspWire.range(), portfolio)
     }
 
@@ -100,7 +100,7 @@ class WebSocketVerificationFlowTest {
             send(Frame.Text(verifyCommand(id = 2)))
             val result = awaitResponseFor(id = 2).resultAs(VerificationCaseResult::class.java)
             assertThat(result.status()).isEqualTo("passed")
-            assertThat(result.portfolioId()).isEqualTo("smart-full")
+            assertThat(result.portfolioId()).isEqualTo("smart")
         }
 
         assertThat(executor.calls).hasSize(1)
@@ -149,7 +149,7 @@ class WebSocketVerificationFlowTest {
             val result = awaitResponseFor(id = 2).resultAs(VerificationCaseResult::class.java)
             assertThat(result.status()).isEqualTo("errored")
             assertThat(result.message()).contains("verifier exploded")
-            assertThat(result.portfolioId()).isEqualTo("smart-full")
+            assertThat(result.portfolioId()).isEqualTo("smart")
         }
 
         assertThat(verificationCount(injector.getInstance(MeterRegistry::class.java), "verify", "none", "errored")).isEqualTo(1)
@@ -174,7 +174,7 @@ class WebSocketVerificationFlowTest {
             val result = awaitResponseFor(id = 2).resultAs(VerificationCaseResult::class.java)
             assertThat(result.status()).isEqualTo("timeout")
             assertThat(result.message()).contains("timed out")
-            assertThat(result.portfolioId()).isEqualTo("smart-full")
+            assertThat(result.portfolioId()).isEqualTo("smart")
         }
 
         assertThat(verificationCount(injector.getInstance(MeterRegistry::class.java), "verify", "none", "timeout")).isEqualTo(1)
@@ -200,7 +200,7 @@ class WebSocketVerificationFlowTest {
             assertThat(result.status()).isEqualTo(WitnessValidationStatus.TIMEOUT)
             assertThat(result.verdict()).isEqualTo(VerificationStatus.TIMEOUT)
             assertThat(result.message()).contains("timed out")
-            assertThat(result.portfolioId()).isEqualTo("smart-full")
+            assertThat(result.portfolioId()).isEqualTo("smart")
         }
 
         assertThat(verificationCount(injector.getInstance(MeterRegistry::class.java), "validate", "none", "timeout")).isEqualTo(1)
@@ -263,12 +263,12 @@ class WebSocketVerificationFlowTest {
             if (command == "oxsts.case.verify") {
                 val result = response.resultAs(VerificationCaseResult::class.java)
                 assertThat(result.status()).isEqualTo(VerificationStatus.CANCELLED)
-                assertThat(result.portfolioId()).isEqualTo("smart-full")
+                assertThat(result.portfolioId()).isEqualTo("smart")
             } else {
                 val result = response.resultAs(WitnessValidationResult::class.java)
                 assertThat(result.status()).isEqualTo(WitnessValidationStatus.CANCELLED)
                 assertThat(result.verdict()).isEqualTo(VerificationStatus.CANCELLED)
-                assertThat(result.portfolioId()).isEqualTo("smart-full")
+                assertThat(result.portfolioId()).isEqualTo("smart")
             }
         }
     }
@@ -291,7 +291,7 @@ class WebSocketVerificationFlowTest {
             )
         }
 
-        val otherCase = VerificationCaseRequest(documentUri, LspWire.range(startLine = 5, endLine = 5), "smart-full")
+        val otherCase = VerificationCaseRequest(documentUri, LspWire.range(startLine = 5, endLine = 5), "smart")
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
             send(Frame.Text(LspWire.initializeRequest()))
             awaitResponseFor(id = 1)
@@ -302,7 +302,7 @@ class WebSocketVerificationFlowTest {
             val superseded = awaitResponseFor(id = 3).resultAs(VerificationCaseResult::class.java)
             assertThat(superseded.status()).isEqualTo(VerificationStatus.CANCELLED)
             assertThat(superseded.message()).contains("superseded")
-            assertThat(superseded.portfolioId()).isEqualTo("smart-full")
+            assertThat(superseded.portfolioId()).isEqualTo("smart")
             release.complete(Unit)
             assertThat(awaitResponseFor(id = 4).resultAs(VerificationCaseResult::class.java).status()).isEqualTo("passed")
         }
@@ -386,7 +386,7 @@ class WebSocketVerificationFlowTest {
             assertThat(firstActive).hasSize(1)
             val entry = firstActive.first()
             assertThat(entry.verificationId).isNotBlank()
-            assertThat(entry.portfolioId).isEqualTo("smart-full")
+            assertThat(entry.portfolioId).isEqualTo("smart")
             assertThat(entry.kind).isEqualTo(VerificationKind.Verify)
             assertThat(entry.location.uri).isEqualTo(documentUri)
             assertThat(lastActive).isEmpty()
@@ -437,7 +437,7 @@ class WebSocketVerificationFlowTest {
     fun `finished verifications are timed by kind, backend and verdict`(@TempDir tmp: Path) = testApplication {
         val executor = FakeVerificationExecutor {
             if (it.command == "oxsts.case.validateWitness") {
-                WitnessValidationResult("valid", null, null, "theta-full", "smart-full", null)
+                WitnessValidationResult("valid", null, null, "theta", "smart", null)
             } else {
                 cannedResult
             }
@@ -461,8 +461,8 @@ class WebSocketVerificationFlowTest {
         }
 
         val registry = injector.getInstance(MeterRegistry::class.java)
-        assertThat(verificationCount(registry, "verify", "theta-full", "passed")).isEqualTo(2)
-        assertThat(verificationCount(registry, "validate", "theta-full", "valid")).isEqualTo(1)
+        assertThat(verificationCount(registry, "verify", "theta", "passed")).isEqualTo(2)
+        assertThat(verificationCount(registry, "validate", "theta", "valid")).isEqualTo(1)
         assertThat(registry.get("semantifyr.live.verification.queue").tag("kind", "verify").timer().count()).isEqualTo(2)
     }
 

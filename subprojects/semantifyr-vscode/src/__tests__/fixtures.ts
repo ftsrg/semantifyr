@@ -10,7 +10,7 @@ export const modelUri = 'file:///workspace/lamp.oxsts';
 
 export const witnessUri = 'file:/tmp/semantifyr/lamp.Safe/witness.oxsts';
 
-export const resolutionNote = "Portfolio 'all-agree-full' resolved to Passed from theta over spin=Failed (not trusted, UnderApproximating)";
+export const resolutionNote = "Portfolio 'all-agree' resolved to Passed from theta over spin=Failed (not trusted, UnderApproximating)";
 
 export const safeCase: VerificationCaseSpecification = {
     id: 'lamp::Safe',
@@ -46,5 +46,5 @@ export const counterexample: VerificationTrace = {
 };
 
 export function result(status: VerificationCaseResult['status'], trace: VerificationTrace | null = null, message: string | null = null): VerificationCaseResult {
-    return { status, message, backendId: 'theta-cegar-expl', portfolioId: 'theta-full', metrics: null, trace };
+    return { status, message, backendId: 'theta-cegar-expl', portfolioId: 'theta', metrics: null, trace };
 }
