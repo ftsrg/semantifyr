@@ -1,0 +1,25 @@
+---
+title: Gamma
+sidebar_position: 6
+---
+
+import GammaConstructTable, { GammaDepartures } from '@site/src/components/GammaConstructs';
+import constructs from '@gamma-models/constructs.tsv';
+
+# Gamma
+
+Semantifyr is a framework for the execution semantics of engineering languages; Gamma, the statechart composition language of the BME Fault Tolerant Systems Research Group, is one of its frontends, beside SysML v2. The Gamma frontend maps a sub-language of Gamma, written in Gamma's syntax, one to one into a semantic library written in OXSTS. The library holds Gamma's execution semantics, and each of Gamma's semantic variation points is a variant of the library. The models of Gamma's own tests, with verdicts confirmed by running Gamma, check the library. A model that uses a construct outside the sub-language is rejected.
+
+The [command line](cli/gamma.mdx) verifies Gamma models, and a witness is written as a [Gamma execution trace](../develop/gamma-trace.md).
+
+## What the library assumes
+
+A carried construct behaves as it does in Gamma. These are the declared differences:
+
+<GammaDepartures table={constructs} />
+
+## Constructs
+
+Every construct and variation point of Gamma has one of four outcomes. Carried: the frontend verifies it. Carried with a departure: as carried, with a difference listed above. Planned: decided to be built. Out: not supported yet. This page is generated from the table that a test of the Gamma frontend checks against the models that use each construct.
+
+<GammaConstructTable table={constructs} />

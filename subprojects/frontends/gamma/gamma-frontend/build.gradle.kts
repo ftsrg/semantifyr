@@ -49,6 +49,7 @@ tasks.processResources {
 tasks.withType<Test>().configureEach {
     inputs.files(syncGammaTestModels)
     inputs.dir(layout.projectDirectory.dir("../models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("../models/constructs.tsv")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(layout.projectDirectory.dir("../models").asFileTree.matching { include("corpus/**", "semantics/**") }).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 

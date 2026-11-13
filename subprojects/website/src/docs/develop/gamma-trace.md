@@ -5,7 +5,7 @@ sidebar_position: 2
 
 # Gamma traces
 
-A witness of a Gamma verification case is written as a Gamma execution trace, `trace.get`, next to the back-annotated `witness.oxsts`. The trace is a `.get` file of its own in Gamma's execution trace syntax, with two extensions: its header names a verification case, and it asserts the transitions that fired. Every name in it is a cross-reference into the model, so the Gamma language checks a trace like any other Gamma file.
+A witness of a [Gamma](../learn/gamma.mdx) verification case is written as a Gamma execution trace, `trace.get`, next to the back-annotated `witness.oxsts`. The trace is a `.get` file of its own in Gamma's execution trace syntax, with two extensions: its header names a verification case, and it asserts the transitions that fired. Every name in it is a cross-reference into the model, so the Gamma language checks a trace like any other Gamma file.
 
 The reference pair is `subprojects/frontends/gamma/models/etc/crossroads-ACanBeGreen.*`, a witness of the case `ACanBeGreen` of `models/examples/Crossroads.gamma`: `trace.json` and `witness.json` as Theta's witness produced them, and the hand-written `trace.get` they generate.
 
