@@ -7,7 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.reader
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.logging.error
+import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
@@ -18,6 +18,7 @@ import org.eclipse.xtext.diagnostics.Severity
 import org.eclipse.xtext.util.CancelIndicator
 import org.eclipse.xtext.validation.CheckMode
 import org.eclipse.xtext.validation.IResourceValidator
+import org.eclipse.xtext.validation.Issue
 
 class ResourceSetLoader @Inject constructor(
     private val resourceValidator: IResourceValidator,
@@ -37,49 +38,47 @@ class ResourceSetLoader @Inject constructor(
         val fileLabel = resource.uri.toFileString() ?: resource.uri.toString()
 
         if (resource.errors.any()) {
-            val parseErrorSummary = resource.errors.joinToString("\n  ") {
+            val parseErrors = resource.errors.joinToString("\n  ") {
                 "$fileLabel:${it.line}:${it.column}: ${it.message}"
             }
-            error("Parse errors in $fileLabel:\n  $parseErrorSummary")
+            error("$fileLabel does not parse:\n  $parseErrors")
         }
-        if (resource.warnings.any()) {
-            logger.warn { "Warnings found in file $fileLabel" }
-
-            for (warning in resource.warnings) {
-                logger.warn(warning.message)
-            }
+        for (warning in resource.warnings) {
+            logger.warn { "$fileLabel:${warning.line}:${warning.column}: ${warning.message}" }
         }
-        if (issues.any()) {
-            logger.info { "Issues found in file $fileLabel" }
-
-            for (issue in issues) {
-                when (issue.severity) {
-                    Severity.INFO -> {
-                        logger.info { "${issue.uriToProblem.toFileString()}[${issue.lineNumber}:${issue.column}] ${issue.message}" }
-                    }
-                    Severity.WARNING -> {
-                        logger.warn { "${issue.uriToProblem.toFileString()}[${issue.lineNumber}:${issue.column}] ${issue.message}" }
-                    }
-                    Severity.ERROR -> {
-                        logger.error { "${issue.uriToProblem.toFileString()}[${issue.lineNumber}:${issue.column}] ${issue.message}" }
-                    }
-                    Severity.IGNORE -> {}
+        // an error reaches the user once, in the exception, so the log keeps it below the default level
+        for (issue in issues) {
+            when (issue.severity) {
+                Severity.WARNING -> {
+                    logger.warn { issueLine(issue, fileLabel) }
                 }
-            }
-
-            val blockingIssues = issues.filter {
-                it.severity == Severity.ERROR
-            }
-            if (blockingIssues.isNotEmpty()) {
-                val summary = blockingIssues.joinToString("\n  ") {
-                    val loc = it.uriToProblem?.toFileString() ?: fileLabel
-                    "$loc:${it.lineNumber}:${it.column}: ${it.severity} ${it.code ?: ""} ${it.message}".trim()
+                Severity.ERROR -> {
+                    logger.debug { issueLine(issue, fileLabel) }
                 }
-                error(
-                    "${blockingIssues.size} validation issue(s) in $fileLabel:\n  $summary",
-                )
+                Severity.INFO -> {
+                    logger.info { issueLine(issue, fileLabel) }
+                }
+                Severity.IGNORE -> {}
             }
         }
+
+        val errors = issues.filter {
+            it.severity == Severity.ERROR
+        }
+        if (errors.isNotEmpty()) {
+            val errorLines = errors.joinToString("\n  ") {
+                issueLine(it, fileLabel)
+            }
+            error("$fileLabel does not validate:\n  $errorLines")
+        }
+    }
+
+    private fun issueLine(issue: Issue, fileLabel: String): String {
+        val location = issue.uriToProblem?.toFileString() ?: fileLabel
+        val code = issue.code?.let {
+            " [$it]"
+        } ?: ""
+        return "$location:${issue.lineNumber}:${issue.column}: ${issue.message}$code"
     }
 
 }

@@ -27,7 +27,7 @@ class SingleBackendPortfolio<T : BackendConfig>(
 
     override val id: String = "${backend.id}-${configuration.id}"
     override val displayName: String = "${backend.id} ${configuration.id}"
-    override val description: String = "Single ${backend.id} configuration: ${configuration.id}"
+    override val description: String = "Runs the ${configuration.id} configuration of ${backend.id} alone."
     override val executorKeys: Set<ExecutorKey<*>> = setOf(backend.executorKey)
     override val legs = listOf(PortfolioLeg("${backend.id}:${configuration.id}", configuration.soundness))
 

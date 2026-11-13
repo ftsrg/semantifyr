@@ -49,10 +49,10 @@ class CompileCommand @Inject constructor(
 
     private val outputPath by option("-o", "--output")
         .path(mustExist = false, canBeFile = true, canBeDir = true)
-        .help("Output file, or directory for several cases.")
+        .help("The output file, or the output directory for several cases.")
 
     override fun help(context: Context): String {
-        return "Compile cases to inlined OXSTS."
+        return "Compile each case of an OXSTS model to inlined OXSTS."
     }
 
     override suspend fun run() {

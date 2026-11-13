@@ -62,7 +62,7 @@ suspend fun SuspendingCliktCommand.verifyCase(
                 echo(jsonLineFormat.encodeToString(CaseFailureLine(caseName, ExitCode.BackAnnotation.code, CasePhase.BackAnnotation, message)))
             }
         }
-        echo("Back-annotating the witness of $caseName failed: $message", err = true)
+        echo("error: Back-annotating the witness of $caseName failed: $message", err = true)
         return ExitCode.BackAnnotation
     } catch (exception: Exception) {
         val message = exception.message ?: exception::class.simpleName
@@ -77,7 +77,7 @@ suspend fun SuspendingCliktCommand.verifyCase(
                 echo(jsonLineFormat.encodeToString(CaseFailureLine(caseName, ExitCode.Compilation.code, CasePhase.Compilation, message)))
             }
         }
-        echo("Compiling $caseName failed: $message", err = true)
+        echo("error: Compiling $caseName failed: $message", err = true)
         return ExitCode.Compilation
     }
     val result = outcome.result

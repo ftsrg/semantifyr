@@ -40,4 +40,9 @@ enum class ExitCode(val code: Int) {
 class CommandExit(
     exitCode: ExitCode,
     message: String? = null,
-) : CliktError(message, statusCode = exitCode.code)
+) : CliktError(
+    message?.let {
+        "error: $it"
+    },
+    statusCode = exitCode.code,
+)

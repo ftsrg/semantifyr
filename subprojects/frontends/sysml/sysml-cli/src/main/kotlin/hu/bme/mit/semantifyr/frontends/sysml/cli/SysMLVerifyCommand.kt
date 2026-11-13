@@ -54,7 +54,7 @@ class SysMLVerifyCommand @Inject constructor(
     private val libraries by option("-l", "--library")
         .path()
         .multiple()
-        .help("OXSTS library file or directory, repeatable.")
+        .help("An OXSTS library added to the bundled SysML v2 library, repeatable.")
 
     private val caseSpecificationOptions by VerificationCaseSpecificationOptionGroup(verificationCaseDiscoverer)
     private val backendOptions by BackendOptionGroup {

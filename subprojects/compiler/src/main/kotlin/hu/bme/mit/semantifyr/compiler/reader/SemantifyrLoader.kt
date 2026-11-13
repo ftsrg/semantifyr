@@ -129,7 +129,7 @@ class SemantifyrLoader @Inject constructor(
 
         fun loadModel(path: Path): SemantifyrLoaderContext {
             if (! isOxstsFile(path)) {
-                logger.warn { "Tried to load non-oxsts file, skipping: $path" }
+                logger.warn { "Skipped $path, which is not an OXSTS file" }
             }
 
             val resource = loadFile(resourceSet, path)
@@ -148,7 +148,7 @@ class SemantifyrLoader @Inject constructor(
 
         fun loadLibrary(path: Path): SemantifyrLoaderContext {
             if (! isOxstsFile(path)) {
-                logger.warn { "Tried to load non-oxsts file, skipping: $path" }
+                logger.warn { "Skipped $path, which is not an OXSTS file" }
             }
 
             val resource = loadFile(resourceSet, path)

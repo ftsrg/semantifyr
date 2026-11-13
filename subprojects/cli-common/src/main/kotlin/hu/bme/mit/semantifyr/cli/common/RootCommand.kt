@@ -23,6 +23,8 @@ import com.github.ajalt.clikt.parameters.types.choice
 import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.core.config.Configurator
 
+const val DOCUMENTATION_URL = "https://ftsrg.mit.bme.hu/semantifyr/"
+
 abstract class RootCommand(
     name: String,
     private val description: String,
@@ -30,15 +32,15 @@ abstract class RootCommand(
 ) : SuspendingCliktCommand(name) {
     private val logLevel by option("--log-level")
         .choice(
-            "ERROR" to Level.ERROR,
-            "WARN" to Level.WARN,
-            "INFO" to Level.INFO,
-            "DEBUG" to Level.DEBUG,
-            "TRACE" to Level.TRACE,
+            "error" to Level.ERROR,
+            "warn" to Level.WARN,
+            "info" to Level.INFO,
+            "debug" to Level.DEBUG,
+            "trace" to Level.TRACE,
             ignoreCase = true,
         )
-        .default(Level.WARN)
-        .help("Root log level.")
+        .default(Level.WARN, defaultForHelp = "warn")
+        .help("How much is logged to stderr.")
 
     init {
         versionOption(javaClass.`package`.implementationVersion ?: "unknown")
@@ -52,6 +54,10 @@ abstract class RootCommand(
 
     override fun help(context: Context): String {
         return description
+    }
+
+    override fun helpEpilog(context: Context): String {
+        return "Documentation: $DOCUMENTATION_URL"
     }
 
     // the logging configuration is loaded before the arguments are parsed

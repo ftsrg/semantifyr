@@ -32,12 +32,12 @@ abstract class BaseSemantifyrCommand(
 
     val model by argument("model path")
         .path()
-        .help("OXSTS model file or directory.")
+        .help("An OXSTS model file, or a directory of them.")
 
     val libraries by option("-l", "--library")
         .path()
         .multiple()
-        .help("OXSTS library file or directory, repeatable.")
+        .help("An OXSTS library file or directory the model uses, repeatable.")
 
     fun checkInputs() {
         checkInputPath("Model", model, OxstsLibrary.FILE_NAME_SUFFIX)
