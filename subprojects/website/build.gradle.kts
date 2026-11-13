@@ -147,36 +147,39 @@ val cloneApiDocs = tasks.register<Sync>("cloneApiDocs") {
 }
 
 fun NpmTask.configureSharedInputs() {
-    inputs.dir(project.layout.projectDirectory.dir("src"))
-    inputs.dir(project.layout.projectDirectory.dir("static"))
-    inputs.file(project.layout.projectDirectory.file("docusaurus.config.ts"))
-    inputs.file(project.layout.projectDirectory.file("sidebars.ts"))
-    inputs.file(project.layout.projectDirectory.file("babel.config.cts"))
-    inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
-    inputs.file(project.layout.projectDirectory.file("eslint.config.mjs"))
-    inputs.file(project.layout.projectDirectory.file("package.json"))
-    inputs.file(rootProject.layout.projectDirectory.file("tsconfig.base.json"))
-    inputs.file(rootProject.layout.projectDirectory.file("eslint.config.base.js"))
-    inputs.file(rootProject.layout.projectDirectory.file("package.json"))
-    inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
-    inputs.dir(rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial"))
-    inputs.file(rootProject.layout.projectDirectory.file("oxsts-test-models/constructs/constructs.tsv"))
-    inputs.dir(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/tutorial"))
-    inputs.file(rootProject.layout.projectDirectory.file("subprojects/semantifyr-vscode/syntaxes/oxsts.tmLanguage.json"))
-    inputs.files(tasks.npmInstall)
-    inputs.files(cloneBrandingAssets)
-    inputs.files(editorCommonFiles)
+    inputs.dir(project.layout.projectDirectory.dir("src")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir(project.layout.projectDirectory.dir("static")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(project.layout.projectDirectory.file("docusaurus.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(project.layout.projectDirectory.file("sidebars.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(project.layout.projectDirectory.file("babel.config.cts")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(project.layout.projectDirectory.file("tsconfig.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(project.layout.projectDirectory.file("eslint.config.mjs")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(project.layout.projectDirectory.file("vitest.config.mts")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(project.layout.projectDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(rootProject.layout.projectDirectory.file("tsconfig.base.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(rootProject.layout.projectDirectory.file("eslint.config.base.js")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(rootProject.layout.projectDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(rootProject.layout.projectDirectory.file("package-lock.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir(rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir(rootProject.layout.projectDirectory.dir("subprojects/oxsts.lang/src/main/resources/hu/bme/mit/semantifyr/oxsts/lang/library")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(rootProject.layout.projectDirectory.file("oxsts-test-models/constructs/constructs.tsv")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(rootProject.layout.projectDirectory.file("subprojects/semantifyr-vscode/syntaxes/oxsts.tmLanguage.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(tasks.npmInstall).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cloneBrandingAssets).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(editorCommonFiles).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     configureSharedInputs()
     inputs.property("liveBackendUrl", providers.environmentVariable("SEMANTIFYR_LIVE_URL").orElse(""))
-    inputs.files(cliReference)
-    inputs.files(cloneSysmlConstructs)
+    inputs.files(cliReference).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cloneSysmlConstructs).withPathSensitivity(PathSensitivity.RELATIVE)
 
     npmCommand.set(listOf("run", "assemble"))
-    inputs.files(cloneApiDocs)
+    inputs.files(cloneApiDocs).withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.dir(project.layout.buildDirectory.dir("docusaurus"))
+    outputs.cacheIf { true }
 }
 
 val npmCheck = tasks.register<NpmTask>("npmCheck") {
@@ -185,6 +188,7 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
     npmCommand.set(listOf("run", "check"))
 
     stampOnSuccess()
+    outputs.cacheIf { true }
 }
 
 tasks {

@@ -11,7 +11,13 @@ Annotations attach metadata to declarations. They do not change behavior directl
 
 The `@` prefix attaches an annotation to the immediately following declaration.
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+  var value: int := 0
+}
+
+// hide-end
 @VerificationCase
 class Reaches10 {
   contains counter: Counter
@@ -22,9 +28,15 @@ class Reaches10 {
 }
 ```
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+// hide-end
 @Control
 var value: int := 0
+// hide-start
+}
+// hide-end
 ```
 
 ## With Arguments
@@ -80,11 +92,19 @@ annotation Description(text: string)
 
 A custom annotation may then be applied like any built-in.
 
-```oxsts fragment
+```oxsts continue
+// hide-start
+class Counter {
+  var value: int := 0
+
+// hide-end
 @Description(text = "Increments the counter by one")
 tran increment() {
   value := value + 1
 }
+// hide-start
+}
+// hide-end
 ```
 
 ## Standard Annotations

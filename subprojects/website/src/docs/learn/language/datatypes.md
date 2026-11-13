@@ -32,10 +32,20 @@ enum Color {
 
 Enum literals are referenced with `::`:
 
-```oxsts fragment
+```oxsts continue
+// hide-start
+class Light {
+  var current: Color := Color::Red
+
+  redefine tran {
+// hide-end
 if (current == Color::Red) {
   current := Color::Green
 }
+// hide-start
+  }
+}
+// hide-end
 ```
 
 ## Records
@@ -56,7 +66,7 @@ record Segment {
 
 A variable of record type holds one record. Fields are read and written with `.`, a whole record is assigned with `:=` and compared with `==` and `!=`, and `havoc` picks an arbitrary value for every field.
 
-```oxsts fragment
+```oxsts edit continue
 class Plotter {
   var pen: Point := Point { x = 0 }
   var mark: Point := Point { x = 0 }

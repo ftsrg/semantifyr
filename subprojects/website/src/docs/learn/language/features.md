@@ -21,7 +21,13 @@ Features define the **structural relationships** between classes. Unlike [variab
 
 A `contains` feature declares ownership: each instance of the enclosing class owns its own instance of the target type. A `[1]` containment is instantiated together with its holder, one instance per holder instance; a containment of any other multiplicity holds only the instances of the features that [subset](#subsets) it, so `n` children are written as `n` `[1]` subsetters.
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+  var value: int := 0
+}
+
+// hide-end
 class Pair {
   contains a: Counter
   contains b: Counter
@@ -32,7 +38,13 @@ class Pair {
 
 A `refers` feature is a cross-reference. It points to an instance that lives elsewhere; there is no ownership.
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+  var value: int := 0
+}
+
+// hide-end
 class Display {
   refers source: Counter
 }
@@ -53,11 +65,18 @@ class Tree {
 
 A `derived refers` feature is computed automatically from the model structure: it holds the instances whose `opposite` feature refers to the holder. A `derived refers` without an `opposite`, declared or inherited, is rejected (`OXSTS.UNSUPPORTED_FEATURE`).
 
-```oxsts fragment
+```oxsts
 class StateNode {
   derived refers inTrans: Transition[0..*] opposite to
   derived refers outTrans: Transition[0..*] opposite from
 }
+// hide-start
+
+class Transition {
+  refers from: StateNode opposite outTrans
+  refers to: StateNode opposite inTrans
+}
+// hide-end
 ```
 
 ## `features`
@@ -70,7 +89,7 @@ abstract class Container {
 }
 ```
 
-```oxsts fragment
+```oxsts continue
 class IntContainer : Container {
   redefine contains payload: int
 }
@@ -106,7 +125,11 @@ class Tree {
 
 `subsets` declares that the values of one feature are also included in another, more general feature.
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Item
+
+// hide-end
 class Wrapper {
   contains all: Item[0..*]
   contains primary: Item subsets all
@@ -119,7 +142,20 @@ This is the primary way semantic libraries declaratively add instances to a coll
 
 `redefine` overrides an inherited feature of the **same name**, typically with a more specific type or a more constrained body. 
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+  var value: int := 0
+}
+
+class Counter10 : Counter
+
+class CounterPair {
+  contains a: Counter
+  contains b: Counter
+}
+
+// hide-end
 class Counter10Pair : CounterPair {
   redefine contains a: Counter10
   redefine contains b: Counter10
@@ -128,7 +164,20 @@ class Counter10Pair : CounterPair {
 
 `redefines` replaces an inherited feature under a new name: the old name no longer resolves on the subclass, and inherited members that use it reach the new feature. A class redefines an inherited feature at most once, by `redefine` or by `redefines` (`OXSTS.DUPLICATE_REDEFINITION`).
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+  var value: int := 0
+}
+
+class Counter10 : Counter
+
+class CounterPair {
+  contains a: Counter
+  contains b: Counter
+}
+
+// hide-end
 class Counter10Pair : CounterPair {
   contains newA: Counter10 redefines a
   contains newB: Counter10 redefines b
@@ -139,18 +188,38 @@ class Counter10Pair : CounterPair {
 
 A feature declaration may include a block of nested feature declarations to redefine inner structure.
 
-```oxsts fragment
+```oxsts
+// hide-start
+abstract class Action
+
+class SetValueAction : Action
+
+class State {
+  contains entryAction: Action
+}
+
+class Machine {
+// hide-end
 contains state: State {
   redefine contains entryAction: SetValueAction
 }
+// hide-start
+}
+// hide-end
 ```
 
 ## Feature Binding
 
 A feature can be bound to a compile-time expression with `=`. The bound value cannot depend on runtime state.
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Limit {
+// hide-end
 refers maximum: int = 10
+// hide-start
+}
+// hide-end
 ```
 
 ## Top-Level (Global) Features
@@ -162,12 +231,22 @@ Top-level features are declared **outside** any class. They represent shared ins
 | `global containment` | A top-level owned instance. |
 | `global reference` | A top-level reference. |
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Event
+
+// hide-end
 global containment globalEvent: Event[1]
 ```
 
 Top-level features currently support only the `subsets` modifier. This restriction may be relaxed in future versions.
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Event
+
+global containment sharedEvents: Event[0..*]
+
+// hide-end
 global containment sharedEvent: Event subsets sharedEvents
 ```

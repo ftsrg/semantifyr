@@ -22,18 +22,34 @@ The declaration valuation, every variable at its initializer, is not a state: th
 
 A transition declaration consists of one of the kind keywords, a name, a parameter list, and a body in `{ }`.
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+  var value: int := 0
+
+// hide-end
 tran increment() {
   value := value + 1
 }
+// hide-start
+}
+// hide-end
 ```
 
 With parameters:
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+  var value: int := 0
+
+// hide-end
 tran setBy(amount: int) {
   value := value + amount
 }
+// hide-start
+}
+// hide-end
 ```
 
 Parameters are passed by value when the transition is invoked through an [inline call](inline-operations.md#inline-call). A parameter cannot be an array (`OXSTS.UNSUPPORTED_FEATURE`), and two parameters of one transition cannot share a name (`OXSTS.DUPLICATE_NAME`). A parameter may reuse the name of a member of the class, which the body then reaches as `self.name`.
@@ -67,12 +83,20 @@ class Counter {
 
 A transition body may contain alternative branches separated by `or`. This is a shorthand for wrapping the body in a top-level [`choice`](operations.md#choice).
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+  var value: int := 0
+
+// hide-end
 tran step() {
   value := value + 1
 } or {
   value := value - 1
 }
+// hide-start
+}
+// hide-end
 ```
 
 The verifier explores both branches non-deterministically.
@@ -81,32 +105,80 @@ The verifier explores both branches non-deterministically.
 
 An `abstract` transition has no body. Concrete subclasses must redefine it.
 
-```oxsts fragment
+```oxsts
+// hide-start
+abstract class Transition {
+// hide-end
 abstract tran fire()
+// hide-start
+}
+// hide-end
 ```
 
 ## Redefining Transitions
 
 Override an inherited transition of the **same name** with `redefine`.
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+  var value: int := 0
+
+  tran increment() {
+    value := value + 1
+  }
+}
+
+class BoundedCounter : Counter {
+  prop maximum(): int {
+    return 10
+  }
+
+// hide-end
 redefine tran increment() {
   if (value < maximum()) {
     value := value + 1
   }
 }
+// hide-start
+}
+// hide-end
 ```
 
 The implicit transitions inherited from `Anything` are overridden by declaring them, with or without `redefine`: a class has one `main` and one `init`, and a second anonymous transition of a kind in the same class is a duplicate name (`OXSTS.DUPLICATE_NAME`).
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+  var value: int := 0
+
+// hide-end
 redefine init {
   value := 0
 }
+// hide-start
+}
+// hide-end
 ```
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+  var value: int := 0
+
+  redefine tran {
+    value := value + 1
+  }
+}
+
+class Parent {
+  contains child: Counter
+
+// hide-end
 redefine tran {
   inline child.main()
 }
+// hide-start
+}
+// hide-end
 ```

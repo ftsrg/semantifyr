@@ -5,6 +5,7 @@
  */
 
 .embed {
+  position: relative;
   margin-bottom: var(--ifm-leading);
 }
 
@@ -14,62 +15,116 @@
   border: 0;
 }
 
-.block {
-  position: relative;
-}
-
-/* the run control sits in the code block's corner; the block's own copy button moves aside for it */
-.run {
-  position: absolute;
-  top: calc(var(--ifm-pre-padding) / 2);
-  right: calc(var(--ifm-pre-padding) / 2);
-  z-index: 1;
+/* the height of the copy button beside it */
+.control {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.3rem 0.6rem 0.3rem 0.45rem;
+  height: calc(1.125rem + 0.8rem + 2px);
+  padding: 0 0.55rem 0 0.45rem;
   border: 1px solid var(--ifm-color-emphasis-300);
   border-radius: var(--ifm-global-radius);
   background: var(--prism-background-color);
-  color: var(--ifm-color-primary);
+  color: var(--ifm-color-emphasis-700);
   font-family: inherit;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1;
   cursor: pointer;
 }
 
-.run:hover,
-.run:focus-visible {
+.control:hover,
+.control:focus-visible {
   border-color: var(--ifm-color-primary);
+  color: var(--ifm-color-primary);
 }
 
-.runIcon {
+.controlIcon {
   width: 0.85rem;
   height: 0.85rem;
 }
 
-.block :global(.theme-code-block) [class*='buttonGroup'] {
-  right: 6.5rem;
+.loadingLabel {
+  display: inline-flex;
+  align-items: center;
+  height: calc(1.125rem + 0.8rem + 2px);
+  padding: 0 0.6rem;
+  border-radius: var(--ifm-global-radius);
+  background: var(--prism-background-color);
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.8rem;
 }
 
-.toolbar {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 0.5rem;
+.loading :global(.theme-code-block) {
+  opacity: 0.55;
+  transition: opacity 150ms ease-in-out;
 }
 
-.button {
-  background: var(--ifm-color-emphasis-200);
-  color: var(--ifm-font-color-base);
+.loading :global(.theme-code-block) [class*='buttonGroup'] {
+  display: none;
+}
+
+.progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  overflow: hidden;
+  border-radius: var(--ifm-global-radius) var(--ifm-global-radius) 0 0;
+}
+
+.progress::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 30%;
+  background: var(--ifm-color-primary);
+  animation: sweep 1.1s ease-in-out infinite;
+}
+
+@keyframes sweep {
+  from {
+    left: -30%;
+  }
+
+  to {
+    left: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress::after {
+    left: 0;
+    width: 100%;
+    animation: none;
+  }
+}
+
+/* a cross-origin frame that is not rendered never loads its page, so it loads see-through over the block, at the width it will have */
+.pending {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.close {
+  display: block;
+  margin: 0.35rem 0 0 auto;
+  padding: 0.2rem 0.1rem;
   border: none;
-  border-radius: 4px;
-  padding: 0.4rem 0.95rem;
+  background: none;
+  color: var(--ifm-color-emphasis-700);
+  font-family: inherit;
   font-size: 0.8rem;
   cursor: pointer;
-  font-family: inherit;
 }
 
-.button:hover {
-  background: var(--ifm-color-emphasis-300);
+.close:hover,
+.close:focus-visible {
+  color: var(--ifm-color-primary);
+  text-decoration: underline;
 }

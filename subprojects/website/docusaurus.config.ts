@@ -11,6 +11,7 @@ import type { Options as ClassicThemeOptions } from '@docusaurus/theme-classic';
 import type { UserThemeConfig } from '@docusaurus/theme-common';
 import type { Config } from '@docusaurus/types';
 import { themes } from 'prism-react-renderer';
+import remarkFences from './src/plugins/remarkFences';
 
 const liveBackendUrl = process.env.SEMANTIFYR_LIVE_URL ?? 'https://live.semantifyr.org';
 
@@ -62,6 +63,9 @@ export default {
         path: 'src/docs',
         routeBasePath: '/',
         sidebarPath: './sidebars.ts',
+        remarkPlugins: [
+          remarkFences,
+        ],
         editUrl:
           'https://github.com/ftsrg/semantifyr/edit/main/subprojects/website',
       } satisfies DocsOptions,
@@ -77,6 +81,7 @@ export default {
         resolve: {
           alias: {
             '@oxsts-test-models': path.resolve(__dirname, '../../oxsts-test-models'),
+            '@oxsts-library': path.resolve(__dirname, '../oxsts.lang/src/main/resources/hu/bme/mit/semantifyr/oxsts/lang/library'),
             '@sysml-tutorial-models': path.resolve(__dirname, '../frontends/sysml/models/tutorial'),
             // written by the cliReference_* Gradle tasks
             '@cli-reference': path.resolve(__dirname, 'build/cli-reference'),

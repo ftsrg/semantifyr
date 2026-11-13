@@ -11,26 +11,52 @@ Properties are **pure computations**: they return a value without changing any s
 
 A property declaration consists of the `prop` keyword, a name, a parameter list, a return type, and a body containing exactly one `return` statement followed by an expression.
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+  var value: int := 0
+
+// hide-end
 prop isPositive(): bool {
   return value > 0
 }
+// hide-start
+}
+// hide-end
 ```
 
 With parameters:
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+  var value: int := 0
+
+// hide-end
 prop isAtLeast(threshold: int): bool {
   return value >= threshold
 }
+// hide-start
+}
+// hide-end
 ```
 
 A parameter may hold an instance, and the body reads its members. An argument that is a variable reads the members of the instance the variable holds. Two parameters of one property cannot share a name (`OXSTS.DUPLICATE_NAME`).
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Worker {
+  var done: bool := false
+}
+
+class Supervisor {
+// hide-end
 prop isDoneOf(worker: Worker[0..1]): bool {
   return worker.done
 }
+// hide-start
+}
+// hide-end
 ```
 
 The single-`return` restriction may be relaxed in future versions.
@@ -39,34 +65,67 @@ The single-`return` restriction may be relaxed in future versions.
 
 An `abstract` property has no body. Concrete subclasses must redefine it.
 
-```oxsts fragment
+```oxsts
+// hide-start
+abstract class Limit {
+// hide-end
 abstract prop maximum(): int
+// hide-start
+}
+// hide-end
 ```
 
 ## Redefining Properties
 
 Override an inherited property of the **same name** with `redefine`. The redefinition takes as many parameters as the inherited property, and its return type must be assignable to the inherited one.
 
-```oxsts fragment
+```oxsts continue
+// hide-start
+class TenLimit : Limit {
+// hide-end
 redefine prop maximum(): int {
   return 10
 }
+// hide-start
+}
+// hide-end
 ```
 
 ## Invoking a Property
 
 A property is invoked via the `()` invocation expression.
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+  var value: int := 0
+
+  prop maximum(): int {
+    return 10
+  }
+
+// hide-end
 prop atLimit(): bool {
   return value == maximum()
 }
+// hide-start
+}
+// hide-end
 ```
 
-```oxsts fragment
+```oxsts continue
+// hide-start
+class Pair {
+  contains a: Counter
+  contains b: Counter
+
+// hide-end
 prop pairAtLimit(): bool {
   return a.atLimit() && b.atLimit()
 }
+// hide-start
+}
+// hide-end
 ```
 
 See [Expressions / Property Invocation](expressions.md#property-invocation-).
@@ -75,7 +134,13 @@ See [Expressions / Property Invocation](expressions.md#property-invocation-).
 
 A `prop { return expr; }` without a name has the **implicit name** `prop`. This is the special property checked by the model checker. The body uses [temporal operators](expressions.md#temporal-operators) such as `AG` and `EF` to express safety and reachability properties.
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+  var value: int := 0
+}
+
+// hide-end
 class Reaches10 {
   contains counter: Counter
 
