@@ -14,8 +14,10 @@ plugins {
 }
 
 node {
-    // the website states it as the Node.js the tools need
-    version = providers.gradleProperty("nodeVersion")
+    // .nvmrc is the one Node.js version: the workflows' set-up and the website read it too
+    version = providers.fileContents(rootProject.layout.projectDirectory.file(".nvmrc")).asText.map {
+        it.trim()
+    }
     download = true
     // the Node.js repository is declared in settings, which forbids project repositories
     distBaseUrl = null

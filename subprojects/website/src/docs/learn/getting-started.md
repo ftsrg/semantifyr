@@ -3,9 +3,8 @@ title: Getting Started
 sidebar_position: 1
 ---
 
-import live from '@generated-reference/live.json';
 import extension from '@vscode-extension/package.json';
-import { LiveBackends, LiveLimit } from '@site/src/components/LiveFacts';
+import LiveLimit from '@site/src/components/LiveLimit';
 import NodeVersion from '@site/src/components/NodeVersion';
 import Planned from '@site/src/components/Planned';
 import VscodeSettings from '@site/src/components/VscodeSettings';
@@ -22,7 +21,7 @@ The fastest way to try Semantifyr. The **in-browser live editor** is a lightweig
 
 [Open the live editor](https://live.semantifyr.org)
 
-Live verifies with the backends its server has, <LiveBackends facts={live} />, and stops a verification after <LiveLimit facts={live} />. Sessions are ephemeral. **Save** in the toolbar writes your model to a file, and **Share** puts the model and its results into a link.
+The public instance stops a verification after <LiveLimit />. Sessions are ephemeral. **Save** in the toolbar writes your model to a file, and **Share** puts the model and its results into a link.
 
 ## Option B: Install the VS Code extension (for local work)
 

@@ -15,6 +15,7 @@ path = [
     "**/package.json",
     "**/tsconfig*.json",
     "**/.gitignore",
+    ".nvmrc",
 ]
 SPDX-FileCopyrightText = "2023-2026 The Semantifyr Authors"
 SPDX-License-Identifier = "EPL-2.0"
