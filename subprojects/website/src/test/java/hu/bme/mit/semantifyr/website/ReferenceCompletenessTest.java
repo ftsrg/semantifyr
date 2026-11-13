@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 import org.eclipse.emf.ecore.EObject;
@@ -24,6 +25,7 @@ import org.eclipse.xtext.EnumLiteralDeclaration;
 import org.eclipse.xtext.GrammarUtil;
 import org.eclipse.xtext.IGrammarAccess;
 import org.eclipse.xtext.Keyword;
+import org.eclipse.xtext.nodemodel.ILeafNode;
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils;
 import org.eclipse.xtext.resource.XtextResourceSet;
 import org.eclipse.xtext.testing.util.ParseHelper;
@@ -32,11 +34,7 @@ import org.junit.jupiter.api.Test;
 @InjectWithOxsts
 public class ReferenceCompletenessTest {
 
-    private static final Pattern WORD = Pattern.compile("[A-Za-z][A-Za-z ]*");
-
-    private static final Pattern ISSUE_CODE = Pattern.compile("OXSTS\\.[A-Z_]+");
-
-    private static final String ISSUE_PREFIX = "OXSTS.";
+    private static final Pattern ISSUE_CODE = Pattern.compile(Pattern.quote(OxstsValidator.ISSUE_PREFIX) + "[A-Z_]+");
 
     @Inject
     private IGrammarAccess grammarAccess;
@@ -56,37 +54,41 @@ public class ReferenceCompletenessTest {
         rules.addAll(GrammarUtil.allEnumRules(grammar));
         for (var rule : rules) {
             for (var keyword : EcoreUtil2.eAllOfType(rule, Keyword.class)) {
-                if (WORD.matcher(keyword.getValue()).matches()) {
-                    keywords.add(keyword.getValue());
-                }
+                keywords.add(keyword.getValue());
             }
         }
 
-        var examples = new ArrayList<String>();
+        var shown = new TreeSet<String>();
         for (var fence : DocumentationFences.allFences()) {
             if (!DocumentationFences.SYNTAX.equals(fence.issue())) {
-                examples.add(fence.text());
+                var parsed = parseHelper.parse(fence.text(), resourceSetProvider.get());
+                for (var leaf : NodeModelUtils.getNode(parsed).getLeafNodes()) {
+                    var line = fence.model().get(leaf.getStartLine() - 1);
+                    if (line.shown()) {
+                        addKeyword(leaf, shown);
+                    }
+                }
             }
         }
         for (var model : DocumentationFences.importedModels()) {
-            examples.add(Files.readString(model));
-        }
-        var shown = new TreeSet<String>();
-        for (var example : examples) {
-            var parsed = parseHelper.parse(example, resourceSetProvider.get());
+            var parsed = parseHelper.parse(Files.readString(model), resourceSetProvider.get());
             for (var leaf : NodeModelUtils.getNode(parsed).getLeafNodes()) {
-                if (leaf.getGrammarElement() instanceof Keyword keyword) {
-                    shown.add(keyword.getValue());
-                } else if (leaf.getGrammarElement() instanceof EnumLiteralDeclaration literal) {
-                    shown.add(literal.getLiteral().getValue());
-                }
+                addKeyword(leaf, shown);
             }
         }
 
         keywords.removeAll(shown);
         assertThat(keywords)
-                .as("keywords of the grammar in no checked oxsts fence and no imported model")
+                .as("keywords of the grammar on no shown line of a checked oxsts fence and in no imported model")
                 .isEmpty();
+    }
+
+    private static void addKeyword(ILeafNode leaf, Set<String> keywords) {
+        if (leaf.getGrammarElement() instanceof Keyword keyword) {
+            keywords.add(keyword.getValue());
+        } else if (leaf.getGrammarElement() instanceof EnumLiteralDeclaration literal) {
+            keywords.add(literal.getLiteral().getValue());
+        }
     }
 
     @Test
@@ -95,7 +97,8 @@ public class ReferenceCompletenessTest {
         for (var field : OxstsValidator.class.getFields()) {
             if (Modifier.isStatic(field.getModifiers())
                     && field.get(null) instanceof String code
-                    && code.startsWith(ISSUE_PREFIX)
+                    && code.startsWith(OxstsValidator.ISSUE_PREFIX)
+                    && !code.equals(OxstsValidator.ISSUE_PREFIX)
                     && !field.isAnnotationPresent(InternalIssue.class)) {
                 codes.add(code);
             }
@@ -104,7 +107,7 @@ public class ReferenceCompletenessTest {
         var shown = new TreeSet<String>();
         var texts = new ArrayList<String>();
         for (var page : DocumentationFences.pages()) {
-            texts.add(Files.readString(page));
+            texts.add(DocumentationFences.shownText(page));
         }
         for (var model : DocumentationFences.importedModels()) {
             texts.add(Files.readString(model));

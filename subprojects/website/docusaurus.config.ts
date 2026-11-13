@@ -13,6 +13,7 @@ import type { UserThemeConfig } from '@docusaurus/theme-common';
 import type { Config } from '@docusaurus/types';
 import type { PrismTheme } from 'prism-react-renderer';
 import remarkFences from './src/plugins/remarkFences';
+import sourceAliases from './source-aliases.json';
 
 // the code blocks take their colours from live's grammars in theme/CodeBlock/Content; the block itself from the tokens
 const codeBlockTheme: PrismTheme = {
@@ -126,12 +127,12 @@ export default {
       configureWebpack: () => ({
         resolve: {
           alias: {
-            '@oxsts-test-models': path.resolve(__dirname, '../../oxsts-test-models'),
-            '@oxsts-library': path.resolve(__dirname, '../oxsts.lang/src/main/resources/hu/bme/mit/semantifyr/oxsts/lang/library'),
-            '@sysml-tutorial-models': path.resolve(__dirname, '../frontends/sysml/models/tutorial'),
-            // the reference pairs of the trace files, which the frontends' tests check
-            '@sysml-reference-trace': path.resolve(__dirname, '../frontends/sysml/models/etc'),
-            '@gamma-reference-trace': path.resolve(__dirname, '../frontends/gamma/models/etc'),
+            // the sources the pages import, which the website's test and its Gradle tasks read from the same file
+            ...Object.fromEntries(
+              Object.entries(sourceAliases).map(([alias, directory]) => {
+                return [alias, path.resolve(__dirname, directory)];
+              }),
+            ),
             // written by the cliReference_* Gradle tasks
             '@cli-reference': path.resolve(__dirname, 'build/cli-reference'),
             // written by the cloneSysmlConstructs Gradle task from the SysML translation's registry
