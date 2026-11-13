@@ -33,7 +33,7 @@ class GammaSemanticSuite {
         val gammaVerificationCase = helper.discoverInWorkspace(entry.directory, entry.model.file).single {
             it.declaration.name == entry.case.name
         }
-        val frontend = helper.buildFrontend(Portfolios.ThetaCegarExplPredCombined, artifactRoot, timeout = 2.minutes)
+        val frontend = helper.buildFrontend(Portfolios.SmartFull, artifactRoot, timeout = 2.minutes)
         helper.checkVerificationCase(frontend, gammaVerificationCase, entry.case.expectedVerdict)
     }
 }
