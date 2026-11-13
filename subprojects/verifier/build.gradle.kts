@@ -25,4 +25,5 @@ dependencies {
     testFixturesApi(testFixtures(project(":backend")))
     testFixturesImplementation(libs.kotlinx.coroutines.core)
     testFixturesImplementation(project(":logging"))
+    testFixturesImplementation(libs.kotlinx.serialization.json)
 }

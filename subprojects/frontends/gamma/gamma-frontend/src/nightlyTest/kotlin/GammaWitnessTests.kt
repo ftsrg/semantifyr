@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.frontends.gamma.GammaVerificationCase
+import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaCorpusEntry
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaFrontendTestHelper
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaTestEngine
 import hu.bme.mit.semantifyr.portfolios.Portfolios
@@ -28,7 +28,7 @@ class GammaWitnessTests {
 
     @ParameterizedTest(name = "{0} on {1}")
     @MethodSource
-    suspend fun `Witnesses Re-verify Through All Backends`(gammaVerificationCase: GammaVerificationCase, engine: GammaTestEngine) {
-        helper.checkVerificationCaseOn(engine, gammaVerificationCase, artifactRoot, timeout = 30.minutes, validationPortfolio = Portfolios.AllAgree)
+    suspend fun `Witnesses Re-verify Through All Backends`(entry: GammaCorpusEntry, engine: GammaTestEngine) {
+        helper.checkVerificationCaseOn(engine, entry, artifactRoot, timeout = 30.minutes, validationPortfolio = Portfolios.AllAgree)
     }
 }

@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.frontends.sysml.testing
 
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.frontends.sysml.SysMLv2Frontend
@@ -24,8 +25,6 @@ import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.copyTo
 import kotlin.io.path.createDirectories
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.name
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
@@ -44,6 +43,7 @@ class SysMLv2FrontendTestHelper {
         variant: SysMLv2Variant = SysMLv2Variant.Default,
         timeout: Duration = 2.minutes,
         artifacts: ArtifactConfig = ArtifactConfig.ALL,
+        environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
     ): SysMLv2Frontend {
         return SysMLv2Frontend.builder()
             .source(sourcePath)
@@ -51,6 +51,7 @@ class SysMLv2FrontendTestHelper {
             .injector(injector)
             .loader(loader)
             .portfolio(portfolio)
+            .environment(environment)
             .timeout(timeout)
             .artifacts(artifacts)
             .outputDirectory(outputDirectory)
@@ -98,28 +99,6 @@ class SysMLv2FrontendTestHelper {
         return tracePath
     }
 
-    // the tutorial models are outside the corpus, so their cases come from discovery and the Violated suffix
-    fun tutorialEntries(
-        frontend: SysMLv2Frontend,
-        source: Path,
-    ): List<CorpusEntry> {
-        val model = CorpusModel(
-            file = source.name,
-            cases = frontend.verificationCases().map {
-                val name = it.qualifiedName.substringAfterLast("::")
-                val verdict = if (name.endsWith("Violated")) {
-                    CorpusVerdict.Failed
-                } else {
-                    CorpusVerdict.Passed
-                }
-                CorpusCase(name, verdict, CorpusTier.Integration)
-            },
-        )
-        return model.cases.map {
-            CorpusEntry(model, it)
-        }
-    }
-
     suspend fun recordVerificationCase(
         frontend: SysMLv2Frontend,
         entry: CorpusEntry,
@@ -150,39 +129,31 @@ class SysMLv2FrontendTestHelper {
     companion object {
         val MODELS_ROOT: Path = Path("build", "test-models")
 
-        val TUTORIAL_MODELS: List<Path>
+        val TUTORIAL_ROOT: Path = Path("..", "models", "tutorial")
+
+        val ETC_ROOT: Path = Path("..", "models", "etc")
+
+        val tutorialEntries: List<CorpusEntry>
             get() {
-                return Path("..", "models", "tutorial").listDirectoryEntries("*.sysml").sorted()
+                return SysMLCorpus.load(TUTORIAL_ROOT.resolve("manifest.json")).entries
             }
 
-        private const val GUARDED_INITIAL_TRANSITION_MODEL = "guarded_initial_transition.sysml"
-
-        // the model is a library fixture outside the corpus, so its cases are listed here
-        private val GUARDED_INITIAL_TRANSITION_CASES = listOf(
-            "GuardedInitialTransitionEntersLowTestCase",
-            "GuardedInitialTransitionNeverEntersHighTestCase",
-            "GuardedNestedInitialTransitionEntersRightTestCase",
-            "GuardedNestedInitialTransitionNeverEntersLeftTestCase",
-        )
-
         fun guardedInitialTransitionEntries(variant: SysMLv2Variant): List<CorpusEntry> {
-            val model = CorpusModel(
-                file = GUARDED_INITIAL_TRANSITION_MODEL,
-                variant = variant,
-                cases = GUARDED_INITIAL_TRANSITION_CASES.map {
-                    CorpusCase(it, CorpusVerdict.Passed, CorpusTier.Integration)
-                },
-            )
-            return model.cases.map {
-                CorpusEntry(model, it)
+            return SysMLCorpus.load(ETC_ROOT.resolve("manifest.json")).models.map {
+                it.copy(variant = variant)
+            }.flatMap { model ->
+                model.cases.map {
+                    CorpusEntry(model, it)
+                }
             }
         }
 
         // the SysML CLI reads every model next to the source, so the fixture gets a workspace of its own
         fun guardedInitialTransitionModel(workspace: Path): Path {
+            val model = SysMLCorpus.load(ETC_ROOT.resolve("manifest.json")).models.single().file
             workspace.createDirectories()
             modelPath("Verification.sysml").copyTo(workspace.resolve("Verification.sysml"), overwrite = true)
-            return Path("..", "models", "etc", GUARDED_INITIAL_TRANSITION_MODEL).copyTo(workspace.resolve(GUARDED_INITIAL_TRANSITION_MODEL), overwrite = true)
+            return ETC_ROOT.resolve(model).copyTo(workspace.resolve(model), overwrite = true)
         }
 
         fun testArtifactRoot(testClass: Class<*>): Path {

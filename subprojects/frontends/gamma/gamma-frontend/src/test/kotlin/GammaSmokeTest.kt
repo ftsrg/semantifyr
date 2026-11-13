@@ -23,6 +23,6 @@ class GammaSmokeTest {
             outputDirectory = GammaFrontendTestHelper.testArtifactRoot(GammaSmokeTest::class.java),
         )
 
-        helper.checkVerificationCase(frontend, helper.discover(Path("build", "test-models", "Simple.gamma")).first())
+        helper.checkVerificationCase(frontend, helper.discover(Path("build", "test-models", "Simple.gamma")).first(), VerificationVerdict.Passed)
     }
 }

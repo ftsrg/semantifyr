@@ -1,9 +1,3 @@
-/*
- * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
- *
- * SPDX-License-Identifier: EPL-2.0
- */
-
 package example::levelcrossing
 
 enum TrackState {
@@ -120,7 +114,6 @@ class LevelCrossing {
 }
 
 @VerificationCase
-@Tag("expect-fail")
 class BarrierDownWhileTrainInCrossing : LevelCrossing {
     prop {
         return AG (!(trackA.state == TrackState::InCrossing || trackB.state == TrackState::InCrossing) || barrier.state == BarrierState::Down)
@@ -128,7 +121,6 @@ class BarrierDownWhileTrainInCrossing : LevelCrossing {
 }
 
 @VerificationCase
-@Tag("expect-pass")
 class TwoTrainsCanBeInTheCrossing : LevelCrossing {
     prop {
         return EF (trackA.state == TrackState::InCrossing && trackB.state == TrackState::InCrossing)

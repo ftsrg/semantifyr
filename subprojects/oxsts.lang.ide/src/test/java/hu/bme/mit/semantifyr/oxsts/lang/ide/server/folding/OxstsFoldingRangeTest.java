@@ -32,13 +32,13 @@ class OxstsFoldingRangeTest extends OxstsLanguageServerTest {
         assertThat(lines).doesNotHaveDuplicates();
         assertThat(lines)
                 .contains(
-                        new Lines(14, 41),
-                        new Lines(22, 23),
-                        new Lines(26, 36),
-                        new Lines(27, 35),
-                        new Lines(27, 29),
-                        new Lines(30, 32),
-                        new Lines(33, 35));
+                        new Lines(8, 35),
+                        new Lines(16, 17),
+                        new Lines(20, 30),
+                        new Lines(21, 29),
+                        new Lines(21, 23),
+                        new Lines(24, 26),
+                        new Lines(27, 29));
     }
 
     @Test

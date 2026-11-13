@@ -37,9 +37,11 @@ class SysMLTraceTests {
             val frontend = helper.buildFrontend(guardedModel, Portfolios.SmartFull, artifactRoot.resolve(variant.name.lowercase()), variant)
             frontend to SysMLv2FrontendTestHelper.guardedInitialTransitionEntries(variant)
         }
-        val tutorial = SysMLv2FrontendTestHelper.TUTORIAL_MODELS.map { source ->
-            val frontend = helper.buildFrontend(source, Portfolios.SmartFull, artifactRoot.resolve(source.nameWithoutExtension))
-            frontend to helper.tutorialEntries(frontend, source)
+        val tutorial = SysMLv2FrontendTestHelper.tutorialEntries.groupBy {
+            it.model
+        }.map { (model, entries) ->
+            val source = SysMLv2FrontendTestHelper.TUTORIAL_ROOT.resolve(model.file)
+            helper.buildFrontend(source, Portfolios.SmartFull, artifactRoot.resolve(source.nameWithoutExtension)) to entries
         }
 
         val traces = (corpus + guarded + tutorial).flatMap { (frontend, entries) ->

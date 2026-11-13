@@ -62,32 +62,35 @@ function studentRun(overrides: Partial<StudentRun>): StudentRun {
 }
 
 describe('declaredCases', () => {
-  it('reads the verification cases and their expected verdicts', () => {
+  it('reads the verification cases and takes their expected verdicts from the manifest', () => {
     const source = `
 class Helper {}
 
 @VerificationCase
-@Tag("expect-pass")
 class Reachable {}
 
-@Tag("expect-fail")
+@Trace
 @VerificationCase
 class Violated {}
 
 @VerificationCase
-class Untagged {}
+class Unlisted {}
 
-@Tag("expect-pass")
 class NotACase {}
 `
-    expect(declaredCases(source)).toEqual([
+    const expected = new Map([
+      ['Reachable', VerificationStatus.Passed],
+      ['Violated', VerificationStatus.Failed],
+      ['NotACase', VerificationStatus.Passed],
+    ])
+    expect(declaredCases(source, expected)).toEqual([
       { name: 'Reachable', expected: 'passed' },
       { name: 'Violated', expected: 'failed' },
-      { name: 'Untagged', expected: null },
+      { name: 'Unlisted', expected: null },
     ])
   })
 
-  it('finds a tagged case in every tutorial step model it loads', () => {
+  it('finds an expected verdict for every case of every tutorial step model it loads', () => {
     const models = tutorialStepModels()
     expect(models.length).toBeGreaterThan(0)
     for (const model of models) {

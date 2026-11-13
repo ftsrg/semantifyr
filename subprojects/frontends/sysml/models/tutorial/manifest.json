@@ -1,0 +1,12 @@
+{
+    "models": [
+        {
+            "file": "room.sysml",
+            "cases": [
+                { "name": "LampLitReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "LampNeverLitViolated", "verdict": "Failed", "tier": "Integration" },
+                { "name": "LampLitOnlyWhileSwitchOnViolated", "verdict": "Failed", "tier": "Integration" }
+            ]
+        }
+    ]
+}

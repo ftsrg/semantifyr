@@ -1,9 +1,3 @@
-/*
- * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
- *
- * SPDX-License-Identifier: EPL-2.0
- */
-
 package example::trafficlight::advanced::step2
 
 class State : Statechart {
@@ -111,7 +105,6 @@ class Intersection {
 }
 
 @VerificationCase
-@Tag("expect-pass")
 class GreenColorIsReachable {
     contains light: TrafficLight[1]
 
@@ -129,7 +122,6 @@ class GreenColorIsReachable {
 }
 
 @VerificationCase
-@Tag("expect-pass")
 class IntersectionNeverBothGreen {
     contains intersection: Intersection
 
@@ -147,7 +139,6 @@ class IntersectionNeverBothGreen {
 }
 
 @VerificationCase
-@Tag("expect-pass")
 class NeverGreenInStandby {
     contains light: TrafficLight[1]
 

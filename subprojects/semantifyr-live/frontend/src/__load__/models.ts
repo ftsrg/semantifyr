@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { readdirSync, readFileSync } from 'node:fs'
-import { basename } from 'node:path'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { basename, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { VerificationStatus } from '@semantifyr/editor-common'
 
@@ -24,23 +24,46 @@ const tutorialDirectory = fileURLToPath(new URL('../../../../../oxsts-test-model
 
 const annotatedClass = /((?:@\w+(?:\([^)]*\))?\s*)+)class\s+(\w+)/g
 
-export function declaredCases(text: string): DeclaredCase[] {
+// the expected verdicts are the manifest's beside the model, in the shape the frontends' corpus manifests share
+interface CaseManifest {
+  models: {
+    file: string
+    cases: {
+      name: string
+      verdict: 'Passed' | 'Failed'
+    }[]
+  }[]
+}
+
+const MANIFEST_VERDICTS: Readonly<Record<'Passed' | 'Failed', VerificationStatus>> = {
+  Passed: VerificationStatus.Passed,
+  Failed: VerificationStatus.Failed,
+}
+
+export function expectedVerdicts(path: string): ReadonlyMap<string, VerificationStatus> {
+  const manifestPath = join(dirname(path), 'manifest.json')
+  if (!existsSync(manifestPath)) {
+    return new Map()
+  }
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8')) as CaseManifest
+  const model = manifest.models.find((candidate) => {
+    return candidate.file === basename(path)
+  })
+  return new Map(model?.cases.map((declaredCase) => {
+    return [declaredCase.name, MANIFEST_VERDICTS[declaredCase.verdict]]
+  }))
+}
+
+export function declaredCases(text: string, expected: ReadonlyMap<string, VerificationStatus>): DeclaredCase[] {
   return [...text.matchAll(annotatedClass)].filter((match) => match[1]?.includes('@VerificationCase')).map((match) => {
-    const annotations = match[1] ?? ''
-    return {
-      name: match[2] ?? '',
-      expected: annotations.includes('@Tag("expect-pass")')
-        ? VerificationStatus.Passed
-        : annotations.includes('@Tag("expect-fail")')
-          ? VerificationStatus.Failed
-          : null,
-    }
+    const name = match[2] ?? ''
+    return { name, expected: expected.get(name) ?? null }
   })
 }
 
 export function readModel(path: string): LoadTestModel {
   const text = readFileSync(path, 'utf-8')
-  return { name: basename(path, '.oxsts'), text, cases: declaredCases(text) }
+  return { name: basename(path, '.oxsts'), text, cases: declaredCases(text, expectedVerdicts(path)) }
 }
 
 export function tutorialStepModels(): LoadTestModel[] {

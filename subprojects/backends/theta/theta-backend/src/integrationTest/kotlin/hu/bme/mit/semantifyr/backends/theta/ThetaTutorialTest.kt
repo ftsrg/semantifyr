@@ -6,8 +6,10 @@
 
 package hu.bme.mit.semantifyr.backends.theta
 
+import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
+import hu.bme.mit.semantifyr.verifier.CaseManifest
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
@@ -34,10 +36,12 @@ class ThetaTutorialTest {
         private val injector = OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
         private val helper = injector.getInstance(SemantifyrVerifierTestHelper::class.java)
         private val validator = injector.getInstance(IResourceValidator::class.java)
+        private val tutorial = Path("build/test-models/tutorial")
+        private val manifest = CaseManifest.load(tutorial)
 
         // every step of a tutorial is a model of its own, loaded alone as the website's live editor loads it
         private val contexts: Map<Path, SemantifyrModelContext> by lazy {
-            Path("build/test-models/tutorial").walk().filter {
+            tutorial.walk().filter {
                 it.isRegularFile() && it.extension == "oxsts"
             }.sorted().associateWith {
                 helper.semantifyrLoader.loadStandaloneModel(it)
@@ -52,10 +56,11 @@ class ThetaTutorialTest {
         }
 
         @JvmStatic
-        fun `Tutorial Cases Verify As Tagged`(): List<Arguments> {
-            return contexts.values.flatMap { context ->
+        fun `Tutorial Cases Reach Their Expected Verdict`(): List<Arguments> {
+            return contexts.flatMap { (model, context) ->
                 helper.collectVerificationCases(context).map {
-                    Arguments.of(Named.of(it.qualifiedName, it), context)
+                    val expectedVerdict = manifest.expectedVerdict(model.name, it.qualifiedName.substringAfterLast("::"))
+                    Arguments.of(Named.of(it.qualifiedName, it), context, expectedVerdict)
                 }
             }
         }
@@ -75,12 +80,17 @@ class ThetaTutorialTest {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource
-    suspend fun `Tutorial Cases Verify As Tagged`(verificationCase: VerificationCase, context: SemantifyrModelContext) {
+    suspend fun `Tutorial Cases Reach Their Expected Verdict`(
+        verificationCase: VerificationCase,
+        context: SemantifyrModelContext,
+        expectedVerdict: VerificationVerdict,
+    ) {
         helper.checkTestModel(
             context,
             verificationCase,
             verificationPortfolio = SingleBackendPortfolio(ThetaBackend(), ThetaConfig.CegarExplPredCombined),
             outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(ThetaTutorialTest::class.java),
+            expectedVerdict = expectedVerdict,
         )
     }
 }

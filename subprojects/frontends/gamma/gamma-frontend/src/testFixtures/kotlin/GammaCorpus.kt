@@ -76,6 +76,9 @@ object GammaCorpus {
 
     val corpus: Path = Path("..", "models", "corpus")
 
+    // the served examples and their test models, as the build copies them for the tests
+    val examples: Path = Path("build", "test-models")
+
     fun load(directory: Path): List<GammaCorpusEntry> {
         val manifest = json.decodeFromString<GammaCorpusManifest>(directory.resolve(MANIFEST_FILE).readText())
         return manifest.models.flatMap { model ->

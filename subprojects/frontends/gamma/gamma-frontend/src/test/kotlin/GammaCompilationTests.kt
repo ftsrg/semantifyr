@@ -172,7 +172,7 @@ class GammaCompilationTests {
 
         val gammaVerificationCase = helper.discover(workspace.resolve("Machine.gcd")).single()
 
-        helper.checkVerificationCase(frontend, gammaVerificationCase)
+        helper.checkVerificationCase(frontend, gammaVerificationCase, VerificationVerdict.Passed)
 
         val caseDirectory = temporaryDirectory.resolve("artifacts").resolve(gammaVerificationCase.qualifiedName)
         assertThat(caseDirectory.resolve("model.oxsts").readText()).contains("import _library::_control")

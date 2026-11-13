@@ -22,14 +22,17 @@ class SysMLTutorialTests {
         private val artifactRoot = SysMLv2FrontendTestHelper.testArtifactRoot(SysMLTutorialTests::class.java)
 
         @JvmStatic
-        fun `Tutorial Cases Verify As Named`(): List<Arguments> {
-            return SysMLv2FrontendTestHelper.TUTORIAL_MODELS.flatMap { source ->
+        fun `Tutorial Cases Reach Their Expected Verdict`(): List<Arguments> {
+            return SysMLv2FrontendTestHelper.tutorialEntries.groupBy {
+                it.model
+            }.flatMap { (model, entries) ->
+                val source = SysMLv2FrontendTestHelper.TUTORIAL_ROOT.resolve(model.file)
                 val frontend = helper.buildFrontend(
                     source,
                     SingleBackendPortfolio(ThetaBackend(), ThetaConfig.CegarExplPredCombined),
                     artifactRoot.resolve(source.nameWithoutExtension),
                 )
-                helper.tutorialEntries(frontend, source).map {
+                entries.map {
                     Arguments.of(it, frontend)
                 }
             }
@@ -38,7 +41,7 @@ class SysMLTutorialTests {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource
-    suspend fun `Tutorial Cases Verify As Named`(
+    suspend fun `Tutorial Cases Reach Their Expected Verdict`(
         entry: CorpusEntry,
         frontend: SysMLv2Frontend,
     ) {
