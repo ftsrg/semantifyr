@@ -16,6 +16,7 @@ path = [
     "**/tsconfig*.json",
     "**/.gitignore",
     "subprojects/semantifyr-editor-common/src/terms/terms.json",
+    ".nvmrc",
 ]
 SPDX-FileCopyrightText = "2023-2026 The Semantifyr Authors"
 SPDX-License-Identifier = "EPL-2.0"

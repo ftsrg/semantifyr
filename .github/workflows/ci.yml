@@ -44,6 +44,8 @@ jobs:
     env:
       # only the ubuntu leg uploads the website
       WEBSITE_API_DOCS: ${{ matrix.os == 'ubuntu-latest' }}
+      # the published website names its commit; every other build of it describes the development branch and stays cacheable
+      SEMANTIFYR_SITE_COMMIT: ${{ inputs.publish && matrix.os == 'ubuntu-latest' && github.sha || '' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -61,7 +63,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: package-lock.json
       - name: Install Spin
@@ -254,7 +256,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: package-lock.json
       - name: Install dependencies

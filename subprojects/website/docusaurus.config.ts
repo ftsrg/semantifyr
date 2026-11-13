@@ -25,7 +25,7 @@ const codeBlockTheme: PrismTheme = {
 
 const liveBackendUrl = process.env.SEMANTIFYR_LIVE_URL ?? 'https://live.semantifyr.org';
 
-// the build's constants, which every page that states one takes from here
+// the build's constants, which every page that states one takes from here: the version from gradle.properties
 function gradleProperty(name: string): string {
   const properties = readFileSync(path.resolve(__dirname, '../../gradle.properties'), 'utf8');
   const value = new RegExp(`^${name}=(.*)$`, 'm').exec(properties)?.[1]?.trim();
@@ -36,9 +36,15 @@ function gradleProperty(name: string): string {
 }
 
 const version = gradleProperty('version');
-const nodeVersion = gradleProperty('nodeVersion');
+const nodeVersion = readFileSync(path.resolve(__dirname, '../../.nvmrc'), 'utf8').trim();
 
-// the npmAssemble Gradle task passes the commit, and the tag when the commit is tagged
+// the limit of the public instance, as the deployment's example configuration sets it
+const liveLimitSeconds = /^VERIFY_TIMEOUT_SECONDS=(\d+)$/m.exec(readFileSync(path.resolve(__dirname, '../../deploy/live/env.example'), 'utf8'))?.[1];
+if (liveLimitSeconds === undefined) {
+  throw new Error('deploy/live/env.example sets no VERIFY_TIMEOUT_SECONDS');
+}
+
+// only the deploying workflow names the commit, and its tag when it is a release, so any other build stays cacheable
 const commit = process.env.SEMANTIFYR_SITE_COMMIT ?? '';
 const released = process.env.SEMANTIFYR_SITE_TAG === `v${version}`;
 
@@ -66,6 +72,7 @@ export default {
   customFields: {
     liveBackendUrl,
     nodeVersion,
+    liveLimitSeconds,
   },
   headTags: [
     {

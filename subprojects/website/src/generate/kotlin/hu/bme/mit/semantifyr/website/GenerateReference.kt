@@ -7,8 +7,6 @@
 package hu.bme.mit.semantifyr.website
 
 import hu.bme.mit.semantifyr.cli.common.ExitCode
-import hu.bme.mit.semantifyr.live.backend.VerificationConfig
-import hu.bme.mit.semantifyr.live.backend.liveImageBackends
 import hu.bme.mit.semantifyr.verifier.VerificationReport
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -30,12 +28,6 @@ data class ReportField(
     val nullable: Boolean,
     val values: List<String>,
     val fields: List<ReportField>,
-)
-
-@Serializable
-data class LiveFacts(
-    val backends: List<String>,
-    val verificationTimeoutSeconds: Long,
 )
 
 private val json = Json {
@@ -128,14 +120,6 @@ private fun reportFields(): String {
     return json.encodeToString(fieldsOf(VerificationReport.serializer().descriptor, emptySet()))
 }
 
-private fun live(): String {
-    val facts = LiveFacts(
-        backends = liveImageBackends,
-        verificationTimeoutSeconds = VerificationConfig().timeout.inWholeSeconds,
-    )
-    return json.encodeToString(facts)
-}
-
 fun main(arguments: Array<String>) {
     val output = when (val reference = arguments.single()) {
         "exit-codes" -> {
@@ -143,9 +127,6 @@ fun main(arguments: Array<String>) {
         }
         "report-fields" -> {
             reportFields()
-        }
-        "live" -> {
-            live()
         }
         else -> {
             error("No reference $reference")
