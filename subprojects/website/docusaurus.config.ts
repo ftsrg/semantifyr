@@ -129,6 +129,9 @@ export default {
             '@oxsts-test-models': path.resolve(__dirname, '../../oxsts-test-models'),
             '@oxsts-library': path.resolve(__dirname, '../oxsts.lang/src/main/resources/hu/bme/mit/semantifyr/oxsts/lang/library'),
             '@sysml-tutorial-models': path.resolve(__dirname, '../frontends/sysml/models/tutorial'),
+            // the reference pairs of the trace files, which the frontends' tests check
+            '@sysml-reference-trace': path.resolve(__dirname, '../frontends/sysml/models/etc'),
+            '@gamma-reference-trace': path.resolve(__dirname, '../frontends/gamma/models/etc'),
             // written by the cliReference_* Gradle tasks
             '@cli-reference': path.resolve(__dirname, 'build/cli-reference'),
             // written by the cloneSysmlConstructs Gradle task from the SysML translation's registry
@@ -141,7 +144,11 @@ export default {
           },
         },
         module: {
-          rules: [{ test: /\.(oxsts|sysml|txt|tsv)$/, type: 'asset/source' }],
+          rules: [
+            { test: /\.(oxsts|sysml|gamma|txt|tsv)$/, type: 'asset/source' },
+            // a JSON file a page shows as it is written
+            { test: /\.json$/, resourceQuery: /raw/, type: 'asset/source' },
+          ],
         },
       }),
     }),

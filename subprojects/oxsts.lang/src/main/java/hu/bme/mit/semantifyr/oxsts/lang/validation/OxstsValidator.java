@@ -148,8 +148,11 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String INCORRECT_SUBSETS = ISSUE_PREFIX + "INCORRECT_SUBSETS";
     public static final String ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED =
             ISSUE_PREFIX + "ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED";
+    // only the commented-out check of a feature's abstract members raises it
+    @InternalIssue
     public static final String ABSTRACT_FEATURE_INHERITED_MEMBERS_NOT_REDEFINED =
             ISSUE_PREFIX + "ABSTRACT_FEATURE_INHERITED_MEMBERS_NOT_REDEFINED";
+
     public static final String ABSTRACT_FEATURE_NOT_REALIZED = ISSUE_PREFIX + "ABSTRACT_FEATURE_NOT_REALIZED";
     public static final String INCORRECT_ASSIGNMENT = ISSUE_PREFIX + "INCORRECT_ASSIGNMENT";
     public static final String INCORRECT_CALLED_ELEMENT = ISSUE_PREFIX + "INCORRECT_CALLED_ELEMENT";

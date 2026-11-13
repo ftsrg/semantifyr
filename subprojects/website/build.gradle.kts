@@ -132,6 +132,9 @@ fun generatedReferenceTask(name: String) = tasks.register<JavaExec>("generatedRe
 val generatedReference = listOf(
     generatedReferenceTask("exit-codes"),
     generatedReferenceTask("report-fields"),
+    generatedReferenceTask("verdicts"),
+    generatedReferenceTask("trace-fields"),
+    generatedReferenceTask("witness-fields"),
 )
 
 tasks.npmInstall {
@@ -217,6 +220,8 @@ fun NpmTask.configureSharedInputs() {
     inputs.dir(rootProject.layout.projectDirectory.dir("subprojects/oxsts.lang/src/main/resources/hu/bme/mit/semantifyr/oxsts/lang/library")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(rootProject.layout.projectDirectory.file("oxsts-test-models/constructs/constructs.tsv")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir(rootProject.layout.projectDirectory.dir("subprojects/frontends/gamma/models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneGrammars).withPathSensitivity(PathSensitivity.RELATIVE)
     // the builds keep their own caches under node_modules/.cache, which say nothing of the result
     dependsOn(tasks.npmInstall)
@@ -266,6 +271,17 @@ tasks {
     test {
         inputs.dir(project.layout.projectDirectory.dir("src/docs"))
             .withPropertyName("documentation")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        // the completeness test reads the models the pages import through the site's aliases
+        inputs.file(project.layout.projectDirectory.file("docusaurus.config.ts"))
+            .withPropertyName("aliases")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.files(
+            rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial"),
+            rootProject.layout.projectDirectory.dir("subprojects/oxsts.lang/src/main/resources/hu/bme/mit/semantifyr/oxsts/lang/library"),
+            rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/etc"),
+        )
+            .withPropertyName("importedModels")
             .withPathSensitivity(PathSensitivity.RELATIVE)
     }
 
