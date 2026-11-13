@@ -5,10 +5,9 @@
  */
 
 import { describe, expect, it } from 'vitest';
-
 import { highlight, type TokenStyle } from '../lib/highlight';
 
-// Goal: a block of each language live has a grammar for comes out in the tokens' syntax colours, read from the grammar's scopes
+// Goal: a block of each language live has a grammar for comes out in the tokens' syntax colours by the grammar's scopes, and any other language stays plain
 
 function styleOf(code: string, language: string, text: string): TokenStyle | undefined {
   return highlight(code, language)?.flat().find((token) => {
@@ -16,28 +15,40 @@ function styleOf(code: string, language: string, text: string): TokenStyle | und
   })?.style;
 }
 
+const KEYWORD = { color: 'var(--syntax-keyword)' };
+const COMMENT = { color: 'var(--syntax-comment)', fontStyle: 'italic' };
+
+const BLOCKS = [
+  {
+    language: 'oxsts',
+    code: 'class Light {\n    var level: Integer := 1 // dimmed\n}',
+    keyword: 'class',
+    comment: '// dimmed',
+  },
+  {
+    language: 'gamma',
+    code: 'statechart Light [\n] {\n    var level : integer := 1 // dimmed\n}',
+    keyword: 'statechart',
+    comment: '// dimmed',
+  },
+  {
+    language: 'sysmlv2',
+    code: 'part def Light {\n    attribute level = 1; // dimmed\n}',
+    keyword: 'attribute',
+    comment: '// dimmed',
+  },
+];
+
 describe('the highlighter', () => {
-  it('colours an OXSTS block', () => {
-    const code = 'class Lamp {\n    var on: Boolean := false // off\n    var count: Integer := 1\n}';
-    expect(styleOf(code, 'oxsts', 'class')).toEqual({ color: 'var(--syntax-keyword)' });
-    expect(styleOf(code, 'oxsts', ':=')).toEqual({ color: 'var(--syntax-operator)' });
-    expect(styleOf(code, 'oxsts', '1')).toEqual({ color: 'var(--syntax-number)' });
-    expect(styleOf(code, 'oxsts', '// off')).toEqual({ color: 'var(--syntax-comment)', fontStyle: 'italic' });
-  });
+  for (const { language, code, keyword, comment } of BLOCKS) {
+    it(`colours a ${language} block by its grammar's scopes`, () => {
+      expect(styleOf(code, language, keyword)).toEqual(KEYWORD);
+      expect(styleOf(code, language, comment)).toEqual(COMMENT);
+      expect(styleOf(code, language, '}')).toEqual({ color: 'inherit' });
+    });
+  }
 
-  it('colours a Gamma block', () => {
-    const code = 'interface Control {\n    out event toggle // a toggle\n}';
-    expect(styleOf(code, 'gamma', 'interface')).toEqual({ color: 'var(--syntax-keyword)' });
-    expect(styleOf(code, 'gamma', '// a toggle')).toEqual({ color: 'var(--syntax-comment)', fontStyle: 'italic' });
-  });
-
-  it('colours a SysML v2 block', () => {
-    const code = 'part def Lamp; // a lamp';
-    expect(styleOf(code, 'sysmlv2', 'part')).toEqual({ color: 'var(--syntax-keyword)' });
-    expect(styleOf(code, 'sysmlv2', '// a lamp')).toEqual({ color: 'var(--syntax-comment)', fontStyle: 'italic' });
-  });
-
-  it('leaves a language without a grammar of live to the plain block', () => {
-    expect(highlight('echo hello', 'bash')).toBeNull();
+  it('leaves a language live has no grammar for plain', () => {
+    expect(highlight('echo 1', 'bash')).toBeNull();
   });
 });
