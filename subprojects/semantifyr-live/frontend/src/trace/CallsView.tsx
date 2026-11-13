@@ -32,6 +32,7 @@ interface PlacedCall {
   offset: number
   middle: number
   bottom: number
+  label: string
 }
 
 interface Band {
@@ -70,8 +71,10 @@ function titleOf(call: TraceCall): string {
   return `${call.self}\n${call.calledTransition}${argumentsText}`
 }
 
+const SELF_LABEL_START = 4 + SELF_LOOP + 6
+
 function selfLabelX(placed: PlacedCall): number {
-  return placed.center + placed.offset + 4 + SELF_LOOP + 6
+  return placed.center + placed.offset + SELF_LABEL_START
 }
 
 function cut(text: string, width: number): string {
@@ -85,7 +88,7 @@ interface ArrowSpan {
   width: number
 }
 
-// the environment's lifeline first, then the instances'; neighbours part to fit the text on the arrows between them, up to the widest arrow
+// the environment's lifeline first, then the instances'; neighbours part to fit the text on the arrows between them and beside a self call's loop, up to the widest arrow
 function lifelinePositions(steps: readonly { step: TraceCallStep }[], lifelines: readonly string[]): number[] {
   const indices = new Map(lifelines.map((id, index) => {
     return [id, index + 1]
@@ -93,17 +96,26 @@ function lifelinePositions(steps: readonly { step: TraceCallStep }[], lifelines:
   const gaps = lifelines.map((_, index) => {
     return index === 0 ? ENVIRONMENT_COLUMN / 2 + COLUMN / 2 : COLUMN
   })
-  const spans = steps.flatMap(({ step }) => {
-    return step.calls.flatMap((call): ArrowSpan[] => {
+  const spans: ArrowSpan[] = []
+  for (const { step } of steps) {
+    const offsets: number[] = []
+    for (const call of step.calls) {
       const caller = call.enclosing === null ? 0 : indices.get(step.calls[call.enclosing]?.self ?? '') ?? 0
       const callee = indices.get(call.self) ?? 0
-      if (caller === callee) {
-        return []
+      const textWidth = labelOf(call).length * CHARACTER_WIDTH
+      if (caller !== callee) {
+        offsets.push(0)
+        spans.push({ first: Math.min(caller, callee), last: Math.max(caller, callee), width: Math.min(textWidth + 2 * ARROW_MARGIN, WIDEST_ARROW) })
+        continue
       }
-      const width = Math.min(labelOf(call).length * CHARACTER_WIDTH + 2 * ARROW_MARGIN, WIDEST_ARROW)
-      return [{ first: Math.min(caller, callee), last: Math.max(caller, callee), width }]
-    })
-  }).sort((first, second) => {
+      const offset = (offsets[call.enclosing ?? -1] ?? 0) + NESTED_OFFSET
+      offsets.push(offset)
+      if (callee < lifelines.length) {
+        spans.push({ first: callee, last: callee + 1, width: Math.min(offset + SELF_LABEL_START + textWidth + ARROW_MARGIN, WIDEST_ARROW) })
+      }
+    }
+  }
+  spans.sort((first, second) => {
     return (first.last - first.first) - (second.last - second.first)
   })
   for (const span of spans) {
@@ -127,6 +139,9 @@ function layout(steps: readonly { number: number, step: TraceCallStep }[], lifel
   const columns = new Map(lifelines.map((id, index) => {
     return [id, positions[index + 1] ?? environment]
   }))
+  const nextColumns = new Map(lifelines.map((id, index) => {
+    return [id, positions[index + 2]]
+  }))
   let width = (positions.at(-1) ?? environment) + COLUMN / 2
   let y = 0
   const bands = steps.map(({ number, step }) => {
@@ -137,7 +152,7 @@ function layout(steps: readonly { number: number, step: TraceCallStep }[], lifel
       const center = columns.get(call.self) ?? environment
       const enclosing = call.enclosing === null ? undefined : placed[call.enclosing]
       const offset = enclosing?.center === center ? enclosing.offset + NESTED_OFFSET : 0
-      placed.push({ call, center, offset, middle: cursor + ROW / 2, bottom: 0 })
+      placed.push({ call, center, offset, middle: cursor + ROW / 2, bottom: 0, label: labelOf(call) })
       cursor += ROW
     }
     placed.forEach((entry, index) => {
@@ -148,7 +163,11 @@ function layout(steps: readonly { number: number, step: TraceCallStep }[], lifel
       entry.bottom = (placed[last]?.middle ?? entry.middle) + ROW / 2 - 3
       const enclosing = entry.call.enclosing === null ? undefined : placed[entry.call.enclosing]
       if (enclosing?.center === entry.center) {
-        width = Math.max(width, selfLabelX(entry) + labelOf(entry.call).length * CHARACTER_WIDTH + 16)
+        const next = nextColumns.get(entry.call.self)
+        if (next !== undefined) {
+          entry.label = cut(entry.label, next - selfLabelX(entry) - ARROW_MARGIN)
+        }
+        width = Math.max(width, selfLabelX(entry) + entry.label.length * CHARACTER_WIDTH + 16)
       }
     })
     cursor += BAND_PADDING
@@ -181,7 +200,7 @@ function Arrow({ placed, caller, fromEnvironment }: { placed: PlacedCall, caller
     const right = to + SELF_LOOP
     return (
       <g className={className}>
-        <text x={selfLabelX(placed)} y={placed.middle - 1}>{labelOf(placed.call)}</text>
+        <text x={selfLabelX(placed)} y={placed.middle - 1}>{placed.label}</text>
         <path d={`M${from} ${y - 12} H${right} V${y} H${to + 7}`} />
         <path className="arrowhead" d={`M${to} ${y} l7 -3.5 v7z`} />
       </g>
@@ -192,7 +211,7 @@ function Arrow({ placed, caller, fromEnvironment }: { placed: PlacedCall, caller
   const to = placed.center - 4 * direction
   return (
     <g className={className}>
-      <text className="call-arrow-label" x={(from + to) / 2} y={y - LABEL_RISE}>{cut(labelOf(placed.call), Math.abs(to - from) - 2 * LABEL_PADDING)}</text>
+      <text className="call-arrow-label" x={(from + to) / 2} y={y - LABEL_RISE}>{cut(placed.label, Math.abs(to - from) - 2 * LABEL_PADDING)}</text>
       <path d={`M${from} ${y} H${to - 7 * direction}`} />
       <path className="arrowhead" d={`M${to} ${y} l${-7 * direction} -3.5 v7z`} />
     </g>
