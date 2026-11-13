@@ -164,17 +164,21 @@ class GammaTraceGenerator @Inject constructor(
         }
     }
 
-    private fun createFiredTransitionAssertion(receiver: List<EObject>, transition: Transition): Expression {
+    // a transition into a history node without an id has no fired-transition form, the asserted states show where it led
+    private fun createFiredTransitionAssertion(receiver: List<EObject>, transition: Transition): Expression? {
+        val from = transition.from as State
+        val to = transition.to
+        if (transition.name == null && to !is State) {
+            return null
+        }
         return factory.createFiredTransitionExpression().also {
             it.instance = createInstanceReference(receiver)
             if (transition.name != null) {
                 it.transition = transition
                 return@also
             }
-            val from = transition.from as State
-            val to = transition.to as State
             it.from = from
-            it.to = to
+            it.to = to as State
             if (GammaUtils.findTransitions(from, to, null).size > 1) {
                 it.trigger = EcoreUtil.copy(transition.trigger)
             }

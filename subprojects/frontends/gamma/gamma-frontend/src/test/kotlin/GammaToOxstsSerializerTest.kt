@@ -827,6 +827,594 @@ class GammaToOxstsSerializerTest {
         )
     }
 
+    private val historyStatechart = """
+        package test
+        interface Control {
+            in event start
+            in event stop
+        }
+        statechart Machine [
+            port control : provides Control
+        ] {
+            region Main {
+                initial MainInitial
+                state Working {
+                    region Progress {
+                        initial ProgressInitial
+                        shallow history History
+                        state First
+                        state Second
+                    }
+                }
+                state Paused
+            }
+            transition from MainInitial to Working
+            transition from ProgressInitial to First
+            transition from History to Second
+            transition from First to Second when control.start
+            transition from Working to Paused when control.stop
+            transition from Paused to History when control.stop
+        }
+    """
+
+    @Test
+    fun `a shallow history node is contained in its region with its transition's target beside the entry transition`() {
+        val lines = oxstsLines(historyStatechart)
+
+        assertThat(lines).containsSequence(
+            "contains _History: ShallowHistory subsets shallowHistory {",
+            "redefine refers to: State = _Second",
+            "}",
+            "contains entry_to_First: EntryTransition subsets entryTransitions {",
+            "redefine refers to: State = _First",
+            "}",
+            "contains transition_First_to_Second: Transition subsets transitions {",
+        )
+        assertThat(lines).noneMatch {
+            it.contains("transition_History_to_Second")
+        }
+    }
+
+    @Test
+    fun `a transition to a history node refers to the node by its path`() {
+        val lines = oxstsLines(historyStatechart)
+
+        assertThat(lines).containsSequence(
+            "contains transition_Paused_to_History: Transition subsets transitions {",
+            "redefine refers from: State = _Paused",
+            "redefine refers to: ShallowHistory = _Working._Progress._History",
+        )
+    }
+
+    private val cascadeSystem = """
+        package test
+        interface Control {
+            in event start
+        }
+        statechart Worker [
+            port control : provides Control
+        ] {
+            region Main {
+                initial MainInitial
+                state Idle
+            }
+            transition from MainInitial to Idle
+        }
+        cascade Repeated [
+            port control : provides Control
+        ] {
+            component first : Worker
+            component second : Worker
+            bind control -> first.control
+            execute first, second, first
+        }
+        cascade Declared {
+            component first : Worker
+            component second : Worker
+        }
+    """
+
+    @Test
+    fun `a cascade composite contains one execution step per entry of its execution list in order`() {
+        val lines = oxstsLines(cascadeSystem)
+
+        assertThat(lines).containsSequence(
+            "class _Repeated : CascadeComponent {",
+            "refers _control: Port subsets ports = _first._control",
+            "contains _first: _test::_Worker subsets components",
+            "contains _second: _test::_Worker subsets components",
+            "contains execute_first: ExecutionStep subsets executionSteps {",
+            "redefine refers component: Component = _first",
+            "}",
+            "contains execute_second: ExecutionStep subsets executionSteps {",
+            "redefine refers component: Component = _second",
+            "}",
+            "contains execute_first_2: ExecutionStep subsets executionSteps {",
+            "redefine refers component: Component = _first",
+            "}",
+        )
+    }
+
+    @Test
+    fun `a cascade composite without an execution list executes its instances in declaration order`() {
+        val lines = oxstsLines(cascadeSystem)
+
+        assertThat(lines).containsSequence(
+            "class _Declared : CascadeComponent {",
+            "contains _first: _test::_Worker subsets components",
+            "contains _second: _test::_Worker subsets components",
+            "contains execute_first: ExecutionStep subsets executionSteps {",
+            "redefine refers component: Component = _first",
+            "}",
+            "contains execute_second: ExecutionStep subsets executionSteps {",
+            "redefine refers component: Component = _second",
+            "}",
+        )
+    }
+
+    private val parameterStatechart = """
+        package test
+        type Point : record {
+            x : integer,
+            y : integer
+        }
+        interface Measurements {
+            in event sample(value : integer, valid : boolean)
+            in persistent event level(value : integer)
+            in event moved(position : Point)
+            out event reading(value : integer)
+        }
+        statechart Probe [
+            port measure : provides Measurements
+        ] {
+            var kept : integer
+            region Main {
+                initial MainInitial
+                state Waiting
+                state Holding
+            }
+            transition from MainInitial to Waiting
+            transition from Waiting to Holding when measure.sample [ measure.sample::valid ] / kept := measure.sample::value; raise measure.reading(kept + 1);
+        }
+    """
+
+    @Test
+    fun `an event contains one shared parameter per declared parameter of its type`() {
+        val lines = oxstsLines(parameterStatechart)
+
+        assertThat(lines).containsSequence(
+            "contains _sample: Event subsets inputEvents {",
+            "@Shared",
+            "redefine contains declaration: EventDeclaration",
+            "contains _value: IntegerParameter subsets parameters {",
+            "@Shared",
+            "redefine contains declaration: ParameterDeclaration",
+            "}",
+            "contains _valid: BooleanParameter subsets parameters {",
+            "@Shared",
+            "redefine contains declaration: ParameterDeclaration",
+            "}",
+            "}",
+        )
+        assertThat(lines).containsSequence(
+            "contains _moved: Event subsets inputEvents {",
+            "@Shared",
+            "redefine contains declaration: EventDeclaration",
+            "contains _position: _test::parameter_Point subsets parameters {",
+        )
+    }
+
+    @Test
+    fun `a persistent event redefines its persistency`() {
+        val lines = oxstsLines(parameterStatechart)
+
+        assertThat(lines).containsSequence(
+            "contains _level: Event subsets inputEvents {",
+            "@Shared",
+            "redefine contains declaration: EventDeclaration",
+            "redefine refers persistent: bool = true",
+            "contains _value: IntegerParameter subsets parameters {",
+        )
+    }
+
+    @Test
+    fun `a parameter reference refers to the parameter of the received event`() {
+        val lines = oxstsLines(parameterStatechart)
+
+        assertThat(lines).containsSequence(
+            "redefine contains guard: Guard {",
+            "redefine contains expression: ParameterExpression {",
+            "redefine refers parameter: Parameter = _measure.interface._sample._valid",
+            "}",
+            "}",
+        )
+        assertThat(lines).containsSequence(
+            "contains assign_kept: AssignmentAction subsets actions {",
+            "redefine refers variable: Variable = _kept",
+            "redefine contains expression: ParameterExpression {",
+            "redefine refers parameter: Parameter = _measure.interface._sample._value",
+            "}",
+            "}",
+        )
+    }
+
+    @Test
+    fun `a raise with arguments contains one argument per parameter of the raised event`() {
+        val lines = oxstsLines(parameterStatechart)
+
+        assertThat(lines).containsSequence(
+            "contains raise_measure_reading: RaiseEventAction subsets actions {",
+            "redefine refers port: Port = _measure",
+            "redefine refers event: Event = _measure.interface._reading",
+            "contains _value: Argument subsets arguments {",
+            "redefine refers parameter: Parameter = _measure.interface._reading._value",
+            "redefine contains expression: PlusOperatorExpression {",
+        )
+    }
+
+    private val recordStatechart = """
+        package test
+        type Point : record {
+            x : integer,
+            y : integer
+        }
+        type Box : record {
+            corner : Point,
+            open : boolean
+        }
+        interface Control {
+            in event start
+        }
+        statechart Plotter [
+            port control : provides Control
+        ] {
+            var position : Point := #Point { x := 3 }
+            var copy : Point
+            var box : Box := #Box { corner := #Point { y := -2 }, open := true }
+            region Main {
+                initial MainInitial
+                state Start
+                state Done
+            }
+            transition from MainInitial to Start
+            transition from Start to Done when control.start [ box.corner.x > 4 ] / box.corner.x := 5; copy := position;
+        }
+    """
+
+    @Test
+    fun `a record type is an OXSTS record with field defaults`() {
+        val lines = oxstsLines(recordStatechart)
+
+        assertThat(lines).containsSequence(
+            "record _Point {",
+            "var _x: int := 0",
+            "var _y: int := 0",
+            "}",
+        )
+        assertThat(lines).containsSequence(
+            "record _Box {",
+            "var _corner: _test::_Point := _test::_Point { _x = 0 }",
+            "var _open: bool := false",
+            "}",
+        )
+    }
+
+    @Test
+    fun `a record type has a parameter class holding the record`() {
+        val lines = oxstsLines(recordStatechart)
+
+        assertThat(lines).containsSequence(
+            "class parameter_Point : Parameter {",
+            "var value: _test::_Point := _test::_Point { _x = 0 }",
+            "",
+            "redefine prop evaluate(): _test::_Point {",
+            "return value",
+            "}",
+            "",
+            "redefine tran set(value: _test::_Point) {",
+            "self.value := value",
+            "}",
+            "",
+            "redefine tran reset() {",
+            "value := _test::_Point { _x = 0 }",
+            "}",
+            "",
+            "redefine tran havoc() {",
+            "havoc(value)",
+            "}",
+            "}",
+        )
+    }
+
+    @Test
+    fun `a record type has a variable class whose initializer reads one default binding per leaf field`() {
+        val lines = oxstsLines(recordStatechart)
+
+        assertThat(lines).containsSequence(
+            "class variable_Box : Variable {",
+            "refers default_corner_x: int = 0",
+            "refers default_corner_y: int = 0",
+            "refers default_open: bool = false",
+            "",
+            "var variable: _test::_Box := _test::_Box { _corner = _test::_Point { _x = default_corner_x, _y = default_corner_y }, _open = default_open }",
+            "",
+            "redefine prop evaluate(): _test::_Box {",
+            "return variable",
+            "}",
+            "",
+            "redefine tran set(value: _test::_Box) {",
+            "variable := value",
+            "}",
+            "}",
+        )
+    }
+
+    @Test
+    fun `a record type has one access class per field that reads and updates the field`() {
+        val lines = oxstsLines(recordStatechart)
+
+        assertThat(lines).containsSequence(
+            "class access_Point_x : FieldAccessExpression {",
+            "redefine prop evaluate(): any {",
+            "return (operand.evaluate() as _test::_Point)._x",
+            "}",
+            "",
+            "redefine prop updated(original: any, value: any): any {",
+            "return _test::_Point { _x = value as int, _y = (original as _test::_Point)._y }",
+            "}",
+            "}",
+        )
+        assertThat(lines).containsSequence(
+            "class access_Box_corner : FieldAccessExpression {",
+            "redefine prop evaluate(): any {",
+            "return (operand.evaluate() as _test::_Box)._corner",
+            "}",
+            "",
+            "redefine prop updated(original: any, value: any): any {",
+            "return _test::_Box { _corner = value as _test::_Point, _open = (original as _test::_Box)._open }",
+            "}",
+            "}",
+        )
+    }
+
+    @Test
+    fun `a record variable redefines the default bindings of its initial value`() {
+        val lines = oxstsLines(recordStatechart)
+
+        assertThat(lines).containsSequence(
+            "contains _position: _test::variable_Point subsets variables {",
+            "redefine refers default_x: int = 3",
+            "}",
+            "contains _copy: _test::variable_Point subsets variables {",
+            "}",
+            "contains _box: _test::variable_Box subsets variables {",
+            "redefine refers default_corner_y: int = -2",
+            "redefine refers default_open: bool = true",
+            "}",
+        )
+    }
+
+    @Test
+    fun `a nested field read chains the access classes through their operands`() {
+        val lines = oxstsLines(recordStatechart)
+
+        assertThat(lines).containsSequence(
+            "redefine contains expression: GreaterThanOperatorExpression {",
+            "redefine contains left: _test::access_Point_x {",
+            "redefine contains operand: _test::access_Box_corner {",
+            "redefine contains operand: VariableExpression {",
+            "redefine refers variable: Variable = _box",
+            "}",
+            "}",
+            "}",
+        )
+    }
+
+    @Test
+    fun `a nested field write assigns the variable the record updated outermost field first`() {
+        val lines = oxstsLines(recordStatechart)
+
+        assertThat(lines).containsSequence(
+            "contains assign_box: AssignmentAction subsets actions {",
+            "redefine refers variable: Variable = _box",
+            "redefine contains expression: FieldUpdateExpression {",
+            "redefine contains field: _test::access_Box_corner {",
+            "redefine contains operand: VariableExpression {",
+            "redefine refers variable: Variable = _box",
+            "}",
+            "}",
+            "redefine contains value: FieldUpdateExpression {",
+            "redefine contains field: _test::access_Point_x {",
+            "redefine contains operand: _test::access_Box_corner {",
+            "redefine contains operand: VariableExpression {",
+            "redefine refers variable: Variable = _box",
+            "}",
+            "}",
+            "}",
+            "redefine contains value: LiteralIntegerExpression {",
+            "redefine refers value: int = 5",
+            "}",
+            "}",
+            "}",
+            "}",
+        )
+    }
+
+    @Test
+    fun `a whole record assignment assigns the variable the other record`() {
+        val lines = oxstsLines(recordStatechart)
+
+        assertThat(lines).containsSequence(
+            "contains assign_copy: AssignmentAction subsets actions {",
+            "redefine refers variable: Variable = _copy",
+            "redefine contains expression: VariableExpression {",
+            "redefine refers variable: Variable = _position",
+            "}",
+            "}",
+        )
+    }
+
+    @Test
+    fun `an interface with one parent extends the parent's class`() {
+        val lines = oxstsLines(
+            """
+                package test
+                interface Greeting {
+                    in event hello
+                }
+                interface Reply extends Greeting {
+                    out event welcome
+                }
+            """,
+        )
+
+        assertThat(lines).containsSequence(
+            "class _Reply : _test::_Greeting {",
+            "contains _welcome: Event subsets outputEvents {",
+            "@Shared",
+            "redefine contains declaration: EventDeclaration",
+            "}",
+            "}",
+        )
+    }
+
+    @Test
+    fun `an interface with several parents contains every ancestor's events before its own`() {
+        val lines = oxstsLines(
+            """
+                package test
+                interface Greeting {
+                    in event hello
+                }
+                interface Farewell {
+                    in event bye
+                }
+                interface Conversation extends Greeting, Farewell {
+                    out event welcome
+                }
+            """,
+        )
+
+        assertThat(lines).containsSubsequence(
+            "class _Conversation : Interface {",
+            "contains _hello: Event subsets inputEvents {",
+            "contains _bye: Event subsets inputEvents {",
+            "contains _welcome: Event subsets outputEvents {",
+        )
+    }
+
+    private val inoutStatechart = """
+        package test
+        interface Duplex {
+            inout event ping
+        }
+        statechart Caller [
+            port line : provides Duplex
+        ] {
+            region Main {
+                initial MainInitial
+                state Idle
+                state Calling
+            }
+            transition from MainInitial to Idle
+            transition from Idle to Calling when line.ping / raise line.ping;
+        }
+        statechart Callee [
+            port line : requires Duplex
+        ] {
+            region Main {
+                initial MainInitial
+                state Idle
+                state Calling
+            }
+            transition from MainInitial to Idle
+            transition from Idle to Calling when line.ping / raise line.ping;
+        }
+    """
+
+    @Test
+    fun `an inout event is an input and an output event with a shared declaration each`() {
+        val lines = oxstsLines(inoutStatechart)
+
+        assertThat(lines).containsSequence(
+            "class _Duplex : Interface {",
+            "contains input_ping: Event subsets inputEvents {",
+            "@Shared",
+            "redefine contains declaration: EventDeclaration",
+            "}",
+            "contains output_ping: Event subsets outputEvents {",
+            "@Shared",
+            "redefine contains declaration: EventDeclaration",
+            "}",
+            "}",
+        )
+    }
+
+    @Test
+    fun `a provided port receives the input half of an inout event and raises its output half`() {
+        val lines = oxstsLines(inoutStatechart)
+        val caller = lines.subList(lines.indexOf("class _Caller : Statechart {"), lines.indexOf("class _Callee : Statechart {"))
+
+        assertThat(caller).containsSequence(
+            "contains raise_line_ping: RaiseEventAction subsets actions {",
+            "redefine refers port: Port = _line",
+            "redefine refers event: Event = _line.interface.output_ping",
+        )
+        assertThat(caller).containsSequence(
+            "redefine contains trigger: EventTrigger {",
+            "redefine refers port: Port = _line",
+            "redefine refers event: Event = _line.interface.input_ping",
+        )
+    }
+
+    @Test
+    fun `a required port receives the output half of an inout event and raises its input half`() {
+        val lines = oxstsLines(inoutStatechart)
+        val callee = lines.subList(lines.indexOf("class _Callee : Statechart {"), lines.size)
+
+        assertThat(callee).containsSequence(
+            "contains raise_line_ping: RaiseEventAction subsets actions {",
+            "redefine refers port: Port = _line",
+            "redefine refers event: Event = _line.interface.input_ping",
+        )
+        assertThat(callee).containsSequence(
+            "redefine contains trigger: EventTrigger {",
+            "redefine refers port: Port = _line",
+            "redefine refers event: Event = _line.interface.output_ping",
+        )
+    }
+
+    @Test
+    fun `a raise atom reads whether the event is raised on the port of the instance`() {
+        val lines = oxstsLines(
+            """
+                package test
+                interface Control {
+                    out event done
+                }
+                statechart Machine [
+                    port control : provides Control
+                ] {
+                }
+                sync System {
+                    component machine : Machine
+                }
+                verification case Raised of System {
+                    EF raise machine.control.done
+                }
+            """,
+        )
+
+        assertThat(lines).containsSequence(
+            "redefine contains propertyExpression: Eventually {",
+            "redefine contains body: IsEventRaisedExpression {",
+            "redefine refers port: Port = component._machine._control",
+            "redefine refers event: Event = component._machine._control.interface._done",
+            "}",
+            "}",
+        )
+    }
+
     @ParameterizedTest(name = "{0}")
     @MethodSource("unmappedConstructs")
     fun `a construct the serializer does not map yet is a located diagnostic`(construct: String, source: String) {
@@ -841,81 +1429,24 @@ class GammaToOxstsSerializerTest {
         }.isInstanceOf(UnmappedGammaConstructException::class.java).hasMessageContaining(construct).hasMessageContaining("is not mapped to OXSTS yet").hasMessageMatching("(?s).*:\\d+: .*")
     }
 
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("refusedConstructs")
+    fun `a construct the user decided to refuse is a located diagnostic`(construct: String, source: String) {
+        val gammaPackage = parseHelper.parse(source.trimIndent(), URI.createURI("test.gamma"), resourceSetProvider.get())
+        EcoreUtil.resolveAll(gammaPackage)
+        assertThat(gammaPackage.eResource().errors).isEmpty()
+
+        assertThatThrownBy {
+            GammaToOxstsSerializer(GammaNameMap()).transformToOxsts(gammaPackage)
+        }.isInstanceOf(UnmappedGammaConstructException::class.java).hasMessageContaining("$construct is refused").hasMessageMatching("(?s)test.gamma:\\d+: .*")
+    }
+
     companion object {
         @JvmStatic
         fun unmappedConstructs(): Stream<Arguments> {
             return Stream.of(
                 Arguments.of(
-                    "the type declaration 'Point'",
-                    """
-                        package test
-                        type Point : record {
-                            x : integer
-                        }
-                    """,
-                ),
-                Arguments.of(
-                    "the interface inheritance of 'Extended'",
-                    """
-                        package test
-                        interface Base {
-                            in event start
-                        }
-                        interface Extended extends Base {
-                        }
-                    """,
-                ),
-                Arguments.of(
-                    "the inout event 'ping'",
-                    """
-                        package test
-                        interface Control {
-                            inout event ping
-                        }
-                    """,
-                ),
-                Arguments.of(
-                    "the parameters of event 'start'",
-                    """
-                        package test
-                        interface Control {
-                            in event start(value : integer)
-                        }
-                    """,
-                ),
-                Arguments.of(
-                    "the persistent event 'start'",
-                    """
-                        package test
-                        interface Control {
-                            in persistent event start
-                        }
-                    """,
-                ),
-                Arguments.of(
-                    "the cascade composite 'System'",
-                    """
-                        package test
-                        cascade System {
-                        }
-                    """,
-                ),
-                Arguments.of(
-                    "the shallow history node 'History'",
-                    """
-                        package test
-                        statechart Machine {
-                            region Main {
-                                initial MainInitial
-                                shallow history History
-                                state Idle
-                            }
-                            transition from MainInitial to Idle
-                        }
-                    """,
-                ),
-                Arguments.of(
-                    "a transition to the history node 'History'",
+                    "a transition to the history node 'History' of a top-level region",
                     """
                         package test
                         interface Control {
@@ -996,18 +1527,88 @@ class GammaToOxstsSerializerTest {
                     """,
                 ),
                 Arguments.of(
-                    "a raised event in a property",
+                    "an anonymous record type",
+                    """
+                        package test
+                        type Box : record {
+                            corner : record {
+                                x : integer
+                            }
+                        }
+                    """,
+                ),
+                Arguments.of(
+                    "a record literal outside a variable's initial value",
+                    """
+                        package test
+                        type Point : record {
+                            x : integer
+                        }
+                        statechart Machine {
+                            var position : Point
+                            timeout delay
+                            region Main {
+                                initial MainInitial
+                                state Idle
+                            }
+                            transition from MainInitial to Idle
+                            transition from Idle to Idle when timeout delay / position := #Point { x := 1 };
+                        }
+                    """,
+                ),
+            )
+        }
+
+        @JvmStatic
+        fun refusedConstructs(): Stream<Arguments> {
+            return Stream.of(
+                Arguments.of(
+                    "a transition from 'Right' to the history node 'History' from an orthogonal region of its parent state",
                     """
                         package test
                         interface Control {
-                            out event done
+                            in event start
                         }
                         statechart Machine [
                             port control : provides Control
                         ] {
+                            region Main {
+                                initial MainInitial
+                                state Outer {
+                                    region First {
+                                        initial FirstInitial
+                                        shallow history History
+                                        state Left
+                                    }
+                                    region Second {
+                                        initial SecondInitial
+                                        state Right
+                                    }
+                                }
+                            }
+                            transition from MainInitial to Outer
+                            transition from FirstInitial to Left
+                            transition from History to Left
+                            transition from SecondInitial to Right
+                            transition from Right to History when control.start
                         }
-                        verification case Raised of Machine {
-                            EF raise control.done
+                    """,
+                ),
+                Arguments.of(
+                    "a channel from the instance 'machine' to itself",
+                    """
+                        package test
+                        interface Control {
+                            in event start
+                        }
+                        statechart Machine [
+                            port input : provides Control,
+                            port output : requires Control
+                        ] {
+                        }
+                        sync System {
+                            component machine : Machine
+                            channel [ machine.input ] -o)- [ machine.output ]
                         }
                     """,
                 ),
