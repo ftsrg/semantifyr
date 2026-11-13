@@ -735,22 +735,30 @@ class GammaToOxstsSerializer(
 
     private fun IndentingStringBuilder.serialize(trigger: EventTrigger) {
         appendIndent("redefine contains trigger: EventTrigger") {
-            appendLine("redefine refers port: Port = ${markName(trigger.port.name)}")
+            appendLine("redefine refers port: Port = ${memberReference(trigger.port)}")
             appendLine("redefine refers event: Event = ${inputEventPath(trigger.port, trigger.event)}")
         }
     }
 
     // a provided port receives the input half of an inout event and raises its output half, a required port the reverse
-    private fun inputEventPath(port: PortDeclaration, event: EventDeclaration): String {
-        return eventPath(port, event, port.realizationMode == RealizationMode.PROVIDED)
+    private fun inputEventPath(
+        port: PortDeclaration,
+        event: EventDeclaration,
+        portReference: String = memberReference(port),
+    ): String {
+        return eventPath(portReference, event, port.realizationMode == RealizationMode.PROVIDED)
     }
 
-    private fun outputEventPath(port: PortDeclaration, event: EventDeclaration): String {
-        return eventPath(port, event, port.realizationMode == RealizationMode.REQUIRED)
+    private fun outputEventPath(
+        port: PortDeclaration,
+        event: EventDeclaration,
+        portReference: String = memberReference(port),
+    ): String {
+        return eventPath(portReference, event, port.realizationMode == RealizationMode.REQUIRED)
     }
 
     private fun eventPath(
-        port: PortDeclaration,
+        portReference: String,
         event: EventDeclaration,
         inputHalf: Boolean,
     ): String {
@@ -760,12 +768,12 @@ class GammaToOxstsSerializer(
         } else {
             halves.last()
         }
-        return "${markName(port.name)}.interface.${half.name}"
+        return "$portReference.interface.${half.name}"
     }
 
     private fun IndentingStringBuilder.serialize(trigger: TimeoutTrigger) {
         appendIndent("redefine contains trigger: TimeoutTrigger") {
-            appendLine("redefine refers timeout: Timeout = ${markName(trigger.timeout.name)}")
+            appendLine("redefine refers timeout: Timeout = ${memberReference(trigger.timeout)}")
         }
     }
 
@@ -835,7 +843,7 @@ class GammaToOxstsSerializer(
         val name = nameMap.declareGenerated(action.eContainer(), action, deriveName(action, subsets))
         val eventPath = outputEventPath(action.port, action.event)
         appendIndent("contains $name: RaiseEventAction subsets $subsets") {
-            appendLine("redefine refers port: Port = ${markName(action.port.name)}")
+            appendLine("redefine refers port: Port = ${memberReference(action.port)}")
             appendLine("redefine refers event: Event = $eventPath")
             for ((index, argument) in action.arguments.withIndex()) {
                 val parameter = action.event.parameters[index]
@@ -853,7 +861,7 @@ class GammaToOxstsSerializer(
     ) {
         val name = nameMap.declareGenerated(action.eContainer(), action, deriveName(action, subsets))
         appendIndent("contains $name: SetTimeoutAction subsets $subsets") {
-            appendLine("redefine refers timeout: Timeout = ${markName(action.timeout.name)}")
+            appendLine("redefine refers timeout: Timeout = ${memberReference(action.timeout)}")
             serialize(action.value, "expression")
         }
     }
@@ -864,7 +872,7 @@ class GammaToOxstsSerializer(
     ) {
         val name = nameMap.declareGenerated(action.eContainer(), action, deriveName(action, subsets))
         appendIndent("contains $name: AssignmentAction subsets $subsets") {
-            appendLine("redefine refers variable: Variable = ${markName(assignedVariable(action).name)}")
+            appendLine("redefine refers variable: Variable = ${memberReference(assignedVariable(action))}")
             serializeAssignedValue(fieldAccesses(action.reference), action.expression, "expression")
         }
     }
@@ -1096,7 +1104,7 @@ class GammaToOxstsSerializer(
         val path = instancePath(expression).joinToString(".")
         appendIndent("redefine contains $redefines: IsEventRaisedExpression") {
             appendLine("redefine refers port: Port = $path.${markName(expression.port.name)}")
-            appendLine("redefine refers event: Event = $path.${outputEventPath(expression.port, expression.event)}")
+            appendLine("redefine refers event: Event = $path.${outputEventPath(expression.port, expression.event, markName(expression.port.name))}")
         }
     }
 
@@ -1124,7 +1132,7 @@ class GammaToOxstsSerializer(
         redefines: String,
     ) {
         appendIndent("redefine contains $redefines: VariableExpression") {
-            appendLine("redefine refers variable: Variable = ${markName(expression.declaration.name)}")
+            appendLine("redefine refers variable: Variable = ${memberReference(expression.declaration)}")
         }
     }
 
@@ -1136,6 +1144,18 @@ class GammaToOxstsSerializer(
         appendIndent("redefine contains $redefines: VariableExpression") {
             appendLine("redefine refers variable: Variable = ${path.joinToString(".")}")
         }
+    }
+
+    // a region, state or history node named like a statechart member shadows it inside the regions, so the member is reached through the statechart
+    private fun memberReference(member: NamedElement): String {
+        val statechart = member.eContainer() as? StatechartDeclaration ?: return markName(member.name)
+        val shadowed = EcoreUtil2.eAllContents(statechart).asSequence().any {
+            (it is Region || it is StateNode) && (it as NamedElement).name == member.name
+        }
+        if (!shadowed) {
+            return markName(member.name)
+        }
+        return "(statechart as ${qualifiedClassName(statechart)}).${markName(member.name)}"
     }
 
     private fun instancePath(expression: InstanceElementExpression): List<String> {
