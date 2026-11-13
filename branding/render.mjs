@@ -15,7 +15,6 @@ function renderWidth(source, width) {
     return new Resvg(source, { fitTo: { mode: 'width', value: width } }).render().asPng();
 }
 
-// the glyph is scaled to glyphHeight and pressed into the top right corner of a square canvas, whole
 function renderFileIcon(source, canvas, glyphHeight) {
     const bounds = new Resvg(source).getBBox();
     const scale = glyphHeight / bounds.height;
@@ -41,7 +40,9 @@ function packIcon(images) {
         header.writeUInt32LE(offset, entry + 12);
         offset += png.length;
     });
-    return Buffer.concat([header, ...images.map(({ png }) => png)]);
+    return Buffer.concat([header, ...images.map(({ png }) => {
+        return png;
+    })]);
 }
 
 const [outputDirectory, ...specifications] = process.argv.slice(2);
@@ -52,7 +53,9 @@ for (const specification of specifications) {
     const source = readFileSync(join(brandingDirectory, `${stem}.svg`));
     let content;
     if (file.endsWith('.ico')) {
-        content = packIcon(request.split(',').map((size) => ({ size: Number(size), png: renderWidth(source, Number(size)) })));
+        content = packIcon(request.split(',').map((size) => {
+            return { size: Number(size), png: renderWidth(source, Number(size)) };
+        }));
     } else if (request.includes('+')) {
         const [canvas, glyphHeight] = request.split('+').map(Number);
         content = renderFileIcon(source, canvas, glyphHeight);
