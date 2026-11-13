@@ -360,7 +360,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
                 var redefined = redefinitionHandler.getRedefinedDeclaration(redefinableDeclaration);
                 if (redefined == null) {
                     acceptError(
-                            "Could not find redefined declaration.",
+                            "No supertype declares a member named '" + NamingUtil.getName(redefinableDeclaration)
+                                    + "' to redefine.",
                             redefinableDeclaration,
                             OxstsPackage.Literals.NAMED_ELEMENT__NAME,
                             0,
@@ -368,7 +369,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
                 }
             } catch (Exception e) {
                 acceptError(
-                        "Could not find redefined declaration.",
+                        "No supertype declares a member named '" + NamingUtil.getName(redefinableDeclaration)
+                                + "' to redefine.",
                         redefinableDeclaration,
                         OxstsPackage.Literals.NAMED_ELEMENT__NAME,
                         0,
@@ -838,8 +840,11 @@ public class OxstsValidator extends AbstractOxstsValidator {
             }
         }
         if (!unbound.isEmpty()) {
+            var quoted = unbound.stream().map(name -> "'" + name + "'").collect(Collectors.joining(", "));
             acceptError(
-                    "Missing argument(s) for non-optional parameter(s): " + String.join(", ", unbound) + ".",
+                    unbound.size() == 1
+                            ? "Missing an argument for the required parameter " + quoted + "."
+                            : "Missing arguments for the required parameters " + quoted + ".",
                     callSuffixExpression,
                     INVALID_CALL_ARGUMENTS_COUND,
                     unbound.toArray(String[]::new));
@@ -916,7 +921,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
                 var optionalName = firstOptional.getName() != null ? firstOptional.getName() : "<unnamed>";
                 var paramName = parameter.getName() != null ? parameter.getName() : "<unnamed>";
                 acceptError(
-                        "Non-optional parameter '"
+                        "Required parameter '"
                                 + paramName
                                 + "' cannot follow optional parameter '"
                                 + optionalName
@@ -1343,7 +1348,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
             rejectParameterWrite(parameter, assignmentOperation, OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE);
         } else if (!(written instanceof VariableDeclaration)) {
             acceptError(
-                    "Only variables can be assigned to!",
+                    "Only a variable can be assigned.",
                     assignmentOperation,
                     OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE,
                     0,
@@ -1504,7 +1509,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
 
         if (!OxstsUtils.isCallable(called)) {
             acceptError(
-                    "Element " + called.getName() + " is not callable!",
+                    "'" + called.getName() + "' is not a transition or a property, so it cannot be called.",
                     callSuffixExpression,
                     OxstsPackage.Literals.POSTFIX_UNARY_EXPRESSION__PRIMARY,
                     0,
@@ -2260,7 +2265,10 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
 
         if (variableDeclaration.getTypeSpecification() == null) {
-            acceptError("Variables may not have implicit types!", variableDeclaration, VARIABLE_WITH_IMPLICIT_TYPE);
+            acceptError(
+                    "Variable '" + variableDeclaration.getName() + "' needs a declared type.",
+                    variableDeclaration,
+                    VARIABLE_WITH_IMPLICIT_TYPE);
         }
     }
 
