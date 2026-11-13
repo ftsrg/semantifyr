@@ -13,7 +13,7 @@ Verifying a case [compiles](../how-it-works/index.mdx) it to a transition system
 
 ## Backends side by side
 
-A portfolio is made of legs, each one backend under one configuration. A portfolio starts every leg whose backend is installed at the same time, each writing its files to a directory of its own in the case's directory. How many legs run at once is bounded, by default by the number of the machine's processors, and a leg beyond the bound waits for a free place. Before its backend runs, a leg checks whether the backend can translate the model, and answers Not supported, naming the constructs it refuses, when it cannot; each [backend's page](/category/backends) lists what it refuses. A model left with no variable, no `init` and no transition is decided without any backend.
+A portfolio is made of legs, each one backend under one configuration. A portfolio runs every leg whose backend is installed, each writing its files to a directory of its own in the case's directory, as many at once as a bound allows, by default the number of the machine's processors; a leg beyond the bound waits for a free place. Before its backend runs, a leg checks whether the backend can translate the model, and answers Not supported, naming the constructs it refuses, when it cannot; each [backend's page](/category/backends) lists what it refuses. A model left with no variable, no `init` and no transition is decided without any backend.
 
 ## Soundness directions
 

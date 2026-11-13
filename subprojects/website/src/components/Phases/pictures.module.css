@@ -74,20 +74,13 @@
   text-anchor: middle;
 }
 
-.instance .boxTitle,
-.variable {
+.instance .boxTitle {
   font-family: var(--font-mono);
 }
 
 .instance .boxLine {
   fill: var(--syntax-type);
   font-family: var(--font-mono);
-}
-
-.variable {
-  fill: var(--text-secondary);
-  font-size: 13px;
-  text-anchor: middle;
 }
 
 a:hover .phase rect {

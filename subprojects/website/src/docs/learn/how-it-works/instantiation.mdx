@@ -20,4 +20,4 @@ The compiler keeps the tree in memory and writes no file of it, so it is drawn h
 
 <InstanceTree />
 
-`root.left` and `root.right` are two instances of the same class, `Lamp`, and each has its own `on`. The later phases read the tree: [inlining](inlining.mdx) takes each call's body from the class of the instance it is called on, and [flattening](flattening.mdx) makes one variable of every variable of every instance.
+`root.left` and `root.right` are two instances of the same class, `Lamp`. The tree holds instances and no variable. The later phases read it: [inlining](inlining.mdx) takes each call's body from the class of the instance it is called on, and [flattening](flattening.mdx) gives every instance its own copy of each variable its class declares, as one variable of the model.

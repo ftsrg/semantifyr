@@ -19,7 +19,7 @@ An OXSTS model, written by hand or translated from another language by a [fronte
 2. [Inlining](inlining.mdx) replaces every call by its body, as the class of the instance it is called on defines it, until the case is one transition over instance paths such as `root.left.on`.
 3. [Flattening](flattening.mdx) turns every variable of every instance into one variable of the model and leaves no instance: the transition system.
 
-The three pages step through what the compiler writes for this one model. Every model they show is the compiler's own output, written when the site is built and shown whole; only the instance tree is drawn by hand, since the compiler keeps it in memory.
+The three pages step through what the compiler writes for this one model. Every model they show is the compiler's own output, written when the site is built and shown whole, except the model itself, `room.oxsts` below, where instantiation's walk starts; only the instance tree is drawn by hand, since the compiler keeps it in memory.
 
 <CodeBlock language="oxsts" title="room.oxsts">{room}</CodeBlock>
 
