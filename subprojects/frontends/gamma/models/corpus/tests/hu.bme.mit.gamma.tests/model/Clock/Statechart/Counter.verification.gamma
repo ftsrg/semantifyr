@@ -1,17 +1,11 @@
-package clocks_verification
+package clock::clocks::Counter_verification
 
-import "Counter.gcd"
+import clock::clocks
 
-verification case StateAReachable {
-    component system : Counter
-    property {
-        EF isActive(system.main._A)
-    }
+verification case StateAReachable of Counter {
+    EF state main._A
 }
 
-verification case StateBReachable {
-    component system : Counter
-    property {
-        EF isActive(system.main._B)
-    }
+verification case StateBReachable of Counter {
+    EF state main._B
 }

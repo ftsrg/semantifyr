@@ -1,17 +1,11 @@
-package package_b_10_verification
+package validation::package_b_10::stm_verification
 
-import "stm.gcd"
+import validation::package_b_10
 
-verification case StateS0Reachable {
-    component system : statemachine
-    property {
-        EF isActive(system.Main.S0)
-    }
+verification case StateS0Reachable of statemachine {
+    EF state Main.S0
 }
 
-verification case StateS1Reachable {
-    component system : statemachine
-    property {
-        EF isActive(system.Main.S1)
-    }
+verification case StateS1Reachable of statemachine {
+    EF state Main.S1
 }

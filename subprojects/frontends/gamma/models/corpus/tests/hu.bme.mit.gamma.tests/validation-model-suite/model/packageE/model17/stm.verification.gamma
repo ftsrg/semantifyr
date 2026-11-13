@@ -1,52 +1,31 @@
-package package_e_17_verification
+package validation::package_e_17::stm_verification
 
-import "stm.gcd"
+import validation::package_e_17
 
-verification case StateS0Reachable {
-    component system : statemachine
-    property {
-        EF isActive(system.Main.S0)
-    }
+verification case StateS0Reachable of statemachine {
+    EF state Main.S0
 }
 
-verification case StateC1Reachable {
-    component system : statemachine
-    property {
-        EF isActive(system.Main.C1)
-    }
+verification case StateC1Reachable of statemachine {
+    EF state Main.C1
 }
 
-verification case StateS1Reachable {
-    component system : statemachine
-    property {
-        EF isActive(system.Main.C1.R1.S1)
-    }
+verification case StateS1Reachable of statemachine {
+    EF state R1.S1
 }
 
-verification case StateS11Reachable {
-    component system : statemachine
-    property {
-        EF isActive(system.Main.C1.R1.S11)
-    }
+verification case StateS11Reachable of statemachine {
+    EF state R1.S11
 }
 
-verification case StateS2Reachable {
-    component system : statemachine
-    property {
-        EF isActive(system.Main.C1.R2.S2)
-    }
+verification case StateS2Reachable of statemachine {
+    EF state R2.S2
 }
 
-verification case StateS22Reachable {
-    component system : statemachine
-    property {
-        EF isActive(system.Main.C1.R2.S22)
-    }
+verification case StateS22Reachable of statemachine {
+    EF state R2.S22
 }
 
-verification case EnteringCompositeEntersOrthogonalRegion {
-    component system : statemachine
-    property {
-        EF (isActive(system.Main.C1.R1.S1) and isActive(system.Main.C1.R2.S2))
-    }
+verification case EnteringCompositeEntersOrthogonalRegion of statemachine {
+    EF (state R1.S1 and state R2.S2)
 }

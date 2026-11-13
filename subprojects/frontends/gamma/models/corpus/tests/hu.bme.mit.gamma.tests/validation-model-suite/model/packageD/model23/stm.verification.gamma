@@ -1,31 +1,19 @@
-package package_d_23_verification
+package validation::package_d_23::stm_verification
 
-import "stm.gcd"
+import validation::package_d_23
 
-verification case StateS0Reachable {
-    component system : statemachine
-    property {
-        EF isActive(system.Main.S0)
-    }
+verification case StateS0Reachable of statemachine {
+    EF state Main.S0
 }
 
-verification case StateS1Reachable {
-    component system : statemachine
-    property {
-        EF isActive(system.Main.S1)
-    }
+verification case StateS1Reachable of statemachine {
+    EF state Main.S1
 }
 
-verification case StateS11Reachable {
-    component system : statemachine
-    property {
-        EF isActive(system.Main.S1.R1.S11)
-    }
+verification case StateS11Reachable of statemachine {
+    EF state R1.S11
 }
 
-verification case FourOutputsOfOneStepAllVisible {
-    component system : statemachine
-    property {
-        EF (system.output.a and system.output.b and system.output.c and system.output.d)
-    }
+verification case FourOutputsOfOneStepAllVisible of statemachine {
+    EF (raise output.a and raise output.b and raise output.c and raise output.d)
 }

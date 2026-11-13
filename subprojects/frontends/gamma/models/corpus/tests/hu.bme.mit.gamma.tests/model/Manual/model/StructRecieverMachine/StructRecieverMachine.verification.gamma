@@ -1,24 +1,15 @@
-package StructRecieverMachine_verification
+package manual::StructRecieverMachine::StructRecieverMachine_verification
 
-import "StructRecieverMachine.gcd"
+import manual::StructRecieverMachine
 
-verification case StateStructRecieverMachineStateReachable {
-    component system : StructRecieverMachine
-    property {
-        EF isActive(system.StructRecieverMachine_.StructRecieverMachine__State)
-    }
+verification case StateStructRecieverMachineStateReachable of StructRecieverMachine {
+    EF state StructRecieverMachine_.StructRecieverMachine__State
 }
 
-verification case RecordParameterAddedToBoth {
-    component system : StructRecieverMachine
-    property {
-        EF (system.cnt = 5 and system.ss.val = 5)
-    }
+verification case RecordParameterAddedToBoth of StructRecieverMachine {
+    EF (variable cnt = 5 and (variable ss).val = 5)
 }
 
-verification case RecordParameterAddedUnequally {
-    component system : StructRecieverMachine
-    property {
-        EF (system.cnt = 1 and system.ss.val = 2)
-    }
+verification case RecordParameterAddedUnequally of StructRecieverMachine {
+    EF (variable cnt = 1 and (variable ss).val = 2)
 }

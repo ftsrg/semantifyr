@@ -1,31 +1,19 @@
-package monitor_verification
+package crossroads::monitor::Monitor_verification
 
-import "Monitor.gcd"
+import crossroads::monitor
 
-verification case StateErrorReachable {
-    component system : Monitor
-    property {
-        EF isActive(system.main_region.Error)
-    }
+verification case StateErrorReachable of Monitor {
+    EF state main_region.Error
 }
 
-verification case StateOtherReachable {
-    component system : Monitor
-    property {
-        EF isActive(system.main_region.Other)
-    }
+verification case StateOtherReachable of Monitor {
+    EF state main_region.Other
 }
 
-verification case StateRedReachable {
-    component system : Monitor
-    property {
-        EF isActive(system.main_region.Red)
-    }
+verification case StateRedReachable of Monitor {
+    EF state main_region.Red
 }
 
-verification case StateGreenReachable {
-    component system : Monitor
-    property {
-        EF isActive(system.main_region.Green)
-    }
+verification case StateGreenReachable of Monitor {
+    EF state main_region.Green
 }

@@ -1,80 +1,47 @@
-package complex_verification
+package complexStatechart::complex::TopDownComplexStatechart_verification
 
-import "TopDownComplexStatechart.gcd"
+import complexStatechart::complex
 
-verification case StateAReachable {
-    component system : TopDown
-    property {
-        EF isActive(system.main.A_)
-    }
+verification case StateAReachable of TopDown {
+    EF state main.A_
 }
 
-verification case StateAAReachable {
-    component system : TopDown
-    property {
-        EF isActive(system.main.A_.A.AA)
-    }
+verification case StateAAReachable of TopDown {
+    EF state A.AA
 }
 
-verification case StateABReachable {
-    component system : TopDown
-    property {
-        EF isActive(system.main.A_.A.AB)
-    }
+verification case StateABReachable of TopDown {
+    EF state A.AB
 }
 
-verification case StateABAAReachable {
-    component system : TopDown
-    property {
-        EF isActive(system.main.A_.A.AB.ABA.ABAA)
-    }
+verification case StateABAAReachable of TopDown {
+    EF state ABA.ABAA
 }
 
-verification case StateABABReachable {
-    component system : TopDown
-    property {
-        EF isActive(system.main.A_.A.AB.ABA.ABAB)
-    }
+verification case StateABABReachable of TopDown {
+    EF state ABA.ABAB
 }
 
-verification case StateABBAReachable {
-    component system : TopDown
-    property {
-        EF isActive(system.main.A_.A.AB.ABB.ABBA)
-    }
+verification case StateABBAReachable of TopDown {
+    EF state ABB.ABBA
 }
 
-verification case StateABBBReachable {
-    component system : TopDown
-    property {
-        EF isActive(system.main.A_.A.AB.ABB.ABBB)
-    }
+verification case StateABBBReachable of TopDown {
+    EF state ABB.ABBB
 }
 
-verification case StateBAReachable {
-    component system : TopDown
-    property {
-        EF isActive(system.main.A_.B.BA)
-    }
+verification case StateBAReachable of TopDown {
+    EF state B.BA
 }
 
-verification case StateBBReachable {
-    component system : TopDown
-    property {
-        EF isActive(system.main.A_.B.BB)
-    }
+verification case StateBBReachable of TopDown {
+    EF state B.BB
 }
 
-verification case StateBReachable {
-    component system : TopDown
-    property {
-        EF isActive(system.main.B_)
-    }
+verification case StateBReachable of TopDown {
+    EF state main.B_
 }
 
-verification case StateCReachable {
-    component system : TopDown
-    property {
-        EF isActive(system.main.C_)
-    }
+verification case StateCReachable of TopDown {
+    EF state main.C_
 }
