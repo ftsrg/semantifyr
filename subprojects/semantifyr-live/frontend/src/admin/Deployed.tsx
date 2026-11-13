@@ -98,7 +98,7 @@ export function Deployed({ store }: { store: AdminStore }): React.JSX.Element | 
             })}
           </ul>
         </Group>
-        <Group title="Flavours">
+        <Group title="Libraries">
           <ul className="admin-rows">
             {flavourRows(flavors).map((flavor) => {
               const count = counts.get(flavor.id) ?? 0
