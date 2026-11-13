@@ -14,3 +14,4 @@ The result: the same library can verify many models, the same model can be check
 - [Getting Started](getting-started.md) to set up your environment.
 - [Tutorials](tutorials/index.md) to build your first model from scratch.
 - [Language Reference](language/index.md) to look up specific constructs.
+- [Gamma](gamma.mdx) for the constructs of Gamma the frontend carries.
