@@ -11,7 +11,7 @@ import { editorKeysOf } from '../testBrowser'
 import { casesListed, editor, test } from './harness'
 
 const BUILTIN = 'file:///workspace/.semantifyr/builtin/semantifyr.oxsts'
-const TRACE_ANNOTATION_LINE = 78
+const TRACE_ANNOTATION_LINE = 80
 
 // the text of the line the cursor is on in the document shown
 async function currentLine(page: Page): Promise<string> {
