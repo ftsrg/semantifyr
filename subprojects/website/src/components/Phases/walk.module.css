@@ -1,0 +1,155 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+.walk {
+  margin-bottom: var(--ifm-leading);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.controls,
+.views {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.button {
+  padding: var(--space-2) var(--space-5);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-medium);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.button:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.button:disabled {
+  color: var(--text-disabled);
+  cursor: default;
+}
+
+.button[aria-pressed='true'] {
+  border-color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+
+.caption {
+  min-height: 3em;
+  margin: var(--space-5) 0;
+}
+
+.sideBySide {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+
+@media (max-width: 996px) {
+  .sideBySide {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.pane {
+  margin: 0;
+  min-width: 0;
+}
+
+.paneTitle {
+  margin-bottom: var(--space-2);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+}
+
+.code {
+  margin: 0;
+  padding: var(--space-5) 0;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  font-size: var(--text-code);
+  line-height: var(--line-code);
+}
+
+.code > code {
+  display: block;
+  min-width: max-content;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: inherit;
+}
+
+.line {
+  display: block;
+  padding-right: var(--space-5);
+}
+
+.sign {
+  display: inline-block;
+  width: 2.5ch;
+  padding-left: var(--space-3);
+  color: var(--text-tertiary);
+  user-select: none;
+}
+
+.added {
+  background: var(--verdict-passed-soft);
+}
+
+.added .sign {
+  color: var(--verdict-passed);
+  font-weight: var(--weight-semibold);
+}
+
+.removed {
+  background: var(--verdict-failed-soft);
+}
+
+.removed .sign {
+  color: var(--verdict-failed);
+  font-weight: var(--weight-semibold);
+}
+
+.line ins {
+  text-decoration: none;
+}
+
+.line del {
+  text-decoration: line-through;
+}
+
+.spoken {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .appearing {
+    animation: appear var(--duration-medium) ease-out;
+  }
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+}

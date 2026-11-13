@@ -1,0 +1,24 @@
+---
+title: Flattening
+sidebar_position: 3
+hide_table_of_contents: true
+---
+
+import PhaseWalk from '@site/src/components/Phases/PhaseWalk';
+import { flattening } from '@site/src/components/Phases/walks';
+
+# Flattening
+
+Flattening is the third and last phase of the compilation. It starts from the model [inlining](inlining.mdx) wrote and the instance tree, and leaves a transition system: variables, an `init`, one transition and a property, with no instance left.
+
+- Every variable of every instance becomes one variable of the model, named by the path of its instance, and every use of it is rewritten to that variable.
+- A record variable becomes one variable for each field, and an array variable one variable for each slot.
+- A variable whose type is a feature holds a number in place of an instance, each instance it can hold numbered; the case's `mapping.json` lists the numbers.
+- Every expression that is decided at compile time is replaced by its value.
+- The phase's optimizations then run until none of them changes the model: they simplify expressions and nested operations, remove redundant operations, propagate assumptions that are false, substitute variables that keep one value, propagate copies, remove dead stores and dead code, and remove the variables that nothing reads.
+
+What the phase writes, `pipeline/flattened.oxsts`, is what `semantifyr compile` writes as its output and what a [backend](/category/backends) receives, each translating it into its own input language.
+
+<PhaseWalk steps={flattening} label="Flattening, step by step" />
+
+This model has no record, array or feature-typed variable, and no optimization changes it, so the walk is one step. The compiler writes the flattening's frame only once its optimizations are done; on a model they change, each optimization that fires writes a frame of its own before it, the first of them showing the flattening already done.

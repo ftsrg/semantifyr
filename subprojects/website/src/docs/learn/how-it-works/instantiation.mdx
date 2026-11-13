@@ -1,0 +1,23 @@
+---
+title: Instantiation
+sidebar_position: 1
+hide_table_of_contents: true
+---
+
+import PhaseWalk from '@site/src/components/Phases/PhaseWalk';
+import InstanceTree from '@site/src/components/Phases/InstanceTree';
+import { instantiation } from '@site/src/components/Phases/walks';
+
+# Instantiation
+
+Instantiation is the first phase of the compilation. Before it, the compiler wraps the case in a root: a model that contains one instance of the case's class, named `root`, and calls its `init`, its main transition and its property. Instantiation leaves that text as it is. What it builds is the instance tree, the instances the system is made of.
+
+It takes the instances in the order it reaches them, breadth first, starting from the model, and gives every containment of multiplicity one of each instance an instance of its own, which it then reaches in turn. A containment marked `@Shared` gets one instance, shared by every instance that holds it, and a containment with an `opposite` is placed on both sides. Only containments get instances here: references and bound features point into the tree and are evaluated against it later, when inlining and flattening ask for them.
+
+<PhaseWalk steps={instantiation} label="Instantiation, step by step" marks={false} />
+
+The compiler keeps the tree in memory and writes no file of it, so it is drawn here by hand. The numbers are the order in which instantiation reaches the instances.
+
+<InstanceTree />
+
+`root.left` and `root.right` are two instances of the same class, `Lamp`, and each has its own `on`. The later phases read the tree: [inlining](inlining.mdx) takes each call's body from the class of the instance it is called on, and [flattening](flattening.mdx) makes one variable of every variable of every instance.

@@ -1,0 +1,20 @@
+---
+title: Inlining
+sidebar_position: 2
+hide_table_of_contents: true
+---
+
+import PhaseWalk from '@site/src/components/Phases/PhaseWalk';
+import { inlining } from '@site/src/components/Phases/walks';
+
+# Inlining
+
+Inlining is the second phase of the compilation. It starts from the root that [instantiation](instantiation.mdx) left and the instance tree, and expands, one at a time, every call that is decided at compile time: an `inline` call of a transition gives way to the transition's body, and a call of a property in an expression gives way to the expression the property returns. The body is the one the class of the called instance defines, so a redefinition replaces what it redefines, and its names are written as paths from `root`. A body that calls further is expanded in its turn.
+
+The other inline operations are decided here too: an `inline if` keeps the branch its compile-time condition selects, an `inline for` is unrolled over its range, an `inline` call through a variable whose type is a feature becomes a choice with one guarded branch for each instance the variable can hold, and a property call or a read through such a variable becomes an if-then-else over the same instances. When nothing is left to expand, the phase's optimizations simplify the result, and the property must have `AG` or `EF` at its root. What the phase writes, `pipeline/inlined.oxsts`, is one `init`, one transition and one property over instance paths.
+
+The walk shows every frame the compiler writes during inlining, each the whole model after one expansion.
+
+<PhaseWalk steps={inlining} label="Inlining, step by step" />
+
+The `init` is expanded first, then the main transition, then the property. No optimization of the phase changes this model, so the last expansion's frame is the model inlining writes. [Flattening](flattening.mdx) starts from it.
