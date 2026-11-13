@@ -47,6 +47,7 @@ Composition	Broadcast channels, component parameters and arguments	out			Future 
 Composition	Asynchronous adapters with message queues, capacities and priorities, control specifications, clocks, asynchronous and scheduled-asynchronous composites, asynchronous statecharts	planned			A stretch goal behind OXSTS arrays sized from a binding and arrays of records.
 Composition	The `full-step` control function	out			Future work.
 Time	Timeouts in seconds and milliseconds	carried	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaGrammarTest.kt	a timeout is set in seconds or milliseconds	
+Time	Timeouts in nanoseconds, microseconds and hours	planned			The grammar does not have these units.
 Time	Time passing	departure	models/semantics/MillisecondTimeout.gamma	TheShorterTimeoutIsUpFirst	Every step advances time by a fixed delta of one second. Gamma adds a delay of a range the analysis constrains.
 Time	A havocked delay between steps	planned			The trace design decides time.
 Properties and cases	Verification cases, `verification case N of Component { property }`	departure	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaGrammarTest.kt	a verification case names its component	Gamma keeps properties in a separate property file. A case names its component in its header and holds the property expression as its body.
