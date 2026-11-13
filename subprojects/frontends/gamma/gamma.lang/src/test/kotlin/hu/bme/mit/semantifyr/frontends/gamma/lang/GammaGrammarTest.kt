@@ -142,6 +142,29 @@ class GammaGrammarTest {
     }
 
     @Test
+    fun `parentheses regroup an or under an and`() {
+        val statechart = statechart(
+            """
+                package test
+                statechart Machine {
+                    var a : boolean
+                    var b : boolean
+                    var c : boolean
+                    region Main {
+                        initial Start
+                        state Idle
+                    }
+                    transition from Start to Idle [(a or b) and c]
+                }
+            """,
+        )
+
+        val guard = statechart.transitions.single().guard as BooleanOperator
+        assertThat(guard.op).isEqualTo(BooleanOp.AND)
+        assertThat((guard.left as BooleanOperator).op).isEqualTo(BooleanOp.OR)
+    }
+
+    @Test
     fun `a timeout is set in seconds or milliseconds`() {
         val statechart = statechart(
             """

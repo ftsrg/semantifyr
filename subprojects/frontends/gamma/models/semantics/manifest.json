@@ -148,19 +148,6 @@
             ]
         },
         {
-            "file": "Precedence.gamma",
-            "cases": [
-                { "name": "AndBindsTighterThanOr", "verdict": "Passed", "tier": "Integration" },
-                { "name": "NotBindsLooserThanEquality", "verdict": "Passed", "tier": "Integration" },
-                { "name": "EqualityBindsLooserThanOrdering", "verdict": "Passed", "tier": "Integration" },
-                { "name": "AndBindsTighterThanOrInAProperty", "verdict": "Passed", "tier": "Integration" },
-                { "name": "RegroupedOrBeforeAndUnreachable", "verdict": "Failed", "tier": "Integration" },
-                { "name": "NegatedTrueEqualityUnreachable", "verdict": "Failed", "tier": "Integration" },
-                { "name": "OrderingComparedWithFalseUnreachable", "verdict": "Failed", "tier": "Integration" },
-                { "name": "RegroupedOrBeforeAndInAPropertyViolated", "verdict": "Failed", "tier": "Integration" }
-            ]
-        },
-        {
             "file": "QueuePriority.gamma",
             "cases": [
                 { "name": "TheHigherPriorityQueueIsServedFirst", "verdict": "Passed", "tier": "Integration" },

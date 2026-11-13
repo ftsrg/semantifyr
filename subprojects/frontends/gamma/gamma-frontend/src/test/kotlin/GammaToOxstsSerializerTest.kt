@@ -572,6 +572,113 @@ class GammaToOxstsSerializerTest {
         )
     }
 
+    private fun guardLines(guard: String): List<String> {
+        return oxstsLines(
+            """
+                package test
+                interface Control {
+                    in event start
+                }
+                statechart Machine [
+                    port control : provides Control
+                ] {
+                    var first : boolean := true
+                    var second : boolean := false
+                    var third : boolean := false
+                    var count : integer := 0
+                    region Main {
+                        initial MainInitial
+                        state Idle
+                        state Busy
+                    }
+                    transition from MainInitial to Idle
+                    transition from Idle to Busy when control.start [$guard]
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `and binds tighter than or`() {
+        val lines = guardLines("first or second and third")
+
+        assertThat(lines).containsSequence(
+            "redefine contains expression: OrOperatorExpression {",
+            "redefine contains left: VariableExpression {",
+            "redefine refers variable: Variable = _first",
+            "}",
+            "redefine contains right: AndOperatorExpression {",
+            "redefine contains left: VariableExpression {",
+            "redefine refers variable: Variable = _second",
+            "}",
+            "redefine contains right: VariableExpression {",
+            "redefine refers variable: Variable = _third",
+            "}",
+            "}",
+            "}",
+        )
+    }
+
+    @Test
+    fun `parentheses regroup an or under an and`() {
+        val lines = guardLines("(first or second) and third")
+
+        assertThat(lines).containsSequence(
+            "redefine contains expression: AndOperatorExpression {",
+            "redefine contains left: OrOperatorExpression {",
+            "redefine contains left: VariableExpression {",
+            "redefine refers variable: Variable = _first",
+            "}",
+            "redefine contains right: VariableExpression {",
+            "redefine refers variable: Variable = _second",
+            "}",
+            "}",
+            "redefine contains right: VariableExpression {",
+            "redefine refers variable: Variable = _third",
+            "}",
+            "}",
+        )
+    }
+
+    @Test
+    fun `not binds looser than equality`() {
+        val lines = guardLines("not count = 1")
+
+        assertThat(lines).containsSequence(
+            "redefine contains expression: UnaryNotExpression {",
+            "redefine contains body: EqualityOperatorExpression {",
+            "redefine contains left: VariableExpression {",
+            "redefine refers variable: Variable = _count",
+            "}",
+            "redefine contains right: LiteralIntegerExpression {",
+            "redefine refers value: int = 1",
+            "}",
+            "}",
+            "}",
+        )
+    }
+
+    @Test
+    fun `equality binds looser than ordering`() {
+        val lines = guardLines("count < 1 = first")
+
+        assertThat(lines).containsSequence(
+            "redefine contains expression: EqualityOperatorExpression {",
+            "redefine contains left: LessThanOperatorExpression {",
+            "redefine contains left: VariableExpression {",
+            "redefine refers variable: Variable = _count",
+            "}",
+            "redefine contains right: LiteralIntegerExpression {",
+            "redefine refers value: int = 1",
+            "}",
+            "}",
+            "redefine contains right: VariableExpression {",
+            "redefine refers variable: Variable = _first",
+            "}",
+            "}",
+        )
+    }
+
     @Test
     fun `a raise event action refers to the port and the event of its interface`() {
         val lines = statechartLines("transition from Idle to Busy / raise control.done;")
