@@ -47,6 +47,7 @@ class SmartFullPortfolio(
         PortfolioTask(spin, SpinConfig.SafeDfs, "spin-safe-dfs"),
         PortfolioTask(uppaal, UppaalConfig.Default, "uppaal-default"),
         PortfolioTask(nuxmv, NuxmvConfig.Ic3Invar, "nuxmv-ic3"),
+        PortfolioTask(theta, ThetaConfig.CegarExpl, "theta-cegar-expl"),
         PortfolioTask(theta, ThetaConfig.CegarExplPredCombined, "theta-cegar-combined"),
         PortfolioTask(theta, ThetaConfig.BoundedKInduction, "theta-kinduction"),
         PortfolioTask(theta, ThetaConfig.Ic3, "theta-ic3"),
