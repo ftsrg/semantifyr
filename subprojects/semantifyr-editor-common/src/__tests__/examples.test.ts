@@ -119,6 +119,10 @@ describe.each(servedExamples.map((example) => {
     expect(example.cases).toEqual(declaredCases(example.file, example.language));
   });
 
+  test.skipIf(example.language === AWAITING_THEIR_LANE)('has at most ten cases, so that a reader is not overwhelmed', () => {
+    expect(example.cases.length).toBeLessThanOrEqual(10);
+  });
+
   test('names its origin, its rights holder and its licence', () => {
     expect(example.origin.trim()).not.toBe('');
     expect(example.holder.trim()).not.toBe('');
@@ -147,10 +151,6 @@ const listedModels = servedExamples.filter((example) => {
 describe.each(listedModels.map((example) => {
   return [address(example), example] as const;
 }))('the served model %s', (_, example) => {
-  test('has at most ten cases, so that a reader is not overwhelmed', () => {
-    expect(example.cases.length).toBeLessThanOrEqual(10);
-  });
-
   test('has a case that gives a trace, a reachability case expected to pass or a case expected to fail', () => {
     const model = manifestBeside(example).models.find((candidate) => {
       return candidate.file === fileNameOf(example);
