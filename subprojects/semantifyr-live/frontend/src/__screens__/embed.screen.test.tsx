@@ -19,8 +19,8 @@ import { caseState, LANGUAGES, seedWithTrace } from './traces'
 
 const WIDTH = 760
 
-const BARRIER = caseOf('BarrierDownWhileTrainInCrossingViolated', 97)
-const TWO_TRAINS = caseOf('TwoTrainsCanBeInTheCrossing', 112)
+const BARRIER = caseOf('BarrierDownWhileTrainInCrossing', 102)
+const TWO_TRAINS = caseOf('TwoTrainsCanBeInTheCrossing', 117)
 
 const SYSML = LANGUAGES.sysml!
 const TRACED = caseState(SYSML, { validated: true, recorded: true })

@@ -20,8 +20,8 @@ const ORIENTATIONS: Readonly<Record<string, { width: number, height: number }>> 
   landscape: { width: 1024, height: 768 },
 }
 
-const BARRIER = caseOf('BarrierDownWhileTrainInCrossingViolated', 97)
-const TWO_TRAINS = caseOf('TwoTrainsCanBeInTheCrossing', 112)
+const BARRIER = caseOf('BarrierDownWhileTrainInCrossing', 102)
+const TWO_TRAINS = caseOf('TwoTrainsCanBeInTheCrossing', 117)
 
 // a toolbar group is the width its neighbour leaves it, and the fonts decide whether its last button runs into the gap after it, which expectApart bounds
 const UNCLIPPED = [

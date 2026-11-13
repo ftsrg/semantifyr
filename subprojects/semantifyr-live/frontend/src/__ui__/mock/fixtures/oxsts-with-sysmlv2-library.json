@@ -89,12 +89,12 @@
  },
  "sessionInfo": null,
  "documents": {
-  "1f38d5bc21944f80": {
+  "36f5a108ef4b86a4": {
    "diagnostics": [],
    "cases": [
     {
-     "id": "semantifyr::sysml::model::BarrierDownWhileTrainInCrossingViolated",
-     "label": "semantifyr::sysml::model::BarrierDownWhileTrainInCrossingViolated",
+     "id": "semantifyr::sysml::model::BarrierDownWhileTrainInCrossing",
+     "label": "semantifyr::sysml::model::BarrierDownWhileTrainInCrossing",
      "location": {
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
@@ -104,7 +104,7 @@
        },
        "end": {
         "line": 235,
-        "character": 45
+        "character": 37
        }
       }
      }
@@ -128,128 +128,9 @@
     }
    ]
   },
-  "91fddb2ca44f8c2c": {
+  "0013d81745ffafb5": {
    "diagnostics": [],
    "cases": [
-    {
-     "id": "semantifyr::sysml::model::ControllerOperatingReachable",
-     "label": "semantifyr::sysml::model::ControllerOperatingReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 327,
-        "character": 6
-       },
-       "end": {
-        "line": 327,
-        "character": 34
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::ControllerOperatingBothYellowReachable",
-     "label": "semantifyr::sysml::model::ControllerOperatingBothYellowReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 341,
-        "character": 6
-       },
-       "end": {
-        "line": 341,
-        "character": 44
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::ControllerOperatingBothRedReachable",
-     "label": "semantifyr::sysml::model::ControllerOperatingBothRedReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 355,
-        "character": 6
-       },
-       "end": {
-        "line": 355,
-        "character": 41
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::ControllerOperatingTrafficOnAReachable",
-     "label": "semantifyr::sysml::model::ControllerOperatingTrafficOnAReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 369,
-        "character": 6
-       },
-       "end": {
-        "line": 369,
-        "character": 44
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::ControllerOperatingStoppingAReachable",
-     "label": "semantifyr::sysml::model::ControllerOperatingStoppingAReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 383,
-        "character": 6
-       },
-       "end": {
-        "line": 383,
-        "character": 43
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::ControllerOperatingTrafficOnBReachable",
-     "label": "semantifyr::sysml::model::ControllerOperatingTrafficOnBReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 397,
-        "character": 6
-       },
-       "end": {
-        "line": 397,
-        "character": 44
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::ControllerOperatingStoppingBReachable",
-     "label": "semantifyr::sysml::model::ControllerOperatingStoppingBReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 411,
-        "character": 6
-       },
-       "end": {
-        "line": 411,
-        "character": 43
-       }
-      }
-     }
-    },
     {
      "id": "semantifyr::sysml::model::ControllerInterruptedReachable",
      "label": "semantifyr::sysml::model::ControllerInterruptedReachable",
@@ -257,148 +138,12 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 425,
+        "line": 327,
         "character": 6
        },
        "end": {
-        "line": 425,
+        "line": 327,
         "character": 36
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::ControllerInterruptedUnreachableViolated",
-     "label": "semantifyr::sysml::model::ControllerInterruptedUnreachableViolated",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 439,
-        "character": 6
-       },
-       "end": {
-        "line": 439,
-        "character": 46
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::TrafficLightABehaviorNormalReachable",
-     "label": "semantifyr::sysml::model::TrafficLightABehaviorNormalReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 455,
-        "character": 6
-       },
-       "end": {
-        "line": 455,
-        "character": 42
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::TrafficLightABehaviorNormalYellowReachable",
-     "label": "semantifyr::sysml::model::TrafficLightABehaviorNormalYellowReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 469,
-        "character": 6
-       },
-       "end": {
-        "line": 469,
-        "character": 48
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::TrafficLightABehaviorNormalRedReachable",
-     "label": "semantifyr::sysml::model::TrafficLightABehaviorNormalRedReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 483,
-        "character": 6
-       },
-       "end": {
-        "line": 483,
-        "character": 45
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::TrafficLightABehaviorNormalGreenReachable",
-     "label": "semantifyr::sysml::model::TrafficLightABehaviorNormalGreenReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 497,
-        "character": 6
-       },
-       "end": {
-        "line": 497,
-        "character": 47
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::TrafficLightABehaviorNormalGreenUnreachableViolated",
-     "label": "semantifyr::sysml::model::TrafficLightABehaviorNormalGreenUnreachableViolated",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 511,
-        "character": 6
-       },
-       "end": {
-        "line": 511,
-        "character": 57
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::TrafficLightABehaviorInterruptedReachable",
-     "label": "semantifyr::sysml::model::TrafficLightABehaviorInterruptedReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 527,
-        "character": 6
-       },
-       "end": {
-        "line": 527,
-        "character": 47
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::TrafficLightABehaviorInterruptedYellowReachable",
-     "label": "semantifyr::sysml::model::TrafficLightABehaviorInterruptedYellowReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 541,
-        "character": 6
-       },
-       "end": {
-        "line": 541,
-        "character": 53
        }
       }
      }
@@ -410,63 +155,12 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 555,
+        "line": 341,
         "character": 6
        },
        "end": {
-        "line": 555,
+        "line": 341,
         "character": 52
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::TrafficLightBBehaviorNormalReachable",
-     "label": "semantifyr::sysml::model::TrafficLightBBehaviorNormalReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 569,
-        "character": 6
-       },
-       "end": {
-        "line": 569,
-        "character": 42
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::TrafficLightBBehaviorNormalYellowReachable",
-     "label": "semantifyr::sysml::model::TrafficLightBBehaviorNormalYellowReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 583,
-        "character": 6
-       },
-       "end": {
-        "line": 583,
-        "character": 48
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::TrafficLightBBehaviorNormalRedReachable",
-     "label": "semantifyr::sysml::model::TrafficLightBBehaviorNormalRedReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 597,
-        "character": 6
-       },
-       "end": {
-        "line": 597,
-        "character": 45
        }
       }
      }
@@ -478,148 +172,12 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 611,
+        "line": 355,
         "character": 6
        },
        "end": {
-        "line": 611,
+        "line": 355,
         "character": 47
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::TrafficLightBBehaviorInterruptedReachable",
-     "label": "semantifyr::sysml::model::TrafficLightBBehaviorInterruptedReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 625,
-        "character": 6
-       },
-       "end": {
-        "line": 625,
-        "character": 47
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::TrafficLightBBehaviorInterruptedYellowReachable",
-     "label": "semantifyr::sysml::model::TrafficLightBBehaviorInterruptedYellowReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 639,
-        "character": 6
-       },
-       "end": {
-        "line": 639,
-        "character": 53
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::TrafficLightBBehaviorInterruptedBlackReachable",
-     "label": "semantifyr::sysml::model::TrafficLightBBehaviorInterruptedBlackReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 653,
-        "character": 6
-       },
-       "end": {
-        "line": 653,
-        "character": 52
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::ReachableRedRed",
-     "label": "semantifyr::sysml::model::ReachableRedRed",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 667,
-        "character": 6
-       },
-       "end": {
-        "line": 667,
-        "character": 21
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::ReachableRedGreen",
-     "label": "semantifyr::sysml::model::ReachableRedGreen",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 686,
-        "character": 6
-       },
-       "end": {
-        "line": 686,
-        "character": 23
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::UnreachableRedGreenViolated",
-     "label": "semantifyr::sysml::model::UnreachableRedGreenViolated",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 705,
-        "character": 6
-       },
-       "end": {
-        "line": 705,
-        "character": 33
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::ReachableRedYellow",
-     "label": "semantifyr::sysml::model::ReachableRedYellow",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 726,
-        "character": 6
-       },
-       "end": {
-        "line": 726,
-        "character": 24
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::ReachableGreenRed",
-     "label": "semantifyr::sysml::model::ReachableGreenRed",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 745,
-        "character": 6
-       },
-       "end": {
-        "line": 745,
-        "character": 23
        }
       }
      }
@@ -631,174 +189,21 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 764,
+        "line": 369,
         "character": 6
        },
        "end": {
-        "line": 764,
+        "line": 369,
         "character": 27
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::UnreachableGreenYellow",
-     "label": "semantifyr::sysml::model::UnreachableGreenYellow",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 785,
-        "character": 6
-       },
-       "end": {
-        "line": 785,
-        "character": 28
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::ReachableYellowRed",
-     "label": "semantifyr::sysml::model::ReachableYellowRed",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 806,
-        "character": 6
-       },
-       "end": {
-        "line": 806,
-        "character": 24
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::UnreachableYellowGreen",
-     "label": "semantifyr::sysml::model::UnreachableYellowGreen",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 825,
-        "character": 6
-       },
-       "end": {
-        "line": 825,
-        "character": 28
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::ReachableYellowYellow",
-     "label": "semantifyr::sysml::model::ReachableYellowYellow",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 846,
-        "character": 6
-       },
-       "end": {
-        "line": 846,
-        "character": 27
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::TrafficLightAReturnsToNormalAfterInterruptionTestCase",
-     "label": "semantifyr::sysml::model::TrafficLightAReturnsToNormalAfterInterruptionTestCase",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 865,
-        "character": 6
-       },
-       "end": {
-        "line": 865,
-        "character": 59
        }
       }
      }
     }
    ]
   },
-  "7fb78f6e02532c6f": {
+  "17bcf649225b8ddf": {
    "diagnostics": [],
    "cases": [
-    {
-     "id": "semantifyr::sysml::model::StationBehaviorIdleReachable",
-     "label": "semantifyr::sysml::model::StationBehaviorIdleReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 424,
-        "character": 6
-       },
-       "end": {
-        "line": 424,
-        "character": 34
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::StationBehaviorOperationReachable",
-     "label": "semantifyr::sysml::model::StationBehaviorOperationReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 438,
-        "character": 6
-       },
-       "end": {
-        "line": 438,
-        "character": 39
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::StationBehaviorOperationWaitingReachable",
-     "label": "semantifyr::sysml::model::StationBehaviorOperationWaitingReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 452,
-        "character": 6
-       },
-       "end": {
-        "line": 452,
-        "character": 46
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::SpacecraftBehaviorCommunicationWaitingPingReachable",
-     "label": "semantifyr::sysml::model::SpacecraftBehaviorCommunicationWaitingPingReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 466,
-        "character": 6
-       },
-       "end": {
-        "line": 466,
-        "character": 57
-       }
-      }
-     }
-    },
     {
      "id": "semantifyr::sysml::model::SpacecraftBehaviorCommunicationTransmittingReachable",
      "label": "semantifyr::sysml::model::SpacecraftBehaviorCommunicationTransmittingReachable",
@@ -806,590 +211,12 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 480,
+        "line": 399,
         "character": 6
        },
        "end": {
-        "line": 480,
+        "line": 399,
         "character": 58
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::SpacecraftBehaviorCommunicationTransmittingSendDataReachable",
-     "label": "semantifyr::sysml::model::SpacecraftBehaviorCommunicationTransmittingSendDataReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 494,
-        "character": 6
-       },
-       "end": {
-        "line": 494,
-        "character": 66
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::SpacecraftBehaviorCommunicationTransmittingSendDataSendingReachable",
-     "label": "semantifyr::sysml::model::SpacecraftBehaviorCommunicationTransmittingSendDataSendingReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 508,
-        "character": 6
-       },
-       "end": {
-        "line": 508,
-        "character": 73
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::SpacecraftBehaviorCommunicationTransmittingConsumePowerReachable",
-     "label": "semantifyr::sysml::model::SpacecraftBehaviorCommunicationTransmittingConsumePowerReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 522,
-        "character": 6
-       },
-       "end": {
-        "line": 522,
-        "character": 70
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::SpacecraftBehaviorCommunicationTransmittingConsumePowerConsumingReachable",
-     "label": "semantifyr::sysml::model::SpacecraftBehaviorCommunicationTransmittingConsumePowerConsumingReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 536,
-        "character": 6
-       },
-       "end": {
-        "line": 536,
-        "character": 79
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::SpacecraftBehaviorBatteryNotRechargingReachable",
-     "label": "semantifyr::sysml::model::SpacecraftBehaviorBatteryNotRechargingReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 550,
-        "character": 6
-       },
-       "end": {
-        "line": 550,
-        "character": 53
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::SpacecraftBehaviorBatteryRechargingReachable",
-     "label": "semantifyr::sysml::model::SpacecraftBehaviorBatteryRechargingReachable",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 564,
-        "character": 6
-       },
-       "end": {
-        "line": 564,
-        "character": 50
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::GroundStationReceivedDataCanReach0",
-     "label": "semantifyr::sysml::model::GroundStationReceivedDataCanReach0",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 578,
-        "character": 6
-       },
-       "end": {
-        "line": 578,
-        "character": 40
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::GroundStationReceivedDataCanReach10",
-     "label": "semantifyr::sysml::model::GroundStationReceivedDataCanReach10",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 597,
-        "character": 6
-       },
-       "end": {
-        "line": 597,
-        "character": 41
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::GroundStationReceivedDataCanReach20",
-     "label": "semantifyr::sysml::model::GroundStationReceivedDataCanReach20",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 616,
-        "character": 6
-       },
-       "end": {
-        "line": 616,
-        "character": 41
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::GroundStationReceivedDataCannotReach20Violated",
-     "label": "semantifyr::sysml::model::GroundStationReceivedDataCannotReach20Violated",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 635,
-        "character": 6
-       },
-       "end": {
-        "line": 635,
-        "character": 52
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::GroundStationReceivedDataCanReach30",
-     "label": "semantifyr::sysml::model::GroundStationReceivedDataCanReach30",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 656,
-        "character": 6
-       },
-       "end": {
-        "line": 656,
-        "character": 41
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::GroundStationReceivedDataCanReach40",
-     "label": "semantifyr::sysml::model::GroundStationReceivedDataCanReach40",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 675,
-        "character": 6
-       },
-       "end": {
-        "line": 675,
-        "character": 41
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::GroundStationReceivedDataCanReach50",
-     "label": "semantifyr::sysml::model::GroundStationReceivedDataCanReach50",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 694,
-        "character": 6
-       },
-       "end": {
-        "line": 694,
-        "character": 41
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::GroundStationReceivedDataCanReach60",
-     "label": "semantifyr::sysml::model::GroundStationReceivedDataCanReach60",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 713,
-        "character": 6
-       },
-       "end": {
-        "line": 713,
-        "character": 41
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::GroundStationReceivedDataCanReach70",
-     "label": "semantifyr::sysml::model::GroundStationReceivedDataCanReach70",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 732,
-        "character": 6
-       },
-       "end": {
-        "line": 732,
-        "character": 41
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::GroundStationReceivedDataCanReach80",
-     "label": "semantifyr::sysml::model::GroundStationReceivedDataCanReach80",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 751,
-        "character": 6
-       },
-       "end": {
-        "line": 751,
-        "character": 41
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::GroundStationReceivedDataCanReach90",
-     "label": "semantifyr::sysml::model::GroundStationReceivedDataCanReach90",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 770,
-        "character": 6
-       },
-       "end": {
-        "line": 770,
-        "character": 41
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::GroundStationReceivedDataCanReach100",
-     "label": "semantifyr::sysml::model::GroundStationReceivedDataCanReach100",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 789,
-        "character": 6
-       },
-       "end": {
-        "line": 789,
-        "character": 42
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::SpacecraftDataCanReach100",
-     "label": "semantifyr::sysml::model::SpacecraftDataCanReach100",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 808,
-        "character": 6
-       },
-       "end": {
-        "line": 808,
-        "character": 31
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::SpacecraftDataCanReach90",
-     "label": "semantifyr::sysml::model::SpacecraftDataCanReach90",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 827,
-        "character": 6
-       },
-       "end": {
-        "line": 827,
-        "character": 30
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::SpacecraftDataCanReach80",
-     "label": "semantifyr::sysml::model::SpacecraftDataCanReach80",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 846,
-        "character": 6
-       },
-       "end": {
-        "line": 846,
-        "character": 30
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::SpacecraftDataCanReach70",
-     "label": "semantifyr::sysml::model::SpacecraftDataCanReach70",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 865,
-        "character": 6
-       },
-       "end": {
-        "line": 865,
-        "character": 30
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::SpacecraftDataCanReach60",
-     "label": "semantifyr::sysml::model::SpacecraftDataCanReach60",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 884,
-        "character": 6
-       },
-       "end": {
-        "line": 884,
-        "character": 30
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::SpacecraftDataCannotReach60Violated",
-     "label": "semantifyr::sysml::model::SpacecraftDataCannotReach60Violated",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 903,
-        "character": 6
-       },
-       "end": {
-        "line": 903,
-        "character": 41
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::SpacecraftDataCanReach50",
-     "label": "semantifyr::sysml::model::SpacecraftDataCanReach50",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 924,
-        "character": 6
-       },
-       "end": {
-        "line": 924,
-        "character": 30
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::SpacecraftDataCanReach40",
-     "label": "semantifyr::sysml::model::SpacecraftDataCanReach40",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 943,
-        "character": 6
-       },
-       "end": {
-        "line": 943,
-        "character": 30
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::SpacecraftDataCanReach30",
-     "label": "semantifyr::sysml::model::SpacecraftDataCanReach30",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 962,
-        "character": 6
-       },
-       "end": {
-        "line": 962,
-        "character": 30
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::SpacecraftDataCanReach20",
-     "label": "semantifyr::sysml::model::SpacecraftDataCanReach20",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 981,
-        "character": 6
-       },
-       "end": {
-        "line": 981,
-        "character": 30
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::SpacecraftDataCanReach10",
-     "label": "semantifyr::sysml::model::SpacecraftDataCanReach10",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 1000,
-        "character": 6
-       },
-       "end": {
-        "line": 1000,
-        "character": 30
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::SpacecraftDataCanReach0",
-     "label": "semantifyr::sysml::model::SpacecraftDataCanReach0",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 1019,
-        "character": 6
-       },
-       "end": {
-        "line": 1019,
-        "character": 29
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::SpacecraftBatteryAlwaysAbove0",
-     "label": "semantifyr::sysml::model::SpacecraftBatteryAlwaysAbove0",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 1038,
-        "character": 6
-       },
-       "end": {
-        "line": 1038,
-        "character": 35
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::SpacecraftBatteryAlwaysAbove10",
-     "label": "semantifyr::sysml::model::SpacecraftBatteryAlwaysAbove10",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 1057,
-        "character": 6
-       },
-       "end": {
-        "line": 1057,
-        "character": 36
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::SpacecraftBatteryAlwaysAbove20",
-     "label": "semantifyr::sysml::model::SpacecraftBatteryAlwaysAbove20",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 1076,
-        "character": 6
-       },
-       "end": {
-        "line": 1076,
-        "character": 36
-       }
-      }
-     }
-    },
-    {
-     "id": "semantifyr::sysml::model::SpacecraftBatteryAlwaysAbove30",
-     "label": "semantifyr::sysml::model::SpacecraftBatteryAlwaysAbove30",
-     "location": {
-      "uri": "file:///workspace/snippet.oxsts",
-      "range": {
-       "start": {
-        "line": 1095,
-        "character": 6
-       },
-       "end": {
-        "line": 1095,
-        "character": 36
        }
       }
      }
@@ -1401,12 +228,102 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 1114,
+        "line": 413,
         "character": 6
        },
        "end": {
-        "line": 1114,
+        "line": 413,
         "character": 36
+       }
+      }
+     }
+    },
+    {
+     "id": "semantifyr::sysml::model::NeverTransmitsWhileRecharging",
+     "label": "semantifyr::sysml::model::NeverTransmitsWhileRecharging",
+     "location": {
+      "uri": "file:///workspace/snippet.oxsts",
+      "range": {
+       "start": {
+        "line": 432,
+        "character": 6
+       },
+       "end": {
+        "line": 432,
+        "character": 35
+       }
+      }
+     }
+    }
+   ]
+  },
+  "1429f7dcc27f4b85": {
+   "diagnostics": [],
+   "cases": [
+    {
+     "id": "semantifyr::sysml::model::GearCanBeRetracted",
+     "label": "semantifyr::sysml::model::GearCanBeRetracted",
+     "location": {
+      "uri": "file:///workspace/snippet.oxsts",
+      "range": {
+       "start": {
+        "line": 480,
+        "character": 6
+       },
+       "end": {
+        "line": 480,
+        "character": 24
+       }
+      }
+     }
+    },
+    {
+     "id": "semantifyr::sysml::model::GearCanBeLoweredAgain",
+     "label": "semantifyr::sysml::model::GearCanBeLoweredAgain",
+     "location": {
+      "uri": "file:///workspace/snippet.oxsts",
+      "range": {
+       "start": {
+        "line": 499,
+        "character": 6
+       },
+       "end": {
+        "line": 499,
+        "character": 27
+       }
+      }
+     }
+    },
+    {
+     "id": "semantifyr::sysml::model::BayClosedInCruise",
+     "label": "semantifyr::sysml::model::BayClosedInCruise",
+     "location": {
+      "uri": "file:///workspace/snippet.oxsts",
+      "range": {
+       "start": {
+        "line": 513,
+        "character": 6
+       },
+       "end": {
+        "line": 513,
+        "character": 23
+       }
+      }
+     }
+    },
+    {
+     "id": "semantifyr::sysml::model::GearMovesOnlyWithDoorsOpen",
+     "label": "semantifyr::sysml::model::GearMovesOnlyWithDoorsOpen",
+     "location": {
+      "uri": "file:///workspace/snippet.oxsts",
+      "range": {
+       "start": {
+        "line": 536,
+        "character": 6
+       },
+       "end": {
+        "line": 536,
+        "character": 32
        }
       }
      }
@@ -1420,7 +337,7 @@
   "99c476aabdc4a56d": {
    "diagnostics": []
   },
-  "af8290f953612100": {
+  "7e7a9c6db4c40759": {
    "diagnostics": []
   },
   "8eaccf694fd829d9": {
@@ -1428,807 +345,56 @@
   }
  },
  "results": {
-  "semantifyr::sysml::model::TwoTrainsCanBeInTheCrossing": {
-   "status": "passed",
-   "backendId": "uppaal:default",
-   "portfolioId": "smart",
-   "metrics": {
-    "totalDuration": "PT1.702378419S",
-    "preparationDuration": "PT0.311034426S",
-    "verificationDuration": "PT0.441079858S",
-    "backAnnotationDuration": "PT0.022391153S",
-    "compilation": {
-     "createDuration": "PT0.003781312S",
-     "instantiationDuration": "PT0.004236087S",
-     "inliningDuration": "PT0.192204763S",
-     "flatteningDuration": "PT0.109266935S",
-     "inliningOptimization": {
-      "duration": "PT0.015842229S",
-      "passes": [
-       {
-        "name": "OperationCallInlining",
-        "duration": "PT0.006528782S",
-        "runs": 1149,
-        "firings": 198
-       },
-       {
-        "name": "ExpressionSimplificationPass",
-        "duration": "PT0.003810191S",
-        "runs": 5,
-        "firings": 4
-       },
-       {
-        "name": "OperationFlatteningPass",
-        "duration": "PT0.003132503S",
-        "runs": 5,
-        "firings": 2
-       },
-       {
-        "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.001096445S",
-        "runs": 5,
-        "firings": 1
-       },
-       {
-        "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.001118565S",
-        "runs": 5,
-        "firings": 1
-       },
-       {
-        "name": "PropertyExpressionNormalization",
-        "duration": "PT0.000010137S",
-        "runs": 1,
-        "firings": 0
-       }
-      ],
-      "analyses": []
-     },
-     "flatteningOptimization": {
-      "duration": "PT0.074747078S",
-      "passes": [
-       {
-        "name": "ExpressionSimplificationPass",
-        "duration": "PT0.000918108S",
-        "runs": 3,
-        "firings": 1
-       },
-       {
-        "name": "OperationFlatteningPass",
-        "duration": "PT0.000382671S",
-        "runs": 3,
-        "firings": 0
-       },
-       {
-        "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.000386896S",
-        "runs": 3,
-        "firings": 1
-       },
-       {
-        "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.000396477S",
-        "runs": 3,
-        "firings": 0
-       },
-       {
-        "name": "ConstantVariableSubstitutionPass",
-        "duration": "PT0.014934943S",
-        "runs": 3,
-        "firings": 1
-       },
-       {
-        "name": "CopyPropagationPass",
-        "duration": "PT0.0249309S",
-        "runs": 3,
-        "firings": 1
-       },
-       {
-        "name": "DeadStoreEliminationPass",
-        "duration": "PT0.014803318S",
-        "runs": 3,
-        "firings": 1
-       },
-       {
-        "name": "DeadCodeRemovalPass",
-        "duration": "PT0.007105507S",
-        "runs": 3,
-        "firings": 0
-       },
-       {
-        "name": "VariableLivenessPass",
-        "duration": "PT0.010672501S",
-        "runs": 3,
-        "firings": 1
-       }
-      ],
-      "analyses": [
-       {
-        "name": "ConstantValueAnalysis",
-        "duration": "PT0.002024504S",
-        "computations": 2
-       },
-       {
-        "name": "ReachingDefinitionsAnalysis",
-        "duration": "PT0.038881534S",
-        "computations": 3
-       },
-       {
-        "name": "ConeOfInfluenceAnalysis",
-        "duration": "PT0.006532636S",
-        "computations": 2
-       }
-      ]
-     },
-     "inputSize": {
-      "variables": 0,
-      "operations": 0,
-      "expressions": 106
-     },
-     "inlinedSize": {
-      "variables": 52,
-      "operations": 322,
-      "expressions": 2053
-     },
-     "flattenedSize": {
-      "variables": 72,
-      "operations": 315,
-      "expressions": 854
-     }
-    }
-   },
-   "trace": {
-    "callTrace": {
-     "initializedStep": {
-      "traces": [
-       {
-        "self": "root.system.trackA.Behaviour.Free",
-        "calledTransition": "semantifyr::sysml::states::State::enter",
-        "arguments": [
-         {
-          "parameter": "commonState",
-          "value": "root.system.trackA.Behaviour"
-         }
-        ]
-       },
-       {
-        "self": "root.system.trackB.Behaviour.Free",
-        "calledTransition": "semantifyr::sysml::states::State::enter",
-        "arguments": [
-         {
-          "parameter": "commonState",
-          "value": "root.system.trackB.Behaviour"
-         }
-        ]
-       },
-       {
-        "self": "root.system.controller.Behaviour.Idle",
-        "calledTransition": "semantifyr::sysml::states::State::enter",
-        "arguments": [
-         {
-          "parameter": "commonState",
-          "value": "root.system.controller.Behaviour"
-         }
-        ]
-       },
-       {
-        "self": "root.system.barrier.Behaviour.Up",
-        "calledTransition": "semantifyr::sysml::states::State::enter",
-        "arguments": [
-         {
-          "parameter": "commonState",
-          "value": "root.system.barrier.Behaviour"
-         }
-        ]
-       }
-      ]
-     },
-     "steps": [
-      {
-       "traces": [
-        {
-         "self": "root.system.trackA.Behaviour.transition1",
-         "calledTransition": "semantifyr::sysml::states::Transition::fire",
-         "arguments": [],
-         "innerTraces": [
-          {
-           "self": "root.system.trackA.Behaviour.Free",
-           "calledTransition": "semantifyr::sysml::states::State::exit",
-           "arguments": [
-            {
-             "parameter": "commonState",
-             "value": "root.system.trackA.Behaviour"
-            }
-           ]
-          },
-          {
-           "self": "root.system.trackA.Behaviour.transition1.action.send1",
-           "calledTransition": "semantifyr::sysml::actions::SendItemAction::send",
-           "arguments": []
-          },
-          {
-           "self": "root.system.trackA.Behaviour.Approaching",
-           "calledTransition": "semantifyr::sysml::states::State::enter",
-           "arguments": [
-            {
-             "parameter": "commonState",
-             "value": "root.system.trackA.Behaviour"
-            }
-           ]
-          }
-         ]
-        },
-        {
-         "self": "root.system.trackB.Behaviour.transition1",
-         "calledTransition": "semantifyr::sysml::states::Transition::fire",
-         "arguments": [],
-         "innerTraces": [
-          {
-           "self": "root.system.trackB.Behaviour.Free",
-           "calledTransition": "semantifyr::sysml::states::State::exit",
-           "arguments": [
-            {
-             "parameter": "commonState",
-             "value": "root.system.trackB.Behaviour"
-            }
-           ]
-          },
-          {
-           "self": "root.system.trackB.Behaviour.transition1.action.send1",
-           "calledTransition": "semantifyr::sysml::actions::SendItemAction::send",
-           "arguments": []
-          },
-          {
-           "self": "root.system.trackB.Behaviour.Approaching",
-           "calledTransition": "semantifyr::sysml::states::State::enter",
-           "arguments": [
-            {
-             "parameter": "commonState",
-             "value": "root.system.trackB.Behaviour"
-            }
-           ]
-          }
-         ]
-        },
-        {
-         "self": "root",
-         "calledTransition": "semantifyr::sysml::verification::VerificationCaseDefinition::passTime",
-         "arguments": []
-        }
-       ]
-      },
-      {
-       "traces": [
-        {
-         "self": "root.system.trackA.Behaviour.transition2",
-         "calledTransition": "semantifyr::sysml::states::Transition::fire",
-         "arguments": [],
-         "innerTraces": [
-          {
-           "self": "root.system.trackA.Behaviour.Approaching",
-           "calledTransition": "semantifyr::sysml::states::State::exit",
-           "arguments": [
-            {
-             "parameter": "commonState",
-             "value": "root.system.trackA.Behaviour"
-            }
-           ]
-          },
-          {
-           "self": "root.system.trackA.Behaviour.Near",
-           "calledTransition": "semantifyr::sysml::states::State::enter",
-           "arguments": [
-            {
-             "parameter": "commonState",
-             "value": "root.system.trackA.Behaviour"
-            }
-           ]
-          }
-         ]
-        },
-        {
-         "self": "root.system.trackB.Behaviour.transition2",
-         "calledTransition": "semantifyr::sysml::states::Transition::fire",
-         "arguments": [],
-         "innerTraces": [
-          {
-           "self": "root.system.trackB.Behaviour.Approaching",
-           "calledTransition": "semantifyr::sysml::states::State::exit",
-           "arguments": [
-            {
-             "parameter": "commonState",
-             "value": "root.system.trackB.Behaviour"
-            }
-           ]
-          },
-          {
-           "self": "root.system.trackB.Behaviour.Near",
-           "calledTransition": "semantifyr::sysml::states::State::enter",
-           "arguments": [
-            {
-             "parameter": "commonState",
-             "value": "root.system.trackB.Behaviour"
-            }
-           ]
-          }
-         ]
-        },
-        {
-         "self": "root.system.controller.Behaviour.transition1",
-         "calledTransition": "semantifyr::sysml::states::Transition::fire",
-         "arguments": [],
-         "innerTraces": [
-          {
-           "self": "root.system.controller.Behaviour.Idle",
-           "calledTransition": "semantifyr::sysml::states::State::exit",
-           "arguments": [
-            {
-             "parameter": "commonState",
-             "value": "root.system.controller.Behaviour"
-            }
-           ]
-          },
-          {
-           "self": "root.system.controller.Behaviour.transition1.action.send1",
-           "calledTransition": "semantifyr::sysml::actions::SendItemAction::send",
-           "arguments": []
-          },
-          {
-           "self": "root.system.controller.Behaviour.TrainPresent",
-           "calledTransition": "semantifyr::sysml::states::State::enter",
-           "arguments": [
-            {
-             "parameter": "commonState",
-             "value": "root.system.controller.Behaviour"
-            }
-           ]
-          }
-         ]
-        },
-        {
-         "self": "root",
-         "calledTransition": "semantifyr::sysml::verification::VerificationCaseDefinition::passTime",
-         "arguments": []
-        }
-       ]
-      },
-      {
-       "traces": [
-        {
-         "self": "root.system.trackA.Behaviour.transition3",
-         "calledTransition": "semantifyr::sysml::states::Transition::fire",
-         "arguments": [],
-         "innerTraces": [
-          {
-           "self": "root.system.trackA.Behaviour.Near",
-           "calledTransition": "semantifyr::sysml::states::State::exit",
-           "arguments": [
-            {
-             "parameter": "commonState",
-             "value": "root.system.trackA.Behaviour"
-            }
-           ]
-          },
-          {
-           "self": "root.system.trackA.Behaviour.InCrossing",
-           "calledTransition": "semantifyr::sysml::states::State::enter",
-           "arguments": [
-            {
-             "parameter": "commonState",
-             "value": "root.system.trackA.Behaviour"
-            }
-           ]
-          }
-         ]
-        },
-        {
-         "self": "root.system.trackB.Behaviour.transition3",
-         "calledTransition": "semantifyr::sysml::states::Transition::fire",
-         "arguments": [],
-         "innerTraces": [
-          {
-           "self": "root.system.trackB.Behaviour.Near",
-           "calledTransition": "semantifyr::sysml::states::State::exit",
-           "arguments": [
-            {
-             "parameter": "commonState",
-             "value": "root.system.trackB.Behaviour"
-            }
-           ]
-          },
-          {
-           "self": "root.system.trackB.Behaviour.InCrossing",
-           "calledTransition": "semantifyr::sysml::states::State::enter",
-           "arguments": [
-            {
-             "parameter": "commonState",
-             "value": "root.system.trackB.Behaviour"
-            }
-           ]
-          }
-         ]
-        },
-        {
-         "self": "root.system.barrier.Behaviour.transition1",
-         "calledTransition": "semantifyr::sysml::states::Transition::fire",
-         "arguments": [],
-         "innerTraces": [
-          {
-           "self": "root.system.barrier.Behaviour.Up",
-           "calledTransition": "semantifyr::sysml::states::State::exit",
-           "arguments": [
-            {
-             "parameter": "commonState",
-             "value": "root.system.barrier.Behaviour"
-            }
-           ]
-          },
-          {
-           "self": "root.system.barrier.Behaviour.Down",
-           "calledTransition": "semantifyr::sysml::states::State::enter",
-           "arguments": [
-            {
-             "parameter": "commonState",
-             "value": "root.system.barrier.Behaviour"
-            }
-           ]
-          }
-         ]
-        },
-        {
-         "self": "root",
-         "calledTransition": "semantifyr::sysml::verification::VerificationCaseDefinition::passTime",
-         "arguments": []
-        }
-       ]
-      }
-     ]
-    },
-    "witnessState": {
-     "initializedStep": {
-      "values": [
-       {
-        "variable": "root.system.trackA.Behaviour.activeState",
-        "value": "root.system.trackA.Behaviour.Free"
-       },
-       {
-        "variable": "root.system.trackA.sensors.incomingItem",
-        "value": "nothing"
-       },
-       {
-        "variable": "root.system.trackA.sensors.consumed",
-        "value": "false"
-       },
-       {
-        "variable": "root.system.trackA.controller.outgoingItem",
-        "value": "nothing"
-       },
-       {
-        "variable": "root.system.trackB.Behaviour.activeState",
-        "value": "root.system.trackB.Behaviour.Free"
-       },
-       {
-        "variable": "root.system.trackB.sensors.incomingItem",
-        "value": "nothing"
-       },
-       {
-        "variable": "root.system.trackB.sensors.consumed",
-        "value": "false"
-       },
-       {
-        "variable": "root.system.trackB.controller.outgoingItem",
-        "value": "nothing"
-       },
-       {
-        "variable": "root.system.controller.Behaviour.activeState",
-        "value": "root.system.controller.Behaviour.Idle"
-       },
-       {
-        "variable": "root.system.controller.trackA.incomingItem",
-        "value": "nothing"
-       },
-       {
-        "variable": "root.system.controller.trackA.consumed",
-        "value": "false"
-       },
-       {
-        "variable": "root.system.controller.trackB.incomingItem",
-        "value": "nothing"
-       },
-       {
-        "variable": "root.system.controller.trackB.consumed",
-        "value": "false"
-       },
-       {
-        "variable": "root.system.controller.barrier.outgoingItem",
-        "value": "nothing"
-       },
-       {
-        "variable": "root.system.barrier.Behaviour.activeState",
-        "value": "root.system.barrier.Behaviour.Up"
-       },
-       {
-        "variable": "root.system.barrier.controller.incomingItem",
-        "value": "nothing"
-       },
-       {
-        "variable": "root.system.barrier.controller.consumed",
-        "value": "false"
-       }
-      ]
-     },
-     "steps": [
-      {
-       "values": [
-        {
-         "variable": "root.system.trackA.Behaviour.activeState",
-         "value": "root.system.trackA.Behaviour.Approaching"
-        },
-        {
-         "variable": "root.system.trackA.sensors.incomingItem",
-         "value": "nothing"
-        },
-        {
-         "variable": "root.system.trackA.sensors.consumed",
-         "value": "false"
-        },
-        {
-         "variable": "root.system.trackA.controller.outgoingItem",
-         "value": "semantifyr::sysml::model::global_TrainApproaching"
-        },
-        {
-         "variable": "root.system.trackB.Behaviour.activeState",
-         "value": "root.system.trackB.Behaviour.Approaching"
-        },
-        {
-         "variable": "root.system.trackB.sensors.incomingItem",
-         "value": "nothing"
-        },
-        {
-         "variable": "root.system.trackB.sensors.consumed",
-         "value": "false"
-        },
-        {
-         "variable": "root.system.trackB.controller.outgoingItem",
-         "value": "semantifyr::sysml::model::global_TrainApproaching"
-        },
-        {
-         "variable": "root.system.controller.Behaviour.activeState",
-         "value": "root.system.controller.Behaviour.Idle"
-        },
-        {
-         "variable": "root.system.controller.trackA.incomingItem",
-         "value": "semantifyr::sysml::model::global_TrainApproaching"
-        },
-        {
-         "variable": "root.system.controller.trackA.consumed",
-         "value": "false"
-        },
-        {
-         "variable": "root.system.controller.trackB.incomingItem",
-         "value": "semantifyr::sysml::model::global_TrainApproaching"
-        },
-        {
-         "variable": "root.system.controller.trackB.consumed",
-         "value": "false"
-        },
-        {
-         "variable": "root.system.controller.barrier.outgoingItem",
-         "value": "nothing"
-        },
-        {
-         "variable": "root.system.barrier.Behaviour.activeState",
-         "value": "root.system.barrier.Behaviour.Up"
-        },
-        {
-         "variable": "root.system.barrier.controller.incomingItem",
-         "value": "nothing"
-        },
-        {
-         "variable": "root.system.barrier.controller.consumed",
-         "value": "false"
-        }
-       ]
-      },
-      {
-       "values": [
-        {
-         "variable": "root.system.trackA.Behaviour.activeState",
-         "value": "root.system.trackA.Behaviour.Near"
-        },
-        {
-         "variable": "root.system.trackA.sensors.incomingItem",
-         "value": "nothing"
-        },
-        {
-         "variable": "root.system.trackA.sensors.consumed",
-         "value": "false"
-        },
-        {
-         "variable": "root.system.trackA.controller.outgoingItem",
-         "value": "nothing"
-        },
-        {
-         "variable": "root.system.trackB.Behaviour.activeState",
-         "value": "root.system.trackB.Behaviour.Near"
-        },
-        {
-         "variable": "root.system.trackB.sensors.incomingItem",
-         "value": "nothing"
-        },
-        {
-         "variable": "root.system.trackB.sensors.consumed",
-         "value": "false"
-        },
-        {
-         "variable": "root.system.trackB.controller.outgoingItem",
-         "value": "nothing"
-        },
-        {
-         "variable": "root.system.controller.Behaviour.activeState",
-         "value": "root.system.controller.Behaviour.TrainPresent"
-        },
-        {
-         "variable": "root.system.controller.trackA.incomingItem",
-         "value": "nothing"
-        },
-        {
-         "variable": "root.system.controller.trackA.consumed",
-         "value": "false"
-        },
-        {
-         "variable": "root.system.controller.trackB.incomingItem",
-         "value": "nothing"
-        },
-        {
-         "variable": "root.system.controller.trackB.consumed",
-         "value": "false"
-        },
-        {
-         "variable": "root.system.controller.barrier.outgoingItem",
-         "value": "semantifyr::sysml::model::global_Lower"
-        },
-        {
-         "variable": "root.system.barrier.Behaviour.activeState",
-         "value": "root.system.barrier.Behaviour.Up"
-        },
-        {
-         "variable": "root.system.barrier.controller.incomingItem",
-         "value": "semantifyr::sysml::model::global_Lower"
-        },
-        {
-         "variable": "root.system.barrier.controller.consumed",
-         "value": "false"
-        }
-       ]
-      },
-      {
-       "values": [
-        {
-         "variable": "root.system.trackA.Behaviour.activeState",
-         "value": "root.system.trackA.Behaviour.InCrossing"
-        },
-        {
-         "variable": "root.system.trackA.sensors.incomingItem",
-         "value": "nothing"
-        },
-        {
-         "variable": "root.system.trackA.sensors.consumed",
-         "value": "false"
-        },
-        {
-         "variable": "root.system.trackA.controller.outgoingItem",
-         "value": "nothing"
-        },
-        {
-         "variable": "root.system.trackB.Behaviour.activeState",
-         "value": "root.system.trackB.Behaviour.InCrossing"
-        },
-        {
-         "variable": "root.system.trackB.sensors.incomingItem",
-         "value": "nothing"
-        },
-        {
-         "variable": "root.system.trackB.sensors.consumed",
-         "value": "false"
-        },
-        {
-         "variable": "root.system.trackB.controller.outgoingItem",
-         "value": "nothing"
-        },
-        {
-         "variable": "root.system.controller.Behaviour.activeState",
-         "value": "root.system.controller.Behaviour.TrainPresent"
-        },
-        {
-         "variable": "root.system.controller.trackA.incomingItem",
-         "value": "nothing"
-        },
-        {
-         "variable": "root.system.controller.trackA.consumed",
-         "value": "false"
-        },
-        {
-         "variable": "root.system.controller.trackB.incomingItem",
-         "value": "nothing"
-        },
-        {
-         "variable": "root.system.controller.trackB.consumed",
-         "value": "false"
-        },
-        {
-         "variable": "root.system.controller.barrier.outgoingItem",
-         "value": "nothing"
-        },
-        {
-         "variable": "root.system.barrier.Behaviour.activeState",
-         "value": "root.system.barrier.Behaviour.Down"
-        },
-        {
-         "variable": "root.system.barrier.controller.incomingItem",
-         "value": "nothing"
-        },
-        {
-         "variable": "root.system.barrier.controller.consumed",
-         "value": "false"
-        }
-       ]
-      }
-     ]
-    },
-    "witnessUri": "file:///workspace/.artifacts/snippet.semantifyr.sysml.model.TwoTrainsCanBeInTheCrossing/witness.oxsts"
-   }
-  },
-  "semantifyr::sysml::model::BarrierDownWhileTrainInCrossingViolated": {
+  "semantifyr::sysml::model::BarrierDownWhileTrainInCrossing": {
    "status": "failed",
    "backendId": "uppaal:default",
    "portfolioId": "smart",
    "metrics": {
-    "totalDuration": "PT1.829541857S",
-    "preparationDuration": "PT0.342913543S",
-    "verificationDuration": "PT0.833612777S",
-    "backAnnotationDuration": "PT0.095499711S",
+    "totalDuration": "PT1.08764287S",
+    "preparationDuration": "PT0.344983094S",
+    "verificationDuration": "PT0.373047771S",
+    "backAnnotationDuration": "PT0.020170888S",
     "compilation": {
-     "createDuration": "PT0.004347896S",
-     "instantiationDuration": "PT0.005719319S",
-     "inliningDuration": "PT0.210389518S",
-     "flatteningDuration": "PT0.11195947S",
+     "createDuration": "PT0.003714967S",
+     "instantiationDuration": "PT0.004322421S",
+     "inliningDuration": "PT0.210560837S",
+     "flatteningDuration": "PT0.125129431S",
      "inliningOptimization": {
-      "duration": "PT0.015989729S",
+      "duration": "PT0.017630993S",
       "passes": [
        {
         "name": "OperationCallInlining",
-        "duration": "PT0.006958255S",
+        "duration": "PT0.006934467S",
         "runs": 1149,
         "firings": 198
        },
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.003801773S",
+        "duration": "PT0.004156173S",
         "runs": 5,
         "firings": 4
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.003002016S",
+        "duration": "PT0.003308295S",
         "runs": 5,
         "firings": 2
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.001022172S",
+        "duration": "PT0.001447652S",
         "runs": 5,
         "firings": 1
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.001054069S",
+        "duration": "PT0.001623518S",
         "runs": 5,
         "firings": 1
        },
        {
         "name": "PropertyExpressionNormalization",
-        "duration": "PT0.000008214S",
+        "duration": "PT0.000014383S",
         "runs": 1,
         "firings": 0
        }
@@ -2236,59 +402,59 @@
       "analyses": []
      },
      "flatteningOptimization": {
-      "duration": "PT0.065221838S",
+      "duration": "PT0.079788402S",
       "passes": [
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.000755812S",
+        "duration": "PT0.000863369S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.000371655S",
+        "duration": "PT0.000409164S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.000367602S",
+        "duration": "PT0.000407474S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.000357306S",
+        "duration": "PT0.000386701S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "ConstantVariableSubstitutionPass",
-        "duration": "PT0.005306298S",
+        "duration": "PT0.005509314S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "CopyPropagationPass",
-        "duration": "PT0.02506039S",
+        "duration": "PT0.031650607S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "DeadStoreEliminationPass",
-        "duration": "PT0.015033077S",
+        "duration": "PT0.01792569S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "DeadCodeRemovalPass",
-        "duration": "PT0.007264678S",
+        "duration": "PT0.007684799S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "VariableLivenessPass",
-        "duration": "PT0.010549039S",
+        "duration": "PT0.01473771S",
         "runs": 3,
         "firings": 1
        }
@@ -2296,17 +462,17 @@
       "analyses": [
        {
         "name": "ConstantValueAnalysis",
-        "duration": "PT0.001674599S",
+        "duration": "PT0.00187218S",
         "computations": 2
        },
        {
         "name": "ReachingDefinitionsAnalysis",
-        "duration": "PT0.039093642S",
+        "duration": "PT0.048555791S",
         "computations": 3
        },
        {
         "name": "ConeOfInfluenceAnalysis",
-        "duration": "PT0.006667034S",
+        "duration": "PT0.006988717S",
         "computations": 2
        }
       ]
@@ -3261,7 +1427,758 @@
       }
      ]
     },
-    "witnessUri": "file:///workspace/.artifacts/snippet.semantifyr.sysml.model.BarrierDownWhileTrainInC-1c451eb7/witness.oxsts"
+    "witnessUri": "file:///workspace/.artifacts/snippet.semantifyr.sysml.model.BarrierDownWhileTrainInCrossing/witness.oxsts"
+   }
+  },
+  "semantifyr::sysml::model::TwoTrainsCanBeInTheCrossing": {
+   "status": "passed",
+   "backendId": "nuxmv:bmc-invar",
+   "portfolioId": "smart",
+   "metrics": {
+    "totalDuration": "PT1.168899053S",
+    "preparationDuration": "PT0.344351621S",
+    "verificationDuration": "PT0.680483379S",
+    "backAnnotationDuration": "PT0.00413805S",
+    "compilation": {
+     "createDuration": "PT0.004224845S",
+     "instantiationDuration": "PT0.005652012S",
+     "inliningDuration": "PT0.216177785S",
+     "flatteningDuration": "PT0.115671861S",
+     "inliningOptimization": {
+      "duration": "PT0.020973998S",
+      "passes": [
+       {
+        "name": "OperationCallInlining",
+        "duration": "PT0.007334363S",
+        "runs": 1149,
+        "firings": 198
+       },
+       {
+        "name": "ExpressionSimplificationPass",
+        "duration": "PT0.00531483S",
+        "runs": 5,
+        "firings": 4
+       },
+       {
+        "name": "OperationFlatteningPass",
+        "duration": "PT0.00426926S",
+        "runs": 5,
+        "firings": 2
+       },
+       {
+        "name": "RedundantOperationRemovalPass",
+        "duration": "PT0.00202125S",
+        "runs": 5,
+        "firings": 1
+       },
+       {
+        "name": "AssumeFalsePropagationPass",
+        "duration": "PT0.001850975S",
+        "runs": 5,
+        "firings": 1
+       },
+       {
+        "name": "PropertyExpressionNormalization",
+        "duration": "PT0.000006681S",
+        "runs": 1,
+        "firings": 0
+       }
+      ],
+      "analyses": []
+     },
+     "flatteningOptimization": {
+      "duration": "PT0.068665374S",
+      "passes": [
+       {
+        "name": "ExpressionSimplificationPass",
+        "duration": "PT0.001125069S",
+        "runs": 3,
+        "firings": 1
+       },
+       {
+        "name": "OperationFlatteningPass",
+        "duration": "PT0.000597704S",
+        "runs": 3,
+        "firings": 0
+       },
+       {
+        "name": "RedundantOperationRemovalPass",
+        "duration": "PT0.000564964S",
+        "runs": 3,
+        "firings": 1
+       },
+       {
+        "name": "AssumeFalsePropagationPass",
+        "duration": "PT0.000560928S",
+        "runs": 3,
+        "firings": 0
+       },
+       {
+        "name": "ConstantVariableSubstitutionPass",
+        "duration": "PT0.006870646S",
+        "runs": 3,
+        "firings": 1
+       },
+       {
+        "name": "CopyPropagationPass",
+        "duration": "PT0.025622135S",
+        "runs": 3,
+        "firings": 1
+       },
+       {
+        "name": "DeadStoreEliminationPass",
+        "duration": "PT0.015168807S",
+        "runs": 3,
+        "firings": 1
+       },
+       {
+        "name": "DeadCodeRemovalPass",
+        "duration": "PT0.007236326S",
+        "runs": 3,
+        "firings": 0
+       },
+       {
+        "name": "VariableLivenessPass",
+        "duration": "PT0.010707177S",
+        "runs": 3,
+        "firings": 1
+       }
+      ],
+      "analyses": [
+       {
+        "name": "ConstantValueAnalysis",
+        "duration": "PT0.002487105S",
+        "computations": 2
+       },
+       {
+        "name": "ReachingDefinitionsAnalysis",
+        "duration": "PT0.039776758S",
+        "computations": 3
+       },
+       {
+        "name": "ConeOfInfluenceAnalysis",
+        "duration": "PT0.00663882S",
+        "computations": 2
+       }
+      ]
+     },
+     "inputSize": {
+      "variables": 0,
+      "operations": 0,
+      "expressions": 106
+     },
+     "inlinedSize": {
+      "variables": 52,
+      "operations": 322,
+      "expressions": 2053
+     },
+     "flattenedSize": {
+      "variables": 72,
+      "operations": 315,
+      "expressions": 854
+     }
+    }
+   },
+   "trace": {
+    "callTrace": {
+     "initializedStep": {
+      "traces": [
+       {
+        "self": "root.system.trackA.Behaviour.Free",
+        "calledTransition": "semantifyr::sysml::states::State::enter",
+        "arguments": [
+         {
+          "parameter": "commonState",
+          "value": "root.system.trackA.Behaviour"
+         }
+        ]
+       },
+       {
+        "self": "root.system.trackB.Behaviour.Free",
+        "calledTransition": "semantifyr::sysml::states::State::enter",
+        "arguments": [
+         {
+          "parameter": "commonState",
+          "value": "root.system.trackB.Behaviour"
+         }
+        ]
+       },
+       {
+        "self": "root.system.controller.Behaviour.Idle",
+        "calledTransition": "semantifyr::sysml::states::State::enter",
+        "arguments": [
+         {
+          "parameter": "commonState",
+          "value": "root.system.controller.Behaviour"
+         }
+        ]
+       },
+       {
+        "self": "root.system.barrier.Behaviour.Up",
+        "calledTransition": "semantifyr::sysml::states::State::enter",
+        "arguments": [
+         {
+          "parameter": "commonState",
+          "value": "root.system.barrier.Behaviour"
+         }
+        ]
+       }
+      ]
+     },
+     "steps": [
+      {
+       "traces": [
+        {
+         "self": "root.system.trackA.Behaviour.transition1",
+         "calledTransition": "semantifyr::sysml::states::Transition::fire",
+         "arguments": [],
+         "innerTraces": [
+          {
+           "self": "root.system.trackA.Behaviour.Free",
+           "calledTransition": "semantifyr::sysml::states::State::exit",
+           "arguments": [
+            {
+             "parameter": "commonState",
+             "value": "root.system.trackA.Behaviour"
+            }
+           ]
+          },
+          {
+           "self": "root.system.trackA.Behaviour.transition1.action.send1",
+           "calledTransition": "semantifyr::sysml::actions::SendItemAction::send",
+           "arguments": []
+          },
+          {
+           "self": "root.system.trackA.Behaviour.Approaching",
+           "calledTransition": "semantifyr::sysml::states::State::enter",
+           "arguments": [
+            {
+             "parameter": "commonState",
+             "value": "root.system.trackA.Behaviour"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "self": "root.system.trackB.Behaviour.transition1",
+         "calledTransition": "semantifyr::sysml::states::Transition::fire",
+         "arguments": [],
+         "innerTraces": [
+          {
+           "self": "root.system.trackB.Behaviour.Free",
+           "calledTransition": "semantifyr::sysml::states::State::exit",
+           "arguments": [
+            {
+             "parameter": "commonState",
+             "value": "root.system.trackB.Behaviour"
+            }
+           ]
+          },
+          {
+           "self": "root.system.trackB.Behaviour.transition1.action.send1",
+           "calledTransition": "semantifyr::sysml::actions::SendItemAction::send",
+           "arguments": []
+          },
+          {
+           "self": "root.system.trackB.Behaviour.Approaching",
+           "calledTransition": "semantifyr::sysml::states::State::enter",
+           "arguments": [
+            {
+             "parameter": "commonState",
+             "value": "root.system.trackB.Behaviour"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "self": "root",
+         "calledTransition": "semantifyr::sysml::verification::VerificationCaseDefinition::passTime",
+         "arguments": []
+        }
+       ]
+      },
+      {
+       "traces": [
+        {
+         "self": "root.system.trackA.Behaviour.transition2",
+         "calledTransition": "semantifyr::sysml::states::Transition::fire",
+         "arguments": [],
+         "innerTraces": [
+          {
+           "self": "root.system.trackA.Behaviour.Approaching",
+           "calledTransition": "semantifyr::sysml::states::State::exit",
+           "arguments": [
+            {
+             "parameter": "commonState",
+             "value": "root.system.trackA.Behaviour"
+            }
+           ]
+          },
+          {
+           "self": "root.system.trackA.Behaviour.Near",
+           "calledTransition": "semantifyr::sysml::states::State::enter",
+           "arguments": [
+            {
+             "parameter": "commonState",
+             "value": "root.system.trackA.Behaviour"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "self": "root.system.trackB.Behaviour.transition2",
+         "calledTransition": "semantifyr::sysml::states::Transition::fire",
+         "arguments": [],
+         "innerTraces": [
+          {
+           "self": "root.system.trackB.Behaviour.Approaching",
+           "calledTransition": "semantifyr::sysml::states::State::exit",
+           "arguments": [
+            {
+             "parameter": "commonState",
+             "value": "root.system.trackB.Behaviour"
+            }
+           ]
+          },
+          {
+           "self": "root.system.trackB.Behaviour.Near",
+           "calledTransition": "semantifyr::sysml::states::State::enter",
+           "arguments": [
+            {
+             "parameter": "commonState",
+             "value": "root.system.trackB.Behaviour"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "self": "root.system.controller.Behaviour.transition1",
+         "calledTransition": "semantifyr::sysml::states::Transition::fire",
+         "arguments": [],
+         "innerTraces": [
+          {
+           "self": "root.system.controller.Behaviour.Idle",
+           "calledTransition": "semantifyr::sysml::states::State::exit",
+           "arguments": [
+            {
+             "parameter": "commonState",
+             "value": "root.system.controller.Behaviour"
+            }
+           ]
+          },
+          {
+           "self": "root.system.controller.Behaviour.transition1.action.send1",
+           "calledTransition": "semantifyr::sysml::actions::SendItemAction::send",
+           "arguments": []
+          },
+          {
+           "self": "root.system.controller.Behaviour.TrainPresent",
+           "calledTransition": "semantifyr::sysml::states::State::enter",
+           "arguments": [
+            {
+             "parameter": "commonState",
+             "value": "root.system.controller.Behaviour"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "self": "root",
+         "calledTransition": "semantifyr::sysml::verification::VerificationCaseDefinition::passTime",
+         "arguments": []
+        }
+       ]
+      },
+      {
+       "traces": [
+        {
+         "self": "root.system.trackA.Behaviour.transition3",
+         "calledTransition": "semantifyr::sysml::states::Transition::fire",
+         "arguments": [],
+         "innerTraces": [
+          {
+           "self": "root.system.trackA.Behaviour.Near",
+           "calledTransition": "semantifyr::sysml::states::State::exit",
+           "arguments": [
+            {
+             "parameter": "commonState",
+             "value": "root.system.trackA.Behaviour"
+            }
+           ]
+          },
+          {
+           "self": "root.system.trackA.Behaviour.InCrossing",
+           "calledTransition": "semantifyr::sysml::states::State::enter",
+           "arguments": [
+            {
+             "parameter": "commonState",
+             "value": "root.system.trackA.Behaviour"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "self": "root.system.trackB.Behaviour.transition3",
+         "calledTransition": "semantifyr::sysml::states::Transition::fire",
+         "arguments": [],
+         "innerTraces": [
+          {
+           "self": "root.system.trackB.Behaviour.Near",
+           "calledTransition": "semantifyr::sysml::states::State::exit",
+           "arguments": [
+            {
+             "parameter": "commonState",
+             "value": "root.system.trackB.Behaviour"
+            }
+           ]
+          },
+          {
+           "self": "root.system.trackB.Behaviour.InCrossing",
+           "calledTransition": "semantifyr::sysml::states::State::enter",
+           "arguments": [
+            {
+             "parameter": "commonState",
+             "value": "root.system.trackB.Behaviour"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "self": "root.system.barrier.Behaviour.transition1",
+         "calledTransition": "semantifyr::sysml::states::Transition::fire",
+         "arguments": [],
+         "innerTraces": [
+          {
+           "self": "root.system.barrier.Behaviour.Up",
+           "calledTransition": "semantifyr::sysml::states::State::exit",
+           "arguments": [
+            {
+             "parameter": "commonState",
+             "value": "root.system.barrier.Behaviour"
+            }
+           ]
+          },
+          {
+           "self": "root.system.barrier.Behaviour.Down",
+           "calledTransition": "semantifyr::sysml::states::State::enter",
+           "arguments": [
+            {
+             "parameter": "commonState",
+             "value": "root.system.barrier.Behaviour"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "self": "root",
+         "calledTransition": "semantifyr::sysml::verification::VerificationCaseDefinition::passTime",
+         "arguments": []
+        }
+       ]
+      }
+     ]
+    },
+    "witnessState": {
+     "initializedStep": {
+      "values": [
+       {
+        "variable": "root.system.trackA.Behaviour.activeState",
+        "value": "root.system.trackA.Behaviour.Free"
+       },
+       {
+        "variable": "root.system.trackA.sensors.incomingItem",
+        "value": "nothing"
+       },
+       {
+        "variable": "root.system.trackA.sensors.consumed",
+        "value": "false"
+       },
+       {
+        "variable": "root.system.trackA.controller.outgoingItem",
+        "value": "nothing"
+       },
+       {
+        "variable": "root.system.trackB.Behaviour.activeState",
+        "value": "root.system.trackB.Behaviour.Free"
+       },
+       {
+        "variable": "root.system.trackB.sensors.incomingItem",
+        "value": "nothing"
+       },
+       {
+        "variable": "root.system.trackB.sensors.consumed",
+        "value": "false"
+       },
+       {
+        "variable": "root.system.trackB.controller.outgoingItem",
+        "value": "nothing"
+       },
+       {
+        "variable": "root.system.controller.Behaviour.activeState",
+        "value": "root.system.controller.Behaviour.Idle"
+       },
+       {
+        "variable": "root.system.controller.trackA.incomingItem",
+        "value": "nothing"
+       },
+       {
+        "variable": "root.system.controller.trackA.consumed",
+        "value": "false"
+       },
+       {
+        "variable": "root.system.controller.trackB.incomingItem",
+        "value": "nothing"
+       },
+       {
+        "variable": "root.system.controller.trackB.consumed",
+        "value": "false"
+       },
+       {
+        "variable": "root.system.controller.barrier.outgoingItem",
+        "value": "nothing"
+       },
+       {
+        "variable": "root.system.barrier.Behaviour.activeState",
+        "value": "root.system.barrier.Behaviour.Up"
+       },
+       {
+        "variable": "root.system.barrier.controller.incomingItem",
+        "value": "nothing"
+       },
+       {
+        "variable": "root.system.barrier.controller.consumed",
+        "value": "false"
+       }
+      ]
+     },
+     "steps": [
+      {
+       "values": [
+        {
+         "variable": "root.system.trackA.Behaviour.activeState",
+         "value": "root.system.trackA.Behaviour.Approaching"
+        },
+        {
+         "variable": "root.system.trackA.sensors.incomingItem",
+         "value": "nothing"
+        },
+        {
+         "variable": "root.system.trackA.sensors.consumed",
+         "value": "false"
+        },
+        {
+         "variable": "root.system.trackA.controller.outgoingItem",
+         "value": "semantifyr::sysml::model::global_TrainApproaching"
+        },
+        {
+         "variable": "root.system.trackB.Behaviour.activeState",
+         "value": "root.system.trackB.Behaviour.Approaching"
+        },
+        {
+         "variable": "root.system.trackB.sensors.incomingItem",
+         "value": "nothing"
+        },
+        {
+         "variable": "root.system.trackB.sensors.consumed",
+         "value": "false"
+        },
+        {
+         "variable": "root.system.trackB.controller.outgoingItem",
+         "value": "semantifyr::sysml::model::global_TrainApproaching"
+        },
+        {
+         "variable": "root.system.controller.Behaviour.activeState",
+         "value": "root.system.controller.Behaviour.Idle"
+        },
+        {
+         "variable": "root.system.controller.trackA.incomingItem",
+         "value": "semantifyr::sysml::model::global_TrainApproaching"
+        },
+        {
+         "variable": "root.system.controller.trackA.consumed",
+         "value": "false"
+        },
+        {
+         "variable": "root.system.controller.trackB.incomingItem",
+         "value": "semantifyr::sysml::model::global_TrainApproaching"
+        },
+        {
+         "variable": "root.system.controller.trackB.consumed",
+         "value": "false"
+        },
+        {
+         "variable": "root.system.controller.barrier.outgoingItem",
+         "value": "nothing"
+        },
+        {
+         "variable": "root.system.barrier.Behaviour.activeState",
+         "value": "root.system.barrier.Behaviour.Up"
+        },
+        {
+         "variable": "root.system.barrier.controller.incomingItem",
+         "value": "nothing"
+        },
+        {
+         "variable": "root.system.barrier.controller.consumed",
+         "value": "false"
+        }
+       ]
+      },
+      {
+       "values": [
+        {
+         "variable": "root.system.trackA.Behaviour.activeState",
+         "value": "root.system.trackA.Behaviour.Near"
+        },
+        {
+         "variable": "root.system.trackA.sensors.incomingItem",
+         "value": "nothing"
+        },
+        {
+         "variable": "root.system.trackA.sensors.consumed",
+         "value": "false"
+        },
+        {
+         "variable": "root.system.trackA.controller.outgoingItem",
+         "value": "nothing"
+        },
+        {
+         "variable": "root.system.trackB.Behaviour.activeState",
+         "value": "root.system.trackB.Behaviour.Near"
+        },
+        {
+         "variable": "root.system.trackB.sensors.incomingItem",
+         "value": "nothing"
+        },
+        {
+         "variable": "root.system.trackB.sensors.consumed",
+         "value": "false"
+        },
+        {
+         "variable": "root.system.trackB.controller.outgoingItem",
+         "value": "nothing"
+        },
+        {
+         "variable": "root.system.controller.Behaviour.activeState",
+         "value": "root.system.controller.Behaviour.TrainPresent"
+        },
+        {
+         "variable": "root.system.controller.trackA.incomingItem",
+         "value": "nothing"
+        },
+        {
+         "variable": "root.system.controller.trackA.consumed",
+         "value": "false"
+        },
+        {
+         "variable": "root.system.controller.trackB.incomingItem",
+         "value": "nothing"
+        },
+        {
+         "variable": "root.system.controller.trackB.consumed",
+         "value": "false"
+        },
+        {
+         "variable": "root.system.controller.barrier.outgoingItem",
+         "value": "semantifyr::sysml::model::global_Lower"
+        },
+        {
+         "variable": "root.system.barrier.Behaviour.activeState",
+         "value": "root.system.barrier.Behaviour.Up"
+        },
+        {
+         "variable": "root.system.barrier.controller.incomingItem",
+         "value": "semantifyr::sysml::model::global_Lower"
+        },
+        {
+         "variable": "root.system.barrier.controller.consumed",
+         "value": "false"
+        }
+       ]
+      },
+      {
+       "values": [
+        {
+         "variable": "root.system.trackA.Behaviour.activeState",
+         "value": "root.system.trackA.Behaviour.InCrossing"
+        },
+        {
+         "variable": "root.system.trackA.sensors.incomingItem",
+         "value": "nothing"
+        },
+        {
+         "variable": "root.system.trackA.sensors.consumed",
+         "value": "false"
+        },
+        {
+         "variable": "root.system.trackA.controller.outgoingItem",
+         "value": "nothing"
+        },
+        {
+         "variable": "root.system.trackB.Behaviour.activeState",
+         "value": "root.system.trackB.Behaviour.InCrossing"
+        },
+        {
+         "variable": "root.system.trackB.sensors.incomingItem",
+         "value": "nothing"
+        },
+        {
+         "variable": "root.system.trackB.sensors.consumed",
+         "value": "false"
+        },
+        {
+         "variable": "root.system.trackB.controller.outgoingItem",
+         "value": "nothing"
+        },
+        {
+         "variable": "root.system.controller.Behaviour.activeState",
+         "value": "root.system.controller.Behaviour.TrainPresent"
+        },
+        {
+         "variable": "root.system.controller.trackA.incomingItem",
+         "value": "nothing"
+        },
+        {
+         "variable": "root.system.controller.trackA.consumed",
+         "value": "false"
+        },
+        {
+         "variable": "root.system.controller.trackB.incomingItem",
+         "value": "nothing"
+        },
+        {
+         "variable": "root.system.controller.trackB.consumed",
+         "value": "false"
+        },
+        {
+         "variable": "root.system.controller.barrier.outgoingItem",
+         "value": "nothing"
+        },
+        {
+         "variable": "root.system.barrier.Behaviour.activeState",
+         "value": "root.system.barrier.Behaviour.Down"
+        },
+        {
+         "variable": "root.system.barrier.controller.incomingItem",
+         "value": "nothing"
+        },
+        {
+         "variable": "root.system.barrier.controller.consumed",
+         "value": "false"
+        }
+       ]
+      }
+     ]
+    },
+    "witnessUri": "file:///workspace/.artifacts/snippet.semantifyr.sysml.model.TwoTrainsCanBeInTheCrossing/witness.oxsts"
    }
   }
  },
@@ -3272,51 +2189,51 @@
    "backendId": "uppaal:default",
    "portfolioId": "smart",
    "metrics": {
-    "totalDuration": "PT3.291398303S",
-    "preparationDuration": "PT2.109223178S",
-    "verificationDuration": "PT1.663555535S",
-    "backAnnotationDuration": "PT0.082679814S",
+    "totalDuration": "PT2.638879061S",
+    "preparationDuration": "PT1.208573761S",
+    "verificationDuration": "PT1.378087891S",
+    "backAnnotationDuration": "PT0.055308121S",
     "compilation": {
-     "createDuration": "PT0.003251678S",
-     "instantiationDuration": "PT0.01175477S",
-     "inliningDuration": "PT1.266723381S",
-     "flatteningDuration": "PT0.820469659S",
+     "createDuration": "PT0.003954866S",
+     "instantiationDuration": "PT0.015013881S",
+     "inliningDuration": "PT0.691010797S",
+     "flatteningDuration": "PT0.493201469S",
      "inliningOptimization": {
-      "duration": "PT0.079648494S",
+      "duration": "PT0.063162308S",
       "passes": [
        {
         "name": "OperationCallInlining",
-        "duration": "PT0.038550989S",
+        "duration": "PT0.037319503S",
         "runs": 3191,
         "firings": 562
        },
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.015468942S",
+        "duration": "PT0.010299498S",
         "runs": 5,
         "firings": 4
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.014380086S",
+        "duration": "PT0.008356495S",
         "runs": 5,
         "firings": 2
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.00559374S",
+        "duration": "PT0.003483691S",
         "runs": 5,
         "firings": 1
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.00539944S",
+        "duration": "PT0.003498045S",
         "runs": 5,
         "firings": 1
        },
        {
         "name": "PropertyExpressionNormalization",
-        "duration": "PT0.000010757S",
+        "duration": "PT0.000011067S",
         "runs": 1,
         "firings": 0
        }
@@ -3324,59 +2241,59 @@
       "analyses": []
      },
      "flatteningOptimization": {
-      "duration": "PT0.421422561S",
+      "duration": "PT0.253862686S",
       "passes": [
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.004179759S",
+        "duration": "PT0.00212777S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.002026894S",
+        "duration": "PT0.001317294S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.001988826S",
+        "duration": "PT0.0012026S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.001892126S",
+        "duration": "PT0.001094498S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "ConstantVariableSubstitutionPass",
-        "duration": "PT0.030799773S",
+        "duration": "PT0.016534588S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "CopyPropagationPass",
-        "duration": "PT0.176346587S",
+        "duration": "PT0.098864866S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "DeadStoreEliminationPass",
-        "duration": "PT0.104890346S",
+        "duration": "PT0.058351813S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "DeadCodeRemovalPass",
-        "duration": "PT0.038908024S",
+        "duration": "PT0.023152059S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "VariableLivenessPass",
-        "duration": "PT0.060000332S",
+        "duration": "PT0.050943364S",
         "runs": 3,
         "firings": 1
        }
@@ -3384,17 +2301,17 @@
       "analyses": [
        {
         "name": "ConstantValueAnalysis",
-        "duration": "PT0.009164353S",
+        "duration": "PT0.004807235S",
         "computations": 2
        },
        {
         "name": "ReachingDefinitionsAnalysis",
-        "duration": "PT0.27516773S",
+        "duration": "PT0.153129147S",
         "computations": 3
        },
        {
         "name": "ConeOfInfluenceAnalysis",
-        "duration": "PT0.034955724S",
+        "duration": "PT0.020894046S",
         "computations": 2
        }
       ]
@@ -3417,57 +2334,57 @@
     }
    }
   },
-  "file:///workspace/.artifacts/snippet.semantifyr.sysml.model.BarrierDownWhileTrainInC-1c451eb7/witness.oxsts": {
+  "file:///workspace/.artifacts/snippet.semantifyr.sysml.model.BarrierDownWhileTrainInCrossing/witness.oxsts": {
    "status": "valid",
    "verdict": "passed",
    "backendId": "uppaal:default",
    "portfolioId": "smart",
    "metrics": {
-    "totalDuration": "PT8.133149748S",
-    "preparationDuration": "PT6.95938379S",
-    "verificationDuration": "PT3.78159565S",
-    "backAnnotationDuration": "PT0.966659993S",
+    "totalDuration": "PT7.123491517S",
+    "preparationDuration": "PT5.517952888S",
+    "verificationDuration": "PT3.870888968S",
+    "backAnnotationDuration": "PT0.683280291S",
     "compilation": {
-     "createDuration": "PT0.003874171S",
-     "instantiationDuration": "PT0.023257647S",
-     "inliningDuration": "PT5.116229856S",
-     "flatteningDuration": "PT1.804733154S",
+     "createDuration": "PT0.002400412S",
+     "instantiationDuration": "PT0.017565756S",
+     "inliningDuration": "PT3.232234639S",
+     "flatteningDuration": "PT2.255266655S",
      "inliningOptimization": {
-      "duration": "PT0.178810634S",
+      "duration": "PT0.100676966S",
       "passes": [
        {
         "name": "OperationCallInlining",
-        "duration": "PT0.073645773S",
+        "duration": "PT0.037760662S",
         "runs": 6254,
         "firings": 1108
        },
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.040396769S",
+        "duration": "PT0.024394286S",
         "runs": 5,
         "firings": 4
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.033765899S",
+        "duration": "PT0.021015978S",
         "runs": 5,
         "firings": 2
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.015086465S",
+        "duration": "PT0.008664182S",
         "runs": 5,
         "firings": 1
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.015469839S",
+        "duration": "PT0.008531504S",
         "runs": 5,
         "firings": 1
        },
        {
         "name": "PropertyExpressionNormalization",
-        "duration": "PT0.000020189S",
+        "duration": "PT0.000025955S",
         "runs": 1,
         "firings": 0
        }
@@ -3475,59 +2392,59 @@
       "analyses": []
      },
      "flatteningOptimization": {
-      "duration": "PT0.828156865S",
+      "duration": "PT1.204620758S",
       "passes": [
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.006495826S",
+        "duration": "PT0.030069577S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.003729312S",
+        "duration": "PT0.015285708S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.003922761S",
+        "duration": "PT0.029660104S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.003748889S",
+        "duration": "PT0.01943072S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "ConstantVariableSubstitutionPass",
-        "duration": "PT0.067592482S",
+        "duration": "PT0.201518264S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "CopyPropagationPass",
-        "duration": "PT0.378319758S",
+        "duration": "PT0.495239289S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "DeadStoreEliminationPass",
-        "duration": "PT0.197648116S",
+        "duration": "PT0.238096483S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "DeadCodeRemovalPass",
-        "duration": "PT0.059195036S",
+        "duration": "PT0.063807143S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "VariableLivenessPass",
-        "duration": "PT0.107112188S",
+        "duration": "PT0.11094817S",
         "runs": 3,
         "firings": 1
        }
@@ -3535,17 +2452,17 @@
       "analyses": [
        {
         "name": "ConstantValueAnalysis",
-        "duration": "PT0.018043957S",
+        "duration": "PT0.081471612S",
         "computations": 2
        },
        {
         "name": "ReachingDefinitionsAnalysis",
-        "duration": "PT0.564353101S",
+        "duration": "PT0.720093105S",
         "computations": 3
        },
        {
         "name": "ConeOfInfluenceAnalysis",
-        "duration": "PT0.051867789S",
+        "duration": "PT0.055101984S",
         "computations": 2
        }
       ]
@@ -3570,7 +2487,7 @@
   }
  },
  "reads": {
-  "file:///workspace/.artifacts/snippet.semantifyr.sysml.model.BarrierDownWhileTrainInC-1c451eb7/witness.oxsts": "witness of sysml::model::BarrierDownWhileTrainInCrossingViolated\n\nvar step: int := 0\n\ncontains root: sysml::model::BarrierDownWhileTrainInCrossingViolated\n\ninit {\n    assume(step == 0)\n    inline root.init()\n    assume(root.system.trackA.Behaviour.activeState == root.system.trackA.Behaviour.Free)\n    assume(root.system.trackA.sensors.incomingItem == nothing)\n    assume(root.system.trackA.sensors.consumed == false)\n    assume(root.system.trackA.controller.outgoingItem == nothing)\n    assume(root.system.trackB.Behaviour.activeState == root.system.trackB.Behaviour.Free)\n    assume(root.system.trackB.sensors.incomingItem == nothing)\n    assume(root.system.trackB.sensors.consumed == false)\n    assume(root.system.trackB.controller.outgoingItem == nothing)\n    assume(root.system.controller.Behaviour.activeState == root.system.controller.Behaviour.Idle)\n    assume(root.system.controller.trackA.incomingItem == nothing)\n    assume(root.system.controller.trackA.consumed == false)\n    assume(root.system.controller.trackB.incomingItem == nothing)\n    assume(root.system.controller.trackB.consumed == false)\n    assume(root.system.controller.barrier.outgoingItem == nothing)\n    assume(root.system.barrier.Behaviour.activeState == root.system.barrier.Behaviour.Up)\n    assume(root.system.barrier.controller.incomingItem == nothing)\n    assume(root.system.barrier.controller.consumed == false)\n    step := 1\n}\n\ntran {\n    assume(step == 1)\n    inline root.main()\n    assume(root.system.trackA.Behaviour.activeState == root.system.trackA.Behaviour.Free)\n    assume(root.system.trackA.sensors.incomingItem == nothing)\n    assume(root.system.trackA.sensors.consumed == false)\n    assume(root.system.trackA.controller.outgoingItem == nothing)\n    assume(root.system.trackB.Behaviour.activeState == root.system.trackB.Behaviour.Approaching)\n    assume(root.system.trackB.sensors.incomingItem == nothing)\n    assume(root.system.trackB.sensors.consumed == false)\n    assume(root.system.trackB.controller.outgoingItem == sysml::model::global_TrainApproaching)\n    assume(root.system.controller.Behaviour.activeState == root.system.controller.Behaviour.Idle)\n    assume(root.system.controller.trackA.incomingItem == nothing)\n    assume(root.system.controller.trackA.consumed == false)\n    assume(root.system.controller.trackB.incomingItem == sysml::model::global_TrainApproaching)\n    assume(root.system.controller.trackB.consumed == false)\n    assume(root.system.controller.barrier.outgoingItem == nothing)\n    assume(root.system.barrier.Behaviour.activeState == root.system.barrier.Behaviour.Up)\n    assume(root.system.barrier.controller.incomingItem == nothing)\n    assume(root.system.barrier.controller.consumed == false)\n    step := 2\n} or {\n    assume(step == 2)\n    inline root.main()\n    assume(root.system.trackA.Behaviour.activeState == root.system.trackA.Behaviour.Free)\n    assume(root.system.trackA.sensors.incomingItem == nothing)\n    assume(root.system.trackA.sensors.consumed == false)\n    assume(root.system.trackA.controller.outgoingItem == nothing)\n    assume(root.system.trackB.Behaviour.activeState == root.system.trackB.Behaviour.Near)\n    assume(root.system.trackB.sensors.incomingItem == nothing)\n    assume(root.system.trackB.sensors.consumed == false)\n    assume(root.system.trackB.controller.outgoingItem == nothing)\n    assume(root.system.controller.Behaviour.activeState == root.system.controller.Behaviour.TrainPresent)\n    assume(root.system.controller.trackA.incomingItem == nothing)\n    assume(root.system.controller.trackA.consumed == false)\n    assume(root.system.controller.trackB.incomingItem == nothing)\n    assume(root.system.controller.trackB.consumed == false)\n    assume(root.system.controller.barrier.outgoingItem == sysml::model::global_Lower)\n    assume(root.system.barrier.Behaviour.activeState == root.system.barrier.Behaviour.Up)\n    assume(root.system.barrier.controller.incomingItem == sysml::model::global_Lower)\n    assume(root.system.barrier.controller.consumed == false)\n    step := 3\n} or {\n    assume(step == 3)\n    inline root.main()\n    assume(root.system.trackA.Behaviour.activeState == root.system.trackA.Behaviour.Free)\n    assume(root.system.trackA.sensors.incomingItem == nothing)\n    assume(root.system.trackA.sensors.consumed == false)\n    assume(root.system.trackA.controller.outgoingItem == nothing)\n    assume(root.system.trackB.Behaviour.activeState == root.system.trackB.Behaviour.InCrossing)\n    assume(root.system.trackB.sensors.incomingItem == nothing)\n    assume(root.system.trackB.sensors.consumed == false)\n    assume(root.system.trackB.controller.outgoingItem == nothing)\n    assume(root.system.controller.Behaviour.activeState == root.system.controller.Behaviour.TrainPresent)\n    assume(root.system.controller.trackA.incomingItem == nothing)\n    assume(root.system.controller.trackA.consumed == false)\n    assume(root.system.controller.trackB.incomingItem == nothing)\n    assume(root.system.controller.trackB.consumed == false)\n    assume(root.system.controller.barrier.outgoingItem == nothing)\n    assume(root.system.barrier.Behaviour.activeState == root.system.barrier.Behaviour.Down)\n    assume(root.system.barrier.controller.incomingItem == nothing)\n    assume(root.system.barrier.controller.consumed == false)\n    step := 4\n} or {\n    assume(step == 4)\n    inline root.main()\n    assume(root.system.trackA.Behaviour.activeState == root.system.trackA.Behaviour.Approaching)\n    assume(root.system.trackA.sensors.incomingItem == nothing)\n    assume(root.system.trackA.sensors.consumed == false)\n    assume(root.system.trackA.controller.outgoingItem == sysml::model::global_TrainApproaching)\n    assume(root.system.trackB.Behaviour.activeState == root.system.trackB.Behaviour.Free)\n    assume(root.system.trackB.sensors.incomingItem == nothing)\n    assume(root.system.trackB.sensors.consumed == false)\n    assume(root.system.trackB.controller.outgoingItem == sysml::model::global_TrainLeft)\n    assume(root.system.controller.Behaviour.activeState == root.system.controller.Behaviour.TrainPresent)\n    assume(root.system.controller.trackA.incomingItem == sysml::model::global_TrainApproaching)\n    assume(root.system.controller.trackA.consumed == false)\n    assume(root.system.controller.trackB.incomingItem == sysml::model::global_TrainLeft)\n    assume(root.system.controller.trackB.consumed == false)\n    assume(root.system.controller.barrier.outgoingItem == nothing)\n    assume(root.system.barrier.Behaviour.activeState == root.system.barrier.Behaviour.Down)\n    assume(root.system.barrier.controller.incomingItem == nothing)\n    assume(root.system.barrier.controller.consumed == false)\n    step := 5\n} or {\n    assume(step == 5)\n    inline root.main()\n    assume(root.system.trackA.Behaviour.activeState == root.system.trackA.Behaviour.Near)\n    assume(root.system.trackA.sensors.incomingItem == nothing)\n    assume(root.system.trackA.sensors.consumed == false)\n    assume(root.system.trackA.controller.outgoingItem == nothing)\n    assume(root.system.trackB.Behaviour.activeState == root.system.trackB.Behaviour.Free)\n    assume(root.system.trackB.sensors.incomingItem == nothing)\n    assume(root.system.trackB.sensors.consumed == false)\n    assume(root.system.trackB.controller.outgoingItem == nothing)\n    assume(root.system.controller.Behaviour.activeState == root.system.controller.Behaviour.Idle)\n    assume(root.system.controller.trackA.incomingItem == nothing)\n    assume(root.system.controller.trackA.consumed == false)\n    assume(root.system.controller.trackB.incomingItem == nothing)\n    assume(root.system.controller.trackB.consumed == false)\n    assume(root.system.controller.barrier.outgoingItem == sysml::model::global_Lift)\n    assume(root.system.barrier.Behaviour.activeState == root.system.barrier.Behaviour.Down)\n    assume(root.system.barrier.controller.incomingItem == sysml::model::global_Lift)\n    assume(root.system.barrier.controller.consumed == false)\n    step := 6\n} or {\n    assume(step == 6)\n    inline root.main()\n    assume(root.system.trackA.Behaviour.activeState == root.system.trackA.Behaviour.InCrossing)\n    assume(root.system.trackA.sensors.incomingItem == nothing)\n    assume(root.system.trackA.sensors.consumed == false)\n    assume(root.system.trackA.controller.outgoingItem == nothing)\n    assume(root.system.trackB.Behaviour.activeState == root.system.trackB.Behaviour.Free)\n    assume(root.system.trackB.sensors.incomingItem == nothing)\n    assume(root.system.trackB.sensors.consumed == false)\n    assume(root.system.trackB.controller.outgoingItem == nothing)\n    assume(root.system.controller.Behaviour.activeState == root.system.controller.Behaviour.Idle)\n    assume(root.system.controller.trackA.incomingItem == nothing)\n    assume(root.system.controller.trackA.consumed == false)\n    assume(root.system.controller.trackB.incomingItem == nothing)\n    assume(root.system.controller.trackB.consumed == false)\n    assume(root.system.controller.barrier.outgoingItem == nothing)\n    assume(root.system.barrier.Behaviour.activeState == root.system.barrier.Behaviour.Up)\n    assume(root.system.barrier.controller.incomingItem == nothing)\n    assume(root.system.barrier.controller.consumed == false)\n    step := 7\n}\n\nprop {\n    !root.prop()\n}",
+  "file:///workspace/.artifacts/snippet.semantifyr.sysml.model.BarrierDownWhileTrainInCrossing/witness.oxsts": "witness of sysml::model::BarrierDownWhileTrainInCrossing\n\nvar step: int := 0\n\ncontains root: sysml::model::BarrierDownWhileTrainInCrossing\n\ninit {\n    assume(step == 0)\n    inline root.init()\n    assume(root.system.trackA.Behaviour.activeState == root.system.trackA.Behaviour.Free)\n    assume(root.system.trackA.sensors.incomingItem == nothing)\n    assume(root.system.trackA.sensors.consumed == false)\n    assume(root.system.trackA.controller.outgoingItem == nothing)\n    assume(root.system.trackB.Behaviour.activeState == root.system.trackB.Behaviour.Free)\n    assume(root.system.trackB.sensors.incomingItem == nothing)\n    assume(root.system.trackB.sensors.consumed == false)\n    assume(root.system.trackB.controller.outgoingItem == nothing)\n    assume(root.system.controller.Behaviour.activeState == root.system.controller.Behaviour.Idle)\n    assume(root.system.controller.trackA.incomingItem == nothing)\n    assume(root.system.controller.trackA.consumed == false)\n    assume(root.system.controller.trackB.incomingItem == nothing)\n    assume(root.system.controller.trackB.consumed == false)\n    assume(root.system.controller.barrier.outgoingItem == nothing)\n    assume(root.system.barrier.Behaviour.activeState == root.system.barrier.Behaviour.Up)\n    assume(root.system.barrier.controller.incomingItem == nothing)\n    assume(root.system.barrier.controller.consumed == false)\n    step := 1\n}\n\ntran {\n    assume(step == 1)\n    inline root.main()\n    assume(root.system.trackA.Behaviour.activeState == root.system.trackA.Behaviour.Free)\n    assume(root.system.trackA.sensors.incomingItem == nothing)\n    assume(root.system.trackA.sensors.consumed == false)\n    assume(root.system.trackA.controller.outgoingItem == nothing)\n    assume(root.system.trackB.Behaviour.activeState == root.system.trackB.Behaviour.Approaching)\n    assume(root.system.trackB.sensors.incomingItem == nothing)\n    assume(root.system.trackB.sensors.consumed == false)\n    assume(root.system.trackB.controller.outgoingItem == sysml::model::global_TrainApproaching)\n    assume(root.system.controller.Behaviour.activeState == root.system.controller.Behaviour.Idle)\n    assume(root.system.controller.trackA.incomingItem == nothing)\n    assume(root.system.controller.trackA.consumed == false)\n    assume(root.system.controller.trackB.incomingItem == sysml::model::global_TrainApproaching)\n    assume(root.system.controller.trackB.consumed == false)\n    assume(root.system.controller.barrier.outgoingItem == nothing)\n    assume(root.system.barrier.Behaviour.activeState == root.system.barrier.Behaviour.Up)\n    assume(root.system.barrier.controller.incomingItem == nothing)\n    assume(root.system.barrier.controller.consumed == false)\n    step := 2\n} or {\n    assume(step == 2)\n    inline root.main()\n    assume(root.system.trackA.Behaviour.activeState == root.system.trackA.Behaviour.Free)\n    assume(root.system.trackA.sensors.incomingItem == nothing)\n    assume(root.system.trackA.sensors.consumed == false)\n    assume(root.system.trackA.controller.outgoingItem == nothing)\n    assume(root.system.trackB.Behaviour.activeState == root.system.trackB.Behaviour.Near)\n    assume(root.system.trackB.sensors.incomingItem == nothing)\n    assume(root.system.trackB.sensors.consumed == false)\n    assume(root.system.trackB.controller.outgoingItem == nothing)\n    assume(root.system.controller.Behaviour.activeState == root.system.controller.Behaviour.TrainPresent)\n    assume(root.system.controller.trackA.incomingItem == nothing)\n    assume(root.system.controller.trackA.consumed == false)\n    assume(root.system.controller.trackB.incomingItem == nothing)\n    assume(root.system.controller.trackB.consumed == false)\n    assume(root.system.controller.barrier.outgoingItem == sysml::model::global_Lower)\n    assume(root.system.barrier.Behaviour.activeState == root.system.barrier.Behaviour.Up)\n    assume(root.system.barrier.controller.incomingItem == sysml::model::global_Lower)\n    assume(root.system.barrier.controller.consumed == false)\n    step := 3\n} or {\n    assume(step == 3)\n    inline root.main()\n    assume(root.system.trackA.Behaviour.activeState == root.system.trackA.Behaviour.Free)\n    assume(root.system.trackA.sensors.incomingItem == nothing)\n    assume(root.system.trackA.sensors.consumed == false)\n    assume(root.system.trackA.controller.outgoingItem == nothing)\n    assume(root.system.trackB.Behaviour.activeState == root.system.trackB.Behaviour.InCrossing)\n    assume(root.system.trackB.sensors.incomingItem == nothing)\n    assume(root.system.trackB.sensors.consumed == false)\n    assume(root.system.trackB.controller.outgoingItem == nothing)\n    assume(root.system.controller.Behaviour.activeState == root.system.controller.Behaviour.TrainPresent)\n    assume(root.system.controller.trackA.incomingItem == nothing)\n    assume(root.system.controller.trackA.consumed == false)\n    assume(root.system.controller.trackB.incomingItem == nothing)\n    assume(root.system.controller.trackB.consumed == false)\n    assume(root.system.controller.barrier.outgoingItem == nothing)\n    assume(root.system.barrier.Behaviour.activeState == root.system.barrier.Behaviour.Down)\n    assume(root.system.barrier.controller.incomingItem == nothing)\n    assume(root.system.barrier.controller.consumed == false)\n    step := 4\n} or {\n    assume(step == 4)\n    inline root.main()\n    assume(root.system.trackA.Behaviour.activeState == root.system.trackA.Behaviour.Approaching)\n    assume(root.system.trackA.sensors.incomingItem == nothing)\n    assume(root.system.trackA.sensors.consumed == false)\n    assume(root.system.trackA.controller.outgoingItem == sysml::model::global_TrainApproaching)\n    assume(root.system.trackB.Behaviour.activeState == root.system.trackB.Behaviour.Free)\n    assume(root.system.trackB.sensors.incomingItem == nothing)\n    assume(root.system.trackB.sensors.consumed == false)\n    assume(root.system.trackB.controller.outgoingItem == sysml::model::global_TrainLeft)\n    assume(root.system.controller.Behaviour.activeState == root.system.controller.Behaviour.TrainPresent)\n    assume(root.system.controller.trackA.incomingItem == sysml::model::global_TrainApproaching)\n    assume(root.system.controller.trackA.consumed == false)\n    assume(root.system.controller.trackB.incomingItem == sysml::model::global_TrainLeft)\n    assume(root.system.controller.trackB.consumed == false)\n    assume(root.system.controller.barrier.outgoingItem == nothing)\n    assume(root.system.barrier.Behaviour.activeState == root.system.barrier.Behaviour.Down)\n    assume(root.system.barrier.controller.incomingItem == nothing)\n    assume(root.system.barrier.controller.consumed == false)\n    step := 5\n} or {\n    assume(step == 5)\n    inline root.main()\n    assume(root.system.trackA.Behaviour.activeState == root.system.trackA.Behaviour.Near)\n    assume(root.system.trackA.sensors.incomingItem == nothing)\n    assume(root.system.trackA.sensors.consumed == false)\n    assume(root.system.trackA.controller.outgoingItem == nothing)\n    assume(root.system.trackB.Behaviour.activeState == root.system.trackB.Behaviour.Free)\n    assume(root.system.trackB.sensors.incomingItem == nothing)\n    assume(root.system.trackB.sensors.consumed == false)\n    assume(root.system.trackB.controller.outgoingItem == nothing)\n    assume(root.system.controller.Behaviour.activeState == root.system.controller.Behaviour.Idle)\n    assume(root.system.controller.trackA.incomingItem == nothing)\n    assume(root.system.controller.trackA.consumed == false)\n    assume(root.system.controller.trackB.incomingItem == nothing)\n    assume(root.system.controller.trackB.consumed == false)\n    assume(root.system.controller.barrier.outgoingItem == sysml::model::global_Lift)\n    assume(root.system.barrier.Behaviour.activeState == root.system.barrier.Behaviour.Down)\n    assume(root.system.barrier.controller.incomingItem == sysml::model::global_Lift)\n    assume(root.system.barrier.controller.consumed == false)\n    step := 6\n} or {\n    assume(step == 6)\n    inline root.main()\n    assume(root.system.trackA.Behaviour.activeState == root.system.trackA.Behaviour.InCrossing)\n    assume(root.system.trackA.sensors.incomingItem == nothing)\n    assume(root.system.trackA.sensors.consumed == false)\n    assume(root.system.trackA.controller.outgoingItem == nothing)\n    assume(root.system.trackB.Behaviour.activeState == root.system.trackB.Behaviour.Free)\n    assume(root.system.trackB.sensors.incomingItem == nothing)\n    assume(root.system.trackB.sensors.consumed == false)\n    assume(root.system.trackB.controller.outgoingItem == nothing)\n    assume(root.system.controller.Behaviour.activeState == root.system.controller.Behaviour.Idle)\n    assume(root.system.controller.trackA.incomingItem == nothing)\n    assume(root.system.controller.trackA.consumed == false)\n    assume(root.system.controller.trackB.incomingItem == nothing)\n    assume(root.system.controller.trackB.consumed == false)\n    assume(root.system.controller.barrier.outgoingItem == nothing)\n    assume(root.system.barrier.Behaviour.activeState == root.system.barrier.Behaviour.Up)\n    assume(root.system.barrier.controller.incomingItem == nothing)\n    assume(root.system.barrier.controller.consumed == false)\n    step := 7\n}\n\nprop {\n    !root.prop()\n}",
   "file:///workspace/.artifacts/snippet.semantifyr.sysml.model.TwoTrainsCanBeInTheCrossing/witness.oxsts": "witness of sysml::model::TwoTrainsCanBeInTheCrossing\n\nvar step: int := 0\n\ncontains root: sysml::model::TwoTrainsCanBeInTheCrossing\n\ninit {\n    assume(step == 0)\n    inline root.init()\n    assume(root.system.trackA.Behaviour.activeState == root.system.trackA.Behaviour.Free)\n    assume(root.system.trackA.sensors.incomingItem == nothing)\n    assume(root.system.trackA.sensors.consumed == false)\n    assume(root.system.trackA.controller.outgoingItem == nothing)\n    assume(root.system.trackB.Behaviour.activeState == root.system.trackB.Behaviour.Free)\n    assume(root.system.trackB.sensors.incomingItem == nothing)\n    assume(root.system.trackB.sensors.consumed == false)\n    assume(root.system.trackB.controller.outgoingItem == nothing)\n    assume(root.system.controller.Behaviour.activeState == root.system.controller.Behaviour.Idle)\n    assume(root.system.controller.trackA.incomingItem == nothing)\n    assume(root.system.controller.trackA.consumed == false)\n    assume(root.system.controller.trackB.incomingItem == nothing)\n    assume(root.system.controller.trackB.consumed == false)\n    assume(root.system.controller.barrier.outgoingItem == nothing)\n    assume(root.system.barrier.Behaviour.activeState == root.system.barrier.Behaviour.Up)\n    assume(root.system.barrier.controller.incomingItem == nothing)\n    assume(root.system.barrier.controller.consumed == false)\n    step := 1\n}\n\ntran {\n    assume(step == 1)\n    inline root.main()\n    assume(root.system.trackA.Behaviour.activeState == root.system.trackA.Behaviour.Approaching)\n    assume(root.system.trackA.sensors.incomingItem == nothing)\n    assume(root.system.trackA.sensors.consumed == false)\n    assume(root.system.trackA.controller.outgoingItem == sysml::model::global_TrainApproaching)\n    assume(root.system.trackB.Behaviour.activeState == root.system.trackB.Behaviour.Approaching)\n    assume(root.system.trackB.sensors.incomingItem == nothing)\n    assume(root.system.trackB.sensors.consumed == false)\n    assume(root.system.trackB.controller.outgoingItem == sysml::model::global_TrainApproaching)\n    assume(root.system.controller.Behaviour.activeState == root.system.controller.Behaviour.Idle)\n    assume(root.system.controller.trackA.incomingItem == sysml::model::global_TrainApproaching)\n    assume(root.system.controller.trackA.consumed == false)\n    assume(root.system.controller.trackB.incomingItem == sysml::model::global_TrainApproaching)\n    assume(root.system.controller.trackB.consumed == false)\n    assume(root.system.controller.barrier.outgoingItem == nothing)\n    assume(root.system.barrier.Behaviour.activeState == root.system.barrier.Behaviour.Up)\n    assume(root.system.barrier.controller.incomingItem == nothing)\n    assume(root.system.barrier.controller.consumed == false)\n    step := 2\n} or {\n    assume(step == 2)\n    inline root.main()\n    assume(root.system.trackA.Behaviour.activeState == root.system.trackA.Behaviour.Near)\n    assume(root.system.trackA.sensors.incomingItem == nothing)\n    assume(root.system.trackA.sensors.consumed == false)\n    assume(root.system.trackA.controller.outgoingItem == nothing)\n    assume(root.system.trackB.Behaviour.activeState == root.system.trackB.Behaviour.Near)\n    assume(root.system.trackB.sensors.incomingItem == nothing)\n    assume(root.system.trackB.sensors.consumed == false)\n    assume(root.system.trackB.controller.outgoingItem == nothing)\n    assume(root.system.controller.Behaviour.activeState == root.system.controller.Behaviour.TrainPresent)\n    assume(root.system.controller.trackA.incomingItem == nothing)\n    assume(root.system.controller.trackA.consumed == false)\n    assume(root.system.controller.trackB.incomingItem == nothing)\n    assume(root.system.controller.trackB.consumed == false)\n    assume(root.system.controller.barrier.outgoingItem == sysml::model::global_Lower)\n    assume(root.system.barrier.Behaviour.activeState == root.system.barrier.Behaviour.Up)\n    assume(root.system.barrier.controller.incomingItem == sysml::model::global_Lower)\n    assume(root.system.barrier.controller.consumed == false)\n    step := 3\n} or {\n    assume(step == 3)\n    inline root.main()\n    assume(root.system.trackA.Behaviour.activeState == root.system.trackA.Behaviour.InCrossing)\n    assume(root.system.trackA.sensors.incomingItem == nothing)\n    assume(root.system.trackA.sensors.consumed == false)\n    assume(root.system.trackA.controller.outgoingItem == nothing)\n    assume(root.system.trackB.Behaviour.activeState == root.system.trackB.Behaviour.InCrossing)\n    assume(root.system.trackB.sensors.incomingItem == nothing)\n    assume(root.system.trackB.sensors.consumed == false)\n    assume(root.system.trackB.controller.outgoingItem == nothing)\n    assume(root.system.controller.Behaviour.activeState == root.system.controller.Behaviour.TrainPresent)\n    assume(root.system.controller.trackA.incomingItem == nothing)\n    assume(root.system.controller.trackA.consumed == false)\n    assume(root.system.controller.trackB.incomingItem == nothing)\n    assume(root.system.controller.trackB.consumed == false)\n    assume(root.system.controller.barrier.outgoingItem == nothing)\n    assume(root.system.barrier.Behaviour.activeState == root.system.barrier.Behaviour.Down)\n    assume(root.system.barrier.controller.incomingItem == nothing)\n    assume(root.system.barrier.controller.consumed == false)\n    step := 4\n}\n\nprop {\n    root.prop()\n}",
   "file:///workspace/.semantifyr/builtin/semantifyr.oxsts": "/*\n * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\n/*\n * The standard library, in scope in every file without an import, below the file's own package and its imports. It declares the primitive datatypes, `Anything`, the base class of every class, and the annotations the tools read.\n */\npackage semantifyr\n\n/*\n * The supertype of every type.\n */\nextern datatype any\n\n/*\n * Integer numbers.\n */\nextern datatype int\n\n/*\n * Real numbers.\n */\nextern datatype real\n\n/*\n * The Boolean values `true` and `false`.\n */\nextern datatype bool\n\n/*\n * Sequences of characters.\n */\nextern datatype string\n\n/*\n * The implicit supertype of every class. Its `init` and its main transition do nothing, and a class that declares its own replaces them, with or without `redefine`.\n */\nclass Anything {\n    // contains children: Anything[0..*] opposite parent;\n    // container parent: Anything[0..1] opposite children;\n    /*\n     * The base main transition.\n     */\n    tran {\n    }\n\n    /*\n     * The base init transition.\n     */\n    init {\n    }\n}\n\n/*\n * Marks a class as a verification case, which the tools find and verify. The optional `summary` is the text the editors show for the case in place of its name.\n */\nannotation VerificationCase(summary: string[0..1])\n\n/*\n * Gives a verification case a category, such as `@Tag(\"slow\")`, by which the command line selects and skips cases.\n */\nannotation Tag(category: string)\n\n/*\n * Marks a variable that a backend may track from the start of its search. It is a hint for the backend's speed and changes neither the verdict nor the trace.\n */\nannotation Control\n\n/*\n * Marks a containment feature whose instance is created once in a model and shared by every instance of the class that declares the feature, instead of once for each.\n */\nannotation Shared\n\n/*\n * Marks a transition whose calls the trace lists: each call that fired, in the step it fired in, with its receiver's path from the root instance, such as `root.kitchen.lamp`, and the values of its arguments at the call site.\n * \n * The trace records the arguments as the compiler evaluates them, so every argument of a call to a traced transition must be evaluable at compile time (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`), and none may be a record (`OXSTS.UNSUPPORTED_FEATURE`).\n */\nannotation Trace\n\n/*\n * Marks a variable as a clock, which a backend with clocks may represent as one. Like every variable, a clock carries an initializer.\n */\nannotation Clock\n\n/*\n * Excludes a variable from the optimizer passes that could remove or fold it, so that it stays in the model a backend receives and in the witness.\n */\nannotation NonOptimizable\n",
   "file:///workspace/Library/Actions.oxsts": "/*\n * SPDX-FileCopyrightText: 2025 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\npackage semantifyr::sysml::actions\n\nimport semantifyr::sysml::attributes\nimport semantifyr::sysml::expressions\nimport semantifyr::sysml::ports\nimport semantifyr::sysml::items\n\nabstract class Action\n\nclass SendItemAction : Action {\n    refers viaPort: Port\n    refers payload: Item\n\n    redefine tran {\n        inline send()\n    }\n\n    @Trace\n    tran send() {\n        inline viaPort.setOutgoingItem(payload)\n    }\n}\n\nclass AssignmentAction : Action {\n    refers attribute: Attribute\n    contains expression: Expression\n    redefine tran {\n        inline attribute.set(expression.evaluate())\n    }\n}\n\nclass CompositeAction : Action {\n    contains children: Action[0..*]\n    redefine tran {\n        inline for (child in children) {\n            inline child.main()\n        }\n    }\n}\n\nclass Guard {\n    contains expression: Expression\n\n    prop isOpen(): bool {\n        return expression.evaluate() as bool\n    }\n}\n",

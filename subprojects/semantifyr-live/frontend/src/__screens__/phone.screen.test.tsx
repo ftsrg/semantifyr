@@ -23,8 +23,8 @@ import { noCases } from '../texts'
 const WIDTH = 390
 const HEIGHT = 844
 
-const BARRIER = caseOf('BarrierDownWhileTrainInCrossingViolated', 97)
-const TWO_TRAINS = caseOf('TwoTrainsCanBeInTheCrossing', 112)
+const BARRIER = caseOf('BarrierDownWhileTrainInCrossing', 102)
+const TWO_TRAINS = caseOf('TwoTrainsCanBeInTheCrossing', 117)
 
 const PORTFOLIOS: PortfolioInfo[] = [
   { id: 'smart', displayName: 'Smart', description: 'Runs the installed backends side by side and takes the first trusted answer.', available: true },

@@ -58,8 +58,8 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
     language: 'sysml',
     view: 'own',
     expectState: async () => {
-      await editorShows('part def BarrierDownWhileTrainInCrossingViolatedTrace')
-      expect(text('.case-trace .trace-frame-bar')).toContain('BarrierDownWhileTrainInCrossingViolatedTrace.sysml')
+      await editorShows('part def BarrierDownWhileTrainInCrossingTrace')
+      expect(text('.case-trace .trace-frame-bar')).toContain('BarrierDownWhileTrainInCrossingTrace.sysml')
     },
   },
   'sysml-steps': {
@@ -310,13 +310,13 @@ describe('the text of a trace', () => {
         </ShellContext.Provider>
       </LiveContext.Provider>,
     )
-    await editorShows('part def BarrierDownWhileTrainInCrossingViolatedTrace')
+    await editorShows('part def BarrierDownWhileTrainInCrossingTrace')
     vi.advanceTimersByTime(4 * 60 * 1000)
     await new Promise((resolve) => {
       setTimeout(resolve, 500)
     })
     expect(count('.case-trace .trace-editor .monaco-editor')).toBe(1)
-    expect(text('.case-trace .trace-editor .view-lines')).toContain('part def BarrierDownWhileTrainInCrossingViolatedTrace')
+    expect(text('.case-trace .trace-editor .view-lines')).toContain('part def BarrierDownWhileTrainInCrossingTrace')
   })
 })
 

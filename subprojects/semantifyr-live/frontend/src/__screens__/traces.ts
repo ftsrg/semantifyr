@@ -13,15 +13,15 @@ import { seedLive, type Seed, type Seeded } from './seededLive'
 
 // A failed case of the level crossing with its trace in each language, and a Live that reads the trace's documents
 
-const SYSML_TRACE_URI = 'file:///workspace/traces/BarrierDownWhileTrainInCrossingViolated.trace.sysml'
-const SYSML_WITNESS_URI = 'file:///workspace/.artifacts/snippet.semantifyr.sysml.model.BarrierDownWhileTrainInCrossingViolated/witness.oxsts'
+const SYSML_TRACE_URI = 'file:///workspace/traces/BarrierDownWhileTrainInCrossing.trace.sysml'
+const SYSML_WITNESS_URI = 'file:///workspace/.artifacts/snippet.semantifyr.sysml.model.BarrierDownWhileTrainInCrossing/witness.oxsts'
 const GAMMA_TRACE_URI = 'file:///workspace/.artifacts/snippet.LevelCrossing.BarrierDownWhileTrainInCrossing/trace.get'
 const GAMMA_WITNESS_URI = 'file:///workspace/.artifacts/snippet.LevelCrossing.BarrierDownWhileTrainInCrossing/witness.oxsts'
 const OXSTS_WITNESS_URI = 'file:///workspace/.artifacts/snippet.example.levelcrossing.BarrierDownWhileTrainInCrossing/witness.oxsts'
 
 const SYSML_TRACE = `private import Occurrences::HappensJustBefore;
 
-part def BarrierDownWhileTrainInCrossingViolatedTrace :> LevelCrossing {
+part def BarrierDownWhileTrainInCrossingTrace :> LevelCrossing {
     part trackB :>> trackB {
         exhibit state Behaviour :>> Behaviour {
             state free1 :> Free;
@@ -152,7 +152,7 @@ export interface Language {
 }
 
 export const LANGUAGES: Readonly<Record<string, Language>> = {
-  sysml: { flavorId: 'sysml', exampleId: 'level-crossing', caseName: 'BarrierDownWhileTrainInCrossingViolated', definition: 'verification def BarrierDownWhileTrainInCrossingViolated', traceUri: SYSML_TRACE_URI },
+  sysml: { flavorId: 'sysml', exampleId: 'level-crossing', caseName: 'BarrierDownWhileTrainInCrossing', definition: 'verification def BarrierDownWhileTrainInCrossing', traceUri: SYSML_TRACE_URI },
   gamma: { flavorId: 'gamma', exampleId: 'level-crossing', caseName: 'BarrierDownWhileTrainInCrossing', definition: 'verification case BarrierDownWhileTrainInCrossing', traceUri: GAMMA_TRACE_URI },
   oxsts: { flavorId: 'oxsts', exampleId: 'level-crossing', caseName: 'BarrierDownWhileTrainInCrossing', definition: 'class BarrierDownWhileTrainInCrossing', traceUri: OXSTS_WITNESS_URI },
 }

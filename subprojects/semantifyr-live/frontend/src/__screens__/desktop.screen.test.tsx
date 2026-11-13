@@ -29,8 +29,8 @@ const PORTFOLIOS: PortfolioInfo[] = [
   { id: 'spin-safe-dfs', displayName: 'Spin', description: 'Runs the safe-dfs configuration of spin alone.', available: true },
 ]
 
-const BARRIER = caseOf('BarrierDownWhileTrainInCrossingViolated', 97)
-const TWO_TRAINS = caseOf('TwoTrainsCanBeInTheCrossing', 112)
+const BARRIER = caseOf('BarrierDownWhileTrainInCrossing', 102)
+const TWO_TRAINS = caseOf('TwoTrainsCanBeInTheCrossing', 117)
 
 const BACKGROUNDS: Readonly<Record<ResolvedColorMode, string>> = {
   light: 'rgb(241, 238, 231)',

@@ -368,51 +368,51 @@
    "backendId": "nuxmv:bmc-invar",
    "portfolioId": "smart",
    "metrics": {
-    "totalDuration": "PT0.911929688S",
-    "preparationDuration": "PT0.064226091S",
-    "verificationDuration": "PT0.240883888S",
+    "totalDuration": "PT0.915598697S",
+    "preparationDuration": "PT0.080407521S",
+    "verificationDuration": "PT0.234142445S",
     "backAnnotationDuration": "PT0S",
     "compilation": {
-     "createDuration": "PT0.010356453S",
-     "instantiationDuration": "PT0.00705722S",
-     "inliningDuration": "PT0.024317969S",
-     "flatteningDuration": "PT0.021429666S",
+     "createDuration": "PT0.009134073S",
+     "instantiationDuration": "PT0.007101789S",
+     "inliningDuration": "PT0.030510279S",
+     "flatteningDuration": "PT0.032369331S",
      "inliningOptimization": {
-      "duration": "PT0.002892468S",
+      "duration": "PT0.002388012S",
       "passes": [
        {
         "name": "OperationCallInlining",
-        "duration": "PT0.00119348S",
+        "duration": "PT0.00091745S",
         "runs": 17,
         "firings": 6
        },
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.000635473S",
+        "duration": "PT0.000575385S",
         "runs": 3,
         "firings": 2
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.000334371S",
+        "duration": "PT0.000231723S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.000237086S",
+        "duration": "PT0.000220315S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.00029016S",
+        "duration": "PT0.000227134S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "PropertyExpressionNormalization",
-        "duration": "PT0.000016391S",
+        "duration": "PT0.000022075S",
         "runs": 1,
         "firings": 0
        }
@@ -420,59 +420,59 @@
       "analyses": []
      },
      "flatteningOptimization": {
-      "duration": "PT0.004039093S",
+      "duration": "PT0.006694437S",
       "passes": [
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.000190541S",
+        "duration": "PT0.000242362S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.000083943S",
+        "duration": "PT0.000124691S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.000098613S",
+        "duration": "PT0.000111208S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.000123722S",
+        "duration": "PT0.000088562S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "ConstantVariableSubstitutionPass",
-        "duration": "PT0.000558003S",
+        "duration": "PT0.000494188S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "CopyPropagationPass",
-        "duration": "PT0.001674632S",
+        "duration": "PT0.003606703S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "DeadStoreEliminationPass",
-        "duration": "PT0.000105224S",
+        "duration": "PT0.000203515S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "DeadCodeRemovalPass",
-        "duration": "PT0.000539813S",
+        "duration": "PT0.000597138S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "VariableLivenessPass",
-        "duration": "PT0.000472462S",
+        "duration": "PT0.000474362S",
         "runs": 1,
         "firings": 0
        }
@@ -480,17 +480,17 @@
       "analyses": [
        {
         "name": "ConstantValueAnalysis",
-        "duration": "PT0.000432578S",
+        "duration": "PT0.000419722S",
         "computations": 1
        },
        {
         "name": "ReachingDefinitionsAnalysis",
-        "duration": "PT0.001615438S",
+        "duration": "PT0.003562966S",
         "computations": 1
        },
        {
         "name": "ConeOfInfluenceAnalysis",
-        "duration": "PT0.000456455S",
+        "duration": "PT0.000486298S",
         "computations": 1
        }
       ]
@@ -518,51 +518,51 @@
    "backendId": "nuxmv:bmc-invar",
    "portfolioId": "smart",
    "metrics": {
-    "totalDuration": "PT0.87129266S",
-    "preparationDuration": "PT0.04042394S",
-    "verificationDuration": "PT0.164585975S",
-    "backAnnotationDuration": "PT0.016054196S",
+    "totalDuration": "PT0.955257202S",
+    "preparationDuration": "PT0.054859253S",
+    "verificationDuration": "PT0.211207961S",
+    "backAnnotationDuration": "PT0.007765174S",
     "compilation": {
-     "createDuration": "PT0.006183852S",
-     "instantiationDuration": "PT0.004495083S",
-     "inliningDuration": "PT0.017278028S",
-     "flatteningDuration": "PT0.011049528S",
+     "createDuration": "PT0.012038621S",
+     "instantiationDuration": "PT0.009955743S",
+     "inliningDuration": "PT0.021220691S",
+     "flatteningDuration": "PT0.010633993S",
      "inliningOptimization": {
-      "duration": "PT0.00126517S",
+      "duration": "PT0.001108899S",
       "passes": [
        {
         "name": "OperationCallInlining",
-        "duration": "PT0.000506704S",
+        "duration": "PT0.000343837S",
         "runs": 9,
         "firings": 3
        },
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.000263612S",
+        "duration": "PT0.000235104S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.000108653S",
+        "duration": "PT0.000102739S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.000091152S",
+        "duration": "PT0.000083764S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.000082417S",
+        "duration": "PT0.000109069S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "PropertyExpressionNormalization",
-        "duration": "PT0.000014532S",
+        "duration": "PT0.000055846S",
         "runs": 1,
         "firings": 0
        }
@@ -570,59 +570,59 @@
       "analyses": []
      },
      "flatteningOptimization": {
-      "duration": "PT0.002698259S",
+      "duration": "PT0.002573142S",
       "passes": [
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.000153223S",
+        "duration": "PT0.000216861S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.000096698S",
+        "duration": "PT0.000083265S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.000092102S",
+        "duration": "PT0.000081949S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.000075472S",
+        "duration": "PT0.000246796S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "ConstantVariableSubstitutionPass",
-        "duration": "PT0.000532821S",
+        "duration": "PT0.000369018S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "CopyPropagationPass",
-        "duration": "PT0.000934703S",
+        "duration": "PT0.000864661S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "DeadStoreEliminationPass",
-        "duration": "PT0.000090117S",
+        "duration": "PT0.000078722S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "DeadCodeRemovalPass",
-        "duration": "PT0.000327039S",
+        "duration": "PT0.000286691S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "VariableLivenessPass",
-        "duration": "PT0.000264822S",
+        "duration": "PT0.000235149S",
         "runs": 1,
         "firings": 0
        }
@@ -630,17 +630,17 @@
       "analyses": [
        {
         "name": "ConstantValueAnalysis",
-        "duration": "PT0.000444298S",
+        "duration": "PT0.000301102S",
         "computations": 1
        },
        {
         "name": "ReachingDefinitionsAnalysis",
-        "duration": "PT0.000904881S",
+        "duration": "PT0.000832638S",
         "computations": 1
        },
        {
         "name": "ConeOfInfluenceAnalysis",
-        "duration": "PT0.000271377S",
+        "duration": "PT0.000226903S",
         "computations": 1
        }
       ]
@@ -712,51 +712,51 @@
    "backendId": "nuxmv:bmc-invar",
    "portfolioId": "smart",
    "metrics": {
-    "totalDuration": "PT1.075631845S",
-    "preparationDuration": "PT0.076034715S",
-    "verificationDuration": "PT0.271773208S",
-    "backAnnotationDuration": "PT0.006210946S",
+    "totalDuration": "PT0.843498383S",
+    "preparationDuration": "PT0.072675439S",
+    "verificationDuration": "PT0.21627665S",
+    "backAnnotationDuration": "PT0.002553176S",
     "compilation": {
-     "createDuration": "PT0.008063904S",
-     "instantiationDuration": "PT0.004437759S",
-     "inliningDuration": "PT0.030687955S",
-     "flatteningDuration": "PT0.031698024S",
+     "createDuration": "PT0.005693865S",
+     "instantiationDuration": "PT0.004650403S",
+     "inliningDuration": "PT0.029191948S",
+     "flatteningDuration": "PT0.031808395S",
      "inliningOptimization": {
-      "duration": "PT0.001783363S",
+      "duration": "PT0.002022313S",
       "passes": [
        {
         "name": "OperationCallInlining",
-        "duration": "PT0.000913818S",
+        "duration": "PT0.0011382S",
         "runs": 18,
         "firings": 15
        },
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.000289233S",
+        "duration": "PT0.000327853S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.000166096S",
+        "duration": "PT0.000158617S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.000151087S",
+        "duration": "PT0.000138216S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.000151635S",
+        "duration": "PT0.000139914S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "PropertyExpressionNormalization",
-        "duration": "PT0.000025312S",
+        "duration": "PT0.000011088S",
         "runs": 1,
         "firings": 0
        }
@@ -764,59 +764,59 @@
       "analyses": []
      },
      "flatteningOptimization": {
-      "duration": "PT0.021323874S",
+      "duration": "PT0.021197767S",
       "passes": [
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.000739238S",
+        "duration": "PT0.000830747S",
         "runs": 4,
         "firings": 0
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.000403S",
+        "duration": "PT0.000374455S",
         "runs": 4,
         "firings": 1
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.00039814S",
+        "duration": "PT0.000432896S",
         "runs": 4,
         "firings": 1
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.000345016S",
+        "duration": "PT0.000327077S",
         "runs": 4,
         "firings": 0
        },
        {
         "name": "ConstantVariableSubstitutionPass",
-        "duration": "PT0.004881526S",
+        "duration": "PT0.004605128S",
         "runs": 4,
         "firings": 0
        },
        {
         "name": "CopyPropagationPass",
-        "duration": "PT0.008406656S",
+        "duration": "PT0.008774694S",
         "runs": 4,
         "firings": 0
        },
        {
         "name": "DeadStoreEliminationPass",
-        "duration": "PT0.000630011S",
+        "duration": "PT0.00059791S",
         "runs": 4,
         "firings": 1
        },
        {
         "name": "DeadCodeRemovalPass",
-        "duration": "PT0.001683683S",
+        "duration": "PT0.00186629S",
         "runs": 4,
         "firings": 1
        },
        {
         "name": "VariableLivenessPass",
-        "duration": "PT0.003490574S",
+        "duration": "PT0.003087227S",
         "runs": 4,
         "firings": 1
        }
@@ -824,17 +824,17 @@
       "analyses": [
        {
         "name": "ConstantValueAnalysis",
-        "duration": "PT0.001699089S",
+        "duration": "PT0.001642981S",
         "computations": 3
        },
        {
         "name": "ReachingDefinitionsAnalysis",
-        "duration": "PT0.008241598S",
+        "duration": "PT0.008607077S",
         "computations": 3
        },
        {
         "name": "ConeOfInfluenceAnalysis",
-        "duration": "PT0.001191289S",
+        "duration": "PT0.001367056S",
         "computations": 3
        }
       ]
@@ -1020,51 +1020,51 @@
    "backendId": "uppaal:default",
    "portfolioId": "smart",
    "metrics": {
-    "totalDuration": "PT1.050545784S",
-    "preparationDuration": "PT0.087380762S",
-    "verificationDuration": "PT0.327252275S",
-    "backAnnotationDuration": "PT0.021705518S",
+    "totalDuration": "PT0.876113649S",
+    "preparationDuration": "PT0.080304693S",
+    "verificationDuration": "PT0.176702506S",
+    "backAnnotationDuration": "PT0.039872623S",
     "compilation": {
-     "createDuration": "PT0.003549643S",
-     "instantiationDuration": "PT0.003649869S",
-     "inliningDuration": "PT0.035593159S",
-     "flatteningDuration": "PT0.039464627S",
+     "createDuration": "PT0.005940818S",
+     "instantiationDuration": "PT0.004369989S",
+     "inliningDuration": "PT0.037239746S",
+     "flatteningDuration": "PT0.030350327S",
      "inliningOptimization": {
-      "duration": "PT0.003205429S",
+      "duration": "PT0.003198654S",
       "passes": [
        {
         "name": "OperationCallInlining",
-        "duration": "PT0.001161049S",
+        "duration": "PT0.001239998S",
         "runs": 18,
         "firings": 15
        },
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.000712542S",
+        "duration": "PT0.000715349S",
         "runs": 3,
         "firings": 2
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.00039576S",
+        "duration": "PT0.000319721S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.000373045S",
+        "duration": "PT0.000368143S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.000357243S",
+        "duration": "PT0.000342976S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "PropertyExpressionNormalization",
-        "duration": "PT0.000022968S",
+        "duration": "PT0.000016693S",
         "runs": 1,
         "firings": 0
        }
@@ -1072,59 +1072,59 @@
       "analyses": []
      },
      "flatteningOptimization": {
-      "duration": "PT0.021300262S",
+      "duration": "PT0.015442993S",
       "passes": [
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.000576265S",
+        "duration": "PT0.000433993S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.000284065S",
+        "duration": "PT0.000141364S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.000168536S",
+        "duration": "PT0.000124813S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.000274208S",
+        "duration": "PT0.000122454S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "ConstantVariableSubstitutionPass",
-        "duration": "PT0.002252843S",
+        "duration": "PT0.001935038S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "CopyPropagationPass",
-        "duration": "PT0.008093849S",
+        "duration": "PT0.005498923S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "DeadStoreEliminationPass",
-        "duration": "PT0.000331317S",
+        "duration": "PT0.000318711S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "DeadCodeRemovalPass",
-        "duration": "PT0.002380149S",
+        "duration": "PT0.001651388S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "VariableLivenessPass",
-        "duration": "PT0.006757487S",
+        "duration": "PT0.004981108S",
         "runs": 2,
         "firings": 1
        }
@@ -1132,17 +1132,17 @@
       "analyses": [
        {
         "name": "ConstantValueAnalysis",
-        "duration": "PT0.002153568S",
+        "duration": "PT0.001788968S",
         "computations": 2
        },
        {
         "name": "ReachingDefinitionsAnalysis",
-        "duration": "PT0.007978475S",
+        "duration": "PT0.005390732S",
         "computations": 2
        },
        {
         "name": "ConeOfInfluenceAnalysis",
-        "duration": "PT0.002079783S",
+        "duration": "PT0.001452931S",
         "computations": 2
        }
       ]
@@ -1637,51 +1637,51 @@
    "backendId": "nuxmv:bmc-invar",
    "portfolioId": "smart",
    "metrics": {
-    "totalDuration": "PT0.768374368S",
-    "preparationDuration": "PT0.077898726S",
-    "verificationDuration": "PT0.174098658S",
-    "backAnnotationDuration": "PT0.005109773S",
+    "totalDuration": "PT0.470956501S",
+    "preparationDuration": "PT0.047209081S",
+    "verificationDuration": "PT0.119003166S",
+    "backAnnotationDuration": "PT0.001142073S",
     "compilation": {
-     "createDuration": "PT0.003955975S",
-     "instantiationDuration": "PT0.01775051S",
-     "inliningDuration": "PT0.033747652S",
-     "flatteningDuration": "PT0.021528481S",
+     "createDuration": "PT0.003030695S",
+     "instantiationDuration": "PT0.011801337S",
+     "inliningDuration": "PT0.016186955S",
+     "flatteningDuration": "PT0.015383884S",
      "inliningOptimization": {
-      "duration": "PT0.001404422S",
+      "duration": "PT0.000613989S",
       "passes": [
        {
         "name": "OperationCallInlining",
-        "duration": "PT0.0004696S",
+        "duration": "PT0.000237651S",
         "runs": 9,
         "firings": 3
        },
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.000311091S",
+        "duration": "PT0.000140036S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.000130143S",
+        "duration": "PT0.000045099S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.0001361S",
+        "duration": "PT0.000048707S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.000127466S",
+        "duration": "PT0.000043733S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "PropertyExpressionNormalization",
-        "duration": "PT0.000015002S",
+        "duration": "PT0.00000507S",
         "runs": 1,
         "firings": 0
        }
@@ -1689,59 +1689,59 @@
       "analyses": []
      },
      "flatteningOptimization": {
-      "duration": "PT0.005284401S",
+      "duration": "PT0.00337221S",
       "passes": [
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.000288735S",
+        "duration": "PT0.000201543S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.000127105S",
+        "duration": "PT0.000070647S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.000123518S",
+        "duration": "PT0.000078033S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.000117007S",
+        "duration": "PT0.000078038S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "ConstantVariableSubstitutionPass",
-        "duration": "PT0.000842935S",
+        "duration": "PT0.000721076S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "CopyPropagationPass",
-        "duration": "PT0.001984426S",
+        "duration": "PT0.001152801S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "DeadStoreEliminationPass",
-        "duration": "PT0.00012418S",
+        "duration": "PT0.00008186S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "DeadCodeRemovalPass",
-        "duration": "PT0.00082312S",
+        "duration": "PT0.000463843S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "VariableLivenessPass",
-        "duration": "PT0.000626001S",
+        "duration": "PT0.000357028S",
         "runs": 1,
         "firings": 0
        }
@@ -1749,17 +1749,17 @@
       "analyses": [
        {
         "name": "ConstantValueAnalysis",
-        "duration": "PT0.000719721S",
+        "duration": "PT0.000624598S",
         "computations": 1
        },
        {
         "name": "ReachingDefinitionsAnalysis",
-        "duration": "PT0.001913472S",
+        "duration": "PT0.001097206S",
         "computations": 1
        },
        {
         "name": "ConeOfInfluenceAnalysis",
-        "duration": "PT0.00072983S",
+        "duration": "PT0.000383677S",
         "computations": 1
        }
       ]
@@ -1788,51 +1788,51 @@
    "backendId": "uppaal:default",
    "portfolioId": "smart",
    "metrics": {
-    "totalDuration": "PT0.884160349S",
-    "preparationDuration": "PT0.229511895S",
-    "verificationDuration": "PT0.203845158S",
-    "backAnnotationDuration": "PT0.01889822S",
+    "totalDuration": "PT0.741299256S",
+    "preparationDuration": "PT0.250622225S",
+    "verificationDuration": "PT0.168385341S",
+    "backAnnotationDuration": "PT0.010364505S",
     "compilation": {
-     "createDuration": "PT0.005195143S",
-     "instantiationDuration": "PT0.011749675S",
-     "inliningDuration": "PT0.096135372S",
-     "flatteningDuration": "PT0.114249133S",
+     "createDuration": "PT0.004722541S",
+     "instantiationDuration": "PT0.010490565S",
+     "inliningDuration": "PT0.097693447S",
+     "flatteningDuration": "PT0.135068693S",
      "inliningOptimization": {
-      "duration": "PT0.005000076S",
+      "duration": "PT0.00505544S",
       "passes": [
        {
         "name": "OperationCallInlining",
-        "duration": "PT0.002763205S",
+        "duration": "PT0.00260366S",
         "runs": 52,
         "firings": 45
        },
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.000825124S",
+        "duration": "PT0.000918554S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.000445537S",
+        "duration": "PT0.000474328S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.000382767S",
+        "duration": "PT0.000378263S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.000382761S",
+        "duration": "PT0.000422009S",
         "runs": 1,
         "firings": 0
        },
        {
         "name": "PropertyExpressionNormalization",
-        "duration": "PT0.000014823S",
+        "duration": "PT0.000015194S",
         "runs": 1,
         "firings": 0
        }
@@ -1840,59 +1840,59 @@
       "analyses": []
      },
      "flatteningOptimization": {
-      "duration": "PT0.077206296S",
+      "duration": "PT0.082004636S",
       "passes": [
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.001969308S",
+        "duration": "PT0.001792387S",
         "runs": 4,
         "firings": 0
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.001125267S",
+        "duration": "PT0.00166334S",
         "runs": 4,
         "firings": 1
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.001227404S",
+        "duration": "PT0.001124223S",
         "runs": 4,
         "firings": 1
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.000956868S",
+        "duration": "PT0.001061344S",
         "runs": 4,
         "firings": 0
        },
        {
         "name": "ConstantVariableSubstitutionPass",
-        "duration": "PT0.012317142S",
+        "duration": "PT0.012937537S",
         "runs": 4,
         "firings": 0
        },
        {
         "name": "CopyPropagationPass",
-        "duration": "PT0.035859861S",
+        "duration": "PT0.037057055S",
         "runs": 4,
         "firings": 0
        },
        {
         "name": "DeadStoreEliminationPass",
-        "duration": "PT0.002086875S",
+        "duration": "PT0.002248413S",
         "runs": 4,
         "firings": 1
        },
        {
         "name": "DeadCodeRemovalPass",
-        "duration": "PT0.008157266S",
+        "duration": "PT0.009084835S",
         "runs": 4,
         "firings": 1
        },
        {
         "name": "VariableLivenessPass",
-        "duration": "PT0.012980521S",
+        "duration": "PT0.014533073S",
         "runs": 4,
         "firings": 1
        }
@@ -1900,17 +1900,17 @@
       "analyses": [
        {
         "name": "ConstantValueAnalysis",
-        "duration": "PT0.00468753S",
+        "duration": "PT0.005483815S",
         "computations": 3
        },
        {
         "name": "ReachingDefinitionsAnalysis",
-        "duration": "PT0.035572049S",
+        "duration": "PT0.036793667S",
         "computations": 3
        },
        {
         "name": "ConeOfInfluenceAnalysis",
-        "duration": "PT0.006313527S",
+        "duration": "PT0.007087867S",
         "computations": 3
        }
       ]
@@ -1939,51 +1939,51 @@
    "backendId": "uppaal:default",
    "portfolioId": "smart",
    "metrics": {
-    "totalDuration": "PT2.016338572S",
-    "preparationDuration": "PT1.080973784S",
-    "verificationDuration": "PT0.759431408S",
-    "backAnnotationDuration": "PT0.246255756S",
+    "totalDuration": "PT1.250901933S",
+    "preparationDuration": "PT0.850599393S",
+    "verificationDuration": "PT0.484296734S",
+    "backAnnotationDuration": "PT0.160284026S",
     "compilation": {
-     "createDuration": "PT0.013866404S",
-     "instantiationDuration": "PT0.033534344S",
-     "inliningDuration": "PT0.199733527S",
-     "flatteningDuration": "PT0.814380351S",
+     "createDuration": "PT0.005429187S",
+     "instantiationDuration": "PT0.026014539S",
+     "inliningDuration": "PT0.20922839S",
+     "flatteningDuration": "PT0.603248422S",
      "inliningOptimization": {
-      "duration": "PT0.014500071S",
+      "duration": "PT0.017090774S",
       "passes": [
        {
         "name": "OperationCallInlining",
-        "duration": "PT0.003859338S",
+        "duration": "PT0.003743887S",
         "runs": 103,
         "firings": 90
        },
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.003514823S",
+        "duration": "PT0.005178883S",
         "runs": 5,
         "firings": 4
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.00219816S",
+        "duration": "PT0.002869819S",
         "runs": 5,
         "firings": 0
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.002299707S",
+        "duration": "PT0.00252555S",
         "runs": 5,
         "firings": 0
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.002353651S",
+        "duration": "PT0.002496895S",
         "runs": 5,
         "firings": 0
        },
        {
         "name": "PropertyExpressionNormalization",
-        "duration": "PT0.000023739S",
+        "duration": "PT0.000021784S",
         "runs": 1,
         "firings": 0
        }
@@ -1991,59 +1991,59 @@
       "analyses": []
      },
      "flatteningOptimization": {
-      "duration": "PT0.249840027S",
+      "duration": "PT0.193858541S",
       "passes": [
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.002690652S",
+        "duration": "PT0.00255255S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.001477787S",
+        "duration": "PT0.001487309S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.00158928S",
+        "duration": "PT0.001369158S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.002109752S",
+        "duration": "PT0.004533185S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "ConstantVariableSubstitutionPass",
-        "duration": "PT0.010578682S",
+        "duration": "PT0.010350899S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "CopyPropagationPass",
-        "duration": "PT0.138730323S",
+        "duration": "PT0.116945601S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "DeadStoreEliminationPass",
-        "duration": "PT0.007154152S",
+        "duration": "PT0.003752119S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "DeadCodeRemovalPass",
-        "duration": "PT0.039422971S",
+        "duration": "PT0.021883284S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "VariableLivenessPass",
-        "duration": "PT0.045632607S",
+        "duration": "PT0.030563982S",
         "runs": 2,
         "firings": 1
        }
@@ -2051,17 +2051,17 @@
       "analyses": [
        {
         "name": "ConstantValueAnalysis",
-        "duration": "PT0.010362221S",
+        "duration": "PT0.010161198S",
         "computations": 2
        },
        {
         "name": "ReachingDefinitionsAnalysis",
-        "duration": "PT0.138368631S",
+        "duration": "PT0.116643857S",
         "computations": 2
        },
        {
         "name": "ConeOfInfluenceAnalysis",
-        "duration": "PT0.032543026S",
+        "duration": "PT0.017875604S",
         "computations": 2
        }
       ]
@@ -2094,13 +2094,13 @@
  "verifyProgress": [
   {
    "kind": "begin",
-   "title": "Verifying class IntersectionNeverBothGreen",
+   "title": "Verifying class TwoTrainsCanBeInTheCrossing",
    "cancellable": true,
    "message": "Initializing"
   },
   {
    "kind": "report",
-   "message": "Compiling example::trafficlight::basics::IntersectionNeverBothGreen"
+   "message": "Compiling example::levelcrossing::TwoTrainsCanBeInTheCrossing"
   },
   {
    "kind": "report",

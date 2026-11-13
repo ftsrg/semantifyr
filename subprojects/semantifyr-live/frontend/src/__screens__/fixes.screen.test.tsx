@@ -18,8 +18,8 @@ import { caseOf, finished, seedLive, type Seed } from './seededLive'
 
 // Goal: what the desktop shows while a case is run again, in both themes
 
-const BARRIER = caseOf('BarrierDownWhileTrainInCrossingViolated', 97)
-const TWO_TRAINS = caseOf('TwoTrainsCanBeInTheCrossing', 112)
+const BARRIER = caseOf('BarrierDownWhileTrainInCrossing', 102)
+const TWO_TRAINS = caseOf('TwoTrainsCanBeInTheCrossing', 117)
 
 function discovered(cases: VerificationCaseState[], phase: VerificationState['phase']): VerificationState {
   return { phase, discovery: 'discovered', cases }
