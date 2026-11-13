@@ -16,17 +16,21 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Block
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.BooleanOp
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.BooleanOperator
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.BooleanType
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.CascadeComponentDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Channel
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComparisonOp
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComparisonOperator
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComponentDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComponentInstance
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.CompositeComponentDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.DirectReferenceExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EF
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventDirection
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventParameterReferenceExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventTrigger
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Expression
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.FieldDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaUtils
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GuardEvaluation
@@ -40,13 +44,20 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.LiteralExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.LiteralInteger
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.NamedElement
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.NegationOperator
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ParameterDeclaration
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Persistency
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.PortBinding
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.PortDeclaration
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RaiseEventAct
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RaiseEventAction
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RealizationMode
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RecordAccessExpression
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RecordLiteralExpression
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RecordType
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Region
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SchedulingOrder
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SetTimeoutAction
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ShallowHistoryState
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.State
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StateNode
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StateReferenceExpression
@@ -60,6 +71,7 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Transition
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TransitionPriority
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Trigger
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Type
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TypeDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.UnaryOp
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VariableDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VariableReferenceExpression
@@ -92,6 +104,12 @@ class GammaToOxstsSerializer(
         }
         appendLine()
 
+        for (typeDeclaration in gammaPackage.typeDeclarations) {
+            if (typeDeclaration.type is RecordType) {
+                serializeRecord(typeDeclaration)
+            }
+        }
+
         for (interfaceDeclaration in gammaPackage.interfaces) {
             serialize(interfaceDeclaration)
         }
@@ -105,38 +123,291 @@ class GammaToOxstsSerializer(
         }
     }
 
-    private fun IndentingStringBuilder.serialize(interfaceDeclaration: InterfaceDeclaration) {
-        appendIndent("class ${markName(interfaceDeclaration.name)} : Interface") {
-            for (event in interfaceDeclaration.events) {
-                serialize(event)
+    private fun IndentingStringBuilder.serializeRecord(typeDeclaration: TypeDeclaration) {
+        val recordType = typeDeclaration.type as RecordType
+        val recordName = nameMap.declare(typeDeclaration.eContainer(), typeDeclaration, markName(typeDeclaration.name))
+        val qualifiedRecord = qualifiedClassName(typeDeclaration)
+
+        appendIndent("record $recordName") {
+            for (field in recordType.fields) {
+                val fieldName = nameMap.declare(typeDeclaration, field, markName(field.name))
+                appendLine("var $fieldName: ${oxstsType(field.type)} := ${defaultValue(field.type)}")
+            }
+        }
+
+        appendIndent("class $PARAMETER_CLASS$recordName : Parameter") {
+            appendLine("var value: $qualifiedRecord := ${defaultValue(recordType)}")
+            appendLine()
+            appendIndent("redefine prop evaluate(): $qualifiedRecord") {
+                appendLine("return value")
+            }
+            appendLine()
+            appendIndent("redefine tran set(value: $qualifiedRecord)") {
+                appendLine("self.value := value")
+            }
+            appendLine()
+            appendIndent("redefine tran reset()") {
+                appendLine("value := ${defaultValue(recordType)}")
+            }
+            appendLine()
+            appendIndent("redefine tran havoc()") {
+                appendLine("havoc(value)")
+            }
+        }
+
+        appendIndent("class $VARIABLE_CLASS$recordName : Variable") {
+            val defaults = defaultBindings(recordType)
+            for (binding in defaults) {
+                appendLine("refers ${binding.name}: ${oxstsType(binding.path.last().type)} = ${defaultValue(binding.path.last().type)}")
+            }
+            appendLine()
+            appendLine("var variable: $qualifiedRecord := ${initializer(recordType, emptyList(), defaults)}")
+            appendLine()
+            appendIndent("redefine prop evaluate(): $qualifiedRecord") {
+                appendLine("return variable")
+            }
+            appendLine()
+            appendIndent("redefine tran set(value: $qualifiedRecord)") {
+                appendLine("variable := value")
+            }
+        }
+
+        for (field in recordType.fields) {
+            appendIndent("class ${accessClassNames(gammaPackageOf(typeDeclaration)).getValue(field)} : FieldAccessExpression") {
+                appendIndent("redefine prop evaluate(): any") {
+                    appendLine("return (operand.evaluate() as $qualifiedRecord).${markName(field.name)}")
+                }
+                appendLine()
+                appendIndent("redefine prop updated(original: any, value: any): any") {
+                    val fields = recordType.fields.joinToString(", ") {
+                        if (it == field) {
+                            "${markName(it.name)} = value as ${oxstsType(it.type)}"
+                        } else {
+                            "${markName(it.name)} = (original as $qualifiedRecord).${markName(it.name)}"
+                        }
+                    }
+                    appendLine("return $qualifiedRecord { $fields }")
+                }
             }
         }
     }
 
-    private fun getEventDirection(event: EventDeclaration): String {
-        return when (event.direction) {
-            EventDirection.IN -> "inputEvents"
-            EventDirection.OUT -> "outputEvents"
-            EventDirection.INOUT -> error("Inout event '${event.name}' has no OXSTS mapping")
+    private class DefaultBinding(
+        val path: List<FieldDeclaration>,
+        val name: String,
+    )
+
+    // one binding per leaf field, since a feature binding cannot hold a record
+    private fun defaultBindings(recordType: RecordType): List<DefaultBinding> {
+        val bindings = mutableListOf<DefaultBinding>()
+        val taken = mutableSetOf<String>()
+        fun collect(type: RecordType, prefix: List<FieldDeclaration>) {
+            for (field in type.fields) {
+                val path = prefix + field
+                val fieldRecord = recordTypeOf(field.type)
+                if (fieldRecord != null) {
+                    collect(fieldRecord, path)
+                    continue
+                }
+                val derived = "default" + path.joinToString("") {
+                    markName(it.name)
+                }
+                var name = derived
+                var number = 2
+                while (!taken.add(name)) {
+                    name = "${derived}_$number"
+                    number++
+                }
+                bindings += DefaultBinding(path, name)
+            }
+        }
+        collect(recordType, emptyList())
+        return bindings
+    }
+
+    private fun initializer(
+        recordType: RecordType,
+        prefix: List<FieldDeclaration>,
+        defaults: List<DefaultBinding>,
+    ): String {
+        val fields = recordType.fields.joinToString(", ") { field ->
+            val path = prefix + field
+            val fieldRecord = recordTypeOf(field.type)
+            val value = if (fieldRecord != null) {
+                initializer(fieldRecord, path, defaults)
+            } else {
+                defaults.single {
+                    it.path == path
+                }.name
+            }
+            "${markName(field.name)} = $value"
+        }
+        return "${qualifiedClassName(recordType.eContainer() as TypeDeclaration)} { $fields }"
+    }
+
+    private fun recordTypeOf(type: Type): RecordType? {
+        return GammaUtils.resolveType(type) as? RecordType
+    }
+
+    private fun recordDeclarationOf(type: Type): TypeDeclaration? {
+        return recordTypeOf(type)?.eContainer() as? TypeDeclaration
+    }
+
+    private fun recordClassName(prefix: String, typeDeclaration: TypeDeclaration): String {
+        return "${markQualifiedName(gammaPackageOf(typeDeclaration).name)}::$prefix${markName(typeDeclaration.name)}"
+    }
+
+    private fun accessClassName(field: FieldDeclaration): String {
+        val gammaPackage = gammaPackageOf(field)
+        return "${markQualifiedName(gammaPackage.name)}::${accessClassNames(gammaPackage).getValue(field)}"
+    }
+
+    // the names of a package's access classes depend on that package alone, so every package that reads a field names its class alike
+    private fun accessClassNames(gammaPackage: GammaModelPackage): Map<FieldDeclaration, String> {
+        return accessClassNamesByPackage.getOrPut(gammaPackage) {
+            val taken = mutableSetOf<String>()
+            val packageNames = mutableMapOf<FieldDeclaration, String>()
+            for (declaration in gammaPackage.typeDeclarations) {
+                val recordType = declaration.type as? RecordType ?: continue
+                for (recordField in recordType.fields) {
+                    val derived = "$ACCESS_CLASS${markName(declaration.name)}${markName(recordField.name)}"
+                    var name = derived
+                    var number = 2
+                    while (!taken.add(name)) {
+                        name = "${derived}_$number"
+                        number++
+                    }
+                    packageNames[recordField] = name
+                }
+            }
+            packageNames
         }
     }
 
-    private fun IndentingStringBuilder.serialize(event: EventDeclaration) {
-        val name = nameMap.declare(event.eContainer(), event, markName(event.name))
-        appendIndent("contains $name: Event subsets ${getEventDirection(event)}") {
+    private fun gammaPackageOf(element: EObject): GammaModelPackage {
+        return EcoreUtil2.getContainerOfType(element, GammaModelPackage::class.java)
+    }
+
+    private val accessClassNamesByPackage = mutableMapOf<GammaModelPackage, Map<FieldDeclaration, String>>()
+
+    private fun oxstsType(type: Type): String {
+        return when (val resolved = GammaUtils.resolveType(type)) {
+            is IntegerType -> "int"
+            is BooleanType -> "bool"
+            is RecordType -> qualifiedClassName(resolved.eContainer() as TypeDeclaration)
+            else -> error("Unknown type: $type")
+        }
+    }
+
+    private fun defaultValue(type: Type): String {
+        return when (val resolved = GammaUtils.resolveType(type)) {
+            is IntegerType -> "0"
+            is BooleanType -> "false"
+            is RecordType -> {
+                val first = resolved.fields.first()
+                "${qualifiedClassName(resolved.eContainer() as TypeDeclaration)} { ${markName(first.name)} = ${defaultValue(first.type)} }"
+            }
+            else -> error("Unknown type: $type")
+        }
+    }
+
+    private fun variableClassName(type: Type): String {
+        return when (val resolved = GammaUtils.resolveType(type)) {
+            is IntegerType -> "IntegerVariable"
+            is BooleanType -> "BooleanVariable"
+            is RecordType -> recordClassName(VARIABLE_CLASS, resolved.eContainer() as TypeDeclaration)
+            else -> error("Unknown type: $type")
+        }
+    }
+
+    private fun parameterClassName(type: Type): String {
+        return when (val resolved = GammaUtils.resolveType(type)) {
+            is IntegerType -> "IntegerParameter"
+            is BooleanType -> "BooleanParameter"
+            is RecordType -> recordClassName(PARAMETER_CLASS, resolved.eContainer() as TypeDeclaration)
+            else -> error("Unknown type: $type")
+        }
+    }
+
+    private fun IndentingStringBuilder.serialize(interfaceDeclaration: InterfaceDeclaration) {
+        val parents = interfaceDeclaration.parents
+        if (parents.size == 1) {
+            appendIndent("class ${markName(interfaceDeclaration.name)} : ${qualifiedClassName(parents.single())}") {
+                for (event in GammaUtils.getAllEvents(parents.single())) {
+                    declareEvent(interfaceDeclaration, event)
+                }
+                for (event in interfaceDeclaration.events) {
+                    serialize(interfaceDeclaration, event)
+                }
+            }
+            return
+        }
+        // several parents have no common superclass, so every ancestor's events are flattened in, ancestors first
+        val inheritedEvents = GammaUtils.getAllEvents(interfaceDeclaration) - interfaceDeclaration.events.toSet()
+        val events = inheritedEvents + interfaceDeclaration.events
+        appendIndent("class ${markName(interfaceDeclaration.name)} : Interface") {
+            for (event in events) {
+                serialize(interfaceDeclaration, event)
+            }
+        }
+    }
+
+    private fun declareEvent(interfaceDeclaration: InterfaceDeclaration, event: EventDeclaration) {
+        for (half in eventHalves(event)) {
+            nameMap.declare(interfaceDeclaration, event, half.name)
+        }
+    }
+
+    private class EventHalf(
+        val name: String,
+        val subsets: String,
+    )
+
+    // an inout event is an input and an output of the port, each half a feature of its own
+    private fun eventHalves(event: EventDeclaration): List<EventHalf> {
+        return when (event.direction) {
+            EventDirection.IN -> listOf(EventHalf(markName(event.name), "inputEvents"))
+            EventDirection.OUT -> listOf(EventHalf(markName(event.name), "outputEvents"))
+            EventDirection.INOUT -> listOf(
+                EventHalf("$INPUT_HALF${markName(event.name)}", "inputEvents"),
+                EventHalf("$OUTPUT_HALF${markName(event.name)}", "outputEvents"),
+            )
+        }
+    }
+
+    private fun IndentingStringBuilder.serialize(interfaceDeclaration: InterfaceDeclaration, event: EventDeclaration) {
+        for (half in eventHalves(event)) {
+            val name = nameMap.declare(interfaceDeclaration, event, half.name)
+            appendIndent("contains $name: Event subsets ${half.subsets}") {
+                appendLine("@Shared")
+                appendLine("redefine contains declaration: EventDeclaration")
+                if (event.persistency == Persistency.PERSISTENT) {
+                    appendLine("redefine refers persistent: bool = true")
+                }
+                for (parameter in event.parameters) {
+                    serialize(event, parameter)
+                }
+            }
+        }
+    }
+
+    private fun IndentingStringBuilder.serialize(event: EventDeclaration, parameter: ParameterDeclaration) {
+        val name = nameMap.declare(event, parameter, markName(parameter.name))
+        appendIndent("contains $name: ${parameterClassName(parameter.type)} subsets parameters") {
             appendLine("@Shared")
-            appendLine("redefine contains declaration: EventDeclaration")
+            appendLine("redefine contains declaration: ParameterDeclaration")
         }
     }
 
     private fun IndentingStringBuilder.serialize(component: ComponentDeclaration) = when (component) {
-        is SyncComponentDeclaration -> serialize(component)
+        is SyncComponentDeclaration -> serializeComposite(component, "SyncComponent")
+        is CascadeComponentDeclaration -> serializeComposite(component, "CascadeComponent")
         is StatechartDeclaration -> serialize(component)
         else -> error("Unknown component type: $component")
     }
 
-    private fun IndentingStringBuilder.serialize(component: SyncComponentDeclaration) {
-        appendIndent("class ${markName(component.name)} : SyncComponent") {
+    private fun IndentingStringBuilder.serializeComposite(component: CompositeComponentDeclaration, superclass: String) {
+        appendIndent("class ${markName(component.name)} : $superclass") {
             val unboundPorts = mutableSetOf<PortDeclaration>()
             unboundPorts += component.ports
             unboundPorts -= component.bindings.map { it.port }.toSet()
@@ -155,6 +426,29 @@ class GammaToOxstsSerializer(
 
             for (channel in component.channels) {
                 serialize(channel)
+            }
+
+            if (component is CascadeComponentDeclaration) {
+                serializeExecutionSteps(component)
+            }
+        }
+    }
+
+    private fun IndentingStringBuilder.serializeExecutionSteps(component: CascadeComponentDeclaration) {
+        val executionList = component.executionList.ifEmpty {
+            component.components
+        }
+        val taken = mutableSetOf<String>()
+        for (instance in executionList) {
+            val derived = "$EXECUTION_STEP${markName(instance.name)}"
+            var name = derived
+            var number = 2
+            while (!taken.add(name)) {
+                name = "${derived}_$number"
+                number++
+            }
+            appendIndent("contains $name: ExecutionStep subsets executionSteps") {
+                appendLine("redefine refers component: Component = ${markName(instance.name)}")
             }
         }
     }
@@ -247,29 +541,38 @@ class GammaToOxstsSerializer(
         }
     }
 
-    private fun getTypeReferenceName(typeReference: Type): String {
-        return when (typeReference) {
-            is IntegerType -> "Integer"
-            is BooleanType -> "Boolean"
-            else -> error("Unknown type reference!")
-        }
-    }
-
-    private fun getTypeReferenceOxstsName(typeReference: Type): String {
-        return when (typeReference) {
-            is IntegerType -> "int"
-            is BooleanType -> "bool"
-            else -> error("Unknown type reference!")
-        }
-    }
-
     private fun IndentingStringBuilder.serialize(variable: VariableDeclaration) {
         val name = nameMap.declare(variable.eContainer(), variable, markName(variable.name))
-        appendIndent("contains $name: ${getTypeReferenceName(variable.type)}Variable subsets variables") {
-            if (variable.default != null) {
-                val default = serializeInline(variable.default)
+        appendIndent("contains $name: ${variableClassName(variable.type)} subsets variables") {
+            val default = variable.default ?: return@appendIndent
+            if (default is RecordLiteralExpression) {
+                val recordType = recordTypeOf(variable.type) ?: error("Variable '${variable.name}' is not of a record type")
+                val bindings = defaultBindings(recordType)
+                for (leaf in literalLeaves(default, emptyList())) {
+                    val binding = bindings.single {
+                        it.path == leaf.path
+                    }
+                    appendLine("redefine refers ${binding.name}: ${oxstsType(leaf.path.last().type)} = ${serializeInline(leaf.value)}")
+                }
+            } else {
+                appendLine("redefine refers defaultValue: ${oxstsType(variable.type)} = ${serializeInline(default)}")
+            }
+        }
+    }
 
-                appendLine("redefine refers defaultValue: ${getTypeReferenceOxstsName(variable.type)} = $default")
+    private class LiteralLeaf(
+        val path: List<FieldDeclaration>,
+        val value: Expression,
+    )
+
+    private fun literalLeaves(literal: RecordLiteralExpression, prefix: List<FieldDeclaration>): List<LiteralLeaf> {
+        return literal.fieldAssignments.flatMap {
+            val path = prefix + it.field
+            val value = it.value
+            if (value is RecordLiteralExpression) {
+                literalLeaves(value, path)
+            } else {
+                listOf(LiteralLeaf(path, value))
             }
         }
     }
@@ -300,6 +603,10 @@ class GammaToOxstsSerializer(
                 serialize(state)
             }
 
+            for (history in region.stateNodes.filterIsInstance<ShallowHistoryState>()) {
+                serialize(history)
+            }
+
             for (transition in transitionsOf(region)) {
                 serialize(region, transition)
             }
@@ -323,6 +630,18 @@ class GammaToOxstsSerializer(
         }
     }
 
+    // the node's own transition is its default target, which the library holds on the node
+    private fun IndentingStringBuilder.serialize(history: ShallowHistoryState) {
+        val name = nameMap.declare(history.eContainer(), history, markName(history.name))
+        val statechart = EcoreUtil2.getContainerOfType(history, StatechartDeclaration::class.java)
+        val target = statechart.transitions.single {
+            it.from == history
+        }.to
+        appendIndent("contains $name: ShallowHistory subsets shallowHistory") {
+            appendLine("redefine refers to: State = ${markName(target.name)}")
+        }
+    }
+
     private fun transitionsOf(region: Region): List<Transition> {
         val statechart = EcoreUtil2.getContainerOfType(region, StatechartDeclaration::class.java)
         return statechart.transitions.filter {
@@ -331,10 +650,10 @@ class GammaToOxstsSerializer(
     }
 
     private fun IndentingStringBuilder.serialize(region: Region, transition: Transition) {
-        if (transition.from is InitialState) {
-            serializeEntryTransition(region, transition)
-        } else {
-            serializeStateTransition(region, transition)
+        when (transition.from) {
+            is InitialState -> serializeEntryTransition(region, transition)
+            is ShallowHistoryState -> Unit
+            else -> serializeStateTransition(region, transition)
         }
     }
 
@@ -353,7 +672,12 @@ class GammaToOxstsSerializer(
         }
         appendIndent("contains $name: Transition subsets transitions") {
             appendLine("redefine refers from: State = ${markName(transition.from.name)}")
-            appendLine("redefine refers to: State = ${targetPath(transition).joinToString(".")}")
+            val targetType = if (transition.to is ShallowHistoryState) {
+                "ShallowHistory"
+            } else {
+                "State"
+            }
+            appendLine("redefine refers to: $targetType = ${targetPath(transition).joinToString(".")}")
 
             val statechart = EcoreUtil2.getContainerOfType(transition, StatechartDeclaration::class.java)
             if (statechart.transitionPriority == TransitionPriority.VALUE_BASED && transition.priority != 0) {
@@ -412,12 +736,31 @@ class GammaToOxstsSerializer(
     private fun IndentingStringBuilder.serialize(trigger: EventTrigger) {
         appendIndent("redefine contains trigger: EventTrigger") {
             appendLine("redefine refers port: Port = ${markName(trigger.port.name)}")
-            appendLine("redefine refers event: Event = ${eventPath(trigger.port, trigger.event)}")
+            appendLine("redefine refers event: Event = ${inputEventPath(trigger.port, trigger.event)}")
         }
     }
 
-    private fun eventPath(port: PortDeclaration, event: EventDeclaration): String {
-        return "${markName(port.name)}.interface.${markName(event.name)}"
+    // a provided port receives the input half of an inout event and raises its output half, a required port the reverse
+    private fun inputEventPath(port: PortDeclaration, event: EventDeclaration): String {
+        return eventPath(port, event, port.realizationMode == RealizationMode.PROVIDED)
+    }
+
+    private fun outputEventPath(port: PortDeclaration, event: EventDeclaration): String {
+        return eventPath(port, event, port.realizationMode == RealizationMode.REQUIRED)
+    }
+
+    private fun eventPath(
+        port: PortDeclaration,
+        event: EventDeclaration,
+        inputHalf: Boolean,
+    ): String {
+        val halves = eventHalves(event)
+        val half = if (halves.size == 1 || inputHalf) {
+            halves.first()
+        } else {
+            halves.last()
+        }
+        return "${markName(port.name)}.interface.${half.name}"
     }
 
     private fun IndentingStringBuilder.serialize(trigger: TimeoutTrigger) {
@@ -490,9 +833,17 @@ class GammaToOxstsSerializer(
         subsets: String,
     ) {
         val name = nameMap.declareGenerated(action.eContainer(), action, deriveName(action, subsets))
+        val eventPath = outputEventPath(action.port, action.event)
         appendIndent("contains $name: RaiseEventAction subsets $subsets") {
             appendLine("redefine refers port: Port = ${markName(action.port.name)}")
-            appendLine("redefine refers event: Event = ${eventPath(action.port, action.event)}")
+            appendLine("redefine refers event: Event = $eventPath")
+            for ((index, argument) in action.arguments.withIndex()) {
+                val parameter = action.event.parameters[index]
+                appendIndent("contains ${markName(parameter.name)}: Argument subsets arguments") {
+                    appendLine("redefine refers parameter: Parameter = $eventPath.${markName(parameter.name)}")
+                    serialize(argument, "expression")
+                }
+            }
         }
     }
 
@@ -514,12 +865,42 @@ class GammaToOxstsSerializer(
         val name = nameMap.declareGenerated(action.eContainer(), action, deriveName(action, subsets))
         appendIndent("contains $name: AssignmentAction subsets $subsets") {
             appendLine("redefine refers variable: Variable = ${markName(assignedVariable(action).name)}")
-            serialize(action.expression, "expression")
+            serializeAssignedValue(fieldAccesses(action.reference), action.expression, "expression")
         }
     }
 
+    // a field write assigns the whole variable the record with that field updated, outermost field first
+    private fun IndentingStringBuilder.serializeAssignedValue(
+        accesses: List<RecordAccessExpression>,
+        value: Expression,
+        redefines: String,
+    ) {
+        if (accesses.isEmpty()) {
+            serialize(value, redefines)
+            return
+        }
+        appendIndent("redefine contains $redefines: FieldUpdateExpression") {
+            serialize(accesses.first(), "field")
+            serializeAssignedValue(accesses.drop(1), value, "value")
+        }
+    }
+
+    private fun fieldAccesses(reference: Expression): List<RecordAccessExpression> {
+        val accesses = mutableListOf<RecordAccessExpression>()
+        var current = reference
+        while (current is RecordAccessExpression) {
+            accesses.add(0, current)
+            current = current.operand
+        }
+        return accesses
+    }
+
     private fun assignedVariable(action: AssignmentAction): VariableDeclaration {
-        return (action.reference as DirectReferenceExpression).declaration as VariableDeclaration
+        var reference = action.reference
+        while (reference is RecordAccessExpression) {
+            reference = reference.operand
+        }
+        return (reference as DirectReferenceExpression).declaration as VariableDeclaration
     }
 
     private fun IndentingStringBuilder.serialize(verificationCase: VerificationCaseDeclaration) {
@@ -545,8 +926,11 @@ class GammaToOxstsSerializer(
         is LiteralExpression -> serialize(expression, redefines)
         is NegationOperator -> serialize(expression, redefines)
         is StateReferenceExpression -> serialize(expression, redefines)
+        is RaiseEventAct -> serialize(expression, redefines)
         is DirectReferenceExpression -> serializeVariableReference(expression, redefines)
         is VariableReferenceExpression -> serializeVariableReference(expression, redefines)
+        is EventParameterReferenceExpression -> serialize(expression, redefines)
+        is RecordAccessExpression -> serialize(expression, redefines)
         else -> error("Unknown type of expression: $expression")
     }
 
@@ -705,6 +1089,36 @@ class GammaToOxstsSerializer(
         }
     }
 
+    private fun IndentingStringBuilder.serialize(
+        expression: RaiseEventAct,
+        redefines: String,
+    ) {
+        val path = instancePath(expression).joinToString(".")
+        appendIndent("redefine contains $redefines: IsEventRaisedExpression") {
+            appendLine("redefine refers port: Port = $path.${markName(expression.port.name)}")
+            appendLine("redefine refers event: Event = $path.${outputEventPath(expression.port, expression.event)}")
+        }
+    }
+
+    private fun IndentingStringBuilder.serialize(
+        expression: EventParameterReferenceExpression,
+        redefines: String,
+    ) {
+        val eventPath = inputEventPath(expression.port, expression.event)
+        appendIndent("redefine contains $redefines: ParameterExpression") {
+            appendLine("redefine refers parameter: Parameter = $eventPath.${markName(expression.parameter.name)}")
+        }
+    }
+
+    private fun IndentingStringBuilder.serialize(
+        expression: RecordAccessExpression,
+        redefines: String,
+    ) {
+        appendIndent("redefine contains $redefines: ${accessClassName(expression.field)}") {
+            serialize(expression.operand, "operand")
+        }
+    }
+
     private fun IndentingStringBuilder.serializeVariableReference(
         expression: DirectReferenceExpression,
         redefines: String,
@@ -748,5 +1162,11 @@ class GammaToOxstsSerializer(
     companion object {
         private const val CASE_COMPONENT = "component"
         private const val MILLISECONDS_PER_STEP = 1000
+        private const val PARAMETER_CLASS = "parameter"
+        private const val VARIABLE_CLASS = "variable"
+        private const val ACCESS_CLASS = "access"
+        private const val EXECUTION_STEP = "execute"
+        private const val INPUT_HALF = "input"
+        private const val OUTPUT_HALF = "output"
     }
 }

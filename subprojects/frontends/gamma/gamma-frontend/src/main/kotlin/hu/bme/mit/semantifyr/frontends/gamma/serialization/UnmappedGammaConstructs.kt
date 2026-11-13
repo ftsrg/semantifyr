@@ -7,24 +7,23 @@
 package hu.bme.mit.semantifyr.frontends.gamma.serialization
 
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ArithmeticUnaryOperator
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.BooleanType
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.CascadeComponentDeclaration
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventDeclaration
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventDirection
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Channel
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventParameterReferenceExpression
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Expression
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.FieldAssignment
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.FiredTransitionExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaPackage
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaUtils
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.InitialState
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.InstanceElementExpression
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.IntegerType
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.InterfaceDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.LiteralExpression
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Persistency
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RaiseEventAct
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RaiseEventAction
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RecordAccessExpression
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RecordLiteralExpression
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RecordType
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Region
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ShallowHistoryState
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.State
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StateNode
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StatechartDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Transition
@@ -38,6 +37,7 @@ import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 class UnmappedGammaConstruct(
     val element: EObject,
     val construct: String,
+    val reason: String = "is not mapped to OXSTS yet",
 ) {
     val location: String
         get() {
@@ -47,7 +47,7 @@ class UnmappedGammaConstruct(
         }
 
     override fun toString(): String {
-        return "$location: $construct is not mapped to OXSTS yet"
+        return "$location: $construct $reason"
     }
 }
 
@@ -65,63 +65,54 @@ object UnmappedGammaConstructs {
     }
 
     fun collect(gammaPackage: GammaModelPackage): List<UnmappedGammaConstruct> {
-        val constructs = mutableListOf<UnmappedGammaConstruct>()
-        for (element in EcoreUtil2.eAllContentsAsList(gammaPackage)) {
-            describe(element)?.let {
-                constructs += UnmappedGammaConstruct(element, it)
-            }
+        return EcoreUtil2.eAllContentsAsList(gammaPackage).mapNotNull {
+            describe(it)
         }
-        return constructs
     }
 
-    private fun describe(element: EObject): String? {
-        return when (element) {
-            is TypeDeclaration -> {
-                "the type declaration '${element.name}'"
-            }
-            is InterfaceDeclaration -> {
-                if (element.parents.isNotEmpty()) {
-                    "the interface inheritance of '${element.name}'"
+    private fun describe(element: EObject): UnmappedGammaConstruct? {
+        val construct = when (element) {
+            is RecordType -> {
+                if (element.eContainer() !is TypeDeclaration) {
+                    "an anonymous record type"
                 } else {
                     null
                 }
             }
-            is EventDeclaration -> {
-                describe(element)
-            }
-            is CascadeComponentDeclaration -> {
-                "the cascade composite '${element.name}'"
+            is Channel -> {
+                return describe(element)
             }
             is VariableDeclaration -> {
                 describe(element)
             }
             is ShallowHistoryState -> {
-                "the shallow history node '${element.name}'"
-            }
-            is Transition -> {
                 describe(element)
             }
+            is Transition -> {
+                return describe(element)
+            }
             is RaiseEventAction -> {
-                if (element.arguments.isNotEmpty()) {
-                    "a raise with event arguments"
+                describe(element)
+            }
+            is RecordLiteralExpression -> {
+                if (!isInitialValue(element)) {
+                    "a record literal outside a variable's initial value"
                 } else {
                     null
                 }
             }
             is EventParameterReferenceExpression -> {
-                "the event parameter reference '${element.parameter?.name}'"
-            }
-            is RecordAccessExpression -> {
-                "the record field access '${element.field?.name}'"
-            }
-            is RaiseEventAct -> {
-                "a raised event in a property, for which the library has no expression"
+                if (isInVerificationCase(element)) {
+                    "the event parameter reference '${element.parameter?.name}' in a property"
+                } else {
+                    null
+                }
             }
             is FiredTransitionExpression -> {
                 "a fired transition in a property"
             }
             is InstanceElementExpression -> {
-                if (EcoreUtil2.getContainerOfType(element, VerificationCaseDeclaration::class.java) == null) {
+                if (!isInVerificationCase(element)) {
                     "a component instance reference in a statechart"
                 } else {
                     null
@@ -131,35 +122,109 @@ object UnmappedGammaConstructs {
                 null
             }
         }
+        return construct?.let {
+            UnmappedGammaConstruct(element, it)
+        }
     }
 
-    private fun describe(event: EventDeclaration): String? {
-        if (event.direction == EventDirection.INOUT) {
-            return "the inout event '${event.name}'"
+    private fun isInVerificationCase(element: EObject): Boolean {
+        return EcoreUtil2.getContainerOfType(element, VerificationCaseDeclaration::class.java) != null
+    }
+
+    private fun isInitialValue(literal: RecordLiteralExpression): Boolean {
+        var current: EObject = literal
+        while (current.eContainer() is FieldAssignment) {
+            current = current.eContainer().eContainer()
         }
-        if (event.parameters.isNotEmpty()) {
-            return "the parameters of event '${event.name}'"
+        return current.eContainingFeature() == GammaPackage.Literals.VARIABLE_DECLARATION__DEFAULT
+    }
+
+    // Gamma's validator only warns on a channel that connects an instance to itself, the library has no such channel
+    private fun describe(channel: Channel): UnmappedGammaConstruct? {
+        val instance = channel.providedPort.instance
+        if (instance != channel.requiredPort.instance) {
+            return null
         }
-        if (event.persistency == Persistency.PERSISTENT) {
-            return "the persistent event '${event.name}'"
-        }
-        return null
+        return UnmappedGammaConstruct(channel, "a channel from the instance '${instance.name}' to itself", "is refused")
     }
 
     private fun describe(variable: VariableDeclaration): String? {
-        if (variable.type !is IntegerType && variable.type !is BooleanType) {
-            return "the type of variable '${variable.name}'"
+        val default = variable.default ?: return null
+        val recordType = GammaUtils.resolveType(variable.type) as? RecordType
+        if (recordType == null) {
+            if (!isLiteral(default)) {
+                return "the non-literal initial value of variable '${variable.name}'"
+            }
+            return null
         }
-        if (variable.default != null && variable.default !is LiteralExpression && variable.default !is ArithmeticUnaryOperator) {
-            return "the non-literal initial value of variable '${variable.name}'"
+        if (default !is RecordLiteralExpression || GammaUtils.resolveType(default.typeDeclaration.type) != recordType || !hasLiteralLeaves(default)) {
+            return "the initial value of record variable '${variable.name}' other than a record literal of literals"
         }
         return null
     }
 
-    private fun describe(transition: Transition): String? {
-        if (transition.to is ShallowHistoryState) {
-            return "a transition to the history node '${transition.to.name}'"
+    private fun isLiteral(expression: Expression): Boolean {
+        return expression is LiteralExpression || (expression is ArithmeticUnaryOperator && expression.body is LiteralExpression)
+    }
+
+    private fun hasLiteralLeaves(literal: RecordLiteralExpression): Boolean {
+        return literal.fieldAssignments.all {
+            val value = it.value
+            if (value is RecordLiteralExpression) {
+                hasLiteralLeaves(value)
+            } else {
+                isLiteral(value)
+            }
         }
+    }
+
+    private fun describe(history: ShallowHistoryState): String? {
+        val region = history.eContainer() as Region
+        if (region.stateNodes.filterIsInstance<ShallowHistoryState>().first() != history) {
+            return "a second history node '${history.name}' in region '${region.name}'"
+        }
+        val statechart = EcoreUtil2.getContainerOfType(history, StatechartDeclaration::class.java)
+        val transitions = statechart.transitions.filter {
+            it.from == history
+        }
+        val transition = transitions.singleOrNull()
+        if (transition == null || transition.to !is State || transition.to.eContainer() != region) {
+            return "the history node '${history.name}' without one transition to a state of its region"
+        }
+        if (transition.trigger != null || transition.guard != null || transition.actions.isNotEmpty()) {
+            return "the transition of the history node '${history.name}' with a trigger, guard or action"
+        }
+        return null
+    }
+
+    private fun describe(action: RaiseEventAction): String? {
+        if (action.arguments.size != action.event.parameters.size) {
+            return "a raise of '${action.event.name}' with ${action.arguments.size} arguments for ${action.event.parameters.size} parameters"
+        }
+        return null
+    }
+
+    private fun describe(transition: Transition): UnmappedGammaConstruct? {
+        val history = transition.to
+        if (history is ShallowHistoryState) {
+            val parentState = history.eContainer().eContainer()
+            if (parentState !is State) {
+                return UnmappedGammaConstruct(transition, "a transition to the history node '${history.name}' of a top-level region")
+            }
+            // Gamma's validator accepts it and its transformation leaves the transition out
+            if (parentState in ancestors(transition.from) && history.eContainer() !in ancestors(transition.from)) {
+                return UnmappedGammaConstruct(
+                    transition,
+                    "a transition from '${transition.from.name}' to the history node '${history.name}' from an orthogonal region of its parent state",
+                    "is refused",
+                )
+            }
+        }
+        val construct = describeEnds(transition) ?: return null
+        return UnmappedGammaConstruct(transition, construct)
+    }
+
+    private fun describeEnds(transition: Transition): String? {
         if (transition.from is InitialState) {
             if (transition.trigger != null || transition.guard != null || transition.actions.isNotEmpty()) {
                 return "an initial transition with a trigger, guard or action"
