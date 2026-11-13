@@ -27,8 +27,8 @@ class Clock {
     }
 }
 
-// the mapper writes each queue's storage with its capacity as a literal, so a subclass holds the arrays and their accesses
 abstract class MessageQueue {
+    // the mapper writes each queue's storage with its capacity as a literal, so a subclass holds the arrays and their accesses
     container adapter: AsynchronousAdapter[0..1] opposite queues
 
     refers capacity: int
@@ -167,8 +167,8 @@ abstract class AsynchronousAdapter : Component {
     }
 }
 
-// the mapper writes one dispatch per output event a channel carries into a queue that stores it
 abstract class MessageDispatch {
+    // the mapper writes one dispatch per output event a channel carries into a queue that stores it
     refers source: AsynchronousAdapter
     refers event: Event
     refers target: MessageQueue
@@ -234,8 +234,8 @@ abstract class AsynchronousComposite : Component {
     }
 }
 
-// an adapter with no message does nothing when chosen, so a cycle may pass with no run
 class AsynchronousCompositeComponent : AsynchronousComposite {
+    // an adapter with no message does nothing when chosen, so a cycle may pass with no run
     redefine tran schedule() {
         inline tickClocks()
         inline for choice (adapter in adapters) {
