@@ -1,0 +1,31 @@
+package room
+
+class Lamp {
+    var on: bool := false
+
+    tran toggle() {
+        on := !on
+    }
+
+    prop isOn(): bool {
+        return on
+    }
+}
+
+@VerificationCase
+class BothLampsCanBeOn {
+    contains left: Lamp
+    contains right: Lamp
+
+    redefine tran {
+        choice {
+            inline left.toggle()
+        } or {
+            inline right.toggle()
+        }
+    }
+
+    prop {
+        return EF left.isOn() && right.isOn()
+    }
+}

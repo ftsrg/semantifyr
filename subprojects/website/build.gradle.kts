@@ -262,6 +262,45 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
     outputs.cacheIf { true }
 }
 
+// written for the alias @phases: the compiler's own output for the model of the pages on how the language works, a frame after every single rewrite included
+val phasesModel = rootProject.layout.projectDirectory.file("oxsts-test-models/phases/room.oxsts")
+val phasesDir = layout.buildDirectory.dir("phases")
+
+val phases = tasks.register<JavaExec>("phases") {
+    classpath = cliDistributionFiles.get().asFileTree.matching {
+        include("${semantifyr.name}/lib/*.jar")
+    }
+    mainClass = semantifyr.mainClass
+    jvmArgs("--enable-native-access=ALL-UNNAMED", "-Dguice_bytecode_gen_option=DISABLED")
+    inputs.file(phasesModel).withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir(phasesDir)
+    outputs.cacheIf { true }
+    val outputDirectory = phasesDir.get().asFile
+    // relative paths keep the arguments, and so the cache key, the same in every checkout
+    workingDir = outputDirectory
+    args(
+        "compile",
+        "--artifacts=debug",
+        "--disable-artifact=mapping",
+        "--artifact-directory=.",
+        "--output=compiled.oxsts",
+        phasesModel.asFile.relativeTo(outputDirectory).invariantSeparatorsPath,
+    )
+    doFirst {
+        outputDirectory.deleteRecursively()
+        outputDirectory.mkdirs()
+    }
+}
+
+npmAssemble.configure {
+    inputs.files(phases).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(phasesModel).withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
+tasks.test {
+    inputs.file(phasesModel).withPropertyName("phasesModel").withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
 tasks {
     test {
         inputs.dir(project.layout.projectDirectory.dir("src/docs"))

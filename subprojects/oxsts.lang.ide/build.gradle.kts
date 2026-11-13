@@ -27,6 +27,7 @@ application {
 tasks.named("test") {
     listOf(
         "oxsts-test-models/tutorial",
+        "oxsts-test-models/phases",
         "subprojects/oxsts.lang/src/main/resources/hu/bme/mit/semantifyr/oxsts/lang/library",
         "subprojects/frontends/gamma/models/libraries",
         "subprojects/frontends/sysml/models/libraries",
