@@ -7,7 +7,7 @@
 import * as vscode from 'vscode'
 import { createRoot } from 'react-dom/client'
 import { describe, expect, it, onTestFinished } from 'vitest'
-import { page, server } from 'vitest/browser'
+import { page, server, userEvent } from 'vitest/browser'
 
 import { toVscodeDiagnostics, type ProblemEntry } from '../lib/session/problems'
 import { connectionLost } from '../lib/stores/connection'
@@ -166,6 +166,30 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     expectState: () => {
       expect(count('.case-row.is-outdated .outdated-tag')).toBe(2)
       expect(text('[data-testid=status-message]')).toContain('outdated')
+      for (const word of document.querySelectorAll<HTMLElement>('.case-row.is-outdated .verdict-word')) {
+        expect(word.innerText).toMatch(/^(Failed|Passed)$/)
+        expect(getComputedStyle(word).opacity, 'the verdict word of an outdated result in full').toBe('1')
+      }
+    },
+  },
+  'example-menu-by-keyboard': {
+    seed: { verification: discovered([notRun(BARRIER), notRun(TWO_TRAINS)]) },
+    act: async () => {
+      document.querySelector<HTMLElement>('.example-button')!.focus()
+      await userEvent.keyboard('{Enter}')
+      await expect.poll(() => {
+        return count('[role=menu] [role=menuitem]')
+      }).toBeGreaterThan(2)
+      await userEvent.keyboard('{ArrowDown}')
+      await expect.poll(() => {
+        return count('[role=menu] [role=menuitem][data-highlighted]')
+      }).toBe(1)
+    },
+    expectState: () => {
+      const highlighted = document.querySelector<HTMLElement>('[role=menu] [role=menuitem][data-highlighted]')!
+      const other = document.querySelector<HTMLElement>('[role=menu] [role=menuitem]:not([data-highlighted]):not(.is-current)')!
+      expect(getComputedStyle(highlighted).boxShadow, 'a bar beside the highlighted entry').toContain('inset')
+      expect(getComputedStyle(other).boxShadow).toBe('none')
     },
   },
   'address-unknown-example': {

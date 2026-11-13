@@ -104,12 +104,13 @@ describe('the keyboard', () => {
       await expect.poll(async () => {
         return page.locator('.view-lines').first().innerText()
       }).toContain('package')
-      await page.locator('.view-lines').first().click()
-      expect(await focused(page)).toBe('editor')
-
-      await page.keyboard.press('Tab')
-
-      expect(await focused(page)).not.toBe('editor')
+      // the embed sets the editor's options once its runtime starts, which may follow the first text
+      await expect.poll(async () => {
+        await page.locator('.view-lines').first().click()
+        expect(await focused(page)).toBe('editor')
+        await page.keyboard.press('Tab')
+        return focused(page)
+      }).not.toBe('editor')
     })
   }
 })
