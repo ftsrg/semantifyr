@@ -37,7 +37,7 @@ Once per server, as an administrator with sudo.
 
 ## Capacity
 
-Per instance in its `.env`: `VERIFY_CONCURRENCY` (6 on production, 2 on staging), `VERIFY_TIMEOUT_SECONDS`, `THETA_JAVA_OPTS` (the heap of each Theta process; `JAVA_OPTS` changes nothing), `MEMORY_LIMIT` (`40g` and `12g`) and `CPUS` (8 and 2). A change applies at the instance's next deploy, or at once with `docker compose up -d` in its directory as the deploy user.
+Per instance in its `.env`: `VERIFY_CONCURRENCY` (6 on production, 2 on staging), `THETA_JAVA_OPTS` (the heap of each Theta process; `JAVA_OPTS` changes nothing), `MEMORY_LIMIT` (`40g` and `12g`) and `CPUS` (8 and 2). A change applies at the instance's next deploy, or at once with `docker compose up -d` in its directory as the deploy user.
 
 ## Nightly
 

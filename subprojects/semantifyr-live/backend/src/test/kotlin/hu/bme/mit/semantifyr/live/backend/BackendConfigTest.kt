@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class BackendConfigTest {
@@ -26,7 +25,7 @@ class BackendConfigTest {
         assertThat(config.sessionManager.maxSessionsGlobal).isEqualTo(256)
         assertThat(config.sessionManager.rootWorkDirectory).isEqualTo("/var/lib/semantifyr-live")
         assertThat(config.verification.concurrency).isEqualTo(4)
-        assertThat(config.verification.timeout).isEqualTo(5.minutes)
+        assertThat(config.verification.timeout).isEqualTo(120.seconds)
     }
 
     @Test
