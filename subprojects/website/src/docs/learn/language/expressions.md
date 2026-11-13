@@ -29,7 +29,14 @@ See [Datatypes](datatypes.md) for the corresponding types.
 
 Inside a class body, `self` refers to the current class or feature instance. Outside a class, in a global feature or a record, it is rejected (`OXSTS.SELF_OUTSIDE_CLASS`).
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Display {
+  tran bind(counter: Counter) {
+  }
+}
+
+// hide-end
 class Counter {
   refers display: Display
 
@@ -106,31 +113,83 @@ Evaluated at compile time, as in an `inline if` guard, `==` between instance exp
 
 The `.` operator names a member of an instance. When the instance is held by a variable, the member of the instance the variable holds is read (see [Feature-Typed Variables](variables.md#feature-typed-variables)).
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+  var value: int := 0
+}
+
+class Holder {
+  contains counter: Counter
+
+  prop current(): int {
+    return
+// hide-end
 counter.value
+// hide-start
+  }
+}
+// hide-end
 ```
 
 ### Optional Member Access (`?.`)
 
 `?.` navigates through an optional (`[0..1]`) reference. An `inline` call whose receiver is absent is dropped, and the rest of the transition runs; reading a member through an absent receiver fails compilation.
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Parent {
+  tran notify() {
+  }
+}
+
+class Child {
+  refers parent: Parent[0..1]
+
+  redefine tran {
+// hide-end
 inline parent?.notify()
+// hide-start
+  }
+}
+// hide-end
 ```
 
 ## Indexing (`[]`)
 
 Accesses an array element by index.
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Buffer {
+  var items: int[3] := [0, 0, 0]
+
+  prop first(): int {
+    return
+// hide-end
 items[0]
+// hide-start
+  }
+}
+// hide-end
 ```
 
 ## Property Invocation (`()`)
 
 A [property](properties.md) is invoked using the `()` invocation expression.
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+  var value: int := 0
+  refers a: Counter
+  refers b: Counter
+
+  prop maximum(): int {
+    return 10
+  }
+
+// hide-end
 prop atLimit(): bool {
   return value == maximum()
 }
@@ -138,6 +197,9 @@ prop atLimit(): bool {
 prop pairAtLimit(): bool {
   return a.atLimit() && b.atLimit()
 }
+// hide-start
+}
+// hide-end
 ```
 
 ## Temporal Operators
@@ -149,10 +211,23 @@ Temporal operators denote logical formulae over the possible executions of the s
 | `AG expr` | Always globally. `expr` holds in **every** reachable state. Use for safety properties. |
 | `EF expr` | Exists finally. `expr` holds in **some** reachable state. Use for reachability checks. |
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+  var value: int := 0
+}
+
+@VerificationCase
+class Bounded {
+  contains counter: Counter
+
+// hide-end
 prop {
   return AG counter.value < 100
 }
+// hide-start
+}
+// hide-end
 ```
 
 A temporal operator is only allowed as the whole expression a property returns: one in a transition (`flag := AG true`), below another operator or nested in another temporal operator (`AG (EF on)`) is rejected (`OXSTS.MISPLACED_TEMPORAL_OPERATOR`).
@@ -161,10 +236,23 @@ A temporal operator is only allowed as the whole expression a property returns: 
 
 More temporal operators are planned: `AF expr` (`expr` eventually holds on every execution), `EG expr` (`expr` always holds on some execution), `AX expr` and `EX expr` (`expr` holds in every or in some next state). The parser rejects them today; only `AG` and `EF` parse.
 
-```oxsts fragment
+```oxsts issue=syntax
+// hide-start
+class Counter {
+  var value: int := 0
+}
+
+@VerificationCase
+class Eventually {
+  contains counter: Counter
+
+// hide-end
 prop {
   return AF counter.value == 100
 }
+// hide-start
+}
+// hide-end
 ```
 
 </Planned>

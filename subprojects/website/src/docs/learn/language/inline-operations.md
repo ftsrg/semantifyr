@@ -35,15 +35,33 @@ class Swapper {
 
 After the main transition runs, `x` is `2` and `y` is `1`: `first` reads the value `x` had at the call, not the value the body wrote.
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+  var value: int := 0
+
+  tran increment() {
+    value := value + 1
+  }
+}
+
+class Holder {
+  contains counter: Counter
+
+  redefine tran {
+// hide-end
 inline counter.increment()
+// hide-start
+  }
+}
+// hide-end
 ```
 
 A body never writes a parameter: an assignment or a `havoc` whose target is a parameter is rejected (`OXSTS.INCORRECT_ASSIGNMENT`), since arguments are passed by value and the write could not reach the caller. Copy the parameter into a local variable to change it.
 
 ### One-step example
 
-```oxsts
+```oxsts checkpoint=counter
 class Counter {
   var value: int := 0
 
@@ -53,7 +71,7 @@ class Counter {
 }
 ```
 
-```oxsts fragment
+```oxsts continue
 class Pair {
   contains a: Counter
   contains b: Counter
@@ -67,11 +85,20 @@ class Pair {
 
 After one inlining step the body of `Pair`'s implicit `main` becomes:
 
-```oxsts fragment
+```oxsts continue=counter
+// hide-start
+class Pair {
+  contains a: Counter
+  contains b: Counter
+
+// hide-end
 redefine tran {
   a.value := a.value + 1
   b.value := b.value + 1
 }
+// hide-start
+}
+// hide-end
 ```
 
 ## `inline if`
@@ -97,8 +124,22 @@ class Counter {
 
 Since `maximum` is bound to `10`, the `inline if` unfolds to:
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+  var value: int := 0
+
+  tran increment() {
+    value := value + 1
+  }
+
+  redefine tran {
+// hide-end
 inline increment()
+// hide-start
+  }
+}
+// hide-end
 ```
 
 If `maximum` were bound to `0` instead, the entire `inline if` would be removed (replaced with the empty `else` branch).
@@ -107,10 +148,28 @@ If `maximum` were bound to `0` instead, the entire `inline if` would be removed 
 
 `inline for [seq] (x in expr) { ... }` unrolls into a **sequence** of body copies, one per value in `expr`. The `seq` keyword is optional: `inline for (x in r)` and `inline for seq (x in r)` are equivalent.
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+  var value: int := 0
+
+  tran increment() {
+    value := value + 1
+  }
+}
+
+class Counters {
+  contains counters: Counter[0..*]
+
+  redefine tran {
+// hide-end
 inline for (counter in counters) {
   inline counter.increment()
 }
+// hide-start
+  }
+}
+// hide-end
 ```
 
 If `counters` instantiates two children at compile time, the snippet unfolds to:
@@ -126,10 +185,28 @@ If `counters` instantiates two children at compile time, the snippet unfolds to:
 
 `inline for choice (x in expr) { ... }` unrolls into a non-deterministic **choice** rather than a sequence. The `choice` keyword is required.
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+  var value: int := 0
+
+  tran increment() {
+    value := value + 1
+  }
+}
+
+class Counters {
+  contains counters: Counter[0..*]
+
+  redefine tran {
+// hide-end
 inline for choice (counter in counters) {
   inline counter.increment()
 }
+// hide-start
+  }
+}
+// hide-end
 ```
 
 With the same two children, the snippet unfolds to:
@@ -146,12 +223,30 @@ choice {
 
 The `else` branch of an `inline for` is taken when the range expression evaluates to the **empty set** at compile time. The same `else` is available for `inline for [seq]`, `inline for choice`, and `inline if`.
 
-```oxsts fragment
+```oxsts
+// hide-start
+class Counter {
+  var value: int := 0
+
+  tran increment() {
+    value := value + 1
+  }
+}
+
+class Counters {
+  contains counters: Counter[0..*]
+
+  redefine tran {
+// hide-end
 inline for choice (counter in counters) {
   inline counter.increment()
 } else {
   assume(false)
 }
+// hide-start
+  }
+}
+// hide-end
 ```
 
 ## Inline vs Runtime

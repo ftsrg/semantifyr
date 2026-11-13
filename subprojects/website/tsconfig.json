@@ -10,6 +10,6 @@
     "allowImportingTsExtensions": true,
     "paths": { "@site/*": ["./*"] }
   },
-  "include": ["src", "docusaurus.config.ts", "sidebars.ts"],
+  "include": ["src", "docusaurus.config.ts", "sidebars.ts", "vitest.config.mts"],
   "exclude": [".docusaurus", "node_modules", "build", "static-imported-branding"]
 }
