@@ -23,7 +23,7 @@ class SysMLNightlyVerificationTests {
         @JvmStatic
         fun `Nightly Cases Reach Their Expected Verdict`(): List<CorpusEntry> {
             return SysMLCorpus.load().entries.filter {
-                it.case.tier == CorpusTier.Nightly && it.case.verdict != CorpusVerdict.Unknown
+                it.case.tier == CorpusTier.Nightly && it.case.verdict != CorpusVerdict.Unknown && !SysMLv2FrontendTestHelper.isServed(it)
             }
         }
 

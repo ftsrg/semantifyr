@@ -11,9 +11,11 @@ import hu.bme.mit.semantifyr.frontends.sysml.testing.SysMLCorpus
 import hu.bme.mit.semantifyr.frontends.sysml.testing.SysMLv2FrontendTestHelper
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.portfolios.testing.ExampleLanguage
+import hu.bme.mit.semantifyr.portfolios.testing.ServedExample
 import hu.bme.mit.semantifyr.portfolios.testing.ServedExamples
 import hu.bme.mit.semantifyr.portfolios.testing.liveBackends
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import kotlin.io.path.name
 
@@ -23,13 +25,14 @@ class SysMLServedExampleTests {
         private val artifactRoot = SysMLv2FrontendTestHelper.testArtifactRoot(SysMLServedExampleTests::class.java)
 
         @JvmStatic
-        fun `Served Cases Reach Their Expected Verdict On Live's Backends`(): List<CorpusEntry> {
-            val manifest = SysMLCorpus.load().entries
+        fun `Served Cases Reach Their Expected Verdict On Live's Backends`(): List<Arguments> {
             return ServedExamples.load().of(ExampleLanguage.Sysml).flatMap { example ->
+                val manifest = SysMLCorpus.load(example.path.parent.resolve("manifest.json")).entries
                 example.cases.map { name ->
-                    manifest.single {
+                    val entry = manifest.single {
                         it.model.file == example.path.name && it.case.name == name
                     }
+                    Arguments.of(entry, example)
                 }
             }
         }
@@ -37,11 +40,11 @@ class SysMLServedExampleTests {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource
-    suspend fun `Served Cases Reach Their Expected Verdict On Live's Backends`(entry: CorpusEntry) {
+    suspend fun `Served Cases Reach Their Expected Verdict On Live's Backends`(entry: CorpusEntry, example: ServedExample) {
         val frontend = helper.buildFrontend(
-            SysMLv2FrontendTestHelper.modelPath(entry.model.file),
+            example.path,
             Portfolios.SmartFull,
-            artifactRoot,
+            artifactRoot.resolve(example.id),
             entry.model.variant,
             environment = liveBackends,
         )

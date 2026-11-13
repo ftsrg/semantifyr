@@ -22,7 +22,7 @@ class SysMLVerificationTests {
         @JvmStatic
         fun `Example Model Cases Reach Their Expected Verdict`(): List<CorpusEntry> {
             return SysMLCorpus.load().entries.filter {
-                !it.model.conformance && it.case.tier != CorpusTier.Nightly
+                !it.model.conformance && it.case.tier != CorpusTier.Nightly && !SysMLv2FrontendTestHelper.isServed(it)
             }
         }
     }

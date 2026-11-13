@@ -19,9 +19,17 @@ enum class ManifestVerdict {
 }
 
 @Serializable
+enum class ManifestTier {
+    Smoke,
+    Integration,
+    Nightly,
+}
+
+@Serializable
 data class ManifestCase(
     val name: String,
     val verdict: ManifestVerdict,
+    val tier: ManifestTier? = null,
 ) {
     val expectedVerdict: VerificationVerdict
         get() {
@@ -38,7 +46,7 @@ data class ManifestModel(
     val cases: List<ManifestCase>,
 )
 
-// the expected verdicts of an OXSTS model directory, in the shape the frontends' corpus manifests share
+// the expected verdicts of the models beside it, in the shape the corpora share; the SysML v2 corpus adds keys of its own
 @Serializable
 data class CaseManifest(
     val models: List<ManifestModel>,

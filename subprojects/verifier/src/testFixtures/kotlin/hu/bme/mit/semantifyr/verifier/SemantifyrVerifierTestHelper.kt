@@ -121,7 +121,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         outputDirectory: Path,
         timeout: Duration = 30.minutes,
         environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
-        expectedVerdict: VerificationVerdict = VerificationVerdict.Passed,
+        expectedVerdict: VerificationVerdict,
         optimization: OptimizationConfig? = null,
         validationPortfolio: VerificationPortfolio? = null,
     ) {
@@ -311,7 +311,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         return "\n\nBackend diagnostics (last $tailLineLimit lines per file):\n${sections.joinToString("\n")}"
     }
 
-    private fun expectedVerdictFromTags(case: VerificationCase): VerificationVerdict {
+    fun expectedVerdictFromTags(case: VerificationCase): VerificationVerdict {
         return when {
             "expect-pass" in case.tags -> VerificationVerdict.Passed
             "expect-fail" in case.tags -> VerificationVerdict.Failed

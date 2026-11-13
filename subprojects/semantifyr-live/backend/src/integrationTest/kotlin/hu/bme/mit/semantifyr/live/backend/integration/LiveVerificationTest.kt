@@ -28,6 +28,7 @@ import hu.bme.mit.semantifyr.live.backend.testing.pickByLabelSuffix
 import hu.bme.mit.semantifyr.live.backend.testing.resultAs
 import hu.bme.mit.semantifyr.live.backend.testing.verifyEndToEnd
 import hu.bme.mit.semantifyr.live.backend.testing.withRealServer
+import hu.bme.mit.semantifyr.verifier.CaseManifest
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.websocket.Frame
 import org.assertj.core.api.Assertions.assertThat
@@ -147,7 +148,7 @@ class LiveVerificationTest {
                     ),
                 )
                 val verifyResult = awaitResponseFor(id = 3, timeout = 2.minutes).resultAs(VerificationCaseResult::class.java)
-                assertThat(verifyResult.status()).isEqualTo("passed")
+                assertThat(verifyResult.status()).isEqualTo(expectedStatus("Simple.gamma", "LeaderStatechartIdleReachable"))
                 val traceUri = verifyResult.trace()?.witnessUri()
                     ?: error("verify produced no trace URI: $verifyResult")
                 assertThat(traceUri).startsWith("file:///workspace/").endsWith("/trace.get")
@@ -188,7 +189,7 @@ class LiveVerificationTest {
 
                 send(Frame.Text(LspWire.executeCommandRequest(id = 4, command = "gamma.case.verify", arguments = listOf(request))))
                 val verifyResult = awaitResponseFor(id = 4, timeout = 2.minutes).resultAs(VerificationCaseResult::class.java)
-                assertThat(verifyResult.status()).isEqualTo("passed")
+                assertThat(verifyResult.status()).isEqualTo(expectedStatus("Simple.gamma", "LeaderStatechartIdleReachable"))
 
                 send(Frame.Text(LspWire.executeCommandRequest(id = 5, command = "gamma.witness.validate", arguments = listOf(request))))
                 val validation = awaitResponseFor(id = 5, timeout = 2.minutes).resultAs(WitnessValidationResult::class.java)
@@ -213,7 +214,7 @@ class LiveVerificationTest {
         verifyFirstCase(
             tmp = tmp,
             flavor = "oxsts-with-gamma-library",
-            modelSource = stagedModel(StagedTestSupport.gammaLibraryModelsDirectory, "semantifyr.live.gammaLibraryModels", "LevelCrossing.oxsts"),
+            modelSource = stagedModel(StagedTestSupport.gammaLibraryModelsDirectory, "semantifyr.live.gammaLibraryModels", "Simple.oxsts"),
         )
     }
 
@@ -222,8 +223,13 @@ class LiveVerificationTest {
         verifyFirstCase(
             tmp = tmp,
             flavor = "oxsts-with-sysmlv2-library",
-            modelSource = stagedModel(StagedTestSupport.sysmlLibraryModelsDirectory, "semantifyr.live.sysmlLibraryModels", "level_crossing.oxsts"),
+            modelSource = stagedModel(StagedTestSupport.sysmlLibraryModelsDirectory, "semantifyr.live.sysmlLibraryModels", "door_access.oxsts"),
         )
+    }
+
+    // the wire's status of a case's expected verdict, which the manifest beside the staged Gamma models states
+    private fun expectedStatus(file: String, caseName: String): String {
+        return CaseManifest.load(checkNotNull(StagedTestSupport.gammaTestModelsDirectory)).expectedVerdict(file, caseName).name.lowercase()
     }
 
     private fun caseDirectoryName(modelStem: String, case: VerificationCaseSpecification): String {

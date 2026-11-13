@@ -76,17 +76,16 @@ data class ServedExamples(
     }
 
     companion object {
-        // the build names the repository's root relative to the module, see build-logic's readsServedExamples
+        // build-logic's readsServedExamples names both for the test task
         val repository: Path
             get() {
                 return Path(System.getProperty("semantifyr.repository") ?: error("The build names no repository root"))
             }
 
         fun load(): ServedExamples {
-            return Json.decodeFromString(repository.resolve(REGISTRY).readText())
+            val registry = System.getProperty("semantifyr.examples") ?: error("The build names no examples registry")
+            return Json.decodeFromString(Path(registry).readText())
         }
-
-        private const val REGISTRY = "subprojects/semantifyr-editor-common/src/examples/examples.json"
     }
 }
 

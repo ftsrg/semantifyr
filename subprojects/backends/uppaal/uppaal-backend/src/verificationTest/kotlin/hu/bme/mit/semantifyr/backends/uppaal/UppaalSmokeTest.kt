@@ -37,12 +37,14 @@ class UppaalSmokeTest {
             .loadModels(Path("build/test-models/smoke"))
             .buildAndResolve()
 
+        val case = helper.collectVerificationCases(context).single()
         helper.checkVerificationCase(
             context = context,
-            case = helper.collectVerificationCases(context).single(),
+            case = case,
             verificationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.Default),
             validationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.Default),
             outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(UppaalSmokeTest::class.java),
+            expectedVerdict = helper.expectedVerdictFromTags(case),
         )
     }
 }

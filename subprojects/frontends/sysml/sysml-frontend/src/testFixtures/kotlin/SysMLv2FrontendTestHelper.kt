@@ -15,6 +15,8 @@ import hu.bme.mit.semantifyr.frontends.sysml.SysMLv2Variant
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
+import hu.bme.mit.semantifyr.portfolios.testing.ExampleLanguage
+import hu.bme.mit.semantifyr.portfolios.testing.ServedExamples
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.assertVerdict
@@ -25,6 +27,7 @@ import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.copyTo
 import kotlin.io.path.createDirectories
+import kotlin.io.path.name
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
@@ -128,6 +131,17 @@ class SysMLv2FrontendTestHelper {
 
     companion object {
         val MODELS_ROOT: Path = Path("build", "test-models")
+
+        private val served by lazy {
+            ServedExamples.load().of(ExampleLanguage.Sysml)
+        }
+
+        // a served case is verified by the served-case test alone
+        fun isServed(entry: CorpusEntry): Boolean {
+            return served.any {
+                it.path.name == entry.model.file && entry.case.name in it.cases
+            }
+        }
 
         val TUTORIAL_ROOT: Path = Path("..", "models", "tutorial")
 

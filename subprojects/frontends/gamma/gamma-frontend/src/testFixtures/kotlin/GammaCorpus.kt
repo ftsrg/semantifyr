@@ -6,56 +6,16 @@
 
 package hu.bme.mit.semantifyr.frontends.gamma.testing
 
-import hu.bme.mit.semantifyr.backend.VerificationVerdict
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
+import hu.bme.mit.semantifyr.verifier.CaseManifest
+import hu.bme.mit.semantifyr.verifier.ManifestCase
+import hu.bme.mit.semantifyr.verifier.ManifestModel
 import java.nio.file.Path
 import kotlin.io.path.Path
-import kotlin.io.path.readText
-
-@Serializable
-enum class GammaCorpusVerdict {
-    Passed,
-    Failed,
-}
-
-@Serializable
-enum class GammaCorpusTier {
-    Smoke,
-    Integration,
-    Nightly,
-}
-
-@Serializable
-data class GammaCorpusCase(
-    val name: String,
-    val verdict: GammaCorpusVerdict,
-    val tier: GammaCorpusTier,
-) {
-    val expectedVerdict: VerificationVerdict
-        get() {
-            return when (verdict) {
-                GammaCorpusVerdict.Passed -> VerificationVerdict.Passed
-                GammaCorpusVerdict.Failed -> VerificationVerdict.Failed
-            }
-        }
-}
-
-@Serializable
-data class GammaCorpusModel(
-    val file: String,
-    val cases: List<GammaCorpusCase>,
-)
-
-@Serializable
-data class GammaCorpusManifest(
-    val models: List<GammaCorpusModel>,
-)
 
 data class GammaCorpusEntry(
     val directory: Path,
-    val model: GammaCorpusModel,
-    val case: GammaCorpusCase,
+    val model: ManifestModel,
+    val case: ManifestCase,
 ) {
     val modelPath: Path
         get() {
@@ -68,10 +28,6 @@ data class GammaCorpusEntry(
 }
 
 object GammaCorpus {
-    private val json = Json {
-        ignoreUnknownKeys = true
-    }
-
     val semantics: Path = Path("..", "models", "semantics")
 
     val corpus: Path = Path("..", "models", "corpus")
@@ -80,13 +36,10 @@ object GammaCorpus {
     val examples: Path = Path("build", "test-models")
 
     fun load(directory: Path): List<GammaCorpusEntry> {
-        val manifest = json.decodeFromString<GammaCorpusManifest>(directory.resolve(MANIFEST_FILE).readText())
-        return manifest.models.flatMap { model ->
+        return CaseManifest.load(directory).models.flatMap { model ->
             model.cases.map {
                 GammaCorpusEntry(directory, model, it)
             }
         }
     }
-
-    private const val MANIFEST_FILE = "manifest.json"
 }

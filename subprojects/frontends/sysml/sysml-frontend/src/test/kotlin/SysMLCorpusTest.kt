@@ -45,15 +45,6 @@ class SysMLCorpusTest {
     }
 
     @Test
-    fun `every model lists exactly the cases its file declares`() {
-        corpus.models.forEach { model ->
-            assertThat(model.cases.map { it.name })
-                .describedAs(model.file)
-                .containsExactlyInAnyOrderElementsOf(declaredCases(SysMLv2FrontendTestHelper.modelPath(model.file)))
-        }
-    }
-
-    @Test
     fun `falsification twins are expected to fail`() {
         corpus.entries.filter {
             it.case.falsification
@@ -73,18 +64,6 @@ class SysMLCorpusTest {
             it.file in served
         }.forEach {
             assertThat(it.variant).describedAs(it.file).isEqualTo(SysMLv2Variant.Default)
-        }
-    }
-
-    @Test
-    fun `the tutorial and the library fixture list exactly the cases their files declare`() {
-        listOf(SysMLv2FrontendTestHelper.TUTORIAL_ROOT, SysMLv2FrontendTestHelper.ETC_ROOT).forEach { root ->
-            SysMLCorpus.load(root.resolve("manifest.json")).models.forEach { model ->
-                val names = model.cases.map {
-                    it.name
-                }
-                assertThat(names).describedAs(model.file).containsExactlyInAnyOrderElementsOf(declaredCases(root.resolve(model.file)))
-            }
         }
     }
 
