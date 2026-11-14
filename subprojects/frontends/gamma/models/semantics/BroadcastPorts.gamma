@@ -1,0 +1,80 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package BroadcastPorts
+
+interface Go {
+    in event go
+}
+
+interface Signal {
+    out event signal
+}
+
+@Asynchronous
+statechart Sender capacity (1) [
+    port control : provides Go,
+    port signal : provides Signal
+] {
+    region Main {
+        initial MainInitial
+        state Idle
+        state Sent
+    }
+
+    transition from MainInitial to Idle
+    transition from Idle to Sent when control.go / raise signal.signal;
+}
+
+statechart Counter [
+    port signal : requires Signal
+] {
+    region Main {
+        initial MainInitial
+        state Waiting
+        state Once
+        state Twice
+    }
+
+    transition from MainInitial to Waiting
+    transition from Waiting to Once when signal.signal
+    transition from Once to Twice when signal.signal
+}
+
+adapter Buffered of component counter : Counter {
+    when any / run
+    queue messages (priority = 1, capacity = 1) {
+        signal.any
+    }
+}
+
+async LedOut [
+    port control : provides Go,
+    port signal : provides Signal
+] {
+    component sender : Sender
+    component counter : Buffered
+    bind control -> sender.control
+    bind signal -> sender.signal
+    channel [ sender.signal ] -o)- [ counter.signal ]
+}
+
+async Internal [
+    port control : provides Go
+] {
+    component sender : Sender
+    component counter : Buffered
+    bind control -> sender.control
+    channel [ sender.signal ] -o)- [ counter.signal ]
+}
+
+verification case AnOutputLedOutToTheSystemIsDeliveredAgainAtALaterTurn of LedOut {
+    EF state counter -> counter.Main.Twice
+}
+
+verification case AnOutputNotLedOutDeliveredTwiceUnreachable of Internal {
+    EF state counter -> counter.Main.Twice
+}

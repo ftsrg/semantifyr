@@ -46,7 +46,7 @@ A clock counts the time that passes in the step and is up once its count reaches
 
 ### Events of an Adapter
 
-An adapter clears the wrapped component's output events when it runs the component. An output bound to a port of the system, which a case's property can see, stays raised until the adapter runs or resets the component again. An output that a channel carries into a queue is put into the queue in the adapter's turn and reset there. An output that is bound to a port of the system as well is not reset there: it stays raised and is put into that queue again at every later turn of its adapter, once for each entry of an execution list that names the adapter, until the adapter runs or resets the component.
+An adapter clears the wrapped component's output events when it runs the component. An output bound to a port of the system, which a case's property can see, stays raised until the adapter runs or resets the component again. An output that a channel carries into a queue is put into the queue in the adapter's turn and reset there. An output of a provided port whose interface has `out` events alone, the one kind of port that may be both on a channel and bound to a port of the system, is not reset there when it is bound: it stays raised and is put into that queue again at every later turn of its adapter, a turn for each entry of an execution list that names the adapter, until the adapter runs or resets the component.
 
 ### Reset
 
