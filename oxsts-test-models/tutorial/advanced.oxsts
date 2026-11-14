@@ -1,3 +1,7 @@
+// A traffic light whose colors are substates of an operating state, beside a standby state, on a small statechart library.
+// The light has a lamp, which a state can switch when it is entered, and an operator's events move the light to standby and back.
+// In an emergency, the intersection turns both lights red.
+
 package example::trafficlight::advanced
 
 class State : Statechart {
@@ -179,10 +183,10 @@ class Intersection {
             inline east.operating.activate()
         } else {
             choice {
-                assume(!east.operating.green.isActive())
+                assume(east.operating.red.isActive())
                 inline north.main()
             } or {
-                assume(!north.operating.green.isActive())
+                assume(north.operating.red.isActive())
                 inline east.main()
             }
         }
@@ -190,8 +194,8 @@ class Intersection {
 }
 
 @VerificationCase
-class GreenColorIsReachable {
-    contains light: TrafficLight[1]
+class LightCanTurnGreen {
+    contains light: TrafficLight
 
     redefine init {
         inline light.init()
@@ -208,7 +212,7 @@ class GreenColorIsReachable {
 }
 
 @VerificationCase
-class IntersectionNeverBothGreen {
+class NeverBothGreen {
     contains intersection: Intersection
 
     redefine init {
@@ -228,7 +232,7 @@ class IntersectionNeverBothGreen {
 
 @VerificationCase
 class NeverGreenInStandby {
-    contains light: TrafficLight[1]
+    contains light: TrafficLight
 
     redefine init {
         inline light.init()
@@ -246,7 +250,7 @@ class NeverGreenInStandby {
 
 @VerificationCase
 class GreenLampOnlyInGreen {
-    contains light: TrafficLight[1]
+    contains light: TrafficLight
 
     redefine init {
         inline light.init()
@@ -264,7 +268,7 @@ class GreenLampOnlyInGreen {
 
 @VerificationCase
 class NoStandbyWithoutPause {
-    contains light: TrafficLight[1]
+    contains light: TrafficLight
 
     redefine init {
         inline light.init()

@@ -1,3 +1,6 @@
+// A traffic light whose colors are substates of an operating state, beside a standby state, on a small statechart library.
+// The light has a lamp, which a state can switch when it is entered.
+
 package example::trafficlight::advanced::step3
 
 class State : Statechart {
@@ -28,6 +31,7 @@ class Transition {
         return from.isActive()
     }
 
+    @Trace
     redefine tran {
         assume(isEnabled())
         inline to.activate()
@@ -91,10 +95,7 @@ class TrafficLight : Statechart {
 
         redefine refers initial: State[0..1] = red
     }
-    contains standby: LampState subsets states {
-        redefine refers output: Lamp = lamp
-        redefine refers color: LightColor = LightColor::Yellow
-    }
+    contains standby: State subsets states
 
     contains redToGreen: Transition subsets transitions {
         redefine refers from: State[1] = operating.red
@@ -133,18 +134,18 @@ class Intersection {
 
     redefine tran {
         choice {
-            assume(!east.operating.green.isActive())
+            assume(east.operating.red.isActive())
             inline north.main()
         } or {
-            assume(!north.operating.green.isActive())
+            assume(north.operating.red.isActive())
             inline east.main()
         }
     }
 }
 
 @VerificationCase
-class GreenColorIsReachable {
-    contains light: TrafficLight[1]
+class LightCanTurnGreen {
+    contains light: TrafficLight
 
     redefine init {
         inline light.init()
@@ -160,7 +161,7 @@ class GreenColorIsReachable {
 }
 
 @VerificationCase
-class IntersectionNeverBothGreen {
+class NeverBothGreen {
     contains intersection: Intersection
 
     redefine init {
@@ -178,7 +179,7 @@ class IntersectionNeverBothGreen {
 
 @VerificationCase
 class NeverGreenInStandby {
-    contains light: TrafficLight[1]
+    contains light: TrafficLight
 
     redefine init {
         inline light.init()
@@ -195,7 +196,7 @@ class NeverGreenInStandby {
 
 @VerificationCase
 class GreenLampOnlyInGreen {
-    contains light: TrafficLight[1]
+    contains light: TrafficLight
 
     redefine init {
         inline light.init()

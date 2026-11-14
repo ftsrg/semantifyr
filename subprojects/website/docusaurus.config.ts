@@ -11,7 +11,7 @@ import type { Options as PagesOptions } from '@docusaurus/plugin-content-pages';
 import type { Options as ClassicThemeOptions } from '@docusaurus/theme-classic';
 import type { UserThemeConfig } from '@docusaurus/theme-common';
 import type { Config, Plugin } from '@docusaurus/types';
-import { servedExamples } from '@semantifyr/editor-common/examples';
+import { servedExamples, type CaseManifest, type ServedExample } from '@semantifyr/editor-common/examples';
 import type { PrismTheme } from 'prism-react-renderer';
 import remarkFences from './src/plugins/remarkFences';
 import sourceAliases from './source-aliases.json';
@@ -27,7 +27,19 @@ const codeBlockTheme: PrismTheme = {
 
 const liveBackendUrl = process.env.SEMANTIFYR_LIVE_URL ?? 'https://live.semantifyr.org';
 
-// a page imports a served example by its address, @served-examples/<language>/<id>, and gets its text from the registry's file
+// the expected verdict of each case of a served example, from the manifest beside its file
+function expectedVerdicts(example: ServedExample): Record<string, string> {
+  const file = path.resolve(__dirname, '../..', example.file);
+  const manifest = JSON.parse(readFileSync(path.join(path.dirname(file), 'manifest.json'), 'utf8')) as CaseManifest;
+  const model = manifest.models.find((candidate) => {
+    return candidate.file === path.basename(file);
+  });
+  return Object.fromEntries((model?.cases ?? []).map((declaredCase) => {
+    return [declaredCase.name, declaredCase.verdict];
+  }));
+}
+
+// a page imports a served example by its address, @served-examples/<language>/<id>, and gets its text from the registry's file and its cases' verdicts from the manifest beside it
 function servedExamplesPlugin(): Plugin {
   let directory = '';
   return {
@@ -37,7 +49,7 @@ function servedExamplesPlugin(): Plugin {
         const address = `${example.language}/${example.id}`;
         const written = await actions.createData(`${address}.js`, [
           `import text from ${JSON.stringify(path.resolve(__dirname, '../..', example.file))};`,
-          `export default { language: ${JSON.stringify(example.language)}, id: ${JSON.stringify(example.id)}, text };`,
+          `export default { language: ${JSON.stringify(example.language)}, id: ${JSON.stringify(example.id)}, text, verdicts: ${JSON.stringify(expectedVerdicts(example))} };`,
           '',
         ].join('\n'));
         directory = written.slice(0, -`${address}.js`.length);

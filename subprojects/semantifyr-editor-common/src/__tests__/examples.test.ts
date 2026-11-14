@@ -89,8 +89,8 @@ const OPENING_COMMENT: Readonly<Record<ExampleLanguage, RegExp>> = {
 // Gamma's served models are brought to the checks of a served model by their own lane, which removes this line
 const AWAITING_THEIR_LANE: ExampleLanguage = 'gamma';
 
-// the lessons' models open with no comment yet; the lane on the lessons gives them one and removes this line
-const AWAITING_THEIR_COMMENT: ExampleLanguage = 'oxsts';
+// the OXSTS level crossing is no lesson's model and was left as it is, without a comment, until its owner decides it
+const AWAITING_ITS_COMMENT = '/oxsts/level-crossing';
 
 const manifests = MODEL_ROOTS.flatMap((root) => {
   return readdirSync(join(REPOSITORY, root), { recursive: true, withFileTypes: true }).filter((entry) => {
@@ -164,7 +164,7 @@ describe.each(listedModels.map((example) => {
     expect(tracing).not.toEqual([]);
   });
 
-  test.skipIf(example.language === AWAITING_THEIR_COMMENT)('opens with a comment that describes it', () => {
+  test.skipIf(address(example) === AWAITING_ITS_COMMENT)('opens with a comment that describes it', () => {
     expect(readFileSync(join(REPOSITORY, example.file), 'utf8')).toMatch(OPENING_COMMENT[example.language]);
   });
 });

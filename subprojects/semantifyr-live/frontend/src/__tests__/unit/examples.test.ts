@@ -153,9 +153,9 @@ describe('the registry\'s examples', () => {
   });
 
   it('shows no description for a model whose file has no comment at its top', () => {
-    const basics = findExample(findFlavor(servedLiveFlavors, 'oxsts')!, 'basics');
+    const levelCrossing = findExample(findFlavor(servedLiveFlavors, 'oxsts')!, 'level-crossing');
 
-    expect(basics?.description).toBeNull();
+    expect(levelCrossing?.description).toBeNull();
   });
 });
 
@@ -177,7 +177,9 @@ describe('findFlavor', () => {
 describe('findExample', () => {
   it('returns an example by id within the supplied flavor', () => {
     const oxsts = findFlavor(servedLiveFlavors, 'oxsts')!;
-    expect(findExample(oxsts, 'basics')?.label).toContain('Basics');
+    expect(findExample(oxsts, 'basics')?.label).toBe(servedExamplesOf('oxsts').find((example) => {
+      return example.id === 'basics';
+    })?.label);
   });
 
   it('returns undefined when the id does not exist in the flavor', () => {

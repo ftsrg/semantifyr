@@ -1,3 +1,5 @@
+// A traffic light built on a small library of states.
+
 package example::trafficlight::intermediate::step1
 
 class State {
@@ -12,30 +14,48 @@ class State {
     }
 }
 
-class Transition {
-    refers from: State
-    refers to: State
+class Statechart {
+    contains states: State[0..*] opposite parent
 
-    prop isEnabled(): bool {
-        return from.isActive()
+    var activeState: states[0..1] := nothing
+}
+
+class TrafficLight : Statechart {
+    contains red: State subsets states
+    contains yellow: State subsets states
+    contains green: State subsets states
+
+    redefine init {
+        inline red.activate()
     }
 
     redefine tran {
-        assume(isEnabled())
-        inline to.activate()
+        choice {
+            assume(red.isActive())
+            inline green.activate()
+        } or {
+            assume(green.isActive())
+            inline yellow.activate()
+        } or {
+            assume(yellow.isActive())
+            inline red.activate()
+        }
     }
 }
 
-class Statechart {
-    contains states: State[0..*] opposite parent
-    contains transitions: Transition[0..*]
+@VerificationCase
+class LightCanTurnYellow {
+    contains light: TrafficLight
 
-    @Control
-    var activeState: states[0..1] := nothing
+    redefine init {
+        inline light.init()
+    }
 
     redefine tran {
-        inline for choice (transition in transitions) {
-            inline transition.main()
-        }
+        inline light.main()
+    }
+
+    prop {
+        return EF light.yellow.isActive()
     }
 }

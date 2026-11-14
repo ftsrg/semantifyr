@@ -1,109 +1,123 @@
 {
     "models": [
         {
+            "file": "light-step1.oxsts",
+            "cases": [
+                { "name": "TrafficLight", "verdict": "Passed" }
+            ]
+        },
+        {
             "file": "basics-step1.oxsts",
-            "cases": []
+            "cases": [
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "EastCanTurnGreen", "verdict": "Passed" }
+            ]
         },
         {
             "file": "basics-step2.oxsts",
             "cases": [
-                { "name": "TrafficLight", "verdict": "Passed" }
-            ]
-        },
-        {
-            "file": "basics-step3.oxsts",
-            "cases": [
-                { "name": "TrafficLight", "verdict": "Passed" }
-            ]
-        },
-        {
-            "file": "basics-step4.oxsts",
-            "cases": [
-                { "name": "GreenColorIsReachable", "verdict": "Passed" },
-                { "name": "IntersectionNeverBothGreen", "verdict": "Failed" }
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "EastCanTurnGreen", "verdict": "Passed" },
+                { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Failed" }
             ]
         },
         {
             "file": "basics.oxsts",
             "cases": [
-                { "name": "GreenColorIsReachable", "verdict": "Passed" },
-                { "name": "IntersectionNeverBothGreen", "verdict": "Passed" }
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "EastCanTurnGreen", "verdict": "Passed" },
+                { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "green-time-step1.oxsts",
+            "cases": [
+                { "name": "NorthCanTurnYellow", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "green-time-step2.oxsts",
+            "cases": [
+                { "name": "NorthCanTurnYellow", "verdict": "Passed" },
+                { "name": "NorthGreenForThreeSteps", "verdict": "Failed" }
+            ]
+        },
+        {
+            "file": "green-time.oxsts",
+            "cases": [
+                { "name": "NorthCanTurnYellow", "verdict": "Passed" },
+                { "name": "NorthGreenForThreeSteps", "verdict": "Passed" }
             ]
         },
         {
             "file": "intermediate-step1.oxsts",
-            "cases": []
+            "cases": [
+                { "name": "LightCanTurnYellow", "verdict": "Passed" }
+            ]
         },
         {
             "file": "intermediate-step2.oxsts",
             "cases": [
-                { "name": "GreenColorIsReachable", "verdict": "Failed" }
-            ]
-        },
-        {
-            "file": "intermediate-step3.oxsts",
-            "cases": [
-                { "name": "GreenColorIsReachable", "verdict": "Passed" }
+                { "name": "LightCanTurnYellow", "verdict": "Passed" }
             ]
         },
         {
             "file": "intermediate.oxsts",
             "cases": [
-                { "name": "GreenColorIsReachable", "verdict": "Passed" },
-                { "name": "IntersectionNeverBothGreen", "verdict": "Passed" }
+                { "name": "LightCanTurnYellow", "verdict": "Passed" },
+                { "name": "PedestriansCanWalk", "verdict": "Passed" },
+                { "name": "WalkOnlyWhileRed", "verdict": "Passed" }
             ]
         },
         {
             "file": "advanced-step1.oxsts",
             "cases": [
-                { "name": "GreenColorIsReachable", "verdict": "Passed" },
-                { "name": "IntersectionNeverBothGreen", "verdict": "Passed" },
+                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
                 { "name": "NeverGreenInStandby", "verdict": "Failed" }
             ]
         },
         {
             "file": "advanced-step2.oxsts",
             "cases": [
-                { "name": "GreenColorIsReachable", "verdict": "Passed" },
-                { "name": "IntersectionNeverBothGreen", "verdict": "Passed" },
+                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
                 { "name": "NeverGreenInStandby", "verdict": "Passed" }
             ]
         },
         {
             "file": "advanced-step3.oxsts",
             "cases": [
-                { "name": "GreenColorIsReachable", "verdict": "Passed" },
-                { "name": "IntersectionNeverBothGreen", "verdict": "Passed" },
+                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
                 { "name": "NeverGreenInStandby", "verdict": "Passed" },
-                { "name": "GreenLampOnlyInGreen", "verdict": "Passed" }
+                { "name": "GreenLampOnlyInGreen", "verdict": "Failed" }
             ]
         },
         {
             "file": "advanced-step4.oxsts",
             "cases": [
-                { "name": "GreenColorIsReachable", "verdict": "Passed" },
-                { "name": "IntersectionNeverBothGreen", "verdict": "Passed" },
+                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NeverGreenInStandby", "verdict": "Passed" },
+                { "name": "GreenLampOnlyInGreen", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "advanced-step5.oxsts",
+            "cases": [
+                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
                 { "name": "NeverGreenInStandby", "verdict": "Passed" },
                 { "name": "GreenLampOnlyInGreen", "verdict": "Passed" },
                 { "name": "NoStandbyWithoutPause", "verdict": "Passed" }
             ]
         },
         {
-            "file": "advanced-step5.oxsts",
-            "cases": [
-                { "name": "GreenColorIsReachable", "verdict": "Passed" },
-                { "name": "IntersectionNeverBothGreen", "verdict": "Passed" },
-                { "name": "NeverGreenInStandby", "verdict": "Passed" },
-                { "name": "GreenLampOnlyInGreen", "verdict": "Passed" },
-                { "name": "NoStandbyWithoutPause", "verdict": "Passed" },
-                { "name": "EmergencyStopsTraffic", "verdict": "Passed" }
-            ]
-        },
-        {
             "file": "advanced.oxsts",
             "cases": [
-                { "name": "GreenColorIsReachable", "verdict": "Passed" },
-                { "name": "IntersectionNeverBothGreen", "verdict": "Passed" },
+                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
                 { "name": "NeverGreenInStandby", "verdict": "Passed" },
                 { "name": "GreenLampOnlyInGreen", "verdict": "Passed" },
                 { "name": "NoStandbyWithoutPause", "verdict": "Passed" },

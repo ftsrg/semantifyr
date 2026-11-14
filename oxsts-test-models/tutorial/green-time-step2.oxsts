@@ -1,0 +1,87 @@
+// Two traffic lights at an intersection, where a green light counts its steps before it may turn yellow.
+
+package example::trafficlight::greentime::step2
+
+enum LightColor {
+    Red,
+    Yellow,
+    Green,
+}
+
+class TrafficLight {
+    var color: LightColor := LightColor::Red
+    var greenFor: int := 0
+
+    @Trace
+    redefine tran {
+        choice {
+            assume(color == LightColor::Red)
+            color := LightColor::Green
+        } or {
+            assume(color == LightColor::Green && greenFor < 3)
+            greenFor := greenFor + 1
+        } or {
+            assume(color == LightColor::Green && greenFor >= 3)
+            color := LightColor::Yellow
+        } or {
+            assume(color == LightColor::Yellow)
+            color := LightColor::Red
+        }
+    }
+
+    prop isColor(color: LightColor): bool {
+        return self.color == color
+    }
+}
+
+class Intersection {
+    contains north: TrafficLight
+    contains east: TrafficLight
+
+    redefine tran {
+        choice {
+            assume(east.isColor(LightColor::Red))
+            inline north.main()
+        } or {
+            assume(north.isColor(LightColor::Red))
+            inline east.main()
+        }
+    }
+}
+
+@VerificationCase
+class NorthCanTurnYellow {
+    contains intersection: Intersection
+
+    redefine tran {
+        inline intersection.main()
+    }
+
+    prop {
+        return EF intersection.north.isColor(LightColor::Yellow)
+    }
+}
+
+@VerificationCase
+class NorthGreenForThreeSteps {
+    contains intersection: Intersection
+    var stepsGreen: int := 0
+    var leftGreenEarly: bool := false
+
+    redefine tran {
+        var wasGreen: bool := intersection.north.isColor(LightColor::Green)
+        inline intersection.main()
+        var isGreen: bool := intersection.north.isColor(LightColor::Green)
+        leftGreenEarly := wasGreen && !isGreen && stepsGreen < 3
+        if (wasGreen && isGreen && stepsGreen < 3) {
+            stepsGreen := stepsGreen + 1
+        }
+        if (!isGreen) {
+            stepsGreen := 0
+        }
+    }
+
+    prop {
+        return AG !leftGreenEarly
+    }
+}

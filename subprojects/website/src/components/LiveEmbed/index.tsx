@@ -6,7 +6,7 @@
 
 import type React from 'react';
 import type { LiveEditorLines, LiveEditorView } from '@semantifyr/editor-common';
-import type { ExampleLanguage } from '@semantifyr/editor-common/examples';
+import type { CaseManifest, ExampleLanguage } from '@semantifyr/editor-common/examples';
 import { EmbeddedExample } from './EmbeddedExample';
 
 // a served example as a page imports it, by its address @served-examples/<language>/<id>
@@ -14,7 +14,11 @@ export interface ServedText {
   language: ExampleLanguage;
   id: string;
   text: string;
+  // each case's expected verdict, from the manifest beside the file
+  verdicts: Readonly<Record<string, ExpectedVerdict>>;
 }
+
+export type ExpectedVerdict = CaseManifest['models'][number]['cases'][number]['verdict'];
 
 interface Props {
   example: ServedText;

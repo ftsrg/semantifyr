@@ -53,19 +53,21 @@ class OxstsDocumentSymbolTest extends OxstsLanguageServerTest {
                         EnumMember Green
                     Class TrafficLight
                         Variable color LightColor
-                        Method assumeColor (color: LightColor)
-                        Method setColor (color: LightColor)
                         Method main ()
                         Function isColor (color: LightColor): bool
                     Class Intersection
                         Property north contains TrafficLight
                         Property east contains TrafficLight
                         Method main ()
-                    Class GreenColorIsReachable
-                        Property light contains TrafficLight[1]
+                    Class NeverBothGreen
+                        Property intersection contains Intersection
                         Method main ()
                         Function prop
-                    Class IntersectionNeverBothGreen
+                    Class EastCanTurnGreen
+                        Property intersection contains Intersection
+                        Method main ()
+                        Function prop
+                    Class NorthGreenOnlyWhileEastRed
                         Property intersection contains Intersection
                         Method main ()
                         Function prop

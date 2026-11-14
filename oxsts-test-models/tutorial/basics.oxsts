@@ -1,33 +1,28 @@
+// Two traffic lights at an intersection, where one light switches in each step.
+// A light switches only while the other is red.
+
 package example::trafficlight::basics
 
 enum LightColor {
     Red,
     Yellow,
-    Green
+    Green,
 }
 
 class TrafficLight {
     var color: LightColor := LightColor::Red
 
-    tran assumeColor(color: LightColor) {
-        assume(self.color == color)
-    }
-
     @Trace
-    tran setColor(color: LightColor) {
-        self.color := color
-    }
-
     redefine tran {
         choice {
-            inline assumeColor(LightColor::Red)
-            inline setColor(LightColor::Green)
+            assume(color == LightColor::Red)
+            color := LightColor::Green
         } or {
-            inline assumeColor(LightColor::Green)
-            inline setColor(LightColor::Yellow)
+            assume(color == LightColor::Green)
+            color := LightColor::Yellow
         } or {
-            inline assumeColor(LightColor::Yellow)
-            inline setColor(LightColor::Red)
+            assume(color == LightColor::Yellow)
+            color := LightColor::Red
         }
     }
 
@@ -42,30 +37,17 @@ class Intersection {
 
     redefine tran {
         choice {
-            assume(!east.isColor(LightColor::Green))
+            assume(east.isColor(LightColor::Red))
             inline north.main()
         } or {
-            assume(!north.isColor(LightColor::Green))
+            assume(north.isColor(LightColor::Red))
             inline east.main()
         }
     }
 }
 
 @VerificationCase
-class GreenColorIsReachable {
-    contains light: TrafficLight[1]
-
-    redefine tran {
-        inline light.main()
-    }
-
-    prop {
-        return EF (light.color == LightColor::Green)
-    }
-}
-
-@VerificationCase
-class IntersectionNeverBothGreen {
+class NeverBothGreen {
     contains intersection: Intersection
 
     redefine tran {
@@ -73,6 +55,32 @@ class IntersectionNeverBothGreen {
     }
 
     prop {
-        return AG !(intersection.north.color == LightColor::Green && intersection.east.color == LightColor::Green)
+        return AG !(intersection.north.isColor(LightColor::Green) && intersection.east.isColor(LightColor::Green))
+    }
+}
+
+@VerificationCase
+class EastCanTurnGreen {
+    contains intersection: Intersection
+
+    redefine tran {
+        inline intersection.main()
+    }
+
+    prop {
+        return EF intersection.east.isColor(LightColor::Green)
+    }
+}
+
+@VerificationCase
+class NorthGreenOnlyWhileEastRed {
+    contains intersection: Intersection
+
+    redefine tran {
+        inline intersection.main()
+    }
+
+    prop {
+        return AG (!intersection.north.isColor(LightColor::Green) || intersection.east.isColor(LightColor::Red))
     }
 }

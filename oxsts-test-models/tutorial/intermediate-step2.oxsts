@@ -1,3 +1,5 @@
+// A traffic light built on a small statechart library, whose transitions are data.
+
 package example::trafficlight::intermediate::step2
 
 class State {
@@ -20,6 +22,7 @@ class Transition {
         return from.isActive()
     }
 
+    @Trace
     redefine tran {
         assume(isEnabled())
         inline to.activate()
@@ -59,19 +62,23 @@ class TrafficLight : Statechart {
     }
 
     redefine init {
-        activeState := red
+        inline red.activate()
     }
 }
 
 @VerificationCase
-class GreenColorIsReachable {
-    contains light: TrafficLight[1]
+class LightCanTurnYellow {
+    contains light: TrafficLight
+
+    redefine init {
+        inline light.init()
+    }
 
     redefine tran {
         inline light.main()
     }
 
     prop {
-        return EF light.green.isActive()
+        return EF light.yellow.isActive()
     }
 }

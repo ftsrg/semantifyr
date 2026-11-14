@@ -1,28 +1,15 @@
 ---
 title: 'Traffic Light'
 sidebar_position: 0
+description: The OXSTS lessons, five levels on a traffic light, each cut by what you verify in it.
 ---
 
 # Traffic Light
 
-This tutorial series models the same example system, a small traffic-light intersection, with progressively more abstract Semantifyr features. The first two tutorials build the same model with the same verification cases, once directly and once on top of a small library, to show how Semantifyr supports a smooth migration path from a directly-encoded model to a library-based one. The third extends that library with the patterns real semantic libraries use.
+These lessons teach OXSTS, Semantifyr's language for semantics, on one example: a traffic light, then an intersection of two. Each level adds what its cases need, and each step runs in Live in the place of its code block. They are meant to be read in order.
 
-The tutorials share the same example so you can compare the encodings side by side. They are designed to be read in order, but each one is self-contained and starts from a fresh file.
-
-:::tip Try it live
-Every step of a tutorial ends in a complete model that you can open in Live, embedded in the page: a lightweight editor with syntax highlighting, diagnostics, content assist, and the verification cases with their verdicts and traces beside it. Each tutorial's **Snapshot** section holds the finished model.
-:::
-
-## Tutorials
-
-### 1. [Direct Modeling](direct-modeling.md)
-
-The first tutorial encodes the traffic light directly: a single class with an enum, a variable, and a hand-written `redefine tran` body. There are no reusable abstractions; the entire state machine lives inside one class. This tutorial introduces the basic Semantifyr language constructs: packages, enums, classes, variables, transitions, properties, features, and verification cases.
-
-### 2. [Building a Library](building-a-library.md)
-
-The second tutorial refactors the traffic light into a small reusable library: a `Statechart` base class with first-class `State` and `Transition` instances. The concrete traffic light becomes a thin specialization of `Statechart`. This tutorial introduces inheritance, the container-opposite pattern, the `subsets` modifier, feature-typed variables, the `nothing` literal, `inline for choice`, and the init-chain pattern.
-
-### 3. [Advanced Tutorial](advanced-tutorial.md)
-
-The third tutorial extends the small library with patterns that real semantic libraries use: hierarchical states, entry actions, and events with triggers, followed by a global emergency override. Hierarchy and entry actions extend `State`, triggers extend `Transition`, and the emergency override lives in the intersection, which pre-empts the traffic lights without changing their definition. This tutorial introduces composite states, `inline if`, `State` subclasses for per-state behavior, `redefine contains`, `havoc` for modeling the environment, and global features.
+1. [One Light](one-light.md): you verify that a light can turn yellow, and read the trace that shows how.
+2. [The Intersection](intersection.md): you verify that two lights are never green together, and find with a second case a requirement the first did not cover.
+3. [The Minimum Green Time](green-time.md): you verify with an integer counter and a case that counts on its own that a light stays green for at least three steps.
+4. [A Statechart Library](library.md): you verify a light built on a library of states and transitions, and a crossing where pedestrians walk only while the traffic light is red.
+5. [Hierarchy, Events and the Environment](hierarchy.md): you verify a light with nested states, entry actions and events sent by its environment, and an emergency that turns an intersection red.

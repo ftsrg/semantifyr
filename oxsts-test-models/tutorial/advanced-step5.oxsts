@@ -1,3 +1,6 @@
+// A traffic light whose colors are substates of an operating state, beside a standby state, on a small statechart library.
+// The light has a lamp, which a state can switch when it is entered, and an operator's events move the light to standby and back.
+
 package example::trafficlight::advanced::step5
 
 class State : Statechart {
@@ -51,6 +54,7 @@ class Transition {
         return from.isActive() && trigger.isTriggered()
     }
 
+    @Trace
     redefine tran {
         assume(isEnabled())
         inline to.activate()
@@ -157,12 +161,6 @@ class TrafficLight : Statechart {
     }
 }
 
-class Emergency {
-    var active: bool := false
-}
-
-global containment emergency: Emergency[1]
-
 class Intersection {
     contains north: TrafficLight
     contains east: TrafficLight
@@ -173,24 +171,19 @@ class Intersection {
     }
 
     redefine tran {
-        if (emergency.active) {
-            inline north.operating.activate()
-            inline east.operating.activate()
-        } else {
-            choice {
-                assume(!east.operating.green.isActive())
-                inline north.main()
-            } or {
-                assume(!north.operating.green.isActive())
-                inline east.main()
-            }
+        choice {
+            assume(east.operating.red.isActive())
+            inline north.main()
+        } or {
+            assume(north.operating.red.isActive())
+            inline east.main()
         }
     }
 }
 
 @VerificationCase
-class GreenColorIsReachable {
-    contains light: TrafficLight[1]
+class LightCanTurnGreen {
+    contains light: TrafficLight
 
     redefine init {
         inline light.init()
@@ -207,7 +200,7 @@ class GreenColorIsReachable {
 }
 
 @VerificationCase
-class IntersectionNeverBothGreen {
+class NeverBothGreen {
     contains intersection: Intersection
 
     redefine init {
@@ -227,7 +220,7 @@ class IntersectionNeverBothGreen {
 
 @VerificationCase
 class NeverGreenInStandby {
-    contains light: TrafficLight[1]
+    contains light: TrafficLight
 
     redefine init {
         inline light.init()
@@ -245,7 +238,7 @@ class NeverGreenInStandby {
 
 @VerificationCase
 class GreenLampOnlyInGreen {
-    contains light: TrafficLight[1]
+    contains light: TrafficLight
 
     redefine init {
         inline light.init()
@@ -263,7 +256,7 @@ class GreenLampOnlyInGreen {
 
 @VerificationCase
 class NoStandbyWithoutPause {
-    contains light: TrafficLight[1]
+    contains light: TrafficLight
 
     redefine init {
         inline light.init()
@@ -277,25 +270,5 @@ class NoStandbyWithoutPause {
 
     prop {
         return AG !light.standby.isActive()
-    }
-}
-
-@VerificationCase
-class EmergencyStopsTraffic {
-    contains intersection: Intersection
-
-    redefine init {
-        inline intersection.init()
-    }
-
-    redefine tran {
-        havoc(emergency.active)
-        havoc(intersection.north.event)
-        havoc(intersection.east.event)
-        inline intersection.main()
-    }
-
-    prop {
-        return AG (!emergency.active || (intersection.north.lamp.color == LightColor::Red && intersection.east.lamp.color == LightColor::Red))
     }
 }

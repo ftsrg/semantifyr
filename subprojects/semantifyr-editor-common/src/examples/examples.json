@@ -180,45 +180,62 @@
       "id": "basics",
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/basics.oxsts",
-      "label": "Tutorial: Basics",
-      "reason": "The model the first lesson ends in.",
+      "label": "Lesson 2: Intersection",
+      "reason": "The model the second lesson ends in: two lights that take turns, a requirement it took a second case to state, and the trace that found the gap.",
       "origin": "Made for Semantifyr",
       "holder": "The Semantifyr Authors",
       "licence": "EPL-2.0",
-      "page": "learn/tutorials/trafficlight/direct-modeling",
+      "page": "learn/tutorials/trafficlight/intersection",
       "cases": [
-        "GreenColorIsReachable",
-        "IntersectionNeverBothGreen"
+        "NeverBothGreen",
+        "EastCanTurnGreen",
+        "NorthGreenOnlyWhileEastRed"
+      ]
+    },
+    {
+      "id": "green-time",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/green-time.oxsts",
+      "label": "Lesson 3: Green time",
+      "reason": "The model the third lesson ends in: an integer counter that holds a light green, and a case that counts the steps on its own.",
+      "origin": "Made for Semantifyr",
+      "holder": "The Semantifyr Authors",
+      "licence": "EPL-2.0",
+      "page": "learn/tutorials/trafficlight/green-time",
+      "cases": [
+        "NorthCanTurnYellow",
+        "NorthGreenForThreeSteps"
       ]
     },
     {
       "id": "intermediate",
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/intermediate.oxsts",
-      "label": "Tutorial: Intermediate",
-      "reason": "The model the second lesson ends in.",
+      "label": "Lesson 4: Library",
+      "reason": "The model the fourth lesson ends in: a small statechart library that a traffic light and a pedestrian light are both built on.",
       "origin": "Made for Semantifyr",
       "holder": "The Semantifyr Authors",
       "licence": "EPL-2.0",
-      "page": "learn/tutorials/trafficlight/building-a-library",
+      "page": "learn/tutorials/trafficlight/library",
       "cases": [
-        "GreenColorIsReachable",
-        "IntersectionNeverBothGreen"
+        "LightCanTurnYellow",
+        "PedestriansCanWalk",
+        "WalkOnlyWhileRed"
       ]
     },
     {
       "id": "advanced",
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/advanced.oxsts",
-      "label": "Tutorial: Advanced",
-      "reason": "The model the third lesson ends in.",
+      "label": "Lesson 5: Hierarchy",
+      "reason": "The model the fifth lesson ends in: nested states, entry actions, events from an operator and an emergency that overrides the lights.",
       "origin": "Made for Semantifyr",
       "holder": "The Semantifyr Authors",
       "licence": "EPL-2.0",
-      "page": "learn/tutorials/trafficlight/advanced-tutorial",
+      "page": "learn/tutorials/trafficlight/hierarchy",
       "cases": [
-        "GreenColorIsReachable",
-        "IntersectionNeverBothGreen",
+        "LightCanTurnGreen",
+        "NeverBothGreen",
         "NeverGreenInStandby",
         "GreenLampOnlyInGreen",
         "NoStandbyWithoutPause",
@@ -241,61 +258,81 @@
       ]
     },
     {
-      "id": "basics-step1",
+      "id": "light-step1",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/basics-step1.oxsts",
-      "label": "Direct Modeling, step 1",
-      "reason": "A step of the first lesson, run from its page.",
+      "file": "oxsts-test-models/tutorial/light-step1.oxsts",
+      "label": "One Light, step 1",
+      "reason": "A step of lesson 1, run from its page.",
       "origin": "Made for Semantifyr",
       "holder": "The Semantifyr Authors",
       "licence": "EPL-2.0",
-      "page": "learn/tutorials/trafficlight/direct-modeling",
-      "cases": [],
+      "page": "learn/tutorials/trafficlight/one-light",
+      "cases": [
+        "TrafficLight"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "basics-step1",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/basics-step1.oxsts",
+      "label": "The Intersection, step 1",
+      "reason": "A step of lesson 2, run from its page.",
+      "origin": "Made for Semantifyr",
+      "holder": "The Semantifyr Authors",
+      "licence": "EPL-2.0",
+      "page": "learn/tutorials/trafficlight/intersection",
+      "cases": [
+        "NeverBothGreen",
+        "EastCanTurnGreen"
+      ],
       "hidden": true
     },
     {
       "id": "basics-step2",
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/basics-step2.oxsts",
-      "label": "Direct Modeling, step 2",
-      "reason": "A step of the first lesson, run from its page.",
+      "label": "The Intersection, step 2",
+      "reason": "A step of lesson 2, run from its page.",
       "origin": "Made for Semantifyr",
       "holder": "The Semantifyr Authors",
       "licence": "EPL-2.0",
-      "page": "learn/tutorials/trafficlight/direct-modeling",
+      "page": "learn/tutorials/trafficlight/intersection",
       "cases": [
-        "TrafficLight"
+        "NeverBothGreen",
+        "EastCanTurnGreen",
+        "NorthGreenOnlyWhileEastRed"
       ],
       "hidden": true
     },
     {
-      "id": "basics-step3",
+      "id": "green-time-step1",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/basics-step3.oxsts",
-      "label": "Direct Modeling, step 3",
-      "reason": "A step of the first lesson, run from its page.",
+      "file": "oxsts-test-models/tutorial/green-time-step1.oxsts",
+      "label": "The Minimum Green Time, step 1",
+      "reason": "A step of lesson 3, run from its page.",
       "origin": "Made for Semantifyr",
       "holder": "The Semantifyr Authors",
       "licence": "EPL-2.0",
-      "page": "learn/tutorials/trafficlight/direct-modeling",
+      "page": "learn/tutorials/trafficlight/green-time",
       "cases": [
-        "TrafficLight"
+        "NorthCanTurnYellow"
       ],
       "hidden": true
     },
     {
-      "id": "basics-step4",
+      "id": "green-time-step2",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/basics-step4.oxsts",
-      "label": "Direct Modeling, step 4",
-      "reason": "A step of the first lesson, run from its page.",
+      "file": "oxsts-test-models/tutorial/green-time-step2.oxsts",
+      "label": "The Minimum Green Time, step 2",
+      "reason": "A step of lesson 3, run from its page.",
       "origin": "Made for Semantifyr",
       "holder": "The Semantifyr Authors",
       "licence": "EPL-2.0",
-      "page": "learn/tutorials/trafficlight/direct-modeling",
+      "page": "learn/tutorials/trafficlight/green-time",
       "cases": [
-        "GreenColorIsReachable",
-        "IntersectionNeverBothGreen"
+        "NorthCanTurnYellow",
+        "NorthGreenForThreeSteps"
       ],
       "hidden": true
     },
@@ -303,42 +340,29 @@
       "id": "intermediate-step1",
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/intermediate-step1.oxsts",
-      "label": "Building a Library, step 1",
-      "reason": "A step of the second lesson, run from its page.",
+      "label": "A Statechart Library, step 1",
+      "reason": "A step of lesson 4, run from its page.",
       "origin": "Made for Semantifyr",
       "holder": "The Semantifyr Authors",
       "licence": "EPL-2.0",
-      "page": "learn/tutorials/trafficlight/building-a-library",
-      "cases": [],
+      "page": "learn/tutorials/trafficlight/library",
+      "cases": [
+        "LightCanTurnYellow"
+      ],
       "hidden": true
     },
     {
       "id": "intermediate-step2",
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/intermediate-step2.oxsts",
-      "label": "Building a Library, step 2",
-      "reason": "A step of the second lesson, run from its page.",
+      "label": "A Statechart Library, step 2",
+      "reason": "A step of lesson 4, run from its page.",
       "origin": "Made for Semantifyr",
       "holder": "The Semantifyr Authors",
       "licence": "EPL-2.0",
-      "page": "learn/tutorials/trafficlight/building-a-library",
+      "page": "learn/tutorials/trafficlight/library",
       "cases": [
-        "GreenColorIsReachable"
-      ],
-      "hidden": true
-    },
-    {
-      "id": "intermediate-step3",
-      "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/intermediate-step3.oxsts",
-      "label": "Building a Library, step 3",
-      "reason": "A step of the second lesson, run from its page.",
-      "origin": "Made for Semantifyr",
-      "holder": "The Semantifyr Authors",
-      "licence": "EPL-2.0",
-      "page": "learn/tutorials/trafficlight/building-a-library",
-      "cases": [
-        "GreenColorIsReachable"
+        "LightCanTurnYellow"
       ],
       "hidden": true
     },
@@ -346,15 +370,15 @@
       "id": "advanced-step1",
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/advanced-step1.oxsts",
-      "label": "Advanced Tutorial, step 1",
-      "reason": "A step of the third lesson, run from its page.",
+      "label": "Hierarchy, Events and the Environment, step 1",
+      "reason": "A step of lesson 5, run from its page.",
       "origin": "Made for Semantifyr",
       "holder": "The Semantifyr Authors",
       "licence": "EPL-2.0",
-      "page": "learn/tutorials/trafficlight/advanced-tutorial",
+      "page": "learn/tutorials/trafficlight/hierarchy",
       "cases": [
-        "GreenColorIsReachable",
-        "IntersectionNeverBothGreen",
+        "LightCanTurnGreen",
+        "NeverBothGreen",
         "NeverGreenInStandby"
       ],
       "hidden": true
@@ -363,15 +387,15 @@
       "id": "advanced-step2",
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/advanced-step2.oxsts",
-      "label": "Advanced Tutorial, step 2",
-      "reason": "A step of the third lesson, run from its page.",
+      "label": "Hierarchy, Events and the Environment, step 2",
+      "reason": "A step of lesson 5, run from its page.",
       "origin": "Made for Semantifyr",
       "holder": "The Semantifyr Authors",
       "licence": "EPL-2.0",
-      "page": "learn/tutorials/trafficlight/advanced-tutorial",
+      "page": "learn/tutorials/trafficlight/hierarchy",
       "cases": [
-        "GreenColorIsReachable",
-        "IntersectionNeverBothGreen",
+        "LightCanTurnGreen",
+        "NeverBothGreen",
         "NeverGreenInStandby"
       ],
       "hidden": true
@@ -380,15 +404,15 @@
       "id": "advanced-step3",
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/advanced-step3.oxsts",
-      "label": "Advanced Tutorial, step 3",
-      "reason": "A step of the third lesson, run from its page.",
+      "label": "Hierarchy, Events and the Environment, step 3",
+      "reason": "A step of lesson 5, run from its page.",
       "origin": "Made for Semantifyr",
       "holder": "The Semantifyr Authors",
       "licence": "EPL-2.0",
-      "page": "learn/tutorials/trafficlight/advanced-tutorial",
+      "page": "learn/tutorials/trafficlight/hierarchy",
       "cases": [
-        "GreenColorIsReachable",
-        "IntersectionNeverBothGreen",
+        "LightCanTurnGreen",
+        "NeverBothGreen",
         "NeverGreenInStandby",
         "GreenLampOnlyInGreen"
       ],
@@ -398,18 +422,17 @@
       "id": "advanced-step4",
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/advanced-step4.oxsts",
-      "label": "Advanced Tutorial, step 4",
-      "reason": "A step of the third lesson, run from its page.",
+      "label": "Hierarchy, Events and the Environment, step 4",
+      "reason": "A step of lesson 5, run from its page.",
       "origin": "Made for Semantifyr",
       "holder": "The Semantifyr Authors",
       "licence": "EPL-2.0",
-      "page": "learn/tutorials/trafficlight/advanced-tutorial",
+      "page": "learn/tutorials/trafficlight/hierarchy",
       "cases": [
-        "GreenColorIsReachable",
-        "IntersectionNeverBothGreen",
+        "LightCanTurnGreen",
+        "NeverBothGreen",
         "NeverGreenInStandby",
-        "GreenLampOnlyInGreen",
-        "NoStandbyWithoutPause"
+        "GreenLampOnlyInGreen"
       ],
       "hidden": true
     },
@@ -417,19 +440,18 @@
       "id": "advanced-step5",
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/advanced-step5.oxsts",
-      "label": "Advanced Tutorial, step 5",
-      "reason": "A step of the third lesson, run from its page.",
+      "label": "Hierarchy, Events and the Environment, step 5",
+      "reason": "A step of lesson 5, run from its page.",
       "origin": "Made for Semantifyr",
       "holder": "The Semantifyr Authors",
       "licence": "EPL-2.0",
-      "page": "learn/tutorials/trafficlight/advanced-tutorial",
+      "page": "learn/tutorials/trafficlight/hierarchy",
       "cases": [
-        "GreenColorIsReachable",
-        "IntersectionNeverBothGreen",
+        "LightCanTurnGreen",
+        "NeverBothGreen",
         "NeverGreenInStandby",
         "GreenLampOnlyInGreen",
-        "NoStandbyWithoutPause",
-        "EmergencyStopsTraffic"
+        "NoStandbyWithoutPause"
       ],
       "hidden": true
     }

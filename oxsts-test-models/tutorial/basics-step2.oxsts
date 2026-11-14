@@ -1,15 +1,17 @@
+// Two traffic lights at an intersection, where one light switches in each step.
+
 package example::trafficlight::basics::step2
 
 enum LightColor {
     Red,
     Yellow,
-    Green
+    Green,
 }
 
-@VerificationCase
 class TrafficLight {
     var color: LightColor := LightColor::Red
 
+    @Trace
     redefine tran {
         choice {
             assume(color == LightColor::Red)
@@ -23,7 +25,61 @@ class TrafficLight {
         }
     }
 
+    prop isColor(color: LightColor): bool {
+        return self.color == color
+    }
+}
+
+class Intersection {
+    contains north: TrafficLight
+    contains east: TrafficLight
+
+    redefine tran {
+        choice {
+            assume(!east.isColor(LightColor::Green))
+            inline north.main()
+        } or {
+            assume(!north.isColor(LightColor::Green))
+            inline east.main()
+        }
+    }
+}
+
+@VerificationCase
+class NeverBothGreen {
+    contains intersection: Intersection
+
+    redefine tran {
+        inline intersection.main()
+    }
+
     prop {
-        return EF (color == LightColor::Yellow)
+        return AG !(intersection.north.isColor(LightColor::Green) && intersection.east.isColor(LightColor::Green))
+    }
+}
+
+@VerificationCase
+class EastCanTurnGreen {
+    contains intersection: Intersection
+
+    redefine tran {
+        inline intersection.main()
+    }
+
+    prop {
+        return EF intersection.east.isColor(LightColor::Green)
+    }
+}
+
+@VerificationCase
+class NorthGreenOnlyWhileEastRed {
+    contains intersection: Intersection
+
+    redefine tran {
+        inline intersection.main()
+    }
+
+    prop {
+        return AG (!intersection.north.isColor(LightColor::Green) || intersection.east.isColor(LightColor::Red))
     }
 }

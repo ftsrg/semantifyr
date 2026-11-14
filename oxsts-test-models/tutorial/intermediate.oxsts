@@ -1,3 +1,6 @@
+// A traffic light and a pedestrian light at a crossing, both built on one small statechart library.
+// The library says once how a statechart steps, and each light only lists its states and transitions.
+
 package example::trafficlight::intermediate
 
 class State {
@@ -60,33 +63,51 @@ class TrafficLight : Statechart {
     }
 
     redefine init {
-        activeState := red
+        inline red.activate()
     }
 }
 
-class Intersection {
-    contains north: TrafficLight
-    contains east: TrafficLight
+class PedestrianLight : Statechart {
+    contains stop: State subsets states
+    contains walk: State subsets states
+
+    contains stopToWalk: Transition subsets transitions {
+        redefine refers from: State[1] = stop
+        redefine refers to: State[1] = walk
+    }
+    contains walkToStop: Transition subsets transitions {
+        redefine refers from: State[1] = walk
+        redefine refers to: State[1] = stop
+    }
 
     redefine init {
-        inline north.init()
-        inline east.init()
+        inline stop.activate()
+    }
+}
+
+class Crossing {
+    contains light: TrafficLight
+    contains pedestrians: PedestrianLight
+
+    redefine init {
+        inline light.init()
+        inline pedestrians.init()
     }
 
     redefine tran {
         choice {
-            assume(!east.green.isActive())
-            inline north.main()
+            assume(pedestrians.stop.isActive())
+            inline light.main()
         } or {
-            assume(!north.green.isActive())
-            inline east.main()
+            assume(light.red.isActive())
+            inline pedestrians.main()
         }
     }
 }
 
 @VerificationCase
-class GreenColorIsReachable {
-    contains light: TrafficLight[1]
+class LightCanTurnYellow {
+    contains light: TrafficLight
 
     redefine init {
         inline light.init()
@@ -97,23 +118,40 @@ class GreenColorIsReachable {
     }
 
     prop {
-        return EF light.green.isActive()
+        return EF light.yellow.isActive()
     }
 }
 
 @VerificationCase
-class IntersectionNeverBothGreen {
-    contains intersection: Intersection
+class PedestriansCanWalk {
+    contains crossing: Crossing
 
     redefine init {
-        inline intersection.init()
+        inline crossing.init()
     }
 
     redefine tran {
-        inline intersection.main()
+        inline crossing.main()
     }
 
     prop {
-        return AG !(intersection.north.green.isActive() && intersection.east.green.isActive())
+        return EF crossing.pedestrians.walk.isActive()
+    }
+}
+
+@VerificationCase
+class WalkOnlyWhileRed {
+    contains crossing: Crossing
+
+    redefine init {
+        inline crossing.init()
+    }
+
+    redefine tran {
+        inline crossing.main()
+    }
+
+    prop {
+        return AG (!crossing.pedestrians.walk.isActive() || crossing.light.red.isActive())
     }
 }

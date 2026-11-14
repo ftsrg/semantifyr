@@ -5,20 +5,7 @@ sidebar_position: 0
 
 # Tutorials
 
-Guided walk-throughs of Semantifyr. The Traffic Light series builds a small state machine from scratch and progressively introduces the language constructs you will need to read and write real semantic libraries.
+Guided walk-throughs of Semantifyr. Each runs in your browser with no setup: every step opens in Live, embedded in the page.
 
-If you are new to Semantifyr, start with [Direct Modeling](trafficlight/direct-modeling.md). The Traffic Light tutorials run in your browser with no setup: every step opens in Live, embedded in the page.
-
-## Traffic Light series
-
-| Tutorial | Description |
-|----------|-------------|
-| [Direct Modeling](trafficlight/direct-modeling.md) | Build a basic traffic light and intersection directly, with no reusable abstractions. Discover and fix a safety bug. Introduces classes, transitions, properties, `choice`/`assume`, containment, `@VerificationCase`, `AG`/`EF`. |
-| [Building a Library](trafficlight/building-a-library.md) | Refactor the traffic light into a small `Statechart` library with first-class `State` and `Transition` classes. Introduces inheritance, `container`/`opposite`, `subsets`, feature-typed variables, `nothing`, `inline for choice`, and the init-chain pattern. |
-| [Advanced Tutorial](trafficlight/advanced-tutorial.md) | Extend the small library with patterns from real semantic libraries: hierarchical states, entry actions, and events with triggers, then pre-empt the lights with a global emergency override. Introduces composite states, `inline if`, `State` subclasses, `redefine contains`, `havoc` for modeling the environment, and global features. |
-
-## SysML v2
-
-| Tutorial | Description |
-|----------|-------------|
-| [Verifying SysML v2 Models](sysml-v2.md) | Model a switch and a lamp in SysML v2, verify requirements in Live, and read the trace of a failed one. |
+- [Traffic Light](trafficlight/index.md): the OXSTS lessons, five levels from one traffic light to a small statechart library with nested states, events and an environment. If you are new to OXSTS, start with [One Light](trafficlight/one-light.md).
+- [Verifying SysML v2 Models](sysml-v2.md): model a switch and a lamp in SysML v2, verify requirements in Live, and read the trace of a failed one.

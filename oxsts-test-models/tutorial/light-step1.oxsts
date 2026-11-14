@@ -1,0 +1,31 @@
+// One traffic light that cycles from red to green to yellow, and a question about it.
+
+package example::trafficlight::light
+
+enum LightColor {
+    Red,
+    Yellow,
+    Green,
+}
+
+@VerificationCase
+class TrafficLight {
+    var color: LightColor := LightColor::Red
+
+    redefine tran {
+        choice {
+            assume(color == LightColor::Red)
+            color := LightColor::Green
+        } or {
+            assume(color == LightColor::Green)
+            color := LightColor::Yellow
+        } or {
+            assume(color == LightColor::Yellow)
+            color := LightColor::Red
+        }
+    }
+
+    prop {
+        return EF (color == LightColor::Yellow)
+    }
+}

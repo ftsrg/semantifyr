@@ -1,0 +1,93 @@
+// Two traffic lights at an intersection, where a green light counts its steps before it may turn yellow.
+// A light starts counting again whenever it switches, and a case counts the steps north stays green on its own.
+
+package example::trafficlight::greentime
+
+enum LightColor {
+    Red,
+    Yellow,
+    Green,
+}
+
+class TrafficLight {
+    var color: LightColor := LightColor::Red
+    var greenFor: int := 0
+
+    @Trace
+    tran switchTo(color: LightColor) {
+        self.color := color
+        greenFor := 0
+    }
+
+    redefine tran {
+        choice {
+            assume(color == LightColor::Red)
+            inline switchTo(LightColor::Green)
+        } or {
+            assume(color == LightColor::Green && greenFor < 3)
+            greenFor := greenFor + 1
+        } or {
+            assume(color == LightColor::Green && greenFor >= 3)
+            inline switchTo(LightColor::Yellow)
+        } or {
+            assume(color == LightColor::Yellow)
+            inline switchTo(LightColor::Red)
+        }
+    }
+
+    prop isColor(color: LightColor): bool {
+        return self.color == color
+    }
+}
+
+class Intersection {
+    contains north: TrafficLight
+    contains east: TrafficLight
+
+    redefine tran {
+        choice {
+            assume(east.isColor(LightColor::Red))
+            inline north.main()
+        } or {
+            assume(north.isColor(LightColor::Red))
+            inline east.main()
+        }
+    }
+}
+
+@VerificationCase
+class NorthCanTurnYellow {
+    contains intersection: Intersection
+
+    redefine tran {
+        inline intersection.main()
+    }
+
+    prop {
+        return EF intersection.north.isColor(LightColor::Yellow)
+    }
+}
+
+@VerificationCase
+class NorthGreenForThreeSteps {
+    contains intersection: Intersection
+    var stepsGreen: int := 0
+    var leftGreenEarly: bool := false
+
+    redefine tran {
+        var wasGreen: bool := intersection.north.isColor(LightColor::Green)
+        inline intersection.main()
+        var isGreen: bool := intersection.north.isColor(LightColor::Green)
+        leftGreenEarly := wasGreen && !isGreen && stepsGreen < 3
+        if (wasGreen && isGreen && stepsGreen < 3) {
+            stepsGreen := stepsGreen + 1
+        }
+        if (!isGreen) {
+            stepsGreen := 0
+        }
+    }
+
+    prop {
+        return AG !leftGreenEarly
+    }
+}
