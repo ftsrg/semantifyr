@@ -11,6 +11,9 @@ import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.servedExamples
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
 import org.gradle.api.file.RegularFile
+import org.gradle.process.ExecOperations
+import java.io.ByteArrayOutputStream
+import javax.inject.Inject
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.nodejs")
@@ -34,6 +37,12 @@ val sysmlCompiledExamplesFiles = configurations.resolvable("sysmlCompiledExample
     attributes(semantifyrArtifact("compiled-examples"))
 }
 
+val sysmlCompiledTutorial = configurations.dependencyScope("sysmlCompiledTutorial")
+val sysmlCompiledTutorialFiles = configurations.resolvable("sysmlCompiledTutorialFiles") {
+    extendsFrom(sysmlCompiledTutorial.get())
+    attributes(semantifyrArtifact("compiled-tutorial"))
+}
+
 val sysmlWorker = configurations.dependencyScope("sysmlWorker")
 val sysmlWorkerFiles = configurations.resolvable("sysmlWorkerFiles") {
     extendsFrom(sysmlWorker.get())
@@ -44,6 +53,7 @@ dependencies {
     editorCommon(project(":semantifyr-editor-common"))
     gammaCompiledExamples(project(":gamma-frontend"))
     sysmlCompiledExamples(project(":sysml-wrapper"))
+    sysmlCompiledTutorial(project(":sysml-wrapper"))
     sysmlWorker(project(":sysml-wrapper"))
 }
 
@@ -90,6 +100,17 @@ val cloneTutorialSnippets = tasks.register<Sync>("cloneTutorialSnippets") {
 val exampleDescriptions = tasks.register<ExampleDescriptions>("exampleDescriptions") {
     models.from(servedFiles("sysml"), servedFiles("gamma"), servedFiles("oxsts"))
     outputDirectory.set(importedSnippetsDir.dir("descriptions"))
+}
+
+// the load test sends a served SysML v2 model as the OXSTS it compiles to, the tutorial's among them
+val cloneLoadTestModels = tasks.register<Sync>("cloneLoadTestModels") {
+    from(sysmlCompiledExamplesFiles) {
+        include(compiledFiles("sysml"))
+    }
+    from(sysmlCompiledTutorialFiles) {
+        include(compiledFiles("sysml"))
+    }
+    into(layout.buildDirectory.dir("load-test-models/sysml"))
 }
 
 val cloneTestModels = tasks.register("cloneTestModels") {
@@ -186,6 +207,10 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
     group = "verification"
 
     configureSharedInputs()
+    // an example's page is tested against live's head and the rights the REUSE file gives, and the load test's models are read as it sends them
+    inputs.file(project.layout.projectDirectory.file("index.html")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(rootProject.layout.projectDirectory.file("REUSE.toml")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cloneLoadTestModels).withPathSensitivity(PathSensitivity.RELATIVE)
 
     npmCommand.set(listOf("run", "check"))
 
@@ -231,27 +256,35 @@ tasks.register<NpmTask>("uiTest") {
     inputs.files(cloneSysmlWorker)
 }
 
-// the pages' screenshots are taken from live itself, on Playwright's Chromium unless SCREEN_TEST_CHROMIUM names one
-val installScreenshotBrowser = tasks.register<NpmTask>("installScreenshotBrowser") {
-    dependsOn(tasks.npmInstall)
-    val localChromium = providers.environmentVariable("SCREEN_TEST_CHROMIUM")
-    onlyIf {
-        !localChromium.isPresent
+abstract class ScreenshotBrowser : ValueSource<String, ScreenshotBrowser.Parameters> {
+    interface Parameters : ValueSourceParameters {
+        val chromium: Property<String>
     }
-    // a Linux runner of CI lacks the libraries the browser needs, which Playwright installs there
-    val dependencies = if (providers.environmentVariable("CI").isPresent && System.getProperty("os.name") == "Linux") {
-        listOf("--with-deps")
-    } else {
-        emptyList()
+
+    @get:Inject
+    abstract val execOperations: ExecOperations
+
+    override fun obtain(): String {
+        val system = "${System.getProperty("os.name")} ${System.getProperty("os.arch")}"
+        val chromium = parameters.chromium.orNull
+        if (chromium.isNullOrEmpty()) {
+            return "Playwright's Chromium on $system"
+        }
+        if (!File(chromium).exists()) {
+            throw GradleException("The screenshots need Chromium, and SCREEN_TEST_CHROMIUM names $chromium, which does not exist. Name a Chromium with SCREEN_TEST_CHROMIUM=<path to its executable>, or leave it unset for Playwright's.")
+        }
+        val version = ByteArrayOutputStream()
+        execOperations.exec {
+            commandLine(chromium, "--version")
+            standardOutput = version
+        }
+        return "${version.toString().trim()} on $system"
     }
-    npmCommand.set(
-        listOf(
-            "exec",
-            "--",
-            "playwright",
-            "install",
-        ) + dependencies + listOf("chromium"),
-    )
+}
+
+// a picture holds the fonts and the rendering of the browser and the system it is taken on, so they key the cache beside Playwright's version in the lock file
+val screenshotBrowser = providers.of(ScreenshotBrowser::class) {
+    parameters.chromium.set(providers.environmentVariable("SCREEN_TEST_CHROMIUM"))
 }
 
 val screenshots = tasks.register<NpmTask>("screenshots") {
@@ -264,7 +297,7 @@ val screenshots = tasks.register<NpmTask>("screenshots") {
     inputs.file(project.layout.projectDirectory.file("index.html")).withPathSensitivity(PathSensitivity.RELATIVE)
     dependsOn(npmAssemble)
     inputs.files(cloneSysmlWorker).withPathSensitivity(PathSensitivity.RELATIVE)
-    dependsOn(installScreenshotBrowser)
+    inputs.property("screenshotBrowser", screenshotBrowser)
 
     npmCommand.set(listOf("run", "screenshots"))
     environment.put("TEST_BROWSER", "chromium")
@@ -295,8 +328,7 @@ tasks.register<NpmTask>("loadTest") {
     group = "verification"
 
     inputs.files(tasks.npmInstall)
-    // a SysML v2 example goes to the server as the OXSTS the build compiles it to
-    dependsOn(cloneTestModels)
+    inputs.files(cloneLoadTestModels)
 
     npmCommand.set(listOf("run", "load-test", "--"))
     args.set(

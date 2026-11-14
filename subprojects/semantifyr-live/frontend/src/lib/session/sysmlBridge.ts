@@ -15,7 +15,7 @@ import {
   type WitnessValidationResult,
 } from '@semantifyr/editor-common'
 
-import { SemantifyrLiveMethods, type ReadDocumentParams, type ReadDocumentResult, type VerificationsChangedParams } from '../api/lspExtensions'
+import { SemantifyrLiveMethods, type ReadDocumentParams, type ReadDocumentResult, type VerificationsChangedParams } from '../api/lspExtensions.ts'
 import type { CancellationToken, LspClient } from '../verification/engine'
 import type { ProblemEntry } from './problems'
 

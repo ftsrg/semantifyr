@@ -17,7 +17,7 @@ import { runStudent, type StudentRun } from './student.ts'
 
 const usage = `Usage: npm run load-test -- [options]
 
-Simulates a class on a live server: each student opens a served example, waits for diagnostics, discovers every case and verifies them all at once with the default portfolio, validates every witness as the editor does, edits the model, verifies again and disconnects once the validations are back. Then, with the class gone, it verifies every served case of the examples alone and reports each one that takes longer than the bound, which fails nothing.
+Simulates a class on a live server: each student opens a served example, waits for diagnostics, discovers every case and verifies them all at once with the default portfolio, validates every witness as the editor does, edits the model, verifies again and disconnects once the validations are back. Before the class, it verifies every served case of the examples alone and reports each one that takes longer than the bound, which fails nothing.
 
   --url <url>               live server (default $SEMANTIFYR_LIVE_URL, else https://live-staging.semantifyr.org)
   --students <n>            concurrent students (default 30)
@@ -162,6 +162,27 @@ async function main(): Promise<number> {
     })
   }, healthIntervalMs)
 
+  // the bound is of a case with nothing beside it, so each served case is verified alone before the class, while what a class leaves on the server cannot run beside it
+  let bound: BoundReport | null = null
+  if (values.measure) {
+    const sessionsBefore = await activeSessions(httpBase)
+    console.log(`${elapsed()}  verifying each served case alone, ${sessionsBefore ?? 'an unknown number of'} other sessions on the server`)
+    const measured: StudentRun[] = []
+    for (const model of models) {
+      if (abort.signal.aborted) {
+        break
+      }
+      const run = await runStudent(-1, 0, { webSocketBase, flavor: flavorOf(model), portfolio, validationPortfolio: null, model, edit: false, oneAtATime: true, timeoutMs, signal: abort.signal })
+      const times = run.cases.map((verification) => {
+        return `${verification.name} ${(verification.wallMs / 1000).toFixed(1)} s`
+      })
+      console.log(`${elapsed()}  ${model.name}: ${run.error ? `${run.error.phase} failed: ${run.error.message}` : times.join(', ')}`)
+      measured.push(run)
+    }
+    bound = boundOf(measured, boundMs, sessionsBefore)
+    console.log('')
+  }
+
   const runs = (await Promise.all(Array.from({ length: students }, async (_, student) => {
     const results: StudentRun[] = []
     try {
@@ -182,22 +203,6 @@ async function main(): Promise<number> {
     }
     return results
   }))).flat()
-
-  // the bound counts a case with nothing beside it: each served case alone, once the class has left
-  let bound: BoundReport | null = null
-  if (values.measure && !abort.signal.aborted) {
-    console.log(`\n${elapsed()}  verifying each served case alone`)
-    const measured: StudentRun[] = []
-    for (const model of models) {
-      const run = await runStudent(-1, 0, { webSocketBase, flavor: flavorOf(model), portfolio, validationPortfolio: null, model, edit: false, oneAtATime: true, timeoutMs, signal: abort.signal })
-      const times = run.cases.map((verification) => {
-        return `${verification.name} ${(verification.wallMs / 1000).toFixed(1)} s`
-      })
-      console.log(`${elapsed()}  ${model.name}: ${run.error ? `${run.error.phase} failed: ${run.error.message}` : times.join(', ')}`)
-      measured.push(run)
-    }
-    bound = boundOf(measured, boundMs)
-  }
 
   clearInterval(sampler)
   await sleep(2000)

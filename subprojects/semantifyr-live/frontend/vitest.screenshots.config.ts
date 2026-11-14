@@ -11,7 +11,7 @@ export default defineConfig({
   cacheDir: 'build/vite/screenshots',
   test: {
     include: ['src/__shots__/**/*.shots.ts'],
-    globalSetup: ['./src/__ui__/staticServer.ts'],
+    globalSetup: ['./src/__shots__/browser.ts', './src/__ui__/staticServer.ts'],
     testTimeout: 240 * 1000,
     hookTimeout: 60 * 1000,
     fileParallelism: false,

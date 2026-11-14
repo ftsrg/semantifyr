@@ -10,6 +10,8 @@ import { fileURLToPath } from 'node:url'
 import { VerificationStatus } from '@semantifyr/editor-common'
 import { fileNameOf, servedExamples, type CaseManifest, type ExampleLanguage, type ServedExample } from '@semantifyr/editor-common/examples'
 
+import { SYSML_FLAVOR_ID, SYSML_OXSTS_FLAVOR_ID } from '../lib/session/sysmlBridge.ts'
+
 export interface DeclaredCase {
   name: string
   expected: VerificationStatus | null
@@ -26,13 +28,11 @@ export interface LoadTestModel {
 const repository = fileURLToPath(new URL('../../../../../', import.meta.url))
 
 // the build writes the compiled OXSTS of the served SysML v2 models here, as sysml-2ls's mapper gives it
-const compiledSysmlDirectory = fileURLToPath(new URL('../snippets/imported/sysmlv2/', import.meta.url))
+const compiledSysmlDirectory = fileURLToPath(new URL('../../build/load-test-models/sysml/', import.meta.url))
 
-// as live sends a model: SysML v2 as its mapped OXSTS on the SysML v2 library, the others in their own language
-const FLAVOR_OF: Readonly<Record<ExampleLanguage, string>> = {
-  sysml: 'oxsts-with-sysmlv2-library',
-  gamma: 'gamma',
-  oxsts: 'oxsts',
+// as live sends a model: SysML v2 as its mapped OXSTS on the flavor live's SysML v2 language sends it on, the others on their own language's flavor
+function flavorIdOf(language: ExampleLanguage): string {
+  return language === SYSML_FLAVOR_ID ? SYSML_OXSTS_FLAVOR_ID : language
 }
 
 // a case of unknown verdict is benchmarked and expects nothing
@@ -63,7 +63,7 @@ function textOf(example: ServedExample): string {
   const name = fileNameOf(example)
   const compiled = join(compiledSysmlDirectory, `${name.slice(0, name.lastIndexOf('.'))}.oxsts`)
   if (!existsSync(compiled)) {
-    throw new Error(`${compiled} is missing: run ./gradlew :semantifyr-live-frontend:cloneTestModels first`)
+    throw new Error(`${compiled} is missing: run ./gradlew :semantifyr-live-frontend:cloneLoadTestModels first`)
   }
   return readFileSync(compiled, 'utf-8')
 }
@@ -72,7 +72,7 @@ export function servedModel(example: ServedExample): LoadTestModel {
   const expected = expectedVerdicts(join(repository, example.file))
   return {
     name: `${example.language}/${example.id}`,
-    flavorId: FLAVOR_OF[example.language],
+    flavorId: flavorIdOf(example.language),
     text: textOf(example),
     cases: example.cases.map((name) => {
       return { name, expected: expected.get(name) ?? null }

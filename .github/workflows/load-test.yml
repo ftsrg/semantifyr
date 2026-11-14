@@ -46,7 +46,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: package-lock.json
-      # the run sends a SysML v2 example as the OXSTS the build compiles it to, and then verifies each served case alone against the bound
+      # the run sends a SysML v2 example as the OXSTS the build compiles it to, and verifies each served case alone against the bound before the class
       - name: Load test
         timeout-minutes: 60
         env:

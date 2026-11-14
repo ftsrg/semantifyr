@@ -231,6 +231,8 @@ export interface BoundCase {
 
 export interface BoundReport {
   boundMs: number
+  // the sessions on the server when the measurement began, before the class
+  sessionsBefore: number | null
   cases: BoundCase[]
   over: BoundCase[]
   // a model whose session failed before its cases answered, with the reason
@@ -238,7 +240,7 @@ export interface BoundReport {
 }
 
 // a served case answers within the bound when it is verified alone; the run reports the ones that do not and fails nothing for them
-export function boundOf(runs: StudentRun[], boundMs: number): BoundReport {
+export function boundOf(runs: StudentRun[], boundMs: number, sessionsBefore: number | null): BoundReport {
   const cases = runs.flatMap((run) => {
     return run.cases.map((verification) => {
       return { model: run.model, name: verification.name, status: verification.status, message: verification.message, wallMs: verification.wallMs, serverMs: verification.serverMs }
@@ -246,6 +248,7 @@ export function boundOf(runs: StudentRun[], boundMs: number): BoundReport {
   })
   return {
     boundMs,
+    sessionsBefore,
     cases,
     over: cases.filter((verification) => {
       return verification.wallMs > boundMs
@@ -259,7 +262,9 @@ export function boundOf(runs: StudentRun[], boundMs: number): BoundReport {
 }
 
 export function formatBound(report: BoundReport): string {
-  const lines = [`served cases verified alone: ${report.cases.length}, over the bound of ${seconds(report.boundMs)}: ${report.over.length}`]
+  const lines = [
+    `served cases verified alone before the class, with ${report.sessionsBefore ?? 'an unknown number of'} other sessions on the server: ${report.cases.length}, over the bound of ${seconds(report.boundMs)}: ${report.over.length}`,
+  ]
   for (const verification of report.over) {
     lines.push(`- ${verification.model} ${verification.name}: ${seconds(verification.wallMs)}, ${verification.serverMs === null ? 'no time' : seconds(verification.serverMs)} on the server, ${verification.status ?? 'no result'}`)
   }

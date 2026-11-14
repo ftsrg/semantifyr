@@ -204,6 +204,7 @@ tasks.processResources {
 
 val compiledExamplesDir = layout.buildDirectory.dir("compiled-examples")
 val compiledCorpusDir = layout.buildDirectory.dir("compiled-corpus")
+val compiledTutorialDir = layout.buildDirectory.dir("compiled-tutorial")
 val examplesSourceDir = layout.projectDirectory.dir("../models/examples")
 val corpusDir = layout.buildDirectory.dir("corpus")
 val cliBundleDir = layout.buildDirectory.dir("cli-bundle")
@@ -260,20 +261,30 @@ val tutorialWorkspace = fileTree(tutorialSourceDir) {
     include("**/*.sysml", "**/*.kerml")
 }
 
-// the tutorial's models, which its page runs in live, compiled beside the examples for the load test that sends them as live does
-val compileSysmlTutorialTasks = corpusModels(tutorialSourceDir).map {
-    sysmlCompileTask("compileSysmlTutorial_${it.name}", provider { tutorialSourceDir }, tutorialWorkspace, it.name, compiledExamplesDir)
-}
-
 val compileSysmlExamples = tasks.register("compileSysmlExamples") {
     inputs.files(compileSysmlExampleTasks)
-    inputs.files(compileSysmlTutorialTasks)
 }
 
 configurations.consumable("compiledExamplesElements") {
     attributes(semantifyrArtifact("compiled-examples"))
     outgoing.artifact(compiledExamplesDir) {
         builtBy(compileSysmlExamples)
+    }
+}
+
+// the tutorial's models are served on its page, and the load test sends them as live does
+val compileSysmlTutorialTasks = corpusModels(tutorialSourceDir).map {
+    sysmlCompileTask("compileSysmlTutorial_${it.name}", provider { tutorialSourceDir }, tutorialWorkspace, it.name, compiledTutorialDir)
+}
+
+val compileSysmlTutorial = tasks.register("compileSysmlTutorial") {
+    inputs.files(compileSysmlTutorialTasks)
+}
+
+configurations.consumable("compiledTutorialElements") {
+    attributes(semantifyrArtifact("compiled-tutorial"))
+    outgoing.artifact(compiledTutorialDir) {
+        builtBy(compileSysmlTutorial)
     }
 }
 

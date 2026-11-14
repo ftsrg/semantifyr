@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { VerificationStatus, type VerificationCaseResult } from '@semantifyr/editor-common'
 import { servedExamples } from '@semantifyr/editor-common/examples'
 import { servedModels } from '../../__load__/models.ts'
-import { boundOf, distribution, failures, fairness, summarize } from '../../__load__/stats.ts'
+import { boundOf, distribution, failures, fairness, formatBound, summarize } from '../../__load__/stats.ts'
 import { validateResult, type CaseRun, type RunningTracker, type StudentRun, type ValidationRun } from '../../__load__/student.ts'
 import type { LspClient } from '../../lib/verification/engine.ts'
 import { servedFlavors } from '../fixtures/flavors.ts'
@@ -289,10 +289,11 @@ describe('boundOf', () => {
     const report = boundOf([
       studentRun({ model: 'sysml/crossroads', cases: [caseRun({ name: 'Fast', wallMs: 4000 }), caseRun({ name: 'Slow', wallMs: 31_000, serverMs: 30_500 })] }),
       studentRun({ model: 'gamma/spacecraft', cases: [], error: { phase: 'discovery', message: 'no answer', timeout: true } }),
-    ], 30_000)
+    ], 30_000, 0)
 
     expect(report.over).toEqual([{ model: 'sysml/crossroads', name: 'Slow', status: 'passed', message: null, wallMs: 31_000, serverMs: 30_500 }])
     expect(report.cases).toHaveLength(2)
     expect(report.unmeasured).toEqual([{ model: 'gamma/spacecraft', reason: 'discovery failed: no answer' }])
+    expect(formatBound(report).split('\n')[0]).toBe('served cases verified alone before the class, with 0 other sessions on the server: 2, over the bound of 30.00 s: 1')
   })
 })
