@@ -156,7 +156,9 @@ class GammaFrontendTestHelper {
         private val WITNESS_EXAMPLES = listOf(
             "Simple.gamma",
             "Crossroads.gamma",
+            "CrossroadsFurtherCases.gamma",
             "Spacecraft.gamma",
+            "SpacecraftFurtherCases.gamma",
         )
 
         @JvmStatic

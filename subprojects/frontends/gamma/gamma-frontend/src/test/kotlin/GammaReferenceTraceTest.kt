@@ -51,18 +51,18 @@ class GammaReferenceTraceTest {
 
     @Test
     fun `the hand-written reference trace validates against the crossroads model`() {
-        val (_, reference) = read(CROSSROADS, REFERENCE_TRACE)
+        val (_, reference) = read(CROSSROADS_CASES, REFERENCE_TRACE)
 
         assertThat((reference as ExecutionTrace).steps).hasSize(5)
     }
 
     @Test
     fun `the reference trace round-trips through parse and serialize`() {
-        val (_, reference) = read(CROSSROADS, REFERENCE_TRACE)
+        val (_, reference) = read(CROSSROADS_CASES, REFERENCE_TRACE)
         val serializedTrace = temporaryDirectory.resolve("trace.get")
         serializedTrace.writeText(serializer.serialize(reference, SaveOptions.newBuilder().format().options))
 
-        val (_, original, reparsed) = read(CROSSROADS, REFERENCE_TRACE, serializedTrace)
+        val (_, original, reparsed) = read(CROSSROADS_CASES, REFERENCE_TRACE, serializedTrace)
 
         assertThat(EcoreUtil.equals(original, reparsed)).isTrue()
     }
@@ -76,7 +76,7 @@ class GammaReferenceTraceTest {
         val generatedTrace = temporaryDirectory.resolve("trace.get")
         generatedTrace.writeText(generatedText)
 
-        val (_, reference, reparsed) = read(CROSSROADS, REFERENCE_TRACE, generatedTrace)
+        val (_, reference, reparsed) = read(CROSSROADS_CASES, REFERENCE_TRACE, generatedTrace)
 
         assertThat(EcoreUtil.equals(reference, reparsed)).isTrue()
         assertThat(generatedText).isEqualTo(REFERENCE_TRACE.readText().replace("\r\n", "\n").substringAfter("*/").trimStart())
@@ -127,9 +127,9 @@ class GammaReferenceTraceTest {
     }
 
     private fun compileReferenceCase(): CompiledReferenceCase {
-        val crossroads = read(CROSSROADS).single() as GammaModelPackage
-        val nameMap = gammaCompiler.compile(crossroads, temporaryDirectory.resolve("model.oxsts"))
-        val verificationCase = crossroads.verificationCases.single {
+        val crossroadsCases = read(CROSSROADS_CASES).single() as GammaModelPackage
+        val nameMap = gammaCompiler.compileWithImports(crossroadsCases, temporaryDirectory).nameMap
+        val verificationCase = crossroadsCases.verificationCases.single {
             it.name == "ACanBeGreen"
         }
         return CompiledReferenceCase(verificationCase, nameMap)
@@ -177,7 +177,7 @@ class GammaReferenceTraceTest {
     )
 
     companion object {
-        private val CROSSROADS = Path("build", "test-models", "Crossroads.gamma")
+        private val CROSSROADS_CASES = Path("build", "test-models", "CrossroadsFurtherCases.gamma")
         private val PAIR = Path("..", "models", "etc")
         private val REFERENCE_TRACE = PAIR.resolve("crossroads-ACanBeGreen.trace.get")
         private val REFERENCE_TRACE_JSON = PAIR.resolve("crossroads-ACanBeGreen.trace.json")

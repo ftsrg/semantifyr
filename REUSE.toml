@@ -48,7 +48,10 @@ SPDX-License-Identifier = "EPL-1.0"
 
 # from the Crossroads of the Gamma tutorial, https://github.com/ftsrg/gamma/tree/master/tutorial/hu.bme.mit.gamma.tutorial.finish/model
 [[annotations]]
-path = "subprojects/frontends/gamma/models/examples/Crossroads.gamma"
+path = [
+    "subprojects/frontends/gamma/models/examples/Crossroads.gamma",
+    "subprojects/frontends/gamma/models/examples/CrossroadsFurtherCases.gamma",
+]
 precedence = "override"
 SPDX-FileCopyrightText = "The contributors to the Gamma project"
 SPDX-License-Identifier = "EPL-1.0"
@@ -57,6 +60,7 @@ SPDX-License-Identifier = "EPL-1.0"
 [[annotations]]
 path = [
     "subprojects/frontends/gamma/models/examples/Spacecraft.gamma",
+    "subprojects/frontends/gamma/models/examples/SpacecraftFurtherCases.gamma",
     "subprojects/frontends/sysml/models/examples/crossroads.sysml",
     "subprojects/frontends/sysml/models/examples/crossroads.further-cases",
     "subprojects/frontends/sysml/models/examples/compressedspacecraft.sysml",
@@ -71,7 +75,10 @@ SPDX-License-Identifier = "EPL-1.0"
 
 # follows the Landing Gear System case study of Frédéric Boniol and Virginie Wiels, ABZ 2014; the model is the Semantifyr authors' own
 [[annotations]]
-path = "subprojects/frontends/sysml/models/examples/landing_gear.sysml"
+path = [
+    "subprojects/frontends/gamma/models/examples/LandingGear.gamma",
+    "subprojects/frontends/sysml/models/examples/landing_gear.sysml",
+]
 precedence = "override"
 SPDX-FileCopyrightText = "2026 The Semantifyr Authors"
 SPDX-License-Identifier = "EPL-2.0"

@@ -67,6 +67,8 @@ fun gammaExampleTask(name: String) = tasks.register<JavaExec>("compileGammaExamp
     val sourceFile = examplesSourceDir.file("$name.gamma")
     val targetFile = compiledExamplesDir.map { it.file("$name.oxsts") }
     inputs.file(sourceFile).withPathSensitivity(PathSensitivity.NAME_ONLY)
+    // a model's imports resolve in the files beside it
+    inputs.dir(examplesSourceDir).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(sourceSets["main"].runtimeClasspath).withNormalizer(ClasspathNormalizer::class)
     outputs.file(targetFile)
     outputs.cacheIf { true }

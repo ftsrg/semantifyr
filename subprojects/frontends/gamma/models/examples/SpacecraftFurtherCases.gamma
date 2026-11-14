@@ -1,0 +1,35 @@
+package SpacecraftFurtherCases
+
+import Spacecraft
+
+verification case Station_IdleReachable of SpaceMission {
+    EF state station.Main.Idle
+}
+
+verification case Station_OperationReachable of SpaceMission {
+    EF state station.Main.Operation
+}
+
+verification case Station_OperationReceiveDataWaitingReachable of SpaceMission {
+    EF state station.ReceiveData.Waiting
+}
+
+verification case Spacecraft_CommunicationWaitingPingReachable of SpaceMission {
+    EF state spacecraft.Communication.WaitingPing
+}
+
+verification case Spacecraft_CommunicationTransmittingSendDataSendingReachable of SpaceMission {
+    EF state spacecraft.SendData.Sending
+}
+
+verification case Spacecraft_CommunicationTransmittingConsumePowerConsumingReachable of SpaceMission {
+    EF state spacecraft.ConsumePower.Consuming
+}
+
+verification case Spacecraft_BatteryNotRechargingReachable of SpaceMission {
+    EF state spacecraft.Battery.NotRecharging
+}
+
+verification case Spacecraft_BatteryRechargingReachable of SpaceMission {
+    EF state spacecraft.Battery.Recharging
+}
