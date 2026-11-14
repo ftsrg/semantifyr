@@ -7,7 +7,7 @@ sidebar_position: 2
 
 The form of `trace.get` and what it shows are on the reference page [Gamma traces](../learn/cli/gamma-trace.mdx), and witness validation under [Artifacts](../learn/cli/artifacts.mdx#witness-validation). This page is how the trace is generated and tested.
 
-The reference pair is `subprojects/frontends/gamma/models/etc/crossroads-ACanBeGreen.*`, a witness of the case `ACanBeGreen` of `models/examples/Crossroads.gamma`: `trace.json` and `witness.json` as Theta's witness produced them, and the hand-written `trace.get` they generate.
+The reference pair is `subprojects/frontends/gamma/models/etc/crossroads-ACanBeGreen.*`, a witness of the case `ACanBeGreen` of `models/examples/CrossroadsFurtherCases.gamma`, one of the Crossroads model's further cases: `trace.json` and `witness.json` as Theta's witness produced them, and the hand-written `trace.get` they generate.
 
 ## Generation
 
