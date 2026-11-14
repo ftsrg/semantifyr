@@ -14,24 +14,93 @@ import java.util.TreeMap;
 
 public final class TestModels {
 
-    private static final Path BASICS_TUTORIAL = Path.of("../../oxsts-test-models/tutorial/basics.oxsts");
-
-    private static final Path GREEN_TIME_TUTORIAL = Path.of("../../oxsts-test-models/tutorial/green-time.oxsts");
-
     private static final Path GAMMA_LIBRARY = Path.of("../frontends/gamma/models/libraries/default");
 
     private TestModels() {}
 
-    public static String basics() throws IOException {
-        return Files.readString(BASICS_TUTORIAL);
-    }
+    public static final String TRAFFIC_LIGHTS = """
+            package example::trafficlights
 
-    public static String basicsWith(String addition) throws IOException {
-        return basics() + "\n" + addition;
-    }
+            enum LightColor {
+                Red,
+                Yellow,
+                Green
+            }
 
-    public static String greenTimeWith(String addition) throws IOException {
-        return Files.readString(GREEN_TIME_TUTORIAL) + "\n" + addition;
+            class TrafficLight {
+                var color: LightColor := LightColor::Red
+
+                tran assumeColor(color: LightColor) {
+                    assume(self.color == color)
+                }
+
+                @Trace
+                tran setColor(color: LightColor) {
+                    self.color := color
+                }
+
+                redefine tran {
+                    choice {
+                        inline assumeColor(LightColor::Red)
+                        inline setColor(LightColor::Green)
+                    } or {
+                        inline assumeColor(LightColor::Green)
+                        inline setColor(LightColor::Yellow)
+                    } or {
+                        inline assumeColor(LightColor::Yellow)
+                        inline setColor(LightColor::Red)
+                    }
+                }
+
+                prop isColor(color: LightColor): bool {
+                    return self.color == color
+                }
+            }
+
+            class Intersection {
+                contains north: TrafficLight
+                contains east: TrafficLight
+
+                redefine tran {
+                    choice {
+                        assume(!east.isColor(LightColor::Green))
+                        inline north.main()
+                    } or {
+                        assume(!north.isColor(LightColor::Green))
+                        inline east.main()
+                    }
+                }
+            }
+
+            @VerificationCase
+            class GreenColorIsReachable {
+                contains light: TrafficLight[1]
+
+                redefine tran {
+                    inline light.main()
+                }
+
+                prop {
+                    return EF (light.color == LightColor::Green)
+                }
+            }
+
+            @VerificationCase
+            class IntersectionNeverBothGreen {
+                contains intersection: Intersection
+
+                redefine tran {
+                    inline intersection.main()
+                }
+
+                prop {
+                    return AG !(intersection.north.color == LightColor::Green && intersection.east.color == LightColor::Green)
+                }
+            }
+            """;
+
+    public static String trafficLightsWith(String addition) {
+        return TRAFFIC_LIGHTS + "\n" + addition;
     }
 
     public static Map<String, String> gammaLibrary() throws IOException {

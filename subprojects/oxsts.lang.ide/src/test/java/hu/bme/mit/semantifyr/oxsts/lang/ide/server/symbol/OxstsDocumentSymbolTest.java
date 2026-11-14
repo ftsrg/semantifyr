@@ -33,8 +33,8 @@ class OxstsDocumentSymbolTest extends OxstsLanguageServerTest {
     }
 
     @Test
-    void outlineOfTheBasicsTutorialHasOneKindPerDeclarationSimpleNamesAndSignatures() throws Exception {
-        var document = openModel(TestModels.basics());
+    void outlineOfTheTrafficLightsHasOneKindPerDeclarationSimpleNamesAndSignatures() throws Exception {
+        var document = openModel(TestModels.TRAFFIC_LIGHTS);
 
         var symbols = languageServer
                 .documentSymbol(new DocumentSymbolParams(document))
@@ -46,28 +46,26 @@ class OxstsDocumentSymbolTest extends OxstsLanguageServerTest {
         }
         assertThat(symbols).allMatch(Either::isRight);
         assertThat(outline.toString()).isEqualTo("""
-                Package example::trafficlight::basics
+                Package example::trafficlights
                     Enum LightColor
                         EnumMember Red
                         EnumMember Yellow
                         EnumMember Green
                     Class TrafficLight
                         Variable color LightColor
+                        Method assumeColor (color: LightColor)
+                        Method setColor (color: LightColor)
                         Method main ()
                         Function isColor (color: LightColor): bool
                     Class Intersection
                         Property north contains TrafficLight
                         Property east contains TrafficLight
                         Method main ()
-                    Class NeverBothGreen
-                        Property intersection contains Intersection
+                    Class GreenColorIsReachable
+                        Property light contains TrafficLight[1]
                         Method main ()
                         Function prop
-                    Class EastCanTurnGreen
-                        Property intersection contains Intersection
-                        Method main ()
-                        Function prop
-                    Class NorthGreenOnlyWhileEastRed
+                    Class IntersectionNeverBothGreen
                         Property intersection contains Intersection
                         Method main ()
                         Function prop

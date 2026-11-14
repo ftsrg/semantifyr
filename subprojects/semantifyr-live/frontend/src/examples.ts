@@ -59,15 +59,16 @@ function importedText(files: Record<string, unknown>, path: string): string | nu
   return typeof text === 'string' ? text : null;
 }
 
-function descriptionOf(served: ServedExample): string | null {
-  return importedText(importedDescriptions, `./snippets/imported/descriptions/${fileNameOf(served)}.description`)?.trim() ?? null;
+// a model without a comment at its top has no description file
+export function descriptionOf(descriptions: Record<string, unknown>, fileName: string): string | null {
+  return importedText(descriptions, `./snippets/imported/descriptions/${fileName}.description`)?.trim() ?? null;
 }
 
 function sourceExamples(language: ExampleLanguage, flavor: string): LiveExample[] {
   const { directory, files } = IMPORTED[language];
   return servedExamplesOf(language).flatMap((served) => {
     const code = importedText(files, `./snippets/imported/${directory}/${fileNameOf(served)}`);
-    return code === null ? [] : [{ id: served.id, flavor, label: served.label, description: descriptionOf(served), code, served }];
+    return code === null ? [] : [{ id: served.id, flavor, label: served.label, description: descriptionOf(importedDescriptions, fileNameOf(served)), code, served }];
   });
 }
 

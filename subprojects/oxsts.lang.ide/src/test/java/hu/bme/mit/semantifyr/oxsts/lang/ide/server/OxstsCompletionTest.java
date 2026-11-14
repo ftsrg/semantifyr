@@ -6,9 +6,8 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server;
 
-import static hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels.basicsWith;
+import static hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels.trafficLightsWith;
 import static hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels.gammaLibrary;
-import static hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels.greenTimeWith;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import hu.bme.mit.semantifyr.oxsts.lang.ide.MarkedText;
@@ -24,7 +23,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void containmentTypeOffersOnlyClasses() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 class Case {
                     contains other: <|>
                 }
@@ -35,13 +34,13 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
                 .doesNotContain("bool", "int", "any", "LightColor");
         assertThat(item(items, "TrafficLight")).satisfies(item -> {
             assertThat(item.getKind()).isEqualTo(CompletionItemKind.Class);
-            assertThat(item.getDetail()).isEqualTo("example::trafficlight::basics");
+            assertThat(item.getDetail()).isEqualTo("example::trafficlights");
         });
     }
 
     @Test
     void referenceTypeOffersClassesDataTypesAndEnums() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 class Case {
                     refers color: <|>
                 }
@@ -53,7 +52,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void expressionMemberOffersValuesAndNoTransitions() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 class Case {
                     contains light: TrafficLight
 
@@ -77,7 +76,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void statementStartOffersOnlyAssignableTargets() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 class Case {
                     contains light: TrafficLight
                     var counter: int := 0
@@ -93,7 +92,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void inlineStatementOffersTransitionsAndInstanceFeatures() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 class Case {
                     contains light: TrafficLight
                     var counter: int := 0
@@ -109,7 +108,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void inlineCallInsertsTheTransitionWithItsParameters() throws Exception {
-        var items = complete(MarkedText.of(greenTimeWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 class Case {
                     contains light: TrafficLight
 
@@ -119,10 +118,10 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
                 }
                 """)));
 
-        assertThat(item(items, "switchTo")).satisfies(item -> {
+        assertThat(item(items, "setColor")).satisfies(item -> {
             assertThat(item.getKind()).isEqualTo(CompletionItemKind.Method);
-            assertThat(item.getDetail()).isEqualTo("switchTo(color: LightColor)");
-            assertThat(item.getTextEdit().getLeft().getNewText()).isEqualTo("switchTo(${1:color})$0");
+            assertThat(item.getDetail()).isEqualTo("setColor(color: LightColor)");
+            assertThat(item.getTextEdit().getLeft().getNewText()).isEqualTo("setColor(${1:color})$0");
             assertThat(item.getInsertTextFormat()).isEqualTo(InsertTextFormat.Snippet);
         });
         assertThat(item(items, "main").getTextEdit().getLeft().getNewText()).isEqualTo("main()$0");
@@ -130,12 +129,12 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void callArgumentOffersTheNamedArgumentAndValuesOfTheParameterTypeFirst() throws Exception {
-        var items = complete(MarkedText.of(greenTimeWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 class Case {
                     contains light: TrafficLight
 
                     redefine tran {
-                        inline light.switchTo(<|>)
+                        inline light.setColor(<|>)
                     }
                 }
                 """)));
@@ -157,7 +156,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void propertyArgumentInAnExpressionOffersTheNamedArgument() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 class Case {
                     contains light: TrafficLight
 
@@ -172,25 +171,26 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void redefineTransitionOffersTheInheritedSignaturesWithoutInit() throws Exception {
-        var items = complete(MarkedText.of(greenTimeWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 class SpecialLight : TrafficLight {
                     redefine tran <|>
                 }
                 """)));
 
-        assertThat(labels(items)).containsExactly("switchTo(color: LightColor)");
-        assertThat(item(items, "switchTo(color: LightColor)")
+        assertThat(labels(items))
+                .containsExactlyInAnyOrder("assumeColor(color: LightColor)", "setColor(color: LightColor)");
+        assertThat(item(items, "setColor(color: LightColor)")
                         .getTextEdit()
                         .getLeft()
                         .getNewText())
-                .isEqualTo("switchTo(color: LightColor) {\n\t$0\n}");
+                .isEqualTo("setColor(color: LightColor) {\n\t$0\n}");
     }
 
     @Test
     void classBodyOffersRedefinitionsOfInheritedMembers() throws Exception {
-        var items = complete(MarkedText.of(greenTimeWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 class SpecialLight : TrafficLight {
-                    redefine tran switchTo(color: LightColor) {
+                    redefine tran setColor(color: LightColor) {
                         self.color := color
                     }
 
@@ -199,8 +199,12 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
                 """)));
 
         assertThat(labels(items))
-                .contains("redefine prop isColor(color: LightColor): bool", "redefine tran", "redefine init")
-                .doesNotContain("redefine tran switchTo(color: LightColor)");
+                .contains(
+                        "redefine tran assumeColor(color: LightColor)",
+                        "redefine prop isColor(color: LightColor): bool",
+                        "redefine tran",
+                        "redefine init")
+                .doesNotContain("redefine tran setColor(color: LightColor)");
         assertThat(item(items, "redefine prop isColor(color: LightColor): bool"))
                 .satisfies(item -> {
                     assertThat(item.getKind()).isEqualTo(CompletionItemKind.Function);
@@ -212,7 +216,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void classBodyOffersAnAbstractFeatureAsContainsAndRefersRedefinitions() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 abstract class LightHolder {
                     features light: TrafficLight
                 }
@@ -234,7 +238,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void classBodyAfterAFeatureOffersTheRedefinitionsOfTheClassNotOfTheFeatureType() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 class Case {
                     contains light: TrafficLight
                     <|>

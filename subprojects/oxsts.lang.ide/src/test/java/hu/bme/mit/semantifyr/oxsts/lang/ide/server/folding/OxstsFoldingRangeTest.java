@@ -23,7 +23,7 @@ class OxstsFoldingRangeTest extends OxstsLanguageServerTest {
 
     @Test
     void everyBlockFoldsOnceAndKeepsItsClosingBraceVisible() throws Exception {
-        var document = openModel(TestModels.basics());
+        var document = openModel(TestModels.TRAFFIC_LIGHTS);
 
         var lines = foldingRanges(document).stream()
                 .map(range -> new Lines(range.getStartLine(), range.getEndLine()))
@@ -32,13 +32,13 @@ class OxstsFoldingRangeTest extends OxstsLanguageServerTest {
         assertThat(lines).doesNotHaveDuplicates();
         assertThat(lines)
                 .contains(
-                        new Lines(11, 30),
-                        new Lines(15, 25),
-                        new Lines(16, 24),
-                        new Lines(16, 18),
-                        new Lines(19, 21),
-                        new Lines(22, 24),
-                        new Lines(28, 29));
+                        new Lines(8, 35),
+                        new Lines(16, 17),
+                        new Lines(20, 30),
+                        new Lines(21, 29),
+                        new Lines(21, 23),
+                        new Lines(24, 26),
+                        new Lines(27, 29));
     }
 
     @Test

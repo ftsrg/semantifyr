@@ -7,6 +7,7 @@
 import { describe, expect, it } from 'vitest';
 import { servedExamplesOf } from '@semantifyr/editor-common/examples';
 import {
+  descriptionOf,
   findExample,
   findFlavor,
   listedExamples,
@@ -117,13 +118,13 @@ describe('liveFlavors', () => {
   it('the trafficlight tutorial snapshots are registered as named oxsts examples', () => {
     const oxsts = findFlavor(servedLiveFlavors, 'oxsts')!;
     const ids = oxsts.examples.map((example) => example.id);
-    expect(ids).toContain('basics');
-    expect(ids).toContain('intermediate');
-    expect(ids).toContain('advanced');
+    expect(ids).toContain('intersection');
+    expect(ids).toContain('library');
+    expect(ids).toContain('hierarchy');
   });
 
   it('the trafficlight snapshots contain code that mentions a verification case', () => {
-    const direct = findExample(findFlavor(servedLiveFlavors, 'oxsts')!, 'basics');
+    const direct = findExample(findFlavor(servedLiveFlavors, 'oxsts')!, 'intersection');
     expect(direct?.code).toContain('@VerificationCase');
   });
 });
@@ -146,16 +147,19 @@ describe('the registry\'s examples', () => {
   it('a lesson\'s step opens by its address and the menu does not list it', () => {
     const oxsts = findFlavor(servedLiveFlavors, 'oxsts')!;
 
-    expect(findExample(oxsts, 'basics-step1')?.code).toContain('package example::trafficlight::basics::step1');
+    expect(findExample(oxsts, 'intersection-step1')?.code).toContain('package example::trafficlight::intersection::step1');
     expect(listedExamples(oxsts).map((example) => {
       return example.id;
-    })).not.toContain('basics-step1');
+    })).not.toContain('intersection-step1');
   });
 
   it('shows no description for a model whose file has no comment at its top', () => {
-    const levelCrossing = findExample(findFlavor(servedLiveFlavors, 'oxsts')!, 'level-crossing');
+    const descriptions = {
+      './snippets/imported/descriptions/lights.oxsts.description': ' Two lights at a crossing.\n',
+    };
 
-    expect(levelCrossing?.description).toBeNull();
+    expect(descriptionOf(descriptions, 'lights.oxsts')).toBe('Two lights at a crossing.');
+    expect(descriptionOf(descriptions, 'bare.oxsts')).toBeNull();
   });
 });
 
@@ -176,10 +180,12 @@ describe('findFlavor', () => {
 
 describe('findExample', () => {
   it('returns an example by id within the supplied flavor', () => {
-    const oxsts = findFlavor(servedLiveFlavors, 'oxsts')!;
-    expect(findExample(oxsts, 'basics')?.label).toBe(servedExamplesOf('oxsts').find((example) => {
-      return example.id === 'basics';
-    })?.label);
+    const examples = [
+      { id: 'first', flavor: 'oxsts', label: 'First', description: null, code: '', served: null },
+      { id: 'second', flavor: 'oxsts', label: 'Second', description: null, code: '', served: null },
+    ];
+
+    expect(findExample({ examples }, 'second')).toBe(examples[1]);
   });
 
   it('returns undefined when the id does not exist in the flavor', () => {
