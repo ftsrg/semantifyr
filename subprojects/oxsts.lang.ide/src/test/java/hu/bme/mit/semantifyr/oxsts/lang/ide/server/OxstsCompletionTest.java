@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server;
 
 import static hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels.basicsWith;
+import static hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels.greenTimeWith;
 import static hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels.gammaLibrary;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -108,7 +109,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void inlineCallInsertsTheTransitionWithItsParameters() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(greenTimeWith("""
                 class Case {
                     contains light: TrafficLight
 
@@ -118,10 +119,10 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
                 }
                 """)));
 
-        assertThat(item(items, "setColor")).satisfies(item -> {
+        assertThat(item(items, "switchTo")).satisfies(item -> {
             assertThat(item.getKind()).isEqualTo(CompletionItemKind.Method);
-            assertThat(item.getDetail()).isEqualTo("setColor(color: LightColor)");
-            assertThat(item.getTextEdit().getLeft().getNewText()).isEqualTo("setColor(${1:color})$0");
+            assertThat(item.getDetail()).isEqualTo("switchTo(color: LightColor)");
+            assertThat(item.getTextEdit().getLeft().getNewText()).isEqualTo("switchTo(${1:color})$0");
             assertThat(item.getInsertTextFormat()).isEqualTo(InsertTextFormat.Snippet);
         });
         assertThat(item(items, "main").getTextEdit().getLeft().getNewText()).isEqualTo("main()$0");
@@ -129,12 +130,12 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void callArgumentOffersTheNamedArgumentAndValuesOfTheParameterTypeFirst() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(greenTimeWith("""
                 class Case {
                     contains light: TrafficLight
 
                     redefine tran {
-                        inline light.setColor(<|>)
+                        inline light.switchTo(<|>)
                     }
                 }
                 """)));
@@ -171,26 +172,26 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void redefineTransitionOffersTheInheritedSignaturesWithoutInit() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(greenTimeWith("""
                 class SpecialLight : TrafficLight {
                     redefine tran <|>
                 }
                 """)));
 
         assertThat(labels(items))
-                .containsExactlyInAnyOrder("assumeColor(color: LightColor)", "setColor(color: LightColor)");
-        assertThat(item(items, "setColor(color: LightColor)")
+                .containsExactly("switchTo(color: LightColor)");
+        assertThat(item(items, "switchTo(color: LightColor)")
                         .getTextEdit()
                         .getLeft()
                         .getNewText())
-                .isEqualTo("setColor(color: LightColor) {\n\t$0\n}");
+                .isEqualTo("switchTo(color: LightColor) {\n\t$0\n}");
     }
 
     @Test
     void classBodyOffersRedefinitionsOfInheritedMembers() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(greenTimeWith("""
                 class SpecialLight : TrafficLight {
-                    redefine tran setColor(color: LightColor) {
+                    redefine tran switchTo(color: LightColor) {
                         self.color := color
                     }
 
@@ -200,11 +201,10 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
         assertThat(labels(items))
                 .contains(
-                        "redefine tran assumeColor(color: LightColor)",
                         "redefine prop isColor(color: LightColor): bool",
                         "redefine tran",
                         "redefine init")
-                .doesNotContain("redefine tran setColor(color: LightColor)");
+                .doesNotContain("redefine tran switchTo(color: LightColor)");
         assertThat(item(items, "redefine prop isColor(color: LightColor): bool"))
                 .satisfies(item -> {
                     assertThat(item.getKind()).isEqualTo(CompletionItemKind.Function);

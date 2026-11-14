@@ -16,6 +16,8 @@ public final class TestModels {
 
     private static final Path BASICS_TUTORIAL = Path.of("../../oxsts-test-models/tutorial/basics.oxsts");
 
+    private static final Path GREEN_TIME_TUTORIAL = Path.of("../../oxsts-test-models/tutorial/green-time.oxsts");
+
     private static final Path GAMMA_LIBRARY = Path.of("../frontends/gamma/models/libraries/default");
 
     private TestModels() {}
@@ -26,6 +28,10 @@ public final class TestModels {
 
     public static String basicsWith(String addition) throws IOException {
         return basics() + "\n" + addition;
+    }
+
+    public static String greenTimeWith(String addition) throws IOException {
+        return Files.readString(GREEN_TIME_TUTORIAL) + "\n" + addition;
     }
 
     public static Map<String, String> gammaLibrary() throws IOException {
