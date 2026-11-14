@@ -169,15 +169,44 @@ function ThemeSwitch(): React.JSX.Element {
 
 // on a phone the bar is live's: the brand, and the current section opening the menu
 function PhoneMenuButton(): React.JSX.Element {
-  const mobileSidebar = useNavbarMobileSidebar();
+  const { shown, toggle } = useNavbarMobileSidebar();
   const current = useCurrentSection();
+  const button = useRef<HTMLButtonElement>(null);
+
+  // the theme's menu stays open on Escape and under a focus that has left it for the page behind it
+  useEffect(() => {
+    if (!shown) {
+      return;
+    }
+    const menu = document.querySelector('.navbar-sidebar');
+    const closeOnEscape = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') {
+        toggle();
+        button.current?.focus();
+      }
+    };
+    const closeOnLeaving = (event: FocusEvent): void => {
+      const target = event.target as Node;
+      if (!menu?.contains(target) && !button.current?.contains(target)) {
+        toggle();
+      }
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    document.addEventListener('focusin', closeOnLeaving);
+    return () => {
+      document.removeEventListener('keydown', closeOnEscape);
+      document.removeEventListener('focusin', closeOnLeaving);
+    };
+  }, [shown, toggle]);
+
   return (
     <button
+      ref={button}
       type="button"
       className="site-header-phone-menu"
-      aria-expanded={mobileSidebar.shown}
+      aria-expanded={shown}
       onClick={() => {
-        mobileSidebar.toggle();
+        toggle();
       }}
     >
       <span className="site-header-phone-menu-text">
