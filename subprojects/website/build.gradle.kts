@@ -12,9 +12,7 @@ import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.servedExampleSources
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
-import org.gradle.process.ExecOperations
-import java.io.ByteArrayOutputStream
-import javax.inject.Inject
+import hu.bme.mit.semantifyr.gradle.conventions.testChromium
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
@@ -62,7 +60,6 @@ val liveScreenshotsFiles = configurations.resolvable("liveScreenshotsFiles") {
     attributes(semantifyrArtifact("screenshots"))
 }
 
-// the keyboard walk opens the embedded examples in live's production build
 val liveWebDistribution = configurations.dependencyScope("liveWebDistribution")
 val liveWebDistributionFiles = configurations.resolvable("liveWebDistributionFiles") {
     extendsFrom(liveWebDistribution.get())
@@ -302,6 +299,13 @@ val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     outputs.cacheIf { true }
 }
 
+// the walk imports live's mock backend and its static server's content types, which the check type-checks, with what they import of live's
+val liveTestSources = rootProject.files(
+    "subprojects/semantifyr-live/frontend/src/__ui__/mock",
+    "subprojects/semantifyr-live/frontend/src/__ui__/staticServer.ts",
+    "subprojects/semantifyr-live/frontend/src/lib/api/types.ts",
+)
+
 val npmCheck = tasks.register<NpmTask>("npmCheck") {
     configureSharedInputs()
     // the terms test reads live's texts too
@@ -313,6 +317,7 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
     inputs.file(rootProject.layout.projectDirectory.file("subprojects/semantifyr-live/frontend/index.html")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(linkingFilesFile).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(linkingFiles).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(liveTestSources).withPropertyName("liveTestSources").withPathSensitivity(PathSensitivity.RELATIVE)
 
     npmCommand.set(listOf("run", "check"))
 
@@ -320,36 +325,7 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
     outputs.cacheIf { true }
 }
 
-abstract class WalkBrowser : ValueSource<String, WalkBrowser.Parameters> {
-    interface Parameters : ValueSourceParameters {
-        val chromium: Property<String>
-    }
-
-    @get:Inject
-    abstract val execOperations: ExecOperations
-
-    override fun obtain(): String {
-        val system = "${System.getProperty("os.name")} ${System.getProperty("os.arch")}"
-        val chromium = parameters.chromium.orNull
-        if (chromium.isNullOrEmpty()) {
-            return "Playwright's Chromium on $system"
-        }
-        if (!File(chromium).exists()) {
-            throw GradleException("The keyboard walk needs Chromium, and SCREEN_TEST_CHROMIUM names $chromium, which does not exist. Name a Chromium with SCREEN_TEST_CHROMIUM=<path to its executable>, or leave it unset for Playwright's.")
-        }
-        val version = ByteArrayOutputStream()
-        execOperations.exec {
-            commandLine(chromium, "--version")
-            standardOutput = version
-        }
-        return "${version.toString().trim()} on $system"
-    }
-}
-
-// the walk drives the browser it names, whose version and system key its result beside Playwright's version in the lock file
-val walkBrowser = providers.of(WalkBrowser::class) {
-    parameters.chromium.set(providers.environmentVariable("SCREEN_TEST_CHROMIUM"))
-}
+val walkBrowser = testChromium("The keyboard walk needs")
 
 tasks.register<NpmTask>("walkTest") {
     group = "verification"
@@ -358,9 +334,7 @@ tasks.register<NpmTask>("walkTest") {
     inputs.file(project.layout.projectDirectory.file("vitest.walk.config.mts")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(npmAssemble).withPropertyName("site").withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(liveWebDistributionFiles).withPropertyName("live").withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.dir(rootProject.layout.projectDirectory.dir("subprojects/semantifyr-live/frontend/src/__ui__/mock"))
-        .withPropertyName("liveMockBackend")
-        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(liveTestSources).withPropertyName("liveTestSources").withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.property("walkBrowser", walkBrowser)
 
     npmCommand.set(listOf("run", "walk"))

@@ -10,10 +10,8 @@ import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.servedExamples
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
+import hu.bme.mit.semantifyr.gradle.conventions.testChromium
 import org.gradle.api.file.RegularFile
-import org.gradle.process.ExecOperations
-import java.io.ByteArrayOutputStream
-import javax.inject.Inject
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.nodejs")
@@ -256,36 +254,8 @@ tasks.register<NpmTask>("uiTest") {
     inputs.files(cloneSysmlWorker)
 }
 
-abstract class ScreenshotBrowser : ValueSource<String, ScreenshotBrowser.Parameters> {
-    interface Parameters : ValueSourceParameters {
-        val chromium: Property<String>
-    }
-
-    @get:Inject
-    abstract val execOperations: ExecOperations
-
-    override fun obtain(): String {
-        val system = "${System.getProperty("os.name")} ${System.getProperty("os.arch")}"
-        val chromium = parameters.chromium.orNull
-        if (chromium.isNullOrEmpty()) {
-            return "Playwright's Chromium on $system"
-        }
-        if (!File(chromium).exists()) {
-            throw GradleException("The screenshots need Chromium, and SCREEN_TEST_CHROMIUM names $chromium, which does not exist. Name a Chromium with SCREEN_TEST_CHROMIUM=<path to its executable>, or leave it unset for Playwright's.")
-        }
-        val version = ByteArrayOutputStream()
-        execOperations.exec {
-            commandLine(chromium, "--version")
-            standardOutput = version
-        }
-        return "${version.toString().trim()} on $system"
-    }
-}
-
-// a picture holds the fonts and the rendering of the browser and the system it is taken on, so they key the cache beside Playwright's version in the lock file
-val screenshotBrowser = providers.of(ScreenshotBrowser::class) {
-    parameters.chromium.set(providers.environmentVariable("SCREEN_TEST_CHROMIUM"))
-}
+// a picture holds the fonts and the rendering of the browser and the system it is taken on
+val screenshotBrowser = testChromium("The screenshots need")
 
 val screenshots = tasks.register<NpmTask>("screenshots") {
     group = "build"
