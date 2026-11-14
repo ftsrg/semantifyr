@@ -5,88 +5,98 @@
  */
 
 import type React from 'react';
+import { outcomeTerms, type Outcome } from '@semantifyr/editor-common/terms';
+import { withCode } from '@site/src/lib/inlineCode';
+import { OutcomeCell, OutcomeLegend, outcomeOf, warningOf } from './ConstructOutcome';
 
-type Outcome = 'carried' | 'departure' | 'planned' | 'out';
+const TABLE = 'gamma constructs.tsv';
+const HEADER = 'area\tconstruct\toutcome\twarning\tfixture\tmarker\tdetail';
+
+const DIFFERENCES: readonly Outcome[] = [
+  'abstracted',
+  'deviating',
+  'extension',
+];
 
 interface GammaConstruct {
   area: string;
   name: string;
   outcome: Outcome;
+  warning: boolean;
   detail: string;
 }
-
-const HEADER = 'area\tconstruct\toutcome\tfixture\tmarker\tdetail';
-const OUTCOMES: readonly string[] = ['carried', 'departure', 'planned', 'out'];
-
-const STATUS: Record<Outcome, string> = {
-  carried: 'Carried',
-  departure: 'Carried with a departure',
-  planned: 'Planned',
-  out: 'Out',
-};
 
 function parseConstructs(table: string): GammaConstruct[] {
   const [header, ...rows] = table.replace(/\r\n/g, '\n').trimEnd().split('\n');
   if (header !== HEADER) {
-    throw new Error(`gamma constructs.tsv must start with the header ${HEADER}`);
+    throw new Error(`${TABLE} must start with the header ${HEADER}`);
   }
   return rows.map((row) => {
-    const [area, name, outcome, , , detail] = row.split('\t');
-    if (area === undefined || name === undefined || outcome === undefined || detail === undefined || !OUTCOMES.includes(outcome)) {
-      throw new Error(`gamma constructs.tsv has a malformed row: ${row}`);
+    const [area, name, outcome, warning, , , detail] = row.split('\t');
+    if (area === undefined || name === undefined || detail === undefined) {
+      throw new Error(`${TABLE} has a malformed row: ${row}`);
     }
-    return { area, name, outcome: outcome as Outcome, detail };
+    return { area, name, outcome: outcomeOf(outcome, TABLE, row), warning: warningOf(warning, TABLE, row), detail };
   });
 }
 
-function withCode(text: string): React.ReactNode[] {
-  return text.split('`').map((part, index) => (index % 2 === 1 ? <code key={index}>{part}</code> : part));
-}
-
-export function GammaDepartures({ table }: { table: string }): React.JSX.Element {
+export function GammaDifferences({ table }: { table: string }): React.JSX.Element {
   return (
     <ul>
       {parseConstructs(table)
-        .filter(({ outcome }) => outcome === 'departure')
-        .map(({ name, detail }) => (
-          <li key={name}>
-            <strong>{withCode(name)}.</strong> {withCode(detail)}
-          </li>
-        ))}
+        .filter(({ outcome }) => {
+          return DIFFERENCES.includes(outcome);
+        })
+        .map(({ name, outcome, detail }) => {
+          return (
+            <li key={name}>
+              <strong>{withCode(name)}</strong>, {outcomeTerms[outcome].term.toLowerCase()}. {withCode(detail)}
+            </li>
+          );
+        })}
     </ul>
   );
 }
 
 export default function GammaConstructTable({ table }: { table: string }): React.JSX.Element {
   const constructs = parseConstructs(table);
-  const areas = [...new Set(constructs.map(({ area }) => area))];
+  const areas = [...new Set(constructs.map(({ area }) => {
+    return area;
+  }))];
   return (
     <>
-      {areas.map((area) => (
-        <section key={area}>
-          <h3>{area}</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Construct</th>
-                <th>Status</th>
-                <th>Note</th>
-              </tr>
-            </thead>
-            <tbody>
-              {constructs
-                .filter((construct) => construct.area === area)
-                .map((construct) => (
-                  <tr key={construct.name}>
-                    <td>{withCode(construct.name)}</td>
-                    <td>{STATUS[construct.outcome]}</td>
-                    <td>{withCode(construct.detail)}</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </section>
-      ))}
+      <OutcomeLegend />
+      {areas.map((area) => {
+        return (
+          <section key={area}>
+            <h3>{area}</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Construct</th>
+                  <th>Outcome</th>
+                  <th>Note</th>
+                </tr>
+              </thead>
+              <tbody>
+                {constructs
+                  .filter((construct) => {
+                    return construct.area === area;
+                  })
+                  .map((construct) => {
+                    return (
+                      <tr key={construct.name}>
+                        <td>{withCode(construct.name)}</td>
+                        <OutcomeCell outcome={construct.outcome} warning={construct.warning} />
+                        <td>{withCode(construct.detail)}</td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </section>
+        );
+      })}
     </>
   );
 }

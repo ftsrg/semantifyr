@@ -5,57 +5,59 @@
  */
 
 import type React from 'react';
+import type { Outcome } from '@semantifyr/editor-common/terms';
+import { withCode } from '@site/src/lib/inlineCode';
+import { OutcomeCell, OutcomeLegend, outcomeOf, warningOf } from './ConstructOutcome';
 
-const HEADER = 'construct\tstatus\tdetail';
-const STATUSES: Record<string, string> = {
-  supported: 'Supported',
-  warned: 'Supported with a warning',
-  refused: 'Refused',
-};
+const TABLE = 'the SysML construct table';
+const HEADER = 'construct\toutcome\twarning\tdetail';
 
 interface SysmlConstruct {
   construct: string;
-  status: string;
+  outcome: Outcome;
+  warning: boolean;
   detail: string;
 }
 
 function parseConstructs(table: string): SysmlConstruct[] {
   const [header, ...rows] = table.replace(/\r\n/g, '\n').trimEnd().split('\n');
   if (header !== HEADER) {
-    throw new Error(`the SysML construct table must start with the header ${HEADER}`);
+    throw new Error(`${TABLE} must start with the header ${HEADER}`);
   }
   return rows.map((row) => {
-    const [construct, status, detail] = row.split('\t');
-    if (construct === undefined || status === undefined || detail === undefined || STATUSES[status] === undefined) {
-      throw new Error(`the SysML construct table has a malformed row: ${row}`);
+    const [construct, outcome, warning, detail] = row.split('\t');
+    if (construct === undefined || detail === undefined) {
+      throw new Error(`${TABLE} has a malformed row: ${row}`);
     }
-    return { construct, status, detail };
+    return { construct, outcome: outcomeOf(outcome, TABLE, row), warning: warningOf(warning, TABLE, row), detail };
   });
 }
 
-function withCode(text: string): React.ReactNode[] {
-  return text.split('`').map((part, index) => (index % 2 === 1 ? <code key={index}>{part}</code> : part));
-}
-
 export default function SysmlConstructTable({ table }: { table: string }): React.JSX.Element {
+  const constructs = parseConstructs(table);
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Construct</th>
-          <th>Status</th>
-          <th>Detail</th>
-        </tr>
-      </thead>
-      <tbody>
-        {parseConstructs(table).map((construct) => (
-          <tr key={construct.construct}>
-            <td>{withCode(construct.construct)}</td>
-            <td>{STATUSES[construct.status]}</td>
-            <td>{construct.detail}</td>
+    <>
+      <OutcomeLegend />
+      <table>
+        <thead>
+          <tr>
+            <th>Construct</th>
+            <th>Outcome</th>
+            <th>Detail</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {constructs.map((construct) => {
+            return (
+              <tr key={construct.construct}>
+                <td>{withCode(construct.construct)}</td>
+                <OutcomeCell outcome={construct.outcome} warning={construct.warning} />
+                <td>{withCode(construct.detail)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </>
   );
 }

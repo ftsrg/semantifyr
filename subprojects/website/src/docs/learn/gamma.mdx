@@ -4,7 +4,7 @@ sidebar_position: 6
 ---
 
 import ServedExamples from '@site/src/components/ServedExamples';
-import GammaConstructTable, { GammaDepartures } from '@site/src/components/GammaConstructs';
+import GammaConstructTable, { GammaDifferences } from '@site/src/components/GammaConstructs';
 import constructs from '@gamma-models/constructs.tsv';
 
 # Gamma
@@ -15,13 +15,13 @@ The [command line](cli/gamma.mdx) verifies Gamma models, and a witness is writte
 
 ## What the library assumes
 
-A carried construct behaves as it does in Gamma. These are the declared differences:
+A conformant construct behaves as it does in Gamma. These are the declared differences, each an abstraction, a deviation or an extension:
 
-<GammaDepartures table={constructs} />
+<GammaDifferences table={constructs} />
 
 ## Constructs
 
-Every construct and variation point of Gamma has one of four outcomes. Carried: the frontend verifies it. Carried with a departure: as carried, with a difference listed above. Planned: decided to be built. Out: not supported yet. This page is generated from the table that a test of the Gamma frontend checks against the models that use each construct.
+Every construct and variation point of Gamma has one of six outcomes, and one with a warning draws a warning from the validator. This page is generated from the table that a test of the Gamma frontend checks against the models that use each construct.
 
 <GammaConstructTable table={constructs} />
 
