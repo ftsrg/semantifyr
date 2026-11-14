@@ -6,8 +6,8 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server;
 
-import static hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels.trafficLightsWith;
 import static hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels.gammaLibrary;
+import static hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels.trafficLightsWith;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import hu.bme.mit.semantifyr.oxsts.lang.ide.MarkedText;
