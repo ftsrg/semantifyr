@@ -67,8 +67,6 @@ fun gammaExampleTask(name: String) = tasks.register<JavaExec>("compileGammaExamp
     val sourceFile = examplesSourceDir.file("$name.gamma")
     val targetFile = compiledExamplesDir.map { it.file("$name.oxsts") }
     inputs.file(sourceFile).withPathSensitivity(PathSensitivity.NAME_ONLY)
-    // a model's imports resolve in the files beside it
-    inputs.dir(examplesSourceDir).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(sourceSets["main"].runtimeClasspath).withNormalizer(ClasspathNormalizer::class)
     outputs.file(targetFile)
     outputs.cacheIf { true }
@@ -79,7 +77,12 @@ fun gammaExampleTask(name: String) = tasks.register<JavaExec>("compileGammaExamp
     }
 }
 
-val compileGammaExampleTasks = corpusModels(examplesSourceDir).map {
+// a file that imports another holds a model's further cases, which nothing consumes compiled
+val compileGammaExampleTasks = corpusModels(examplesSourceDir).filter { model ->
+    providers.fileContents(examplesSourceDir.file(model.file)).asText.get().lines().none {
+        it.startsWith("import ")
+    }
+}.map {
     gammaExampleTask(it.name)
 }
 
