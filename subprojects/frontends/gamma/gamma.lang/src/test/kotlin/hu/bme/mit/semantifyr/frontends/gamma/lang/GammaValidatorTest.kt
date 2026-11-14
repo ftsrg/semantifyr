@@ -242,4 +242,81 @@ class GammaValidatorTest {
         validationTestHelper.assertError(model, GammaPackage.Literals.COMPONENT_INSTANCE, GammaValidator.INVALID_COMPONENT_KIND, "'Receiver' is not an asynchronous component")
         validationTestHelper.assertError(model, GammaPackage.Literals.COMPONENT_INSTANCE, GammaValidator.INVALID_COMPONENT_KIND, "'Buffered' is an asynchronous component")
     }
+
+    private fun channelledComposite(
+        keyword: String,
+        events: String,
+        body: String,
+    ): GammaRoot {
+        return parseHelper.parse(
+            """
+                package test
+                interface Signals {
+                    $events
+                }
+                statechart Sender [
+                    port signals : requires Signals
+                ] {
+                }
+                statechart Receiver [
+                    port signals : provides Signals
+                ] {
+                }
+                $keyword Wired [
+                    port outer : requires Signals
+                ] {
+                    component sender : Sender
+                    component receiver : Receiver
+                    $body
+                }
+            """.trimIndent(),
+        )
+    }
+
+    private val inAndOut = """
+        in event first
+        out event second
+    """
+
+    @Test
+    fun `a provided port with an input event is on a channel or in a binding, never both`() {
+        val model = channelledComposite(
+            "sync",
+            inAndOut,
+            """
+                channel [receiver.signals] -o)- [sender.signals]
+                bind outer -> receiver.signals
+            """,
+        )
+
+        validationTestHelper.assertError(model, GammaPackage.Literals.CHANNEL, GammaValidator.PORT_IN_CHANNEL_AND_BINDING, "either in a channel or a port binding")
+    }
+
+    @Test
+    fun `a required port is on a channel or in a binding, never both`() {
+        val model = channelledComposite(
+            "cascade",
+            "out event second",
+            """
+                channel [receiver.signals] -o)- [sender.signals]
+                bind outer -> sender.signals
+            """,
+        )
+
+        validationTestHelper.assertError(model, GammaPackage.Literals.CHANNEL, GammaValidator.PORT_IN_CHANNEL_AND_BINDING, "either in a channel or a port binding")
+    }
+
+    @Test
+    fun `a provided port of an output-only interface may be on a channel and in a binding`() {
+        val model = channelledComposite(
+            "sync",
+            "out event second",
+            """
+                channel [receiver.signals] -o)- [sender.signals]
+                bind outer -> receiver.signals
+            """,
+        )
+
+        validationTestHelper.assertNoIssue(model, GammaPackage.Literals.CHANNEL, GammaValidator.PORT_IN_CHANNEL_AND_BINDING)
+    }
 }
