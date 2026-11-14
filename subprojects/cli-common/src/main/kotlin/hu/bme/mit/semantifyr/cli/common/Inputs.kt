@@ -19,9 +19,11 @@ import kotlin.io.path.walk
 fun checkInputFile(
     kind: String,
     path: Path,
-    vararg fileSuffixes: String,
+    fileSuffix: String,
+    vararg otherFileSuffixes: String,
 ) {
     checkReadable(kind, path)
+    val fileSuffixes = listOf(fileSuffix) + otherFileSuffixes
     val suffixed = fileSuffixes.any {
         path.name.endsWith(it)
     }
