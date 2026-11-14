@@ -1,7 +1,7 @@
 ---
 title: 'Traffic Light'
 sidebar_position: 0
-description: The OXSTS lessons, five levels on a traffic light, each cut by what you verify in it.
+description: The OXSTS lessons, five levels on a traffic light and an intersection of two, and what you verify at each level.
 ---
 
 # Traffic Light

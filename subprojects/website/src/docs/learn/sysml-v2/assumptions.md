@@ -1,12 +1,15 @@
 ---
 title: Semantic Assumptions
 sidebar_position: 2
-description: What the SysML v2 frontend assumes of a model's meaning, the step, each assumption with its outcome, the variants of its library and what a verdict covers.
+description: What the SysML v2 frontend assumes of a model's meaning, the step, the assumptions, the variants of its library and what a verdict covers.
 ---
+
+import { SysmlConstructsOf } from '@site/src/components/SysmlConstructs';
+import constructs from '@sysml-constructs/constructs.tsv';
 
 # SysML v2's Semantic Assumptions
 
-Semantifyr verifies a SysML v2 model against its SysML v2 semantic library, an abstraction of the standard at the level of states: parts and the regions of a parallel state run concurrently, actions are atomic and instantaneous, expressions are instant and side-effect free, items are signals and time is discrete. Where SysML v2 and KerML decide, the library follows them. Each assumption below names its outcome, in the sense the legend of [What Is Supported](supported.mdx) gives the six, and its enforcement today: a diagnostic of the translator, the library itself, or a convention the model has to keep.
+Semantifyr verifies a SysML v2 model against its SysML v2 semantic library, an abstraction of the standard at the level of states: parts and the regions of a parallel state run concurrently, actions are atomic and instantaneous, expressions are instant and side-effect free, items are signals and time is discrete. Where SysML v2 and KerML decide, the library follows them, except in the constructs the table of [What Is Supported](supported.mdx) calls deviating and in its `fifo` variant. Where an assumption below names an outcome, it is the outcome of the table's rows, in the sense the table's legend gives the six; where it names its enforcement today, that is a diagnostic of the translator, the library itself, or a convention the model has to keep.
 
 ## The Step
 
@@ -18,8 +21,8 @@ Initialization builds the part tree, sets the initial values of the attributes a
 
 ### Parts and Composition
 
-- The part tree is fixed and finite, built at initialization and alive for the whole run; parts react concurrently in the step, the sub-parts of a part in textual order. Abstraction for the lifetimes. A usage with multiplicity `[0]` is absent and a literal `[n]` on a part or port is n instances, both conformant; `[0..1]` and a literal `[n]` on an attribute are planned; creation and destruction, every other multiplicity, and `individual`, `snapshot` and `timeslice` parts are unsupported. A planned or an unsupported multiplicity is a diagnostic.
-- Parts share nothing: a part's guards, effects, entry and exit actions read and write only its own attributes and the items on its own ports; a verification case, a requirement or a constraint reads across the whole subject. Abstraction. A reference to another part's attribute elsewhere is a diagnostic.
+- The part tree is fixed and finite, built at initialization and alive for the whole run; parts react concurrently in the step, the sub-parts of a part in textual order. Abstraction for the lifetimes. A usage with multiplicity `[0]` is absent and a literal `[n]` on a part or port is n instances, both conformant; `[0..1]` and a literal `[n]` on an attribute are planned; creation and destruction and every other multiplicity are unsupported. A planned or an unsupported multiplicity is a diagnostic. The translator does not read `individual`, `snapshot` or `timeslice` on a part usage and translates such a part as any other.
+- Parts share nothing: a part's guards, effects, entry and exit actions read and write only its own attributes and the items on its own ports; a verification case, a requirement or a constraint reads across the whole subject. A reference to and an assignment to the part's own attribute are conformant; a reference to another part's attribute outside a verification case or a requirement is unsupported, a diagnostic.
 
 ### Exhibited States
 
@@ -35,8 +38,8 @@ Initialization builds the part tree, sets the initial values of the attributes a
 
 ### Transitions
 
-- A firing is atomic within the step: trigger and guard are read, then the exits, the effect, the entries and the initial descent run at zero duration. The target's transitions are enabled from the next step, so a chain of untriggered transitions takes one step per transition. Abstraction for a transition observed in progress and compound transitions; unsupported for decision, terminate and action targets. A target other than a state of the model is a diagnostic.
-- A trigger on an initial transition and a guard that is the literal `false` are diagnostics. A guard closed only at runtime on every initial transition blocks initialization, which makes every verdict vacuous, by convention.
+- A firing is atomic within the step: trigger and guard are read, then the exits, the effect, the entries and the initial descent run at zero duration. The target's transitions are enabled from the next step, so a chain of untriggered transitions takes one step per transition. Abstraction for a transition observed in progress and compound transitions; unsupported for decision, terminate and action targets. A transition to `done` is conformant; a source or a target other than a state of the model or `done` is a diagnostic.
+- A trigger on an initial transition is unsupported, a diagnostic, and an initial transition whose guard is the literal `false` is a diagnostic, since it can never be taken. A guard closed only at runtime on every initial transition blocks initialization, which makes every verdict vacuous, by convention.
 
 ### Entry, Exit and Do Actions
 
@@ -51,8 +54,8 @@ Initialization builds the part tree, sets the initial values of the attributes a
 
 ### Attributes and Expressions
 
-- An attribute is a variable of its part, changed only by assignments within the step, typed Boolean or unbounded Integer. `:=` and `default :=` give its initial value; `=` and `default` bind it, by KerML's feature values, so it is derived and never assigned, an assignment to it a diagnostic; an attribute without a value starts at any value. Abstraction. A literal `[n]` on an attribute is a diagnostic. Real and enumerations are planned, String and quantities unsupported, each a diagnostic.
-- An expression is a pure, instantaneous evaluation on the part's state in the step. `isStateActive`, `eventually` and `mustAlways` are Semantifyr's extensions. Abstraction; user calculations are unsupported. The division of two integers is an integer, where KerML's is a rational. Deviation.
+- An attribute is a variable of its part, changed only by assignments within the step, typed Boolean or unbounded Integer. `:=` and `default :=` give its initial value; `=` and `default` bind it, by KerML's feature values, so it is derived and never assigned, an assignment to it a diagnostic; an attribute without a value starts at any value. Conformant. A literal `[n]` on an attribute is a diagnostic. Real and enumerations are planned, String and quantities unsupported, each a diagnostic.
+- An expression is a pure, instantaneous evaluation on the part's state in the step. Integer and Boolean literals, the operators the table lists as conformant and a reference to the part's own attribute are conformant; `isStateActive`, `eventually` and `mustAlways` are Semantifyr's extensions; the division of two integers is an integer, where KerML's is a rational, a deviation; user calculations are unsupported.
 
 ### Time
 
@@ -60,8 +63,8 @@ Initialization builds the part tree, sets the initial values of the attributes a
 
 ### Verification
 
-- The verified part is closed: the environment may put any item on any of its ports in every step. `mustAlways` holds when the condition holds in every reachable state between steps; `eventually` passes when one run reaches the condition, under some choice of the environment. Abstraction.
-- A requirement holds one `require constraint` and a verification case verifies one requirement; a case without `verify` checks its objective's own `require constraint`. `assume` and `assert constraint` in a part are unsupported and a second `require` or `verify` planned; `assume`, a second `require` or `verify`, an objective with both its own `require` and a `verify`, and a temporal operator below the root of a constraint, negations aside, are diagnostics; a constraint without a temporal operator is read as `mustAlways`.
+- The verified part is closed: the environment may put any item on any of its ports in every step. `mustAlways` holds when the condition holds in every reachable state between steps; `eventually` passes when one run reaches the condition, under some choice of the environment. The closed subject is an abstraction, `mustAlways` and `eventually` are extensions.
+- A requirement holds one `require constraint` and a verification case verifies one requirement; a case without `verify` checks its objective's own `require constraint`. `assume` and `assert constraint` in a part are unsupported and a second `require` or `verify` planned; `assume`, a second `require` or `verify`, an objective with both its own `require` and a `verify`, and a temporal operator below the root of a constraint, negations aside, are diagnostics; a constraint without a temporal operator is read as `mustAlways`, an extension.
 
 ## Untyped Ports and Flows
 
@@ -85,4 +88,8 @@ The frontend selects a variant for a whole model; the `semantifyr-sysml` command
 
 ## What a Verdict Covers
 
-An abstraction narrows the runs a verdict ranges over. A passed `mustAlways` and a failed `eventually` hold over the runs the library keeps, and a run the standard admits outside them may break them; a passed `eventually` and a failed `mustAlways` rest on one run the library keeps, which the standard admits within the subset unless a deviation admitted it: the untyped flows, a port's item types, a conjugated port, a part's plain `state` and the division of two integers each admit runs the standard excludes. Such a verdict holds under the standard when its trace does not pass through one of them, which a reader checks on the trace. For example, `mustAlways(not isStateActive(S) or entered)`, where the entry action of `S` sets `entered`, passes because the entry action completes in the step that activates `S`; the standard has `S` active while its entry action runs, and that run breaks the invariant.
+An abstraction narrows the runs a verdict ranges over. A passed `mustAlways` and a failed `eventually` hold over the runs the library keeps, and a run the standard admits outside them may break them. A passed `eventually` and a failed `mustAlways` rest on one run the library keeps, which the standard admits too unless a deviation is involved in it: then the run may be one the standard excludes. The table's deviating constructs are these:
+
+<SysmlConstructsOf table={constructs} outcome="deviating" />
+
+The `fifo` variant departs from the standard as well, which the table does not show: a verdict under it may rest on a run the standard excludes under its defaults. A trace shows the transitions that fired with their triggers and guards, the items they sent and the states the parts were in, so a reader sees on it whether the run sent an item across a typed flow or port, sent against a conjugated port or ran a plain `state`; it does not show whether a division was evaluated, nor an item that an accept of its supertype left untaken. For example, `mustAlways(not isStateActive(S) or entered)`, where the entry action of `S` sets `entered`, passes because the entry action completes in the step that activates `S`; the standard has `S` active while its entry action runs, and that run breaks the invariant.

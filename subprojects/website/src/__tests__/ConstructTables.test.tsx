@@ -11,7 +11,7 @@ import { outcomeTerms, outcomeWarning } from '@semantifyr/editor-common/terms';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import GammaConstructTable, { GammaDifferences } from '../components/GammaConstructs';
-import SysmlConstructTable from '../components/SysmlConstructs';
+import SysmlConstructTable, { SysmlConstructsOf } from '../components/SysmlConstructs';
 
 // Goal: both construct tables show an outcome by the terms file's word with its warning beside it, under a legend of the terms file's meanings, and a row in a word they do not know fails the page
 
@@ -73,6 +73,19 @@ describe('the construct tables', () => {
     expect([...container.querySelectorAll('li strong')].map((name) => {
       return name.textContent;
     })).toEqual(['Time passing']);
+  });
+
+  it('list the rows of one outcome', () => {
+    const gamma = `${GAMMA}\nVariation points\tA written priority under priority off\tdeviating\tyes\tmodels/semantics/TransitionPriority.gamma\t(1) from Idle to Low\tThe priority is ignored.`;
+    const names = (container: HTMLElement): (string | null)[] => {
+      return [...container.querySelectorAll('li strong')].map((name) => {
+        return name.textContent;
+      });
+    };
+
+    expect(names(render(<SysmlConstructsOf table={SYSML} outcome="deviating" />).container)).toEqual(['Item definition specializing another']);
+    cleanup();
+    expect(names(render(<GammaDifferences table={gamma} outcome="deviating" />).container)).toEqual(['A written priority under priority off']);
   });
 
   it('refuse a table whose header they do not know', () => {

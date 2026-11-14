@@ -14,7 +14,7 @@ import styles from './styles.module.css';
 
 const STACK_OFFSET = 6;
 
-export interface Backend {
+interface Backend {
   name: string;
   page: string;
 }

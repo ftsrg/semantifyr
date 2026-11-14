@@ -34,17 +34,20 @@ function parseConstructs(table: string): GammaConstruct[] {
   });
 }
 
-export function GammaDifferences({ table }: { table: string }): React.JSX.Element {
+export function GammaDifferences({ table, outcome }: { table: string; outcome?: Outcome }): React.JSX.Element {
   return (
     <ul>
       {parseConstructs(table)
-        .filter(({ outcome }) => {
-          return outcomeTerms[outcome].difference;
+        .filter((construct) => {
+          if (outcome !== undefined) {
+            return construct.outcome === outcome;
+          }
+          return outcomeTerms[construct.outcome].difference;
         })
-        .map(({ name, outcome, detail }) => {
+        .map((construct) => {
           return (
-            <li key={name}>
-              <strong>{withCode(name)}</strong>, {outcomeTerms[outcome].term.toLowerCase()}. {withCode(detail)}
+            <li key={construct.name}>
+              <strong>{withCode(construct.name)}</strong>, {outcomeTerms[construct.outcome].term.toLowerCase()}. {withCode(construct.detail)}
             </li>
           );
         })}

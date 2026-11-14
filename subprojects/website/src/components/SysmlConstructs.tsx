@@ -33,6 +33,24 @@ function parseConstructs(table: string): SysmlConstruct[] {
   });
 }
 
+export function SysmlConstructsOf({ table, outcome }: { table: string; outcome: Outcome }): React.JSX.Element {
+  return (
+    <ul>
+      {parseConstructs(table)
+        .filter((construct) => {
+          return construct.outcome === outcome;
+        })
+        .map(({ construct, detail }) => {
+          return (
+            <li key={construct}>
+              <strong>{withCode(construct)}</strong>: {withCode(detail)}
+            </li>
+          );
+        })}
+    </ul>
+  );
+}
+
 export default function SysmlConstructTable({ table }: { table: string }): React.JSX.Element {
   const constructs = parseConstructs(table);
   return (
