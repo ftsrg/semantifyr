@@ -1,6 +1,7 @@
 ---
 title: Expressions
 sidebar_position: 4
+description: OXSTS expressions, their literals, operators and precedence, casts, if-then-else and calls.
 ---
 
 import Planned from '@site/src/components/Planned';

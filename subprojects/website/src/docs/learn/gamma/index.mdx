@@ -1,0 +1,21 @@
+---
+title: Gamma
+description: The Gamma frontend, which verifies Gamma statecharts and their composition and writes their traces in Gamma's trace language, its pages and the Gamma models Live serves.
+---
+
+import ServedExamples from '@site/src/components/ServedExamples';
+
+# Gamma
+
+Gamma, the statechart composition language of the BME Fault Tolerant Systems Research Group, is one of Semantifyr's frontends, beside SysML v2. The Gamma frontend maps a sub-language of Gamma, written in Gamma's syntax, one to one into a semantic library written in OXSTS. The library holds Gamma's execution semantics, and each of Gamma's semantic variation points is a variant of the library. Small models, one per feature, check the library on every change, and the models of Gamma's own tests check its coverage every night; each verdict is the one Gamma gives, except where a difference is declared. A model that uses a construct outside the sub-language is rejected.
+
+- [What Is Supported](supported.mdx): every construct and variation point of Gamma, each with its outcome.
+- [Semantic Assumptions](assumptions.mdx): the step, time and events as the library has them, what a verdict covers, and the declared differences.
+
+The [command line](../reference/cli/gamma.mdx) verifies Gamma models, and a witness is written as a [Gamma execution trace](../reference/artifacts/gamma-trace.mdx).
+
+## Examples in Live
+
+The Gamma models Live serves, each opening in Live by its own address:
+
+<ServedExamples />

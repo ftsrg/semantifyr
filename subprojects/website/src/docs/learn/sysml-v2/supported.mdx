@@ -1,0 +1,16 @@
+---
+title: What Is Supported
+sidebar_position: 1
+description: The SysML v2 constructs the translator reads, each with its outcome, generated from the frontend's registry.
+---
+
+import SysmlConstructTable from '@site/src/components/SysmlConstructs';
+import constructs from '@sysml-constructs/constructs.tsv';
+
+# What of SysML v2 Is Supported
+
+The SysML v2 frontend takes the part of the language that describes behaviour at the level of states: part and port definitions with their usages, items sent over flows between ports, attributes of type Integer and Boolean, exhibited state machines, and verification cases whose objectives are requirements over a part. What the frontend assumes of the meaning of these constructs is on [Semantic Assumptions](assumptions.md).
+
+Every SysML v2 construct the translator reads, generated from its registry with its outcome: a planned or an unsupported construct is a diagnostic located on it and no OXSTS is written; every other one is accepted and translated unless its detail says it is not, and one with a warning draws a warning that says what the model should know.
+
+<SysmlConstructTable table={constructs} />

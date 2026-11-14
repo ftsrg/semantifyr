@@ -1,6 +1,7 @@
 ---
 title: SysML v2
 sidebar_position: 2
+description: The semantifyr-sysml launcher, which translates and verifies SysML v2 models, its commands and what it needs.
 ---
 
 import CodeBlock from '@theme/CodeBlock';
@@ -27,4 +28,4 @@ The translation is verified on top of the bundled SysML v2 semantic library, the
 
 <CodeBlock language="text">{compile}</CodeBlock>
 
-`compile` writes the OXSTS translation of the model to `--output`, by default next to the model with the `.oxsts` extension, and the name map from the model's elements to the OXSTS beside it with the `.names.json` extension. A construct the translator refuses is an error at its line and no OXSTS is written; a warning is printed and the translation written ([SysML v2 subset](../../sysml-v2-subset.md#constructs)). `semantifyr` verifies it together with that library: `semantifyr verify -l <semantifyr-sysml distribution>/libraries/sysmlv2 room.oxsts`.
+`compile` writes the OXSTS translation of the model to `--output`, by default next to the model with the `.oxsts` extension, and the name map from the model's elements to the OXSTS beside it with the `.names.json` extension. A construct the translator refuses is an error at its line and no OXSTS is written; a warning is printed and the translation written ([What Is Supported](../../sysml-v2/supported.mdx)). `semantifyr` verifies it together with that library: `semantifyr verify -l <semantifyr-sysml distribution>/libraries/sysmlv2 room.oxsts`.

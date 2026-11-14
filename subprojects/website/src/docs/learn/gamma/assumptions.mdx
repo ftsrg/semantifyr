@@ -1,0 +1,39 @@
+---
+title: Semantic Assumptions
+sidebar_position: 2
+description: What the Gamma frontend assumes of a Gamma model's meaning, the step, time and events, what a verdict covers, and its declared differences from Gamma.
+---
+
+import { GammaDifferences } from '@site/src/components/GammaConstructs';
+import constructs from '@gamma-models/constructs.tsv';
+
+# Gamma's Semantic Assumptions
+
+The Gamma frontend gives a model the meaning Gamma gives it, as the Gamma semantic library writes it in OXSTS. This page states what the library assumes where Gamma leaves a choice or where the library simplifies, and the differences the frontend declares.
+
+## The Step
+
+A verification runs the component of its case in steps, from the state its `init` reaches. Each step does four things in order:
+
+1. The output events raised in the step before are cleared.
+2. The environment raises any of the component's input events, each with any value of its parameters, or none.
+3. Time passes by one delta.
+4. The component runs once, as its kind of composition runs its parts.
+
+## Time
+
+Every step advances time by a fixed delta of one second, the same for every timeout. A timeout that was never set is up from the start. A timeout that is set counts down by the delta in every step while it is above zero, and is up from the moment it reaches zero: it stays up until it is set again. A timeout is therefore up after as many steps as its value has started seconds, so a timeout shorter than a second, 500 ms say, is up after the first step, as a timeout of one second is, and one of 1500 ms after the second.
+
+## Events
+
+An output event raised in a step stays raised until the next step starts, so a case's property sees it in the state after the step. An input event lasts for the step it arrives in.
+
+## What a Verdict Covers
+
+The fixed delta is an abstraction: Gamma lets a range of time pass between two steps, which its analysis constrains, and the library keeps the runs in which exactly one second passes. A passed `AG` and a failed `EF` hold over the runs the library keeps, and a run with another delay may break them. A failed `AG` and a passed `EF` rest on a run the library found, in which a second passes every step.
+
+## Declared Differences
+
+A conformant construct behaves as it does in Gamma. These are the declared differences, each an abstraction, a deviation or an extension:
+
+<GammaDifferences table={constructs} />

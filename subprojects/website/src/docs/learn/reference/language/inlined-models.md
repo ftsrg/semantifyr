@@ -1,6 +1,7 @@
 ---
 title: Inlined Models
 sidebar_position: 13.5
+description: The inlined model, the form in which the compiler writes a compiled case and a witness.
 ---
 
 # Inlined Models

@@ -1,6 +1,7 @@
 ---
 title: Operations
 sidebar_position: 11
+description: The runtime operations of OXSTS transition bodies, assignment, havoc, assumption, sequence, choice, if, for and local variables.
 ---
 
 # Operations

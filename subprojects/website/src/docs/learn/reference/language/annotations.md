@@ -1,6 +1,7 @@
 ---
 title: Annotations
 sidebar_position: 13
+description: OXSTS annotations, how they are declared and applied, and the standard annotations the toolchain reads.
 ---
 
 # Annotations

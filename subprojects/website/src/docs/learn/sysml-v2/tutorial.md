@@ -1,6 +1,7 @@
 ---
 title: 'Verifying SysML v2 Models'
-sidebar_position: 2
+sidebar_position: 3
+description: A tutorial that models a room with a switch and a lamp in SysML v2, verifies three requirements in Live and reads a trace.
 ---
 
 import CodeBlock from '@theme/CodeBlock';
@@ -37,7 +38,7 @@ Finally, the room puts the two parts together:
 
 The room's own `button` port is bound to the switch's button, and a flow connects the switch's output to the lamp's input.
 
-The semantic library executes such a model in steps. In each step, the environment may put an item on each port of the verified part; here that means someone may or may not press the button. Then every state machine with an enabled transition fires one, and every region of a parallel state does the same; an item fires at most one transition per part. At the end of the step the flows move the items sent in it to the receiving ports, which hold them for the next step only: an item that the receiver does not accept in that step is dropped. The [SysML v2 subset](../sysml-v2-subset.md) lists every assumption the library makes and the constructs it supports.
+The semantic library executes such a model in steps. In each step, the environment may put an item on each port of the verified part; here that means someone may or may not press the button. Then every state machine with an enabled transition fires one, and every region of a parallel state does the same; an item fires at most one transition per part. At the end of the step the flows move the items sent in it to the receiving ports, which hold them for the next step only: an item that the receiver does not accept in that step is dropped. [Semantic Assumptions](assumptions.md) lists every assumption the library makes, and [What Is Supported](supported.mdx) the constructs the translator reads.
 
 ## Requirements and Verification Cases
 

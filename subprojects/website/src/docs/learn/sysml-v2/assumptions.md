@@ -1,21 +1,12 @@
 ---
-title: SysML v2 Subset
-sidebar_position: 6
+title: Semantic Assumptions
+sidebar_position: 2
+description: What the SysML v2 frontend assumes of a model's meaning, the step, each assumption with its outcome, the variants of its library and what a verdict covers.
 ---
 
-import ServedExamples from '@site/src/components/ServedExamples';
-import SysmlConstructTable from '@site/src/components/SysmlConstructs';
-import constructs from '@sysml-constructs/constructs.tsv';
+# SysML v2's Semantic Assumptions
 
-# SysML v2 Subset
-
-Semantifyr verifies a SysML v2 model against its SysML v2 semantic library, an abstraction of the standard at the level of states: parts and the regions of a parallel state run concurrently, actions are atomic and instantaneous, expressions are instant and side-effect free, items are signals and time is discrete. Where SysML v2 and KerML decide, the library follows them; every place where it narrows the standard is one of three kinds:
-
-- **Abstraction**: the standard admits several runs and the library keeps some of them.
-- **Unsupported**: the construct is outside the subset; one scheduled to be supported is planned.
-- **Deviation**: the library chose something other than the standard deliberately. Each is a deviating construct of the [table](#constructs), and the untyped flows are stated [below](#untyped-flows).
-
-Each assumption below names its kind and its enforcement today: a diagnostic of the translator, the library itself, or a convention the model has to keep.
+Semantifyr verifies a SysML v2 model against its SysML v2 semantic library, an abstraction of the standard at the level of states: parts and the regions of a parallel state run concurrently, actions are atomic and instantaneous, expressions are instant and side-effect free, items are signals and time is discrete. Where SysML v2 and KerML decide, the library follows them. Each assumption below names its outcome, in the sense the legend of [What Is Supported](supported.mdx) gives the six, and its enforcement today: a diagnostic of the translator, the library itself, or a convention the model has to keep.
 
 ## The Step
 
@@ -27,12 +18,12 @@ Initialization builds the part tree, sets the initial values of the attributes a
 
 ### Parts and Composition
 
-- The part tree is fixed and finite, built at initialization and alive for the whole run; parts react concurrently in the step, the sub-parts of a part in textual order. Abstraction for the lifetimes; unsupported for creation and destruction, multiplicities other than `[1]`, and `individual`, `snapshot` and `timeslice` parts, `[0..1]` planned. A usage with multiplicity `[0]` is absent and a literal `[n]` on a part or port is n instances; every other multiplicity, `[0..1]` included, is a diagnostic.
+- The part tree is fixed and finite, built at initialization and alive for the whole run; parts react concurrently in the step, the sub-parts of a part in textual order. Abstraction for the lifetimes. A usage with multiplicity `[0]` is absent and a literal `[n]` on a part or port is n instances, both conformant; `[0..1]` and a literal `[n]` on an attribute are planned; creation and destruction, every other multiplicity, and `individual`, `snapshot` and `timeslice` parts are unsupported. A planned or an unsupported multiplicity is a diagnostic.
 - Parts share nothing: a part's guards, effects, entry and exit actions read and write only its own attributes and the items on its own ports; a verification case, a requirement or a constraint reads across the whole subject. Abstraction. A reference to another part's attribute elsewhere is a diagnostic.
 
 ### Exhibited States
 
-- A part exhibits at most one state, owned by the part. It is performed from the part's initialization until it reaches `done`, which ends its performance and leaves the part idle. Planned for several exhibited states, abstraction for the start of the performance. An owned, a referenced (`exhibit s;`) or a definition-typed exhibit state and a part's plain `state` are its exhibited state; a second one is a diagnostic.
+- A part exhibits at most one state, owned by the part. It is performed from the part's initialization until it reaches `done`, which ends its performance and leaves the part idle. Planned for several exhibited states, abstraction for the start of the performance. An owned, a referenced (`exhibit s;`) or a definition-typed exhibit state is its exhibited state, and so is a part's plain `state`, a deviation, since SysML v2 performs only exhibited states; a second one is a diagnostic.
 
 ### States, Regions and Parallelism
 
@@ -55,7 +46,7 @@ Initialization builds the part tree, sets the initial values of the attributes a
 
 - Items are signals. A send puts the item on the sending port's outgoing slot, the flows move it at the end of the step, and the receiving port holds it for the next step only: an item not accepted in that step is dropped, and the last of several transfers into one port in a step is kept. Abstraction (see [below](#the-dropped-item)). Library.
 - An item fires at most one transition per part per step. The regions of a parallel state compete for it nondeterministically, and a step never blocks because another region consumed the item. Abstraction. Library.
-- Ports and flows are untyped: a port has one incoming and one outgoing slot, its `in` and `out` item usages merged, and a flow's item type and a port's conjugation are not read. Every send and accept names its port with `via`, which is a diagnostic otherwise; a send's `to` is a diagnostic. Item payloads are planned.
+- Ports and flows are untyped: a port has one incoming and one outgoing slot, its `in` and `out` item usages merged, an abstraction, and a port's item types, its conjugation and a flow's item type are not read, three deviations stated [below](#untyped-ports-and-flows). Every send and accept names its port with `via`, which is a diagnostic otherwise; a send's `to` is a diagnostic. Item payloads are planned.
 - An item has no identity across hops and no payload: every item of one item definition is the same value.
 
 ### Attributes and Expressions
@@ -72,9 +63,9 @@ Initialization builds the part tree, sets the initial values of the attributes a
 - The verified part is closed: the environment may put any item on any of its ports in every step. `mustAlways` holds when the condition holds in every reachable state between steps; `eventually` passes when one run reaches the condition, under some choice of the environment. Abstraction.
 - A requirement holds one `require constraint` and a verification case verifies one requirement; a case without `verify` checks its objective's own `require constraint`. `assume` and `assert constraint` in a part are unsupported and a second `require` or `verify` planned; `assume`, a second `require` or `verify`, an objective with both its own `require` and a `verify`, and a temporal operator below the root of a constraint, negations aside, are diagnostics; a constraint without a temporal operator is read as `mustAlways`.
 
-## Untyped Flows
+## Untyped Ports and Flows
 
-The library admits a kind of run the standard excludes: an item of another type crosses a `flow of X`, where in SysML v2 the flow carries `X` and its specializations only, since ports and flows are untyped.
+The library admits runs the standard excludes by three deviations, since ports and flows are untyped: an item of another type crosses a `flow of X`, where in SysML v2 the flow carries `X` and its specializations only; a port admits an item its definition does not declare; and a send against a conjugated port's direction is admitted.
 
 ## The Dropped Item
 
@@ -82,7 +73,7 @@ KerML's state performances never fix which arrived transfers are acceptable, so 
 
 ## Item Specialization
 
-An item definition may specialize another with `:>`, and the translator accepts it with a warning, but an accept matches the exact item definition: an accept of a supertype drops an item of a subtype.
+An item definition may specialize another with `:>`, and the translator accepts it with a warning, but an accept matches the exact item definition: an accept of a supertype drops an item of a subtype. A deviation.
 
 ## Library Variants
 
@@ -94,16 +85,4 @@ The frontend selects a variant for a whole model; the `semantifyr-sysml` command
 
 ## What a Verdict Covers
 
-An abstraction narrows the runs a verdict ranges over. A passed `mustAlways` and a failed `eventually` hold over the runs the library keeps, and a run the standard admits outside them may break them; a passed `eventually` and a failed `mustAlways` hold under the standard as well, since every run the library keeps is one the standard admits within the subset. For example, `mustAlways(not isStateActive(S) or entered)`, where the entry action of `S` sets `entered`, passes because the entry action completes in the step that activates `S`; the standard has `S` active while its entry action runs, and that run breaks the invariant.
-
-## Constructs
-
-Every SysML v2 construct the translator reads, generated from its registry with its outcome: a planned or an unsupported construct is a diagnostic located on it and no OXSTS is written, every other one is translated, and one with a warning draws a warning that says what the model should know.
-
-<SysmlConstructTable table={constructs} />
-
-## Examples in Live
-
-The SysML v2 models Live serves, each opening in Live by its own address:
-
-<ServedExamples />
+An abstraction narrows the runs a verdict ranges over. A passed `mustAlways` and a failed `eventually` hold over the runs the library keeps, and a run the standard admits outside them may break them; a passed `eventually` and a failed `mustAlways` rest on one run the library keeps, which the standard admits within the subset unless a deviation admitted it: the untyped flows, a port's item types, a conjugated port, a part's plain `state` and the division of two integers each admit runs the standard excludes. Such a verdict holds under the standard when its trace does not pass through one of them, which a reader checks on the trace. For example, `mustAlways(not isStateActive(S) or entered)`, where the entry action of `S` sets `entered`, passes because the entry action completes in the step that activates `S`; the standard has `S` active while its entry action runs, and that run breaks the invariant.

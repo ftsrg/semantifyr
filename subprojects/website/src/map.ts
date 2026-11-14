@@ -24,19 +24,20 @@ export const learnParts: LearnPart[] = [
   {
     label: 'SysML v2',
     description: 'Verifying SysML v2 models: what of the language the frontend supports, what it assumes, and a tutorial.',
-    opening: { doc: 'learn/sysml-v2-subset' },
+    opening: { doc: 'learn/sysml-v2/index' },
     directory: 'learn/sysml-v2',
   },
   {
     label: 'Gamma',
     description: 'Verifying Gamma statecharts and their compositions: what of the language the frontend supports and what it assumes.',
-    opening: { doc: 'learn/gamma' },
+    opening: { doc: 'learn/gamma/index' },
+    directory: 'learn/gamma',
   },
   {
     label: 'OXSTS Lessons',
     description: 'Defining semantics yourself in OXSTS, in five levels on a traffic light, from one light to a statechart library.',
-    opening: { doc: 'learn/tutorials/trafficlight/index' },
-    directory: 'learn/tutorials/trafficlight',
+    opening: { doc: 'learn/lessons/index' },
+    directory: 'learn/lessons',
   },
   {
     label: 'How the Language Works',
@@ -70,26 +71,6 @@ export const sections = [
   {
     label: 'Publications',
     to: '/publications/',
-  },
-];
-
-// every backend the reference has a page for, which a test holds to those pages
-export const BACKENDS = [
-  {
-    name: 'Theta',
-    page: '/learn/reference/backends/theta/',
-  },
-  {
-    name: 'nuXmv',
-    page: '/learn/reference/backends/nuxmv/',
-  },
-  {
-    name: 'Spin',
-    page: '/learn/reference/backends/spin/',
-  },
-  {
-    name: 'Uppaal',
-    page: '/learn/reference/backends/uppaal/',
   },
 ];
 

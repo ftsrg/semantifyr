@@ -1,6 +1,7 @@
 ---
 title: Transitions
 sidebar_position: 10
+description: OXSTS transitions, the behaviour of a class, their kinds and declaration, the implicit main and init, branches with or, abstract transitions and redefinition.
 ---
 
 # Transitions

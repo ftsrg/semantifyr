@@ -1,6 +1,7 @@
 ---
 title: Classes
 sidebar_position: 6
+description: OXSTS classes, their declaration, abstract classes, inheritance, redefinition and self.
 ---
 
 import LibraryDeclaration from '@site/src/components/LibraryDeclaration';

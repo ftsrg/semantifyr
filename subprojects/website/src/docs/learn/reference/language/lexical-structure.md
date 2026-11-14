@@ -1,6 +1,7 @@
 ---
 title: Lexical Structure
 sidebar_position: 0.5
+description: The lexical structure of OXSTS, its names, keywords, literals, comments and whitespace.
 ---
 
 # Lexical Structure

@@ -1,0 +1,22 @@
+---
+title: SysML v2
+description: The SysML v2 frontend, which verifies models of OMG's Systems Modeling Language and writes their traces in SysML v2, its pages and the SysML v2 models Live serves.
+---
+
+import ServedExamples from '@site/src/components/ServedExamples';
+
+# SysML v2
+
+The SysML v2 frontend verifies models of OMG's Systems Modeling Language. It translates a model and its verification cases into OXSTS on the SysML v2 semantic library, with a fork of SysIDE, and writes the trace of a case as a SysML v2 model that refines the model it came from.
+
+- [What Is Supported](supported.mdx): the constructs the translator reads, each with its outcome.
+- [Semantic Assumptions](assumptions.md): what the library assumes of a model's meaning, and what a verdict covers.
+- [Verifying SysML v2 Models](tutorial.md): a tutorial on a room with a switch and a lamp.
+
+[Verifying on the Command Line](../tools/command-line.md) runs a SysML v2 model on your machine, and [SysML v2 Traces](../reference/artifacts/sysml-trace.mdx) gives the form of a trace.
+
+## Examples in Live
+
+The SysML v2 models Live serves, each opening in Live by its own address:
+
+<ServedExamples />

@@ -1,0 +1,16 @@
+---
+title: What Is Supported
+sidebar_position: 1
+description: Every construct and variation point of Gamma with its outcome in the Gamma frontend, generated from the table its tests check.
+---
+
+import GammaConstructTable from '@site/src/components/GammaConstructs';
+import constructs from '@gamma-models/constructs.tsv';
+
+# What of Gamma Is Supported
+
+The Gamma frontend takes Gamma's statecharts, their synchronous and cascade composition, and verification cases written in the model, in Gamma's syntax with Gamma's packages and imports. What it assumes of the meaning of these constructs is on [Semantic Assumptions](assumptions.mdx).
+
+Every construct and variation point of Gamma has one of six outcomes, and one with a warning draws a warning from the validator. This page is generated from the table that a test of the Gamma frontend checks against the models that use each construct.
+
+<GammaConstructTable table={constructs} />

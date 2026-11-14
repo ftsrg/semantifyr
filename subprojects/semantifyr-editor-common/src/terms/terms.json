@@ -36,7 +36,7 @@
         "counterexample",
         "counterexamples"
       ],
-      "explainedOn": "subprojects/website/src/docs/learn/tutorials/trafficlight/intersection.md"
+      "explainedOn": "subprojects/website/src/docs/learn/lessons/intersection.md"
     },
     "witness": {
       "term": "witness",

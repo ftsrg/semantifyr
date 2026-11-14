@@ -1,6 +1,7 @@
 ---
 title: Datatypes
 sidebar_position: 2
+description: The data values OXSTS can represent, the primitive datatypes, enumerations and records.
 ---
 
 # Datatypes

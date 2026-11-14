@@ -9,7 +9,7 @@ import Planned from '@site/src/components/Planned';
 
 # Installing It
 
-Semantifyr runs on your machine as a VS Code extension, for OXSTS and Gamma, and as three command-line launchers, `semantifyr` for OXSTS, `semantifyr-sysml` for SysML v2 and `semantifyr-gamma` for Gamma. Both give the same language and the same compiler as [Live](try.md); verification runs on the backends installed on your machine. Until a release is published, both are built from a clone of the [repository](https://github.com/ftsrg/semantifyr), which needs Git and a Java 25 runtime and downloads everything else.
+Semantifyr runs on your machine as a VS Code extension, for OXSTS and Gamma, and as three command-line launchers, `semantifyr` for OXSTS, `semantifyr-sysml` for SysML v2 and `semantifyr-gamma` for Gamma. The extension edits and verifies OXSTS and Gamma models and the launchers models of all three languages, both with the same compiler as [Live](try.md); verification runs on the backends installed on your machine. Until a release is published, both are built from a clone of the [repository](https://github.com/ftsrg/semantifyr), which needs Git and a Java 25 runtime and downloads everything else.
 
 ## The VS Code Extension
 

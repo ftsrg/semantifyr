@@ -1,6 +1,7 @@
 ---
 title: Gamma Traces
 sidebar_position: 2
+description: The form of trace.get, the Gamma execution trace a case's witness is written as, and what it shows of the run.
 ---
 
 import CodeBlock from '@theme/CodeBlock';
@@ -8,7 +9,7 @@ import trace from '@gamma-reference-trace/crossroads-ACanBeGreen.trace.get';
 
 # Gamma Traces
 
-`semantifyr-gamma verify`, the VS Code extension and Live's Gamma language write the witness of a [Gamma](../../gamma.mdx) verification case as a Gamma execution trace, `trace.get`, next to the back-annotated [`witness.oxsts`](index.mdx#witnessoxsts). The trace is a `.get` file of its own in Gamma's execution trace syntax, with two extensions: its header names a verification case, and it asserts the transitions that fired. Every name in it is a cross-reference into the model, so the Gamma language checks a trace like any other Gamma file.
+`semantifyr-gamma verify`, the VS Code extension and Live's Gamma language write the witness of a [Gamma](../../gamma/index.mdx) verification case as a Gamma execution trace, `trace.get`, next to the back-annotated [`witness.oxsts`](index.mdx#witnessoxsts). The trace is a `.get` file of its own in Gamma's execution trace syntax, with two extensions: its header names a verification case, and it asserts the transitions that fired. Every name in it is a cross-reference into the model, so the Gamma language checks a trace like any other Gamma file.
 
 ## Form
 

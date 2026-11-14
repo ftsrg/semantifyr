@@ -1,6 +1,7 @@
 ---
 title: Variables
 sidebar_position: 7
+description: OXSTS variables, the mutable state of a model, their declaration, initial states, multiplicity on the type and feature-typed variables.
 ---
 
 # Variables

@@ -11,7 +11,7 @@ import ServedExamples from '@site/src/components/ServedExamples';
 
 OXSTS is the **declarative-operational** language of Semantifyr, in which the [semantic libraries](../../start/index.mdx) of the framework and the models verified on them are written. An OXSTS model is a collection of classes, features, transitions, and properties that the compiler unfolds into a flat transition system and hands to a backend, the model checker that verifies it.
 
-These pages specify OXSTS, one construct a page, for lookup in any order; the [OXSTS lessons](../../tutorials/trafficlight/index.md) teach it, and [How the Language Works](../../how-it-works/index.mdx) shows what the compiler makes of a model. [Status](status.mdx) lists the constructs the compiler supports, rejects or plans.
+These pages specify OXSTS, one construct a page, for lookup in any order; the [OXSTS lessons](../../lessons/index.md) teach it, and [How the Language Works](../../how-it-works/index.mdx) shows what the compiler makes of a model. [Status](status.mdx) lists the constructs the compiler supports, rejects or plans.
 
 ## The Language at a Glance
 
@@ -41,7 +41,7 @@ A pervasive distinction throughout the language is **compile-time vs runtime**. 
 ## What This Reference Does Not Cover
 
 - The **internals** of the compiler, which the [architecture](../../../develop/index.md) sketches and the code holds.
-- The **frontends** that translate SysML v2 and Gamma models into OXSTS, each with its part of Learn: [SysML v2](../../sysml-v2-subset.md) and [Gamma](../../gamma.mdx).
+- The **frontends** that translate SysML v2 and Gamma models into OXSTS, each with its part of Learn: [SysML v2](../../sysml-v2/index.mdx) and [Gamma](../../gamma/index.mdx).
 - What a **backend** does with a construct, which each [backend's page](/learn/reference/backends) states, and the input languages of the backends.
 
 ## Examples in Live
