@@ -211,7 +211,6 @@ val cloneApiDocs = tasks.register<Sync>("cloneApiDocs") {
 
 fun NpmTask.configureSharedInputs() {
     inputs.dir(project.layout.projectDirectory.dir("src")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.dir(project.layout.projectDirectory.dir("static")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(project.layout.projectDirectory.file("docusaurus.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(project.layout.projectDirectory.file("sidebars.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(project.layout.projectDirectory.file("babel.config.cts")).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -268,6 +267,13 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
         },
     ).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(rootProject.layout.projectDirectory.file("subprojects/semantifyr-live/frontend/index.html")).withPathSensitivity(PathSensitivity.RELATIVE)
+    // the site links test reads the files that link into the site
+    inputs.files(
+        rootProject.layout.projectDirectory.file("README.md"),
+        rootProject.layout.projectDirectory.file("CITATION.cff"),
+        rootProject.layout.projectDirectory.file("subprojects/semantifyr-vscode/README.md"),
+        rootProject.layout.projectDirectory.file("subprojects/cli-common/src/main/kotlin/hu/bme/mit/semantifyr/cli/common/RootCommand.kt"),
+    ).withPathSensitivity(PathSensitivity.RELATIVE)
 
     npmCommand.set(listOf("run", "check"))
 

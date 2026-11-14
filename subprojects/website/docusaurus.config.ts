@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import type { Options as DocsOptions } from '@docusaurus/plugin-content-docs';
 import type { Options as PagesOptions } from '@docusaurus/plugin-content-pages';
@@ -15,6 +15,7 @@ import { servedExamples, type CaseManifest, type ServedExample } from '@semantif
 import type { PrismTheme } from 'prism-react-renderer';
 import remarkFences from './src/plugins/remarkFences';
 import sourceAliases from './source-aliases.json';
+import { addressOf, learnParts, sections, SOURCE_CODE } from './src/map';
 
 // the code blocks take their colours from live's grammars in theme/CodeBlock/Content; the block itself from the tokens
 const codeBlockTheme: PrismTheme = {
@@ -59,6 +60,26 @@ function servedExamplesPlugin(): Plugin {
   };
 }
 
+// every built page names its own description and the card for a shared link, or the build fails
+function pageHeadsPlugin(): Plugin {
+  return {
+    name: 'page-heads',
+    postBuild({ outDir }) {
+      const pages = readdirSync(outDir, { recursive: true, encoding: 'utf8' }).filter((file) => {
+        return file.endsWith('.html') && !file.startsWith(`api${path.sep}`);
+      });
+      const failing = pages.filter((file) => {
+        const html = readFileSync(path.join(outDir, file), 'utf8');
+        // the minifier drops the quotes it can
+        return !/<meta[^>]+name="?description"?[^>]+content="?[^"\s>]/.test(html) || !/<meta[^>]+property="?og:image"?[^>]+content="?[^"\s>]*social-card\.png/.test(html);
+      });
+      if (failing.length > 0) {
+        throw new Error(`These pages name no description or no card for a shared link: ${failing.join(', ')}`);
+      }
+    },
+  };
+}
+
 // the build's constants, which every page that states one takes from here: the version from gradle.properties
 function gradleProperty(name: string): string {
   const properties = readFileSync(path.resolve(__dirname, '../../gradle.properties'), 'utf8');
@@ -95,14 +116,13 @@ function siteState(): string {
 
 export default {
   title: 'Semantifyr',
-  tagline:
-    'Semantic library-driven formal verification of engineering models',
+  tagline: 'A framework to support the declarative definition of engineering model semantics',
   favicon: 'favicon.ico',
   url: 'https://ftsrg.mit.bme.hu',
   baseUrl: '/semantifyr/',
   baseUrlIssueBanner: false,
   trailingSlash: true,
-  staticDirectories: ['static', 'static-imported-branding', 'build/api-static'],
+  staticDirectories: ['static-imported-branding', 'build/api-static'],
   customFields: {
     liveBackendUrl,
     nodeVersion,
@@ -143,6 +163,13 @@ export default {
         path: 'src/docs',
         routeBasePath: '/',
         sidebarPath: './sidebars.ts',
+        // a part of Learn links its index, so the index is no page of the part's own
+        async sidebarItemsGenerator({ defaultSidebarItemsGenerator, ...generation }) {
+          const items = await defaultSidebarItemsGenerator(generation);
+          return items.filter((item) => {
+            return !(item.type === 'doc' && item.id === `${generation.item.dirName}/index`);
+          });
+        },
         remarkPlugins: [
           remarkFences,
         ],
@@ -156,6 +183,7 @@ export default {
     ],
     '@docusaurus/plugin-sitemap',
     servedExamplesPlugin,
+    pageHeadsPlugin,
     () => ({
       name: 'raw-sources',
       configureWebpack: () => ({
@@ -198,6 +226,7 @@ export default {
           require.resolve('@semantifyr/editor-common/tokens.css'),
           require.resolve('@semantifyr/editor-common/marks.css'),
           require.resolve('./src/css/custom.css'),
+          require.resolve('./src/css/header.css'),
         ],
       } satisfies ClassicThemeOptions,
     ],
@@ -209,92 +238,67 @@ export default {
     prism: {
       theme: codeBlockTheme,
     },
+    image: 'img/social-card.png',
     navbar: {
-      hideOnScroll: true,
       logo: {
         alt: 'Semantifyr',
         src: 'img/logo-full-light.svg',
         srcDark: 'img/logo-full-dark.svg',
-        height: 32,
+        height: 21,
       },
+      // the phone's menu; the header draws the same entries from the map on a desktop
       items: [
         {
-          type: 'doc',
+          type: 'dropdown',
           label: 'Learn',
-          docId: 'learn/index',
+          to: '/learn/',
           position: 'left',
+          items: learnParts.map((part) => {
+            return { label: part.label, to: addressOf(part) };
+          }),
         },
+        ...sections.filter((section) => {
+          return section.label !== 'Learn';
+        }).map((section) => {
+          return { label: section.label, to: section.to, position: 'left' as const };
+        }),
         {
-          type: 'doc',
-          label: 'Develop',
-          docId: 'develop/index',
-          position: 'left',
-        },
-        {
-          label: 'API',
-          // the API docs are published next to the site, outside the Docusaurus router
-          to: 'pathname:///api/',
-          target: '_self',
-          position: 'left',
-        },
-        {
-          href: 'https://github.com/ftsrg/semantifyr',
+          label: 'Source code',
+          href: SOURCE_CODE,
           position: 'right',
-          className: 'header-github-link',
-          'aria-label': 'GitHub repository',
         },
         {
-          label: 'Try Live',
-          position: 'right',
+          label: 'Open Live',
           href: liveBackendUrl,
-          className: 'navbar__link--try-now',
+          position: 'right',
         },
       ],
     },
     footer: {
       links: [
         {
-          title: 'Learn',
-          items: [
-            {
-              label: 'Introduction',
-              to: '/learn',
-            },
-            {
-              label: 'Language Reference',
-              to: '/learn/language',
-            },
-            {
-              label: 'Tutorials',
-              to: '/learn/tutorials',
-            },
-          ],
+          label: 'Learn',
+          to: '/learn/',
         },
         {
-          title: 'Develop',
-          items: [
-            {
-              label: 'Developer Guide',
-              to: '/develop',
-            },
-            {
-              label: 'GitHub',
-              href: 'https://github.com/ftsrg/semantifyr',
-            },
-          ],
+          label: 'Develop',
+          to: '/develop/',
         },
         {
-          title: 'More',
-          items: [
-            {
-              label: 'GitHub',
-              href: 'https://github.com/ftsrg/semantifyr',
-            },
-            {
-              label: 'BME MIT FTSRG',
-              href: 'https://ftsrg.mit.bme.hu/en/',
-            },
-          ],
+          label: 'Publications',
+          to: '/publications/',
+        },
+        {
+          label: 'Semantifyr Live',
+          href: liveBackendUrl,
+        },
+        {
+          label: 'What Live\'s Server Keeps',
+          to: '/learn/tools/privacy/',
+        },
+        {
+          label: 'Source code',
+          href: SOURCE_CODE,
         },
       ],
       copyright: `${siteState()}<br/>Copyright &copy; 2023-2026 <a href="https://github.com/ftsrg/semantifyr/blob/main/CONTRIBUTORS.md" target="_blank">The Semantifyr Authors</a>. Available under the <a href="https://www.eclipse.org/legal/epl-2.0/">Eclipse Public License - v 2.0</a>.`,
