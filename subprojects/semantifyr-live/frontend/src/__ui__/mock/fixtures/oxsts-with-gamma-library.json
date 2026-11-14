@@ -89,7 +89,7 @@
  },
  "sessionInfo": null,
  "documents": {
-  "3428c1705c090e94": {
+  "fa7d45777e209ddf": {
    "diagnostics": [],
    "cases": [
     {
@@ -99,11 +99,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 239,
+        "line": 240,
         "character": 6
        },
        "end": {
-        "line": 239,
+        "line": 240,
         "character": 38
        }
       }
@@ -116,11 +116,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 262,
+        "line": 263,
         "character": 6
        },
        "end": {
-        "line": 262,
+        "line": 263,
         "character": 34
        }
       }
@@ -128,7 +128,7 @@
     }
    ]
   },
-  "646019436a5631e3": {
+  "509d5d95f1e23379": {
    "diagnostics": [],
    "cases": [
     {
@@ -138,11 +138,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 454,
+        "line": 455,
         "character": 6
        },
        "end": {
-        "line": 454,
+        "line": 455,
         "character": 28
        }
       }
@@ -155,11 +155,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 463,
+        "line": 464,
         "character": 6
        },
        "end": {
-        "line": 463,
+        "line": 464,
         "character": 33
        }
       }
@@ -172,11 +172,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 472,
+        "line": 473,
         "character": 6
        },
        "end": {
-        "line": 472,
+        "line": 473,
         "character": 51
        }
       }
@@ -189,11 +189,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 481,
+        "line": 482,
         "character": 6
        },
        "end": {
-        "line": 481,
+        "line": 482,
         "character": 51
        }
       }
@@ -206,11 +206,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 490,
+        "line": 491,
         "character": 6
        },
        "end": {
-        "line": 490,
+        "line": 491,
         "character": 52
        }
       }
@@ -223,11 +223,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 499,
+        "line": 500,
         "character": 6
        },
        "end": {
-        "line": 499,
+        "line": 500,
         "character": 67
        }
       }
@@ -240,11 +240,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 508,
+        "line": 509,
         "character": 6
        },
        "end": {
-        "line": 508,
+        "line": 509,
         "character": 73
        }
       }
@@ -257,11 +257,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 517,
+        "line": 518,
         "character": 6
        },
        "end": {
-        "line": 517,
+        "line": 518,
         "character": 47
        }
       }
@@ -274,11 +274,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 526,
+        "line": 527,
         "character": 6
        },
        "end": {
-        "line": 526,
+        "line": 527,
         "character": 44
        }
       }
@@ -286,7 +286,7 @@
     }
    ]
   },
-  "51520f8dc1a14c0c": {
+  "9787a699e1e5d931": {
    "diagnostics": [],
    "cases": [
     {
@@ -296,11 +296,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 370,
+        "line": 371,
         "character": 6
        },
        "end": {
-        "line": 370,
+        "line": 371,
         "character": 35
        }
       }
@@ -313,11 +313,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 379,
+        "line": 380,
         "character": 6
        },
        "end": {
-        "line": 379,
+        "line": 380,
         "character": 45
        }
       }
@@ -330,11 +330,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 388,
+        "line": 389,
         "character": 6
        },
        "end": {
-        "line": 388,
+        "line": 389,
         "character": 42
        }
       }
@@ -347,11 +347,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 397,
+        "line": 398,
         "character": 6
        },
        "end": {
-        "line": 397,
+        "line": 398,
         "character": 44
        }
       }
@@ -364,11 +364,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 406,
+        "line": 407,
         "character": 6
        },
        "end": {
-        "line": 406,
+        "line": 407,
         "character": 44
        }
       }
@@ -381,11 +381,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 415,
+        "line": 416,
         "character": 6
        },
        "end": {
-        "line": 415,
+        "line": 416,
         "character": 45
        }
       }
@@ -398,11 +398,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 424,
+        "line": 425,
         "character": 6
        },
        "end": {
-        "line": 424,
+        "line": 425,
         "character": 45
        }
       }
@@ -415,11 +415,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 433,
+        "line": 434,
         "character": 6
        },
        "end": {
-        "line": 433,
+        "line": 434,
         "character": 37
        }
       }
@@ -432,11 +432,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 442,
+        "line": 443,
         "character": 6
        },
        "end": {
-        "line": 442,
+        "line": 443,
         "character": 23
        }
       }
@@ -449,11 +449,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 451,
+        "line": 452,
         "character": 6
        },
        "end": {
-        "line": 451,
+        "line": 452,
         "character": 28
        }
       }
@@ -466,11 +466,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 460,
+        "line": 461,
         "character": 6
        },
        "end": {
-        "line": 460,
+        "line": 461,
         "character": 19
        }
       }
@@ -483,11 +483,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 469,
+        "line": 470,
         "character": 6
        },
        "end": {
-        "line": 469,
+        "line": 470,
         "character": 16
        }
       }
@@ -500,11 +500,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 478,
+        "line": 479,
         "character": 6
        },
        "end": {
-        "line": 478,
+        "line": 479,
         "character": 18
        }
       }
@@ -517,11 +517,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 487,
+        "line": 488,
         "character": 6
        },
        "end": {
-        "line": 487,
+        "line": 488,
         "character": 27
        }
       }
@@ -534,11 +534,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 496,
+        "line": 497,
         "character": 6
        },
        "end": {
-        "line": 496,
+        "line": 497,
         "character": 26
        }
       }
@@ -551,11 +551,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 505,
+        "line": 506,
         "character": 6
        },
        "end": {
-        "line": 505,
+        "line": 506,
         "character": 23
        }
       }
@@ -568,11 +568,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 514,
+        "line": 515,
         "character": 6
        },
        "end": {
-        "line": 514,
+        "line": 515,
         "character": 28
        }
       }
@@ -585,11 +585,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 523,
+        "line": 524,
         "character": 6
        },
        "end": {
-        "line": 523,
+        "line": 524,
         "character": 19
        }
       }
@@ -602,11 +602,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 532,
+        "line": 533,
         "character": 6
        },
        "end": {
-        "line": 532,
+        "line": 533,
         "character": 16
        }
       }
@@ -619,11 +619,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 541,
+        "line": 542,
         "character": 6
        },
        "end": {
-        "line": 541,
+        "line": 542,
         "character": 18
        }
       }
@@ -636,11 +636,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 550,
+        "line": 551,
         "character": 6
        },
        "end": {
-        "line": 550,
+        "line": 551,
         "character": 27
        }
       }
@@ -653,11 +653,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 559,
+        "line": 560,
         "character": 6
        },
        "end": {
-        "line": 559,
+        "line": 560,
         "character": 26
        }
       }
@@ -670,11 +670,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 568,
+        "line": 569,
         "character": 6
        },
        "end": {
-        "line": 568,
+        "line": 569,
         "character": 22
        }
       }
@@ -687,11 +687,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 582,
+        "line": 583,
         "character": 6
        },
        "end": {
-        "line": 582,
+        "line": 583,
         "character": 24
        }
       }
@@ -704,11 +704,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 596,
+        "line": 597,
         "character": 6
        },
        "end": {
-        "line": 596,
+        "line": 597,
         "character": 25
        }
       }
@@ -721,11 +721,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 610,
+        "line": 611,
         "character": 6
        },
        "end": {
-        "line": 610,
+        "line": 611,
         "character": 24
        }
       }
@@ -738,11 +738,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 624,
+        "line": 625,
         "character": 6
        },
        "end": {
-        "line": 624,
+        "line": 625,
         "character": 28
        }
       }
@@ -755,11 +755,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 640,
+        "line": 641,
         "character": 6
        },
        "end": {
-        "line": 640,
+        "line": 641,
         "character": 29
        }
       }
@@ -772,11 +772,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 656,
+        "line": 657,
         "character": 6
        },
        "end": {
-        "line": 656,
+        "line": 657,
         "character": 25
        }
       }
@@ -789,11 +789,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 670,
+        "line": 671,
         "character": 6
        },
        "end": {
-        "line": 670,
+        "line": 671,
         "character": 29
        }
       }
@@ -806,11 +806,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 686,
+        "line": 687,
         "character": 6
        },
        "end": {
-        "line": 686,
+        "line": 687,
         "character": 28
        }
       }
@@ -818,7 +818,7 @@
     }
    ]
   },
-  "f79dabf6a5902a56": {
+  "7e732e603156f9a8": {
    "diagnostics": [],
    "cases": [
     {
@@ -828,11 +828,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 117,
+        "line": 118,
         "character": 6
        },
        "end": {
-        "line": 117,
+        "line": 118,
         "character": 36
        }
       }
@@ -845,11 +845,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 126,
+        "line": 127,
         "character": 6
        },
        "end": {
-        "line": 126,
+        "line": 127,
         "character": 43
        }
       }
@@ -862,11 +862,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 135,
+        "line": 136,
         "character": 6
        },
        "end": {
-        "line": 135,
+        "line": 136,
         "character": 39
        }
       }
@@ -879,11 +879,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 144,
+        "line": 145,
         "character": 6
        },
        "end": {
-        "line": 144,
+        "line": 145,
         "character": 34
        }
       }
@@ -896,11 +896,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 155,
+        "line": 156,
         "character": 6
        },
        "end": {
-        "line": 155,
+        "line": 156,
         "character": 36
        }
       }
@@ -913,11 +913,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 164,
+        "line": 165,
         "character": 6
        },
        "end": {
-        "line": 164,
+        "line": 165,
         "character": 43
        }
       }
@@ -930,11 +930,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 173,
+        "line": 174,
         "character": 6
        },
        "end": {
-        "line": 173,
+        "line": 174,
         "character": 39
        }
       }
@@ -947,11 +947,11 @@
       "uri": "file:///workspace/snippet.oxsts",
       "range": {
        "start": {
-        "line": 182,
+        "line": 183,
         "character": 6
        },
        "end": {
-        "line": 182,
+        "line": 183,
         "character": 34
        }
       }
@@ -976,51 +976,51 @@
    "backendId": "nuxmv:bmc-invar",
    "portfolioId": "smart-full",
    "metrics": {
-    "totalDuration": "PT0.977322214S",
-    "preparationDuration": "PT0.441621097S",
-    "verificationDuration": "PT0.517742191S",
-    "backAnnotationDuration": "PT0.007866333S",
+    "totalDuration": "PT1.239379468S",
+    "preparationDuration": "PT0.365093073S",
+    "verificationDuration": "PT0.293145722S",
+    "backAnnotationDuration": "PT0.021542465S",
     "compilation": {
-     "createDuration": "PT0.01803562S",
-     "instantiationDuration": "PT0.005484416S",
-     "inliningDuration": "PT0.3175955S",
-     "flatteningDuration": "PT0.096581305S",
+     "createDuration": "PT0.004051331S",
+     "instantiationDuration": "PT0.003082131S",
+     "inliningDuration": "PT0.269464546S",
+     "flatteningDuration": "PT0.086035334S",
      "inliningOptimization": {
-      "duration": "PT0.029295023S",
+      "duration": "PT0.024792387S",
       "passes": [
        {
         "name": "OperationCallInlining",
-        "duration": "PT0.017344165S",
-        "runs": 863,
+        "duration": "PT0.011353585S",
+        "runs": 867,
         "firings": 221
        },
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.00781623S",
+        "duration": "PT0.0072039S",
         "runs": 3,
         "firings": 2
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.001802135S",
+        "duration": "PT0.00285812S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.000933032S",
+        "duration": "PT0.001503052S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.001201037S",
+        "duration": "PT0.00168396S",
         "runs": 3,
         "firings": 2
        },
        {
         "name": "PropertyExpressionNormalization",
-        "duration": "PT0.000009607S",
+        "duration": "PT0.000012832S",
         "runs": 1,
         "firings": 0
        }
@@ -1028,59 +1028,59 @@
       "analyses": []
      },
      "flatteningOptimization": {
-      "duration": "PT0.058045092S",
+      "duration": "PT0.057009428S",
       "passes": [
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.000830294S",
+        "duration": "PT0.000844749S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.000363478S",
+        "duration": "PT0.00045939S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.000273204S",
+        "duration": "PT0.000431662S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.000294112S",
+        "duration": "PT0.000442063S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "ConstantVariableSubstitutionPass",
-        "duration": "PT0.00205777S",
+        "duration": "PT0.002247488S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "CopyPropagationPass",
-        "duration": "PT0.022549153S",
+        "duration": "PT0.032729777S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "DeadStoreEliminationPass",
-        "duration": "PT0.000980936S",
+        "duration": "PT0.001163144S",
         "runs": 2,
         "firings": 1
        },
        {
         "name": "DeadCodeRemovalPass",
-        "duration": "PT0.008412127S",
+        "duration": "PT0.01046684S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "VariableLivenessPass",
-        "duration": "PT0.022018261S",
+        "duration": "PT0.007972338S",
         "runs": 2,
         "firings": 1
        }
@@ -1088,17 +1088,17 @@
       "analyses": [
        {
         "name": "ConstantValueAnalysis",
-        "duration": "PT0.001951172S",
+        "duration": "PT0.002166441S",
         "computations": 2
        },
        {
         "name": "ReachingDefinitionsAnalysis",
-        "duration": "PT0.022442215S",
+        "duration": "PT0.032643731S",
         "computations": 2
        },
        {
         "name": "ConeOfInfluenceAnalysis",
-        "duration": "PT0.007685117S",
+        "duration": "PT0.009747756S",
         "computations": 2
        }
       ]
@@ -1763,51 +1763,51 @@
    "backendId": "nuxmv:bmc-invar",
    "portfolioId": "smart-full",
    "metrics": {
-    "totalDuration": "PT2.612518701S",
-    "preparationDuration": "PT0.565509167S",
-    "verificationDuration": "PT2.119331058S",
-    "backAnnotationDuration": "PT0.013124548S",
+    "totalDuration": "PT2.557718607S",
+    "preparationDuration": "PT0.468777124S",
+    "verificationDuration": "PT1.942448211S",
+    "backAnnotationDuration": "PT0.018344908S",
     "compilation": {
-     "createDuration": "PT0.014877608S",
-     "instantiationDuration": "PT0.007412519S",
-     "inliningDuration": "PT0.418997498S",
-     "flatteningDuration": "PT0.100810465S",
+     "createDuration": "PT0.00418844S",
+     "instantiationDuration": "PT0.005248289S",
+     "inliningDuration": "PT0.321005831S",
+     "flatteningDuration": "PT0.134925734S",
      "inliningOptimization": {
-      "duration": "PT0.038917207S",
+      "duration": "PT0.026727065S",
       "passes": [
        {
         "name": "OperationCallInlining",
-        "duration": "PT0.019889421S",
-        "runs": 863,
+        "duration": "PT0.011524503S",
+        "runs": 867,
         "firings": 221
        },
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.010752034S",
+        "duration": "PT0.008015164S",
         "runs": 3,
         "firings": 2
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.003682948S",
+        "duration": "PT0.00334268S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.002050828S",
+        "duration": "PT0.001689755S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.002267245S",
+        "duration": "PT0.00196975S",
         "runs": 3,
         "firings": 2
        },
        {
         "name": "PropertyExpressionNormalization",
-        "duration": "PT0.000024225S",
+        "duration": "PT0.000022424S",
         "runs": 1,
         "firings": 0
        }
@@ -1815,59 +1815,59 @@
       "analyses": []
      },
      "flatteningOptimization": {
-      "duration": "PT0.048287621S",
+      "duration": "PT0.067100234S",
       "passes": [
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.000824275S",
+        "duration": "PT0.000791848S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.00038382S",
+        "duration": "PT0.000450767S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.000393465S",
+        "duration": "PT0.000429241S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.000440755S",
+        "duration": "PT0.000455165S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "ConstantVariableSubstitutionPass",
-        "duration": "PT0.002590034S",
+        "duration": "PT0.002045171S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "CopyPropagationPass",
-        "duration": "PT0.026163277S",
+        "duration": "PT0.043724139S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "DeadStoreEliminationPass",
-        "duration": "PT0.000696542S",
+        "duration": "PT0.000776503S",
         "runs": 2,
         "firings": 1
        },
        {
         "name": "DeadCodeRemovalPass",
-        "duration": "PT0.008885868S",
+        "duration": "PT0.008919136S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "VariableLivenessPass",
-        "duration": "PT0.007673919S",
+        "duration": "PT0.009207038S",
         "runs": 2,
         "firings": 1
        }
@@ -1875,17 +1875,17 @@
       "analyses": [
        {
         "name": "ConstantValueAnalysis",
-        "duration": "PT0.002473396S",
+        "duration": "PT0.001970979S",
         "computations": 2
        },
        {
         "name": "ReachingDefinitionsAnalysis",
-        "duration": "PT0.026052791S",
+        "duration": "PT0.043632835S",
         "computations": 2
        },
        {
         "name": "ConeOfInfluenceAnalysis",
-        "duration": "PT0.008130745S",
+        "duration": "PT0.008357214S",
         "computations": 2
        }
       ]
@@ -3128,51 +3128,51 @@
    "backendId": "nuxmv:bmc-invar",
    "portfolioId": "smart-full",
    "metrics": {
-    "totalDuration": "PT3.123296987S",
-    "preparationDuration": "PT2.797924006S",
-    "verificationDuration": "PT2.573597452S",
-    "backAnnotationDuration": "PT0.041945091S",
+    "totalDuration": "PT2.304635933S",
+    "preparationDuration": "PT1.642496318S",
+    "verificationDuration": "PT1.640185817S",
+    "backAnnotationDuration": "PT0.020249767S",
     "compilation": {
-     "createDuration": "PT0.027202473S",
-     "instantiationDuration": "PT0.143321604S",
-     "inliningDuration": "PT1.956683477S",
-     "flatteningDuration": "PT0.63997562S",
+     "createDuration": "PT0.004814055S",
+     "instantiationDuration": "PT0.028323777S",
+     "inliningDuration": "PT1.110698092S",
+     "flatteningDuration": "PT0.491165776S",
      "inliningOptimization": {
-      "duration": "PT0.161942176S",
+      "duration": "PT0.107472697S",
       "passes": [
        {
         "name": "OperationCallInlining",
-        "duration": "PT0.112029927S",
-        "runs": 2383,
+        "duration": "PT0.045762733S",
+        "runs": 2387,
         "firings": 613
        },
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.030673786S",
+        "duration": "PT0.028714232S",
         "runs": 3,
         "firings": 2
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.00814817S",
+        "duration": "PT0.012880522S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.004649855S",
+        "duration": "PT0.010426938S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.006066223S",
+        "duration": "PT0.009164015S",
         "runs": 3,
         "firings": 2
        },
        {
         "name": "PropertyExpressionNormalization",
-        "duration": "PT0.000046274S",
+        "duration": "PT0.00004667S",
         "runs": 1,
         "firings": 0
        }
@@ -3180,59 +3180,59 @@
       "analyses": []
      },
      "flatteningOptimization": {
-      "duration": "PT0.383155242S",
+      "duration": "PT0.302379023S",
       "passes": [
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.005919892S",
+        "duration": "PT0.003837707S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.00204858S",
+        "duration": "PT0.002133974S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.002152511S",
+        "duration": "PT0.001981091S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.0020766S",
+        "duration": "PT0.001911503S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "ConstantVariableSubstitutionPass",
-        "duration": "PT0.010919357S",
+        "duration": "PT0.006583089S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "CopyPropagationPass",
-        "duration": "PT0.162280279S",
+        "duration": "PT0.142792363S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "DeadStoreEliminationPass",
-        "duration": "PT0.079640872S",
+        "duration": "PT0.064843206S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "DeadCodeRemovalPass",
-        "duration": "PT0.041534059S",
+        "duration": "PT0.032442301S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "VariableLivenessPass",
-        "duration": "PT0.076173233S",
+        "duration": "PT0.045460841S",
         "runs": 3,
         "firings": 1
        }
@@ -3240,17 +3240,17 @@
       "analyses": [
        {
         "name": "ConstantValueAnalysis",
-        "duration": "PT0.010708211S",
+        "duration": "PT0.006416809S",
         "computations": 2
        },
        {
         "name": "ReachingDefinitionsAnalysis",
-        "duration": "PT0.235854159S",
+        "duration": "PT0.20307825S",
         "computations": 3
        },
        {
         "name": "ConeOfInfluenceAnalysis",
-        "duration": "PT0.037749066S",
+        "duration": "PT0.029584003S",
         "computations": 2
        }
       ]
@@ -3279,51 +3279,51 @@
    "backendId": "uppaal:default",
    "portfolioId": "smart-full",
    "metrics": {
-    "totalDuration": "PT7.399622359S",
-    "preparationDuration": "PT6.056111386S",
-    "verificationDuration": "PT5.472768074S",
-    "backAnnotationDuration": "PT0.664423087S",
+    "totalDuration": "PT6.877683619S",
+    "preparationDuration": "PT4.25956758S",
+    "verificationDuration": "PT5.018853408S",
+    "backAnnotationDuration": "PT0.20225051S",
     "compilation": {
-     "createDuration": "PT0.004920184S",
-     "instantiationDuration": "PT0.049295074S",
-     "inliningDuration": "PT4.886349292S",
-     "flatteningDuration": "PT1.082550951S",
+     "createDuration": "PT0.002707452S",
+     "instantiationDuration": "PT0.027865561S",
+     "inliningDuration": "PT3.20393021S",
+     "flatteningDuration": "PT1.016641617S",
      "inliningOptimization": {
-      "duration": "PT0.632129779S",
+      "duration": "PT0.363847103S",
       "passes": [
        {
         "name": "OperationCallInlining",
-        "duration": "PT0.121562586S",
-        "runs": 4663,
+        "duration": "PT0.099878848S",
+        "runs": 4667,
         "firings": 1201
        },
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.24821039S",
+        "duration": "PT0.121340639S",
         "runs": 5,
         "firings": 4
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.087437073S",
+        "duration": "PT0.05689504S",
         "runs": 5,
         "firings": 1
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.086710395S",
+        "duration": "PT0.039222614S",
         "runs": 5,
         "firings": 1
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.087248408S",
+        "duration": "PT0.045526095S",
         "runs": 5,
         "firings": 2
        },
        {
         "name": "PropertyExpressionNormalization",
-        "duration": "PT0.000058418S",
+        "duration": "PT0.000041688S",
         "runs": 1,
         "firings": 0
        }
@@ -3331,59 +3331,59 @@
       "analyses": []
      },
      "flatteningOptimization": {
-      "duration": "PT0.598868327S",
+      "duration": "PT0.537409841S",
       "passes": [
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.00968067S",
+        "duration": "PT0.004283828S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.003452143S",
+        "duration": "PT0.002641983S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.003379716S",
+        "duration": "PT0.00294774S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.003429868S",
+        "duration": "PT0.002646253S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "ConstantVariableSubstitutionPass",
-        "duration": "PT0.017616017S",
+        "duration": "PT0.01035653S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "CopyPropagationPass",
-        "duration": "PT0.287666072S",
+        "duration": "PT0.240991488S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "DeadStoreEliminationPass",
-        "duration": "PT0.132071461S",
+        "duration": "PT0.134864336S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "DeadCodeRemovalPass",
-        "duration": "PT0.058319757S",
+        "duration": "PT0.055400586S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "VariableLivenessPass",
-        "duration": "PT0.082821352S",
+        "duration": "PT0.082923905S",
         "runs": 3,
         "firings": 1
        }
@@ -3391,17 +3391,17 @@
       "analyses": [
        {
         "name": "ConstantValueAnalysis",
-        "duration": "PT0.01750836S",
+        "duration": "PT0.010220915S",
         "computations": 2
        },
        {
         "name": "ReachingDefinitionsAnalysis",
-        "duration": "PT0.40723245S",
+        "duration": "PT0.365276245S",
         "computations": 3
        },
        {
         "name": "ConeOfInfluenceAnalysis",
-        "duration": "PT0.050993587S",
+        "duration": "PT0.049538467S",
         "computations": 2
        }
       ]
@@ -3430,13 +3430,14 @@
   "file:///workspace/.artifacts/snippet._LevelCrossing._TwoTrainsCanBeInTheCrossing/witness.oxsts": "witness of _LevelCrossing::_TwoTrainsCanBeInTheCrossing\n\nvar step: int := 0\n\ncontains root: _LevelCrossing::_TwoTrainsCanBeInTheCrossing\n\ninit {\n    assume(step == 0)\n    inline root.init()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._Free)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Free)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._Idle)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Up)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == false)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == false)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 1\n}\n\ntran {\n    assume(step == 1)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._Approaching)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Approaching)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._Idle)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Up)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == true)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == true)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == true)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == true)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == false)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == false)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 2\n} or {\n    assume(step == 2)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._Near)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Near)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._TrainPresent)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Up)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == true)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == true)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 3\n} or {\n    assume(step == 3)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._InCrossing)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._InCrossing)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._TrainPresent)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Down)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == false)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == false)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 4\n}\n\nprop {\n    root.prop()\n}",
   "file:///workspace/.semantifyr/builtin/semantifyr.oxsts": "/*\n * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\n/*\n * The Semantifyr base library.\n */\npackage semantifyr\n\n/*\n * The any datatype is the base type of all other types.\n */\nextern datatype any\n\n/*\n * Integer numbers.\n */\nextern datatype int\n\n/*\n * Floating point numbers. Most verification backends do not support it.\n */\nextern datatype real\n\n/*\n * Boolean true or false values.\n */\nextern datatype bool\n\n/*\n * String datatypes. Most verification backends do not support it.\n */\nextern datatype string\n\n/*\n * The Control annotation signals that this variable might be important to track during verification.\n */\nannotation Control\n\n/*\n * Anything is the implicit supertype of all classes.\n */\nclass Anything {\n    // contains children: Anything[0..*] opposite parent;\n    // container parent: Anything[0..1] opposite children;\n    /*\n     * The base main transition.\n     */\n    tran {\n    }\n\n    /*\n     * The base init transition.\n     */\n    init {\n    }\n}\n\n/*\n * Classes annotated with VerificationCase can be verified with the Semantifyr toolchain. The optional summary string specifies how this verification case should be presented.\n */\nannotation VerificationCase(summary: string[0..1])\n\n/*\n * Tags allow categorizing verification cases, e.g., into slow for long-running cases.\n */\nannotation Tag(category: string)\n\n/*\n * Instances contained in Containment features annotated with @Shared are shared across all instances of the containing class.\n */\nannotation Shared\n\n/*\n * Calls to transitions annotated with @Trace will be traced back in the verification case witness, containing the bindings of it's parameters at the call site.\n */\nannotation Trace\n\n/*\n * Variables annotated with @Clock allows time-aware backends to handle them in a more optimal way.\n */\nannotation Clock\n\n/*\n * Variables annotated with @NonOptimizable are excluded from optimizer passes that could remove or fold them.\n */\nannotation NonOptimizable\n",
   "file:///workspace/Library/Actions.oxsts": "/*\n * SPDX-FileCopyrightText: 2025 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\npackage semantifyr::gamma::actions\n\nimport semantifyr::gamma::variables\nimport semantifyr::gamma::expressions\nimport semantifyr::gamma::events\nimport semantifyr::gamma::ports\n\nabstract class Action {\n    redefine tran {\n    }\n}\n\nclass RaiseEventAction : Action {\n    refers port: Port[1]\n    refers event: Event[1]\n    contains arguments: Argument[0..*]\n\n    redefine tran {\n        inline for (argument in arguments) {\n            inline argument.parameter.set(argument.expression.evaluate())\n        }\n        inline port.setOutputEvent(event)\n    }\n}\n\nclass Argument {\n    refers parameter: Parameter[1]\n    contains expression: Expression[1]\n}\n\nclass SetTimeoutAction : Action {\n    refers timeout: Timeout[1]\n    contains expression: Expression[1]\n\n    redefine tran {\n        timeout.remainingTime := expression.evaluate() as int\n    }\n}\n\nclass AssignmentAction : Action {\n    refers variable: Variable[1]\n    contains expression: Expression[1]\n\n    redefine tran {\n        inline variable.set(expression.evaluate())\n    }\n}\n",
-  "file:///workspace/Library/Components.oxsts": "/*\n * SPDX-FileCopyrightText: 2025 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\npackage semantifyr::gamma::components\n\nimport semantifyr::gamma::events\nimport semantifyr::gamma::ports\n\nabstract class Component {\n    contains ports: Port[0..*]\n    contains timeouts: Timeout[0..*]\n\n    redefine tran {\n        inline schedule()\n    }\n\n    abstract tran schedule()\n\n    tran resetInputEvents() {\n        inline for (port in ports) {\n            inline port.resetInputEvents()\n        }\n    }\n\n    tran havocInputEvents() {\n        inline for (port in ports) {\n            inline port.havocInputEvents()\n        }\n    }\n\n    tran resetOutputEvents() {\n        inline for (port in ports) {\n            inline port.resetOutputEvents()\n        }\n    }\n\n    tran passTime() {\n        inline for (timeout in timeouts) {\n            inline timeout.passTime()\n        }\n    }\n}\n\nclass Channel {\n    refers inputPort: Port[1]\n    refers outputPort: Port[1]\n\n    redefine tran {\n        inline inputPort.transferOutputEvents(outputPort)\n        inline outputPort.transferOutputEvents(inputPort)\n    }\n\n    tran resetOutputEventsOf(component: Component) {\n        inline for (port in component.ports) {\n            inline if (port == inputPort) {\n                inline inputPort.resetOutputEvents()\n            }\n            inline if (port == outputPort) {\n                inline outputPort.resetOutputEvents()\n            }\n        }\n    }\n\n    tran transferOutputEventsOf(component: Component) {\n        inline for (port in component.ports) {\n            inline if (port == inputPort) {\n                inline inputPort.transferOutputEvents(outputPort)\n            }\n            inline if (port == outputPort) {\n                inline outputPort.transferOutputEvents(inputPort)\n            }\n        }\n    }\n}\n\nabstract class CompositeComponent : Component {\n    contains components: Component[0..*]\n    contains channels: Channel[0..*]\n\n    redefine init {\n        inline for (component in components) {\n            inline component.init()\n        }\n\n        inline for (channel in channels) {\n            inline channel.main()\n        }\n    }\n\n    redefine tran passTime() {\n        inline for (timeout in timeouts) {\n            inline timeout.passTime()\n        }\n\n        inline for (component in components) {\n            inline component.passTime()\n        }\n    }\n}\n\nclass SyncComponent : CompositeComponent {\n    redefine tran schedule() {\n        inline for (component in components) {\n            inline component.resetOutputEvents()\n            inline component.main()\n        }\n\n        inline for (channel in channels) {\n            inline channel.main()\n        }\n\n        inline resetInputEvents()\n    }\n}\n\nclass ExecutionStep {\n    refers component: Component[1]\n}\n\nclass CascadeComponent : CompositeComponent {\n    contains executionSteps: ExecutionStep[0..*]\n\n    // a channel delivers at the raise; its source's outputs are not state in Gamma, so they are cleared before the source runs again\n    redefine tran schedule() {\n        inline for (step in executionSteps) {\n            inline for (channel in channels) {\n                inline channel.resetOutputEventsOf(step.component)\n            }\n\n            inline step.component.main()\n\n            inline for (channel in channels) {\n                inline channel.transferOutputEventsOf(step.component)\n            }\n        }\n    }\n}\n",
-  "file:///workspace/Library/Events.oxsts": "/*\n * SPDX-FileCopyrightText: 2025 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\npackage semantifyr::gamma::events\n\nimport semantifyr::gamma::expressions\n\nclass EventDeclaration\n\nclass Event {\n    // shared by every port's instance of the event, so a channel matches the instances of one event\n    contains declaration: EventDeclaration\n    contains parameters: Parameter[0..*]\n\n    refers persistent: bool = false\n\n    var isRaised: bool := false\n\n    tran reset() {\n        isRaised := false\n        inline if (!persistent) {\n            inline for (parameter in parameters) {\n                inline parameter.reset()\n            }\n        }\n    }\n\n    tran havocParameters() {\n        inline for (parameter in parameters) {\n            inline parameter.havoc()\n        }\n    }\n\n    tran copyParametersFrom(source: Event) {\n        inline for (parameter in parameters) {\n            inline for (sourceParameter in source.parameters) {\n                inline if (parameter.declaration == sourceParameter.declaration) {\n                    inline parameter.set(sourceParameter.evaluate())\n                }\n            }\n        }\n    }\n}\n\nclass ParameterDeclaration\n\nabstract class Parameter {\n    // shared like the event's declaration, so a channel matches the instances of one parameter\n    contains declaration: ParameterDeclaration\n\n    abstract prop evaluate(): any\n\n    abstract tran set(value: any)\n\n    abstract tran reset()\n\n    abstract tran havoc()\n}\n\nclass IntegerParameter : Parameter {\n    var value: int := 0\n\n    redefine prop evaluate(): int {\n        return value\n    }\n\n    redefine tran set(value: int) {\n        self.value := value\n    }\n\n    redefine tran reset() {\n        value := 0\n    }\n\n    redefine tran havoc() {\n        havoc(value)\n    }\n}\n\nclass BooleanParameter : Parameter {\n    var value: bool := false\n\n    redefine prop evaluate(): bool {\n        return value\n    }\n\n    redefine tran set(value: bool) {\n        self.value := value\n    }\n\n    redefine tran reset() {\n        value := false\n    }\n\n    redefine tran havoc() {\n        havoc(value)\n    }\n}\n\nclass ParameterExpression : Expression {\n    refers parameter: Parameter\n\n    redefine prop evaluate(): any {\n        return parameter.evaluate()\n    }\n}\n\nclass Timeout {\n    refers deltaTime: int = 1\n\n    var remainingTime: int := 0\n\n    tran passTime() {\n        if (remainingTime > 0) {\n            remainingTime := remainingTime - deltaTime\n        }\n    }\n\n    prop isUp(): bool {\n        return remainingTime <= 0\n    }\n\n    tran assumeIsUp() {\n        assume(remainingTime <= 0)\n    }\n}\n",
+  "file:///workspace/Library/Asynchronous.oxsts": "/*\n * SPDX-FileCopyrightText: 2026 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\npackage semantifyr::gamma::asynchronous\n\nimport semantifyr::gamma::components\nimport semantifyr::gamma::events\nimport semantifyr::gamma::ports\n\nclass Clock {\n    refers rate: int\n    refers deltaTime: int = 1\n\n    var elapsed: int := 0\n\n    tran passTime() {\n        if (elapsed < rate) {\n            elapsed := elapsed + deltaTime\n        }\n    }\n\n    prop isUp(): bool {\n        return elapsed >= rate\n    }\n}\n\nabstract class MessageQueue {\n    // the mapper writes each queue's storage with its capacity as a literal, so a subclass holds the arrays and their accesses\n    container adapter: AsynchronousAdapter[0..1] opposite queues\n\n    refers capacity: int\n    refers priority: int\n    refers position: int\n    refers rank: int\n    refers environmental: bool = false\n    refers discardsOldest: bool = false\n\n    var size: int := 0\n\n    prop isEmpty(): bool {\n        return size <= 0\n    }\n\n    prop isFull(): bool {\n        return size >= capacity\n    }\n\n    // pops the oldest message, gives its event and parameters to the wrapped component and applies its control specification\n    abstract tran receive()\n\n    abstract tran shift()\n\n    abstract tran clear()\n\n    abstract tran receiveEnvironmentMessage()\n\n    abstract tran receiveClockTick(clock: Clock)\n\n    // the environment never drops a message, as in Gamma, so only a dispatch and a clock tick call this\n    tran dropOldestWhenFull() {\n        inline if (discardsOldest) {\n            if (isFull()) {\n                inline shift()\n            }\n        }\n    }\n}\n\nabstract class AsynchronousAdapter : Component {\n    contains wrapped: Component\n    contains queues: MessageQueue[0..*] opposite adapter\n    contains clocks: Clock[0..*]\n\n    refers scheduleCount: int = 1\n\n    redefine init {\n        inline wrapped.init()\n    }\n\n    redefine tran schedule() {\n        inline tickClocks()\n        inline receiveMessage()\n    }\n\n    tran tickClocks() {\n        inline for (clock in clocks) {\n            if (clock.isUp()) {\n                clock.elapsed := 0\n                inline for (queue in queues) {\n                    inline queue.receiveClockTick(clock)\n                }\n            }\n        }\n    }\n\n    // one message per turn, served by rank: descending priority, the first declared first among equal ones\n    tran receiveMessage() {\n        var received: bool := false\n        inline for (turn in queues) {\n            inline for (queue in queues) {\n                inline if (queue.rank == turn.position) {\n                    if (!received && !queue.isEmpty()) {\n                        received := true\n                        inline queue.receive()\n                    }\n                }\n            }\n        }\n    }\n\n    tran run() {\n        inline wrapped.resetOutputEvents()\n        inline wrapped.main()\n    }\n\n    // Gamma's component reset is the wrapped component's initializing action: every variable assigned its initial value, every region deactivated, then the entry\n    tran resetComponent() {\n        inline wrapped.restore()\n        inline wrapped.init()\n    }\n\n    tran clearQueues() {\n        inline for (queue in queues) {\n            inline queue.clear()\n        }\n    }\n\n    tran clearOtherQueues(kept: MessageQueue) {\n        inline for (queue in queues) {\n            inline if (queue != kept) {\n                inline queue.clear()\n            }\n        }\n    }\n\n    // a run resets the wrapped component's outputs, so a raised output stays until the adapter runs again\n    redefine tran resetOutputEvents() {\n    }\n\n    // a queue of lower priority takes environment messages only while it and the queues above hold fewer than the adapter's runs in a cycle\n    redefine tran havocInputEvents() {\n        inline for (queue in queues) {\n            inline if (queue.environmental) {\n                inline for (attempt in 1..queue.capacity) {\n                    inline offerEnvironmentMessage(queue)\n                }\n            }\n        }\n    }\n\n    tran offerEnvironmentMessage(queue: MessageQueue) {\n        var load: int := queue.size\n        var constrained: bool := false\n        inline for (other in queues) {\n            inline if (other.priority > queue.priority) {\n                load := load + other.size\n                constrained := true\n            }\n        }\n        if (!queue.isFull() && (!constrained || load < scheduleCount)) {\n            inline queue.receiveEnvironmentMessage()\n        }\n    }\n\n    redefine tran passTime() {\n        inline wrapped.passTime()\n        inline for (clock in clocks) {\n            inline clock.passTime()\n        }\n    }\n}\n\nabstract class MessageDispatch {\n    // the mapper writes one dispatch per output event a channel carries into a queue that stores it\n    refers source: AsynchronousAdapter\n    refers event: Event\n    refers target: MessageQueue\n    refers resetsSource: bool = true\n\n    tran dispatch() {\n        if (event.isRaised) {\n            inline target.dropOldestWhenFull()\n            if (!target.isFull()) {\n                inline enqueue()\n            }\n            inline if (resetsSource) {\n                inline event.reset()\n            }\n        }\n    }\n\n    abstract tran enqueue()\n}\n\nabstract class AsynchronousComposite : Component {\n    contains adapters: AsynchronousAdapter[0..*]\n    contains dispatches: MessageDispatch[0..*]\n\n    redefine init {\n        inline for (adapter in adapters) {\n            inline adapter.init()\n        }\n\n        inline for (dispatch in dispatches) {\n            inline dispatch.dispatch()\n        }\n    }\n\n    tran tickClocks() {\n        inline for (adapter in adapters) {\n            inline adapter.tickClocks()\n        }\n    }\n\n    tran turn(adapter: AsynchronousAdapter) {\n        inline adapter.receiveMessage()\n        inline for (dispatch in dispatches) {\n            inline if (dispatch.source == adapter) {\n                inline dispatch.dispatch()\n            }\n        }\n    }\n\n    redefine tran resetOutputEvents() {\n    }\n\n    redefine tran havocInputEvents() {\n        inline for (adapter in adapters) {\n            inline adapter.havocInputEvents()\n        }\n    }\n\n    redefine tran passTime() {\n        inline for (adapter in adapters) {\n            inline adapter.passTime()\n        }\n    }\n}\n\nclass AsynchronousCompositeComponent : AsynchronousComposite {\n    // an adapter with no message does nothing when chosen, so a cycle may pass with no run\n    redefine tran schedule() {\n        inline tickClocks()\n        inline for choice (adapter in adapters) {\n            inline turn(adapter)\n        }\n    }\n}\n\nclass AsynchronousExecutionStep {\n    refers adapter: AsynchronousAdapter[1]\n}\n\nclass ScheduledAsynchronousCompositeComponent : AsynchronousComposite {\n    contains executionSteps: AsynchronousExecutionStep[0..*]\n\n    redefine tran schedule() {\n        inline tickClocks()\n        inline for (step in executionSteps) {\n            inline turn(step.adapter)\n        }\n    }\n}\n",
+  "file:///workspace/Library/Components.oxsts": "/*\n * SPDX-FileCopyrightText: 2025 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\npackage semantifyr::gamma::components\n\nimport semantifyr::gamma::events\nimport semantifyr::gamma::ports\n\nabstract class Component {\n    contains ports: Port[0..*]\n    contains timeouts: Timeout[0..*]\n\n    redefine tran {\n        inline schedule()\n    }\n\n    abstract tran schedule()\n\n    tran resetInputEvents() {\n        inline for (port in ports) {\n            inline port.resetInputEvents()\n        }\n    }\n\n    tran havocInputEvents() {\n        inline for (port in ports) {\n            inline port.havocInputEvents()\n        }\n    }\n\n    tran resetOutputEvents() {\n        inline for (port in ports) {\n            inline port.resetOutputEvents()\n        }\n    }\n\n    tran passTime() {\n        inline for (timeout in timeouts) {\n            inline timeout.passTime()\n        }\n    }\n\n    // timeouts are left as Gamma's initializing action leaves them, a state sets its own when entered\n    tran restore() {\n        inline for (port in ports) {\n            inline port.restore()\n        }\n    }\n}\n\nclass Channel {\n    refers inputPort: Port[1]\n    refers outputPort: Port[1]\n\n    redefine tran {\n        inline inputPort.transferOutputEvents(outputPort)\n        inline outputPort.transferOutputEvents(inputPort)\n    }\n\n    tran resetOutputEventsOf(component: Component) {\n        inline for (port in component.ports) {\n            inline if (port == inputPort) {\n                inline inputPort.resetOutputEvents()\n            }\n            inline if (port == outputPort) {\n                inline outputPort.resetOutputEvents()\n            }\n        }\n    }\n\n    tran transferOutputEventsOf(component: Component) {\n        inline for (port in component.ports) {\n            inline if (port == inputPort) {\n                inline inputPort.transferOutputEvents(outputPort)\n            }\n            inline if (port == outputPort) {\n                inline outputPort.transferOutputEvents(inputPort)\n            }\n        }\n    }\n}\n\nabstract class CompositeComponent : Component {\n    contains components: Component[0..*]\n    contains channels: Channel[0..*]\n\n    redefine init {\n        inline for (component in components) {\n            inline component.init()\n        }\n\n        inline for (channel in channels) {\n            inline channel.main()\n        }\n    }\n\n    redefine tran passTime() {\n        inline for (timeout in timeouts) {\n            inline timeout.passTime()\n        }\n\n        inline for (component in components) {\n            inline component.passTime()\n        }\n    }\n\n    redefine tran restore() {\n        inline for (port in ports) {\n            inline port.restore()\n        }\n\n        inline for (component in components) {\n            inline component.restore()\n        }\n    }\n}\n\nclass SyncComponent : CompositeComponent {\n    redefine tran schedule() {\n        inline for (component in components) {\n            inline component.resetOutputEvents()\n            inline component.main()\n        }\n\n        inline for (channel in channels) {\n            inline channel.main()\n        }\n\n        inline resetInputEvents()\n    }\n}\n\nclass ExecutionStep {\n    refers component: Component[1]\n}\n\nclass CascadeComponent : CompositeComponent {\n    contains executionSteps: ExecutionStep[0..*]\n\n    // a channel delivers at the raise; its source's outputs are not state in Gamma, so they are cleared before the source runs again\n    redefine tran schedule() {\n        inline for (step in executionSteps) {\n            inline for (channel in channels) {\n                inline channel.resetOutputEventsOf(step.component)\n            }\n\n            inline step.component.main()\n\n            inline for (channel in channels) {\n                inline channel.transferOutputEventsOf(step.component)\n            }\n        }\n    }\n}\n",
+  "file:///workspace/Library/Events.oxsts": "/*\n * SPDX-FileCopyrightText: 2025 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\npackage semantifyr::gamma::events\n\nimport semantifyr::gamma::expressions\n\nclass EventDeclaration\n\nclass Event {\n    // shared by every port's instance of the event, so a channel matches the instances of one event\n    contains declaration: EventDeclaration\n    contains parameters: Parameter[0..*]\n\n    refers persistent: bool = false\n\n    var isRaised: bool := false\n\n    tran reset() {\n        isRaised := false\n        inline if (!persistent) {\n            inline for (parameter in parameters) {\n                inline parameter.reset()\n            }\n        }\n    }\n\n    // a persistent parameter is restored too, as Gamma's component reset assigns every parameter its initial value\n    tran restore() {\n        isRaised := false\n        inline for (parameter in parameters) {\n            inline parameter.reset()\n        }\n    }\n\n    tran havocParameters() {\n        inline for (parameter in parameters) {\n            inline parameter.havoc()\n        }\n    }\n\n    tran copyParametersFrom(source: Event) {\n        inline for (parameter in parameters) {\n            inline for (sourceParameter in source.parameters) {\n                inline if (parameter.declaration == sourceParameter.declaration) {\n                    inline parameter.set(sourceParameter.evaluate())\n                }\n            }\n        }\n    }\n}\n\nclass ParameterDeclaration\n\nabstract class Parameter {\n    // shared like the event's declaration, so a channel matches the instances of one parameter\n    contains declaration: ParameterDeclaration\n\n    abstract prop evaluate(): any\n\n    abstract tran set(value: any)\n\n    abstract tran reset()\n\n    abstract tran havoc()\n}\n\nclass IntegerParameter : Parameter {\n    var value: int := 0\n\n    redefine prop evaluate(): int {\n        return value\n    }\n\n    redefine tran set(value: int) {\n        self.value := value\n    }\n\n    redefine tran reset() {\n        value := 0\n    }\n\n    redefine tran havoc() {\n        havoc(value)\n    }\n}\n\nclass BooleanParameter : Parameter {\n    var value: bool := false\n\n    redefine prop evaluate(): bool {\n        return value\n    }\n\n    redefine tran set(value: bool) {\n        self.value := value\n    }\n\n    redefine tran reset() {\n        value := false\n    }\n\n    redefine tran havoc() {\n        havoc(value)\n    }\n}\n\nclass ParameterExpression : Expression {\n    refers parameter: Parameter\n\n    redefine prop evaluate(): any {\n        return parameter.evaluate()\n    }\n}\n\nclass Timeout {\n    refers deltaTime: int = 1\n\n    var remainingTime: int := 0\n\n    tran passTime() {\n        if (remainingTime > 0) {\n            remainingTime := remainingTime - deltaTime\n        }\n    }\n\n    prop isUp(): bool {\n        return remainingTime <= 0\n    }\n\n    tran assumeIsUp() {\n        assume(remainingTime <= 0)\n    }\n}\n",
   "file:///workspace/Library/Expressions.oxsts": "package semantifyr::gamma::expressions\n\nabstract class Expression {\n    abstract prop evaluate(): any\n}\n\nabstract class LiteralExpression : Expression\nclass LiteralBooleanExpression : LiteralExpression {\n    refers value: bool[1]\n    redefine prop evaluate(): bool {\n        return value\n    }\n}\n\nclass LiteralIntegerExpression : LiteralExpression {\n    refers value: int[1]\n    redefine prop evaluate(): int {\n        return value\n    }\n}\n\nabstract class BinaryOperatorExpression : Expression {\n    contains left: Expression[1]\n    contains right: Expression[1]\n}\n\nclass LessThanOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): bool {\n        return left.evaluate() < right.evaluate()\n    }\n}\n\nclass LessThanOrEqualsOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): bool {\n        return left.evaluate() <= right.evaluate()\n    }\n}\n\nclass GreaterThanOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): bool {\n        return left.evaluate() > right.evaluate()\n    }\n}\n\nclass GreaterThanOrEqualsOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): bool {\n        return left.evaluate() >= right.evaluate()\n    }\n}\n\nclass PlusOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): any {\n        return left.evaluate() + right.evaluate()\n    }\n}\n\nclass MinusOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): any {\n        return left.evaluate() - right.evaluate()\n    }\n}\n\nclass MultiplyOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): any {\n        return left.evaluate() * right.evaluate()\n    }\n}\n\nclass DivideOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): any {\n        return left.evaluate() / right.evaluate()\n    }\n}\n\nclass EqualityOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): bool {\n        return left.evaluate() == right.evaluate()\n    }\n}\n\nclass InequalityOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): bool {\n        return left.evaluate() != right.evaluate()\n    }\n}\n\nclass OrOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): bool {\n        return left.evaluate() || right.evaluate()\n    }\n}\n\nclass AndOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): bool {\n        return left.evaluate() && right.evaluate()\n    }\n}\n\nabstract class UnaryOperatorExpression : Expression {\n    contains body: Expression[1]\n}\n\nclass UnaryNotExpression : UnaryOperatorExpression {\n    redefine prop evaluate(): bool {\n        return !body.evaluate()\n    }\n}\n\nclass UnaryPlusExpression : UnaryOperatorExpression {\n    redefine prop evaluate(): any {\n        return body.evaluate()\n    }\n}\n\nclass UnaryMinusExpression : UnaryOperatorExpression {\n    redefine prop evaluate(): any {\n        return -body.evaluate()\n    }\n}\n\nabstract class FieldAccessExpression : Expression {\n    contains operand: Expression[1]\n\n    abstract prop updated(original: any, value: any): any\n}\n\nclass FieldUpdateExpression : Expression {\n    contains field: FieldAccessExpression[1]\n    contains value: Expression[1]\n\n    redefine prop evaluate(): any {\n        return field.updated(field.operand.evaluate(), value.evaluate())\n    }\n}\n\nabstract class TemporalOperatorExpression : Expression {\n    contains body: Expression[1]\n}\n\nclass Eventually : TemporalOperatorExpression {\n    redefine prop evaluate(): any {\n        return EF body.evaluate()\n    }\n}\n\nclass MustAlways : TemporalOperatorExpression {\n    redefine prop evaluate(): any {\n        return AG body.evaluate()\n    }\n}\n",
-  "file:///workspace/Library/Ports.oxsts": "package semantifyr::gamma::ports\n\nimport semantifyr::gamma::events\nimport semantifyr::gamma::expressions\n\nclass Interface {\n    contains events: Event[0..*]\n    contains inputEvents: Event[0..*] subsets events\n    contains outputEvents: Event[0..*] subsets events\n}\n\nclass Port {\n    contains interface: Interface[1]\n\n    refers inputEvents: Event[0..*]\n    refers outputEvents: Event[0..*]\n\n    prop hasInputEvent(event: Event): bool {\n        return event.isRaised\n    }\n\n    tran setInputEvent(event: Event) {\n        event.isRaised := true\n    }\n\n    @Trace\n    tran setOutputEvent(event: Event) {\n        event.isRaised := true\n    }\n\n    tran resetInputEvents() {\n        inline for (event in inputEvents) {\n            inline event.reset()\n        }\n    }\n\n    tran resetOutputEvents() {\n        inline for (event in outputEvents) {\n            inline event.reset()\n        }\n    }\n\n    tran havocInputEvents() {\n        inline for (event in inputEvents) {\n            choice {\n                inline event.reset()\n            } or {\n                inline raiseInputEvent(event)\n                inline event.havocParameters()\n            }\n        }\n    }\n\n    @Trace\n    tran raiseInputEvent(event: Event) {\n        event.isRaised := true\n    }\n\n    tran transferOutputEvents(target: Port) {\n        inline for (event in outputEvents) {\n            inline for (targetEvent in target.inputEvents) {\n                inline if (event.declaration == targetEvent.declaration) {\n                    if (event.isRaised) {\n                        inline target.setInputEvent(targetEvent)\n                        inline targetEvent.copyParametersFrom(event)\n                    }\n                }\n            }\n        }\n    }\n}\n\nclass RequiredPort : Port {\n    // required ports flip the direction\n    redefine refers inputEvents: Event[0..*] = interface.outputEvents\n    redefine refers outputEvents: Event[0..*] = interface.inputEvents\n}\n\nclass ProvidedPort : Port {\n    redefine refers inputEvents: Event[0..*] = interface.inputEvents\n    redefine refers outputEvents: Event[0..*] = interface.outputEvents\n}\n\nclass IsEventRaisedExpression : Expression {\n    refers port: Port\n    refers event: Event\n\n    redefine prop evaluate(): bool {\n        return event.isRaised\n    }\n}\n",
-  "file:///workspace/Library/Statecharts.oxsts": "/*\n * SPDX-FileCopyrightText: 2025 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\npackage semantifyr::gamma::statecharts\n\nimport semantifyr::gamma::expressions\nimport semantifyr::gamma::variables\nimport semantifyr::gamma::components\nimport semantifyr::gamma::triggers\nimport semantifyr::gamma::actions\nimport semantifyr::gamma::events\n\nenum RegionSchedule {\n    TopDown,\n    BottomUp,\n}\n\nenum TransitionPriority {\n    Off,\n    OrderBased,\n    ValueBased,\n}\n\nenum GuardEvaluation {\n    OnTheFly,\n    BeginningOfStep,\n}\n\nclass TransitionScheduler {\n    refers innerRegions: Region[0..*]\n\n    tran fireTransitions() {\n        var anyRegionExecuted: bool := false\n        inline for (region in innerRegions) {\n            choice {\n                inline region.fire()\n                anyRegionExecuted := true\n            } or {\n                inline region.assumeNoTransitionEnabled()\n            }\n        }\n        assume(anyRegionExecuted) // at least one inner \"parallel\" region must be executed\n    }\n}\n\nclass Statechart : Component {\n    contains regions: Region[0..*] opposite parentStatechart\n    contains variables: Variable[0..*]\n\n    refers regionSchedule: RegionSchedule = RegionSchedule::TopDown\n    refers transitionPriority: TransitionPriority = TransitionPriority::Off\n    refers guardEvaluation: GuardEvaluation = GuardEvaluation::OnTheFly\n\n    contains transitionScheduler: TransitionScheduler {\n        redefine refers innerRegions: Region[0..*] = regions\n    }\n\n    redefine init {\n        inline for (region in regions) {\n            inline region.activateRecursive()\n        }\n    }\n\n    redefine tran schedule() {\n        inline if (guardEvaluation == GuardEvaluation::BeginningOfStep) {\n            inline for (region in regions) {\n                inline region.saveGuards()\n            }\n        }\n\n        choice {\n            inline transitionScheduler.fireTransitions()\n        } or {\n            inline assumeNoTransitionEnabled()\n            // only do nothing, if the statechart cannot do anything, i.e., no fireable transitions\n        }\n\n        inline resetInputEvents()\n    }\n\n    // TODO: would be easier to implement if we had ...any { } and ...all { } lambda functions that could compose expressions\n    tran assumeNoTransitionEnabled() {\n        inline for (region in regions) {\n            inline region.assumeNoTransitionEnabled()\n        }\n    }\n}\n\nclass Region {\n    contains states: State[0..*] opposite parentRegion\n    container parentStatechart: Statechart[0..1] opposite regions\n    container parentState: State[0..1] opposite regions\n\n    refers statechart: Statechart = if (parentState == nothing) then parentStatechart as Statechart else parentState.statechart\n\n    contains abstractTransitions: AbstractTransition[0..*] opposite parentRegion\n    contains transitions: Transition[0..*] subsets abstractTransitions\n    contains entryTransitions: EntryTransition[0..*] subsets abstractTransitions\n    contains shallowHistory: ShallowHistory[0..1] opposite parentRegion\n\n    @Control\n    var activeState: states[0..1] := nothing\n\n    tran activateRecursive() {\n        inline if (entryTransitions == nothing) {\n            inline for (history in shallowHistory) {\n                inline history.enterRegion()\n            }\n        } else {\n            inline for (transition in entryTransitions) {\n                inline transition.main()\n            }\n        }\n    }\n\n    tran exitRecursive() {\n        inline for (state in states) {\n            inline state.exitRecursive()\n        }\n    }\n\n    tran activateOrthogonalRegions() {\n        inline for (region in parentState.regions) {\n            inline if (region != self) {\n                inline region.activateRecursive()\n            }\n        }\n    }\n\n    tran exitOrthogonalRegions() {\n        inline for (region in parentState.regions) {\n            inline if (region != self) {\n                inline region.exitRecursive()\n            }\n        }\n    }\n\n    tran saveGuards() {\n        inline for (transition in transitions) {\n            inline transition.saveGuard()\n        }\n        inline for (state in states) {\n            inline for (region in state.regions) {\n                inline region.saveGuards()\n            }\n        }\n    }\n\n    tran fire() {\n        inline if (statechart.regionSchedule == RegionSchedule::BottomUp) {\n            choice {\n                // fire state transitions if inner transitions are not enabled (bottom-up)\n                inline assumeNoInnerTransitionEnabled()\n                inline fireLocalTransitions()\n            } or {\n                inline fireInnerTransitions()\n            }\n        } else {\n            choice {\n                inline fireLocalTransitions()\n            } or {\n                // fire inner transitions if local transitions are not enabled (top-down)\n                inline assumeNoLocalTransitionEnabled()\n                inline fireInnerTransitions()\n            }\n        }\n    }\n\n    tran fireLocalTransitions() {\n        inline if (statechart.transitionPriority == TransitionPriority::OrderBased) {\n            var fired: bool := false\n            inline for (transition in transitions) {\n                if (!fired && transition.isEnabled()) {\n                    fired := true\n                    inline transition.fire()\n                }\n            }\n            assume(fired)\n        } else {\n            inline for choice (transition in transitions) {\n                inline if (statechart.transitionPriority == TransitionPriority::ValueBased) {\n                    inline transition.assumeNoHigherPriorityEnabled()\n                }\n                inline transition.main()\n            } else {\n                assume(false)\n            }\n        }\n    }\n\n    tran fireInnerTransitions() {\n        inline for choice (state in states) {\n            inline state.fireTransitions()\n        } else {\n            assume(false)\n        }\n    }\n\n    tran assumeNoLocalTransitionEnabled() {\n        inline for (transition in transitions) {\n            assume(!transition.isEnabled())\n        }\n    }\n\n    tran assumeNoInnerTransitionEnabled() {\n        inline for (state in states) {\n            inline state.assumeNoTransitionEnabled()\n        }\n    }\n\n    tran assumeNoTransitionEnabled() {\n        inline assumeNoLocalTransitionEnabled()\n        inline assumeNoInnerTransitionEnabled()\n    }\n}\n\nabstract class TransitionTarget {\n    abstract tran receive(transition: Transition)\n\n    abstract tran enterFrom(top: State)\n}\n\nclass State : TransitionTarget {\n    container parentRegion: Region[1] opposite states\n    contains regions: Region[0..*] opposite parentState\n\n    refers parentState: State[0..1] = parentRegion.parentState // as pattern parentState\n    refers statechart: Statechart = parentRegion.statechart\n    contains entryActions: Action[0..*]\n    contains exitActions: Action[0..*]\n\n    contains transitionScheduler: TransitionScheduler {\n        redefine refers innerRegions: Region[0..*] = regions\n    }\n\n    prop isActive(): bool {\n        return parentRegion.activeState == self\n    }\n\n    tran enterOwn() {\n        parentRegion.activeState := self\n        inline for (history in parentRegion.shallowHistory) {\n            history.lastState := nothing\n        }\n\n        inline for (action in entryActions) {\n            inline action.main()\n        }\n    }\n\n    tran enter() {\n        inline enterOwn()\n\n        inline for (region in regions) {\n            inline region.activateRecursive()\n        }\n    }\n\n    tran exitOwn() {\n        inline for (action in exitActions) {\n            inline action.main()\n        }\n\n        inline for (history in parentRegion.shallowHistory) {\n            history.lastState := self\n        }\n        parentRegion.activeState := nothing\n    }\n\n    tran exitRecursive() {\n        if (isActive()) {\n            inline for (region in regions) {\n                inline region.exitRecursive()\n            }\n\n            inline exitOwn()\n        }\n    }\n\n    // the order of the levels and their orthogonal regions is Gamma's, ExitActionRetriever and EntryActionRetriever\n    tran exitUpTo(top: State) {\n        inline exitRecursive()\n\n        inline if (self != top) {\n            inline parentRegion.exitOrthogonalRegions()\n            inline exitAncestorsUpTo(top)\n        }\n    }\n\n    tran exitAncestorsUpTo(top: State) {\n        inline if (self != top) {\n            inline if (parentState != top) {\n                inline parentState.parentRegion.exitOrthogonalRegions()\n            }\n            inline parentState.exitOwn()\n            inline parentState.exitAncestorsUpTo(top)\n        }\n    }\n\n    redefine tran receive(transition: Transition) {\n        inline transition.fireBetween(transition.from, self, self)\n    }\n\n    redefine tran enterFrom(top: State) {\n        inline if (self != top) {\n            inline enterAncestorsFrom(top)\n            inline enter()\n            inline parentRegion.activateOrthogonalRegions()\n        } else {\n            inline enter()\n        }\n    }\n\n    tran enterAncestorsFrom(top: State) {\n        inline if (self != top) {\n            inline parentState.enterAncestorsFrom(top)\n            inline if (parentState != top) {\n                inline parentState.parentRegion.activateOrthogonalRegions()\n            }\n            inline parentState.enterOwn()\n        }\n    }\n\n    tran fireTransitions() {\n        inline if (regions == nothing) {\n            assume(false)\n        } else {\n            inline transitionScheduler.fireTransitions()\n        }\n    }\n\n    tran assumeNoTransitionEnabled() {\n        inline for (region in regions) {\n            inline region.assumeNoTransitionEnabled()\n        }\n    }\n}\n\nclass Guard {\n    contains expression: Expression[1]\n\n    prop isOpen(): bool {\n        return expression.evaluate() as bool\n    }\n}\n\nabstract class AbstractTransition {\n    container parentRegion: Region[1] opposite abstractTransitions\n\n    abstract prop isEnabled(): bool\n\n    abstract tran fire()\n\n    redefine tran {\n        assume(isEnabled())\n        inline fire()\n    }\n}\n\nclass EntryTransition : AbstractTransition {\n    refers to: State[1]\n\n    redefine prop isEnabled(): bool {\n        return true\n    }\n\n    redefine tran fire() {\n        inline to.enter()\n    }\n}\n\nclass Transition : AbstractTransition {\n    refers from: State[1]\n    refers to: TransitionTarget[1]\n    refers statechart: Statechart = parentRegion.statechart\n    refers priority: int = 0\n\n    contains trigger: Trigger[1]\n    contains guard: Guard[1] { // default guard is true\n        redefine contains expression: LiteralBooleanExpression {\n            redefine refers value: bool = true\n        }\n    }\n\n    contains actions: Action[0..*]\n\n    var guardAtStepStart: bool := false\n\n    prop isTriggeredAndOpen(): bool {\n        return trigger.isTriggered() && guard.isOpen()\n    }\n\n    redefine prop isEnabled(): bool {\n        return from.isActive() && (if (statechart.guardEvaluation == GuardEvaluation::BeginningOfStep) then guardAtStepStart else isTriggeredAndOpen())\n    }\n\n    tran saveGuard() {\n        guardAtStepStart := isTriggeredAndOpen()\n    }\n\n    tran assumeNoHigherPriorityEnabled() {\n        inline for (other in parentRegion.transitions) {\n            inline if (other.priority > priority) {\n                assume(!other.isEnabled())\n            }\n        }\n    }\n\n    @Trace\n    redefine tran fire() {\n        inline to.receive(self)\n    }\n\n    tran fireBetween(sourceAncestor: State, targetAncestor: State, targetStart: State) {\n        inline if (sourceAncestor.parentRegion == targetAncestor.parentRegion) {\n            inline from.exitUpTo(sourceAncestor)\n            inline for (action in actions) {\n                inline action.main()\n            }\n            inline to.enterFrom(targetAncestor)\n        } else {\n            inline if (targetAncestor.parentState != nothing) {\n                inline fireBetween(sourceAncestor, targetAncestor.parentState as State, targetStart)\n            } else {\n                inline fireBetween(sourceAncestor.parentState as State, targetStart, targetStart)\n            }\n        }\n    }\n}\n\nclass ShallowHistory : TransitionTarget {\n    container parentRegion: Region[1] opposite shallowHistory\n\n    refers to: State[1]\n\n    @Control\n    var lastState: State[0..1] := nothing\n\n    tran enterRegion() {\n        if (lastState == nothing) {\n            inline to.enter()\n        } else {\n            inline for (state in parentRegion.states) {\n                if (lastState == state) {\n                    inline state.enter()\n                }\n            }\n        }\n    }\n\n    redefine tran receive(transition: Transition) {\n        inline transition.fireBetween(transition.from, parentRegion.parentState as State, parentRegion.parentState as State)\n    }\n\n    redefine tran enterFrom(top: State) {\n        inline parentRegion.parentState.enterAncestorsFrom(top)\n        inline parentRegion.parentState.enterOwn()\n        inline for (region in parentRegion.parentState.regions) {\n            inline if (region == parentRegion) {\n                inline enterRegion()\n            } else {\n                inline region.activateRecursive()\n            }\n        }\n        inline if (parentRegion.parentState != top) {\n            inline parentRegion.parentState.parentRegion.activateOrthogonalRegions()\n        }\n    }\n}\n\nclass IsStateActiveExpression : Expression {\n    refers state: State\n\n    redefine prop evaluate(): bool {\n        return state.isActive()\n    }\n}\n",
+  "file:///workspace/Library/Ports.oxsts": "package semantifyr::gamma::ports\n\nimport semantifyr::gamma::events\nimport semantifyr::gamma::expressions\n\nclass Interface {\n    contains events: Event[0..*]\n    contains inputEvents: Event[0..*] subsets events\n    contains outputEvents: Event[0..*] subsets events\n}\n\nclass Port {\n    contains interface: Interface[1]\n\n    refers inputEvents: Event[0..*]\n    refers outputEvents: Event[0..*]\n\n    prop hasInputEvent(event: Event): bool {\n        return event.isRaised\n    }\n\n    tran setInputEvent(event: Event) {\n        event.isRaised := true\n    }\n\n    @Trace\n    tran setOutputEvent(event: Event) {\n        event.isRaised := true\n    }\n\n    tran resetInputEvents() {\n        inline for (event in inputEvents) {\n            inline event.reset()\n        }\n    }\n\n    tran resetOutputEvents() {\n        inline for (event in outputEvents) {\n            inline event.reset()\n        }\n    }\n\n    tran restore() {\n        inline for (event in interface.events) {\n            inline event.restore()\n        }\n    }\n\n    tran havocInputEvents() {\n        inline for (event in inputEvents) {\n            choice {\n                inline event.reset()\n            } or {\n                inline raiseInputEvent(event)\n                inline event.havocParameters()\n            }\n        }\n    }\n\n    @Trace\n    tran raiseInputEvent(event: Event) {\n        event.isRaised := true\n    }\n\n    // the environment's message to an adapter, which the adapter's queue stores\n    @Trace\n    tran receiveInputMessage(event: Event) {\n    }\n\n    tran transferOutputEvents(target: Port) {\n        inline for (event in outputEvents) {\n            inline for (targetEvent in target.inputEvents) {\n                inline if (event.declaration == targetEvent.declaration) {\n                    if (event.isRaised) {\n                        inline target.setInputEvent(targetEvent)\n                        inline targetEvent.copyParametersFrom(event)\n                    }\n                }\n            }\n        }\n    }\n}\n\nclass RequiredPort : Port {\n    // required ports flip the direction\n    redefine refers inputEvents: Event[0..*] = interface.outputEvents\n    redefine refers outputEvents: Event[0..*] = interface.inputEvents\n}\n\nclass ProvidedPort : Port {\n    redefine refers inputEvents: Event[0..*] = interface.inputEvents\n    redefine refers outputEvents: Event[0..*] = interface.outputEvents\n}\n\nclass IsEventRaisedExpression : Expression {\n    refers port: Port\n    refers event: Event\n\n    redefine prop evaluate(): bool {\n        return event.isRaised\n    }\n}\n",
+  "file:///workspace/Library/Statecharts.oxsts": "/*\n * SPDX-FileCopyrightText: 2025 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\npackage semantifyr::gamma::statecharts\n\nimport semantifyr::gamma::expressions\nimport semantifyr::gamma::variables\nimport semantifyr::gamma::components\nimport semantifyr::gamma::triggers\nimport semantifyr::gamma::actions\nimport semantifyr::gamma::events\n\nenum RegionSchedule {\n    TopDown,\n    BottomUp,\n}\n\nenum TransitionPriority {\n    Off,\n    OrderBased,\n    ValueBased,\n}\n\nenum GuardEvaluation {\n    OnTheFly,\n    BeginningOfStep,\n}\n\nclass TransitionScheduler {\n    refers innerRegions: Region[0..*]\n\n    tran fireTransitions() {\n        var anyRegionExecuted: bool := false\n        inline for (region in innerRegions) {\n            choice {\n                inline region.fire()\n                anyRegionExecuted := true\n            } or {\n                inline region.assumeNoTransitionEnabled()\n            }\n        }\n        assume(anyRegionExecuted) // at least one inner \"parallel\" region must be executed\n    }\n}\n\nclass Statechart : Component {\n    contains regions: Region[0..*] opposite parentStatechart\n    contains variables: Variable[0..*]\n\n    refers regionSchedule: RegionSchedule = RegionSchedule::TopDown\n    refers transitionPriority: TransitionPriority = TransitionPriority::Off\n    refers guardEvaluation: GuardEvaluation = GuardEvaluation::OnTheFly\n\n    contains transitionScheduler: TransitionScheduler {\n        redefine refers innerRegions: Region[0..*] = regions\n    }\n\n    redefine init {\n        inline for (region in regions) {\n            inline region.activateRecursive()\n        }\n    }\n\n    redefine tran schedule() {\n        inline if (guardEvaluation == GuardEvaluation::BeginningOfStep) {\n            inline for (region in regions) {\n                inline region.saveGuards()\n            }\n        }\n\n        choice {\n            inline transitionScheduler.fireTransitions()\n        } or {\n            inline assumeNoTransitionEnabled()\n            // only do nothing, if the statechart cannot do anything, i.e., no fireable transitions\n        }\n\n        inline resetInputEvents()\n    }\n\n    redefine tran restore() {\n        inline for (port in ports) {\n            inline port.restore()\n        }\n\n        inline for (variable in variables) {\n            inline variable.restore()\n        }\n\n        inline for (region in regions) {\n            inline region.restore()\n        }\n    }\n\n    // TODO: would be easier to implement if we had ...any { } and ...all { } lambda functions that could compose expressions\n    tran assumeNoTransitionEnabled() {\n        inline for (region in regions) {\n            inline region.assumeNoTransitionEnabled()\n        }\n    }\n}\n\nclass Region {\n    contains states: State[0..*] opposite parentRegion\n    container parentStatechart: Statechart[0..1] opposite regions\n    container parentState: State[0..1] opposite regions\n\n    refers statechart: Statechart = if (parentState == nothing) then parentStatechart as Statechart else parentState.statechart\n\n    contains abstractTransitions: AbstractTransition[0..*] opposite parentRegion\n    contains transitions: Transition[0..*] subsets abstractTransitions\n    contains entryTransitions: EntryTransition[0..*] subsets abstractTransitions\n    contains shallowHistory: ShallowHistory[0..1] opposite parentRegion\n\n    @Control\n    var activeState: states[0..1] := nothing\n\n    tran restore() {\n        activeState := nothing\n        inline for (history in shallowHistory) {\n            inline history.restore()\n        }\n        inline for (state in states) {\n            inline for (region in state.regions) {\n                inline region.restore()\n            }\n        }\n    }\n\n    tran activateRecursive() {\n        inline if (entryTransitions == nothing) {\n            inline for (history in shallowHistory) {\n                inline history.enterRegion()\n            }\n        } else {\n            inline for (transition in entryTransitions) {\n                inline transition.main()\n            }\n        }\n    }\n\n    tran exitRecursive() {\n        inline for (state in states) {\n            inline state.exitRecursive()\n        }\n    }\n\n    tran activateOrthogonalRegions() {\n        inline for (region in parentState.regions) {\n            inline if (region != self) {\n                inline region.activateRecursive()\n            }\n        }\n    }\n\n    tran exitOrthogonalRegions() {\n        inline for (region in parentState.regions) {\n            inline if (region != self) {\n                inline region.exitRecursive()\n            }\n        }\n    }\n\n    tran saveGuards() {\n        inline for (transition in transitions) {\n            inline transition.saveGuard()\n        }\n        inline for (state in states) {\n            inline for (region in state.regions) {\n                inline region.saveGuards()\n            }\n        }\n    }\n\n    tran fire() {\n        inline if (statechart.regionSchedule == RegionSchedule::BottomUp) {\n            choice {\n                // fire state transitions if inner transitions are not enabled (bottom-up)\n                inline assumeNoInnerTransitionEnabled()\n                inline fireLocalTransitions()\n            } or {\n                inline fireInnerTransitions()\n            }\n        } else {\n            choice {\n                inline fireLocalTransitions()\n            } or {\n                // fire inner transitions if local transitions are not enabled (top-down)\n                inline assumeNoLocalTransitionEnabled()\n                inline fireInnerTransitions()\n            }\n        }\n    }\n\n    tran fireLocalTransitions() {\n        inline if (statechart.transitionPriority == TransitionPriority::OrderBased) {\n            var fired: bool := false\n            inline for (transition in transitions) {\n                if (!fired && transition.isEnabled()) {\n                    fired := true\n                    inline transition.fire()\n                }\n            }\n            assume(fired)\n        } else {\n            inline for choice (transition in transitions) {\n                inline if (statechart.transitionPriority == TransitionPriority::ValueBased) {\n                    inline transition.assumeNoHigherPriorityEnabled()\n                }\n                inline transition.main()\n            } else {\n                assume(false)\n            }\n        }\n    }\n\n    tran fireInnerTransitions() {\n        inline for choice (state in states) {\n            inline state.fireTransitions()\n        } else {\n            assume(false)\n        }\n    }\n\n    tran assumeNoLocalTransitionEnabled() {\n        inline for (transition in transitions) {\n            assume(!transition.isEnabled())\n        }\n    }\n\n    tran assumeNoInnerTransitionEnabled() {\n        inline for (state in states) {\n            inline state.assumeNoTransitionEnabled()\n        }\n    }\n\n    tran assumeNoTransitionEnabled() {\n        inline assumeNoLocalTransitionEnabled()\n        inline assumeNoInnerTransitionEnabled()\n    }\n}\n\nabstract class TransitionTarget {\n    abstract tran receive(transition: Transition)\n\n    abstract tran enterFrom(top: State)\n}\n\nclass State : TransitionTarget {\n    container parentRegion: Region[1] opposite states\n    contains regions: Region[0..*] opposite parentState\n\n    refers parentState: State[0..1] = parentRegion.parentState // as pattern parentState\n    refers statechart: Statechart = parentRegion.statechart\n    contains entryActions: Action[0..*]\n    contains exitActions: Action[0..*]\n\n    contains transitionScheduler: TransitionScheduler {\n        redefine refers innerRegions: Region[0..*] = regions\n    }\n\n    prop isActive(): bool {\n        return parentRegion.activeState == self\n    }\n\n    tran enterOwn() {\n        parentRegion.activeState := self\n        inline for (history in parentRegion.shallowHistory) {\n            history.lastState := nothing\n        }\n\n        inline for (action in entryActions) {\n            inline action.main()\n        }\n    }\n\n    tran enter() {\n        inline enterOwn()\n\n        inline for (region in regions) {\n            inline region.activateRecursive()\n        }\n    }\n\n    tran exitOwn() {\n        inline for (action in exitActions) {\n            inline action.main()\n        }\n\n        inline for (history in parentRegion.shallowHistory) {\n            history.lastState := self\n        }\n        parentRegion.activeState := nothing\n    }\n\n    tran exitRecursive() {\n        if (isActive()) {\n            inline for (region in regions) {\n                inline region.exitRecursive()\n            }\n\n            inline exitOwn()\n        }\n    }\n\n    // the order of the levels and their orthogonal regions is Gamma's, ExitActionRetriever and EntryActionRetriever\n    tran exitUpTo(top: State) {\n        inline exitRecursive()\n\n        inline if (self != top) {\n            inline parentRegion.exitOrthogonalRegions()\n            inline exitAncestorsUpTo(top)\n        }\n    }\n\n    tran exitAncestorsUpTo(top: State) {\n        inline if (self != top) {\n            inline if (parentState != top) {\n                inline parentState.parentRegion.exitOrthogonalRegions()\n            }\n            inline parentState.exitOwn()\n            inline parentState.exitAncestorsUpTo(top)\n        }\n    }\n\n    redefine tran receive(transition: Transition) {\n        inline transition.fireBetween(transition.from, self, self)\n    }\n\n    redefine tran enterFrom(top: State) {\n        inline if (self != top) {\n            inline enterAncestorsFrom(top)\n            inline enter()\n            inline parentRegion.activateOrthogonalRegions()\n        } else {\n            inline enter()\n        }\n    }\n\n    tran enterAncestorsFrom(top: State) {\n        inline if (self != top) {\n            inline parentState.enterAncestorsFrom(top)\n            inline if (parentState != top) {\n                inline parentState.parentRegion.activateOrthogonalRegions()\n            }\n            inline parentState.enterOwn()\n        }\n    }\n\n    tran fireTransitions() {\n        inline if (regions == nothing) {\n            assume(false)\n        } else {\n            inline transitionScheduler.fireTransitions()\n        }\n    }\n\n    tran assumeNoTransitionEnabled() {\n        inline for (region in regions) {\n            inline region.assumeNoTransitionEnabled()\n        }\n    }\n}\n\nclass Guard {\n    contains expression: Expression[1]\n\n    prop isOpen(): bool {\n        return expression.evaluate() as bool\n    }\n}\n\nabstract class AbstractTransition {\n    container parentRegion: Region[1] opposite abstractTransitions\n\n    abstract prop isEnabled(): bool\n\n    abstract tran fire()\n\n    redefine tran {\n        assume(isEnabled())\n        inline fire()\n    }\n}\n\nclass EntryTransition : AbstractTransition {\n    refers to: State[1]\n\n    contains actions: Action[0..*]\n\n    redefine prop isEnabled(): bool {\n        return true\n    }\n\n    redefine tran fire() {\n        inline for (action in actions) {\n            inline action.main()\n        }\n        inline to.enter()\n    }\n}\n\nclass Transition : AbstractTransition {\n    refers from: State[1]\n    refers to: TransitionTarget[1]\n    refers statechart: Statechart = parentRegion.statechart\n    refers priority: int = 0\n\n    contains trigger: Trigger[1]\n    contains guard: Guard[1] { // default guard is true\n        redefine contains expression: LiteralBooleanExpression {\n            redefine refers value: bool = true\n        }\n    }\n\n    contains actions: Action[0..*]\n\n    var guardAtStepStart: bool := false\n\n    prop isTriggeredAndOpen(): bool {\n        return trigger.isTriggered() && guard.isOpen()\n    }\n\n    redefine prop isEnabled(): bool {\n        return from.isActive() && (if (statechart.guardEvaluation == GuardEvaluation::BeginningOfStep) then guardAtStepStart else isTriggeredAndOpen())\n    }\n\n    tran saveGuard() {\n        guardAtStepStart := isTriggeredAndOpen()\n    }\n\n    tran assumeNoHigherPriorityEnabled() {\n        inline for (other in parentRegion.transitions) {\n            inline if (other.priority > priority) {\n                assume(!other.isEnabled())\n            }\n        }\n    }\n\n    @Trace\n    redefine tran fire() {\n        inline to.receive(self)\n    }\n\n    tran fireBetween(sourceAncestor: State, targetAncestor: State, targetStart: State) {\n        inline if (sourceAncestor.parentRegion == targetAncestor.parentRegion) {\n            inline from.exitUpTo(sourceAncestor)\n            inline for (action in actions) {\n                inline action.main()\n            }\n            inline to.enterFrom(targetAncestor)\n        } else {\n            inline if (targetAncestor.parentState != nothing) {\n                inline fireBetween(sourceAncestor, targetAncestor.parentState as State, targetStart)\n            } else {\n                inline fireBetween(sourceAncestor.parentState as State, targetStart, targetStart)\n            }\n        }\n    }\n}\n\nclass ShallowHistory : TransitionTarget {\n    container parentRegion: Region[1] opposite shallowHistory\n    refers parentState: State[0..1] = parentRegion.parentState\n\n    refers to: State[1]\n\n    @Control\n    var lastState: State[0..1] := nothing\n\n    tran restore() {\n        lastState := nothing\n    }\n\n    tran enterRegion() {\n        if (lastState == nothing) {\n            inline to.enter()\n        } else {\n            inline for (state in parentRegion.states) {\n                if (lastState == state) {\n                    inline state.enter()\n                }\n            }\n        }\n    }\n\n    redefine tran receive(transition: Transition) {\n        inline transition.fireBetween(transition.from, parentState as State, parentState as State)\n    }\n\n    redefine tran enterFrom(top: State) {\n        inline parentState.enterAncestorsFrom(top)\n        inline parentState.enterOwn()\n        inline for (region in parentState.regions) {\n            inline if (region == parentRegion) {\n                inline enterRegion()\n            } else {\n                inline region.activateRecursive()\n            }\n        }\n        inline if (parentState != top) {\n            inline parentState.parentRegion.activateOrthogonalRegions()\n        }\n    }\n}\n\nclass IsStateActiveExpression : Expression {\n    refers state: State\n\n    redefine prop evaluate(): bool {\n        return state.isActive()\n    }\n}\n",
   "file:///workspace/Library/Triggers.oxsts": "/*\n * SPDX-FileCopyrightText: 2025 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\npackage semantifyr::gamma::triggers\n\nimport semantifyr::gamma::events\nimport semantifyr::gamma::ports\n\nabstract class Trigger {\n    abstract prop isTriggered(): bool\n\n    tran assumeIsTriggered() {\n        assume(isTriggered())\n    }\n}\n\nclass EventTrigger : Trigger {\n    refers port: Port[1]\n    refers event: Event[1]\n\n    redefine prop isTriggered(): bool {\n        return port.hasInputEvent(event)\n    }\n}\n\nclass TimeoutTrigger : Trigger {\n    refers timeout: Timeout[1]\n\n    redefine prop isTriggered(): bool {\n        return timeout.isUp()\n    }\n}\n",
-  "file:///workspace/Library/Variables.oxsts": "package semantifyr::gamma::variables\n\nimport semantifyr::gamma::expressions\n\nabstract class Variable {\n    abstract prop evaluate(): any\n\n    abstract tran set(value: any)\n}\n\nclass IntegerVariable : Variable {\n    refers defaultValue: int = 0\n\n    var variable: int := defaultValue\n\n    redefine prop evaluate(): int {\n        return variable\n    }\n\n    redefine tran set(value: int) {\n        variable := value\n    }\n}\n\nclass BooleanVariable : Variable {\n    refers defaultValue: bool = false\n\n    var variable: bool := defaultValue\n\n    redefine prop evaluate(): bool {\n        return variable\n    }\n\n    redefine tran set(value: bool) {\n        variable := value\n    }\n}\n\nclass VariableExpression : Expression {\n    refers variable: Variable\n    redefine prop evaluate(): any {\n        return variable.evaluate()\n    }\n}\n",
+  "file:///workspace/Library/Variables.oxsts": "package semantifyr::gamma::variables\n\nimport semantifyr::gamma::expressions\n\nabstract class Variable {\n    abstract prop evaluate(): any\n\n    abstract tran set(value: any)\n\n    abstract tran restore()\n}\n\nclass IntegerVariable : Variable {\n    refers defaultValue: int = 0\n\n    var variable: int := defaultValue\n\n    redefine prop evaluate(): int {\n        return variable\n    }\n\n    redefine tran set(value: int) {\n        variable := value\n    }\n\n    redefine tran restore() {\n        variable := defaultValue\n    }\n}\n\nclass BooleanVariable : Variable {\n    refers defaultValue: bool = false\n\n    var variable: bool := defaultValue\n\n    redefine prop evaluate(): bool {\n        return variable\n    }\n\n    redefine tran set(value: bool) {\n        variable := value\n    }\n\n    redefine tran restore() {\n        variable := defaultValue\n    }\n}\n\nclass VariableExpression : Expression {\n    refers variable: Variable\n    redefine prop evaluate(): any {\n        return variable.evaluate()\n    }\n}\n",
   "file:///workspace/Library/Verification.oxsts": "package semantifyr::gamma::verification\n\nimport semantifyr::gamma::components\nimport semantifyr::gamma::expressions\n\nclass GammaVerificationCase {\n    contains component: Component\n    contains propertyExpression: Expression\n\n    redefine init {\n        inline component.init()\n    }\n\n    redefine tran {\n        inline component.resetOutputEvents()\n        inline component.havocInputEvents()\n        inline passTime()\n        inline component.main()\n    }\n\n    @Trace\n    tran passTime() {\n        inline component.passTime()\n    }\n\n    prop {\n        return propertyExpression.evaluate() as bool\n    }\n}\n"
  },
  "verifyProgress": [
@@ -3452,11 +3453,11 @@
   },
   {
    "kind": "report",
-   "message": "racing 10 backend(s)"
+   "message": "racing 11 backend(s)"
   },
   {
    "kind": "report",
-   "message": "result 1/10: Passed"
+   "message": "result 1/11: Passed"
   },
   {
    "kind": "end"
@@ -3475,11 +3476,11 @@
   },
   {
    "kind": "report",
-   "message": "racing 10 backend(s)"
+   "message": "racing 11 backend(s)"
   },
   {
    "kind": "report",
-   "message": "result 1/10: Passed"
+   "message": "result 1/11: Passed"
   },
   {
    "kind": "end"
