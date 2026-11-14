@@ -7,10 +7,10 @@
 // @vitest-environment jsdom
 
 import { cleanup, render } from '@testing-library/react';
-import { outcomeTerms } from '@semantifyr/editor-common/terms';
+import { outcomeTerms, outcomeWarning } from '@semantifyr/editor-common/terms';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import GammaConstructTable from '../components/GammaConstructs';
+import GammaConstructTable, { GammaDifferences } from '../components/GammaConstructs';
 import SysmlConstructTable from '../components/SysmlConstructs';
 
 // Goal: both construct tables show an outcome by the terms file's word with its warning beside it, under a legend of the terms file's meanings, and a row in a word they do not know fails the page
@@ -39,7 +39,7 @@ describe('the construct tables', () => {
     const cells = [...container.querySelectorAll('tbody tr')].map((row) => {
       return row.querySelectorAll('td')[1]?.textContent;
     });
-    expect(cells).toEqual([`${outcomeTerms.deviating.term}, with a warning`, outcomeTerms.planned.term]);
+    expect(cells).toEqual([`${outcomeTerms.deviating.term}, ${outcomeWarning}`, outcomeTerms.planned.term]);
   });
 
   it('say what each of the six outcomes means', () => {
@@ -62,6 +62,17 @@ describe('the construct tables', () => {
     expect(() => {
       render(<SysmlConstructTable table={SYSML.replace('planned', 'refused')} />);
     }).toThrow(`where the outcomes are ${SIX}`);
+  });
+
+  it('list as Gamma\'s differences the rows whose outcome the terms file calls a difference', () => {
+    const table = `${GAMMA}\nTime\tTimeouts in seconds\tconformant\tno\tmodels/semantics/Timeouts.gamma\twhen timeout short\tIn seconds.`;
+    const { container } = render(<GammaDifferences table={table} />);
+
+    expect(outcomeTerms.abstracted.difference).toBe(true);
+    expect(outcomeTerms.conformant.difference).toBe(false);
+    expect([...container.querySelectorAll('li strong')].map((name) => {
+      return name.textContent;
+    })).toEqual(['Time passing']);
   });
 
   it('refuse a table whose header they do not know', () => {

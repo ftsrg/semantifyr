@@ -12,12 +12,6 @@ import { OutcomeCell, OutcomeLegend, outcomeOf, warningOf } from './ConstructOut
 const TABLE = 'gamma constructs.tsv';
 const HEADER = 'area\tconstruct\toutcome\twarning\tfixture\tmarker\tdetail';
 
-const DIFFERENCES: readonly Outcome[] = [
-  'abstracted',
-  'deviating',
-  'extension',
-];
-
 interface GammaConstruct {
   area: string;
   name: string;
@@ -45,7 +39,7 @@ export function GammaDifferences({ table }: { table: string }): React.JSX.Elemen
     <ul>
       {parseConstructs(table)
         .filter(({ outcome }) => {
-          return DIFFERENCES.includes(outcome);
+          return outcomeTerms[outcome].difference;
         })
         .map(({ name, outcome, detail }) => {
           return (
