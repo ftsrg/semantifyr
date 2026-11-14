@@ -6,6 +6,7 @@
 
 import com.github.gradle.node.npm.task.NpmTask
 import groovy.json.JsonSlurper
+import hu.bme.mit.semantifyr.gradle.conventions.javaRuntimeLibrary
 import hu.bme.mit.semantifyr.gradle.conventions.readsServedExamples
 import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
@@ -45,6 +46,19 @@ val sysmlWorkerFiles = configurations.resolvable("sysmlWorkerFiles") {
     attributes(semantifyrArtifact("sysml-worker"))
 }
 
+// the modules whose texts a launcher can print, which the terms test reads where they are raised
+val launcherModules = configurations.dependencyScope("launcherModules")
+val launcherModulesGraph = configurations.resolvable("launcherModulesGraph") {
+    extendsFrom(launcherModules.get())
+    attributes(javaRuntimeLibrary())
+}
+
+val liveScreenshots = configurations.dependencyScope("liveScreenshots")
+val liveScreenshotsFiles = configurations.resolvable("liveScreenshotsFiles") {
+    extendsFrom(liveScreenshots.get())
+    attributes(semantifyrArtifact("screenshots"))
+}
+
 val apiDocs = configurations.dependencyScope("apiDocs")
 val apiDocsFiles = configurations.resolvable("apiDocsFiles") {
     extendsFrom(apiDocs.get())
@@ -56,14 +70,19 @@ dependencies {
     add(generate.implementationConfigurationName, project(":verifier"))
     add(generate.implementationConfigurationName, libs.kotlinx.serialization.json)
 
+    testImplementation(libs.kotlinx.serialization.json)
     testImplementation(project(":oxsts.lang"))
     testImplementation(testFixtures(project(":oxsts.lang")))
 
     editorCommon(project(":semantifyr-editor-common"))
+    launcherModules(project(":semantifyr-cli"))
+    launcherModules(project(":sysml-cli"))
+    launcherModules(project(":gamma-cli"))
     cliDistribution(project(":semantifyr-cli"))
     cliDistribution(project(":sysml-cli"))
     cliDistribution(project(":gamma-cli"))
     sysmlConstructs(project(":sysml-wrapper"))
+    liveScreenshots(project(":semantifyr-live-frontend"))
     sysmlWorker(project(":sysml-wrapper"))
     if (providers.gradleProperty("website.apiDocs").getOrElse("false").toBoolean()) {
         apiDocs(project(":"))
@@ -212,6 +231,12 @@ val cloneGrammars = tasks.register<Sync>("cloneGrammars") {
     into(layout.buildDirectory.dir("grammars"))
 }
 
+// the static directory build/live-screenshots: live's screenshots, which its build takes
+val cloneScreenshots = tasks.register<Sync>("cloneScreenshots") {
+    from(liveScreenshotsFiles)
+    into(layout.buildDirectory.dir("live-screenshots/img/screenshots"))
+}
+
 val cloneApiDocs = tasks.register<Sync>("cloneApiDocs") {
     from(apiDocsFiles)
     into(layout.buildDirectory.dir("api-static/api"))
@@ -259,6 +284,7 @@ val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     inputs.files(cliReference).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(generatedReference).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneSysmlConstructs).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cloneScreenshots).withPathSensitivity(PathSensitivity.RELATIVE)
 
     npmCommand.set(listOf("run", "assemble"))
     inputs.files(cloneApiDocs).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -332,8 +358,59 @@ npmCheck.configure {
     inputs.file(phasesModel).withPropertyName("phasesModel").withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
+val projectDirectories = rootProject.allprojects.associate {
+    it.path to it.projectDir
+}
+
+val launcherSourceDirectories = launcherModulesGraph.flatMap {
+    it.incoming.resolutionResult.rootComponent
+}.map { root ->
+    val reached = mutableSetOf<ResolvedComponentResult>()
+    val pending = ArrayDeque(listOf(root))
+    while (pending.isNotEmpty()) {
+        pending.removeFirst().dependencies.filterIsInstance<ResolvedDependencyResult>().forEach {
+            if (reached.add(it.selected)) {
+                pending.add(it.selected)
+            }
+        }
+    }
+    reached.mapNotNull {
+        (it.id as? ProjectComponentIdentifier)?.projectPath
+    }.distinct().sorted().flatMap { path ->
+        listOf("kotlin", "java").map {
+            projectDirectories.getValue(path).resolve("src/main/$it")
+        }
+    }.filter {
+        it.isDirectory
+    }
+}
+
+class RelativePathsArgument(
+    private val name: String,
+    private val module: File,
+    private val paths: Provider<List<File>>,
+) : CommandLineArgumentProvider {
+    override fun asArguments(): Iterable<String> {
+        val relative = paths.get().map {
+            it.relativeTo(module).invariantSeparatorsPath
+        }
+        return listOf("-D$name=${relative.joinToString(",")}")
+    }
+}
+
 tasks {
     test {
+        // the terms test reads the terms, every text a launcher can print and the details of the SysML v2 constructs
+        inputs.file(rootProject.layout.projectDirectory.file("subprojects/semantifyr-editor-common/src/terms/terms.json"))
+            .withPropertyName("terms")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.files(launcherSourceDirectories)
+            .withPropertyName("launcherSources")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.files(cloneSysmlConstructs)
+            .withPropertyName("sysmlConstructs")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        jvmArgumentProviders.add(RelativePathsArgument("semantifyr.launcherSources", projectDir, launcherSourceDirectories))
         inputs.dir(project.layout.projectDirectory.dir("src/docs"))
             .withPropertyName("documentation")
             .withPathSensitivity(PathSensitivity.RELATIVE)
