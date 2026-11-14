@@ -231,6 +231,58 @@ tasks.register<NpmTask>("uiTest") {
     inputs.files(cloneSysmlWorker)
 }
 
+// the pages' screenshots are taken from live itself, on Playwright's Chromium unless SCREEN_TEST_CHROMIUM names one
+val installScreenshotBrowser = tasks.register<NpmTask>("installScreenshotBrowser") {
+    dependsOn(tasks.npmInstall)
+    val localChromium = providers.environmentVariable("SCREEN_TEST_CHROMIUM")
+    onlyIf {
+        !localChromium.isPresent
+    }
+    // a Linux runner of CI lacks the libraries the browser needs, which Playwright installs there
+    val dependencies = if (providers.environmentVariable("CI").isPresent && System.getProperty("os.name") == "Linux") {
+        listOf("--with-deps")
+    } else {
+        emptyList()
+    }
+    npmCommand.set(
+        listOf(
+            "exec",
+            "--",
+            "playwright",
+            "install",
+        ) + dependencies + listOf("chromium"),
+    )
+}
+
+val screenshots = tasks.register<NpmTask>("screenshots") {
+    group = "build"
+
+    configureSharedInputs()
+    inputs.file(project.layout.projectDirectory.file("vitest.screenshots.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
+    // dist/ carries its build time, so the build's sources key the cache and the build itself only runs first
+    inputs.dir(project.layout.projectDirectory.dir("public")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(project.layout.projectDirectory.file("index.html")).withPathSensitivity(PathSensitivity.RELATIVE)
+    dependsOn(npmAssemble)
+    inputs.files(cloneSysmlWorker).withPathSensitivity(PathSensitivity.RELATIVE)
+    dependsOn(installScreenshotBrowser)
+
+    npmCommand.set(listOf("run", "screenshots"))
+    environment.put("TEST_BROWSER", "chromium")
+    val screenshotsDirectory = project.layout.buildDirectory.dir("screenshots")
+    outputs.dir(screenshotsDirectory)
+    outputs.cacheIf { true }
+    doFirst {
+        screenshotsDirectory.get().asFile.deleteRecursively()
+    }
+}
+
+configurations.consumable("screenshotsElements") {
+    attributes(semantifyrArtifact("screenshots"))
+    outgoing.artifact(project.layout.buildDirectory.dir("screenshots")) {
+        builtBy(screenshots)
+    }
+}
+
 tasks.register<NpmTask>("runDev") {
     group = "application"
 
@@ -243,6 +295,8 @@ tasks.register<NpmTask>("loadTest") {
     group = "verification"
 
     inputs.files(tasks.npmInstall)
+    // a SysML v2 example goes to the server as the OXSTS the build compiles it to
+    dependsOn(cloneTestModels)
 
     npmCommand.set(listOf("run", "load-test", "--"))
     args.set(

@@ -67,8 +67,9 @@ export interface AdminFixture {
 
 export const FIXTURES_DIRECTORY = join(import.meta.dirname, 'fixtures')
 
+// a Windows checkout gives the served models CRLF line ends, which the recording never saw
 export function textKey(text: string): string {
-  return createHash('sha256').update(text).digest('hex').slice(0, 16)
+  return createHash('sha256').update(text.replaceAll('\r\n', '\n')).digest('hex').slice(0, 16)
 }
 
 function readJson(name: string): unknown {

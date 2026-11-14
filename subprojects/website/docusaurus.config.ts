@@ -148,7 +148,7 @@ export default {
   baseUrl: '/semantifyr/',
   baseUrlIssueBanner: false,
   trailingSlash: true,
-  staticDirectories: ['static-imported-branding', 'build/api-static'],
+  staticDirectories: ['static-imported-branding', 'build/live-screenshots', 'build/api-static'],
   customFields: {
     liveBackendUrl,
     nodeVersion,
