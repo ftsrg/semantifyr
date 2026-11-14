@@ -464,6 +464,7 @@ class Transition : AbstractTransition {
 
 class ShallowHistory : TransitionTarget {
     container parentRegion: Region[1] opposite shallowHistory
+    refers parentState: State[0..1] = parentRegion.parentState
 
     refers to: State[1]
 
@@ -487,21 +488,21 @@ class ShallowHistory : TransitionTarget {
     }
 
     redefine tran receive(transition: Transition) {
-        inline transition.fireBetween(transition.from, parentRegion.parentState as State, parentRegion.parentState as State)
+        inline transition.fireBetween(transition.from, parentState as State, parentState as State)
     }
 
     redefine tran enterFrom(top: State) {
-        inline parentRegion.parentState.enterAncestorsFrom(top)
-        inline parentRegion.parentState.enterOwn()
-        inline for (region in parentRegion.parentState.regions) {
+        inline parentState.enterAncestorsFrom(top)
+        inline parentState.enterOwn()
+        inline for (region in parentState.regions) {
             inline if (region == parentRegion) {
                 inline enterRegion()
             } else {
                 inline region.activateRecursive()
             }
         }
-        inline if (parentRegion.parentState != top) {
-            inline parentRegion.parentState.parentRegion.activateOrthogonalRegions()
+        inline if (parentState != top) {
+            inline parentState.parentRegion.activateOrthogonalRegions()
         }
     }
 }
