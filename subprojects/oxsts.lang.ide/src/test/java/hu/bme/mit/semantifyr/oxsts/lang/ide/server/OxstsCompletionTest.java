@@ -7,8 +7,8 @@
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server;
 
 import static hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels.basicsWith;
-import static hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels.greenTimeWith;
 import static hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels.gammaLibrary;
+import static hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels.greenTimeWith;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import hu.bme.mit.semantifyr.oxsts.lang.ide.MarkedText;
@@ -178,8 +178,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
                 }
                 """)));
 
-        assertThat(labels(items))
-                .containsExactly("switchTo(color: LightColor)");
+        assertThat(labels(items)).containsExactly("switchTo(color: LightColor)");
         assertThat(item(items, "switchTo(color: LightColor)")
                         .getTextEdit()
                         .getLeft()
@@ -200,10 +199,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
                 """)));
 
         assertThat(labels(items))
-                .contains(
-                        "redefine prop isColor(color: LightColor): bool",
-                        "redefine tran",
-                        "redefine init")
+                .contains("redefine prop isColor(color: LightColor): bool", "redefine tran", "redefine init")
                 .doesNotContain("redefine tran switchTo(color: LightColor)");
         assertThat(item(items, "redefine prop isColor(color: LightColor): bool"))
                 .satisfies(item -> {
