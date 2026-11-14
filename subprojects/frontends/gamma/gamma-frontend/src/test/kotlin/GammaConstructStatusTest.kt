@@ -4,13 +4,21 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import com.google.inject.Inject
+import com.google.inject.Provider
+import hu.bme.mit.semantifyr.frontends.gamma.lang.tests.InjectWithGamma
 import org.assertj.core.api.Assertions.assertThat
+import org.eclipse.emf.common.util.URI
+import org.eclipse.xtext.diagnostics.Severity
+import org.eclipse.xtext.resource.XtextResourceSet
+import org.eclipse.xtext.testing.validation.ValidationTestHelper
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 import kotlin.io.path.readLines
 import kotlin.io.path.readText
@@ -24,12 +32,13 @@ enum class ConstructOutcome(val word: String) {
     UNSUPPORTED("unsupported"),
 }
 
+@InjectWithGamma
 class GammaConstructStatusTest {
 
     data class ConstructRow(
         val area: String,
         val construct: String,
-        val outcome: String,
+        val outcome: ConstructOutcome,
         val warning: String,
         val fixture: String,
         val marker: String,
@@ -38,70 +47,121 @@ class GammaConstructStatusTest {
 
     companion object {
         private val gammaRoot: Path = Path("..")
+        private val columnNames = listOf(
+            "area",
+            "construct",
+            "outcome",
+            "warning",
+            "fixture",
+            "marker",
+            "detail",
+        )
 
-        private fun rows(): List<ConstructRow> {
+        private fun lines(): List<List<String>> {
             val lines = gammaRoot.resolve("models/constructs.tsv").readLines()
-            check(lines.first() == "area\tconstruct\toutcome\twarning\tfixture\tmarker\tdetail") {
+            check(lines.first() == columnNames.joinToString("\t")) {
                 "constructs.tsv must start with its header"
             }
             return lines.drop(1).filter {
                 it.isNotBlank()
             }.map {
-                val columns = it.split("\t")
-                check(columns.size == 7) {
-                    "Expected seven tab-separated columns: $it"
-                }
-                ConstructRow(columns[0], columns[1], columns[2], columns[3], columns[4], columns[5], columns[6])
+                it.split("\t")
             }
         }
 
-        private fun outcomeOf(row: ConstructRow): ConstructOutcome {
-            val outcome = ConstructOutcome.entries.firstOrNull {
-                it.word == row.outcome
+        private fun nameOf(columns: List<String>): String {
+            return columns.getOrElse(1) {
+                columns.first()
             }
-            checkNotNull(outcome) {
+        }
+
+        private fun rowOf(columns: List<String>): ConstructRow {
+            val construct = nameOf(columns)
+            val outcome = ConstructOutcome.entries.firstOrNull {
+                it.word == columns.getOrNull(2)
+            }
+            val problems = mutableListOf<String>()
+            if (columns.size != columnNames.size) {
+                problems += "${columns.size} columns, where the header has ${columnNames.size}, ${columnNames.joinToString(", ")}"
+            }
+            if (outcome == null) {
                 val words = ConstructOutcome.entries.joinToString(", ") {
                     it.word
                 }
-                "The row '${row.construct}' has the outcome '${row.outcome}', where the outcomes are $words"
+                problems += "the outcome '${columns.getOrNull(2)}', where the outcomes are $words"
             }
-            return outcome
+            check(problems.isEmpty() && outcome != null) {
+                "The row '$construct' has ${problems.joinToString(" and ")}"
+            }
+            return ConstructRow(columns[0], columns[1], outcome, columns[3], columns[4], columns[5], columns[6])
         }
 
         @JvmStatic
         fun constructs(): List<Arguments> {
-            return rows().map {
-                Arguments.argumentSet(it.construct, it)
+            return lines().map {
+                Arguments.argumentSet(nameOf(it), it)
             }
         }
     }
 
+    @Inject
+    private lateinit var resourceSetProvider: Provider<XtextResourceSet>
+
+    @Inject
+    private lateinit var validationTestHelper: ValidationTestHelper
+
     @Test
     fun `every construct is listed once`() {
-        val names = rows().map {
-            it.construct
+        val names = lines().map {
+            nameOf(it)
         }
         assertThat(names).doesNotHaveDuplicates()
     }
 
     @ParameterizedTest
     @MethodSource("constructs")
-    fun `construct has the outcome the table claims`(row: ConstructRow) {
-        val outcome = outcomeOf(row)
+    fun `construct has the outcome the table claims`(columns: List<String>) {
+        val row = rowOf(columns)
         assertThat(row.area).isNotBlank()
         assertThat(row.warning).describedAs("the warning of '${row.construct}'").isIn("yes", "no")
-        when (outcome) {
+        when (row.outcome) {
             ConstructOutcome.PLANNED, ConstructOutcome.UNSUPPORTED -> {
-                assertThat(row.fixture).describedAs("a ${row.outcome} construct has no fixture").isEmpty()
+                assertThat(row.fixture).describedAs("a ${row.outcome.word} construct has no fixture").isEmpty()
                 assertThat(row.marker).isEmpty()
-                assertThat(row.warning).describedAs("a ${row.outcome} construct draws no warning").isEqualTo("no")
+                assertThat(row.warning).describedAs("a ${row.outcome.word} construct draws no warning").isEqualTo("no")
             }
             else -> {
                 assertFixtureUsesMarker(row)
             }
         }
-        if (outcome != ConstructOutcome.CONFORMANT) {
-            assertThat(row.detail).describedAs("a ${row.outcome} construct says why").isNotBlank()
+        if (row.outcome != ConstructOutcome.CONFORMANT) {
+            assertThat(row.detail).describedAs("a ${row.outcome.word} construct says why").isNotBlank()
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("constructs")
+    fun `a construct's fixture draws a warning on its marker exactly where the table says so`(columns: List<String>) {
+        val row = rowOf(columns)
+        if (!row.fixture.endsWith(".gamma")) {
+            return
+        }
+        val warned = warnedLines(row.fixture).any {
+            it.contains(row.marker)
+        }
+        assertThat(warned)
+            .describedAs("the validator warns on '${row.marker}' in ${row.fixture}, where the table's warning of '${row.construct}' is ${row.warning}")
+            .isEqualTo(row.warning == "yes")
+    }
+
+    private fun warnedLines(fixture: String): List<String> {
+        val path = gammaRoot.resolve(fixture)
+        val resource = resourceSetProvider.get().getResource(URI.createFileURI(path.absolutePathString()), true)
+        val lines = path.readLines()
+        return validationTestHelper.validate(resource).filter {
+            it.severity == Severity.WARNING
+        }.map {
+            lines[it.lineNumber - 1]
         }
     }
 
