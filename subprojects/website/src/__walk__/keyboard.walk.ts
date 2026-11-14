@@ -325,6 +325,12 @@ describe('the keyboard', () => {
     await expect.poll(async () => {
       return shown.count();
     }).toBe(1);
+    // the menu slides in, and takes no focus before it is visible
+    await expect.poll(async () => {
+      return menu.evaluate((element) => {
+        return getComputedStyle(element).visibility === 'visible' && element.getAnimations().length === 0;
+      });
+    }).toBe(true);
     await tabTo(page, menu.locator('.menu__link', { hasText: /^Learn$/ }), 'the menu\'s Learn', 10);
     await press(page, 'Escape');
 
@@ -337,6 +343,12 @@ describe('the keyboard', () => {
     await expect.poll(async () => {
       return shown.count();
     }).toBe(1);
+    // the menu slides in, and takes no focus before it is visible
+    await expect.poll(async () => {
+      return menu.evaluate((element) => {
+        return getComputedStyle(element).visibility === 'visible' && element.getAnimations().length === 0;
+      });
+    }).toBe(true);
     await tabTo(page, menu.locator('a', { hasText: 'Open Live' }), 'the menu\'s last entry', 20);
     await press(page);
 
