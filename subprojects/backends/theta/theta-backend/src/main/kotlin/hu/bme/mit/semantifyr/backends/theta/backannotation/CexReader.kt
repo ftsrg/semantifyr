@@ -43,7 +43,7 @@ class CexReader {
             val resource = loadFile(resourceSet, model)
             resource.errors.firstOrNull()?.let {
                 val text = model.readLines().getOrNull(it.line - 1)?.trim()
-                throw WitnessFailedException("Theta's counterexample does not parse at line ${it.line} (${it.message}): $text")
+                throw WitnessFailedException("Theta's output does not parse at line ${it.line} (${it.message}): $text")
             }
             return resource.contents.single() as CexModel
         }
