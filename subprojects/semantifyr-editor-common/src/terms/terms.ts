@@ -52,3 +52,8 @@ export const verdictOfLauncherVerdict: Readonly<Record<string, Verdict>> = Objec
     });
   }),
 );
+
+// live shows a verification's status as one of the four verdicts, by the terms' mapping of the launcher's six; a status that is no verdict has none
+export function verdictOfStatus(status: string): Verdict | null {
+  return verdictOfLauncherVerdict[status.toUpperCase()] ?? null;
+}

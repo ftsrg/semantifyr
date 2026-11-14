@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import { verdictOfStatus } from '@semantifyr/editor-common/terms'
+
 import type { VerificationCaseState, VerificationState } from '../verification/engine'
 import { VERDICT_WORDS } from '../../texts'
 import type { CaseRow } from './caseRows'
@@ -30,20 +32,7 @@ function verdictOf(caseState: VerificationCaseState): SharedVerdict | null {
   if (caseState.outdated === true || caseState.resultStatus === undefined) {
     return null
   }
-  switch (caseState.resultStatus) {
-    case 'passed':
-      return 'passed'
-    case 'failed':
-      return 'failed'
-    case 'inconclusive':
-    case 'timeout':
-    case 'not_supported':
-      return 'inconclusive'
-    case 'errored':
-      return 'error'
-    default:
-      return null
-  }
+  return verdictOfStatus(caseState.resultStatus)
 }
 
 export function sharedResultsOf(state: VerificationState | undefined, selectedCase: string | null): SharedResults | null {

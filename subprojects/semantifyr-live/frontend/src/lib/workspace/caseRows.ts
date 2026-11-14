@@ -5,6 +5,7 @@
  */
 
 import type { VerdictStatus } from '@semantifyr/editor-common/marks'
+import { verdictOfStatus } from '@semantifyr/editor-common/terms'
 
 import { CASE_MESSAGES, VERDICT_WORDS } from '../../texts'
 import { isoDurationToMs } from '../util/duration'
@@ -65,16 +66,6 @@ function ownStatusOf(caseState: VerificationCaseState): VerdictStatus {
 
 function statusOf(status: VerificationCaseState['status']): VerdictStatus {
   switch (status) {
-    case 'passed':
-      return 'passed'
-    case 'failed':
-      return 'failed'
-    case 'inconclusive':
-    case 'timeout':
-    case 'not_supported':
-      return 'inconclusive'
-    case 'errored':
-      return 'error'
     case 'running':
       return 'running'
     case 'queued':
@@ -82,6 +73,8 @@ function statusOf(status: VerificationCaseState['status']): VerdictStatus {
     case 'stale':
     case 'cancelled':
       return 'not-run'
+    default:
+      return verdictOfStatus(status) ?? 'error'
   }
 }
 

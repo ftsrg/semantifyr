@@ -6,6 +6,7 @@
 
 import { describe, expect, it, vi } from 'vitest'
 import type { VerificationCaseSpecification } from '@semantifyr/editor-common'
+import { verdictOfLauncherVerdict, verdictWords } from '@semantifyr/editor-common/terms'
 
 import { editorColorsFrom, toHexColor } from '../../lib/session/editorTheme'
 import { fileUriOfLibrary, isLibraryFileUri, libraryUriOf } from '../../lib/session/readOnlyDocuments'
@@ -75,6 +76,17 @@ describe('a case row', () => {
     expect(caseRowOf(result('a', 'not_supported', { message: 'not supported: unbounded' }))).toMatchObject({ status: 'inconclusive', message: 'not supported: unbounded' })
     expect(caseRowOf(result('a', 'errored', { message: 'broke' }))).toMatchObject({ status: 'error', word: 'Error', message: 'broke' })
     expect(caseRowOf({ caseInfo: caseAt('a', 1), status: 'stale', message: 'Verification cancelled' })).toMatchObject({ status: 'not-run', word: 'Not run', message: 'cancelled', time: null })
+  })
+
+  it('shows each of the launcher\'s six verdicts as the terms map it, a timeout and a not supported answer as inconclusive with the exact verdict named', () => {
+    expect(Object.keys(verdictOfLauncherVerdict)).toHaveLength(6)
+    for (const [launcherVerdict, verdict] of Object.entries(verdictOfLauncherVerdict)) {
+      const status = launcherVerdict.toLowerCase() as VerificationCaseState['status']
+      expect(caseRowOf(result('a', status)), launcherVerdict).toMatchObject({ status: verdict, word: verdictWords[verdict] })
+    }
+    expect(verdictOfLauncherVerdict).toMatchObject({ TIMEOUT: 'inconclusive', NOT_SUPPORTED: 'inconclusive' })
+    expect(caseRowOf(result('a', 'timeout')).message).toBe('timed out')
+    expect(caseRowOf(result('a', 'not_supported')).message).toBe('not supported')
   })
 
   it('says what an inconclusive and an errored case mean when the server sent no message', () => {
