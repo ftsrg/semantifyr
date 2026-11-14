@@ -9,16 +9,15 @@ import Link from '@docusaurus/Link';
 import Head from '@docusaurus/Head';
 import { useLiveBackendUrl } from '@site/src/lib/live';
 
-// every old address lands here, since none is redirected before 1.0
 export default function NotFoundContent(): React.JSX.Element {
   const liveUrl = useLiveBackendUrl();
   return (
     <main className="container margin-vert--xl">
       <Head>
-        <meta name="description" content="No page of the Semantifyr site has this address; its pages moved when the site was rearranged." />
+        <meta name="description" content="This address opens no page of the Semantifyr site." />
       </Head>
       <h1>No page has this address</h1>
-      <p>The pages of this site moved when it was rearranged, and an old address leads nowhere. Learn lists every page, and Live opens the examples.</p>
+      <p>This address opens no page of the site. Learn leads to the documentation, and Live opens the examples.</p>
       <ul>
         <li><Link to="/learn/">Learn</Link></li>
         <li><a href={liveUrl}>Semantifyr Live</a></li>

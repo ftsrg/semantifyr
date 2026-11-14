@@ -78,6 +78,14 @@ val sourceAliasDirectories = (JsonSlurper().parse(sourceAliasesFile.asFile) as M
     layout.projectDirectory.dir(it)
 }
 
+// the files outside the site that link into it, which the site links test reads
+val linkingFilesFile = layout.projectDirectory.file("linking-files.json")
+
+@Suppress("UNCHECKED_CAST")
+val linkingFiles = (JsonSlurper().parse(linkingFilesFile.asFile) as List<String>).map {
+    rootProject.layout.projectDirectory.file(it)
+}
+
 val cliReferenceDir = layout.buildDirectory.dir("cli-reference")
 
 class Launcher(val name: String, val mainClass: String)
@@ -267,13 +275,9 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
         },
     ).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(rootProject.layout.projectDirectory.file("subprojects/semantifyr-live/frontend/index.html")).withPathSensitivity(PathSensitivity.RELATIVE)
-    // the site links test reads the files that link into the site
-    inputs.files(
-        rootProject.layout.projectDirectory.file("README.md"),
-        rootProject.layout.projectDirectory.file("CITATION.cff"),
-        rootProject.layout.projectDirectory.file("subprojects/semantifyr-vscode/README.md"),
-        rootProject.layout.projectDirectory.file("subprojects/cli-common/src/main/kotlin/hu/bme/mit/semantifyr/cli/common/RootCommand.kt"),
-    ).withPathSensitivity(PathSensitivity.RELATIVE)
+    // the site links test reads the files that link into the site, which the list names
+    inputs.file(linkingFilesFile).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(linkingFiles).withPathSensitivity(PathSensitivity.RELATIVE)
 
     npmCommand.set(listOf("run", "check"))
 

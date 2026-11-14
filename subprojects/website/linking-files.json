@@ -1,0 +1,8 @@
+[
+  "README.md",
+  "CITATION.cff",
+  "subprojects/semantifyr-vscode/README.md",
+  "subprojects/semantifyr-vscode/package.json",
+  "subprojects/semantifyr-live/frontend/src/texts.ts",
+  "subprojects/cli-common/src/main/kotlin/hu/bme/mit/semantifyr/cli/common/RootCommand.kt"
+]

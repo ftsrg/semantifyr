@@ -20,7 +20,7 @@ import clsx from 'clsx';
 
 import styles from './index.module.css';
 
-const SENTENCES = 'Semantifyr is a framework to support the declarative definition of engineering model semantics: the meaning of a modelling language is written once, as a semantic library, and every model of the language can then be verified by established model checkers. SysML v2 and Gamma are its frontends: a model in either is verified as it is written, and the trace of a case comes back in the language of the model.';
+const SENTENCES = 'Semantifyr is a framework to support the declarative definition of engineering model semantics: the meaning of a modelling language is written once, as a semantic library, and the models written in it are then verified by established model checkers, within the part of the language the library covers and the checkers accept. SysML v2 and Gamma are its frontends: a model in either is verified as it is written, and the trace of a case comes back in the language of the model.';
 
 // the served crossroads' comment and its first declarations
 const STILL_LINES = 22;
@@ -79,7 +79,7 @@ function Still(): React.JSX.Element {
   return (
     <div className={styles.still}>
       <EmbeddedExample model={crossroads.text} example={crossroads.id} shown={shown} lines={{ first: 1, last: STILL_LINES }} language="sysml" view="embed" />
-      <p className={styles.stillNote}>The crossroads, a SysML v2 model of two traffic lights and their controller. Run opens it in Live here and verifies its cases.</p>
+      <p className={styles.stillNote}>The crossroads, a SysML v2 model of two traffic lights and their controller. Run opens it in Live here, where Verify all checks its cases.</p>
     </div>
   );
 }

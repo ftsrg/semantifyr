@@ -120,7 +120,7 @@
 .site-segmented-option[aria-pressed='true'] {
   background: var(--surface-raised);
   color: var(--text-primary);
-  box-shadow: 0 0 0 1px var(--border) inset, 0 1px 2px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 0 0 1px var(--border) inset;
 }
 
 .site-segmented-small .site-segmented-option {

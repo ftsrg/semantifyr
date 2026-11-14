@@ -7,16 +7,22 @@
 import type React from 'react';
 import Link from '@docusaurus/Link';
 import useBaseUrl from '@docusaurus/useBaseUrl';
-import { BACKENDS } from '@site/src/map';
+import { usePluginData } from '@docusaurus/useGlobalData';
 import clsx from 'clsx';
 
 import styles from './styles.module.css';
 
 const STACK_OFFSET = 6;
 
-const BACKEND_NAMES = BACKENDS.map((backend) => {
-  return backend.name;
-});
+export interface Backend {
+  name: string;
+  page: string;
+}
+
+// the backends the reference has a page for, read from those pages when the site is built
+function useBackends(): Backend[] {
+  return (usePluginData('backends') as { backends: Backend[] }).backends;
+}
 
 interface Rectangle {
   x: number;
@@ -189,9 +195,10 @@ function Logo({ area, vertical }: { area: Rectangle; vertical: boolean }): React
 }
 
 // the backends under their box, two lines beside the vertical figure and one under the turned one
-function BackendNames({ layout }: { layout: Layout }): React.ReactNode {
+function BackendNames({ layout, backends }: { layout: Layout; backends: Backend[] }): React.ReactNode {
   const [x, y] = layout.backendsCaption;
-  const lines = layout.vertical ? [BACKENDS.slice(0, 2), BACKENDS.slice(2)] : [BACKENDS];
+  const half = Math.ceil(backends.length / 2);
+  const lines = layout.vertical ? [backends.slice(0, half), backends.slice(half)] : [backends];
   return (
     <text className={styles.caption} x={x} y={y} fontSize={layout.fontSize * 0.86} textAnchor="middle">
       {lines.map((line, lineIndex) => {
@@ -207,12 +214,15 @@ function BackendNames({ layout }: { layout: Layout }): React.ReactNode {
   );
 }
 
-function Figure({ layout }: { layout: Layout }): React.ReactNode {
+function Figure({ layout, backends }: { layout: Layout; backends: Backend[] }): React.ReactNode {
+  const names = backends.map((backend) => {
+    return backend.name;
+  });
   const { vertical, fontSize } = layout;
   const marker = `architecture-arrow-${layout.name}`;
   const refinesMarker = `architecture-refines-${layout.name}`;
   return (
-    <svg className={clsx(styles.figure, styles[layout.name])} viewBox={`0 0 ${String(layout.width)} ${String(layout.height)}`} role="img" aria-label={`A model goes through a frontend to a Semantifyr model, which Semantifyr compiles with the semantic library to a formal model for a backend, ${BACKEND_NAMES.join(', ')}; the traces come back the same way, each refining its model`}>
+    <svg className={clsx(styles.figure, styles[layout.name])} viewBox={`0 0 ${String(layout.width)} ${String(layout.height)}`} role="img" aria-label={`A model goes through a frontend to a Semantifyr model, which Semantifyr compiles with the semantic library to a formal model for a backend, ${names.join(', ')}; the traces come back the same way, each refining its model`}>
       <defs>
         <marker id={marker} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path className={styles.head} d="M 0 0 L 10 5 L 0 10 z" />
@@ -228,7 +238,7 @@ function Figure({ layout }: { layout: Layout }): React.ReactNode {
       <Logo area={layout.semantifyr} vertical={vertical} />
       <Box area={layout.formalModel} text="Formal model" kind="artifact" vertical={false} fontSize={fontSize} />
       <Stack area={layout.backend} text="Backend" kind="tool" vertical={vertical} fontSize={fontSize} />
-      <BackendNames layout={layout} />
+      <BackendNames layout={layout} backends={backends} />
       <Box area={layout.formalTrace} text="Formal trace" kind="artifact" vertical={false} fontSize={fontSize} />
       <Box area={layout.semantifyrTrace} text="Semantifyr trace" kind="artifact" vertical={false} fontSize={fontSize} />
       <Box area={layout.trace} text="Trace" kind="artifact" vertical={false} fontSize={fontSize} />
@@ -252,13 +262,14 @@ function Figure({ layout }: { layout: Layout }): React.ReactNode {
 }
 
 export default function Architecture(): React.ReactNode {
+  const backends = useBackends();
   return (
     <figure className={styles.picture}>
-      <Figure layout={DESKTOP} />
-      <Figure layout={PHONE} />
+      <Figure layout={DESKTOP} backends={backends} />
+      <Figure layout={PHONE} backends={backends} />
       <figcaption className={styles.backends}>
         {'The backends: '}
-        {BACKENDS.map((backend, index) => {
+        {backends.map((backend, index) => {
           return (
             <span key={backend.name}>
               {index === 0 ? '' : ', '}
