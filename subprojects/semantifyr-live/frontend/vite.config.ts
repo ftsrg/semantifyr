@@ -5,11 +5,13 @@
  */
 
 import { execSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import type { Plugin, Rollup } from 'vite';
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
-import { PAGE_DESCRIPTION, PRODUCT_NAME, SHORT_NAME } from './src/texts.ts';
+import { fileNameOf, servedExamples } from '@semantifyr/editor-common/examples';
+import { exampleDescription, exampleTitle, LANGUAGES, LIVE_URL, PAGE_DESCRIPTION, PRODUCT_NAME, SHORT_NAME } from './src/texts.ts';
 
 function getVersion(): string {
   const properties = readFileSync(new URL('../../../gradle.properties', import.meta.url), 'utf-8');
@@ -26,6 +28,48 @@ function getGitCommit(): string {
 
 const backendProxyTarget = process.env.VITE_BACKEND_PROXY_TARGET ?? 'http://localhost:18080';
 
+function escapeHtml(text: string): string {
+  return text.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+}
+
+function withHead(html: string, title: string, description: string): string {
+  return html.replaceAll('%LIVE_TITLE%', escapeHtml(title)).replaceAll('%LIVE_DESCRIPTION%', escapeHtml(description));
+}
+
+// the first line of the model's comment, which the build writes beside the served models
+function commentOf(fileName: string): string | null {
+  const file = new URL(`./src/snippets/imported/descriptions/${fileName}.description`, import.meta.url);
+  return existsSync(file) ? readFileSync(file, 'utf-8').trim() : null;
+}
+
+// a preview of a shared link reads the page's head without running it: each example's address gets a page whose head names the model
+function liveTexts(): Plugin {
+  return {
+    name: 'live-texts',
+    enforce: 'post',
+    transformIndexHtml: {
+      order: 'pre',
+      handler: (html, context) => {
+        const texts = html.replaceAll('%LIVE_NAME%', PRODUCT_NAME).replaceAll('%LIVE_CARD%', `${LIVE_URL}/social-card.png`);
+        return context.server === undefined ? texts : withHead(texts, PRODUCT_NAME, PAGE_DESCRIPTION);
+      },
+    },
+    generateBundle(_, bundle) {
+      const index = bundle['index.html'] as Rollup.OutputAsset;
+      const template = String(index.source);
+      index.source = withHead(template, PRODUCT_NAME, PAGE_DESCRIPTION);
+      for (const example of servedExamples) {
+        const language = LANGUAGES[example.language]?.name ?? example.language;
+        this.emitFile({
+          type: 'asset',
+          fileName: `${example.language}/${example.id}/index.html`,
+          source: withHead(template, exampleTitle(example.label, language), exampleDescription(example.label, language, commentOf(fileNameOf(example)))),
+        });
+      }
+    },
+  };
+}
+
 export default defineConfig({
   // out of node_modules, which Gradle fingerprints as the install's output: a run's results would make the next run stale
   cacheDir: 'build/vite/app',
@@ -37,12 +81,7 @@ export default defineConfig({
   },
   plugins: [
     react(),
-    {
-      name: 'live-texts',
-      transformIndexHtml: (html: string): string => {
-        return html.replaceAll('%LIVE_DESCRIPTION%', PAGE_DESCRIPTION).replaceAll('%LIVE_NAME%', PRODUCT_NAME);
-      },
-    },
+    liveTexts(),
     VitePWA({
       disable: process.env.VITEST === 'true',
       registerType: 'autoUpdate',
@@ -66,6 +105,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{css,html,ico,svg,png,json,webmanifest,woff,woff2,ttf}'],
+        // an example's page is for a link's preview alone, and offline the precached index.html serves every address
+        globIgnores: ['*/*/index.html'],
         // pages come from the network, so a returning browser starts the deployed build; the precached index.html is only the offline page
         navigateFallback: null,
         directoryIndex: null,

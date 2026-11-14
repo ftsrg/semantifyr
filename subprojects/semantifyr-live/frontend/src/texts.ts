@@ -17,6 +17,19 @@ export const SOURCE_CODE_URL = 'https://github.com/ftsrg/semantifyr'
 
 export const PAGE_DESCRIPTION = 'Verify a SysML v2, Gamma or OXSTS model in your browser and read its traces in its own language.'
 
+export const LIVE_URL = 'https://live.semantifyr.org'
+
+// what a shared link to an example previews: the page's title names it, and the description adds its comment's first line
+export function exampleTitle(label: string, languageName: string): string {
+  return `${label} - ${languageName} - ${PRODUCT_NAME}`
+}
+
+export function exampleDescription(label: string, languageName: string, comment: string | null): string {
+  return [`${label}, in ${languageName}.`, comment, 'Verify it in your browser and read its traces.'].filter((sentence) => {
+    return sentence !== null
+  }).join(' ')
+}
+
 export const ABOUT = {
   sentences: [
     'Semantifyr is a framework to support the declarative definition of engineering model semantics.',
