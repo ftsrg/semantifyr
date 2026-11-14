@@ -16,12 +16,14 @@ const VERDICT_OF: Readonly<Record<ExpectedVerdict, Verdict | null>> = {
   Unknown: null,
 };
 
-// a case of a served example with the verdict its manifest expects, as live shows it
 export default function CaseVerdict({ example, name }: { example: ServedText; name: string }): React.JSX.Element {
   const expected = example.verdicts[name];
-  const verdict = expected === undefined ? null : VERDICT_OF[expected];
+  if (expected === undefined) {
+    throw new Error(`The manifest beside /${example.language}/${example.id} has no case ${name}`);
+  }
+  const verdict = VERDICT_OF[expected];
   if (verdict === null) {
-    throw new Error(`The manifest expects no verdict of the case ${name} of /${example.language}/${example.id}`);
+    throw new Error(`The manifest gives the case ${name} of /${example.language}/${example.id} an unknown verdict, which a page cannot show`);
   }
   return (
     <span className={`${styles.verdict} status-${verdict}`}>

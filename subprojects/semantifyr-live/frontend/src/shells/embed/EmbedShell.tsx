@@ -21,7 +21,7 @@ import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext
 import { noCases, PRODUCT_NAME, SERVER_NOT_ANSWERING } from '../../texts'
 import { Icon } from '../../ui/icons'
 import { ValidationMark } from '../../ui/marks'
-import { addressProblemText } from '../desktop/Orientation'
+import { addressProblemText } from '../desktop/AddressError'
 import { shareLink } from '../desktop/SharePopover'
 import { useFlavor } from '../hooks'
 import { BackToModel, ModelEditor } from '../modelEditor'

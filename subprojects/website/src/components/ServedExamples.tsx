@@ -8,28 +8,12 @@ import type React from 'react';
 import { useLocation } from '@docusaurus/router';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { liveExampleUrl, normalizeBaseUrl } from '@semantifyr/editor-common';
-import { servedExamples, type ExampleLanguage, type ServedExample } from '@semantifyr/editor-common/examples';
+import { servedExamples, type ServedExample } from '@semantifyr/editor-common/examples';
 import { useLiveBackendUrl } from '@site/src/lib/live';
 
 function useExampleAddress(example: ServedExample): string {
   const liveBackendUrl = useLiveBackendUrl();
   return liveExampleUrl(`${normalizeBaseUrl(liveBackendUrl).http}/`, example.language, example.id);
-}
-
-function exampleOf(language: ExampleLanguage, id: string): ServedExample {
-  const example = servedExamples.find((candidate) => {
-    return candidate.language === language && candidate.id === id;
-  });
-  if (example === undefined) {
-    throw new Error(`The registry serves no /${language}/${id}`);
-  }
-  return example;
-}
-
-// an example by its address in live, under its label
-export function ExampleLink({ language, id }: { language: ExampleLanguage; id: string }): React.JSX.Element {
-  const example = exampleOf(language, id);
-  return <a href={useExampleAddress(example)}>{example.label}</a>;
 }
 
 function ServedExampleItem({ example }: { example: ServedExample }): React.JSX.Element {

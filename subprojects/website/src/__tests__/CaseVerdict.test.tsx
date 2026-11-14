@@ -40,6 +40,6 @@ describe('CaseVerdict', () => {
   it('refuses a case its manifest does not have', () => {
     expect(() => {
       render(<CaseVerdict example={EXAMPLE} name="NeverBothRed" />);
-    }).toThrow('The manifest expects no verdict of the case NeverBothRed of /oxsts/lights');
+    }).toThrow('The manifest beside /oxsts/lights has no case NeverBothRed');
   });
 });

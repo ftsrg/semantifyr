@@ -14,7 +14,6 @@ export interface ServedText {
   language: ExampleLanguage;
   id: string;
   text: string;
-  // each case's expected verdict, from the manifest beside the file
   verdicts: Readonly<Record<string, ExpectedVerdict>>;
 }
 

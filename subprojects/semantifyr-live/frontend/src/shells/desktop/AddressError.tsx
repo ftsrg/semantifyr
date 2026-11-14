@@ -31,7 +31,6 @@ export function addressProblemText(live: Live, problem: AddressProblem): string 
   }
 }
 
-// what opened in place of an address that names something live does not have
 export function AddressError(): React.JSX.Element | null {
   const live = useLive()
   const problem = useStore(live.address)
