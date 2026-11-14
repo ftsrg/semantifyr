@@ -4,191 +4,129 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React from 'react';
+import type React from 'react';
 import Link from '@docusaurus/Link';
-import { terms } from '@semantifyr/editor-common/terms';
 import useBaseUrl from '@docusaurus/useBaseUrl';
+import { LanguageMark } from '@semantifyr/editor-common/marks';
+import { terms } from '@semantifyr/editor-common/terms';
+import Architecture from '@site/src/components/Architecture';
+import { EmbeddedExample } from '@site/src/components/LiveEmbed/EmbeddedExample';
 import { useLiveBackendUrl } from '@site/src/lib/live';
+import { addressOf, learnParts } from '@site/src/map';
+import crossroads from '@served-examples/sysml/crossroads';
 import Layout from '@theme/Layout';
 import ThemedImage from '@theme/ThemedImage';
 import clsx from 'clsx';
 
-function OpenInNewIcon(): React.ReactNode {
-  return (
-    <svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style={{ verticalAlign: 'middle', marginLeft: '0.3em' }}>
-      <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z" />
-    </svg>
-  );
-}
-
-function ArrowForwardIcon(): React.ReactNode {
-  return (
-    <svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style={{ verticalAlign: 'middle', marginLeft: '0.3em' }}>
-      <path d="m12 4-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
-    </svg>
-  );
-}
-
 import styles from './index.module.css';
 
-function Hero() {
-  const liveUrl = useLiveBackendUrl();
-  const lightLogo = useBaseUrl('/img/logo-full-light.svg');
-  const darkLogo = useBaseUrl('/img/logo-full-dark.svg');
+const SENTENCES = 'Semantifyr is a framework to support the declarative definition of engineering model semantics: the meaning of a modelling language is written once, as a semantic library, and every model of the language can then be verified by established model checkers. SysML v2 and Gamma are its frontends: a model in either is verified as it is written, and the trace of a case comes back in the language of the model.';
+
+// the served crossroads' comment and its first declarations
+const STILL_LINES = 22;
+
+function partAddress(label: string): string {
+  const part = learnParts.find((candidate) => {
+    return candidate.label === label;
+  });
+  if (part === undefined) {
+    throw new Error(`Learn has no part ${label}`);
+  }
+  return addressOf(part);
+}
+
+const DOORS = [
+  {
+    language: 'sysml',
+    title: 'Verify a SysML v2 model',
+    text: 'Write verification cases beside your parts and state machines, and read the trace of a case as a SysML v2 model that refines yours.',
+    part: 'SysML v2',
+  },
+  {
+    language: 'gamma',
+    title: 'Verify a Gamma model',
+    text: 'Verify Gamma statecharts and their composition against the cases you state, and read each trace in Gamma\'s own trace language.',
+    part: 'Gamma',
+  },
+  {
+    language: 'oxsts',
+    title: 'Define semantics in OXSTS',
+    text: 'Write the semantics of a language of your own as a library in OXSTS, the language both frontends are built on, and verify its models the same way.',
+    part: 'OXSTS Lessons',
+  },
+] as const;
+
+function Doors(): React.JSX.Element {
   return (
-    <header className={styles.hero}>
-      <div className={clsx('container', styles.hero__inner)}>
-        <h1 className={styles.hero__title}>
-          <span className={styles.hero__sr}>Semantifyr</span>
-          <ThemedImage
-            className={styles.hero__logo}
-            alt="Semantifyr"
-            sources={{ light: lightLogo, dark: darkLogo }}
-          />
-        </h1>
-        <p className={styles.hero__tagline}>
-          Semantic library-driven formal verification of engineering models.
-        </p>
-        <div className={styles.hero__buttons}>
-          <Link
-            href={liveUrl}
-            className={clsx(
-              'button',
-              'button--lg',
-              'button--primary',
-              styles.hero__button,
-            )}
-          >
-            Try it live <OpenInNewIcon />
+    <div className={styles.doors}>
+      {DOORS.map((door) => {
+        return (
+          <Link key={door.language} to={partAddress(door.part)} className={clsx(styles.door)} data-language={door.language}>
+            <span className={styles.doorTitle}>
+              <LanguageMark languageId={door.language} />
+              {door.title}
+            </span>
+            <span className={styles.doorText}>{door.text}</span>
           </Link>
-          <Link
-            to="/learn"
-            className={clsx(
-              'button',
-              'button--lg',
-              'button--outline',
-              'button--primary',
-              styles.hero__button,
-            )}
-          >
-            Learn the language <ArrowForwardIcon />
-          </Link>
-        </div>
-      </div>
-    </header>
+        );
+      })}
+    </div>
   );
 }
 
-type HealthStatus = 'checking' | 'online' | 'offline';
-
-function useHealthCheck(healthUrl: string): HealthStatus {
-  const [status, setStatus] = React.useState<HealthStatus>('checking');
-
-  React.useEffect(() => {
-    let cancelled = false;
-    const controller = new AbortController();
-    const timer = setTimeout(() => { controller.abort(); }, 5000);
-    fetch(healthUrl, { signal: controller.signal })
-      .then((res) => { if (!cancelled) setStatus(res.ok ? 'online' : 'offline'); })
-      .catch(() => { if (!cancelled) setStatus('offline'); })
-      .finally(() => { clearTimeout(timer); });
-    return () => { cancelled = true; controller.abort(); };
-  }, [healthUrl]);
-
-  return status;
+function Still(): React.JSX.Element {
+  const shown = crossroads.text.split('\n').slice(0, STILL_LINES).join('\n');
+  return (
+    <div className={styles.still}>
+      <EmbeddedExample model={crossroads.text} example={crossroads.id} shown={shown} lines={{ first: 1, last: STILL_LINES }} language="sysml" view="embed" />
+      <p className={styles.stillNote}>The crossroads, a SysML v2 model of two traffic lights and their controller. Run opens it in Live here and verifies its cases.</p>
+    </div>
+  );
 }
 
-function HealthDot({ status }: { status: HealthStatus }): React.ReactNode {
-  if (status === 'checking') return null;
-  const cls = status === 'online' ? styles['health-dot--online'] : styles['health-dot--offline'];
-  const label = status === 'online' ? 'Service is online' : 'Service appears offline';
-  return <span className={clsx(styles['health-dot'], cls)} title={label} aria-label={label} />;
-}
-
-function TryIt() {
+function Ways(): React.JSX.Element {
   const liveUrl = useLiveBackendUrl();
-  const liveHealth = useHealthCheck(`${liveUrl}/api/health`);
-
   return (
-    <section className={styles.section}>
-      <div className="container">
-        <h2 className={styles.section__title}>Try it online</h2>
-        <div className={styles.cards}>
-          <div className={styles.card}>
-            <div className={styles.card__header}>
-              <h3 className={styles.card__title}>{terms.live.term}</h3>
-              <HealthDot status={liveHealth} />
-            </div>
-            <p className={styles.card__body}>
-              A lightweight editor for quick experimentation. Supports syntax
-              highlighting, diagnostics, content assist, and verification
-              cases with their verdicts and traces. No installation or
-              account required.
-            </p>
-            <Link
-              href={liveUrl}
-              className={clsx('button', 'button--primary', 'button--block', styles.card__button)}
-            >
-              {`Open ${terms.live.short ?? terms.live.term} `}<OpenInNewIcon />
-            </Link>
-          </div>
-        </div>
+    <div className={styles.ways}>
+      <div className={styles.way}>
+        <h2 className={styles.wayTitle}>Learn</h2>
+        <p className={styles.wayText}>From a first verification in the browser to the full specification of OXSTS.</p>
+        <Link to="/learn/">Go to Learn</Link>
       </div>
-    </section>
+      <div className={styles.way}>
+        <h2 className={styles.wayTitle}>{terms.live.term}</h2>
+        <p className={styles.wayText}>Edit and verify SysML v2, Gamma and OXSTS models in the browser, with nothing to install.</p>
+        <a href={liveUrl}>Open Live</a>
+      </div>
+      <div className={styles.way}>
+        <h2 className={styles.wayTitle}>Publications</h2>
+        <p className={styles.wayText}>The papers on the approach, the framework and its language.</p>
+        <Link to="/publications/">See the publications</Link>
+      </div>
+    </div>
   );
 }
 
-function LearnMore() {
+export default function Home(): React.JSX.Element {
+  const light = useBaseUrl('/img/logo-full-light.svg');
+  const dark = useBaseUrl('/img/logo-full-dark.svg');
   return (
-    <section className={clsx(styles.section, styles['section--alt'])}>
-      <div className="container">
-        <h2 className={styles.section__title}>Get started</h2>
-        <div className={clsx('row', styles['features-row'])}>
-          <div className="col col--4">
-            <div className={styles.feature}>
-              <h3>Tutorials</h3>
-              <p>
-                Build a traffic light model from scratch, discover and fix a
-                safety bug, then refactor it into a reusable library.
-              </p>
-              <Link to="/learn/tutorials">Start the tutorials <ArrowForwardIcon /></Link>
-            </div>
+    <Layout title="A framework for the semantics of engineering models" description={SENTENCES}>
+      <main className={styles.page}>
+        <div className="container">
+          <h1 className={styles.title}>
+            <ThemedImage className={styles.logo} alt="Semantifyr" sources={{ light, dark }} />
+          </h1>
+          <p className={styles.sentences}>{SENTENCES}</p>
+          <div className={styles.try}>
+            <Still />
+            <Doors />
           </div>
-          <div className="col col--4">
-            <div className={styles.feature}>
-              <h3>Language Reference</h3>
-              <p>
-                Quick-lookup reference for every Semantifyr construct: classes,
-                features, transitions, properties, expressions, and more.
-              </p>
-              <Link to="/learn/language">Browse the reference <ArrowForwardIcon /></Link>
-            </div>
-          </div>
-          <div className="col col--4">
-            <div className={styles.feature}>
-              <h3>Contribute</h3>
-              <p>
-                Semantifyr is open source. Fork the repository, build from
-                source, and start contributing to the compiler, frontends, or
-                tooling.
-              </p>
-              <Link to="/develop">Developer guide <ArrowForwardIcon /></Link>
-            </div>
-          </div>
+          <h2 className={styles.section}>How it works</h2>
+          <Architecture />
+          <Ways />
         </div>
-      </div>
-    </section>
-  );
-}
-
-export default function Home() {
-  return (
-    <Layout>
-      <div className={styles.page}>
-        <Hero />
-        <TryIt />
-        <LearnMore />
-      </div>
+      </main>
     </Layout>
   );
 }

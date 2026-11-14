@@ -1,0 +1,107 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+.picture {
+  margin: 0 0 2.5rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-large);
+  background: var(--surface-panel);
+}
+
+.figure {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.phone {
+  display: none;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.artifact {
+  fill: var(--surface-raised);
+  stroke: var(--language-sysml);
+  stroke-width: 2;
+}
+
+.tool {
+  fill: var(--surface-editor);
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.label {
+  fill: var(--text-primary);
+  font-family: var(--font-sans);
+  font-weight: 700;
+}
+
+.caption {
+  fill: var(--text-secondary);
+  font-family: var(--font-sans);
+}
+
+.arrow {
+  stroke: var(--text-secondary);
+  stroke-width: 2;
+}
+
+.head {
+  fill: var(--text-secondary);
+}
+
+.refines {
+  stroke: var(--text-tertiary);
+  stroke-width: 2;
+  stroke-dasharray: 3 5;
+}
+
+.refinesHead {
+  fill: var(--text-tertiary);
+}
+
+.refinesLabel {
+  fill: var(--text-tertiary);
+  font-family: var(--font-sans);
+  font-style: italic;
+}
+
+.logoDark {
+  display: none;
+}
+
+:global([data-theme='dark']) .logoLight {
+  display: none;
+}
+
+:global([data-theme='dark']) .logoDark {
+  display: inline;
+}
+
+@media (max-width: 700px) {
+  .picture {
+    padding: 1rem 0.75rem;
+  }
+
+  .desktop {
+    display: none;
+  }
+
+  .phone {
+    display: block;
+  }
+}
+
+.backends {
+  margin-top: 1rem;
+  color: var(--text-secondary);
+  font-size: var(--text-small);
+  text-align: center;
+}
