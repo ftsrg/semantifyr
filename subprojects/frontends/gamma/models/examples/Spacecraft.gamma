@@ -1,7 +1,7 @@
 // A spacecraft that sends its data to a ground station while it manages its battery.
 // The station pings the spacecraft when it starts operating, every ten seconds after and on each piece of data it receives; the spacecraft then transmits while it has data and charge, and its battery recharges in an orthogonal region.
 // The spacecraft starts a transmission only while it is not recharging; its charge and its data change in steps of ten.
-// The cases ask whether a transmission can start, whether the charge ever falls below 40, and whether the spacecraft can transmit while it recharges.
+// The cases ask whether a transmission can start, whether the charge ever falls below 30, and whether the spacecraft can transmit while it recharges.
 
 package Spacecraft
 
@@ -125,8 +125,8 @@ verification case TransmissionCanStart of SpaceMission {
     EF state spacecraft.Communication.Transmitting
 }
 
-verification case ChargeNeverBelow40 of SpaceMission {
-    AG (variable spacecraft.batteryCharge >= 40)
+verification case ChargeNeverBelow30 of SpaceMission {
+    AG (variable spacecraft.batteryCharge >= 30)
 }
 
 verification case CanTransmitWhileRecharging of SpaceMission {

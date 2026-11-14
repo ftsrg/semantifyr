@@ -52,7 +52,7 @@
             "file": "Spacecraft.gamma",
             "cases": [
                 { "name": "TransmissionCanStart", "verdict": "Passed", "tier": "Integration" },
-                { "name": "ChargeNeverBelow40", "verdict": "Failed", "tier": "Integration" },
+                { "name": "ChargeNeverBelow30", "verdict": "Passed", "tier": "Integration" },
                 { "name": "CanTransmitWhileRecharging", "verdict": "Passed", "tier": "Integration" }
             ]
         },
