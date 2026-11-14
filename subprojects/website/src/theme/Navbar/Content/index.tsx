@@ -175,27 +175,41 @@ function PhoneMenuButton(): React.JSX.Element {
 
   // the theme's menu stays open on Escape and under a focus that has left it for the page behind it
   useEffect(() => {
-    if (!shown) {
+    const menu = document.querySelector('.navbar-sidebar');
+    const opener = button.current;
+    if (!shown || menu === null || opener === null) {
       return;
     }
-    const menu = document.querySelector('.navbar-sidebar');
-    const closeOnEscape = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') {
-        toggle();
-        button.current?.focus();
-      }
-    };
-    const closeOnLeaving = (event: FocusEvent): void => {
-      const target = event.target as Node;
-      if (!menu?.contains(target) && !button.current?.contains(target)) {
+    // the theme offers a toggle alone, and one event may lead to both closings
+    let closed = false;
+    const close = (): void => {
+      if (!closed) {
+        closed = true;
         toggle();
       }
     };
-    document.addEventListener('keydown', closeOnEscape);
-    document.addEventListener('focusin', closeOnLeaving);
+    const closeOnEscape = (event: Event): void => {
+      if ((event as KeyboardEvent).key === 'Escape') {
+        close();
+        opener.focus();
+      }
+    };
+    const closeOnLeaving = (event: Event): void => {
+      // a press on the menu's text or a window left behind moves the focus nowhere, which leaves the menu open
+      const next = (event as FocusEvent).relatedTarget as Node | null;
+      if (next !== null && !menu.contains(next) && !opener.contains(next)) {
+        close();
+      }
+    };
+    for (const element of [menu, opener]) {
+      element.addEventListener('keydown', closeOnEscape);
+      element.addEventListener('focusout', closeOnLeaving);
+    }
     return () => {
-      document.removeEventListener('keydown', closeOnEscape);
-      document.removeEventListener('focusin', closeOnLeaving);
+      for (const element of [menu, opener]) {
+        element.removeEventListener('keydown', closeOnEscape);
+        element.removeEventListener('focusout', closeOnLeaving);
+      }
     };
   }, [shown, toggle]);
 
