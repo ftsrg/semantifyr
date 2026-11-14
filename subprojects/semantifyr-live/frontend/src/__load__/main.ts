@@ -4,31 +4,34 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { parseArgs } from 'node:util'
-import { normalizeBaseUrl, type FlavorsResponse, type PortfoliosResponse } from '@semantifyr/editor-common'
+import { normalizeBaseUrl, type FlavorInfo, type FlavorsResponse, type PortfoliosResponse } from '@semantifyr/editor-common'
 import type { InfoResponse } from '../lib/api/types.ts'
 import { DEFAULT_VALIDATION_PORTFOLIO_ID } from '../lib/verification/engine.ts'
-import { readModel, tutorialStepModels } from './models.ts'
-import { failures, formatSummary, summarize, type HealthSample } from './stats.ts'
+import { servedModels, type LoadTestModel } from './models.ts'
+import { boundOf, failures, formatBound, formatSummary, summarize, type BoundReport, type HealthSample } from './stats.ts'
 import { runStudent, type StudentRun } from './student.ts'
 
 const usage = `Usage: npm run load-test -- [options]
 
-Simulates a class on a live server: each student opens a tutorial model, waits for diagnostics, discovers every case and verifies them all at once with the default portfolio, validates every witness as the editor does, edits the model, verifies again and disconnects once the validations are back.
+Simulates a class on a live server: each student opens a served example, waits for diagnostics, discovers every case and verifies them all at once with the default portfolio, validates every witness as the editor does, edits the model, verifies again and disconnects once the validations are back. Then, with the class gone, it verifies every served case of the examples alone and reports each one that takes longer than the bound, which fails nothing.
 
   --url <url>               live server (default $SEMANTIFYR_LIVE_URL, else https://live-staging.semantifyr.org)
   --students <n>            concurrent students (default 30)
   --ramp <seconds>          students join evenly over this time (default 60)
   --rounds <n>              sessions per student, each on the next model (default 1)
-  --models <files>          comma-separated .oxsts files (default the tutorial step models with a case)
+  --examples <addresses>    comma-separated <language>/<id> of the registry (default every served example with a case)
   --portfolio <id>          (default the server's default portfolio)
   --validation-portfolio <id>  witness validation portfolio (default the editor's, ${DEFAULT_VALIDATION_PORTFOLIO_ID})
   --no-edit                 skip the edit and the second verification
   --timeout <seconds>       per request, verification queueing included (default 300)
   --max-verify-p95 <s>      fail when the p95 verification time exceeds this (default 120)
+  --bound <seconds>         a served case verified alone answers within this (default 30)
+  --no-measure              skip verifying each served case alone
+  --summary <file>          append the bound's report to this Markdown file, such as $GITHUB_STEP_SUMMARY
   --output <file>           JSON result (default build/load-test/<start time>.json)`
 
 // mirrors the container health check: a 5 s timeout, unhealthy after 3 failures in a row
@@ -86,12 +89,15 @@ async function main(): Promise<number> {
       'students': { type: 'string', default: '30' },
       'ramp': { type: 'string', default: '60' },
       'rounds': { type: 'string', default: '1' },
-      'models': { type: 'string' },
+      'examples': { type: 'string' },
       'portfolio': { type: 'string' },
       'validation-portfolio': { type: 'string', default: DEFAULT_VALIDATION_PORTFOLIO_ID },
       'edit': { type: 'boolean', default: true },
       'timeout': { type: 'string', default: '300' },
       'max-verify-p95': { type: 'string', default: '120' },
+      'bound': { type: 'string', default: '30' },
+      'measure': { type: 'boolean', default: true },
+      'summary': { type: 'string' },
       'output': { type: 'string' },
       'help': { type: 'boolean', default: false },
     },
@@ -105,19 +111,28 @@ async function main(): Promise<number> {
   const rounds = positive('rounds', values.rounds, true)
   const timeoutMs = positive('timeout', values.timeout, false) * 1000
   const maxVerificationP95Ms = positive('max-verify-p95', values['max-verify-p95'], false) * 1000
-  const models = values.models ? values.models.split(',').map((path) => readModel(resolve(path.trim()))) : tutorialStepModels()
-  const caseless = models.filter((model) => model.cases.length === 0)
-  if (models.length === 0 || caseless.length > 0) {
-    throw new Error(`every model must declare a verification case: ${caseless.map((model) => model.name).join(', ') || 'no models'}`)
+  const boundMs = positive('bound', values.bound, false) * 1000
+  const models = servedModels(values.examples?.split(',').map((address) => {
+    return address.trim()
+  }))
+  if (models.length === 0) {
+    throw new Error('no served example has a verification case')
   }
   const startedAt = new Date()
   const output = resolve(values.output ?? `build/load-test/${startedAt.toISOString().replace(/[:.]/g, '-')}.json`)
 
   const { http: httpBase, ws: webSocketBase } = normalizeBaseUrl(values.url)
-  const flavor = (await getJson<FlavorsResponse>(`${httpBase}/api/flavors`)).flavors.find((candidate) => candidate.id === 'oxsts')
-  if (!flavor) {
-    throw new Error(`${httpBase} serves no oxsts flavor`)
+  const flavors = (await getJson<FlavorsResponse>(`${httpBase}/api/flavors`)).flavors
+  const flavorOf = (model: LoadTestModel): FlavorInfo => {
+    const flavor = flavors.find((candidate) => {
+      return candidate.id === model.flavorId
+    })
+    if (!flavor) {
+      throw new Error(`${httpBase} serves no ${model.flavorId} flavor for ${model.name}`)
+    }
+    return flavor
   }
+  models.forEach(flavorOf)
   const portfolio = values.portfolio ?? (await getJson<Partial<PortfoliosResponse>>(`${httpBase}/api/portfolios`)).defaultPortfolio
   if (!portfolio) {
     throw new Error(`${httpBase} names no default portfolio, pass --portfolio`)
@@ -159,7 +174,7 @@ async function main(): Promise<number> {
       if (!model) {
         break
       }
-      const run = await runStudent(student, round, { webSocketBase, flavor, portfolio, validationPortfolio: values['validation-portfolio'], model, edit: values.edit, timeoutMs, signal: abort.signal })
+      const run = await runStudent(student, round, { webSocketBase, flavor: flavorOf(model), portfolio, validationPortfolio: values['validation-portfolio'], model, edit: values.edit, oneAtATime: false, timeoutMs, signal: abort.signal })
       const wrong = run.cases.filter((verification) => !verification.ok).map((verification) => `${verification.name} ${verification.status ?? 'no result'}${verification.message ? ` (${verification.message})` : ''}`)
       const outcome = run.error ? `${run.error.phase} failed: ${run.error.message}` : `${run.cases.length} verifications, ${run.validations.length} witness validations${wrong.length > 0 ? `, unexpected: ${wrong.join('; ')}` : ''}`
       console.log(`${elapsed()}  student ${student + 1} round ${round + 1} ${model.name}: ${outcome}`)
@@ -167,6 +182,22 @@ async function main(): Promise<number> {
     }
     return results
   }))).flat()
+
+  // the bound counts a case with nothing beside it: each served case alone, once the class has left
+  let bound: BoundReport | null = null
+  if (values.measure && !abort.signal.aborted) {
+    console.log(`\n${elapsed()}  verifying each served case alone`)
+    const measured: StudentRun[] = []
+    for (const model of models) {
+      const run = await runStudent(-1, 0, { webSocketBase, flavor: flavorOf(model), portfolio, validationPortfolio: null, model, edit: false, oneAtATime: true, timeoutMs, signal: abort.signal })
+      const times = run.cases.map((verification) => {
+        return `${verification.name} ${(verification.wallMs / 1000).toFixed(1)} s`
+      })
+      console.log(`${elapsed()}  ${model.name}: ${run.error ? `${run.error.phase} failed: ${run.error.message}` : times.join(', ')}`)
+      measured.push(run)
+    }
+    bound = boundOf(measured, boundMs)
+  }
 
   clearInterval(sampler)
   await sleep(2000)
@@ -177,6 +208,12 @@ async function main(): Promise<number> {
   const reasons = failures(summary, maxVerificationP95Ms, abort.signal.aborted)
   console.log(`\nfinished in ${(durationMs / 1000).toFixed(1)} s, ${health.at(-1)?.activeSessions ?? 'unknown'} active sessions afterwards\n`)
   console.log(formatSummary(summary))
+  if (bound) {
+    console.log(`\n${formatBound(bound)}`)
+    if (values.summary) {
+      appendFileSync(values.summary, `## Served cases over the bound\n\n${formatBound(bound)}\n`)
+    }
+  }
   console.log(reasons.length === 0 ? '\nPASSED' : `\nFAILED\n${reasons.map((reason) => `- ${reason}`).join('\n')}`)
 
   mkdirSync(dirname(output), { recursive: true })
@@ -185,8 +222,9 @@ async function main(): Promise<number> {
     server: info,
     startedAt: startedAt.toISOString(),
     durationMs,
-    options: { students, rampMs, rounds, edit: values.edit, timeoutMs, maxVerificationP95Ms, portfolio, validationPortfolio: values['validation-portfolio'], models: models.map((model) => model.name) },
+    options: { students, rampMs, rounds, edit: values.edit, timeoutMs, maxVerificationP95Ms, boundMs, portfolio, validationPortfolio: values['validation-portfolio'], examples: models.map((model) => model.name) },
     summary,
+    bound,
     failures: reasons,
     health,
     runs,

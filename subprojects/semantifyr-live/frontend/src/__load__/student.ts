@@ -24,9 +24,12 @@ export interface StudentOptions {
   webSocketBase: string
   flavor: FlavorInfo
   portfolio: string
-  validationPortfolio: string
+  // null validates no witness
+  validationPortfolio: string | null
   model: LoadTestModel
   edit: boolean
+  // each case alone, the next sent once the last has answered, where Verify all sends every case at once
+  oneAtATime: boolean
   timeoutMs: number
   signal: AbortSignal
 }
@@ -310,7 +313,7 @@ export async function runStudent(student: number, round: number, options: Studen
 
     const verifyAll = async (cases: VerificationCaseSpecification[], edited: boolean) => {
       state.phase = 'verify'
-      const runs = await Promise.all(cases.map(async (verificationCase) => {
+      const verifyOne = async (verificationCase: VerificationCaseSpecification): Promise<CaseRun> => {
         const name = caseName(verificationCase)
         const expected = model.cases.find((declaredCase) => declaredCase.name === name)?.expected ?? null
         const location = { uri, range: verificationCase.location.range }
@@ -329,7 +332,9 @@ export async function runStudent(student: number, round: number, options: Studen
         )
         const runningAt = running.runningAt(key)
         const status = result.value?.status ?? null
-        validate({ flavor, verificationCase, result: result.value, edited, portfolio: options.validationPortfolio, timeoutMs })
+        if (options.validationPortfolio !== null) {
+          validate({ flavor, verificationCase, result: result.value, edited, portfolio: options.validationPortfolio, timeoutMs })
+        }
         return {
           name,
           edited,
@@ -342,8 +347,14 @@ export async function runStudent(student: number, round: number, options: Studen
           queueMs: runningAt === null ? null : runningAt - sentAt,
           serverMs: milliseconds(result.value?.metrics?.totalDuration),
         }
-      }))
-      run.cases.push(...runs)
+      }
+      if (options.oneAtATime) {
+        for (const verificationCase of cases) {
+          run.cases.push(await verifyOne(verificationCase))
+        }
+        return
+      }
+      run.cases.push(...await Promise.all(cases.map(verifyOne)))
     }
 
     await verifyAll(await discover(), false)

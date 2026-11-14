@@ -219,3 +219,52 @@ export function formatSummary(summary: Summary): string {
   }
   return lines.join('\n')
 }
+
+export interface BoundCase {
+  model: string
+  name: string
+  status: string | null
+  message: string | null
+  wallMs: number
+  serverMs: number | null
+}
+
+export interface BoundReport {
+  boundMs: number
+  cases: BoundCase[]
+  over: BoundCase[]
+  // a model whose session failed before its cases answered, with the reason
+  unmeasured: { model: string, reason: string }[]
+}
+
+// a served case answers within the bound when it is verified alone; the run reports the ones that do not and fails nothing for them
+export function boundOf(runs: StudentRun[], boundMs: number): BoundReport {
+  const cases = runs.flatMap((run) => {
+    return run.cases.map((verification) => {
+      return { model: run.model, name: verification.name, status: verification.status, message: verification.message, wallMs: verification.wallMs, serverMs: verification.serverMs }
+    })
+  })
+  return {
+    boundMs,
+    cases,
+    over: cases.filter((verification) => {
+      return verification.wallMs > boundMs
+    }),
+    unmeasured: runs.filter((run) => {
+      return run.error !== null
+    }).map((run) => {
+      return { model: run.model, reason: `${run.error?.phase} failed: ${run.error?.message}` }
+    }),
+  }
+}
+
+export function formatBound(report: BoundReport): string {
+  const lines = [`served cases verified alone: ${report.cases.length}, over the bound of ${seconds(report.boundMs)}: ${report.over.length}`]
+  for (const verification of report.over) {
+    lines.push(`- ${verification.model} ${verification.name}: ${seconds(verification.wallMs)}, ${verification.serverMs === null ? 'no time' : seconds(verification.serverMs)} on the server, ${verification.status ?? 'no result'}`)
+  }
+  for (const model of report.unmeasured) {
+    lines.push(`- ${model.model} not measured: ${model.reason}`)
+  }
+  return lines.join('\n')
+}

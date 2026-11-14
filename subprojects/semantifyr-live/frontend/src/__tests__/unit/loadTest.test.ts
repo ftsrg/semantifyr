@@ -8,8 +8,9 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { VerificationStatus, type VerificationCaseResult } from '@semantifyr/editor-common'
-import { declaredCases, tutorialStepModels } from '../../__load__/models.ts'
-import { distribution, failures, fairness, summarize } from '../../__load__/stats.ts'
+import { servedExamples } from '@semantifyr/editor-common/examples'
+import { servedModels } from '../../__load__/models.ts'
+import { boundOf, distribution, failures, fairness, summarize } from '../../__load__/stats.ts'
 import { validateResult, type CaseRun, type RunningTracker, type StudentRun, type ValidationRun } from '../../__load__/student.ts'
 import type { LspClient } from '../../lib/verification/engine.ts'
 import { servedFlavors } from '../fixtures/flavors.ts'
@@ -61,43 +62,30 @@ function studentRun(overrides: Partial<StudentRun>): StudentRun {
   }
 }
 
-describe('declaredCases', () => {
-  it('reads the verification cases and takes their expected verdicts from the manifest', () => {
-    const source = `
-class Helper {}
-
-@VerificationCase
-class Reachable {}
-
-@Trace
-@VerificationCase
-class Violated {}
-
-@VerificationCase
-class Unlisted {}
-
-class NotACase {}
-`
-    const expected = new Map([
-      ['Reachable', VerificationStatus.Passed],
-      ['Violated', VerificationStatus.Failed],
-      ['NotACase', VerificationStatus.Passed],
-    ])
-    expect(declaredCases(source, expected)).toEqual([
-      { name: 'Reachable', expected: 'passed' },
-      { name: 'Violated', expected: 'failed' },
-      { name: 'Unlisted', expected: null },
-    ])
+describe('servedModels', () => {
+  it('reads every served example with a case, sends each as live does and expects each case\'s verdict from its manifest', () => {
+    const models = servedModels()
+    expect(models.map((model) => {
+      return model.name
+    })).toEqual(servedExamples.filter((example) => {
+      return example.cases.length > 0
+    }).map((example) => {
+      return `${example.language}/${example.id}`
+    }))
+    for (const model of models) {
+      expect(model.cases.length, model.name).toBeGreaterThan(0)
+      expect(model.cases.every((declaredCase) => {
+        return declaredCase.expected !== null
+      }), model.name).toBe(true)
+    }
+    expect(servedModels(['sysml/level-crossing'])[0]).toMatchObject({ flavorId: 'oxsts-with-sysmlv2-library', text: expect.stringContaining('package') })
+    expect(servedModels(['gamma/level-crossing'])[0]).toMatchObject({ flavorId: 'gamma' })
   })
 
-  it('finds an expected verdict for every case of every tutorial step model it loads', () => {
-    const models = tutorialStepModels()
-    expect(models.length).toBeGreaterThan(0)
-    for (const model of models) {
-      expect(model.name).toMatch(/-step\d+$/)
-      expect(model.cases.length).toBeGreaterThan(0)
-      expect(model.cases.every((declaredCase) => declaredCase.expected !== null)).toBe(true)
-    }
+  it('names an address the registry does not serve', () => {
+    expect(() => {
+      return servedModels(['oxsts/nowhere'])
+    }).toThrow('the registry serves no oxsts/nowhere')
   })
 })
 
@@ -293,5 +281,18 @@ describe('validateResult', () => {
 
     expect(validation).toBeNull()
     expect(client.sendRequest).not.toHaveBeenCalled()
+  })
+})
+
+describe('boundOf', () => {
+  it('reports the cases verified alone that took longer than the bound, and the models it could not measure', () => {
+    const report = boundOf([
+      studentRun({ model: 'sysml/crossroads', cases: [caseRun({ name: 'Fast', wallMs: 4000 }), caseRun({ name: 'Slow', wallMs: 31_000, serverMs: 30_500 })] }),
+      studentRun({ model: 'gamma/spacecraft', cases: [], error: { phase: 'discovery', message: 'no answer', timeout: true } }),
+    ], 30_000)
+
+    expect(report.over).toEqual([{ model: 'sysml/crossroads', name: 'Slow', status: 'passed', message: null, wallMs: 31_000, serverMs: 30_500 }])
+    expect(report.cases).toHaveLength(2)
+    expect(report.unmeasured).toEqual([{ model: 'gamma/spacecraft', reason: 'discovery failed: no answer' }])
   })
 })

@@ -255,8 +255,19 @@ val compileSysmlExampleTasks = corpusModels(examplesSourceDir).filter {
     sysmlCompileTask("compileSysmlExample_${it.name}", provider { examplesSourceDir }, examplesWorkspace, it.name, compiledExamplesDir)
 }
 
+val tutorialSourceDir = layout.projectDirectory.dir("../models/tutorial")
+val tutorialWorkspace = fileTree(tutorialSourceDir) {
+    include("**/*.sysml", "**/*.kerml")
+}
+
+// the tutorial's models, which its page runs in live, compiled beside the examples for the load test that sends them as live does
+val compileSysmlTutorialTasks = corpusModels(tutorialSourceDir).map {
+    sysmlCompileTask("compileSysmlTutorial_${it.name}", provider { tutorialSourceDir }, tutorialWorkspace, it.name, compiledExamplesDir)
+}
+
 val compileSysmlExamples = tasks.register("compileSysmlExamples") {
     inputs.files(compileSysmlExampleTasks)
+    inputs.files(compileSysmlTutorialTasks)
 }
 
 configurations.consumable("compiledExamplesElements") {
