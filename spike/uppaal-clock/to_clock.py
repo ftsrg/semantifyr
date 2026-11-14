@@ -53,6 +53,12 @@ assert not re.search(r"__clock[^<]*\|\|", text)
 invariant = " &amp;&amp; ".join(
     f"({name}__pending imply {name}__clock &lt;= {name}__bound)" for _, name in timers
 )
+if mode == "delay-reset":
+    text = re.sub(
+        r'<label kind="assignment">(\w+)__pending = false</label>',
+        r'<label kind="assignment">\1__pending = false, \1__clock = 0, \1__bound = 0</label>',
+        text,
+    )
 if mode == "fixed":
     text = text.replace("int[0,", "clock stepClock;\nint[0,", 1)
     invariant += " &amp;&amp; stepClock &lt;= 1"
