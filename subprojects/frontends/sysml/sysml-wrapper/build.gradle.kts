@@ -25,7 +25,7 @@ dependencies {
     testImplementation(testFixtures(project(":compiler")))
 }
 
-val sysmlCommit = "49f5a4694e04dcab65718d5bce4efb2838bf2712" // fix: trace input takes a missing innerTraces as null
+val sysmlCommit = "5c7318fe273d437eafe1473e13f8b2d8b8c7f03a" // fix: a literal written with an exponent is refused as a real literal
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 
