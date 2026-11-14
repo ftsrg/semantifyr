@@ -1,0 +1,466 @@
+package semantifyr::sysml::states
+
+import semantifyr::sysml::actions
+import semantifyr::sysml::triggers
+import semantifyr::sysml::expressions
+
+abstract class StateNode {
+    derived refers incomingTransitions: Transition[0..*] opposite to
+    derived refers outgoingTransitions: Transition[0..*] opposite from
+
+    abstract prop isActive(): bool
+
+    abstract tran enter(commonState: StateNode)
+    abstract tran exit(commonState: StateNode)
+
+    abstract tran performOutgoing(transition: Transition)
+    abstract tran findCommonState(transition: Transition, candidate: AbstractState[0..1])
+}
+
+abstract class AbstractState : StateNode {
+    container parent: AbstractState[0..1] opposite states
+    contains states: AbstractState[0..*] opposite parent
+
+    contains entryAction: Action[1]
+    contains exitAction: Action[1]
+
+    redefine prop isActive(): bool {
+        return parent?.isInnerStateActive(self)
+    }
+
+    abstract prop isInnerStateActive(state: AbstractState): bool
+
+    abstract tran fireTransitions()
+    abstract tran assumeNoTransitionEnabled()
+    abstract tran deferTransitions()
+    abstract tran activateRecursive()
+    abstract tran deactivateRecursive(deactivate: bool)
+    abstract tran passTime(elapsedTime: int)
+
+    abstract tran enterRecursive(commonState: StateNode, child: AbstractState[0..1])
+    abstract tran exitRecursive(commonState: StateNode, child: AbstractState[0..1])
+
+    abstract tran activate()
+
+    abstract tran setActiveState(state: AbstractState[0..1])
+
+    // a transition exits and enters up to the closest common ancestor of its source and target, not up to the state declaring it
+    redefine tran performOutgoing(transition: Transition) {
+        inline transition.to.findCommonState(transition, parent)
+    }
+
+    redefine tran findCommonState(transition: Transition, candidate: AbstractState[0..1]) {
+        inline if (candidate == parent) {
+            inline transition.performWithin(candidate as AbstractState)
+        } else {
+            inline if (parent == nothing) {
+                inline transition.to.findCommonState(transition, candidate.parent)
+            } else {
+                inline parent.findCommonState(transition, candidate)
+            }
+        }
+    }
+}
+
+class State : AbstractState {
+    contains start: EntryState[1]
+    contains done: DoneState[1] opposite owner
+
+    contains transitions: Transition[0..*] opposite parentState
+
+    var activeState: states[0..1] := nothing
+
+    redefine prop isInnerStateActive(state: AbstractState): bool {
+        return state == activeState
+    }
+
+    redefine tran setActiveState(state: AbstractState) {
+        activeState := state
+    }
+
+    redefine tran fireTransitions() {
+        choice {
+            inline assumeNoInnerTransitionEnabled()
+            inline fireLocalTransitions()
+        } or {
+            inline fireInnerTransitions()
+        }
+    }
+    tran fireLocalTransitions() {
+        inline for choice (transition in transitions) {
+            inline transition.fire()
+        } else {
+            assume(false)
+        }
+    }
+    tran fireInnerTransitions() {
+        inline for choice (state in states) {
+            inline state.fireTransitions()
+        } else {
+            assume(false)
+        }
+    }
+
+    redefine tran assumeNoTransitionEnabled() {
+        inline assumeNoLocalTransitionEnabled()
+        inline assumeNoInnerTransitionEnabled()
+    }
+    tran assumeNoLocalTransitionEnabled() {
+        inline for (transition in transitions) {
+            assume(!transition.isEnabled())
+        }
+    }
+    tran assumeNoInnerTransitionEnabled() {
+        inline for (state in states) {
+            inline state.assumeNoTransitionEnabled()
+        }
+    }
+
+    redefine tran deferTransitions() {
+        inline for (transition in transitions) {
+            if (transition.isEnabled()) {
+                inline transition.acceptAction.requireConsumption()
+            }
+        }
+        inline for (state in states) {
+            inline state.deferTransitions()
+        }
+    }
+
+    redefine tran activateRecursive() {
+        inline start.enter(self)
+    }
+
+    redefine tran deactivateRecursive(_deactivate: bool) {
+        inline for (state in states) {
+            inline state.deactivateRecursive(true)
+        }
+
+        inline if (_deactivate) {
+            inline deactivate()
+        }
+    }
+
+    redefine tran passTime(elapsedTime: int) {
+        inline for (transition in transitions) {
+            inline transition.passTime(elapsedTime)
+        }
+        inline for (state in states) {
+            inline state.passTime(elapsedTime)
+        }
+    }
+
+    redefine tran enterRecursive(commonState: StateNode, child: AbstractState[0..1]) {
+        inline if (parent != nothing) {
+            inline if (commonState != parent) {
+                inline parent.enterRecursive(commonState, self)
+            }
+
+            inline activate()
+        }
+    }
+    @Trace
+    redefine tran enter(commonState: StateNode) {
+        inline enterRecursive(commonState)
+        inline activateRecursive()
+    }
+
+    redefine tran exitRecursive(commonState: StateNode, child: AbstractState[0..1]) {
+        inline if (parent != nothing) {
+            inline deactivate()
+
+            inline if (commonState != parent) {
+                inline parent?.exitRecursive(commonState, self)
+            }
+        }
+    }
+    @Trace
+    redefine tran exit(commonState: StateNode) {
+        inline deactivateRecursive(false)
+        inline exitRecursive(commonState)
+    }
+
+    redefine tran activate() {
+        inline parent?.setActiveState(self)
+
+        inline for (transition in outgoingTransitions) {
+            inline transition.initialize()
+        }
+
+        inline entryAction.main()
+    }
+
+    tran deactivate() {
+        if (isActive()) {
+            inline exitAction.main()
+
+            inline parent.setActiveState(nothing)
+        }
+    }
+
+    tran complete() {
+    }
+}
+
+class ExhibitedState : State {
+    var performing: bool := false
+
+    redefine prop isActive(): bool {
+        return performing
+    }
+
+    redefine tran activate() {
+        performing := true
+
+        inline entryAction.main()
+    }
+
+    redefine tran complete() {
+        inline exitAction.main()
+
+        performing := false
+    }
+}
+
+class Transition {
+    container parentState: State[1] opposite transitions
+
+    refers from: StateNode[1] opposite outgoingTransitions
+    refers to: StateNode[1] opposite incomingTransitions
+
+    contains action: Action
+    contains acceptAction: AcceptAction
+    contains guard: Guard[1] { // default guard is true
+        redefine contains expression: LiteralBooleanExpression {
+            redefine refers value: bool = true
+        }
+    }
+
+    @Trace
+    tran fire() {
+        assume(isEnabled())
+        inline acceptAction.consume()
+        inline performTransition()
+    }
+
+    prop isEnabled(): bool {
+        return acceptAction.isTriggered() && from.isActive() && guard.isOpen()
+    }
+
+    tran performTransition() {
+        inline from.performOutgoing(self)
+    }
+
+    tran performWithin(commonState: StateNode) {
+        inline from.exit(commonState)
+        inline action.main()
+        inline to.enter(commonState)
+    }
+
+    tran passTime(elapsedTime: int) {
+        inline acceptAction.passTime(elapsedTime)
+    }
+
+    tran initialize() {
+        inline acceptAction.initialize()
+    }
+}
+
+class ParallelState : AbstractState {
+    redefine tran setActiveState(state: AbstractState) {
+    }
+
+    redefine prop isInnerStateActive(state: AbstractState): bool {
+        return isActive()
+    }
+
+    // a region may leave its enabled item transitions to another region, which then has to consume the item
+    redefine tran fireTransitions() {
+        var anyStateExecuted: bool := false
+
+        inline for (state in states) {
+            choice {
+                anyStateExecuted := true
+
+                inline state.fireTransitions()
+            } or {
+                inline state.deferTransitions()
+            }
+        }
+
+        assume(anyStateExecuted)
+    }
+
+    redefine tran assumeNoTransitionEnabled() {
+        inline for (state in states) {
+            inline state.assumeNoTransitionEnabled()
+        }
+    }
+
+    redefine tran deferTransitions() {
+        inline for (state in states) {
+            inline state.deferTransitions()
+        }
+    }
+
+    redefine tran activateRecursive() {
+        inline for (state in states) {
+            inline state.activate()
+            inline state.activateRecursive()
+        }
+    }
+
+    redefine tran deactivateRecursive(_deactivate: bool) {
+        inline for (state in states) {
+            inline state.deactivateRecursive(true)
+        }
+
+        inline if (_deactivate) {
+            inline deactivate()
+        }
+    }
+
+    redefine tran passTime(elapsedTime: int) {
+        inline for (state in states) {
+            inline state.passTime(elapsedTime)
+        }
+    }
+
+    // entering one region enters the whole parallel state
+    redefine tran enterRecursive(commonState: StateNode, child: AbstractState[0..1]) {
+        inline if (commonState != parent) {
+            inline parent?.enterRecursive(commonState, self)
+        }
+
+        inline activate()
+
+        inline if (child != nothing) {
+            inline for (state in states) {
+                inline if (state != child) {
+                    inline state.activate()
+                    inline state.activateRecursive()
+                }
+            }
+        }
+    }
+    @Trace
+    redefine tran enter(commonState: StateNode) {
+        inline enterRecursive(commonState)
+        inline activateRecursive()
+    }
+
+    // leaving one region leaves the whole parallel state
+    redefine tran exitRecursive(commonState: StateNode, child: AbstractState[0..1]) {
+        inline for (state in states) {
+            inline if (state != child) {
+                inline state.deactivateRecursive(true)
+            }
+        }
+
+        inline deactivate()
+
+        inline if (commonState != parent) {
+            inline parent?.exitRecursive(commonState, self)
+        }
+    }
+    @Trace
+    redefine tran exit(commonState: StateNode) {
+        inline exitRecursive(commonState)
+    }
+
+    redefine tran activate() {
+        inline parent?.setActiveState(self)
+
+        inline for (transition in outgoingTransitions) {
+            inline transition.initialize()
+        }
+
+        inline entryAction.main()
+    }
+
+    tran deactivate() {
+        inline if (parent != nothing) {
+            if (isActive()) {
+                inline exitAction.main()
+
+                inline parent.setActiveState(nothing)
+            }
+        }
+    }
+}
+
+class ExhibitedParallelState : ParallelState {
+    var performing: bool := false
+
+    redefine prop isActive(): bool {
+        return performing
+    }
+
+    redefine tran activate() {
+        performing := true
+
+        inline entryAction.main()
+    }
+}
+
+class EntryState : StateNode {
+    redefine prop isActive(): bool {
+        return false
+    }
+
+    redefine tran enter(commonState: StateNode) {
+        inline for choice (transition in outgoingTransitions) {
+            assume(transition.guard.isOpen())
+            inline transition.performTransition()
+        }
+    }
+
+    redefine tran exit(commonState: StateNode) {
+    }
+
+    redefine tran performOutgoing(transition: Transition) {
+        inline transition.performWithin(transition.parentState)
+    }
+
+    redefine tran findCommonState(transition: Transition, candidate: AbstractState[0..1]) {
+    }
+}
+
+class DoneState : StateNode {
+    container owner: State[1] opposite done
+
+    redefine prop isActive(): bool {
+        return false
+    }
+
+    // reaching done ends an exhibited state's performance and leaves any other state without an active substate
+    redefine tran enter(commonState: StateNode) {
+        inline if (commonState != owner) {
+            inline owner.enterRecursive(commonState)
+        }
+
+        inline owner.complete()
+    }
+
+    redefine tran exit(commonState: StateNode) {
+    }
+
+    redefine tran performOutgoing(transition: Transition) {
+    }
+
+    redefine tran findCommonState(transition: Transition, candidate: AbstractState[0..1]) {
+        inline if (candidate == owner) {
+            inline transition.performWithin(owner)
+        } else {
+            inline owner.findCommonState(transition, candidate)
+        }
+    }
+}
+
+class IsStateActiveExpression : Expression {
+    refers state: AbstractState
+
+    redefine prop evaluate(): bool {
+        return state.isActive()
+    }
+}

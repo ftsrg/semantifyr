@@ -1,0 +1,38 @@
+package semantifyr::gamma::verification
+
+import semantifyr::gamma::components
+import semantifyr::gamma::events
+import semantifyr::gamma::expressions
+
+class GammaVerificationCase {
+    contains component: Component
+    contains elapsedTime: ElapsedTime
+    contains propertyExpression: Expression
+
+    redefine init {
+        inline component.init()
+    }
+
+    redefine tran {
+        inline component.havocInputEvents()
+        inline component.main()
+        inline component.resetOutputEvents()
+        elapsedTime.timerRunning := false
+        havoc(elapsedTime.amount)
+        assume(elapsedTime.amount >= 1)
+        inline component.boundElapsedTime(elapsedTime)
+        if (!elapsedTime.timerRunning) {
+            assume(elapsedTime.amount == 1)
+        }
+        inline passTime()
+    }
+
+    @Trace
+    tran passTime() {
+        inline component.passTime(elapsedTime.amount)
+    }
+
+    prop {
+        return propertyExpression.evaluate() as bool
+    }
+}

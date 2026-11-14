@@ -1,0 +1,682 @@
+package Crossroads
+
+import semantifyr::gamma::expressions
+import semantifyr::gamma::variables
+import semantifyr::gamma::statecharts
+import semantifyr::gamma::components
+import semantifyr::gamma::triggers
+import semantifyr::gamma::actions
+import semantifyr::gamma::events
+import semantifyr::gamma::ports
+import semantifyr::gamma::verification
+
+class CentralControl : Interface {
+    @Shared
+    contains police: Event subsets outputEvents
+    @Shared
+    contains toggle: Event subsets outputEvents
+}
+class LightControl : Interface {
+    @Shared
+    contains red: Event subsets outputEvents
+    @Shared
+    contains yellow: Event subsets outputEvents
+    @Shared
+    contains green: Event subsets outputEvents
+    @Shared
+    contains none: Event subsets outputEvents
+}
+class CentralController : Statechart {
+    redefine refers regionSchedule: RegionSchedule = RegionSchedule::TopDown
+    contains control: RequiredPort subsets ports {
+        redefine contains interface: CentralControl
+    }
+    contains controlA: ProvidedPort subsets ports {
+        redefine contains interface: CentralControl
+    }
+    contains controlB: ProvidedPort subsets ports {
+        redefine contains interface: CentralControl
+    }
+    contains toggleTimeout: Timeout subsets timeouts
+    contains Main: Region subsets regions {
+        contains Operating: State subsets states {
+            contains OperatingRegion: Region subsets regions {
+                contains BothYellow: State subsets states {
+                    contains entry_set_toggleTimeout: SetTimeoutAction subsets entryActions {
+                        redefine refers timeout: Timeout = toggleTimeout
+                        redefine contains expression: LiteralIntegerExpression {
+                            redefine refers value: int = 10
+                        }
+                    }
+                }
+                contains BothRed: State subsets states {
+                    contains entry_set_toggleTimeout: SetTimeoutAction subsets entryActions {
+                        redefine refers timeout: Timeout = toggleTimeout
+                        redefine contains expression: LiteralIntegerExpression {
+                            redefine refers value: int = 20
+                        }
+                    }
+                }
+                contains TrafficOnA: State subsets states {
+                    contains entry_set_toggleTimeout: SetTimeoutAction subsets entryActions {
+                        redefine refers timeout: Timeout = toggleTimeout
+                        redefine contains expression: LiteralIntegerExpression {
+                            redefine refers value: int = 20
+                        }
+                    }
+                }
+                contains StoppingA: State subsets states {
+                    contains entry_set_toggleTimeout: SetTimeoutAction subsets entryActions {
+                        redefine refers timeout: Timeout = toggleTimeout
+                        redefine contains expression: LiteralIntegerExpression {
+                            redefine refers value: int = 10
+                        }
+                    }
+                }
+                contains TrafficOnB: State subsets states {
+                    contains entry_set_toggleTimeout: SetTimeoutAction subsets entryActions {
+                        redefine refers timeout: Timeout = toggleTimeout
+                        redefine contains expression: LiteralIntegerExpression {
+                            redefine refers value: int = 20
+                        }
+                    }
+                }
+                contains StoppingB: State subsets states {
+                    contains entry_set_toggleTimeout: SetTimeoutAction subsets entryActions {
+                        redefine refers timeout: Timeout = toggleTimeout
+                        redefine contains expression: LiteralIntegerExpression {
+                            redefine refers value: int = 10
+                        }
+                    }
+                }
+                contains entry_to_BothYellow: EntryTransition subsets entryTransitions {
+                    redefine refers to: State = BothYellow
+                }
+                contains BothYellow_to_BothRed: Transition subsets transitions {
+                    redefine refers from: State = BothYellow
+                    redefine refers to: State = BothRed
+                    redefine contains trigger: TimeoutTrigger {
+                        redefine refers timeout: Timeout = toggleTimeout
+                    }
+                    contains raise_controlA_toggle: RaiseEventAction subsets actions {
+                        redefine refers port: Port = controlA
+                        redefine refers event: Event = controlA.interface.toggle
+                    }
+                    contains raise_controlB_toggle: RaiseEventAction subsets actions {
+                        redefine refers port: Port = controlB
+                        redefine refers event: Event = controlB.interface.toggle
+                    }
+                }
+                contains BothRed_to_TrafficOnA: Transition subsets transitions {
+                    redefine refers from: State = BothRed
+                    redefine refers to: State = TrafficOnA
+                    redefine contains trigger: TimeoutTrigger {
+                        redefine refers timeout: Timeout = toggleTimeout
+                    }
+                    contains raise_controlA_toggle: RaiseEventAction subsets actions {
+                        redefine refers port: Port = controlA
+                        redefine refers event: Event = controlA.interface.toggle
+                    }
+                }
+                contains TrafficOnA_to_StoppingA: Transition subsets transitions {
+                    redefine refers from: State = TrafficOnA
+                    redefine refers to: State = StoppingA
+                    redefine contains trigger: TimeoutTrigger {
+                        redefine refers timeout: Timeout = toggleTimeout
+                    }
+                    contains raise_controlA_toggle: RaiseEventAction subsets actions {
+                        redefine refers port: Port = controlA
+                        redefine refers event: Event = controlA.interface.toggle
+                    }
+                }
+                contains StoppingA_to_TrafficOnB: Transition subsets transitions {
+                    redefine refers from: State = StoppingA
+                    redefine refers to: State = TrafficOnB
+                    redefine contains trigger: TimeoutTrigger {
+                        redefine refers timeout: Timeout = toggleTimeout
+                    }
+                    contains raise_controlA_toggle: RaiseEventAction subsets actions {
+                        redefine refers port: Port = controlA
+                        redefine refers event: Event = controlA.interface.toggle
+                    }
+                    contains raise_controlB_toggle: RaiseEventAction subsets actions {
+                        redefine refers port: Port = controlB
+                        redefine refers event: Event = controlB.interface.toggle
+                    }
+                }
+                contains TrafficOnB_to_StoppingB: Transition subsets transitions {
+                    redefine refers from: State = TrafficOnB
+                    redefine refers to: State = StoppingB
+                    redefine contains trigger: TimeoutTrigger {
+                        redefine refers timeout: Timeout = toggleTimeout
+                    }
+                    contains raise_controlB_toggle: RaiseEventAction subsets actions {
+                        redefine refers port: Port = controlB
+                        redefine refers event: Event = controlB.interface.toggle
+                    }
+                }
+                contains StoppingB_to_TrafficOnA: Transition subsets transitions {
+                    redefine refers from: State = StoppingB
+                    redefine refers to: State = TrafficOnA
+                    redefine contains trigger: TimeoutTrigger {
+                        redefine refers timeout: Timeout = toggleTimeout
+                    }
+                    contains raise_controlA_toggle: RaiseEventAction subsets actions {
+                        redefine refers port: Port = controlA
+                        redefine refers event: Event = controlA.interface.toggle
+                    }
+                    contains raise_controlB_toggle: RaiseEventAction subsets actions {
+                        redefine refers port: Port = controlB
+                        redefine refers event: Event = controlB.interface.toggle
+                    }
+                }
+            }
+        }
+        contains Interrupted: State subsets states {
+            contains entry_raise_controlA_police: RaiseEventAction subsets entryActions {
+                redefine refers port: Port = controlA
+                redefine refers event: Event = controlA.interface.police
+            }
+            contains entry_raise_controlB_police: RaiseEventAction subsets entryActions {
+                redefine refers port: Port = controlB
+                redefine refers event: Event = controlB.interface.police
+            }
+            contains exit_raise_controlA_police: RaiseEventAction subsets exitActions {
+                redefine refers port: Port = controlA
+                redefine refers event: Event = controlA.interface.police
+            }
+            contains exit_raise_controlB_police: RaiseEventAction subsets exitActions {
+                redefine refers port: Port = controlB
+                redefine refers event: Event = controlB.interface.police
+            }
+        }
+        contains entry_to_Operating: EntryTransition subsets entryTransitions {
+            redefine refers to: State = Operating
+        }
+        contains Operating_to_Interrupted: Transition subsets transitions {
+            redefine refers from: State = Operating
+            redefine refers to: State = Interrupted
+            redefine contains trigger: EventTrigger {
+                redefine refers port: Port = control
+                redefine refers event: Event = control.interface.police
+            }
+        }
+        contains Interrupted_to_Operating: Transition subsets transitions {
+            redefine refers from: State = Interrupted
+            redefine refers to: State = Operating
+            redefine contains trigger: EventTrigger {
+                redefine refers port: Port = control
+                redefine refers event: Event = control.interface.police
+            }
+        }
+    }
+}
+class TrafficLightController : Statechart {
+    redefine refers regionSchedule: RegionSchedule = RegionSchedule::TopDown
+    contains control: RequiredPort subsets ports {
+        redefine contains interface: CentralControl
+    }
+    contains lightControl: ProvidedPort subsets ports {
+        redefine contains interface: LightControl
+    }
+    contains blinkingTimeout: Timeout subsets timeouts
+    contains Main: Region subsets regions {
+        contains Normal: State subsets states {
+            contains NormalRegion: Region subsets regions {
+                contains Yellow: State subsets states {
+                    contains entry_raise_lightControl_yellow: RaiseEventAction subsets entryActions {
+                        redefine refers port: Port = lightControl
+                        redefine refers event: Event = lightControl.interface.yellow
+                    }
+                }
+                contains Red: State subsets states {
+                    contains entry_raise_lightControl_red: RaiseEventAction subsets entryActions {
+                        redefine refers port: Port = lightControl
+                        redefine refers event: Event = lightControl.interface.red
+                    }
+                }
+                contains Green: State subsets states {
+                    contains entry_raise_lightControl_green: RaiseEventAction subsets entryActions {
+                        redefine refers port: Port = lightControl
+                        redefine refers event: Event = lightControl.interface.green
+                    }
+                }
+                contains entry_to_Yellow: EntryTransition subsets entryTransitions {
+                    redefine refers to: State = Yellow
+                }
+                contains Yellow_to_Red: Transition subsets transitions {
+                    redefine refers from: State = Yellow
+                    redefine refers to: State = Red
+                    redefine contains trigger: EventTrigger {
+                        redefine refers port: Port = control
+                        redefine refers event: Event = control.interface.toggle
+                    }
+                }
+                contains Red_to_Green: Transition subsets transitions {
+                    redefine refers from: State = Red
+                    redefine refers to: State = Green
+                    redefine contains trigger: EventTrigger {
+                        redefine refers port: Port = control
+                        redefine refers event: Event = control.interface.toggle
+                    }
+                }
+                contains Green_to_Yellow: Transition subsets transitions {
+                    redefine refers from: State = Green
+                    redefine refers to: State = Yellow
+                    redefine contains trigger: EventTrigger {
+                        redefine refers port: Port = control
+                        redefine refers event: Event = control.interface.toggle
+                    }
+                }
+            }
+        }
+        contains Interrupted: State subsets states {
+            contains InterruptedRegion: Region subsets regions {
+                contains Yellow: State subsets states {
+                    contains entry_set_blinkingTimeout: SetTimeoutAction subsets entryActions {
+                        redefine refers timeout: Timeout = blinkingTimeout
+                        redefine contains expression: LiteralIntegerExpression {
+                            redefine refers value: int = 10
+                        }
+                    }
+                    contains entry_raise_lightControl_yellow: RaiseEventAction subsets entryActions {
+                        redefine refers port: Port = lightControl
+                        redefine refers event: Event = lightControl.interface.yellow
+                    }
+                }
+                contains Black: State subsets states {
+                    contains entry_set_blinkingTimeout: SetTimeoutAction subsets entryActions {
+                        redefine refers timeout: Timeout = blinkingTimeout
+                        redefine contains expression: LiteralIntegerExpression {
+                            redefine refers value: int = 10
+                        }
+                    }
+                    contains entry_raise_lightControl_none: RaiseEventAction subsets entryActions {
+                        redefine refers port: Port = lightControl
+                        redefine refers event: Event = lightControl.interface.none
+                    }
+                }
+                contains entry_to_Yellow: EntryTransition subsets entryTransitions {
+                    redefine refers to: State = Yellow
+                }
+                contains Black_to_Yellow: Transition subsets transitions {
+                    redefine refers from: State = Black
+                    redefine refers to: State = Yellow
+                    redefine contains trigger: TimeoutTrigger {
+                        redefine refers timeout: Timeout = blinkingTimeout
+                    }
+                }
+                contains Yellow_to_Black: Transition subsets transitions {
+                    redefine refers from: State = Yellow
+                    redefine refers to: State = Black
+                    redefine contains trigger: TimeoutTrigger {
+                        redefine refers timeout: Timeout = blinkingTimeout
+                    }
+                }
+            }
+        }
+        contains entry_to_Normal: EntryTransition subsets entryTransitions {
+            redefine refers to: State = Normal
+        }
+        contains Normal_to_Interrupted: Transition subsets transitions {
+            redefine refers from: State = Normal
+            redefine refers to: State = Interrupted
+            redefine contains trigger: EventTrigger {
+                redefine refers port: Port = control
+                redefine refers event: Event = control.interface.police
+            }
+        }
+        contains Interrupted_to_Normal: Transition subsets transitions {
+            redefine refers from: State = Interrupted
+            redefine refers to: State = Normal
+            redefine contains trigger: EventTrigger {
+                redefine refers port: Port = control
+                redefine refers event: Event = control.interface.police
+            }
+        }
+    }
+}
+class CrossroadSystem : SyncComponent {
+    refers control: Port subsets ports = controller.control
+    contains controller: CentralController subsets components
+    contains trafficLightA: TrafficLightController subsets components
+    contains trafficLightB: TrafficLightController subsets components
+    contains controller_controlA_to_trafficLightA_control: Channel subsets channels {
+        redefine refers inputPort: Port = controller.controlA
+        redefine refers outputPort: Port = trafficLightA.control
+    }
+    contains controller_controlB_to_trafficLightB_control: Channel subsets channels {
+        redefine refers inputPort: Port = controller.controlB
+        redefine refers outputPort: Port = trafficLightB.control
+    }
+}
+@VerificationCase
+class ControllerOperatingReachable : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsStateActiveExpression {
+            redefine refers state: State = system.controller.Main.Operating
+        }
+    }
+}
+@VerificationCase
+class ControllerOperatingBothYellowReachable : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsStateActiveExpression {
+            redefine refers state: State = system.controller.Main.Operating.OperatingRegion.BothYellow
+        }
+    }
+}
+@VerificationCase
+class ControllerOperatingBothRedReachable : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsStateActiveExpression {
+            redefine refers state: State = system.controller.Main.Operating.OperatingRegion.BothRed
+        }
+    }
+}
+@VerificationCase
+class ControllerOperatingStoppingAReachable : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsStateActiveExpression {
+            redefine refers state: State = system.controller.Main.Operating.OperatingRegion.StoppingA
+        }
+    }
+}
+@VerificationCase
+class ControllerOperatingStoppingBReachable : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsStateActiveExpression {
+            redefine refers state: State = system.controller.Main.Operating.OperatingRegion.StoppingB
+        }
+    }
+}
+@VerificationCase
+class ControllerOperatingTrafficOnAReachable : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsStateActiveExpression {
+            redefine refers state: State = system.controller.Main.Operating.OperatingRegion.TrafficOnA
+        }
+    }
+}
+@VerificationCase
+class ControllerOperatingTrafficOnBReachable : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsStateActiveExpression {
+            redefine refers state: State = system.controller.Main.Operating.OperatingRegion.TrafficOnB
+        }
+    }
+}
+@VerificationCase
+class ControllerInterruptedReachable : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsStateActiveExpression {
+            redefine refers state: State = system.controller.Main.Interrupted
+        }
+    }
+}
+@VerificationCase
+class ANormalReachable : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsStateActiveExpression {
+            redefine refers state: State = system.trafficLightA.Main.Normal
+        }
+    }
+}
+@VerificationCase
+class AInterruptedReachable : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsStateActiveExpression {
+            redefine refers state: State = system.trafficLightA.Main.Interrupted
+        }
+    }
+}
+@VerificationCase
+class ACanBeYellow : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsStateActiveExpression {
+            redefine refers state: State = system.trafficLightA.Main.Normal.NormalRegion.Yellow
+        }
+    }
+}
+@VerificationCase
+class ACanBeRed : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsStateActiveExpression {
+            redefine refers state: State = system.trafficLightA.Main.Normal.NormalRegion.Red
+        }
+    }
+}
+@VerificationCase
+class ACanBeGreen : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsStateActiveExpression {
+            redefine refers state: State = system.trafficLightA.Main.Normal.NormalRegion.Green
+        }
+    }
+}
+@VerificationCase
+class ACanBeBlinkingYellow : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsStateActiveExpression {
+            redefine refers state: State = system.trafficLightA.Main.Interrupted.InterruptedRegion.Yellow
+        }
+    }
+}
+@VerificationCase
+class ACanBeBlinkingBlack : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsStateActiveExpression {
+            redefine refers state: State = system.trafficLightA.Main.Interrupted.InterruptedRegion.Black
+        }
+    }
+}
+@VerificationCase
+class BNormalReachable : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsStateActiveExpression {
+            redefine refers state: State = system.trafficLightB.Main.Normal
+        }
+    }
+}
+@VerificationCase
+class BInterruptedReachable : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsStateActiveExpression {
+            redefine refers state: State = system.trafficLightB.Main.Interrupted
+        }
+    }
+}
+@VerificationCase
+class BCanBeYellow : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsStateActiveExpression {
+            redefine refers state: State = system.trafficLightB.Main.Normal.NormalRegion.Yellow
+        }
+    }
+}
+@VerificationCase
+class BCanBeRed : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsStateActiveExpression {
+            redefine refers state: State = system.trafficLightB.Main.Normal.NormalRegion.Red
+        }
+    }
+}
+@VerificationCase
+class BCanBeGreen : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsStateActiveExpression {
+            redefine refers state: State = system.trafficLightB.Main.Normal.NormalRegion.Green
+        }
+    }
+}
+@VerificationCase
+class BCanBeBlinkingYellow : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsStateActiveExpression {
+            redefine refers state: State = system.trafficLightB.Main.Interrupted.InterruptedRegion.Yellow
+        }
+    }
+}
+@VerificationCase
+class BCanBeBlinkingBlack : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: IsStateActiveExpression {
+            redefine refers state: State = system.trafficLightB.Main.Interrupted.InterruptedRegion.Black
+        }
+    }
+}
+@VerificationCase
+class ReachableRedRed : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: AndOperatorExpression {
+            redefine contains left: IsStateActiveExpression {
+                redefine refers state: State = system.trafficLightA.Main.Normal.NormalRegion.Red
+            }
+            redefine contains right: IsStateActiveExpression {
+                redefine refers state: State = system.trafficLightB.Main.Normal.NormalRegion.Red
+            }
+        }
+    }
+}
+@VerificationCase
+class ReachableRedGreen : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: AndOperatorExpression {
+            redefine contains left: IsStateActiveExpression {
+                redefine refers state: State = system.trafficLightA.Main.Normal.NormalRegion.Red
+            }
+            redefine contains right: IsStateActiveExpression {
+                redefine refers state: State = system.trafficLightB.Main.Normal.NormalRegion.Green
+            }
+        }
+    }
+}
+@VerificationCase
+class ReachableRedYellow : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: AndOperatorExpression {
+            redefine contains left: IsStateActiveExpression {
+                redefine refers state: State = system.trafficLightA.Main.Normal.NormalRegion.Red
+            }
+            redefine contains right: IsStateActiveExpression {
+                redefine refers state: State = system.trafficLightB.Main.Normal.NormalRegion.Yellow
+            }
+        }
+    }
+}
+@VerificationCase
+class ReachableGreenRed : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: AndOperatorExpression {
+            redefine contains left: IsStateActiveExpression {
+                redefine refers state: State = system.trafficLightA.Main.Normal.NormalRegion.Green
+            }
+            redefine contains right: IsStateActiveExpression {
+                redefine refers state: State = system.trafficLightB.Main.Normal.NormalRegion.Red
+            }
+        }
+    }
+}
+@VerificationCase
+class UnreachableGreenGreen : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: MustAlways {
+        redefine contains body: UnaryNotExpression {
+            redefine contains body: AndOperatorExpression {
+                redefine contains left: IsStateActiveExpression {
+                    redefine refers state: State = system.trafficLightA.Main.Normal.NormalRegion.Green
+                }
+                redefine contains right: IsStateActiveExpression {
+                    redefine refers state: State = system.trafficLightB.Main.Normal.NormalRegion.Green
+                }
+            }
+        }
+    }
+}
+@VerificationCase
+class UnreachableGreenYellow : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: MustAlways {
+        redefine contains body: UnaryNotExpression {
+            redefine contains body: AndOperatorExpression {
+                redefine contains left: IsStateActiveExpression {
+                    redefine refers state: State = system.trafficLightA.Main.Normal.NormalRegion.Green
+                }
+                redefine contains right: IsStateActiveExpression {
+                    redefine refers state: State = system.trafficLightB.Main.Normal.NormalRegion.Yellow
+                }
+            }
+        }
+    }
+}
+@VerificationCase
+class ReachableYellowRed : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: AndOperatorExpression {
+            redefine contains left: IsStateActiveExpression {
+                redefine refers state: State = system.trafficLightA.Main.Normal.NormalRegion.Yellow
+            }
+            redefine contains right: IsStateActiveExpression {
+                redefine refers state: State = system.trafficLightB.Main.Normal.NormalRegion.Red
+            }
+        }
+    }
+}
+@VerificationCase
+class UnreachableYellowGreen : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: MustAlways {
+        redefine contains body: UnaryNotExpression {
+            redefine contains body: AndOperatorExpression {
+                redefine contains left: IsStateActiveExpression {
+                    redefine refers state: State = system.trafficLightA.Main.Normal.NormalRegion.Yellow
+                }
+                redefine contains right: IsStateActiveExpression {
+                    redefine refers state: State = system.trafficLightB.Main.Normal.NormalRegion.Green
+                }
+            }
+        }
+    }
+}
+@VerificationCase
+class ReachableYellowYellow : GammaVerificationCase {
+    contains system: CrossroadSystem redefines component
+    redefine contains propertyExpression: Eventually {
+        redefine contains body: AndOperatorExpression {
+            redefine contains left: IsStateActiveExpression {
+                redefine refers state: State = system.trafficLightA.Main.Normal.NormalRegion.Yellow
+            }
+            redefine contains right: IsStateActiveExpression {
+                redefine refers state: State = system.trafficLightB.Main.Normal.NormalRegion.Yellow
+            }
+        }
+    }
+}

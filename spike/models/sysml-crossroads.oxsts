@@ -1,0 +1,884 @@
+package semantifyr::sysml::model
+
+import semantifyr::sysml::expressions
+import semantifyr::sysml::attributes
+import semantifyr::sysml::states
+import semantifyr::sysml::parts
+import semantifyr::sysml::ports
+import semantifyr::sysml::items
+import semantifyr::sysml::actions
+import semantifyr::sysml::triggers
+import semantifyr::sysml::verification
+
+class Police : Item
+
+global containment global_Police: Police[1]
+
+class Toggle : Item
+
+global containment global_Toggle: Toggle[1]
+
+class RedL : Item
+
+global containment global_RedL: RedL[1]
+
+class YellowL : Item
+
+global containment global_YellowL: YellowL[1]
+
+class GreenL : Item
+
+global containment global_GreenL: GreenL[1]
+
+class NoneL : Item
+
+global containment global_NoneL: NoneL[1]
+
+class CentralControl : NormalPort
+
+class ConjugatedCentralControl : ConjugatedPort
+
+class LightControl : NormalPort
+
+class ConjugatedLightControl : ConjugatedPort
+
+class CentralController : Part {
+    contains control: ConjugatedCentralControl subsets ports
+    contains controlA: CentralControl subsets ports
+    contains controlB: CentralControl subsets ports
+    contains Behaviour: ExhibitedState redefines exhibitState {
+        contains Operating: State subsets states {
+            contains BothYellow: State subsets states
+            contains BothRed: State subsets states
+            contains TrafficOnA: State subsets states
+            contains StoppingA: State subsets states
+            contains TrafficOnB: State subsets states
+            contains StoppingB: State subsets states
+            contains initial1: Transition subsets transitions {
+                redefine refers from: StateNode = start
+                redefine refers to: StateNode = BothYellow
+            }
+            contains transition1: Transition subsets transitions {
+                redefine refers from: StateNode = BothYellow
+                redefine refers to: StateNode = BothRed
+                redefine contains acceptAction: AcceptTimeoutAction {
+                    redefine refers afterTime: int = 1
+                }
+                redefine contains action: CompositeAction {
+                    contains send1: SendItemAction subsets children {
+                        redefine refers viaPort: Port = controlA
+                        redefine refers payload: Item = global_Toggle
+                    }
+                    contains send2: SendItemAction subsets children {
+                        redefine refers viaPort: Port = controlB
+                        redefine refers payload: Item = global_Toggle
+                    }
+                }
+            }
+            contains transition2: Transition subsets transitions {
+                redefine refers from: StateNode = BothRed
+                redefine refers to: StateNode = TrafficOnA
+                redefine contains acceptAction: AcceptTimeoutAction {
+                    redefine refers afterTime: int = 2
+                }
+                redefine contains action: CompositeAction {
+                    contains send1: SendItemAction subsets children {
+                        redefine refers viaPort: Port = controlA
+                        redefine refers payload: Item = global_Toggle
+                    }
+                }
+            }
+            contains transition3: Transition subsets transitions {
+                redefine refers from: StateNode = TrafficOnA
+                redefine refers to: StateNode = StoppingA
+                redefine contains acceptAction: AcceptTimeoutAction {
+                    redefine refers afterTime: int = 2
+                }
+                redefine contains action: CompositeAction {
+                    contains send1: SendItemAction subsets children {
+                        redefine refers viaPort: Port = controlA
+                        redefine refers payload: Item = global_Toggle
+                    }
+                }
+            }
+            contains transition4: Transition subsets transitions {
+                redefine refers from: StateNode = StoppingA
+                redefine refers to: StateNode = TrafficOnB
+                redefine contains acceptAction: AcceptTimeoutAction {
+                    redefine refers afterTime: int = 1
+                }
+                redefine contains action: CompositeAction {
+                    contains send1: SendItemAction subsets children {
+                        redefine refers viaPort: Port = controlA
+                        redefine refers payload: Item = global_Toggle
+                    }
+                    contains send2: SendItemAction subsets children {
+                        redefine refers viaPort: Port = controlB
+                        redefine refers payload: Item = global_Toggle
+                    }
+                }
+            }
+            contains transition5: Transition subsets transitions {
+                redefine refers from: StateNode = TrafficOnB
+                redefine refers to: StateNode = StoppingB
+                redefine contains acceptAction: AcceptTimeoutAction {
+                    redefine refers afterTime: int = 2
+                }
+                redefine contains action: CompositeAction {
+                    contains send1: SendItemAction subsets children {
+                        redefine refers viaPort: Port = controlB
+                        redefine refers payload: Item = global_Toggle
+                    }
+                }
+            }
+            contains transition6: Transition subsets transitions {
+                redefine refers from: StateNode = StoppingB
+                redefine refers to: StateNode = TrafficOnA
+                redefine contains acceptAction: AcceptTimeoutAction {
+                    redefine refers afterTime: int = 1
+                }
+                redefine contains action: CompositeAction {
+                    contains send1: SendItemAction subsets children {
+                        redefine refers viaPort: Port = controlA
+                        redefine refers payload: Item = global_Toggle
+                    }
+                    contains send2: SendItemAction subsets children {
+                        redefine refers viaPort: Port = controlB
+                        redefine refers payload: Item = global_Toggle
+                    }
+                }
+            }
+        }
+        contains Interrupted: State subsets states {
+            redefine contains entryAction: CompositeAction {
+                contains send1: SendItemAction subsets children {
+                    redefine refers viaPort: Port = controlA
+                    redefine refers payload: Item = global_Police
+                }
+                contains send2: SendItemAction subsets children {
+                    redefine refers viaPort: Port = controlB
+                    redefine refers payload: Item = global_Police
+                }
+            }
+            redefine contains exitAction: CompositeAction {
+                contains send1: SendItemAction subsets children {
+                    redefine refers viaPort: Port = controlA
+                    redefine refers payload: Item = global_Police
+                }
+                contains send2: SendItemAction subsets children {
+                    redefine refers viaPort: Port = controlB
+                    redefine refers payload: Item = global_Police
+                }
+            }
+        }
+        contains initial1: Transition subsets transitions {
+            redefine refers from: StateNode = start
+            redefine refers to: StateNode = Operating
+        }
+        contains transition1: Transition subsets transitions {
+            redefine refers from: StateNode = Operating
+            redefine refers to: StateNode = Interrupted
+            redefine contains acceptAction: AcceptItemAction {
+                redefine refers viaPort: Port = control
+                redefine refers payload: Item = global_Police
+            }
+        }
+        contains transition2: Transition subsets transitions {
+            redefine refers from: StateNode = Interrupted
+            redefine refers to: StateNode = Operating
+            redefine contains acceptAction: AcceptItemAction {
+                redefine refers viaPort: Port = control
+                redefine refers payload: Item = global_Police
+            }
+        }
+    }
+}
+
+class TrafficLightController : Part {
+    contains control: ConjugatedCentralControl subsets ports
+    contains lightControl: LightControl subsets ports
+    contains Behaviour: ExhibitedState redefines exhibitState {
+        contains Normal: State subsets states {
+            contains Yellow: State subsets states {
+                redefine contains entryAction: SendItemAction {
+                    redefine refers viaPort: Port = lightControl
+                    redefine refers payload: Item = global_YellowL
+                }
+            }
+            contains Red: State subsets states {
+                redefine contains entryAction: SendItemAction {
+                    redefine refers viaPort: Port = lightControl
+                    redefine refers payload: Item = global_RedL
+                }
+            }
+            contains Green: State subsets states {
+                redefine contains entryAction: SendItemAction {
+                    redefine refers viaPort: Port = lightControl
+                    redefine refers payload: Item = global_GreenL
+                }
+            }
+            contains initial1: Transition subsets transitions {
+                redefine refers from: StateNode = start
+                redefine refers to: StateNode = Yellow
+            }
+            contains transition1: Transition subsets transitions {
+                redefine refers from: StateNode = Yellow
+                redefine refers to: StateNode = Red
+                redefine contains acceptAction: AcceptItemAction {
+                    redefine refers viaPort: Port = control
+                    redefine refers payload: Item = global_Toggle
+                }
+            }
+            contains transition2: Transition subsets transitions {
+                redefine refers from: StateNode = Red
+                redefine refers to: StateNode = Green
+                redefine contains acceptAction: AcceptItemAction {
+                    redefine refers viaPort: Port = control
+                    redefine refers payload: Item = global_Toggle
+                }
+            }
+            contains transition3: Transition subsets transitions {
+                redefine refers from: StateNode = Green
+                redefine refers to: StateNode = Yellow
+                redefine contains acceptAction: AcceptItemAction {
+                    redefine refers viaPort: Port = control
+                    redefine refers payload: Item = global_Toggle
+                }
+            }
+        }
+        contains Interrupted: State subsets states {
+            contains Yellow: State subsets states {
+                redefine contains entryAction: SendItemAction {
+                    redefine refers viaPort: Port = lightControl
+                    redefine refers payload: Item = global_YellowL
+                }
+                contains transition1: Transition subsets transitions {
+                    redefine refers from: StateNode = Yellow
+                    redefine refers to: StateNode = Normal
+                    redefine contains acceptAction: AcceptItemAction {
+                        redefine refers viaPort: Port = control
+                        redefine refers payload: Item = global_Police
+                    }
+                }
+            }
+            contains Black: State subsets states {
+                redefine contains entryAction: SendItemAction {
+                    redefine refers viaPort: Port = lightControl
+                    redefine refers payload: Item = global_NoneL
+                }
+                contains transition1: Transition subsets transitions {
+                    redefine refers from: StateNode = Black
+                    redefine refers to: StateNode = Normal
+                    redefine contains acceptAction: AcceptItemAction {
+                        redefine refers viaPort: Port = control
+                        redefine refers payload: Item = global_Police
+                    }
+                }
+            }
+            contains initial1: Transition subsets transitions {
+                redefine refers from: StateNode = start
+                redefine refers to: StateNode = Yellow
+            }
+            contains transition1: Transition subsets transitions {
+                redefine refers from: StateNode = Yellow
+                redefine refers to: StateNode = Black
+                redefine contains acceptAction: AcceptTimeoutAction {
+                    redefine refers afterTime: int = 1
+                }
+            }
+            contains transition2: Transition subsets transitions {
+                redefine refers from: StateNode = Black
+                redefine refers to: StateNode = Yellow
+                redefine contains acceptAction: AcceptTimeoutAction {
+                    redefine refers afterTime: int = 1
+                }
+            }
+        }
+        contains initial1: Transition subsets transitions {
+            redefine refers from: StateNode = start
+            redefine refers to: StateNode = Normal
+        }
+        contains transition1: Transition subsets transitions {
+            redefine refers from: StateNode = Normal
+            redefine refers to: StateNode = Interrupted
+            redefine contains acceptAction: AcceptItemAction {
+                redefine refers viaPort: Port = control
+                redefine refers payload: Item = global_Police
+            }
+        }
+    }
+}
+
+class CrossroadSystem : Part {
+    contains controller: CentralController subsets parts
+    contains trafficLightA: TrafficLightController subsets parts
+    contains trafficLightB: TrafficLightController subsets parts
+    refers control: ConjugatedCentralControl subsets ports = controller.control
+    contains flow1: Flow subsets flows {
+        redefine refers source: Port = controller.controlA
+        redefine refers target: Port = trafficLightA.control
+    }
+    contains flow2: Flow subsets flows {
+        redefine refers source: Port = controller.controlB
+        redefine refers target: Port = trafficLightB.control
+    }
+}
+
+@VerificationCase
+class ControllerOperatingReachable : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.controller.Behaviour.Operating
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class ControllerOperatingBothYellowReachable : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.controller.Behaviour.Operating.BothYellow
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class ControllerOperatingBothRedReachable : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.controller.Behaviour.Operating.BothRed
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class ControllerOperatingTrafficOnAReachable : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.controller.Behaviour.Operating.TrafficOnA
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class ControllerOperatingStoppingAReachable : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.controller.Behaviour.Operating.StoppingA
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class ControllerOperatingTrafficOnBReachable : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.controller.Behaviour.Operating.TrafficOnB
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class ControllerOperatingStoppingBReachable : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.controller.Behaviour.Operating.StoppingB
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class ControllerInterruptedReachable : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.controller.Behaviour.Interrupted
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class ControllerInterruptedUnreachableViolated : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: UnaryNotExpression subsets requiredConstraints {
+                redefine contains operand: Eventually {
+                    redefine contains body: IsStateActiveExpression {
+                        redefine refers state: AbstractState = system.controller.Behaviour.Interrupted
+                    }
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class TrafficLightABehaviorNormalReachable : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.trafficLightA.Behaviour.Normal
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class TrafficLightABehaviorNormalYellowReachable : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.trafficLightA.Behaviour.Normal.Yellow
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class TrafficLightABehaviorNormalRedReachable : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.trafficLightA.Behaviour.Normal.Red
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class TrafficLightABehaviorNormalGreenReachable : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.trafficLightA.Behaviour.Normal.Green
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class TrafficLightABehaviorNormalGreenUnreachableViolated : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: UnaryNotExpression subsets requiredConstraints {
+                redefine contains operand: Eventually {
+                    redefine contains body: IsStateActiveExpression {
+                        redefine refers state: AbstractState = system.trafficLightA.Behaviour.Normal.Green
+                    }
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class TrafficLightABehaviorInterruptedReachable : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.trafficLightA.Behaviour.Interrupted
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class TrafficLightABehaviorInterruptedYellowReachable : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.trafficLightA.Behaviour.Interrupted.Yellow
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class TrafficLightABehaviorInterruptedBlackReachable : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.trafficLightA.Behaviour.Interrupted.Black
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class TrafficLightBBehaviorNormalReachable : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.trafficLightB.Behaviour.Normal
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class TrafficLightBBehaviorNormalYellowReachable : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.trafficLightB.Behaviour.Normal.Yellow
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class TrafficLightBBehaviorNormalRedReachable : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.trafficLightB.Behaviour.Normal.Red
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class TrafficLightBBehaviorNormalGreenReachable : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.trafficLightB.Behaviour.Normal.Green
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class TrafficLightBBehaviorInterruptedReachable : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.trafficLightB.Behaviour.Interrupted
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class TrafficLightBBehaviorInterruptedYellowReachable : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.trafficLightB.Behaviour.Interrupted.Yellow
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class TrafficLightBBehaviorInterruptedBlackReachable : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.trafficLightB.Behaviour.Interrupted.Black
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class ReachableRedRed : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: AndOperatorExpression {
+                    redefine contains left: IsStateActiveExpression {
+                        redefine refers state: AbstractState = system.trafficLightA.Behaviour.Normal.Red
+                    }
+                    redefine contains right: IsStateActiveExpression {
+                        redefine refers state: AbstractState = system.trafficLightB.Behaviour.Normal.Red
+                    }
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class ReachableRedGreen : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: AndOperatorExpression {
+                    redefine contains left: IsStateActiveExpression {
+                        redefine refers state: AbstractState = system.trafficLightA.Behaviour.Normal.Red
+                    }
+                    redefine contains right: IsStateActiveExpression {
+                        redefine refers state: AbstractState = system.trafficLightB.Behaviour.Normal.Green
+                    }
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class UnreachableRedGreenViolated : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: UnaryNotExpression subsets requiredConstraints {
+                redefine contains operand: Eventually {
+                    redefine contains body: AndOperatorExpression {
+                        redefine contains left: IsStateActiveExpression {
+                            redefine refers state: AbstractState = system.trafficLightA.Behaviour.Normal.Red
+                        }
+                        redefine contains right: IsStateActiveExpression {
+                            redefine refers state: AbstractState = system.trafficLightB.Behaviour.Normal.Green
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class ReachableRedYellow : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: AndOperatorExpression {
+                    redefine contains left: IsStateActiveExpression {
+                        redefine refers state: AbstractState = system.trafficLightA.Behaviour.Normal.Red
+                    }
+                    redefine contains right: IsStateActiveExpression {
+                        redefine refers state: AbstractState = system.trafficLightB.Behaviour.Normal.Yellow
+                    }
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class ReachableGreenRed : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: AndOperatorExpression {
+                    redefine contains left: IsStateActiveExpression {
+                        redefine refers state: AbstractState = system.trafficLightA.Behaviour.Normal.Green
+                    }
+                    redefine contains right: IsStateActiveExpression {
+                        redefine refers state: AbstractState = system.trafficLightB.Behaviour.Normal.Red
+                    }
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class UnreachableGreenGreen : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: MustAlways subsets requiredConstraints {
+                redefine contains body: UnaryNotExpression {
+                    redefine contains operand: AndOperatorExpression {
+                        redefine contains left: IsStateActiveExpression {
+                            redefine refers state: AbstractState = system.trafficLightA.Behaviour.Normal.Green
+                        }
+                        redefine contains right: IsStateActiveExpression {
+                            redefine refers state: AbstractState = system.trafficLightB.Behaviour.Normal.Green
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class UnreachableGreenYellow : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: UnaryNotExpression subsets requiredConstraints {
+                redefine contains operand: Eventually {
+                    redefine contains body: AndOperatorExpression {
+                        redefine contains left: IsStateActiveExpression {
+                            redefine refers state: AbstractState = system.trafficLightA.Behaviour.Normal.Green
+                        }
+                        redefine contains right: IsStateActiveExpression {
+                            redefine refers state: AbstractState = system.trafficLightB.Behaviour.Normal.Yellow
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class ReachableYellowRed : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: AndOperatorExpression {
+                    redefine contains left: IsStateActiveExpression {
+                        redefine refers state: AbstractState = system.trafficLightA.Behaviour.Normal.Yellow
+                    }
+                    redefine contains right: IsStateActiveExpression {
+                        redefine refers state: AbstractState = system.trafficLightB.Behaviour.Normal.Red
+                    }
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class UnreachableYellowGreen : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: UnaryNotExpression subsets requiredConstraints {
+                redefine contains operand: Eventually {
+                    redefine contains body: AndOperatorExpression {
+                        redefine contains left: IsStateActiveExpression {
+                            redefine refers state: AbstractState = system.trafficLightA.Behaviour.Normal.Yellow
+                        }
+                        redefine contains right: IsStateActiveExpression {
+                            redefine refers state: AbstractState = system.trafficLightB.Behaviour.Normal.Green
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class ReachableYellowYellow : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: Eventually subsets requiredConstraints {
+                redefine contains body: AndOperatorExpression {
+                    redefine contains left: IsStateActiveExpression {
+                        redefine refers state: AbstractState = system.trafficLightA.Behaviour.Normal.Yellow
+                    }
+                    redefine contains right: IsStateActiveExpression {
+                        redefine refers state: AbstractState = system.trafficLightB.Behaviour.Normal.Yellow
+                    }
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+class TrafficLightAReturnsToNormalAfterInterruptionTestCase : VerificationCaseDefinition {
+    contains system: CrossroadSystem[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains requirement1: Constraint subsets verifiedRequirements {
+            contains constraint1: MustAlways subsets requiredConstraints {
+                redefine contains body: UnaryNotExpression {
+                    redefine contains operand: AndOperatorExpression {
+                        redefine contains left: IsStateActiveExpression {
+                            redefine refers state: AbstractState = system.controller.Behaviour.Operating.TrafficOnA
+                        }
+                        redefine contains right: IsStateActiveExpression {
+                            redefine refers state: AbstractState = system.trafficLightA.Behaviour.Interrupted
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

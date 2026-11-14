@@ -1,0 +1,43 @@
+/*
+ * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::gamma::events
+
+class Event
+
+class ElapsedTime {
+    @NonOptimizable
+    var amount: int := 0
+
+    var timerRunning: bool := false
+}
+
+class Timeout {
+    refers deltaTime: int = 1
+
+    var remainingTime: int := 0
+
+    tran passTime(elapsedTime: int) {
+        if (remainingTime > 0) {
+            remainingTime := remainingTime - elapsedTime * deltaTime
+        }
+    }
+
+    tran boundElapsedTime(elapsedTime: ElapsedTime) {
+        if (remainingTime > 0) {
+            assume(elapsedTime.amount * deltaTime <= remainingTime)
+            elapsedTime.timerRunning := true
+        }
+    }
+
+    prop isUp(): bool {
+        return remainingTime <= 0
+    }
+
+    tran assumeIsUp() {
+        assume(remainingTime <= 0)
+    }
+}

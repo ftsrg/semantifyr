@@ -1,0 +1,55 @@
+package semantifyr::sysml::verification
+
+import semantifyr::sysml::parts
+import semantifyr::sysml::states
+import semantifyr::sysml::expressions
+
+class Constraint : Expression {
+    contains requiredConstraints: Expression[0..*]
+
+    // the mapper emits at most one required constraint
+    refers requiredConstraint: Expression[0..1] = requiredConstraints
+
+    redefine prop evaluate(): bool {
+        return requiredConstraint.evaluate() as bool
+    }
+}
+
+class Requirement : Constraint {
+    contains verifiedRequirements: Constraint[0..*]
+
+    // a case without verify checks its objective's own constraint
+    refers checkedConstraint: Expression[0..1] = if (verifiedRequirements == nothing) then requiredConstraint else verifiedRequirements
+
+    redefine prop evaluate(): bool {
+        return checkedConstraint.evaluate() as bool
+    }
+}
+
+class VerificationCaseDefinition {
+    @NonOptimizable
+    var elapsedTime: int := 0
+
+    contains subject: Part
+    contains objective: Requirement
+
+    redefine init {
+        inline subject.init()
+    }
+
+    redefine tran {
+        inline subject.havocInputEvents()
+        inline subject.executeMainComponent()
+        elapsedTime := 1
+        inline passTime()
+    }
+
+    @Trace
+    tran passTime() {
+        inline subject.passTime(elapsedTime)
+    }
+
+    prop {
+        return objective.evaluate()
+    }
+}
