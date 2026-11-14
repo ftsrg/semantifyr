@@ -71,6 +71,7 @@ const LIBRARY_LISTING: LibrariesResponse = {
   semantic: {
     'oxsts-with-gamma-library': [
       'Actions.oxsts',
+      'Asynchronous.oxsts',
       'Components.oxsts',
       'Events.oxsts',
       'Expressions.oxsts',
@@ -93,6 +94,7 @@ const LIBRARY_LISTING: LibrariesResponse = {
     ],
     'gamma': [
       'Actions.oxsts',
+      'Asynchronous.oxsts',
       'Components.oxsts',
       'Events.oxsts',
       'Expressions.oxsts',
