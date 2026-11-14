@@ -8,6 +8,13 @@
             ]
         },
         {
+            "file": "BroadcastPorts.gamma",
+            "cases": [
+                { "name": "AnOutputLedOutToTheSystemIsDeliveredAgainAtALaterTurn", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AnOutputNotLedOutDeliveredTwiceUnreachable", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
             "file": "Cascade.gamma",
             "cases": [
                 { "name": "LaterInstanceSeesTheEventInTheSameCycle", "verdict": "Passed", "tier": "Integration" },
