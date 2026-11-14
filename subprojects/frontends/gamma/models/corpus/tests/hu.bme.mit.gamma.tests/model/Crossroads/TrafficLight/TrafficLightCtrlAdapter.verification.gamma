@@ -1,0 +1,31 @@
+package crossroads::trafficlightctrl::TrafficLightCtrlAdapter_verification
+
+import crossroads::trafficlightctrl
+
+verification case StateInterruptedReachable of TrafficLightCtrlAdapter {
+    EF state trafficLightCtrl.Main_region.Interrupted
+}
+
+verification case StateBlackReachable of TrafficLightCtrlAdapter {
+    EF state trafficLightCtrl.interrupted.Black
+}
+
+verification case StateBlinkingYellowReachable of TrafficLightCtrlAdapter {
+    EF state trafficLightCtrl.interrupted.BlinkingYellow
+}
+
+verification case StateNormalReachable of TrafficLightCtrlAdapter {
+    EF state trafficLightCtrl.Main_region.Normal
+}
+
+verification case StateYellowReachable of TrafficLightCtrlAdapter {
+    EF state trafficLightCtrl.normal.Yellow
+}
+
+verification case StateRedReachable of TrafficLightCtrlAdapter {
+    EF state trafficLightCtrl.normal.Red
+}
+
+verification case StateGreenReachable of TrafficLightCtrlAdapter {
+    EF state trafficLightCtrl.normal.Green
+}

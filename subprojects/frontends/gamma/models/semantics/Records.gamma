@@ -66,6 +66,7 @@ verification case FieldAndWholeRecordAssignment of Plotter {
     AG (not state Main.Done or ((variable copy).x = 4 and (variable copy).y = 2))
 }
 
+// Gamma's run does not settle this case, its optimiser removes the nested field box.corner.y
 verification case NestedFieldAssignmentKeepsTheOtherFields of Plotter {
     AG (not state Main.Done or ((variable box).corner.x = 5 and (variable box).corner.y = -1 and (variable box).open))
 }
@@ -86,6 +87,7 @@ verification case RecordVariableLosingItsInitialValueUnreachable of Plotter {
     EF (state Main.Middle and not (variable position).x = 3)
 }
 
+// Gamma's run does not settle this case, its optimiser removes the nested field box.corner.y
 verification case NestedFieldAssignmentChangingAnotherFieldUnreachable of Plotter {
     EF (state Main.Done and not (variable box).corner.y = -1)
 }

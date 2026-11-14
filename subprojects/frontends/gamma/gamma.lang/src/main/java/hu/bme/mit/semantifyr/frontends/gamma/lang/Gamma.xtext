@@ -93,6 +93,9 @@ EventDeclaration:
 ComponentDeclaration:
     SyncComponentDeclaration
     | CascadeComponentDeclaration
+    | AsynchronousCompositeComponentDeclaration
+    | ScheduledAsynchronousCompositeComponentDeclaration
+    | AsynchronousAdapterDeclaration
     | StatechartDeclaration
 ;
 
@@ -119,6 +122,111 @@ CascadeComponentDeclaration:
         )*
         ('execute' executionList+=[ComponentInstance] (',' executionList+=[ComponentInstance])*)?
     '}'
+;
+
+AsynchronousCompositeComponentDeclaration:
+    'async' name=ID ('(' ')')?
+    ('[' (ports+=PortDeclaration (','? ports+=PortDeclaration)*)? ']')?
+    '{'
+        (
+            components+=ComponentInstance
+            | bindings+=PortBinding
+            | channels+=Channel
+        )*
+    '}'
+;
+
+ScheduledAsynchronousCompositeComponentDeclaration:
+    'scheduled-async' name=ID ('(' ')')?
+    ('[' (ports+=PortDeclaration (','? ports+=PortDeclaration)*)? ']')?
+    '{'
+        (
+            components+=ComponentInstance
+            | bindings+=PortBinding
+            | channels+=Channel
+        )*
+        ('execute' executionList+=[ComponentInstance] (',' executionList+=[ComponentInstance])*)?
+    '}'
+;
+
+AsynchronousAdapterDeclaration:
+    'adapter' name=ID ('(' ')')?
+    'of' wrappedComponent=ComponentInstance
+    ('[' (ports+=PortDeclaration (','? ports+=PortDeclaration)*)? ']')?
+    '{'
+        (
+            clocks+=ClockDeclaration
+            | controlSpecifications+=ControlSpecification
+            | messageQueues+=MessageQueue
+        )*
+    '}'
+;
+
+ClockDeclaration:
+    'clock' name=ID '(' 'rate' '=' value=AdditiveExpression unit=TimeUnit ')'
+;
+
+enum ControlFunction:
+    RUN_ONCE='run'
+    | RUN_TO_COMPLETION='full-step'
+    | RESET='reset'
+    | RESET_MESSAGE_QUEUE='reset-queue'
+    | RESET_MESSAGE_QUEUES='reset-queues'
+    | RESET_OTHER_MESSAGE_QUEUES='reset-other-queues'
+;
+
+ControlSpecification:
+    'when' trigger=ControlTrigger '/' controlFunction=ControlFunction
+;
+
+ControlTrigger:
+    AnyTrigger
+    | MessageTrigger
+;
+
+AnyTrigger:
+    {AnyTrigger} 'any'
+;
+
+MessageTrigger:
+    reference=MessageReference
+;
+
+enum DiscardStrategy:
+    INCOMING='incoming'
+    | OLDEST='oldest'
+;
+
+MessageQueue:
+    'queue' name=ID '('
+        'priority' '=' priority=INT
+        ',' 'capacity' '=' capacity=Expression
+        (',' 'discard' '=' discardStrategy=DiscardStrategy)?
+    ')' '{'
+        eventPassings+=EventPassing (',' eventPassings+=EventPassing)*
+    '}'
+;
+
+EventPassing:
+    source=MessageReference ('->' target=MessageReference)?
+;
+
+MessageReference:
+    AnyPortEventReference
+    | PortEventReference
+    | ClockTickReference
+;
+
+AnyPortEventReference:
+    => (port=[PortDeclaration] '.' 'any')
+;
+
+PortEventReference:
+    => (port=[PortDeclaration] '.') event=[EventDeclaration]
+;
+
+ClockTickReference:
+    clock=[ClockDeclaration]
 ;
 
 ComponentInstance:
@@ -163,12 +271,13 @@ enum GuardEvaluation:
 ;
 
 StatechartDeclaration:
+    asynchronous?='@Asynchronous'?
     (
         ('@RegionSchedule' '=' schedulingOrder=SchedulingOrder)?
         & ('@TransitionPriority' '=' transitionPriority=TransitionPriority)?
         & ('@GuardEvaluation' '=' guardEvaluation=GuardEvaluation)?
     )
-    'statechart' name=ID ('(' ')')?
+    'statechart' name=ID ('capacity' '(' capacity=Expression ')')? ('(' ')')?
     ('[' (ports+=PortDeclaration (','? ports+=PortDeclaration)*)? ']')?
     '{'
         (

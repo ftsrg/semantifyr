@@ -612,6 +612,113 @@ class GammaToOxstsSerializerTest {
         )
     }
 
+    private fun guardLines(guard: String): List<String> {
+        return oxstsLines(
+            """
+                package test
+                interface Control {
+                    in event start
+                }
+                statechart Machine [
+                    port control : provides Control
+                ] {
+                    var first : boolean := true
+                    var second : boolean := false
+                    var third : boolean := false
+                    var count : integer := 0
+                    region Main {
+                        initial MainInitial
+                        state Idle
+                        state Busy
+                    }
+                    transition from MainInitial to Idle
+                    transition from Idle to Busy when control.start [$guard]
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `and binds tighter than or`() {
+        val lines = guardLines("first or second and third")
+
+        assertThat(lines).containsSequence(
+            "redefine contains expression: OrOperatorExpression {",
+            "redefine contains left: VariableExpression {",
+            "redefine refers variable: Variable = _first",
+            "}",
+            "redefine contains right: AndOperatorExpression {",
+            "redefine contains left: VariableExpression {",
+            "redefine refers variable: Variable = _second",
+            "}",
+            "redefine contains right: VariableExpression {",
+            "redefine refers variable: Variable = _third",
+            "}",
+            "}",
+            "}",
+        )
+    }
+
+    @Test
+    fun `parentheses regroup an or under an and`() {
+        val lines = guardLines("(first or second) and third")
+
+        assertThat(lines).containsSequence(
+            "redefine contains expression: AndOperatorExpression {",
+            "redefine contains left: OrOperatorExpression {",
+            "redefine contains left: VariableExpression {",
+            "redefine refers variable: Variable = _first",
+            "}",
+            "redefine contains right: VariableExpression {",
+            "redefine refers variable: Variable = _second",
+            "}",
+            "}",
+            "redefine contains right: VariableExpression {",
+            "redefine refers variable: Variable = _third",
+            "}",
+            "}",
+        )
+    }
+
+    @Test
+    fun `not binds looser than equality`() {
+        val lines = guardLines("not count = 1")
+
+        assertThat(lines).containsSequence(
+            "redefine contains expression: UnaryNotExpression {",
+            "redefine contains body: EqualityOperatorExpression {",
+            "redefine contains left: VariableExpression {",
+            "redefine refers variable: Variable = _count",
+            "}",
+            "redefine contains right: LiteralIntegerExpression {",
+            "redefine refers value: int = 1",
+            "}",
+            "}",
+            "}",
+        )
+    }
+
+    @Test
+    fun `equality binds looser than ordering`() {
+        val lines = guardLines("count < 1 = first")
+
+        assertThat(lines).containsSequence(
+            "redefine contains expression: EqualityOperatorExpression {",
+            "redefine contains left: LessThanOperatorExpression {",
+            "redefine contains left: VariableExpression {",
+            "redefine refers variable: Variable = _count",
+            "}",
+            "redefine contains right: LiteralIntegerExpression {",
+            "redefine refers value: int = 1",
+            "}",
+            "}",
+            "redefine contains right: VariableExpression {",
+            "redefine refers variable: Variable = _first",
+            "}",
+            "}",
+        )
+    }
+
     @Test
     fun `a raise event action refers to the port and the event of its interface`() {
         val lines = statechartLines("transition from Idle to Busy / raise control.done;")
@@ -1167,7 +1274,7 @@ class GammaToOxstsSerializerTest {
     }
 
     @Test
-    fun `a record type has a variable class whose initializer reads one default binding per leaf field`() {
+    fun `a record type has a variable class whose initializer and restore read one default binding per leaf field`() {
         val lines = oxstsLines(recordStatechart)
 
         assertThat(lines).containsSequence(
@@ -1184,6 +1291,10 @@ class GammaToOxstsSerializerTest {
             "",
             "redefine tran set(value: _test::_Box) {",
             "variable := value",
+            "}",
+            "",
+            "redefine tran restore() {",
+            "variable := _test::_Box { _corner = _test::_Point { _x = default_corner_x, _y = default_corner_y }, _open = default_open }",
             "}",
             "}",
         )
@@ -1521,6 +1632,268 @@ class GammaToOxstsSerializerTest {
         )
     }
 
+    private fun asynchronousLines(): List<String> {
+        return oxstsLines(
+            """
+                package test
+                interface Signals {
+                    in event first(value : integer)
+                    in event second
+                }
+                interface Replies {
+                    out event done
+                }
+                @Asynchronous
+                statechart Sender [
+                    port signals : provides Signals,
+                    port replies : provides Replies
+                ] {
+                }
+                statechart Receiver [
+                    port signals : provides Signals,
+                    port replies : requires Replies
+                ] {
+                }
+                adapter Buffered of component receiver : Receiver {
+                    clock ticker (rate = 3 ms)
+                    when ticker / run
+                    queue low (priority = 1, capacity = 2) {
+                        replies.any, ticker
+                    }
+                    queue high (priority = 2, capacity = 1) {
+                        signals.any
+                    }
+                }
+                scheduled-async System [
+                    port signals : provides Signals
+                ] {
+                    component sender : Sender
+                    component buffered : Buffered
+                    bind signals -> sender.signals
+                    channel [ sender.replies ] -o)- [ buffered.replies ]
+                    execute sender, buffered, buffered
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `a queue is a generated class whose storage has the capacity as a literal`() {
+        val lines = asynchronousLines()
+
+        assertThat(lines).containsSequence(
+            "class queue_Buffered_high : MessageQueue {",
+            "redefine refers capacity: int = 1",
+            "redefine refers priority: int = 2",
+        )
+        assertThat(lines).contains(
+            "var identifiers: int[2] := [0, 0]",
+            "var values_1_value: int[2] := [0, 0]",
+            "var identifiers: int[2] := [0, 0]",
+        )
+        assertThat(lines).containsSequence(
+            "tran enqueue_1(value_value: int) {",
+            "identifiers[size] := 1",
+            "values_1_value[size] := value_value",
+            "size := size + 1",
+        )
+    }
+
+    @Test
+    fun `queues are ranked by descending priority and a clock tick runs the component`() {
+        val lines = asynchronousLines()
+
+        assertThat(lines).containsSequence(
+            "contains _low: _test::queue_Buffered_low subsets queues {",
+            "redefine refers position: int = 0",
+            "redefine refers rank: int = 1",
+        )
+        assertThat(lines).containsSequence(
+            "contains _high: _test::queue_Buffered_high subsets queues {",
+            "redefine refers position: int = 1",
+            "redefine refers rank: int = 0",
+        )
+        assertThat(lines).containsSequence(
+            "inline shift()",
+            "if (identifier == 2) {",
+            "inline adapter.run()",
+        )
+        assertThat(lines).containsSequence(
+            "inline if (clock == clock_2) {",
+            "inline dropOldestWhenFull()",
+            "if (!isFull()) {",
+            "inline enqueue_2()",
+        )
+    }
+
+    @Test
+    fun `a reset message resets the wrapped component in place of a run and a queue reset replaces both`() {
+        val lines = oxstsLines(
+            """
+                package test
+                interface Signals {
+                    in event first
+                    in event second
+                    in event third
+                }
+                statechart Receiver [
+                    port signals : provides Signals
+                ] {
+                }
+                adapter Buffered of component receiver : Receiver {
+                    when signals.first / run
+                    when signals.second / reset
+                    when signals.third / reset
+                    when signals.third / reset-queue
+                    queue messages (priority = 1, capacity = 2) {
+                        signals.any
+                    }
+                }
+            """,
+        )
+
+        assertThat(lines).containsSequence(
+            "if (identifier == 1) {",
+            "inline adapter.run()",
+            "}",
+            "if (identifier == 2) {",
+            "inline adapter.resetComponent()",
+            "}",
+            "if (identifier == 3) {",
+            "inline clear()",
+            "}",
+        )
+    }
+
+    @Test
+    fun `a queue discarding the oldest message binds it and redefines the shift that drops it`() {
+        val lines = oxstsLines(
+            """
+                package test
+                interface Signals {
+                    in event first(value : integer)
+                }
+                statechart Receiver [
+                    port signals : provides Signals
+                ] {
+                }
+                adapter Buffered of component receiver : Receiver {
+                    when any / run
+                    queue messages (priority = 1, capacity = 2, discard = oldest) {
+                        signals.any
+                    }
+                }
+            """,
+        )
+
+        assertThat(lines).containsSequence(
+            "class queue_Buffered_messages : MessageQueue {",
+            "redefine refers capacity: int = 2",
+            "redefine refers priority: int = 1",
+            "redefine refers discardsOldest: bool = true",
+        )
+        assertThat(lines).containsSequence(
+            "redefine tran shift() {",
+            "inline for (index in 0..<capacity - 1) {",
+            "identifiers[index] := identifiers[index + 1]",
+            "values_1_value[index] := values_1_value[index + 1]",
+        )
+    }
+
+    @Test
+    fun `a queue discarding the incoming message leaves the library default`() {
+        val lines = asynchronousLines()
+
+        assertThat(lines).noneMatch {
+            it.contains("discardsOldest")
+        }
+    }
+
+    @Test
+    fun `an output reaching several queues is dispatched to each and reset by the last dispatch only`() {
+        val lines = oxstsLines(
+            """
+                package test
+                interface Signals {
+                    out event first(value : integer)
+                }
+                @Asynchronous
+                statechart Sender [
+                    port signals : provides Signals
+                ] {
+                }
+                @Asynchronous
+                statechart Receiver [
+                    port signals : requires Signals
+                ] {
+                }
+                async System {
+                    component sender : Sender
+                    component left : Receiver
+                    component right : Receiver
+                    channel [ sender.signals ] -o)- [ left.signals ]
+                    channel [ sender.signals ] -o)- [ right.signals ]
+                }
+            """,
+        )
+
+        assertThat(lines).containsSequence(
+            "contains dispatch_System_sender_signals_first_to_left_signals: _test::dispatch_System_sender_signals_first_to_left_signals subsets dispatches {",
+            "redefine refers source: AsynchronousAdapter = _sender",
+            "redefine refers event: Event = _sender.wrapped._signals.interface._first",
+            "redefine refers target: _test::queue_Receiver_ReceiverMessageQueue = _left.queue_ReceiverMessageQueue",
+            "redefine refers parameter_value: Parameter = _sender.wrapped._signals.interface._first._value",
+            "redefine refers resetsSource: bool = false",
+            "}",
+            "contains dispatch_System_sender_signals_first_to_right_signals: _test::dispatch_System_sender_signals_first_to_right_signals subsets dispatches {",
+            "redefine refers source: AsynchronousAdapter = _sender",
+            "redefine refers event: Event = _sender.wrapped._signals.interface._first",
+            "redefine refers target: _test::queue_Receiver_ReceiverMessageQueue = _right.queue_ReceiverMessageQueue",
+            "redefine refers parameter_value: Parameter = _sender.wrapped._signals.interface._first._value",
+            "}",
+        )
+    }
+
+    @Test
+    fun `an asynchronous statechart is unfolded into Gamma's default adapter`() {
+        val lines = asynchronousLines()
+
+        assertThat(lines).containsSequence(
+            "class adapter_Sender : AsynchronousAdapter {",
+            "redefine contains wrapped: _test::_Sender",
+            "refers _signals: Port subsets ports = wrapped._signals",
+            "refers _replies: Port subsets ports = wrapped._replies",
+            "refers environmental_SenderMessageQueue: bool = true",
+            "contains queue_SenderMessageQueue: _test::queue_Sender_SenderMessageQueue subsets queues {",
+        )
+        assertThat(lines).contains("redefine refers capacity: int = 4")
+    }
+
+    @Test
+    fun `a composite binds per instance which queues the environment fills, how often it runs and where its outputs go`() {
+        val lines = asynchronousLines()
+
+        assertThat(lines).containsSequence(
+            "contains _sender: _test::adapter_Sender subsets adapters {",
+            "redefine refers environmental_SenderMessageQueue: bool = true",
+            "}",
+            "contains _buffered: _test::_Buffered subsets adapters {",
+            "redefine refers scheduleCount: int = 2",
+            "redefine refers environmental_low: bool = false",
+            "redefine refers environmental_high: bool = false",
+        )
+        assertThat(lines).containsSequence(
+            "contains dispatch_System_sender_replies_done_to_buffered_replies: _test::dispatch_System_sender_replies_done_to_buffered_replies subsets dispatches {",
+            "redefine refers source: AsynchronousAdapter = _sender",
+            "redefine refers event: Event = _sender.wrapped._replies.interface._done",
+            "redefine refers target: _test::queue_Buffered_low = _buffered._low",
+        )
+        assertThat(lines).containsSequence(
+            "contains execute_sender: AsynchronousExecutionStep subsets executionSteps {",
+            "redefine refers adapter: AsynchronousAdapter = _sender",
+        )
+    }
+
     @ParameterizedTest(name = "{0}")
     @MethodSource("unmappedConstructs")
     fun `a construct the serializer does not map yet is a located diagnostic`(construct: String, source: String) {
@@ -1572,7 +1945,7 @@ class GammaToOxstsSerializerTest {
                     """,
                 ),
                 Arguments.of(
-                    "an initial transition with a trigger, guard or action",
+                    "an initial transition with a trigger or guard",
                     """
                         package test
                         statechart Machine {
@@ -1581,7 +1954,7 @@ class GammaToOxstsSerializerTest {
                                 initial MainInitial
                                 state Idle
                             }
-                            transition from MainInitial to Idle / count := 1;
+                            transition from MainInitial to Idle [count = 0]
                         }
                     """,
                 ),
@@ -1662,12 +2035,96 @@ class GammaToOxstsSerializerTest {
                         }
                     """,
                 ),
+                Arguments.of(
+                    "the asynchronous composite 'Inner' inside the asynchronous composite 'Outer'",
+                    """
+                        package test
+                        interface Signals {
+                            in event first
+                        }
+                        statechart Receiver [
+                            port signals : provides Signals
+                        ] {
+                        }
+                        adapter Buffered of component receiver : Receiver {
+                            when any / run
+                            queue messages (priority = 1, capacity = 1) {
+                                signals.any
+                            }
+                        }
+                        async Inner {
+                            component buffered : Buffered
+                        }
+                        async Outer {
+                            component inner : Inner
+                        }
+                    """,
+                ),
+                Arguments.of(
+                    "the queue 'messages' of 'Ticking' storing messages of the environment and clock ticks",
+                    """
+                        package test
+                        interface Signals {
+                            in event first
+                        }
+                        statechart Receiver [
+                            port signals : provides Signals
+                        ] {
+                        }
+                        adapter Ticking of component receiver : Receiver {
+                            clock ticker (rate = 1 s)
+                            when ticker / run
+                            queue messages (priority = 1, capacity = 1) {
+                                ticker, signals.any
+                            }
+                        }
+                        verification case Ticks of Ticking {
+                            EF true
+                        }
+                    """,
+                ),
+                Arguments.of(
+                    "the record-typed parameter of 'first' stored in the queue of statechart 'Receiver'",
+                    """
+                        package test
+                        type Point : record {
+                            x : integer
+                        }
+                        interface Signals {
+                            in event first(position : Point)
+                        }
+                        @Asynchronous
+                        statechart Receiver [
+                            port signals : provides Signals
+                        ] {
+                        }
+                    """,
+                ),
             )
         }
 
         @JvmStatic
         fun refusedConstructs(): Stream<Arguments> {
             return Stream.of(
+                Arguments.of(
+                    "the full-step control function",
+                    """
+                        package test
+                        interface Signals {
+                            in event first
+                        }
+                        statechart Receiver [
+                            port signals : provides Signals
+                        ] {
+                        }
+                        adapter Buffered of component receiver : Receiver {
+                            when any / full-step
+                            queue messages (priority = 1, capacity = 1) {
+                                signals.any
+                            }
+                        }
+                    """,
+                ),
                 Arguments.of(
                     "a transition from 'Right' to the history node 'History' from an orthogonal region of its parent state",
                     """

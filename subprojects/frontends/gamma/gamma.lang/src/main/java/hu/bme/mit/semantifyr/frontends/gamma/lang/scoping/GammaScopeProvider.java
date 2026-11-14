@@ -91,7 +91,19 @@ public class GammaScopeProvider extends AbstractGammaScopeProvider {
             if (instance == null || instance.eIsProxy() || instance.getComponent() == null) {
                 return IScope.NULLSCOPE;
             }
-            return Scopes.scopeFor(instance.getComponent().getPorts());
+            return Scopes.scopeFor(GammaUtils.getAllPorts(instance.getComponent()));
+        }
+
+        if ((reference == GammaPackage.Literals.PORT_EVENT_REFERENCE__PORT
+                        || reference == GammaPackage.Literals.ANY_PORT_EVENT_REFERENCE__PORT)
+                && EcoreUtil2.getContainerOfType(context, AsynchronousAdapterDeclaration.class)
+                        instanceof AsynchronousAdapterDeclaration adapter) {
+            return Scopes.scopeFor(GammaUtils.getAllPorts(adapter));
+        }
+
+        if (reference == GammaPackage.Literals.PORT_EVENT_REFERENCE__EVENT
+                && context instanceof PortEventReference eventReference) {
+            return Scopes.scopeFor(GammaUtils.getEvents(eventReference.getPort()));
         }
 
         if (reference == GammaPackage.Literals.COMPONENT_INSTANCE_REFERENCE__INSTANCE
@@ -104,7 +116,7 @@ public class GammaScopeProvider extends AbstractGammaScopeProvider {
             if (component == null) {
                 return IScope.NULLSCOPE;
             }
-            return Scopes.scopeFor(component.getPorts());
+            return Scopes.scopeFor(GammaUtils.getAllPorts(component));
         }
 
         if (context instanceof InstanceElementExpression expression) {

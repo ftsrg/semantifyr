@@ -53,6 +53,40 @@ sync System [
     channel [ server.clients ] -o)- [ client.server ]
 }
 
+statechart Announcer [
+    port link : provides Request
+] {
+    region Main {
+        initial MainInitial
+        state Ready {
+            entry / raise link.answer;
+        }
+    }
+
+    transition from MainInitial to Ready
+}
+
+statechart Listener [
+    port link : requires Request
+] {
+    region Main {
+        initial MainInitial
+        state Waiting
+        state Heard
+        state HeardAgain
+    }
+
+    transition from MainInitial to Waiting
+    transition from Waiting to Heard when link.answer
+    transition from Heard to HeardAgain when link.answer
+}
+
+sync Announcement {
+    component announcer : Announcer
+    component listener : Listener
+    channel [ announcer.link ] -o)- [ listener.link ]
+}
+
 verification case RequiredPortsRaiseReachesTheProvidedPort of System {
     EF state server.Main.Asked
 }
@@ -63,4 +97,12 @@ verification case ProvidedPortsRaiseReachesTheRequiredPort of System {
 
 verification case AnswerWithoutAQuestionUnreachable of System {
     EF (state client.Main.Answered and state server.Main.Waiting)
+}
+
+verification case OutputRaisedAtInitializationCrossesTheChannel of Announcement {
+    EF state listener.Main.Heard
+}
+
+verification case OutputRaisedAtInitializationDeliveredTwiceUnreachable of Announcement {
+    EF state listener.Main.HeardAgain
 }

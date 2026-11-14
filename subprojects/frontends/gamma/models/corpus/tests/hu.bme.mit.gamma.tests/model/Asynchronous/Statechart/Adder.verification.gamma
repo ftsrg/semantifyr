@@ -1,0 +1,7 @@
+package asynchronous::asynchronousreactive::Adder_verification
+
+import asynchronous::asynchronousreactive
+
+verification case StateAReachable of Adder {
+    EF state main.A
+}

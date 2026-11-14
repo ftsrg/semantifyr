@@ -153,4 +153,93 @@ class GammaValidatorTest {
 
         validationTestHelper.assertError(model, GammaPackage.Literals.GAMMA_MODEL_PACKAGE, GammaValidator.INVALID_FILE_CONTENT)
     }
+
+    private fun adapter(queues: String, composite: String = ""): GammaRoot {
+        return parseHelper.parse(
+            """
+                package test
+                interface Signals {
+                    in event first
+                    out event second
+                }
+                statechart Receiver [
+                    port signals : provides Signals
+                ] {
+                }
+                adapter Buffered of component receiver : Receiver {
+                    clock ticker (rate = 1 s)
+                    when any / run
+                    $queues
+                }
+                $composite
+            """.trimIndent(),
+        )
+    }
+
+    @Test
+    fun `a message is stored in one queue of an adapter`() {
+        val model = adapter(
+            """
+                queue one (priority = 2, capacity = 1) {
+                    signals.any
+                }
+                queue other (priority = 1, capacity = 1) {
+                    signals.first
+                }
+            """,
+        )
+
+        validationTestHelper.assertError(model, GammaPackage.Literals.MESSAGE_QUEUE, GammaValidator.MESSAGE_IN_SEVERAL_QUEUES)
+    }
+
+    @Test
+    fun `a queue stores input events only`() {
+        val model = adapter(
+            """
+                queue messages (priority = 1, capacity = 1) {
+                    signals.second
+                }
+            """,
+        )
+
+        validationTestHelper.assertError(model, GammaPackage.Literals.PORT_EVENT_REFERENCE, GammaValidator.QUEUED_OUTPUT_EVENT)
+    }
+
+    @Test
+    fun `queues of equal priority are served in declaration order with a warning`() {
+        val model = adapter(
+            """
+                queue one (priority = 1, capacity = 1) {
+                    signals.first
+                }
+                queue other (priority = 1, capacity = 1) {
+                    ticker
+                }
+            """,
+        )
+
+        validationTestHelper.assertWarning(model, GammaPackage.Literals.MESSAGE_QUEUE, GammaValidator.EQUAL_QUEUE_PRIORITIES)
+    }
+
+    @Test
+    fun `an asynchronous composite holds asynchronous components and a synchronous one does not`() {
+        val model = adapter(
+            """
+                queue messages (priority = 1, capacity = 1) {
+                    signals.first
+                }
+            """,
+            """
+                async Wrong {
+                    component receiver : Receiver
+                }
+                sync AlsoWrong {
+                    component buffered : Buffered
+                }
+            """,
+        )
+
+        validationTestHelper.assertError(model, GammaPackage.Literals.COMPONENT_INSTANCE, GammaValidator.INVALID_COMPONENT_KIND, "'Receiver' is not an asynchronous component")
+        validationTestHelper.assertError(model, GammaPackage.Literals.COMPONENT_INSTANCE, GammaValidator.INVALID_COMPONENT_KIND, "'Buffered' is an asynchronous component")
+    }
 }

@@ -135,7 +135,41 @@ public class GammaUtils {
         if (component instanceof CompositeComponentDeclaration composite) {
             return composite.getComponents();
         }
+        if (component instanceof AsynchronousAdapterDeclaration adapter && adapter.getWrappedComponent() != null) {
+            return List.of(adapter.getWrappedComponent());
+        }
         return List.of();
+    }
+
+    // an adapter offers its wrapped component's ports beside its own, as Gamma's adapter does
+    public static List<PortDeclaration> getAllPorts(ComponentDeclaration component) {
+        if (component == null) {
+            return List.of();
+        }
+        if (!(component instanceof AsynchronousAdapterDeclaration adapter)) {
+            return component.getPorts();
+        }
+        var ports = new ArrayList<PortDeclaration>(adapter.getPorts());
+        var wrapped = adapter.getWrappedComponent();
+        if (wrapped != null && resolved(wrapped.getComponent()) != null) {
+            ports.addAll(wrapped.getComponent().getPorts());
+        }
+        return ports;
+    }
+
+    public static boolean isAsynchronous(ComponentDeclaration component) {
+        return component instanceof AsynchronousAdapterDeclaration
+                || component instanceof AsynchronousCompositeComponentDeclaration
+                || component instanceof ScheduledAsynchronousCompositeComponentDeclaration
+                || (component instanceof StatechartDeclaration statechart && statechart.isAsynchronous());
+    }
+
+    public static List<EventDeclaration> getInputEvents(PortDeclaration port) {
+        return getEvents(port).stream().filter(it -> isInputEvent(port, it)).toList();
+    }
+
+    public static List<EventDeclaration> getOutputEvents(PortDeclaration port) {
+        return getEvents(port).stream().filter(it -> isOutputEvent(port, it)).toList();
     }
 
     public static List<ComponentInstance> getInstancePath(InstanceElementExpression expression) {
@@ -162,6 +196,36 @@ public class GammaUtils {
             case null, default -> null;
         };
         return resolveType(type);
+    }
+
+    public static Integer evaluateInteger(Expression expression) {
+        return switch (expression) {
+            case LiteralInteger literal -> literal.getValue();
+            case ArithmeticUnaryOperator unary -> {
+                var body = evaluateInteger(unary.getBody());
+                if (body == null) {
+                    yield null;
+                }
+                if (unary.getOp() == UnaryOp.MINUS) {
+                    yield -body;
+                }
+                yield body;
+            }
+            case ArithmeticBinaryOperator binary -> {
+                var left = evaluateInteger(binary.getLeft());
+                var right = evaluateInteger(binary.getRight());
+                if (left == null || right == null || (binary.getOp() == ArithmeticOp.DIV && right == 0)) {
+                    yield null;
+                }
+                yield switch (binary.getOp()) {
+                    case ADD -> left + right;
+                    case SUB -> left - right;
+                    case MUL -> left * right;
+                    case DIV -> left / right;
+                };
+            }
+            case null, default -> null;
+        };
     }
 
     public static Type resolveType(Type type) {

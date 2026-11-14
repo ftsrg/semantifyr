@@ -7,7 +7,14 @@
 package hu.bme.mit.semantifyr.frontends.gamma.serialization
 
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ArithmeticUnaryOperator
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.AsynchronousAdapterDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Channel
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ClockDeclaration
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComponentDeclaration
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComponentInstance
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.CompositeComponentDeclaration
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ControlFunction
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ControlSpecification
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EventParameterReferenceExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Expression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.FieldAssignment
@@ -18,6 +25,7 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaUtils
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.InitialState
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.InstanceElementExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.LiteralExpression
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.MessageQueue
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RaiseEventAction
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RecordLiteralExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RecordType
@@ -65,9 +73,32 @@ object UnmappedGammaConstructs {
     }
 
     fun collect(gammaPackage: GammaModelPackage): List<UnmappedGammaConstruct> {
-        return EcoreUtil2.eAllContentsAsList(gammaPackage).mapNotNull {
+        val constructs = EcoreUtil2.eAllContentsAsList(gammaPackage).mapNotNull {
             describe(it)
         }
+        if (constructs.isNotEmpty()) {
+            return constructs
+        }
+        return gammaPackage.components.flatMap {
+            describeAsynchronousComposition(it)
+        } + gammaPackage.verificationCases.mapNotNull {
+            describeAsynchronousRoot(it)
+        }
+    }
+
+    // at the root every port is the environment's, and Gamma's transformation rejects a queue mixing them with clock ticks
+    private fun describeAsynchronousRoot(verificationCase: VerificationCaseDeclaration): UnmappedGammaConstruct? {
+        val component = verificationCase.component
+        if (component == null || !AsynchronousMapping.isAdapter(component)) {
+            return null
+        }
+        val queue = AsynchronousMapping.adapterOf(component).queues.firstOrNull {
+            it.storesClocks && it.portMessages.isNotEmpty()
+        } ?: return null
+        return UnmappedGammaConstruct(
+            verificationCase,
+            "the queue '${queue.name}' of '${component.name}' storing messages of the environment and clock ticks",
+        )
     }
 
     private fun describe(element: EObject): UnmappedGammaConstruct? {
@@ -111,6 +142,25 @@ object UnmappedGammaConstructs {
             is FiredTransitionExpression -> {
                 "a fired transition in a property"
             }
+            is ControlSpecification -> {
+                return describe(element)
+            }
+            is MessageQueue -> {
+                describe(element)
+            }
+            is ClockDeclaration -> {
+                if (GammaUtils.evaluateInteger(element.value) == null) {
+                    "the rate of clock '${element.name}' other than a constant"
+                } else {
+                    null
+                }
+            }
+            is StatechartDeclaration -> {
+                describeAsynchronous(element)
+            }
+            is ComponentInstance -> {
+                describeAsynchronous(element)
+            }
             is InstanceElementExpression -> {
                 if (!isInVerificationCase(element)) {
                     "a component instance reference in a statechart"
@@ -125,6 +175,89 @@ object UnmappedGammaConstructs {
         return construct?.let {
             UnmappedGammaConstruct(element, it)
         }
+    }
+
+    // Gamma's XSTS route consumes a full-step message without running the component, its code generator runs it to completion
+    private fun describe(specification: ControlSpecification): UnmappedGammaConstruct? {
+        return when (specification.controlFunction) {
+            ControlFunction.RUN_TO_COMPLETION -> UnmappedGammaConstruct(specification, "the full-step control function", "is refused")
+            else -> null
+        }
+    }
+
+    private fun describe(queue: MessageQueue): String? {
+        if (GammaUtils.evaluateInteger(queue.capacity) == null) {
+            return "the capacity of queue '${queue.name}' other than a constant"
+        }
+        val adapter = queue.eContainer() as AsynchronousAdapterDeclaration
+        val mapping = AsynchronousMapping.adapterOf(adapter).queues.firstOrNull {
+            it.element == queue
+        } ?: return null
+        return describeMessages(mapping, "queue '${queue.name}'")
+    }
+
+    private fun describeMessages(queue: QueueMapping, owner: String): String? {
+        val recordMessage = queue.portMessages.firstOrNull { message ->
+            message.event!!.parameters.any {
+                GammaUtils.resolveType(it.type) is RecordType
+            }
+        }
+        if (recordMessage != null) {
+            return "the record-typed parameter of '${recordMessage.event!!.name}' stored in $owner"
+        }
+        val mismatched = queue.messages.firstOrNull {
+            it.targetEvent != null && it.targetEvent.parameters.size != it.event!!.parameters.size
+        }
+        if (mismatched != null) {
+            return "the passing of '${mismatched.event!!.name}' to '${mismatched.targetEvent!!.name}' with other parameters in $owner"
+        }
+        return null
+    }
+
+    private fun describeAsynchronous(statechart: StatechartDeclaration): String? {
+        if (!statechart.isAsynchronous) {
+            return null
+        }
+        if (statechart.capacity != null && GammaUtils.evaluateInteger(statechart.capacity) == null) {
+            return "the capacity of statechart '${statechart.name}' other than a constant"
+        }
+        val queue = AsynchronousMapping.adapterOf(statechart).queues.singleOrNull() ?: return null
+        return describeMessages(queue, "the queue of statechart '${statechart.name}'")
+    }
+
+    private fun describeAsynchronous(instance: ComponentInstance): String? {
+        val container = instance.eContainer() as? CompositeComponentDeclaration ?: return null
+        if (!GammaUtils.isAsynchronous(container) || AsynchronousMapping.isAdapter(instance.component)) {
+            return null
+        }
+        return "the asynchronous composite '${instance.component.name}' inside the asynchronous composite '${container.name}'"
+    }
+
+    // a composite decides per adapter instance which queues the environment fills
+    private fun describeAsynchronousComposition(component: ComponentDeclaration): List<UnmappedGammaConstruct> {
+        if (component !is CompositeComponentDeclaration || !GammaUtils.isAsynchronous(component)) {
+            return emptyList()
+        }
+        val constructs = mutableListOf<UnmappedGammaConstruct>()
+        for (instance in AsynchronousMapping.adapterInstances(component)) {
+            for (queue in AsynchronousMapping.adapterOf(instance.component).queues) {
+                val bound = queue.portMessages.count {
+                    AsynchronousMapping.isBound(component, instance, it.port!!)
+                }
+                if (bound > 0 && (bound < queue.portMessages.size || queue.storesClocks)) {
+                    val others = if (queue.storesClocks) {
+                        "clock ticks"
+                    } else {
+                        "messages of other components"
+                    }
+                    constructs += UnmappedGammaConstruct(
+                        instance,
+                        "the queue '${queue.name}' of '${instance.name}' storing messages of the environment and $others",
+                    )
+                }
+            }
+        }
+        return constructs
     }
 
     private fun isInVerificationCase(element: EObject): Boolean {
@@ -226,8 +359,8 @@ object UnmappedGammaConstructs {
 
     private fun describeEnds(transition: Transition): String? {
         if (transition.from is InitialState) {
-            if (transition.trigger != null || transition.guard != null || transition.actions.isNotEmpty()) {
-                return "an initial transition with a trigger, guard or action"
+            if (transition.trigger != null || transition.guard != null) {
+                return "an initial transition with a trigger or guard"
             }
             if (transition.from.eContainer() != transition.to.eContainer()) {
                 return "an initial transition to '${transition.to.name}' in another region"

@@ -114,6 +114,84 @@ object Gamma : MetaPackage(
         val executionList by refers(MANY) { ComponentInstance }
     }
 
+    object AsynchronousCompositeComponentDeclaration : MetaClass(CompositeComponentDeclaration)
+
+    object ScheduledAsynchronousCompositeComponentDeclaration : MetaClass(CompositeComponentDeclaration) {
+        val executionList by refers(MANY) { ComponentInstance }
+    }
+
+    object AsynchronousAdapterDeclaration : MetaClass(ComponentDeclaration) {
+        val wrappedComponent by contains { ComponentInstance }
+        val clocks by contains(MANY) { ClockDeclaration }
+        val controlSpecifications by contains(MANY) { ControlSpecification }
+        val messageQueues by contains(MANY) { MessageQueue }
+    }
+
+    object ClockDeclaration : MetaClass(NamedElement) {
+        val value by contains { Expression }
+        val unit by attribute(TimeUnit)
+    }
+
+    enum class ControlFunction {
+        RUN_ONCE,
+        RUN_TO_COMPLETION,
+        RESET,
+        RESET_MESSAGE_QUEUE,
+        RESET_MESSAGE_QUEUES,
+        RESET_OTHER_MESSAGE_QUEUES,
+        ;
+
+        companion object : MetaEnum<ControlFunction>(entries)
+    }
+
+    object ControlSpecification : MetaClass() {
+        val trigger by contains { ControlTrigger }
+        val controlFunction by attribute(ControlFunction)
+    }
+
+    object ControlTrigger : AbstractMetaClass()
+
+    object AnyTrigger : MetaClass(ControlTrigger)
+
+    object MessageTrigger : MetaClass(ControlTrigger) {
+        val reference by contains { MessageReference }
+    }
+
+    enum class DiscardStrategy {
+        INCOMING,
+        OLDEST,
+        ;
+
+        companion object : MetaEnum<DiscardStrategy>(entries)
+    }
+
+    object MessageQueue : MetaClass(NamedElement) {
+        val priority by attribute(EInt)
+        val capacity by contains { Expression }
+        val discardStrategy by attribute(DiscardStrategy)
+        val eventPassings by contains(MANY) { EventPassing }
+    }
+
+    object EventPassing : MetaClass() {
+        val source by contains { MessageReference }
+        val target by contains { MessageReference }
+    }
+
+    object MessageReference : AbstractMetaClass()
+
+    object PortEventReference : MetaClass(MessageReference) {
+        val port by refers { PortDeclaration }
+        val event by refers { EventDeclaration }
+    }
+
+    object AnyPortEventReference : MetaClass(MessageReference) {
+        val port by refers { PortDeclaration }
+    }
+
+    object ClockTickReference : MetaClass(MessageReference) {
+        val clock by refers { ClockDeclaration }
+    }
+
     object ComponentInstance : MetaClass(NamedElement) {
         val component by refers { ComponentDeclaration }
     }
@@ -172,6 +250,8 @@ object Gamma : MetaPackage(
     }
 
     object StatechartDeclaration : MetaClass(ComponentDeclaration) {
+        val asynchronous by attribute(EBoolean)
+        val capacity by contains { Expression }
         val schedulingOrder by attribute(SchedulingOrder)
         val transitionPriority by attribute(TransitionPriority)
         val guardEvaluation by attribute(GuardEvaluation)

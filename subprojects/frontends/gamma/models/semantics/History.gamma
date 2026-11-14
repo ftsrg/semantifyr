@@ -85,6 +85,41 @@ statechart LateHistory [
     transition from Idle to Working when control.start
 }
 
+statechart Nested [
+    port control : provides Control
+] {
+    var left : boolean := false
+
+    region Main {
+        initial MainInitial
+        state Working {
+            exit / left := true;
+            region Progress {
+                initial ProgressInitial
+                shallow history ProgressHistory
+                state First
+                state Second {
+                    region Detail {
+                        initial DetailInitial
+                        state Coarse
+                        state Fine
+                    }
+                }
+            }
+        }
+        state Paused
+    }
+
+    transition from MainInitial to Working
+    transition from ProgressInitial to First
+    transition from ProgressHistory to First
+    transition from DetailInitial to Coarse
+    transition from First to Second when control.start [not left]
+    transition from Coarse to Fine when control.start [not left]
+    transition from Working to Paused when control.stop
+    transition from Paused to ProgressHistory when control.stop
+}
+
 verification case TransitionToTheHistoryNodeRestoresTheLastState of Resuming {
     EF (variable left and state Progress.Second)
 }
@@ -99,4 +134,12 @@ verification case NeverActiveHistoryRegionTakesTheNodesTransition of LateHistory
 
 verification case NeverActiveHistoryRegionOtherStateUnreachable of LateHistory {
     EF state Progress.First
+}
+
+verification case RestoredStateEntersItsRegionsAfresh of Nested {
+    EF (variable left and state Detail.Coarse)
+}
+
+verification case RestoredStatesInnerStateUnreachable of Nested {
+    EF (variable left and state Detail.Fine)
 }

@@ -40,6 +40,12 @@ class Port {
         }
     }
 
+    tran restore() {
+        inline for (event in interface.events) {
+            inline event.restore()
+        }
+    }
+
     tran havocInputEvents() {
         inline for (event in inputEvents) {
             choice {
@@ -54,6 +60,11 @@ class Port {
     @Trace
     tran raiseInputEvent(event: Event) {
         event.isRaised := true
+    }
+
+    // the environment's message to an adapter, which the adapter's queue stores
+    @Trace
+    tran receiveInputMessage(event: Event) {
     }
 
     tran transferOutputEvents(target: Port) {

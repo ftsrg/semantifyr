@@ -39,15 +39,15 @@ The validator checks that an act raises an input event and an assert an output e
 
 ## What the trace shows
 
-The trace has one `step` per witness step. The Gamma semantic library marks four transitions with `@Trace`: `Transition::fire`, `Port::raiseInputEvent(event)`, `Port::setOutputEvent(event)` and `GammaVerificationCase::passTime`, which the trace shows as:
+The trace has one `step` per witness step. The Gamma semantic library marks five transitions with `@Trace`: `Transition::fire`, `Port::raiseInputEvent(event)`, `Port::receiveInputMessage(event)`, `Port::setOutputEvent(event)` and `GammaVerificationCase::passTime`, which the trace shows as:
 
 - a fired `Transition::fire` as a `transition` assert;
-- `Port::raiseInputEvent` as a `raise` act on the port of the traced component the inner port is bound to, and `Port::setOutputEvent` as a `raise` assert on the port of the instance that raised it, as the called transition says;
+- `Port::raiseInputEvent`, and `Port::receiveInputMessage`, the environment's message to an adapter's queue, as a `raise` act on the port of the traced component the inner port is bound to, and `Port::setOutputEvent` as a `raise` assert on the port of the instance that raised it, as the called transition says;
 - `passTime` at the root as `elapse 1000` in the same step, before `schedule`;
 - the active state of every region and the value of every statechart variable in the witness as `state` and `variable` asserts.
 
 Input events are traced because the library resets them within the step, so no state between steps shows them. Output events are traced because the optimizer removes outputs that nothing reads.
 
-Not in the trace: negations of the output events not raised, timers and port variables; the values of event parameters, since a traced call records no runtime argument, so a raise of an event with parameters is written without its arguments; the values of record-typed variables; the last state a shallow history node holds, which is not an active state; and the firing of a transition into a history node without an `@(id)`, which the `from`/`to` form cannot name, so only the states it entered show it. The time step is fixed at one second.
+Not in the trace: negations of the output events not raised, timers and port variables; the values of event parameters, since a traced call records no runtime argument, so a raise of an event with parameters is written without its arguments; the values of record-typed variables; the messages an adapter's queues hold and its clocks; the last state a shallow history node holds, which is not an active state; and the firing of a transition into a history node without an `@(id)`, which the `from`/`to` form cannot name, so only the states it entered show it. The time step is fixed at one second.
 
 The VS Code extension's language server opens a `.get` trace like any Gamma file, and Live's Gamma language shows the trace in the *Gamma trace* view of the trace under the cases.

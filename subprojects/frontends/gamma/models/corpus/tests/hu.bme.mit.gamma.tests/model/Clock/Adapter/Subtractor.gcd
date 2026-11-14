@@ -1,0 +1,13 @@
+package ^clock::clocks
+
+
+
+adapter SubtractorAdapter of component subtractorAdapter : Subtractor [
+] {
+	when any / run
+
+	queue Queue(priority = 1, capacity = 4) {
+		Execute.any
+	}
+	
+}

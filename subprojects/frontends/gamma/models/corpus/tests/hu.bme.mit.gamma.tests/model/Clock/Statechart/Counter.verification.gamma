@@ -1,6 +1,6 @@
-package clock::clocks::Counter_verification
+package ^clock::clocks::Counter_verification
 
-import clock::clocks
+import ^clock::clocks
 
 verification case StateAReachable of Counter {
     EF state main._A

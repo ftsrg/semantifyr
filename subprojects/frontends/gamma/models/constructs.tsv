@@ -1,5 +1,5 @@
 area	construct	outcome	warning	fixture	marker	detail
-Types and expressions	Integer and boolean types, variables with a literal initial value	conformant	no	models/semantics/Precedence.gamma	var first : boolean := true	
+Types and expressions	Integer and boolean types, variables with a literal initial value	conformant	no	gamma-frontend/src/test/kotlin/GammaToOxstsSerializerTest.kt	var first : boolean := true	
 Types and expressions	Record types, nested records, record-typed variables and event parameters	conformant	no	models/semantics/Records.gamma	#Point { x := 3, y := 0 }	
 Types and expressions	Arithmetic, comparison and boolean operators with Gamma's precedence for `not`, equality, ordering, `and` and `or`	conformant	no	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaGrammarTest.kt	not binds tighter than and	
 Types and expressions	Variables with a non-literal initial value	planned	no			The mapper refuses it with a diagnostic.
@@ -8,13 +8,15 @@ Types and expressions	`xor`, `imply`, the conditional expression, `div`, `mod`, 
 Types and expressions	Functions, procedures and lambdas	unsupported	no			Future work.
 Statecharts	Regions, simple and composite states, nested regions	conformant	no	models/semantics/Hierarchy.gamma	region Inner	
 Statecharts	Initial pseudostates	conformant	no	models/semantics/Hierarchy.gamma	initial MainInitial	
-Statecharts	Initial transitions with a trigger, a guard or an action	unsupported	no			The mapper refuses them with a diagnostic.
-Statecharts	Transitions declared at the statechart level, between any two states of the statechart, exiting and entering up to the lowest common region	conformant	no	models/etc/semantics/Hierarchy.oxsts	LeavingAStateExitsItsAncestorsUpToTheCommonRegion	
+Statecharts	Initial transitions with an action	conformant	no	models/semantics/InitialTransitions.gamma	from MainInitial to Idle / started := true;	
+Statecharts	Initial transitions with a trigger or a guard	unsupported	no			The mapper refuses them with a diagnostic.
+Statecharts	Transitions declared at the statechart level, between any two states of the statechart, exiting and entering up to the lowest common region	conformant	no	models/semantics/Hierarchy.gamma	transition from Outside to Second when control.go	
 Statecharts	Exit actions innermost first, entry actions outermost first, the orthogonal regions of an exited or entered ancestor	conformant	no	models/semantics/EntryAndExitOrder.gamma	ChildExitsThenParentExitsThenTheTransitionActsThenTheTargetEnters	
 Statecharts	Entry and exit actions	conformant	no	models/semantics/EntryAndExitOrder.gamma	exit /	
 Statecharts	Shallow history, and a transition into the history node	conformant	no	models/semantics/History.gamma	shallow history	
 Statecharts	Transition ids, `@(id)`, unique within a statechart	conformant	no	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaValidatorTest.kt	transition ids are unique within a statechart	
 Statecharts	A transition leaving a state needs a trigger	conformant	no	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaValidatorTest.kt	a transition leaving a state needs a trigger	The validator rejects it, as Gamma's does.
+Statecharts	Two transitions with the same source, target and trigger	conformant	yes	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaValidatorTest.kt	transitions sharing source, target and trigger ask for an id	The validator warns on each of them without an `@(id)` and asks for one, so that a trace can tell them apart.
 Statecharts	Deep history	unsupported	no			Future work.
 Statecharts	Choice and merge	unsupported	no			Future work.
 Statecharts	Fork and join	unsupported	no			Future work.
@@ -44,8 +46,20 @@ Composition	A channel carries the events of both directions	conformant	no	models
 Composition	Cascade composite components and their execution list	conformant	no	models/semantics/Cascade.gamma	execute asker, answerer, asker	
 Composition	`initial execute` of a cascade composite	unsupported	no			The library has no support for it and the mapper refuses it.
 Composition	Broadcast channels, component parameters and arguments	unsupported	no			Future work.
-Composition	Asynchronous adapters with message queues, capacities and priorities, control specifications, clocks, asynchronous and scheduled-asynchronous composites, asynchronous statecharts	planned	no			A stretch goal behind OXSTS arrays sized from a binding and arrays of records.
-Composition	The `full-step` control function	unsupported	no			Future work.
+Composition	Asynchronous adapters and their message queues, served by descending priority, one message per turn, first in first out	conformant	no	models/semantics/QueuePriority.gamma	queue high (priority = 2, capacity = 1)	
+Composition	A full queue drops the incoming message	conformant	no	models/semantics/Queues.gamma	AFullQueueDropsTheIncomingMessage	
+Composition	A full queue with `discard = oldest` drops its oldest message and takes the incoming one	conformant	no	models/semantics/Queues.gamma	discard = oldest	
+Composition	Control specifications `run`, `reset-queue`, `reset-queues` and `reset-other-queues` on `any`, an event, a port's events or a clock	conformant	no	models/semantics/ControlSpecifications.gamma	when signals.second / reset-other-queues	
+Composition	The `reset` control function, the wrapped component's variables, events, parameters, regions and history back at their initial values and its statechart entered again in place of the run	conformant	no	models/semantics/ControlSpecifications.gamma	when commands.restart / reset	
+Composition	Clocks	abstracted	no	models/semantics/Clocks.gamma	clock ticker (rate = 2 s)	A clock counts the fixed delta of every step, as timeouts do.
+Composition	Asynchronous and scheduled-asynchronous composites and the execution list	conformant	no	models/semantics/ScheduledAsynchronous.gamma	execute buffered, buffered	
+Composition	Asynchronous statecharts, unfolded into Gamma's default adapter	conformant	no	models/semantics/AsynchronousStatechart.gamma	@Asynchronous	
+Composition	An event passing to another event, `->`	conformant	no	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaGrammarTest.kt	control.any -> signals.any	
+Composition	An output event reaching several queues, delivered to each with its parameter values	deviating	no	models/semantics/SeveralQueues.gamma	channel [ sender.values ] -o)- [ right.values ]	Gamma's transformation resets the parameters after the first queue, so a later queue receives the event with default values, and of several simple channels from one port it serves only the first.
+Composition	An asynchronous composite inside an asynchronous composite, a queue holding messages of the environment and of other components or clock ticks	unsupported	no			The mapper refuses them with a diagnostic.
+Composition	Event parameters of record type in a queued message	planned	no			Waits for arrays of records in OXSTS.
+Composition	The queue size and overflow atoms of a property, `initial execute` of a scheduled-asynchronous composite	unsupported	no			Future work.
+Composition	The `full-step` control function	unsupported	no			The mapper refuses it with a diagnostic, since Gamma's analysis consumes the message without running the component where its code generator runs it to completion.
 Time	Timeouts in seconds and milliseconds	conformant	no	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaGrammarTest.kt	a timeout is set in seconds or milliseconds	
 Time	Timeouts in nanoseconds, microseconds and hours	planned	no			The grammar does not have these units.
 Time	Time passing	abstracted	no	models/semantics/Timeouts.gamma	TheShorterTimeoutIsUpFirst	Every step advances time by a fixed delta of one second. Gamma adds a delay of a range the analysis constrains.

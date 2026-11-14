@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.frontends.gamma.trace
 import com.google.inject.Inject
 import com.google.inject.Provider
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Act
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.AsynchronousAdapterDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.BooleanType
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComparisonOp
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComponentInstance
@@ -125,7 +126,7 @@ class GammaTraceGenerator @Inject constructor(
     }
 
     private fun createInputAct(entry: TraceEntry, paths: InstancePaths): Act? {
-        if (entry.calledTransition != RAISE_INPUT_EVENT) {
+        if (entry.calledTransition !in INPUT_CALLS) {
             return null
         }
         val receiver = paths.resolve(entry.self)
@@ -149,7 +150,7 @@ class GammaTraceGenerator @Inject constructor(
             is Transition -> createFiredTransitionAssertion(receiver, element)
             is PortDeclaration -> {
                 when (entry.calledTransition) {
-                    RAISE_INPUT_EVENT -> null
+                    in INPUT_CALLS -> null
                     SET_OUTPUT_EVENT -> {
                         factory.createRaiseEventAct().also {
                             it.instance = createInstanceReference(receiver)
@@ -301,6 +302,10 @@ class GammaTraceGenerator @Inject constructor(
                 } else {
                     instances[index - 1].component
                 }
+                // an adapter offers its wrapped component's ports as its own
+                if (container is AsynchronousAdapterDeclaration && container.wrappedComponent == instance) {
+                    continue
+                }
                 val composite = container as? CompositeComponentDeclaration ?: return null
                 val binding = composite.bindings.firstOrNull {
                     it.boundPort.instance == instance && it.boundPort.port == port
@@ -317,6 +322,11 @@ class GammaTraceGenerator @Inject constructor(
         private const val TRACE_RESOURCE_NAME = "trace.get"
         private const val RAISE_INPUT_EVENT = "semantifyr::gamma::ports::Port::raiseInputEvent"
         private const val SET_OUTPUT_EVENT = "semantifyr::gamma::ports::Port::setOutputEvent"
+        private const val RECEIVE_INPUT_MESSAGE = "semantifyr::gamma::ports::Port::receiveInputMessage"
+        private val INPUT_CALLS = setOf(
+            RAISE_INPUT_EVENT,
+            RECEIVE_INPUT_MESSAGE,
+        )
 
         private val MODEL_ORDER = Comparator<List<EObject>> { left, right ->
             val leftIndices = left.map {

@@ -1,0 +1,24 @@
+package ^clock::clocks
+
+
+
+
+
+
+
+scheduled-async ClockSystem [
+	port ExecuteAdder : requires ExecuteClock
+	port ExecuteSubtractor : requires ExecuteClock
+] {
+	component adder : AdderAdapter
+	component subtractor : SubtractorAdapter
+	
+	component counter : CounterAdapter
+	
+	bind ExecuteAdder -> adder.Execute
+	bind ExecuteSubtractor -> subtractor.Execute
+	
+	channel [ adder.Toggle ] -o)- [ counter.Toggle ]
+	channel [ subtractor.Toggle ] -o)- [ counter.Toggle ]
+	
+}

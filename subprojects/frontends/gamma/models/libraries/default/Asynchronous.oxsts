@@ -1,0 +1,266 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::gamma::asynchronous
+
+import semantifyr::gamma::components
+import semantifyr::gamma::events
+import semantifyr::gamma::ports
+
+class Clock {
+    refers rate: int
+    refers deltaTime: int = 1
+
+    var elapsed: int := 0
+
+    tran passTime() {
+        if (elapsed < rate) {
+            elapsed := elapsed + deltaTime
+        }
+    }
+
+    prop isUp(): bool {
+        return elapsed >= rate
+    }
+}
+
+abstract class MessageQueue {
+    // the mapper writes each queue's storage with its capacity as a literal, so a subclass holds the arrays and their accesses
+    container adapter: AsynchronousAdapter[0..1] opposite queues
+
+    refers capacity: int
+    refers priority: int
+    refers position: int
+    refers rank: int
+    refers environmental: bool = false
+    refers discardsOldest: bool = false
+
+    var size: int := 0
+
+    prop isEmpty(): bool {
+        return size <= 0
+    }
+
+    prop isFull(): bool {
+        return size >= capacity
+    }
+
+    // pops the oldest message, gives its event and parameters to the wrapped component and applies its control specification
+    abstract tran receive()
+
+    abstract tran shift()
+
+    abstract tran clear()
+
+    abstract tran receiveEnvironmentMessage()
+
+    abstract tran receiveClockTick(clock: Clock)
+
+    // the environment never drops a message, as in Gamma, so only a dispatch and a clock tick call this
+    tran dropOldestWhenFull() {
+        inline if (discardsOldest) {
+            if (isFull()) {
+                inline shift()
+            }
+        }
+    }
+}
+
+abstract class AsynchronousAdapter : Component {
+    contains wrapped: Component
+    contains queues: MessageQueue[0..*] opposite adapter
+    contains clocks: Clock[0..*]
+
+    refers scheduleCount: int = 1
+
+    redefine init {
+        inline wrapped.init()
+    }
+
+    redefine tran schedule() {
+        inline tickClocks()
+        inline receiveMessage()
+    }
+
+    tran tickClocks() {
+        inline for (clock in clocks) {
+            if (clock.isUp()) {
+                clock.elapsed := 0
+                inline for (queue in queues) {
+                    inline queue.receiveClockTick(clock)
+                }
+            }
+        }
+    }
+
+    // one message per turn, served by rank: descending priority, the first declared first among equal ones
+    tran receiveMessage() {
+        var received: bool := false
+        inline for (turn in queues) {
+            inline for (queue in queues) {
+                inline if (queue.rank == turn.position) {
+                    if (!received && !queue.isEmpty()) {
+                        received := true
+                        inline queue.receive()
+                    }
+                }
+            }
+        }
+    }
+
+    tran run() {
+        inline wrapped.resetOutputEvents()
+        inline wrapped.main()
+    }
+
+    // Gamma's component reset is the wrapped component's initializing action: every variable assigned its initial value, every region deactivated, then the entry
+    tran resetComponent() {
+        inline wrapped.restore()
+        inline wrapped.init()
+    }
+
+    tran clearQueues() {
+        inline for (queue in queues) {
+            inline queue.clear()
+        }
+    }
+
+    tran clearOtherQueues(kept: MessageQueue) {
+        inline for (queue in queues) {
+            inline if (queue != kept) {
+                inline queue.clear()
+            }
+        }
+    }
+
+    // a run resets the wrapped component's outputs, so a raised output stays until the adapter runs again
+    redefine tran resetOutputEvents() {
+    }
+
+    // a queue of lower priority takes environment messages only while it and the queues above hold fewer than the adapter's runs in a cycle
+    redefine tran havocInputEvents() {
+        inline for (queue in queues) {
+            inline if (queue.environmental) {
+                inline for (attempt in 1..queue.capacity) {
+                    inline offerEnvironmentMessage(queue)
+                }
+            }
+        }
+    }
+
+    tran offerEnvironmentMessage(queue: MessageQueue) {
+        var load: int := queue.size
+        var constrained: bool := false
+        inline for (other in queues) {
+            inline if (other.priority > queue.priority) {
+                load := load + other.size
+                constrained := true
+            }
+        }
+        if (!queue.isFull() && (!constrained || load < scheduleCount)) {
+            inline queue.receiveEnvironmentMessage()
+        }
+    }
+
+    redefine tran passTime() {
+        inline wrapped.passTime()
+        inline for (clock in clocks) {
+            inline clock.passTime()
+        }
+    }
+}
+
+abstract class MessageDispatch {
+    // the mapper writes one dispatch per output event a channel carries into a queue that stores it
+    refers source: AsynchronousAdapter
+    refers event: Event
+    refers target: MessageQueue
+    refers resetsSource: bool = true
+
+    tran dispatch() {
+        if (event.isRaised) {
+            inline target.dropOldestWhenFull()
+            if (!target.isFull()) {
+                inline enqueue()
+            }
+            inline if (resetsSource) {
+                inline event.reset()
+            }
+        }
+    }
+
+    abstract tran enqueue()
+}
+
+abstract class AsynchronousComposite : Component {
+    contains adapters: AsynchronousAdapter[0..*]
+    contains dispatches: MessageDispatch[0..*]
+
+    redefine init {
+        inline for (adapter in adapters) {
+            inline adapter.init()
+        }
+
+        inline for (dispatch in dispatches) {
+            inline dispatch.dispatch()
+        }
+    }
+
+    tran tickClocks() {
+        inline for (adapter in adapters) {
+            inline adapter.tickClocks()
+        }
+    }
+
+    tran turn(adapter: AsynchronousAdapter) {
+        inline adapter.receiveMessage()
+        inline for (dispatch in dispatches) {
+            inline if (dispatch.source == adapter) {
+                inline dispatch.dispatch()
+            }
+        }
+    }
+
+    redefine tran resetOutputEvents() {
+    }
+
+    redefine tran havocInputEvents() {
+        inline for (adapter in adapters) {
+            inline adapter.havocInputEvents()
+        }
+    }
+
+    redefine tran passTime() {
+        inline for (adapter in adapters) {
+            inline adapter.passTime()
+        }
+    }
+}
+
+class AsynchronousCompositeComponent : AsynchronousComposite {
+    // an adapter with no message does nothing when chosen, so a cycle may pass with no run
+    redefine tran schedule() {
+        inline tickClocks()
+        inline for choice (adapter in adapters) {
+            inline turn(adapter)
+        }
+    }
+}
+
+class AsynchronousExecutionStep {
+    refers adapter: AsynchronousAdapter[1]
+}
+
+class ScheduledAsynchronousCompositeComponent : AsynchronousComposite {
+    contains executionSteps: AsynchronousExecutionStep[0..*]
+
+    redefine tran schedule() {
+        inline tickClocks()
+        inline for (step in executionSteps) {
+            inline turn(step.adapter)
+        }
+    }
+}

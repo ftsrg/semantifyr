@@ -1,13 +1,24 @@
 {
     "models": [
         {
+            "file": "AsynchronousStatechart.gamma",
+            "cases": [
+                { "name": "TheDefaultAdapterServesOneMessagePerCycleUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "TheDefaultAdapterServesTheNextMessageInALaterCycle", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
             "file": "Cascade.gamma",
             "cases": [
                 { "name": "LaterInstanceSeesTheEventInTheSameCycle", "verdict": "Passed", "tier": "Integration" },
                 { "name": "EarlierInstanceSeesTheReplyInALaterCycle", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ReplyInTheSameCycleWithoutASecondRunViolated", "verdict": "Failed", "tier": "Integration" },
                 { "name": "InstanceListedTwiceRunsTwiceInACycle", "verdict": "Passed", "tier": "Integration" },
-                { "name": "LaterInstanceMissingTheEventOfItsCycleUnreachable", "verdict": "Failed", "tier": "Integration" }
+                { "name": "LaterInstanceMissingTheEventOfItsCycleUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "RaiseIsDeliveredOnce", "verdict": "Passed", "tier": "Integration" },
+                { "name": "RaiseDeliveredTwiceUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "CascadeKeepsTheOutputOfAnEarlierRun", "verdict": "Passed", "tier": "Integration" },
+                { "name": "SynchronousCompositeRunTwiceKeepingTheOutputUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
@@ -15,7 +26,34 @@
             "cases": [
                 { "name": "RequiredPortsRaiseReachesTheProvidedPort", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ProvidedPortsRaiseReachesTheRequiredPort", "verdict": "Passed", "tier": "Integration" },
-                { "name": "AnswerWithoutAQuestionUnreachable", "verdict": "Failed", "tier": "Integration" }
+                { "name": "AnswerWithoutAQuestionUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "OutputRaisedAtInitializationCrossesTheChannel", "verdict": "Passed", "tier": "Integration" },
+                { "name": "OutputRaisedAtInitializationDeliveredTwiceUnreachable", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "Clocks.gamma",
+            "cases": [
+                { "name": "AQueuedMessageIsSeenAtTheClockRun", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AClockTheQueueDoesNotStoreRunsTheComponentUnreachable", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "ControlSpecifications.gamma",
+            "cases": [
+                { "name": "AMessageWithoutARunIsSeenAtTheNextRun", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AMessageWithoutARunRunsTheComponentUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "AResetMessageRunsNothing", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AResetOfTheOtherQueuesDropsTheirMessagesUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "AResetEntersTheInitialStateAgainWithTheInitialValue", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AResetRestoresTheInitialValueOfAVariable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AResetKeepingTheValueOfAVariableUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "AResetLeavesTheNestedStatesInactive", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AResetMessageRunningTheComponentUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "AResetForgetsTheHistoryOfARegion", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AResetKeepingTheHistoryOfARegionUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "AResetForgetsAPersistentParameter", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AResetKeepingAPersistentParameterUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
@@ -34,7 +72,9 @@
                 { "name": "BothEventsOfAPortAreRaisedInOneStep", "verdict": "Passed", "tier": "Integration" },
                 { "name": "OneEventOfAPortRaisedWithoutTheOtherUnreachable", "verdict": "Failed", "tier": "Integration" },
                 { "name": "OutputIsVisibleAfterTheStepThatRaisedIt", "verdict": "Passed", "tier": "Integration" },
-                { "name": "OutputKeptBeyondTheNextStepUnreachable", "verdict": "Failed", "tier": "Integration" }
+                { "name": "OutputKeptBeyondTheNextStepUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "BothInputEventsOfAPortArriveInOneStep", "verdict": "Passed", "tier": "Integration" },
+                { "name": "OneRegionTakingBothInputEventsOfAStepUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
@@ -53,7 +93,11 @@
                 { "name": "EnteringTheInnerTargetThroughItsInitialStateUnreachable", "verdict": "Failed", "tier": "Integration" },
                 { "name": "InnerSourceActiveAfterLeavingItUnreachable", "verdict": "Failed", "tier": "Integration" },
                 { "name": "EnteringOneRegionEntersItsOrthogonalRegion", "verdict": "Passed", "tier": "Integration" },
-                { "name": "OrthogonalStateActiveAfterLeavingTheParentUnreachable", "verdict": "Failed", "tier": "Integration" }
+                { "name": "OrthogonalStateActiveAfterLeavingTheParentUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "EnteringOneRegionRunsTheOrthogonalRegionsEntryAction", "verdict": "Passed", "tier": "Integration" },
+                { "name": "OrthogonalRegionEnteredWithoutItsEntryActionUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "LeavingTheParentRunsTheOrthogonalRegionsExitAction", "verdict": "Passed", "tier": "Integration" },
+                { "name": "OrthogonalRegionLeftWithoutItsExitActionUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
@@ -62,7 +106,18 @@
                 { "name": "TransitionToTheHistoryNodeRestoresTheLastState", "verdict": "Passed", "tier": "Integration" },
                 { "name": "InitialNodeBeatsTheHistoryNodeRestoredStateUnreachable", "verdict": "Failed", "tier": "Integration" },
                 { "name": "NeverActiveHistoryRegionTakesTheNodesTransition", "verdict": "Passed", "tier": "Integration" },
-                { "name": "NeverActiveHistoryRegionOtherStateUnreachable", "verdict": "Failed", "tier": "Integration" }
+                { "name": "NeverActiveHistoryRegionOtherStateUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "RestoredStateEntersItsRegionsAfresh", "verdict": "Passed", "tier": "Integration" },
+                { "name": "RestoredStatesInnerStateUnreachable", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "InitialTransitions.gamma",
+            "cases": [
+                { "name": "InitialTransitionActionRunsAtInitialization", "verdict": "Passed", "tier": "Integration" },
+                { "name": "InitialTransitionActionSkippedUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "PersistentParameterRaisedAtInitializationIsReadLater", "verdict": "Passed", "tier": "Integration" },
+                { "name": "PersistentParameterRaisedAtInitializationLostUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
@@ -87,20 +142,27 @@
                 { "name": "TransientParameterKeptUnreachable", "verdict": "Failed", "tier": "Integration" },
                 { "name": "PersistentParameterLosingItsValueUnreachable", "verdict": "Failed", "tier": "Integration" },
                 { "name": "NegativeArgumentTakesItsGuardedTransition", "verdict": "Passed", "tier": "Integration" },
-                { "name": "NegativeArgumentTakingThePositiveTransitionUnreachable", "verdict": "Failed", "tier": "Integration" }
+                { "name": "NegativeArgumentTakingThePositiveTransitionUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "EachPortOfAnEventHoldsItsOwnParameter", "verdict": "Passed", "tier": "Integration" },
+                { "name": "OnePortsParameterSeenOnTheOtherPortUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
-            "file": "Precedence.gamma",
+            "file": "QueuePriority.gamma",
             "cases": [
-                { "name": "AndBindsTighterThanOr", "verdict": "Passed", "tier": "Integration" },
-                { "name": "NotBindsLooserThanEquality", "verdict": "Passed", "tier": "Integration" },
-                { "name": "EqualityBindsLooserThanOrdering", "verdict": "Passed", "tier": "Integration" },
-                { "name": "AndBindsTighterThanOrInAProperty", "verdict": "Passed", "tier": "Integration" },
-                { "name": "RegroupedOrBeforeAndUnreachable", "verdict": "Failed", "tier": "Integration" },
-                { "name": "NegatedTrueEqualityUnreachable", "verdict": "Failed", "tier": "Integration" },
-                { "name": "OrderingComparedWithFalseUnreachable", "verdict": "Failed", "tier": "Integration" },
-                { "name": "RegroupedOrBeforeAndInAPropertyViolated", "verdict": "Failed", "tier": "Integration" }
+                { "name": "TheHigherPriorityQueueIsServedFirst", "verdict": "Passed", "tier": "Integration" },
+                { "name": "TheDeclaredFirstQueueIsServedFirstUnreachable", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "Queues.gamma",
+            "cases": [
+                { "name": "MessagesAreReceivedInTheirOrder", "verdict": "Passed", "tier": "Integration" },
+                { "name": "MessagesAreReceivedInReverseUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "AFullQueueDropsTheIncomingMessage", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AFullQueueDropsTheOldestMessageUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "AFullQueueDiscardingTheOldestKeepsTheNewestMessage", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AFullQueueDiscardingTheOldestKeepingItUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
@@ -133,6 +195,23 @@
             ]
         },
         {
+            "file": "ScheduledAsynchronous.gamma",
+            "cases": [
+                { "name": "TwoTurnsInACycleServeTwoMessages", "verdict": "Passed", "tier": "Integration" },
+                { "name": "OneTurnInACycleServesTwoMessagesUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "ALaterTurnSeesTheTimeoutUp", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "SeveralQueues.gamma",
+            "cases": [
+                { "name": "AnOutputReachingTwoQueuesIsServedFromBoth", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AnOutputReachingTwoQueuesServedTwiceFromOneUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "AnOutputReachingTwoQueuesCarriesItsValueToBoth", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AnOutputReachingTwoQueuesWithoutItsValueInOneUnreachable", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
             "file": "SynchronousComposition.gamma",
             "cases": [
                 { "name": "ReceiverSeesTheRaiseInTheNextCycle", "verdict": "Passed", "tier": "Integration" },
@@ -143,7 +222,11 @@
             "file": "Timeouts.gamma",
             "cases": [
                 { "name": "TheShorterTimeoutIsUpFirst", "verdict": "Passed", "tier": "Integration" },
-                { "name": "TheLongerTimeoutUpFirstUnreachable", "verdict": "Failed", "tier": "Integration" }
+                { "name": "TheLongerTimeoutUpFirstUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "TimeoutIsUpAfterItsValue", "verdict": "Passed", "tier": "Integration" },
+                { "name": "TimeoutUpBeforeItsValueUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "TimeoutStaysUpOnceUp", "verdict": "Passed", "tier": "Integration" },
+                { "name": "TimeoutResetOnceItFiredUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {

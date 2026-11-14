@@ -1,0 +1,7 @@
+package asynchronous::asynchronousreactive::Subtractor_verification
+
+import asynchronous::asynchronousreactive
+
+verification case StateAReachable of Subtractor {
+    EF state main.A
+}

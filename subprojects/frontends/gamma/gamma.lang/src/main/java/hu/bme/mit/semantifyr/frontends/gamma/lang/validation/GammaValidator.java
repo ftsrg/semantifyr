@@ -41,6 +41,10 @@ public class GammaValidator extends AbstractGammaValidator {
     public static final String INVALID_TRACE_VALUE = "Gamma.INVALID_TRACE_VALUE";
     public static final String UNKNOWN_TRACE_TRANSITION = "Gamma.UNKNOWN_TRACE_TRANSITION";
     public static final String AMBIGUOUS_TRACE_TRANSITION = "Gamma.AMBIGUOUS_TRACE_TRANSITION";
+    public static final String MESSAGE_IN_SEVERAL_QUEUES = "Gamma.MESSAGE_IN_SEVERAL_QUEUES";
+    public static final String QUEUED_OUTPUT_EVENT = "Gamma.QUEUED_OUTPUT_EVENT";
+    public static final String EQUAL_QUEUE_PRIORITIES = "Gamma.EQUAL_QUEUE_PRIORITIES";
+    public static final String INVALID_COMPONENT_KIND = "Gamma.INVALID_COMPONENT_KIND";
 
     private static final String TRACE_FILE_EXTENSION = "get";
 
@@ -180,8 +184,114 @@ public class GammaValidator extends AbstractGammaValidator {
     }
 
     @Check
+    public void checkMessageInOneQueue(AsynchronousAdapterDeclaration adapter) {
+        var queuesByMessage = new LinkedHashMap<Object, List<MessageQueue>>();
+        for (var queue : adapter.getMessageQueues()) {
+            for (var passing : queue.getEventPassings()) {
+                for (var message : storedMessages(passing.getSource())) {
+                    var queues = queuesByMessage.computeIfAbsent(message, ignored -> new ArrayList<>());
+                    if (!queues.contains(queue)) {
+                        queues.add(queue);
+                    }
+                }
+            }
+        }
+        for (var queues : queuesByMessage.values()) {
+            if (queues.size() < 2) {
+                continue;
+            }
+            for (var queue : queues) {
+                error(
+                        "A message is stored in more than one queue of adapter '" + adapter.getName() + "'",
+                        queue,
+                        GammaPackage.Literals.NAMED_ELEMENT__NAME,
+                        MESSAGE_IN_SEVERAL_QUEUES);
+            }
+        }
+    }
+
+    private List<Object> storedMessages(MessageReference reference) {
+        return switch (reference) {
+            case ClockTickReference clockTick when clockTick.getClock() != null -> List.of(clockTick.getClock());
+            case AnyPortEventReference anyPort ->
+                GammaUtils.getInputEvents(anyPort.getPort()).stream()
+                        .map(it -> (Object) List.of(anyPort.getPort(), it))
+                        .toList();
+            case PortEventReference portEvent -> List.of(List.of(portEvent.getPort(), portEvent.getEvent()));
+            case null, default -> List.of();
+        };
+    }
+
+    @Check
+    public void checkQueuedEventIsAnInput(PortEventReference reference) {
+        var port = reference.getPort();
+        var event = reference.getEvent();
+        if (port == null || port.eIsProxy() || event == null || event.eIsProxy()) {
+            return;
+        }
+        if (!GammaUtils.isInputEvent(port, event)) {
+            error(
+                    "'" + event.getName() + "' is not an input event of port '" + port.getName() + "'",
+                    GammaPackage.Literals.PORT_EVENT_REFERENCE__EVENT,
+                    QUEUED_OUTPUT_EVENT);
+        }
+    }
+
+    @Check
+    public void checkQueuePrioritiesDiffer(AsynchronousAdapterDeclaration adapter) {
+        for (var queue : adapter.getMessageQueues()) {
+            var hasTwin = adapter.getMessageQueues().stream()
+                    .anyMatch(other -> other != queue && other.getPriority() == queue.getPriority());
+            if (hasTwin) {
+                warning(
+                        "Another queue of adapter '" + adapter.getName()
+                                + "' has the same priority, the one declared first is served first",
+                        queue,
+                        GammaPackage.Literals.MESSAGE_QUEUE__PRIORITY,
+                        EQUAL_QUEUE_PRIORITIES);
+            }
+        }
+    }
+
+    @Check
+    public void checkComponentKind(ComponentInstance instance) {
+        var component = instance.getComponent();
+        if (component == null || component.eIsProxy()) {
+            return;
+        }
+        var container = instance.eContainer();
+        var asynchronousContainer = container instanceof AsynchronousCompositeComponentDeclaration
+                || container instanceof ScheduledAsynchronousCompositeComponentDeclaration;
+        var asynchronous = GammaUtils.isAsynchronous(component);
+        if (asynchronousContainer && !asynchronous) {
+            error(
+                    "'" + component.getName() + "' is not an asynchronous component",
+                    GammaPackage.Literals.COMPONENT_INSTANCE__COMPONENT,
+                    INVALID_COMPONENT_KIND);
+        }
+        if (!asynchronousContainer && asynchronous) {
+            error(
+                    "'" + component.getName() + "' is an asynchronous component",
+                    GammaPackage.Literals.COMPONENT_INSTANCE__COMPONENT,
+                    INVALID_COMPONENT_KIND);
+        }
+    }
+
+    @Check
+    public void checkPositiveClockRate(ClockDeclaration clock) {
+        var value = GammaUtils.evaluateInteger(clock.getValue());
+        if (value != null && value <= 0) {
+            error(
+                    "A time value must be positive, it is " + value,
+                    clock,
+                    GammaPackage.Literals.CLOCK_DECLARATION__VALUE,
+                    NON_POSITIVE_TIME);
+        }
+    }
+
+    @Check
     public void checkPositiveTime(SetTimeoutAction action) {
-        var value = evaluateInteger(action.getValue());
+        var value = GammaUtils.evaluateInteger(action.getValue());
         if (value != null && value <= 0) {
             error(
                     "A time value must be positive, it is " + value,
@@ -189,36 +299,6 @@ public class GammaValidator extends AbstractGammaValidator {
                     GammaPackage.Literals.SET_TIMEOUT_ACTION__VALUE,
                     NON_POSITIVE_TIME);
         }
-    }
-
-    private Integer evaluateInteger(Expression expression) {
-        return switch (expression) {
-            case LiteralInteger literal -> literal.getValue();
-            case ArithmeticUnaryOperator unary -> {
-                var body = evaluateInteger(unary.getBody());
-                if (body == null) {
-                    yield null;
-                }
-                if (unary.getOp() == UnaryOp.MINUS) {
-                    yield -body;
-                }
-                yield body;
-            }
-            case ArithmeticBinaryOperator binary -> {
-                var left = evaluateInteger(binary.getLeft());
-                var right = evaluateInteger(binary.getRight());
-                if (left == null || right == null || (binary.getOp() == ArithmeticOp.DIV && right == 0)) {
-                    yield null;
-                }
-                yield switch (binary.getOp()) {
-                    case ADD -> left + right;
-                    case SUB -> left - right;
-                    case MUL -> left * right;
-                    case DIV -> left / right;
-                };
-            }
-            case null, default -> null;
-        };
     }
 
     @Check
