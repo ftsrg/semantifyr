@@ -123,8 +123,9 @@ function opened(webSocket: WebSocket): Promise<void> {
   })
 }
 
+// an OXSTS case is named <package>::<case>, a Gamma one <package>.<case>
 function caseName(verificationCase: VerificationCaseSpecification): string {
-  return verificationCase.id.split('::').at(-1) ?? verificationCase.id
+  return verificationCase.id.split(/::|\./).at(-1) ?? verificationCase.id
 }
 
 function milliseconds(duration: string | undefined): number | null {
