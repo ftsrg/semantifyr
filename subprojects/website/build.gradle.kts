@@ -12,6 +12,9 @@ import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.servedExampleSources
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
+import org.gradle.process.ExecOperations
+import java.io.ByteArrayOutputStream
+import javax.inject.Inject
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
@@ -59,6 +62,13 @@ val liveScreenshotsFiles = configurations.resolvable("liveScreenshotsFiles") {
     attributes(semantifyrArtifact("screenshots"))
 }
 
+// the keyboard walk opens the embedded examples in live's production build
+val liveWebDistribution = configurations.dependencyScope("liveWebDistribution")
+val liveWebDistributionFiles = configurations.resolvable("liveWebDistributionFiles") {
+    extendsFrom(liveWebDistribution.get())
+    attributes(semantifyrArtifact("web-distribution"))
+}
+
 val apiDocs = configurations.dependencyScope("apiDocs")
 val apiDocsFiles = configurations.resolvable("apiDocsFiles") {
     extendsFrom(apiDocs.get())
@@ -83,6 +93,7 @@ dependencies {
     cliDistribution(project(":gamma-cli"))
     sysmlConstructs(project(":sysml-wrapper"))
     liveScreenshots(project(":semantifyr-live-frontend"))
+    liveWebDistribution(project(":semantifyr-live-frontend"))
     sysmlWorker(project(":sysml-wrapper"))
     if (providers.gradleProperty("website.apiDocs").getOrElse("false").toBoolean()) {
         apiDocs(project(":"))
@@ -304,6 +315,55 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
     inputs.files(linkingFiles).withPathSensitivity(PathSensitivity.RELATIVE)
 
     npmCommand.set(listOf("run", "check"))
+
+    stampOnSuccess()
+    outputs.cacheIf { true }
+}
+
+abstract class WalkBrowser : ValueSource<String, WalkBrowser.Parameters> {
+    interface Parameters : ValueSourceParameters {
+        val chromium: Property<String>
+    }
+
+    @get:Inject
+    abstract val execOperations: ExecOperations
+
+    override fun obtain(): String {
+        val system = "${System.getProperty("os.name")} ${System.getProperty("os.arch")}"
+        val chromium = parameters.chromium.orNull
+        if (chromium.isNullOrEmpty()) {
+            return "Playwright's Chromium on $system"
+        }
+        if (!File(chromium).exists()) {
+            throw GradleException("The keyboard walk needs Chromium, and SCREEN_TEST_CHROMIUM names $chromium, which does not exist. Name a Chromium with SCREEN_TEST_CHROMIUM=<path to its executable>, or leave it unset for Playwright's.")
+        }
+        val version = ByteArrayOutputStream()
+        execOperations.exec {
+            commandLine(chromium, "--version")
+            standardOutput = version
+        }
+        return "${version.toString().trim()} on $system"
+    }
+}
+
+// the walk drives the browser it names, whose version and system key its result beside Playwright's version in the lock file
+val walkBrowser = providers.of(WalkBrowser::class) {
+    parameters.chromium.set(providers.environmentVariable("SCREEN_TEST_CHROMIUM"))
+}
+
+tasks.register<NpmTask>("walkTest") {
+    group = "verification"
+
+    configureSharedInputs()
+    inputs.file(project.layout.projectDirectory.file("vitest.walk.config.mts")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(npmAssemble).withPropertyName("site").withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(liveWebDistributionFiles).withPropertyName("live").withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir(rootProject.layout.projectDirectory.dir("subprojects/semantifyr-live/frontend/src/__ui__/mock"))
+        .withPropertyName("liveMockBackend")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.property("walkBrowser", walkBrowser)
+
+    npmCommand.set(listOf("run", "walk"))
 
     stampOnSuccess()
     outputs.cacheIf { true }

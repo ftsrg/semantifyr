@@ -10,6 +10,6 @@
     "allowImportingTsExtensions": true,
     "paths": { "@site/*": ["./*"], "@grammars/*": ["./build/grammars/*"] }
   },
-  "include": ["src", "docusaurus.config.ts", "sidebars.ts", "vitest.config.mts"],
+  "include": ["src", "docusaurus.config.ts", "sidebars.ts", "vitest.config.mts", "vitest.walk.config.mts"],
   "exclude": [".docusaurus", "node_modules", "build", "static-imported-branding"]
 }

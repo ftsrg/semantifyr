@@ -84,6 +84,9 @@ jobs:
       - name: Run the live UI tests on Chromium
         if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
         run: ./gradlew :semantifyr-live-frontend:uiTest -PtestBrowser=chromium
+      - name: Run the website's keyboard walk
+        if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
+        run: ./gradlew :website:walkTest
       - name: Run the live screen tests on Firefox
         if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
         run: ./gradlew :semantifyr-live-frontend:screenTest -PtestBrowser=firefox
@@ -109,6 +112,13 @@ jobs:
         with:
           name: live-ui-evidence
           path: subprojects/semantifyr-live/frontend/build/evidence/
+          if-no-files-found: ignore
+      - name: Upload the evidence of a failed keyboard walk
+        if: ${{ matrix.os == 'ubuntu-latest' && failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: website-walk-evidence
+          path: subprojects/website/build/evidence/
           if-no-files-found: ignore
       - name: Read the VS Code version of the integration test
         id: vscode
