@@ -23,7 +23,7 @@
   },
   "portfolios": [
    {
-    "id": "smart-full",
+    "id": "smart",
     "engines": [
      "nuxmv",
      "spin",
@@ -32,7 +32,7 @@
     ]
    },
    {
-    "id": "all-agree-full",
+    "id": "all-agree",
     "engines": [
      "nuxmv",
      "spin",
@@ -41,7 +41,7 @@
     ]
    },
    {
-    "id": "theta-full",
+    "id": "theta",
     "engines": [
      "theta"
     ]
@@ -81,14 +81,14 @@
     "activeVerifications": [
      {
       "verificationId": "3f6bc614-277c-4985-81bd-732ddca646c0",
-      "portfolioId": "smart-full",
+      "portfolioId": "smart",
       "kind": "Validate",
       "state": "Running",
       "elapsed": "PT0.457898939S"
      },
      {
       "verificationId": "5ec1eb65-0649-46f3-8a17-0c9f06e7d2bf",
-      "portfolioId": "smart-full",
+      "portfolioId": "smart",
       "kind": "Verify",
       "state": "Running",
       "elapsed": "PT0.457587821S"
