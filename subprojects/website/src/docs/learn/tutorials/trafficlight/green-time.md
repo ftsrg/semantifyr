@@ -59,7 +59,7 @@ Predict, then run the step:
 
 ## Reading the Trace
 
-Open the trace of `NorthGreenForThreeSteps` and follow `north.greenFor` and the case's `stepsGreen` through *Steps*. The first green phase is the one you saw above. Then north turns yellow and red, and `greenFor` stays at 3. When north turns green the second time the counter still says 3, so the branch to yellow can be taken at once, and in the last state `leftGreenEarly` is `true`.
+Open the trace of `NorthGreenForThreeSteps` and follow `north.greenFor` and the case's `stepsGreen` through *Steps*. The first green phase is the one you saw above. Then north turns yellow and red, and `greenFor` stays at 3. When north turns green the second time the counter still says 3, in the next state north is yellow, and in that last state `leftGreenEarly` is `true`.
 
 The counter starts at 0 when the model starts, and nothing sets it back.
 

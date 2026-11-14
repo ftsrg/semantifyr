@@ -66,7 +66,7 @@ describe('the verifying embed', () => {
   })
 
   test('as edit-only is the editor alone, on a session of its own kind', async ({ ui }) => {
-    const page = await ui.host(framing('/oxsts/basics?view=edit-only', 'width: 760px; height: 600px'))
+    const page = await ui.host(framing('/oxsts/intersection?view=edit-only', 'width: 760px; height: 600px'))
     const frame = page.frameLocator('iframe')
 
     await expect.poll(async () => {
@@ -100,7 +100,7 @@ describe('the verifying embed', () => {
 
   for (const theme of ['dark', 'light'] as const) {
     test(`shows the ${theme} theme its address names, whatever the system prefers, and stores none`, async ({ ui }) => {
-      const page = await ui.host(framing(`/oxsts/basics?view=embed&theme=${theme}`, 'width: 760px; height: 600px'))
+      const page = await ui.host(framing(`/oxsts/intersection?view=embed&theme=${theme}`, 'width: 760px; height: 600px'))
       await page.emulateMedia({ colorScheme: theme === 'dark' ? 'light' : 'dark' })
       const frame = page.frames().find((candidate) => {
         return candidate.url().includes('view=embed')

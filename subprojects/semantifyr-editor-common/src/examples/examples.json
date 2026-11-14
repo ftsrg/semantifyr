@@ -150,9 +150,9 @@
       ]
     },
     {
-      "id": "basics",
+      "id": "intersection",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/basics.oxsts",
+      "file": "oxsts-test-models/tutorial/intersection.oxsts",
       "label": "Lesson 2: Intersection",
       "reason": "The model the second lesson ends in: two lights that take turns, a requirement it took a second case to state, and the trace that found the gap.",
       "page": "learn/tutorials/trafficlight/intersection",
@@ -175,9 +175,9 @@
       ]
     },
     {
-      "id": "intermediate",
+      "id": "library",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/intermediate.oxsts",
+      "file": "oxsts-test-models/tutorial/library.oxsts",
       "label": "Lesson 4: Library",
       "reason": "The model the fourth lesson ends in: a small statechart library that a traffic light and a pedestrian light are both built on.",
       "page": "learn/tutorials/trafficlight/library",
@@ -188,9 +188,9 @@
       ]
     },
     {
-      "id": "advanced",
+      "id": "hierarchy",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/advanced.oxsts",
+      "file": "oxsts-test-models/tutorial/hierarchy.oxsts",
       "label": "Lesson 5: Hierarchy",
       "reason": "The model the fifth lesson ends in: nested states, entry actions, events from an operator and an emergency that overrides the lights.",
       "page": "learn/tutorials/trafficlight/hierarchy",
@@ -216,9 +216,9 @@
       ]
     },
     {
-      "id": "light-step1",
+      "id": "one-light",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/light-step1.oxsts",
+      "file": "oxsts-test-models/tutorial/one-light.oxsts",
       "label": "One Light, step 1",
       "reason": "A step of lesson 1, run from its page.",
       "page": "learn/tutorials/trafficlight/one-light",
@@ -228,9 +228,9 @@
       "hidden": true
     },
     {
-      "id": "basics-step1",
+      "id": "intersection-step1",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/basics-step1.oxsts",
+      "file": "oxsts-test-models/tutorial/intersection-step1.oxsts",
       "label": "The Intersection, step 1",
       "reason": "A step of lesson 2, run from its page.",
       "page": "learn/tutorials/trafficlight/intersection",
@@ -241,9 +241,9 @@
       "hidden": true
     },
     {
-      "id": "basics-step2",
+      "id": "intersection-step2",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/basics-step2.oxsts",
+      "file": "oxsts-test-models/tutorial/intersection-step2.oxsts",
       "label": "The Intersection, step 2",
       "reason": "A step of lesson 2, run from its page.",
       "page": "learn/tutorials/trafficlight/intersection",
@@ -280,9 +280,9 @@
       "hidden": true
     },
     {
-      "id": "intermediate-step1",
+      "id": "library-step1",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/intermediate-step1.oxsts",
+      "file": "oxsts-test-models/tutorial/library-step1.oxsts",
       "label": "A Statechart Library, step 1",
       "reason": "A step of lesson 4, run from its page.",
       "page": "learn/tutorials/trafficlight/library",
@@ -292,9 +292,9 @@
       "hidden": true
     },
     {
-      "id": "intermediate-step2",
+      "id": "library-step2",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/intermediate-step2.oxsts",
+      "file": "oxsts-test-models/tutorial/library-step2.oxsts",
       "label": "A Statechart Library, step 2",
       "reason": "A step of lesson 4, run from its page.",
       "page": "learn/tutorials/trafficlight/library",
@@ -304,9 +304,9 @@
       "hidden": true
     },
     {
-      "id": "advanced-step1",
+      "id": "hierarchy-step1",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/advanced-step1.oxsts",
+      "file": "oxsts-test-models/tutorial/hierarchy-step1.oxsts",
       "label": "Hierarchy, Events and the Environment, step 1",
       "reason": "A step of lesson 5, run from its page.",
       "page": "learn/tutorials/trafficlight/hierarchy",
@@ -318,9 +318,9 @@
       "hidden": true
     },
     {
-      "id": "advanced-step2",
+      "id": "hierarchy-step2",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/advanced-step2.oxsts",
+      "file": "oxsts-test-models/tutorial/hierarchy-step2.oxsts",
       "label": "Hierarchy, Events and the Environment, step 2",
       "reason": "A step of lesson 5, run from its page.",
       "page": "learn/tutorials/trafficlight/hierarchy",
@@ -332,9 +332,9 @@
       "hidden": true
     },
     {
-      "id": "advanced-step3",
+      "id": "hierarchy-step3",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/advanced-step3.oxsts",
+      "file": "oxsts-test-models/tutorial/hierarchy-step3.oxsts",
       "label": "Hierarchy, Events and the Environment, step 3",
       "reason": "A step of lesson 5, run from its page.",
       "page": "learn/tutorials/trafficlight/hierarchy",
@@ -347,9 +347,9 @@
       "hidden": true
     },
     {
-      "id": "advanced-step4",
+      "id": "hierarchy-step4",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/advanced-step4.oxsts",
+      "file": "oxsts-test-models/tutorial/hierarchy-step4.oxsts",
       "label": "Hierarchy, Events and the Environment, step 4",
       "reason": "A step of lesson 5, run from its page.",
       "page": "learn/tutorials/trafficlight/hierarchy",
@@ -362,9 +362,9 @@
       "hidden": true
     },
     {
-      "id": "advanced-step5",
+      "id": "hierarchy-step5",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/advanced-step5.oxsts",
+      "file": "oxsts-test-models/tutorial/hierarchy-step5.oxsts",
       "label": "Hierarchy, Events and the Environment, step 5",
       "reason": "A step of lesson 5, run from its page.",
       "page": "learn/tutorials/trafficlight/hierarchy",

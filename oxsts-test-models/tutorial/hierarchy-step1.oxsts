@@ -1,13 +1,13 @@
 // A traffic light whose colors are substates of an operating state, beside a standby state, on a small statechart library.
 
-package example::trafficlight::advanced::step2
+package example::trafficlight::hierarchy::step1
 
 class State : Statechart {
     container parent: Statechart opposite states
     refers initial: State[0..1]
 
-    redefine prop isActive(): bool {
-        return parent.activeState == self && parent.isActive()
+    prop isActive(): bool {
+        return parent.activeState == self
     }
 
     tran activate() {
@@ -37,12 +37,7 @@ class Statechart {
     contains states: State[0..*] opposite parent
     contains transitions: Transition[0..*]
 
-    @Control
     var activeState: states[0..1] := nothing
-
-    prop isActive(): bool {
-        return true
-    }
 
     redefine tran {
         inline for choice (transition in transitions) {

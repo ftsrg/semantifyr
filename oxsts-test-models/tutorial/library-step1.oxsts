@@ -1,6 +1,6 @@
 // A traffic light built on a small library of states.
 
-package example::trafficlight::intermediate::step1
+package example::trafficlight::library::step1
 
 class State {
     container parent: Statechart opposite states

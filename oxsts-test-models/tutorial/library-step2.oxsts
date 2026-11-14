@@ -1,6 +1,6 @@
 // A traffic light built on a small statechart library, whose transitions are data.
 
-package example::trafficlight::intermediate::step2
+package example::trafficlight::library::step2
 
 class State {
     container parent: Statechart opposite states
@@ -33,7 +33,6 @@ class Statechart {
     contains states: State[0..*] opposite parent
     contains transitions: Transition[0..*]
 
-    @Control
     var activeState: states[0..1] := nothing
 
     redefine tran {

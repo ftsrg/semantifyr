@@ -1,7 +1,6 @@
 // A traffic light whose colors are substates of an operating state, beside a standby state, on a small statechart library.
-// The light has a lamp, which a state can switch when it is entered.
 
-package example::trafficlight::advanced::step3
+package example::trafficlight::hierarchy::step2
 
 class State : Statechart {
     container parent: Statechart opposite states
@@ -11,12 +10,8 @@ class State : Statechart {
         return parent.activeState == self && parent.isActive()
     }
 
-    tran entry() {
-    }
-
     tran activate() {
         parent.activeState := self
-        inline entry()
         inline if (initial != nothing) {
             inline initial.activate()
         }
@@ -42,7 +37,6 @@ class Statechart {
     contains states: State[0..*] opposite parent
     contains transitions: Transition[0..*]
 
-    @Control
     var activeState: states[0..1] := nothing
 
     prop isActive(): bool {
@@ -56,42 +50,11 @@ class Statechart {
     }
 }
 
-enum LightColor {
-    Off,
-    Red,
-    Yellow,
-    Green
-}
-
-class Lamp {
-    var color: LightColor := LightColor::Off
-}
-
-class LampState : State {
-    refers output: Lamp
-    refers color: LightColor
-
-    redefine tran entry() {
-        output.color := color
-    }
-}
-
 class TrafficLight : Statechart {
-    contains lamp: Lamp
-
     contains operating: State subsets states {
-        contains red: LampState subsets states {
-            redefine refers output: Lamp = lamp
-            redefine refers color: LightColor = LightColor::Red
-        }
-        contains yellow: LampState subsets states {
-            redefine refers output: Lamp = lamp
-            redefine refers color: LightColor = LightColor::Yellow
-        }
-        contains green: LampState subsets states {
-            redefine refers output: Lamp = lamp
-            redefine refers color: LightColor = LightColor::Green
-        }
+        contains red: State subsets states
+        contains yellow: State subsets states
+        contains green: State subsets states
 
         redefine refers initial: State[0..1] = red
     }
@@ -191,22 +154,5 @@ class NeverGreenInStandby {
 
     prop {
         return AG !(light.standby.isActive() && light.operating.green.isActive())
-    }
-}
-
-@VerificationCase
-class GreenLampOnlyInGreen {
-    contains light: TrafficLight
-
-    redefine init {
-        inline light.init()
-    }
-
-    redefine tran {
-        inline light.main()
-    }
-
-    prop {
-        return AG !(light.lamp.color == LightColor::Green && !light.operating.green.isActive())
     }
 }

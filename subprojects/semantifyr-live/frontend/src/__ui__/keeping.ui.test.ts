@@ -13,7 +13,7 @@ import { describe, expect } from 'vitest'
 import { editorKeysOf, TEST_BROWSER } from '../testBrowser'
 import { casesListed, editor, editorWorkerLoaded, results, statesOf, test } from './harness'
 
-const BASICS = readFileSync(join(import.meta.dirname, '../snippets/imported/tutorial/basics.oxsts'), 'utf-8')
+const INTERSECTION = readFileSync(join(import.meta.dirname, '../snippets/imported/tutorial/intersection.oxsts'), 'utf-8')
 
 interface Disk {
   // the file the open picker gives, the name the save picker gives
@@ -107,14 +107,14 @@ describe('opening a file', () => {
     const page = await ui.open('/oxsts/level-crossing', { before: stubPickers })
     await casesListed(page)
 
-    await openFile(page, 'mine.oxsts', BASICS)
+    await openFile(page, 'mine.oxsts', INTERSECTION)
 
     await expect.poll(async () => {
       return page.title()
     }).toBe('mine.oxsts - OXSTS - Semantifyr Live')
     await casesListed(page)
     expect(await results(page).rows.count()).toBe(servedExamplesOf('oxsts').find((example) => {
-      return example.id === 'basics'
+      return example.id === 'intersection'
     })?.cases.length)
   })
 
@@ -129,7 +129,7 @@ describe('opening a file', () => {
       const dialog = (window as unknown as { fileDialog: HTMLInputElement }).fileDialog
       dialog.files = transfer.files
       dialog.dispatchEvent(new Event('change'))
-    }, BASICS)
+    }, INTERSECTION)
 
     await expect.poll(async () => {
       return page.title()
@@ -137,7 +137,7 @@ describe('opening a file', () => {
   })
 
   test('by a drop opens the dropped file in its language', async ({ ui }) => {
-    const page = await ui.open('/oxsts/basics')
+    const page = await ui.open('/oxsts/intersection')
     await casesListed(page)
     ui.backend.answer('discover', () => {
       return []
@@ -163,7 +163,7 @@ describe('saving', () => {
     skip(TEST_BROWSER !== 'chromium', NO_PICKERS)
     const page = await ui.open('/oxsts/level-crossing', { before: stubPickers })
     await casesListed(page)
-    await openFile(page, 'mine.oxsts', BASICS)
+    await openFile(page, 'mine.oxsts', INTERSECTION)
     await casesListed(page)
 
     await typeAtTheEnd(page, '\n// edited\n')
@@ -185,7 +185,7 @@ describe('saving', () => {
 
   test('with Save as asks for a place under the suggested name and saves there', async ({ ui, skip }) => {
     skip(TEST_BROWSER !== 'chromium', NO_PICKERS)
-    const page = await ui.open('/oxsts/basics', { before: stubPickers })
+    const page = await ui.open('/oxsts/intersection', { before: stubPickers })
     await casesListed(page)
     await typeAtTheEnd(page, '\n// edited\n')
 
@@ -197,27 +197,27 @@ describe('saving', () => {
         return write.name
       })
     }).toEqual(['saved.oxsts'])
-    expect((await diskOf(page)).suggested).toEqual(['basics.oxsts'])
+    expect((await diskOf(page)).suggested).toEqual(['intersection.oxsts'])
     await expect.poll(async () => {
       return page.title()
     }).toBe('saved.oxsts - OXSTS - Semantifyr Live')
   })
 
   test('downloads under the model\'s name where the browser has no save dialog', async ({ ui }) => {
-    const page = await ui.open('/oxsts/basics', { before: withoutPickers })
+    const page = await ui.open('/oxsts/intersection', { before: withoutPickers })
     await casesListed(page)
     await typeAtTheEnd(page, '\n// edited\n')
 
     const download = page.waitForEvent('download')
     await page.locator('.toolbar').getByRole('button', { name: 'Save', exact: true }).click()
 
-    expect((await download).suggestedFilename()).toBe('basics.oxsts')
+    expect((await download).suggestedFilename()).toBe('intersection.oxsts')
   })
 })
 
 describe('leaving the page', () => {
   test('with edits not saved to a file brings the browser\'s warning, and without them none', async ({ ui }) => {
-    const page = await ui.open('/oxsts/basics')
+    const page = await ui.open('/oxsts/intersection')
     await casesListed(page)
     await editorWorkerLoaded(page)
     const dialogs: string[] = []

@@ -1,6 +1,6 @@
 // Two traffic lights at an intersection, where one light switches in each step.
 
-package example::trafficlight::basics::step1
+package example::trafficlight::intersection::step1
 
 enum LightColor {
     Red,

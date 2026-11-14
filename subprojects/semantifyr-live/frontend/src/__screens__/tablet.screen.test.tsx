@@ -62,7 +62,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
   },
   // the widest toolbar: a flavour menu and the longest example name
   'oxsts': {
-    seed: { flavorId: 'oxsts', exampleId: 'intermediate', verification: discovered([{ caseInfo: caseOf('GreenColorIsReachable', 40, 'file:///workspace/snippet.oxsts'), status: 'stale' }]) },
+    seed: { flavorId: 'oxsts', exampleId: 'library', verification: discovered([{ caseInfo: caseOf('GreenColorIsReachable', 40, 'file:///workspace/snippet.oxsts'), status: 'stale' }]) },
     expectState: () => {
       expect(count('.flavour-button')).toBe(1)
       expect(count('.segmented-option[data-language=oxsts][aria-pressed=true]')).toBe(1)

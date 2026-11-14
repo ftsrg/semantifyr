@@ -6,9 +6,9 @@ description: The fourth OXSTS lesson. Write once how a statechart runs, build a 
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
 import CaseVerdict from '@site/src/components/CaseVerdict';
-import step1 from '@served-examples/oxsts/intermediate-step1';
-import step2 from '@served-examples/oxsts/intermediate-step2';
-import intermediate from '@served-examples/oxsts/intermediate';
+import step1 from '@served-examples/oxsts/library-step1';
+import step2 from '@served-examples/oxsts/library-step2';
+import library from '@served-examples/oxsts/library';
 
 # A Statechart Library
 
@@ -22,7 +22,7 @@ A state is an object, and the statechart that owns it holds the active one:
 
 <LiveEmbed example={step1} show={['State', 'Statechart']} />
 
-`Statechart` [contains](../../language/features.md#contains) any number of states, `[0..*]`, and each `State` knows the statechart that contains it through a [`container`](../../language/features.md#container) feature; [`opposite`](../../language/features.md#opposite) ties the two directions together. `activeState` is a [feature-typed variable](../../language/variables.md#feature-typed-variables): its values are the states of this statechart, or `nothing` before one is active. A state is active when its statechart holds it, and `activate` makes it so.
+`Statechart` [contains](../../language/features.md#contains) any number of states, `[0..*]`, and each `State` knows the statechart that contains it through a [`container`](../../language/features.md#container) feature; [`opposite`](../../language/features.md#opposite) ties the two directions together; both sides name each other, and the validator rejects an `opposite` written on one side only. `activeState` is a [feature-typed variable](../../language/variables.md#feature-typed-variables): its values are the states of this statechart, or `nothing` before one is active. When the model is compiled, it becomes an integer that numbers the states. A state is active when its statechart holds it, and `activate` makes it so.
 
 The light [extends](../../language/classes.md#inheritance) `Statechart`. Its three states [subset](../../language/features.md#subsets) the inherited `states`, so they are states of the light:
 
@@ -49,9 +49,9 @@ The light's main transition still spells out its cycle. Make the transitions obj
 
 <LiveEmbed example={step2} show={['Transition', 'Statechart']} />
 
-A `Transition` [refers](../../language/features.md#refers) to the state it leaves and the state it enters, without owning them, and fires when its source is active. The statechart's main transition is an [`inline for choice`](../../language/inline-operations.md#inline-for-choice): when the model is compiled, it becomes a `choice` with one branch for each transition of the statechart. `@Control` on `activeState` is a hint for a backend's speed and changes no verdict.
+A `Transition` [refers](../../language/features.md#refers) to the state it leaves and the state it enters, without owning them, and fires when its source is active. A reference without a multiplicity refers to exactly one, as if written `[1]`. The statechart's main transition is an [`inline for choice`](../../language/inline-operations.md#inline-for-choice): when the model is compiled, it becomes a `choice` with one branch for each transition of the statechart.
 
-The light no longer has a main transition. It lists its transitions and [binds](../../language/features.md#feature-binding) the states of each in a nested block, with `=`, which is fixed when the model is compiled:
+The light no longer has a main transition. It lists its transitions, and the nested block of each [redefines](../../language/features.md#redefine-and-redefines) the transition's two references for this light: `redefine refers from: State[1] = red` keeps the reference's name, type and multiplicity and [binds](../../language/features.md#feature-binding) it with `=` to the light's `red`, fixed when the model is compiled:
 
 <LiveEmbed example={step2} show={['TrafficLight']} />
 
@@ -70,30 +70,30 @@ The *Calls* view of the trace answers: each step names the transition that fired
 
 The library pays off with a second machine. A pedestrian light has two states and two transitions, and nothing else:
 
-<LiveEmbed example={intermediate} show={['PedestrianLight']} />
+<LiveEmbed example={library} show={['PedestrianLight']} />
 
 At a crossing, the traffic light switches only while the pedestrians wait, and the pedestrian light only while the traffic light is red:
 
-<LiveEmbed example={intermediate} show={['Crossing']} />
+<LiveEmbed example={library} show={['Crossing']} />
 
 Two new cases ask whether pedestrians can walk at all, and whether they walk only while the traffic light is red:
 
-<LiveEmbed example={intermediate} show={['PedestriansCanWalk', 'WalkOnlyWhileRed']} />
+<LiveEmbed example={library} show={['PedestriansCanWalk', 'WalkOnlyWhileRed']} />
 
 Run the model:
 
 <details>
 <summary>The verdicts Live shows</summary>
 
-- <CaseVerdict example={intermediate} name="LightCanTurnYellow" />
-- <CaseVerdict example={intermediate} name="PedestriansCanWalk" />
-- <CaseVerdict example={intermediate} name="WalkOnlyWhileRed" />
+- <CaseVerdict example={library} name="LightCanTurnYellow" />
+- <CaseVerdict example={library} name="PedestriansCanWalk" />
+- <CaseVerdict example={library} name="WalkOnlyWhileRed" />
 
 </details>
 
 The whole model:
 
-<LiveEmbed example={intermediate} />
+<LiveEmbed example={library} />
 
 ## What You Can Do Now
 

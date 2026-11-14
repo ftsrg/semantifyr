@@ -6,12 +6,12 @@ description: The fifth OXSTS lesson. Grow the statechart library with nested sta
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
 import CaseVerdict from '@site/src/components/CaseVerdict';
-import step1 from '@served-examples/oxsts/advanced-step1';
-import step2 from '@served-examples/oxsts/advanced-step2';
-import step3 from '@served-examples/oxsts/advanced-step3';
-import step4 from '@served-examples/oxsts/advanced-step4';
-import step5 from '@served-examples/oxsts/advanced-step5';
-import advanced from '@served-examples/oxsts/advanced';
+import step1 from '@served-examples/oxsts/hierarchy-step1';
+import step2 from '@served-examples/oxsts/hierarchy-step2';
+import step3 from '@served-examples/oxsts/hierarchy-step3';
+import step4 from '@served-examples/oxsts/hierarchy-step4';
+import step5 from '@served-examples/oxsts/hierarchy-step5';
+import hierarchy from '@served-examples/oxsts/hierarchy';
 
 # Hierarchy, Events and the Environment
 
@@ -46,7 +46,7 @@ Predict, then run the step:
 
 </details>
 
-Open the trace of `NeverGreenInStandby` and read *Steps*: the light's `activeState` is `standby`, and `operating`'s `activeState` keeps moving through the colors after it.
+Open the trace of `NeverGreenInStandby` and read *Steps*: once the light's `activeState` is `standby`, `operating`'s `activeState` still changes from color to color, and in the last state it is `green`.
 
 ## Parents and Children
 
@@ -140,33 +140,33 @@ Events come from outside the light, so the cases send them: before each step, [`
 
 When an emergency vehicle approaches, both lights of the intersection turn red and stay red until the emergency is over, whatever state they are in. One emergency signal serves every intersection of a town, so it belongs to no light and no intersection: it is a [global feature](../../language/features.md#top-level-global-features), declared outside every class and reached by name.
 
-<LiveEmbed example={advanced} show={['Emergency', 'emergency']} />
+<LiveEmbed example={hierarchy} show={['Emergency', 'emergency']} />
 
 The intersection consults it before it lets a light step. During an emergency it activates `operating` in both lights, which enters `red`, whose entry action switches the lamp to red; the [`if`](../../language/operations.md#if) is decided in every step, as in [The Minimum Green Time](green-time.md).
 
-<LiveEmbed example={advanced} show={['Intersection']} />
+<LiveEmbed example={hierarchy} show={['Intersection']} />
 
 A case lets the emergency start and end at any step:
 
-<LiveEmbed example={advanced} show={['EmergencyStopsTraffic']} />
+<LiveEmbed example={hierarchy} show={['EmergencyStopsTraffic']} />
 
 As in Java, `&&` binds tighter than `||` ([operator precedence](../../language/expressions.md#operator-precedence)); the parentheses only make the grouping visible.
 
 <details>
 <summary>The verdicts Live shows</summary>
 
-- <CaseVerdict example={advanced} name="LightCanTurnGreen" />
-- <CaseVerdict example={advanced} name="NeverBothGreen" />
-- <CaseVerdict example={advanced} name="NeverGreenInStandby" />
-- <CaseVerdict example={advanced} name="GreenLampOnlyInGreen" />
-- <CaseVerdict example={advanced} name="NoStandbyWithoutPause" />
-- <CaseVerdict example={advanced} name="EmergencyStopsTraffic" />
+- <CaseVerdict example={hierarchy} name="LightCanTurnGreen" />
+- <CaseVerdict example={hierarchy} name="NeverBothGreen" />
+- <CaseVerdict example={hierarchy} name="NeverGreenInStandby" />
+- <CaseVerdict example={hierarchy} name="GreenLampOnlyInGreen" />
+- <CaseVerdict example={hierarchy} name="NoStandbyWithoutPause" />
+- <CaseVerdict example={hierarchy} name="EmergencyStopsTraffic" />
 
 </details>
 
 The whole model:
 
-<LiveEmbed example={advanced} />
+<LiveEmbed example={hierarchy} />
 
 ## Where the Lessons End
 

@@ -1,18 +1,18 @@
 ---
 title: 'The Intersection'
 sidebar_position: 2
-description: The second OXSTS lesson. Put two traffic lights at an intersection, verify that they are never green together, and find with a second case what the first did not ask.
+description: The second OXSTS lesson. Put two traffic lights at an intersection and verify that they are never green together, that they still switch, and that a light turns green only while the other is red.
 ---
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
 import CaseVerdict from '@site/src/components/CaseVerdict';
-import step1 from '@served-examples/oxsts/basics-step1';
-import step2 from '@served-examples/oxsts/basics-step2';
-import basics from '@served-examples/oxsts/basics';
+import step1 from '@served-examples/oxsts/intersection-step1';
+import step2 from '@served-examples/oxsts/intersection-step2';
+import intersection from '@served-examples/oxsts/intersection';
 
 # The Intersection
 
-**What you verify:** that two lights at an intersection are never green together, that they still switch, and, with a case you add, a requirement the first case does not cover.
+**What you verify:** that two lights at an intersection are never green together, that they still switch, and that a light turns green only while the other is red.
 
 This lesson starts from the light of [One Light](one-light.md).
 
@@ -48,7 +48,7 @@ Predict both verdicts, then press **Run** and **Verify all**:
 
 </details>
 
-An `AG` case that holds has no execution to show: no state breaks it. Open the trace of `EastCanTurnGreen`. `@Trace` on the light's main transition fills the *Calls* view: each step names the light that switched, `root.intersection.north` or `root.intersection.east`, beside the colors in *Steps*.
+A trace is an execution that shows a case's answer: for an `EF` case one that reaches what it asks for, for an `AG` case one that breaks it. Where no such execution exists, there is no trace. Open the trace of `EastCanTurnGreen`. `@Trace` on the light's main transition fills the *Calls* view: each step names the light that switched, `root.intersection.north` or `root.intersection.east`, beside the colors in *Steps*.
 
 ## A Second Requirement
 
@@ -69,7 +69,7 @@ At a real intersection a light turns green only once the crossing traffic has st
 
 ## Reading the Trace
 
-A case that does not hold comes with an execution that breaks it, its trace; model checkers call it a counterexample. Open the trace of `NorthGreenOnlyWhileEastRed` and read *Steps* to its last state.
+The trace of an `AG` case is an execution that breaks it, what model checkers call a counterexample. Open the trace of `NorthGreenOnlyWhileEastRed` and read *Steps* to its last state.
 
 In its last state north is green while east is yellow. Going back through the steps: east turned yellow, and from then on north was free to switch, since its guard waits only while east is green; north turned green before east turned red. The guard keeps the lights from being green together, and nothing more: a light may turn green while the other is still yellow, and no case asked about it until now.
 
@@ -77,24 +77,24 @@ In its last state north is green while east is yellow. Going back through the st
 
 A light switches only while the other is red:
 
-<LiveEmbed example={basics} show={['Intersection']} />
+<LiveEmbed example={intersection} show={['Intersection']} />
 
 Run the fixed model with its three cases:
 
 <details>
 <summary>The verdicts Live shows</summary>
 
-- <CaseVerdict example={basics} name="NeverBothGreen" />
-- <CaseVerdict example={basics} name="EastCanTurnGreen" />
-- <CaseVerdict example={basics} name="NorthGreenOnlyWhileEastRed" />
+- <CaseVerdict example={intersection} name="NeverBothGreen" />
+- <CaseVerdict example={intersection} name="EastCanTurnGreen" />
+- <CaseVerdict example={intersection} name="NorthGreenOnlyWhileEastRed" />
 
 </details>
 
-`EastCanTurnGreen` still matters: a guard that stopped both lights would make the two safety cases hold as well.
+`EastCanTurnGreen` still matters: a guard that stopped both lights would leave no state with two greens, or with a green beside a yellow, as well.
 
 The whole model:
 
-<LiveEmbed example={basics} />
+<LiveEmbed example={intersection} />
 
 ## What You Can Do Now
 

@@ -1,20 +1,20 @@
 {
     "models": [
         {
-            "file": "light-step1.oxsts",
+            "file": "one-light.oxsts",
             "cases": [
                 { "name": "TrafficLight", "verdict": "Passed" }
             ]
         },
         {
-            "file": "basics-step1.oxsts",
+            "file": "intersection-step1.oxsts",
             "cases": [
                 { "name": "NeverBothGreen", "verdict": "Passed" },
                 { "name": "EastCanTurnGreen", "verdict": "Passed" }
             ]
         },
         {
-            "file": "basics-step2.oxsts",
+            "file": "intersection-step2.oxsts",
             "cases": [
                 { "name": "NeverBothGreen", "verdict": "Passed" },
                 { "name": "EastCanTurnGreen", "verdict": "Passed" },
@@ -22,7 +22,7 @@
             ]
         },
         {
-            "file": "basics.oxsts",
+            "file": "intersection.oxsts",
             "cases": [
                 { "name": "NeverBothGreen", "verdict": "Passed" },
                 { "name": "EastCanTurnGreen", "verdict": "Passed" },
@@ -50,19 +50,19 @@
             ]
         },
         {
-            "file": "intermediate-step1.oxsts",
+            "file": "library-step1.oxsts",
             "cases": [
                 { "name": "LightCanTurnYellow", "verdict": "Passed" }
             ]
         },
         {
-            "file": "intermediate-step2.oxsts",
+            "file": "library-step2.oxsts",
             "cases": [
                 { "name": "LightCanTurnYellow", "verdict": "Passed" }
             ]
         },
         {
-            "file": "intermediate.oxsts",
+            "file": "library.oxsts",
             "cases": [
                 { "name": "LightCanTurnYellow", "verdict": "Passed" },
                 { "name": "PedestriansCanWalk", "verdict": "Passed" },
@@ -70,7 +70,7 @@
             ]
         },
         {
-            "file": "advanced-step1.oxsts",
+            "file": "hierarchy-step1.oxsts",
             "cases": [
                 { "name": "LightCanTurnGreen", "verdict": "Passed" },
                 { "name": "NeverBothGreen", "verdict": "Passed" },
@@ -78,7 +78,7 @@
             ]
         },
         {
-            "file": "advanced-step2.oxsts",
+            "file": "hierarchy-step2.oxsts",
             "cases": [
                 { "name": "LightCanTurnGreen", "verdict": "Passed" },
                 { "name": "NeverBothGreen", "verdict": "Passed" },
@@ -86,7 +86,7 @@
             ]
         },
         {
-            "file": "advanced-step3.oxsts",
+            "file": "hierarchy-step3.oxsts",
             "cases": [
                 { "name": "LightCanTurnGreen", "verdict": "Passed" },
                 { "name": "NeverBothGreen", "verdict": "Passed" },
@@ -95,7 +95,7 @@
             ]
         },
         {
-            "file": "advanced-step4.oxsts",
+            "file": "hierarchy-step4.oxsts",
             "cases": [
                 { "name": "LightCanTurnGreen", "verdict": "Passed" },
                 { "name": "NeverBothGreen", "verdict": "Passed" },
@@ -104,7 +104,7 @@
             ]
         },
         {
-            "file": "advanced-step5.oxsts",
+            "file": "hierarchy-step5.oxsts",
             "cases": [
                 { "name": "LightCanTurnGreen", "verdict": "Passed" },
                 { "name": "NeverBothGreen", "verdict": "Passed" },
@@ -114,7 +114,7 @@
             ]
         },
         {
-            "file": "advanced.oxsts",
+            "file": "hierarchy.oxsts",
             "cases": [
                 { "name": "LightCanTurnGreen", "verdict": "Passed" },
                 { "name": "NeverBothGreen", "verdict": "Passed" },

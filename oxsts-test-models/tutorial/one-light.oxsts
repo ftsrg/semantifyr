@@ -1,6 +1,6 @@
 // One traffic light that cycles from red to green to yellow, and a question about it.
 
-package example::trafficlight::light
+package example::trafficlight::onelight
 
 enum LightColor {
     Red,

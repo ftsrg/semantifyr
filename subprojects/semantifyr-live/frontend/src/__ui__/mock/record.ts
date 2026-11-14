@@ -191,7 +191,7 @@ async function record(liveUrl: string, adminUserHeader: string | undefined): Pro
       console.error('a scenario failed, the recording goes on without it', error)
     })
   }
-  await attempt(cancelRuns(context, liveUrl, '/oxsts/advanced'))
+  await attempt(cancelRuns(context, liveUrl, '/oxsts/hierarchy'))
   for (const address of ['/oxsts', '/oxsts?library=gamma', '/oxsts?library=sysml', '/gamma', '/sysml']) {
     await attempt(walkExamples(context, liveUrl, address))
   }
@@ -199,7 +199,7 @@ async function record(liveUrl: string, adminUserHeader: string | undefined): Pro
   const running = context.newPage().then(async (page) => {
     const embed = await context.newPage()
     await embed.goto(`${liveUrl}/gamma/level-crossing?view=embed`)
-    await page.goto(`${liveUrl}/oxsts/advanced`)
+    await page.goto(`${liveUrl}/oxsts/hierarchy`)
     await settled(page)
     await page.locator('.results').getByRole('button', { name: 'Verify all', exact: true }).click()
     if (adminUserHeader !== undefined) {
@@ -215,7 +215,7 @@ async function record(liveUrl: string, adminUserHeader: string | undefined): Pro
     await page.close()
   })
   await attempt(running)
-  for (const address of ['/oxsts/basics', '/oxsts/level-crossing', '/oxsts/level-crossing?library=gamma', '/oxsts/level-crossing?library=sysml', '/gamma/level-crossing', '/sysml/level-crossing']) {
+  for (const address of ['/oxsts/intersection', '/oxsts/level-crossing', '/oxsts/level-crossing?library=gamma', '/oxsts/level-crossing?library=sysml', '/gamma/level-crossing', '/sysml/level-crossing']) {
     await attempt(verifyAndRead(context, liveUrl, address))
   }
   await browser.close()

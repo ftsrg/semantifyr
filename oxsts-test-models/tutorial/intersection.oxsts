@@ -1,6 +1,7 @@
 // Two traffic lights at an intersection, where one light switches in each step.
+// A light switches only while the other is red.
 
-package example::trafficlight::basics::step2
+package example::trafficlight::intersection
 
 enum LightColor {
     Red,
@@ -36,10 +37,10 @@ class Intersection {
 
     redefine tran {
         choice {
-            assume(!east.isColor(LightColor::Green))
+            assume(east.isColor(LightColor::Red))
             inline north.main()
         } or {
-            assume(!north.isColor(LightColor::Green))
+            assume(north.isColor(LightColor::Red))
             inline east.main()
         }
     }

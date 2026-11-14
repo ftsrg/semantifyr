@@ -6,7 +6,7 @@ description: The first OXSTS lesson. Model one traffic light, ask whether it can
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
 import CaseVerdict from '@site/src/components/CaseVerdict';
-import step1 from '@served-examples/oxsts/light-step1';
+import step1 from '@served-examples/oxsts/one-light';
 
 # One Light
 
@@ -20,7 +20,9 @@ A traffic light has three colors. Every OXSTS file starts with its package, and 
 
 <LiveEmbed example={step1} show={['package', 'LightColor']} />
 
-The light itself is a [class](../../language/classes.md). Its state is one [variable](../../language/variables.md), `color`, which starts at `LightColor::Red`. Its behavior is its main transition, written `redefine tran`, since every class inherits an empty one:
+Semicolons may end a statement, and nothing needs one.
+
+The light itself is a [class](../../language/classes.md). Its state is one [variable](../../language/variables.md), `color`, which starts at `LightColor::Red`. Its behavior is its main transition. Every class extends [`Anything`](../../language/classes.md#the-anything-base-class), which declares an empty main transition and an empty `init`, so the light writes its own as `redefine tran`:
 
 <LiveEmbed example={step1} show={['TrafficLight']} />
 
@@ -28,7 +30,7 @@ The main transition is a [`choice`](../../language/operations.md#choice) of thre
 
 This is how a model runs, the one rule everything else builds on:
 
-- The model starts in the state its variables' initial values give.
+- This model has no `init` transition of its own, so it starts in the state its variables' initial values give.
 - Every step runs the main transition once. A `choice` takes any branch that can be taken, and the verifier looks at every one of them.
 - A step in which no branch can be taken does not happen.
 
@@ -51,9 +53,9 @@ Press **Run** in the corner of the code block above. The editor opens in its pla
 
 ## The Trace
 
-The line now ends in **Trace**. Click it: the trace opens below, the execution the verifier found. Its *Steps* view lists the state at the start and the change of each step: `color` starts at `Red`, turns `Green` in step 1 and `Yellow` in step 2.
+Once the run ends, the trace of the case opens below its line by itself: the execution the verifier found. A click on the line closes it, and another opens it again. Its *Steps* view lists the state at the start and the change of each step: `color` starts at `Red`, turns `Green` in step 1 and `Yellow` in step 2.
 
-A reachability case comes with the execution that reaches its target, so the trace is the proof. The other views show the same execution: *Witness* as an OXSTS model, and *Calls* the calls of transitions marked to be traced, of which this model has none yet.
+The trace of an `EF` case is an execution that reaches what the case asks for. The other views show the same execution: *Witness* as an OXSTS model, and *Calls* the calls of transitions marked to be traced, of which this model has none yet.
 
 The editor checks the model as you type: misspell a color and a red underline names the problem, and `Ctrl+Space` offers what can be written where the cursor is. [Live's screen](../../live.md) lists every control of the editor.
 

@@ -15,7 +15,7 @@ import { MockSession, type Answers } from '../../__ui__/mock/session'
 const URI = 'file:///workspace/snippet.oxsts'
 
 // the fixtures are recorded from a checkout with LF line ends
-const BASICS = readFileSync(join(import.meta.dirname, '../../snippets/imported/tutorial/basics.oxsts'), 'utf-8').replaceAll('\r\n', '\n')
+const INTERSECTION = readFileSync(join(import.meta.dirname, '../../snippets/imported/tutorial/intersection.oxsts'), 'utf-8').replaceAll('\r\n', '\n')
 
 interface Harness {
   session: MockSession
@@ -97,14 +97,14 @@ describe('the mock session', () => {
     const discover = (id: number): void => {
       session.receive(encodeMessage(request(id, 'workspace/executeCommand', { command: 'oxsts.case.discover', arguments: [URI] })))
     }
-    session.receive(encodeMessage(notification('textDocument/didOpen', { textDocument: { uri: URI, languageId: 'oxsts', version: 1, text: BASICS } })))
+    session.receive(encodeMessage(notification('textDocument/didOpen', { textDocument: { uri: URI, languageId: 'oxsts', version: 1, text: INTERSECTION } })))
     discover(1)
     const recorded = (await answered(1)).result
 
-    session.receive(encodeMessage(notification('textDocument/didChange', { textDocument: { uri: URI, version: 2 }, contentChanges: [{ text: `${BASICS}\n` }] })))
+    session.receive(encodeMessage(notification('textDocument/didChange', { textDocument: { uri: URI, version: 2 }, contentChanges: [{ text: `${INTERSECTION}\n` }] })))
     discover(2)
 
-    expect(recorded).toEqual(flavorFixture('oxsts').documents[textKey(BASICS)]?.cases)
+    expect(recorded).toEqual(flavorFixture('oxsts').documents[textKey(INTERSECTION)]?.cases)
     expect((recorded as unknown[]).length).toBeGreaterThan(0)
     expect((await answered(2)).result).toEqual(recorded)
     expect(problems).toEqual([])

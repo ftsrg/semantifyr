@@ -47,7 +47,7 @@ describe('an address', () => {
 
   it('opens the language and the example its path names', async () => {
     expect(await resolved('/gamma/crossroads')).toMatchObject({ flavor: { id: 'gamma' }, example: { id: 'crossroads' }, shared: false, problem: null })
-    expect(await resolved('/oxsts')).toMatchObject({ flavor: { id: 'oxsts' }, example: { id: 'basics' } })
+    expect(await resolved('/oxsts')).toMatchObject({ flavor: { id: 'oxsts' }, example: { id: 'intersection' } })
   })
 
   it('opens the flavour its library names, the example keeping its plain name', async () => {
@@ -57,7 +57,7 @@ describe('an address', () => {
 
   it('says which name it did not find and what it opened in its place', async () => {
     expect(await resolved('/kerml/level-crossing')).toMatchObject({ flavor: { id: 'sysml' }, example: { id: 'level-crossing' }, problem: { kind: 'language', requested: 'kerml' } })
-    expect(await resolved('/oxsts/crossroads?library=uml')).toMatchObject({ flavor: { id: 'oxsts' }, example: { id: 'basics' }, problem: { kind: 'library', requested: 'uml' } })
+    expect(await resolved('/oxsts/crossroads?library=uml')).toMatchObject({ flavor: { id: 'oxsts' }, example: { id: 'intersection' }, problem: { kind: 'library', requested: 'uml' } })
     expect(await resolved('/gamma/level-crosing')).toMatchObject({ flavor: { id: 'gamma' }, example: { id: 'level-crossing' }, problem: { kind: 'example', requested: 'level-crosing' } })
   })
 
@@ -93,8 +93,8 @@ describe('an address', () => {
     const model = await encodeCompressedBase64Url('package edited')
 
     expect(await resolved(`/oxsts#model=${model}`)).toMatchObject({ flavor: { id: 'oxsts' }, text: 'package edited', shared: true, replace: true })
-    expect(await resolved(`/oxsts/advanced#model=${model}`)).toMatchObject({ example: { id: 'advanced' }, text: 'package edited', shared: false })
-    expect(await resolved('/oxsts#model=garbled')).toMatchObject({ shared: false, text: findExample(testFlavors()[0], 'basics')?.code, problem: { kind: 'model' } })
+    expect(await resolved(`/oxsts/hierarchy#model=${model}`)).toMatchObject({ example: { id: 'hierarchy' }, text: 'package edited', shared: false })
+    expect(await resolved('/oxsts#model=garbled')).toMatchObject({ shared: false, text: findExample(testFlavors()[0], 'intersection')?.code, problem: { kind: 'model' } })
   })
 
   it('carries the selected case and the verdicts apart, and the case alone when there are no verdicts', async () => {

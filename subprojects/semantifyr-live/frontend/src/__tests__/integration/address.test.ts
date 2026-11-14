@@ -36,7 +36,7 @@ describe('a page that moves to another address in place', () => {
 
   it('opens the model the new address names', async () => {
     open = createTestLive(silent, servedFlavors)
-    open.live.start('/oxsts/basics')
+    open.live.start('/oxsts/intersection')
     await vi.waitFor(() => {
       expect(open!.live.workspace.get().runtime).not.toBeNull()
     })

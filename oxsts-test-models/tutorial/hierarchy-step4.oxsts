@@ -1,17 +1,22 @@
 // A traffic light whose colors are substates of an operating state, beside a standby state, on a small statechart library.
+// The light has a lamp, which a state can switch when it is entered.
 
-package example::trafficlight::advanced::step1
+package example::trafficlight::hierarchy::step4
 
 class State : Statechart {
     container parent: Statechart opposite states
     refers initial: State[0..1]
 
-    prop isActive(): bool {
-        return parent.activeState == self
+    redefine prop isActive(): bool {
+        return parent.activeState == self && parent.isActive()
+    }
+
+    tran entry() {
     }
 
     tran activate() {
         parent.activeState := self
+        inline entry()
         inline if (initial != nothing) {
             inline initial.activate()
         }
@@ -37,8 +42,11 @@ class Statechart {
     contains states: State[0..*] opposite parent
     contains transitions: Transition[0..*]
 
-    @Control
     var activeState: states[0..1] := nothing
+
+    prop isActive(): bool {
+        return true
+    }
 
     redefine tran {
         inline for choice (transition in transitions) {
@@ -47,15 +55,49 @@ class Statechart {
     }
 }
 
+enum LightColor {
+    Off,
+    Red,
+    Yellow,
+    Green
+}
+
+class Lamp {
+    var color: LightColor := LightColor::Off
+}
+
+class LampState : State {
+    refers output: Lamp
+    refers color: LightColor
+
+    redefine tran entry() {
+        output.color := color
+    }
+}
+
 class TrafficLight : Statechart {
+    contains lamp: Lamp
+
     contains operating: State subsets states {
-        contains red: State subsets states
-        contains yellow: State subsets states
-        contains green: State subsets states
+        contains red: LampState subsets states {
+            redefine refers output: Lamp = lamp
+            redefine refers color: LightColor = LightColor::Red
+        }
+        contains yellow: LampState subsets states {
+            redefine refers output: Lamp = lamp
+            redefine refers color: LightColor = LightColor::Yellow
+        }
+        contains green: LampState subsets states {
+            redefine refers output: Lamp = lamp
+            redefine refers color: LightColor = LightColor::Green
+        }
 
         redefine refers initial: State[0..1] = red
     }
-    contains standby: State subsets states
+    contains standby: LampState subsets states {
+        redefine refers output: Lamp = lamp
+        redefine refers color: LightColor = LightColor::Yellow
+    }
 
     contains redToGreen: Transition subsets transitions {
         redefine refers from: State[1] = operating.red
@@ -151,5 +193,22 @@ class NeverGreenInStandby {
 
     prop {
         return AG !(light.standby.isActive() && light.operating.green.isActive())
+    }
+}
+
+@VerificationCase
+class GreenLampOnlyInGreen {
+    contains light: TrafficLight
+
+    redefine init {
+        inline light.init()
+    }
+
+    redefine tran {
+        inline light.main()
+    }
+
+    prop {
+        return AG !(light.lamp.color == LightColor::Green && !light.operating.green.isActive())
     }
 }

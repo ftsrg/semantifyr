@@ -1,7 +1,7 @@
 // A traffic light and a pedestrian light at a crossing, both built on one small statechart library.
 // The library says once how a statechart steps, and each light only lists its states and transitions.
 
-package example::trafficlight::intermediate
+package example::trafficlight::library
 
 class State {
     container parent: Statechart opposite states
@@ -34,7 +34,6 @@ class Statechart {
     contains states: State[0..*] opposite parent
     contains transitions: Transition[0..*]
 
-    @Control
     var activeState: states[0..1] := nothing
 
     redefine tran {
