@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import type { VerificationStatus } from '../wire.ts';
 import file from './terms.json' with { type: 'json' };
 
 export interface Term {
@@ -53,7 +54,13 @@ export const verdictOfLauncherVerdict: Readonly<Record<string, Verdict>> = Objec
   }),
 );
 
-// live shows a verification's status as one of the four verdicts, by the terms' mapping of the launcher's six; a status that is no verdict has none
-export function verdictOfStatus(status: string): Verdict | null {
-  return verdictOfLauncherVerdict[status.toUpperCase()] ?? null;
+export type ResultStatus = Exclude<VerificationStatus, typeof VerificationStatus.Cancelled>;
+
+// the terms file cannot be typed by its verdicts' lists, so a status it misses fails here and in its test, never as a default
+export function verdictOfStatus(status: ResultStatus): Verdict {
+  const verdict = verdictOfLauncherVerdict[status.toUpperCase()];
+  if (verdict === undefined) {
+    throw new Error(`The terms map no verdict to the status ${status}`);
+  }
+  return verdict;
 }

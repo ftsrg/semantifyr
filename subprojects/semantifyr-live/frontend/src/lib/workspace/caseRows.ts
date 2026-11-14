@@ -74,7 +74,7 @@ function statusOf(status: VerificationCaseState['status']): VerdictStatus {
     case 'cancelled':
       return 'not-run'
     default:
-      return verdictOfStatus(status) ?? 'error'
+      return verdictOfStatus(status)
   }
 }
 

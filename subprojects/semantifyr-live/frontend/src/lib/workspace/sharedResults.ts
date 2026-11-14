@@ -32,7 +32,15 @@ function verdictOf(caseState: VerificationCaseState): SharedVerdict | null {
   if (caseState.outdated === true || caseState.resultStatus === undefined) {
     return null
   }
-  return verdictOfStatus(caseState.resultStatus)
+  switch (caseState.resultStatus) {
+    case 'stale':
+    case 'queued':
+    case 'running':
+    case 'cancelled':
+      return null
+    default:
+      return verdictOfStatus(caseState.resultStatus)
+  }
 }
 
 export function sharedResultsOf(state: VerificationState | undefined, selectedCase: string | null): SharedResults | null {
