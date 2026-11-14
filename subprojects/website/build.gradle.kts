@@ -46,7 +46,7 @@ val sysmlWorkerFiles = configurations.resolvable("sysmlWorkerFiles") {
     attributes(semantifyrArtifact("sysml-worker"))
 }
 
-// the modules whose texts a launcher can print, which the terms test reads where they are raised
+// the launchers' runtime classpaths, so that a module a launcher gains is read by the terms test without a list of its own
 val launcherModules = configurations.dependencyScope("launcherModules")
 val launcherModulesGraph = configurations.resolvable("launcherModulesGraph") {
     extendsFrom(launcherModules.get())
@@ -231,7 +231,6 @@ val cloneGrammars = tasks.register<Sync>("cloneGrammars") {
     into(layout.buildDirectory.dir("grammars"))
 }
 
-// the static directory build/live-screenshots: live's screenshots, which its build takes
 val cloneScreenshots = tasks.register<Sync>("cloneScreenshots") {
     from(liveScreenshotsFiles)
     into(layout.buildDirectory.dir("live-screenshots/img/screenshots"))
@@ -399,7 +398,7 @@ class RelativePathsArgument(
 
 tasks {
     test {
-        // the terms test reads the terms, every text a launcher can print and the details of the SysML v2 constructs
+        // the terms test reads these files from disk, so they key the test's results beside its classes
         inputs.file(rootProject.layout.projectDirectory.file("subprojects/semantifyr-editor-common/src/terms/terms.json"))
             .withPropertyName("terms")
             .withPathSensitivity(PathSensitivity.RELATIVE)
