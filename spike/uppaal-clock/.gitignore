@@ -1,0 +1,5 @@
+*.oxsts
+*.xml
+*.q
+generated*/
+runs/
