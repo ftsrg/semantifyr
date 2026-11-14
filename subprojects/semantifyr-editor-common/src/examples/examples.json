@@ -150,6 +150,17 @@
       ]
     },
     {
+      "id": "one-light",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/one-light.oxsts",
+      "label": "Lesson 1: One light",
+      "reason": "The model the first lesson ends in: one traffic light that cycles through its colors, and the question whether it can turn yellow.",
+      "page": "learn/tutorials/trafficlight/one-light",
+      "cases": [
+        "TrafficLight"
+      ]
+    },
+    {
       "id": "intersection",
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/intersection.oxsts",
@@ -208,24 +219,12 @@
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/level-crossing.oxsts",
       "label": "Level crossing",
-      "reason": "The smallest model: its first case fails and the trace shows why.",
+      "reason": "The simplest model, four small classes, and the one requirement a reader checks first.",
       "page": "learn/language",
       "cases": [
         "BarrierDownWhileTrainInCrossing",
         "TwoTrainsCanBeInTheCrossing"
       ]
-    },
-    {
-      "id": "one-light",
-      "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/one-light.oxsts",
-      "label": "One Light, step 1",
-      "reason": "A step of lesson 1, run from its page.",
-      "page": "learn/tutorials/trafficlight/one-light",
-      "cases": [
-        "TrafficLight"
-      ],
-      "hidden": true
     },
     {
       "id": "intersection-step1",
