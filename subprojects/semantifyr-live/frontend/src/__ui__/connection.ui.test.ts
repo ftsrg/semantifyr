@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import { servedExamplesOf } from '@semantifyr/editor-common/examples'
 import { describe, expect } from 'vitest'
 
 import { casesListed, editor, results, seenStatusTexts, statesOf, test, watchStatusTexts } from './harness'
@@ -117,7 +118,11 @@ describe('a lost connection', () => {
     }).toMatch(/Connection lost. Reconnecting/)
     await expect.poll(async () => {
       return statesOf(results(page).rows, 'status-')
-    }).toEqual(['not-run', 'not-run'])
+    }).toEqual(servedExamplesOf('oxsts').find((example) => {
+      return example.id === 'basics'
+    })?.cases.map(() => {
+      return 'not-run'
+    }))
     await expect.poll(async () => {
       return results(page).rows.first().locator('.case-message').innerText()
     }).toContain('cancelled')

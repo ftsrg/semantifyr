@@ -7,6 +7,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Page } from 'playwright'
+import { servedExamplesOf } from '@semantifyr/editor-common/examples'
 import { describe, expect } from 'vitest'
 
 import { editorKeysOf, TEST_BROWSER } from '../testBrowser'
@@ -112,7 +113,9 @@ describe('opening a file', () => {
       return page.title()
     }).toBe('mine.oxsts - OXSTS - Semantifyr Live')
     await casesListed(page)
-    expect(await results(page).rows.count()).toBe(2)
+    expect(await results(page).rows.count()).toBe(servedExamplesOf('oxsts').find((example) => {
+      return example.id === 'basics'
+    })?.cases.length)
   })
 
   test('through Open, where the browser has no file picker, takes the file chosen in the file dialog', async ({ ui }) => {
