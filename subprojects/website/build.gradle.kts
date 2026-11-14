@@ -78,7 +78,7 @@ val sourceAliasDirectories = (JsonSlurper().parse(sourceAliasesFile.asFile) as M
     layout.projectDirectory.dir(it)
 }
 
-// the files outside the site that link into it, which the site links test reads
+// one list for the site links test and the check's inputs, so that a file the test reads cannot be missing from the cache key
 val linkingFilesFile = layout.projectDirectory.file("linking-files.json")
 
 @Suppress("UNCHECKED_CAST")
@@ -275,7 +275,6 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
         },
     ).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(rootProject.layout.projectDirectory.file("subprojects/semantifyr-live/frontend/index.html")).withPathSensitivity(PathSensitivity.RELATIVE)
-    // the site links test reads the files that link into the site, which the list names
     inputs.file(linkingFilesFile).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(linkingFiles).withPathSensitivity(PathSensitivity.RELATIVE)
 

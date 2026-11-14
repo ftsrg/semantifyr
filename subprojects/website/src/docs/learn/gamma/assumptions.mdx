@@ -9,7 +9,7 @@ import constructs from '@gamma-models/constructs.tsv';
 
 # Gamma's Semantic Assumptions
 
-The Gamma frontend gives a model the meaning Gamma gives it, as the Gamma semantic library writes it in OXSTS. This page states what the library assumes where Gamma leaves a choice or where the library simplifies, and the differences the frontend declares.
+The Gamma frontend gives a model the meaning Gamma gives it, as the Gamma semantic library writes it in OXSTS, except in the differences it declares at the end of this page. This page states what the library assumes where Gamma leaves a choice or where the library simplifies, and those differences.
 
 ## The Step
 
@@ -30,7 +30,9 @@ An output event raised in a step stays raised until the next step starts, so a c
 
 ## What a Verdict Covers
 
-The fixed delta is an abstraction: Gamma lets a range of time pass between two steps, which its analysis constrains, and the library keeps the runs in which exactly one second passes. A passed `AG` and a failed `EF` hold over the runs the library keeps, and a run with another delay may break them. A failed `AG` and a passed `EF` rest on a run the library found, in which a second passes every step.
+The fixed delta is an abstraction: Gamma lets a range of time pass between two steps, which its analysis constrains, and the library keeps the runs in which exactly one second passes. A passed `AG` and a failed `EF` hold over the runs the library keeps, and a run with another delay may break them. A failed `AG` and a passed `EF` rest on one run the library found, in which a second passes every step, and which Gamma admits too unless a deviation is involved in it: then the run may be one Gamma excludes. The table's deviating constructs are these:
+
+<GammaDifferences table={constructs} outcome="deviating" />
 
 ## Declared Differences
 

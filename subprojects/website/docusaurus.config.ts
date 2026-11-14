@@ -60,9 +60,13 @@ function servedExamplesPlugin(): Plugin {
   };
 }
 
-// the backends the reference has a page for, which the architecture names
+// the docs are routed at the site's root, so a page's address is its path under them
+const DOCS = 'src/docs';
+
+// a backend's page is the one place that adds it, so the architecture's names cannot fall behind the reference
 function backendsPlugin(): Plugin {
-  const directory = path.resolve(__dirname, 'src/docs/learn/reference/backends');
+  const pages = 'learn/reference/backends';
+  const directory = path.resolve(__dirname, DOCS, pages);
   return {
     name: 'backends',
     contentLoaded({ actions }) {
@@ -70,12 +74,12 @@ function backendsPlugin(): Plugin {
         return file.endsWith('.mdx');
       }).map((file) => {
         const text = readFileSync(path.join(directory, file), 'utf8');
-        const name = /^title: (.+)$/m.exec(text)?.[1];
+        const name = /^title: (['"]?)(.+)\1$/m.exec(text)?.[2];
         const position = Number(/^sidebar_position: (.+)$/m.exec(text)?.[1]);
         if (name === undefined || Number.isNaN(position)) {
           throw new Error(`The backend's page ${file} names no title or no sidebar position`);
         }
-        return { name, position, page: `/learn/reference/backends/${file.replace(/\.mdx$/, '')}/` };
+        return { name, position, page: `/${pages}/${path.basename(file, '.mdx')}/` };
       }).sort((left, right) => {
         return left.position - right.position;
       }).map(({ name, page }) => {
@@ -186,7 +190,7 @@ export default {
     [
       '@docusaurus/plugin-content-docs',
       {
-        path: 'src/docs',
+        path: DOCS,
         routeBasePath: '/',
         sidebarPath: './sidebars.ts',
         // a part of Learn links its index, so the index is no page of the part's own
