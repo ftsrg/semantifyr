@@ -8,21 +8,16 @@
             ]
         },
         {
-            "file": "Spacecraft.gamma",
+            "file": "Crossroads.gamma",
             "cases": [
-                { "name": "Station_IdleReachable", "verdict": "Passed", "tier": "Integration" },
-                { "name": "Station_OperationReachable", "verdict": "Passed", "tier": "Integration" },
-                { "name": "Station_OperationReceiveDataWaitingReachable", "verdict": "Passed", "tier": "Integration" },
-                { "name": "Spacecraft_CommunicationWaitingPingReachable", "verdict": "Passed", "tier": "Integration" },
-                { "name": "Spacecraft_CommunicationTransmittingReachable", "verdict": "Passed", "tier": "Integration" },
-                { "name": "Spacecraft_CommunicationTransmittingSendDataSendingReachable", "verdict": "Passed", "tier": "Integration" },
-                { "name": "Spacecraft_CommunicationTransmittingConsumePowerConsumingReachable", "verdict": "Passed", "tier": "Integration" },
-                { "name": "Spacecraft_BatteryNotRechargingReachable", "verdict": "Passed", "tier": "Integration" },
-                { "name": "Spacecraft_BatteryRechargingReachable", "verdict": "Passed", "tier": "Integration" }
+                { "name": "PoliceCanInterrupt", "verdict": "Passed", "tier": "Integration" },
+                { "name": "LightACanBlink", "verdict": "Passed", "tier": "Integration" },
+                { "name": "RoadBCanGetGreen", "verdict": "Passed", "tier": "Integration" },
+                { "name": "NeverBothGreen", "verdict": "Passed", "tier": "Integration" }
             ]
         },
         {
-            "file": "Crossroads.gamma",
+            "file": "CrossroadsFurtherCases.gamma",
             "cases": [
                 { "name": "ControllerOperatingReachable", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ControllerOperatingBothYellowReachable", "verdict": "Passed", "tier": "Integration" },
@@ -31,30 +26,55 @@
                 { "name": "ControllerOperatingStoppingBReachable", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ControllerOperatingTrafficOnAReachable", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ControllerOperatingTrafficOnBReachable", "verdict": "Passed", "tier": "Integration" },
-                { "name": "ControllerInterruptedReachable", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ANormalReachable", "verdict": "Passed", "tier": "Integration" },
                 { "name": "AInterruptedReachable", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ACanBeYellow", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ACanBeRed", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ACanBeGreen", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ACanBeBlinkingYellow", "verdict": "Passed", "tier": "Integration" },
-                { "name": "ACanBeBlinkingBlack", "verdict": "Passed", "tier": "Integration" },
                 { "name": "BNormalReachable", "verdict": "Passed", "tier": "Integration" },
                 { "name": "BInterruptedReachable", "verdict": "Passed", "tier": "Integration" },
                 { "name": "BCanBeYellow", "verdict": "Passed", "tier": "Integration" },
                 { "name": "BCanBeRed", "verdict": "Passed", "tier": "Integration" },
-                { "name": "BCanBeGreen", "verdict": "Passed", "tier": "Integration" },
                 { "name": "BCanBeBlinkingYellow", "verdict": "Passed", "tier": "Integration" },
                 { "name": "BCanBeBlinkingBlack", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ReachableRedRed", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ReachableRedGreen", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ReachableRedYellow", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ReachableGreenRed", "verdict": "Passed", "tier": "Integration" },
-                { "name": "UnreachableGreenGreen", "verdict": "Passed", "tier": "Integration" },
                 { "name": "UnreachableGreenYellow", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ReachableYellowRed", "verdict": "Passed", "tier": "Integration" },
                 { "name": "UnreachableYellowGreen", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ReachableYellowYellow", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "Spacecraft.gamma",
+            "cases": [
+                { "name": "TransmissionCanStart", "verdict": "Passed", "tier": "Integration" },
+                { "name": "ChargeNeverBelow30", "verdict": "Passed", "tier": "Integration" },
+                { "name": "CanTransmitWhileRecharging", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "SpacecraftFurtherCases.gamma",
+            "cases": [
+                { "name": "Station_IdleReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "Station_OperationReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "Station_OperationReceiveDataWaitingReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "Spacecraft_CommunicationWaitingPingReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "Spacecraft_CommunicationTransmittingSendDataSendingReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "Spacecraft_CommunicationTransmittingConsumePowerConsumingReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "Spacecraft_BatteryNotRechargingReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "Spacecraft_BatteryRechargingReachable", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "LandingGear.gamma",
+            "cases": [
+                { "name": "GearCanBeRetracted", "verdict": "Passed", "tier": "Integration" },
+                { "name": "BayClosedInCruise", "verdict": "Passed", "tier": "Integration" },
+                { "name": "GearMovesOnlyWithDoorsOpen", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {

@@ -77,7 +77,12 @@ fun gammaExampleTask(name: String) = tasks.register<JavaExec>("compileGammaExamp
     }
 }
 
-val compileGammaExampleTasks = corpusModels(examplesSourceDir).map {
+// a file that imports another holds a model's further cases, which nothing consumes compiled
+val compileGammaExampleTasks = corpusModels(examplesSourceDir).filter { model ->
+    providers.fileContents(examplesSourceDir.file(model.file)).asText.get().lines().none {
+        it.startsWith("import ")
+    }
+}.map {
     gammaExampleTask(it.name)
 }
 

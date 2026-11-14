@@ -1,8 +1,12 @@
+// A spacecraft that sends its data to a ground station while it manages its battery.
+// The station pings the spacecraft when it starts operating, every ten seconds after and on each piece of data it receives; the spacecraft then transmits while it has data and charge, and its battery recharges in an orthogonal region.
+// The spacecraft starts a transmission only while it is not recharging; its charge and its data change in steps of ten.
+// The cases ask whether a transmission can start, whether the charge ever falls below 30, and whether the spacecraft can transmit while it recharges.
+
 package Spacecraft
 
 interface Control {
     out event start
-    out event shutdown
 }
 
 interface Data {
@@ -35,7 +39,6 @@ statechart Station [
         }
 
         initial MainInitial
-        // transition from Operation to Idle when control.shutdown
     }
 
     transition from ReceiveDataInitial to Waiting
@@ -54,7 +57,7 @@ statechart Spacecraft[
     timeout rechargeTimeout
     timeout consumeTimeout
     timeout transmitTimeout
-    
+
     var batteryCharge : integer := 100
     var recharging : boolean := false
     var data : integer := 100
@@ -118,148 +121,17 @@ sync SpaceMission [
     channel [ spacecraft.connection ] -o)- [ station.connection ]
 }
 
-verification case Station_IdleReachable of SpaceMission {
-    EF state station.Main.Idle
-}
-
-verification case Station_OperationReachable of SpaceMission {
-    EF state station.Main.Operation
-}
-
-verification case Station_OperationReceiveDataWaitingReachable of SpaceMission {
-    EF state station.ReceiveData.Waiting
-}
-
-verification case Spacecraft_CommunicationWaitingPingReachable of SpaceMission {
-    EF state spacecraft.Communication.WaitingPing
-}
-
-verification case Spacecraft_CommunicationTransmittingReachable of SpaceMission {
+verification case TransmissionCanStart of SpaceMission {
     EF state spacecraft.Communication.Transmitting
 }
 
-verification case Spacecraft_CommunicationTransmittingSendDataSendingReachable of SpaceMission {
-    EF state spacecraft.SendData.Sending
-}
-
-verification case Spacecraft_CommunicationTransmittingConsumePowerConsumingReachable of SpaceMission {
-    EF state spacecraft.ConsumePower.Consuming
-}
-
-verification case Spacecraft_BatteryNotRechargingReachable of SpaceMission {
-    EF state spacecraft.Battery.NotRecharging
-}
-
-verification case Spacecraft_BatteryRechargingReachable of SpaceMission {
-    EF state spacecraft.Battery.Recharging
-}
-
-/*
-verification case Station_ReceivedDataCanReach0 of SpaceMission {
-    EF (variable station.receivedData >= 0)
-}
-
-verification case Station_ReceivedDataCanReach10 of SpaceMission {
-    EF (variable station.receivedData >= 10)
-}
-
-verification case Station_ReceivedDataCanReach20 of SpaceMission {
-    EF (variable station.receivedData >= 20)
-}
-
-verification case Station_ReceivedDataCanReach30 of SpaceMission {
-    EF (variable station.receivedData >= 30)
-}
-
-verification case Station_ReceivedDataCanReach40 of SpaceMission {
-    EF (variable station.receivedData >= 40)
-}
-
-verification case Station_ReceivedDataCanReach50 of SpaceMission {
-    EF (variable station.receivedData >= 50)
-}
-
-verification case Station_ReceivedDataCanReach60 of SpaceMission {
-    EF (variable station.receivedData >= 60)
-}
-
-verification case Station_ReceivedDataCanReach70 of SpaceMission {
-    EF (variable station.receivedData >= 70)
-}
-
-verification case Station_ReceivedDataCanReach80 of SpaceMission {
-    EF (variable station.receivedData >= 80)
-}
-
-verification case Station_ReceivedDataCanReach90 of SpaceMission {
-    EF (variable station.receivedData >= 90)
-}
-
-verification case Station_ReceivedDataCanReach100 of SpaceMission {
-    EF (variable station.receivedData >= 100)
-}
-
-verification case Spacecraft_DataCanReach100 of SpaceMission {
-    EF (variable spacecraft.data <= 100)
-}
-
-verification case Spacecraft_DataCanReach90 of SpaceMission {
-    EF (variable spacecraft.data <= 90)
-}
-
-verification case Spacecraft_DataCanReach80 of SpaceMission {
-    EF (variable spacecraft.data <= 80)
-}
-
-verification case Spacecraft_DataCanReach70 of SpaceMission {
-    EF (variable spacecraft.data <= 70)
-}
-
-verification case Spacecraft_DataCanReach60 of SpaceMission {
-    EF (variable spacecraft.data <= 60)
-}
-
-verification case Spacecraft_DataCanReach50 of SpaceMission {
-    EF (variable spacecraft.data <= 50)
-}
-
-verification case Spacecraft_DataCanReach40 of SpaceMission {
-    EF (variable spacecraft.data <= 40)
-}
-
-verification case Spacecraft_DataCanReach30 of SpaceMission {
-    EF (variable spacecraft.data <= 30)
-}
-
-verification case Spacecraft_DataCanReach20 of SpaceMission {
-    EF (variable spacecraft.data <= 20)
-}
-
-verification case Spacecraft_DataCanReach10 of SpaceMission {
-    EF (variable spacecraft.data <= 10)
-}
-
-verification case Spacecraft_DataCanReach0 of SpaceMission {
-    EF (variable spacecraft.data <= 0)
-}
-
-verification case Spacecraft_BatteryAlwaysAbove0 of SpaceMission {
-    AG (variable spacecraft.batteryCharge >= 0)
-}
-
-verification case Spacecraft_BatteryAlwaysAbove10 of SpaceMission {
-    AG (variable spacecraft.batteryCharge >= 10)
-}
-
-verification case Spacecraft_BatteryAlwaysAbove20 of SpaceMission {
-    AG (variable spacecraft.batteryCharge >= 20)
-}
-
-verification case Spacecraft_BatteryAlwaysAbove30 of SpaceMission {
+verification case ChargeNeverBelow30 of SpaceMission {
     AG (variable spacecraft.batteryCharge >= 30)
 }
 
-verification case Spacecraft_BatteryAlwaysAbove40 of SpaceMission {
-    AG (variable spacecraft.batteryCharge >= 40)
+verification case CanTransmitWhileRecharging of SpaceMission {
+    EF (
+        state spacecraft.Communication.Transmitting
+        and state spacecraft.Battery.Recharging
+    )
 }
-*/

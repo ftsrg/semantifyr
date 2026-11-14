@@ -1,0 +1,171 @@
+// An aircraft's landing gear behind its bay doors, which a controller moves on the pilot's handle.
+// To retract the gear, the controller opens the doors, raises the gear and closes the doors; to extend it, it does the same the other way round.
+// The doors and the gear report when their sensors find a movement ended, and the pilot may move the handle back at any moment.
+// The cases ask whether the gear can be retracted, whether the doors are closed whenever the controller holds the gear up, and whether the gear ever moves while the doors are not fully open.
+
+package LandingGear
+
+interface Handle {
+    out event up
+    out event down
+}
+
+interface DoorCommands {
+    out event open
+    out event close
+}
+
+interface DoorSensors {
+    out event fullyOpen
+    out event fullyClosed
+}
+
+interface DoorReports {
+    out event opened
+    out event closed
+}
+
+interface GearCommands {
+    out event retract
+    out event extend
+}
+
+interface GearSensors {
+    out event upLocked
+    out event downLocked
+}
+
+interface GearReports {
+    out event isUp
+    out event isDown
+}
+
+statechart Doors [
+    port commands : requires DoorCommands,
+    port sensors : requires DoorSensors,
+    port reports : provides DoorReports
+] {
+    region Main {
+        initial MainInitial
+
+        state Closed
+        state Opening
+        state Open
+        state Closing
+    }
+
+    transition from MainInitial to Closed
+    transition from Closed to Opening when commands.open
+    transition from Opening to Open when sensors.fullyOpen / raise reports.opened;
+    transition from Opening to Closing when commands.close
+    transition from Open to Closing when commands.close
+    transition from Closing to Closed when sensors.fullyClosed / raise reports.closed;
+    transition from Closing to Opening when commands.open
+}
+
+statechart Gear [
+    port commands : requires GearCommands,
+    port sensors : requires GearSensors,
+    port reports : provides GearReports
+] {
+    region Main {
+        initial MainInitial
+
+        state Down
+        state Retracting
+        state Up
+        state Extending
+    }
+
+    transition from MainInitial to Down
+    transition from Down to Retracting when commands.retract
+    transition from Retracting to Up when sensors.upLocked / raise reports.isUp;
+    transition from Retracting to Extending when commands.extend
+    transition from Up to Extending when commands.extend
+    transition from Extending to Down when sensors.downLocked / raise reports.isDown;
+    transition from Extending to Retracting when commands.retract
+}
+
+statechart Controller [
+    port handle : requires Handle,
+    port doors : provides DoorCommands,
+    port doorReports : requires DoorReports,
+    port gear : provides GearCommands,
+    port gearReports : requires GearReports
+] {
+    region Main {
+        initial MainInitial
+
+        state GearDown
+        state OpeningToRetract
+        state Retracting
+        state ClosingAfterRetract
+        state GearUp
+        state OpeningToExtend
+        state Extending
+        state ClosingAfterExtend
+    }
+
+    transition from MainInitial to GearDown
+    transition from GearDown to OpeningToRetract when handle.up / raise doors.open;
+
+    transition from OpeningToRetract to Retracting when doorReports.opened / raise gear.retract;
+    transition from OpeningToRetract to ClosingAfterExtend when handle.down / raise doors.close;
+
+    transition from Retracting to ClosingAfterRetract when gearReports.isUp / raise doors.close;
+    transition from Retracting to Extending when handle.down / raise gear.extend;
+
+    transition from ClosingAfterRetract to GearUp when doorReports.closed
+    transition from ClosingAfterRetract to Extending when handle.down / raise gear.extend;
+
+    transition from GearUp to OpeningToExtend when handle.down / raise doors.open;
+
+    transition from OpeningToExtend to Extending when doorReports.opened / raise gear.extend;
+    transition from OpeningToExtend to ClosingAfterRetract when handle.up / raise doors.close;
+
+    transition from Extending to ClosingAfterExtend when gearReports.isDown / raise doors.close;
+    transition from Extending to Retracting when handle.up / raise gear.retract;
+
+    transition from ClosingAfterExtend to GearDown when doorReports.closed
+    transition from ClosingAfterExtend to OpeningToRetract when handle.up / raise doors.open;
+}
+
+sync LandingGearSystem [
+    port handle : requires Handle,
+    port doorSensors : requires DoorSensors,
+    port gearSensors : requires GearSensors
+] {
+    component controller : Controller
+    component doors : Doors
+    component gear : Gear
+
+    bind handle -> controller.handle
+    bind doorSensors -> doors.sensors
+    bind gearSensors -> gear.sensors
+
+    channel [ controller.doors ] -o)- [ doors.commands ]
+    channel [ doors.reports ] -o)- [ controller.doorReports ]
+    channel [ controller.gear ] -o)- [ gear.commands ]
+    channel [ gear.reports ] -o)- [ controller.gearReports ]
+}
+
+verification case GearCanBeRetracted of LandingGearSystem {
+    EF (
+        state gear.Main.Up
+        and state doors.Main.Closed
+    )
+}
+
+verification case BayClosedInCruise of LandingGearSystem {
+    AG not (
+        state controller.Main.GearUp
+        and not state doors.Main.Closed
+    )
+}
+
+verification case GearMovesOnlyWithDoorsOpen of LandingGearSystem {
+    AG not (
+        (state gear.Main.Retracting or state gear.Main.Extending)
+        and not state doors.Main.Open
+    )
+}
