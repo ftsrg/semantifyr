@@ -5,91 +5,98 @@ sidebar_position: 2
 
 # Gamma traces
 
-A witness of a Gamma verification case is written as a Gamma execution trace, `trace.gamma`, next to the back-annotated `witness.oxsts`. The trace is a file of the model's package in the trace sub-language of the Gamma grammar, modelled after Gamma's `ExecutionTrace`: a sequence of steps, each with the acts of the environment and the asserts that hold after it. Every path in it is a cross-reference into the model, so the Gamma language checks a trace like any other Gamma file.
+A witness of a [Gamma](../learn/gamma.mdx) verification case is written as a Gamma execution trace, `trace.get`, next to the back-annotated `witness.oxsts`. The trace is a `.get` file of its own in Gamma's execution trace syntax, with two extensions: its header names a verification case, and it asserts the transitions that fired. Every name in it is a cross-reference into the model, so the Gamma language checks a trace like any other Gamma file.
 
-The reference pair is `subprojects/frontends/gamma/models/etc/crossroads-ACanBeGreen.*`, a witness of the case `ACanBeGreen` of `models/examples/Crossroads.gamma`: `trace.json` and `witness.json` as Theta's witness produced them, and the hand-written `trace.gamma` they generate.
+The reference pair is `subprojects/frontends/gamma/models/etc/crossroads-ACanBeGreen.*`, a witness of the case `ACanBeGreen` of `models/examples/Crossroads.gamma`: `trace.json` and `witness.json` as Theta's witness produced them, and the hand-written `trace.get` they generate.
 
 ## Form
 
 ```gamma
-package Crossroads
+import Crossroads
 
-trace ACanBeGreenTrace of ACanBeGreen {
-    step {
-        act {
-            reset
-        }
-        assert {
-            raise system.trafficLightA.lightControl.yellow
-            raise system.trafficLightB.lightControl.yellow
-            state system.controller.Main.Operating.OperatingRegion.BothYellow
-            state system.trafficLightA.Main.Normal.NormalRegion.Yellow
-            state system.trafficLightB.Main.Normal.NormalRegion.Yellow
-        }
+trace ACanBeGreenTrace of ACanBeGreen
+
+step {
+    act {
+        reset
     }
+    assert {
+        raise trafficLightA.lightControl.yellow;
+        raise trafficLightB.lightControl.yellow;
+        state controller.Main.Operating;
+        state controller.OperatingRegion.BothYellow;
+        state trafficLightA.Main.Normal;
+        state trafficLightA.NormalRegion.Yellow;
+        state trafficLightB.Main.Normal;
+        state trafficLightB.NormalRegion.Yellow;
+    }
+}
 ```
 
-- `trace <name> of <case>` names the traced verification case. The trace sits in the case's package, so it resolves the case across files, in a resource set and through the language server's index.
-- Every path starts at the component instance of the case, `system` here, and navigates through component instances, ports, regions and states.
-- The first step is initialization: the `reset` act, the events raised during initialization, and the state reached.
+- `import` names the case's package by its qualified name, as a Gamma model imports a package.
+- `trace <name> of <case>` names the traced verification case; the traced component is the case's component, in whose scope every name of the trace resolves, as in the case's property.
+- Instances are named from the traced component down, `controller` here, nested ones as `outer->inner`; an element of the traced component itself is named without an instance, `state Main.Idle`.
+- The first step is initialization: the `reset` act, the outputs the entry actions raised and the state reached.
 
 The last step of the pair:
 
 ```gamma
-    step {
-        act {
-            raise system.controller.control.toggle
-            schedule component
-            elapse 1 s
-        }
-        assert {
-            transition system.trafficLightA.Main.Normal.NormalRegion.Red to Green
-            raise system.trafficLightA.lightControl.green
-            state system.controller.Main.Operating.OperatingRegion.TrafficOnA
-            state system.trafficLightA.Main.Normal.NormalRegion.Green
-            state system.trafficLightB.Main.Normal.NormalRegion.Red
-        }
+step {
+    act {
+        raise control.toggle
+        elapse 1000
+        schedule component
+    }
+    assert {
+        transition trafficLightA from Red to Green;
+        raise trafficLightA.lightControl.green;
+        state controller.Main.Operating;
+        state controller.OperatingRegion.TrafficOnA;
+        state trafficLightA.Main.Normal;
+        state trafficLightA.NormalRegion.Green;
+        state trafficLightB.Main.Normal;
+        state trafficLightB.NormalRegion.Red;
     }
 }
 ```
 
 Acts:
 
-- `raise <port>.<event>`: the environment raises an input event of a port of the component.
+- `raise <port>.<event>`: the environment raises an input event of a port of the traced component; an act names no instance.
+- `elapse <milliseconds>`: time advances before the step.
 - `schedule component`: the component takes one step.
-- `elapse 1 s`: time advances by one time step.
 
-Asserts:
+Asserts, each closed by `;`:
 
-- `transition <state> to <state>`: a transition fired; `when <trigger>` follows when another transition shares its source and target.
-- `raise <port>.<event>`: the component raised an output event.
-- `state <state>`: a leaf state is active.
-- `variable <variable> == <value>`: a statechart variable has a value.
+- `state <instance>.<region>.<state>`: a state is active.
+- `variable <instance>.<variable> = <value>`: a statechart variable has a value.
+- `raise <instance>.<port>.<event>`: an instance raised an output event of its port, `raise <port>.<event>` the traced component itself.
+- `transition <instance> from <state> to <state>`: a transition fired, followed by `when <trigger>` when another transition shares its source and target; a transition with an `@(id)` is named `transition <instance>.<id>`.
 
-The validator checks that a path starts at the case's component instance, that an act raises an input event and an assert an output event of its port, that a state assert names a state, that a fired transition exists and is unambiguous, and that a value matches its variable's type.
+The validator checks that an act raises an input event and an assert an output event of its port, that a fired transition exists and is unambiguous, and that a value matches its variable's type; scoping checks that every name belongs to the instance it follows.
 
 ## Generation
 
-The Gamma semantic library marks four transitions with `@Trace`: `Transition::fire`, `Port::raiseInputEvent(event)`, `Port::setOutputEvent(event)` and `GammaVerificationCase::passTime`. A verify run writes, step by step, the traced calls to `trace.json` and the state to `witness.json`, both named by their path from the root instance. `GammaTraceGenerator` resolves each path through the names the Gamma compiler recorded when it emitted the OXSTS model, so it never decodes OXSTS names, and maps:
+The Gamma semantic library marks five transitions with `@Trace`: `Transition::fire`, `Port::raiseInputEvent(event)`, `Port::receiveInputMessage(event)`, `Port::setOutputEvent(event)` and `GammaVerificationCase::passTime`. A verify run writes, step by step, the traced calls to `trace.json` and the state to `witness.json`, both named by their path from the root instance. `GammaTraceGenerator` resolves each path through the name map the Gamma compiler filled when it emitted the OXSTS model in the same verify run, so it never decodes OXSTS names, and maps:
 
 - a fired `Transition::fire` to a `transition` assert;
-- `Port::raiseInputEvent` to a `raise` act and `Port::setOutputEvent` to a `raise` assert, as the called transition says;
-- `passTime` at the root to `elapse 1 s`;
-- the active state of every region and the value of every statechart variable in the witness to `state` and `variable` asserts, leaf states only.
+- `Port::raiseInputEvent`, and `Port::receiveInputMessage`, the environment's message to an adapter's queue, to a `raise` act on the port of the traced component the inner port is bound to, and `Port::setOutputEvent` to a `raise` assert on the port of the instance that raised it, as the called transition says;
+- `passTime` at the root to `elapse 1000` in the same step, before `schedule`;
+- the active state of every region and the value of every statechart variable in the witness to `state` and `variable` asserts.
 
-Input events are traced because the library resets them within the step, so no state between steps shows them. Output events are traced because the optimizer removes outputs that nothing reads, and two raises on one port in a step would show as one. The Gamma language's serializer and formatter write the trace.
+Input events are traced because the library resets them within the step, so no state between steps shows them. Output events are traced because the optimizer removes outputs that nothing reads. The Gamma language's serializer and formatter write the trace.
 
-Not in the trace: transitions with the same source, target and trigger (the validator reports them as ambiguous), and timers and port variables. The time step is fixed at one second, and the trace is not written in the `.get` format of the Gamma framework.
+Not in the trace: negations of the output events not raised, timers and port variables; the values of event parameters, since a traced call records no runtime argument, so a raise of an event with parameters is written without its arguments; the values of record-typed variables; the messages an adapter's queues hold and its clocks; the last state a shallow history node holds, which is not an active state; and the firing of a transition into a history node without an `@(id)`, which the `from`/`to` form cannot name, so only the states it entered show it. The time step is fixed at one second.
 
 ## Validation
 
-- `GammaReferenceTraceTest` generates the trace from the pair's JSON files and checks that it serializes to the hand-written `trace.gamma`.
+- `GammaReferenceTraceTest` generates the trace from the pair's JSON files and checks that it serializes to the hand-written `trace.get`.
 - `GammaTraceLanguageTest` covers the validator's rules.
-- `GammaTraceTests` (integration) verifies every `EF` case of the three examples on Theta, nuXmv, Spin and Uppaal, and checks each generated trace: it parses, links and validates against the model, has one step per witness step, asserts the witness's leaf states and variable values, and every fired transition leaves a state active before its step and enters one active after it, which checks the traced calls against the witness state.
+- `GammaTraceGeneratorTest` generates traces from small fixed witnesses of the semantic models and checks the steps, the acts, the asserted states, variables, fired transitions and raised events, one point per test.
 - `GammaTraceLanguageServerTest` opens a trace next to its model in the language server, without errors, and checks that the trace relinks when the model changes.
 - `GammaWitnessTests` (nightly) re-verifies every engine's witness on all four engines.
 
-The VS Code extension's language server opens a `trace.gamma` like any Gamma file, and the live editor's Gamma language shows the trace in the *Gamma trace* view of the trace under the cases.
+The VS Code extension's language server opens a `.get` trace like any Gamma file, and the live editor's Gamma language shows the trace in the *Gamma trace* view of the trace under the cases.
 
 ## Witness validation
 

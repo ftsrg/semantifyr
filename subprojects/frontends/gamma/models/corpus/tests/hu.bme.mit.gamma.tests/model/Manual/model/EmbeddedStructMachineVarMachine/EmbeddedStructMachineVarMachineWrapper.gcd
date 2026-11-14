@@ -1,0 +1,12 @@
+package manual::EmbeddedStructMachineVarMachine
+
+
+
+
+cascade EmbeddedStructMachineVarMachineWrapper [
+	port portA : requires portA
+] {
+	component embeddedStructMachineVarMachine : EmbeddedStructMachineVarMachine
+	
+	bind portA -> embeddedStructMachineVarMachine.portA
+}

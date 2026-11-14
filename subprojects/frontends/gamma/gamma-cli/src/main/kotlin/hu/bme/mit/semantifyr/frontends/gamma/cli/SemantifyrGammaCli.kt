@@ -11,14 +11,26 @@ import com.google.inject.Injector
 import hu.bme.mit.semantifyr.cli.common.CommandExit
 import hu.bme.mit.semantifyr.cli.common.ExitCode
 import hu.bme.mit.semantifyr.cli.common.RootCommand
+import hu.bme.mit.semantifyr.cli.common.checkInputFile
 import hu.bme.mit.semantifyr.cli.common.execute
 import hu.bme.mit.semantifyr.frontends.gamma.lang.GammaStandaloneSetup
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import java.nio.file.Path
+import kotlin.io.path.name
 
-internal const val GAMMA_FILE_SUFFIX = ".gamma"
+private val GAMMA_FILE_SUFFIXES = listOf(
+    ".gamma",
+    ".gcd",
+)
+
+internal fun checkGammaModel(model: Path) {
+    val suffix = GAMMA_FILE_SUFFIXES.firstOrNull {
+        model.name.endsWith(it)
+    } ?: GAMMA_FILE_SUFFIXES.first()
+    checkInputFile("Model", model, suffix)
+}
 
 class SemantifyrGammaCommand(
     gammaInjector: Injector,
@@ -35,9 +47,10 @@ class SemantifyrGammaCommand(
 internal fun readGammaModel(
     gammaInjector: Injector,
     model: Path,
+    workspace: Path?,
 ): GammaModelPackage {
     try {
-        return gammaInjector.getInstance(GammaReader::class.java).readGammaFile(model.toFile())
+        return gammaInjector.getInstance(GammaReader::class.java).readGammaFile(model.toFile(), workspace)
     } catch (exception: Exception) {
         throw CommandExit(ExitCode.Compilation, exception.message ?: exception::class.simpleName)
     }

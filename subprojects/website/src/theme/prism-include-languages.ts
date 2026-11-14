@@ -99,8 +99,8 @@ export default function prismIncludeLanguages(
       { pattern: /\/\/.*/, greedy: true },
     ],
     keyword:
-      /\b(?:AG|Boolean|EF|Integer|act|and|assert|bind|case|channel|component|elapse|entry|event|exit|false|in|interface|isActive|not|of|or|out|package|port|property|provides|raise|region|requires|reset|schedule|set|state|statechart|step|sync|timeout|to|trace|transition|true|var|variable|verification|when)\b/,
-    operator: /(:=|==|!=|<=|>=|&&|\|\||<|>|\+|-|\*|\/|!)/,
+      /\b(?:AG|EF|act|adapter|and|any|assert|async|bind|boolean|capacity|cascade|case|channel|clock|component|discard|elapse|entry|event|execute|exit|extends|false|from|full-step|history|import|in|incoming|initial|inout|integer|interface|ms|not|of|oldest|or|out|package|persistent|port|priority|property|provides|queue|raise|rate|record|region|requires|reset-other-queues|reset-queues|reset-queue|reset|run|s|scheduled-async|schedule|self|set|shallow|state|statechart|step|sync|timeout|to|trace|transient|transition|true|type|var|variable|verification|when)\b/,
+    operator: /(-o\)-|->|::|:=|==|!=|\/=|<=|>=|<|>|=|\+|-|\*|\/|!)/,
     number: /\b\d+\b/,
     punctuation: /[{}[\]();:,.]/,
   };

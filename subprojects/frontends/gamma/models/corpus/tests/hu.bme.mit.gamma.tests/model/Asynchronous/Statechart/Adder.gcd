@@ -1,0 +1,19 @@
+package asynchronous::asynchronousreactive
+
+
+
+@Asynchronous
+statechart Adder [
+	port Execute : requires ExecuteAsynchronous
+	port Toggle : provides AddSubtract
+] {
+	var count : integer
+	region main {
+		initial Initial
+		state A
+	}
+	
+	transition from Initial to A / raise Toggle.init(10);
+	transition from A to A when Execute.^execute / raise Toggle.add; count := count + 1;
+	
+}

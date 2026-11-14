@@ -1,0 +1,11 @@
+package ^clock::clocks::Counter_verification
+
+import ^clock::clocks
+
+verification case StateAReachable of Counter {
+    EF state main._A
+}
+
+verification case StateBReachable of Counter {
+    EF state main._B
+}

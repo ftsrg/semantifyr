@@ -77,6 +77,7 @@ export default {
         resolve: {
           alias: {
             '@oxsts-test-models': path.resolve(__dirname, '../../oxsts-test-models'),
+            '@gamma-models': path.resolve(__dirname, '../frontends/gamma/models'),
             '@sysml-tutorial-models': path.resolve(__dirname, '../frontends/sysml/models/tutorial'),
             // written by the cliReference_* Gradle tasks
             '@cli-reference': path.resolve(__dirname, 'build/cli-reference'),

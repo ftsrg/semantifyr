@@ -1,0 +1,7 @@
+package manual::MachineVarMachine::MachineVarMachineWrapper_verification
+
+import manual::MachineVarMachine
+
+verification case MachineVarMachineMachineVarMachineStateReachable of MachineVarMachineWrapper {
+    EF state machineVarMachine.MachineVarMachine_.MachineVarMachine__State
+}

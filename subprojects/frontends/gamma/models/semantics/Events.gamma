@@ -1,0 +1,99 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package Events
+
+interface Control {
+    in event start
+}
+
+interface Signals {
+    out event first
+    out event second
+}
+
+interface Commands {
+    in event begin
+    in event end
+}
+
+statechart Sender [
+    port control : provides Control,
+    port output : provides Signals
+] {
+    region Main {
+        initial MainInitial
+        state Idle
+        state Sent
+        state Done
+    }
+
+    transition from MainInitial to Idle
+    transition from Idle to Sent when control.start / raise output.first; raise output.second;
+    transition from Sent to Done when control.start
+}
+
+statechart TwoRegions [
+    port control : provides Commands,
+    port output : provides Signals
+] {
+    region Starting {
+        initial StartingInitial
+        state StartIdle
+        state Started
+    }
+
+    region Stopping {
+        initial StoppingInitial
+        state StopIdle
+        state Stopped
+    }
+
+    transition from StartingInitial to StartIdle
+    transition from StoppingInitial to StopIdle
+    transition from StartIdle to Started when control.begin / raise output.first;
+    transition from StopIdle to Stopped when control.end / raise output.second;
+}
+
+statechart OneRegion [
+    port control : provides Commands,
+    port output : provides Signals
+] {
+    region Main {
+        initial MainInitial
+        state Idle
+        state Started
+        state Stopped
+    }
+
+    transition from MainInitial to Idle
+    transition from Idle to Started when control.begin / raise output.first;
+    transition from Idle to Stopped when control.end / raise output.second;
+}
+
+verification case BothEventsOfAPortAreRaisedInOneStep of Sender {
+    EF (raise output.first and raise output.second)
+}
+
+verification case OneEventOfAPortRaisedWithoutTheOtherUnreachable of Sender {
+    EF (raise output.first and not raise output.second)
+}
+
+verification case OutputIsVisibleAfterTheStepThatRaisedIt of Sender {
+    EF (state Main.Sent and raise output.first)
+}
+
+verification case OutputKeptBeyondTheNextStepUnreachable of Sender {
+    EF (state Main.Done and raise output.first)
+}
+
+verification case BothInputEventsOfAPortArriveInOneStep of TwoRegions {
+    EF (raise output.first and raise output.second)
+}
+
+verification case OneRegionTakingBothInputEventsOfAStepUnreachable of OneRegion {
+    EF (raise output.first and raise output.second)
+}

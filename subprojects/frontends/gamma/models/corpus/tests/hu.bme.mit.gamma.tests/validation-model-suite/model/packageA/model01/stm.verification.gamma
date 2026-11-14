@@ -1,0 +1,7 @@
+package validation::package_a_1::stm_verification
+
+import validation::package_a_1
+
+verification case StateS1Reachable of statemachine {
+    EF state Main.S1
+}

@@ -1,0 +1,23 @@
+package validation::package_e_21::stm_verification
+
+import validation::package_e_21
+
+verification case StateC1Reachable of statemachine {
+    EF state Main.C1
+}
+
+verification case StateS11Reachable of statemachine {
+    EF state R1.S11
+}
+
+verification case StateS12Reachable of statemachine {
+    EF state R1.S12
+}
+
+verification case StateS13Reachable of statemachine {
+    EF state R2.S13
+}
+
+verification case StateS14Reachable of statemachine {
+    EF state R2.S14
+}

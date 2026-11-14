@@ -1,0 +1,169 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package Parameters
+
+interface Control {
+    in event start
+}
+
+interface Measurements {
+    in event sample(value : integer)
+    in persistent event level(value : integer)
+}
+
+interface Readings {
+    out event reading(value : integer)
+}
+
+interface Values {
+    out event value(amount : integer)
+}
+
+interface Samples {
+    in event sample(value : integer)
+}
+
+@TransitionPriority = order-based
+statechart Probe [
+    port control : provides Control,
+    port measure : provides Measurements
+] {
+    var kept : integer
+    var sampled : integer
+    var observed : integer
+
+    region Main {
+        initial MainInitial
+        state Waiting
+        state Holding
+        state Probed
+    }
+
+    transition from MainInitial to Waiting
+    transition from Waiting to Holding when measure.level / kept := measure.level::value;
+    transition from Holding to Holding when measure.level / kept := measure.level::value;
+    transition from Holding to Holding when measure.sample
+    transition from Holding to Probed when control.start / sampled := measure.sample::value; observed := measure.level::value;
+}
+
+statechart Sensor [
+    port control : provides Control,
+    port output : provides Readings
+] {
+    region Main {
+        initial MainInitial
+        state Idle
+        state Sent
+    }
+
+    transition from MainInitial to Idle
+    transition from Idle to Sent when control.start / raise output.reading(5);
+}
+
+statechart Display [
+    port input : requires Readings
+] {
+    var shown : integer
+
+    region Main {
+        initial MainInitial
+        state Waiting
+        state Showing
+    }
+
+    transition from MainInitial to Waiting
+    transition from Waiting to Showing when input.reading / shown := input.reading::value;
+}
+
+statechart Counter [
+    port input : requires Values
+] {
+    var last : integer
+
+    region Main {
+        initial MainInitial
+        state Waiting
+        state Positive
+        state Negative
+    }
+
+    transition from MainInitial to Waiting
+    transition from Waiting to Positive when input.value [input.value::amount > 0] / last := input.value::amount;
+    transition from Waiting to Negative when input.value [input.value::amount < 0] / last := input.value::amount;
+}
+
+sync Monitoring [
+    port control : provides Control
+] {
+    component sensor : Sensor
+    component display : Display
+    bind control -> sensor.control
+    channel [ sensor.output ] -o)- [ display.input ]
+}
+
+@TransitionPriority = order-based
+statechart PairedProbe [
+    port first : provides Samples,
+    port second : provides Samples
+] {
+    var fromFirst : integer
+    var fromSecond : integer
+
+    region Main {
+        initial MainInitial
+        state Waiting
+        state Read
+    }
+
+    transition from MainInitial to Waiting
+    transition from Waiting to Waiting when second.sample
+    transition from Waiting to Read when first.sample / fromFirst := first.sample::value; fromSecond := second.sample::value;
+}
+
+verification case TransientParameterIsResetWhenItsEventIsNotRaised of Probe {
+    AG (not state Main.Probed or variable sampled = 0)
+}
+
+verification case PersistentParameterKeepsItsValueWhenItsEventIsNotRaised of Probe {
+    AG (not state Main.Probed or variable observed = variable kept)
+}
+
+verification case EnvironmentChoosesTheParameterWithTheRaise of Probe {
+    EF (state Main.Probed and variable observed = 7)
+}
+
+verification case RaisedArgumentCrossesTheChannel of Monitoring {
+    AG (not state display.Main.Showing or variable display.shown = 5)
+}
+
+verification case RaisedArgumentChangedOnTheChannelUnreachable of Monitoring {
+    EF (state display.Main.Showing and not variable display.shown = 5)
+}
+
+verification case TransientParameterKeptUnreachable of Probe {
+    EF (state Main.Probed and not variable sampled = 0)
+}
+
+verification case PersistentParameterLosingItsValueUnreachable of Probe {
+    EF (state Main.Probed and not variable observed = variable kept)
+}
+
+verification case NegativeArgumentTakesItsGuardedTransition of Counter {
+    EF (state Main.Negative and variable last = -1)
+}
+
+verification case NegativeArgumentTakingThePositiveTransitionUnreachable of Counter {
+    EF (state Main.Positive and variable last = -1)
+}
+
+verification case EachPortOfAnEventHoldsItsOwnParameter of PairedProbe {
+    EF (state Main.Read and variable fromFirst = 7)
+}
+
+verification case OnePortsParameterSeenOnTheOtherPortUnreachable of PairedProbe {
+    EF (state Main.Read and not variable fromSecond = 0)
+}

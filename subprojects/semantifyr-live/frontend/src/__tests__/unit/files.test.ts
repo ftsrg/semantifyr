@@ -26,6 +26,7 @@ describe('the file a document opens in', () => {
     expect(languageOfFile('model.sysml')).toBe('sysml')
     expect(languageOfFile('Library.KerML')).toBe('sysml')
     expect(languageOfFile('LevelCrossing.gamma')).toBe('gamma')
+    expect(languageOfFile('LevelCrossing.get')).toBe('gamma')
     expect(languageOfFile('snippet.oxsts')).toBe('oxsts')
     expect(languageOfFile('notes.txt')).toBeNull()
   })

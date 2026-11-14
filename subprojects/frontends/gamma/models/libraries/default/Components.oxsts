@@ -21,19 +21,19 @@ abstract class Component {
 
     tran resetInputEvents() {
         inline for (port in ports) {
-            inline port.resetInputEvent()
+            inline port.resetInputEvents()
         }
     }
 
     tran havocInputEvents() {
         inline for (port in ports) {
-            inline port.havocInputEvent()
+            inline port.havocInputEvents()
         }
     }
 
     tran resetOutputEvents() {
         inline for (port in ports) {
-            inline port.resetOutputEvent()
+            inline port.resetOutputEvents()
         }
     }
 
@@ -42,19 +42,43 @@ abstract class Component {
             inline timeout.passTime()
         }
     }
+
+    // timeouts are left as Gamma's initializing action leaves them, a state sets its own when entered
+    tran restore() {
+        inline for (port in ports) {
+            inline port.restore()
+        }
+    }
 }
 
 class Channel {
     refers inputPort: Port[1]
     refers outputPort: Port[1]
 
-    tran doTransferEvent() {
-        inline outputPort.setInputEvent(inputPort.outputEvent as Event)
+    redefine tran {
+        inline inputPort.transferOutputEvents(outputPort)
+        inline outputPort.transferOutputEvents(inputPort)
     }
 
-    redefine tran {
-        if (inputPort.hasOutput()) {
-            inline doTransferEvent()
+    tran resetOutputEventsOf(component: Component) {
+        inline for (port in component.ports) {
+            inline if (port == inputPort) {
+                inline inputPort.resetOutputEvents()
+            }
+            inline if (port == outputPort) {
+                inline outputPort.resetOutputEvents()
+            }
+        }
+    }
+
+    tran transferOutputEventsOf(component: Component) {
+        inline for (port in component.ports) {
+            inline if (port == inputPort) {
+                inline inputPort.transferOutputEvents(outputPort)
+            }
+            inline if (port == outputPort) {
+                inline outputPort.transferOutputEvents(inputPort)
+            }
         }
     }
 }
@@ -62,6 +86,16 @@ class Channel {
 abstract class CompositeComponent : Component {
     contains components: Component[0..*]
     contains channels: Channel[0..*]
+
+    redefine init {
+        inline for (component in components) {
+            inline component.init()
+        }
+
+        inline for (channel in channels) {
+            inline channel.main()
+        }
+    }
 
     redefine tran passTime() {
         inline for (timeout in timeouts) {
@@ -72,19 +106,22 @@ abstract class CompositeComponent : Component {
             inline component.passTime()
         }
     }
+
+    redefine tran restore() {
+        inline for (port in ports) {
+            inline port.restore()
+        }
+
+        inline for (component in components) {
+            inline component.restore()
+        }
+    }
 }
 
 class SyncComponent : CompositeComponent {
-    redefine init {
-        inline for (component in components) {
-            inline component.init()
-        }
-    }
-
     redefine tran schedule() {
-        inline resetOutputEvents()
-
         inline for (component in components) {
+            inline component.resetOutputEvents()
             inline component.main()
         }
 
@@ -93,5 +130,28 @@ class SyncComponent : CompositeComponent {
         }
 
         inline resetInputEvents()
+    }
+}
+
+class ExecutionStep {
+    refers component: Component[1]
+}
+
+class CascadeComponent : CompositeComponent {
+    contains executionSteps: ExecutionStep[0..*]
+
+    // a channel delivers at the raise; its source's outputs are not state in Gamma, so they are cleared before the source runs again
+    redefine tran schedule() {
+        inline for (step in executionSteps) {
+            inline for (channel in channels) {
+                inline channel.resetOutputEventsOf(step.component)
+            }
+
+            inline step.component.main()
+
+            inline for (channel in channels) {
+                inline channel.transferOutputEventsOf(step.component)
+            }
+        }
     }
 }

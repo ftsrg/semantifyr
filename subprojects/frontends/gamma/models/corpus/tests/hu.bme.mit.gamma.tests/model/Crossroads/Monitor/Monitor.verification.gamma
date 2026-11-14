@@ -1,0 +1,19 @@
+package crossroads::monitor::Monitor_verification
+
+import crossroads::monitor
+
+verification case StateErrorReachable of Monitor {
+    EF state main_region.Error
+}
+
+verification case StateOtherReachable of Monitor {
+    EF state main_region.Other
+}
+
+verification case StateRedReachable of Monitor {
+    EF state main_region.Red
+}
+
+verification case StateGreenReachable of Monitor {
+    EF state main_region.Green
+}

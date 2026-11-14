@@ -120,7 +120,7 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
     view: 'own',
     expectState: async () => {
       await editorShows('trace BarrierDownWhileTrainInCrossingTrace')
-      expect(text('.case-trace .trace-frame-bar')).toContain('BarrierDownWhileTrainInCrossing.trace.gamma')
+      expect(text('.case-trace .trace-frame-bar')).toContain('BarrierDownWhileTrainInCrossing.trace.get')
     },
   },
   'gamma-steps': {

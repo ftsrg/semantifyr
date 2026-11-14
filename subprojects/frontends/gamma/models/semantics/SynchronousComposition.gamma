@@ -1,0 +1,59 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package SynchronousComposition
+
+interface Control {
+    in event start
+}
+
+interface Link {
+    out event ping
+}
+
+statechart Sender [
+    port control : provides Control,
+    port link : provides Link
+] {
+    region Main {
+        initial MainInitial
+        state Idle
+        state Sent
+    }
+
+    transition from MainInitial to Idle
+    transition from Idle to Sent when control.start / raise link.ping;
+}
+
+statechart Receiver [
+    port link : requires Link
+] {
+    region Main {
+        initial MainInitial
+        state Waiting
+        state Received
+    }
+
+    transition from MainInitial to Waiting
+    transition from Waiting to Received when link.ping
+}
+
+sync Pair [
+    port control : provides Control
+] {
+    component sender : Sender
+    component receiver : Receiver
+    bind control -> sender.control
+    channel [ sender.link ] -o)- [ receiver.link ]
+}
+
+verification case ReceiverSeesTheRaiseInTheNextCycle of Pair {
+    EF (state sender.Main.Sent and state receiver.Main.Waiting)
+}
+
+verification case ReceiverSeeingTheRaiseInItsCycleViolated of Pair {
+    AG (not state sender.Main.Sent or state receiver.Main.Received)
+}

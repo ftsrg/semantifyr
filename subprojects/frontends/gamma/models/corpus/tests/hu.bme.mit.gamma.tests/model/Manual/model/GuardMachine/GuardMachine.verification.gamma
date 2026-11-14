@@ -1,0 +1,7 @@
+package manual::GuardMachine::GuardMachine_verification
+
+import manual::GuardMachine
+
+verification case StateGuardMachineStateReachable of GuardMachine {
+    EF state GuardMachine_.GuardMachine__State
+}

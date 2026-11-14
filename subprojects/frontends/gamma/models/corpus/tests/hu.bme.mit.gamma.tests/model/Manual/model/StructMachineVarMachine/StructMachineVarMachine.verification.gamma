@@ -1,0 +1,7 @@
+package manual::StructMachineVarMachine::StructMachineVarMachine_verification
+
+import manual::StructMachineVarMachine
+
+verification case StateStructMachineVarMachineStateReachable of StructMachineVarMachine {
+    EF state StructMachineVarMachine_.StructMachineVarMachine__State
+}

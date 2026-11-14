@@ -1,0 +1,7 @@
+package ^clock::clocks::Adder_verification
+
+import ^clock::clocks
+
+verification case StateXReachable of Adder {
+    EF state main._X
+}
