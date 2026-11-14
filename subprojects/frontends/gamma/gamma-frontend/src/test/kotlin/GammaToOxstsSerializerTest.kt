@@ -18,6 +18,7 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtext.EcoreUtil2
+import org.eclipse.xtext.nodemodel.ICompositeNode
 import org.eclipse.xtext.resource.XtextResourceSet
 import org.eclipse.xtext.testing.util.ParseHelper
 import org.junit.jupiter.api.Test
@@ -342,12 +343,18 @@ class GammaToOxstsSerializerTest {
         EcoreUtil.resolveAll(gammaPackage)
         assertThat(gammaPackage.eResource().errors).isEmpty()
         val literal = EcoreUtil2.getAllContentsOfType(gammaPackage, LiteralInteger::class.java).single()
-        // the grammar has no third literal, so a literal of a kind the serializer does not know is made in the test
-        EcoreUtil.replace(literal, object : LiteralExpressionImpl() {})
+        // the grammar has no third literal, so a literal of a kind the serializer does not know is made in the test, and it takes over the parsed literal's node so that it has a line
+        val unknownLiteral = object : LiteralExpressionImpl() {}
+        val nodes = literal.eAdapters().filter {
+            it is ICompositeNode
+        }
+        literal.eAdapters().removeAll(nodes)
+        unknownLiteral.eAdapters().addAll(nodes)
+        EcoreUtil.replace(literal, unknownLiteral)
 
         assertThatThrownBy {
             GammaToOxstsSerializer(GammaNameMap()).transformToOxsts(gammaPackage)
-        }.isInstanceOf(IllegalStateException::class.java).hasMessageMatching("test\\.gamma:\\d+: the literal of type LiteralExpression is not supported")
+        }.isInstanceOf(IllegalStateException::class.java).hasMessage("test.gamma:10: the literal of type LiteralExpression is not supported")
     }
 
     @Test

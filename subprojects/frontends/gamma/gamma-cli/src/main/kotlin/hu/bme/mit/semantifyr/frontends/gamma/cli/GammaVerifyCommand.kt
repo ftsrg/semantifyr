@@ -52,7 +52,7 @@ class GammaVerifyCommand(
 
     private val workspace by option("--workspace")
         .path(mustExist = true, canBeFile = false)
-        .help("The directory whose Gamma files, in it and below it, the model's imports resolve in; the model's own directory by default.")
+        .help("The directory whose Gamma files, in it and below it, the model's imports resolve in; by default the Gamma files of the model's own directory, and none below it.")
 
     private val backendOptions by BackendOptionGroup {
         portfolios
