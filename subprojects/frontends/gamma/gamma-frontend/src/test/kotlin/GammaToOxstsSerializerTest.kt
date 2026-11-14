@@ -7,6 +7,8 @@
 import com.google.inject.Inject
 import com.google.inject.Provider
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.LiteralInteger
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.impl.LiteralExpressionImpl
 import hu.bme.mit.semantifyr.frontends.gamma.lang.tests.InjectWithGamma
 import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaNameMap
 import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaToOxstsSerializer
@@ -15,6 +17,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.util.EcoreUtil
+import org.eclipse.xtext.EcoreUtil2
 import org.eclipse.xtext.resource.XtextResourceSet
 import org.eclipse.xtext.testing.util.ParseHelper
 import org.junit.jupiter.api.Test
@@ -315,6 +318,36 @@ class GammaToOxstsSerializerTest {
             "contains _flag: BooleanVariable subsets variables {",
             "}",
         )
+    }
+
+    @Test
+    fun `a literal the serializer does not know is named with its place`() {
+        val gammaPackage = parseHelper.parse(
+            """
+                package test
+                statechart Machine {
+                    var count : integer
+                    region Main {
+                        state Idle
+                        state Busy
+                        initial MainInitial
+                    }
+                    transition from MainInitial to Idle
+                    transition from Idle to Busy [ count < 3 ]
+                }
+            """.trimIndent(),
+            URI.createURI("test.gamma"),
+            resourceSetProvider.get(),
+        )
+        EcoreUtil.resolveAll(gammaPackage)
+        assertThat(gammaPackage.eResource().errors).isEmpty()
+        val literal = EcoreUtil2.getAllContentsOfType(gammaPackage, LiteralInteger::class.java).single()
+        // the grammar has no third literal, so a literal of a kind the serializer does not know is made in the test
+        EcoreUtil.replace(literal, object : LiteralExpressionImpl() {})
+
+        assertThatThrownBy {
+            GammaToOxstsSerializer(GammaNameMap()).transformToOxsts(gammaPackage)
+        }.isInstanceOf(IllegalStateException::class.java).hasMessageMatching("test\\.gamma:\\d+: the literal of type LiteralExpression is not supported")
     }
 
     @Test
