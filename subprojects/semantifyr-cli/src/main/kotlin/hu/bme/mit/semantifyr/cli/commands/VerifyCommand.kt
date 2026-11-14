@@ -29,7 +29,7 @@ import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 
 class VerifyCommand @Inject constructor(
-    semantifyrLoader: SemantifyrLoader,
+    private val semantifyrLoader: SemantifyrLoader,
     verificationCaseDiscoverer: VerificationCaseDiscoverer,
     private val injector: Injector,
 ) : BaseSemantifyrCommand("verify", semantifyrLoader) {
@@ -70,6 +70,20 @@ class VerifyCommand @Inject constructor(
             .outputDirectory(artifactOptions.resolvedOutputDirectory)
             .optimization(compilationOptions.resolved)
             .build()
+
+        val witnessPath = System.getProperty("semantifyr.spike.witness")
+        if (witnessPath != null) {
+            val witnessContext = semantifyrLoader
+                .startContext()
+                .loadLibraryPaths(libraries)
+                .loadModelPaths(listOf(model))
+                .loadModel(java.nio.file.Path.of(witnessPath))
+                .buildAndResolve()
+            val witness = witnessContext.modelResources.last().contents.filterIsInstance<hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts>().single()
+            val result = verifier.verify(witness)
+            println("spike witness verdict=${result.verdict} message=${result.message}")
+            return
+        }
 
         val exitCode = cases.maxOf { case ->
             verifyCase(output, case.qualifiedName) {

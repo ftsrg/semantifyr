@@ -186,7 +186,13 @@ class InlineOperationExpander @Inject constructor(
 
         rewriteLocalVariables(body, containerInstance)
 
-        if (!builtinAnnotationHandler.isTransitionTraced(actualTransition)) {
+        val tracing = System.getProperty("semantifyr.spike.tracing", "library")
+        val traced = when (tracing) {
+            "none" -> false
+            "all" -> true
+            else -> builtinAnnotationHandler.isTransitionTraced(actualTransition)
+        }
+        if (!traced) {
             return body
         }
 

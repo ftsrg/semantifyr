@@ -76,12 +76,18 @@ class TransitionCallTraceTransformer @Inject constructor(
                     val evaluation = try {
                         evaluator.evaluateTyped(ExpressionEvaluation::class.java, it.expression)
                     } catch (_: EvaluationFailureException) {
-                        sourceError(it.expression, "The argument of traced transition '${transitionDeclaration.name}' is not evaluable at compile time")
+                        if (System.getProperty("semantifyr.spike.tracing") == "all") {
+                            null
+                        } else {
+                            sourceError(it.expression, "The argument of traced transition '${transitionDeclaration.name}' is not evaluable at compile time")
+                        }
                     }
-                    ArgumentTrace(
-                        parameter,
-                        evaluation,
-                    )
+                    evaluation?.let {
+                        ArgumentTrace(
+                            parameter,
+                            it,
+                        )
+                    }
                 }
             },
             parent = parent,
