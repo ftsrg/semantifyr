@@ -22,7 +22,7 @@ So that traffic can pass, a light that turns green stays green for at least thre
 
 <LiveEmbed example={step1} show={['TrafficLight']} />
 
-The main transition has a fourth branch. While the light is green and has counted fewer than three steps, it stays green and adds one to the counter with [arithmetic](../../language/expressions.md#arithmetic-operators); once it has counted three, it may turn yellow. The guard `greenFor < 3` also bounds the counter: it never goes above three, the bound a backend such as [Spin](../../backends/spin.mdx) needs on an integer.
+The main transition has a fourth branch. While the light is green and has counted fewer than three steps, it stays green and adds one to the counter with [arithmetic](../../reference/language/expressions.md#arithmetic-operators); once it has counted three, it may turn yellow. The guard `greenFor < 3` also bounds the counter: it never goes above three, the bound a backend such as [Spin](../../reference/backends/spin.mdx) needs on an integer.
 
 Can north still turn yellow, and how many steps does it take now?
 
@@ -45,7 +45,7 @@ That trace is one execution. The requirement is about every green phase of every
 
 <LiveEmbed example={step2} show={['NorthGreenForThreeSteps']} />
 
-Its main transition remembers whether north was green before the step in a [local variable](../../language/operations.md#local-variable), `wasGreen`, which lives only in the step that declares it and may read the state. It runs the intersection's step, then looks again. While north stays green, the case counts, up to three; when north leaves green, `leftGreenEarly` tells whether it left before three steps. The [`if`](../../language/operations.md#if) is decided at run time, in every step. `AG !leftGreenEarly` asks that it never does.
+Its main transition remembers whether north was green before the step in a [local variable](../../reference/language/operations.md#local-variable), `wasGreen`, which lives only in the step that declares it and may read the state. It runs the intersection's step, then looks again. While north stays green, the case counts, up to three; when north leaves green, `leftGreenEarly` tells whether it left before three steps. The [`if`](../../reference/language/operations.md#if) is decided at run time, in every step. `AG !leftGreenEarly` asks that it never does.
 
 Predict, then run the step:
 
@@ -65,7 +65,7 @@ The counter starts at 0 when the model starts, and nothing sets it back.
 
 ## The Fix
 
-Every change of color now goes through one [transition with a parameter](../../language/transitions.md#declaring-a-transition), `switchTo`, which sets the color and starts the count again, so no branch can forget it. Each branch calls it with an inline call and an argument; inside it, `self.color` is the variable and `color` the parameter, as in `isColor`. `@Trace` moves to `switchTo`, so *Calls* names each switch with its color.
+Every change of color now goes through one [transition with a parameter](../../reference/language/transitions.md#declaring-a-transition), `switchTo`, which sets the color and starts the count again, so no branch can forget it. Each branch calls it with an inline call and an argument; inside it, `self.color` is the variable and `color` the parameter, as in `isColor`. `@Trace` moves to `switchTo`, so *Calls* names each switch with its color.
 
 <LiveEmbed example={greenTime} show={['TrafficLight']} />
 

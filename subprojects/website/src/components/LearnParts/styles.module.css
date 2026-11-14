@@ -1,0 +1,36 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+.parts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.part {
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-large);
+  background: var(--surface-panel);
+}
+
+.title {
+  margin: 0 0 0.4rem;
+  font-size: 1.15rem;
+}
+
+.description {
+  margin: 0 0 0.6rem;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.pages {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.95rem;
+}

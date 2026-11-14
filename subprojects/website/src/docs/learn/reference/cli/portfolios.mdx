@@ -1,0 +1,17 @@
+---
+title: Portfolios
+sidebar_position: 1
+description: The portfolios of the command line, Live and the VS Code extension, each with its backend configurations, read from the launcher.
+---
+
+import PortfolioTable from '@site/src/components/PortfolioTable';
+import listing from '@cli-reference/portfolios.txt';
+import verifyHelp from '@cli-reference/verify.txt';
+
+# Portfolios
+
+How a portfolio runs its backends side by side and decides the verdict from their answers is explained under [Verification and Portfolios](../../tools/verification.mdx).
+
+Choose a portfolio with `semantifyr verify --portfolio <id>`. A single-backend portfolio needs its backend installed, a combined one at least one of its backends; the `portfolios` command of every launcher, `semantifyr portfolios` for one, reports which portfolios are available on your machine, and `--portfolio` answers an id that names none with the ids that do.
+
+<PortfolioTable listing={listing} verifyHelp={verifyHelp} />

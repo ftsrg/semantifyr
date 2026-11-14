@@ -1,0 +1,52 @@
+---
+title: Gamma Traces
+sidebar_position: 2
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import trace from '@gamma-reference-trace/crossroads-ACanBeGreen.trace.get';
+
+# Gamma Traces
+
+`semantifyr-gamma verify`, the VS Code extension and Live's Gamma language write the witness of a [Gamma](../../gamma.mdx) verification case as a Gamma execution trace, `trace.get`, next to the back-annotated [`witness.oxsts`](index.mdx#witnessoxsts). The trace is a `.get` file of its own in Gamma's execution trace syntax, with two extensions: its header names a verification case, and it asserts the transitions that fired. Every name in it is a cross-reference into the model, so the Gamma language checks a trace like any other Gamma file.
+
+## Form
+
+The reference trace, of the case `ACanBeGreen` of the Crossroads example, which the Gamma frontend's tests generate from its `witness.json` and `trace.json` and compare whole:
+
+<CodeBlock language="gamma">{trace.replace(/^\/\*[\s\S]*?\*\/\s*/, '')}</CodeBlock>
+
+- `import` names the case's package by its qualified name, as a Gamma model imports a package.
+- `trace <name> of <case>` names the traced verification case; the traced component is the case's component, in whose scope every name of the trace resolves, as in the case's property.
+- Instances are named from the traced component down, `controller` here, nested ones as `outer->inner`; an element of the traced component itself is named without an instance, `state Main.Idle`.
+- The first step is initialization: the `reset` act, the outputs the entry actions raised and the state reached.
+
+Acts:
+
+- `raise <port>.<event>`: the environment raises an input event of a port of the traced component; an act names no instance.
+- `elapse <milliseconds>`: time advances before the step.
+- `schedule component`: the component takes one step.
+
+Asserts, each closed by `;`:
+
+- `state <instance>.<region>.<state>`: a state is active.
+- `variable <instance>.<variable> = <value>`: a statechart variable has a value.
+- `raise <instance>.<port>.<event>`: an instance raised an output event of its port, `raise <port>.<event>` the traced component itself.
+- `transition <instance> from <state> to <state>`: a transition fired, followed by `when <trigger>` when another transition shares its source and target; a transition with an `@(id)` is named `transition <instance>.<id>`.
+
+The validator checks that an act raises an input event and an assert an output event of its port, that a fired transition exists and is unambiguous, and that a value matches its variable's type; scoping checks that every name belongs to the instance it follows.
+
+## What the trace shows
+
+The trace has one `step` per witness step. The Gamma semantic library marks four transitions with `@Trace`: `Transition::fire`, `Port::raiseInputEvent(event)`, `Port::setOutputEvent(event)` and `GammaVerificationCase::passTime`, which the trace shows as:
+
+- a fired `Transition::fire` as a `transition` assert;
+- `Port::raiseInputEvent` as a `raise` act on the port of the traced component the inner port is bound to, and `Port::setOutputEvent` as a `raise` assert on the port of the instance that raised it, as the called transition says;
+- `passTime` at the root as `elapse 1000` in the same step, before `schedule`;
+- the active state of every region and the value of every statechart variable in the witness as `state` and `variable` asserts.
+
+Input events are traced because the library resets them within the step, so no state between steps shows them. Output events are traced because the optimizer removes outputs that nothing reads.
+
+Not in the trace: negations of the output events not raised, timers and port variables; the values of event parameters, since a traced call records no runtime argument, so a raise of an event with parameters is written without its arguments; the values of record-typed variables; the last state a shallow history node holds, which is not an active state; and the firing of a transition into a history node without an `@(id)`, which the `from`/`to` form cannot name, so only the states it entered show it. The time step is fixed at one second.
+
+The VS Code extension's language server opens a `.get` trace like any Gamma file, and Live's Gamma language shows the trace in the *Gamma trace* view of the trace under the cases.

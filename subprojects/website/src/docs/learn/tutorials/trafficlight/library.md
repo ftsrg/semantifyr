@@ -22,9 +22,9 @@ A state is an object, and the statechart that owns it holds the active one:
 
 <LiveEmbed example={step1} show={['State', 'Statechart']} />
 
-`Statechart` [contains](../../language/features.md#contains) any number of states, `[0..*]`, and each `State` knows the statechart that contains it through a [`container`](../../language/features.md#container) feature; [`opposite`](../../language/features.md#opposite) ties the two directions together; both sides name each other, and the validator rejects an `opposite` written on one side only. `activeState` is a [feature-typed variable](../../language/variables.md#feature-typed-variables): its values are the states of this statechart, or `nothing` before one is active. When the model is compiled, it becomes an integer that numbers the states. A state is active when its statechart holds it, and `activate` makes it so.
+`Statechart` [contains](../../reference/language/features.md#contains) any number of states, `[0..*]`, and each `State` knows the statechart that contains it through a [`container`](../../reference/language/features.md#container) feature; [`opposite`](../../reference/language/features.md#opposite) ties the two directions together; both sides name each other, and the validator rejects an `opposite` written on one side only. `activeState` is a [feature-typed variable](../../reference/language/variables.md#feature-typed-variables): its values are the states of this statechart, or `nothing` before one is active. When the model is compiled, it becomes an integer that numbers the states. A state is active when its statechart holds it, and `activate` makes it so.
 
-The light [extends](../../language/classes.md#inheritance) `Statechart`. Its three states [subset](../../language/features.md#subsets) the inherited `states`, so they are states of the light:
+The light [extends](../../reference/language/classes.md#inheritance) `Statechart`. Its three states [subset](../../reference/language/features.md#subsets) the inherited `states`, so they are states of the light:
 
 <LiveEmbed example={step1} show={['TrafficLight']} />
 
@@ -49,9 +49,9 @@ The light's main transition still spells out its cycle. Make the transitions obj
 
 <LiveEmbed example={step2} show={['Transition', 'Statechart']} />
 
-A `Transition` [refers](../../language/features.md#refers) to the state it leaves and the state it enters, without owning them, and fires when its source is active. A reference without a multiplicity refers to exactly one, as if written `[1]`. The statechart's main transition is an [`inline for choice`](../../language/inline-operations.md#inline-for-choice): when the model is compiled, it becomes a `choice` with one branch for each transition of the statechart.
+A `Transition` [refers](../../reference/language/features.md#refers) to the state it leaves and the state it enters, without owning them, and fires when its source is active. A reference without a multiplicity refers to exactly one, as if written `[1]`. The statechart's main transition is an [`inline for choice`](../../reference/language/inline-operations.md#inline-for-choice): when the model is compiled, it becomes a `choice` with one branch for each transition of the statechart.
 
-The light no longer has a main transition. It lists its transitions, and the nested block of each [redefines](../../language/features.md#redefine-and-redefines) the transition's two references for this light: `redefine refers from: State[1] = red` keeps the reference's name, type and multiplicity and [binds](../../language/features.md#feature-binding) it with `=` to the light's `red`, fixed when the model is compiled:
+The light no longer has a main transition. It lists its transitions, and the nested block of each [redefines](../../reference/language/features.md#redefine-and-redefines) the transition's two references for this light: `redefine refers from: State[1] = red` keeps the reference's name, type and multiplicity and [binds](../../reference/language/features.md#feature-binding) it with `=` to the light's `red`, fixed when the model is compiled:
 
 <LiveEmbed example={step2} show={['TrafficLight']} />
 

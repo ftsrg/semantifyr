@@ -16,17 +16,17 @@ A browser is enough for this lesson. Each model on the page opens in Live, the e
 
 ## The Light
 
-A traffic light has three colors. Every OXSTS file starts with its package, and this one declares the colors as an [enumeration](../../language/datatypes.md#enumerations):
+A traffic light has three colors. Every OXSTS file starts with its package, and this one declares the colors as an [enumeration](../../reference/language/datatypes.md#enumerations):
 
 <LiveEmbed example={step1} show={['package', 'LightColor']} />
 
 Semicolons may end a statement, and nothing needs one.
 
-The light itself is a [class](../../language/classes.md). Its state is one [variable](../../language/variables.md), `color`, which starts at `LightColor::Red`. Its behavior is its main transition. Every class extends [`Anything`](../../language/classes.md#the-anything-base-class), which declares an empty main transition and an empty `init`, so the light writes its own as `redefine tran`:
+The light itself is a [class](../../reference/language/classes.md). Its state is one [variable](../../reference/language/variables.md), `color`, which starts at `LightColor::Red`. Its behavior is its main transition. Every class extends [`Anything`](../../reference/language/classes.md#the-anything-base-class), which declares an empty main transition and an empty `init`, so the light writes its own as `redefine tran`:
 
 <LiveEmbed example={step1} show={['TrafficLight']} />
 
-The main transition is a [`choice`](../../language/operations.md#choice) of three branches. Each branch starts with an [`assume`](../../language/operations.md#assumption): a branch whose assumption does not hold in the current state cannot be taken. The assignment `:=` then sets the next color.
+The main transition is a [`choice`](../../reference/language/operations.md#choice) of three branches. Each branch starts with an [`assume`](../../reference/language/operations.md#assumption): a branch whose assumption does not hold in the current state cannot be taken. The assignment `:=` then sets the next color.
 
 This is how a model runs, the one rule everything else builds on:
 
@@ -38,7 +38,7 @@ So the light goes from red to green to yellow and back to red, one color a step.
 
 ## The Question
 
-`@VerificationCase` makes the light a case that the verifier checks, and the [property](../../language/properties.md#the-verification-property) at the bottom is the question it asks. [`EF`](../../language/expressions.md#temporal-operators), "exists finally", asks whether some execution reaches a state where the expression holds: can the light ever be yellow?
+`@VerificationCase` makes the light a case that the verifier checks, and the [property](../../reference/language/properties.md#the-verification-property) at the bottom is the question it asks. [`EF`](../../reference/language/expressions.md#temporal-operators), "exists finally", asks whether some execution reaches a state where the expression holds: can the light ever be yellow?
 
 Before you run it, decide what you expect, and how many steps you think the light needs.
 
@@ -57,7 +57,7 @@ Once the run ends, the trace of the case opens below its line by itself: the exe
 
 The trace of an `EF` case is an execution that reaches what the case asks for. The other views show the same execution: *Witness* as an OXSTS model, and *Calls* the calls of transitions marked to be traced, of which this model has none yet.
 
-The editor checks the model as you type: misspell a color and a red underline names the problem, and `Ctrl+Space` offers what can be written where the cursor is. [Live's screen](../../live.md) lists every control of the editor.
+The editor checks the model as you type: misspell a color and a red underline names the problem, and `Ctrl+Space` offers what can be written where the cursor is. [Live's screen](../../tools/live.md) lists every control of the editor.
 
 ## What You Can Do Now
 

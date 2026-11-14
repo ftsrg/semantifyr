@@ -17,7 +17,7 @@ Flattening is the third and last phase of the compilation. It starts from the mo
 - Every expression that still names an instance is replaced by that instance's number, and `nothing` by `-1`.
 - The phase's optimizations then run until none of them changes the model: they simplify expressions and nested operations, remove redundant operations, propagate assumptions that are false, substitute variables that keep one value, propagate copies, remove dead stores and dead code, and remove the variables that nothing reads.
 
-What the phase writes, `pipeline/flattened.oxsts`, is what `semantifyr compile` writes as its output and what a [backend](/category/backends) receives, each translating it into its own input language.
+What the phase writes, `pipeline/flattened.oxsts`, is what `semantifyr compile` writes as its output and what a [backend](/learn/reference/backends) receives, each translating it into its own input language.
 
 <PhaseWalk steps={flattening} label="Flattening, step by step" />
 

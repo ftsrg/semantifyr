@@ -11,7 +11,7 @@ export const PRODUCT_NAME = terms.live.term
 export const SHORT_NAME = terms.live.short ?? terms.live.term
 
 export const WEBSITE_URL = 'https://semantifyr.org'
-export const PRIVACY_URL = `${WEBSITE_URL}/learn/live-privacy`
+export const PRIVACY_URL = `${WEBSITE_URL}/learn/tools/privacy/`
 
 export const SOURCE_CODE_URL = 'https://github.com/ftsrg/semantifyr'
 

@@ -11,7 +11,7 @@ import room from '@oxsts-phases-models/room.oxsts';
 
 # How the Language Works
 
-An OXSTS model, written by hand or translated from another language by a [frontend](../index.md), describes a system by its structure: classes whose instances contain instances of other classes, and transitions that call other transitions. What a [backend](/category/backends) checks is a transition system: variables, an initial transition, one transition the system takes again and again, and a property over the variables. The compiler turns the one into the other, for one verification case at a time, in three phases.
+An OXSTS model, written by hand or translated from another language by a [frontend](../start/index.mdx#frontends), describes a system by its structure: classes whose instances contain instances of other classes, and transitions that call other transitions. What a [backend](/learn/reference/backends) checks is a transition system: variables, an initial transition, one transition the system takes again and again, and a property over the variables. The compiler turns the one into the other, for one verification case at a time, in three phases.
 
 <PhaseChain />
 
@@ -23,4 +23,4 @@ The three pages step through what the compiler writes for this one model. Every 
 
 <CodeBlock language="oxsts" title="room.oxsts">{room}</CodeBlock>
 
-The command line writes the same files for any model: `semantifyr compile --artifacts=debug` keeps the model after each phase and after every single step in the case's directory, as [the command line's page](../cli/index.mdx) describes.
+The command line writes the same files for any model: `semantifyr compile --artifacts=debug` keeps the model after each phase and after every single step in the case's directory, as [the command line's page](../reference/cli/index.mdx) describes.

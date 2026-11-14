@@ -1,0 +1,30 @@
+---
+title: What Semantifyr Is
+sidebar_label: What Semantifyr Is
+description: Semantifyr, a framework for the declarative definition of engineering model semantics, how a model becomes a verdict and a trace, and its frontends and backends.
+---
+
+import Architecture from '@site/src/components/Architecture';
+
+# What Semantifyr Is
+
+**Semantifyr** is a framework to support the declarative definition of engineering model semantics. Where a verification tool usually translates each engineering language to a model checker by a translator of its own, Semantifyr has the execution semantics of a language written once, as a **semantic library** in its own language, OXSTS, and verifies every model of the language as an instance of that library. The same library verifies many models, a language can have variants of its library, and the model checkers, the backends, never need to know the engineering language.
+
+## How It Works at a Glance
+
+<Architecture />
+
+A [frontend](#frontends) translates a model of its language, with the verification cases written in it, into a Semantifyr model: OXSTS that instantiates the classes of the language's semantic library. Semantifyr compiles each case of it into a formal model, a transition system, in [three phases](../how-it-works/index.mdx), and a [portfolio](../tools/verification.mdx) hands that to the [backends](#backends). The verdict comes back, and where it rests on a run the backend found, the run comes back too: as the formal trace, back-annotated into a trace of the Semantifyr model, and turned by the frontend into a trace in the language of the model.
+
+## Frontends
+
+A frontend brings an engineering language to Semantifyr: its translation into OXSTS, its semantic library and its traces. Each has its part of Learn, with what of the language it supports and what it assumes of the language's meaning.
+
+- [SysML v2](../sysml-v2-subset.md): parts, ports, items and state machines, with verification cases whose objectives are requirements, and traces written as SysML v2 models.
+- [Gamma](../gamma.mdx): statecharts and their composition in Gamma's syntax, with verification cases in the model, and traces in Gamma's trace language.
+
+A language without a frontend is written in OXSTS directly, as the [OXSTS lessons](../tutorials/trafficlight/index.md) do.
+
+## Backends
+
+A backend is a model checker that Semantifyr runs on the formal model: [Theta](../reference/backends/theta.mdx), [nuXmv](../reference/backends/nuxmv.mdx), [Spin](../reference/backends/spin.mdx) and [Uppaal](../reference/backends/uppaal.mdx). Each backend's page lists what it refuses before it runs.

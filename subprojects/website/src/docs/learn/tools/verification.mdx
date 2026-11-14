@@ -1,0 +1,33 @@
+---
+title: Verification and Portfolios
+sidebar_position: 3
+description: How a portfolio runs the backends side by side, how the verdict is decided from their answers, and how a witness is checked.
+---
+
+# Verification and Portfolios
+
+Verifying a case [compiles](../how-it-works/index.mdx) it to a transition system and hands that to a portfolio. A portfolio is a strategy for the backend runs: which backends run under which configurations, how they run side by side, and how the verdict is decided from their answers. Where a backend found a run that shows the verdict, its witness comes back with the verdict, and the witness can be checked. The command line, Live and the VS Code extension all verify this way; `smart` is the default portfolio everywhere.
+
+## Backends side by side
+
+A portfolio is made of legs, each one backend under one configuration. A portfolio runs every leg whose backend is installed, each writing its files to a directory of its own in the case's directory, as many at once as a bound allows, by default the number of the machine's processors; a leg beyond the bound waits for a free place. Before its backend runs, a leg checks whether the backend can translate the model, and answers Not supported, naming the constructs it refuses, when it cannot; each [backend's page](/learn/reference/backends) lists what it refuses. A model left with no variable, no `init` and no transition is decided without any backend.
+
+## Soundness directions
+
+Each leg is one backend configuration, listed with the direction in which its verdicts can be trusted. An exact leg is trusted both ways. An under-approximating leg explores only part of the behaviour, so it is trusted when it finds a trace (a Failed `AG` or a Passed `EF` property) and not when it reports that none exists. An over-approximating leg is trusted the other way round. Spin and Uppaal are under-approximating, since they choose a havoced value only among candidate values; Theta and nuXmv are exact. Uppaal's `over-approximation` configuration (`-A`, the convex hull of clock zones) is over-approximating, and since a run is exact, over-approximating or under-approximating, never both, it reports a case Not supported before it runs when the case havocs an integer that the model reads other than in comparisons with literals, which is where the candidate values would under-approximate. Spin and Uppaal compute with 32-bit integers that wrap. Spin runs a case only when every integer its property depends on has a static bound within 32 bits, and reports it Not supported otherwise. Uppaal declares every integer with its static bound, or with a 31-bit range when it has none within 32 bits, so that an increment or a doubling cannot wrap before Uppaal checks the range. It reports a case Not supported before it runs when arithmetic its property depends on may still leave 32 bits under those ranges, and stops a run as Not supported, naming the variable, when a value leaves its declared range. A trace either finds therefore never passes through a wrapped value.
+
+## The verdict from the answers
+
+How the answers become one verdict is what tells the portfolios apart:
+
+- `smart` and `theta` race their legs: the first answer that its leg's direction trusts is the verdict, and the legs still running are stopped. An answer that is not trusted does not end the race.
+- `all-agree` waits for every leg and reports the verdict its trusted legs agree on, naming any untrusted leg it overrules. Trusted legs that disagree make the case Errored, since one of them is unsound.
+- A single-backend portfolio reports its configuration's verdict when the leg's direction trusts it; otherwise the case is Inconclusive without a witness, and the message names the verdict it withheld, such as Spin's Passed on an `AG` property.
+
+When no trusted answer comes, the case is Timeout when a leg ran out of time or was still running at the time limit, Errored when every leg failed, Not supported when every leg refused the model, naming each leg and the constructs it refused, and Inconclusive otherwise; the message lists what every leg reported. The time limit holds for the whole case, the compilation and the back-annotation of the witness included. The [command line's reference](../reference/cli/index.mdx#verdicts) says how each verdict is reported, and [the portfolios](../reference/cli/portfolios.mdx) lists each portfolio with its legs.
+
+## The witness
+
+A trusted verdict that rests on a run the backend found, a Failed `AG` or a Passed `EF` property, comes with that run, the backend's evidence. The verifier back-annotates it into OXSTS as the witness, `witness.oxsts` in the case's directory: a model, `witness of` the case, that takes the case's transitions step by step and assumes after each step the state the backend reported, with the case's property, negated when the case failed. Beside it, `witness.json` holds the state of each step and `trace.json` the traced calls of each step, from which the editors and the frontends show the trace.
+
+A witness is checked by verifying it again, which is called validation: the witness model goes through the same compilation and a portfolio, the validation portfolio. The witness is valid when that verification passes, since the replayed run then exists in the model and shows what the verdict says; it is invalid when the verification fails, inconclusive when it decides nothing, and errored when it cannot run. Live and the VS Code extension validate every witness right after its verdict unless that is turned off in their settings, where the validation portfolio is chosen too.

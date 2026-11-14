@@ -69,7 +69,7 @@
       "file": "subprojects/frontends/sysml/models/tutorial/room.sysml",
       "label": "SysML v2 tutorial: Room",
       "reason": "The model the SysML v2 tutorial builds and runs from its page.",
-      "page": "learn/tutorials/sysml-v2",
+      "page": "learn/sysml-v2/tutorial",
       "cases": [
         "LampLitReachable",
         "LampNeverLitViolated",
@@ -220,7 +220,7 @@
       "file": "oxsts-test-models/tutorial/level-crossing.oxsts",
       "label": "Level crossing",
       "reason": "The simplest model, four small classes, and the one requirement a reader checks first.",
-      "page": "learn/language",
+      "page": "learn/reference/language",
       "cases": [
         "BarrierDownWhileTrainInCrossing",
         "TwoTrainsCanBeInTheCrossing"
