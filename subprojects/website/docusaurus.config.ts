@@ -60,6 +60,32 @@ function servedExamplesPlugin(): Plugin {
   };
 }
 
+// the backends the reference has a page for, which the architecture names
+function backendsPlugin(): Plugin {
+  const directory = path.resolve(__dirname, 'src/docs/learn/reference/backends');
+  return {
+    name: 'backends',
+    contentLoaded({ actions }) {
+      const backends = readdirSync(directory).filter((file) => {
+        return file.endsWith('.mdx');
+      }).map((file) => {
+        const text = readFileSync(path.join(directory, file), 'utf8');
+        const name = /^title: (.+)$/m.exec(text)?.[1];
+        const position = Number(/^sidebar_position: (.+)$/m.exec(text)?.[1]);
+        if (name === undefined || Number.isNaN(position)) {
+          throw new Error(`The backend's page ${file} names no title or no sidebar position`);
+        }
+        return { name, position, page: `/learn/reference/backends/${file.replace(/\.mdx$/, '')}/` };
+      }).sort((left, right) => {
+        return left.position - right.position;
+      }).map(({ name, page }) => {
+        return { name, page };
+      });
+      actions.setGlobalData({ backends });
+    },
+  };
+}
+
 // every built page names its own description and the card for a shared link, or the build fails
 function pageHeadsPlugin(): Plugin {
   return {
@@ -184,6 +210,7 @@ export default {
     '@docusaurus/plugin-sitemap',
     servedExamplesPlugin,
     pageHeadsPlugin,
+    backendsPlugin,
     () => ({
       name: 'raw-sources',
       configureWebpack: () => ({
@@ -229,6 +256,18 @@ export default {
           require.resolve('./src/css/header.css'),
         ],
       } satisfies ClassicThemeOptions,
+    ],
+    [
+      '@easyops-cn/docusaurus-search-local',
+      {
+        // the index is built with the site and searched in the reader's browser
+        hashed: true,
+        indexBlog: false,
+        indexPages: true,
+        docsRouteBasePath: '/',
+        explicitSearchResultPath: true,
+        searchBarShortcutHint: false,
+      },
     ],
   ],
   themeConfig: {

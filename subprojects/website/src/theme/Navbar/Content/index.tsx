@@ -11,6 +11,7 @@ import { useLocation } from '@docusaurus/router';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import { useColorMode } from '@docusaurus/theme-common';
 import { useNavbarMobileSidebar } from '@docusaurus/theme-common/internal';
+import SearchBar from '@theme/SearchBar';
 import ThemedImage from '@theme/ThemedImage';
 import { addressOf, learnParts, sections, SOURCE_CODE } from '@site/src/map';
 import { useLiveBackendUrl } from '@site/src/lib/live';
@@ -195,6 +196,9 @@ export default function NavbarContent(): React.JSX.Element {
       <div className="site-header-group">
         <Brand />
         <Sections />
+      </div>
+      <div className="site-header-search">
+        <SearchBar />
       </div>
       <div className="site-header-group site-header-end">
         <a href={SOURCE_CODE} className="site-button">
