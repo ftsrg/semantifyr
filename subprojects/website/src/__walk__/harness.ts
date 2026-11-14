@@ -10,9 +10,10 @@ import type { Browser, BrowserContext, Page } from 'playwright';
 import { expect, inject, test as base } from 'vitest';
 import { MockBackend } from '../../../semantifyr-live/frontend/src/__ui__/mock/backend';
 import { launchChromium } from './browser';
-import { CONTENT_TYPES, fileOf, LIVE } from './staticServer';
+import { contentTypeOf, fileOf, LIVE } from './staticServer';
 
 export const SITE_URL = inject('siteUrl');
+const LIVE_URL = inject('liveUrl');
 
 const EVIDENCE = resolve(import.meta.dirname, '../../build/evidence/walk');
 
@@ -23,24 +24,30 @@ export interface OpenOptions {
 
 export interface Walk {
   backend: MockBackend;
-  // opens an address of the site under its base path; the first page fixes the context's viewport
+  // the first page fixes the context's viewport
   open: (address: string, options?: OpenOptions) => Promise<Page>;
 }
 
 const DESKTOP = { width: 1440, height: 900 };
 
-// live's production build answers at the address the site's build names for live, with the mock backend of live's interface tests behind it
-async function serveLive(context: BrowserContext, backend: MockBackend, liveUrl: string): Promise<void> {
-  await context.route(`${liveUrl}/**`, async (route) => {
+// the routes stand before the first page loads, so no request of a page reaches another host than the site's server; a route sees HTTP requests alone, and the mock answers live's sockets
+async function routeHosts(context: BrowserContext, backend: MockBackend): Promise<void> {
+  const siteOrigin = new URL(SITE_URL).origin;
+  await context.route((url) => {
+    return url.origin !== siteOrigin;
+  }, async (route) => {
+    await route.abort('blockedbyclient');
+  });
+  await context.route(`${LIVE_URL}/**`, async (route) => {
     const path = new URL(route.request().url()).pathname;
     const file = fileOf(LIVE, path) ?? (extname(path) === '' ? join(LIVE, 'index.html') : null);
     if (file === null) {
       await route.fulfill({ status: 404 });
       return;
     }
-    await route.fulfill({ contentType: CONTENT_TYPES[extname(file)] ?? 'application/octet-stream', body: readFileSync(file) });
+    await route.fulfill({ contentType: contentTypeOf(file), body: readFileSync(file) });
   });
-  await backend.install(context, liveUrl);
+  await backend.install(context, LIVE_URL);
 }
 
 function folderName(name: string): string {
@@ -61,9 +68,7 @@ export const test = base.extend<{ walk: Walk; browser: Browser }>({
   walk: async ({ browser, task }, provide) => {
     const backend = new MockBackend();
     const pageErrors: string[] = [];
-    const siteOrigin = new URL(SITE_URL).origin;
     let context: BrowserContext | null = null;
-    let liveUrl: string | null = null;
     const contextFor = async (options: OpenOptions): Promise<BrowserContext> => {
       if (context) {
         return context;
@@ -73,31 +78,17 @@ export const test = base.extend<{ walk: Walk; browser: Browser }>({
         serviceWorkers: 'block',
       });
       await context.tracing.start({ screenshots: true, snapshots: true });
-      // the walk reaches no other host than the site and live
-      await context.route((url) => {
-        return url.origin !== siteOrigin;
-      }, async (route) => {
-        await route.abort('blockedbyclient');
-      });
+      await routeHosts(context, backend);
       return context;
     };
     await provide({
       backend,
       open: async (address, options = {}) => {
-        const opened = await contextFor(options);
-        const page = await opened.newPage();
+        const page = await (await contextFor(options)).newPage();
         page.on('pageerror', (error) => {
           pageErrors.push(`${page.url()}: ${error.stack ?? error.message}`);
         });
         await page.goto(new URL(address.replace(/^\//, ''), SITE_URL).toString());
-        if (liveUrl === null) {
-          const named = await page.locator('a', { hasText: 'Open Live' }).first().getAttribute('href');
-          if (named === null) {
-            throw new Error('The site\'s header has no link that opens live');
-          }
-          liveUrl = new URL(named).origin;
-          await serveLive(opened, backend, liveUrl);
-        }
         return page;
       },
     });
