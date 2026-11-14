@@ -29,11 +29,11 @@ export function setup(): void {
   if (existsSync(chromium.executablePath())) {
     return;
   }
-  const cli = join(dirname(createRequire(import.meta.url).resolve('playwright/package.json')), 'cli.js');
+  const playwrightCommandLine = join(dirname(createRequire(import.meta.url).resolve('playwright/package.json')), 'cli.js');
   // a Linux runner of CI lacks the libraries the browser needs, which Playwright installs there
   const dependencies = process.env.CI !== undefined && process.platform === 'linux' ? ['--with-deps'] : [];
   try {
-    execFileSync(process.execPath, [cli, 'install', ...dependencies, 'chromium'], { stdio: 'inherit' });
+    execFileSync(process.execPath, [playwrightCommandLine, 'install', ...dependencies, 'chromium'], { stdio: 'inherit' });
   } catch (error) {
     throw new Error(`The keyboard walk needs Chromium, and Playwright's could not be installed: ${error instanceof Error ? error.message : String(error)}. ${NAMING}`);
   }
