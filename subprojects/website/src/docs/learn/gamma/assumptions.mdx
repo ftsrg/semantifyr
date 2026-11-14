@@ -26,7 +26,7 @@ Every step advances time by a fixed delta of one second, the same for every time
 
 ## Events
 
-An output event raised in a step stays raised until the next step starts, so a case's property sees it in the state after the step. An input event lasts for the step it arrives in.
+An output event raised in a step stays raised until the next step starts, so a case's property sees it in the state after the step. An input event lasts for the step it arrives in. An asynchronous adapter is the exception: the environment's messages wait in its queues, and an output event it raised stays until it runs again.
 
 ## What a Verdict Covers
 
