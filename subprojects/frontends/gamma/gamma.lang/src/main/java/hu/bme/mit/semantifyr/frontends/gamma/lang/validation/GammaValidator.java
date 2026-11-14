@@ -45,6 +45,7 @@ public class GammaValidator extends AbstractGammaValidator {
     public static final String QUEUED_OUTPUT_EVENT = "Gamma.QUEUED_OUTPUT_EVENT";
     public static final String EQUAL_QUEUE_PRIORITIES = "Gamma.EQUAL_QUEUE_PRIORITIES";
     public static final String INVALID_COMPONENT_KIND = "Gamma.INVALID_COMPONENT_KIND";
+    public static final String PORT_IN_CHANNEL_AND_BINDING = "Gamma.PORT_IN_CHANNEL_AND_BINDING";
 
     private static final String TRACE_FILE_EXTENSION = "get";
 
@@ -274,6 +275,38 @@ public class GammaValidator extends AbstractGammaValidator {
                     "'" + component.getName() + "' is an asynchronous component",
                     GammaPackage.Literals.COMPONENT_INSTANCE__COMPONENT,
                     INVALID_COMPONENT_KIND);
+        }
+    }
+
+    @Check
+    public void checkPortInChannelOrBinding(Channel channel) {
+        if (!(channel.eContainer() instanceof CompositeComponentDeclaration composite)) {
+            return;
+        }
+        var provided = channel.getProvidedPort();
+        if (provided == null || provided.getPort() == null || !GammaUtils.isBroadcast(provided.getPort())) {
+            checkEndNotBound(composite, provided, GammaPackage.Literals.CHANNEL__PROVIDED_PORT);
+        }
+        checkEndNotBound(composite, channel.getRequiredPort(), GammaPackage.Literals.CHANNEL__REQUIRED_PORT);
+    }
+
+    private void checkEndNotBound(
+            CompositeComponentDeclaration composite, InstancePortReference end, EReference feature) {
+        if (end == null || end.getInstance() == null || end.getPort() == null) {
+            return;
+        }
+        var bound = composite.getBindings().stream().anyMatch(it -> {
+            var boundPort = it.getBoundPort();
+            return boundPort != null
+                    && boundPort.getInstance() == end.getInstance()
+                    && boundPort.getPort() == end.getPort();
+        });
+        if (bound) {
+            error(
+                    "A port of an instance can be included either in a channel or a port binding",
+                    end.eContainer(),
+                    feature,
+                    PORT_IN_CHANNEL_AND_BINDING);
         }
     }
 

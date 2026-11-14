@@ -164,6 +164,11 @@ public class GammaUtils {
                 || (component instanceof StatechartDeclaration statechart && statechart.isAsynchronous());
     }
 
+    public static boolean isBroadcast(PortDeclaration port) {
+        return port.getRealizationMode() == RealizationMode.PROVIDED
+                && getEvents(port).stream().allMatch(it -> it.getDirection() == EventDirection.OUT);
+    }
+
     public static List<EventDeclaration> getInputEvents(PortDeclaration port) {
         return getEvents(port).stream().filter(it -> isInputEvent(port, it)).toList();
     }
