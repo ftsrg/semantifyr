@@ -82,7 +82,7 @@
       "language": "gamma",
       "file": "subprojects/frontends/gamma/models/examples/LevelCrossing.gamma",
       "label": "Level crossing",
-      "reason": "The smallest model: its first case fails and the trace shows why.",
+      "reason": "The simplest model, small statecharts that pass events over channels, and the one requirement a reader checks first.",
       "page": "learn/gamma",
       "cases": [
         "BarrierDownWhileTrainInCrossing",
@@ -90,63 +90,43 @@
       ]
     },
     {
-      "id": "spacecraft",
-      "language": "gamma",
-      "file": "subprojects/frontends/gamma/models/examples/Spacecraft.gamma",
-      "label": "Spacecraft",
-      "reason": "A spacecraft and a ground station exchanging data, with orthogonal regions, timeouts and a battery counter.",
-      "page": "learn/gamma",
-      "cases": [
-        "Station_IdleReachable",
-        "Station_OperationReachable",
-        "Station_OperationReceiveDataWaitingReachable",
-        "Spacecraft_CommunicationWaitingPingReachable",
-        "Spacecraft_CommunicationTransmittingReachable",
-        "Spacecraft_CommunicationTransmittingSendDataSendingReachable",
-        "Spacecraft_CommunicationTransmittingConsumePowerConsumingReachable",
-        "Spacecraft_BatteryNotRechargingReachable",
-        "Spacecraft_BatteryRechargingReachable"
-      ]
-    },
-    {
       "id": "crossroads",
       "language": "gamma",
       "file": "subprojects/frontends/gamma/models/examples/Crossroads.gamma",
       "label": "Crossroads",
-      "reason": "Two traffic lights under one controller, composed of statecharts with ports and channels.",
+      "reason": "Hierarchical states, entry and exit actions and timeouts, in two lights that one controller cycles by events over channels.",
       "page": "learn/gamma",
       "cases": [
-        "ControllerOperatingReachable",
-        "ControllerOperatingBothYellowReachable",
-        "ControllerOperatingBothRedReachable",
-        "ControllerOperatingStoppingAReachable",
-        "ControllerOperatingStoppingBReachable",
-        "ControllerOperatingTrafficOnAReachable",
-        "ControllerOperatingTrafficOnBReachable",
-        "ControllerInterruptedReachable",
-        "ANormalReachable",
-        "AInterruptedReachable",
-        "ACanBeYellow",
-        "ACanBeRed",
-        "ACanBeGreen",
-        "ACanBeBlinkingYellow",
-        "ACanBeBlinkingBlack",
-        "BNormalReachable",
-        "BInterruptedReachable",
-        "BCanBeYellow",
-        "BCanBeRed",
-        "BCanBeGreen",
-        "BCanBeBlinkingYellow",
-        "BCanBeBlinkingBlack",
-        "ReachableRedRed",
-        "ReachableRedGreen",
-        "ReachableRedYellow",
-        "ReachableGreenRed",
-        "UnreachableGreenGreen",
-        "UnreachableGreenYellow",
-        "ReachableYellowRed",
-        "UnreachableYellowGreen",
-        "ReachableYellowYellow"
+        "PoliceCanInterrupt",
+        "LightACanBlink",
+        "RoadBCanGetGreen",
+        "NeverBothGreen"
+      ]
+    },
+    {
+      "id": "spacecraft",
+      "language": "gamma",
+      "file": "subprojects/frontends/gamma/models/examples/Spacecraft.gamma",
+      "label": "Spacecraft",
+      "reason": "Orthogonal regions and integer variables with guards and assignments, in a spacecraft that transmits while its battery recharges.",
+      "page": "learn/gamma",
+      "cases": [
+        "TransmissionCanStart",
+        "ChargeNeverBelow40",
+        "CanTransmitWhileRecharging"
+      ]
+    },
+    {
+      "id": "landing-gear",
+      "language": "gamma",
+      "file": "subprojects/frontends/gamma/models/examples/LandingGear.gamma",
+      "label": "Landing gear",
+      "reason": "A sequence of doors and gear that the pilot may reverse at any moment, from a known verification benchmark, in plain statecharts that exchange events.",
+      "page": "learn/gamma",
+      "cases": [
+        "GearCanBeRetracted",
+        "BayClosedInCruise",
+        "GearMovesOnlyWithDoorsOpen"
       ]
     },
     {

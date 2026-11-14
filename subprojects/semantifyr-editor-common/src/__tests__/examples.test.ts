@@ -86,10 +86,6 @@ const OPENING_COMMENT: Readonly<Record<ExampleLanguage, RegExp>> = {
   sysml: /^\s*doc\s*\/\*[\s*]*[^\s*/]/,
 };
 
-// Gamma's served models are brought to the checks of a served model by their own lane, which removes this line
-const AWAITING_THEIR_LANE: ExampleLanguage = 'gamma';
-
-
 const manifests = MODEL_ROOTS.flatMap((root) => {
   return readdirSync(join(REPOSITORY, root), { recursive: true, withFileTypes: true }).filter((entry) => {
     return entry.isFile() && entry.name === 'manifest.json';
@@ -117,7 +113,7 @@ describe.each(servedExamples.map((example) => {
     expect(example.cases).toEqual(declaredCases(example.file, example.language));
   });
 
-  test.skipIf(example.language === AWAITING_THEIR_LANE)('has at most ten cases, so that a reader is not overwhelmed', () => {
+  test('has at most ten cases, so that a reader is not overwhelmed', () => {
     expect(example.cases.length).toBeLessThanOrEqual(10);
   });
 
@@ -137,7 +133,7 @@ describe.each(servedExamples.map((example) => {
 });
 
 const listedModels = servedExamples.filter((example) => {
-  return example.hidden !== true && example.language !== AWAITING_THEIR_LANE;
+  return example.hidden !== true;
 });
 
 describe.each(listedModels.map((example) => {
