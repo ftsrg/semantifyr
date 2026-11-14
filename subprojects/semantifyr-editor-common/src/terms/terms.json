@@ -82,12 +82,14 @@
     "conformant": {
       "term": "Conformant",
       "meaning": "Means what the source language defines.",
-      "rejected": []
+      "rejected": [],
+      "difference": false
     },
     "abstracted": {
       "term": "Abstracted",
       "meaning": "Simplifies the source language and keeps part of what it allows, which decides what a verdict covers.",
-      "rejected": []
+      "rejected": [],
+      "difference": true
     },
     "deviating": {
       "term": "Deviating",
@@ -95,24 +97,29 @@
       "rejected": [
         "contradiction",
         "contradictions"
-      ]
+      ],
+      "difference": true
     },
     "extension": {
       "term": "Extension",
-      "meaning": "Offered by the frontend, which the source language does not have.",
-      "rejected": []
+      "meaning": "Offered by the frontend where the source language has no such construct.",
+      "rejected": [],
+      "difference": true
     },
     "planned": {
       "term": "Planned",
       "meaning": "Not supported yet, and scheduled.",
-      "rejected": []
+      "rejected": [],
+      "difference": false
     },
     "unsupported": {
       "term": "Unsupported",
-      "meaning": "Not supported and not scheduled, among them constructs refused on purpose.",
-      "rejected": []
+      "meaning": "Not supported, among them constructs refused on purpose.",
+      "rejected": [],
+      "difference": false
     }
   },
+  "outcomeWarning": "with a warning",
   "portfolios": {
     "smart": "Smart",
     "all-agree": "All agree",

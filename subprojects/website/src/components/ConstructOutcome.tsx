@@ -5,7 +5,7 @@
  */
 
 import type React from 'react';
-import { isOutcome, outcomeTerms, type Outcome } from '@semantifyr/editor-common/terms';
+import { isOutcome, outcomeTerms, outcomeWarning, type Outcome } from '@semantifyr/editor-common/terms';
 
 const OUTCOMES = Object.keys(outcomeTerms) as Outcome[];
 
@@ -27,7 +27,7 @@ export function OutcomeCell({ outcome, warning }: { outcome: Outcome; warning: b
   return (
     <td>
       {outcomeTerms[outcome].term}
-      {warning ? ', with a warning' : ''}
+      {warning ? `, ${outcomeWarning}` : ''}
     </td>
   );
 }
