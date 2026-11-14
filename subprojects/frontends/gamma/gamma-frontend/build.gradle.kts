@@ -11,6 +11,7 @@ plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
     id("hu.bme.mit.semantifyr.gradle.conventions.integration")
     id("hu.bme.mit.semantifyr.gradle.conventions.nightly")
+    id("hu.bme.mit.semantifyr.gradle.conventions.sysml-crossroads")
     kotlin("jvm")
 }
 
@@ -83,4 +84,17 @@ configurations.consumable("compiledExamplesElements") {
     outgoing.artifact(compiledExamplesDir) {
         builtBy(compileGammaExamples)
     }
+}
+
+val syncSysmlExamples = tasks.register<Sync>("syncSysmlExamples") {
+    from(configurations.named("sysmlCompiledExamplesFiles"))
+    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/libraries/default")) {
+        into("library")
+    }
+    into(layout.buildDirectory.dir("sysml-examples"))
+}
+
+tasks.named("nightlyTest") {
+    inputs.files(compileGammaExamples)
+    inputs.files(syncSysmlExamples)
 }
