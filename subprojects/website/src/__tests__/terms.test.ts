@@ -7,7 +7,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { terms } from '@semantifyr/editor-common/terms';
+import { outcomeTerms, terms } from '@semantifyr/editor-common/terms';
 import { describe, expect, it } from 'vitest';
 
 const REPOSITORY = fileURLToPath(new URL('../../../../', import.meta.url));
@@ -146,7 +146,9 @@ function rejectedPattern(word: string): RegExp {
   return new RegExp(`(?<![\\p{L}\\p{N}])${words.join('\\s+')}(?![\\p{L}\\p{N}])`, 'iu');
 }
 
-const RULES = Object.values(terms).flatMap((term) => {
+const TERMS = [...Object.values(terms), ...Object.values(outcomeTerms)];
+
+const RULES = TERMS.flatMap((term) => {
   return term.rejected.map((word) => {
     return { word, term: term.term, pattern: rejectedPattern(word), explainedOn: term.explainedOn };
   });
@@ -182,7 +184,7 @@ describe('the terms', () => {
   });
 
   it('explains a rejected word on the one page that may use it', () => {
-    for (const term of Object.values(terms)) {
+    for (const term of TERMS) {
       if (term.explainedOn !== undefined) {
         const page = readFileSync(join(REPOSITORY, term.explainedOn), 'utf-8');
         expect(term.rejected.some((word) => {

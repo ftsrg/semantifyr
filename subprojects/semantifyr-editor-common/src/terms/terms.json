@@ -78,6 +78,41 @@
       ]
     }
   },
+  "outcomes": {
+    "conformant": {
+      "term": "Conformant",
+      "meaning": "Means what the source language defines.",
+      "rejected": []
+    },
+    "abstracted": {
+      "term": "Abstracted",
+      "meaning": "Simplifies the source language and keeps part of what it allows, which decides what a verdict covers.",
+      "rejected": []
+    },
+    "deviating": {
+      "term": "Deviating",
+      "meaning": "Means something other than the source language defines, chosen deliberately.",
+      "rejected": [
+        "contradiction",
+        "contradictions"
+      ]
+    },
+    "extension": {
+      "term": "Extension",
+      "meaning": "Offered by the frontend, which the source language does not have.",
+      "rejected": []
+    },
+    "planned": {
+      "term": "Planned",
+      "meaning": "Not supported yet, and scheduled.",
+      "rejected": []
+    },
+    "unsupported": {
+      "term": "Unsupported",
+      "meaning": "Not supported and not scheduled, among them constructs refused on purpose.",
+      "rejected": []
+    }
+  },
   "portfolios": {
     "smart": "Smart",
     "all-agree": "All agree",

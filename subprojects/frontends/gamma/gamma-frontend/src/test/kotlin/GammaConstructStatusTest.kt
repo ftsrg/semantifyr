@@ -15,12 +15,22 @@ import kotlin.io.path.exists
 import kotlin.io.path.readLines
 import kotlin.io.path.readText
 
+enum class ConstructOutcome(val word: String) {
+    CONFORMANT("conformant"),
+    ABSTRACTED("abstracted"),
+    DEVIATING("deviating"),
+    EXTENSION("extension"),
+    PLANNED("planned"),
+    UNSUPPORTED("unsupported"),
+}
+
 class GammaConstructStatusTest {
 
     data class ConstructRow(
         val area: String,
         val construct: String,
         val outcome: String,
+        val warning: String,
         val fixture: String,
         val marker: String,
         val detail: String,
@@ -28,22 +38,34 @@ class GammaConstructStatusTest {
 
     companion object {
         private val gammaRoot: Path = Path("..")
-        private val outcomes = setOf("carried", "departure", "planned", "out")
 
         private fun rows(): List<ConstructRow> {
             val lines = gammaRoot.resolve("models/constructs.tsv").readLines()
-            check(lines.first() == "area\tconstruct\toutcome\tfixture\tmarker\tdetail") {
+            check(lines.first() == "area\tconstruct\toutcome\twarning\tfixture\tmarker\tdetail") {
                 "constructs.tsv must start with its header"
             }
             return lines.drop(1).filter {
                 it.isNotBlank()
             }.map {
                 val columns = it.split("\t")
-                check(columns.size == 6) {
-                    "Expected six tab-separated columns: $it"
+                check(columns.size == 7) {
+                    "Expected seven tab-separated columns: $it"
                 }
-                ConstructRow(columns[0], columns[1], columns[2], columns[3], columns[4], columns[5])
+                ConstructRow(columns[0], columns[1], columns[2], columns[3], columns[4], columns[5], columns[6])
             }
+        }
+
+        private fun outcomeOf(row: ConstructRow): ConstructOutcome {
+            val outcome = ConstructOutcome.entries.firstOrNull {
+                it.word == row.outcome
+            }
+            checkNotNull(outcome) {
+                val words = ConstructOutcome.entries.joinToString(", ") {
+                    it.word
+                }
+                "The row '${row.construct}' has the outcome '${row.outcome}', where the outcomes are $words"
+            }
+            return outcome
         }
 
         @JvmStatic
@@ -65,16 +87,20 @@ class GammaConstructStatusTest {
     @ParameterizedTest
     @MethodSource("constructs")
     fun `construct has the outcome the table claims`(row: ConstructRow) {
-        assertThat(row.outcome).isIn(outcomes)
+        val outcome = outcomeOf(row)
         assertThat(row.area).isNotBlank()
-        when (row.outcome) {
-            "carried", "departure" -> assertFixtureUsesMarker(row)
-            else -> {
+        assertThat(row.warning).describedAs("the warning of '${row.construct}'").isIn("yes", "no")
+        when (outcome) {
+            ConstructOutcome.PLANNED, ConstructOutcome.UNSUPPORTED -> {
                 assertThat(row.fixture).describedAs("a ${row.outcome} construct has no fixture").isEmpty()
                 assertThat(row.marker).isEmpty()
+                assertThat(row.warning).describedAs("a ${row.outcome} construct draws no warning").isEqualTo("no")
+            }
+            else -> {
+                assertFixtureUsesMarker(row)
             }
         }
-        if (row.outcome != "carried") {
+        if (outcome != ConstructOutcome.CONFORMANT) {
             assertThat(row.detail).describedAs("a ${row.outcome} construct says why").isNotBlank()
         }
     }
