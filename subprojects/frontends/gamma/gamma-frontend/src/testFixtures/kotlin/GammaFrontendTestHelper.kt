@@ -71,9 +71,7 @@ class GammaFrontendTestHelper {
     }
 
     fun witnessCasesOnEveryEngine(): Stream<Arguments> {
-        return GammaCorpus.load(GammaCorpus.examples).filter {
-            it.model.file in WITNESS_EXAMPLES
-        }.asSequence().flatMap { entry ->
+        return GammaCorpus.load(GammaCorpus.examples).asSequence().flatMap { entry ->
             val gammaVerificationCase = discoverInWorkspace(entry.directory, entry.model.file).single {
                 it.declaration.name == entry.case.name
             }
@@ -153,14 +151,6 @@ class GammaFrontendTestHelper {
     }
 
     companion object {
-        private val WITNESS_EXAMPLES = listOf(
-            "Simple.gamma",
-            "Crossroads.gamma",
-            "CrossroadsFurtherCases.gamma",
-            "Spacecraft.gamma",
-            "SpacecraftFurtherCases.gamma",
-        )
-
         @JvmStatic
         fun testArtifactRoot(testClass: Class<*>): Path {
             return Path("build", "test-artifacts", testClass.simpleName)
