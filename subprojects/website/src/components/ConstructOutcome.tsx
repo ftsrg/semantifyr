@@ -38,7 +38,9 @@ export function OutcomeLegend(): React.JSX.Element {
       {OUTCOMES.map((outcome) => {
         return (
           <div key={outcome}>
-            <dt>{outcomeTerms[outcome].term}</dt>
+            <dt>
+              <strong>{outcomeTerms[outcome].term}</strong>
+            </dt>
             <dd>{outcomeTerms[outcome].meaning}</dd>
           </div>
         );
