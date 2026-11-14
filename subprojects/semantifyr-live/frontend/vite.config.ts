@@ -10,8 +10,8 @@ import type { Plugin, Rollup } from 'vite';
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
-import { fileNameOf, servedExamples } from '@semantifyr/editor-common/examples';
-import { exampleDescription, exampleTitle, LANGUAGES, LIVE_URL, PAGE_DESCRIPTION, PRODUCT_NAME, SHORT_NAME } from './src/texts.ts';
+import { examplePages, withHead } from './src/examplePages.ts';
+import { LIVE_URL, PAGE_DESCRIPTION, PRODUCT_NAME, SHORT_NAME } from './src/texts.ts';
 
 function getVersion(): string {
   const properties = readFileSync(new URL('../../../gradle.properties', import.meta.url), 'utf-8');
@@ -28,21 +28,15 @@ function getGitCommit(): string {
 
 const backendProxyTarget = process.env.VITE_BACKEND_PROXY_TARGET ?? 'http://localhost:18080';
 
-function escapeHtml(text: string): string {
-  return text.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
-}
-
-function withHead(html: string, title: string, description: string): string {
-  return html.replaceAll('%LIVE_TITLE%', escapeHtml(title)).replaceAll('%LIVE_DESCRIPTION%', escapeHtml(description));
-}
-
-// the first line of the model's comment, which the build writes beside the served models
+// a model without a comment has no description file
 function commentOf(fileName: string): string | null {
   const file = new URL(`./src/snippets/imported/descriptions/${fileName}.description`, import.meta.url);
   return existsSync(file) ? readFileSync(file, 'utf-8').trim() : null;
 }
 
-// a preview of a shared link reads the page's head without running it: each example's address gets a page whose head names the model
+// one image serves staging and production, so the build knows no address of its own and the card is production's
+const CARD = `${LIVE_URL}/social-card.png`;
+
 function liveTexts(): Plugin {
   return {
     name: 'live-texts',
@@ -50,7 +44,7 @@ function liveTexts(): Plugin {
     transformIndexHtml: {
       order: 'pre',
       handler: (html, context) => {
-        const texts = html.replaceAll('%LIVE_NAME%', PRODUCT_NAME).replaceAll('%LIVE_CARD%', `${LIVE_URL}/social-card.png`);
+        const texts = html.replaceAll('%LIVE_NAME%', PRODUCT_NAME).replaceAll('%LIVE_CARD%', CARD);
         return context.server === undefined ? texts : withHead(texts, PRODUCT_NAME, PAGE_DESCRIPTION);
       },
     },
@@ -58,12 +52,11 @@ function liveTexts(): Plugin {
       const index = bundle['index.html'] as Rollup.OutputAsset;
       const template = String(index.source);
       index.source = withHead(template, PRODUCT_NAME, PAGE_DESCRIPTION);
-      for (const example of servedExamples) {
-        const language = LANGUAGES[example.language]?.name ?? example.language;
+      for (const page of examplePages(template, commentOf)) {
         this.emitFile({
           type: 'asset',
-          fileName: `${example.language}/${example.id}/index.html`,
-          source: withHead(template, exampleTitle(example.label, language), exampleDescription(example.label, language, commentOf(fileNameOf(example)))),
+          fileName: page.fileName,
+          source: page.source,
         });
       }
     },
