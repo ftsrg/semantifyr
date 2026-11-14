@@ -30,15 +30,15 @@ class GammaCompileCommand(
 
     private val model by argument("model path")
         .path()
-        .help("Gamma model file.")
+        .help("A Gamma model file, ending in .gamma or .gcd.")
 
     private val outputPath by option("-o", "--output")
         .path(canBeDir = false)
-        .help("Output file.")
+        .help("The output file; the model's path with .oxsts in place of its ending by default.")
 
     private val workspace by option("--workspace")
         .path(mustExist = true, canBeFile = false)
-        .help("Directory whose Gamma files, recursively, imports resolve in.")
+        .help("The directory whose Gamma files, in it and below it, the model's imports resolve in; the model's own directory by default.")
 
     override fun help(context: Context): String {
         return "Compile a Gamma model to OXSTS."

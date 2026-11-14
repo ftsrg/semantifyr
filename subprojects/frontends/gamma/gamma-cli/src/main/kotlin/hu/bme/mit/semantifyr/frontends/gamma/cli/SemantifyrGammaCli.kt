@@ -19,18 +19,14 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import java.nio.file.Path
-import kotlin.io.path.name
-
-private val GAMMA_FILE_SUFFIXES = listOf(
-    ".gamma",
-    ".gcd",
-)
 
 internal fun checkGammaModel(model: Path) {
-    val suffix = GAMMA_FILE_SUFFIXES.firstOrNull {
-        model.name.endsWith(it)
-    } ?: GAMMA_FILE_SUFFIXES.first()
-    checkInputFile("Model", model, suffix)
+    checkInputFile(
+        "Model",
+        model,
+        ".gamma",
+        ".gcd",
+    )
 }
 
 class SemantifyrGammaCommand(

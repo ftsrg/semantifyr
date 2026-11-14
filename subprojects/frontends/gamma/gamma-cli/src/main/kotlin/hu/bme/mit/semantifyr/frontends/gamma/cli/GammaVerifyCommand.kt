@@ -44,7 +44,7 @@ class GammaVerifyCommand(
 
     private val model by argument("model path")
         .path()
-        .help("Gamma model file.")
+        .help("A Gamma model file, ending in .gamma or .gcd.")
 
     private val caseNames by option("--case-name")
         .multiple()
@@ -52,7 +52,7 @@ class GammaVerifyCommand(
 
     private val workspace by option("--workspace")
         .path(mustExist = true, canBeFile = false)
-        .help("Directory whose Gamma files, recursively, imports resolve in.")
+        .help("The directory whose Gamma files, in it and below it, the model's imports resolve in; the model's own directory by default.")
 
     private val backendOptions by BackendOptionGroup {
         portfolios

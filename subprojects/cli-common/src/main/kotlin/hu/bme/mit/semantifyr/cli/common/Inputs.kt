@@ -19,11 +19,14 @@ import kotlin.io.path.walk
 fun checkInputFile(
     kind: String,
     path: Path,
-    fileSuffix: String,
+    vararg fileSuffixes: String,
 ) {
     checkReadable(kind, path)
-    if (path.isDirectory() || !path.name.endsWith(fileSuffix)) {
-        throw CommandExit(ExitCode.Input, "$kind path '$path' is not a file ending in $fileSuffix.")
+    val suffixed = fileSuffixes.any {
+        path.name.endsWith(it)
+    }
+    if (path.isDirectory() || !suffixed) {
+        throw CommandExit(ExitCode.Input, "$kind path '$path' is not a file ending in ${fileSuffixes.joinToString(" or ")}.")
     }
 }
 
