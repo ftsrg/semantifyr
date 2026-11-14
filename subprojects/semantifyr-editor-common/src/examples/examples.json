@@ -1,15 +1,12 @@
 {
   "languages": {
     "sysml": {
-      "page": "learn/sysml-v2-subset",
       "blank": ""
     },
     "gamma": {
-      "page": "learn/gamma",
       "blank": "package model\n"
     },
     "oxsts": {
-      "page": "learn/language",
       "blank": ""
     }
   },
@@ -20,9 +17,6 @@
       "file": "subprojects/frontends/sysml/models/examples/level_crossing.sysml",
       "label": "Level crossing",
       "reason": "The simplest model, four small state machines that pass items, and the one requirement a reader checks first.",
-      "origin": "Made for Semantifyr's lecture on model checking",
-      "holder": "The Semantifyr Authors",
-      "licence": "EPL-2.0",
       "page": "learn/sysml-v2-subset",
       "cases": [
         "BarrierDownWhileTrainInCrossing",
@@ -35,9 +29,6 @@
       "file": "subprojects/frontends/sysml/models/examples/crossroads.sysml",
       "label": "Crossroads",
       "reason": "Nested states, entry and exit actions and timed transitions, in two lights that one controller cycles by items.",
-      "origin": "The Crossroads of the Gamma tutorial, rewritten in SysML v2 by Semantifyr",
-      "holder": "The contributors to the Gamma project and the Semantifyr Authors",
-      "licence": "EPL-1.0",
       "page": "learn/sysml-v2-subset",
       "cases": [
         "PoliceCanInterrupt",
@@ -52,9 +43,6 @@
       "file": "subprojects/frontends/sysml/models/examples/compressedspacecraft.sysml",
       "label": "Spacecraft",
       "reason": "Parallel regions and integer attributes with guards and assignments, in a spacecraft that transmits while its battery recharges.",
-      "origin": "The Spacecraft of the Gamma repository's tests, rewritten in SysML v2 by Semantifyr",
-      "holder": "The contributors to the Gamma project and the Semantifyr Authors",
-      "licence": "EPL-1.0",
       "page": "learn/sysml-v2-subset",
       "cases": [
         "TransmissionCanStart",
@@ -68,9 +56,6 @@
       "file": "subprojects/frontends/sysml/models/examples/landing_gear.sysml",
       "label": "Landing gear",
       "reason": "A sequence of doors and gear that the pilot may reverse at any moment, from a known verification benchmark, in plain state machines that exchange items.",
-      "origin": "After the Landing Gear System case study of Frédéric Boniol and Virginie Wiels, ABZ 2014; the model is Semantifyr's own",
-      "holder": "The Semantifyr Authors",
-      "licence": "EPL-2.0",
       "page": "learn/sysml-v2-subset",
       "cases": [
         "GearCanBeRetracted",
@@ -84,9 +69,6 @@
       "file": "subprojects/frontends/sysml/models/tutorial/room.sysml",
       "label": "SysML v2 tutorial: Room",
       "reason": "The model the SysML v2 tutorial builds and runs from its page.",
-      "origin": "Made for Semantifyr",
-      "holder": "The Semantifyr Authors",
-      "licence": "EPL-2.0",
       "page": "learn/tutorials/sysml-v2",
       "cases": [
         "LampLitReachable",
@@ -101,9 +83,6 @@
       "file": "subprojects/frontends/gamma/models/examples/LevelCrossing.gamma",
       "label": "Level crossing",
       "reason": "The smallest model: its first case fails and the trace shows why.",
-      "origin": "Made for Semantifyr's lecture on model checking",
-      "holder": "The Semantifyr Authors",
-      "licence": "EPL-2.0",
       "page": "learn/gamma",
       "cases": [
         "BarrierDownWhileTrainInCrossing",
@@ -116,9 +95,6 @@
       "file": "subprojects/frontends/gamma/models/examples/Spacecraft.gamma",
       "label": "Spacecraft",
       "reason": "A spacecraft and a ground station exchanging data, with orthogonal regions, timeouts and a battery counter.",
-      "origin": "The Spacecraft of the Gamma repository's tests, rewritten in Gamma's syntax by Semantifyr",
-      "holder": "The contributors to the Gamma project and the Semantifyr Authors",
-      "licence": "EPL-1.0",
       "page": "learn/gamma",
       "cases": [
         "Station_IdleReachable",
@@ -138,9 +114,6 @@
       "file": "subprojects/frontends/gamma/models/examples/Crossroads.gamma",
       "label": "Crossroads",
       "reason": "Two traffic lights under one controller, composed of statecharts with ports and channels.",
-      "origin": "The Crossroads of the Gamma tutorial",
-      "holder": "The contributors to the Gamma project",
-      "licence": "EPL-1.0",
       "page": "learn/gamma",
       "cases": [
         "ControllerOperatingReachable",
@@ -182,9 +155,6 @@
       "file": "oxsts-test-models/tutorial/basics.oxsts",
       "label": "Lesson 2: Intersection",
       "reason": "The model the second lesson ends in: two lights that take turns, a requirement it took a second case to state, and the trace that found the gap.",
-      "origin": "Made for Semantifyr",
-      "holder": "The Semantifyr Authors",
-      "licence": "EPL-2.0",
       "page": "learn/tutorials/trafficlight/intersection",
       "cases": [
         "NeverBothGreen",
@@ -198,9 +168,6 @@
       "file": "oxsts-test-models/tutorial/green-time.oxsts",
       "label": "Lesson 3: Green time",
       "reason": "The model the third lesson ends in: an integer counter that holds a light green, and a case that counts the steps on its own.",
-      "origin": "Made for Semantifyr",
-      "holder": "The Semantifyr Authors",
-      "licence": "EPL-2.0",
       "page": "learn/tutorials/trafficlight/green-time",
       "cases": [
         "NorthCanTurnYellow",
@@ -213,9 +180,6 @@
       "file": "oxsts-test-models/tutorial/intermediate.oxsts",
       "label": "Lesson 4: Library",
       "reason": "The model the fourth lesson ends in: a small statechart library that a traffic light and a pedestrian light are both built on.",
-      "origin": "Made for Semantifyr",
-      "holder": "The Semantifyr Authors",
-      "licence": "EPL-2.0",
       "page": "learn/tutorials/trafficlight/library",
       "cases": [
         "LightCanTurnYellow",
@@ -229,9 +193,6 @@
       "file": "oxsts-test-models/tutorial/advanced.oxsts",
       "label": "Lesson 5: Hierarchy",
       "reason": "The model the fifth lesson ends in: nested states, entry actions, events from an operator and an emergency that overrides the lights.",
-      "origin": "Made for Semantifyr",
-      "holder": "The Semantifyr Authors",
-      "licence": "EPL-2.0",
       "page": "learn/tutorials/trafficlight/hierarchy",
       "cases": [
         "LightCanTurnGreen",
@@ -248,9 +209,6 @@
       "file": "oxsts-test-models/tutorial/level-crossing.oxsts",
       "label": "Level crossing",
       "reason": "The smallest model: its first case fails and the trace shows why.",
-      "origin": "Made for Semantifyr's lecture on model checking",
-      "holder": "The Semantifyr Authors",
-      "licence": "EPL-2.0",
       "page": "learn/language",
       "cases": [
         "BarrierDownWhileTrainInCrossing",
@@ -263,9 +221,6 @@
       "file": "oxsts-test-models/tutorial/light-step1.oxsts",
       "label": "One Light, step 1",
       "reason": "A step of lesson 1, run from its page.",
-      "origin": "Made for Semantifyr",
-      "holder": "The Semantifyr Authors",
-      "licence": "EPL-2.0",
       "page": "learn/tutorials/trafficlight/one-light",
       "cases": [
         "TrafficLight"
@@ -278,9 +233,6 @@
       "file": "oxsts-test-models/tutorial/basics-step1.oxsts",
       "label": "The Intersection, step 1",
       "reason": "A step of lesson 2, run from its page.",
-      "origin": "Made for Semantifyr",
-      "holder": "The Semantifyr Authors",
-      "licence": "EPL-2.0",
       "page": "learn/tutorials/trafficlight/intersection",
       "cases": [
         "NeverBothGreen",
@@ -294,9 +246,6 @@
       "file": "oxsts-test-models/tutorial/basics-step2.oxsts",
       "label": "The Intersection, step 2",
       "reason": "A step of lesson 2, run from its page.",
-      "origin": "Made for Semantifyr",
-      "holder": "The Semantifyr Authors",
-      "licence": "EPL-2.0",
       "page": "learn/tutorials/trafficlight/intersection",
       "cases": [
         "NeverBothGreen",
@@ -311,9 +260,6 @@
       "file": "oxsts-test-models/tutorial/green-time-step1.oxsts",
       "label": "The Minimum Green Time, step 1",
       "reason": "A step of lesson 3, run from its page.",
-      "origin": "Made for Semantifyr",
-      "holder": "The Semantifyr Authors",
-      "licence": "EPL-2.0",
       "page": "learn/tutorials/trafficlight/green-time",
       "cases": [
         "NorthCanTurnYellow"
@@ -326,9 +272,6 @@
       "file": "oxsts-test-models/tutorial/green-time-step2.oxsts",
       "label": "The Minimum Green Time, step 2",
       "reason": "A step of lesson 3, run from its page.",
-      "origin": "Made for Semantifyr",
-      "holder": "The Semantifyr Authors",
-      "licence": "EPL-2.0",
       "page": "learn/tutorials/trafficlight/green-time",
       "cases": [
         "NorthCanTurnYellow",
@@ -342,9 +285,6 @@
       "file": "oxsts-test-models/tutorial/intermediate-step1.oxsts",
       "label": "A Statechart Library, step 1",
       "reason": "A step of lesson 4, run from its page.",
-      "origin": "Made for Semantifyr",
-      "holder": "The Semantifyr Authors",
-      "licence": "EPL-2.0",
       "page": "learn/tutorials/trafficlight/library",
       "cases": [
         "LightCanTurnYellow"
@@ -357,9 +297,6 @@
       "file": "oxsts-test-models/tutorial/intermediate-step2.oxsts",
       "label": "A Statechart Library, step 2",
       "reason": "A step of lesson 4, run from its page.",
-      "origin": "Made for Semantifyr",
-      "holder": "The Semantifyr Authors",
-      "licence": "EPL-2.0",
       "page": "learn/tutorials/trafficlight/library",
       "cases": [
         "LightCanTurnYellow"
@@ -372,9 +309,6 @@
       "file": "oxsts-test-models/tutorial/advanced-step1.oxsts",
       "label": "Hierarchy, Events and the Environment, step 1",
       "reason": "A step of lesson 5, run from its page.",
-      "origin": "Made for Semantifyr",
-      "holder": "The Semantifyr Authors",
-      "licence": "EPL-2.0",
       "page": "learn/tutorials/trafficlight/hierarchy",
       "cases": [
         "LightCanTurnGreen",
@@ -389,9 +323,6 @@
       "file": "oxsts-test-models/tutorial/advanced-step2.oxsts",
       "label": "Hierarchy, Events and the Environment, step 2",
       "reason": "A step of lesson 5, run from its page.",
-      "origin": "Made for Semantifyr",
-      "holder": "The Semantifyr Authors",
-      "licence": "EPL-2.0",
       "page": "learn/tutorials/trafficlight/hierarchy",
       "cases": [
         "LightCanTurnGreen",
@@ -406,9 +337,6 @@
       "file": "oxsts-test-models/tutorial/advanced-step3.oxsts",
       "label": "Hierarchy, Events and the Environment, step 3",
       "reason": "A step of lesson 5, run from its page.",
-      "origin": "Made for Semantifyr",
-      "holder": "The Semantifyr Authors",
-      "licence": "EPL-2.0",
       "page": "learn/tutorials/trafficlight/hierarchy",
       "cases": [
         "LightCanTurnGreen",
@@ -424,9 +352,6 @@
       "file": "oxsts-test-models/tutorial/advanced-step4.oxsts",
       "label": "Hierarchy, Events and the Environment, step 4",
       "reason": "A step of lesson 5, run from its page.",
-      "origin": "Made for Semantifyr",
-      "holder": "The Semantifyr Authors",
-      "licence": "EPL-2.0",
       "page": "learn/tutorials/trafficlight/hierarchy",
       "cases": [
         "LightCanTurnGreen",
@@ -442,9 +367,6 @@
       "file": "oxsts-test-models/tutorial/advanced-step5.oxsts",
       "label": "Hierarchy, Events and the Environment, step 5",
       "reason": "A step of lesson 5, run from its page.",
-      "origin": "Made for Semantifyr",
-      "holder": "The Semantifyr Authors",
-      "licence": "EPL-2.0",
       "page": "learn/tutorials/trafficlight/hierarchy",
       "cases": [
         "LightCanTurnGreen",

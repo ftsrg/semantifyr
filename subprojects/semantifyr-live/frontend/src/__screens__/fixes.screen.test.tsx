@@ -84,8 +84,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       verification: discovered([finished(BARRIER, 'failed', 2.9), finished(TWO_TRAINS, 'passed', 0.8)], 'done'),
     },
     expectState: () => {
-      expect(text('.orientation-text')).toContain('Level crossing.')
-      expect(text('.orientation-text')).not.toContain('Press')
+      expect(document.querySelector('.orientation')).toBeNull()
     },
   },
   'server-not-answering-gamma': {

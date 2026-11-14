@@ -123,12 +123,6 @@ describe.each(servedExamples.map((example) => {
     expect(example.cases.length).toBeLessThanOrEqual(10);
   });
 
-  test('names its origin, its rights holder and its licence', () => {
-    expect(example.origin.trim()).not.toBe('');
-    expect(example.holder.trim()).not.toBe('');
-    expect(example.licence.trim()).not.toBe('');
-  });
-
   test('finds the expected verdict of each case in the manifest beside its file', () => {
     const model = manifestBeside(example).models.find((candidate) => {
       return candidate.file === fileNameOf(example);

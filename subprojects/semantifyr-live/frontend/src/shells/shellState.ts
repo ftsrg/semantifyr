@@ -14,7 +14,6 @@ export type CountFilter = Exclude<VerdictStatus, 'not-run' | 'running' | 'queued
 
 // What only the shells show, kept for the visit and never stored
 export interface ShellState {
-  dismissedOrientations: Store<ReadonlySet<string>>
   // Verify all was pressed while the model had errors
   verifyBlocked: Store<boolean>
   cursor: Store<CursorPosition | null>
@@ -29,7 +28,6 @@ export interface ShellState {
 
 export function createShellState(): ShellState {
   return {
-    dismissedOrientations: createStore<ReadonlySet<string>>(new Set()),
     verifyBlocked: createStore(false),
     cursor: createStore<CursorPosition | null>(null),
     filter: createStore<CountFilter | null>(null),
@@ -45,21 +43,11 @@ export function errorCount(live: Live): number {
   }).length
 }
 
-export function dismissOrientation(shell: ShellState, key: string): void {
-  shell.dismissedOrientations.update((previous) => {
-    return new Set([...previous, key])
-  })
-}
-
 export function verifyAll(live: Live, shell: ShellState): void {
   if (errorCount(live) > 0) {
     shell.verifyBlocked.set(true)
     return
   }
   shell.verifyBlocked.set(false)
-  const key = live.workspace.get().documentKey
-  if (key !== null) {
-    dismissOrientation(shell, key)
-  }
   live.verifyAll()
 }

@@ -30,7 +30,6 @@ const UNCLIPPED = [
   '.counts',
   '.case-outcome',
   '.status-end',
-  '.orientation-text',
 ]
 
 function discovered(cases: VerificationCaseState[], phase: VerificationState['phase'] = 'idle'): VerificationState {
@@ -50,7 +49,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
   'first': {
     seed: { verification: discovered([{ caseInfo: BARRIER, status: 'stale' }, { caseInfo: TWO_TRAINS, status: 'stale' }]) },
     expectState: () => {
-      expect(count('.orientation .orientation-text')).toBe(1)
+      expect(count('.orientation')).toBe(0)
       expect(count('.case-row.status-not-run')).toBe(2)
     },
   },

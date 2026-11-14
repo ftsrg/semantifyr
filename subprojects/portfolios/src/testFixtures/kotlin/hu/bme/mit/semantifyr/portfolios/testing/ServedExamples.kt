@@ -36,7 +36,6 @@ enum class ExampleLanguage {
 
 @Serializable
 data class ServedLanguage(
-    val page: String,
     val blank: String,
 )
 
@@ -47,9 +46,6 @@ data class ServedExample(
     val file: String,
     val label: String,
     val reason: String,
-    val origin: String,
-    val holder: String,
-    val licence: String,
     val page: String,
     val cases: List<String>,
     val hidden: Boolean = false,

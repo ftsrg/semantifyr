@@ -53,10 +53,7 @@
 .pane-editor .model-editor-host { position: absolute; inset: 0; }
 
 .phone-orientation { flex: none; display: flex; align-items: flex-start; gap: var(--space-5); padding: var(--space-5) var(--space-2) var(--space-5) var(--space-6); border-bottom: 1px solid var(--border); background: var(--surface-panel); color: var(--text-secondary); font-size: 14px; line-height: 1.45; }
-.phone-orientation-source { color: var(--text-tertiary); }
-.phone-orientation strong { color: var(--text-primary); font-weight: var(--weight-semibold); }
 .phone-orientation > span:nth-child(2) { flex: 1; padding-top: 2px; }
-.phone-orientation .orientation-mark { flex: none; align-self: stretch; width: 3px; height: auto; margin: 3px 0; border-radius: 2px; background: var(--accent); }
 .phone-orientation .phone-icon-button { margin-top: -10px; }
 .phone-orientation.is-error { background: var(--problem-soft); color: var(--text-primary); }
 .phone-orientation.is-error > .icon { color: var(--problem); flex: none; margin-top: 3px; }

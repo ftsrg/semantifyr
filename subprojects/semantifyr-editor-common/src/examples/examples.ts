@@ -15,7 +15,6 @@ export const EXAMPLE_LANGUAGES = [
 export type ExampleLanguage = (typeof EXAMPLE_LANGUAGES)[number];
 
 export interface ServedLanguage {
-  page: string;
   blank: string;
 }
 
@@ -25,9 +24,6 @@ export interface ServedExample {
   file: string;
   label: string;
   reason: string;
-  origin: string;
-  holder: string;
-  licence: string;
   page: string;
   cases: string[];
   // a lesson's step, which its page runs and live's menu does not list
@@ -70,9 +66,4 @@ export function servedExamplesOf(language: ExampleLanguage): ServedExample[] {
 
 export function fileNameOf(example: ServedExample): string {
   return example.file.slice(example.file.lastIndexOf('/') + 1);
-}
-
-// where an example comes from and under which terms, as live and the website say it
-export function rightsOf(example: ServedExample): string {
-  return `Origin: ${example.origin}. Rights: ${example.holder}, ${example.licence}.`;
 }

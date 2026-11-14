@@ -13,10 +13,6 @@ export const SHORT_NAME = terms.live.short ?? terms.live.term
 export const WEBSITE_URL = 'https://semantifyr.org'
 export const PRIVACY_URL = `${WEBSITE_URL}/learn/live-privacy`
 
-// a page of the website, by its path below the site's root
-export function websitePage(page: string): string {
-  return `${WEBSITE_URL}/${page}`
-}
 export const SOURCE_CODE_URL = 'https://github.com/ftsrg/semantifyr'
 
 export const PAGE_DESCRIPTION = 'Verify a SysML v2, Gamma or OXSTS model in your browser and read its traces in its own language.'
@@ -133,16 +129,6 @@ export function noCases(languageId: string): string {
   return writeCase === undefined ? 'The model has no verification cases.' : `The model has no verification cases. ${writeCase}`
 }
 
-export function casesSentence(count: number | null): string {
-  if (count === null) {
-    return ''
-  }
-  if (count === 0) {
-    return ' It has no verification cases yet.'
-  }
-  return ` It has ${count} verification ${count === 1 ? 'case' : 'cases'}.`
-}
-
 export const SERVER_NOT_ANSWERING = 'The server is not answering. The model can be edited, and its verification cases are listed once it answers.'
 export const VERIFY_ALL_HELD = 'Verify all is pressed. Every case runs as soon as initialization has finished.'
 
@@ -158,11 +144,6 @@ export function compiledDescription(languageName: string): string {
   return `Compiled from the ${languageName} model.`
 }
 
-export const EXAMPLE_PAGE = 'About this example'
-
-export function aboutLanguage(languageName: string): string {
-  return `About ${languageName}`
-}
 export const PROBLEMS = 'Problems in the model'
 export const NO_PROBLEMS = 'No problems.'
 

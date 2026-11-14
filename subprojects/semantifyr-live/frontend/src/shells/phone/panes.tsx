@@ -5,11 +5,9 @@
  */
 
 import type React from 'react'
-import { rightsOf } from '@semantifyr/editor-common/examples'
 import { type VerdictStatus, LanguageMark, VerdictMark } from '@semantifyr/editor-common/marks'
 
 import { parseLiveEditorUrl } from '@semantifyr/editor-common'
-import { findExample } from '../../examples'
 import { initializationStepsOf, presentationOf } from '../../lib/language/presentation'
 import { areCasesKnown, initializationOf } from '../../lib/stores/initialization'
 import { useStore } from '../../lib/stores/useStore'
@@ -17,14 +15,13 @@ import type { ResolvedColorMode } from '../../lib/util/colorMode'
 import { caseRowOf, countsOf, type CaseCounts, type CaseRow } from '../../lib/workspace/caseRows'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import { stepTimeText } from '../../lib/workspace/shellStatus'
-import { casesSentence, EXAMPLE_PAGE, noCases, SERVER_NOT_ANSWERING, VERDICT_WORDS, VERIFY_ALL_HELD, websitePage } from '../../texts'
+import { noCases, SERVER_NOT_ANSWERING, VERDICT_WORDS, VERIFY_ALL_HELD } from '../../texts'
 import { Icon } from '../../ui/icons'
 import { ValidationMark } from '../../ui/marks'
 import { addressProblemText } from '../desktop/Orientation'
 import { documentLabel, useCurrentDocument, useFlavor, useNow } from '../hooks'
 import { BackToModel, ModelEditor } from '../modelEditor'
 import { useShell } from '../shellContext'
-import { dismissOrientation } from '../shellState'
 import { EditControl, useTouchInput } from '../touch'
 import type { TraceSlot } from '../traceSlot'
 
@@ -50,64 +47,6 @@ export function AddressError(): React.JSX.Element | null {
         aria-label="Dismiss"
         onClick={() => {
           live.address.set(null)
-        }}
-      >
-        <Icon name="close" size="small" />
-      </button>
-    </div>
-  )
-}
-
-function Orientation(): React.JSX.Element | null {
-  const live = useLive()
-  const shell = useShell()
-  const document = useCurrentDocument(live)
-  const flavor = useFlavor(live)
-  const verification = useCurrentVerification(live)
-  const dismissed = useStore(shell.dismissedOrientations)
-  if (!document || !flavor || document.shared || dismissed.has(document.key)) {
-    return null
-  }
-  const example = findExample(flavor, document.example.id)
-  if (!example) {
-    return null
-  }
-  const count = verification.discovery === 'discovered' ? verification.cases.length : null
-  // once the model was verified, by the visitor or by the link that opened it, the button needs no pointing at
-  const verified = verification.phase !== 'idle' || verification.cases.some((caseState) => {
-    return caseState.resultStatus !== undefined
-  })
-  return (
-    <div className="phone-orientation">
-      <span className="orientation-mark" />
-      <span className="orientation-text">
-        <strong>{`${example.label}.`}</strong>
-        {casesSentence(count)}
-        {verified
-          ? null
-          : (
-            <>
-              {' Press '}
-              <strong>Verify all</strong>
-              {count === 1 ? ' to check it.' : ' to check them.'}
-            </>
-          )}
-        {example.served
-          ? (
-            <span className="phone-orientation-source">
-              {` ${rightsOf(example.served)} `}
-              <a className="link" href={websitePage(example.served.page)} target="_blank" rel="noreferrer">{EXAMPLE_PAGE}</a>
-            </span>
-          )
-          : null}
-      </span>
-      <button
-        type="button"
-        className="phone-icon-button"
-        title="Dismiss"
-        aria-label="Dismiss"
-        onClick={() => {
-          dismissOrientation(shell, document.key)
         }}
       >
         <Icon name="close" size="small" />
@@ -154,7 +93,6 @@ export function ModelPane({ colorMode, hidden }: { colorMode: ResolvedColorMode,
   const editing = useStore(shell.editing)
   return (
     <section className={`pane pane-model${editing ? ' is-editing' : ''}`} data-language={flavor?.languageId} aria-label="Model" hidden={hidden}>
-      {editing ? null : <Orientation />}
       <ModelBar />
       <BackToModel />
       <div className="pane-editor">

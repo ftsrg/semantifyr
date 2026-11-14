@@ -9,7 +9,7 @@ import { Menu } from '@base-ui/react/menu'
 import { liveEditorUrl, parseLiveEditorUrl } from '@semantifyr/editor-common'
 import { LanguageMark } from '@semantifyr/editor-common/marks'
 
-import { languagePageOf, listedExamples, type LiveExample, type LiveFlavor } from '../../examples'
+import { listedExamples, type LiveExample, type LiveFlavor } from '../../examples'
 import { LANGUAGE_ORDER, presentationOf } from '../../lib/language/presentation'
 import type { LanguageUnit } from '../../lib/language/types'
 import { changeSettings } from '../../lib/stores/settings'
@@ -17,7 +17,7 @@ import { useStore } from '../../lib/stores/useStore'
 import { documentKey, type Live } from '../../lib/workspace/live'
 import { useLive } from '../../lib/workspace/liveContext'
 import type { ColorModePreference } from '../../lib/util/colorMode'
-import { aboutLanguage, BLANK_MODEL, LIBRARY, libraryButton, libraryOf, SHARED_MODEL, THEMES, websitePage } from '../../texts'
+import { BLANK_MODEL, LIBRARY, libraryButton, libraryOf, SHARED_MODEL, THEMES } from '../../texts'
 import { Icon, type IconName } from '../../ui/icons'
 import { Logo } from '../../ui/marks'
 import { useAddressedModel, useCurrentDocument, useFlavor } from '../hooks'
@@ -173,16 +173,14 @@ function caseCountOf(live: ReturnType<typeof useLive>, flavor: LiveFlavor, examp
   return state?.discovery === 'discovered' ? state.cases.length : null
 }
 
-// the language the menu's examples are written in, with the website's page on it
+// the language the menu's examples are written in
 function LanguageIntro({ languageId }: { languageId: string }): React.JSX.Element {
   const presentation = presentationOf(languageId)
-  const page = languagePageOf(languageId)
   return (
     <div className="language-intro">
       <LanguageMark languageId={languageId} />
       <span className="language-intro-name">{`${presentation.name} examples`}</span>
       <span className="language-intro-detail">{presentation.detail}</span>
-      {page === null ? null : <a className="link language-intro-page" href={websitePage(page)} target="_blank" rel="noreferrer">{aboutLanguage(presentation.name)}</a>}
     </div>
   )
 }

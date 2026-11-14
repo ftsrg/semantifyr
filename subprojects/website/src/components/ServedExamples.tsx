@@ -8,7 +8,7 @@ import type React from 'react';
 import { useLocation } from '@docusaurus/router';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { liveExampleUrl, normalizeBaseUrl } from '@semantifyr/editor-common';
-import { rightsOf, servedExamples, type ExampleLanguage, type ServedExample } from '@semantifyr/editor-common/examples';
+import { servedExamples, type ExampleLanguage, type ServedExample } from '@semantifyr/editor-common/examples';
 import { useLiveBackendUrl } from '@site/src/lib/live';
 
 function useExampleAddress(example: ServedExample): string {
@@ -26,10 +26,6 @@ function exampleOf(language: ExampleLanguage, id: string): ServedExample {
   return example;
 }
 
-export function ExampleRights({ example }: { example: ServedExample }): React.JSX.Element {
-  return <>{rightsOf(example)}</>;
-}
-
 // an example by its address in live, under its label
 export function ExampleLink({ language, id }: { language: ExampleLanguage; id: string }): React.JSX.Element {
   const example = exampleOf(language, id);
@@ -40,8 +36,7 @@ function ServedExampleItem({ example }: { example: ServedExample }): React.JSX.E
   return (
     <li>
       <a href={useExampleAddress(example)}>{example.label}</a>
-      {`: ${example.reason} `}
-      <ExampleRights example={example} />
+      {`: ${example.reason}`}
     </li>
   );
 }

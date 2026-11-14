@@ -11,7 +11,7 @@ import type { ResolvedColorMode } from '../../lib/util/colorMode'
 import { useLive } from '../../lib/workspace/liveContext'
 import type { TraceSlot } from '../traceSlot'
 import { EditorArea } from './EditorArea'
-import { Orientation } from './Orientation'
+import { AddressError } from './Orientation'
 import { ResultsColumn } from './ResultsColumn'
 import { StatusBar } from './StatusBar'
 import { Toolbar } from './Toolbar'
@@ -37,7 +37,7 @@ export default function DesktopShell({ colorMode, trace }: Props): React.JSX.Ele
   return (
     <div className="app" data-language={languageId} data-testid="desktop-shell">
       <Toolbar />
-      <Orientation />
+      <AddressError />
       <main className={`workspace${settings.resultsColumnCollapsed ? ' is-collapsed' : ''}`} style={columnStyle}>
         <EditorArea colorMode={colorMode} />
         <ResultsColumn trace={trace} />

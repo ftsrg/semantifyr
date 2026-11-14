@@ -46,7 +46,6 @@ const UNCLIPPED = [
   '.case-outcome',
   '.status-message',
   '.status-end',
-  '.orientation-text',
   '.initialization-step',
 ]
 
@@ -94,7 +93,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
   'first': {
     seed: { verification: discovered([notRun(BARRIER), notRun(TWO_TRAINS)]) },
     expectState: () => {
-      expect(text('.orientation-text')).toContain('Press Verify all')
+      expect(count('.orientation')).toBe(0)
       expect(count('.case-row.status-not-run')).toBe(2)
       expect(count('.results-header .button-primary')).toBe(1)
     },

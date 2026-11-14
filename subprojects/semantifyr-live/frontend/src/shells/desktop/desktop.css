@@ -55,12 +55,7 @@
 .orientation[hidden] { display: none; }
 .orientation.is-error { background: var(--problem-soft); color: var(--text-primary); }
 .orientation.is-error > .icon { color: var(--problem); }
-.orientation-mark { width: 3px; height: 16px; border-radius: 2px; background: var(--accent); flex: none; }
 .orientation-text { flex: 0 1 auto; }
-.orientation-source { flex: 1 1 0; min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: var(--space-5); font-size: var(--text-small); }
-.orientation-rights { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-tertiary); }
-.orientation-source > a { flex: none; }
-.orientation-text strong { color: var(--text-primary); font-weight: var(--weight-semibold); }
 
 .workspace { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) var(--results-width); min-height: 0; }
 .workspace.is-collapsed { grid-template-columns: minmax(0, 1fr) var(--rail-width); }
@@ -246,7 +241,6 @@
 .examples-menu .language-intro { display: grid; grid-template-columns: 18px 1fr; column-gap: var(--space-4); padding: var(--space-4) var(--space-4) var(--space-5); }
 .examples-menu .language-intro-name { font-weight: var(--weight-semibold); }
 .examples-menu .language-intro-detail { grid-column: 2; color: var(--text-tertiary); font-size: var(--text-small); }
-.examples-menu .language-intro-page { grid-column: 2; font-size: var(--text-small); }
 .examples-menu .menu-item { padding: var(--space-4); }
 .check { color: var(--text-primary); }
 

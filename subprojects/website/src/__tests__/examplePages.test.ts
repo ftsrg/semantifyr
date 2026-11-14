@@ -6,7 +6,7 @@
 
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { EXAMPLE_LANGUAGES, servedExamples, servedLanguages } from '@semantifyr/editor-common/examples';
+import { servedExamples } from '@semantifyr/editor-common/examples';
 import { describe, expect, it } from 'vitest';
 
 const DOCS = fileURLToPath(new URL('../docs/', import.meta.url));
@@ -23,16 +23,10 @@ function pageExists(page: string): boolean {
   });
 }
 
-describe('the pages live links to', () => {
+describe('the pages the examples name', () => {
   it.each(servedExamples.map((example) => {
     return [`/${example.language}/${example.id}`, example.page] as const;
   }))('the page explaining %s, %s, exists', (_, page) => {
-    expect(pageExists(page)).toBe(true);
-  });
-
-  it.each(EXAMPLE_LANGUAGES.map((language) => {
-    return [language, servedLanguages[language].page] as const;
-  }))('the page on %s, %s, exists', (_, page) => {
     expect(pageExists(page)).toBe(true);
   });
 });

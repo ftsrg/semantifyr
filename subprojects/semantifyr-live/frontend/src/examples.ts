@@ -5,7 +5,7 @@
  */
 
 import type { FlavorInfo } from '@semantifyr/editor-common';
-import { EXAMPLE_LANGUAGES, fileNameOf, servedExamplesOf, servedLanguages, type ExampleLanguage, type ServedExample } from '@semantifyr/editor-common/examples';
+import { fileNameOf, servedExamplesOf, servedLanguages, type ExampleLanguage, type ServedExample } from '@semantifyr/editor-common/examples';
 import { presentationOf } from './lib/language/presentation';
 import { SYSML_FLAVOR_INFO } from './lib/session/sysmlBridge';
 import { BLANK_MODEL, compiledDescription, compiledLabel } from './texts';
@@ -112,11 +112,6 @@ const BUNDLED_EXAMPLES: Readonly<Record<string, LiveExample[]>> = {
 
 export function bundledExamplesOf(flavorId: string): LiveExample[] {
   return BUNDLED_EXAMPLES[flavorId] ?? [blank(flavorId)];
-}
-
-// the website's page on a language, for a language the registry knows
-export function languagePageOf(languageId: string): string | null {
-  return EXAMPLE_LANGUAGES.includes(languageId as ExampleLanguage) ? servedLanguages[languageId as ExampleLanguage].page : null;
 }
 
 // the examples live's menu lists: a lesson's step is opened by its address alone, and the blank model has a place of its own

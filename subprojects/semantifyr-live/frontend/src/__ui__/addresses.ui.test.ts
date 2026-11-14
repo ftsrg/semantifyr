@@ -5,11 +5,10 @@
  */
 
 import { encodeCompressedBase64Url } from '@semantifyr/editor-common'
-import { servedExamples, servedLanguages } from '@semantifyr/editor-common/examples'
+import { servedExamples } from '@semantifyr/editor-common/examples'
 import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
-import { aboutLanguage, EXAMPLE_PAGE, websitePage } from '../texts'
 import { casesListed, editor, servedExample, test, titleOf } from './harness'
 
 function pathOf(page: Page): string {
@@ -138,7 +137,7 @@ describe('the history of a visit', () => {
 
 describe('the served examples', () => {
   for (const example of servedExamples) {
-    test(`opens /${example.language}/${example.id} at its address, with the page that explains it`, async ({ ui }) => {
+    test(`opens /${example.language}/${example.id} at its address, with no banner over it`, async ({ ui }) => {
       ui.backend.answer('discover', () => {
         return []
       })
@@ -147,17 +146,7 @@ describe('the served examples', () => {
       await expect.poll(async () => {
         return page.title()
       }).toBe(titleOf(example.language, example.id))
-      expect(await page.locator('.orientation.is-error').count()).toBe(0)
-      expect(await page.locator('.orientation').getByRole('link', { name: EXAMPLE_PAGE }).getAttribute('href')).toBe(websitePage(example.page))
+      expect(await page.locator('.orientation').count()).toBe(0)
     })
   }
-
-  test('links the language to its page from the menu of its examples', async ({ ui }) => {
-    const page = await ui.open('/gamma/crossroads')
-    await casesListed(page)
-
-    await page.locator('.example-button').click()
-
-    expect(await page.locator('.examples-menu').getByRole('link', { name: aboutLanguage('Gamma') }).getAttribute('href')).toBe(websitePage(servedLanguages.gamma.page))
-  })
 })

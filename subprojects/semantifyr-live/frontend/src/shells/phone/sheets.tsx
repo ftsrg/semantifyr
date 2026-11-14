@@ -9,7 +9,7 @@ import { useState } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
 import { LanguageMark } from '@semantifyr/editor-common/marks'
 
-import { languagePageOf, listedExamples, type LiveExample, type LiveFlavor } from '../../examples'
+import { listedExamples, type LiveExample, type LiveFlavor } from '../../examples'
 import { LANGUAGE_ORDER, presentationOf } from '../../lib/language/presentation'
 import type { LanguageUnit } from '../../lib/language/types'
 import { changeSettings } from '../../lib/stores/settings'
@@ -19,7 +19,7 @@ import type { Live } from '../../lib/workspace/live'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import { portfolioChoices, portfolioName, type PortfolioChoice } from '../../lib/workspace/portfolioChoices'
 import { sharedResultsOf } from '../../lib/workspace/sharedResults'
-import { aboutLanguage, BLANK_MODEL, LIBRARY, libraryOf, NO_PROBLEMS, ONE_BACKEND, PROBLEMS, THEMES, VALIDATION, websitePage } from '../../texts'
+import { BLANK_MODEL, LIBRARY, libraryOf, NO_PROBLEMS, ONE_BACKEND, PROBLEMS, THEMES, VALIDATION } from '../../texts'
 import { Icon, type IconName } from '../../ui/icons'
 import { AboutDialog, DeveloperDialog } from '../desktop/Dialogs'
 import { pickFile } from '../desktop/keeping'
@@ -90,7 +90,6 @@ function Chooser({ onClose }: { onClose: () => void }): React.JSX.Element | null
   const libraryDetail = libraryOf(chosen.id).detail
   const presentation = presentationOf(chosen.languageId)
   const examples = listedExamples(chosen)
-  const languagePage = languagePageOf(chosen.languageId)
   const blank = chosen.examples.find((example) => {
     return example.id === 'blank'
   })
@@ -156,14 +155,6 @@ function Chooser({ onClose }: { onClose: () => void }): React.JSX.Element | null
         : null}
       <p className="chooser-intro">
         {presentation.detail}
-        {languagePage === null
-          ? null
-          : (
-            <>
-              {' '}
-              <a className="link" href={websitePage(languagePage)} target="_blank" rel="noreferrer">{aboutLanguage(presentation.name)}</a>
-            </>
-          )}
       </p>
       <div className="chooser-list" data-language={chosen.languageId}>
         <div className="section-label">{`${presentation.name} examples`}</div>

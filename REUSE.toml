@@ -69,6 +69,13 @@ SPDX-FileCopyrightText = [
 ]
 SPDX-License-Identifier = "EPL-1.0"
 
+# follows the Landing Gear System case study of Frédéric Boniol and Virginie Wiels, ABZ 2014; the model is the Semantifyr authors' own
+[[annotations]]
+path = "subprojects/frontends/sysml/models/examples/landing_gear.sysml"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 The Semantifyr Authors"
+SPDX-License-Identifier = "EPL-2.0"
+
 # origins of corpus models that are not served and whose rights holders are not recorded yet: orion_protocol.sysml is Prolan's Orion protocol, from the 2018-1.3.1-VKE project; spacecraft.sysml follows OpenMBEE's Simple Space Mission; autonomous_driving.sysml follows the paper "Automatic Formal Verification of SysML State Machine Diagrams for Vehicular Control Systems" of Clemson University
 [[annotations]]
 path = [

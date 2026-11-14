@@ -99,7 +99,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     seed: { verification: NOT_RUN },
     expectState: () => {
       expect(visiblePanes()).toEqual(['Model'])
-      expect(text('.phone-orientation')).toContain('Press Verify all')
+      expect(count('.phone-orientation')).toBe(0)
       expect(text('.model-bar-name')).toBe('level-crossing.sysml')
       expect(count('.phone-bar .button-primary')).toBe(1)
       expect(text('.model-chooser')).toContain('Level crossing')
