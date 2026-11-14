@@ -280,3 +280,15 @@
     display: inline-flex;
   }
 }
+
+/* the phone's menu opens with live's brand at the bar's height */
+.navbar-sidebar__brand {
+  height: 56px;
+  padding: 0 var(--space-4) 0 var(--space-6);
+  border-bottom: 1px solid var(--border);
+  box-shadow: none;
+}
+
+.navbar-sidebar__brand .navbar__logo {
+  height: 19px;
+}

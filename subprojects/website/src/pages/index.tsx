@@ -100,7 +100,7 @@ function Ways(): React.JSX.Element {
       </div>
       <div className={styles.way}>
         <h2 className={styles.wayTitle}>Publications</h2>
-        <p className={styles.wayText}>The papers on the approach, the framework and its language.</p>
+        <p className={styles.wayText}>The papers on Semantifyr and its approach of semantic libraries.</p>
         <Link to="/publications/">See the publications</Link>
       </div>
     </div>
