@@ -82,7 +82,7 @@
  },
  "sessionInfo": null,
  "documents": {
-  "9f1b12bcf51700d4": {
+  "5e144a13fe475366": {
    "diagnostics": [],
    "cases": [
     {
@@ -92,11 +92,11 @@
       "uri": "file:///workspace/snippet.gamma",
       "range": {
        "start": {
-        "line": 94,
+        "line": 96,
         "character": 18
        },
        "end": {
-        "line": 94,
+        "line": 96,
         "character": 49
        }
       }
@@ -109,11 +109,11 @@
       "uri": "file:///workspace/snippet.gamma",
       "range": {
        "start": {
-        "line": 98,
+        "line": 100,
         "character": 18
        },
        "end": {
-        "line": 98,
+        "line": 100,
         "character": 45
        }
       }
@@ -125,7 +125,7 @@
     "oxsts": "package _LevelCrossing\n\nimport semantifyr::gamma::expressions\nimport semantifyr::gamma::variables\nimport semantifyr::gamma::statecharts\nimport semantifyr::gamma::components\nimport semantifyr::gamma::triggers\nimport semantifyr::gamma::actions\nimport semantifyr::gamma::events\nimport semantifyr::gamma::ports\nimport semantifyr::gamma::verification\nimport semantifyr::gamma::asynchronous\n\nclass _Sensors : Interface {\n    contains _approach: Event subsets outputEvents {\n        @Shared\n        redefine contains declaration: EventDeclaration\n    }\n    contains _near: Event subsets outputEvents {\n        @Shared\n        redefine contains declaration: EventDeclaration\n    }\n    contains _enter: Event subsets outputEvents {\n        @Shared\n        redefine contains declaration: EventDeclaration\n    }\n    contains _leave: Event subsets outputEvents {\n        @Shared\n        redefine contains declaration: EventDeclaration\n    }\n}\nclass _TrackReports : Interface {\n    contains _trainApproaching: Event subsets outputEvents {\n        @Shared\n        redefine contains declaration: EventDeclaration\n    }\n    contains _trainLeft: Event subsets outputEvents {\n        @Shared\n        redefine contains declaration: EventDeclaration\n    }\n}\nclass _BarrierCommands : Interface {\n    contains _lower: Event subsets outputEvents {\n        @Shared\n        redefine contains declaration: EventDeclaration\n    }\n    contains _lift: Event subsets outputEvents {\n        @Shared\n        redefine contains declaration: EventDeclaration\n    }\n}\nclass _Track : Statechart {\n    redefine refers regionSchedule: RegionSchedule = RegionSchedule::TopDown\n    redefine refers transitionPriority: TransitionPriority = TransitionPriority::Off\n    redefine refers guardEvaluation: GuardEvaluation = GuardEvaluation::OnTheFly\n    contains _sensors: RequiredPort subsets ports {\n        redefine contains interface: _LevelCrossing::_Sensors\n    }\n    contains _controller: ProvidedPort subsets ports {\n        redefine contains interface: _LevelCrossing::_TrackReports\n    }\n    contains _Main: Region subsets regions {\n        contains _Free: State subsets states {\n        }\n        contains _Approaching: State subsets states {\n        }\n        contains _Near: State subsets states {\n        }\n        contains _InCrossing: State subsets states {\n        }\n        contains entry_to_Free: EntryTransition subsets entryTransitions {\n            redefine refers to: State = _Free\n        }\n        contains transition_Free_to_Approaching: Transition subsets transitions {\n            redefine refers from: State = _Free\n            redefine refers to: State = _Approaching\n            redefine contains trigger: EventTrigger {\n                redefine refers port: Port = _sensors\n                redefine refers event: Event = _sensors.interface._approach\n            }\n            contains raise_controller_trainApproaching: RaiseEventAction subsets actions {\n                redefine refers port: Port = _controller\n                redefine refers event: Event = _controller.interface._trainApproaching\n            }\n        }\n        contains transition_Approaching_to_Near: Transition subsets transitions {\n            redefine refers from: State = _Approaching\n            redefine refers to: State = _Near\n            redefine contains trigger: EventTrigger {\n                redefine refers port: Port = _sensors\n                redefine refers event: Event = _sensors.interface._near\n            }\n        }\n        contains transition_Near_to_InCrossing: Transition subsets transitions {\n            redefine refers from: State = _Near\n            redefine refers to: State = _InCrossing\n            redefine contains trigger: EventTrigger {\n                redefine refers port: Port = _sensors\n                redefine refers event: Event = _sensors.interface._enter\n            }\n        }\n        contains transition_InCrossing_to_Free: Transition subsets transitions {\n            redefine refers from: State = _InCrossing\n            redefine refers to: State = _Free\n            redefine contains trigger: EventTrigger {\n                redefine refers port: Port = _sensors\n                redefine refers event: Event = _sensors.interface._leave\n            }\n            contains raise_controller_trainLeft: RaiseEventAction subsets actions {\n                redefine refers port: Port = _controller\n                redefine refers event: Event = _controller.interface._trainLeft\n            }\n        }\n    }\n}\nclass _Controller : Statechart {\n    redefine refers regionSchedule: RegionSchedule = RegionSchedule::TopDown\n    redefine refers transitionPriority: TransitionPriority = TransitionPriority::Off\n    redefine refers guardEvaluation: GuardEvaluation = GuardEvaluation::OnTheFly\n    contains _trackA: RequiredPort subsets ports {\n        redefine contains interface: _LevelCrossing::_TrackReports\n    }\n    contains _trackB: RequiredPort subsets ports {\n        redefine contains interface: _LevelCrossing::_TrackReports\n    }\n    contains _barrier: ProvidedPort subsets ports {\n        redefine contains interface: _LevelCrossing::_BarrierCommands\n    }\n    contains _Main: Region subsets regions {\n        contains _Idle: State subsets states {\n        }\n        contains _TrainPresent: State subsets states {\n        }\n        contains entry_to_Idle: EntryTransition subsets entryTransitions {\n            redefine refers to: State = _Idle\n        }\n        contains transition_Idle_to_TrainPresent_on_trackA_trainApproaching: Transition subsets transitions {\n            redefine refers from: State = _Idle\n            redefine refers to: State = _TrainPresent\n            redefine contains trigger: EventTrigger {\n                redefine refers port: Port = _trackA\n                redefine refers event: Event = _trackA.interface._trainApproaching\n            }\n            contains raise_barrier_lower: RaiseEventAction subsets actions {\n                redefine refers port: Port = _barrier\n                redefine refers event: Event = _barrier.interface._lower\n            }\n        }\n        contains transition_Idle_to_TrainPresent_on_trackB_trainApproaching: Transition subsets transitions {\n            redefine refers from: State = _Idle\n            redefine refers to: State = _TrainPresent\n            redefine contains trigger: EventTrigger {\n                redefine refers port: Port = _trackB\n                redefine refers event: Event = _trackB.interface._trainApproaching\n            }\n            contains raise_barrier_lower: RaiseEventAction subsets actions {\n                redefine refers port: Port = _barrier\n                redefine refers event: Event = _barrier.interface._lower\n            }\n        }\n        contains transition_TrainPresent_to_Idle_on_trackA_trainLeft: Transition subsets transitions {\n            redefine refers from: State = _TrainPresent\n            redefine refers to: State = _Idle\n            redefine contains trigger: EventTrigger {\n                redefine refers port: Port = _trackA\n                redefine refers event: Event = _trackA.interface._trainLeft\n            }\n            contains raise_barrier_lift: RaiseEventAction subsets actions {\n                redefine refers port: Port = _barrier\n                redefine refers event: Event = _barrier.interface._lift\n            }\n        }\n        contains transition_TrainPresent_to_Idle_on_trackB_trainLeft: Transition subsets transitions {\n            redefine refers from: State = _TrainPresent\n            redefine refers to: State = _Idle\n            redefine contains trigger: EventTrigger {\n                redefine refers port: Port = _trackB\n                redefine refers event: Event = _trackB.interface._trainLeft\n            }\n            contains raise_barrier_lift: RaiseEventAction subsets actions {\n                redefine refers port: Port = _barrier\n                redefine refers event: Event = _barrier.interface._lift\n            }\n        }\n    }\n}\nclass _Barrier : Statechart {\n    redefine refers regionSchedule: RegionSchedule = RegionSchedule::TopDown\n    redefine refers transitionPriority: TransitionPriority = TransitionPriority::Off\n    redefine refers guardEvaluation: GuardEvaluation = GuardEvaluation::OnTheFly\n    contains _controller: RequiredPort subsets ports {\n        redefine contains interface: _LevelCrossing::_BarrierCommands\n    }\n    contains _Main: Region subsets regions {\n        contains _Up: State subsets states {\n        }\n        contains _Down: State subsets states {\n        }\n        contains entry_to_Up: EntryTransition subsets entryTransitions {\n            redefine refers to: State = _Up\n        }\n        contains transition_Up_to_Down: Transition subsets transitions {\n            redefine refers from: State = _Up\n            redefine refers to: State = _Down\n            redefine contains trigger: EventTrigger {\n                redefine refers port: Port = _controller\n                redefine refers event: Event = _controller.interface._lower\n            }\n        }\n        contains transition_Down_to_Up: Transition subsets transitions {\n            redefine refers from: State = _Down\n            redefine refers to: State = _Up\n            redefine contains trigger: EventTrigger {\n                redefine refers port: Port = _controller\n                redefine refers event: Event = _controller.interface._lift\n            }\n        }\n    }\n}\nclass _LevelCrossing : SyncComponent {\n    refers _trackASensors: Port subsets ports = _trackA._sensors\n    refers _trackBSensors: Port subsets ports = _trackB._sensors\n    contains _trackA: _LevelCrossing::_Track subsets components\n    contains _trackB: _LevelCrossing::_Track subsets components\n    contains _controller: _LevelCrossing::_Controller subsets components\n    contains _barrier: _LevelCrossing::_Barrier subsets components\n    contains channel_trackA_controller_to_controller_trackA: Channel subsets channels {\n        redefine refers inputPort: Port = _trackA._controller\n        redefine refers outputPort: Port = _controller._trackA\n    }\n    contains channel_trackB_controller_to_controller_trackB: Channel subsets channels {\n        redefine refers inputPort: Port = _trackB._controller\n        redefine refers outputPort: Port = _controller._trackB\n    }\n    contains channel_controller_barrier_to_barrier_controller: Channel subsets channels {\n        redefine refers inputPort: Port = _controller._barrier\n        redefine refers outputPort: Port = _barrier._controller\n    }\n}\n@VerificationCase\nclass _BarrierDownWhileTrainInCrossing : GammaVerificationCase {\n    redefine contains component: _LevelCrossing::_LevelCrossing\n    redefine contains propertyExpression: MustAlways {\n        redefine contains body: OrOperatorExpression {\n            redefine contains left: AndOperatorExpression {\n                redefine contains left: UnaryNotExpression {\n                    redefine contains body: IsStateActiveExpression {\n                        redefine refers state: State = component._trackA._Main._InCrossing\n                    }\n                }\n                redefine contains right: UnaryNotExpression {\n                    redefine contains body: IsStateActiveExpression {\n                        redefine refers state: State = component._trackB._Main._InCrossing\n                    }\n                }\n            }\n            redefine contains right: IsStateActiveExpression {\n                redefine refers state: State = component._barrier._Main._Down\n            }\n        }\n    }\n}\n@VerificationCase\nclass _TwoTrainsCanBeInTheCrossing : GammaVerificationCase {\n    redefine contains component: _LevelCrossing::_LevelCrossing\n    redefine contains propertyExpression: Eventually {\n        redefine contains body: AndOperatorExpression {\n            redefine contains left: IsStateActiveExpression {\n                redefine refers state: State = component._trackA._Main._InCrossing\n            }\n            redefine contains right: IsStateActiveExpression {\n                redefine refers state: State = component._trackB._Main._InCrossing\n            }\n        }\n    }\n}\n"
    }
   },
-  "84b73b105cb71908": {
+  "c0c1e49eeaa6eca6": {
    "diagnostics": [],
    "cases": [
     {
@@ -135,11 +135,11 @@
       "uri": "file:///workspace/snippet.gamma",
       "range": {
        "start": {
-        "line": 145,
+        "line": 147,
         "character": 18
        },
        "end": {
-        "line": 145,
+        "line": 147,
         "character": 36
        }
       }
@@ -152,11 +152,11 @@
       "uri": "file:///workspace/snippet.gamma",
       "range": {
        "start": {
-        "line": 149,
+        "line": 151,
         "character": 18
        },
        "end": {
-        "line": 149,
+        "line": 151,
         "character": 32
        }
       }
@@ -169,11 +169,11 @@
       "uri": "file:///workspace/snippet.gamma",
       "range": {
        "start": {
-        "line": 153,
+        "line": 155,
         "character": 18
        },
        "end": {
-        "line": 153,
+        "line": 155,
         "character": 34
        }
       }
@@ -186,11 +186,11 @@
       "uri": "file:///workspace/snippet.gamma",
       "range": {
        "start": {
-        "line": 157,
+        "line": 159,
         "character": 18
        },
        "end": {
-        "line": 157,
+        "line": 159,
         "character": 32
        }
       }
@@ -198,7 +198,7 @@
     }
    ]
   },
-  "dd1b58f5380bf515": {
+  "1adcf75e7b4c7464": {
    "diagnostics": [],
    "cases": [
     {
@@ -208,11 +208,11 @@
       "uri": "file:///workspace/snippet.gamma",
       "range": {
        "start": {
-        "line": 123,
+        "line": 125,
         "character": 18
        },
        "end": {
-        "line": 123,
+        "line": 125,
         "character": 38
        }
       }
@@ -225,11 +225,11 @@
       "uri": "file:///workspace/snippet.gamma",
       "range": {
        "start": {
-        "line": 127,
+        "line": 129,
         "character": 18
        },
        "end": {
-        "line": 127,
+        "line": 129,
         "character": 36
        }
       }
@@ -242,11 +242,11 @@
       "uri": "file:///workspace/snippet.gamma",
       "range": {
        "start": {
-        "line": 131,
+        "line": 133,
         "character": 18
        },
        "end": {
-        "line": 131,
+        "line": 133,
         "character": 44
        }
       }
@@ -254,7 +254,7 @@
     }
    ]
   },
-  "771f5ebdf12a8a1c": {
+  "72ad063a43f8535c": {
    "diagnostics": [],
    "cases": [
     {
@@ -264,11 +264,11 @@
       "uri": "file:///workspace/snippet.gamma",
       "range": {
        "start": {
-        "line": 151,
+        "line": 153,
         "character": 18
        },
        "end": {
-        "line": 151,
+        "line": 153,
         "character": 36
        }
       }
@@ -281,11 +281,11 @@
       "uri": "file:///workspace/snippet.gamma",
       "range": {
        "start": {
-        "line": 158,
+        "line": 160,
         "character": 18
        },
        "end": {
-        "line": 158,
+        "line": 160,
         "character": 35
        }
       }
@@ -298,11 +298,11 @@
       "uri": "file:///workspace/snippet.gamma",
       "range": {
        "start": {
-        "line": 165,
+        "line": 167,
         "character": 18
        },
        "end": {
-        "line": 165,
+        "line": 167,
         "character": 44
        }
       }
@@ -29054,51 +29054,51 @@
    "backendId": "nuxmv:bmc-invar",
    "portfolioId": "smart",
    "metrics": {
-    "totalDuration": "PT2.150571429S",
-    "preparationDuration": "PT0.334950827S",
-    "verificationDuration": "PT0.765596996S",
-    "backAnnotationDuration": "PT0.014353201S",
+    "totalDuration": "PT4.825722626S",
+    "preparationDuration": "PT0.530777633S",
+    "verificationDuration": "PT2.084071797S",
+    "backAnnotationDuration": "PT0.010519026S",
     "compilation": {
-     "createDuration": "PT0.004513919S",
-     "instantiationDuration": "PT0.005674932S",
-     "inliningDuration": "PT0.25305277S",
-     "flatteningDuration": "PT0.068472123S",
+     "createDuration": "PT0.009287741S",
+     "instantiationDuration": "PT0.008752531S",
+     "inliningDuration": "PT0.395295206S",
+     "flatteningDuration": "PT0.114281332S",
      "inliningOptimization": {
-      "duration": "PT0.022672884S",
+      "duration": "PT0.026131192S",
       "passes": [
        {
         "name": "OperationCallInlining",
-        "duration": "PT0.010386063S",
+        "duration": "PT0.015669992S",
         "runs": 867,
         "firings": 221
        },
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.006481057S",
+        "duration": "PT0.005621433S",
         "runs": 3,
         "firings": 2
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.002608946S",
+        "duration": "PT0.002092698S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.001511193S",
+        "duration": "PT0.00116086S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.001515147S",
+        "duration": "PT0.001412986S",
         "runs": 3,
         "firings": 2
        },
        {
         "name": "PropertyExpressionNormalization",
-        "duration": "PT0.00001254S",
+        "duration": "PT0.000014677S",
         "runs": 1,
         "firings": 0
        }
@@ -29106,59 +29106,59 @@
       "analyses": []
      },
      "flatteningOptimization": {
-      "duration": "PT0.038814145S",
+      "duration": "PT0.057832375S",
       "passes": [
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.000480572S",
+        "duration": "PT0.000647302S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.000257875S",
+        "duration": "PT0.000329876S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.000286166S",
+        "duration": "PT0.00035289S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.00027S",
+        "duration": "PT0.000366524S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "ConstantVariableSubstitutionPass",
-        "duration": "PT0.001557745S",
+        "duration": "PT0.002122792S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "CopyPropagationPass",
-        "duration": "PT0.021759595S",
+        "duration": "PT0.035055601S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "DeadStoreEliminationPass",
-        "duration": "PT0.000492513S",
+        "duration": "PT0.000685519S",
         "runs": 2,
         "firings": 1
        },
        {
         "name": "DeadCodeRemovalPass",
-        "duration": "PT0.007525721S",
+        "duration": "PT0.009057457S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "VariableLivenessPass",
-        "duration": "PT0.006023291S",
+        "duration": "PT0.008995109S",
         "runs": 2,
         "firings": 1
        }
@@ -29166,17 +29166,17 @@
       "analyses": [
        {
         "name": "ConstantValueAnalysis",
-        "duration": "PT0.001483067S",
+        "duration": "PT0.002045757S",
         "computations": 2
        },
        {
         "name": "ReachingDefinitionsAnalysis",
-        "duration": "PT0.021681644S",
+        "duration": "PT0.034933462S",
         "computations": 2
        },
        {
         "name": "ConeOfInfluenceAnalysis",
-        "duration": "PT0.007077777S",
+        "duration": "PT0.00848469S",
         "computations": 2
        }
       ]
@@ -29841,51 +29841,51 @@
    "backendId": "nuxmv:bmc-invar",
    "portfolioId": "smart",
    "metrics": {
-    "totalDuration": "PT4.52842514S",
-    "preparationDuration": "PT0.370127124S",
-    "verificationDuration": "PT2.56959464S",
-    "backAnnotationDuration": "PT0.006806862S",
+    "totalDuration": "PT5.094502662S",
+    "preparationDuration": "PT0.606070721S",
+    "verificationDuration": "PT3.233814156S",
+    "backAnnotationDuration": "PT0.013451605S",
     "compilation": {
-     "createDuration": "PT0.006431326S",
-     "instantiationDuration": "PT0.00527241S",
-     "inliningDuration": "PT0.281016072S",
-     "flatteningDuration": "PT0.07421026S",
+     "createDuration": "PT0.011755549S",
+     "instantiationDuration": "PT0.014907351S",
+     "inliningDuration": "PT0.433014283S",
+     "flatteningDuration": "PT0.143219824S",
      "inliningOptimization": {
-      "duration": "PT0.020899961S",
+      "duration": "PT0.036599885S",
       "passes": [
        {
         "name": "OperationCallInlining",
-        "duration": "PT0.011503193S",
+        "duration": "PT0.017429759S",
         "runs": 867,
         "firings": 221
        },
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.005255981S",
+        "duration": "PT0.010497534S",
         "runs": 3,
         "firings": 2
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.001968638S",
+        "duration": "PT0.00385714S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.000913467S",
+        "duration": "PT0.002193405S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.001130326S",
+        "duration": "PT0.002397801S",
         "runs": 3,
         "firings": 2
        },
        {
         "name": "PropertyExpressionNormalization",
-        "duration": "PT0.000010844S",
+        "duration": "PT0.000022408S",
         "runs": 1,
         "firings": 0
        }
@@ -29893,59 +29893,59 @@
       "analyses": []
      },
      "flatteningOptimization": {
-      "duration": "PT0.040829607S",
+      "duration": "PT0.077798523S",
       "passes": [
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.000482442S",
+        "duration": "PT0.001019069S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.000255234S",
+        "duration": "PT0.000672225S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.00026865S",
+        "duration": "PT0.00065121S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.000261327S",
+        "duration": "PT0.00065274S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "ConstantVariableSubstitutionPass",
-        "duration": "PT0.001502555S",
+        "duration": "PT0.004141176S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "CopyPropagationPass",
-        "duration": "PT0.021821662S",
+        "duration": "PT0.042935856S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "DeadStoreEliminationPass",
-        "duration": "PT0.000499357S",
+        "duration": "PT0.001270037S",
         "runs": 2,
         "firings": 1
        },
        {
         "name": "DeadCodeRemovalPass",
-        "duration": "PT0.007577601S",
+        "duration": "PT0.013941982S",
         "runs": 2,
         "firings": 0
        },
        {
         "name": "VariableLivenessPass",
-        "duration": "PT0.008038545S",
+        "duration": "PT0.012217196S",
         "runs": 2,
         "firings": 1
        }
@@ -29953,17 +29953,17 @@
       "analyses": [
        {
         "name": "ConstantValueAnalysis",
-        "duration": "PT0.001448687S",
+        "duration": "PT0.003930677S",
         "computations": 2
        },
        {
         "name": "ReachingDefinitionsAnalysis",
-        "duration": "PT0.021746562S",
+        "duration": "PT0.042765241S",
         "computations": 2
        },
        {
         "name": "ConeOfInfluenceAnalysis",
-        "duration": "PT0.007128555S",
+        "duration": "PT0.013121367S",
         "computations": 2
        }
       ]
@@ -31203,54 +31203,54 @@
   "LevelCrossing.TwoTrainsCanBeInTheCrossing": {
    "status": "valid",
    "verdict": "passed",
-   "backendId": "nuxmv:bmc-invar",
+   "backendId": "uppaal:default",
    "portfolioId": "smart",
    "metrics": {
-    "totalDuration": "PT5.696346814S",
-    "preparationDuration": "PT2.361567267S",
-    "verificationDuration": "PT4.145230756S",
-    "backAnnotationDuration": "PT0.086429373S",
+    "totalDuration": "PT3.513899216S",
+    "preparationDuration": "PT1.817800823S",
+    "verificationDuration": "PT2.382403175S",
+    "backAnnotationDuration": "PT0.062223753S",
     "compilation": {
-     "createDuration": "PT0.005908506S",
-     "instantiationDuration": "PT0.093555478S",
-     "inliningDuration": "PT1.738937351S",
-     "flatteningDuration": "PT0.505782541S",
+     "createDuration": "PT0.010480841S",
+     "instantiationDuration": "PT0.107724791S",
+     "inliningDuration": "PT1.192436495S",
+     "flatteningDuration": "PT0.502141731S",
      "inliningOptimization": {
-      "duration": "PT0.155422798S",
+      "duration": "PT0.112917518S",
       "passes": [
        {
         "name": "OperationCallInlining",
-        "duration": "PT0.091327441S",
+        "duration": "PT0.042842629S",
         "runs": 2387,
         "firings": 613
        },
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.028157096S",
+        "duration": "PT0.021778018S",
         "runs": 3,
         "firings": 2
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.013306366S",
+        "duration": "PT0.037745692S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.009667689S",
+        "duration": "PT0.005087364S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.012580194S",
+        "duration": "PT0.00516361S",
         "runs": 3,
         "firings": 2
        },
        {
         "name": "PropertyExpressionNormalization",
-        "duration": "PT0.000034766S",
+        "duration": "PT0.000016855S",
         "runs": 1,
         "firings": 0
        }
@@ -31258,59 +31258,59 @@
       "analyses": []
      },
      "flatteningOptimization": {
-      "duration": "PT0.32186597S",
+      "duration": "PT0.271913478S",
       "passes": [
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.002754455S",
+        "duration": "PT0.002637966S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.001702865S",
+        "duration": "PT0.002002383S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.001769186S",
+        "duration": "PT0.001893819S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.001692333S",
+        "duration": "PT0.001856614S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "ConstantVariableSubstitutionPass",
-        "duration": "PT0.008048256S",
+        "duration": "PT0.008897584S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "CopyPropagationPass",
-        "duration": "PT0.138148643S",
+        "duration": "PT0.116622299S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "DeadStoreEliminationPass",
-        "duration": "PT0.077743518S",
+        "duration": "PT0.059836055S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "DeadCodeRemovalPass",
-        "duration": "PT0.040895414S",
+        "duration": "PT0.031406791S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "VariableLivenessPass",
-        "duration": "PT0.048763044S",
+        "duration": "PT0.046410755S",
         "runs": 3,
         "firings": 1
        }
@@ -31318,17 +31318,17 @@
       "analyses": [
        {
         "name": "ConstantValueAnalysis",
-        "duration": "PT0.007921283S",
+        "duration": "PT0.008694262S",
         "computations": 2
        },
        {
         "name": "ReachingDefinitionsAnalysis",
-        "duration": "PT0.209728032S",
+        "duration": "PT0.172003001S",
         "computations": 3
        },
        {
         "name": "ConeOfInfluenceAnalysis",
-        "duration": "PT0.03783423S",
+        "duration": "PT0.028420607S",
         "computations": 2
        }
       ]
@@ -31354,54 +31354,54 @@
   "LevelCrossing.BarrierDownWhileTrainInCrossing": {
    "status": "valid",
    "verdict": "passed",
-   "backendId": "uppaal:default",
+   "backendId": "theta:bounded-bmc",
    "portfolioId": "smart",
    "metrics": {
-    "totalDuration": "PT8.333967259S",
-    "preparationDuration": "PT8.548692023S",
-    "verificationDuration": "PT4.504653422S",
-    "backAnnotationDuration": "PT0.551671693S",
+    "totalDuration": "PT9.649462898S",
+    "preparationDuration": "PT6.390075357S",
+    "verificationDuration": "PT6.106046917S",
+    "backAnnotationDuration": "PT1.205055486S",
     "compilation": {
-     "createDuration": "PT0.003597698S",
-     "instantiationDuration": "PT0.041153426S",
-     "inliningDuration": "PT6.530034522S",
-     "flatteningDuration": "PT1.942380033S",
+     "createDuration": "PT0.00530967S",
+     "instantiationDuration": "PT0.084099378S",
+     "inliningDuration": "PT3.587469991S",
+     "flatteningDuration": "PT2.281906548S",
      "inliningOptimization": {
-      "duration": "PT0.512340051S",
+      "duration": "PT0.204958676S",
       "passes": [
        {
         "name": "OperationCallInlining",
-        "duration": "PT0.11773435S",
+        "duration": "PT0.063193594S",
         "runs": 4667,
         "firings": 1201
        },
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.178269564S",
+        "duration": "PT0.048294089S",
         "runs": 5,
         "firings": 4
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.104337812S",
+        "duration": "PT0.022685508S",
         "runs": 5,
         "firings": 1
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.053768248S",
+        "duration": "PT0.053626231S",
         "runs": 5,
         "firings": 1
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.057309711S",
+        "duration": "PT0.016670803S",
         "runs": 5,
         "firings": 2
        },
        {
         "name": "PropertyExpressionNormalization",
-        "duration": "PT0.000041874S",
+        "duration": "PT0.000017188S",
         "runs": 1,
         "firings": 0
        }
@@ -31409,59 +31409,59 @@
       "analyses": []
      },
      "flatteningOptimization": {
-      "duration": "PT1.085206515S",
+      "duration": "PT1.565495523S",
       "passes": [
        {
         "name": "ExpressionSimplificationPass",
-        "duration": "PT0.009362618S",
+        "duration": "PT0.0164854S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "OperationFlatteningPass",
-        "duration": "PT0.00775147S",
+        "duration": "PT0.009491464S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "RedundantOperationRemovalPass",
-        "duration": "PT0.006984634S",
+        "duration": "PT0.014788529S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "AssumeFalsePropagationPass",
-        "duration": "PT0.007028612S",
+        "duration": "PT0.008780941S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "ConstantVariableSubstitutionPass",
-        "duration": "PT0.026924138S",
+        "duration": "PT0.043113625S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "CopyPropagationPass",
-        "duration": "PT0.557064821S",
+        "duration": "PT0.872461125S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "DeadStoreEliminationPass",
-        "duration": "PT0.248436164S",
+        "duration": "PT0.400114037S",
         "runs": 3,
         "firings": 1
        },
        {
         "name": "DeadCodeRemovalPass",
-        "duration": "PT0.087642917S",
+        "duration": "PT0.082960675S",
         "runs": 3,
         "firings": 0
        },
        {
         "name": "VariableLivenessPass",
-        "duration": "PT0.133452049S",
+        "duration": "PT0.116643579S",
         "runs": 3,
         "firings": 1
        }
@@ -31469,17 +31469,17 @@
       "analyses": [
        {
         "name": "ConstantValueAnalysis",
-        "duration": "PT0.026583122S",
+        "duration": "PT0.04284018S",
         "computations": 2
        },
        {
         "name": "ReachingDefinitionsAnalysis",
-        "duration": "PT0.789605422S",
+        "duration": "PT1.257017879S",
         "computations": 3
        },
        {
         "name": "ConeOfInfluenceAnalysis",
-        "duration": "PT0.078362229S",
+        "duration": "PT0.071906479S",
         "computations": 2
        }
       ]

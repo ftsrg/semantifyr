@@ -4,7 +4,7 @@
  },
  "config": {
   "server": {
-   "port": 18840,
+   "port": 18350,
    "pingPeriod": "PT30S",
    "pingTimeout": "PT15S",
    "webRootDirectory": "/opt/semantifyr/staging/web",
@@ -69,52 +69,80 @@
  "status": {
   "sessions": [
    {
-    "sessionId": "c26a84e4-8d64-4d98-9ee8-7a0842b8059f",
-    "remoteIp": "0:0:0:0:0:0:0:1",
-    "flavorId": "oxsts",
-    "kind": "full",
-    "languageId": "oxsts",
-    "uptime": "PT9.784592928S",
-    "runningCount": 2,
-    "queuedCount": 0,
-    "workingDirectory": "/tmp/semantifyr/sessions/c26a84e4-8d64-4d98-9ee8-7a0842b8059f",
-    "activeVerifications": [
-     {
-      "verificationId": "3f6bc614-277c-4985-81bd-732ddca646c0",
-      "portfolioId": "smart",
-      "kind": "Validate",
-      "state": "Running",
-      "elapsed": "PT0.457898939S"
-     },
-     {
-      "verificationId": "5ec1eb65-0649-46f3-8a17-0c9f06e7d2bf",
-      "portfolioId": "smart",
-      "kind": "Verify",
-      "state": "Running",
-      "elapsed": "PT0.457587821S"
-     }
-    ]
-   },
-   {
-    "sessionId": "419d62ae-af20-42c8-a5d9-b8eb65b4930f",
-    "remoteIp": "0:0:0:0:0:0:0:1",
+    "sessionId": "4df0caed-4651-452f-9d75-ca2fd107d467",
+    "remoteIp": "127.0.0.1",
     "flavorId": "gamma",
     "kind": "embed",
     "languageId": "gamma",
-    "uptime": "PT8.844919661S",
+    "uptime": "PT5.024819271S",
     "runningCount": 0,
     "queuedCount": 0,
-    "workingDirectory": "/tmp/semantifyr/sessions/419d62ae-af20-42c8-a5d9-b8eb65b4930f",
+    "workingDirectory": "/tmp/semantifyr/sessions/4df0caed-4651-452f-9d75-ca2fd107d467",
     "activeVerifications": []
+   },
+   {
+    "sessionId": "adf90e7e-3898-42d8-a6fd-4109c98672d6",
+    "remoteIp": "127.0.0.1",
+    "flavorId": "oxsts",
+    "kind": "full",
+    "languageId": "oxsts",
+    "uptime": "PT4.854305740S",
+    "runningCount": 4,
+    "queuedCount": 2,
+    "workingDirectory": "/tmp/semantifyr/sessions/adf90e7e-3898-42d8-a6fd-4109c98672d6",
+    "activeVerifications": [
+     {
+      "verificationId": "f43814f7-0ed9-409f-9562-6bbac850992d",
+      "portfolioId": "smart",
+      "kind": "Verify",
+      "state": "Running",
+      "elapsed": "PT0.086065738S"
+     },
+     {
+      "verificationId": "4c9ed21f-c2d4-42ae-b0c6-0b7e7fd59590",
+      "portfolioId": "smart",
+      "kind": "Verify",
+      "state": "Running",
+      "elapsed": "PT0.084329573S"
+     },
+     {
+      "verificationId": "aa90a3b5-fa19-44d8-88fa-ec2e061bc2f3",
+      "portfolioId": "smart",
+      "kind": "Verify",
+      "state": "Running",
+      "elapsed": "PT0.083518427S"
+     },
+     {
+      "verificationId": "c2a11f7e-bc81-47c9-afcc-20dd3edaf0ec",
+      "portfolioId": "smart",
+      "kind": "Verify",
+      "state": "Running",
+      "elapsed": "PT0.082210706S"
+     },
+     {
+      "verificationId": "1b171c64-ccd0-429e-b6d7-db40d0b890da",
+      "portfolioId": "smart",
+      "kind": "Verify",
+      "state": "Queued",
+      "elapsed": "PT0.081262320S"
+     },
+     {
+      "verificationId": "f251cfa7-07d6-4948-8725-2dee9ab189d8",
+      "portfolioId": "smart",
+      "kind": "Verify",
+      "state": "Queued",
+      "elapsed": "PT0.080194844S"
+     }
+    ]
    }
   ],
   "load": {
    "activeSessions": 2,
    "maxSessions": 256,
-   "runningVerifications": 2,
-   "queuedVerifications": 0,
+   "runningVerifications": 4,
+   "queuedVerifications": 2,
    "verificationPermits": 4,
-   "uptime": "PT25M10.727262748S"
+   "uptime": "PT2M10.839485449S"
   }
  }
 }
