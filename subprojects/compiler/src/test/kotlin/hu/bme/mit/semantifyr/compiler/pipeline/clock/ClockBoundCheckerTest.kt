@@ -27,6 +27,20 @@ class ClockBoundCheckerTest : FlatteningTestBase() {
         flatten("CompileTimeBound", MODEL)
     }
 
+    @Test
+    fun `a clock that the verified property reads through a property it calls is refused`() {
+        val exception = assertThrows<IllegalStateException> {
+            flatten("PropertyReadsClock", MODEL)
+        }
+
+        assertThat(exception.message).contains("The verified property reads a clock")
+    }
+
+    @Test
+    fun `a property that reads a clock compiles in an assumption`() {
+        flatten("AssumedProperty", MODEL)
+    }
+
     companion object {
         private val MODEL = """
             package clock::tests::bound
@@ -38,6 +52,34 @@ class ClockBoundCheckerTest : FlatteningTestBase() {
                 tran expire(limit: int) {
                     assume(elapsed >= limit)
                     assume(elapsed <= deadline)
+                }
+
+                prop isUp(): bool {
+                    return elapsed >= deadline
+                }
+            }
+
+            @VerificationCase
+            class PropertyReadsClock {
+                contains timer: Timer
+
+                prop {
+                    return AG !timer.isUp()
+                }
+            }
+
+            @VerificationCase
+            class AssumedProperty {
+                contains timer: Timer
+                var done: bool := false
+
+                redefine tran {
+                    assume(timer.isUp())
+                    done := true
+                }
+
+                prop {
+                    return AG true
                 }
             }
 

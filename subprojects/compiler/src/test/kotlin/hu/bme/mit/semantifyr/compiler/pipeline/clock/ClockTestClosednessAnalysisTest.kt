@@ -42,6 +42,20 @@ class ClockTestClosednessAnalysisTest : FlatteningTestBase() {
         })
     }
 
+    @Test
+    fun `a closed test of a clock read through a variable holding an instance is closed`() {
+        val compilation = flatten("DispatchedDeadline", MODEL)
+
+        assertThat(clockTestClosednessAnalysis.analyze(compilation.inlinedOxsts).isClosed).isTrue()
+    }
+
+    @Test
+    fun `a strict test of a clock read through a variable holding an instance is not closed`() {
+        val compilation = flatten("DispatchedStrictTest", MODEL)
+
+        assertThat(clockTestClosednessAnalysis.analyze(compilation.inlinedOxsts).unclosedTests).hasSize(1)
+    }
+
     companion object {
         private val MODEL = """
             package clock::tests::closedness
@@ -73,6 +87,41 @@ class ClockTestClosednessAnalysisTest : FlatteningTestBase() {
                     } or {
                         assume(timer.elapsed == 1)
                     }
+                }
+
+                prop {
+                    return AG true
+                }
+            }
+
+            @VerificationCase
+            class DispatchedDeadline {
+                contains first: Timer
+                contains second: Timer
+                var current: Timer := first
+
+                redefine tran {
+                    assume(current.elapsed <= 5)
+                    choice {
+                        current := first
+                    } or {
+                        current := second
+                    }
+                }
+
+                prop {
+                    return AG true
+                }
+            }
+
+            @VerificationCase
+            class DispatchedStrictTest {
+                contains first: Timer
+                contains second: Timer
+                var current: Timer := first
+
+                redefine tran {
+                    assume(current.elapsed < 5)
                 }
 
                 prop {

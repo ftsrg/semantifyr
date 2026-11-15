@@ -163,7 +163,45 @@ public class ClockValidationTest {
             }
             """, CheckMode.ALL);
 
-        assertOnlyClockError(parsedPackage, "A property cannot read a clock");
+        assertOnlyClockError(parsedPackage, "The verified property cannot read a clock");
+    }
+
+    @Test
+    void propertyReadingAClockForAnAssumptionPasses() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Timer {
+                var elapsed: clock := 0
+                prop isUp(): bool {
+                    return elapsed >= 5
+                }
+                redefine tran {
+                    assume(isUp())
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationIssues();
+    }
+
+    @Test
+    void localClockIsRejected() {
+        assertOnlyClockError("""
+                var lap: clock := 0
+            """, "never as a local");
+    }
+
+    @Test
+    void clockFeatureIsRejected() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Timer {
+                refers elapsed: clock
+            }
+            """, CheckMode.ALL);
+
+        assertOnlyClockError(parsedPackage, "never as a feature");
     }
 
     @Test

@@ -2026,6 +2026,15 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (OxstsUtils.isLoopVariable(variableDeclaration) || !clockTestAnalysis.isClock(variableDeclaration)) {
             return;
         }
+        if (variableDeclaration instanceof LocalVarDeclarationOperation) {
+            acceptError(
+                    "A clock is declared only as a variable of a class, never as a local.",
+                    variableDeclaration,
+                    OxstsPackage.Literals.VARIABLE_DECLARATION__TYPE_SPECIFICATION,
+                    0,
+                    INCORRECT_CLOCK_USE);
+            return;
+        }
         if (variableDeclaration.eContainer() instanceof RecordDeclaration) {
             acceptError(
                     "A record field cannot be a clock.",
@@ -2057,6 +2066,21 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     "A clock starts at 0, so its initializer is 0.",
                     variableDeclaration,
                     OxstsPackage.Literals.VARIABLE_DECLARATION__EXPRESSION,
+                    0,
+                    INCORRECT_CLOCK_USE);
+        }
+    }
+
+    @Check
+    public void checkClockFeature(FeatureDeclaration featureDeclaration) {
+        var typeSpecification = featureDeclaration.getTypeSpecification();
+        if (typeSpecification != null
+                && typeSpecification.getDomain() != null
+                && typeSpecification.getDomain() == builtinSymbolResolver.clockDatatype(featureDeclaration)) {
+            acceptError(
+                    "A clock is declared only as a variable of a class, never as a feature.",
+                    featureDeclaration,
+                    OxstsPackage.Literals.FEATURE_DECLARATION__TYPE_SPECIFICATION,
                     0,
                     INCORRECT_CLOCK_USE);
         }
@@ -2103,9 +2127,10 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
         var container = expression.eContainer();
         String message;
-        if (EcoreUtil2.getContainerOfType(expression, PropertyDeclaration.class) != null) {
+        var property = EcoreUtil2.getContainerOfType(expression, PropertyDeclaration.class);
+        if (property != null && NamingUtil.isAnonymous(property)) {
             message =
-                    "A property cannot read a clock; a timing requirement is modelled as a value that a timed branch sets.";
+                    "The verified property cannot read a clock; a timing requirement is modelled as a value that a timed branch sets.";
         } else if (container instanceof AssignmentOperation assignment && assignment.getReference() == expression) {
             return;
         } else if (container instanceof ComparisonOperator) {

@@ -209,7 +209,7 @@ public class ClockTestAnalysis {
         if (!inAssumption || polarity == null) {
             return false;
         }
-        if (referencedClock(comparison.getLeft()) == null && referencedClock(comparison.getRight()) == null) {
+        if (clockLeaves(comparison.getLeft()) == null && clockLeaves(comparison.getRight()) == null) {
             return false;
         }
         var op = polarity ? comparison.getOp() : negated(comparison.getOp());
@@ -228,12 +228,39 @@ public class ClockTestAnalysis {
     }
 
     private boolean isReset(ComparisonOperator comparison, Set<List<Object>> reset) {
-        var clockSide = referencedClock(comparison.getLeft()) != null ? comparison.getLeft() : comparison.getRight();
-        if (referencedClock(clockSide) == null) {
+        var leaves = clockLeaves(comparison.getLeft());
+        if (leaves == null) {
+            leaves = clockLeaves(comparison.getRight());
+        }
+        if (leaves == null) {
             return false;
         }
-        var key = keyOf(clockSide);
-        return key != null && reset.contains(key);
+        for (var leaf : leaves) {
+            var key = keyOf(leaf);
+            if (key == null || !reset.contains(key)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // a choice among clocks compared with a bound is the comparison of each clock under its guard, so it is closed
+    // exactly when the comparison is
+    private List<Expression> clockLeaves(Expression expression) {
+        if (expression instanceof IfThenElse ifThenElse) {
+            var thenLeaves = clockLeaves(ifThenElse.getThen());
+            var elseLeaves = clockLeaves(ifThenElse.getElse());
+            if (thenLeaves == null || elseLeaves == null) {
+                return null;
+            }
+            var leaves = new ArrayList<>(thenLeaves);
+            leaves.addAll(elseLeaves);
+            return leaves;
+        }
+        if (expression != null && referencedClock(expression) != null) {
+            return List.of(expression);
+        }
+        return null;
     }
 
     // two references name the same clock when they walk the same path, so a reset is matched by structure
