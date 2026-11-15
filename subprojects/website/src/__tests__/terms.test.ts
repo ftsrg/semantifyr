@@ -4,11 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { statSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { outcomeTerms, terms } from '@semantifyr/editor-common/terms';
 import { describe, expect, it } from 'vitest';
+import { filesUnder, readText } from './files';
 
 const REPOSITORY = fileURLToPath(new URL('../../../../', import.meta.url));
 
@@ -24,17 +25,17 @@ const SOURCES = [
 
 const SKIPPED = /(^|\/)(__[a-z]+__|snippets|vscode)(\/|$)|testBrowser\.ts$/;
 
-function filesUnder(path: string): string[] {
+function sourcesUnder(path: string): string[] {
   const absolute = join(REPOSITORY, path);
   if (statSync(absolute).isFile()) {
     return [path];
   }
-  return readdirSync(absolute, { recursive: true, withFileTypes: true })
-    .filter((entry) => {
-      return entry.isFile() && /\.(md|mdx|ts|tsx|html)$/.test(entry.name);
+  return filesUnder(absolute)
+    .filter((file) => {
+      return /\.(md|mdx|ts|tsx|html)$/.test(file);
     })
-    .map((entry) => {
-      return relative(REPOSITORY, join(entry.parentPath, entry.name));
+    .map((file) => {
+      return `${path}/${file}`;
     })
     .filter((file) => {
       return !SKIPPED.test(file);
@@ -155,7 +156,7 @@ const RULES = TERMS.flatMap((term) => {
 });
 
 describe('the terms', () => {
-  const files = SOURCES.flatMap(filesUnder);
+  const files = SOURCES.flatMap(sourcesUnder);
 
   it('reads the pages and the components of the website and of live', () => {
     expect(files.some((file) => {
@@ -168,7 +169,7 @@ describe('the terms', () => {
 
   it('finds no rejected word in a page or a component', () => {
     const found = files.flatMap((file) => {
-      const source = readFileSync(join(REPOSITORY, file), 'utf-8');
+      const source = readText(join(REPOSITORY, file));
       const texts = /\.(md|mdx)$/.test(file) ? textsOfPage(source) : textsOfCode(source);
       return texts.flatMap(({ line, text }) => {
         return RULES
@@ -186,7 +187,7 @@ describe('the terms', () => {
   it('explains a rejected word on the one page that may use it', () => {
     for (const term of TERMS) {
       if (term.explainedOn !== undefined) {
-        const page = readFileSync(join(REPOSITORY, term.explainedOn), 'utf-8');
+        const page = readText(join(REPOSITORY, term.explainedOn));
         expect(term.rejected.some((word) => {
           return rejectedPattern(word).test(page);
         }), `${term.explainedOn} explains what "${term.term}" replaces`).toBe(true);

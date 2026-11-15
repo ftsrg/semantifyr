@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import { EDGES, NODES } from '../components/Phases/InstanceTree';
+import { readText } from './files';
 
 // Goal: the hand-drawn instance tree draws the instances instantiation builds for the pages' model, in the order it reaches them
 
-const MODEL = readFileSync(fileURLToPath(new URL('../../../../oxsts-test-models/phases/room.oxsts', import.meta.url)), 'utf-8');
+const MODEL = readText(fileURLToPath(new URL('../../../../oxsts-test-models/phases/room.oxsts', import.meta.url)));
 
 interface Drawn {
   path: string;
