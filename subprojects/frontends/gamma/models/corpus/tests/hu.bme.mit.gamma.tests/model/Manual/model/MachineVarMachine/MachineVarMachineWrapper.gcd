@@ -1,0 +1,12 @@
+package manual::MachineVarMachine
+
+
+
+
+cascade MachineVarMachineWrapper [
+	port portA : requires portA
+] {
+	component machineVarMachine : MachineVarMachine
+	
+	bind portA -> machineVarMachine.portA
+}

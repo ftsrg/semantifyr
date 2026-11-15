@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -8,11 +8,15 @@ package hu.bme.mit.semantifyr.frontends.gamma.lang;
 
 import com.google.inject.Binder;
 import com.google.inject.name.Names;
+import hu.bme.mit.semantifyr.frontends.gamma.lang.conversion.GammaValueConverterService;
+import hu.bme.mit.semantifyr.frontends.gamma.lang.naming.GammaQualifiedNameConverter;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.scoping.EmptyGlobalScopeProvider;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.scoping.GammaLocalScopeProvider;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.serializer.SerializerGrammarAnalyses;
+import org.eclipse.xtext.conversion.IValueConverterService;
 import org.eclipse.xtext.formatting2.FormatterPreferenceKeys;
 import org.eclipse.xtext.formatting2.FormatterRequest;
+import org.eclipse.xtext.naming.IQualifiedNameConverter;
 import org.eclipse.xtext.preferences.MapBasedPreferenceValues;
 import org.eclipse.xtext.scoping.IGlobalScopeProvider;
 import org.eclipse.xtext.scoping.IScopeProvider;
@@ -23,6 +27,15 @@ public class GammaRuntimeModule extends AbstractGammaRuntimeModule {
     @Override
     public Class<? extends IGlobalScopeProvider> bindIGlobalScopeProvider() {
         return EmptyGlobalScopeProvider.class;
+    }
+
+    @Override
+    public Class<? extends IValueConverterService> bindIValueConverterService() {
+        return GammaValueConverterService.class;
+    }
+
+    public Class<? extends IQualifiedNameConverter> bindIQualifiedNameConverter() {
+        return GammaQualifiedNameConverter.class;
     }
 
     @Override

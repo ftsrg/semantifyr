@@ -15,7 +15,7 @@ import { seedLive, type Seed, type Seeded } from './seededLive'
 
 const SYSML_TRACE_URI = 'file:///workspace/traces/BarrierDownWhileTrainInCrossingViolated.trace.sysml'
 const SYSML_WITNESS_URI = 'file:///workspace/.artifacts/snippet.semantifyr.sysml.model.BarrierDownWhileTrainInCrossingViolated/witness.oxsts'
-const GAMMA_TRACE_URI = 'file:///workspace/.artifacts/snippet.LevelCrossing.BarrierDownWhileTrainInCrossing/trace.gamma'
+const GAMMA_TRACE_URI = 'file:///workspace/.artifacts/snippet.LevelCrossing.BarrierDownWhileTrainInCrossing/trace.get'
 const GAMMA_WITNESS_URI = 'file:///workspace/.artifacts/snippet.LevelCrossing.BarrierDownWhileTrainInCrossing/witness.oxsts'
 const OXSTS_WITNESS_URI = 'file:///workspace/.artifacts/snippet.example.levelcrossing.BarrierDownWhileTrainInCrossing/witness.oxsts'
 

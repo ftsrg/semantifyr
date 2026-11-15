@@ -1,0 +1,11 @@
+package asynchronous::asynchronousreactive::Counter_verification
+
+import asynchronous::asynchronousreactive
+
+verification case StateAReachable of Counter {
+    EF state main.A
+}
+
+verification case StateBReachable of Counter {
+    EF state main.B
+}

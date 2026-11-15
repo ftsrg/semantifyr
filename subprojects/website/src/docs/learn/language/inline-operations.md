@@ -113,7 +113,7 @@ inline for (counter in counters) {
 }
 ```
 
-If `counters` instantiates two children at compile time, the snippet unfolds to:
+If `counters` instantiates two children at compile time, the snippet unfolds to the copies in the children's declaration order:
 
 ```oxsts fragment
 {

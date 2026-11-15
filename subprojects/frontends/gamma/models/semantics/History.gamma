@@ -1,0 +1,145 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package History
+
+interface Control {
+    in event start
+    in event stop
+}
+
+statechart Resuming [
+    port control : provides Control
+] {
+    var left : boolean := false
+
+    region Main {
+        initial MainInitial
+        state Working {
+            exit / left := true;
+            region Progress {
+                initial ProgressInitial
+                shallow history ProgressHistory
+                state First
+                state Second
+            }
+        }
+        state Paused
+    }
+
+    transition from MainInitial to Working
+    transition from ProgressInitial to First
+    transition from ProgressHistory to First
+    transition from First to Second when control.start [not left]
+    transition from Working to Paused when control.stop
+    transition from Paused to ProgressHistory when control.stop
+}
+
+statechart Restarting [
+    port control : provides Control
+] {
+    var left : boolean := false
+
+    region Main {
+        initial MainInitial
+        state Working {
+            exit / left := true;
+            region Progress {
+                initial ProgressInitial
+                shallow history ProgressHistory
+                state First
+                state Second
+            }
+        }
+        state Paused
+    }
+
+    transition from MainInitial to Working
+    transition from ProgressInitial to First
+    transition from ProgressHistory to First
+    transition from First to Second when control.start [not left]
+    transition from Working to Paused when control.stop
+    transition from Paused to Working when control.stop
+}
+
+statechart LateHistory [
+    port control : provides Control
+] {
+    region Main {
+        initial MainInitial
+        state Idle
+        state Working {
+            region Progress {
+                shallow history ProgressHistory
+                state First
+                state Second
+            }
+        }
+    }
+
+    transition from MainInitial to Idle
+    transition from ProgressHistory to Second
+    transition from Idle to Working when control.start
+}
+
+statechart Nested [
+    port control : provides Control
+] {
+    var left : boolean := false
+
+    region Main {
+        initial MainInitial
+        state Working {
+            exit / left := true;
+            region Progress {
+                initial ProgressInitial
+                shallow history ProgressHistory
+                state First
+                state Second {
+                    region Detail {
+                        initial DetailInitial
+                        state Coarse
+                        state Fine
+                    }
+                }
+            }
+        }
+        state Paused
+    }
+
+    transition from MainInitial to Working
+    transition from ProgressInitial to First
+    transition from ProgressHistory to First
+    transition from DetailInitial to Coarse
+    transition from First to Second when control.start [not left]
+    transition from Coarse to Fine when control.start [not left]
+    transition from Working to Paused when control.stop
+    transition from Paused to ProgressHistory when control.stop
+}
+
+verification case TransitionToTheHistoryNodeRestoresTheLastState of Resuming {
+    EF (variable left and state Progress.Second)
+}
+
+verification case InitialNodeBeatsTheHistoryNodeRestoredStateUnreachable of Restarting {
+    EF (variable left and state Progress.Second)
+}
+
+verification case NeverActiveHistoryRegionTakesTheNodesTransition of LateHistory {
+    EF state Progress.Second
+}
+
+verification case NeverActiveHistoryRegionOtherStateUnreachable of LateHistory {
+    EF state Progress.First
+}
+
+verification case RestoredStateEntersItsRegionsAfresh of Nested {
+    EF (variable left and state Detail.Coarse)
+}
+
+verification case RestoredStatesInnerStateUnreachable of Nested {
+    EF (variable left and state Detail.Fine)
+}

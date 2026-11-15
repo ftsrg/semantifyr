@@ -6,6 +6,8 @@ abstract class Variable {
     abstract prop evaluate(): any
 
     abstract tran set(value: any)
+
+    abstract tran restore()
 }
 
 class IntegerVariable : Variable {
@@ -20,6 +22,10 @@ class IntegerVariable : Variable {
     redefine tran set(value: int) {
         variable := value
     }
+
+    redefine tran restore() {
+        variable := defaultValue
+    }
 }
 
 class BooleanVariable : Variable {
@@ -33,6 +39,10 @@ class BooleanVariable : Variable {
 
     redefine tran set(value: bool) {
         variable := value
+    }
+
+    redefine tran restore() {
+        variable := defaultValue
     }
 }
 

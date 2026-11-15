@@ -1,0 +1,31 @@
+package crossroads::controller::ControllerAdapter_verification
+
+import crossroads::controller
+
+verification case StateOperatingReachable of ControllerAdapter {
+    EF state control.main_region.Operating
+}
+
+verification case StateInitReachable of ControllerAdapter {
+    EF state control.operating.Init
+}
+
+verification case StateGReachable of ControllerAdapter {
+    EF state control.r.G_
+}
+
+verification case StateSecondaryPreparesReachable of ControllerAdapter {
+    EF state control.operating.SecondaryPrepares
+}
+
+verification case StatePriorityPreparesReachable of ControllerAdapter {
+    EF state control.operating.PriorityPrepares
+}
+
+verification case StatePriorityReachable of ControllerAdapter {
+    EF state control.operating.Priority
+}
+
+verification case StateSecondaryReachable of ControllerAdapter {
+    EF state control.operating.Secondary
+}

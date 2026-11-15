@@ -52,7 +52,7 @@ describe('renderTrace', () => {
 
     it.each([
         ['file:/tmp/semantifyr/lamp.Safe/witness.oxsts', 'Witness'],
-        ['file:/tmp/semantifyr/crossroads.Green/trace.gamma', 'Gamma trace'],
+        ['file:/tmp/semantifyr/crossroads.Green/trace.get', 'Gamma trace'],
     ])('labels the opened file %s as %s', (uri, label) => {
         const trace = { ...counterexample, witnessUri: uri };
 

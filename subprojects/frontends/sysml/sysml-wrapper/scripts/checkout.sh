@@ -21,6 +21,7 @@ git init
 echo "Adding remote"
 git remote add origin "$REMOTE_URL" 2> /dev/null || true
 echo "Fetch latest"
-git fetch
+# detached maintenance would change .git while Gradle reads it as the task's output
+git -c maintenance.auto=false fetch
 echo "Checkout commit"
 git reset "$COMMIT" --hard

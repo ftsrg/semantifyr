@@ -42,7 +42,8 @@ Workflow {
 		}
 		language = StandardLanguage {
 			name = "hu.bme.mit.semantifyr.frontends.gamma.lang.Gamma"
-			fileExtensions = "gamma"
+			fileExtensions = "gamma,gcd,get"
+			referencedResource = "platform:/resource/gamma.lang/model/gamma.genmodel"
 			
 			fragment = ecore2xtext.Ecore2XtextValueConverterServiceFragment2 auto-inject {}
 

@@ -1,0 +1,85 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package Clocks
+
+interface Go {
+    in event go
+}
+
+interface Signal {
+    out event ping
+}
+
+@Asynchronous
+statechart Pinger capacity (1) [
+    port control : provides Go,
+    port output : provides Signal
+] {
+    region Main {
+        initial MainInitial
+        state Idle
+        state Sent
+    }
+
+    transition from MainInitial to Idle
+    transition from Idle to Sent when control.go / raise output.ping;
+}
+
+statechart Mover [
+    port input : requires Signal
+] {
+    region Main {
+        initial MainInitial
+        state Idle
+        state Moved
+    }
+
+    transition from MainInitial to Idle
+    transition from Idle to Moved when input.ping
+}
+
+adapter Ticking of component mover : Mover {
+    clock ticker (rate = 2 s)
+    when ticker / run
+    queue messages (priority = 1, capacity = 2) {
+        ticker, input.any
+    }
+}
+
+adapter Unticked of component mover : Mover {
+    clock ticker (rate = 2 s)
+    when ticker / run
+    queue messages (priority = 1, capacity = 2) {
+        input.any
+    }
+}
+
+async TickedSystem [
+    port control : provides Go
+] {
+    component pinger : Pinger
+    component mover : Ticking
+    bind control -> pinger.control
+    channel [ pinger.output ] -o)- [ mover.input ]
+}
+
+async UntickedSystem [
+    port control : provides Go
+] {
+    component pinger : Pinger
+    component mover : Unticked
+    bind control -> pinger.control
+    channel [ pinger.output ] -o)- [ mover.input ]
+}
+
+verification case AQueuedMessageIsSeenAtTheClockRun of TickedSystem {
+    EF state mover -> mover.Main.Moved
+}
+
+verification case AClockTheQueueDoesNotStoreRunsTheComponentUnreachable of UntickedSystem {
+    EF state mover -> mover.Main.Moved
+}

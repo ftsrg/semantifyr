@@ -1,0 +1,60 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package EntryAndExitOrder
+
+interface Control {
+    in event start
+}
+
+statechart Machine [
+    port control : provides Control
+] {
+    var entered : integer
+    var trail : integer
+
+    region Main {
+        initial MainInitial
+        state Outer {
+            entry / entered := entered * 10 + 1;
+            exit / trail := trail * 10 + 1;
+            region Inner {
+                initial InnerInitial
+                state Nested {
+                    entry / entered := entered * 10 + 2;
+                    exit / trail := trail * 10 + 2;
+                }
+            }
+        }
+        state Outside {
+            entry / trail := trail * 10 + 4;
+        }
+    }
+
+    transition from MainInitial to Outer
+    transition from InnerInitial to Nested
+    transition from Outer to Outside when control.start / trail := trail * 10 + 3;
+}
+
+verification case ParentEntersBeforeItsChild of Machine {
+    AG variable entered = 12
+}
+
+verification case ChildEnteringBeforeItsParentUnreachable of Machine {
+    EF variable entered = 21
+}
+
+verification case ChildExitsThenParentExitsThenTheTransitionActsThenTheTargetEnters of Machine {
+    EF (state Main.Outside and variable trail = 2134)
+}
+
+verification case ParentExitingBeforeItsChildUnreachable of Machine {
+    EF variable trail = 1234
+}
+
+verification case TargetEnteringBeforeTheTransitionActsUnreachable of Machine {
+    EF variable trail = 2143
+}

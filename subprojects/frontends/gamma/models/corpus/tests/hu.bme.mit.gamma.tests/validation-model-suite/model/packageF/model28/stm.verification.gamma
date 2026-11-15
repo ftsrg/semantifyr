@@ -1,0 +1,19 @@
+package validation::package_f_28::stm_verification
+
+import validation::package_f_28
+
+verification case StateS0Reachable of statemachine {
+    EF state Main.S0
+}
+
+verification case StateS1Reachable of statemachine {
+    EF state Main.S1
+}
+
+verification case StateS2Reachable of statemachine {
+    EF state Main.S2
+}
+
+verification case TransitionFromS1ToS1Fires of statemachine {
+    EF (state Main.S1 and variable flag = true)
+}

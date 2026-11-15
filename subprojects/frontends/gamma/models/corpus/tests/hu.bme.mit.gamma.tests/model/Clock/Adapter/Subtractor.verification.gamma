@@ -1,0 +1,7 @@
+package ^clock::clocks::SubtractorAdapter_verification
+
+import ^clock::clocks
+
+verification case StateYReachable of SubtractorAdapter {
+    EF state subtractorAdapter.main._Y
+}

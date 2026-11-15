@@ -2,67 +2,87 @@
     "initializedStep": {
         "values": [
             {
-                "variable": "root.system.controller.control.inputEvent",
-                "value": "nothing"
-            },
-            {
-                "variable": "root.system.controller.controlA.outputEvent",
-                "value": "nothing"
-            },
-            {
-                "variable": "root.system.controller.controlB.outputEvent",
-                "value": "nothing"
-            },
-            {
-                "variable": "root.system.controller.toggleTimeout.remainingTime",
+                "variable": "root.component._controller._shortToggleTimeout.remainingTime",
                 "value": "1"
             },
             {
-                "variable": "root.system.controller.Main.activeState",
-                "value": "root.system.controller.Main.Operating"
-            },
-            {
-                "variable": "root.system.trafficLightA.control.inputEvent",
-                "value": "nothing"
-            },
-            {
-                "variable": "root.system.trafficLightA.blinkingTimeout.remainingTime",
+                "variable": "root.component._controller._longToggleTimeout.remainingTime",
                 "value": "0"
             },
             {
-                "variable": "root.system.trafficLightA.Main.activeState",
-                "value": "root.system.trafficLightA.Main.Normal"
+                "variable": "root.component._controller._Main.activeState",
+                "value": "root.component._controller._Main._Operating"
             },
             {
-                "variable": "root.system.trafficLightB.control.inputEvent",
-                "value": "nothing"
-            },
-            {
-                "variable": "root.system.trafficLightB.blinkingTimeout.remainingTime",
+                "variable": "root.component._trafficLightA._blinkingTimeout.remainingTime",
                 "value": "0"
             },
             {
-                "variable": "root.system.trafficLightB.Main.activeState",
-                "value": "root.system.trafficLightB.Main.Normal"
+                "variable": "root.component._trafficLightA._Main.activeState",
+                "value": "root.component._trafficLightA._Main._Normal"
             },
             {
-                "variable": "root.system.controller.Main.Operating.OperatingRegion.activeState",
-                "value": "root.system.controller.Main.Operating.OperatingRegion.BothYellow"
+                "variable": "root.component._trafficLightB._blinkingTimeout.remainingTime",
+                "value": "0"
             },
             {
-                "variable": "root.system.trafficLightA.Main.Normal.NormalRegion.activeState",
-                "value": "root.system.trafficLightA.Main.Normal.NormalRegion.Yellow"
+                "variable": "root.component._trafficLightB._Main.activeState",
+                "value": "root.component._trafficLightB._Main._Normal"
             },
             {
-                "variable": "root.system.trafficLightA.Main.Interrupted.InterruptedRegion.activeState",
+                "variable": "root.component._controller._control.interface._police.isRaised",
+                "value": "false"
+            },
+            {
+                "variable": "root.component._controller._controlA.interface._police.isRaised",
+                "value": "false"
+            },
+            {
+                "variable": "root.component._controller._controlA.interface._toggle.isRaised",
+                "value": "false"
+            },
+            {
+                "variable": "root.component._controller._controlB.interface._police.isRaised",
+                "value": "false"
+            },
+            {
+                "variable": "root.component._controller._controlB.interface._toggle.isRaised",
+                "value": "false"
+            },
+            {
+                "variable": "root.component._controller._Main._Operating._OperatingRegion.activeState",
+                "value": "root.component._controller._Main._Operating._OperatingRegion._BothYellow"
+            },
+            {
+                "variable": "root.component._trafficLightA._control.interface._police.isRaised",
+                "value": "false"
+            },
+            {
+                "variable": "root.component._trafficLightA._control.interface._toggle.isRaised",
+                "value": "false"
+            },
+            {
+                "variable": "root.component._trafficLightA._Main._Normal._NormalRegion.activeState",
+                "value": "root.component._trafficLightA._Main._Normal._NormalRegion._Yellow"
+            },
+            {
+                "variable": "root.component._trafficLightA._Main._Interrupted._InterruptedRegion.activeState",
                 "value": "nothing"
             },
             {
-                "variable": "root.system.trafficLightB.Main.Normal.NormalRegion.activeState",
-                "value": "root.system.trafficLightB.Main.Normal.NormalRegion.Yellow"
+                "variable": "root.component._trafficLightB._control.interface._police.isRaised",
+                "value": "false"
             },
             {
-                "variable": "root.system.trafficLightB.Main.Interrupted.InterruptedRegion.activeState",
+                "variable": "root.component._trafficLightB._control.interface._toggle.isRaised",
+                "value": "false"
+            },
+            {
+                "variable": "root.component._trafficLightB._Main._Normal._NormalRegion.activeState",
+                "value": "root.component._trafficLightB._Main._Normal._NormalRegion._Yellow"
+            },
+            {
+                "variable": "root.component._trafficLightB._Main._Interrupted._InterruptedRegion.activeState",
                 "value": "nothing"
             }
         ]
@@ -71,67 +91,87 @@
         {
             "values": [
                 {
-                    "variable": "root.system.controller.control.inputEvent",
-                    "value": "nothing"
-                },
-                {
-                    "variable": "root.system.controller.controlA.outputEvent",
-                    "value": "nothing"
-                },
-                {
-                    "variable": "root.system.controller.controlB.outputEvent",
-                    "value": "nothing"
-                },
-                {
-                    "variable": "root.system.controller.toggleTimeout.remainingTime",
+                    "variable": "root.component._controller._shortToggleTimeout.remainingTime",
                     "value": "0"
                 },
                 {
-                    "variable": "root.system.controller.Main.activeState",
-                    "value": "root.system.controller.Main.Operating"
+                    "variable": "root.component._controller._longToggleTimeout.remainingTime",
+                    "value": "2"
                 },
                 {
-                    "variable": "root.system.trafficLightA.control.inputEvent",
-                    "value": "nothing"
+                    "variable": "root.component._controller._Main.activeState",
+                    "value": "root.component._controller._Main._Operating"
                 },
                 {
-                    "variable": "root.system.trafficLightA.blinkingTimeout.remainingTime",
+                    "variable": "root.component._trafficLightA._blinkingTimeout.remainingTime",
                     "value": "0"
                 },
                 {
-                    "variable": "root.system.trafficLightA.Main.activeState",
-                    "value": "root.system.trafficLightA.Main.Normal"
+                    "variable": "root.component._trafficLightA._Main.activeState",
+                    "value": "root.component._trafficLightA._Main._Normal"
                 },
                 {
-                    "variable": "root.system.trafficLightB.control.inputEvent",
-                    "value": "nothing"
-                },
-                {
-                    "variable": "root.system.trafficLightB.blinkingTimeout.remainingTime",
+                    "variable": "root.component._trafficLightB._blinkingTimeout.remainingTime",
                     "value": "0"
                 },
                 {
-                    "variable": "root.system.trafficLightB.Main.activeState",
-                    "value": "root.system.trafficLightB.Main.Normal"
+                    "variable": "root.component._trafficLightB._Main.activeState",
+                    "value": "root.component._trafficLightB._Main._Normal"
                 },
                 {
-                    "variable": "root.system.controller.Main.Operating.OperatingRegion.activeState",
-                    "value": "root.system.controller.Main.Operating.OperatingRegion.BothYellow"
+                    "variable": "root.component._controller._control.interface._police.isRaised",
+                    "value": "false"
                 },
                 {
-                    "variable": "root.system.trafficLightA.Main.Normal.NormalRegion.activeState",
-                    "value": "root.system.trafficLightA.Main.Normal.NormalRegion.Yellow"
+                    "variable": "root.component._controller._controlA.interface._police.isRaised",
+                    "value": "false"
                 },
                 {
-                    "variable": "root.system.trafficLightA.Main.Interrupted.InterruptedRegion.activeState",
+                    "variable": "root.component._controller._controlA.interface._toggle.isRaised",
+                    "value": "true"
+                },
+                {
+                    "variable": "root.component._controller._controlB.interface._police.isRaised",
+                    "value": "false"
+                },
+                {
+                    "variable": "root.component._controller._controlB.interface._toggle.isRaised",
+                    "value": "true"
+                },
+                {
+                    "variable": "root.component._controller._Main._Operating._OperatingRegion.activeState",
+                    "value": "root.component._controller._Main._Operating._OperatingRegion._BothRed"
+                },
+                {
+                    "variable": "root.component._trafficLightA._control.interface._police.isRaised",
+                    "value": "false"
+                },
+                {
+                    "variable": "root.component._trafficLightA._control.interface._toggle.isRaised",
+                    "value": "true"
+                },
+                {
+                    "variable": "root.component._trafficLightA._Main._Normal._NormalRegion.activeState",
+                    "value": "root.component._trafficLightA._Main._Normal._NormalRegion._Yellow"
+                },
+                {
+                    "variable": "root.component._trafficLightA._Main._Interrupted._InterruptedRegion.activeState",
                     "value": "nothing"
                 },
                 {
-                    "variable": "root.system.trafficLightB.Main.Normal.NormalRegion.activeState",
-                    "value": "root.system.trafficLightB.Main.Normal.NormalRegion.Yellow"
+                    "variable": "root.component._trafficLightB._control.interface._police.isRaised",
+                    "value": "false"
                 },
                 {
-                    "variable": "root.system.trafficLightB.Main.Interrupted.InterruptedRegion.activeState",
+                    "variable": "root.component._trafficLightB._control.interface._toggle.isRaised",
+                    "value": "true"
+                },
+                {
+                    "variable": "root.component._trafficLightB._Main._Normal._NormalRegion.activeState",
+                    "value": "root.component._trafficLightB._Main._Normal._NormalRegion._Yellow"
+                },
+                {
+                    "variable": "root.component._trafficLightB._Main._Interrupted._InterruptedRegion.activeState",
                     "value": "nothing"
                 }
             ]
@@ -139,67 +179,87 @@
         {
             "values": [
                 {
-                    "variable": "root.system.controller.control.inputEvent",
-                    "value": "nothing"
+                    "variable": "root.component._controller._shortToggleTimeout.remainingTime",
+                    "value": "0"
                 },
                 {
-                    "variable": "root.system.controller.controlA.outputEvent",
-                    "value": "root.system.controller.control.interface.toggle"
-                },
-                {
-                    "variable": "root.system.controller.controlB.outputEvent",
-                    "value": "root.system.controller.control.interface.toggle"
-                },
-                {
-                    "variable": "root.system.controller.toggleTimeout.remainingTime",
+                    "variable": "root.component._controller._longToggleTimeout.remainingTime",
                     "value": "1"
                 },
                 {
-                    "variable": "root.system.controller.Main.activeState",
-                    "value": "root.system.controller.Main.Operating"
+                    "variable": "root.component._controller._Main.activeState",
+                    "value": "root.component._controller._Main._Operating"
                 },
                 {
-                    "variable": "root.system.trafficLightA.control.inputEvent",
-                    "value": "root.system.controller.control.interface.toggle"
-                },
-                {
-                    "variable": "root.system.trafficLightA.blinkingTimeout.remainingTime",
+                    "variable": "root.component._trafficLightA._blinkingTimeout.remainingTime",
                     "value": "0"
                 },
                 {
-                    "variable": "root.system.trafficLightA.Main.activeState",
-                    "value": "root.system.trafficLightA.Main.Normal"
+                    "variable": "root.component._trafficLightA._Main.activeState",
+                    "value": "root.component._trafficLightA._Main._Normal"
                 },
                 {
-                    "variable": "root.system.trafficLightB.control.inputEvent",
-                    "value": "root.system.controller.control.interface.toggle"
-                },
-                {
-                    "variable": "root.system.trafficLightB.blinkingTimeout.remainingTime",
+                    "variable": "root.component._trafficLightB._blinkingTimeout.remainingTime",
                     "value": "0"
                 },
                 {
-                    "variable": "root.system.trafficLightB.Main.activeState",
-                    "value": "root.system.trafficLightB.Main.Normal"
+                    "variable": "root.component._trafficLightB._Main.activeState",
+                    "value": "root.component._trafficLightB._Main._Normal"
                 },
                 {
-                    "variable": "root.system.controller.Main.Operating.OperatingRegion.activeState",
-                    "value": "root.system.controller.Main.Operating.OperatingRegion.BothRed"
+                    "variable": "root.component._controller._control.interface._police.isRaised",
+                    "value": "false"
                 },
                 {
-                    "variable": "root.system.trafficLightA.Main.Normal.NormalRegion.activeState",
-                    "value": "root.system.trafficLightA.Main.Normal.NormalRegion.Yellow"
+                    "variable": "root.component._controller._controlA.interface._police.isRaised",
+                    "value": "false"
                 },
                 {
-                    "variable": "root.system.trafficLightA.Main.Interrupted.InterruptedRegion.activeState",
+                    "variable": "root.component._controller._controlA.interface._toggle.isRaised",
+                    "value": "false"
+                },
+                {
+                    "variable": "root.component._controller._controlB.interface._police.isRaised",
+                    "value": "false"
+                },
+                {
+                    "variable": "root.component._controller._controlB.interface._toggle.isRaised",
+                    "value": "false"
+                },
+                {
+                    "variable": "root.component._controller._Main._Operating._OperatingRegion.activeState",
+                    "value": "root.component._controller._Main._Operating._OperatingRegion._BothRed"
+                },
+                {
+                    "variable": "root.component._trafficLightA._control.interface._police.isRaised",
+                    "value": "false"
+                },
+                {
+                    "variable": "root.component._trafficLightA._control.interface._toggle.isRaised",
+                    "value": "false"
+                },
+                {
+                    "variable": "root.component._trafficLightA._Main._Normal._NormalRegion.activeState",
+                    "value": "root.component._trafficLightA._Main._Normal._NormalRegion._Red"
+                },
+                {
+                    "variable": "root.component._trafficLightA._Main._Interrupted._InterruptedRegion.activeState",
                     "value": "nothing"
                 },
                 {
-                    "variable": "root.system.trafficLightB.Main.Normal.NormalRegion.activeState",
-                    "value": "root.system.trafficLightB.Main.Normal.NormalRegion.Yellow"
+                    "variable": "root.component._trafficLightB._control.interface._police.isRaised",
+                    "value": "false"
                 },
                 {
-                    "variable": "root.system.trafficLightB.Main.Interrupted.InterruptedRegion.activeState",
+                    "variable": "root.component._trafficLightB._control.interface._toggle.isRaised",
+                    "value": "false"
+                },
+                {
+                    "variable": "root.component._trafficLightB._Main._Normal._NormalRegion.activeState",
+                    "value": "root.component._trafficLightB._Main._Normal._NormalRegion._Red"
+                },
+                {
+                    "variable": "root.component._trafficLightB._Main._Interrupted._InterruptedRegion.activeState",
                     "value": "nothing"
                 }
             ]
@@ -207,67 +267,87 @@
         {
             "values": [
                 {
-                    "variable": "root.system.controller.control.inputEvent",
-                    "value": "nothing"
-                },
-                {
-                    "variable": "root.system.controller.controlA.outputEvent",
-                    "value": "nothing"
-                },
-                {
-                    "variable": "root.system.controller.controlB.outputEvent",
-                    "value": "nothing"
-                },
-                {
-                    "variable": "root.system.controller.toggleTimeout.remainingTime",
+                    "variable": "root.component._controller._shortToggleTimeout.remainingTime",
                     "value": "0"
                 },
                 {
-                    "variable": "root.system.controller.Main.activeState",
-                    "value": "root.system.controller.Main.Operating"
+                    "variable": "root.component._controller._longToggleTimeout.remainingTime",
+                    "value": "2"
                 },
                 {
-                    "variable": "root.system.trafficLightA.control.inputEvent",
-                    "value": "nothing"
+                    "variable": "root.component._controller._Main.activeState",
+                    "value": "root.component._controller._Main._Operating"
                 },
                 {
-                    "variable": "root.system.trafficLightA.blinkingTimeout.remainingTime",
+                    "variable": "root.component._trafficLightA._blinkingTimeout.remainingTime",
                     "value": "0"
                 },
                 {
-                    "variable": "root.system.trafficLightA.Main.activeState",
-                    "value": "root.system.trafficLightA.Main.Normal"
+                    "variable": "root.component._trafficLightA._Main.activeState",
+                    "value": "root.component._trafficLightA._Main._Normal"
                 },
                 {
-                    "variable": "root.system.trafficLightB.control.inputEvent",
-                    "value": "nothing"
-                },
-                {
-                    "variable": "root.system.trafficLightB.blinkingTimeout.remainingTime",
+                    "variable": "root.component._trafficLightB._blinkingTimeout.remainingTime",
                     "value": "0"
                 },
                 {
-                    "variable": "root.system.trafficLightB.Main.activeState",
-                    "value": "root.system.trafficLightB.Main.Normal"
+                    "variable": "root.component._trafficLightB._Main.activeState",
+                    "value": "root.component._trafficLightB._Main._Normal"
                 },
                 {
-                    "variable": "root.system.controller.Main.Operating.OperatingRegion.activeState",
-                    "value": "root.system.controller.Main.Operating.OperatingRegion.BothRed"
+                    "variable": "root.component._controller._control.interface._police.isRaised",
+                    "value": "false"
                 },
                 {
-                    "variable": "root.system.trafficLightA.Main.Normal.NormalRegion.activeState",
-                    "value": "root.system.trafficLightA.Main.Normal.NormalRegion.Red"
+                    "variable": "root.component._controller._controlA.interface._police.isRaised",
+                    "value": "false"
                 },
                 {
-                    "variable": "root.system.trafficLightA.Main.Interrupted.InterruptedRegion.activeState",
+                    "variable": "root.component._controller._controlA.interface._toggle.isRaised",
+                    "value": "true"
+                },
+                {
+                    "variable": "root.component._controller._controlB.interface._police.isRaised",
+                    "value": "false"
+                },
+                {
+                    "variable": "root.component._controller._controlB.interface._toggle.isRaised",
+                    "value": "false"
+                },
+                {
+                    "variable": "root.component._controller._Main._Operating._OperatingRegion.activeState",
+                    "value": "root.component._controller._Main._Operating._OperatingRegion._TrafficOnA"
+                },
+                {
+                    "variable": "root.component._trafficLightA._control.interface._police.isRaised",
+                    "value": "false"
+                },
+                {
+                    "variable": "root.component._trafficLightA._control.interface._toggle.isRaised",
+                    "value": "true"
+                },
+                {
+                    "variable": "root.component._trafficLightA._Main._Normal._NormalRegion.activeState",
+                    "value": "root.component._trafficLightA._Main._Normal._NormalRegion._Red"
+                },
+                {
+                    "variable": "root.component._trafficLightA._Main._Interrupted._InterruptedRegion.activeState",
                     "value": "nothing"
                 },
                 {
-                    "variable": "root.system.trafficLightB.Main.Normal.NormalRegion.activeState",
-                    "value": "root.system.trafficLightB.Main.Normal.NormalRegion.Red"
+                    "variable": "root.component._trafficLightB._control.interface._police.isRaised",
+                    "value": "false"
                 },
                 {
-                    "variable": "root.system.trafficLightB.Main.Interrupted.InterruptedRegion.activeState",
+                    "variable": "root.component._trafficLightB._control.interface._toggle.isRaised",
+                    "value": "false"
+                },
+                {
+                    "variable": "root.component._trafficLightB._Main._Normal._NormalRegion.activeState",
+                    "value": "root.component._trafficLightB._Main._Normal._NormalRegion._Red"
+                },
+                {
+                    "variable": "root.component._trafficLightB._Main._Interrupted._InterruptedRegion.activeState",
                     "value": "nothing"
                 }
             ]
@@ -275,135 +355,87 @@
         {
             "values": [
                 {
-                    "variable": "root.system.controller.control.inputEvent",
-                    "value": "nothing"
+                    "variable": "root.component._controller._shortToggleTimeout.remainingTime",
+                    "value": "0"
                 },
                 {
-                    "variable": "root.system.controller.controlA.outputEvent",
-                    "value": "root.system.controller.control.interface.toggle"
-                },
-                {
-                    "variable": "root.system.controller.controlB.outputEvent",
-                    "value": "nothing"
-                },
-                {
-                    "variable": "root.system.controller.toggleTimeout.remainingTime",
+                    "variable": "root.component._controller._longToggleTimeout.remainingTime",
                     "value": "1"
                 },
                 {
-                    "variable": "root.system.controller.Main.activeState",
-                    "value": "root.system.controller.Main.Operating"
+                    "variable": "root.component._controller._Main.activeState",
+                    "value": "root.component._controller._Main._Operating"
                 },
                 {
-                    "variable": "root.system.trafficLightA.control.inputEvent",
-                    "value": "root.system.controller.control.interface.toggle"
-                },
-                {
-                    "variable": "root.system.trafficLightA.blinkingTimeout.remainingTime",
+                    "variable": "root.component._trafficLightA._blinkingTimeout.remainingTime",
                     "value": "0"
                 },
                 {
-                    "variable": "root.system.trafficLightA.Main.activeState",
-                    "value": "root.system.trafficLightA.Main.Normal"
+                    "variable": "root.component._trafficLightA._Main.activeState",
+                    "value": "root.component._trafficLightA._Main._Normal"
                 },
                 {
-                    "variable": "root.system.trafficLightB.control.inputEvent",
-                    "value": "nothing"
-                },
-                {
-                    "variable": "root.system.trafficLightB.blinkingTimeout.remainingTime",
+                    "variable": "root.component._trafficLightB._blinkingTimeout.remainingTime",
                     "value": "0"
                 },
                 {
-                    "variable": "root.system.trafficLightB.Main.activeState",
-                    "value": "root.system.trafficLightB.Main.Normal"
+                    "variable": "root.component._trafficLightB._Main.activeState",
+                    "value": "root.component._trafficLightB._Main._Normal"
                 },
                 {
-                    "variable": "root.system.controller.Main.Operating.OperatingRegion.activeState",
-                    "value": "root.system.controller.Main.Operating.OperatingRegion.TrafficOnA"
+                    "variable": "root.component._controller._control.interface._police.isRaised",
+                    "value": "false"
                 },
                 {
-                    "variable": "root.system.trafficLightA.Main.Normal.NormalRegion.activeState",
-                    "value": "root.system.trafficLightA.Main.Normal.NormalRegion.Red"
+                    "variable": "root.component._controller._controlA.interface._police.isRaised",
+                    "value": "false"
                 },
                 {
-                    "variable": "root.system.trafficLightA.Main.Interrupted.InterruptedRegion.activeState",
+                    "variable": "root.component._controller._controlA.interface._toggle.isRaised",
+                    "value": "false"
+                },
+                {
+                    "variable": "root.component._controller._controlB.interface._police.isRaised",
+                    "value": "false"
+                },
+                {
+                    "variable": "root.component._controller._controlB.interface._toggle.isRaised",
+                    "value": "false"
+                },
+                {
+                    "variable": "root.component._controller._Main._Operating._OperatingRegion.activeState",
+                    "value": "root.component._controller._Main._Operating._OperatingRegion._TrafficOnA"
+                },
+                {
+                    "variable": "root.component._trafficLightA._control.interface._police.isRaised",
+                    "value": "false"
+                },
+                {
+                    "variable": "root.component._trafficLightA._control.interface._toggle.isRaised",
+                    "value": "false"
+                },
+                {
+                    "variable": "root.component._trafficLightA._Main._Normal._NormalRegion.activeState",
+                    "value": "root.component._trafficLightA._Main._Normal._NormalRegion._Green"
+                },
+                {
+                    "variable": "root.component._trafficLightA._Main._Interrupted._InterruptedRegion.activeState",
                     "value": "nothing"
                 },
                 {
-                    "variable": "root.system.trafficLightB.Main.Normal.NormalRegion.activeState",
-                    "value": "root.system.trafficLightB.Main.Normal.NormalRegion.Red"
+                    "variable": "root.component._trafficLightB._control.interface._police.isRaised",
+                    "value": "false"
                 },
                 {
-                    "variable": "root.system.trafficLightB.Main.Interrupted.InterruptedRegion.activeState",
-                    "value": "nothing"
-                }
-            ]
-        },
-        {
-            "values": [
-                {
-                    "variable": "root.system.controller.control.inputEvent",
-                    "value": "nothing"
+                    "variable": "root.component._trafficLightB._control.interface._toggle.isRaised",
+                    "value": "false"
                 },
                 {
-                    "variable": "root.system.controller.controlA.outputEvent",
-                    "value": "nothing"
+                    "variable": "root.component._trafficLightB._Main._Normal._NormalRegion.activeState",
+                    "value": "root.component._trafficLightB._Main._Normal._NormalRegion._Red"
                 },
                 {
-                    "variable": "root.system.controller.controlB.outputEvent",
-                    "value": "nothing"
-                },
-                {
-                    "variable": "root.system.controller.toggleTimeout.remainingTime",
-                    "value": "0"
-                },
-                {
-                    "variable": "root.system.controller.Main.activeState",
-                    "value": "root.system.controller.Main.Operating"
-                },
-                {
-                    "variable": "root.system.trafficLightA.control.inputEvent",
-                    "value": "nothing"
-                },
-                {
-                    "variable": "root.system.trafficLightA.blinkingTimeout.remainingTime",
-                    "value": "0"
-                },
-                {
-                    "variable": "root.system.trafficLightA.Main.activeState",
-                    "value": "root.system.trafficLightA.Main.Normal"
-                },
-                {
-                    "variable": "root.system.trafficLightB.control.inputEvent",
-                    "value": "nothing"
-                },
-                {
-                    "variable": "root.system.trafficLightB.blinkingTimeout.remainingTime",
-                    "value": "0"
-                },
-                {
-                    "variable": "root.system.trafficLightB.Main.activeState",
-                    "value": "root.system.trafficLightB.Main.Normal"
-                },
-                {
-                    "variable": "root.system.controller.Main.Operating.OperatingRegion.activeState",
-                    "value": "root.system.controller.Main.Operating.OperatingRegion.TrafficOnA"
-                },
-                {
-                    "variable": "root.system.trafficLightA.Main.Normal.NormalRegion.activeState",
-                    "value": "root.system.trafficLightA.Main.Normal.NormalRegion.Green"
-                },
-                {
-                    "variable": "root.system.trafficLightA.Main.Interrupted.InterruptedRegion.activeState",
-                    "value": "nothing"
-                },
-                {
-                    "variable": "root.system.trafficLightB.Main.Normal.NormalRegion.activeState",
-                    "value": "root.system.trafficLightB.Main.Normal.NormalRegion.Red"
-                },
-                {
-                    "variable": "root.system.trafficLightB.Main.Interrupted.InterruptedRegion.activeState",
+                    "variable": "root.component._trafficLightB._Main._Interrupted._InterruptedRegion.activeState",
                     "value": "nothing"
                 }
             ]

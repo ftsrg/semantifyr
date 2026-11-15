@@ -1,0 +1,23 @@
+package asynchronous::asynchronousreactive::AsynchronousSystem_verification
+
+import asynchronous::asynchronousreactive
+
+verification case StateAdderAReachable of AsynchronousSystem {
+    EF state adder.main.A
+}
+
+verification case StateSubtractorAReachable of AsynchronousSystem {
+    EF state subtractor.main.A
+}
+
+verification case StateCounterAReachable of AsynchronousSystem {
+    EF state counter.main.A
+}
+
+verification case StateCounterBReachable of AsynchronousSystem {
+    EF state counter.main.B
+}
+
+verification case CounterReturnsToA of AsynchronousSystem {
+    EF variable counter.rereachedA = true
+}

@@ -1,139 +1,339 @@
 /*
- * SPDX-FileCopyrightText: 2025 The Semantifyr Authors
+ * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors
  *
  * SPDX-License-Identifier: EPL-2.0
  */
 
 grammar hu.bme.mit.semantifyr.frontends.gamma.lang.Gamma with org.eclipse.xtext.common.Terminals
 
-generate gamma "http://www.bme.hu/mit/2025/gamma"
-
+import "http://www.bme.hu/mit/2025/gamma"
 import "http://www.eclipse.org/emf/2002/Ecore" as Ecore
 
-GammaModelPackage:
-    'package' name=Identifier
+GammaRoot:
+    GammaModelPackage
+    | ExecutionTrace
+;
 
+GammaModelPackage:
+    'package' name=QualifiedName
+    imports+=ImportStatement*
     (
-        interfaces += InterfaceDeclaration
-        | components += ComponentDeclaration
-        | verificationCases += VerificationCaseDeclaration
-        | traces += ExecutionTrace
+        typeDeclarations+=TypeDeclaration
+        | interfaces+=InterfaceDeclaration
+        | components+=ComponentDeclaration
+        | verificationCases+=VerificationCaseDeclaration
     )*
 ;
 
+ImportStatement:
+    'import' importedPackage=[GammaModelPackage|QualifiedName]
+;
+
+QualifiedName:
+    ID ('::' ID)*
+;
+
+TypeDeclaration:
+    'type' name=ID ':' type=Type
+;
+
+Type:
+    IntegerType
+    | BooleanType
+    | RecordType
+    | TypeReference
+;
+
+IntegerType:
+    {IntegerType} 'integer'
+;
+
+BooleanType:
+    {BooleanType} 'boolean'
+;
+
+RecordType:
+    'record' '{' fields+=FieldDeclaration (',' fields+=FieldDeclaration)* '}'
+;
+
+TypeReference:
+    reference=[TypeDeclaration]
+;
+
+FieldDeclaration:
+    name=ID ':' type=Type
+;
+
+ParameterDeclaration:
+    name=ID ':' type=Type
+;
+
 InterfaceDeclaration:
-    'interface' name=Identifier '{'
-        events += EventDeclaration*
+    'interface' name=ID ('extends' parents+=[InterfaceDeclaration] (',' parents+=[InterfaceDeclaration])*)? '{'
+        events+=EventDeclaration*
     '}'
 ;
 
 enum EventDirection:
-	IN = 'in' | OUT = 'out' // | INOUT = 'inout' | INTERNAL = 'internal'
+    IN='in'
+    | OUT='out'
+    | INOUT='inout'
+;
+
+enum Persistency:
+    TRANSIENT='transient'
+    | PERSISTENT='persistent'
 ;
 
 EventDeclaration:
-    direction=EventDirection 'event' name=Identifier
+    direction=EventDirection persistency=Persistency? 'event' name=ID
+    ('(' parameters+=ParameterDeclaration (',' parameters+=ParameterDeclaration)* ')')?
 ;
 
 ComponentDeclaration:
     SyncComponentDeclaration
+    | CascadeComponentDeclaration
+    | AsynchronousCompositeComponentDeclaration
+    | ScheduledAsynchronousCompositeComponentDeclaration
+    | AsynchronousAdapterDeclaration
     | StatechartDeclaration
 ;
 
 SyncComponentDeclaration:
-    'sync' 'component' name=Identifier
-    ('[' (ports += PortDeclaration (',' ports += PortDeclaration)*)? ']')?
+    'sync' name=ID ('(' ')')?
+    ('[' (ports+=PortDeclaration (','? ports+=PortDeclaration)*)? ']')?
     '{'
         (
-            components += ComponentInstance
-            | channels += Channel
-            | bindings += PortBinding
+            components+=ComponentInstance
+            | bindings+=PortBinding
+            | channels+=Channel
         )*
     '}'
+;
+
+CascadeComponentDeclaration:
+    'cascade' name=ID ('(' ')')?
+    ('[' (ports+=PortDeclaration (','? ports+=PortDeclaration)*)? ']')?
+    '{'
+        (
+            components+=ComponentInstance
+            | bindings+=PortBinding
+            | channels+=Channel
+        )*
+        ('execute' executionList+=[ComponentInstance] (',' executionList+=[ComponentInstance])*)?
+    '}'
+;
+
+AsynchronousCompositeComponentDeclaration:
+    'async' name=ID ('(' ')')?
+    ('[' (ports+=PortDeclaration (','? ports+=PortDeclaration)*)? ']')?
+    '{'
+        (
+            components+=ComponentInstance
+            | bindings+=PortBinding
+            | channels+=Channel
+        )*
+    '}'
+;
+
+ScheduledAsynchronousCompositeComponentDeclaration:
+    'scheduled-async' name=ID ('(' ')')?
+    ('[' (ports+=PortDeclaration (','? ports+=PortDeclaration)*)? ']')?
+    '{'
+        (
+            components+=ComponentInstance
+            | bindings+=PortBinding
+            | channels+=Channel
+        )*
+        ('execute' executionList+=[ComponentInstance] (',' executionList+=[ComponentInstance])*)?
+    '}'
+;
+
+AsynchronousAdapterDeclaration:
+    'adapter' name=ID ('(' ')')?
+    'of' wrappedComponent=ComponentInstance
+    ('[' (ports+=PortDeclaration (','? ports+=PortDeclaration)*)? ']')?
+    '{'
+        (
+            clocks+=ClockDeclaration
+            | controlSpecifications+=ControlSpecification
+            | messageQueues+=MessageQueue
+        )*
+    '}'
+;
+
+ClockDeclaration:
+    'clock' name=ID '(' 'rate' '=' value=AdditiveExpression unit=TimeUnit ')'
+;
+
+enum ControlFunction:
+    RUN_ONCE='run'
+    | RUN_TO_COMPLETION='full-step'
+    | RESET='reset'
+    | RESET_MESSAGE_QUEUE='reset-queue'
+    | RESET_MESSAGE_QUEUES='reset-queues'
+    | RESET_OTHER_MESSAGE_QUEUES='reset-other-queues'
+;
+
+ControlSpecification:
+    'when' trigger=ControlTrigger '/' controlFunction=ControlFunction
+;
+
+ControlTrigger:
+    AnyTrigger
+    | MessageTrigger
+;
+
+AnyTrigger:
+    {AnyTrigger} 'any'
+;
+
+MessageTrigger:
+    reference=MessageReference
+;
+
+enum DiscardStrategy:
+    INCOMING='incoming'
+    | OLDEST='oldest'
+;
+
+MessageQueue:
+    'queue' name=ID '('
+        'priority' '=' priority=INT
+        ',' 'capacity' '=' capacity=Expression
+        (',' 'discard' '=' discardStrategy=DiscardStrategy)?
+    ')' '{'
+        eventPassings+=EventPassing (',' eventPassings+=EventPassing)*
+    '}'
+;
+
+EventPassing:
+    source=MessageReference ('->' target=MessageReference)?
+;
+
+MessageReference:
+    AnyPortEventReference
+    | PortEventReference
+    | ClockTickReference
+;
+
+AnyPortEventReference:
+    => (port=[PortDeclaration] '.' 'any')
+;
+
+PortEventReference:
+    => (port=[PortDeclaration] '.') event=[EventDeclaration]
+;
+
+ClockTickReference:
+    clock=[ClockDeclaration]
 ;
 
 ComponentInstance:
-    'component' name=ID ':' component=[ComponentDeclaration|Identifier]
+    'component' name=ID ':' component=[ComponentDeclaration]
 ;
 
 enum RealizationMode:
-	PROVIDED = 'provides' | REQUIRED = 'requires'
+    PROVIDED='provides'
+    | REQUIRED='requires'
 ;
 
 PortDeclaration:
-    'port' name=Identifier ':' realizationMode=RealizationMode interface=[InterfaceDeclaration|Identifier]
+    'port' name=ID ':' realizationMode=RealizationMode interface=[InterfaceDeclaration]
 ;
 
-enum SchedulingOrder returns SchedulingOrder:
-	TOP_DOWN = 'top-down' | BOTTOM_UP = 'bottom-up'
+InstancePortReference:
+    instance=[ComponentInstance] '.' port=[PortDeclaration]
+;
+
+PortBinding:
+    'bind' port=[PortDeclaration] '->' boundPort=InstancePortReference
+;
+
+Channel:
+    'channel' '[' providedPort=InstancePortReference ']' '-o)-' '[' requiredPort=InstancePortReference ']'
+;
+
+enum SchedulingOrder:
+    TOP_DOWN='top-down'
+    | BOTTOM_UP='bottom-up'
+;
+
+enum TransitionPriority:
+    OFF='off'
+    | ORDER_BASED='order-based'
+    | VALUE_BASED='value-based'
+;
+
+enum GuardEvaluation:
+    ON_THE_FLY='on-the-fly'
+    | BEGINNING_OF_STEP='beginning-of-step'
 ;
 
 StatechartDeclaration:
-    ('@RegionSchedule' '=' schedulingOrder=SchedulingOrder)?
-	'statechart' name=Identifier
-    ('[' (ports += PortDeclaration (',' ports += PortDeclaration)*)? ']')?
-	'{'
+    asynchronous?='@Asynchronous'?
+    (
+        ('@RegionSchedule' '=' schedulingOrder=SchedulingOrder)?
+        & ('@TransitionPriority' '=' transitionPriority=TransitionPriority)?
+        & ('@GuardEvaluation' '=' guardEvaluation=GuardEvaluation)?
+    )
+    'statechart' name=ID ('capacity' '(' capacity=Expression ')')? ('(' ')')?
+    ('[' (ports+=PortDeclaration (','? ports+=PortDeclaration)*)? ']')?
+    '{'
         (
-            variables += VariableDeclaration
-            | timeouts += TimeoutDeclaration
-            | regions += Region
+            variables+=VariableDeclaration
+            | timeouts+=TimeoutDeclaration
         )*
-	'}'
-;
-
-TypeReference:
-    IntegerType
-    | BooleanType
-;
-
-IntegerType:
-    {IntegerType} 'Integer'
-;
-
-BooleanType:
-    {BooleanType} 'Boolean'
-;
-
-VariableDeclaration:
-    'var' name=Identifier ':' type = TypeReference (':=' default=LiteralExpression)?
-;
-
-TimeoutDeclaration:
-    'timeout' name=Identifier
-;
-
-Region:
-    'region' name=Identifier '{'
         (
-            states += State
-            | transitions += Transition
+            regions+=Region
+            | transitions+=Transition
         )*
     '}'
 ;
 
-State:
-    'state' name=Identifier ('{'
-        ('entry' '/' entryActions+=Action+)?
-        ('exit' '/' exitActions+=Action+)?
+VariableDeclaration:
+    'var' name=ID ':' type=Type (':=' default=Expression)?
+;
 
+TimeoutDeclaration:
+    'timeout' name=ID
+;
+
+Region:
+    'region' name=ID '{'
+        stateNodes+=StateNode*
+    '}'
+;
+
+StateNode:
+    InitialState
+    | ShallowHistoryState
+    | State
+;
+
+InitialState:
+    'initial' name=ID
+;
+
+ShallowHistoryState:
+    'shallow' 'history' name=ID
+;
+
+State:
+    'state' name=ID ('{'
+        ('entry' '/' entryActions+=Action*)?
+        ('exit' '/' exitActions+=Action*)?
         regions+=Region*
     '}')?
 ;
 
 Transition:
-    EntryTransition
-    | StateTransition
-;
-
-EntryTransition:
-    'entry' 'transition' 'to' to=[State|Identifier]
-;
-
-StateTransition:
-    'transition' from=[State] 'to' to=[State|Identifier]
+    ('@' '(' name=ID ')')?
+    'transition' ('(' priority=INT ')')?
+    'from' from=[StateNode] 'to' to=[StateNode]
     ('when' trigger=Trigger)?
     ('[' guard=Expression ']')?
-    ('/' actions+=Action+)?
+    ('/' actions+=Action*)?
 ;
 
 Trigger:
@@ -142,60 +342,64 @@ Trigger:
 ;
 
 TimeoutTrigger:
-    'timeout' timeout=[TimeoutDeclaration|Identifier]
+    'timeout' timeout=[TimeoutDeclaration]
 ;
 
 EventTrigger:
-    'event' port=[PortDeclaration|Identifier] '.' event=[EventDeclaration|Identifier]
+    port=[PortDeclaration] '.' event=[EventDeclaration]
 ;
 
 Action:
-    RaiseEventAction
-    | SetTimeoutAction
-    | AssignmentAction
+    Block
+    | (
+        RaiseEventAction
+        | SetTimeoutAction
+        | AssignmentAction
+    ) ';'
+;
+
+Block:
+    {Block} '{' actions+=Action* '}'
 ;
 
 RaiseEventAction:
-    'raise' port=[PortDeclaration|Identifier] '.' event=[EventDeclaration|Identifier] ';'
+    'raise' port=[PortDeclaration] '.' event=[EventDeclaration]
+    ('(' (arguments+=Expression (',' arguments+=Expression)*)? ')')?
+;
+
+enum TimeUnit:
+    MILLISECOND='ms'
+    | SECOND='s'
 ;
 
 SetTimeoutAction:
-    'set' timeout=[TimeoutDeclaration|Identifier] ':=' value=Expression 's' ';'
+    'set' timeout=[TimeoutDeclaration] ':=' value=AdditiveExpression unit=TimeUnit
 ;
 
 AssignmentAction:
-    'assign' variable=[VariableDeclaration|Identifier] ':=' expression=Expression ';'
+    reference=AssignableExpression ':=' expression=Expression
 ;
 
-InstancePortReference:
-	instance=[ComponentInstance|Identifier] '.' port=[PortDeclaration|Identifier]
-;
-
-PortBinding:
-	'bind' port=[PortDeclaration|Identifier] '->' boundPort=InstancePortReference
-;
-
-Channel:
-	'channel' '[' providedPort=InstancePortReference ']' '->' '[' requiredPort=InstancePortReference ']'
+AssignableExpression returns Expression:
+    DirectReferenceExpression ({RecordAccessExpression.operand=current} '.' field=[FieldDeclaration])*
 ;
 
 VerificationCaseDeclaration:
-    'verification' 'case' name=Identifier '{'
-        component = ComponentInstance
-        'property' '{' expression=Expression '}'
+    'verification' 'case' name=ID 'of' component=[ComponentDeclaration] '{'
+        expression=PropertyExpression
     '}'
 ;
 
 ExecutionTrace:
-    'trace' name=Identifier 'of' verificationCase=[VerificationCaseDeclaration|Identifier] '{'
-        steps += Step*
-    '}'
+    imports+=ImportStatement*
+    'trace' name=ID 'of' verificationCase=[VerificationCaseDeclaration]
+    steps+=Step*
 ;
 
 Step:
     {Step} 'step' '{'
-        ('act' '{' acts += Act+ '}')?
-        'assert' '{' asserts += Assertion* '}'
+        ('act' '{' acts+=Act+ '}')?
+        'assert' '{' (asserts+=Expression ';')* '}'
     '}'
 ;
 
@@ -215,52 +419,21 @@ ScheduleAct:
 ;
 
 TimeElapseAct:
-    'elapse' time=INT 's'
+    'elapse' time=INT
 ;
 
 RaiseEventAct:
-    'raise' event=ElementPath
+    'raise'
+    (
+        => (instance=ComponentInstanceReference '.' port=[PortDeclaration] '.' event=[EventDeclaration])
+        | port=[PortDeclaration] '.' event=[EventDeclaration]
+    )
+    ('(' (arguments+=Expression (',' arguments+=Expression)*)? ')')?
 ;
 
-Assertion:
-    FiredTransitionAssertion
-    | RaisedEventAssertion
-    | ActiveStateAssertion
-    | VariableValueAssertion
-;
-
-FiredTransitionAssertion:
-    'transition' from=ElementPath 'to' to=[State|Identifier] ('when' trigger=Trigger)?
-;
-
-RaisedEventAssertion:
-    'raise' event=ElementPath
-;
-
-ActiveStateAssertion:
-    'state' state=ElementPath
-;
-
-VariableValueAssertion:
-    'variable' variable=ElementPath '==' value=TraceValue
-;
-
-TraceValue returns Expression:
-    LiteralExpression
-    | {ArithmeticUnaryOperator} op=UnaryOp body=LiteralInteger
-;
-
-ElementPath returns Expression:
-    ElementReferenceExpression ({NavigationSuffixExpression.primary=current} '.' member=[Ecore::EObject|Identifier])*
-;
-
-Expression:
-	OperatorExpression
-;
-
-OperatorExpression returns Expression:
-    BooleanOperator
-    | TemporalOperator
+PropertyExpression returns Expression:
+    TemporalOperator
+    | Expression
 ;
 
 TemporalOperator:
@@ -269,114 +442,191 @@ TemporalOperator:
 ;
 
 AG:
-    'AG' body=BooleanOperator
+    'AG' body=Expression
 ;
 
 EF:
-    'EF' body=BooleanOperator
+    'EF' body=Expression
 ;
 
-enum BooleanOp:
-    AND='&&' | OR='||'
-    | AND='and' | OR='or'
+Expression:
+    OrExpression
 ;
 
-BooleanOperator returns Expression:
-    ComparisonOperator (
-        {BooleanOperator.left=current} op=BooleanOp right=ComparisonOperator
+enum OrOp returns BooleanOp:
+    OR='or'
+;
+
+OrExpression returns Expression:
+    AndExpression (
+        {BooleanOperator.left=current} op=OrOp right=AndExpression
     )*
 ;
 
-enum ComparisonOp:
-	LESS="<" | LESS_EQ="<=" | GREATER=">" | GREATER_EQ=">=" | EQ="==" | NOT_EQ="!="
+enum AndOp returns BooleanOp:
+    AND='and'
 ;
 
-ComparisonOperator returns Expression:
-    AdditiveOperator (
-        {ComparisonOperator.left=current} op=ComparisonOp right=AdditiveOperator
+AndExpression returns Expression:
+    NotExpression (
+        {BooleanOperator.left=current} op=AndOp right=NotExpression
+    )*
+;
+
+NotExpression returns Expression:
+    NegationOperator
+    | EquivalenceExpression
+;
+
+NegationOperator:
+    ('not' | '!') body=NotExpression
+;
+
+enum EquivalenceOp returns ComparisonOp:
+    EQ='='
+    | EQ='=='
+    | NOT_EQ='/='
+    | NOT_EQ='!='
+;
+
+EquivalenceExpression returns Expression:
+    RelationalExpression (
+        {ComparisonOperator.left=current} op=EquivalenceOp right=RelationalExpression
+    )?
+;
+
+enum RelationalOp returns ComparisonOp:
+    LESS='<'
+    | LESS_EQ='<='
+    | GREATER='>'
+    | GREATER_EQ='>='
+;
+
+RelationalExpression returns Expression:
+    AdditiveExpression (
+        {ComparisonOperator.left=current} op=RelationalOp right=AdditiveExpression
     )*
 ;
 
 enum AdditiveOp returns ArithmeticOp:
-	ADD="+" | SUB="-"
+    ADD='+'
+    | SUB='-'
 ;
 
-AdditiveOperator returns Expression:
-    MultiplicativeOperator (
-        {ArithmeticBinaryOperator.left=current} op=AdditiveOp right=MultiplicativeOperator
+AdditiveExpression returns Expression:
+    MultiplicativeExpression (
+        {ArithmeticBinaryOperator.left=current} op=AdditiveOp right=MultiplicativeExpression
     )*
 ;
 
 enum MultiplicativeOp returns ArithmeticOp:
-    MUL='*' | DIV='/'
+    MUL='*'
+    | DIV='/'
 ;
 
-MultiplicativeOperator returns Expression:
-    UnaryOperator (
-        {ArithmeticBinaryOperator.left=current} op=MultiplicativeOp right=UnaryOperator
+MultiplicativeExpression returns Expression:
+    UnaryExpression (
+        {ArithmeticBinaryOperator.left=current} op=MultiplicativeOp right=UnaryExpression
     )*
 ;
 
-UnaryOperator returns Expression:
-	NegationOperator
-	| ArithmeticUnaryOperator
-	| PostfixUnaryExpression
-;
-
-NegationOperator:
-	('!' | 'not') body=UnaryOperator
+UnaryExpression returns Expression:
+    ArithmeticUnaryOperator
+    | AccessExpression
 ;
 
 enum UnaryOp:
-	PLUS="+" | MINUS="-"
+    PLUS='+'
+    | MINUS='-'
 ;
 
 ArithmeticUnaryOperator:
-    op=UnaryOp body=UnaryOperator
+    op=UnaryOp body=UnaryExpression
 ;
 
-PostfixUnaryExpression returns Expression:
-    PrimaryExpression -> (
-        ({NavigationSuffixExpression.primary=current} '.' member=[Ecore::EObject|Identifier])
+AccessExpression returns Expression:
+    PrimaryExpression (
+        {RecordAccessExpression.operand=current} '.' field=[FieldDeclaration]
     )*
 ;
 
 PrimaryExpression returns Expression:
-	ElementReferenceExpression
-	| IsStateActiveExpression
-	| LiteralExpression
-	| '(' Expression ')'
+    LiteralExpression
+    | RecordLiteralExpression
+    | EventParameterReferenceExpression
+    | DirectReferenceExpression
+    | StateReferenceExpression
+    | VariableReferenceExpression
+    | FiredTransitionExpression
+    | RaiseEventAct
+    | '(' Expression ')'
 ;
 
-IsStateActiveExpression:
-    'isActive' '(' expression=Expression ')'
+RecordLiteralExpression:
+    '#' typeDeclaration=[TypeDeclaration] '{' fieldAssignments+=FieldAssignment (',' fieldAssignments+=FieldAssignment)* '}'
 ;
 
-// Literal expressions
+FieldAssignment:
+    field=[FieldDeclaration] ':=' value=Expression
+;
+
+EventParameterReferenceExpression:
+    => (port=[PortDeclaration] '.' event=[EventDeclaration] '::') parameter=[ParameterDeclaration]
+;
+
+DirectReferenceExpression:
+    declaration=[ValueDeclaration]
+;
+
+ComponentInstanceReference:
+    instance=[ComponentInstance] ('->' child=ComponentInstanceReference)?
+;
+
+StateReferenceExpression:
+    'state'
+    (
+        => (instance=ComponentInstanceReference '.' region=[Region] '.' state=[State])
+        | region=[Region] '.' state=[State]
+    )
+;
+
+VariableReferenceExpression:
+    'variable'
+    (
+        => (instance=ComponentInstanceReference '.' variable=[VariableDeclaration])
+        | variable=[VariableDeclaration]
+    )
+;
+
+FiredTransitionExpression:
+    'transition'
+    (
+        => (
+            instance=ComponentInstanceReference
+            (
+                '.' transition=[Transition]
+                | 'from' from=[State] 'to' to=[State] ('when' trigger=Trigger)?
+            )
+        )
+        | transition=[Transition]
+        | 'from' from=[State] 'to' to=[State] ('when' trigger=Trigger)?
+    )
+;
 
 LiteralExpression:
-	 LiteralBoolean
-	 | LiteralInteger
+    LiteralBoolean
+    | LiteralInteger
 ;
 
 LiteralBoolean:
-	value = BooleanValue
+    value=BooleanValue
 ;
 
 LiteralInteger:
-	value = INT
+    value=INT
 ;
 
 BooleanValue returns Ecore::EBoolean:
-	'true' | 'false'
+    'true'
+    | 'false'
 ;
-
-ElementReferenceExpression:
-	element=[Ecore::EObject|Identifier]
-;
-
-Identifier:
-    ID
-;
-
-terminal ID: ('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')*;

@@ -1,0 +1,7 @@
+package manual::MachineVarMachine::MachineVarMachine_verification
+
+import manual::MachineVarMachine
+
+verification case StateMachineVarMachineStateReachable of MachineVarMachine {
+    EF state MachineVarMachine_.MachineVarMachine__State
+}
