@@ -23,7 +23,7 @@
       "patterns": [
         {
           "name": "keyword.control.oxsts",
-          "match": "\\b(AG|EF|abstract|annotation|as|assume|choice|class|container|contains|datatype|derived\\s+refers|else|enum|extern|features|for|global\\s+containment|global\\s+reference|havoc|if|import|in|init|inline|inlined|of|opposite|or|oxsts|package|prop|record|redefine|redefines|refers|return|seq|subsets|then|tran|var|witness)\\b"
+          "match": "\\b(AG|EF|abstract|annotation|as|assume|choice|class|container|contains|datatype|derived\\s+refers|else|enum|extern|features|for|global\\s+containment|global\\s+reference|havoc|if|import|in|init|inline|inlined|of|opposite|or|oxsts|package|prop|record|redefine|redefines|refers|return|seq|subsets|then|timescale|tran|var|witness)\\b"
         }
       ]
     },
