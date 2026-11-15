@@ -79,7 +79,7 @@ A light switches only while the other is red:
 
 <LiveEmbed example={intersection} show={['Intersection']} />
 
-Run the fixed model with its three cases:
+Verify the fixed model with its three cases:
 
 <details>
 <summary>The verdicts Live shows</summary>

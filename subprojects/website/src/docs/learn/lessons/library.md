@@ -32,7 +32,7 @@ The light starts red in its `init` transition, which runs once before the first 
 
 <LiveEmbed example={step1} show={['LightCanTurnYellow']} />
 
-Run it:
+Verify it:
 
 <details>
 <summary>The verdict Live shows</summary>
@@ -80,7 +80,7 @@ Two new cases ask whether pedestrians can walk at all, and whether they walk onl
 
 <LiveEmbed example={library} show={['PedestriansCanWalk', 'WalkOnlyWhileRed']} />
 
-Run the model:
+Verify the model:
 
 <details>
 <summary>The verdicts Live shows</summary>

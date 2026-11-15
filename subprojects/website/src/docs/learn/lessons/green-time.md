@@ -28,7 +28,7 @@ Can north still turn yellow, and how many steps does it take now?
 
 <LiveEmbed example={step1} show={['NorthCanTurnYellow']} />
 
-Run it:
+Verify it:
 
 <details>
 <summary>The verdict Live shows</summary>
@@ -69,7 +69,7 @@ Every change of color now goes through one [transition with a parameter](../refe
 
 <LiveEmbed example={greenTime} show={['TrafficLight']} />
 
-Run the fixed model:
+Verify the fixed model:
 
 <details>
 <summary>The verdicts Live shows</summary>
