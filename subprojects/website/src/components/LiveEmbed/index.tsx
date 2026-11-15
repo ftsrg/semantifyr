@@ -26,7 +26,7 @@ interface Props {
   show?: string[];
 }
 
-const VERIFICATION_CASE = /@VerificationCase|\bverification\s+def\b/;
+const VERIFICATION_CASE = /@VerificationCase|\bverification\s+(?:def|case)\b/;
 
 const DECLARATION_NAME = [
   /^(package|import)\s/,
@@ -35,6 +35,8 @@ const DECLARATION_NAME = [
   /^extern\s+datatype\s+(\w+)/,
   /^global\s+\w+\s+(\w+)/,
   /^(?:abstract\s+)?\w+\s+def\s+(?:<\w+>\s+)?(\w+)/,
+  /^(?:interface|statechart|sync|cascade|async|adapter)\s+(\w+)/,
+  /^verification\s+case\s+(\w+)/,
 ];
 
 interface Selection {
