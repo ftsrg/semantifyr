@@ -48,21 +48,21 @@ export const NODES: Node[] = [
   },
   {
     order: 4,
-    path: 'root.hall.left',
+    path: 'root.hall.top',
     type: 'Lamp',
     x: 5,
     y: 392,
   },
   {
     order: 5,
-    path: 'root.hall.right',
+    path: 'root.hall.bottom',
     type: 'Spot',
     x: 265,
     y: 392,
   },
   {
     order: 6,
-    path: 'root.hall.left.fuse',
+    path: 'root.hall.top.fuse',
     type: 'Fuse',
     x: 135,
     y: 556,
@@ -84,12 +84,12 @@ export const EDGES: Edge[] = [
   {
     from: 2,
     to: 3,
-    feature: 'contains left',
+    feature: 'contains top',
   },
   {
     from: 2,
     to: 4,
-    feature: 'contains right',
+    feature: 'contains bottom',
     redefinedIn: 'Hall',
   },
   {
@@ -121,7 +121,7 @@ export function nodeAt(index: number): Node {
 export default function InstanceTree(): React.JSX.Element {
   return (
     <figure className={styles.tree}>
-      <svg viewBox="0 0 500 640" role="img" aria-label="The instance tree: the model contains root, an instance of BothLampsCanBeOn, which contains root.hall, a Hall; root.hall contains root.hall.left, a Lamp, and root.hall.right, a Spot; both lamps hold one shared fuse, root.hall.left.fuse, a Fuse">
+      <svg viewBox="0 0 500 640" role="img" aria-label="The instance tree: the model contains root, an instance of BothLampsCanBeOn, which contains root.hall, a Hall; root.hall contains root.hall.top, a Lamp, and root.hall.bottom, a Spot; both lamps hold one shared fuse, root.hall.top.fuse, a Fuse">
         {EDGES.map((edge) => {
           const from = nodeAt(edge.from);
           const to = nodeAt(edge.to);

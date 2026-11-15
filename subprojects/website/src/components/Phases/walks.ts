@@ -110,6 +110,33 @@ function substitutedVariable(before: string, after: string): string {
   return variable;
 }
 
+const INSTANCE_PATH = /(?<![\w.'$])root(?:\.\w+)+/;
+
+// the number each instance path of a changed line became, pairing the lines a change removes with the lines it adds in their place
+function numbersOf(before: string, after: string): Map<string, string> {
+  const numbers = new Map<string, string>();
+  const removed: string[] = [];
+  let added = 0;
+  for (const line of lineDiff(before, after)) {
+    if (line.kind === 'same') {
+      removed.length = 0;
+      added = 0;
+    } else if (line.kind === 'removed') {
+      removed.push(line.text);
+    } else {
+      const replaced = removed[added++];
+      const path = replaced === undefined ? null : INSTANCE_PATH.exec(replaced);
+      if (replaced !== undefined && path !== null) {
+        const [prefix, suffix] = [replaced.slice(0, path.index), replaced.slice(path.index + path[0].length)];
+        if (line.text.startsWith(prefix) && line.text.endsWith(suffix)) {
+          numbers.set(path[0], line.text.slice(prefix.length, line.text.length - suffix.length));
+        }
+      }
+    }
+  }
+  return numbers;
+}
+
 // the path of the instance tree a variable of the model is named after
 function pathOf(variable: string): string {
   return variable.replace(/'/g, '').split('$$').filter((part) => {
@@ -164,18 +191,14 @@ const CAPTIONS: Readonly<Record<string, Caption>> = {
       throw new Error(`The step ${after.file} rewrites no use of a variable`);
     }
     const instanceValue = after.text.split('\n').some((line) => {
-      return / := root[\w.]*$/.test(line);
+      return !line.startsWith('contains ') && INSTANCE_PATH.test(line);
     });
-    return `Every use of a variable through an instance path is rewritten to the variable of the model: \`${pathOf(variable)}\` becomes \`${variable}\`.${instanceValue ? ' An instance assigned as a value is no variable and keeps its path.' : ''}`;
+    return `Every use of a variable through an instance path is rewritten to the variable of the model: \`${pathOf(variable)}\` becomes \`${variable}\`.${instanceValue ? ' An instance named as a value, in a comparison or an assignment, is no variable and keeps its path.' : ''}`;
   },
   staticexpressionrewriting: (before, after) => {
-    const added = changed(before.text, after.text, 'added');
-    const numbered = changed(before.text, after.text, 'removed').flatMap((line) => {
-      const assigned = /^(.+) := (root[\w.]*)$/.exec(line);
-      const number = added.find((replacement) => {
-        return replacement.startsWith(`${assigned?.[1]} := `);
-      })?.split(' := ')[1];
-      return assigned === null || number === undefined ? [] : [`\`${assigned[2]}\` the number \`${number}\``];
+    const numbers = numbersOf(before.text, after.text);
+    const numbered = [...numbers].map(([instance, number]) => {
+      return `\`${instance}\` the number \`${number}\``;
     });
     return [
       ...before.text.includes(': Anything') ? ['A variable that holds an instance becomes an `int`.'] : [],
@@ -183,14 +206,6 @@ const CAPTIONS: Readonly<Record<string, Caption>> = {
       ...numbered.length === 0 ? [] : [`Every instance an expression names becomes its number, here ${numbered.join(' and ')}.`],
       '`contains root` goes: no instance is left.',
     ].join(' ');
-  },
-  deadcoderemoval: (before, after) => {
-    const removed = changed(before.text, after.text, 'removed');
-    const store = removed[0];
-    if (removed.length !== 1 || store === undefined || !store.includes(' := ') || changed(before.text, after.text, 'added').length !== 0) {
-      throw new Error(`The step ${after.file} removes ${removed.length} lines, the caption names one assignment`);
-    }
-    return `\`${store}\` stores a value nothing reads, so it goes.`;
   },
   unusedvariableelimination: (before, after) => {
     const declaration = changed(before.text, after.text, 'removed').find((line) => {
