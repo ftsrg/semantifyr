@@ -79,7 +79,7 @@ function Still(): React.JSX.Element {
   return (
     <div className={styles.still}>
       <EmbeddedExample model={crossroads.text} example={crossroads.id} shown={shown} lines={{ first: 1, last: STILL_LINES }} language="sysml" view="embed" />
-      <p className={styles.stillNote}>The crossroads, a SysML v2 model of two traffic lights and their controller. Run opens it in Live here, where Verify all checks its cases.</p>
+      <p className={styles.stillNote}>The crossroads, a SysML v2 model of two traffic lights and their controller. Open shows it in Live here, where Verify all checks its cases.</p>
     </div>
   );
 }

@@ -67,17 +67,17 @@ describe('the link into live', () => {
 describe('the row of a code block', () => {
   it('holds the control, the link, word wrap and copy in the order shown, in one row', () => {
     render(
-      <FenceContext.Provider value={{ model: 'whole', control: <button type="button">Run</button> }}>
+      <FenceContext.Provider value={{ model: 'whole', control: <button type="button">Open</button> }}>
         <OpenLinkContext.Provider value={<a href="https://live.example">Open in Live</a>}>
           <ButtonsWrapper />
         </OpenLinkContext.Provider>
       </FenceContext.Provider>,
     );
 
-    const row = screen.getByRole('button', { name: 'Run' }).parentElement;
+    const row = screen.getByRole('button', { name: 'Open' }).parentElement;
     expect(Array.from(row?.querySelectorAll('a, button') ?? []).map((element) => {
       return element.textContent;
-    })).toEqual(['Run', 'Open in Live', 'Word wrap', 'Copy']);
+    })).toEqual(['Open', 'Open in Live', 'Word wrap', 'Copy']);
   });
 
   it('holds word wrap and copy alone in a plain block', () => {

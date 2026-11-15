@@ -60,10 +60,10 @@ describe('an embedded example', () => {
     expect(screen.queryByTitle('Semantifyr Live')).toBeNull();
   });
 
-  it('offers Run where it verifies', () => {
+  it('offers Open where it verifies', () => {
     example('embed');
 
-    expect(screen.getByRole('button').textContent).toBe('Run');
+    expect(screen.getByRole('button').textContent).toBe('Open');
   });
 
   it('loads the whole model at the lines shown under its block, which stays until live shows the model', async () => {

@@ -378,8 +378,8 @@ describe('the keyboard', () => {
 
   test('opens a lesson\'s example into its editor, leaves the editor by Tab and finds the focus back on its control once it closes', async ({ walk }) => {
     const page = await walk.open(LESSON);
-    const run = page.getByRole('button', { name: 'Run', exact: true }).first();
-    await tabTo(page, run, 'the example\'s control', 120);
+    const control = page.getByRole('button', { name: 'Open', exact: true }).first();
+    await tabTo(page, control, 'the example\'s control', 120);
     await press(page, 'Enter');
 
     const frame = page.locator('article iframe').first().contentFrame();
@@ -406,7 +406,7 @@ describe('the keyboard', () => {
     await expect.poll(async () => {
       return page.locator('article iframe').count();
     }).toBe(0);
-    await stopAt(run, 'the example\'s control');
+    await stopAt(control, 'the example\'s control');
   });
 
   test('opens the header\'s menu on a phone, and leaves it by Escape and by Tab', async ({ walk }) => {

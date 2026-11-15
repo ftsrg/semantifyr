@@ -145,7 +145,7 @@ export function EmbeddedExample({ model, example, shown, lines, language, librar
             }}
           >
             {verifies ? <RunIcon /> : <EditIcon />}
-            {verifies ? 'Run' : 'Edit'}
+            {verifies ? 'Open' : 'Edit'}
           </button>
         )
         : phase === 'loading' ? <span className={styles.loadingLabel} role="status">Opening the editor</span> : null,

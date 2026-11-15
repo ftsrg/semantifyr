@@ -60,7 +60,7 @@ The third claims that the lamp is only ever lit while the switch is on. Before y
 
 <CodeBlock language="sysmlv2">{selectDeclarations(room.text, ['LampLitOnlyWhileSwitchOnViolated'])}</CodeBlock>
 
-The complete model is one file. **Run** in the corner of the code block below opens it in an editor on this page:
+The complete model is one file. **Open** in the corner of the code block below shows it in an editor on this page:
 
 <LiveEmbed example={room} />
 

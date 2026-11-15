@@ -38,7 +38,7 @@ The first case contains an intersection, steps it, and asks with [`AG`](../refer
 
 A model that never moves would answer the first question just as well as a correct one. The second makes sure the lights still switch.
 
-Predict both verdicts, then press **Run** and **Verify all**:
+Predict both verdicts, then press **Open** and **Verify all**:
 
 <details>
 <summary>The verdicts Live shows</summary>

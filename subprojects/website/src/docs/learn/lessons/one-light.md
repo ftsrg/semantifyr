@@ -42,7 +42,7 @@ So the light goes from red to green to yellow and back to red, one color a step.
 
 Before you run it, decide what you expect, and how many steps you think the light needs.
 
-Press **Run** in the corner of the code block above. The editor opens in its place with the model, and under it a line for the case, `TrafficLight`. Press **Verify all**. The line shows that the case is running, then its verdict:
+Press **Open** in the corner of the code block above. The editor opens in its place with the model, and under it a line for the case, `TrafficLight`. Press **Verify all**. The line shows that the case is running, then its verdict:
 
 <details>
 <summary>The verdict Live shows</summary>
