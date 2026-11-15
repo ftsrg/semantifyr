@@ -36,10 +36,9 @@ class Argument {
 
 class SetTimeoutAction : Action {
     refers timeout: Timeout[1]
-    contains expression: Expression[1]
 
     redefine tran {
-        timeout.remainingTime := expression.evaluate() as int
+        timeout.clock := 0
     }
 }
 

@@ -318,10 +318,17 @@ class GammaToOxstsSerializerTest {
     }
 
     @Test
-    fun `a timeout set in seconds counts seconds with the library's delta`() {
+    fun `a timeout set to a literal in seconds stops its clock at the value`() {
         val lines = statechartLines("transition from Idle to Busy / set delay := 2 s;")
 
-        assertThat(lines).contains("contains _delay: Timeout subsets timeouts")
+        assertThat(lines).containsSequence(
+            "contains _delay: Timeout subsets timeouts {",
+            "redefine refers stopsAtValue: bool = true",
+            "redefine contains value: LiteralIntegerExpression {",
+            "redefine refers value: int = 2",
+            "}",
+            "}",
+        )
     }
 
     @Test
@@ -331,12 +338,66 @@ class GammaToOxstsSerializerTest {
         assertThat(lines).containsSequence(
             "contains _delay: Timeout subsets timeouts {",
             "redefine refers deltaTime: int = 1000",
+            "redefine refers stopsAtValue: bool = true",
+            "redefine contains value: LiteralIntegerExpression {",
+            "redefine refers value: int = 500",
+            "}",
             "}",
         )
+    }
+
+    @Test
+    fun `a timeout set to a variable reads the variable and its clock counts on`() {
+        val lines = statechartLines("transition from Idle to Busy / set delay := count s;")
+
         assertThat(lines).containsSequence(
-            "redefine refers timeout: Timeout = _delay",
-            "redefine contains expression: LiteralIntegerExpression {",
-            "redefine refers value: int = 500",
+            "contains _delay: Timeout subsets timeouts {",
+            "redefine contains value: VariableExpression {",
+            "redefine refers variable: Variable = _count",
+            "}",
+            "}",
+        )
+    }
+
+    @Test
+    fun `a timeout never set has the value zero and is always up`() {
+        val lines = statechartLines("")
+
+        assertThat(lines).containsSequence(
+            "contains _delay: Timeout subsets timeouts {",
+            "redefine refers stopsAtValue: bool = true",
+            "redefine contains value: LiteralIntegerExpression {",
+            "redefine refers value: int = 0",
+            "}",
+            "}",
+        )
+    }
+
+    @Test
+    fun `a timeout's value names a variable shadowed by a state directly, the statechart's body seeing no state`() {
+        val lines = oxstsLines(
+            """
+                package test
+                statechart Monitor {
+                    var Busy : integer := 2
+                    timeout delay
+                    region Main {
+                        initial MainInitial
+                        state Busy {
+                            entry / set delay := Busy s;
+                        }
+                    }
+                    transition from MainInitial to Busy
+                }
+            """,
+        )
+
+        assertThat(lines).containsSequence(
+            "contains _delay: Timeout subsets timeouts {",
+            "redefine contains value: VariableExpression {",
+            "redefine refers variable: Variable = _Busy",
+            "}",
+            "}",
         )
     }
 
@@ -692,15 +753,12 @@ class GammaToOxstsSerializerTest {
     }
 
     @Test
-    fun `a set timeout action refers to the timeout and contains its value`() {
+    fun `a set timeout action refers to the timeout only, the value being the timeout's`() {
         val lines = statechartLines("transition from Idle to Busy / set delay := 2 s;")
 
         assertThat(lines).containsSequence(
             "contains set_delay: SetTimeoutAction subsets actions {",
             "redefine refers timeout: Timeout = _delay",
-            "redefine contains expression: LiteralIntegerExpression {",
-            "redefine refers value: int = 2",
-            "}",
             "}",
         )
     }

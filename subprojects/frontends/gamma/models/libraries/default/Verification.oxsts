@@ -8,6 +8,7 @@ class GammaVerificationCase {
     contains propertyExpression: Expression
 
     redefine init {
+        inline component.startTimeouts()
         inline component.init()
     }
 
