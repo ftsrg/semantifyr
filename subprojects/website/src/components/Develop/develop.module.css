@@ -66,6 +66,79 @@
   background: var(--surface-editor);
 }
 
+.external {
+  border-style: dashed;
+  border-color: var(--border-strong);
+  background: var(--surface-panel);
+}
+
+.station {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px 96px;
+  grid-template-rows: auto 1fr;
+  column-gap: 6px;
+}
+
+.frame {
+  grid-area: 1 / 1 / 3 / 2;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-medium);
+  background: var(--surface-editor);
+}
+
+.frameTitle {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px 8px;
+  border-radius: var(--radius-medium);
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.frameTitle:hover {
+  color: var(--text-primary);
+  text-decoration: none;
+  background: var(--accent-soft);
+}
+
+.frameTitle:focus-visible {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 2px;
+}
+
+.stack {
+  grid-area: 2 / 1;
+  align-self: center;
+  margin: 0 18px 18px 10px;
+  box-shadow:
+    4px 4px 0 -2px var(--surface-editor),
+    4px 4px 0 0 var(--accent),
+    8px 8px 0 -2px var(--surface-editor),
+    8px 8px 0 0 var(--accent);
+}
+
+.exchange {
+  grid-area: 2 / 2;
+  align-self: center;
+  width: 24px;
+  height: 12px;
+  margin-bottom: 18px;
+  fill: none;
+  stroke: var(--text-secondary);
+  stroke-width: 2;
+  overflow: visible;
+}
+
+.checker {
+  grid-area: 2 / 3;
+  align-self: center;
+  margin-bottom: 18px;
+  padding: 8px;
+}
+
 .title {
   font-size: 15px;
   font-weight: var(--weight-semibold);
@@ -130,12 +203,12 @@
 
 @container (min-width: 880px) {
   .grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(0, 2.2fr);
     grid-template-areas:
-      '. . entry . . .'
+      '. entry entry entry . .'
       'model frontend oxsts-model compiler transition-system portfolio'
       'trace trace verifier verifier verdict portfolio';
-    column-gap: 30px;
+    column-gap: 28px;
     row-gap: 30px;
   }
 

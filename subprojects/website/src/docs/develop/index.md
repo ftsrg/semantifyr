@@ -21,9 +21,13 @@ A frontend takes a model in an engineering language and translates it onto that 
 
 The compiler reads an OXSTS model on its semantic library and never learns which language the model came from. A verification case is a class of the model that carries its own property. The compiler takes one case through instantiation, inlining and flattening, optimizing between them, to a transition system: variables, an initial transition, a main transition and the property. [How OXSTS Compiles](../learn/oxsts/compilation/index.mdx) shows the phases, and [The OXSTS Language](../learn/oxsts/language/index.md) specifies the language.
 
+### The Backends {#backends}
+
+A backend connects Semantifyr to one model checker, a tool outside it. Every backend receives the same transition system and refuses up front, naming each construct, what its model checker cannot express; the rest it translates into the checker's input, runs the checker and reads back a verdict and, as evidence, the states it found. A backend is trusted in one direction, the one its configuration backs, and in both when the configuration is exact. [Backends](../learn/backends/index.mdx) says what each of them refuses.
+
 ### The Portfolio {#portfolio}
 
-A portfolio is a strategy for the backend runs: which backends run under which configurations, side by side, and how the verdict is decided from their answers. Every backend receives the same transition system, refuses up front what its model checker cannot express, translates the rest into the checker's input, runs it, and reads back a verdict and, as evidence, the states it found. A backend is trusted in one direction, and a portfolio takes a verdict only where that direction backs it. A case without variables and transitions is decided with no backend. [Portfolios and Verdicts](../learn/backends/portfolios-and-verdicts.mdx) explains the strategies.
+A portfolio is a strategy for the backend runs: which backends run under which configurations, side by side, and how the verdict is decided from their answers, each taken only in the direction its backend is trusted. A case without variables and transitions is decided with no backend. [Portfolios and Verdicts](../learn/backends/portfolios-and-verdicts.mdx) explains the strategies.
 
 ### The Verifier {#verifier}
 
