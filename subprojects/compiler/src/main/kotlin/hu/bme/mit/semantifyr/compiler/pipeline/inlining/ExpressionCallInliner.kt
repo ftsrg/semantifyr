@@ -12,7 +12,9 @@ import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManag
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EvaluationFailureException
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.ExpressionModalityEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.Modality
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider
@@ -40,6 +42,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralReal
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParameterDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RangeExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordLiteral
@@ -220,8 +223,9 @@ class ExpressionCallInliner @AssistedInject constructor(
 
     // a compile-time guard is decided here, as an inline if is, so the branch not taken holds no use
     override fun visit(expression: IfThenElse) {
-        if (expressionModalityEvaluatorProvider.evaluate(expression.guard) != Modality.RUNTIME) {
-            val taken = if (compileTimeExpressionEvaluatorProvider.getEvaluator(instance).evaluateBoolean(expression.guard)) {
+        val decision = decisionOrNull(expression.guard)
+        if (decision != null) {
+            val taken = if (decision) {
                 expression.then
             } else {
                 expression.`else`
@@ -233,6 +237,24 @@ class ExpressionCallInliner @AssistedInject constructor(
         processorQueue.addFirst(expression.guard)
         processorQueue.addFirst(expression.then)
         processorQueue.addFirst(expression.`else`)
+    }
+
+    // a guard that is not decided here, a parameter's or one the compile-time evaluator cannot evaluate, stays to run time
+    private fun decisionOrNull(guard: Expression): Boolean? {
+        if (expressionModalityEvaluatorProvider.evaluate(guard) == Modality.RUNTIME) {
+            return null
+        }
+        val readsParameter = (listOf(guard) + guard.eAllOfType<ElementReference>().toList()).any {
+            it is ElementReference && it.element is ParameterDeclaration
+        }
+        if (readsParameter) {
+            return null
+        }
+        return try {
+            compileTimeExpressionEvaluatorProvider.getEvaluator(instance).evaluateBoolean(guard)
+        } catch (_: EvaluationFailureException) {
+            null
+        }
     }
 
     private fun rewriteFeatureReference(expression: Expression) {

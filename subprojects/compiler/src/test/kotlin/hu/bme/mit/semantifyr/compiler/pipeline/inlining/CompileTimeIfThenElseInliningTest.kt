@@ -79,4 +79,59 @@ class CompileTimeIfThenElseInliningTest : InliningTestBase() {
             assertThat(property.eAllOfType<IfThenElse>().toList()).hasSize(1)
         }
     }
+
+    private fun compiles(className: String, source: String): List<IfThenElse> {
+        return prepare(className, source, OptimizationConfig.NONE) {
+            inlineAll(it).inlinedOxsts.eAllOfType<IfThenElse>().toList()
+        }
+    }
+
+    @Test
+    fun `a guard over a parameter is decided where its argument is a constant and stays where it is read at run time`() {
+        val source = """
+            package inlining::tests::compile_time_if_then_else_parameters
+            @VerificationCase
+            class Case {
+                var value: int := 0
+                var result: int := 0
+                tran put(limit: int) {
+                    result := if limit > 0 then 1 else 2
+                }
+                prop above(limit: int): bool {
+                    return if limit > 0 then result == 1 else result == 2
+                }
+                redefine tran {
+                    havoc(value)
+                    inline put(3)
+                    inline put(value)
+                }
+                prop {
+                    return AG (above(value) || above(1))
+                }
+            }
+        """
+        assertThat(compiles("Case", source)).hasSize(2)
+    }
+
+    @Test
+    fun `a guard of compile-time modality the compiler cannot evaluate leaves the expression as it was`() {
+        val source = """
+            package inlining::tests::compile_time_if_then_else_many_valued
+            class Worker
+            @VerificationCase
+            class Case {
+                contains workers: Worker[0..*]
+                contains first: Worker subsets workers
+                contains second: Worker subsets workers
+                var result: int := 0
+                redefine tran {
+                    result := if workers[0] == first then 1 else 2
+                }
+                prop {
+                    return AG result >= 0
+                }
+            }
+        """
+        assertThat(compiles("Case", source)).hasSize(1)
+    }
 }
