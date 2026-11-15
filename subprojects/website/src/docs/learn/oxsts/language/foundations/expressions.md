@@ -448,9 +448,9 @@ class Bounded {
 
 A temporal operator is only allowed as the whole expression a property returns: one in a transition (`flag := AG true`), below another operator or nested in another temporal operator (`AG (EF on)`) is rejected (`OXSTS.MISPLACED_TEMPORAL_OPERATOR`).
 
-<Planned table={constructs} construct="AF, EG, AX, EX temporal operators">
+<Planned table={constructs} construct="CTL* properties">
 
-More temporal operators are planned: `AF expr` (`expr` eventually holds on every execution), `EG expr` (`expr` always holds on some execution), `AX expr` and `EX expr` (`expr` holds in every or in some next state). The parser rejects them today; only `AG` and `EF` parse.
+Support of CTL* properties is planned. The parser rejects every temporal operator but `AG` and `EF` today.
 
 ```oxsts issue=syntax
 // hide-start
