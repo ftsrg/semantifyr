@@ -1,0 +1,15 @@
+---
+title: OXSTS
+description: OXSTS, Semantifyr's language for semantics, who writes it, and its lessons, its specification, its compilation and verifying it on the command line.
+---
+
+# OXSTS
+
+OXSTS is Semantifyr's language for semantics. The semantic library of a language is written in it, and every model Semantifyr verifies is an OXSTS model that instantiates the classes of such a library, written by hand or translated by a [frontend](../frontends/index.mdx).
+
+It is written by whoever gives a language its semantics, a frontend's semantic library among them, and by whoever verifies the models of a language without a frontend, who writes the library and the models in OXSTS directly. A model in SysML v2 or Gamma needs none of it written by hand.
+
+- [Lessons](lessons/index.md): learn OXSTS on a traffic light, level by level, each step running in Live.
+- [Language](language/index.md): look a construct up, one construct a page.
+- [Compilation](compilation/index.mdx): see how the compiler turns a model into the transition system a backend checks, in three phases.
+- [On the Command Line](command-line.mdx): verify an OXSTS model with `semantifyr`.
