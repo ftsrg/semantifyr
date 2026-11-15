@@ -1,6 +1,6 @@
 ---
 title: What Live's Server Keeps and Logs
-sidebar_position: 2
+sidebar_position: 1
 description: What Semantifyr Live's server keeps of your model, what it logs and who can see it.
 ---
 

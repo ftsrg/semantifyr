@@ -6,11 +6,11 @@ description: The inlined model, the form in which the compiler writes a compiled
 
 # Inlined Models
 
-An inlined model is the form in which the compiler writes a case after each of its phases and in which a witness is written ([Artifacts](../artifacts/index.mdx)): one file that names the class it comes from and holds the whole model a backend needs, with no class of its own. It is OXSTS: the editors open it, and it validates, compiles and verifies as any other model. It is written by the tools, not by hand.
+An inlined model is the form in which the compiler writes a case after each of its phases and in which a witness is written ([Artifacts](../../reference/artifacts.mdx)): one file that names the class it comes from and holds the whole model a backend needs, with no class of its own. It is OXSTS: the editors open it, and it validates, compiles and verifies as any other model. It is written by the tools, not by hand.
 
 ## Syntax
 
-An inlined model opens with `inlined oxsts of`, or `witness of` for a [witness](../artifacts/index.mdx#witnessoxsts), and the qualified name of the class. Then come, in this order, its variables, optionally a feature that holds the instance of the class, the `init` transition, the main transition, each with its branches separated by `or`, and the property, an expression in `prop { }` without `return`. It has no package and no imports. The feature is named `root` in the instantiated and the inlined model and in the witness, and the members of instances are named by their paths from it, such as `root.counter.value`; the flattened model has no feature left.
+An inlined model opens with `inlined oxsts of`, or `witness of` for a [witness](../../reference/artifacts.mdx#witnessoxsts), and the qualified name of the class. Then come, in this order, its variables, optionally a feature that holds the instance of the class, the `init` transition, the main transition, each with its branches separated by `or`, and the property, an expression in `prop { }` without `return`. It has no package and no imports. The feature is named `root` in the instantiated and the inlined model and in the witness, and the members of instances are named by their paths from it, such as `root.counter.value`; the flattened model has no feature left.
 
 ```oxsts
 inlined oxsts of semantifyr::Anything

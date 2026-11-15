@@ -1,0 +1,6 @@
+label: Library and Output
+position: 3
+link:
+  type: generated-index
+  slug: /learn/language/library-and-output
+  description: The annotations and the standard library of OXSTS, the inlined models the compiler writes, and what of the language is supported.

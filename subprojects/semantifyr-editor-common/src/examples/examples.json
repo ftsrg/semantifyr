@@ -17,7 +17,7 @@
       "file": "subprojects/frontends/sysml/models/examples/level_crossing.sysml",
       "label": "Level crossing",
       "reason": "The simplest model, four small state machines that pass items, and the one requirement a reader checks first.",
-      "page": "learn/sysml-v2",
+      "page": "learn/frontends/sysml-v2",
       "cases": [
         "BarrierDownWhileTrainInCrossing",
         "TwoTrainsCanBeInTheCrossing"
@@ -29,7 +29,7 @@
       "file": "subprojects/frontends/sysml/models/examples/crossroads.sysml",
       "label": "Crossroads",
       "reason": "Nested states, entry and exit actions and timed transitions, in two lights that one controller cycles by items.",
-      "page": "learn/sysml-v2",
+      "page": "learn/frontends/sysml-v2",
       "cases": [
         "PoliceCanInterrupt",
         "LightACanBlink",
@@ -43,7 +43,7 @@
       "file": "subprojects/frontends/sysml/models/examples/compressedspacecraft.sysml",
       "label": "Spacecraft",
       "reason": "Parallel regions and integer attributes with guards and assignments, in a spacecraft that transmits while its battery recharges.",
-      "page": "learn/sysml-v2",
+      "page": "learn/frontends/sysml-v2",
       "cases": [
         "TransmissionCanStart",
         "ChargeNeverBelow40",
@@ -56,7 +56,7 @@
       "file": "subprojects/frontends/sysml/models/examples/landing_gear.sysml",
       "label": "Landing gear",
       "reason": "A sequence of doors and gear that the pilot may reverse at any moment, from a known verification benchmark, in plain state machines that exchange items.",
-      "page": "learn/sysml-v2",
+      "page": "learn/frontends/sysml-v2",
       "cases": [
         "GearCanBeRetracted",
         "BayClosedInCruise",
@@ -69,7 +69,7 @@
       "file": "subprojects/frontends/sysml/models/tutorial/room.sysml",
       "label": "SysML v2 tutorial: Room",
       "reason": "The model the SysML v2 tutorial builds and runs from its page.",
-      "page": "learn/sysml-v2/tutorial",
+      "page": "learn/frontends/sysml-v2/tutorial",
       "cases": [
         "LampLitReachable",
         "LampNeverLitViolated",
@@ -83,7 +83,7 @@
       "file": "subprojects/frontends/gamma/models/examples/LevelCrossing.gamma",
       "label": "Level crossing",
       "reason": "The simplest model, small statecharts that pass events over channels, and the one requirement a reader checks first.",
-      "page": "learn/gamma",
+      "page": "learn/frontends/gamma",
       "cases": [
         "BarrierDownWhileTrainInCrossing",
         "TwoTrainsCanBeInTheCrossing"
@@ -95,7 +95,7 @@
       "file": "subprojects/frontends/gamma/models/examples/Crossroads.gamma",
       "label": "Crossroads",
       "reason": "Hierarchical states, entry and exit actions and timeouts, in two lights that one controller cycles by events over channels.",
-      "page": "learn/gamma",
+      "page": "learn/frontends/gamma",
       "cases": [
         "PoliceCanInterrupt",
         "LightACanBlink",
@@ -109,7 +109,7 @@
       "file": "subprojects/frontends/gamma/models/examples/Spacecraft.gamma",
       "label": "Spacecraft",
       "reason": "Orthogonal regions and integer variables with guards and assignments, in a spacecraft that transmits while its battery recharges.",
-      "page": "learn/gamma",
+      "page": "learn/frontends/gamma",
       "cases": [
         "TransmissionCanStart",
         "ChargeNeverBelow30",
@@ -122,7 +122,7 @@
       "file": "subprojects/frontends/gamma/models/examples/LandingGear.gamma",
       "label": "Landing gear",
       "reason": "A sequence of doors and gear that the pilot may reverse at any moment, from a known verification benchmark, in plain statecharts that exchange events.",
-      "page": "learn/gamma",
+      "page": "learn/frontends/gamma",
       "cases": [
         "GearCanBeRetracted",
         "BayClosedInCruise",
@@ -135,7 +135,7 @@
       "file": "oxsts-test-models/tutorial/level-crossing.oxsts",
       "label": "Level crossing",
       "reason": "The simplest model, four small classes, and the one requirement a reader checks first.",
-      "page": "learn/reference/language",
+      "page": "learn/language",
       "cases": [
         "BarrierDownWhileTrainInCrossing",
         "TwoTrainsCanBeInTheCrossing"

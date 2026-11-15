@@ -12,6 +12,8 @@ export interface LearnPart {
   opening: { doc: string } | { index: string };
   // the folder whose pages, but its index, the part holds
   directory?: string;
+  // the parts the part holds in place of a folder's pages
+  parts?: LearnPart[];
 }
 
 export const learnParts: LearnPart[] = [
@@ -22,16 +24,29 @@ export const learnParts: LearnPart[] = [
     directory: 'learn/start',
   },
   {
-    label: 'SysML v2',
-    description: 'Verifying SysML v2 models: what of the language the frontend supports, what it assumes, and a tutorial.',
-    opening: { doc: 'learn/sysml-v2/index' },
-    directory: 'learn/sysml-v2',
+    label: 'Frontends',
+    description: 'The currently implemented frontends, SysML v2 and Gamma, each with what it supports, what it assumes, its command line and its traces.',
+    opening: { doc: 'learn/frontends/index' },
+    parts: [
+      {
+        label: 'SysML v2',
+        description: 'Verifying SysML v2 models: what of the language the frontend supports, what it assumes, a tutorial, the command line and the traces.',
+        opening: { doc: 'learn/frontends/sysml-v2/index' },
+        directory: 'learn/frontends/sysml-v2',
+      },
+      {
+        label: 'Gamma',
+        description: 'Verifying Gamma statecharts and their compositions: what of the language the frontend supports, what it assumes, the command line and the traces.',
+        opening: { doc: 'learn/frontends/gamma/index' },
+        directory: 'learn/frontends/gamma',
+      },
+    ],
   },
   {
-    label: 'Gamma',
-    description: 'Verifying Gamma statecharts and their compositions: what of the language the frontend supports and what it assumes.',
-    opening: { doc: 'learn/gamma/index' },
-    directory: 'learn/gamma',
+    label: 'Verifying',
+    description: 'How a case gets its verdict, the witness and the trace behind it, and verifying in Live, in VS Code and on the command line.',
+    opening: { doc: 'learn/verifying/index' },
+    directory: 'learn/verifying',
   },
   {
     label: 'OXSTS Lessons',
@@ -40,20 +55,20 @@ export const learnParts: LearnPart[] = [
     directory: 'learn/lessons',
   },
   {
-    label: 'How the Language Works',
+    label: 'How OXSTS Compiles',
     description: 'How the compiler turns an OXSTS model into the transition system a backend checks, phase by phase.',
-    opening: { doc: 'learn/how-it-works/index' },
-    directory: 'learn/how-it-works',
+    opening: { doc: 'learn/compilation/index' },
+    directory: 'learn/compilation',
   },
   {
-    label: 'Tools',
-    description: 'Live, the VS Code extension and the command line, and how a verification reaches its verdict.',
-    opening: { index: '/learn/tools' },
-    directory: 'learn/tools',
+    label: 'The OXSTS Language',
+    description: 'The specification of OXSTS: its foundations, its classes and behaviour, its standard library and what the compiler writes.',
+    opening: { doc: 'learn/language/index' },
+    directory: 'learn/language',
   },
   {
     label: 'Reference',
-    description: 'The specification of OXSTS and its standard library, the command line, the editors\' settings, the backends and the artifacts a verification writes.',
+    description: 'The command line, the portfolios, the VS Code settings, the backends and the artifacts a verification writes.',
     opening: { index: '/learn/reference' },
     directory: 'learn/reference',
   },

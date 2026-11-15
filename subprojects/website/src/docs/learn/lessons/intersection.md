@@ -18,13 +18,13 @@ This lesson starts from the light of [One Light](one-light.md).
 
 ## Two Lights
 
-The light is no longer a case itself. It gains a named [property](../reference/language/properties.md), `isColor`, which tells whether the light shows a color:
+The light is no longer a case itself. It gains a named [property](../language/classes-and-behaviour/properties.md), `isColor`, which tells whether the light shows a color:
 
 <LiveEmbed example={step1} show={['TrafficLight']} />
 
-The parameter `color` has the name of the variable, so the body reaches the variable as `self.color`; [`self`](../reference/language/expressions.md#self) is the light the property is asked of. Ignore `@Trace` until the trace below.
+The parameter `color` has the name of the variable, so the body reaches the variable as `self.color`; [`self`](../language/foundations/expressions.md#self) is the light the property is asked of. Ignore `@Trace` until the trace below.
 
-The intersection [contains](../reference/language/features.md#contains) two lights, `north` and `east`, each a light of its own. In each step one of them switches: `inline north.main()` runs north's main transition in the intersection's step, an [inline call](../reference/language/inline-operations.md#inline-call). The main transitions of contained lights run only where a main transition calls them; the verifier runs the case's alone.
+The intersection [contains](../language/classes-and-behaviour/features.md#contains) two lights, `north` and `east`, each a light of its own. In each step one of them switches: `inline north.main()` runs north's main transition in the intersection's step, an [inline call](../language/classes-and-behaviour/inline-operations.md#inline-call). The main transitions of contained lights run only where a main transition calls them; the verifier runs the case's alone.
 
 Two lights must not be green together, so a light switches only while the other is not green:
 
@@ -32,7 +32,7 @@ Two lights must not be green together, so a light switches only while the other 
 
 ## Never Both Green
 
-The first case contains an intersection, steps it, and asks with [`AG`](../reference/language/expressions.md#temporal-operators), "always globally", whether the two lights are never green at the same time, in every state of every execution. The second asks whether east can turn green at all:
+The first case contains an intersection, steps it, and asks with [`AG`](../language/foundations/expressions.md#temporal-operators), "always globally", whether the two lights are never green at the same time, in every state of every execution. The second asks whether east can turn green at all:
 
 <LiveEmbed example={step1} show={['NeverBothGreen', 'EastCanTurnGreen']} />
 
@@ -69,7 +69,7 @@ At a real intersection a light turns green only once the crossing traffic has st
 
 ## Reading the Trace
 
-The trace of an `AG` case is an execution that breaks it, what model checkers call a counterexample. Open the trace of `NorthGreenOnlyWhileEastRed` and read *Steps* to its last state.
+The [trace](../verifying/witnesses-and-traces.mdx#the-trace) of an `AG` case is an execution that breaks it. Open the trace of `NorthGreenOnlyWhileEastRed` and read *Steps* to its last state.
 
 In its last state north is green while east is yellow. Going back through the steps: east turned yellow, and from then on north was free to switch, since its guard waits only while east is green; north turned green before east turned red. The guard keeps the lights from being green together, and nothing more: a light may turn green while the other is still yellow, and no case asked about it until now.
 

@@ -1,0 +1,6 @@
+label: Foundations
+position: 1
+link:
+  type: generated-index
+  slug: /learn/language/foundations
+  description: The lexical structure, packages and imports, datatypes, types and expressions of OXSTS.

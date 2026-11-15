@@ -12,7 +12,7 @@ import ServedExamples from '@site/src/components/ServedExamples';
 
 # Verifying SysML v2 Models
 
-Semantifyr verifies SysML v2 models by translating them into OXSTS on top of a semantic library that defines what SysML v2 parts, ports, items and state machines do. This tutorial models a room with a switch and a lamp, verifies three requirements in Live, and reads the trace of a requirement that does not hold. All you need is a browser; [Verifying on the Command Line](../tools/command-line.md) runs the same model on your machine.
+Semantifyr verifies SysML v2 models by translating them into OXSTS on top of a semantic library that defines what SysML v2 parts, ports, items and state machines do. This tutorial models a room with a switch and a lamp, verifies three requirements in Live, and reads the trace of a requirement that does not hold. All you need is a browser; [SysML v2 on the Command Line](command-line.mdx) runs the same model on your machine.
 
 ## The Model
 
@@ -83,7 +83,7 @@ The model is yours to edit, as one file. The cases follow your edits, and a cons
 
 A case with a witness says **Trace** at the end of its line, and a click on the line opens its trace below it, in four views:
 
-- *SysML trace*: the witness as a SysML v2 model, a package `<case>Trace` whose part definition `Run` specializes the verified part definition and declares the states, transitions and sends of this execution in time order ([SysML v2 traces](../reference/artifacts/sysml-trace.mdx)).
+- *SysML trace*: the witness as a SysML v2 model, a package `<case>Trace` whose part definition `Run` specializes the verified part definition and declares the states, transitions and sends of this execution in time order ([SysML v2 traces](traces.mdx)).
 - *OXSTS steps*: the values of the model's state in every step of the witness, starting from the initial state that initialization produces. State names are paths from the verified instance, `root`, shortened to their last segments, with the whole path on hover.
 - *Calls*: per step, the traced calls of the semantic library: the transitions that fired, the states entered and left, and the send actions that ran.
 - *OXSTS witness*: the witness as an OXSTS model.

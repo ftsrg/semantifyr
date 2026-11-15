@@ -28,7 +28,7 @@ class Crossing {
 }
 ```
 
-Every keyword is reserved and cannot be a name without quotes, except `init`, `havoc` and `prop`, which may also be names. A class inherits the transition `init` of [`Anything`](classes.md#the-anything-base-class), so a member named `init` hides it (`OXSTS.ELEMENT_SHADOWED`).
+Every keyword is reserved and cannot be a name without quotes, except `init`, `havoc` and `prop`, which may also be names. A class inherits the transition `init` of [`Anything`](../classes-and-behaviour/classes.md#the-anything-base-class), so a member named `init` hides it (`OXSTS.ELEMENT_SHADOWED`).
 
 ```oxsts
 class Recorder {

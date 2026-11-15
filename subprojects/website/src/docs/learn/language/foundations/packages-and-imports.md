@@ -109,7 +109,7 @@ class Corner {
 
 ## Implicit Imports
 
-The [`semantifyr` standard library](standard-library.md) is always in scope, with lower precedence than the current package and the explicit imports.
+The [`semantifyr` standard library](../library-and-output/standard-library.md) is always in scope, with lower precedence than the current package and the explicit imports.
 
 ```oxsts
 package example::application

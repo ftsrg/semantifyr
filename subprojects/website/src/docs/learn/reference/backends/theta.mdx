@@ -1,12 +1,12 @@
 ---
 title: Theta
 sidebar_position: 0
-description: The Theta backend, its exact verdicts and the constructs it refuses before it runs.
+description: The Theta backend, its exact verdicts, which a portfolio trusts, and the constructs it refuses before it runs.
 ---
 
 # Theta
 
-[Theta](https://github.com/ftsrg/theta) verifies the XSTS translation of a case with unbounded integers, and its verdicts are exact. It treats a `@Clock` variable as an ordinary variable. Before it runs, it reports a case Not supported when the case holds a construct listed below, naming each construct and its source line.
+[Theta](https://github.com/ftsrg/theta) verifies the XSTS translation of a case with unbounded integers, and its verdicts are exact, so a portfolio trusts every one of them. It treats a `@Clock` variable as an ordinary variable. Before it runs, it reports a case Not supported when the case holds a construct listed below, naming each construct and its source line.
 
 ## What the backend refuses
 

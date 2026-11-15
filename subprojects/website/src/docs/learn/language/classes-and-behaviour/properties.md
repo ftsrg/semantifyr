@@ -10,7 +10,7 @@ Properties are **pure computations**: they return a value without changing any s
 
 ## Declaring a Property
 
-A property declaration consists of the `prop` keyword, a name, a parameter list, a return type, and a body containing exactly one `return` statement followed by an expression, whose value fits the return type ([Assignability](types.md#assignability), `OXSTS.TYPE_MISMATCH`). Its value is the value of that expression in the state it is read in.
+A property declaration consists of the `prop` keyword, a name, a parameter list, a return type, and a body containing exactly one `return` statement followed by an expression, whose value fits the return type ([Assignability](../foundations/types.md#assignability), `OXSTS.TYPE_MISMATCH`). Its value is the value of that expression in the state it is read in.
 
 ```oxsts
 // hide-start
@@ -129,11 +129,11 @@ class Pair {
 // hide-end
 ```
 
-The arguments bind as [Calls and Arguments](expressions.md#calls-and-arguments) gives, and the call's value is the body's with each parameter replaced by its argument.
+The arguments bind as [Calls and Arguments](../foundations/expressions.md#calls-and-arguments) gives, and the call's value is the body's with each parameter replaced by its argument.
 
 ## The Verification Property
 
-A `prop { return expr; }` without a name has the **implicit name** `prop`. This is the special property checked by the model checker. The body uses [temporal operators](expressions.md#temporal-operators) such as `AG` and `EF` to express safety and reachability properties.
+A `prop { return expr; }` without a name has the **implicit name** `prop`. This is the special property checked by the model checker. The body uses [temporal operators](../foundations/expressions.md#temporal-operators) such as `AG` and `EF` to express safety and reachability properties.
 
 ```oxsts
 // hide-start
@@ -153,7 +153,7 @@ class StaysBelow100 {
 
 When the class is verified, the model checker decides the body over the reachable states: `AG p` holds when `p` holds in every reachable state, `EF p` when it holds in at least one.
 
-The verdict is **Passed** when the property holds and **Failed** when it does not; the verdicts of a verification that decides neither are listed under [Verdicts](../cli/index.mdx#verdicts).
+The verdict is **Passed** when the property holds and **Failed** when it does not; the verdicts of a verification that decides neither are listed under [Verdicts](../../reference/command-line.mdx#verdicts).
 
 ## Properties vs Transitions
 

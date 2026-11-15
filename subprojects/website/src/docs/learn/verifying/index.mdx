@@ -1,0 +1,14 @@
+---
+title: Verifying
+description: How a verification case of a model in any language gets its verdict, the witness and the trace behind it, and verifying in Live, in VS Code and on the command line.
+---
+
+# Verifying
+
+A model holds verification cases, each a property of the model, and verifying a case ends in its verdict: Passed when the property holds, Failed when it does not, or a verdict that decides neither. Where the verdict rests on a run a backend found, a trace of that run comes with it. This part is for everyone who verifies a model, whatever its language and its frontend.
+
+- [Portfolios and Verdicts](portfolios-and-verdicts.mdx): how the backends run side by side and how the verdict is decided from their answers.
+- [Witnesses and Traces](witnesses-and-traces.mdx): the run behind a verdict, the trace a reader reads of it, and how it is validated.
+- [In Live](live/index.md): verifying in the browser, with nothing to install.
+- [In VS Code](vscode.md): verifying the models of your own folders.
+- [On the Command Line](command-line.mdx): verifying an OXSTS model with `semantifyr`, in scripts and CI.

@@ -13,7 +13,7 @@ A `class` describes a part of the modeled system. Classes have state ([variables
 
 ## The `Anything` Base Class
 
-Every class declared in Semantifyr implicitly extends `Anything` from the [standard library](standard-library.md). `Anything` provides empty `init` and `tran` transitions:
+Every class declared in Semantifyr implicitly extends `Anything` from the [standard library](../library-and-output/standard-library.md). `Anything` provides empty `init` and `tran` transitions:
 
 <LibraryDeclaration library={library} name="Anything" />
 
@@ -50,7 +50,7 @@ Or without any.
 class Sentinel
 ```
 
-A semicolon may end a class without a body, and not one with a body ([Lexical Structure](lexical-structure.md)).
+A semicolon may end a class without a body, and not one with a body ([Lexical Structure](../foundations/lexical-structure.md)).
 
 ## Abstract Classes
 

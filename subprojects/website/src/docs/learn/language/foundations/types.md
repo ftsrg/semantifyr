@@ -6,7 +6,7 @@ description: The OXSTS type system, the type of every expression and when a valu
 
 # Types
 
-Every expression has a type, which the validator computes and checks: a domain, which is a [datatype](datatypes.md), an enumeration, a record, a [class](classes.md) or a [feature](features.md), and a [multiplicity](features.md#multiplicities), which bounds how many values the expression holds, `[1]` unless one is written.
+Every expression has a type, which the validator computes and checks: a domain, which is a [datatype](datatypes.md), an enumeration, a record, a [class](../classes-and-behaviour/classes.md) or a [feature](../classes-and-behaviour/features.md), and a [multiplicity](../classes-and-behaviour/features.md#multiplicities), which bounds how many values the expression holds, `[1]` unless one is written.
 
 ## The Type of an Expression
 
@@ -39,7 +39,7 @@ class Gauge {
 
 A value fits a slot, a variable, a parameter, a feature's binding or a property's return, when its domain and its multiplicity fit the slot's; one that does not is rejected (`OXSTS.TYPE_MISMATCH`).
 
-- A domain fits itself and `any`. A class fits each of its superclasses. Where the slot's domain is a feature, a feature fits only if it [subsets](features.md#subsets) the slot's, directly or through others, and a class or a datatype fits if it fits the feature's own class or datatype. Where the slot's domain is a class or a datatype, a feature fits if its class or datatype does.
+- A domain fits itself and `any`. A class fits each of its superclasses. Where the slot's domain is a feature, a feature fits only if it [subsets](../classes-and-behaviour/features.md#subsets) the slot's, directly or through others, and a class or a datatype fits if it fits the feature's own class or datatype. Where the slot's domain is a class or a datatype, a feature fits if its class or datatype does.
 - A multiplicity fits when its lower bound is not below the slot's and its upper bound is not above it: a `[1]` value fits a `[0..1]` slot, while a `[0..1]` value does not fit a `[1]` slot. `nothing` fits a slot whose lower bound is 0.
 - There is no conversion between datatypes: an `int` does not fit a `real` slot, and an enumeration literal fits only its own enumeration.
 

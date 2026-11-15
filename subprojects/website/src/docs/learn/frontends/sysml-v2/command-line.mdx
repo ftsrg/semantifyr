@@ -1,31 +1,71 @@
 ---
-title: SysML v2
-sidebar_position: 2
-description: The semantifyr-sysml launcher, which translates and verifies SysML v2 models, its commands and what it needs.
+title: SysML v2 on the Command Line
+sidebar_label: On the Command Line
+sidebar_position: 4
+description: The semantifyr-sysml launcher, which translates and verifies SysML v2 models, a run of the tutorial's room on your machine, its commands and what it needs.
 ---
 
 import CodeBlock from '@theme/CodeBlock';
 import help from '@cli-reference/sysml-help.txt';
 import verify from '@cli-reference/sysml-verify.txt';
 import compile from '@cli-reference/sysml-compile.txt';
+import CaseVerdict from '@site/src/components/CaseVerdict';
 import NodeVersion from '@site/src/components/NodeVersion';
+import room from '@served-examples/sysml/room';
 
 # SysML v2 on the Command Line
 
-`semantifyr-sysml` verifies SysML v2 models. Its distribution, `semantifyr-sysml-<version>.zip`, carries Theta, the SysML v2 semantic library in `libraries/sysmlv2` and the [tutorial](../../sysml-v2/tutorial.md) model as `models/smoke/room.sysml`. It translates a model to OXSTS with the bundled SysIDE fork, which runs on Node.js, so it needs `node` (<NodeVersion /> or newer) on `PATH`; without it, translating fails with exit code 4 and a message naming `node`. The translator reads every `.sysml` and `.kerml` file below the model's directory as the model's workspace, so keep other models and the artifact directory out of that directory. Translations are cached under `~/.semantifyr/sysml-cache`, keyed by the model and its workspace ([Folders](index.mdx#folders)). [Verifying on the Command Line](../../tools/command-line.md) walks through a run.
+`semantifyr-sysml` verifies SysML v2 models. Its distribution, `semantifyr-sysml-<version>.zip`, carries Theta, the SysML v2 semantic library in `libraries/sysmlv2` and the [tutorial](tutorial.md) model as `models/smoke/room.sysml`. It translates a model to OXSTS with the bundled SysIDE fork, which runs on Node.js, so it needs `node` (<NodeVersion /> or newer) on `PATH`; without it, translating fails with exit code 4 and a message naming `node`. The translator reads every `.sysml` and `.kerml` file below the model's directory as the model's workspace, so keep other models and the artifact directory out of that directory. Translations are cached under `~/.semantifyr/sysml-cache`, keyed by the model and its workspace ([Folders](../../reference/command-line.mdx#folders)).
+
+This page verifies the room of the [SysML v2 tutorial](tutorial.md); `semantifyr` runs an OXSTS model the same way, as [Verifying on the Command Line](../../verifying/command-line.mdx) shows, and `semantifyr-gamma` a [Gamma model](../gamma/command-line.mdx).
+
+## Requirements
+
+- A Java 25 runtime found through `JAVA_HOME` or `PATH`.
+- The `semantifyr-sysml` command-line distribution ([Installing It](../../start/install.md#the-command-line)). It carries the translator from SysML v2 to OXSTS and the SysML v2 semantic library, so Node.js is the only prerequisite SysML v2 adds.
+
+`SEMANTIFYR_HOME` below is the installed distribution, `subprojects/frontends/sysml/sysml-cli/build/install/semantifyr-sysml` in a clone of the repository: it holds the launcher in `bin/`, Theta in `theta-xsts-cli/` and the semantic library in `libraries/`; an unzipped `semantifyr-sysml-<version>.zip` has the same layout. The commands on this page are written for Linux and macOS shells; on Windows, use `bin\semantifyr-sysml.bat`.
+
+## Verifying Locally
+
+Create an empty directory and save the complete model in it as `room.sysml`.
+
+<CodeBlock language="sysmlv2" title="room.sysml">{room.text}</CodeBlock>
+
+In the directory of `room.sysml`, verify the model:
+
+```bash
+"$SEMANTIFYR_HOME/bin/semantifyr-sysml" verify room.sysml --artifact-directory ../room-artifacts
+```
+
+The `verify` command translates `room.sysml` to OXSTS, an OXSTS model that instantiates the classes of the SysML v2 semantic library, which takes about a minute. It then finds the three verification cases and verifies each with the default `smart` portfolio, which races every installed backend. The artifacts go outside the model's directory.
+
+For each case, the command prints its name, `PASSED` or `FAILED` with the time it took, and the path of its `report.json`, and it exits with status 5 when a case fails (the [exit codes](../../reference/command-line.mdx#exit-codes)). The cases end with these verdicts:
+
+- <CaseVerdict example={room} name="LampLitReachable" />
+- <CaseVerdict example={room} name="LampNeverLitViolated" />
+- <CaseVerdict example={room} name="LampLitOnlyWhileSwitchOnViolated" />
+
+## The Artifacts
+
+`--artifact-directory ../room-artifacts` keeps the translated model in `compiled/default/room.oxsts`, with its name map `room.names.json` beside it, and the artifacts of every case in a directory of its own; a case with a witness has `witness.json`, `trace.json`, `witness.oxsts` and `trace.sysml` among them. [Artifacts](../../reference/artifacts.mdx) describes each file.
+
+The trace of `LampLitOnlyWhileSwitchOnViolated`, which the tutorial reads, is in `trace.json` and `witness.json` in `../room-artifacts/room.LampLitOnlyWhileSwitchOnViolated/`, and `trace.sysml` next to them is the model of the *SysML trace* view.
+
+## Commands
 
 <CodeBlock language="text">{help}</CodeBlock>
 
-## `verify`
+### `verify`
 
 <CodeBlock language="text">{verify}</CodeBlock>
 
-`verify` translates the model and verifies its cases with the options, output and [exit codes](index.mdx#exit-codes) of `semantifyr verify`. The case names start with `semantifyr::sysml::model`, the package the translator gives every model. The translated model stays under the artifact directory, and for each case with a witness `verify` writes the witness as a SysML v2 model, `trace.sysml`, next to the case's `report.json` ([Artifacts](../artifacts/index.mdx), [SysML v2 traces](../artifacts/sysml-trace.mdx)); a witness the generator cannot express keeps its verdict, gets no `trace.sysml` and a warning in the log.
+`verify` translates the model and verifies its cases with the options, output and [exit codes](../../reference/command-line.mdx#exit-codes) of `semantifyr verify`. The case names start with `semantifyr::sysml::model`, the package the translator gives every model. The translated model stays under the artifact directory, and for each case with a witness `verify` writes the witness as a SysML v2 model, `trace.sysml`, next to the case's `report.json` ([Artifacts](../../reference/artifacts.mdx), [SysML v2 traces](traces.mdx)); a witness the generator cannot express keeps its verdict, gets no `trace.sysml` and a warning in the log.
 
 The translation is verified on top of the bundled SysML v2 semantic library, the state-level library in `libraries/sysmlv2`. `--library` loads OXSTS files in addition to it and does not replace it.
 
-## `compile`
+### `compile`
 
 <CodeBlock language="text">{compile}</CodeBlock>
 
-`compile` writes the OXSTS translation of the model to `--output`, by default next to the model with the `.oxsts` extension, and the name map from the model's elements to the OXSTS beside it with the `.names.json` extension. A construct the translator refuses is an error at its line and no OXSTS is written; a warning is printed and the translation written ([What Is Supported](../../sysml-v2/supported.mdx)). `semantifyr` verifies it together with that library: `semantifyr verify -l <semantifyr-sysml distribution>/libraries/sysmlv2 room.oxsts`.
+`compile` writes the OXSTS translation of the model to `--output`, by default next to the model with the `.oxsts` extension, and the name map from the model's elements to the OXSTS beside it with the `.names.json` extension. A construct the translator refuses is an error at its line and no OXSTS is written; a warning is printed and the translation written ([What Is Supported](supported.mdx)). `semantifyr` verifies it together with that library: `semantifyr verify -l <semantifyr-sysml distribution>/libraries/sysmlv2 room.oxsts`.

@@ -9,7 +9,7 @@ import constructs from '@oxsts-constructs/constructs.tsv';
 
 # Expressions
 
-Expressions compute values. They appear in [property](properties.md) bodies, on the right-hand side of assignments, in [operation](operations.md) guards, in feature multiplicities, and in feature bindings. [Types](types.md) gives the type of each expression and when it fits where it is used.
+Expressions compute values. They appear in [property](../classes-and-behaviour/properties.md) bodies, on the right-hand side of assignments, in [operation](../classes-and-behaviour/operations.md) guards, in feature multiplicities, and in feature bindings. [Types](types.md) gives the type of each expression and when it fits where it is used.
 
 ## Literals
 
@@ -184,11 +184,11 @@ class Counters {
 }
 ```
 
-A range is an `int` range. `a..<a` is empty, and `a..<*` is unbounded like `a..*`. Ranges are the ranges of `for` and `inline for` and, in brackets, [multiplicities](features.md#multiplicities).
+A range is an `int` range. `a..<a` is empty, and `a..<*` is unbounded like `a..*`. Ranges are the ranges of `for` and `inline for` and, in brackets, [multiplicities](../classes-and-behaviour/features.md#multiplicities).
 
 ## Member Access (`.`)
 
-The `.` operator names a member of an instance. When the instance is held by a variable, the member of the instance the variable holds is read (see [Feature-Typed Variables](variables.md#feature-typed-variables)).
+The `.` operator names a member of an instance. When the instance is held by a variable, the member of the instance the variable holds is read (see [Feature-Typed Variables](../classes-and-behaviour/variables.md#feature-typed-variables)).
 
 ```oxsts
 // hide-start
@@ -263,16 +263,16 @@ class Buffer {
 
 ## Calls and Arguments
 
-`f(arguments)` calls a [property](properties.md) or a [transition](transitions.md). A property call is an expression whose value is the property's; a transition call is what an [inline call](inline-operations.md#inline-call) runs. The callee is named like a member, by itself, through `self` or through a navigation, and calling anything else, such as a variable or a record, is rejected (`OXSTS.INCORRECT_CALLED_ELEMENT`). A call ends a chain of members and indices, and only a cast may follow it: `a.b.f()` calls `f` on `a.b`, while `a.f().b`, `f()()` and `a.f()[0]` are syntax errors, and a member of what a call gives is read through parentheses, `(a.f()).b`.
+`f(arguments)` calls a [property](../classes-and-behaviour/properties.md) or a [transition](../classes-and-behaviour/transitions.md). A property call is an expression whose value is the property's; a transition call is what an [inline call](../classes-and-behaviour/inline-operations.md#inline-call) runs. The callee is named like a member, by itself, through `self` or through a navigation, and calling anything else, such as a variable or a record, is rejected (`OXSTS.INCORRECT_CALLED_ELEMENT`). A call ends a chain of members and indices, and only a cast may follow it: `a.b.f()` calls `f` on `a.b`, while `a.f().b`, `f()()` and `a.f()[0]` are syntax errors, and a member of what a call gives is read through parentheses, `(a.f()).b`.
 
-These rules bind the arguments of a property call and of an inline call; the first, the second and the last bind the arguments of an [annotation](annotations.md#with-arguments) too:
+These rules bind the arguments of a property call and of an inline call; the first, the second and the last bind the arguments of an [annotation](../library-and-output/annotations.md#with-arguments) too:
 
 - An argument is positional or named, `name = value`. A positional argument binds the parameter at its position, a named one the parameter of its name.
 - Every named argument follows all positional ones (`OXSTS.POSITIONAL_ARGUMENT_AFTER_NAMED`), and a parameter is bound at most once, by position or by name (`OXSTS.PARAMETER_BOUND_TWICE`).
 - A parameter whose multiplicity has the lower bound 0, such as `[0..1]`, is optional and binds `nothing` when it is left out. Every other parameter must be bound, and a call has no more arguments than parameters (`OXSTS.INVALID_CALL_ARGUMENTS_COUNT`); a required parameter is declared before every optional one (`OXSTS.INVALID_CALL_ARGUMENTS_COUNT`, at the declaration).
 - Each argument fits its parameter's type ([Assignability](types.md#assignability)).
 
-A property call's value is the value of the property's body with every parameter replaced by its argument, read against the instance the call names; an inline call passes its arguments by value ([Inline Call](inline-operations.md#inline-call)).
+A property call's value is the value of the property's body with every parameter replaced by its argument, read against the instance the call names; an inline call passes its arguments by value ([Inline Call](../classes-and-behaviour/inline-operations.md#inline-call)).
 
 ```oxsts
 class Counter {
@@ -387,7 +387,7 @@ class Flag {
 
 ## If-Then-Else
 
-`if guard then a else b` is `a` when the guard holds and `b` otherwise. The guard is Boolean, the `else` branch is required, and the two branches join ([Comparison and Joining](types.md#comparison-and-joining)); either is rejected otherwise (`OXSTS.TYPE_MISMATCH`). Its type is the joined type of the branches, so `if dark then lamp else nothing` holds at most one instance. Unlike the [`if` operation](operations.md#if), it is an expression and changes no state.
+`if guard then a else b` is `a` when the guard holds and `b` otherwise. The guard is Boolean, the `else` branch is required, and the two branches join ([Comparison and Joining](types.md#comparison-and-joining)); either is rejected otherwise (`OXSTS.TYPE_MISMATCH`). Its type is the joined type of the branches, so `if dark then lamp else nothing` holds at most one instance. Unlike the [`if` operation](../classes-and-behaviour/operations.md#if), it is an expression and changes no state.
 
 ```oxsts
 class Lamp

@@ -1,6 +1,7 @@
 ---
 title: SysML v2 Traces
-sidebar_position: 1
+sidebar_label: Traces
+sidebar_position: 5
 description: The form of trace.sysml, the SysML v2 model a case's witness is written as, what it shows and its name map.
 ---
 
@@ -9,7 +10,7 @@ import trace from '@sysml-reference-trace/crossroads-green.trace.sysml';
 
 # SysML v2 Traces
 
-`semantifyr-sysml verify` and Live's SysML v2 language show the witness of a case as a SysML v2 model, `trace.sysml` beside the case's [`witness.json` and `trace.json`](index.mdx): a package `<Case>Trace` with a part definition `Run` that specializes the verified part's definition and states which states each part was in over which stretch of time, which transitions fired in which step, which items were sent, and how much time passed. Every declaration narrows the model, so the trace is a refinement of it, and a SysML v2 tool reads it next to the model.
+`semantifyr-sysml verify` and Live's SysML v2 language show the witness of a case as a SysML v2 model, `trace.sysml` beside the case's [`witness.json` and `trace.json`](../../reference/artifacts.mdx): a package `<Case>Trace` with a part definition `Run` that specializes the verified part's definition and states which states each part was in over which stretch of time, which transitions fired in which step, which items were sent, and how much time passed. Every declaration narrows the model, so the trace is a refinement of it, and a SysML v2 tool reads it next to the model.
 
 The trace is generated from the witness, its traced calls and the [name map](#the-name-map) of the translation, and validated against the model before it is written: a witness that cannot be expressed keeps its verdict and gets no trace, and the log names the place in the input the error comes from, such as `trace.json.steps[3].traces[0].self`.
 
@@ -24,7 +25,7 @@ The SysML v2 library traces transition firing, state entry and exit, item sendin
 
 ## Form
 
-The reference trace, of the case `TrafficLightABehaviorNormalGreenUnreachableViolated` of the crossroads model, which the SysML v2 frontend's tests generate from its [witness](index.mdx#witnessoxsts) and validate:
+The reference trace, of the case `TrafficLightABehaviorNormalGreenUnreachableViolated` of the crossroads model, which the SysML v2 frontend's tests generate from its [witness](../../reference/artifacts.mdx#witnessoxsts) and validate:
 
 <CodeBlock language="sysmlv2">{trace}</CodeBlock>
 

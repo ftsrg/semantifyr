@@ -42,7 +42,7 @@ class Counter {
 
 ## With Arguments
 
-Annotation arguments are positional or named, every named one after all positional ones (`OXSTS.POSITIONAL_ARGUMENT_AFTER_NAMED`), each parameter bound at most once (`OXSTS.PARAMETER_BOUND_TWICE`), and each argument fitting its parameter's type, as for a call ([Calls and Arguments](expressions.md#calls-and-arguments)). Arguments must be constants: annotations are read without an instance, so the validator rejects a reference to a feature or variable (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`).
+Annotation arguments are positional or named, every named one after all positional ones (`OXSTS.POSITIONAL_ARGUMENT_AFTER_NAMED`), each parameter bound at most once (`OXSTS.PARAMETER_BOUND_TWICE`), and each argument fitting its parameter's type, as for a call ([Calls and Arguments](../foundations/expressions.md#calls-and-arguments)). Arguments must be constants: annotations are read without an instance, so the validator rejects a reference to a feature or variable (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`).
 
 ```oxsts
 @VerificationCase("Reaches the limit")

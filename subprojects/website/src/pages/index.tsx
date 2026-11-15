@@ -20,13 +20,15 @@ import clsx from 'clsx';
 
 import styles from './index.module.css';
 
-const SENTENCES = 'Semantifyr is a framework to support the declarative definition of engineering model semantics: the meaning of a modelling language is written once, as a semantic library, and the models written in it are then verified by established model checkers, within the part of the language the library covers and the checkers accept. SysML v2 and Gamma are its frontends: a model in either is verified as it is written, and the trace of a case comes back in the language of the model.';
+const SENTENCES = 'Semantifyr is a framework to support the declarative definition of engineering model semantics: the meaning of a modelling language is written once, as a semantic library, and the models written in it are then verified by established model checkers, within the part of the language the library covers and the checkers accept. SysML v2 and Gamma are its currently implemented frontends: a model in either is verified as it is written, and the trace of a case comes back in the language of the model.';
 
 // the served crossroads' comment and its first declarations
 const STILL_LINES = 22;
 
 function partAddress(label: string): string {
-  const part = learnParts.find((candidate) => {
+  const part = learnParts.flatMap((candidate) => {
+    return [candidate, ...candidate.parts ?? []];
+  }).find((candidate) => {
     return candidate.label === label;
   });
   if (part === undefined) {

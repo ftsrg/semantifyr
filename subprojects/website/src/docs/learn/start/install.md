@@ -27,7 +27,7 @@ Use it to work on models in your own folders and repositories.
 2. In VS Code, run **Extensions: Install from VSIX...** from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and select the `.vsix` file.
 3. Open a folder that holds an OXSTS or a Gamma model, a `.oxsts`, `.gamma` or `.gcd` file. The extension starts by itself and lists the model's verification cases in the *Testing* view.
 
-[The VS Code Extension](../tools/vscode.md) shows how to verify a case and read its witness and trace, and [its settings](../reference/editors.mdx) choose the portfolio, the timeout and the rest.
+[The VS Code Extension](../verifying/vscode.md) shows how to verify a case and read its witness and trace, and [its settings](../reference/vscode-settings.mdx) choose the portfolio, the timeout and the rest.
 
 <Planned>
 Publication on the Visual Studio Marketplace is planned.
@@ -37,11 +37,11 @@ Publication on the Visual Studio Marketplace is planned.
 
 Use it in scripts and CI. Each launcher has a distribution of its own with the Theta backend, its semantic library and a smoke model, and needs a Java 25 runtime.
 
-1. Build the distribution with `./gradlew :semantifyr-cli:installDist`, which installs it to `subprojects/semantifyr-cli/build/install/semantifyr`; `./gradlew :semantifyr-cli:distZip` packs the same files into `subprojects/semantifyr-cli/build/distributions/semantifyr-<version>.zip`. `:sysml-cli` and `:gamma-cli` build `semantifyr-sysml` and `semantifyr-gamma` the same way, under `subprojects/frontends/sysml/sysml-cli/build/` and `subprojects/frontends/gamma/gamma-cli/build/`.
+1. Build the distribution with `./gradlew :semantifyr-cli:installDist`, which installs it to `subprojects/semantifyr-cli/build/install/semantifyr`; `./gradlew :semantifyr-cli:distZip` packs the same files into `subprojects/semantifyr-cli/build/distributions/semantifyr-<version>.zip`. `:sysml-cli` and `:gamma-cli` build `semantifyr-sysml` and `semantifyr-gamma` the same way, under `subprojects/frontends/sysml/sysml-cli/build/` and `subprojects/frontends/gamma/gamma-cli/build/`. The first build downloads its dependencies, the SysIDE fork among them, and takes several minutes.
 2. Run `bin/semantifyr` in the installed directory (`bin\semantifyr.bat` on Windows). The distribution bundles the Theta backend, which the launcher puts on `PATH`; install the other backends as for the VS Code extension.
 3. Verify the bundled smoke model from the installed directory: `bin/semantifyr verify models/smoke`.
 
-The `semantifyr-sysml` and `semantifyr-gamma` distributions carry their semantic library under `libraries/` and a smoke model under `models/smoke/`. `semantifyr-sysml` translates SysML v2 models with the bundled SysIDE fork, which needs Node.js <NodeVersion /> or newer on `PATH`. [Verifying on the Command Line](../tools/command-line.md) walks through a run, and [the command line's reference](../reference/cli/index.mdx) lists the commands and options.
+The `semantifyr-sysml` and `semantifyr-gamma` distributions carry their semantic library under `libraries/` and a smoke model under `models/smoke/`. `semantifyr-sysml` translates SysML v2 models with the bundled SysIDE fork, which needs Node.js <NodeVersion /> or newer on `PATH`. [Verifying on the Command Line](../verifying/command-line.mdx) walks through a run of `semantifyr` and [SysML v2 on the Command Line](../frontends/sysml-v2/command-line.mdx) one of `semantifyr-sysml`, and [the command line's reference](../reference/command-line.mdx) lists the commands and options.
 
 <Planned>
 A hosted JupyterHub environment that runs VS Code in the browser with the Semantifyr extension, the Theta backend, and example models for SysML v2 and Gamma.

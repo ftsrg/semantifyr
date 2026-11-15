@@ -10,7 +10,7 @@ Inline operations are resolved at **compile time** during unfolding. They never 
 
 ## Inline Call
 
-`inline target.transition(arguments)` runs the body of the called transition in place of the call, with `self` and the members the body names taken on the instance the call names. The transition is resolved on that instance, so a redefinition in its class is the one that runs. Inlining a call into a body that holds another call goes on until none is left, and nothing stops a transition that calls itself: a library keeps its calls finite. [Inlining](../../how-it-works/inlining.mdx) steps through the calls of one model as the compiler expands them.
+`inline target.transition(arguments)` runs the body of the called transition in place of the call, with `self` and the members the body names taken on the instance the call names. The transition is resolved on that instance, so a redefinition in its class is the one that runs. Inlining a call into a body that holds another call goes on until none is left, and nothing stops a transition that calls itself: a library keeps its calls finite. [Inlining](../../compilation/inlining.mdx) steps through the calls of one model as the compiler expands them.
 
 The target is reached through `self`, a variable, or a feature that holds at most one instance; a call through a feature whose upper multiplicity is above 1 (`inline workers.step()` on `contains workers: Worker[0..*]`) is rejected (`OXSTS.CALL_THROUGH_MANY_VALUED_FEATURE`), so call each instance in an `inline for` over the feature.
 
@@ -36,7 +36,7 @@ class Pair {
 
 A step of `Pair` increments the `value` of `a` and then that of `b`.
 
-The arguments bind as [Calls and Arguments](expressions.md#calls-and-arguments) gives, and are passed by value. An argument that reads runtime state (a variable, or a property call over one) is evaluated once, in argument order, into a local variable before the body runs, and the parameter reads that local: a write in the body does not change what a parameter reads. A compile-time argument (a constant, a feature, an instance reference) is substituted for the parameter, so it can steer an `inline if`, an `inline for` range or a call through the parameter. A parameter that holds an instance can be read and called through (`worker.done`, `inline worker.step()`) whether its argument is an instance reference or a variable, in which case the body acts on the instance the variable holds.
+The arguments bind as [Calls and Arguments](../foundations/expressions.md#calls-and-arguments) gives, and are passed by value. An argument that reads runtime state (a variable, or a property call over one) is evaluated once, in argument order, into a local variable before the body runs, and the parameter reads that local: a write in the body does not change what a parameter reads. A compile-time argument (a constant, a feature, an instance reference) is substituted for the parameter, so it can steer an `inline if`, an `inline for` range or a call through the parameter. A parameter that holds an instance can be read and called through (`worker.done`, `inline worker.step()`) whether its argument is an instance reference or a variable, in which case the body acts on the instance the variable holds.
 
 ```oxsts
 class Swapper {
@@ -60,7 +60,7 @@ A body never writes a parameter: an assignment or a `havoc` whose target is a pa
 
 ## `inline if`
 
-`inline if (guard) { ... } else { ... }` evaluates its guard at compile time, for each instance whose transition holds it, and keeps the body of the branch the guard selects in its place; the other branch is dropped, and without an `else`, a false guard leaves nothing, as [inlining](../../how-it-works/inlining.mdx) does it. The guard is Boolean (`OXSTS.TYPE_MISMATCH`) and reads no state (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`).
+`inline if (guard) { ... } else { ... }` evaluates its guard at compile time, for each instance whose transition holds it, and keeps the body of the branch the guard selects in its place; the other branch is dropped, and without an `else`, a false guard leaves nothing, as [inlining](../../compilation/inlining.mdx) does it. The guard is Boolean (`OXSTS.TYPE_MISMATCH`) and reads no state (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`).
 
 ```oxsts
 class Counter {
@@ -87,7 +87,7 @@ A step of `Counter` increments `value`; in `Frozen`, whose `maximum` is 0, the s
 
 ## `inline for` (sequence)
 
-`inline for [seq] (x in expr) { ... }` evaluates its range at compile time, for each instance whose transition holds it, and runs its body once for each value or instance of the range, in order, as one sequence, with `x` standing for that value or instance; [inlining](../../how-it-works/inlining.mdx) unrolls it. The `seq` keyword is optional: `inline for (x in r)` and `inline for seq (x in r)` are equivalent. The range reads no state (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`), and is what the range of a [`for`](operations.md#for) may be: an integer range, an expression of instances or one of several values (`OXSTS.TYPE_MISMATCH`). Its loop variable cannot be written ([Inline vs Runtime](#inline-vs-runtime)).
+`inline for [seq] (x in expr) { ... }` evaluates its range at compile time, for each instance whose transition holds it, and runs its body once for each value or instance of the range, in order, as one sequence, with `x` standing for that value or instance; [inlining](../../compilation/inlining.mdx) unrolls it. The `seq` keyword is optional: `inline for (x in r)` and `inline for seq (x in r)` are equivalent. The range reads no state (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`), and is what the range of a [`for`](operations.md#for) may be: an integer range, an expression of instances or one of several values (`OXSTS.TYPE_MISMATCH`). Its loop variable cannot be written ([Inline vs Runtime](#inline-vs-runtime)).
 
 ```oxsts
 class Counter {
@@ -115,7 +115,7 @@ The instances of `counters` are those of the features that subset it, so a step 
 
 ## `inline for choice`
 
-`inline for choice (x in expr) { ... }` is evaluated as `inline for` is, but its copies of the body are the branches of a [`choice`](operations.md#choice) rather than a sequence: one runs, chosen non-deterministically among the enabled ones, as [inlining](../../how-it-works/inlining.mdx) unrolls it. The `choice` keyword is required.
+`inline for choice (x in expr) { ... }` is evaluated as `inline for` is, but its copies of the body are the branches of a [`choice`](operations.md#choice) rather than a sequence: one runs, chosen non-deterministically among the enabled ones, as [inlining](../../compilation/inlining.mdx) unrolls it. The `choice` keyword is required.
 
 ```oxsts
 class Counter {

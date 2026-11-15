@@ -338,7 +338,7 @@ export default {
         },
         {
           label: 'What Live\'s Server Keeps',
-          to: '/learn/tools/privacy/',
+          to: '/learn/verifying/live/privacy/',
         },
         {
           label: 'Source code',
