@@ -6,6 +6,7 @@
 
 import com.github.gradle.node.npm.task.NpmTask
 import groovy.json.JsonSlurper
+import hu.bme.mit.semantifyr.gradle.conventions.TestInputScopes
 import hu.bme.mit.semantifyr.gradle.conventions.javaRuntimeLibrary
 import hu.bme.mit.semantifyr.gradle.conventions.readsServedExamples
 import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
@@ -13,6 +14,7 @@ import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.servedExampleSources
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
 import hu.bme.mit.semantifyr.gradle.conventions.testChromium
+import hu.bme.mit.semantifyr.gradle.conventions.testInputScope
 import org.gradle.testing.base.TestingExtension
 
 plugins {
@@ -49,7 +51,7 @@ val sysmlWorkerFiles = configurations.resolvable("sysmlWorkerFiles") {
 }
 
 // the launchers' runtime classpaths, so that a module a launcher gains is read by the terms test without a list of its own
-val launcherModules = configurations.dependencyScope("launcherModules")
+val launcherModules = testInputScope("launcherModules")
 val launcherModulesGraph = configurations.resolvable("launcherModulesGraph") {
     extendsFrom(launcherModules.get())
     attributes(javaRuntimeLibrary())
@@ -61,7 +63,8 @@ val liveScreenshotsFiles = configurations.resolvable("liveScreenshotsFiles") {
     attributes(semantifyrArtifact("screenshots"))
 }
 
-val liveWebDistribution = configurations.dependencyScope("liveWebDistribution")
+// the keyboard walk serves live beside the site
+val liveWebDistribution = testInputScope("liveWebDistribution")
 val liveWebDistributionFiles = configurations.resolvable("liveWebDistributionFiles") {
     extendsFrom(liveWebDistribution.get())
     attributes(semantifyrArtifact("web-distribution"))
@@ -391,15 +394,8 @@ npmCheck.configure {
     inputs.file(phasesModel).withPropertyName("phasesModel").withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
-// every module with the modules its production code depends on, read once every module is configured; what a test suite or the test fixtures declare does not count
+// every module with the modules its production code depends on, read once every module is configured; what a test suite, the test fixtures or a test input scope declare does not count
 val buildModules = objects.listProperty<String>()
-
-// files that tests take from a module, the Theta binary on their path and the compiled corpora, are no dependency of code; a launcher or an image that ships Theta reaches it through the backends
-val testInputKinds = setOf(
-    "theta-xsts-cli",
-    "compiled-corpus",
-    "sysml-corpus",
-)
 
 gradle.projectsEvaluated {
     val repository = rootProject.projectDir
@@ -409,20 +405,10 @@ gradle.projectsEvaluated {
         }.map { module ->
             val testing = module.extensions.findByName("testing") as? TestingExtension
             val testSourceSets = testing?.suites?.names.orEmpty() + "testFixtures"
-            val resolvables = module.configurations.filter {
-                it.isCanBeResolved
-            }
+            val testInputs = module.extensions.findByType<TestInputScopes>()?.names.orEmpty()
             val dependencies = module.configurations.filter { configuration ->
-                testSourceSets.none {
+                configuration.name !in testInputs && testSourceSets.none {
                     configuration.name.startsWith(it) && configuration.name.getOrNull(it.length)?.isUpperCase() != false
-                }
-            }.filter { configuration ->
-                resolvables.filter {
-                    configuration in it.extendsFrom
-                }.none { resolvable ->
-                    resolvable.attributes.keySet().any {
-                        it.name == "hu.bme.mit.semantifyr.artifact" && resolvable.attributes.getAttribute(it).toString() in testInputKinds
-                    }
                 }
             }.flatMap {
                 it.dependencies.withType<ProjectDependency>()

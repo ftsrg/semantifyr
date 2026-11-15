@@ -10,18 +10,19 @@ plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
 }
 
-val theta = configurations.dependencyScope("theta")
-val thetaFiles = configurations.resolvable("thetaFiles") {
-    extendsFrom(theta.get())
+// Theta on the tests' path; a module that ships Theta takes it through a scope of its own
+val testTheta = configurations.dependencyScope("testTheta")
+val testThetaFiles = configurations.resolvable("testThetaFiles") {
+    extendsFrom(testTheta.get())
     attributes(semantifyrArtifact("theta-xsts-cli"))
 }
 
 dependencies {
-    theta(project(":theta-executor"))
+    testTheta(project(":theta-executor"))
 }
 
 val cloneTheta = tasks.register<Sync>("cloneTheta") {
-    from(thetaFiles)
+    from(testThetaFiles)
     into(layout.buildDirectory.dir("theta-xsts-cli"))
 }
 
