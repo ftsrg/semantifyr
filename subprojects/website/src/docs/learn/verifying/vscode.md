@@ -1,11 +1,11 @@
 ---
-title: The VS Code Extension
+title: Verifying in VS Code
 sidebar_label: In VS Code
 sidebar_position: 4
 description: Verify the cases of an OXSTS or a Gamma model in VS Code, read their witness and trace, and look at what the compiler makes of a case.
 ---
 
-# The VS Code Extension
+# Verifying in VS Code
 
 The extension lists the verification cases of the OXSTS and Gamma models of the open folder in VS Code's *Testing* view, runs them on the backends of your machine and opens their witnesses and traces beside the model. [Installing It](../start/install.md#the-vs-code-extension) builds and installs it.
 

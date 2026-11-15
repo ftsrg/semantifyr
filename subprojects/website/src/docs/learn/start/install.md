@@ -27,7 +27,7 @@ Use it to work on models in your own folders and repositories.
 2. In VS Code, run **Extensions: Install from VSIX...** from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and select the `.vsix` file.
 3. Open a folder that holds an OXSTS or a Gamma model, a `.oxsts`, `.gamma` or `.gcd` file. The extension starts by itself and lists the model's verification cases in the *Testing* view.
 
-[The VS Code Extension](../verifying/vscode.md) shows how to verify a case and read its witness and trace, and [its settings](../reference/vscode-settings.mdx) choose the portfolio, the timeout and the rest.
+[Verifying in VS Code](../verifying/vscode.md) shows how to verify a case and read its witness and trace, and [its settings](../reference/vscode-settings.mdx) choose the portfolio, the timeout and the rest.
 
 <Planned>
 Publication on the Visual Studio Marketplace is planned.

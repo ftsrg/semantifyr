@@ -1,5 +1,5 @@
 ---
-title: Live's Screen
+title: Verifying in Live
 sidebar_label: In Live
 description: The controls of Semantifyr Live and of the editor a page embeds, and what each shows.
 ---
@@ -7,7 +7,7 @@ description: The controls of Semantifyr Live and of the editor a page embeds, an
 import ThemedImage from '@theme/ThemedImage';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 
-# Live's Screen
+# Verifying in Live
 
 [Semantifyr Live](https://live.semantifyr.org) edits and verifies a model in the browser. A page of this site embeds the same editor in place of a code block. This page lists what each of them shows.
 

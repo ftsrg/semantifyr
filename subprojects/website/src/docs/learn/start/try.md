@@ -16,4 +16,4 @@ import LiveLimit from '@site/src/components/LiveLimit';
 4. Select a case with a trace to read it below the cases: for SysML v2 as a SysML v2 model, for Gamma in Gamma's trace language, and for every language as the steps and calls of the OXSTS model.
 5. Edit the model; the cases follow your edits. **Save** writes the model to a file, and **Share** puts the model and its results into a link.
 
-The public instance stops a verification after <LiveLimit />. [Live's Screen](../verifying/live/index.md) lists every control and view, and [what Live's server keeps](../verifying/live/privacy.md) of your model is on a page of its own.
+The public instance stops a verification after <LiveLimit />. [Verifying in Live](../verifying/live/index.md) lists every control and view, and [what Live's server keeps](../verifying/live/privacy.md) of your model is on a page of its own.
