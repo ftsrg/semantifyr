@@ -43,6 +43,13 @@ abstract class Component {
         }
     }
 
+    // outside init, so a component reset leaves the timeouts as Gamma's does
+    tran startTimeouts() {
+        inline for (timeout in timeouts) {
+            inline timeout.start()
+        }
+    }
+
     // timeouts are left as Gamma's initializing action leaves them, a state sets its own when entered
     tran restore() {
         inline for (port in ports) {
@@ -104,6 +111,16 @@ abstract class CompositeComponent : Component {
 
         inline for (component in components) {
             inline component.passTime()
+        }
+    }
+
+    redefine tran startTimeouts() {
+        inline for (timeout in timeouts) {
+            inline timeout.start()
+        }
+
+        inline for (component in components) {
+            inline component.startTimeouts()
         }
     }
 

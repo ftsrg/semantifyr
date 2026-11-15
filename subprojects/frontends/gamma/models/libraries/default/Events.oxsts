@@ -118,20 +118,28 @@ class ParameterExpression : Expression {
 
 class Timeout {
     refers deltaTime: int = 1
+    // Gamma stops a clock at the greatest value it is compared with that reads no state
+    refers stopsAtValue: bool = false
+    contains value: Expression[1]
 
-    var remainingTime: int := 0
+    var clock: int := 0
+
+    // a timeout is up until it is first set
+    tran start() {
+        clock := value.evaluate() as int
+    }
 
     tran passTime() {
-        if (remainingTime > 0) {
-            remainingTime := remainingTime - deltaTime
+        inline if (stopsAtValue) {
+            if (clock < value.evaluate() as int) {
+                clock := clock + deltaTime
+            }
+        } else {
+            clock := clock + deltaTime
         }
     }
 
     prop isUp(): bool {
-        return remainingTime <= 0
-    }
-
-    tran assumeIsUp() {
-        assume(remainingTime <= 0)
+        return value.evaluate() as int <= clock
     }
 }

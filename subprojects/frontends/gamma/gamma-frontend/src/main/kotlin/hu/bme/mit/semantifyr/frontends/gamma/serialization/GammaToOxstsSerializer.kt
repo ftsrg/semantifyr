@@ -298,6 +298,9 @@ class GammaToOxstsSerializer(
 
     private val accessClassNamesByPackage = mutableMapOf<GammaModelPackage, Map<FieldDeclaration, String>>()
 
+    // a timeout's value is written in the statechart's body, where no region shadows a member
+    private var statechartScope = false
+
     private fun oxstsType(type: Type): String {
         return when (val resolved = GammaUtils.resolveType(type)) {
             is IntegerType -> "int"
@@ -1032,20 +1035,32 @@ class GammaToOxstsSerializer(
 
     private fun IndentingStringBuilder.serialize(timeout: TimeoutDeclaration) {
         val name = nameMap.declare(timeout.eContainer(), timeout, markName(timeout.name))
-        if (isSetInMilliseconds(timeout)) {
-            appendIndent("contains $name: Timeout subsets timeouts") {
+        // the validator lets a timeout be set to one value only, so its first setting gives the value and the unit
+        val setting = EcoreUtil2.getAllContentsOfType(timeout.eContainer(), SetTimeoutAction::class.java).firstOrNull {
+            it.timeout == timeout
+        }
+        appendIndent("contains $name: Timeout subsets timeouts") {
+            if (setting?.unit == TimeUnit.MILLISECOND) {
                 appendLine("redefine refers deltaTime: int = $MILLISECONDS_PER_STEP")
             }
-        } else {
-            appendLine("contains $name: Timeout subsets timeouts")
+            if (setting == null || readsNoState(setting.value)) {
+                appendLine("redefine refers stopsAtValue: bool = true")
+            }
+            if (setting == null) {
+                appendIndent("redefine contains value: LiteralIntegerExpression") {
+                    appendLine("redefine refers value: int = 0")
+                }
+            } else {
+                statechartScope = true
+                serialize(setting.value, "value")
+                statechartScope = false
+            }
         }
     }
 
-    // the validator lets a timeout be set to one value only, so its settings share one unit
-    private fun isSetInMilliseconds(timeout: TimeoutDeclaration): Boolean {
-        val statechart = EcoreUtil2.getContainerOfType(timeout, StatechartDeclaration::class.java)
-        return EcoreUtil2.getAllContentsOfType(statechart, SetTimeoutAction::class.java).any {
-            it.timeout == timeout && it.unit == TimeUnit.MILLISECOND
+    private fun readsNoState(expression: Expression): Boolean {
+        return (sequenceOf(expression) + expression.eAllContents().asSequence()).none {
+            it is DirectReferenceExpression || it is EventParameterReferenceExpression
         }
     }
 
@@ -1318,7 +1333,6 @@ class GammaToOxstsSerializer(
         val name = nameMap.declareGenerated(action.eContainer(), action, deriveName(action, subsets))
         appendIndent("contains $name: SetTimeoutAction subsets $subsets") {
             appendLine("redefine refers timeout: Timeout = ${memberReference(action.timeout)}")
-            serialize(action.value, "expression")
         }
     }
 
@@ -1617,7 +1631,7 @@ class GammaToOxstsSerializer(
     // a region, state or history node named like a statechart member shadows it inside the regions, so the member is reached through the statechart
     private fun memberReference(member: NamedElement): String {
         val statechart = member.eContainer() as? StatechartDeclaration ?: return markName(member.name)
-        val shadowed = EcoreUtil2.eAllContents(statechart).asSequence().any {
+        val shadowed = !statechartScope && EcoreUtil2.eAllContents(statechart).asSequence().any {
             (it is Region || it is StateNode) && (it as NamedElement).name == member.name
         }
         if (!shadowed) {

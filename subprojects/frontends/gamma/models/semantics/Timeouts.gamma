@@ -60,6 +60,33 @@ statechart Delayed {
     transition from Done to StillUp when timeout delay
 }
 
+statechart Assigned {
+    timeout tick
+    timeout delay
+    var seconds : integer := 0
+    var limit : integer := 1000
+
+    region Clock {
+        initial ClockInitial
+        state Ticking {
+            entry / set tick := 1000 ms;
+        }
+    }
+
+    region Main {
+        initial MainInitial
+        state Waiting {
+            entry / set delay := limit ms; limit := 3000;
+        }
+        state Done
+    }
+
+    transition from ClockInitial to Ticking
+    transition from Ticking to Ticking when timeout tick [seconds < 4] / seconds := seconds + 1;
+    transition from MainInitial to Waiting
+    transition from Waiting to Done when timeout delay
+}
+
 verification case TheShorterTimeoutIsUpFirst of Machine {
     EF (state Fast.FastDone and state Slow.SlowWaiting)
 }
@@ -82,4 +109,12 @@ verification case TimeoutStaysUpOnceUp of Delayed {
 
 verification case TimeoutResetOnceItFiredUnreachable of Delayed {
     EF (state Main.Done and variable seconds = 3)
+}
+
+verification case TheValueIsReadAtTheTrigger of Assigned {
+    EF (state Main.Waiting and variable seconds = 2)
+}
+
+verification case TheValueReadAtTheSettingUnreachable of Assigned {
+    EF (state Main.Done and variable seconds = 1)
 }
