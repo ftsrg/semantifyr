@@ -1,0 +1,177 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+/* the search's own variables take the tokens; its classes are hashed, so the rules below match them by their name */
+:root {
+  --search-local-modal-background: var(--surface-overlay);
+  --search-local-modal-shadow: var(--shadow-overlay);
+  --search-local-modal-width: 520px;
+  --search-local-hit-background: transparent;
+  --search-local-hit-shadow: none;
+  --search-local-hit-color: var(--text-primary);
+  --search-local-hit-active-color: var(--text-primary);
+  --search-local-hit-height: 44px;
+  --search-local-highlight-color: var(--accent-ink);
+  --search-local-muted-color: var(--text-tertiary);
+  --search-local-input-active-border-color: var(--accent-ink);
+  --search-local-spacing: var(--space-3);
+  --ifm-navbar-search-input-background-color: var(--surface-inset);
+  --ifm-navbar-search-input-color: var(--text-primary);
+  --ifm-navbar-search-input-placeholder-color: var(--text-tertiary);
+}
+
+html .site-header-search [class*='searchInput_'] {
+  width: 12.5rem;
+  height: 30px;
+  padding: 0 var(--space-4) 0 var(--space-9);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-medium);
+  font: inherit;
+}
+
+html .site-header-search [class*='searchInput_']:hover {
+  border-color: var(--border-strong);
+}
+
+html .site-header-search [class*='searchInput_']:focus {
+  outline-offset: 2px;
+}
+
+html .site-header-search [class*='searchIcon_'] {
+  left: var(--space-5);
+  color: var(--text-tertiary);
+}
+
+html .site-header-search [class*='searchClearButton_'] {
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+html .site-header-search [class*='dropdownMenu_'] {
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-large);
+  font-size: var(--text-body);
+}
+
+html .site-header-search [class*='dropdownMenu_'] [class*='suggestion_'] {
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-medium);
+}
+
+html .site-header-search [class*='dropdownMenu_'] [class*='suggestion_']:not(:last-child) {
+  margin-bottom: var(--space-1);
+}
+
+html .site-header-search [class*='dropdownMenu_'] [class*='suggestion_']:hover,
+html .site-header-search [class*='dropdownMenu_'] [class*='suggestion_'][class*='cursor_'] {
+  background-color: var(--surface-hover);
+  box-shadow: inset 3px 0 0 var(--accent-ink);
+}
+
+html .site-header-search [class*='suggestion_'] [class*='hitTitle_'] {
+  font-size: 1em;
+}
+
+html .site-header-search [class*='suggestion_'] [class*='hitPath_'] {
+  font-size: var(--text-small);
+}
+
+html .site-header-search [class*='suggestion_'] [class*='hitWrapper_'] mark {
+  font-weight: var(--weight-semibold);
+}
+
+html .site-header-search [class*='suggestion_'][class*='cursor_'] mark {
+  color: var(--text-primary) !important;
+  text-decoration: underline var(--accent-ink) 2px;
+  text-underline-offset: 3px;
+}
+
+html .site-header-search [class*='suggestion_'][class*='cursor_'] [class*='hitTree_'],
+html .site-header-search [class*='suggestion_'][class*='cursor_'] [class*='hitIcon_'],
+html .site-header-search [class*='suggestion_'][class*='cursor_'] [class*='hitPath_'] {
+  color: var(--text-tertiary) !important;
+}
+
+html .site-header-search [class*='hitFooter_'] {
+  font-size: var(--text-small);
+}
+
+html .site-header-search [class*='hitFooter_'] a {
+  color: var(--accent-ink);
+  text-decoration: none;
+}
+
+html .site-header-search [class*='hitFooter_'] a:hover {
+  text-decoration: underline;
+}
+
+html [class*='searchQueryInput_'],
+html [class*='searchContextInput_'] {
+  border-color: var(--border);
+  border-radius: var(--radius-medium);
+  background: var(--surface-inset);
+  color: var(--text-primary);
+}
+
+html [class*='searchQueryInput_']:hover,
+html [class*='searchContextInput_']:hover {
+  border-color: var(--border-strong);
+}
+
+html [class*='searchResultItem_'] {
+  border-bottom-color: var(--border);
+}
+
+html [class*='searchResultItemPath_'] {
+  color: var(--text-tertiary);
+}
+
+html [class*='searchResultItemSummary_'] {
+  color: var(--text-secondary);
+}
+
+html [class*='searchResultItem_'] mark {
+  background: none;
+  color: var(--accent-ink);
+  font-weight: var(--weight-semibold);
+}
+
+html [class*='searchResultItem_'] h2 mark {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 576px) {
+  html .site-header-search [class*='searchInput_'] {
+    width: 8rem;
+  }
+
+  html .site-header-search [class*='searchInput_']:not(:focus) {
+    width: 30px;
+    padding: 0;
+  }
+
+  html .site-header-search [class*='searchInput_']:not(:focus)::placeholder {
+    color: transparent;
+  }
+
+  html .site-header-search [class*='searchBarContainer_']:not([class*='focused_']) [class*='searchIcon_'] {
+    left: 7px;
+  }
+
+  html .site-header-search [class*='dropdownMenu_'] {
+    position: fixed !important;
+    top: calc(var(--ifm-navbar-height) + var(--space-3)) !important;
+    right: var(--space-4) !important;
+    left: var(--space-4) !important;
+    width: auto;
+    max-width: none;
+    margin-top: 0;
+  }
+}

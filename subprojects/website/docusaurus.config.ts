@@ -258,6 +258,7 @@ export default {
           require.resolve('@semantifyr/editor-common/marks.css'),
           require.resolve('./src/css/custom.css'),
           require.resolve('./src/css/header.css'),
+          require.resolve('./src/css/search.css'),
         ],
       } satisfies ClassicThemeOptions,
     ],

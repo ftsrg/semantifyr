@@ -76,6 +76,7 @@ interface Use {
 const OVER_PANEL = ['surface-selected', 'surface-panel'] as const;
 const OVER_EDITOR = ['surface-selected', 'surface-editor'] as const;
 const SELECTED_MENU_ENTRY = ['surface-selected', 'surface-overlay'] as const;
+const HOVERED_MENU_ENTRY = ['surface-hover', 'surface-overlay'] as const;
 
 const TEXT_SURFACES: readonly Surface[] = [
   'surface-chrome',
@@ -118,6 +119,16 @@ const USES: readonly Use[] = [
     ],
     surfaces: [
       SELECTED_MENU_ENTRY,
+    ],
+    minimum: TEXT,
+  },
+  {
+    foregrounds: [
+      'text-primary',
+      'text-tertiary',
+    ],
+    surfaces: [
+      HOVERED_MENU_ENTRY,
     ],
     minimum: TEXT,
   },
