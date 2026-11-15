@@ -213,7 +213,11 @@ class ClassWitnessBackAnnotator @Inject constructor(
             }
         }
 
-        private fun recordAssumptions(reference: Expression, domain: DomainDeclaration, value: ReportValue): List<AssumptionOperation> {
+        private fun recordAssumptions(
+            reference: Expression,
+            domain: DomainDeclaration,
+            value: ReportValue,
+        ): List<AssumptionOperation> {
             val record = domain as? RecordDeclaration ?: error("a record value is reported for the type ${domain.name}")
             val fields = value as? ReportValue.Record ?: error("the value of a record is an object of its fields")
             return fields.fields.flatMap { (name, fieldValue) ->

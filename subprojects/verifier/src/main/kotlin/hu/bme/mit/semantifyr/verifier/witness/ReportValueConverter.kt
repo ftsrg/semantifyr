@@ -25,6 +25,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RealEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.StringEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.serializer.ExpressionSerializer
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DataTypeDeclaration
@@ -32,6 +33,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralNothing
@@ -40,6 +42,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TypeSpecification
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.verifier.ReportType
 import hu.bme.mit.semantifyr.verifier.ReportTypeKind
 import hu.bme.mit.semantifyr.verifier.ReportValue
@@ -67,6 +70,7 @@ class ReportValueConverter @Inject constructor(
     fun value(expression: Expression): ReportValue {
         return when (expression) {
             is LiteralInteger -> ReportValue.Integer(expression.value.toBigInteger())
+            is ArithmeticUnaryOperator -> negativeInteger(expression)
             is LiteralBoolean -> ReportValue.Bool(expression.isValue)
             is LiteralReal -> ReportValue.Real(expression.value)
             is LiteralString -> ReportValue.Text(expression.value)
@@ -83,6 +87,14 @@ class ReportValueConverter @Inject constructor(
             )
             else -> reference(expression)
         }
+    }
+
+    private fun negativeInteger(expression: ArithmeticUnaryOperator): ReportValue {
+        val body = expression.body
+        if (expression.op != UnaryOp.MINUS || body !is LiteralInteger) {
+            error("a witness value is a literal, found ${path(expression)}")
+        }
+        return ReportValue.Integer(body.value.toBigInteger().negate())
     }
 
     private fun reference(expression: Expression): ReportValue {
@@ -119,6 +131,7 @@ class ReportValueConverter @Inject constructor(
             is EnumDeclaration -> ReportTypeKind.Enum
             is ClassDeclaration -> ReportTypeKind.Class
             is RecordDeclaration -> ReportTypeKind.Record
+            is FeatureDeclaration -> ReportTypeKind.Feature
             else -> error("a traced value has the type ${domain::class.simpleName}, which a report cannot name")
         }
         return ReportType(

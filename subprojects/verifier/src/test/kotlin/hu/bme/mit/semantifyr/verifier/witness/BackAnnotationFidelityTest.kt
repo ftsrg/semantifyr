@@ -466,12 +466,47 @@ class BackAnnotationFidelityTest {
         }
     }
 
+    @Test
+    suspend fun `the report names a variable and a parameter typed by a feature by the feature's qualified name`(@TempDir models: Path, @TempDir output: Path) {
+        val case = loadText(models, "feature_typed.oxsts", FEATURE_TYPED_MODEL, "semantifyr::verification::report::feature_typed::FeatureTypedPick")
+        val current = flattenedName("root", "scheduler", "current")
+        val tracer = TransitionTracerNames.tracerName(0)
+
+        verifyWithWitness(case, output) { model ->
+            val firstId = (model.variables.single { it.name == current }.expression as LiteralInteger).value
+            linearInlinedWitness(
+                model,
+                listOf(
+                    model.state(current to firstId, tracer to false),
+                    model.state(current to firstId, tracer to true),
+                ),
+            )
+        }
+
+        val trace = readReport(output, case).trace!!
+        val jobs = ReportType(ReportTypeKind.Feature, "semantifyr::verification::report::feature_typed::Scheduler::jobs")
+        assertThat(trace.variables).contains(
+            ObservedVariable("root.scheduler.current", jobs),
+        )
+        assertThat(trace.transitions.single().parameters).containsExactly(
+            ObservedParameter("job", jobs),
+        )
+        assertThat(trace.states.last().values).containsEntry("root.scheduler.current", ReportValue.Text("root.scheduler.first"))
+        assertThat(trace.steps.single().calls.single().arguments).containsExactly(
+            entry("job", ReportValue.Text("root.scheduler.second")),
+        )
+    }
+
     private fun timedWitness(model: InlinedOxsts): InlinedWitness {
         val elapsed = model.variables.single {
             it.name == flattenedName("root", "timer", "elapsed")
         }
         val fired = flattenedName("root", "timer", "fired")
-        fun timed(state: InlinedWitnessState, clock: Fraction, step: Fraction): InlinedWitnessState {
+        fun timed(
+            state: InlinedWitnessState,
+            clock: Fraction,
+            step: Fraction,
+        ): InlinedWitnessState {
             return InlinedWitnessState(state.values, listOf(WitnessClockValue(elapsed, clock)), step)
         }
         return linearInlinedWitness(
@@ -484,7 +519,12 @@ class BackAnnotationFidelityTest {
         )
     }
 
-    private fun loadText(directory: Path, fileName: String, text: String, qualifiedName: String): VerificationCase {
+    private fun loadText(
+        directory: Path,
+        fileName: String,
+        text: String,
+        qualifiedName: String,
+    ): VerificationCase {
         val path = directory.resolve(fileName)
         path.writeText(text)
         val context = loader.loadStandaloneModel(path)
@@ -588,6 +628,39 @@ class BackAnnotationFidelityTest {
 
                 prop {
                     return EF (port.item == 2)
+                }
+            }
+        """.trimIndent()
+
+        private val FEATURE_TYPED_MODEL = """
+            package semantifyr::verification::report::feature_typed
+
+            class Job {
+                var done: bool := false
+            }
+
+            class Scheduler {
+                contains jobs: Job[0..*]
+                contains first: Job subsets jobs
+                contains second: Job subsets jobs
+                var current: jobs := first
+
+                @Trace
+                tran pick(job: jobs) {
+                    current := job
+                }
+            }
+
+            @VerificationCase
+            class FeatureTypedPick {
+                contains scheduler: Scheduler
+
+                redefine tran {
+                    inline scheduler.pick(scheduler.second)
+                }
+
+                prop {
+                    return EF (scheduler.current == scheduler.second)
                 }
             }
         """.trimIndent()

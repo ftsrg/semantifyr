@@ -24,6 +24,9 @@ enum class ReportTypeKind {
     @SerialName("record")
     Record,
 
+    @SerialName("feature")
+    Feature,
+
     @SerialName("array")
     Array,
 }
