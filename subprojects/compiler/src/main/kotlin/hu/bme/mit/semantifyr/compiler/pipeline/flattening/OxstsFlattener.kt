@@ -31,6 +31,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.Flattened
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.parentSequence
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.treeSequence
 import hu.bme.mit.semantifyr.logging.debug
@@ -39,6 +40,8 @@ import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.IntegerEvaluation
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
@@ -116,9 +119,13 @@ class OxstsFlattener @Inject constructor(
         val recordFields = registerRecordFields(recordFieldVariables, variableHolders, variableMappings)
 
         logger.debug { "Flattening array variables" }
-        val arraySlotVariables = arrayFlatteningPass.flattenArrays(inlinedOxsts)
+        val arraySlotVariables = arrayFlatteningPass.flattenArrays(
+            inlinedOxsts,
+            arraySizeEvaluator(instanceTree),
+            arrayDescriber(variableHolders, variableMappings, recordFields),
+        )
         logger.debug { "Flattened ${arraySlotVariables.size} array variable(s)" }
-        val arraySlots = registerArraySlots(arraySlotVariables, variableHolders, variableMappings, variableInstanceDomain)
+        val arraySlots = registerArraySlots(arraySlotVariables, variableHolders, variableMappings, variableInstanceDomain, recordFields)
 
         logger.debug { "Rewriting feature-typed variables" }
         rewriteFeatureTypedVariables(inlinedOxsts, variableInstanceDomain)
@@ -181,11 +188,45 @@ class OxstsFlattener @Inject constructor(
         }
     }
 
+    // the multiplicity was rewritten to the holder's path by the pull-down, so the root evaluates it on the instance
+    private fun arraySizeEvaluator(instanceTree: InstanceTree): (Expression) -> RangeEvaluation {
+        val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(instanceTree.rootInstance)
+        return { expression ->
+            when (val size = evaluator.evaluate(expression)) {
+                is IntegerEvaluation -> RangeEvaluation.of(size.value.toLong())
+                is RangeEvaluation -> size
+                else -> sourceError(expression, "The size of an array must evaluate to an integer or a range.")
+            }
+        }
+    }
+
+    private fun arrayDescriber(
+        variableHolders: Map<VariableDeclaration, Instance>,
+        variableMappings: Map<Instance, Map<VariableDeclaration, VariableDeclaration>>,
+        recordFields: Map<VariableDeclaration, RecordField>,
+    ): (VariableDeclaration) -> String {
+        return { variable ->
+            val holder = variableHolders[variable]
+            if (holder == null) {
+                "'${variable.name}'"
+            } else {
+                val originalVariable = recordFields[variable]?.recordVariable ?: variableMappings.getValue(holder).entries.single {
+                    it.value == variable
+                }.key
+                val path = holder.parentSequence().toList().asReversed().drop(1).joinToString(".") {
+                    it.domain.name
+                }
+                "'${originalVariable.name}' of instance '$path'"
+            }
+        }
+    }
+
     private fun registerArraySlots(
         arraySlotVariables: Map<VariableDeclaration, List<VariableDeclaration>>,
         variableHolders: MutableMap<VariableDeclaration, Instance>,
         variableMappings: Map<Instance, Map<VariableDeclaration, VariableDeclaration>>,
         variableInstanceDomain: MutableMap<VariableDeclaration, Set<Instance>>,
+        recordFields: MutableMap<VariableDeclaration, RecordField>,
     ): Map<VariableDeclaration, ArraySlot> {
         val arraySlots = mutableMapOf<VariableDeclaration, ArraySlot>()
         for ((arrayVariable, slotVariables) in arraySlotVariables) {
@@ -195,12 +236,17 @@ class OxstsFlattener @Inject constructor(
                 }
             }
             val holder = variableHolders[arrayVariable] ?: continue
-            val originalVariable = variableMappings.getValue(holder).entries.single {
+            // a field of an array of records is an array of its own, and its slots name the record's slot and then the field
+            val recordField = recordFields[arrayVariable]
+            val originalVariable = recordField?.recordVariable ?: variableMappings.getValue(holder).entries.single {
                 it.value == arrayVariable
             }.key
             for ((index, slotVariable) in slotVariables.withIndex()) {
                 variableHolders[slotVariable] = holder
                 arraySlots[slotVariable] = ArraySlot(originalVariable, index)
+                if (recordField != null) {
+                    recordFields[slotVariable] = recordField
+                }
             }
         }
         return arraySlots
@@ -210,7 +256,7 @@ class OxstsFlattener @Inject constructor(
         recordFieldVariables: Map<VariableDeclaration, Map<List<VariableDeclaration>, VariableDeclaration>>,
         variableHolders: MutableMap<VariableDeclaration, Instance>,
         variableMappings: Map<Instance, Map<VariableDeclaration, VariableDeclaration>>,
-    ): Map<VariableDeclaration, RecordField> {
+    ): MutableMap<VariableDeclaration, RecordField> {
         val recordFields = mutableMapOf<VariableDeclaration, RecordField>()
         for ((recordVariable, fieldVariables) in recordFieldVariables) {
             val holder = variableHolders[recordVariable] ?: continue

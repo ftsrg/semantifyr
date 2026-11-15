@@ -597,7 +597,15 @@ class ArrayFlatteningPassTest {
     private fun flattenArrays(inlined: InlinedOxsts): Map<VariableDeclaration, List<VariableDeclaration>> {
         val child = injector.createChildInjector(CompilationModule(ArtifactConfig.NONE, OptimizationConfig.NONE))
         return withCompilationScopeBlocking(CompilationRequest(inlined, temporaryDirectory)) {
-            child.getInstance(ArrayFlatteningPass::class.java).flattenArrays(inlined)
+            child.getInstance(ArrayFlatteningPass::class.java).flattenArrays(
+                inlined,
+                {
+                    error("An inlined fixture has no instance to size an array on")
+                },
+                {
+                    "'${it.name}'"
+                },
+            )
         }
     }
 

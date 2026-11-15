@@ -6,6 +6,8 @@ Indexing `a[i]` (runtime)	pass	semantic/arrays.oxsts	ArrayRuntimeIndexReach
 Array `[lb..ub]` multiplicity	pass	semantic/arrays.oxsts	ArrayRangedMultiplicityReach
 Class-typed arrays	pass	semantic/arrays.oxsts	ClassTypedArrayReach
 Feature-typed arrays	pass	semantic/arrays.oxsts	FeatureTypedArrayHavocBound
+Array size from a binding `int[capacity]`, `[0..capacity]`	pass	hu.bme.mit.semantifyr.compiler.pipeline.flattening.ArraySizeFromBindingFlatteningTest	each instance holds as many slots as its binding gives, the last written value filling the rest
+Array literal ending in `...` `[0, ...]`	pass	hu.bme.mit.semantifyr.compiler.pipeline.flattening.ArraySizeFromBindingFlatteningTest	each instance holds as many slots as its binding gives, the last written value filling the rest
 Local arrays	pass	semantic/arrays.oxsts	LocalArrayRuntimeIndexReach
 Local arrays of class or feature type	pass	hu.bme.mit.semantifyr.compiler.pipeline.flattening.LocalInstanceFlatteningTest	each slot of a feature-typed local array chooses among the instances of the feature
 Parameter arrays	reject	constructs/parameter_array.oxsts	OXSTS.UNSUPPORTED_FEATURE
@@ -19,7 +21,8 @@ Optional call through a variable `v?.t()`	reject	constructs/optional_call_throug
 Call through a many-valued feature `workers.step()`	reject	constructs/call_through_many_valued_feature.oxsts	OXSTS.CALL_THROUGH_MANY_VALUED_FEATURE
 `record X { ... }`	pass	semantic/records.oxsts	RecordFieldWriteReach
 Record literal `Point { x = 0 }`	pass	semantic/records.oxsts	RecordLiteralAssignReach
-Arrays of records, array fields in records	reject	constructs/record_array.oxsts	OXSTS.UNSUPPORTED_FEATURE
+Arrays of records in a class-level variable	pass	semantic/records.oxsts	RecordArrayRuntimeIndexReach
+Array fields in records	reject	constructs/record_array_field.oxsts	OXSTS.UNSUPPORTED_FEATURE
 Record-typed features	reject	constructs/record_feature.oxsts	OXSTS.UNSUPPORTED_FEATURE
 Record argument of a traced call	reject	constructs/record_trace_argument.oxsts	OXSTS.UNSUPPORTED_FEATURE
 Ordering on non-numeric values `Red < Green`	reject	constructs/enum_ordering.oxsts	OXSTS.TYPE_MISMATCH

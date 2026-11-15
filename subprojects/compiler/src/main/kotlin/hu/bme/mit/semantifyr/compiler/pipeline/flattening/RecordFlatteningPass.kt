@@ -12,6 +12,8 @@ import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
+import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
@@ -20,6 +22,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfThenElse
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
@@ -32,6 +35,7 @@ import org.eclipse.xtext.EcoreUtil2
 
 class RecordFlatteningPass @Inject constructor(
     private val localVariableManager: LocalVariableManager,
+    private val builtinSymbolResolver: BuiltinSymbolResolver,
 ) {
 
     companion object {
@@ -49,7 +53,7 @@ class RecordFlatteningPass @Inject constructor(
         val fieldVariables = recordVariables.associateWith {
             createFieldVariables(it)
         }
-        RecordRewriting(fieldVariables, localVariableManager).rewrite(inlinedOxsts)
+        RecordRewriting(fieldVariables, localVariableManager, builtinSymbolResolver).rewrite(inlinedOxsts)
         return fieldVariables
     }
 
@@ -73,6 +77,8 @@ class RecordFlatteningPass @Inject constructor(
                     "$FIELD_SEPARATOR${field.name}"
                 }
                 it.typeSpecification = path.last().typeSpecification.copy()
+                // an array of records is one array per leaf field
+                it.typeSpecification.multiplicity = recordVariable.typeSpecification.multiplicity?.copy()
             }
         }
     }
@@ -104,6 +110,7 @@ private fun isRecordField(element: Any?): Boolean {
 private class RecordRewriting(
     private val fieldVariables: Map<VariableDeclaration, Map<List<VariableDeclaration>, VariableDeclaration>>,
     private val localVariableManager: LocalVariableManager,
+    private val builtinSymbolResolver: BuiltinSymbolResolver,
 ) {
 
     fun rewrite(inlinedOxsts: InlinedOxsts) {
@@ -116,7 +123,7 @@ private class RecordRewriting(
         }
         for (assignment in inlinedOxsts.eAllOfType<AssignmentOperation>().toList()) {
             if (recordTypeOf(assignment.reference) != null) {
-                splice(assignment, assignFields(assignment))
+                splice(assignment, saveWrittenIndex(assignment) + assignFields(assignment))
             }
         }
         for (havoc in inlinedOxsts.eAllOfType<HavocOperation>().toList()) {
@@ -171,6 +178,10 @@ private class RecordRewriting(
                 isRecordField(it)
             }?.typeSpecification?.domain as? RecordDeclaration
             is IfThenElse -> recordTypeOf(expression.then)
+            is IndexingSuffixExpression -> recordTypeOf(expression.primary)
+            is ArrayLiteral -> expression.values.firstOrNull()?.let {
+                recordTypeOf(it)
+            }
             is RecordLiteral -> expression.record
             else -> null
         }
@@ -186,6 +197,25 @@ private class RecordRewriting(
                 }
             }
             is RecordLiteral -> literalFieldExpressions(expression)
+            is IndexingSuffixExpression -> fieldExpressions(expression.primary).map { field ->
+                OxstsFactory.createIndexingSuffixExpression().also {
+                    it.primary = field
+                    it.index = expression.index.copy()
+                }
+            }
+            is ArrayLiteral -> {
+                val elements = expression.values.map {
+                    fieldExpressions(it)
+                }
+                elements.first().indices.map { index ->
+                    OxstsFactory.createArrayLiteral().also { literal ->
+                        literal.isRepeatsLast = expression.isRepeatsLast
+                        elements.mapTo(literal.values) {
+                            it[index]
+                        }
+                    }
+                }
+            }
             is ElementReference -> {
                 val fields = fieldVariables[expression.element] ?: sourceError(expression, "Expected a record value.")
                 fields.values.map {
@@ -240,7 +270,7 @@ private class RecordRewriting(
         val written = mutableSetOf<VariableDeclaration>()
         val saved = mutableListOf<Operation>()
         val assignments = fieldExpressions(assignment.reference).zip(fieldExpressions(assignment.expression)) { target, value ->
-            val field = (target as ElementReference).element as VariableDeclaration
+            val field = writtenVariable(target)
             val source = if (readsAny(value, written)) {
                 val temporary = OxstsFactory.createLocalVarDeclarationOperation().also {
                     it.name = field.name
@@ -260,6 +290,38 @@ private class RecordRewriting(
             }
         }
         return saved + assignments
+    }
+
+    private fun writtenVariable(target: Expression): VariableDeclaration {
+        return when (target) {
+            is ElementReference -> target.element as VariableDeclaration
+            is IndexingSuffixExpression -> writtenVariable(target.primary)
+            else -> sourceError(target, "Expected a record variable or a slot of one.")
+        }
+    }
+
+    // a record written at an index that reads one of its own fields would read the new value after the first field
+    private fun saveWrittenIndex(assignment: AssignmentOperation): List<Operation> {
+        var target = assignment.reference
+        while (target is NavigationSuffixExpression) {
+            target = target.primary
+        }
+        val indexing = target as? IndexingSuffixExpression ?: return emptyList()
+        val array = (indexing.primary as? ElementReference)?.element ?: return emptyList()
+        val fields = fieldVariables[array]?.values?.toSet() ?: return emptyList()
+        if (!readsAny(indexing.index, fields)) {
+            return emptyList()
+        }
+        val temporary = OxstsFactory.createLocalVarDeclarationOperation().also {
+            it.name = "slot"
+            it.typeSpecification = OxstsFactory.createTypeSpecification().also { typeSpecification ->
+                typeSpecification.domain = builtinSymbolResolver.intDatatype(assignment)
+            }
+            it.expression = indexing.index
+        }
+        temporary.name = localVariableManager.allocateInlinedName(temporary)
+        indexing.index = OxstsFactory.createElementReference(temporary)
+        return listOf(temporary)
     }
 
     private fun readsAny(expression: Expression, variables: Set<VariableDeclaration>): Boolean {

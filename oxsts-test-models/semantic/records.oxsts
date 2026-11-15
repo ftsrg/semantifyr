@@ -477,3 +477,78 @@ class RecordParameterViolated {
         return AG point.x <= 1
     }
 }
+
+@VerificationCase
+@Tag("expect-pass")
+class RecordArrayRuntimeIndexReach {
+    var readings: Reading[3] := [Reading { value = 0 }, ...]
+    var index: int := 0
+
+    redefine tran {
+        havoc(index)
+        assume(0 <= index && index < 3)
+        readings[index].value := readings[index].value + 1
+        readings[index].valid := true
+    }
+
+    prop {
+        return EF (readings[2].value == 2 && readings[2].valid && !readings[0].valid)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class RecordArrayRuntimeIndexViolated {
+    var readings: Reading[3] := [Reading { value = 0 }, ...]
+    var index: int := 0
+
+    redefine tran {
+        havoc(index)
+        assume(0 <= index && index < 3)
+        readings[index].value := readings[index].value + 1
+        readings[index].valid := true
+    }
+
+    prop {
+        return AG !readings[2].valid
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class RecordArrayWholeCopyBound {
+    var readings: Reading[2] := [Reading { value = 1, valid = true }, Reading { value = 2 }]
+    var held: Reading := Reading { value = 0 }
+
+    redefine tran {
+        choice {
+            held := readings[1]
+            readings[1] := readings[0]
+            readings[0] := held
+        } or {
+            assume(1 <= readings[0].value && readings[0].value <= 2)
+            readings[readings[0].value - 1] := Reading { value = 5 }
+        }
+    }
+
+    prop {
+        return AG (!(readings[0].value == 5 && readings[0].valid) && !(readings[1].value == 5 && readings[1].valid))
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class RecordArrayWholeCopyViolated {
+    var readings: Reading[2] := [Reading { value = 1, valid = true }, Reading { value = 2 }]
+    var held: Reading := Reading { value = 0 }
+
+    redefine tran {
+        held := readings[1]
+        readings[1] := readings[0]
+        readings[0] := held
+    }
+
+    prop {
+        return AG readings[0].valid
+    }
+}
