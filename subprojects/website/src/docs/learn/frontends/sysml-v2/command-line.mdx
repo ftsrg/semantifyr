@@ -17,7 +17,7 @@ import room from '@served-examples/sysml/room';
 
 `semantifyr-sysml` verifies SysML v2 models. Its distribution, `semantifyr-sysml-<version>.zip`, carries Theta, the SysML v2 semantic library in `libraries/sysmlv2` and the [tutorial](tutorial.md) model as `models/smoke/room.sysml`. It translates a model to OXSTS with the bundled SysIDE fork, which runs on Node.js, so it needs `node` on `PATH`; without it, translating fails with exit code 4 and a message naming `node`. The translator reads every `.sysml` and `.kerml` file below the model's directory as the model's workspace, so keep other models and the artifact directory out of that directory. Translations are cached under `~/.semantifyr/sysml-cache`, keyed by the model and its workspace ([Folders](../../reference/command-line.mdx#folders)).
 
-This page verifies the room of the [SysML v2 tutorial](tutorial.md); `semantifyr` runs an OXSTS model the same way, as [OXSTS on the Command Line](../../oxsts/command-line.mdx) shows, and `semantifyr-gamma` a [Gamma model](../gamma/command-line.mdx).
+This page verifies the room of the [SysML v2 tutorial](tutorial.md); `semantifyr` runs an OXSTS model the same way, as [OXSTS on the Command Line](../../start/command-line.mdx) shows, and `semantifyr-gamma` a [Gamma model](../gamma/command-line.mdx).
 
 ## Requirements
 

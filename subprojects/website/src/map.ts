@@ -65,9 +65,6 @@ export const learnParts: LearnPart[] = [
         opening: { doc: 'learn/oxsts/compilation/index' },
         directory: 'learn/oxsts/compilation',
       },
-      {
-        doc: 'learn/oxsts/command-line',
-      },
     ],
   },
   {
