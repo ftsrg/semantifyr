@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.servedExampleSources
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
 import hu.bme.mit.semantifyr.gradle.conventions.testChromium
+import org.gradle.testing.base.TestingExtension
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
@@ -388,6 +389,84 @@ npmAssemble.configure {
 // the instance tree's test reads the model
 npmCheck.configure {
     inputs.file(phasesModel).withPropertyName("phasesModel").withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
+// every module with the modules its production code depends on, read once every module is configured; what a test suite or the test fixtures declare does not count
+val buildModules = objects.listProperty<String>()
+
+// files that tests take from a module, the Theta binary on their path and the compiled corpora, are no dependency of code; a launcher or an image that ships Theta reaches it through the backends
+val testInputKinds = setOf(
+    "theta-xsts-cli",
+    "compiled-corpus",
+    "sysml-corpus",
+)
+
+gradle.projectsEvaluated {
+    val repository = rootProject.projectDir
+    buildModules.set(
+        rootProject.subprojects.sortedBy {
+            it.path
+        }.map { module ->
+            val testing = module.extensions.findByName("testing") as? TestingExtension
+            val testSourceSets = testing?.suites?.names.orEmpty() + "testFixtures"
+            val resolvables = module.configurations.filter {
+                it.isCanBeResolved
+            }
+            val dependencies = module.configurations.filter { configuration ->
+                testSourceSets.none {
+                    configuration.name.startsWith(it) && configuration.name.getOrNull(it.length)?.isUpperCase() != false
+                }
+            }.filter { configuration ->
+                resolvables.filter {
+                    configuration in it.extendsFrom
+                }.none { resolvable ->
+                    resolvable.attributes.keySet().any {
+                        it.name == "hu.bme.mit.semantifyr.artifact" && resolvable.attributes.getAttribute(it).toString() in testInputKinds
+                    }
+                }
+            }.flatMap {
+                it.dependencies.withType<ProjectDependency>()
+            }.map {
+                it.path
+            }.filter {
+                it != module.path && it != rootProject.path
+            }.distinct().sorted()
+            (listOf(module.path, module.projectDir.relativeTo(repository).invariantSeparatorsPath) + dependencies).joinToString(" ")
+        },
+    )
+}
+
+class ModulesArgument(
+    @get:Input val modules: ListProperty<String>,
+) : CommandLineArgumentProvider {
+    override fun asArguments(): Iterable<String> {
+        return modules.get()
+    }
+}
+
+// written for the alias @module-graph
+val moduleGraph = tasks.register<JavaExec>("moduleGraph") {
+    val outputFile = layout.buildDirectory.file("module-graph/modules.json")
+    classpath = generate.runtimeClasspath
+    mainClass = "hu.bme.mit.semantifyr.website.modules.GenerateModuleGraphKt"
+    argumentProviders.add(ModulesArgument(buildModules))
+    outputs.file(outputFile)
+    outputs.cacheIf { true }
+    doFirst {
+        standardOutput = outputFile.get().asFile.outputStream()
+    }
+    doLast {
+        standardOutput.close()
+    }
+}
+
+npmAssemble.configure {
+    inputs.files(moduleGraph).withPropertyName("moduleGraph").withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
+// the module picture's tests read the graph
+npmCheck.configure {
+    inputs.files(moduleGraph).withPropertyName("moduleGraph").withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 val projectDirectories = rootProject.allprojects.associate {

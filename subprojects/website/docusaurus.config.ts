@@ -235,6 +235,8 @@ export default {
             '@generated-reference': path.resolve(__dirname, 'build/generated-reference'),
             // written by the phases Gradle task
             '@phases': path.resolve(__dirname, 'build/phases'),
+            // written by the moduleGraph Gradle task
+            '@module-graph': path.resolve(__dirname, 'build/module-graph'),
             '@vscode-extension': path.resolve(__dirname, '../semantifyr-vscode'),
           },
         },
