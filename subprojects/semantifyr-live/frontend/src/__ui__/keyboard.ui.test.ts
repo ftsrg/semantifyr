@@ -78,24 +78,27 @@ describe('the keyboard', () => {
     const controls = await reachableControls(page)
     expect(controls.length).toBeGreaterThan(10)
 
+    expect(await focused(page), 'the focus starts in the model').toBe('editor')
+    const label = await editorLabel(page)
+    const key = /(Control\+(?:Shift\+)?M) switches Tab to leave the editor/.exec(label)?.[1]
+    expect(key, `the editor names the key that lets Tab leave it: ${label}`).toBeDefined()
+    await page.keyboard.press('Tab')
+    expect(await focused(page), 'Tab indents in the model until the key is pressed').toBe('editor')
+    await page.keyboard.press(key!)
+
+    // Tab past the last control leaves the page, and Firefox comes back where the selection lies, in the model, not at the top: the walk goes to the end by Tab and back by Shift+Tab
     const seen = new Set<string>()
-    let freed = false
-    for (let press = 0; press < controls.length + 20; press++) {
-      const place = await focused(page)
-      seen.add(place)
-      if (place === 'editor' && !freed) {
-        const label = await editorLabel(page)
-        const key = /(Control\+(?:Shift\+)?M) switches Tab to leave the editor/.exec(label)?.[1]
-        expect(key, `the editor names the key that lets Tab leave it: ${label}`).toBeDefined()
-        await page.keyboard.press('Tab')
-        expect(await focused(page), 'Tab indents in the model until the key is pressed').toBe('editor')
-        await page.keyboard.press(key!)
-        freed = true
+    for (const step of ['Tab', 'Shift+Tab']) {
+      for (let press = 0; press < controls.length + 20; press++) {
+        await page.keyboard.press(step)
+        const place = await focused(page)
+        if (place === 'page') {
+          break
+        }
+        seen.add(place)
       }
-      await page.keyboard.press('Tab')
     }
 
-    expect(seen.has('editor')).toBe(true)
     expect(controls.filter((control) => {
       return !seen.has(control)
     })).toEqual([])
