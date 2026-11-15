@@ -20,7 +20,7 @@ Fork the repository and clone your fork. [Installing It](../learn/start/install.
 
 ## Test Levels
 
-The JVM modules have four test suites, each a Gradle task:
+Every JVM module has the test suite `test`, and a module whose tests run real backends adds some of three more, each a Gradle task:
 
 - `test`: unit tests, with fakes in place of the backends. `check` runs it.
 - `verificationTest`: smoke tests that run a real backend, one case per backend, each backend skipped when it is missing. `check` runs it.
@@ -29,7 +29,7 @@ The JVM modules have four test suites, each a Gradle task:
 
 The TypeScript packages run their Vitest suites in their `npmCheck` task, beside the type check and the linter, which `check` runs too. Live's frontend adds `screenTest` and `uiTest`, which drive its screens and its built application in a browser, and the website `walkTest`, a walk by keyboard through the built site.
 
-Run the level that holds what you changed, as a task of the module you changed: `./gradlew :website:test` runs the website's unit tests, which validate every OXSTS code example of these pages, and `./gradlew :website:npmCheck` its type check, linter and Vitest suites. A change of these pages also needs `./gradlew :website:assemble`, which fails on a broken link, and a change of their controls `./gradlew :website:walkTest`. CI runs `./gradlew build` on Linux, Windows and macOS, and on Linux the browser levels and `integrationTest` as well; the [README](https://github.com/ftsrg/semantifyr#build-from-source) says what each of the two runs.
+Run the level that holds what you changed, as a task of the module you changed: `./gradlew :website:test` runs the website's unit tests, which validate every OXSTS code example of these pages, and `./gradlew :website:npmCheck` its type check, linter and Vitest suites. A change of these pages also needs `./gradlew :website:assemble`, which fails on a broken link, and a change of their controls `./gradlew :website:walkTest`. CI runs `./gradlew build` on Linux, Windows and macOS, and on Linux the browser levels and `integrationTest` as well.
 
 ## What a Review Checks
 
@@ -42,7 +42,7 @@ Run the level that holds what you changed, as a task of the module you changed: 
 
 1. Create a branch on your fork.
 2. Make the change, with its tests at the level that proves it, and the pages it alters.
-3. Run the tests of what you changed and `./gradlew spotlessCheck`.
+3. Run `./gradlew build` before you push, as the repository's [`CONTRIBUTING.md`](https://github.com/ftsrg/semantifyr/blob/main/CONTRIBUTING.md) asks; it runs the formatting check and the `test` and `verificationTest` suites with the rest of `check`.
 4. Open a pull request against `main`, saying what changed and why.
 
 By contributing you agree that your contribution is licensed under the project's [Eclipse Public License v2.0](https://github.com/ftsrg/semantifyr/blob/main/LICENSE).

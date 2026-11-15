@@ -30,7 +30,6 @@
     'portfolio'
     'verdict'
     'verifier'
-    'trace-generator'
     'trace';
   row-gap: 28px;
 }
@@ -78,22 +77,6 @@
   color: var(--text-secondary);
   font-size: 13px;
   line-height: 1.35;
-}
-
-.modules {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 10px;
-  margin-top: 4px;
-}
-
-.modules code {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--syntax-type);
-  font-size: 12px;
-  line-height: 1.5;
 }
 
 .arrow {
@@ -152,7 +135,7 @@
     grid-template-areas:
       '. . entry . . .'
       'model frontend oxsts-model compiler transition-system portfolio'
-      'trace trace-generator verifier verifier verdict portfolio';
+      'trace trace verifier verifier verdict portfolio';
     column-gap: 30px;
     row-gap: 30px;
   }

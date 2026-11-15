@@ -15,19 +15,42 @@ import { AROUND, PATH } from '../components/Develop/ComponentPath';
 import ModuleGraph, { layoutModules, type ModuleGraphFile } from '../components/Develop/ModuleGraph';
 import { readText } from './files';
 
-// Goal: Develop's pictures say what the build holds: the module picture draws the generated graph whole and nothing beside it, and a module the path's boxes name is a module of the build, so a renamed module fails the build and not the reader
+// Goal: the architecture page says what the build holds: the module picture draws every module of the generated graph and the fewest edges along which every dependency of it is reached, and a module the page names is a module of the build, so a renamed module fails the build and not the reader
 
 // jsdom replaces the URL that would resolve these beside the test
 const HERE = dirname(fileURLToPath(import.meta.url));
 const GRAPH = JSON.parse(readText(join(HERE, '../../build/module-graph/modules.json'))) as ModuleGraphFile;
 const ARCHITECTURE = readText(join(HERE, '../docs/develop/index.md'));
 
+function edgesOfFile(): [string, string][] {
+  return GRAPH.modules.flatMap((module) => {
+    return module.dependencies.map((dependency): [string, string] => {
+      return [module.path, dependency];
+    });
+  });
+}
+
+function reachable(edges: [string, string][], from: string, to: string): boolean {
+  const seen = new Set<string>();
+  const pending = [from];
+  while (pending.length > 0) {
+    const current = pending.pop() ?? '';
+    for (const [source, target] of edges) {
+      if (source === current && !seen.has(target)) {
+        seen.add(target);
+        pending.push(target);
+      }
+    }
+  }
+  return seen.has(to);
+}
+
 afterEach(() => {
   cleanup();
 });
 
 describe('the module picture', () => {
-  it('draws every module and every dependency of the generated graph, and nothing else', () => {
+  it('draws every module of the generated graph, and of its dependencies exactly those no longer path leads to', () => {
     const { container } = render(<ModuleGraph graph={GRAPH} />);
 
     const drawnModules = [...container.querySelectorAll('[data-module]')].map((node) => {
@@ -40,10 +63,26 @@ describe('the module picture', () => {
       return module.path;
     }).sort());
     expect(drawnDependencies.sort()).toEqual(GRAPH.modules.flatMap((module) => {
-      return module.dependencies.map((dependency) => {
+      return module.dependencies.filter((dependency) => {
+        return !reachable(edgesOfFile().filter(([from, to]) => {
+          return from !== module.path || to !== dependency;
+        }), module.path, dependency);
+      }).map((dependency) => {
         return `${module.path} ${dependency}`;
       });
     }).sort());
+  });
+
+  it('leads along the drawn edges to every dependency of the generated graph', () => {
+    const { container } = render(<ModuleGraph graph={GRAPH} />);
+    const drawn = [...container.querySelectorAll('[data-dependency]')].map((edge): [string, string] => {
+      const [from = '', to = ''] = (edge.getAttribute('data-dependency') ?? '').split(' ');
+      return [from, to];
+    });
+
+    expect(edgesOfFile().filter(([from, to]) => {
+      return !reachable(drawn, from, to);
+    })).toEqual([]);
   });
 
   it('puts every module a row above each module it depends on', () => {
@@ -60,24 +99,24 @@ describe('the module picture', () => {
   });
 });
 
-describe('the path through the components', () => {
-  const boxes = [...PATH, ...AROUND];
-
+describe('the architecture page', () => {
   it('names only modules of the build', () => {
     const modules = new Set(GRAPH.modules.map((module) => {
       return module.path;
     }));
+    const named = [...ARCHITECTURE.matchAll(/`(:[\w.-]+)`/g)].map((match) => {
+      return match[1] ?? '';
+    });
 
-    expect(boxes.flatMap((box) => {
-      return box.modules;
-    }).filter((module) => {
+    expect(named.length).toBeGreaterThan(0);
+    expect(named.filter((module) => {
       return !modules.has(module);
     })).toEqual([]);
   });
 
-  it('leads every box to its section on the page', () => {
-    expect(boxes.filter((box) => {
-      return !ARCHITECTURE.includes(`{#${box.id}}`);
+  it('leads every box of the path to its section', () => {
+    expect([...PATH, ...AROUND].filter((box) => {
+      return !ARCHITECTURE.includes(`{#${box.section}}`);
     }).map((box) => {
       return box.id;
     })).toEqual([]);

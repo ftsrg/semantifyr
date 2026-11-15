@@ -199,6 +199,39 @@ export function layoutModules(graph: ModuleGraphFile): ModuleLayout {
   };
 }
 
+// the dependencies a module has no other path to: the rest follow along the drawn edges
+export function reducedDependencies(graph: ModuleGraphFile): Map<string, string[]> {
+  const byPath = new Map(graph.modules.map((module) => {
+    return [module.path, module];
+  }));
+  const reached = new Map<string, Set<string>>();
+  const reachOf = (path: string): Set<string> => {
+    const known = reached.get(path);
+    if (known !== undefined) {
+      return known;
+    }
+    const reach = new Set<string>();
+    for (const dependency of byPath.get(path)?.dependencies ?? []) {
+      reach.add(dependency);
+      for (const further of reachOf(dependency)) {
+        reach.add(further);
+      }
+    }
+    reached.set(path, reach);
+    return reach;
+  };
+  return new Map(graph.modules.map((module) => {
+    return [
+      module.path,
+      module.dependencies.filter((dependency) => {
+        return !module.dependencies.some((other) => {
+          return other !== dependency && reachOf(other).has(dependency);
+        });
+      }),
+    ];
+  }));
+}
+
 interface Edge {
   from: string;
   to: string;
@@ -206,7 +239,7 @@ interface Edge {
 }
 
 // an edge leaves its module's bottom and enters its dependency's top at a point spread by where the other end stands, so that edges do not meet in one point
-function edgesOf(layout: ModuleLayout): Edge[] {
+function edgesOf(layout: ModuleLayout, drawn: Map<string, string[]>): Edge[] {
   const byPath = new Map(layout.modules.map((module) => {
     return [module.module.path, module];
   }));
@@ -223,17 +256,18 @@ function edgesOf(layout: ModuleLayout): Edge[] {
   };
   const dependents = new Map<string, string[]>();
   for (const module of layout.modules) {
-    for (const dependency of module.module.dependencies) {
+    for (const dependency of drawn.get(module.module.path) ?? []) {
       dependents.set(dependency, [...dependents.get(dependency) ?? [], module.module.path]);
     }
   }
   return layout.modules.flatMap((from) => {
-    return from.module.dependencies.map((dependency) => {
+    const dependencies = drawn.get(from.module.path) ?? [];
+    return dependencies.map((dependency) => {
       const to = byPath.get(dependency);
       if (to === undefined) {
         throw new Error(`The module graph names ${dependency}, which is no module of it`);
       }
-      const x1 = spread(from, from.module.dependencies, dependency);
+      const x1 = spread(from, dependencies, dependency);
       const y1 = from.y + NODE_HEIGHT;
       const x2 = spread(to, dependents.get(dependency) ?? [], from.module.path);
       const y2 = to.y;
@@ -250,11 +284,12 @@ function edgesOf(layout: ModuleLayout): Edge[] {
 export default function ModuleGraph({ graph }: { graph: ModuleGraphFile }): React.JSX.Element {
   const [lit, setLit] = useState<string | null>(null);
   const layout = layoutModules(graph);
-  const edges = edgesOf(layout);
-  const neighbours = new Set(edges.filter((edge) => {
-    return edge.from === lit || edge.to === lit;
-  }).flatMap((edge) => {
-    return [edge.from, edge.to];
+  const edges = edgesOf(layout, reducedDependencies(graph));
+  // hovering a module lights every module it depends on directly and every module that depends on it directly, as the list says
+  const neighbours = new Set(graph.modules.filter((module) => {
+    return module.path === lit || module.dependencies.includes(lit ?? '');
+  }).flatMap((module) => {
+    return module.path === lit ? module.dependencies : [module.path];
   }));
   return (
     <figure className={styles.graph}>
@@ -264,7 +299,7 @@ export default function ModuleGraph({ graph }: { graph: ModuleGraphFile }): Reac
         height={layout.height}
         viewBox={`0 0 ${layout.width.toFixed(1)} ${String(layout.height)}`}
         role="img"
-        aria-label="The modules of the build, each above the modules it depends on; the list under the picture says the same in words"
+        aria-label="The modules of the build, each above the modules it depends on"
       >
         {layout.frames.map((frame) => {
           return (

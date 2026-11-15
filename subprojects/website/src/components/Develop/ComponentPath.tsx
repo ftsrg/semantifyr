@@ -10,11 +10,11 @@ import clsx from 'clsx';
 import styles from './develop.module.css';
 
 export interface PathBox {
-  // the anchor of the box's section under the picture
   id: string;
   title: string;
   line: string;
-  modules: string[];
+  // the section under the picture that describes the box
+  section: string;
   kind: 'artifact' | 'component';
 }
 
@@ -23,108 +23,64 @@ export const PATH: PathBox[] = [
   {
     id: 'model',
     title: 'Model',
-    line: 'in SysML v2 or Gamma',
-    modules: [
-      ':sysml-wrapper',
-      ':gamma.lang',
-    ],
+    line: 'in its own language',
+    section: 'frontends',
     kind: 'artifact',
   },
   {
     id: 'frontend',
     title: 'Frontend',
-    line: 'translates it onto its semantic library',
-    modules: [
-      ':sysml-frontend',
-      ':sysml-wrapper',
-      ':gamma-frontend',
-    ],
+    line: 'translates it onto a semantic library',
+    section: 'frontends',
     kind: 'component',
   },
   {
     id: 'oxsts-model',
     title: 'OXSTS model',
     line: 'on the semantic library',
-    modules: [
-      ':oxsts.model',
-      ':oxsts.lang',
-    ],
+    section: 'compiler',
     kind: 'artifact',
   },
   {
     id: 'compiler',
     title: 'Compiler',
     line: 'instantiation, inlining, flattening',
-    modules: [
-      ':compiler',
-    ],
+    section: 'compiler',
     kind: 'component',
   },
   {
     id: 'transition-system',
     title: 'Transition system',
     line: 'variables, two transitions, a property',
-    modules: [
-      ':oxsts.model',
-    ],
+    section: 'compiler',
     kind: 'artifact',
   },
   {
     id: 'portfolio',
-    title: 'Portfolio of backends',
-    line: 'Theta, Spin, nuXmv, Uppaal',
-    modules: [
-      ':portfolios',
-      ':backend',
-      ':theta-backend',
-      ':theta-executor',
-      ':xsts.lang',
-      ':cex.lang',
-      ':spin-backend',
-      ':spin-executor',
-      ':nuxmv-backend',
-      ':nuxmv-executor',
-      ':uppaal-backend',
-      ':uppaal-executor',
-    ],
+    title: 'Portfolio',
+    line: 'backends side by side',
+    section: 'portfolio',
     kind: 'component',
   },
   {
     id: 'verdict',
     title: 'Verdict and evidence',
     line: 'the states a backend found',
-    modules: [
-      ':backend',
-    ],
+    section: 'portfolio',
     kind: 'artifact',
   },
   {
     id: 'verifier',
     title: 'Verifier',
-    line: 'makes the witness in OXSTS and validates it',
-    modules: [
-      ':verifier',
-    ],
-    kind: 'component',
-  },
-  {
-    id: 'trace-generator',
-    title: 'Trace generator',
-    line: 'of the frontend',
-    modules: [
-      ':gamma-frontend',
-      ':sysml-wrapper',
-    ],
+    line: 'makes the evidence a witness in OXSTS',
+    section: 'verifier',
     kind: 'component',
   },
   {
     id: 'trace',
     title: 'Trace',
-    line: 'in the model\'s language',
-    modules: [
-      ':gamma.lang',
-      ':sysml-wrapper',
-    ],
+    line: 'made by the frontend, in the model\'s language',
+    section: 'frontends',
     kind: 'artifact',
   },
 ];
@@ -134,37 +90,22 @@ export const AROUND: PathBox[] = [
   {
     id: 'launchers',
     title: 'Launchers',
-    line: 'semantifyr, semantifyr-sysml, semantifyr-gamma',
-    modules: [
-      ':cli-common',
-      ':semantifyr-cli',
-      ':sysml-cli',
-      ':gamma-cli',
-    ],
+    line: 'the command line',
+    section: 'what-runs-the-path',
     kind: 'component',
   },
   {
     id: 'editors',
-    title: 'Language servers and VS Code',
-    line: 'for OXSTS and Gamma',
-    modules: [
-      ':lang-ide-common',
-      ':oxsts.lang.ide',
-      ':gamma.lang.ide',
-      ':semantifyr-editor-common',
-      ':semantifyr-vscode',
-      ':semantifyr-vscode-server',
-    ],
+    title: 'Language servers',
+    line: 'and an editor extension',
+    section: 'what-runs-the-path',
     kind: 'component',
   },
   {
     id: 'live',
     title: 'Live',
-    line: 'a server and a browser frontend',
-    modules: [
-      ':semantifyr-live-backend',
-      ':semantifyr-live-frontend',
-    ],
+    line: 'a server and a browser application',
+    section: 'what-runs-the-path',
     kind: 'component',
   },
 ];
@@ -179,14 +120,9 @@ function Arrow({ direction }: { direction: 'right' | 'left' | 'down' }): React.R
 
 function Box({ box, arrow, down, placed }: { box: PathBox; arrow?: 'right' | 'left' | undefined; down: boolean; placed: boolean }): React.ReactNode {
   return (
-    <a href={`#${box.id}`} className={clsx(styles.box, styles[box.kind])} style={placed ? { gridArea: box.id } : undefined}>
+    <a href={`#${box.section}`} className={clsx(styles.box, styles[box.kind])} style={placed ? { gridArea: box.id } : undefined}>
       <strong className={styles.title}>{box.title}</strong>
       <span className={styles.line}>{box.line}</span>
-      <span className={styles.modules}>
-        {box.modules.map((module) => {
-          return <code key={module}>{module}</code>;
-        })}
-      </span>
       {arrow === undefined ? null : <Arrow direction={arrow} />}
       {down ? <Arrow direction="down" /> : null}
     </a>
