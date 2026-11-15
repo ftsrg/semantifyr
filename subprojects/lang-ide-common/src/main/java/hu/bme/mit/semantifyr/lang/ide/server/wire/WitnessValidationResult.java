@@ -6,7 +6,11 @@
 
 package hu.bme.mit.semantifyr.lang.ide.server.wire;
 
-import hu.bme.mit.semantifyr.verifier.WitnessValidationResultDto;
+import hu.bme.mit.semantifyr.verifier.VerificationMetricsDto;
+import hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult.Errored;
+import hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult.Inconclusive;
+import hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult.Invalid;
+import hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult.Valid;
 
 public record WitnessValidationResult(
         String status,
@@ -16,15 +20,16 @@ public record WitnessValidationResult(
         String portfolioId,
         VerificationMetrics metrics) {
 
-    public static WitnessValidationResult fromDto(WitnessValidationResultDto dto, String portfolioId) {
-        var verification = dto.getVerification();
+    public static WitnessValidationResult fromValidation(
+            hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult validation, String portfolioId) {
+        var verification = validation.getVerification();
         return new WitnessValidationResult(
-                statusOf(dto),
+                statusOf(validation),
                 VerificationStatus.of(verification.getVerdict()),
                 verification.getMessage(),
                 verification.getMetadata().getBackendId(),
                 portfolioId,
-                VerificationMetrics.fromDto(verification.getMetrics()));
+                VerificationMetrics.fromDto(VerificationMetricsDto.Companion.fromMetrics(verification.getMetrics())));
     }
 
     public static WitnessValidationResult errored(String message, String portfolioId) {
@@ -41,12 +46,13 @@ public record WitnessValidationResult(
                 WitnessValidationStatus.CANCELLED, VerificationStatus.CANCELLED, message, null, portfolioId, null);
     }
 
-    private static String statusOf(WitnessValidationResultDto dto) {
-        return switch (dto.getKind()) {
-            case VALID -> WitnessValidationStatus.VALID;
-            case INVALID -> WitnessValidationStatus.INVALID;
-            case INCONCLUSIVE -> WitnessValidationStatus.INCONCLUSIVE;
-            case ERRORED -> WitnessValidationStatus.ERRORED;
+    private static String statusOf(hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult validation) {
+        return switch (validation) {
+            case Valid ignored -> WitnessValidationStatus.VALID;
+            case Invalid ignored -> WitnessValidationStatus.INVALID;
+            case Inconclusive ignored -> WitnessValidationStatus.INCONCLUSIVE;
+            case Errored ignored -> WitnessValidationStatus.ERRORED;
+            default -> throw new IllegalStateException("unknown validation result " + validation);
         };
     }
 }

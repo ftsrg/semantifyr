@@ -283,7 +283,7 @@ class SessionVerificationManager @Inject constructor(
         if (entry.kind != VerificationKind.Verify || result !is VerificationCaseResult) {
             return
         }
-        val witnessUri = result.trace()?.witnessUri() ?: return
+        val witnessUri = result.witnessUri() ?: return
         caseLocationsByWitnessUri[witnessUri] = entry.location
     }
 

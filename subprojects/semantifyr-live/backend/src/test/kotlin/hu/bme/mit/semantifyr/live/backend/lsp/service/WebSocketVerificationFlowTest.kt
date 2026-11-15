@@ -48,7 +48,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class WebSocketVerificationFlowTest {
 
-    private val cannedResult = VerificationCaseResult("passed", "ok", "theta", "smart", null, null)
+    private val cannedResult = VerificationCaseResult("passed", "ok", "theta", "smart", null, null, null)
 
     private val documentUri = "file:///workspace/snippet.oxsts"
 

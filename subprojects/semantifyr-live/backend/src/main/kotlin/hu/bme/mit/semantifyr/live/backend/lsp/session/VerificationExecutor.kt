@@ -11,7 +11,6 @@ import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandGson
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
-import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationTrace
 import hu.bme.mit.semantifyr.live.backend.exceptions.SyntaxErrorException
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionRequestManager
@@ -81,8 +80,7 @@ class LiveVerificationExecutor : VerificationExecutor {
         if (result !is VerificationCaseResult) {
             return result
         }
-        val trace = result.trace() ?: return result
-        val serverUri = trace.witnessUri() ?: return result
+        val serverUri = result.witnessUri() ?: return result
         val clientUri = sessionDocumentManager.toClientUri(serverUri)
         if (clientUri == serverUri) {
             logger.warn { "Witness URI is not inside the workspace, leaving it untouched: $serverUri" }
@@ -94,7 +92,8 @@ class LiveVerificationExecutor : VerificationExecutor {
             result.backendId(),
             result.portfolioId(),
             result.metrics(),
-            VerificationTrace(trace.callTrace(), trace.witnessState(), clientUri),
+            result.report(),
+            clientUri,
         )
     }
 }

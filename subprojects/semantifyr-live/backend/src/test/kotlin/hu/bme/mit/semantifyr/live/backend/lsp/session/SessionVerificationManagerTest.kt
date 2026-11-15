@@ -11,7 +11,6 @@ import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationMetrics
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationStatus
-import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationTrace
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationStatus
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
@@ -78,7 +77,7 @@ class SessionVerificationManagerTest {
 
     private fun result(kind: VerificationKind): Any {
         return when (kind) {
-            VerificationKind.Verify -> VerificationCaseResult(VerificationStatus.PASSED, null, "theta", "smart", null, null)
+            VerificationKind.Verify -> VerificationCaseResult(VerificationStatus.PASSED, null, "theta", "smart", null, null, null)
             VerificationKind.Validate -> WitnessValidationResult(WitnessValidationStatus.VALID, VerificationStatus.FAILED, null, "theta", "smart", null)
         }
     }
@@ -181,7 +180,7 @@ class SessionVerificationManagerTest {
 
     @Test
     suspend fun `a verify drops the queued validation of the witness its case left`() {
-        val witnessResult = VerificationCaseResult(VerificationStatus.FAILED, null, "theta", "smart", null, VerificationTrace(null, null, witnessUri))
+        val witnessResult = VerificationCaseResult(VerificationStatus.FAILED, null, "theta", "smart", null, null, witnessUri)
         launch(VerificationKind.Verify, documentUri, 1) {
             witnessResult
         }.await()
@@ -234,7 +233,7 @@ class SessionVerificationManagerTest {
             Duration.ofMillis(20),
             compilation,
         )
-        val result = VerificationCaseResult(VerificationStatus.PASSED, null, "theta", "smart", metrics, null)
+        val result = VerificationCaseResult(VerificationStatus.PASSED, null, "theta", "smart", metrics, null, null)
 
         launch(VerificationKind.Verify, documentUri, 1) {
             result

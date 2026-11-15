@@ -18,6 +18,8 @@ import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult;
 import java.util.List;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.BuildersKt;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.slf4j.Logger;
@@ -105,13 +107,16 @@ public class ValidateWitnessGammaCommandHandler
 
                 progressContext.checkIsCancelled();
 
-                var validation = frontend.validateWitnessBlocking(gammaCase, witnessPath, progressContext);
+                var validation = BuildersKt.<hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult>runBlocking(
+                        EmptyCoroutineContext.INSTANCE,
+                        (scope, continuation) -> frontend.validateWitness(
+                                gammaCase, witnessPath, portfolio, progressContext, continuation));
                 LOGGER.info(
                         "LSP validate witness '{}' -> {}",
                         gammaCase.getQualifiedName(),
                         validation.getVerification().getVerdict());
 
-                return WitnessValidationResult.fromDto(validation, portfolio.getId());
+                return WitnessValidationResult.fromValidation(validation, portfolio.getId());
             } catch (Exception e) {
                 LOGGER.error(
                         "LSP validate witness '{}' threw {}",

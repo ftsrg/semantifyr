@@ -15,8 +15,13 @@ import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts;
+import hu.bme.mit.semantifyr.verifier.CaseDirectoryNameKt;
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier;
+import hu.bme.mit.semantifyr.verifier.VerificationResult;
+import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer;
 import java.util.List;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.BuildersKt;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.slf4j.Logger;
@@ -35,6 +40,9 @@ public class VerifyInlinedOxstsCommandHandler
 
     @Inject
     protected SemantifyrLoader semantifyrLoader;
+
+    @Inject
+    protected VerificationCaseDiscoverer verificationCaseDiscoverer;
 
     @Override
     public String getId() {
@@ -88,9 +96,15 @@ public class VerifyInlinedOxstsCommandHandler
                         .build();
 
                 progressContext.checkIsCancelled();
-                var dto = verifier.verifyBlocking(inlinedOxsts, progressContext);
-                LOGGER.info("LSP verify {}", dto.getVerdict());
-                return VerificationCaseResult.fromDto(dto, portfolio.getId());
+                var verification = BuildersKt.<VerificationResult>runBlocking(
+                        EmptyCoroutineContext.INSTANCE,
+                        (scope, continuation) -> verifier.verify(inlinedOxsts, progressContext, continuation));
+                LOGGER.info("LSP verify {}", verification.getVerdict());
+                // a re-verified model writes its artifacts under its case's validation directory
+                var directory = CaseDirectoryNameKt.caseDirectory(
+                                outputDirectory, verificationCaseDiscoverer.caseOf(inlinedOxsts.getClassDeclaration()))
+                        .resolve("validation");
+                return VerificationCaseResult.fromCaseDirectory(directory, portfolio.getId());
             } catch (Exception e) {
                 LOGGER.warn("Verification threw {}", e.getClass().getSimpleName(), e);
                 return VerificationCaseResult.errored(e.toString(), portfolio.getId());

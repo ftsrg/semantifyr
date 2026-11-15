@@ -71,7 +71,7 @@ class LiveVerificationTest {
                 val verifyResponse = awaitResponseFor(id = 3, timeout = 1.minutes)
                 val verifyResult = verifyResponse.resultAs(VerificationCaseResult::class.java)
                 assertThat(verifyResult.status()).isEqualTo("passed")
-                val witnessUri = verifyResult.trace()?.witnessUri()
+                val witnessUri = verifyResult.witnessUri()
                     ?: error("verify produced no witness URI: $verifyResult")
 
                 send(Frame.Text(LspWire.didOpenNotification(uri = witnessUri, languageId = "oxsts", text = "")))
@@ -149,7 +149,7 @@ class LiveVerificationTest {
                 )
                 val verifyResult = awaitResponseFor(id = 3, timeout = 2.minutes).resultAs(VerificationCaseResult::class.java)
                 assertThat(verifyResult.status()).isEqualTo(expectedStatus("Simple.gamma", "LeaderStatechartIdleReachable"))
-                val traceUri = verifyResult.trace()?.witnessUri()
+                val traceUri = verifyResult.witnessUri()
                     ?: error("verify produced no trace URI: $verifyResult")
                 assertThat(traceUri).startsWith("file:///workspace/").endsWith("/trace.get")
 

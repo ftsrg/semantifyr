@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.live.backend.lsp.session
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandGson
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
-import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationTrace
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocument
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionRequestManager
@@ -66,7 +65,7 @@ class LiveVerificationExecutorTest {
 
     @Test
     fun `a result without a trace is returned unchanged`() = runTest {
-        val raw = VerificationCaseResult("passed", "ok", "theta", "smart", null, null)
+        val raw = VerificationCaseResult("passed", "ok", "theta", "smart", null, null, null)
         val fixture = Fixture(raw)
         assertThat(executor.execute(fixture.requestManager, fixture.documents, noArgs())).isSameAs(raw)
     }
@@ -80,14 +79,15 @@ class LiveVerificationExecutorTest {
             "theta",
             "smart",
             null,
-            VerificationTrace(null, null, serverUri),
+            null,
+            serverUri,
         )
         val fixture = Fixture(raw)
         whenever(fixture.documents.toClientUri(serverUri)).thenReturn("file:///workspace/.artifacts/Case/witness.oxsts")
 
         val result = executor.execute(fixture.requestManager, fixture.documents, noArgs()) as VerificationCaseResult
         assertThat(result.status()).isEqualTo("failed")
-        assertThat(result.trace().witnessUri()).isEqualTo("file:///workspace/.artifacts/Case/witness.oxsts")
+        assertThat(result.witnessUri()).isEqualTo("file:///workspace/.artifacts/Case/witness.oxsts")
     }
 
     @Test
@@ -99,7 +99,8 @@ class LiveVerificationExecutorTest {
             "theta",
             "smart",
             null,
-            VerificationTrace(null, null, outsideUri),
+            null,
+            outsideUri,
         )
         val fixture = Fixture(raw)
         whenever(fixture.documents.toClientUri(outsideUri)).thenReturn(outsideUri)
