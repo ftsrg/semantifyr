@@ -5,7 +5,7 @@
  */
 
 import type React from 'react'
-import type { VerificationTrace } from '@semantifyr/editor-common'
+import type { ResultTrace } from '@semantifyr/editor-common'
 import type { VerdictStatus } from '@semantifyr/editor-common/marks'
 
 import type { LanguageRuntime } from '../lib/language/types'
@@ -16,7 +16,7 @@ import { StepsView } from './StepsView'
 import { textView, type TraceTextSource } from './TextView'
 
 export interface TraceViewProps {
-  trace: VerificationTrace
+  trace: ResultTrace
   caseName: string
   verdict: VerdictStatus
   expandedStep: number | null
@@ -55,7 +55,7 @@ function steps(label: string): TraceView {
   return { id: 'steps', label, layout: 'list', View: StepsView }
 }
 
-function witness(label: string, uriOf: (trace: VerificationTrace, runtime: LanguageRuntime | null) => string | null | undefined): TraceView {
+function witness(label: string, uriOf: (trace: ResultTrace, runtime: LanguageRuntime | null) => string | null | undefined): TraceView {
   return textView('witness', label, (context) => {
     const fileUri = uriOf(context.trace, context.runtime)
     return fileUri
@@ -85,7 +85,7 @@ function languageTrace(label: string, languageId: string, fileName: (caseName: s
 }
 
 // the Gamma frontend writes its trace beside the witness
-function gammaWitnessOf(trace: VerificationTrace): string | null {
+function gammaWitnessOf(trace: ResultTrace): string | null {
   return trace.witnessUri?.replace(/[^/]*$/, 'witness.oxsts') ?? null
 }
 

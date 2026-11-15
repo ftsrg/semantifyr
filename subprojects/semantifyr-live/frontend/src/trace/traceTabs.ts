@@ -7,7 +7,7 @@
 import { useEffect } from 'react'
 
 import type { LanguageRuntime } from '../lib/language/types'
-import type { VerificationTrace } from '@semantifyr/editor-common'
+import type { ResultTrace } from '@semantifyr/editor-common'
 import { caseRowOf } from '../lib/workspace/caseRows'
 import type { Live } from '../lib/workspace/live'
 import { traceLanguageOf } from './registry'
@@ -16,7 +16,7 @@ import { readText, traceTabOf } from './TextView'
 // an open trace text shows the last trace of the case it was opened for, and closes once that case has none or another document is shown
 export function followTraceTabs(live: Live, runtime: LanguageRuntime, languageId: string): () => void {
   const views = traceLanguageOf(languageId).views
-  const reading = new Map<string, VerificationTrace>()
+  const reading = new Map<string, ResultTrace>()
 
   const follow = (): void => {
     const { documentKey } = live.workspace.get()

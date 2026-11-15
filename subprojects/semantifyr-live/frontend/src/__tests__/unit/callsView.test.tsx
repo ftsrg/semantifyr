@@ -5,26 +5,32 @@
  */
 
 import { render } from '@testing-library/react'
-import type { TraceEntry, VerificationTrace } from '@semantifyr/editor-common'
+import type { ReportCall, ReportValue, ResultTrace } from '@semantifyr/editor-common'
 import { describe, expect, it } from 'vitest'
 
 import { CallsView } from '../../trace/CallsView'
 
 // Goal: a call's text sits centred on its arrow, the lifelines part to fit it up to the widest arrow, beyond which the text is cut and the tooltip keeps it whole; a self call keeps its text beside its loop, the next lifeline parting to fit it up to the same cap
 
-function entry(self: string, calledTransition: string, innerTraces: TraceEntry[] = []): TraceEntry {
-  return { self, calledTransition, arguments: [], innerTraces }
+function entry(self: string, transition: string, calls: ReportCall[] = [], argumentValues: Record<string, ReportValue> = {}): ReportCall {
+  return { self, transition, arguments: argumentValues, calls }
 }
 
-function traceOf(...traces: TraceEntry[]): VerificationTrace {
+function traceOf(...calls: ReportCall[]): ResultTrace {
   return {
-    callTrace: { initializedStep: { traces: [] }, steps: [{ traces }] },
-    witnessState: { initializedStep: { values: [] }, steps: [] },
+    root: 'root',
+    transitions: [],
+    variables: [],
+    initial: { state: 0, calls: [] },
+    states: [{ values: {} }, { values: {} }],
+    steps: [{ source: 0, target: 1, elapsed: 0, calls }],
+    missingCalls: null,
+    kind: 'run',
     witnessUri: null,
   }
 }
 
-function show(trace: VerificationTrace): HTMLElement {
+function show(trace: ResultTrace): HTMLElement {
   const { container } = render(
     <CallsView trace={trace} caseName="Case" verdict="failed" expandedStep={null} expandStep={() => {}} runtime={null} openTab={null} growing={false} wrapping={false} />,
   )
@@ -98,5 +104,18 @@ describe('the text of a call in the calls view', () => {
         expect(label.textContent).toBe(`${transition}()`)
       }
     }
+  })
+})
+
+// Goal: what the report adds to a call reaches the view: its argument values, run-time ones included, and why the calls are missing
+describe('what the report adds to the calls view', () => {
+  it('gives a call its argument values', () => {
+    const container = show(traceOf(entry('root.child', 'pass', [], { speed: 3, item: { weight: 2 } })))
+    expect(arrowLabel(container, 'pass').textContent).toBe('pass(speed = 3, item = {weight: 2})')
+  })
+
+  it('says why the calls are missing where they are', () => {
+    const container = show({ ...traceOf(), missingCalls: 'the backend gave no trace variables' })
+    expect(container.querySelector('[data-testid=trace-missing-calls]')?.textContent).toBe('The calls of this trace could not be obtained: the backend gave no trace variables')
   })
 })

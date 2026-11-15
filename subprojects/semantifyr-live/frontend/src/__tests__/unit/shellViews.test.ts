@@ -8,6 +8,8 @@ import { describe, expect, it, vi } from 'vitest'
 import type { VerificationCaseSpecification } from '@semantifyr/editor-common'
 import { verdictOfLauncherVerdict, verdictWords } from '@semantifyr/editor-common/terms'
 
+import { sampleTrace } from '../fixtures/verification-results'
+
 import { editorColorsFrom, toHexColor } from '../../lib/session/editorTheme'
 import { fileUriOfLibrary, isLibraryFileUri, libraryUriOf } from '../../lib/session/readOnlyDocuments'
 import { connectionConnected, connectionLost, INITIAL_CONNECTION } from '../../lib/stores/connection'
@@ -102,7 +104,7 @@ describe('a case row', () => {
   })
 
   it('keeps the verdict of a case run again, with its trace and its count, until the new one arrives', () => {
-    const trace = { callTrace: { initializedStep: { traces: [] }, steps: [] }, witnessState: { initializedStep: { values: [] }, steps: [] }, witnessUri: null }
+    const trace = sampleTrace
     const rows = [
       result('a', 'failed', { status: 'running', serverState: 'Running', trace }),
       result('b', 'passed', { status: 'queued' }),

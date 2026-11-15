@@ -194,7 +194,7 @@ export interface ValidationRequest {
 
 // as the editor's auto-validation: every result with a witness, sent by case where the flavor validates by case
 export async function validateResult(client: LspClient, running: RunningTracker, request: ValidationRequest): Promise<ValidationRun | null> {
-  const witnessUri = request.result?.trace?.witnessUri
+  const witnessUri = request.result?.witnessUri
   const command = request.flavor.validateWitnessCommand
   if (!witnessUri || !command) {
     return null

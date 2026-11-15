@@ -98,7 +98,8 @@ function errored(message: string): VerificationCaseResult {
     backendId: null,
     portfolioId: null,
     metrics: null,
-    trace: null,
+    report: null,
+    witnessUri: null,
   }
 }
 
@@ -192,12 +193,12 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
     result: VerificationCaseResult,
     nameMap: unknown,
   ): Promise<VerificationCaseResult> => {
-    if (!result.trace) {
+    if (!result.report?.trace) {
       return result
     }
     const traceUri = `file:///workspace/traces/${caseName}.trace.sysml`
-    if (result.trace.witnessUri) {
-      witnessUris.set(traceUri, result.trace.witnessUri)
+    if (result.witnessUri) {
+      witnessUris.set(traceUri, result.witnessUri)
     }
     traceModels.delete(traceUri)
     let message = result.message
@@ -206,9 +207,7 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
         traceUri,
         (await executeCommand(workerClient(), 'syside.semantifyr.sysml.trace', {
           uri: options.fileUri,
-          caseName,
-          witness: result.trace.witnessState,
-          trace: result.trace.callTrace,
+          report: result.report,
           nameMap,
         })) as string,
       )
@@ -216,7 +215,7 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
       const reason = error instanceof Error ? error.message : String(error)
       message = [message, `The SysML trace could not be generated: ${reason}`].filter(Boolean).join('\n')
     }
-    return { ...result, message, trace: { ...result.trace, witnessUri: traceUri } }
+    return { ...result, message, witnessUri: traceUri }
   }
 
   const verify = async (request: WorkerCaseRequest, token?: CancellationToken): Promise<VerificationCaseResult> => {

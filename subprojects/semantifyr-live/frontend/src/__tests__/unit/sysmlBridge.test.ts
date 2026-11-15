@@ -5,15 +5,14 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { VerificationStatus, type VerificationCaseResult } from '@semantifyr/editor-common'
+import { VerificationStatus, type VerificationCaseResult, type VerificationReport } from '@semantifyr/editor-common'
 import { createSysmlBridge, mapperProblems, SYSML_OXSTS_URI } from '../../lib/session/sysmlBridge'
 import type { LspClient } from '../../lib/verification/engine'
 
 const fileUri = 'file:///workspace/snippet.sysml'
 const sysmlRange = { start: { line: 4, character: 0 }, end: { line: 9, character: 1 } }
 const oxstsRange = { start: { line: 40, character: 0 }, end: { line: 60, character: 1 } }
-const callTrace = { steps: [] }
-const witnessState = { steps: [] }
+const report = { version: 2, kind: 'run', verificationCase: 'semantifyr::sysml::model::LampNeverLit', trace: { root: 'root', steps: [] } } as unknown as VerificationReport
 const nameMap = { modelHash: 'abc' }
 const witnessUri = 'file:///workspace/.artifacts/case/witness.oxsts'
 
@@ -29,11 +28,8 @@ function failedResult(): VerificationCaseResult {
     backendId: 'theta',
     portfolioId: 'smart',
     metrics: null,
-    trace: {
-      callTrace: callTrace as never,
-      witnessState: witnessState as never,
-      witnessUri,
-    },
+    report,
+    witnessUri,
   }
 }
 
@@ -127,9 +123,9 @@ describe('sysml bridge', () => {
     })
     expect(worker.requests.at(-1)).toEqual({
       command: 'syside.semantifyr.sysml.trace',
-      arguments: [{ uri: fileUri, caseName: 'LampNeverLit', witness: witnessState, trace: callTrace, nameMap }],
+      arguments: [{ uri: fileUri, report, nameMap }],
     })
-    const traceUri = result.trace?.witnessUri ?? ''
+    const traceUri = result.witnessUri ?? ''
     expect(traceUri).toBe('file:///workspace/traces/LampNeverLit.trace.sysml')
     await expect(bridge.client.sendRequest('semantifyr/live/session/document/read', { uri: traceUri })).resolves.toEqual({ text: 'part def LampNeverLitTrace;' })
   })
@@ -159,7 +155,7 @@ describe('sysml bridge', () => {
     })
 
     expect(worker.requests.at(-1)?.arguments).toEqual([
-      { uri: fileUri, caseName: 'LampNeverLit', witness: witnessState, trace: callTrace, nameMap: { modelHash: 'hash1' } },
+      { uri: fileUri, report, nameMap: { modelHash: 'hash1' } },
     ])
   })
 
@@ -228,7 +224,7 @@ describe('sysml bridge', () => {
 
     expect(result.status).toBe(VerificationStatus.Failed)
     expect(result.message).toContain('no such element')
-    await expect(bridge.client.sendRequest('semantifyr/live/session/document/read', { uri: result.trace?.witnessUri })).resolves.toEqual({ text: null })
+    await expect(bridge.client.sendRequest('semantifyr/live/session/document/read', { uri: result.witnessUri })).resolves.toEqual({ text: null })
   })
 
   it('validates the OXSTS witness behind the trace', async () => {
@@ -238,7 +234,7 @@ describe('sysml bridge', () => {
 
     await bridge.client.sendRequest('workspace/executeCommand', {
       command: 'sysml.witness.validate',
-      arguments: [{ uri: result.trace?.witnessUri, range: oxstsRange }],
+      arguments: [{ uri: result.witnessUri, range: oxstsRange }],
     })
 
     expect(oxsts.commands.at(-1)).toEqual({
@@ -264,7 +260,7 @@ describe('sysml bridge', () => {
     const params = { active: [{ verificationId: '2', kind: 'Validate', location: { uri: witnessUri, range: witnessRange } }] }
 
     expect(bridge.translateNotification('semantifyr/live/session/verification/changed', params)).toEqual({
-      active: [{ verificationId: '2', kind: 'Validate', location: { uri: result.trace?.witnessUri, range: witnessRange } }],
+      active: [{ verificationId: '2', kind: 'Validate', location: { uri: result.witnessUri, range: witnessRange } }],
     })
   })
 

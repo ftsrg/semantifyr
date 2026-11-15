@@ -11,8 +11,9 @@ import {
   type Location,
   type VerificationCaseResult,
   type VerificationCaseSpecification,
+  type ResultTrace,
+  resultTraceOf,
   type VerificationMetrics,
-  type VerificationTrace,
   type WitnessValidationResult,
   type WitnessValidationStatus,
   verifyCase,
@@ -29,20 +30,13 @@ import type { ActiveVerificationInfo, VerificationState as ServerState } from '.
 export type VerificationCaseLocation = Location
 
 export type {
-  CallTrace,
-  CallTraceStep,
   Location,
   Range,
-  TraceArgument,
-  TraceEntry,
+  ResultTrace,
   VerificationCaseRequest,
   VerificationCaseResult,
   VerificationCaseSpecification,
   VerificationMetrics,
-  VerificationTrace,
-  WitnessState,
-  WitnessStateStep,
-  WitnessStateValue,
   WitnessValidationStatus,
 } from '@semantifyr/editor-common'
 
@@ -65,7 +59,7 @@ export interface VerificationCaseState {
   caseInfo: VerificationCaseSpecification
   status: VerificationCaseStatus
   message?: string
-  trace?: VerificationTrace
+  trace?: ResultTrace
   witnessValidation?: WitnessValidationStatus
   validationMessage?: string | undefined
   // True between the trace arriving and the follow-up validateWitness resolving.
@@ -349,16 +343,17 @@ export interface RunVerificationOptions {
 interface VerifyOutcome {
   status: VerificationCaseStatus
   message?: string
-  trace?: VerificationTrace
+  trace?: ResultTrace
   metrics?: VerificationMetrics
   backendId?: string
 }
 
 function toVerifyOutcome(response: VerificationCaseResult | null): VerifyOutcome {
+  const trace = resultTraceOf(response)
   return {
     status: parseResultStatus(response),
     ...(response?.message != null ? { message: response.message } : {}),
-    ...(response?.trace ? { trace: response.trace } : {}),
+    ...(trace ? { trace } : {}),
     ...(response?.metrics ? { metrics: response.metrics } : {}),
     ...(response?.backendId ? { backendId: response.backendId } : {}),
   }

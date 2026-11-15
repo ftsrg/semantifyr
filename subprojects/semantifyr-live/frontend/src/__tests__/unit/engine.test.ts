@@ -198,7 +198,7 @@ describe('runAllVerifications', () => {
   });
 
   it('skips auto-validation when the trace has no witnessUri', async () => {
-    const noWitnessFail: VerificationCaseResult = { ...failedResult, trace: { ...sampleTrace, witnessUri: null } };
+    const noWitnessFail: VerificationCaseResult = { ...failedResult, witnessUri: null };
     const sendRequest = vi.fn<LspClient['sendRequest']>(async () => noWitnessFail);
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 

@@ -6,7 +6,7 @@
 
 import type React from 'react'
 import { useMemo } from 'react'
-import { lastNameSegment, shortenPath, traceCalls, type TraceCall, type TraceCallStep } from '@semantifyr/editor-common'
+import { lastNameSegment, missingCallsMessage, shortenPath, traceCalls, type TraceCall, type TraceCallStep } from '@semantifyr/editor-common'
 
 import { Icon } from '../ui/icons'
 import type { TraceViewProps } from './registry'
@@ -61,14 +61,14 @@ function labelOf(call: TraceCall): string {
   const argumentsText = call.arguments.map((argument) => {
     return `${argument.parameter} = ${argumentName(argument.value)}`
   }).join(', ')
-  return `${lastNameSegment(call.calledTransition)}(${argumentsText})`
+  return `${lastNameSegment(call.transition)}(${argumentsText})`
 }
 
 function titleOf(call: TraceCall): string {
   const argumentsText = call.arguments.map((argument) => {
     return `\n${argument.parameter} = ${argument.value}`
   }).join('')
-  return `${call.self}\n${call.calledTransition}${argumentsText}`
+  return `${call.self}\n${call.transition}${argumentsText}`
 }
 
 const SELF_LABEL_START = 4 + SELF_LOOP + 6
@@ -220,12 +220,20 @@ function Arrow({ placed, caller, fromEnvironment }: { placed: PlacedCall, caller
 
 export function CallsView({ trace }: TraceViewProps): React.JSX.Element {
   const diagram = useMemo(() => {
-    const calls = traceCalls(trace.callTrace)
+    const calls = traceCalls(trace)
     const steps = [calls.initialized, ...calls.steps].map((step, number) => {
       return { number, step }
     })
     return calls.lifelines.length > 0 ? layout(steps, calls.lifelines) : null
   }, [trace])
+  if (!diagram && trace.missingCalls !== null) {
+    return (
+      <div className="calls-empty trace-hint" data-testid="trace-missing-calls">
+        <Icon name="alert" size="small" />
+        <span>{missingCallsMessage(trace.missingCalls)}</span>
+      </div>
+    )
+  }
   if (!diagram) {
     return (
       <div className="calls-empty trace-hint" data-testid="trace-no-calls">

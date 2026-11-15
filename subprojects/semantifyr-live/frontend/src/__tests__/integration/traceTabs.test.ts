@@ -10,7 +10,7 @@ import type { LspClient } from '../../lib/verification/engine'
 import { followTraceTabs } from '../../trace/traceTabs'
 import { traceTabOf } from '../../trace/TextView'
 import { createTestLive, type TestLive } from '../helpers/live'
-import { failedResult, passedResult, sampleTrace } from '../fixtures/verification-results'
+import { failedResult, passedResult } from '../fixtures/verification-results'
 
 // Goal: an open trace text shows the last trace of its case and nothing older
 
@@ -101,7 +101,7 @@ describe('an open trace text', () => {
     const stop = followTraceTabs(open.live, open.runtime(), 'oxsts')
     open.live.tabs.open(traceTabOf({ tabId: 'trace-witness', fileUri: 'file:///workspace/first/witness.oxsts', label: 'a.witness.oxsts', languageId: 'oxsts', banner: '' }, 'first witness', { documentKey: documentKey!, caseId: 'a', view: 'witness', shown: firstTrace }))
 
-    session.answer({ ...failedResult, trace: { ...sampleTrace, witnessUri: 'file:///workspace/second/witness.oxsts' } })
+    session.answer({ ...failedResult, witnessUri: 'file:///workspace/second/witness.oxsts' })
     await verified(open)
     await vi.waitFor(() => {
       expect(witnessTab(open!)?.text).toBe('witness at file:///workspace/second/witness.oxsts')

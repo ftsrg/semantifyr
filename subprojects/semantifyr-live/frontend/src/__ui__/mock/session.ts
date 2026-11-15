@@ -524,7 +524,7 @@ export class MockSession {
   private recordedResult(caseRequest: CaseRequest): VerificationCaseResult {
     const recorded = caseRequest.caseId === null ? undefined : this.fixture.results[caseRequest.caseId]
     const result = recorded ?? Object.values(this.fixture.results).find((candidate) => {
-      return candidate.status === 'passed' && !candidate.trace
+      return candidate.status === 'passed' && !candidate.report?.trace
     })
     if (result === undefined) {
       throw new Unanswered(`${this.flavorId}: no recorded result for ${caseRequest.caseId}`)

@@ -194,7 +194,8 @@ describe('validateResult', () => {
       backendId: 'theta',
       portfolioId: 'smart',
       metrics: null,
-      trace: { callTrace: { steps: [] } as never, witnessState: { steps: [] } as never, witnessUri: witness },
+      report: null,
+      witnessUri: witness,
     }
   }
 

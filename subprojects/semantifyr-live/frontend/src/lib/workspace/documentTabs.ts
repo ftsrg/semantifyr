@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { Range, VerificationTrace } from '@semantifyr/editor-common'
+import type { Range, ResultTrace } from '@semantifyr/editor-common'
 
 import { createStore, type ReadableStore } from '../stores/store'
 
@@ -28,7 +28,7 @@ export interface TraceOfTab {
   // the view of the trace the text is
   view: string
   // the trace whose text is shown
-  shown: VerificationTrace
+  shown: ResultTrace
 }
 
 export interface TabSelection {

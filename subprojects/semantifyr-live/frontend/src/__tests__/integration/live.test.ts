@@ -12,7 +12,7 @@ import type { LspClient, VerificationState } from '../../lib/verification/engine
 import { caseRowOf } from '../../lib/workspace/caseRows'
 import { NO_VERIFICATION } from '../../lib/workspace/verification'
 import { createTestLive, testFlavors, type TestLive } from '../helpers/live'
-import { failedResult, passedResult } from '../fixtures/verification-results'
+import { failedResult, passedResult, sampleTrace } from '../fixtures/verification-results'
 import { servedFlavors } from '../fixtures/flavors'
 
 vi.mock('vscode', () => {
@@ -186,7 +186,7 @@ describe('Live', () => {
     await vi.waitFor(() => {
       expect(verificationOf(open!).cases[0]?.status).toBe('running')
     })
-    expect(verificationOf(open).cases[0]).toMatchObject({ resultStatus: 'failed', trace: failedResult.trace })
+    expect(verificationOf(open).cases[0]).toMatchObject({ resultStatus: 'failed', trace: sampleTrace })
 
     pending.resolve(passedResult)
     await vi.waitFor(() => {

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { LibrariesResponse, PortfolioInfo, VerificationCaseSpecification, VerificationTrace } from '@semantifyr/editor-common'
+import type { LibrariesResponse, PortfolioInfo, ResultTrace, VerificationCaseSpecification } from '@semantifyr/editor-common'
 
 import { findExample, liveFlavors, type LiveFlavor } from '../examples'
 import { SemantifyrLiveApi } from '../lib/api/lspExtensions'
@@ -291,9 +291,15 @@ export function caseOf(id: string, line: number, uri = 'file:///workspace/snippe
   }
 }
 
-const EMPTY_TRACE: VerificationTrace = {
-  callTrace: { initializedStep: { traces: [] }, steps: [] },
-  witnessState: { initializedStep: { values: [] }, steps: [] },
+const EMPTY_TRACE: ResultTrace = {
+  root: 'root',
+  transitions: [],
+  variables: [],
+  initial: { state: 0, calls: [] },
+  states: [{ values: {} }],
+  steps: [],
+  missingCalls: null,
+  kind: 'run',
   witnessUri: null,
 }
 

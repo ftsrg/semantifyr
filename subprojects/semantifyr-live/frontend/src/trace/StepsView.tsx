@@ -31,7 +31,7 @@ function Value({ value, className = 'reference' }: { value: string, className?: 
 
 export function StepsView({ trace, verdict, expandedStep, expandStep }: TraceViewProps): React.JSX.Element {
   const states = useMemo(() => {
-    return traceStates(trace.witnessState)
+    return traceStates(trace)
   }, [trace])
   return (
     <div className="steps" data-testid="trace-steps">
@@ -57,6 +57,17 @@ export function StepsView({ trace, verdict, expandedStep, expandStep }: TraceVie
           <div key={index} className={`step${final ? ` is-final status-${verdict}` : ''}${open ? ' is-open' : ''}`}>
             <span className="step-number">{index + 1}</span>
             <div className="step-items">
+              {states.timed
+                ? (
+                  <div className="step-item is-time">
+                    <Icon name="clock" />
+                    <span>
+                      {'elapsed '}
+                      <span className="reference">{step.elapsed}</span>
+                    </span>
+                  </div>
+                )
+                : null}
               {step.changes.length === 0 ? <div className="step-item is-input"><Icon name="value" /><span>no value changed</span></div> : null}
               {step.changes.map((change) => {
                 return (

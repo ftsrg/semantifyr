@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { TraceEntry, VerificationTrace, WitnessStateStep } from '@semantifyr/editor-common'
+import type { ReportCall, ReportState, ResultTrace } from '@semantifyr/editor-common'
 
 import { findExample, liveFlavors } from '../examples'
 import type { VerificationCaseState } from '../lib/verification/engine'
@@ -70,32 +70,32 @@ const TEXTS: Readonly<Record<string, string>> = {
   [OXSTS_WITNESS_URI]: WITNESS,
 }
 
-function call(self: string, transition: string, inner: TraceEntry[] | null = null, argument?: string): TraceEntry {
+function call(self: string, transition: string, calls: ReportCall[] = [], argument?: string): ReportCall {
   return {
     self: `root.system.${self}`,
-    calledTransition: `semantifyr::sysml::${transition}`,
-    arguments: argument === undefined ? [] : [{ parameter: 'item', value: `semantifyr::sysml::model::${argument}` }],
-    innerTraces: inner,
+    transition: `semantifyr::sysml::${transition}`,
+    arguments: argument === undefined ? {} : { item: `semantifyr::sysml::model::${argument}` },
+    calls,
   }
 }
 
-function values(entries: Readonly<Record<string, string>>): WitnessStateStep {
+function values(entries: Readonly<Record<string, string | null>>): ReportState {
   return {
-    values: Object.entries(entries).map(([variable, value]) => {
-      if (value === 'nothing') {
-        return { variable: `root.system.${variable}`, value }
+    values: Object.fromEntries(Object.entries(entries).map(([variable, value]) => {
+      if (value === null) {
+        return [`root.system.${variable}`, null]
       }
-      return { variable: `root.system.${variable}`, value: value.startsWith('global_') ? `semantifyr::sysml::model::${value}` : `root.system.${value}` }
-    }),
+      return [`root.system.${variable}`, value.startsWith('global_') ? `semantifyr::sysml::model::${value}` : `root.system.${value}`]
+    })),
   }
 }
 
 const START = {
   'trackA.Behaviour.activeState': 'trackA.Behaviour.Free',
   'trackB.Behaviour.activeState': 'trackB.Behaviour.Free',
-  'trackB.controller.outgoingItem': 'nothing',
+  'trackB.controller.outgoingItem': null,
   'controller.Behaviour.activeState': 'controller.Behaviour.Idle',
-  'controller.barrier.outgoingItem': 'nothing',
+  'controller.barrier.outgoingItem': null,
   'barrier.Behaviour.activeState': 'barrier.Behaviour.Up',
 }
 
@@ -103,41 +103,33 @@ const STEP_ONE = { ...START, 'trackB.Behaviour.activeState': 'trackB.Behaviour.A
 const STEP_TWO = { ...STEP_ONE, 'controller.Behaviour.activeState': 'controller.Behaviour.TrainPresent', 'controller.barrier.outgoingItem': 'global_Lower' }
 const STEP_THREE = { ...STEP_TWO, 'trackA.Behaviour.activeState': 'trackA.Behaviour.InCrossing', 'barrier.Behaviour.activeState': 'barrier.Behaviour.Down' }
 
-const CALLS = {
-  initializedStep: { traces: [] },
-  steps: [
-    {
-      traces: [
-        call('trackB.Behaviour.UnnamedTransitionUsage1', 'states::Transition::fire', [call('trackB.controller', 'ports::Port::setOutgoingItem', null, 'global_TrainApproaching')]),
-        call('passTime', 'verification::VerificationCaseDefinition::passTime'),
-      ],
-    },
-    {
-      traces: [
-        call('controller.Behaviour.UnnamedTransitionUsage6', 'states::Transition::fire', [call('controller.barrier', 'ports::Port::setOutgoingItem', null, 'global_Lower')]),
-      ],
-    },
-    {
-      traces: [
-        call('trackA.Behaviour.UnnamedTransitionUsage3', 'states::Transition::fire'),
-      ],
-    },
+const CALLS = [
+  [
+    call('trackB.Behaviour.UnnamedTransitionUsage1', 'states::Transition::fire', [call('trackB.controller', 'ports::Port::setOutgoingItem', [], 'global_TrainApproaching')]),
+    call('passTime', 'verification::VerificationCaseDefinition::passTime'),
   ],
-}
-
-const STATES = {
-  initializedStep: values(START),
-  steps: [
-    values(STEP_ONE),
-    values(STEP_TWO),
-    values(STEP_THREE),
+  [
+    call('controller.Behaviour.UnnamedTransitionUsage6', 'states::Transition::fire', [call('controller.barrier', 'ports::Port::setOutgoingItem', [], 'global_Lower')]),
   ],
-}
+  [
+    call('trackA.Behaviour.UnnamedTransitionUsage3', 'states::Transition::fire'),
+  ],
+]
 
-function traceOf(witnessUri: string, recorded = true): VerificationTrace {
+function traceOf(witnessUri: string, recorded = true): ResultTrace {
   return {
-    callTrace: recorded ? CALLS : { initializedStep: { traces: [] }, steps: CALLS.steps.map(() => ({ traces: [] })) },
-    witnessState: STATES,
+    root: 'root',
+    transitions: [],
+    variables: Object.keys(START).map((variable) => {
+      return { variable: `root.system.${variable}`, type: { kind: 'class', name: 'semantifyr::Anything', element: null, size: null }, slot: null }
+    }),
+    initial: { state: 0, calls: [] },
+    states: [values(START), values(STEP_ONE), values(STEP_TWO), values(STEP_THREE)],
+    steps: CALLS.map((calls, index) => {
+      return { source: index, target: index + 1, elapsed: 0, calls: recorded ? calls : [] }
+    }),
+    missingCalls: null,
+    kind: 'run',
     witnessUri,
   }
 }
