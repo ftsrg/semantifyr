@@ -96,7 +96,7 @@ Create an empty directory and save the complete model in it as `room.sysml`. In 
 "$SEMANTIFYR_HOME/bin/semantifyr-sysml" verify room.sysml --artifact-directory ../room-artifacts
 ```
 
-The `verify` command translates `room.sysml` to OXSTS, an OXSTS model that instantiates the classes of the SysML v2 semantic library, which takes about a minute. It then finds the three verification cases and verifies each with the default `smart` portfolio, which races every installed backend. The artifacts go outside the model's directory, since the translator reads every SysML v2 file below it ([`semantifyr-sysml`](../../reference/command-line.mdx#semantifyr-sysml)).
+The `verify` command translates `room.sysml` to OXSTS, an OXSTS model that instantiates the classes of the SysML v2 semantic library, which takes about a minute. It then finds the three verification cases and verifies each with the default `smart` portfolio, which runs the installed backends with the quick configurations first ([stages](../../backends/portfolios-and-verdicts.mdx#stages)). The artifacts go outside the model's directory, since the translator reads every SysML v2 file below it ([`semantifyr-sysml`](../../reference/command-line.mdx#semantifyr-sysml)).
 
 For each case, the command prints its name, `PASSED` or `FAILED` with the time it took, and the path of its `report.json`, and it exits with status 5 when a case fails (the [exit codes](../../reference/command-line.mdx#exit-codes)).
 

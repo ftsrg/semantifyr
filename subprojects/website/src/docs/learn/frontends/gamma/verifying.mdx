@@ -83,7 +83,7 @@ Verifying LevelCrossing.TwoTrainsCanBeInTheCrossing ...
   report: /tmp/level-crossing/artifacts/LevelCrossing.TwoTrainsCanBeInTheCrossing/verification/model._LevelCrossing._TwoTrainsCanBeInTheCrossing/report.json
 ```
 
-Each case ran on the default `smart` portfolio, which races every installed backend, and the command exited with status 5, since a case failed ([exit codes](../../reference/command-line.mdx#exit-codes)). Beside `report.json`, the directory of a case with a witness holds the trace, `trace.get`, and the witness it was written from, `witness.oxsts`, `witness.json` and `trace.json`; [Artifacts](../../reference/artifacts.mdx) describes each file.
+Each case ran on the default `smart` portfolio, which runs the installed backends with the quick configurations first ([stages](../../backends/portfolios-and-verdicts.mdx#stages)), and the command exited with status 5, since a case failed ([exit codes](../../reference/command-line.mdx#exit-codes)). Beside `report.json`, the directory of a case with a witness holds the trace, `trace.get`, and the witness it was written from, `witness.oxsts`, `witness.json` and `trace.json`; [Artifacts](../../reference/artifacts.mdx) describes each file.
 
 ## Reading the Trace
 
