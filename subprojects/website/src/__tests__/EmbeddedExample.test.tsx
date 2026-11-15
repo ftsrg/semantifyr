@@ -56,11 +56,11 @@ describe('an embedded example', () => {
     example();
 
     expect(screen.getByText('var value: int := 0')).toBeTruthy();
-    expect(screen.getByRole('button').textContent).toBe('Edit');
+    expect(screen.getByRole('button').textContent).toBe('Open');
     expect(screen.queryByTitle('Semantifyr Live')).toBeNull();
   });
 
-  it('offers Open where it verifies', () => {
+  it('offers Open where it verifies too', () => {
     example('embed');
 
     expect(screen.getByRole('button').textContent).toBe('Open');
@@ -69,7 +69,7 @@ describe('an embedded example', () => {
   it('loads the whole model at the lines shown under its block, which stays until live shows the model', async () => {
     example();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open' }));
     const loading = await frame();
 
     expect(screen.getByRole('status').textContent).toBe('Opening the editor');
@@ -90,7 +90,7 @@ describe('an embedded example', () => {
   it('takes no sign from another frame', async () => {
     example();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open' }));
     await frame();
     act(() => {
       window.dispatchEvent(new MessageEvent('message', { data: { type: 'semantifyr-live:shown' }, origin: 'https://live.example', source: window }));
@@ -103,13 +103,13 @@ describe('an embedded example', () => {
     const scroll = vi.spyOn(window, 'scrollBy').mockImplementation(() => {});
     example();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open' }));
     report(await frame(), 'semantifyr-live:shown');
     fireEvent.click(screen.getByRole('button', { name: 'Close the editor' }));
 
     expect(screen.queryByTitle('Semantifyr Live')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Close the editor' })).toBeNull();
-    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Edit' }));
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Open' }));
     expect(screen.getByText('var value: int := 0').closest('[hidden]')).toBeNull();
     expect(scroll).toHaveBeenCalledOnce();
   });

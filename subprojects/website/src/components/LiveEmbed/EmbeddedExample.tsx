@@ -62,18 +62,11 @@ function EmbedFrame({ url, initialHeight, onShown }: FrameProps): React.JSX.Elem
   return <iframe ref={frame} className={styles.frame} style={{ height }} src={url} title={terms.live.term} allow="clipboard-write" />;
 }
 
-function RunIcon(): React.JSX.Element {
-  return (
-    <svg className={controlStyles.controlIcon} viewBox="0 0 16 16" aria-hidden="true">
-      <path d="M4.5 2.8v10.4L13 8z" fill="currentColor" />
-    </svg>
-  );
-}
-
-function EditIcon(): React.JSX.Element {
+// an editor's window with an arrow into it
+function OpenIcon(): React.JSX.Element {
   return (
     <svg className={controlStyles.controlIcon} viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4.5 19.5h4l10-10-4-4-10 10v4zM13 7l4 4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M13 4.5h-7a1.5 1.5 0 0 0-1.5 1.5v12a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5v-7M20 4l-8 8M14.5 4H20v5.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -126,7 +119,6 @@ export function EmbeddedExample({ model, example, shown, lines, language, librar
     });
   }, []);
 
-  const verifies = view === 'embed';
   const address = example === undefined ? undefined : liveExampleUrl(`${normalizeBaseUrl(liveBackendUrl).http}/`, language, example);
   const fence = useMemo(() => {
     return {
@@ -138,19 +130,19 @@ export function EmbeddedExample({ model, example, shown, lines, language, librar
             ref={control}
             type="button"
             className={controlStyles.control}
-            title={verifies ? 'Opens this example in an editor here, where its cases verify' : 'Opens this example in an editor here'}
+            title="Opens this example in an editor here"
             onClick={() => {
               setInitialHeight(code.current?.getBoundingClientRect().height ?? 0);
               setPhase('loading');
             }}
           >
-            {verifies ? <RunIcon /> : <EditIcon />}
-            {verifies ? 'Open' : 'Edit'}
+            <OpenIcon />
+            Open
           </button>
         )
         : phase === 'loading' ? <span className={styles.loadingLabel} role="status">Opening the editor</span> : null,
     };
-  }, [model, address, phase, verifies]);
+  }, [model, address, phase]);
 
   return (
     <div ref={block} className={`${styles.embed}${phase === 'loading' ? ` ${styles.loading}` : ''}`} aria-busy={phase === 'loading'}>
