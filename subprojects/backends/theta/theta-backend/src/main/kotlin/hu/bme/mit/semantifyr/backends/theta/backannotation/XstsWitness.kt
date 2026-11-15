@@ -59,7 +59,7 @@ class XstsWitnessTransformer {
 
         private fun transform(variableValue: CexWitnessStateVariableValue): XstsWitnessStateVariableValue {
             val index = declarationOrder[variableValue.variableName]
-                ?: throw WitnessFailedException("Theta's counterexample holds ${variableValue.variableName}, which names no variable of the model")
+                ?: throw WitnessFailedException("Theta's trace holds ${variableValue.variableName}, which names no variable of the model")
             val variable = xstsModel.variableDeclarations[index]
 
             return XstsWitnessStateVariableValue(

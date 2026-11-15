@@ -76,7 +76,7 @@ class XstsExpressionToOxstsExpressionTransformer @Inject constructor(
 
     fun transformInteger(expression: XstsExpression): BigInteger {
         val value = XstsValueEvaluator.evaluate(expression) as? IntegerValue
-            ?: throw WitnessFailedException("Theta's counterexample holds a value that is no integer where an integer is expected")
+            ?: throw WitnessFailedException("Theta's trace holds a value that is no integer where an integer is expected")
         return value.value
     }
 

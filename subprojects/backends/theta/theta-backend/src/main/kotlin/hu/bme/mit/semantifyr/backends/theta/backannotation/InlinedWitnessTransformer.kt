@@ -55,7 +55,7 @@ class InlinedWitnessTransformer @Inject constructor(
 
         private fun resolveOxstsVariable(variableName: String): VariableDeclaration {
             return variablesByName[variableName]
-                ?: throw WitnessFailedException("Theta's counterexample holds $variableName, which names no variable of the model")
+                ?: throw WitnessFailedException("Theta's trace holds $variableName, which names no variable of the model")
         }
     }
 
