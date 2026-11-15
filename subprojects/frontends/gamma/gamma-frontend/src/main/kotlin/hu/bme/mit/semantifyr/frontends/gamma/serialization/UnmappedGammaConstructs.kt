@@ -86,7 +86,6 @@ object UnmappedGammaConstructs {
         }
     }
 
-    // at the root every port is the environment's, and Gamma's transformation rejects a queue mixing them with clock ticks
     private fun describeAsynchronousRoot(verificationCase: VerificationCaseDeclaration): UnmappedGammaConstruct? {
         val component = verificationCase.component
         if (component == null || !AsynchronousMapping.isAdapter(component)) {
@@ -177,7 +176,6 @@ object UnmappedGammaConstructs {
         }
     }
 
-    // Gamma's XSTS route consumes a full-step message without running the component, its code generator runs it to completion
     private fun describe(specification: ControlSpecification): UnmappedGammaConstruct? {
         return when (specification.controlFunction) {
             ControlFunction.RUN_TO_COMPLETION -> UnmappedGammaConstruct(specification, "the full-step control function", "is refused")
@@ -197,14 +195,6 @@ object UnmappedGammaConstructs {
     }
 
     private fun describeMessages(queue: QueueMapping, owner: String): String? {
-        val recordMessage = queue.portMessages.firstOrNull { message ->
-            message.event!!.parameters.any {
-                GammaUtils.resolveType(it.type) is RecordType
-            }
-        }
-        if (recordMessage != null) {
-            return "the record-typed parameter of '${recordMessage.event!!.name}' stored in $owner"
-        }
         val mismatched = queue.messages.firstOrNull {
             it.targetEvent != null && it.targetEvent.parameters.size != it.event!!.parameters.size
         }
@@ -233,7 +223,6 @@ object UnmappedGammaConstructs {
         return "the asynchronous composite '${instance.component.name}' inside the asynchronous composite '${container.name}'"
     }
 
-    // a composite decides per adapter instance which queues the environment fills
     private fun describeAsynchronousComposition(component: ComponentDeclaration): List<UnmappedGammaConstruct> {
         if (component !is CompositeComponentDeclaration || !GammaUtils.isAsynchronous(component)) {
             return emptyList()
