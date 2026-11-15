@@ -11,12 +11,7 @@ export interface LearnPart {
   opening: { doc: string } | { index: string; description: string };
   // the folder whose pages, but its index, the part holds
   directory?: string;
-  parts?: (LearnPart | LearnPage)[];
-}
-
-// a page that stands among a part's parts
-export interface LearnPage {
-  doc: string;
+  parts?: LearnPart[];
 }
 
 export const learnParts: LearnPart[] = [
@@ -51,22 +46,19 @@ export const learnParts: LearnPart[] = [
     opening: { doc: 'learn/oxsts/index' },
     parts: [
       {
-        label: 'Lessons',
-        opening: { doc: 'learn/oxsts/lessons/index' },
-        directory: 'learn/oxsts/lessons',
-      },
-      {
         label: 'Language',
         opening: { doc: 'learn/oxsts/language/index' },
         directory: 'learn/oxsts/language',
       },
       {
+        label: 'Lessons',
+        opening: { doc: 'learn/oxsts/lessons/index' },
+        directory: 'learn/oxsts/lessons',
+      },
+      {
         label: 'Compilation',
         opening: { doc: 'learn/oxsts/compilation/index' },
         directory: 'learn/oxsts/compilation',
-      },
-      {
-        doc: 'learn/oxsts/command-line',
       },
     ],
   },
@@ -76,10 +68,6 @@ export const learnParts: LearnPart[] = [
     directory: 'learn/reference',
   },
 ];
-
-export function isPart(item: LearnPart | LearnPage): item is LearnPart {
-  return 'label' in item;
-}
 
 export const sections = [
   {

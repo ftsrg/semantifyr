@@ -11,7 +11,7 @@ Variables hold the **mutable state** of the system. Unlike [features](features.m
 
 ## Variable Declaration 
 
-A variable declaration consists of the `var` keyword, a name, a type and an initializer. Both are required: the validator rejects a variable without a type (`OXSTS.VARIABLE_WITH_IMPLICIT_TYPE`) and one without an initializer (`OXSTS.MISSING_INITIALIZER`). The loop variable of a `for` and the parameters of a transition or property take their values from the range and the arguments and have no initializer. The initializer's value fits the variable's type ([Assignability](../foundations/types.md#assignability), `OXSTS.TYPE_MISMATCH`).
+A variable declaration consists of the `var` keyword, a name, a type and an initializer. Both are required: the validator rejects a variable without a type and one without an initializer. The loop variable of a `for` and the parameters of a transition or property take their values from the range and the arguments and have no initializer. The initializer's value fits the variable's type ([Assignability](../foundations/types.md#assignability)). {/* OXSTS.VARIABLE_WITH_IMPLICIT_TYPE */} {/* OXSTS.MISSING_INITIALIZER */}
 
 ```oxsts
 // hide-start
@@ -23,7 +23,7 @@ class Counter {
 // hide-end
 ```
 
-The initializer of a variable of a class or a record is evaluated when the model is compiled, once for each instance, and cannot read the state, such as another variable (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`); it may read constants and features, such as `refers limit: int = 10`. A [local variable](operations.md#local-variable)'s initializer is evaluated where the variable is declared, and may read the state.
+The initializer of a variable of a class or a record is evaluated when the model is compiled, once for each instance, and cannot read the state, such as another variable; it may read constants and features, such as `refers limit: int = 10`. A [local variable](operations.md#local-variable)'s initializer is evaluated where the variable is declared, and may read the state.
 
 ```oxsts issue=OXSTS.EXPRESSION_MODALITY_TOO_HIGH
 class Counter {
@@ -52,7 +52,7 @@ When no execution of `init` is enabled, as with `init { assume(false) }`, the sy
 
 ## Multiplicity on the Type
 
-A variable type may include a multiplicity bracket. This is how optional values are declared. A bounded multiplicity above one declares a fixed-size array, such as `var slots: int[3] := [0, 0, 0]`, whose initializer gives every slot. An array of class or feature type, such as `var queue: Job[2] := [first, second]`, holds one instance per slot, and a call or a read through a slot, such as `inline queue[i].finish()` or `queue[i].done`, acts on the instance the slot holds. An array is read and written slot by slot (`slots[i]`), or as a whole: `slots := other`, `slots := [0, 0, 0]`, `havoc(slots)` and `slots == other` act on every slot. An array's upper bound is known at compile time: a variable of multiplicity `[]`, `[*]` or `[n..*]` is rejected (`OXSTS.TYPE_MISMATCH`), as is an array literal initializer with fewer values than the lower bound or more than the upper bound; one with at least the lower bound and fewer than the upper bound, such as two values for `int[2..3]`, leaves a slot without a value (`OXSTS.MISSING_INITIALIZER`).
+A variable type may include a multiplicity bracket. This is how optional values are declared. A bounded multiplicity above one declares a fixed-size array, such as `var slots: int[3] := [0, 0, 0]`, whose initializer gives every slot. An array of class or feature type, such as `var queue: Job[2] := [first, second]`, holds one instance per slot, and a call or a read through a slot, such as `inline queue[i].finish()` or `queue[i].done`, acts on the instance the slot holds. An array is read and written slot by slot (`slots[i]`), or as a whole: `slots := other`, `slots := [0, 0, 0]`, `havoc(slots)` and `slots == other` act on every slot. An array's upper bound is known at compile time: a variable of multiplicity `[]`, `[*]` or `[n..*]` is rejected, as is an array literal initializer with fewer values than the lower bound or more than the upper bound; one with at least the lower bound and fewer than the upper bound, such as two values for `int[2..3]`, leaves a slot without a value.
 
 ```oxsts
 // hide-start
@@ -68,7 +68,7 @@ class Slot {
 
 ## Feature-Typed Variables
 
-A variable's type may be a [feature](features.md). The value domain of such a *feature-typed variable* is the set of instances reachable through that feature. A call through the variable, such as `inline active.step()`, runs the call on the instance the variable holds, and a read through it, such as `active.value` or `active.child.value`, reads the member of that instance. The same holds for a variable of class type, whose value domain is every instance of the class, for an array slot (`queue[i].value`), a local variable and the loop variable of a runtime `for`. A write through a variable, such as `active.value := 1` or `havoc(active.value)`, and optional navigation through one, such as `active?.value` or `inline active?.step()`, are rejected (`OXSTS.UNSUPPORTED_FEATURE`).
+A variable's type may be a [feature](features.md). The value domain of such a *feature-typed variable* is the set of instances reachable through that feature. A call through the variable, such as `inline active.step()`, runs the call on the instance the variable holds, and a read through it, such as `active.value` or `active.child.value`, reads the member of that instance. The same holds for a variable of class type, whose value domain is every instance of the class, for an array slot (`queue[i].value`), a local variable and the loop variable of a runtime `for`. A write through a variable, such as `active.value := 1` or `havoc(active.value)`, and optional navigation through one, such as `active?.value` or `inline active?.step()`, are rejected.
 
 ```oxsts
 // hide-start

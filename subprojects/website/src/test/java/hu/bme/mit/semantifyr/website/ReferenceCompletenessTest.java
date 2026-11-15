@@ -104,24 +104,49 @@ public class ReferenceCompletenessTest {
             }
         }
 
-        var shown = new TreeSet<String>();
+        var named = new TreeSet<String>();
         var texts = new ArrayList<String>();
         for (var page : DocumentationFences.pages()) {
-            texts.add(DocumentationFences.shownText(page));
-        }
-        for (var model : DocumentationFences.importedModels()) {
-            texts.add(Files.readString(model));
+            for (var fence : DocumentationFences.fences(page)) {
+                if (fence.issue() != null) {
+                    texts.add(fence.issue());
+                }
+            }
+            texts.addAll(DocumentationFences.comments(page));
         }
         for (var text : texts) {
-            var matcher = ISSUE_CODE.matcher(text);
-            while (matcher.find()) {
-                shown.add(matcher.group());
-            }
+            named.addAll(issueCodesIn(text));
         }
 
-        codes.removeAll(shown);
+        codes.removeAll(named);
         assertThat(codes)
-                .as("issue codes of the validator on no page and not marked @InternalIssue where they are declared")
+                .as(
+                        "issue codes of the validator named by no fence's issue word or page comment and not marked @InternalIssue where they are declared")
                 .isEmpty();
+    }
+
+    @Test
+    void noIssueCodeIsShownToTheReader() throws Exception {
+        var shown = new TreeSet<String>();
+        for (var page : DocumentationFences.pages()) {
+            for (var code : issueCodesIn(DocumentationFences.shownText(page))) {
+                shown.add(DocumentationFences.DOCUMENTATION.relativize(page) + ": " + code);
+            }
+        }
+        for (var model : DocumentationFences.importedModels()) {
+            for (var code : issueCodesIn(Files.readString(model))) {
+                shown.add(model + ": " + code);
+            }
+        }
+        assertThat(shown).as("issue codes a reader sees on a page").isEmpty();
+    }
+
+    private static Set<String> issueCodesIn(String text) {
+        var codes = new TreeSet<String>();
+        var matcher = ISSUE_CODE.matcher(text);
+        while (matcher.find()) {
+            codes.add(matcher.group());
+        }
+        return codes;
     }
 }

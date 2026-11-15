@@ -1,7 +1,7 @@
 ---
 title: Installing It
 slug: /learn/install
-sidebar_position: 3
+sidebar_position: 4
 description: Install the VS Code extension for OXSTS and Gamma, or the command-line launchers for OXSTS, SysML v2 and Gamma, built from the repository.
 ---
 
@@ -42,7 +42,7 @@ Use it in scripts and CI. Each launcher has a distribution of its own with the T
 2. Run `bin/semantifyr` in the installed directory (`bin\semantifyr.bat` on Windows). The distribution bundles the Theta backend, which the launcher puts on `PATH`; install the other backends as for the VS Code extension.
 3. Verify the bundled smoke model from the installed directory: `bin/semantifyr verify models/smoke`.
 
-The `semantifyr-sysml` and `semantifyr-gamma` distributions carry their semantic library under `libraries/` and a smoke model under `models/smoke/`. `semantifyr-sysml` translates SysML v2 models with the bundled SysIDE fork, which needs Node.js <NodeVersion /> or newer on `PATH`. [OXSTS on the Command Line](../oxsts/command-line.mdx) walks through a run of `semantifyr` and [SysML v2 on the Command Line](../frontends/sysml-v2/command-line.mdx) one of `semantifyr-sysml`, and [the command line's reference](../reference/command-line.mdx) lists the commands and options.
+The `semantifyr-sysml` and `semantifyr-gamma` distributions carry their semantic library under `libraries/` and a smoke model under `models/smoke/`. `semantifyr-sysml` translates SysML v2 models with the bundled SysIDE fork, which needs Node.js <NodeVersion /> or newer on `PATH`. [Trying It on the Command Line](command-line.mdx) walks through a run of `semantifyr` and [SysML v2 on the Command Line](../frontends/sysml-v2/command-line.mdx) one of `semantifyr-sysml`, and [the command line's reference](../reference/command-line.mdx) lists the commands and options.
 
 <Planned>
 A hosted JupyterHub environment that runs VS Code in the browser with the Semantifyr extension, the Theta backend, and example models for SysML v2 and Gamma.

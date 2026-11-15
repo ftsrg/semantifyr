@@ -15,7 +15,7 @@ import { servedExamples, type CaseManifest, type ServedExample } from '@semantif
 import type { PrismTheme } from 'prism-react-renderer';
 import remarkFences from './src/plugins/remarkFences';
 import sourceAliases from './source-aliases.json';
-import { addressOf, learnParts, sections, SOURCE_CODE } from './src/map';
+import { addressOf, learnParts, sections, SOURCE_CODE, type LearnPart } from './src/map';
 
 // the code blocks take their colours from live's grammars in theme/CodeBlock/Content; the block itself from the tokens
 const codeBlockTheme: PrismTheme = {
@@ -59,6 +59,15 @@ function servedExamplesPlugin(): Plugin {
     },
   };
 }
+
+function directoriesOf(part: LearnPart): string[] {
+  return [
+    ...(part.directory === undefined ? [] : [part.directory]),
+    ...(part.parts ?? []).flatMap(directoriesOf),
+  ];
+}
+
+const partDirectories = new Set(learnParts.flatMap(directoriesOf));
 
 // the docs are routed at the site's root, so a page's address is its path under them
 const DOCS = 'src/docs';
@@ -192,9 +201,12 @@ export default {
         path: DOCS,
         routeBasePath: '/',
         sidebarPath: './sidebars.ts',
-        // a part of Learn links its index, so the index is no page of the part's own
+        // a part of Learn links its index, so the index is no page of the part's own; Develop lists its index
         async sidebarItemsGenerator({ defaultSidebarItemsGenerator, ...generation }) {
           const items = await defaultSidebarItemsGenerator(generation);
+          if (!partDirectories.has(generation.item.dirName)) {
+            return items;
+          }
           return items.filter((item) => {
             return !(item.type === 'doc' && item.id === `${generation.item.dirName}/index`);
           });

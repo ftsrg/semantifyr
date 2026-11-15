@@ -34,7 +34,7 @@ OXSTS borrows familiar object-oriented vocabulary, but every concept has a preci
 
 ## Two Evaluation Phases
 
-A pervasive distinction throughout the language is **compile-time vs runtime**. Some expressions are evaluated **once**, while the compiler [unfolds a case](../compilation/index.mdx): feature multiplicities and bindings, the guards and ranges of `inline` constructs, the arguments of annotations, and the initializers of the variables of classes and records, which give each variable its value before `init` runs. The rest, transition bodies, ordinary `if` and `for`, local variables and properties, is evaluated by the **backend** as it explores the state space. Where the compiler needs a value, the validator rejects an expression that reads the state (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`). Knowing which phase a piece of code lives in is essential for reading and writing OXSTS.
+A pervasive distinction throughout the language is **compile-time vs runtime**. Some expressions are evaluated **once**, while the compiler [unfolds a case](../compilation/index.mdx): feature multiplicities and bindings, the guards and ranges of `inline` constructs, the arguments of annotations, and the initializers of the variables of classes and records, which give each variable its value before `init` runs. The rest, transition bodies, ordinary `if` and `for`, local variables and properties, is evaluated by the **backend** as it explores the state space. Where the compiler needs a value, the validator rejects an expression that reads the state. Knowing which phase a piece of code lives in is essential for reading and writing OXSTS.
 
 ## Conventions
 

@@ -25,11 +25,11 @@ Expressions compute values. They appear in [property](../classes-and-behaviour/p
 | Array | `[a, b, c]`, `[]` |
 | Record (see [Records](datatypes.md#records)) | `Point { x = 0, y = 0 }` |
 
-[Lexical Structure](lexical-structure.md#literals) gives the forms of the literals, and [Datatypes](datatypes.md) their types. The values of an array literal share a type (`OXSTS.TYPE_MISMATCH`), and `[a, b, c]` has the multiplicity `[3]`.
+[Lexical Structure](lexical-structure.md#literals) gives the forms of the literals, and [Datatypes](datatypes.md) their types. The values of an array literal share a type, and `[a, b, c]` has the multiplicity `[3]`.
 
 ## `self`
 
-Inside a class body, `self` refers to the current class or feature instance. Outside a class, in a global feature or a record, it is rejected (`OXSTS.SELF_OUTSIDE_CLASS`).
+Inside a class body, `self` refers to the current class or feature instance. Outside a class, in a global feature or a record, it is rejected.
 
 ```oxsts
 // hide-start
@@ -69,7 +69,7 @@ From **lowest** to **highest** precedence:
 
 The binary operators are left-associative, and a range takes one `..` or `..<`. The guard and the branches of an if-then-else are whole expressions, so its `else` branch reaches as far to the right as it can: `if c then 1 else 2 + 3` is `if c then 1 else (2 + 3)`. A cast applies to a call or a chain of members and indices, so `-x as int` is `-(x as int)`. A call ends a chain of members and indices ([Calls and Arguments](#calls-and-arguments)).
 
-As in Java, `&&` binds tighter than `^^`, which binds tighter than `||`: `a || b && c` parses as `a || (b && c)`. The validator warns on an operand that is another of the three written without parentheses (`OXSTS.MIXED_BOOLEAN_OPERATORS`) and names the reading.
+As in Java, `&&` binds tighter than `^^`, which binds tighter than `||`: `a || b && c` parses as `a || (b && c)`. The validator warns on an operand that is another of the three written without parentheses and names the reading.
 
 ```oxsts issue=OXSTS.MIXED_BOOLEAN_OPERATORS
 class Switch {
@@ -92,7 +92,7 @@ class Switch {
 | `^^` | Logical XOR |
 | `!` | Unary NOT |
 
-Their operands are Boolean (`OXSTS.TYPE_MISMATCH`), and so is their value. `^^` holds when exactly one of its operands holds.
+Their operands are Boolean, and so is their value. `^^` holds when exactly one of its operands holds.
 
 ```oxsts
 class Switch {
@@ -126,7 +126,7 @@ class Switch {
 | `==` | Equal |
 | `!=` | Not equal |
 
-`==` and `!=` take two values that compare ([Comparison and Joining](types.md#comparison-and-joining)), and `<`, `<=`, `>` and `>=` numeric operands, `int`, `real` or `any`; ordering other values, such as enum literals (`Color::Red < Color::Green`), is rejected (`OXSTS.TYPE_MISMATCH`).
+`==` and `!=` take two values that compare ([Comparison and Joining](types.md#comparison-and-joining)), and `<`, `<=`, `>` and `>=` numeric operands, `int`, `real` or `any`; ordering other values, such as enum literals (`Color::Red < Color::Green`), is rejected.
 
 Evaluated at compile time, as in an `inline if` guard, `==` between instance expressions (features, `self`, navigations, `nothing`) compares the sets of instances the two sides denote: they are equal when they hold the same instances, in any order. `nothing` is the empty set, so an empty side equals only another empty side, and `!=` is the negation of `==`.
 
@@ -139,7 +139,7 @@ Evaluated at compile time, as in an `inline if` guard, `==` between instance exp
 | `*` | Multiplication |
 | `/` | Division |
 
-Their operands are numeric, `int`, `real` or `any` (`OXSTS.TYPE_MISMATCH`), and their value is an `int` for two `int` operands and a `real` when either is `real`.
+Their operands are numeric, `int`, `real` or `any`, and their value is an `int` for two `int` operands and a `real` when either is `real`.
 
 ```oxsts
 class Counter {
@@ -235,7 +235,7 @@ class Child {
 
 ## Indexing (`[]`)
 
-`a[i]` is the slot `i` of the array `a`, counted from 0, and has the array's domain with the multiplicity `[1]`. The index is numeric, and indexing a value whose multiplicity's upper bound is at most one, such as an `int` variable, is rejected (both `OXSTS.TYPE_MISMATCH`). The index may read the state, and then the slot is chosen when the model runs. A slot is read and written like a variable.
+`a[i]` is the slot `i` of the array `a`, counted from 0, and has the array's domain with the multiplicity `[1]`. The index is numeric, and indexing a value whose multiplicity's upper bound is at most one, such as an `int` variable, is rejected. The index may read the state, and then the slot is chosen when the model runs. A slot is read and written like a variable.
 
 ```oxsts
 // hide-start
@@ -264,13 +264,13 @@ class Buffer {
 
 ## Calls and Arguments
 
-`f(arguments)` calls a [property](../classes-and-behaviour/properties.md) or a [transition](../classes-and-behaviour/transitions.md). A property call is an expression whose value is the property's; a transition call is what an [inline call](../classes-and-behaviour/inline-operations.md#inline-call) runs. The callee is named like a member, by itself, through `self` or through a navigation, and calling anything else, such as a variable or a record, is rejected (`OXSTS.INCORRECT_CALLED_ELEMENT`). A call ends a chain of members and indices, and only a cast may follow it: `a.b.f()` calls `f` on `a.b`, while `a.f().b`, `f()()` and `a.f()[0]` are syntax errors, and a member of what a call gives is read through parentheses, `(a.f()).b`.
+`f(arguments)` calls a [property](../classes-and-behaviour/properties.md) or a [transition](../classes-and-behaviour/transitions.md). A property call is an expression whose value is the property's; a transition call is what an [inline call](../classes-and-behaviour/inline-operations.md#inline-call) runs. The callee is named like a member, by itself, through `self` or through a navigation, and calling anything else, such as a variable or a record, is rejected. A call ends a chain of members and indices, and only a cast may follow it: `a.b.f()` calls `f` on `a.b`, while `a.f().b`, `f()()` and `a.f()[0]` are syntax errors, and a member of what a call gives is read through parentheses, `(a.f()).b`.
 
 These rules bind the arguments of a property call and of an inline call; the first, the second and the last bind the arguments of an [annotation](../library-and-output/annotations.md#with-arguments) too:
 
 - An argument is positional or named, `name = value`. A positional argument binds the parameter at its position, a named one the parameter of its name.
-- Every named argument follows all positional ones (`OXSTS.POSITIONAL_ARGUMENT_AFTER_NAMED`), and a parameter is bound at most once, by position or by name (`OXSTS.PARAMETER_BOUND_TWICE`).
-- A parameter whose multiplicity has the lower bound 0, such as `[0..1]`, is optional and binds `nothing` when it is left out. Every other parameter must be bound, and a call has no more arguments than parameters (`OXSTS.INVALID_CALL_ARGUMENTS_COUNT`); a required parameter is declared before every optional one (`OXSTS.INVALID_CALL_ARGUMENTS_COUNT`, at the declaration).
+- Every named argument follows all positional ones, and a parameter is bound at most once, by position or by name. {/* OXSTS.POSITIONAL_ARGUMENT_AFTER_NAMED */}
+- A parameter whose multiplicity has the lower bound 0, such as `[0..1]`, is optional and binds `nothing` when it is left out. Every other parameter must be bound, and a call has no more arguments than parameters; a required parameter is declared before every optional one, or the declaration is rejected. {/* OXSTS.INVALID_CALL_ARGUMENTS_COUNT */}
 - Each argument fits its parameter's type ([Assignability](types.md#assignability)).
 
 A property call's value is the value of the property's body with every parameter replaced by its argument, read against the instance the call names; an inline call passes its arguments by value ([Inline Call](../classes-and-behaviour/inline-operations.md#inline-call)).
@@ -360,7 +360,7 @@ class Plotter {
 
 ## Casts (`as`)
 
-`expression as Type` gives an expression a narrower type, as a promise that its value fits that type. A cast is accepted when the named type fits the expression's own ([Assignability](types.md#assignability)): to a subclass, to a subsetting feature, from `any` to a datatype, to a smaller multiplicity such as from `[0..*]` to `[1]`, or to the same type. A cast that widens, such as from a class to its superclass or to `any`, or one between unrelated types, is rejected (`OXSTS.INVALID_CAST`). A cast changes nothing when the model runs: the compiler checks the same rule again and then drops it, so nothing checks the promise, and the value is used as it is.
+`expression as Type` gives an expression a narrower type, as a promise that its value fits that type. A cast is accepted when the named type fits the expression's own ([Assignability](types.md#assignability)): to a subclass, to a subsetting feature, from `any` to a datatype, to a smaller multiplicity such as from `[0..*]` to `[1]`, or to the same type. A cast that widens, such as from a class to its superclass or to `any`, or one between unrelated types, is rejected. A cast changes nothing when the model runs: the compiler checks the same rule again and then drops it, so nothing checks the promise, and the value is used as it is.
 
 ```oxsts
 abstract class Expression {
@@ -388,7 +388,7 @@ class Flag {
 
 ## If-Then-Else
 
-`if guard then a else b` is `a` when the guard holds and `b` otherwise. The guard is Boolean, the `else` branch is required, and the two branches join ([Comparison and Joining](types.md#comparison-and-joining)); either is rejected otherwise (`OXSTS.TYPE_MISMATCH`). Its type is the joined type of the branches, so `if dark then lamp else nothing` holds at most one instance. Unlike the [`if` operation](../classes-and-behaviour/operations.md#if), it is an expression and changes no state.
+`if guard then a else b` is `a` when the guard holds and `b` otherwise. The guard is Boolean, the `else` branch is required, and the two branches join ([Comparison and Joining](types.md#comparison-and-joining)); either is rejected otherwise. Its type is the joined type of the branches, so `if dark then lamp else nothing` holds at most one instance. Unlike the [`if` operation](../classes-and-behaviour/operations.md#if), it is an expression and changes no state.
 
 ```oxsts
 class Lamp
@@ -420,7 +420,7 @@ class Room {
 
 ## Temporal Operators
 
-Temporal operators denote logical formulae over the possible executions of the system. Their body is Boolean (`OXSTS.TYPE_MISMATCH`).
+Temporal operators denote logical formulae over the possible executions of the system. Their body is Boolean.
 
 | Operator | Meaning |
 |----------|---------|
@@ -446,11 +446,11 @@ class Bounded {
 // hide-end
 ```
 
-A temporal operator is only allowed as the whole expression a property returns: one in a transition (`flag := AG true`), below another operator or nested in another temporal operator (`AG (EF on)`) is rejected (`OXSTS.MISPLACED_TEMPORAL_OPERATOR`).
+A temporal operator is only allowed as the whole expression a property returns: one in a transition (`flag := AG true`), below another operator or nested in another temporal operator (`AG (EF on)`) is rejected. {/* OXSTS.MISPLACED_TEMPORAL_OPERATOR */}
 
-<Planned table={constructs} construct="AF, EG, AX, EX temporal operators">
+<Planned table={constructs} construct="CTL* properties">
 
-More temporal operators are planned: `AF expr` (`expr` eventually holds on every execution), `EG expr` (`expr` always holds on some execution), `AX expr` and `EX expr` (`expr` holds in every or in some next state). The parser rejects them today; only `AG` and `EF` parse.
+Support of CTL* properties is planned. The parser rejects every temporal operator but `AG` and `EF` today.
 
 ```oxsts issue=syntax
 // hide-start

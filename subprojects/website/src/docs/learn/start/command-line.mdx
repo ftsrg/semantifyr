@@ -1,6 +1,8 @@
 ---
-title: OXSTS on the Command Line
-sidebar_label: On the Command Line
+title: Trying It on the Command Line
+sidebar_label: Trying It on the Command Line
+slug: /learn/command-line
+sidebar_position: 3
 description: Verify the cases of an OXSTS model with the semantifyr command, read their verdicts and find the witness of a failed case on disk.
 ---
 
@@ -8,9 +10,9 @@ import CodeBlock from '@theme/CodeBlock';
 import CaseVerdict from '@site/src/components/CaseVerdict';
 import levelCrossing from '@served-examples/oxsts/level-crossing';
 
-# OXSTS on the Command Line
+# Trying It on the Command Line
 
-`semantifyr` verifies the cases of an OXSTS model on your machine, with every installed backend, by hand or in scripts and CI. This page verifies the OXSTS level crossing. [Installing It](../start/install.md#the-command-line) builds the command, `bin/semantifyr` of its distribution, and [Command Line](../reference/command-line.mdx) lists its options; a SysML v2 or a Gamma model is verified by its frontend's launcher, [`semantifyr-sysml`](../frontends/sysml-v2/command-line.mdx) or [`semantifyr-gamma`](../frontends/gamma/command-line.mdx).
+`semantifyr` verifies the cases of an OXSTS model on your machine, with every installed backend, by hand or in scripts and CI. This page verifies the OXSTS level crossing. [Installing It](install.md#the-command-line) builds the command, `bin/semantifyr` of its distribution, and [Command Line](../reference/command-line.mdx) lists its options; a SysML v2 or a Gamma model is verified by its frontend's launcher, [`semantifyr-sysml`](../frontends/sysml-v2/command-line.mdx) or [`semantifyr-gamma`](../frontends/gamma/command-line.mdx).
 
 ## The Model
 
@@ -77,4 +79,4 @@ witness.json
 witness.oxsts
 ```
 
-Beside the report and the compiled models under `pipeline/`, each backend run has a directory of its own, and `witness.oxsts`, `witness.json` and `trace.json` are the [witness](../backends/witnesses-and-traces.mdx) of the run that breaks the case. [Artifacts](../reference/artifacts.mdx) describes each file.
+Beside the report and the compiled models under `pipeline/`, each backend run has a directory of its own, and `witness.oxsts`, `witness.json` and `trace.json` are the [witness](../oxsts/language/library-and-output/inlined-models.md#witnesses) of the run that breaks the case. [Artifacts](../reference/artifacts.mdx) describes each file.

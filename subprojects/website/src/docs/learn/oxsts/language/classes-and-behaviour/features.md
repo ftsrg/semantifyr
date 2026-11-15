@@ -9,7 +9,7 @@ description: OXSTS features, the structural relationships between classes, resol
 
 Features define the **structural relationships** between classes. Unlike [variables](variables.md) (which hold runtime state), features are resolved during instantiation and eliminated during flattening; they do not exist at runtime.
 
-A feature declaration is a kind, a name, `:` and a type with an optional [multiplicity](#multiplicities), then any of `subsets`, `opposite` and `redefines`, and either a [binding](#feature-binding), a block of [nested features](#nested-features) or nothing. Two members of one class cannot share a name (`OXSTS.DUPLICATE_NAME`). A feature of a record type is rejected (`OXSTS.UNSUPPORTED_FEATURE`); a record value is held by a variable.
+A feature declaration is a kind, a name, `:` and a type with an optional [multiplicity](#multiplicities), then any of `subsets`, `opposite` and `redefines`, and either a [binding](#feature-binding), a block of [nested features](#nested-features) or nothing. Two members of one class cannot share a name. A feature of a record type is rejected; a record value is held by a variable. {/* OXSTS.UNSUPPORTED_FEATURE */}
 
 ## Feature Kinds
 
@@ -56,7 +56,7 @@ class Display {
 
 ## `container`
 
-A `container` feature is the **reverse** of a `contains` feature: the child pointing back to its owning parent. A `container` must always be paired with the corresponding `contains` via `opposite` (`OXSTS.INCORRECT_OPPOSITE`).
+A `container` feature is the **reverse** of a `contains` feature: the child pointing back to its owning parent. A `container` must always be paired with the corresponding `contains` via `opposite`.
 
 ```oxsts
 class Tree {
@@ -67,7 +67,7 @@ class Tree {
 
 ## `derived refers`
 
-A `derived refers` feature is computed automatically from the model structure: it holds the instances whose `opposite` feature refers to the holder. A `derived refers` without an `opposite`, declared or inherited, is rejected (`OXSTS.UNSUPPORTED_FEATURE`).
+A `derived refers` feature is computed automatically from the model structure: it holds the instances whose `opposite` feature refers to the holder. A `derived refers` without an `opposite`, declared or inherited, is rejected.
 
 ```oxsts
 class StateNode {
@@ -85,7 +85,7 @@ class Transition {
 
 ## `features`
 
-The `features` keyword declares an **abstract** feature whose kind is left to subclasses. A subclass redefines it as a concrete `contains` or `refers`, or fills it through features that [subset](#subsets) it: one that is not redefined holds the instances of its subsetters. A concrete class with a `features` that it neither redefines nor subsets is rejected (`OXSTS.ABSTRACT_FEATURE_NOT_REALIZED`).
+The `features` keyword declares an **abstract** feature whose kind is left to subclasses. A subclass redefines it as a concrete `contains` or `refers`, or fills it through features that [subset](#subsets) it: one that is not redefined holds the instances of its subsetters. A concrete class with a `features` that it neither redefines nor subsets is rejected. {/* OXSTS.ABSTRACT_FEATURE_NOT_REALIZED */}
 
 ```oxsts
 abstract class Container {
@@ -101,7 +101,7 @@ class IntContainer : Container {
 
 ## Multiplicities
 
-A feature's multiplicity specifies how many target values are permitted. The multiplicity bracket holds an expression evaluated at compile time, which cannot read the state (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`). The default is `[1]`.
+A feature's multiplicity specifies how many target values are permitted. The multiplicity bracket holds an expression evaluated at compile time, which cannot read the state. The default is `[1]`.
 
 | Syntax | Meaning |
 |--------|---------|
@@ -112,11 +112,11 @@ A feature's multiplicity specifies how many target values are permitted. The mul
 | `[lb..ub]` | Between `lb` and `ub` |
 | `[]` | No bound given; unlike `[0..*]`, a `[]` parameter is required and a `[]` value cannot be `nothing` |
 
-The infinity literal `*` is allowed in ranges (`0..*`); a bare `[*]` is rejected (`OXSTS.TYPE_MISMATCH`).
+The infinity literal `*` is allowed in ranges (`0..*`); a bare `[*]` is rejected.
 
 ## `opposite`
 
-`opposite` declares a bidirectional relationship: an instance is in one feature of another exactly when that other is in the opposite feature of the first, so navigating either way finds the same link. The two features name each other as `opposite`, and the opposite of a `container` is a `contains` and that of a `contains` a `container` (`OXSTS.INCORRECT_OPPOSITE`).
+`opposite` declares a bidirectional relationship: an instance is in one feature of another exactly when that other is in the opposite feature of the first, so navigating either way finds the same link. The two features name each other as `opposite`, and the opposite of a `container` is a `contains` and that of a `contains` a `container`.
 
 ```oxsts
 class Tree {
@@ -147,7 +147,7 @@ class Wrapper {
 }
 ```
 
-This is the primary way semantic libraries declaratively add instances to a collection defined in a superclass. A redefinition that names no `subsets` keeps the superset of the feature it redefines. A bound feature (`= expr`) and a `derived refers` hold the instances their expression or opposite gives them, so neither can be subset (`OXSTS.INCORRECT_SUBSETS`).
+This is the primary way semantic libraries declaratively add instances to a collection defined in a superclass. A redefinition that names no `subsets` keeps the superset of the feature it redefines. A bound feature (`= expr`) and a `derived refers` hold the instances their expression or opposite gives them, so neither can be subset. {/* OXSTS.INCORRECT_SUBSETS */}
 
 ## `redefine` and `redefines`
 
@@ -173,7 +173,7 @@ class Counter10Pair : CounterPair {
 }
 ```
 
-`redefines` replaces an inherited feature under a new name: the old name no longer resolves on the subclass, and inherited members that use it reach the new feature. A class redefines an inherited feature at most once, by `redefine` or by `redefines` (`OXSTS.DUPLICATE_REDEFINITION`).
+`redefines` replaces an inherited feature under a new name: the old name no longer resolves on the subclass, and inherited members that use it reach the new feature. A class redefines an inherited feature at most once, by `redefine` or by `redefines`.
 
 ```oxsts
 // hide-start
@@ -197,7 +197,7 @@ class Counter10Pair : CounterPair {
 
 ## Nested Features
 
-A feature declaration may include a block of nested feature declarations to redefine inner structure. Two nested features of one block cannot share a name (`OXSTS.DUPLICATE_NAME`), and they redefine an inherited feature at most once (`OXSTS.DUPLICATE_REDEFINITION`).
+A feature declaration may include a block of nested feature declarations to redefine inner structure. Two nested features of one block cannot share a name, and they redefine an inherited feature at most once.
 
 ```oxsts
 // hide-start
@@ -221,7 +221,7 @@ class Machine {
 
 ## Feature Binding
 
-A feature can be bound to a compile-time expression with `=`, whose value fits the feature's type (`OXSTS.TYPE_MISMATCH`). The bound value cannot depend on runtime state (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`). A bound feature holds the instances or the value its expression gives, on each instance of its class. The expression is evaluated on the instance that holds the feature, so its names resolve there and never among the members of the feature's own type; in a nested block that is the instance of the enclosing feature.
+A feature can be bound to a compile-time expression with `=`, whose value fits the feature's type. The bound value cannot depend on runtime state. A bound feature holds the instances or the value its expression gives, on each instance of its class. The expression is evaluated on the instance that holds the feature, so its names resolve there and never among the members of the feature's own type; in a nested block that is the instance of the enclosing feature.
 
 ```oxsts
 // hide-start

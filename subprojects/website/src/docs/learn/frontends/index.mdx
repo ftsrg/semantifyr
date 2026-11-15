@@ -1,13 +1,10 @@
 ---
 title: Frontends
-description: What a frontend is, SysML v2 and Gamma as Semantifyr's currently implemented frontends, and OXSTS for a language without one.
+description: What a frontend is, what its trace of a case is, and SysML v2 and Gamma, Semantifyr's currently implemented frontends.
 ---
 
 # Frontends
 
-A frontend brings an engineering language to Semantifyr: its translation into OXSTS, its semantic library and its traces. Semantifyr is a general framework, and SysML v2 and Gamma are its currently implemented frontends, for a modeller who brings a model in either language. Each has a part of its own, with what of the language it supports, what it assumes of the language's meaning, its command line and the form of its traces.
+A frontend brings an engineering language to Semantifyr: its translation into OXSTS, its semantic library and its traces. A frontend writes the [witness](../oxsts/language/library-and-output/inlined-models.md#witnesses) of a case back as its trace, what a reader reads of the case: the steps of the witness in the language of the model, which for a failed `AG` case model checkers call a counterexample.
 
-- [SysML v2](sysml-v2/index.mdx): parts, ports, items and state machines, with verification cases whose objectives are requirements, and traces written as SysML v2 models.
-- [Gamma](gamma/index.mdx): statecharts and their composition in Gamma's syntax, with verification cases in the model, and traces in Gamma's trace language.
-
-A language without a frontend is given its semantics in OXSTS directly, as the [OXSTS lessons](../oxsts/lessons/index.md) do.
+Currently implemented frontends: [SysML v2](sysml-v2/index.mdx), [Gamma](gamma/index.mdx).

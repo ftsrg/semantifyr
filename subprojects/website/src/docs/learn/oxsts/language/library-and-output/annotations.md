@@ -43,7 +43,7 @@ class Counter {
 
 ## With Arguments
 
-Annotation arguments are positional or named, every named one after all positional ones (`OXSTS.POSITIONAL_ARGUMENT_AFTER_NAMED`), each parameter bound at most once (`OXSTS.PARAMETER_BOUND_TWICE`), and each argument fitting its parameter's type, as for a call ([Calls and Arguments](../foundations/expressions.md#calls-and-arguments)). Arguments must be constants: annotations are read without an instance, so the validator rejects a reference to a feature or variable (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`).
+Annotation arguments are positional or named, every named one after all positional ones, each parameter bound at most once, and each argument fitting its parameter's type, as for a call ([Calls and Arguments](../foundations/expressions.md#calls-and-arguments)). Arguments must be constants: annotations are read without an instance, so the validator rejects a reference to a feature or variable.
 
 ```oxsts
 @VerificationCase("Reaches the limit")
@@ -94,7 +94,7 @@ With parameters:
 annotation Description(text: string)
 ```
 
-Its parameters are declared as a transition's are: two cannot share a name (`OXSTS.DUPLICATE_NAME`), and a required one comes before every optional one (`OXSTS.INVALID_CALL_ARGUMENTS_COUNT`). A custom annotation may then be applied like any built-in.
+Its parameters are declared as a transition's are: two cannot share a name, and a required one comes before every optional one. A custom annotation may then be applied like any built-in.
 
 ```oxsts continue
 // hide-start
@@ -113,7 +113,7 @@ class Counter {
 
 ## Standard Annotations
 
-The [Standard Library](standard-library.md#annotations) declares the standard annotations and describes each with the declarations it applies to. A standard annotation on a declaration it does not apply to is rejected (`OXSTS.INCORRECT_ANNOTATION_TARGET`). The compiler reads no annotation it does not know, and a user-declared annotation is not checked against its target.
+The [Standard Library](standard-library.md#annotations) declares the standard annotations and describes each with the declarations it applies to. A standard annotation on a declaration it does not apply to is rejected. The compiler reads no annotation it does not know, and a user-declared annotation is not checked against its target.
 
 ```oxsts issue=OXSTS.INCORRECT_ANNOTATION_TARGET
 @Trace

@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -173,6 +174,15 @@ final class DocumentationFences {
             index++;
         }
         return PAGE_COMMENT.matcher(String.join("\n", shown)).replaceAll("");
+    }
+
+    // where a page names an issue for the tests without showing it to the reader, beside the rule it belongs to
+    static List<String> comments(Path page) throws IOException {
+        return PAGE_COMMENT
+                .matcher(Files.readString(page))
+                .results()
+                .map(MatchResult::group)
+                .toList();
     }
 
     // a continued fence's model is the model it continues, a blank line and its own lines without the markers

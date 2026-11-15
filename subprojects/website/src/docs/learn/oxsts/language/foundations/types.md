@@ -38,7 +38,7 @@ class Gauge {
 
 ## Assignability
 
-A value fits a slot, a variable, a parameter, a feature's binding or a property's return, when its domain and its multiplicity fit the slot's; one that does not is rejected (`OXSTS.TYPE_MISMATCH`).
+A value fits a slot, a variable, a parameter, a feature's binding or a property's return, when its domain and its multiplicity fit the slot's; one that does not is rejected.
 
 - A domain fits itself and `any`. A class fits each of its superclasses. Where the slot's domain is a feature, a feature fits only if it [subsets](../classes-and-behaviour/features.md#subsets) the slot's, directly or through others, and a class or a datatype fits if it fits the feature's own class or datatype. Where the slot's domain is a class or a datatype, a feature fits if its class or datatype does.
 - A multiplicity fits when its lower bound is not below the slot's and its upper bound is not above it: a `[1]` value fits a `[0..1]` slot, while a `[0..1]` value does not fit a `[1]` slot. `nothing` fits a slot whose lower bound is 0.
@@ -73,6 +73,6 @@ class Gauge {
 
 ## Comparison and Joining
 
-`==` and `!=` compare two values when the domain of one fits the other's, whatever their multiplicities; two features whose domains do not fit are compared by their classes, and `nothing` compares with every value. `<`, `<=`, `>` and `>=` take numeric operands, `int`, `real` or `any`, and the Boolean operators Boolean ones (`OXSTS.TYPE_MISMATCH`). A record compares only by `==` and `!=`, and not with `nothing`, and an array of datatype, enumeration or record values only by `==` and `!=`, with another such array of the same upper bound (`OXSTS.TYPE_MISMATCH`).
+`==` and `!=` compare two values when the domain of one fits the other's, whatever their multiplicities; two features whose domains do not fit are compared by their classes, and `nothing` compares with every value. `<`, `<=`, `>` and `>=` take numeric operands, `int`, `real` or `any`, and the Boolean operators Boolean ones. A record compares only by `==` and `!=`, and not with `nothing`, and an array of datatype, enumeration or record values only by `==` and `!=`, with another such array of the same upper bound.
 
 The two branches of an [if-then-else](expressions.md#if-then-else) join when they compare and the multiplicity of one fits the other's. The joined type is the wider domain, two features meeting at their classes, with a multiplicity from the smaller lower bound to the larger upper bound, and a lower bound of 0 when a branch is `nothing`.
