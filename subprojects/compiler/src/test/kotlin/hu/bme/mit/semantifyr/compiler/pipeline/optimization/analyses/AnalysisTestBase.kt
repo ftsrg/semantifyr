@@ -19,6 +19,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceTree
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.scopes.withCompilationScopeBlocking
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.clock.ClockTestAnalysis
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.InlinedOxstsParseHelper
@@ -85,14 +86,15 @@ abstract class AnalysisTestBase {
                 inlined,
                 evaluator,
                 child.getInstance(ConstantExpressionEvaluatorProvider::class.java),
+                child.getInstance(ClockTestAnalysis::class.java),
             ).compute()
             AnalyzedModel(inlined, result)
         }
     }
 
     protected fun runReachingDefinitions(source: String): AnalyzedModel<ReachingDefinitionsInfo> {
-        return withCompiled(source) { (inlined, evaluator) ->
-            AnalyzedModel(inlined, ReachingDefinitionsComputation(inlined, evaluator).compute())
+        return withCompiled(source) { (inlined, evaluator, child) ->
+            AnalyzedModel(inlined, ReachingDefinitionsComputation(inlined, evaluator, child.getInstance(ClockTestAnalysis::class.java)).compute())
         }
     }
 

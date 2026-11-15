@@ -14,6 +14,29 @@ import org.junit.jupiter.api.Test
 
 class ConstantValueAnalysisTest : AnalysisTestBase() {
     @Test
+    fun `a clock reset only to its initial zero is not constant, since time passes between steps`() {
+        val (inlined, result) = runConstantValue(
+            """
+                inlined oxsts of semantifyr::Anything
+                var elapsed: clock := 0
+                var late: bool := false
+                init {
+                }
+                tran {
+                    assume(elapsed >= 6)
+                    late := true
+                    elapsed := 0
+                }
+                prop {
+                    AG !late
+                }
+            """,
+        )
+
+        assertThat(result.isConstant(inlined.varNamed("elapsed"))).isFalse
+    }
+
+    @Test
     fun `variable whose initializer and only write agree is considered constant`() {
         val (inlined, result) = runConstantValue(
             """

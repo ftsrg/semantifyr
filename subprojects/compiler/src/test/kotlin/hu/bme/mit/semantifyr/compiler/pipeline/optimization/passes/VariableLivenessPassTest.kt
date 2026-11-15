@@ -69,6 +69,40 @@ class VariableLivenessPassTest : PassTestBase() {
     }
 
     @Test
+    fun `a clock that is never reset is not substituted by its initializer, since it advances`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            var elapsed: clock := 0
+            var late: bool := false
+            init {
+            }
+            tran {
+                assume(elapsed >= 1)
+                late := true
+            }
+            prop {
+                AG !late
+            }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            var elapsed: clock := 0
+            var late: bool := false
+            init {
+            }
+            tran {
+                assume(elapsed >= 1)
+                late := true
+            }
+            prop {
+                AG !late
+            }
+        """,
+    ) {
+        it.getInstance(VariableLivenessPass::class.java)
+    }
+
+    @Test
     fun `single unused variable is fully eliminated, yielding a zero-variable model`() = assertPassTransforms(
         source = """
             inlined oxsts of semantifyr::Anything
