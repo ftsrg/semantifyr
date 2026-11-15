@@ -34,6 +34,10 @@ class Fraction private constructor(
     val isWhole: Boolean
         get() = denominator == BigInteger.ONE
 
+    operator fun plus(other: Fraction): Fraction {
+        return of(numerator * other.denominator + other.numerator * denominator, denominator * other.denominator)
+    }
+
     override fun equals(other: Any?): Boolean {
         return other is Fraction && numerator == other.numerator && denominator == other.denominator
     }
