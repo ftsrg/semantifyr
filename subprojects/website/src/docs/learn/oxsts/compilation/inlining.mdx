@@ -14,8 +14,8 @@ Inlining is the second phase of the compilation. It starts from the root that [i
 
 The other inline operations are decided here too: an `inline if` keeps the branch its compile-time condition selects, an `inline for` is unrolled over its range, an `inline` call through a variable whose type is a feature becomes a choice with one guarded branch for each instance the variable can hold, and a property call or a read through such a variable becomes an if-then-else over the same instances. When nothing is left to expand, the phase's optimizations run over the whole model, and the property must have `AG` or `EF` at its root. What the phase writes, `pipeline/inlined.oxsts`, is one `init`, one transition and one property over instance paths.
 
-The walk shows every frame the compiler writes during inlining. In this model no simplification changes anything, so each frame is the whole model after one expansion.
+The walk shows every frame the compiler writes during inlining but four: resolving an instance named as a value, as `top` in `last := top`, to its path writes a frame with the text of the one before it, since the expanded body already shows `root.hall.top`. In this model no simplification changes anything, so each frame is the whole model after one expansion.
 
 <PhaseWalk steps={inlining} label="Inlining, step by step" />
 
-The `init` is expanded first, then the main transition, then the property. No optimization of the phase changes this model, so the last expansion's frame is the model inlining writes. [Flattening](flattening.mdx) starts from it.
+The `init` is expanded first, then the main transition, a choice with a branch for each lamp, then the toggle each branch calls, then the property. No optimization of the phase changes this model, so the last expansion's frame is the model inlining writes. [Flattening](flattening.mdx) starts from it.

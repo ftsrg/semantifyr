@@ -17,7 +17,7 @@ An OXSTS model, written by hand or translated from another language by a [fronte
 <PhaseChain />
 
 1. [Instantiation](instantiation.mdx) builds the instance tree: from the case down, an instance for every containment of multiplicity one.
-2. [Inlining](inlining.mdx) replaces every call by its body, as the class of the instance it is called on defines it, until the case is one transition over instance paths such as `root.hall.left.on`.
+2. [Inlining](inlining.mdx) replaces every call by its body, as the class of the instance it is called on defines it, until the case is one transition over instance paths such as `root.hall.top.on`.
 3. [Flattening](flattening.mdx) turns every variable of every instance into one variable of the model and leaves no instance: the transition system.
 
 The three pages step through what the compiler does with this one model, `room.oxsts` below. Every model they show is the compiler's own output, written when the site is built and shown whole; only the instance tree and instantiation's walk through it are drawn by hand, since the compiler keeps the tree in memory.

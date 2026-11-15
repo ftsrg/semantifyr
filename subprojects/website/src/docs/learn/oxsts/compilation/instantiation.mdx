@@ -21,4 +21,4 @@ The compiler keeps the tree in memory and writes no file of it, so the walk and 
 
 <InstanceTree />
 
-`root.hall.left` is a `Lamp` and `root.hall.right` a `Spot`, the class `Hall`'s redefinition of `right` chooses. Both lamps hold the one fuse, named `root.hall.left.fuse` after the holder instantiation reaches first. The tree holds instances and no variable. The later phases read it: [inlining](inlining.mdx) takes each call's body from the class of the instance it is called on, and [flattening](flattening.mdx) gives every instance its own copy of each variable its class declares, as one variable of the model.
+`root.hall.top` is a `Lamp` and `root.hall.bottom` a `Spot`, the class `Hall`'s redefinition of `bottom` chooses. Both lamps hold the one fuse, named `root.hall.top.fuse` after the holder instantiation reaches first. The tree holds instances and no variable. The later phases read it: [inlining](inlining.mdx) takes each call's body from the class of the instance it is called on, and [flattening](flattening.mdx) gives every instance its own copy of each variable its class declares, as one variable of the model.
