@@ -16,21 +16,13 @@ import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 
-// a model describes itself in a comment at its top: `//` lines in OXSTS and Gamma, a `doc` comment in SysML v2
+// a model describes itself in a comment at its top: a `/** */` documentation comment in OXSTS and Gamma, a `doc` comment in SysML v2
 fun descriptionOf(text: String): String? {
-    val lines = text.lines().dropWhile {
-        it.isBlank()
-    }
-    val first = lines.firstOrNull()?.trim() ?: return null
-    if (first.startsWith("//")) {
-        return first.removePrefix("//").trim().ifEmpty {
-            null
-        }
-    }
-    if (!first.startsWith("doc")) {
+    val opening = text.trimStart()
+    if (!opening.startsWith("/**") && !opening.startsWith("doc")) {
         return null
     }
-    val comment = lines.joinToString("\n").substringAfter("/*", "").substringBefore("*/")
+    val comment = opening.substringAfter("/*", "").substringBefore("*/")
     return comment.lines().map {
         it.trim().removePrefix("*").trim()
     }.firstOrNull {

@@ -1,4 +1,6 @@
-// One traffic light that cycles from red to green to yellow.
+/**
+ * One traffic light that cycles from red to green to yellow.
+ */
 
 package example::trafficlight::onelight
 

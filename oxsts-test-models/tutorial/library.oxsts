@@ -1,5 +1,7 @@
-// A traffic light and a pedestrian light at a crossing, both built on one small statechart library.
-// The library says once how a statechart steps, and each light only lists its states and transitions.
+/**
+ * A traffic light and a pedestrian light at a crossing, both built on one small statechart library.
+ * The library says once how a statechart steps, and each light only lists its states and transitions.
+ */
 
 package example::trafficlight::library
 

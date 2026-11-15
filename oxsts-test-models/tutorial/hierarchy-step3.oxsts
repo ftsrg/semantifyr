@@ -1,5 +1,7 @@
-// A traffic light whose colors are substates of an operating state, beside a standby state, on a small statechart library.
-// The light has a lamp, which a state can switch when it is entered.
+/**
+ * A traffic light whose colors are substates of an operating state, beside a standby state, on a small statechart library.
+ * The light has a lamp, which a state can switch when it is entered.
+ */
 
 package example::trafficlight::hierarchy::step3
 

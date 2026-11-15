@@ -1,4 +1,6 @@
-// A traffic light built on a small library of states.
+/**
+ * A traffic light built on a small library of states.
+ */
 
 package example::trafficlight::library::step1
 

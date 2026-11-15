@@ -1,4 +1,6 @@
-// Two traffic lights at an intersection, where a green light counts its steps before it may turn yellow.
+/**
+ * Two traffic lights at an intersection, where a green light counts its steps before it may turn yellow.
+ */
 
 package example::trafficlight::greentime::step1
 

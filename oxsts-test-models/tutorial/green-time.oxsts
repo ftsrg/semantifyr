@@ -1,5 +1,7 @@
-// Two traffic lights at an intersection, where a green light counts its steps before it may turn yellow.
-// A light starts counting again whenever it switches, and a case counts the steps north stays green on its own.
+/**
+ * Two traffic lights at an intersection, where a green light counts its steps before it may turn yellow.
+ * A light starts counting again whenever it switches, and a case counts the steps north stays green on its own.
+ */
 
 package example::trafficlight::greentime
 

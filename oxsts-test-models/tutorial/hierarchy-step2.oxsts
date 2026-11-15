@@ -1,4 +1,6 @@
-// A traffic light whose colors are substates of an operating state, beside a standby state, on a small statechart library.
+/**
+ * A traffic light whose colors are substates of an operating state, beside a standby state, on a small statechart library.
+ */
 
 package example::trafficlight::hierarchy::step2
 

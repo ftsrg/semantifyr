@@ -1,4 +1,6 @@
-// Two traffic lights at an intersection, where one light switches in each step.
+/**
+ * Two traffic lights at an intersection, where one light switches in each step.
+ */
 
 package example::trafficlight::intersection::step1
 

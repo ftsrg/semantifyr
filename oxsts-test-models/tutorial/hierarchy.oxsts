@@ -1,6 +1,8 @@
-// A traffic light whose colors are substates of an operating state, beside a standby state, on a small statechart library.
-// The light has a lamp, which a state can switch when it is entered, and an operator's events move the light to standby and back.
-// In an emergency, the intersection turns both lights red.
+/**
+ * A traffic light whose colors are substates of an operating state, beside a standby state, on a small statechart library.
+ * The light has a lamp, which a state can switch when it is entered, and an operator's events move the light to standby and back.
+ * In an emergency, the intersection turns both lights red.
+ */
 
 package example::trafficlight::hierarchy
 
