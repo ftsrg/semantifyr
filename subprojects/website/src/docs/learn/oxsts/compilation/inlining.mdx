@@ -18,4 +18,4 @@ The walk shows every frame the compiler writes during inlining but four: resolvi
 
 <PhaseWalk steps={inlining} label="Inlining, step by step" />
 
-The `init` is expanded first, then the main transition, whose body is a choice with a branch for each lamp, each branch's call in its turn, then the property. No optimization of the phase changes this model, so the last expansion's frame is the model inlining writes. [Flattening](flattening.mdx) starts from it.
+The `init` is expanded first, then the main transition, a choice with a branch for each lamp, then the toggle each branch calls, then the property. No optimization of the phase changes this model, so the last expansion's frame is the model inlining writes. [Flattening](flattening.mdx) starts from it.
