@@ -1,6 +1,6 @@
 ---
 title: Packages and Imports
-slug: /learn/language/packages-and-imports
+slug: /learn/oxsts/language/packages-and-imports
 sidebar_position: 1
 description: OXSTS packages, how a file declares one, and how imports bring the names of other packages into scope.
 ---

@@ -12,7 +12,7 @@ import { terms } from '@semantifyr/editor-common/terms';
 import Architecture from '@site/src/components/Architecture';
 import { EmbeddedExample } from '@site/src/components/LiveEmbed/EmbeddedExample';
 import { useLiveBackendUrl } from '@site/src/lib/live';
-import { addressOf, learnParts } from '@site/src/map';
+import { addressOf, isPart, learnParts } from '@site/src/map';
 import crossroads from '@served-examples/sysml/crossroads';
 import Layout from '@theme/Layout';
 import ThemedImage from '@theme/ThemedImage';
@@ -27,7 +27,7 @@ const STILL_LINES = 22;
 
 function partAddress(label: string): string {
   const part = learnParts.flatMap((candidate) => {
-    return [candidate, ...candidate.parts ?? []];
+    return [candidate, ...(candidate.parts ?? []).filter(isPart)];
   }).find((candidate) => {
     return candidate.label === label;
   });
@@ -54,7 +54,7 @@ const DOORS = [
     language: 'oxsts',
     title: 'Define semantics in OXSTS',
     text: 'Write the semantics of a language of your own as a library in OXSTS, the language both frontends are built on, and verify its models the same way.',
-    part: 'OXSTS Lessons',
+    part: 'Lessons',
   },
 ] as const;
 

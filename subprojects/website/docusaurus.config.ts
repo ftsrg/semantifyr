@@ -63,15 +63,14 @@ function servedExamplesPlugin(): Plugin {
 // the docs are routed at the site's root, so a page's address is its path under them
 const DOCS = 'src/docs';
 
-// a backend's page is the one place that adds it, so the architecture's names cannot fall behind the reference
+// a backend's page is the one place that adds it, so the architecture's names cannot fall behind the backends' pages
 function backendsPlugin(): Plugin {
-  const pages = 'learn/reference/backends';
-  const directory = path.resolve(__dirname, DOCS, pages);
+  const directory = path.resolve(__dirname, DOCS, 'learn/backends');
   return {
     name: 'backends',
     contentLoaded({ actions }) {
       const backends = readdirSync(directory).filter((file) => {
-        return file.endsWith('.mdx');
+        return /^backend: true$/m.test(readFileSync(path.join(directory, file), 'utf8'));
       }).map((file) => {
         const text = readFileSync(path.join(directory, file), 'utf8');
         const name = /^title: (['"]?)(.+)\1$/m.exec(text)?.[2];
@@ -338,7 +337,7 @@ export default {
         },
         {
           label: 'What Live\'s Server Keeps',
-          to: '/learn/verifying/live/privacy/',
+          to: '/learn/live/privacy/',
         },
         {
           label: 'Source code',

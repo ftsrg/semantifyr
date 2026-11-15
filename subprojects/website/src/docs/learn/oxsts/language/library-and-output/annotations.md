@@ -1,6 +1,6 @@
 ---
 title: Annotations
-slug: /learn/language/annotations
+slug: /learn/oxsts/language/annotations
 sidebar_position: 13
 description: OXSTS annotations, how they are declared and applied, and the standard annotations the toolchain reads.
 ---

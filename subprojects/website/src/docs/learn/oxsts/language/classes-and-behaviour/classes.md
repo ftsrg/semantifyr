@@ -1,6 +1,6 @@
 ---
 title: Classes
-slug: /learn/language/classes
+slug: /learn/oxsts/language/classes
 sidebar_position: 6
 description: OXSTS classes, their declaration, abstract classes, inheritance, redefinition and self.
 ---

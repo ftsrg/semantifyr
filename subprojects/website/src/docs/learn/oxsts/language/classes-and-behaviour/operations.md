@@ -1,6 +1,6 @@
 ---
 title: Operations
-slug: /learn/language/operations
+slug: /learn/oxsts/language/operations
 sidebar_position: 11
 description: The runtime operations of OXSTS transition bodies, assignment, havoc, assumption, sequence, choice, if, for and local variables.
 ---
@@ -236,7 +236,7 @@ class Counter {
 
 ### `for`
 
-A runtime loop. Its range is an integer range, such as `1..count`, whose bounds may read the state, an expression of instances, such as a feature, or an expression of several values, such as an array; a single value of a datatype or an enumeration, such as an `int` variable, is rejected (`OXSTS.TYPE_MISMATCH`). Over a range the loop variable takes each integer of the range in turn, and over a feature it holds each instance, so that a call or a member read through it acts on that instance; it cannot be written. A `for` whose range is known at compile time can be an [`inline for`](inline-operations.md#inline-for-sequence), which the validator hints at (`OXSTS.COULD_BE_INLINE`). The pages of the backends, [Theta](../../reference/backends/theta.mdx), [nuXmv](../../reference/backends/nuxmv.mdx), [Spin](../../reference/backends/spin.mdx) and [Uppaal](../../reference/backends/uppaal.mdx), say what each does with it.
+A runtime loop. Its range is an integer range, such as `1..count`, whose bounds may read the state, an expression of instances, such as a feature, or an expression of several values, such as an array; a single value of a datatype or an enumeration, such as an `int` variable, is rejected (`OXSTS.TYPE_MISMATCH`). Over a range the loop variable takes each integer of the range in turn, and over a feature it holds each instance, so that a call or a member read through it acts on that instance; it cannot be written. A `for` whose range is known at compile time can be an [`inline for`](inline-operations.md#inline-for-sequence), which the validator hints at (`OXSTS.COULD_BE_INLINE`). The pages of the backends, [Theta](../../../backends/theta.mdx), [nuXmv](../../../backends/nuxmv.mdx), [Spin](../../../backends/spin.mdx) and [Uppaal](../../../backends/uppaal.mdx), say what each does with it.
 
 ```oxsts
 // hide-start

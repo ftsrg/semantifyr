@@ -6,15 +6,15 @@ description: How a portfolio runs the backends side by side, in which direction 
 
 # Portfolios and Verdicts
 
-Verifying a case [compiles](../compilation/index.mdx) it to a transition system and hands that to a portfolio. A portfolio is a strategy for the backend runs: which backends run under which configurations, how they run side by side, and how the verdict is decided from their answers. Where a backend found a run that shows the verdict, its [witness](witnesses-and-traces.mdx) comes back with the verdict. The command line, Live and the VS Code extension all verify this way; `smart` is the default portfolio everywhere.
+Verifying a case [compiles](../oxsts/compilation/index.mdx) it to a transition system and hands that to a portfolio. A portfolio is a strategy for the backend runs: which backends run under which configurations, how they run side by side, and how the verdict is decided from their answers. Where a backend found a run that shows the verdict, its [witness](witnesses-and-traces.mdx) comes back with the verdict. The command line, Live and the VS Code extension all verify this way; `smart` is the default portfolio everywhere.
 
 ## Backends side by side
 
-A portfolio is made of legs, each one backend under one configuration. A portfolio runs every leg whose backend is installed, each writing its files to a directory of its own in the case's directory, as many at once as a bound allows, by default the number of the machine's processors; a leg beyond the bound waits for a free place. Before its backend runs, a leg checks whether the backend can translate the model, and answers Not supported, naming the constructs it refuses, when it cannot; each [backend's page](/learn/reference/backends) lists what it refuses. A model left with no variable, no `init` and no transition is decided without any backend.
+A portfolio is made of legs, each one backend under one configuration. A portfolio runs every leg whose backend is installed, each writing its files to a directory of its own in the case's directory, as many at once as a bound allows, by default the number of the machine's processors; a leg beyond the bound waits for a free place. Before its backend runs, a leg checks whether the backend can translate the model, and answers Not supported, naming the constructs it refuses, when it cannot; each [backend's page](index.mdx) lists what it refuses. A model left with no variable, no `init` and no transition is decided without any backend.
 
 ## Soundness directions
 
-Each leg is one backend configuration, listed with the direction in which its verdicts can be trusted. An exact leg is trusted both ways. An under-approximating leg explores only part of the behaviour, so it is trusted when it finds a trace (a Failed `AG` or a Passed `EF` property) and not when it reports that none exists. An over-approximating leg is trusted the other way round. Each [backend's page](/learn/reference/backends) says which of its verdicts a portfolio trusts.
+Each leg is one backend configuration, listed with the direction in which its verdicts can be trusted. An exact leg is trusted both ways. An under-approximating leg explores only part of the behaviour, so it is trusted when it finds a trace (a Failed `AG` or a Passed `EF` property) and not when it reports that none exists. An over-approximating leg is trusted the other way round. Each [backend's page](index.mdx) says which of its verdicts a portfolio trusts.
 
 ## The verdict from the answers
 

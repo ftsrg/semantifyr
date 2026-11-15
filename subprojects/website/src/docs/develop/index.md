@@ -10,10 +10,10 @@ This page is Semantifyr from a distance, for a contributor about to read the cod
 
 ## The Parts
 
-- **The language.** OXSTS, its grammar, its validator and its type system, in which the semantic libraries and the models verified on them are written. [The OXSTS Language](../learn/language/index.md) specifies it.
-- **The compiler.** It turns one verification case of an OXSTS model into a transition system in three phases, instantiation, inlining and flattening, with an optimizer after the last two; [How OXSTS Compiles](../learn/compilation/index.mdx) shows each phase.
+- **The language.** OXSTS, its grammar, its validator and its type system, in which the semantic libraries and the models verified on them are written. [The OXSTS Language](../learn/oxsts/language/index.md) specifies it.
+- **The compiler.** It turns one verification case of an OXSTS model into a transition system in three phases, instantiation, inlining and flattening, with an optimizer after the last two; [How OXSTS Compiles](../learn/oxsts/compilation/index.mdx) shows each phase.
 - **The verifier.** It finds the verification cases of a model, has each compiled and verified, and back-annotates a backend's evidence into an OXSTS witness, which it can verify again to validate it.
-- **The backends.** Each turns the transition system into the input language of its model checker, refuses up front what that language cannot express, runs the checker and reads its answer and its evidence back. A portfolio runs several of them side by side and decides the verdict from their answers ([Portfolios and Verdicts](../learn/verifying/portfolios-and-verdicts.mdx)).
+- **The backends.** Each turns the transition system into the input language of its model checker, refuses up front what that language cannot express, runs the checker and reads its answer and its evidence back. A portfolio runs several of them side by side and decides the verdict from their answers ([Portfolios and Verdicts](../learn/backends/portfolios-and-verdicts.mdx)).
 - **The frontends.** Each takes an engineering language to OXSTS: a translation of its models onto a semantic library of its own, and a generator that writes a witness back as a trace in the language. The SysML v2 frontend translates with a fork of SysIDE, the Gamma frontend with a language of its own beside OXSTS.
 - **The launchers.** `semantifyr`, `semantifyr-sysml` and `semantifyr-gamma` share their options, output and exit codes; each distribution carries the Theta backend, and a frontend's launcher its semantic library.
 - **The editors.** Language servers for OXSTS and Gamma, and the VS Code extension that runs them and shows a case's witness and trace.

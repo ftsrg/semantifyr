@@ -9,7 +9,7 @@ import ServedExamples from '@site/src/components/ServedExamples';
 
 # The OXSTS Language
 
-OXSTS is the **declarative-operational** language of Semantifyr, in which the [semantic libraries](../start/index.mdx) of the framework and the models verified on them are written. An OXSTS model is a collection of classes, features, transitions, and properties that the compiler unfolds into a flat transition system and hands to a backend, the model checker that verifies it.
+OXSTS is the **declarative-operational** language of Semantifyr, in which the [semantic libraries](../../index.mdx) of the framework and the models verified on them are written. An OXSTS model is a collection of classes, features, transitions, and properties that the compiler unfolds into a flat transition system and hands to a backend, the model checker that verifies it.
 
 These pages specify OXSTS, one construct a page, for lookup in any order; the [OXSTS lessons](../lessons/index.md) teach it, and [How OXSTS Compiles](../compilation/index.mdx) shows what the compiler makes of a model. [What Is Supported](library-and-output/supported.mdx) lists the constructs the compiler supports, rejects or plans.
 
@@ -46,9 +46,9 @@ A pervasive distinction throughout the language is **compile-time vs runtime**. 
 
 ## What This Reference Does Not Cover
 
-- The **internals** of the compiler, which the [architecture](../../develop/index.md) sketches and the code holds.
-- The **frontends** that translate SysML v2 and Gamma models into OXSTS, each with its part of Learn: [SysML v2](../frontends/sysml-v2/index.mdx) and [Gamma](../frontends/gamma/index.mdx).
-- What a **backend** does with a construct, which each [backend's page](/learn/reference/backends) states, and the input languages of the backends.
+- The **internals** of the compiler, which the [architecture](../../../develop/index.md) sketches and the code holds.
+- The **frontends** that translate SysML v2 and Gamma models into OXSTS, each with its part of Learn: [SysML v2](../../frontends/sysml-v2/index.mdx) and [Gamma](../../frontends/gamma/index.mdx).
+- What a **backend** does with a construct, which each [backend's page](../../backends/index.mdx) states, and the input languages of the backends.
 
 ## Examples in Live
 

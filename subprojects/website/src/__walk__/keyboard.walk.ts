@@ -27,7 +27,7 @@ const FOCUSABLE = [
 ].join(', ');
 
 // a lesson's step, which embeds its examples
-const LESSON = '/learn/lessons/one-light/';
+const LESSON = '/learn/oxsts/lessons/one-light/';
 
 const PHONE = { width: 375, height: 812 };
 

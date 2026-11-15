@@ -1,6 +1,6 @@
 ---
 title: Inline Operations
-slug: /learn/language/inline-operations
+slug: /learn/oxsts/language/inline-operations
 sidebar_position: 12
 description: OXSTS inline operations, resolved at compile time, the inline call, inline if, inline for and inline for choice.
 ---

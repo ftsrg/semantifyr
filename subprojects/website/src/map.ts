@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-// the parts of Learn, which its sidebar, its page and the header's menu are made from
+// the parts of Learn, which its sidebar and the header's menu are made from
 export interface LearnPart {
   label: string;
   description: string;
@@ -12,14 +12,19 @@ export interface LearnPart {
   opening: { doc: string } | { index: string };
   // the folder whose pages, but its index, the part holds
   directory?: string;
-  parts?: LearnPart[];
+  parts?: (LearnPart | LearnPage)[];
+}
+
+// a page that stands among a part's parts
+export interface LearnPage {
+  doc: string;
 }
 
 export const learnParts: LearnPart[] = [
   {
     label: 'Start',
-    description: 'What Semantifyr is, how it works at a glance, trying it in the browser and installing it.',
-    opening: { doc: 'learn/start/index' },
+    description: 'What Semantifyr is and how it works, verifying in Live and in VS Code, and installing it.',
+    opening: { doc: 'learn/index' },
     directory: 'learn/start',
   },
   {
@@ -42,36 +47,50 @@ export const learnParts: LearnPart[] = [
     ],
   },
   {
-    label: 'Verifying',
-    description: 'How a case gets its verdict, the witness and the trace behind it, and verifying in Live, in VS Code and on the command line.',
-    opening: { doc: 'learn/verifying/index' },
-    directory: 'learn/verifying',
+    label: 'Backends',
+    description: 'What a backend is, how a portfolio decides a verdict from the backends\' answers, the witness behind a verdict, and Theta, nuXmv, Spin and Uppaal.',
+    opening: { doc: 'learn/backends/index' },
+    directory: 'learn/backends',
   },
   {
-    label: 'OXSTS Lessons',
-    description: 'Defining semantics yourself in OXSTS, in five levels on a traffic light, from one light to a statechart library.',
-    opening: { doc: 'learn/lessons/index' },
-    directory: 'learn/lessons',
-  },
-  {
-    label: 'How OXSTS Compiles',
-    description: 'How the compiler turns an OXSTS model into the transition system a backend checks, phase by phase.',
-    opening: { doc: 'learn/compilation/index' },
-    directory: 'learn/compilation',
-  },
-  {
-    label: 'The OXSTS Language',
-    description: 'The specification of OXSTS: its foundations, its classes and behaviour, its standard library and what the compiler writes.',
-    opening: { doc: 'learn/language/index' },
-    directory: 'learn/language',
+    label: 'OXSTS',
+    description: 'Semantifyr\'s language for semantics: lessons that teach it, its specification, how it compiles and verifying it on the command line.',
+    opening: { doc: 'learn/oxsts/index' },
+    parts: [
+      {
+        label: 'Lessons',
+        description: 'Defining semantics yourself in OXSTS, in five levels on a traffic light, from one light to a statechart library.',
+        opening: { doc: 'learn/oxsts/lessons/index' },
+        directory: 'learn/oxsts/lessons',
+      },
+      {
+        label: 'Language',
+        description: 'The specification of OXSTS: its foundations, its classes and behaviour, its standard library and what the compiler writes.',
+        opening: { doc: 'learn/oxsts/language/index' },
+        directory: 'learn/oxsts/language',
+      },
+      {
+        label: 'Compilation',
+        description: 'How the compiler turns an OXSTS model into the transition system a backend checks, phase by phase.',
+        opening: { doc: 'learn/oxsts/compilation/index' },
+        directory: 'learn/oxsts/compilation',
+      },
+      {
+        doc: 'learn/oxsts/command-line',
+      },
+    ],
   },
   {
     label: 'Reference',
-    description: 'The command line, the portfolios, the VS Code settings, the backends and the artifacts a verification writes.',
+    description: 'The command line, the portfolios, the VS Code settings and the artifacts a verification writes.',
     opening: { index: '/learn/reference' },
     directory: 'learn/reference',
   },
 ];
+
+export function isPart(item: LearnPart | LearnPage): item is LearnPart {
+  return 'label' in item;
+}
 
 export const sections = [
   {

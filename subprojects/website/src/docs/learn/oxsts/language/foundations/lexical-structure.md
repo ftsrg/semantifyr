@@ -1,6 +1,6 @@
 ---
 title: Lexical Structure
-slug: /learn/language/lexical-structure
+slug: /learn/oxsts/language/lexical-structure
 sidebar_position: 0.5
 description: The lexical structure of OXSTS, its names, keywords, literals, comments and whitespace.
 ---

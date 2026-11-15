@@ -48,7 +48,7 @@ Predict both verdicts, then press **Open** and **Verify all**:
 
 </details>
 
-A [trace](../verifying/witnesses-and-traces.mdx#the-trace) is an execution that shows a case's answer: for an `EF` case one that reaches what it asks for, for an `AG` case one that breaks it. Where no such execution exists, there is no trace. Open the trace of `EastCanTurnGreen`. `@Trace` on the light's main transition fills the *Calls* view: each step names the light that switched, `root.intersection.north` or `root.intersection.east`, beside the colors in *Steps*.
+A [trace](../../backends/witnesses-and-traces.mdx#the-trace) is an execution that shows a case's answer: for an `EF` case one that reaches what it asks for, for an `AG` case one that breaks it. Where no such execution exists, there is no trace. Open the trace of `EastCanTurnGreen`. `@Trace` on the light's main transition fills the *Calls* view: each step names the light that switched, `root.intersection.north` or `root.intersection.east`, beside the colors in *Steps*.
 
 ## A Second Requirement
 

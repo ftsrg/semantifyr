@@ -1,6 +1,6 @@
 ---
 title: Properties
-slug: /learn/language/properties
+slug: /learn/oxsts/language/properties
 sidebar_position: 9
 description: OXSTS properties, the pure computations used for guards, queries and the verification property.
 ---
@@ -154,7 +154,7 @@ class StaysBelow100 {
 
 When the class is verified, the model checker decides the body over the reachable states: `AG p` holds when `p` holds in every reachable state, `EF p` when it holds in at least one.
 
-The verdict is **Passed** when the property holds and **Failed** when it does not; the verdicts of a verification that decides neither are listed under [Verdicts](../../reference/command-line.mdx#verdicts).
+The verdict is **Passed** when the property holds and **Failed** when it does not; the verdicts of a verification that decides neither are listed under [Verdicts](../../../reference/command-line.mdx#verdicts).
 
 ## Properties vs Transitions
 

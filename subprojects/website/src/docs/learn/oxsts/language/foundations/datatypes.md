@@ -1,6 +1,6 @@
 ---
 title: Datatypes
-slug: /learn/language/datatypes
+slug: /learn/oxsts/language/datatypes
 sidebar_position: 2
 description: The data values OXSTS can represent, the primitive datatypes, enumerations and records.
 ---
@@ -11,7 +11,7 @@ This page describes the **data values** Semantifyr can represent: primitives, en
 
 ## Primitive Datatypes
 
-The [standard library](../library-and-output/standard-library.md#datatypes) declares the primitive datatypes, and its page describes each. `int` holds the mathematical integers and `real` the real numbers, with no fixed width. A model may declare variables of every datatype, and it validates and compiles with them. Which datatypes a backend checks is on the pages of the backends, [Theta](../../reference/backends/theta.mdx), [nuXmv](../../reference/backends/nuxmv.mdx), [Spin](../../reference/backends/spin.mdx) and [Uppaal](../../reference/backends/uppaal.mdx).
+The [standard library](../library-and-output/standard-library.md#datatypes) declares the primitive datatypes, and its page describes each. `int` holds the mathematical integers and `real` the real numbers, with no fixed width. A model may declare variables of every datatype, and it validates and compiles with them. Which datatypes a backend checks is on the pages of the backends, [Theta](../../../backends/theta.mdx), [nuXmv](../../../backends/nuxmv.mdx), [Spin](../../../backends/spin.mdx) and [Uppaal](../../../backends/uppaal.mdx).
 
 A datatype is declared with `extern datatype`, which the standard library alone may do: a model cannot add one (`OXSTS.DATA_TYPE_NOT_IN_BUILTIN`).
 

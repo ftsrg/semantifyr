@@ -22,7 +22,7 @@ So that traffic can pass, a light that turns green stays green for at least thre
 
 <LiveEmbed example={step1} show={['TrafficLight']} />
 
-The main transition has a fourth branch. While the light is green and has counted fewer than three steps, it stays green and adds one to the counter with [arithmetic](../language/foundations/expressions.md#arithmetic-operators); once it has counted three, it may turn yellow. The guard `greenFor < 3` also bounds the counter: it never goes above three, the bound a backend such as [Spin](../reference/backends/spin.mdx) needs on an integer.
+The main transition has a fourth branch. While the light is green and has counted fewer than three steps, it stays green and adds one to the counter with [arithmetic](../language/foundations/expressions.md#arithmetic-operators); once it has counted three, it may turn yellow. The guard `greenFor < 3` also bounds the counter: it never goes above three, the bound a backend such as [Spin](../../backends/spin.mdx) needs on an integer.
 
 Can north still turn yellow, and how many steps does it take now?
 

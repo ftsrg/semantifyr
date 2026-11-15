@@ -1,6 +1,0 @@
-label: Backends
-position: 4
-link:
-  type: generated-index
-  slug: /learn/reference/backends
-  description: What each backend refuses before it runs, and which of its verdicts a portfolio trusts.
