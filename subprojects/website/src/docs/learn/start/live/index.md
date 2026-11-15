@@ -1,5 +1,5 @@
 ---
-title: Verifying in Live
+title: Try in the Browser
 slug: /learn/live
 description: Verify a SysML v2, Gamma or OXSTS model in Semantifyr Live, in the browser with nothing to install, and what the controls of Live and of the editor a page embeds show.
 ---
@@ -8,11 +8,11 @@ import ThemedImage from '@theme/ThemedImage';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import LiveLimit from '@site/src/components/LiveLimit';
 
-# Verifying in Live
+# Try in the Browser
 
 [Semantifyr Live](https://live.semantifyr.org) edits and verifies a SysML v2, Gamma or OXSTS model in the browser, with nothing to install and no account. Its editor has syntax highlighting, diagnostics, content assist and inlay hints; for SysML v2 the language server runs in your browser, with the standard library and the verification library at hand. A page of this site embeds the same editor in place of a code block.
 
-## Trying It
+## A First Run
 
 1. Open [Live](https://live.semantifyr.org). It opens on a SysML v2 example, the level crossing.
 2. Pick a language and one of its example models in the toolbar.

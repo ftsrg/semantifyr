@@ -16,7 +16,7 @@ For anything beyond a small fix, open an issue or a discussion before you start:
 
 ## Building and Running From a Clone
 
-Fork the repository and clone your fork. [Installing It](../learn/start/install.md) says what a build needs and builds the launchers and the VS Code extension from the clone; Gradle downloads the rest, Theta and Node.js among it, and a test that needs nuXmv, Spin or Uppaal is skipped when that backend is not on `PATH`. [Architecture](index.md) says where each part of Semantifyr lives and where to start reading it.
+Fork the repository and clone your fork. [Install](../learn/start/install.md) says what a build needs and builds the launchers and the VS Code extension from the clone; Gradle downloads the rest, Theta and Node.js among it, and a test that needs nuXmv, Spin or Uppaal is skipped when that backend is not on `PATH`. [Architecture](index.md) says where each part of Semantifyr lives and where to start reading it.
 
 ## Test Levels
 

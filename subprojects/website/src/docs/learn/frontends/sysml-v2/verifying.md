@@ -86,7 +86,7 @@ The model is yours to edit, as one file. The cases follow your edits, and a cons
 
 - A Java 25 runtime found through `JAVA_HOME` or `PATH`.
 - Node.js <NodeVersion /> or newer on `PATH`.
-- The `semantifyr-sysml` command-line distribution ([Installing It](../../start/install.md#the-command-line)). It carries the translator from SysML v2 to OXSTS and the SysML v2 semantic library, so Node.js is the only prerequisite SysML v2 adds.
+- The `semantifyr-sysml` command-line distribution ([Install](../../start/install.md#the-command-line)). It carries the translator from SysML v2 to OXSTS and the SysML v2 semantic library, so Node.js is the only prerequisite SysML v2 adds.
 
 `SEMANTIFYR_HOME` below is the installed distribution, `subprojects/frontends/sysml/sysml-cli/build/install/semantifyr-sysml` in a clone of the repository: it holds the launcher in `bin/`, Theta in `theta-xsts-cli/` and the semantic library in `libraries/`; an unzipped `semantifyr-sysml-<version>.zip` has the same layout. The commands below are written for Linux and macOS shells; on Windows, use `bin\semantifyr-sysml.bat`.
 
