@@ -28,20 +28,26 @@ class Spot : Lamp {
 }
 
 class Room {
-    contains left: Lamp
-    contains right: Lamp
+    contains top: Lamp
+    contains bottom: Lamp
 
-    var lastToggled: Lamp[0..1] := nothing
+    var last: Lamp[0..1] := nothing
 
     redefine tran {
-        inline left.toggle()
-        inline right.toggle()
-        lastToggled := right
+        choice {
+            assume(last != top)
+            inline top.toggle()
+            last := top
+        } or {
+            assume(last != bottom)
+            inline bottom.toggle()
+            last := bottom
+        }
     }
 }
 
 class Hall : Room {
-    redefine contains right: Spot
+    redefine contains bottom: Spot
 }
 
 @VerificationCase
@@ -53,6 +59,6 @@ class BothLampsCanBeOn {
     }
 
     prop {
-        return EF hall.left.isOn() && hall.right.isOn()
+        return EF hall.top.isOn() && hall.bottom.isOn()
     }
 }
