@@ -26,7 +26,7 @@ class SmartFullPortfolioTest {
     private val parentInjector = mock(Injector::class.java)
 
     @Test
-    suspend fun `racing all-passing backends produces a Passed verdict`(
+    suspend fun `all-passing backends produce a Passed verdict`(
         @TempDir output: Path,
     ) {
         val portfolio = SmartFullPortfolio(
@@ -58,7 +58,7 @@ class SmartFullPortfolioTest {
     }
 
     @Test
-    suspend fun `a Passed from an under-approximating leg does not win the race`(
+    suspend fun `a Passed invariant from an under-approximating leg does not decide the case`(
         @TempDir output: Path,
     ) {
         val portfolio = SmartFullPortfolio(
@@ -75,7 +75,7 @@ class SmartFullPortfolioTest {
     }
 
     @Test
-    suspend fun `a nuXmv leg races and decides when no other leg can`(
+    suspend fun `a nuXmv leg decides when no other leg can`(
         @TempDir output: Path,
     ) {
         val portfolio = SmartFullPortfolio(
@@ -122,11 +122,11 @@ class SmartFullPortfolioTest {
         val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
-        assertThat(result.message).contains("spin:collapse=Passed (not trusted, UnderApproximating)", "uppaal:over-approximation=NotSupported", "theta:cegar-expl=NotSupported")
+        assertThat(result.message).contains("spin:safe-dfs=Passed (not trusted, UnderApproximating)", "uppaal:over-approximation=NotSupported", "theta:cegar-expl=NotSupported")
     }
 
     @Test
-    suspend fun `a Passed invariant from Uppaal's over-approximation wins the race`(
+    suspend fun `a Passed invariant from Uppaal's over-approximation decides the case`(
         @TempDir output: Path,
     ) {
         val portfolio = SmartFullPortfolio(
@@ -193,7 +193,7 @@ class SmartFullPortfolioTest {
     }
 
     @Test
-    suspend fun `a decisive backend cancels the slower siblings`(@TempDir output: Path) {
+    suspend fun `a trusted answer cancels the legs still running`(@TempDir output: Path) {
         val slowUppaal = SlowBackend<UppaalConfig>("uppaal")
         val portfolio = SmartFullPortfolio(
             theta = PassingBackend("theta"),
@@ -202,10 +202,10 @@ class SmartFullPortfolioTest {
             spin = PassingBackend("spin"),
         )
 
-        val result = portfolio.verify(parentInjector, stubRequest(output), LimitedConcurrencyGate(maxConcurrency = 8), ExecutionEnvironment.Empty, ProgressContext.Silent)
+        val result = portfolio.verify(parentInjector, stubRequest(output), LimitedConcurrencyGate(maxConcurrency = 15), ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
-        assertThat(slowUppaal.invocations.get()).isPositive
-        assertThat(slowUppaal.cancellations.get()).isEqualTo(slowUppaal.invocations.get())
+        assertThat(slowUppaal.invocations.get()).isEqualTo(2)
+        assertThat(slowUppaal.cancellations.get()).isEqualTo(2)
     }
 }

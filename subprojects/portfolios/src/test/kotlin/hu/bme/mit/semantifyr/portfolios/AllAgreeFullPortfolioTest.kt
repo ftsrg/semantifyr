@@ -53,7 +53,7 @@ class AllAgreeFullPortfolioTest {
         val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
-        assertThat(result.message).contains("theta=Passed (Exact)", "spin=Failed (UnderApproximating)")
+        assertThat(result.message).contains("theta:cegar-expl-pred-combined=Passed (Exact)", "spin:safe-dfs=Failed (UnderApproximating)")
     }
 
     @Test
@@ -70,7 +70,7 @@ class AllAgreeFullPortfolioTest {
         val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
-        assertThat(result.message).contains("uppaal=Passed (not trusted, UnderApproximating)", "spin=Passed (not trusted, UnderApproximating)")
+        assertThat(result.message).contains("uppaal:default=Passed (not trusted, UnderApproximating)", "spin:safe-dfs=Passed (not trusted, UnderApproximating)")
     }
 
     @Test

@@ -45,7 +45,7 @@ class SmartFullPortfolio(
     private val firstWindow: Duration = 10.seconds,
     private val secondWindow: Duration = 30.seconds,
     private val windowShare: Double = 1.0 / 3.0,
-    private val shortestWindow: Duration = 10.seconds,
+    private val shortestSecondWindow: Duration = 10.seconds,
     timeSource: TimeSource = TimeSource.Monotonic,
 ) : VerificationPortfolio(timeSource) {
     override val id: String = "smart"
@@ -183,15 +183,15 @@ class SmartFullPortfolio(
         val runs = mutableListOf<LegRun>()
         for (stage in stages) {
             val window = stage.window(case)
-            if (window.isFinite() && minOf(window, case.timeLeft()) < shortestWindow) {
-                logger.info { "$id: skipping the ${stage.name} stage, its window of $window is shorter than $shortestWindow" }
+            if (stage == secondStage && minOf(window, case.timeLeft()) < shortestSecondWindow) {
+                logger.info { "$id: skipping the ${stage.name} stage, its window of $window is shorter than $shortestSecondWindow" }
                 continue
             }
             val stageTasks = stage.tasks.filter {
                 it in available && !endedOnItsOwn(it, runs) && runsInStage(it, stage, runs)
             }
             if (stageTasks.isEmpty()) {
-                logger.info { "$id: skipping the ${stage.name} stage, each of its configurations ended on its own before" }
+                logger.info { "$id: skipping the ${stage.name} stage, none of its configurations is installed or each ended on its own before" }
                 continue
             }
             val outcome = runStage(stage, stageTasks, window, case, parentInjector, environment)
@@ -246,7 +246,7 @@ class SmartFullPortfolio(
         val depthFirstRun = runs.firstOrNull {
             it.stage == firstStage.name && it.leg == spinSafeDfs.leg.id
         }
-        return depthFirstRun == null || !depthFirstRun.end.endedOnItsOwn
+        return depthFirstRun?.end?.endedOnItsOwn != true
     }
 
     private class SmartStage(

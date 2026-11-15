@@ -21,15 +21,15 @@ import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.job
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeoutOrNull
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicReferenceArray
 import kotlin.time.Duration
 import kotlin.time.Instant
 import kotlin.time.TimeMark
@@ -54,28 +54,17 @@ class PortfolioCase internal constructor(
     }
 }
 
-class PortfolioScope internal constructor(
-    private val coroutineScope: CoroutineScope,
-    private val gate: ConcurrencyGate,
-) {
-    internal val legs = mutableListOf<LaunchedLeg>()
+class PortfolioScope internal constructor() {
+    internal val legs = mutableListOf<LegSpecification>()
 
     fun leg(name: String, block: suspend () -> BackendVerificationResult) {
-        val started = AtomicBoolean(false)
-        val job = coroutineScope.async {
-            gate.withPermit {
-                started.set(true)
-                block()
-            }
-        }
-        legs += LaunchedLeg(name, job, started)
+        legs += LegSpecification(name, block)
     }
 }
 
-internal class LaunchedLeg(
+internal class LegSpecification(
     val name: String,
-    val job: Deferred<BackendVerificationResult>,
-    val started: AtomicBoolean,
+    val block: suspend () -> BackendVerificationResult,
 )
 
 sealed interface LegEnd {
@@ -129,7 +118,7 @@ sealed interface PortfolioOutcome {
 
     data class AllErrored(
         val failures: List<String>,
-        override val runs: List<LegRun> = emptyList(),
+        override val runs: List<LegRun>,
     ) : PortfolioOutcome {
         override fun toBackendVerificationResult(startedAt: Instant): BackendVerificationResult {
             val firstMessage = failures.firstOrNull() ?: "(no message)"
@@ -145,7 +134,7 @@ sealed interface PortfolioOutcome {
 
     data class NoDecision(
         val reason: String,
-        override val runs: List<LegRun> = emptyList(),
+        override val runs: List<LegRun>,
     ) : PortfolioOutcome {
         override fun toBackendVerificationResult(startedAt: Instant): BackendVerificationResult {
             return undecidedResult(startedAt, VerificationVerdict.Inconclusive, reason)
@@ -154,7 +143,7 @@ sealed interface PortfolioOutcome {
 
     data class TimedOut(
         val reason: String,
-        override val runs: List<LegRun> = emptyList(),
+        override val runs: List<LegRun>,
     ) : PortfolioOutcome {
         override fun toBackendVerificationResult(startedAt: Instant): BackendVerificationResult {
             return undecidedResult(startedAt, VerificationVerdict.Timeout, reason)
@@ -163,7 +152,7 @@ sealed interface PortfolioOutcome {
 
     data class AllNotSupported(
         val reason: String,
-        override val runs: List<LegRun> = emptyList(),
+        override val runs: List<LegRun>,
     ) : PortfolioOutcome {
         override fun toBackendVerificationResult(startedAt: Instant): BackendVerificationResult {
             return undecidedResult(startedAt, VerificationVerdict.NotSupported, reason)
@@ -194,10 +183,16 @@ private class GateRace(
     val runs: List<LegRun>,
 )
 
-private class IndexedEnd(
-    val index: Int,
-    val end: LegEnd,
+private class LegResult(
+    val leg: String,
+    val result: BackendVerificationResult,
 )
+
+private enum class LegState {
+    Waiting,
+    Started,
+    Closed,
+}
 
 abstract class VerificationPortfolio(
     private val timeSource: TimeSource = TimeSource.Monotonic,
@@ -234,24 +229,23 @@ abstract class VerificationPortfolio(
         window: Duration = Duration.INFINITE,
         stage: String? = null,
         block: PortfolioScope.() -> Unit,
-    ): PortfolioOutcome = supervisorScope {
-        val scope = PortfolioScope(this, case.gate)
+    ): PortfolioOutcome {
+        val scope = PortfolioScope()
         scope.block()
 
         require(scope.legs.isNotEmpty()) { "$id: firstDecisive requires at least one job" }
         logger.info { "$id: firstDecisive over ${scope.legs.size} job(s)${stageSuffix(stage)}, window=${describedBound(case, window)}" }
 
         val race = race(case, window, stage, scope) {
-            if (it.isTrusted) {
-                logger.info { "$id: job produced trusted ${it.verdict}" }
-                it
+            if (it.result.isTrusted) {
+                logger.info { "$id: ${it.leg} produced trusted ${it.result.verdict}" }
+                it.result
             } else {
                 null
             }
         }
 
-        cancelRemainingJobs()
-        if (race.decided != null) {
+        return if (race.decided != null) {
             PortfolioOutcome.Decided(race.decided, race.runs)
         } else {
             classify(race.runs, describedBound(case, window))
@@ -264,40 +258,36 @@ abstract class VerificationPortfolio(
         window: Duration = Duration.INFINITE,
         stage: String? = null,
         block: PortfolioScope.() -> Unit,
-    ): PortfolioOutcome = supervisorScope {
-        val scope = PortfolioScope(this, case.gate)
+    ): PortfolioOutcome {
+        val scope = PortfolioScope()
         scope.block()
 
         require(scope.legs.isNotEmpty()) { "$id: firstNDecisive requires at least one job" }
         logger.info { "$id: firstNDecisive(n=$count) over ${scope.legs.size} job(s)${stageSuffix(stage)}, window=${describedBound(case, window)}" }
 
-        val decisive = mutableListOf<BackendVerificationResult>()
-        val race = race(case, window, stage, scope) { result ->
-            if (!result.isTrusted) {
+        val decisive = mutableListOf<LegResult>()
+        val race = race(case, window, stage, scope) {
+            if (!it.result.isTrusted) {
                 return@race null
             }
-            decisive += result
+            decisive += it
             if (decisive.size < count) {
                 return@race null
             }
-            val allAgree = decisive.map { it.verdict }.distinct().size == 1
+            val allAgree = decisive.map { decided ->
+                decided.result.verdict
+            }.distinct().size == 1
             if (allAgree) {
-                decisive.first()
+                decisive.first().result
             } else {
-                val breakdown = decisive.joinToString(", ") { "${it.metadata.backendId}=${it.verdict}" }
-                logger.warn { "$id: firstNDecisive(n=$count) disagreement among the first $count decisive results ($breakdown)" }
+                logger.warn { "$id: firstNDecisive(n=$count) disagreement among the first $count decisive results (${describeVerdicts(decisive)})" }
                 null
             }
         }
 
-        cancelRemainingJobs()
-
-        when {
+        return when {
             race.decided != null -> PortfolioOutcome.Decided(race.decided, race.runs)
-            decisive.size >= count -> {
-                val breakdown = decisive.joinToString(", ") { "${it.metadata.backendId}=${it.verdict}" }
-                PortfolioOutcome.NoDecision("$id: firstNDecisive(n=$count) disagreement ($breakdown)", race.runs)
-            }
+            decisive.size >= count -> PortfolioOutcome.NoDecision("$id: firstNDecisive(n=$count) disagreement (${describeVerdicts(decisive)})", race.runs)
             else -> classify(race.runs, describedBound(case, window))
         }
     }
@@ -307,8 +297,8 @@ abstract class VerificationPortfolio(
         window: Duration = Duration.INFINITE,
         stage: String? = null,
         block: PortfolioScope.() -> Unit,
-    ): PortfolioOutcome = supervisorScope {
-        val scope = PortfolioScope(this, case.gate)
+    ): PortfolioOutcome {
+        val scope = PortfolioScope()
         scope.block()
 
         require(scope.legs.isNotEmpty()) { "$id: all requires at least one job" }
@@ -318,24 +308,30 @@ abstract class VerificationPortfolio(
             null
         }
 
-        cancelRemainingJobs()
-
-        val collected = race.runs.mapNotNull {
-            (it.end as? LegEnd.Finished)?.result
+        val decisive = race.runs.mapNotNull {
+            val end = it.end
+            if (end is LegEnd.Finished && end.result.isDecisive) {
+                LegResult(it.leg, end.result)
+            } else {
+                null
+            }
         }
-        val decisive = collected.filter { it.isDecisive }
-        val trusted = decisive.filter { it.isTrusted }
-        when {
+        val trusted = decisive.filter {
+            it.result.isTrusted
+        }
+        return when {
             trusted.isEmpty() -> classify(race.runs, describedBound(case, window))
-            trusted.map { it.verdict }.distinct().size > 1 -> {
-                val breakdown = trusted.joinToString(", ") { "${it.metadata.backendId}=${it.verdict} (${it.soundness})" }
+            trusted.map { it.result.verdict }.distinct().size > 1 -> {
+                val breakdown = trusted.joinToString(", ") {
+                    "${it.leg}=${it.result.verdict} (${it.result.soundness})"
+                }
                 logger.warn { "$id: trusted verdicts disagree ($breakdown), one of these legs is unsound" }
                 PortfolioOutcome.Decided(
                     BackendVerificationResult(
                         verdict = VerificationVerdict.Errored,
                         metadata = VerificationMetadata(
                             backendId = null,
-                            startedAt = trusted.first().metadata.startedAt,
+                            startedAt = trusted.first().result.metadata.startedAt,
                         ),
                         message = "Portfolio '$id' saw trusted verdicts disagree: $breakdown",
                     ),
@@ -344,13 +340,17 @@ abstract class VerificationPortfolio(
             }
             else -> {
                 val agreed = trusted.first()
-                val overruled = decisive.filter { it.verdict != agreed.verdict }
+                val overruled = decisive.filter {
+                    it.result.verdict != agreed.result.verdict
+                }
                 if (overruled.isEmpty()) {
-                    PortfolioOutcome.Decided(agreed, race.runs)
+                    PortfolioOutcome.Decided(agreed.result, race.runs)
                 } else {
-                    val breakdown = overruled.joinToString(", ") { "${it.metadata.backendId}=${it.verdict} (not trusted, ${it.soundness})" }
-                    logger.info { "$id: resolved to ${agreed.verdict} over $breakdown" }
-                    PortfolioOutcome.Decided(agreed.copy(message = "Portfolio '$id' resolved to ${agreed.verdict} from ${agreed.metadata.backendId} over $breakdown"), race.runs)
+                    val breakdown = overruled.joinToString(", ") {
+                        "${it.leg}=${it.result.verdict} (not trusted, ${it.result.soundness})"
+                    }
+                    logger.info { "$id: resolved to ${agreed.result.verdict} over $breakdown" }
+                    PortfolioOutcome.Decided(agreed.result.copy(message = "Portfolio '$id' resolved to ${agreed.result.verdict} from ${agreed.leg} over $breakdown"), race.runs)
                 }
             }
         }
@@ -360,47 +360,86 @@ abstract class VerificationPortfolio(
         return classify(runs, null)
     }
 
-    private suspend fun CoroutineScope.race(
+    // no leg starts after the close, and each leg's end is read only once every leg has stopped
+    private suspend fun race(
         case: PortfolioCase,
         window: Duration,
         stage: String?,
         scope: PortfolioScope,
-        onResult: (BackendVerificationResult) -> BackendVerificationResult?,
-    ): GateRace {
-        val results = funnelLegsIntoChannel(scope)
-        val total = scope.legs.size
-        val ends = arrayOfNulls<LegEnd>(total)
+        onResult: (LegResult) -> BackendVerificationResult?,
+    ): GateRace = coroutineScope {
+        val legs = scope.legs
+        val total = legs.size
+        val states = List(total) {
+            AtomicReference(LegState.Waiting)
+        }
+        val ends = AtomicReferenceArray<LegEnd>(total)
+        val finished = Channel<Int>(Channel.UNLIMITED)
         val progressPrefix = if (stage == null) {
             ""
         } else {
             "$stage stage: "
         }
-        var done = 0
-        val decided = withTimeoutOrNull(minOf(window, case.timeLeft())) {
-            while (done < total) {
-                val received = results.receive()
-                done++
-                ends[received.index] = received.end
-                val end = received.end
-                if (end is LegEnd.Finished) {
-                    case.progress.reportProgress("${progressPrefix}result $done/$total: ${end.result.verdict}")
-                    val finalResult = onResult(end.result)
-                    if (finalResult != null) {
-                        return@withTimeoutOrNull finalResult
+        var received = 0
+        var decided: BackendVerificationResult? = null
+
+        fun receive(index: Int) {
+            received++
+            val end = ends.get(index)
+            if (end is LegEnd.Finished) {
+                case.progress.reportProgress("${progressPrefix}result $received/$total: ${end.result.verdict}")
+                decided = onResult(LegResult(legs[index].name, end.result))
+            }
+        }
+
+        for ((index, leg) in legs.withIndex()) {
+            launch {
+                case.gate.withPermit {
+                    if (states[index].compareAndSet(LegState.Waiting, LegState.Started)) {
+                        ends.set(index, runLeg(leg))
+                        finished.trySend(index)
                     }
                 }
             }
-            null
         }
-        val runs = scope.legs.mapIndexed { index, leg ->
-            val end = ends[index] ?: if (leg.started.get()) {
+
+        withTimeoutOrNull(minOf(window, case.timeLeft())) {
+            while (received < total && decided == null) {
+                receive(finished.receive())
+            }
+        }
+
+        for (state in states) {
+            state.compareAndSet(LegState.Waiting, LegState.Closed)
+        }
+        coroutineContext.cancelChildren()
+        coroutineContext.job.children.toList().joinAll()
+
+        while (decided == null) {
+            val index = finished.tryReceive().getOrNull() ?: break
+            receive(index)
+        }
+
+        val runs = legs.mapIndexed { index, leg ->
+            val end = ends.get(index) ?: if (states[index].get() == LegState.Started) {
                 LegEnd.Cut
             } else {
                 LegEnd.NeverStarted
             }
             LegRun(leg.name, stage, end)
         }
-        return GateRace(decided, runs)
+        GateRace(decided, runs)
+    }
+
+    private suspend fun runLeg(leg: LegSpecification): LegEnd {
+        return try {
+            LegEnd.Finished(leg.block())
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (throwable: Throwable) {
+            logger.warn { "$id: ${leg.name} threw ${throwable::class.simpleName}: ${throwable.message ?: ""}" }
+            LegEnd.Threw(throwable)
+        }
     }
 
     private fun classify(runs: List<LegRun>, bound: Duration?): PortfolioOutcome {
@@ -412,19 +451,17 @@ abstract class VerificationPortfolio(
         }.values.map {
             it.last()
         }
-        val lastEnds = lastRuns.map {
-            it.end
-        }
-        val results = lastEnds.mapNotNull {
-            (it as? LegEnd.Finished)?.result
+        val lastResults = lastRuns.mapNotNull {
+            (it.end as? LegEnd.Finished)?.let { finished ->
+                LegResult(it.leg, finished.result)
+            }
         }
         val observed = describeObserved(runs)
-        val timedOutLegs = lastRuns.filter {
-            val end = it.end
-            end is LegEnd.Finished && end.result.verdict == VerificationVerdict.Timeout
+        val timedOutLegs = lastResults.filter {
+            it.result.verdict == VerificationVerdict.Timeout
         }
         return when {
-            lastEnds.any { !it.endedOnItsOwn } -> {
+            lastRuns.any { !it.end.endedOnItsOwn } -> {
                 val reason = if (bound == null) {
                     "$id: no trusted verdict$observed"
                 } else {
@@ -432,14 +469,19 @@ abstract class VerificationPortfolio(
                 }
                 PortfolioOutcome.TimedOut(reason, runs)
             }
-            results.size == lastEnds.size && results.all { it.verdict == VerificationVerdict.NotSupported } -> allNotSupported(results, runs)
-            lastEnds.all { it is LegEnd.Threw || (it is LegEnd.Finished && it.result.verdict == VerificationVerdict.Errored) } -> {
-                val failures = lastEnds.mapNotNull {
-                    (it as? LegEnd.Threw)?.failure
-                }.map {
-                    "${it::class.simpleName}: ${it.message ?: ""}"
-                } + results.map {
-                    "${it.metadata.backendId}: ${it.message ?: ""}"
+            lastResults.size == lastRuns.size && lastResults.all { it.result.verdict == VerificationVerdict.NotSupported } -> {
+                val legs = lastResults.joinToString(", ") {
+                    "${it.leg} (${it.result.message ?: "no construct reported"})"
+                }
+                PortfolioOutcome.AllNotSupported("$id: every leg reported NotSupported: $legs", runs)
+            }
+            lastRuns.all { it.end is LegEnd.Threw || (it.end as? LegEnd.Finished)?.result?.verdict == VerificationVerdict.Errored } -> {
+                val failures = lastRuns.map {
+                    when (val end = it.end) {
+                        is LegEnd.Threw -> "${it.leg}: ${end.failure::class.simpleName}: ${end.failure.message ?: ""}"
+                        is LegEnd.Finished -> "${it.leg}: ${end.result.message ?: ""}"
+                        else -> error("only failed legs reach here")
+                    }
                 }
                 PortfolioOutcome.AllErrored(failures, runs)
             }
@@ -453,11 +495,10 @@ abstract class VerificationPortfolio(
         }
     }
 
-    private fun allNotSupported(collected: List<BackendVerificationResult>, runs: List<LegRun>): PortfolioOutcome.AllNotSupported {
-        val legs = collected.map {
-            "${it.metadata.backendId ?: "?"} (${it.message ?: "no construct reported"})"
-        }.distinct().joinToString(", ")
-        return PortfolioOutcome.AllNotSupported("$id: every backend reported NotSupported: $legs", runs)
+    private fun describeVerdicts(results: List<LegResult>): String {
+        return results.joinToString(", ") {
+            "${it.leg}=${it.result.verdict}"
+        }
     }
 
     private fun describeObserved(runs: List<LegRun>): String {
@@ -505,28 +546,5 @@ abstract class VerificationPortfolio(
         } else {
             " in the $stage stage"
         }
-    }
-
-    private fun CoroutineScope.funnelLegsIntoChannel(scope: PortfolioScope): Channel<IndexedEnd> {
-        val results = Channel<IndexedEnd>(Channel.UNLIMITED)
-        scope.legs.forEachIndexed { index, leg ->
-            launch {
-                val end = try {
-                    LegEnd.Finished(leg.job.await())
-                } catch (cancellation: CancellationException) {
-                    throw cancellation
-                } catch (throwable: Throwable) {
-                    logger.warn { "$id: job threw ${throwable::class.simpleName}: ${throwable.message ?: ""}" }
-                    LegEnd.Threw(throwable)
-                }
-
-                results.send(IndexedEnd(index, end))
-            }
-        }
-        return results
-    }
-
-    private fun CoroutineScope.cancelRemainingJobs() {
-        coroutineContext.cancelChildren()
     }
 }

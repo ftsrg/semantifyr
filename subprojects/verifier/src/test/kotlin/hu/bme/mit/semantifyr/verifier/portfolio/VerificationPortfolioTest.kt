@@ -20,15 +20,25 @@ import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.fakeMetadata
 import hu.bme.mit.semantifyr.verifier.fakeRequest
 import hu.bme.mit.semantifyr.verifier.noopGate
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
+import java.util.Collections
 import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
@@ -640,23 +650,36 @@ class VerificationPortfolioTest {
     @Test
     fun `at a window's close the running legs are cut and the waiting ones never start`() = runTest {
         val portfolio = TestPortfolio(timeSource = testScheduler.timeSource)
-        val quick = FakeBackend.delayed("quick", 1_000, VerificationVerdict.Inconclusive)
-        val running = FakeBackend.delayed("running", 60_000, VerificationVerdict.Passed)
-        val waiting = FakeBackend.delayed("waiting", 1_000, VerificationVerdict.Passed)
+        val legs = List(5) {
+            FakeBackend.delayed("leg-$it", 60_000, VerificationVerdict.Passed)
+        }
 
-        val outcome = portfolio.runFirstDecisive(portfolio.case(LimitedConcurrencyGate(1)), window = 5.seconds) {
-            enqueue(quick)
-            enqueue(running)
-            enqueue(waiting)
+        val outcome = portfolio.runFirstDecisive(portfolio.case(LimitedConcurrencyGate(2)), window = 5.seconds) {
+            for (leg in legs) {
+                enqueue(leg)
+            }
         }
 
         assertThat(currentTime).isEqualTo(5_000)
         assertThat(outcome).isInstanceOf(PortfolioOutcome.TimedOut::class.java)
-        assertThat(outcome.runs[0].end).isInstanceOf(LegEnd.Finished::class.java)
-        assertThat(outcome.runs[1].end).isEqualTo(LegEnd.Cut)
-        assertThat(outcome.runs[2].end).isEqualTo(LegEnd.NeverStarted)
-        assertThat(running.cancellations.get()).isEqualTo(1)
-        assertThat(waiting.invocations.get()).isZero
+        assertThat(
+            outcome.runs.count {
+                it.end == LegEnd.Cut
+            },
+        ).isEqualTo(2)
+        assertThat(
+            outcome.runs.count {
+                it.end == LegEnd.NeverStarted
+            },
+        ).isEqualTo(3)
+        for ((index, run) in outcome.runs.withIndex()) {
+            val leg = legs[index]
+            if (run.end == LegEnd.Cut) {
+                assertThat(leg.cancellations.get()).isEqualTo(1)
+            } else {
+                assertThat(leg.invocations.get()).isZero
+            }
+        }
     }
 
     @Test
@@ -765,6 +788,124 @@ class VerificationPortfolioTest {
         )
 
         assertThat(outcome.toBackendVerificationResult(Clock.System.now()).verdict).isEqualTo(VerificationVerdict.Errored)
+    }
+
+    @Test
+    fun `a trusted answer that arrives as the window closes decides the gate`() = runTest {
+        val portfolio = TestPortfolio(timeSource = testScheduler.timeSource)
+        val onTheClose = FakeBackend.delayed("on-the-close", 5_000, VerificationVerdict.Passed)
+
+        val outcome = portfolio.runFirstDecisive(portfolio.case(noopGate), window = 5.seconds) {
+            enqueue(onTheClose)
+        }
+
+        assertThat(outcome.orFail("expected the answer at the close to decide").metadata.backendId).isEqualTo("on-the-close")
+        assertThat(currentTime).isEqualTo(5_000)
+    }
+
+    @Test
+    suspend fun `after a window's close no waiting leg starts and every leg that ran is reported as run`() {
+        repeat(20) {
+            val invoked = Collections.synchronizedSet(mutableSetOf<String>())
+            val outcome = withContext(Dispatchers.Default) {
+                portfolio.runFirstDecisive(portfolio.case(LimitedConcurrencyGate(1)), window = 20.milliseconds) {
+                    for (name in listOf("a", "b")) {
+                        leg(name) {
+                            invoked += name
+                            withContext(NonCancellable) {
+                                delay(30)
+                            }
+                            fakeResult(name, VerificationVerdict.Inconclusive)
+                        }
+                    }
+                }
+            }
+
+            assertThat(invoked).hasSize(1)
+            for (run in outcome.runs) {
+                if (run.leg in invoked) {
+                    assertThat(run.end).isInstanceOf(LegEnd.Finished::class.java)
+                } else {
+                    assertThat(run.end).isEqualTo(LegEnd.NeverStarted)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `a gate cancelled from outside cancels its legs, frees their permits and propagates the cancellation`() = runTest {
+        val gate = LimitedConcurrencyGate(2)
+        val first = FakeBackend.delayed("first", 60_000, VerificationVerdict.Passed)
+        val second = FakeBackend.delayed("second", 60_000, VerificationVerdict.Passed)
+        val waiting = FakeBackend.delayed("waiting", 60_000, VerificationVerdict.Passed)
+
+        val gateJob = launch {
+            portfolio.runFirstDecisive(gate) {
+                enqueue(first)
+                enqueue(second)
+                enqueue(waiting)
+            }
+        }
+        advanceTimeBy(1_000)
+        gateJob.cancelAndJoin()
+
+        assertThat(gateJob.isCancelled).isTrue
+        val legs = listOf(first, second, waiting)
+        assertThat(
+            legs.sumOf {
+                it.invocations.get()
+            },
+        ).isEqualTo(2)
+        assertThat(
+            legs.sumOf {
+                it.cancellations.get()
+            },
+        ).isEqualTo(2)
+        withTimeout(1_000) {
+            coroutineScope {
+                repeat(2) {
+                    launch {
+                        gate.withPermit {
+                            delay(10)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `all is Timeout when refusals meet a leg cut at the time limit`() = runTest {
+        val refusing = FakeBackend.verdict("refusing", VerificationVerdict.NotSupported)
+        val slow = FakeBackend.delayed("slow", 10_000, VerificationVerdict.Passed)
+
+        val outcome = portfolio.runAll(noopGate, timeout = 1.seconds) {
+            enqueue(refusing)
+            enqueue(slow)
+        }
+
+        assertThat(outcome).isInstanceOf(PortfolioOutcome.TimedOut::class.java)
+    }
+
+    @Test
+    suspend fun `all is Inconclusive when refusals meet a leg that threw`() {
+        val refusing = FakeBackend.verdict("refusing", VerificationVerdict.NotSupported)
+        val throwing = FakeBackend.throwing("throwing", IllegalStateException("broken"))
+
+        val outcome = portfolio.runAll(noopGate) {
+            enqueue(refusing)
+            enqueue(throwing)
+        }
+
+        assertThat(outcome).isInstanceOf(PortfolioOutcome.NoDecision::class.java)
+        assertThat(outcome.toBackendVerificationResult(Clock.System.now()).verdict).isEqualTo(VerificationVerdict.Inconclusive)
+    }
+
+    private fun fakeResult(id: String, verdict: VerificationVerdict): BackendVerificationResult {
+        return BackendVerificationResult(
+            verdict = verdict,
+            metadata = fakeMetadata(id),
+        )
     }
 
     private fun finished(id: String, verdict: VerificationVerdict): LegEnd {
