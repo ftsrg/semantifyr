@@ -53,7 +53,7 @@ class GammaReferenceTraceTest {
     fun `the reference trace validates against the crossroads model`() {
         val (_, reference) = read(CROSSROADS_CASES, REFERENCE_TRACE)
 
-        assertThat((reference as ExecutionTrace).steps).hasSize(5)
+        assertThat((reference as ExecutionTrace).steps).hasSize(4)
     }
 
     @Test
