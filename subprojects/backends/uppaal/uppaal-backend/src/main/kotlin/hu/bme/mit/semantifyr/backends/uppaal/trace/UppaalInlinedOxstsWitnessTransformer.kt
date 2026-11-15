@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
 import hu.bme.mit.semantifyr.backend.witness.linearInlinedWitness
+import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalClockEdge
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalVariableKind
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalVariableTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
@@ -27,31 +28,52 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
     private val uppaalVariableTransformer: UppaalVariableTransformer,
 ) {
 
-    fun transform(inlinedOxsts: InlinedOxsts, trace: UppaalTrace): InlinedWitness {
+    private val uppaalDelaySolver = UppaalDelaySolver()
+
+    fun transform(
+        inlinedOxsts: InlinedOxsts,
+        trace: UppaalTrace,
+        clockEdges: Map<String, UppaalClockEdge>,
+    ): InlinedWitness {
         val nameToVariable = inlinedOxsts.eAllOfType<VariableDeclaration>().associateBy {
             uppaalVariableTransformer.nameOf(it)
         }
-        val boundaryStates = trace.states.filter {
-            it.isOxstsBoundary()
+        val clocks = inlinedOxsts.variables.filter {
+            uppaalVariableTransformer.isClock(it)
         }
 
         val running = mutableMapOf<VariableDeclaration, Expression>()
         val updated = mutableSetOf<VariableDeclaration>()
-
         val stateVariables = inlinedOxsts.variables.toSet()
-        val states = boundaryStates.mapNotNull {
-            updateRunningValues(it, nameToVariable, stateVariables, running, updated)
-            if (it.isStable()) {
-                buildWitnessState(inlinedOxsts.variables, running, updated)
-            } else {
-                null
+
+        val stableValues = mutableListOf<List<WitnessStateValue>>()
+        val steps = mutableListOf<List<UppaalClockEdge>>()
+        var stepEdges = mutableListOf<UppaalClockEdge>()
+        for (state in trace.states) {
+            state.locations.firstNotNullOfOrNull {
+                clockEdges[it.substringAfter('.')]
+            }?.let {
+                stepEdges += it
+            }
+            if (!state.isOxstsBoundary()) {
+                continue
+            }
+            updateRunningValues(state, nameToVariable, stateVariables, running, updated)
+            if (state.isStable()) {
+                stableValues += valuesOf(inlinedOxsts.variables, running, updated)
+                steps += stepEdges
+                stepEdges = mutableListOf()
             }
         }
 
-        if (states.isEmpty()) {
+        if (stableValues.isEmpty()) {
             throw WitnessFailedException("Uppaal's trace has no initialized state")
         }
 
+        val timedStates = uppaalDelaySolver.solve(clocks, steps)
+        val states = stableValues.zip(timedStates) { values, timed ->
+            WitnessState(values, timed.clockValues, timed.elapsed)
+        }
         return linearInlinedWitness(inlinedOxsts, states)
     }
 
@@ -68,7 +90,7 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
                 continue
             }
             val kind = uppaalVariableTransformer.describe(variable).kind
-            // a clock's value is not part of the witness yet
+            // a clock's value is solved anew from the path, since Uppaal prints it rounded or as a zone
             if (kind == UppaalVariableKind.Clock) {
                 continue
             }
@@ -77,12 +99,12 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
         }
     }
 
-    private fun buildWitnessState(
+    private fun valuesOf(
         variables: List<VariableDeclaration>,
         running: Map<VariableDeclaration, Expression>,
         updated: Set<VariableDeclaration>,
-    ): WitnessState {
-        val values = variables.mapNotNull { variable ->
+    ): List<WitnessStateValue> {
+        return variables.mapNotNull { variable ->
             if (variable !in updated) {
                 return@mapNotNull null
             }
@@ -90,7 +112,6 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
                 WitnessStateValue(variable, it.copy())
             }
         }
-        return WitnessState(values)
     }
 
     private fun UppaalTraceState.isOxstsBoundary(): Boolean {

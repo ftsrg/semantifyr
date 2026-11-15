@@ -41,6 +41,8 @@ import hu.bme.mit.semantifyr.logging.info
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 
+private const val SYMBOLIC_TRACE_FLAG = "-y"
+
 class UppaalBackend : VerificationBackend<UppaalConfig>() {
     override val id = "uppaal"
     override val executorKey = UppaalExecutorKey
@@ -113,7 +115,7 @@ class UppaalVerificationContext @AssistedInject constructor(
     override suspend fun run(artifacts: UppaalArtifacts): UppaalVerdict? {
         val workingDir = artifactManager.modelFile.parentFile
         val params = config.parameters.takeIf { it.isNotBlank() }?.split(" ") ?: emptyList()
-        val command = params + listOf(artifactManager.modelFile.name, artifactManager.queryFile.name)
+        val command = params + symbolicTraceFlag() + listOf(artifactManager.modelFile.name, artifactManager.queryFile.name)
 
         val spec = UppaalExecutionSpecification(
             workingDirectory = workingDir,
@@ -140,6 +142,17 @@ class UppaalVerificationContext @AssistedInject constructor(
         }
 
         return verdict
+    }
+
+    // the concrete trace rounds its delays and fails on long runs of small ones, so the delays are solved anew on the symbolic path
+    private fun symbolicTraceFlag(): List<String> {
+        val hasClocks = request.inlinedOxsts.variables.any {
+            uppaalVariableTransformer.isClock(it)
+        }
+        if (!hasClocks) {
+            return emptyList()
+        }
+        return listOf(SYMBOLIC_TRACE_FLAG)
     }
 
     private fun checkRejection() {
@@ -184,7 +197,7 @@ class UppaalVerificationContext @AssistedInject constructor(
             return null
         }
         logger.info { "[$backendId] parsed Uppaal trace with ${trace.states.size} state(s); building witness" }
-        return uppaalInlinedOxstsWitnessTransformer.transform(request.inlinedOxsts, trace)
+        return uppaalInlinedOxstsWitnessTransformer.transform(request.inlinedOxsts, trace, artifacts.clockEdges)
     }
 
     interface Factory {

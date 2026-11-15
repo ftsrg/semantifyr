@@ -671,7 +671,25 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     }
 
     @Test
-    suspend fun `a clock is reset to zero`() {
+    suspend fun `a clock is declared as a clock`() {
+        val declarations = nta(
+            """
+                var elapsed : clock := 0
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
+            """,
+        ).globalDeclarations
+
+        assertThat(declarations.variables).containsExactly(UppaalVariableDecl("clock", "elapsed"))
+    }
+
+    @Test
+    suspend fun `a clock reset enters a location of its own`() {
         val edges = edges(
             """
                 var elapsed : clock := 0
@@ -686,6 +704,183 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
             """,
         )
 
-        assertThat(edges).containsExactly(startToRunning, UppaalEdge("running", "running", assignment = "elapsed = 0"))
+        assertThat(edges).containsExactly(
+            startToRunning,
+            UppaalEdge("running", "loc_0", assignment = "elapsed = 0"),
+            UppaalEdge("loc_0", "running"),
+        )
+    }
+
+    @Test
+    suspend fun `a clock test is a guard into a location of its own`() {
+        val edges = edges(
+            """
+                var elapsed : clock := 0
+                var counter : int := 0
+                init {
+                }
+                tran {
+                    assume(counter < 3 && elapsed < 5)
+                }
+                prop {
+                    AG true
+                }
+            """,
+        )
+
+        assertThat(edges).containsExactly(
+            startToRunning,
+            UppaalEdge("running", "loc_0", guard = "(counter < 3) && elapsed < 5"),
+            UppaalEdge("loc_0", "running"),
+        )
+    }
+
+    @Test
+    suspend fun `a negated clock test is the opposite bound and a disequality two strict ones`() {
+        val edges = edges(
+            """
+                var elapsed : clock := 0
+                init {
+                }
+                tran {
+                    assume(!(5 >= elapsed))
+                    assume(elapsed != 2)
+                }
+                prop {
+                    AG true
+                }
+            """,
+        )
+
+        assertThat(
+            edges.mapNotNull {
+                it.guard
+            },
+        ).containsExactly(
+            "elapsed > 5",
+            "elapsed < 2",
+            "elapsed > 2",
+        )
+    }
+
+    @Test
+    suspend fun `a disjunction over clocks is a guard per disjunct`() {
+        val edges = edges(
+            """
+                var elapsed : clock := 0
+                var flag : bool := false
+                init {
+                }
+                tran {
+                    assume(elapsed <= 1 || (flag && elapsed >= 3))
+                }
+                prop {
+                    AG true
+                }
+            """,
+        )
+
+        assertThat(
+            edges.mapNotNull {
+                it.guard
+            },
+        ).containsExactly(
+            "elapsed <= 1",
+            "flag && elapsed >= 3",
+        )
+    }
+
+    @Test
+    suspend fun `an if over a clock guards its else branch with the negated clock test`() {
+        val edges = edges(
+            """
+                var elapsed : clock := 0
+                var late : bool := false
+                init {
+                }
+                tran {
+                    if (elapsed <= 4) {
+                        late := false
+                    } else {
+                        late := true
+                    }
+                }
+                prop {
+                    AG true
+                }
+            """,
+        )
+
+        assertThat(
+            edges.mapNotNull {
+                it.guard
+            },
+        ).containsExactly(
+            "elapsed <= 4",
+            "elapsed > 4",
+        )
+    }
+
+    @Test
+    suspend fun `a clock read through a variable holding an instance tests each candidate's clock under its guard`() {
+        val edges = edges(
+            """
+                var first : clock := 0
+                var second : clock := 0
+                var holder : int := 0
+                init {
+                }
+                tran {
+                    assume((if holder == 0 then first else second) <= 5)
+                }
+                prop {
+                    AG true
+                }
+            """,
+        )
+
+        assertThat(
+            edges.mapNotNull {
+                it.guard
+            },
+        ).containsExactly(
+            "(holder == 0) && first <= 5",
+            "!((holder == 0)) && second <= 5",
+        )
+    }
+
+    @Test
+    suspend fun `clock edges are named by the location they enter`() {
+        val clockEdges = withTransformer {
+            it.transform(
+                parse(
+                    """
+                        inlined oxsts of semantifyr::Anything
+                        var elapsed : clock := 0
+                        init {
+                        }
+                        tran {
+                            assume(elapsed >= 2)
+                            elapsed := 0
+                        }
+                        prop {
+                            AG true
+                        }
+                    """.trimIndent(),
+                ),
+            ).clockEdges
+        }
+
+        assertThat(clockEdges.keys).containsExactly("clock_loc_1", "clock_loc_2")
+        assertThat(
+            clockEdges.getValue("clock_loc_1").clockAtoms.map {
+                "${it.clock.name} ${it.op} ${it.bound}"
+            },
+        ).containsExactly("elapsed GREATER_EQ 2")
+        assertThat(
+            clockEdges.getValue("clock_loc_2").resets.map {
+                it.name
+            },
+        ).containsExactly("elapsed")
     }
 }

@@ -13,9 +13,11 @@ import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.backend.boolean
 import hu.bme.mit.semantifyr.backend.enumeration
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.integer
+import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backends.uppaal.ReplayingUppaalExecutor
 import hu.bme.mit.semantifyr.backends.uppaal.UppaalExecutionResult
 import hu.bme.mit.semantifyr.backends.uppaal.UppaalExecutionSpecification
@@ -24,6 +26,7 @@ import hu.bme.mit.semantifyr.backends.uppaal.UppaalExecutorKey
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.entry
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -74,6 +77,42 @@ class UppaalBackendReplayTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(result.inlinedWitness!!.transitionStates.last().integer("\$\$root\$\$x")).isEqualTo(1)
+    }
+
+    @Test
+    suspend fun `a clock trace states each step's exact elapsed time, a strict test's on a grid of one half`() {
+        val result = verifyFixture("clocks", "ClockStrictTestDenseReach")
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
+        val witness = result.inlinedWitness!!
+        assertThat(witness.initializedState.elapsed).isEqualTo(Fraction.ZERO)
+        assertThat(
+            witness.transitionStates.map {
+                it.elapsed
+            },
+        ).containsExactly(Fraction.of(1, 2))
+        assertThat(witness.transitionStates.single().boolean("\$\$root\$\$between")).isTrue()
+    }
+
+    @Test
+    suspend fun `a clock trace states every kept clock's value after the step`() {
+        val result = verifyFixture("clocks", "ClockZeroDelayAfterResetViolated")
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        val states = result.inlinedWitness!!.transitionStates
+        assertThat(
+            states.map {
+                it.elapsed
+            },
+        ).containsExactly(Fraction.of(1))
+        assertThat(
+            states.single().clockValues.associate {
+                it.variable.name to it.value
+            },
+        ).containsExactly(
+            entry("\$\$root\$\$lap", Fraction.ZERO),
+            entry("\$\$root\$\$total", Fraction.of(1)),
+        )
     }
 
     @Test

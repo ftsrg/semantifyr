@@ -156,7 +156,6 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
         assertThat(unsupported).containsExactlyInAnyOrder(
             "variables of type real",
             "variables of type any",
-            "variables of type clock",
             "for-operations",
         )
     }
