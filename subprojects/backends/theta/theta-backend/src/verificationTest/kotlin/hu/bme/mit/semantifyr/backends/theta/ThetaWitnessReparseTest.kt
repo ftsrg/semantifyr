@@ -65,4 +65,22 @@ class ThetaWitnessReparseTest {
             "root.slots[2]" to "1",
         )
     }
+
+    @Test
+    suspend fun `array of records witness names the slot and then the field, and reparses and re-verifies`() {
+        val result = helper.checkWitnessReparses(
+            modelPath = Path("build/test-models/semantic/records.oxsts"),
+            qualifiedName = "semantifyr::verification::lang::records::RecordArrayRuntimeIndexReach",
+            verificationPortfolio = portfolio,
+            outputDirectory = outputDirectory,
+        )
+
+        val finalState = requireNotNull(result.trace).witnessState.steps.last().values.map {
+            it.variable to it.value
+        }
+        assertThat(finalState).contains(
+            "root.readings[2].value" to "2",
+            "root.readings[2].valid" to "true",
+        )
+    }
 }
