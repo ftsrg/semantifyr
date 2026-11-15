@@ -177,9 +177,9 @@ function Arrow({ direction }: { direction: 'right' | 'left' | 'down' }): React.R
   );
 }
 
-function Box({ box, arrow, down }: { box: PathBox; arrow?: 'right' | 'left' | undefined; down: boolean }): React.ReactNode {
+function Box({ box, arrow, down, placed }: { box: PathBox; arrow?: 'right' | 'left' | undefined; down: boolean; placed: boolean }): React.ReactNode {
   return (
-    <a href={`#${box.id}`} className={clsx(styles.box, styles[box.kind])} style={{ gridArea: box.id }}>
+    <a href={`#${box.id}`} className={clsx(styles.box, styles[box.kind])} style={placed ? { gridArea: box.id } : undefined}>
       <strong className={styles.title}>{box.title}</strong>
       <span className={styles.line}>{box.line}</span>
       <span className={styles.modules}>
@@ -222,7 +222,7 @@ export default function ComponentPath(): React.JSX.Element {
                   </div>
                 )
               : null,
-            <Box key={box.id} box={box} arrow={arrowOf(index, turn)} down={index < PATH.length - 1} />,
+            <Box key={box.id} box={box} arrow={arrowOf(index, turn)} down={index < PATH.length - 1} placed />,
           ];
         })}
       </div>
@@ -230,7 +230,7 @@ export default function ComponentPath(): React.JSX.Element {
         <span className={styles.aroundTitle}>What runs the path</span>
         <div className={styles.aroundBoxes}>
           {AROUND.map((box) => {
-            return <Box key={box.id} box={box} down={false} />;
+            return <Box key={box.id} box={box} down={false} placed={false} />;
           })}
         </div>
       </div>

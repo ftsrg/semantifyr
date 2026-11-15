@@ -31,7 +31,7 @@ export interface PlacedModule {
 }
 
 export interface GroupFrame {
-  group: string;
+  label: string;
   x: number;
   y: number;
   width: number;
@@ -53,6 +53,7 @@ const GAP = 14;
 const GROUP_GAP = 30;
 const FRAME_PADDING = 6;
 const MARGIN = 10;
+const LABEL_CHARACTER_WIDTH = 6.8;
 
 // the folder that holds the module's folder, which is how the repository groups its modules
 export function groupOf(module: BuildModule): string {
@@ -145,14 +146,26 @@ export function layoutModules(graph: ModuleGraphFile): ModuleLayout {
       if (index > 0) {
         x += GROUP_GAP - GAP;
       }
+      const framed = depth(group) > shallowest;
+      // a frame's label is its folder below the shallowest one, and a frame is at least as wide as its label
+      const label = `${group.split('/').slice(shallowest).join('/')}/`;
+      const widths = members.map((module) => {
+        return module.path.length * CHARACTER_WIDTH + NODE_PADDING;
+      });
+      const membersWidth = widths.reduce((sum, width) => {
+        return sum + width + GAP;
+      }, -GAP);
+      const frameWidth = framed ? Math.max(membersWidth, label.length * LABEL_CHARACTER_WIDTH + 6) : membersWidth;
       const start = x;
-      for (const module of members) {
-        const width = module.path.length * CHARACTER_WIDTH + NODE_PADDING;
+      x += (frameWidth - membersWidth) / 2;
+      members.forEach((module, memberIndex) => {
+        const width = widths[memberIndex] ?? 0;
         rowPlaced.push({ module, group, layer, x, y, width });
         x += width + GAP;
-      }
-      if (depth(group) > shallowest) {
-        rowFrames.push({ group, x: start, y, width: x - GAP - start });
+      });
+      x = start + frameWidth + GAP;
+      if (framed) {
+        rowFrames.push({ label, x: start, y, width: frameWidth });
       }
     });
     const shift = -(x - GAP) / 2;
@@ -255,9 +268,9 @@ export default function ModuleGraph({ graph }: { graph: ModuleGraphFile }): Reac
       >
         {layout.frames.map((frame) => {
           return (
-            <g key={`${frame.group} ${String(frame.y)} ${frame.x.toFixed(1)}`}>
+            <g key={`${frame.label} ${String(frame.y)} ${frame.x.toFixed(1)}`}>
               <rect className={styles.groupFrame} x={frame.x - FRAME_PADDING} y={frame.y - LABEL_HEIGHT} width={frame.width + 2 * FRAME_PADDING} height={NODE_HEIGHT + LABEL_HEIGHT + FRAME_PADDING} rx={6} />
-              <text className={styles.groupLabel} x={frame.x - FRAME_PADDING + 6} y={frame.y - 5}>{`${frame.group}/`}</text>
+              <text className={styles.groupLabel} x={frame.x - FRAME_PADDING + 6} y={frame.y - 5}>{frame.label}</text>
             </g>
           );
         })}
