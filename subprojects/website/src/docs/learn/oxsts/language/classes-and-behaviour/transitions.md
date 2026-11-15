@@ -54,7 +54,7 @@ class Counter {
 // hide-end
 ```
 
-Parameters are passed by value when the transition is invoked through an [inline call](inline-operations.md#inline-call). A parameter cannot be an array (`OXSTS.UNSUPPORTED_FEATURE`), and two parameters of one transition cannot share a name (`OXSTS.DUPLICATE_NAME`). A parameter may reuse the name of a member of the class, which the body then reaches as `self.name`.
+Parameters are passed by value when the transition is invoked through an [inline call](inline-operations.md#inline-call). A parameter cannot be an array, and two parameters of one transition cannot share a name. A parameter may reuse the name of a member of the class, which the body then reaches as `self.name`.
 
 ## The Implicit `main` and `init`
 
@@ -105,7 +105,7 @@ The verifier explores both branches non-deterministically.
 
 ## Abstract Transitions
 
-An `abstract` transition has no body. Only an abstract class declares one (`OXSTS.MEMBER_NOT_IN_ABSTRACT_CLASS`), and a concrete class that inherits it redefines it (`OXSTS.ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED`), as [Abstract Classes](classes.md#abstract-classes) gives.
+An `abstract` transition has no body. Only an abstract class declares one, and a concrete class that inherits it redefines it, as [Abstract Classes](classes.md#abstract-classes) gives.
 
 ```oxsts
 // hide-start
@@ -119,7 +119,7 @@ abstract class Transition {
 
 ## Redefining Transitions
 
-Override an inherited transition of the **same name** with `redefine`. The redefinition takes as many parameters as the inherited transition (`OXSTS.REDEFINITION_SIGNATURE_MISMATCH`), and a `redefine` that no inherited transition answers is rejected (`OXSTS.REDEFINED_NOT_FOUND`), as [Redefining Members](classes.md#redefining-members) gives. A call resolves to the redefinition on the instance it names ([Inline Call](inline-operations.md#inline-call)).
+Override an inherited transition of the **same name** with `redefine`. The redefinition takes as many parameters as the inherited transition, and a `redefine` that no inherited transition answers is rejected, as [Redefining Members](classes.md#redefining-members) gives. A call resolves to the redefinition on the instance it names ([Inline Call](inline-operations.md#inline-call)).
 
 ```oxsts
 // hide-start
@@ -147,7 +147,7 @@ class BoundedCounter : Counter {
 // hide-end
 ```
 
-The implicit transitions inherited from `Anything` are overridden by declaring them, with or without `redefine`: a class has one `main` and one `init`, and a second anonymous transition of a kind in the same class is a duplicate name (`OXSTS.DUPLICATE_NAME`).
+The implicit transitions inherited from `Anything` are overridden by declaring them, with or without `redefine`: a class has one `main` and one `init`, and a second anonymous transition of a kind in the same class is a duplicate name.
 
 ```oxsts
 // hide-start

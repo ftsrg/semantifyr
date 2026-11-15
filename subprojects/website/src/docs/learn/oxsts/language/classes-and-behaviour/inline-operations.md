@@ -13,7 +13,7 @@ Inline operations are resolved at **compile time** during unfolding. They never 
 
 `inline target.transition(arguments)` runs the body of the called transition in place of the call, with `self` and the members the body names taken on the instance the call names. The transition is resolved on that instance, so a redefinition in its class is the one that runs. Inlining a call into a body that holds another call goes on until none is left, and nothing stops a transition that calls itself: a library keeps its calls finite. [Inlining](../../compilation/inlining.mdx) steps through the calls of one model as the compiler expands them.
 
-The target is reached through `self`, a variable, or a feature that holds at most one instance; a call through a feature whose upper multiplicity is above 1 (`inline workers.step()` on `contains workers: Worker[0..*]`) is rejected (`OXSTS.CALL_THROUGH_MANY_VALUED_FEATURE`), so call each instance in an `inline for` over the feature.
+The target is reached through `self`, a variable, or a feature that holds at most one instance; a call through a feature whose upper multiplicity is above 1 (`inline workers.step()` on `contains workers: Worker[0..*]`) is rejected, so call each instance in an `inline for` over the feature. {/* OXSTS.CALL_THROUGH_MANY_VALUED_FEATURE */}
 
 ```oxsts
 class Counter {
@@ -57,11 +57,11 @@ class Swapper {
 
 After the main transition runs, `x` is `2` and `y` is `1`: `first` reads the value `x` had at the call, not the value the body wrote.
 
-A body never writes a parameter: an assignment or a `havoc` whose target is a parameter is rejected (`OXSTS.INCORRECT_ASSIGNMENT`), since arguments are passed by value and the write could not reach the caller. Copy the parameter into a local variable to change it.
+A body never writes a parameter: an assignment or a `havoc` whose target is a parameter is rejected, since arguments are passed by value and the write could not reach the caller. Copy the parameter into a local variable to change it.
 
 ## `inline if`
 
-`inline if (guard) { ... } else { ... }` evaluates its guard at compile time, for each instance whose transition holds it, and keeps the body of the branch the guard selects in its place; the other branch is dropped, and without an `else`, a false guard leaves nothing, as [inlining](../../compilation/inlining.mdx) does it. The guard is Boolean (`OXSTS.TYPE_MISMATCH`) and reads no state (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`).
+`inline if (guard) { ... } else { ... }` evaluates its guard at compile time, for each instance whose transition holds it, and keeps the body of the branch the guard selects in its place; the other branch is dropped, and without an `else`, a false guard leaves nothing, as [inlining](../../compilation/inlining.mdx) does it. The guard is Boolean and reads no state.
 
 ```oxsts
 class Counter {
@@ -88,7 +88,7 @@ A step of `Counter` increments `value`; in `Frozen`, whose `maximum` is 0, the s
 
 ## `inline for` (sequence)
 
-`inline for [seq] (x in expr) { ... }` evaluates its range at compile time, for each instance whose transition holds it, and runs its body once for each value or instance of the range, in order, as one sequence, with `x` standing for that value or instance; [inlining](../../compilation/inlining.mdx) unrolls it. The `seq` keyword is optional: `inline for (x in r)` and `inline for seq (x in r)` are equivalent. The range reads no state (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`), and is what the range of a [`for`](operations.md#for) may be: an integer range, an expression of instances or one of several values (`OXSTS.TYPE_MISMATCH`). Its loop variable cannot be written ([Inline vs Runtime](#inline-vs-runtime)).
+`inline for [seq] (x in expr) { ... }` evaluates its range at compile time, for each instance whose transition holds it, and runs its body once for each value or instance of the range, in order, as one sequence, with `x` standing for that value or instance; [inlining](../../compilation/inlining.mdx) unrolls it. The `seq` keyword is optional: `inline for (x in r)` and `inline for seq (x in r)` are equivalent. The range reads no state, and is what the range of a [`for`](operations.md#for) may be: an integer range, an expression of instances or one of several values. Its loop variable cannot be written ([Inline vs Runtime](#inline-vs-runtime)).
 
 ```oxsts
 class Counter {
@@ -180,6 +180,6 @@ class Counters {
 | Evaluated when | Compile time, during unfolding | Runtime, by the model checker |
 | Constructs | `inline if`, `inline for`, `inline for choice`, `inline call` | [`if`](operations.md#if), [`for`](operations.md#for) |
 
-The validator hints at an `if` whose guard, or a `for` whose range, is evaluable at compile time (`OXSTS.COULD_BE_INLINE`), and the editor offers a "Make inline" quick fix that turns it into its `inline` form. It also hints at a constant expression that is not already a literal or a reference, such as `2 * 3 + 1` (`OXSTS.CONSTANT_EXPRESSION`), and offers "Inline as constant", which replaces the expression by its value. Neither hint is shown in an inlined model.
+The validator hints at an `if` whose guard, or a `for` whose range, is evaluable at compile time, and the editor offers a "Make inline" quick fix that turns it into its `inline` form. It also hints at a constant expression that is not already a literal or a reference, such as `2 * 3 + 1`, and offers "Inline as constant", which replaces the expression by its value. Neither hint is shown in an inlined model. {/* OXSTS.COULD_BE_INLINE */} {/* OXSTS.CONSTANT_EXPRESSION */}
 
-The loop variable of a `for` or an `inline for` takes its values from the range and cannot be written: the validator rejects an assignment or a `havoc` whose target is a loop variable (`OXSTS.INCORRECT_ASSIGNMENT`).
+The loop variable of a `for` or an `inline for` takes its values from the range and cannot be written: the validator rejects an assignment or a `havoc` whose target is a loop variable.

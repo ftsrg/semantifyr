@@ -18,11 +18,11 @@ Every class declared in Semantifyr implicitly extends `Anything` from the [stand
 
 <LibraryDeclaration library={library} name="Anything" />
 
-A class has one [`init`](transitions.md), one [implicit `tran`](transitions.md#the-implicit-main-and-init) (named `main`) and one anonymous [`prop`](properties.md), so declaring your own overrides the inherited one, with or without `redefine`; a second one of a kind in the same class is a duplicate name (`OXSTS.DUPLICATE_NAME`). See [Redefining members](#redefining-members).
+A class has one [`init`](transitions.md), one [implicit `tran`](transitions.md#the-implicit-main-and-init) (named `main`) and one anonymous [`prop`](properties.md), so declaring your own overrides the inherited one, with or without `redefine`; a second one of a kind in the same class is a duplicate name. See [Redefining members](#redefining-members). {/* OXSTS.DUPLICATE_NAME */}
 
 ## Class Declaration
 
-A class declaration consists of the `class` keyword, a name, an optional superclass, and a body in `{ }`. Members may appear in any order, and two members of one class cannot share a name (`OXSTS.DUPLICATE_NAME`).
+A class declaration consists of the `class` keyword, a name, an optional superclass, and a body in `{ }`. Members may appear in any order, and two members of one class cannot share a name.
 
 ```oxsts
 class Counter {
@@ -55,7 +55,7 @@ A semicolon may end a class without a body, and not one with a body ([Lexical St
 
 ## Abstract Classes
 
-`abstract class` cannot be instantiated directly, so it cannot be a `@VerificationCase` (`OXSTS.ABSTRACT_VERIFICATION_CASE`). An abstract class may declare abstract members, transitions and properties without bodies; a concrete class may not (`OXSTS.MEMBER_NOT_IN_ABSTRACT_CLASS`), and a concrete class redefines every abstract member it inherits (`OXSTS.ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED`). A concrete `@VerificationCase` declares or inherits the anonymous `prop` it checks (`OXSTS.MISSING_PROPERTY`).
+`abstract class` cannot be instantiated directly, so it cannot be a `@VerificationCase`. An abstract class may declare abstract members, transitions and properties without bodies; a concrete class may not, and a concrete class redefines every abstract member it inherits. A concrete `@VerificationCase` declares or inherits the anonymous `prop` it checks. {/* OXSTS.ABSTRACT_VERIFICATION_CASE */} {/* OXSTS.MISSING_PROPERTY */}
 
 ```oxsts
 abstract class Shape {
@@ -98,12 +98,12 @@ class Square : Shape {
 ```
 
 :::caution
-The grammar accepts several superclasses separated by commas, but a class has one superclass: the validator rejects every superclass after the first (`OXSTS.MULTIPLE_INHERITANCE`).
+The grammar accepts several superclasses separated by commas, but a class has one superclass: the validator rejects every superclass after the first. {/* OXSTS.MULTIPLE_INHERITANCE */}
 :::
 
 ## Redefining Members
 
-`redefine` overrides an inherited member of the **same name**. A redefined [transition](transitions.md) or [property](properties.md) takes as many parameters as the inherited one (`OXSTS.REDEFINITION_SIGNATURE_MISMATCH`), and a redefined property's return type or feature's type must be assignable to the inherited one (`OXSTS.TYPE_MISMATCH`); parameter types may differ. Variables cannot be redefined. Two members of one class that redefine the same inherited member are rejected (`OXSTS.DUPLICATE_REDEFINITION`). A `redefine` that no superclass member of its name answers is rejected (`OXSTS.REDEFINED_NOT_FOUND`), and a member that takes the name of an inherited one without `redefine` gets a warning (`OXSTS.ELEMENT_SHADOWED`); the anonymous `init`, `tran` and `prop` are the exception, as above. Redefining is the primary mechanism by which semantic libraries specialize behavior.
+`redefine` overrides an inherited member of the **same name**. A redefined [transition](transitions.md) or [property](properties.md) takes as many parameters as the inherited one, and a redefined property's return type or feature's type must be assignable to the inherited one; parameter types may differ. Variables cannot be redefined. Two members of one class that redefine the same inherited member are rejected. A `redefine` that no superclass member of its name answers is rejected, and a member that takes the name of an inherited one without `redefine` gets a warning; the anonymous `init`, `tran` and `prop` are the exception, as above. Redefining is the primary mechanism by which semantic libraries specialize behavior. {/* OXSTS.REDEFINITION_SIGNATURE_MISMATCH */} {/* OXSTS.DUPLICATE_REDEFINITION */}
 
 ```oxsts
 // hide-start
@@ -193,7 +193,7 @@ class Jump : Transition {
 
 ## `self`
 
-Inside a class body, `self` refers to the current instance of that class or [feature](features.md). It is typically used to pass the current instance as an argument, or to reach a member whose name a parameter or a local variable reuses. Outside a class, in a global feature or a record, `self` is rejected (`OXSTS.SELF_OUTSIDE_CLASS`).
+Inside a class body, `self` refers to the current instance of that class or [feature](features.md). It is typically used to pass the current instance as an argument, or to reach a member whose name a parameter or a local variable reuses. Outside a class, in a global feature or a record, `self` is rejected. {/* OXSTS.SELF_OUTSIDE_CLASS */}
 
 ```oxsts
 // hide-start

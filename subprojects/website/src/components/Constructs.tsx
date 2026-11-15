@@ -12,7 +12,6 @@ type Outcome = 'pass' | 'fail' | 'reject' | 'parse';
 interface Construct {
   name: string;
   outcome: Outcome;
-  detail: string;
 }
 
 const HEADER = 'construct\toutcome\tfixture\tdetail';
@@ -28,7 +27,7 @@ function parseConstructs(table: string): Construct[] {
     if (name === undefined || outcome === undefined || detail === undefined || !OUTCOMES.includes(outcome)) {
       throw new Error(`constructs.tsv has a malformed row: ${row}`);
     }
-    return { name, outcome: outcome as Outcome, detail };
+    return { name, outcome: outcome as Outcome };
   });
 }
 
@@ -69,15 +68,7 @@ export default function ConstructTable({ table }: { table: string }): React.JSX.
         {parseConstructs(table).map((construct) => (
           <tr key={construct.name}>
             <td>{withCode(construct.name)}</td>
-            <td>
-              {statusOf(construct)}
-              {construct.outcome === 'reject' && (
-                <>
-                  {' '}
-                  (<code>{construct.detail}</code>)
-                </>
-              )}
-            </td>
+            <td>{statusOf(construct)}</td>
           </tr>
         ))}
       </tbody>

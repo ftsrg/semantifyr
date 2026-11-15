@@ -39,9 +39,9 @@ prop {
 
 The rules of the rest of the reference hold, with these differences:
 
-- A variable carries a type and an initializer, as everywhere (`OXSTS.VARIABLE_WITH_IMPLICIT_TYPE`, `OXSTS.MISSING_INITIALIZER`).
+- A variable carries a type and an initializer, as everywhere.
 - The class is found among the declarations the editor or the compiler has loaded, and a class of a file without a package by its simple name.
-- The validator gives no hint in an inlined model (`OXSTS.COULD_BE_INLINE`, `OXSTS.CONSTANT_EXPRESSION`).
+- The validator gives no hint in an inlined model.
 - A temporal operator stands at the root of the property, as it does at the root of a property's `return`.
 
 ## Meaning
