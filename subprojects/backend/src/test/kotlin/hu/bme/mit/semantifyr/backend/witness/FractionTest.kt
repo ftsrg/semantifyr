@@ -21,6 +21,12 @@ class FractionTest {
     }
 
     @Test
+    fun `a sum of fractions is in lowest terms`() {
+        assertThat(Fraction.of(1, 6) + Fraction.of(1, 3)).isEqualTo(Fraction.of(1, 2))
+        assertThat(Fraction.of(1, 2) + Fraction.of(1, 2)).isEqualTo(Fraction.of(1))
+    }
+
+    @Test
     fun `a whole amount is written without a denominator`() {
         assertThat(Json.encodeToString(Fraction.of(4, 2))).isEqualTo("2")
         assertThat(Json.encodeToString(Fraction.ZERO)).isEqualTo("0")

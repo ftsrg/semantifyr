@@ -372,6 +372,7 @@ object Oxsts : MetaPackage(
         val classDeclaration by refers(ONE) { ClassDeclaration }
         val rootFeature by contains { FeatureDeclaration }
         val witness by attribute(EBoolean, ONE, default = false)
+        val timeScale by attribute(EInt, ONE, default = 1)
     }
 
     object TypeSpecification : MetaClass() {

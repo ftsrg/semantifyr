@@ -17,15 +17,20 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.backend.witness.WitnessClockValue
 import hu.bme.mit.semantifyr.backend.witness.linearInlinedWitness
+import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.flattening.RecordFlatteningPass
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceNames
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
+import hu.bme.mit.semantifyr.oxsts.lang.serializer.ExpressionSerializer
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.verifier.ObservedParameter
@@ -58,6 +63,7 @@ import java.math.BigInteger
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.readText
+import kotlin.io.path.writeText
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import hu.bme.mit.semantifyr.backend.witness.WitnessState as InlinedWitnessState
@@ -74,6 +80,9 @@ class BackAnnotationFidelityTest {
 
     @Inject
     private lateinit var discoverer: VerificationCaseDiscoverer
+
+    @Inject
+    private lateinit var serializer: ExpressionSerializer
 
     private val tracingCase = "semantifyr::verification::lang::tracing::TracedChoiceBranchReach"
     private val arraysCase = "semantifyr::verification::lang::arrays::ArraySlotIndependenceReach"
@@ -383,6 +392,105 @@ class BackAnnotationFidelityTest {
         assertThat(readReport(output, case).trace!!.states.single().values).containsEntry("root.queue[0]", ReportValue.Text("root.second"))
     }
 
+    @Test
+    suspend fun `a call with a run-time argument reports the value of its last run in the step`(@TempDir models: Path, @TempDir output: Path) {
+        val case = loadText(models, "run_time_argument.oxsts", RUN_TIME_ARGUMENT_MODEL, "semantifyr::verification::report::run_time_argument::RunTimeArgumentReach")
+        val item = flattenedName("root", "port", "item")
+        val tracer = TransitionTracerNames.tracerName(0)
+        val argument = TransitionTracerNames.argumentName(0, "value")
+
+        verifyWithWitness(case, output) { model ->
+            linearInlinedWitness(
+                model,
+                listOf(
+                    model.state(item to 0, tracer to false, argument to 0),
+                    model.state(item to 2, tracer to true, argument to 2),
+                ),
+            )
+        }
+
+        assertThat(readReport(output, case).trace!!.steps.single().calls.single().arguments).containsExactly(
+            entry("value", ReportValue.Integer(BigInteger.TWO)),
+        )
+    }
+
+    @Test
+    suspend fun `the witness model of a result with clocks assumes the scaled time and clock values after each step`(@TempDir models: Path, @TempDir output: Path) {
+        val case = loadText(models, "timed.oxsts", TIMED_MODEL, TIMED_CASE)
+
+        verifyWithWitness(case, output) { model ->
+            timedWitness(model)
+        }
+
+        assertThat(readWitnessModel(output, case))
+            .containsPattern("witness of .*TimerFires timescale 6")
+            .contains("var time: clock := 0")
+            .containsSubsequence(
+                "assume(step == 1)",
+                "inline root.main()",
+                "assume(time == 15)",
+                "assume(root.timer.fired == true)",
+                "assume(root.timer.elapsed == 15)",
+                "step := 2",
+                "assume(step == 2)",
+                "inline root.main()",
+                "assume(time == 17)",
+                "assume(root.timer.elapsed == 17)",
+            )
+    }
+
+    @Test
+    suspend fun `the scaled witness model reparses, validates and compiles with the model's clock bounds counting the scale`(@TempDir models: Path, @TempDir output: Path) {
+        val modelPath = models.resolve("timed.oxsts")
+        val case = loadText(models, "timed.oxsts", TIMED_MODEL, TIMED_CASE)
+
+        verifyWithWitness(case, output) { model ->
+            timedWitness(model)
+        }
+
+        val reparsed = loader.startContext()
+            .loadModel(modelPath)
+            .loadModel(caseDirectory(output, case).resolve("witness.oxsts"))
+            .buildAndResolve()
+        val witness = reparsed.modelResources.last().contents.filterIsInstance<InlinedOxsts>().single()
+        val compiled = SemantifyrCompiler(injector, ArtifactConfig.NONE, OptimizationConfig.NONE).compile(witness, models.resolve("recheck"))
+        val clockTests = compiled.inlinedOxsts.eAllOfType<ComparisonOperator>().map {
+            serializer.serialize(it).trim()
+        }.toList()
+
+        assertThat(clockTests).anySatisfy {
+            assertThat(it).endsWith(">= 2 * 6")
+        }
+        assertThat(clockTests).anySatisfy {
+            assertThat(it).isEqualTo("time == 15")
+        }
+    }
+
+    private fun timedWitness(model: InlinedOxsts): InlinedWitness {
+        val elapsed = model.variables.single {
+            it.name == flattenedName("root", "timer", "elapsed")
+        }
+        val fired = flattenedName("root", "timer", "fired")
+        fun timed(state: InlinedWitnessState, clock: Fraction, step: Fraction): InlinedWitnessState {
+            return InlinedWitnessState(state.values, listOf(WitnessClockValue(elapsed, clock)), step)
+        }
+        return linearInlinedWitness(
+            model,
+            listOf(
+                timed(model.state(fired to false), Fraction.ZERO, Fraction.ZERO),
+                timed(model.state(fired to true), Fraction.of(5, 2), Fraction.of(5, 2)),
+                timed(model.state(fired to true), Fraction.of(17, 6), Fraction.of(1, 3)),
+            ),
+        )
+    }
+
+    private fun loadText(directory: Path, fileName: String, text: String, qualifiedName: String): VerificationCase {
+        val path = directory.resolve(fileName)
+        path.writeText(text)
+        val context = loader.loadStandaloneModel(path)
+        return discoverer.findByQualifiedName(context, qualifiedName)
+    }
+
     private fun flattenedName(vararg path: String): String {
         return path.joinToString("") {
             "${InstanceNames.INSTANCE_NAME_SEPARATOR}$it"
@@ -447,6 +555,69 @@ class BackAnnotationFidelityTest {
 
     private fun readWitnessModel(output: Path, case: VerificationCase): String {
         return caseDirectory(output, case).resolve("witness.oxsts").readText()
+    }
+
+    companion object {
+        private const val TIMED_CASE = "semantifyr::verification::report::timed::TimerFires"
+
+        private val RUN_TIME_ARGUMENT_MODEL = """
+            package semantifyr::verification::report::run_time_argument
+
+            class Port {
+                var item: int := 0
+
+                @Trace
+                tran send(value: int) {
+                    item := value
+                }
+            }
+
+            @VerificationCase
+            class RunTimeArgumentReach {
+                contains port: Port
+                var count: int := 0
+
+                redefine tran {
+                    choice {
+                        count := 1
+                    } or {
+                        count := 2
+                    }
+                    inline port.send(count)
+                }
+
+                prop {
+                    return EF (port.item == 2)
+                }
+            }
+        """.trimIndent()
+
+        private val TIMED_MODEL = """
+            package semantifyr::verification::report::timed
+
+            class Timer {
+                var elapsed: clock := 0
+                var fired: bool := false
+
+                tran fire() {
+                    assume(elapsed >= 2)
+                    fired := true
+                }
+            }
+
+            @VerificationCase
+            class TimerFires {
+                contains timer: Timer
+
+                redefine tran {
+                    inline timer.fire()
+                }
+
+                prop {
+                    return EF (timer.fired)
+                }
+            }
+        """.trimIndent()
     }
 
     private class WitnessPortfolio(

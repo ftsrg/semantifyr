@@ -337,13 +337,14 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
     ): BackAnnotation {
         logger.info { "[$qualifiedName] back-annotating witness from ${backendResult.metadata.backendId ?: "?"}" }
         val classWitness = classWitnessTransformer.transform(witness, compilation)
+        val reportTrace = reportTraceTransformer.transform(classWitness, compilation)
         val backAnnotatedModel = classWitnessBackAnnotator.createWitnessInlinedOxsts(
-            classWitness,
+            reportTrace,
+            compilation,
             backendResult.verdict,
         )
         val witnessState = callTraceTransformer.transformWitnessState(classWitness)
         val callTrace = callTraceTransformer.transformCallTrace(classWitness, compilation.transitionCallTraces)
-        val reportTrace = reportTraceTransformer.transform(classWitness, compilation)
         return BackAnnotation(Trace(backAnnotatedModel, witnessState, callTrace), reportTrace)
     }
 
