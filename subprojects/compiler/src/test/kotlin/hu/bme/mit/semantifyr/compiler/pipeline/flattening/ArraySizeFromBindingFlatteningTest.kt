@@ -429,4 +429,65 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
     private fun quoted(name: String): String {
         return "'$name'"
     }
+
+    @Test
+    fun `a property guarding its read with an if-then-else on the size compiles at a size of none and reads the slot above it`() {
+        val sizes = """
+            package flattening::size_from_binding
+            class Item
+            class Store {
+                refers capacity: int = 0
+                var items: Item[0..capacity] := [nothing, ...]
+                prop hasHead(item: Item): bool {
+                    return if capacity > 0 then items[0] == item else false
+                }
+            }
+            @VerificationCase
+            class Host {
+                contains item: Item
+                contains store: Store {
+                    redefine refers capacity: int = %d
+                }
+                redefine tran {
+                    %s
+                }
+                prop {
+                    return AG !store.hasHead(item)
+                }
+            }
+        """
+        val none = flatten("Host", sizes.format(0, ""))
+        assertThat(serialize(none.inlinedOxsts.property)).doesNotContain("items")
+
+        val one = flatten("Host", sizes.format(1, "store.items[0] := item"))
+        assertThat(serialize(one.inlinedOxsts.property)).contains(quoted(member("root", "store", "items") + "_0"))
+    }
+
+    @Test
+    fun `a slot of an array whose lower bound is none takes nothing by assignment at an index`() {
+        val flattened = flatten(
+            "Host",
+            """
+                package flattening::size_from_binding
+                class Item
+                @VerificationCase
+                class Host {
+                    contains first: Item
+                    var fixedItems: Item[0..2] := [first, first]
+                    var index: int := 0
+                    redefine tran {
+                        var current: Item[0..1] := nothing
+                        fixedItems[0] := nothing
+                        fixedItems[index] := current
+                    }
+                    prop {
+                        return EF fixedItems[0] == nothing
+                    }
+                }
+            """,
+        )
+
+        val main = serialize(flattened.inlinedOxsts.mainTransition)
+        assertThat(main).contains(quoted(member("root", "fixedItems") + "_0") + " := -1")
+    }
 }

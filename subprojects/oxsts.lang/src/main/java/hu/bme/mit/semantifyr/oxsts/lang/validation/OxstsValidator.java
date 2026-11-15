@@ -1736,6 +1736,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
             return;
         }
         rhsType = asArrayOfOne(rhs, rhsType, lhsType);
+        lhsType = asWrittenSlot(lhs, lhsType);
         if (!typeCompatibility.isAssignable(lhsType, rhsType, assignmentOperation)) {
             acceptError(
                     "Cannot assign value of type "
@@ -1926,6 +1927,23 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     RangeEvaluation.perInstance(type.getRange().getLowerBound()));
         }
         return type;
+    }
+
+    // a slot read is one value, while a slot written takes what the array's lower bound admits, nothing at a lower
+    // bound of 0
+    private TypeEvaluation asWrittenSlot(Expression target, TypeEvaluation type) {
+        if (!(target instanceof IndexingSuffixExpression indexing)
+                || type instanceof InvalidTypeEvaluation
+                || type.getRange() == null) {
+            return type;
+        }
+        var arrayType = evaluateTypeSafely(indexing.getPrimary());
+        if (arrayType == null
+                || arrayType.getRange() == null
+                || arrayType.getRange().getLowerBound() != 0) {
+            return type;
+        }
+        return new ImmutableTypeEvaluation(type.getDomain(), RangeEvaluation.OPTIONAL);
     }
 
     private static boolean isFixedSizeArray(TypeEvaluation type) {
