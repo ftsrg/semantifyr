@@ -69,7 +69,7 @@
       "file": "subprojects/frontends/sysml/models/tutorial/room.sysml",
       "label": "SysML v2 tutorial: Room",
       "reason": "The model the SysML v2 tutorial builds and runs from its page.",
-      "page": "learn/frontends/sysml-v2/tutorial",
+      "page": "learn/frontends/sysml-v2/verifying",
       "cases": [
         "LampLitReachable",
         "LampNeverLitViolated",
