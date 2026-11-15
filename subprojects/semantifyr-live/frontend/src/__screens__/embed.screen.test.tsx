@@ -209,7 +209,8 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     expectState: () => {
       const editor = document.querySelector('.embed-editor')!.getBoundingClientRect().height
       expect(editor, 'the editor is as tall as the lines it opens at').toBe(4 * 20)
-      const numbered = [...document.querySelectorAll('.embed-editor .line-numbers')].filter((element) => {
+      // the margin's numbers alone: where the editor types into a text area, as in WebKit, a one pixel cover over it carries the class too
+      const numbered = [...document.querySelectorAll('.embed-editor .margin-view-overlays .line-numbers')].filter((element) => {
         const box = element.getBoundingClientRect()
         return box.height > 0 && box.top >= document.querySelector('.embed-editor')!.getBoundingClientRect().top
       }).map((element) => {
