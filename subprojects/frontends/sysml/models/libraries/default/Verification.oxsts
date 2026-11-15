@@ -36,13 +36,8 @@ class VerificationCaseDefinition {
 
     redefine tran {
         inline subject.havocInputEvents()
+        inline subject.sendTimeSignals()
         inline subject.executeMainComponent()
-        inline passTime()
-    }
-
-    @Trace
-    tran passTime() {
-        inline subject.passTime()
     }
 
     prop {

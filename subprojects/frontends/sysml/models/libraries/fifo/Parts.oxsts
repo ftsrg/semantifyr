@@ -24,12 +24,12 @@ class Part {
         }
     }
 
-    tran passTime() {
+    tran sendTimeSignals() {
         inline for (part in parts) {
-            inline part.passTime()
+            inline part.sendTimeSignals()
         }
 
-        inline exhibitState?.passTime()
+        inline exhibitState?.sendTimeSignals()
     }
 
     tran executeExhibitState() {
