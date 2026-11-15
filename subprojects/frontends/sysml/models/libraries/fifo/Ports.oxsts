@@ -6,8 +6,7 @@ abstract class Port {
     // a port queues its arrived items, oldest first, up to capacity, and drops an item arriving at a full queue
     refers capacity: int = 2
 
-    // the multiplicity is a literal, so it repeats capacity
-    var incomingItems: Item[0..2] := [nothing, nothing]
+    var incomingItems: Item[0..capacity] := [nothing, ...]
     var incomingCount: int := 0
     var outgoingItem: Item[0..1] := nothing
 
@@ -40,7 +39,9 @@ abstract class Port {
 
     tran consumeIncomingItem() {
         consumed := true
-        incomingItems := [incomingItems[1], nothing]
+        inline for (index in 0..<capacity - 1) {
+            incomingItems[index] := incomingItems[index + 1]
+        }
         incomingCount := incomingCount - 1
     }
 
@@ -58,9 +59,11 @@ abstract class Port {
     }
 
     tran setIncomingItem(item: Item) {
-        if (incomingCount < capacity) {
-            incomingItems[incomingCount] := item
-            incomingCount := incomingCount + 1
+        inline if (capacity > 0) {
+            if (incomingCount < capacity) {
+                incomingItems[incomingCount] := item
+                incomingCount := incomingCount + 1
+            }
         }
     }
 
