@@ -13,13 +13,4 @@ A backend's answer is a verdict on the case's property, trusted in the direction
 
 Where the verdict rests on a run the backend found, the run comes back with it, back-annotated into a [witness](witnesses-and-traces.mdx) of the model, from which the trace is read.
 
-## The Currently Implemented Backends
-
-Semantifyr is a general framework, and Theta, nuXmv, Spin and Uppaal are its currently implemented backends:
-
-- [Theta](theta.mdx) verifies an XSTS translation with unbounded integers, its verdicts exact, and is the backend every launcher's distribution carries.
-- [nuXmv](nuxmv.mdx) verifies an SMV translation with unbounded integers, its verdicts exact as Theta's are.
-- [Spin](spin.mdx) verifies a Promela translation with 32-bit integers, and is trusted when it finds a trace and not on a proof.
-- [Uppaal](uppaal.mdx) verifies a timed-automaton translation, and is the only backend that honours `@Clock`.
-
-The other backends are installed apart from Semantifyr, and each backend's page says what it needs on the machine.
+Currently implemented backends: [Theta](theta.mdx), [nuXmv](nuxmv.mdx), [Spin](spin.mdx), [Uppaal](uppaal.mdx).
