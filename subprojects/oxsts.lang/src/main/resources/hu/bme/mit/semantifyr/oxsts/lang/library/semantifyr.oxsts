@@ -76,7 +76,7 @@ annotation Shared
 /*
  * Marks a transition whose calls the trace lists: each call that fired, in the step it fired in, with its receiver's path from the root instance, such as `root.kitchen.lamp`, and the values of its arguments at the call site.
  * 
- * The trace records the arguments as the compiler evaluates them, so every argument of a call to a traced transition must be evaluable at compile time (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`), and none may be a record (`OXSTS.UNSUPPORTED_FEATURE`).
+ * The trace records the arguments as the compiler evaluates them, so every argument of a call to a traced transition must be evaluable at compile time, and none may be a record.
  */
 annotation Trace
 

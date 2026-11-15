@@ -114,9 +114,6 @@ public class ReferenceCompletenessTest {
             }
             texts.addAll(DocumentationFences.comments(page));
         }
-        for (var model : DocumentationFences.importedModels()) {
-            texts.add(Files.readString(model));
-        }
         for (var text : texts) {
             named.addAll(issueCodesIn(text));
         }
@@ -134,6 +131,11 @@ public class ReferenceCompletenessTest {
         for (var page : DocumentationFences.pages()) {
             for (var code : issueCodesIn(DocumentationFences.shownText(page))) {
                 shown.add(DocumentationFences.DOCUMENTATION.relativize(page) + ": " + code);
+            }
+        }
+        for (var model : DocumentationFences.importedModels()) {
+            for (var code : issueCodesIn(Files.readString(model))) {
+                shown.add(model + ": " + code);
             }
         }
         assertThat(shown).as("issue codes a reader sees on a page").isEmpty();
