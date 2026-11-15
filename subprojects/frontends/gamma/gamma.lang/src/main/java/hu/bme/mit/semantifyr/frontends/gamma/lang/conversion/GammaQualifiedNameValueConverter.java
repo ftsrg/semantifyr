@@ -8,7 +8,6 @@ package hu.bme.mit.semantifyr.frontends.gamma.lang.conversion;
 
 import org.eclipse.xtext.conversion.impl.QualifiedNameValueConverter;
 
-// a segment of a package name may be escaped with ^ like any other identifier, as in Gamma
 public class GammaQualifiedNameValueConverter extends QualifiedNameValueConverter {
 
     @Override
