@@ -27,6 +27,7 @@ import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.caseDirectory
 import hu.bme.mit.semantifyr.verifier.caseDirectoryName
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
+import org.eclipse.xtext.resource.FileExtensionProvider
 import org.eclipse.xtext.resource.SaveOptions
 import org.eclipse.xtext.serializer.ISerializer
 import java.nio.file.Files
@@ -37,10 +38,11 @@ import kotlin.io.path.nameWithoutExtension
 
 class CompileCommand @Inject constructor(
     semantifyrLoader: SemantifyrLoader,
+    fileExtensionProvider: FileExtensionProvider,
     verificationCaseDiscoverer: VerificationCaseDiscoverer,
     private val serializer: ISerializer,
     private val injector: Injector,
-) : BaseSemantifyrCommand("compile", semantifyrLoader) {
+) : BaseSemantifyrCommand("compile", semantifyrLoader, fileExtensionProvider) {
     private val logger by loggerFactory()
 
     private val caseSpecificationOptions by VerificationCaseSpecificationOptionGroup(verificationCaseDiscoverer)

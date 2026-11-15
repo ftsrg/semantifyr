@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import org.assertj.core.api.Assertions.assertThat
+import org.eclipse.xtext.resource.FileExtensionProvider
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
@@ -31,7 +32,7 @@ class SysMLLibraryRedefinitionTest {
     @ParameterizedTest
     @EnumSource(SysMLv2Variant::class)
     fun `redefined transitions keep the parameters of the transition they redefine`(variant: SysMLv2Variant) {
-        val library = ClasspathBasedOxstsLibrary(javaClass.classLoader, variant.resourcePrefix, extractionDirectory)
+        val library = ClasspathBasedOxstsLibrary(injector.getInstance(FileExtensionProvider::class.java), javaClass.classLoader, variant.resourcePrefix, extractionDirectory)
         val context = loader.startContext()
             .loadLibraryPaths(listOf(library.extractedLibraryPath))
             .buildAndResolve()

@@ -42,7 +42,7 @@ Workflow {
 		}
 		language = StandardLanguage {
 			name = "hu.bme.mit.semantifyr.oxsts.lang.Oxsts"
-			fileExtensions = "oxsts"
+			fileExtensions = "semantifyr,sem,oxsts"
 			referencedResource = "platform:/resource/oxsts.lang/model/oxsts.genmodel"
 			
 			fragment = ecore2xtext.Ecore2XtextValueConverterServiceFragment2 auto-inject {}

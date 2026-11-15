@@ -20,13 +20,14 @@ import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
-import hu.bme.mit.semantifyr.oxsts.lang.library.OxstsLibrary
 import hu.bme.mit.semantifyr.verifier.VerificationCase
+import org.eclipse.xtext.resource.FileExtensionProvider
 import java.nio.file.Path
 
 abstract class BaseSemantifyrCommand(
     name: String,
     private val semantifyrLoader: SemantifyrLoader,
+    private val fileExtensionProvider: FileExtensionProvider,
 ) : SuspendingCliktCommand(name) {
     override val printHelpOnEmptyArgs = true
 
@@ -40,9 +41,9 @@ abstract class BaseSemantifyrCommand(
         .help("An OXSTS library file or directory the model uses, repeatable.")
 
     fun checkInputs() {
-        checkInputPath("Model", model, OxstsLibrary.FILE_NAME_SUFFIX)
+        checkInputPath("Model", model, fileExtensionProvider.fileExtensions)
         for (library in libraries) {
-            checkInputPath("Library", library, OxstsLibrary.FILE_NAME_SUFFIX)
+            checkInputPath("Library", library, fileExtensionProvider.fileExtensions)
         }
     }
 
