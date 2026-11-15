@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.verifier.ObservedParameter
 import hu.bme.mit.semantifyr.verifier.ObservedSlot
@@ -81,8 +82,12 @@ class ReportTraceTransformer @Inject constructor(
     }
 
     private fun rootName(compilation: FlattenedCompilationContext): String {
-        val root = compilation.rootInstance.children.singleOrNull()?.domain as? NamedElement
-            ?: error("the inlined model has no single root instance")
+        // a package-level global is a child of the root instance as well, named by its qualified name
+        val root = compilation.rootInstance.children.map {
+            it.domain
+        }.singleOrNull {
+            it.eContainer() !is OxstsModelPackage
+        } as? NamedElement ?: error("the inlined model has no single root instance")
         return root.name
     }
 

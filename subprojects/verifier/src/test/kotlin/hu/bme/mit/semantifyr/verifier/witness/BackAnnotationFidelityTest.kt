@@ -497,6 +497,29 @@ class BackAnnotationFidelityTest {
         )
     }
 
+    @Test
+    suspend fun `a model with a package-level global reports its root and derives its witness model`(@TempDir output: Path) {
+        val case = loadCase("globals.oxsts", "semantifyr::verification::lang::globals::GlobalTickReach")
+
+        verifyWithWitness(case, output) { model ->
+            val tick = model.variables.single {
+                it.name.endsWith("tick")
+            }.name
+            linearInlinedWitness(
+                model,
+                listOf(
+                    model.state(tick to 0),
+                    model.state(tick to 1),
+                ),
+            )
+        }
+
+        val trace = readReport(output, case).trace!!
+        assertThat(trace.root).isEqualTo("root")
+        assertThat(trace.states.last().values.values).containsExactly(ReportValue.Integer(BigInteger.ONE))
+        assertThat(readWitnessModel(output, case)).containsPattern("assume\\(.*counter\\.tick == 1\\)")
+    }
+
     private fun timedWitness(model: InlinedOxsts): InlinedWitness {
         val elapsed = model.variables.single {
             it.name == flattenedName("root", "timer", "elapsed")
