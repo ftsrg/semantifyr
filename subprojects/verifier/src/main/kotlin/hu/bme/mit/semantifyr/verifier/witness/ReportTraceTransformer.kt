@@ -139,9 +139,7 @@ class ReportTraceTransformer @Inject constructor(
             return ReportCall(
                 self = reportValueConverter.path(site.self),
                 transition = oxstsQualifiedNameProvider.getFullyQualifiedNameString(site.transitionDeclaration),
-                arguments = site.arguments.associate {
-                    it.parameterDeclaration.name to reportValueConverter.value(it.evaluation)
-                },
+                arguments = arguments(site, state),
                 calls = childrenByParent[site].orEmpty().map {
                     build(it)
                 },
@@ -151,6 +149,23 @@ class ReportTraceTransformer @Inject constructor(
         return childrenByParent[null].orEmpty().map {
             build(it)
         }
+    }
+
+    // a recorded argument holds the value of the site's last run in the step
+    private fun arguments(site: TransitionCallTrace, state: ClassWitnessState): Map<String, ReportValue> {
+        val compileTime = site.arguments.associate {
+            it.parameterDeclaration to reportValueConverter.value(it.evaluation)
+        }
+        val recorded = site.recordedArguments.associate {
+            val value = state.recordedArguments[it.variable]
+                ?: error("the recorded argument ${it.variable.name} has no value")
+            it.parameterDeclaration to reportValueConverter.value(value)
+        }
+        return site.transitionDeclaration.parameters.mapNotNull { parameter ->
+            (compileTime[parameter] ?: recorded[parameter])?.let {
+                parameter.name to it
+            }
+        }.toMap()
     }
 
     private fun entries(state: ClassWitnessState): List<ReportEntry> {

@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.backends.theta
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
+import hu.bme.mit.semantifyr.verifier.ReportValue
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationReport
 import hu.bme.mit.semantifyr.verifier.assertVerdict
@@ -17,9 +18,11 @@ import hu.bme.mit.semantifyr.verifier.caseReportPath
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
 import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.entry
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import java.math.BigInteger
 import java.nio.file.Path
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
@@ -71,7 +74,7 @@ class ThetaTracedRunTimeArgumentTest {
     }
 
     @Test
-    suspend fun `a traced call with a run-time argument verifies with a trace whose states leave the recorded argument out`(@TempDir modelDirectory: Path) {
+    suspend fun `a traced call with a run-time argument verifies with the argument's value in its call and not in the states`(@TempDir modelDirectory: Path) {
         val modelFile = modelDirectory.resolve("traced_run_time_argument.oxsts")
         modelFile.writeText(MODEL)
         val context = helper.semantifyrLoader.loadStandaloneModel(modelFile)
@@ -102,7 +105,9 @@ class ThetaTracedRunTimeArgumentTest {
             },
         ).anySatisfy {
             assertThat(it.transition).endsWith("Port::send")
-            assertThat(it.arguments).isEmpty()
+            assertThat(it.arguments).containsExactly(
+                entry("value", ReportValue.Integer(BigInteger.TWO)),
+            )
         }
     }
 }

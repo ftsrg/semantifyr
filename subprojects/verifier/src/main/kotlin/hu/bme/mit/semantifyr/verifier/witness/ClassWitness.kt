@@ -40,6 +40,7 @@ class ClassWitnessState(
     val activatedTraces: List<WitnessStateValue>,
     val clockValues: List<ClassWitnessClockValue> = emptyList(),
     val elapsed: Fraction = Fraction.ZERO,
+    val recordedArguments: Map<VariableDeclaration, Expression> = emptyMap(),
 )
 
 class ClassWitness(

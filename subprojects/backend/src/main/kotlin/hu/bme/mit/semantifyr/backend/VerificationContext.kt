@@ -168,7 +168,10 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
         val traceVariables = request.inlinedOxsts.variables.filter {
             TransitionTracerNames.isTracerName(it.name)
         }
-        if (traceVariables.isEmpty()) {
+        val argumentVariables = request.inlinedOxsts.variables.filter {
+            TransitionTracerNames.isArgumentName(it.name)
+        }
+        if (traceVariables.isEmpty() && argumentVariables.isEmpty()) {
             return
         }
         val states = listOf(witness.initializedState) + witness.transitionStates
@@ -179,6 +182,11 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
             for (variable in traceVariables) {
                 if (values[variable] !is LiteralBoolean) {
                     throw WitnessFailedException("the trace variable ${variable.name} has no value in state $index")
+                }
+            }
+            for (variable in argumentVariables) {
+                if (values[variable] == null) {
+                    throw WitnessFailedException("the recorded argument ${variable.name} has no value in state $index")
                 }
             }
         }

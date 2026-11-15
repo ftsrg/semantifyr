@@ -39,6 +39,11 @@ class ClassWitnessTransformer @Inject constructor(
             val realVariableValues = nonTracerValues.filter {
                 it.variable in compilation.flatteningInfo.variableHolders
             }
+            val recordedArguments = nonTracerValues.filter {
+                TransitionTracerNames.isArgumentName(it.variable.name)
+            }.associate {
+                it.variable to backAnnotateInstancePointers(it.variable, it.value)
+            }
 
             ClassWitnessState(
                 realVariableValues.map {
@@ -51,52 +56,17 @@ class ClassWitnessTransformer @Inject constructor(
                 witnessState.clockValues.filter {
                     it.variable in compilation.flatteningInfo.variableHolders
                 }.map {
-                    ClassWitnessClockValue(locate(it.variable), it.value)
+                    ClassWitnessClockValue(locate(it.variable, compilation), it.value)
                 },
                 witnessState.elapsed,
+                recordedArguments,
             )
         }
 
         private fun transform(variableValue: WitnessStateValue): ClassWitnessStateValue {
             return ClassWitnessStateValue(
-                locate(variableValue.variable),
+                locate(variableValue.variable, compilation),
                 backAnnotateInstancePointers(variableValue.variable, variableValue.value),
-            )
-        }
-
-        private fun locate(variable: VariableDeclaration): ClassWitnessVariable {
-            val holder = compilation.flatteningInfo.variableHolders[variable]
-                ?: error("Witness value references variable '${variable.name}' with no holder instance in flatteningInfo.variableHolders. Synthetic root-level variables should be filtered out before reaching locate(VariableDeclaration).")
-            val arraySlot = compilation.flatteningInfo.arraySlots[variable]
-            val recordField = compilation.flatteningInfo.recordFields[variable]
-            val originalVariable = arraySlot?.arrayVariable
-                ?: recordField?.recordVariable
-                ?: compilation.flatteningInfo.resolveOriginalVariable(holder, variable)
-            val holderReference = instanceReferenceProvider.getReference(holder)
-            val memberReference = OxstsFactory.createNavigationSuffixExpression().also {
-                it.primary = holderReference
-                it.member = originalVariable
-            }
-            val variableReference = when {
-                arraySlot != null -> OxstsFactory.createIndexingSuffixExpression().also {
-                    it.primary = memberReference
-                    it.index = OxstsFactory.createLiteralInteger(arraySlot.index)
-                }
-                recordField != null -> recordField.fields.fold<VariableDeclaration, Expression>(memberReference) { primary, field ->
-                    OxstsFactory.createNavigationSuffixExpression().also {
-                        it.primary = primary
-                        it.member = field
-                    }
-                }
-                else -> memberReference
-            }
-
-            return ClassWitnessVariable(
-                variableReference,
-                memberReference,
-                originalVariable,
-                arraySlot,
-                recordField,
             )
         }
 
@@ -122,6 +92,42 @@ class ClassWitnessTransformer @Inject constructor(
             return instanceReferenceProvider.getReference(instance)
         }
 
+    }
+
+    fun locate(variable: VariableDeclaration, compilation: FlattenedCompilationContext): ClassWitnessVariable {
+        val holder = compilation.flatteningInfo.variableHolders[variable]
+            ?: error("Witness value references variable '${variable.name}' with no holder instance in flatteningInfo.variableHolders. Synthetic root-level variables should be filtered out before reaching locate(VariableDeclaration).")
+        val arraySlot = compilation.flatteningInfo.arraySlots[variable]
+        val recordField = compilation.flatteningInfo.recordFields[variable]
+        val originalVariable = arraySlot?.arrayVariable
+            ?: recordField?.recordVariable
+            ?: compilation.flatteningInfo.resolveOriginalVariable(holder, variable)
+        val holderReference = instanceReferenceProvider.getReference(holder)
+        val memberReference = OxstsFactory.createNavigationSuffixExpression().also {
+            it.primary = holderReference
+            it.member = originalVariable
+        }
+        val variableReference = when {
+            arraySlot != null -> OxstsFactory.createIndexingSuffixExpression().also {
+                it.primary = memberReference
+                it.index = OxstsFactory.createLiteralInteger(arraySlot.index)
+            }
+            recordField != null -> recordField.fields.fold<VariableDeclaration, Expression>(memberReference) { primary, field ->
+                OxstsFactory.createNavigationSuffixExpression().also {
+                    it.primary = primary
+                    it.member = field
+                }
+            }
+            else -> memberReference
+        }
+
+        return ClassWitnessVariable(
+            variableReference,
+            memberReference,
+            originalVariable,
+            arraySlot,
+            recordField,
+        )
     }
 
     fun transform(

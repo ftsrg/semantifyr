@@ -245,6 +245,37 @@ class VerificationContextTest {
     }
 
     @Test
+    suspend fun `a recorded argument without a value in a state fails the run`() {
+        val argument = OxstsFactory.createVariableDeclaration().also {
+            it.name = TransitionTracerNames.argumentName(0, "value")
+        }
+        val inlinedOxsts = modelChecking(OxstsFactory.createAG()).also {
+            it.variables += argument
+        }
+        val witness = linearInlinedWitness(
+            inlinedOxsts,
+            listOf(
+                WitnessState(listOf(WitnessStateValue(argument, OxstsFactory.createLiteralInteger(0)))),
+                WitnessState(emptyList()),
+            ),
+        )
+
+        val result = ScriptedContext(
+            runStep = {
+                "fail"
+            },
+            witness = {
+                witness
+            },
+            inlinedOxsts = inlinedOxsts,
+            capabilityChecker = BackendCapabilityChecker.Unlimited,
+        ).execute()
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(result.message).endsWith("the recorded argument ${argument.name} has no value in state 1")
+    }
+
+    @Test
     suspend fun `a run declares its soundness direction from the model`() {
         val result = ScriptedContext(declaredSoundness = SoundnessDirection.UnderApproximating).execute()
 
