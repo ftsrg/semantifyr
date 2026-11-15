@@ -99,9 +99,3 @@
   }
 }
 
-.backends {
-  margin-top: 1rem;
-  color: var(--text-secondary);
-  font-size: var(--text-small);
-  text-align: center;
-}

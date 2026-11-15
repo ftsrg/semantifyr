@@ -79,11 +79,11 @@ function backendsPlugin(): Plugin {
         if (name === undefined || Number.isNaN(position)) {
           throw new Error(`The backend's page ${file} names no title or no sidebar position`);
         }
-        return { name, position, page: `/${pages}/${path.basename(file, '.mdx')}/` };
+        return { name, position };
       }).sort((left, right) => {
         return left.position - right.position;
-      }).map(({ name, page }) => {
-        return { name, page };
+      }).map(({ name }) => {
+        return { name };
       });
       actions.setGlobalData({ backends });
     },

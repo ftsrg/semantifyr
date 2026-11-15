@@ -5,7 +5,6 @@
  */
 
 import type React from 'react';
-import Link from '@docusaurus/Link';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import { usePluginData } from '@docusaurus/useGlobalData';
 import clsx from 'clsx';
@@ -16,7 +15,6 @@ const STACK_OFFSET = 6;
 
 interface Backend {
   name: string;
-  page: string;
 }
 
 // the backends the reference has a page for, read from those pages when the site is built
@@ -267,18 +265,6 @@ export default function Architecture(): React.ReactNode {
     <figure className={styles.picture}>
       <Figure layout={DESKTOP} backends={backends} />
       <Figure layout={PHONE} backends={backends} />
-      <figcaption className={styles.backends}>
-        {'The backends: '}
-        {backends.map((backend, index) => {
-          return (
-            <span key={backend.name}>
-              {index === 0 ? '' : ', '}
-              <Link to={backend.page}>{backend.name}</Link>
-            </span>
-          );
-        })}
-        .
-      </figcaption>
     </figure>
   );
 }
