@@ -24,6 +24,16 @@ dependencies {
     testImplementation(testFixtures(project(":backend")))
 }
 
+testing {
+    suites {
+        named<JvmTestSuite>("verificationTest") {
+            dependencies {
+                implementation(project(":theta-backend"))
+            }
+        }
+    }
+}
+
 tasks.named("test") {
     inputs.files(tasks.named("cloneOxstsTestModels"))
 }

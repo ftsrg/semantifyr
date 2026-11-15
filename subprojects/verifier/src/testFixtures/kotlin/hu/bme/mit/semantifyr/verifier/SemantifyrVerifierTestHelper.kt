@@ -255,6 +255,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         outputDirectory: Path,
         timeout: Duration = 1.minutes,
         environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
+        validationPortfolio: VerificationPortfolio = verificationPortfolio,
     ): VerificationResult {
         val context = semantifyrLoader.loadStandaloneModel(modelPath)
         val case = verificationCaseDiscoverer.findByQualifiedName(context, qualifiedName)
@@ -272,10 +273,10 @@ class SemantifyrVerifierTestHelper @Inject constructor(
             .buildAndResolve()
         val witness = reparsedContext.modelResources.last().contents.filterIsInstance<InlinedOxsts>().single()
 
-        val verifier = buildVerifier(verificationPortfolio, timeout, outputDirectory, environment)
+        val verifier = buildVerifier(validationPortfolio, timeout, outputDirectory, environment)
         val outcome = WitnessValidator().validate(verifier, witness)
         assertThat(outcome.isValid)
-            .describedAs("Reparsed witness for ${case.qualifiedName} must re-verify Passed via ${verificationPortfolio.id} but got ${outcome.verification.verdict} (${outcome.verification.message ?: "no message"})")
+            .describedAs("Reparsed witness for ${case.qualifiedName} must re-verify Passed via ${validationPortfolio.id} but got ${outcome.verification.verdict} (${outcome.verification.message ?: "no message"})")
             .isTrue()
 
         return result
