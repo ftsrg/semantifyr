@@ -28,8 +28,7 @@ function sidebarItemOf(part: LearnPart | LearnPage): SidebarItem {
     label: part.label,
     link: 'doc' in part.opening
       ? { type: 'doc', id: part.opening.doc }
-      : { type: 'generated-index', slug: part.opening.index, description: part.description },
-    customProps: { description: part.description },
+      : { type: 'generated-index', slug: part.opening.index, description: part.opening.description },
     items: itemsOf(part),
   };
 }
