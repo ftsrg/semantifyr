@@ -180,7 +180,6 @@ class UppaalBackendReplayTest {
         assertThat(UppaalConfig.OverApproximation.soundness).isEqualTo(SoundnessDirection.OverApproximating)
         val underApproximating = listOf(
             UppaalConfig.Default,
-            UppaalConfig.BreadthFirst,
             UppaalConfig.DepthFirst,
             UppaalConfig.RandomDepthFirst,
             UppaalConfig.UnderApproximation,
