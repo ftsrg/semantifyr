@@ -75,7 +75,7 @@
 .station {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 24px 96px;
+  grid-template-columns: minmax(0, 1fr) 24px 92px;
   grid-template-rows: auto 1fr;
   column-gap: 6px;
 }
@@ -112,7 +112,8 @@
 .stack {
   grid-area: 2 / 1;
   align-self: center;
-  margin: 0 18px 18px 10px;
+  margin: 0 14px 18px 8px;
+  padding: 10px;
   box-shadow:
     4px 4px 0 -2px var(--surface-editor),
     4px 4px 0 0 var(--accent),

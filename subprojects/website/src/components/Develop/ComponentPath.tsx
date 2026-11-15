@@ -58,7 +58,7 @@ export const PATH: PathBox[] = [
   {
     id: 'portfolio',
     title: 'Portfolio',
-    line: 'runs backends side by side, decides the verdict',
+    line: 'backends side by side, one verdict',
     section: 'portfolio',
     kind: 'component',
   },
@@ -89,7 +89,7 @@ export const PATH: PathBox[] = [
 export const BACKENDS: PathBox = {
   id: 'backends',
   title: 'Backends',
-  line: 'translate it for a model checker, read its answer back',
+  line: 'one per model checker',
   section: 'backends',
   kind: 'component',
 };
@@ -97,7 +97,7 @@ export const BACKENDS: PathBox = {
 export const MODEL_CHECKER: PathBox = {
   id: 'model-checker',
   title: 'Model checker',
-  line: 'a tool outside Semantifyr',
+  line: 'outside Semantifyr',
   section: 'backends',
   kind: 'external',
 };
