@@ -178,7 +178,11 @@ final class DocumentationFences {
 
     // where a page names an issue for the tests without showing it to the reader, beside the rule it belongs to
     static List<String> comments(Path page) throws IOException {
-        return PAGE_COMMENT.matcher(Files.readString(page)).results().map(MatchResult::group).toList();
+        return PAGE_COMMENT
+                .matcher(Files.readString(page))
+                .results()
+                .map(MatchResult::group)
+                .toList();
     }
 
     // a continued fence's model is the model it continues, a blank line and its own lines without the markers

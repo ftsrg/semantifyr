@@ -123,7 +123,8 @@ public class ReferenceCompletenessTest {
 
         codes.removeAll(named);
         assertThat(codes)
-                .as("issue codes of the validator named by no fence's issue word or page comment and not marked @InternalIssue where they are declared")
+                .as(
+                        "issue codes of the validator named by no fence's issue word or page comment and not marked @InternalIssue where they are declared")
                 .isEmpty();
     }
 
