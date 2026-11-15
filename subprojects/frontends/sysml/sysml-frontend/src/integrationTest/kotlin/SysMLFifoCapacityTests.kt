@@ -19,7 +19,7 @@ import org.junit.jupiter.params.provider.ValueSource
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 
-// the mapper sets no capacity, so the fixture redefines it per port; the queue of one has a port of none beside it
+// the mapper sets no capacity, so the fixture redefines it per port; the queue of one has a port of none beside it, and the queue of none is accepted from
 class SysMLFifoCapacityTests {
     companion object {
         private val injector = OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
@@ -37,6 +37,7 @@ class SysMLFifoCapacityTests {
             "QueueOfThreeNeverAcceptsOutOfOrderTestCase",
             "QueueOfOneAcceptsOldestTestCase",
             "QueueOfOneDropsMiddleTestCase",
+            "QueueOfNoneNeverAcceptsTestCase",
         ],
     )
     suspend fun `Fifo Capacity Cases Should Pass`(caseName: String) {

@@ -165,6 +165,19 @@ class QueueOfOneModel : Part {
     }
 }
 
+class QueueOfNoneModel : Part {
+    contains producer: Producer subsets parts
+    contains consumer: Consumer subsets parts {
+        redefine contains input: ConjugatedFeed subsets ports {
+            redefine refers capacity: int = 0
+        }
+    }
+    contains flow: Flow subsets flows {
+        redefine refers source: Port = producer.output
+        redefine refers target: Port = consumer.input
+    }
+}
+
 @VerificationCase
 @Tag("expect-pass")
 class QueueOfThreeAcceptsNewestTestCase : VerificationCaseDefinition {
@@ -215,6 +228,21 @@ class QueueOfOneDropsMiddleTestCase : VerificationCaseDefinition {
             redefine contains body: UnaryNotExpression {
                 redefine contains operand: IsStateActiveExpression {
                     redefine refers state: AbstractState = system.consumer.Behaviour.GotMiddle
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class QueueOfNoneNeverAcceptsTestCase : VerificationCaseDefinition {
+    contains system: QueueOfNoneModel[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains constraint: MustAlways subsets requiredConstraints {
+            redefine contains body: UnaryNotExpression {
+                redefine contains operand: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.consumer.Behaviour.GotOldest
                 }
             }
         }

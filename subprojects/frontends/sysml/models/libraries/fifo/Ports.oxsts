@@ -22,7 +22,7 @@ abstract class Port {
     }
 
     prop hasIncomingItem(item: Item): bool {
-        return incomingCount > 0 && incomingItems[0] == item
+        return if capacity > 0 then incomingCount > 0 && incomingItems[0] == item else false
     }
 
     prop hasOutgoingItem(item: Item): bool {
@@ -41,6 +41,9 @@ abstract class Port {
         consumed := true
         inline for (index in 0..<capacity - 1) {
             incomingItems[index] := incomingItems[index + 1]
+        }
+        inline if (capacity > 0) {
+            incomingItems[capacity - 1] := nothing
         }
         incomingCount := incomingCount - 1
     }
