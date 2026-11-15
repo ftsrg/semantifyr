@@ -57,7 +57,7 @@ Once the run ends, the trace of the case opens below its line by itself: the exe
 
 The trace of an `EF` case is an execution that reaches what the case asks for. The other views show the same execution: *Witness* as an OXSTS model, and *Calls* the calls of transitions marked to be traced, of which this model has none yet.
 
-The editor checks the model as you type: misspell a color and a red underline names the problem, and `Ctrl+Space` offers what can be written where the cursor is. [Verifying in Live](../../start/live/index.md) lists every control of the editor.
+The editor checks the model as you type: misspell a color and a red underline names the problem, and `Ctrl+Space` offers what can be written where the cursor is. [Try in the Browser](../../start/live/index.md) lists every control of the editor.
 
 ## What You Can Do Now
 
