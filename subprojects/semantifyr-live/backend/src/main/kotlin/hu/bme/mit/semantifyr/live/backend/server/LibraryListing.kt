@@ -13,11 +13,11 @@ import hu.bme.mit.semantifyr.live.backend.FlavorRegistry
 import hu.bme.mit.semantifyr.live.backend.WorkspaceLayout
 import hu.bme.mit.semantifyr.live.backend.data.LibrariesResponse
 import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServiceRegistry
+import org.eclipse.xtext.resource.FileExtensionProvider
 import java.nio.file.Files
 import java.nio.file.Path
 
-private val MODEL_EXTENSIONS = listOf(
-    ".oxsts",
+private val SYSML_EXTENSIONS = listOf(
     ".sysml",
     ".kerml",
 )
@@ -30,6 +30,13 @@ class LibraryListing @Inject constructor(
     private val config: BackendConfig,
     private val languageServiceRegistry: LanguageServiceRegistry,
 ) {
+
+    private val modelExtensions by lazy {
+        val oxstsExtensions = languageServiceRegistry.injectorFor(FlavorRegistry.flavors.first()).getInstance(FileExtensionProvider::class.java).fileExtensions
+        oxstsExtensions.map {
+            ".$it"
+        } + SYSML_EXTENSIONS
+    }
 
     val libraries by lazy {
         val builtinRoot = languageServiceRegistry.forFlavor(FlavorRegistry.flavors.first()).builtinLibrary.extractedLibraryPath
@@ -60,7 +67,7 @@ class LibraryListing @Inject constructor(
             }.map {
                 root.relativize(it).joinToString("/")
             }.filter { path ->
-                MODEL_EXTENSIONS.any {
+                modelExtensions.any {
                     path.endsWith(it)
                 }
             }.sorted().toList()

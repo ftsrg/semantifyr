@@ -8,6 +8,7 @@ import com.github.gradle.node.npm.task.NpmTask
 import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
+import hu.bme.mit.semantifyr.gradle.conventions.testInputScope
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.nodejs")
@@ -25,7 +26,8 @@ val editorCommonFiles = configurations.resolvable("editorCommonFiles") {
     attributes(semantifyrArtifact("npm-package"))
 }
 
-val theta = configurations.dependencyScope("theta")
+// Theta on the integration test's path; the extension does not ship it
+val theta = testInputScope("theta")
 val thetaFiles = configurations.resolvable("thetaFiles") {
     extendsFrom(theta.get())
     attributes(semantifyrArtifact("theta-xsts-cli"))
@@ -85,6 +87,8 @@ val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
 
 val npmCheck = tasks.register<NpmTask>("npmCheck") {
     configureSharedInputs()
+
+    inputs.file(project(":oxsts.lang").layout.projectDirectory.file("src/main/java/hu/bme/mit/semantifyr/oxsts/lang/GenerateOxsts.mwe2")).withPathSensitivity(PathSensitivity.NONE)
 
     npmCommand.set(listOf("run", "check"))
 

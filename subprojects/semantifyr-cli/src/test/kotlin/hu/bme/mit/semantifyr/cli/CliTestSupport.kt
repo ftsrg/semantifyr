@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.cli.common.execute
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
+import org.eclipse.xtext.resource.FileExtensionProvider
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
@@ -25,6 +26,10 @@ const val SMOKE_CASE = "semantifyr::verification::smoke::CounterReachesThree"
 
 private val injector by lazy {
     OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
+}
+
+val oxstsExtensions by lazy {
+    injector.getInstance(FileExtensionProvider::class.java).fileExtensions
 }
 
 suspend fun runCli(

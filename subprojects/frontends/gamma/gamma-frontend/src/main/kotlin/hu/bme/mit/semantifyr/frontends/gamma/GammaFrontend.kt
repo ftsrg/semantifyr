@@ -38,6 +38,7 @@ import hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult
 import hu.bme.mit.semantifyr.verifier.witness.WitnessValidator
 import kotlinx.coroutines.runBlocking
 import org.eclipse.xtext.EcoreUtil2
+import org.eclipse.xtext.resource.FileExtensionProvider
 import org.eclipse.xtext.resource.SaveOptions
 import org.eclipse.xtext.serializer.ISerializer
 import java.nio.file.Path
@@ -400,7 +401,7 @@ class GammaFrontend @Inject private constructor(
             val loader = effectiveOxstsInjector.getInstance(SemantifyrLoader::class.java)
             val discoverer = effectiveOxstsInjector.getInstance(VerificationCaseDiscoverer::class.java)
 
-            val resolvedLibraryPaths = libraryOverride ?: extractVariantLibrary()
+            val resolvedLibraryPaths = libraryOverride ?: extractVariantLibrary(effectiveOxstsInjector.getInstance(FileExtensionProvider::class.java))
             logger.info { "Building GammaFrontend (variant=${variant.name}, libraryPaths=$resolvedLibraryPaths)" }
 
             val gammaFrontendConfiguration = GammaFrontendConfig(
@@ -425,7 +426,7 @@ class GammaFrontend @Inject private constructor(
             )
         }
 
-        private fun extractVariantLibrary(): List<Path> {
+        private fun extractVariantLibrary(fileExtensionProvider: FileExtensionProvider): List<Path> {
             val libraryPath = Path.of(
                 System.getProperty("user.home"),
                 ".semantifyr",
@@ -433,6 +434,7 @@ class GammaFrontend @Inject private constructor(
                 variant.name.lowercase(),
             )
             val library = ClasspathBasedOxstsLibrary(
+                fileExtensionProvider,
                 javaClass.classLoader,
                 variant.resourcePrefix,
                 libraryPath,

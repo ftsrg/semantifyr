@@ -35,24 +35,30 @@ fun checkInputFile(
 fun checkInputPath(
     kind: String,
     path: Path,
-    fileSuffix: String,
+    fileExtensions: Collection<String>,
 ) {
     checkReadable(kind, path)
+    val fileSuffixes = fileExtensions.map {
+        ".$it"
+    }
+    val accepted = "${fileSuffixes.dropLast(1).joinToString(", ")} or ${fileSuffixes.last()}"
     if (!path.isDirectory()) {
-        if (!path.name.endsWith(fileSuffix)) {
-            throw CommandExit(ExitCode.Input, "$kind path '$path' is neither a directory nor a file ending in $fileSuffix.")
+        if (fileSuffixes.none { path.name.endsWith(it) }) {
+            throw CommandExit(ExitCode.Input, "$kind path '$path' is neither a directory nor a file ending in $accepted.")
         }
         return
     }
     val files = try {
         path.walk(PathWalkOption.FOLLOW_LINKS).filter {
-            it.isRegularFile() && it.name.endsWith(fileSuffix)
+            it.isRegularFile() && fileSuffixes.any { suffix ->
+                it.name.endsWith(suffix)
+            }
         }.toList()
     } catch (exception: IOException) {
         throw CommandExit(ExitCode.Input, "$kind directory '$path' cannot be read: ${exception.message}")
     }
     if (files.isEmpty()) {
-        throw CommandExit(ExitCode.Input, "$kind directory '$path' contains no $fileSuffix file.")
+        throw CommandExit(ExitCode.Input, "$kind directory '$path' contains no $accepted file.")
     }
     val unreadable = files.firstOrNull {
         !it.isReadable()

@@ -1,35 +1,42 @@
 ---
 title: Architecture
 sidebar_position: 0
-description: Semantifyr from a distance, its parts, the abstractions between them and the decisions that shape them, for a contributor about to read the code.
+hide_table_of_contents: true
+description: The path of a model through Semantifyr's components, what each of them is for, and the Gradle modules of the build with the dependencies between them, for a contributor about to read the code.
 ---
+
+import ComponentPath from '@site/src/components/Develop/ComponentPath';
+import ModuleGraph from '@site/src/components/Develop/ModuleGraph';
+import modules from '@module-graph/modules.json';
 
 # Architecture
 
-This page is Semantifyr from a distance, for a contributor about to read the code, which holds every detail; the [API documentation](pathname:///api/) is generated from it. [Contributing](contributing.md) says how to make a change.
+<ComponentPath />
 
-## The Parts
+## The Path
 
-- **The language.** OXSTS, its grammar, its validator and its type system, in which the semantic libraries and the models verified on them are written. [The OXSTS Language](../learn/oxsts/language/index.md) specifies it.
-- **The compiler.** It turns one verification case of an OXSTS model into a transition system in three phases, instantiation, inlining and flattening, with an optimizer after the last two; [How OXSTS Compiles](../learn/oxsts/compilation/index.mdx) shows each phase.
-- **The verifier.** It finds the verification cases of a model, has each compiled and verified, and back-annotates a backend's evidence into an OXSTS witness, which it can verify again to validate it.
-- **The backends.** Each turns the transition system into the input language of its model checker, refuses up front what that language cannot express, runs the checker and reads its answer and its evidence back. A portfolio runs several of them side by side and decides the verdict from their answers ([Portfolios and Verdicts](../learn/backends/portfolios-and-verdicts.mdx)).
-- **The frontends.** Each takes an engineering language to OXSTS: a translation of its models onto a semantic library of its own, and a generator that writes a witness back as a trace in the language. The SysML v2 frontend translates with a fork of SysIDE, the Gamma frontend with a language of its own beside OXSTS.
-- **The launchers.** `semantifyr`, `semantifyr-sysml` and `semantifyr-gamma` share their options, output and exit codes; each distribution carries the Theta backend, and a frontend's launcher its semantic library.
-- **The editors.** Language servers for OXSTS and Gamma, and the VS Code extension that runs them and shows a case's witness and trace.
-- **Live.** A server that hosts the same language servers and verifications for many visitors, and a browser frontend over it; the SysML v2 language server runs in the visitor's browser, which sends the server only the translated OXSTS.
+### Frontends {#frontends}
 
-## The Abstractions Between Them
+A frontend takes a model in an engineering language and translates it onto that language's semantic library, OXSTS classes that state what the language's constructs mean. The meaning is then a model of its own, read, varied and verified like any other, and not the code of a translator. A construct the frontend does not translate is reported on the construct, and no model is written for it. At the end of the path the same frontend turns the witness into a trace in the model's language. A model written in OXSTS needs no frontend. [Frontends](../learn/frontends/index.mdx) lists them.
 
-- A **semantic library** is plain OXSTS: a frontend emits a model that instantiates its classes, and the compiler never knows which language a model came from.
-- A **verification case** is a class of the model with a property, so a model carries its own questions in every language.
-- The **transition system** a backend receives is one model of variables, an initial transition, a main transition and a property, the same for every backend.
-- A **verdict** carries the direction in which its backend is trusted, and a portfolio reports only an answer that direction backs.
-- A **witness** is an OXSTS model of the one execution a backend found, from which every trace is made, and which can be verified again.
+### The Compiler {#compiler}
 
-## The General Decisions
+The compiler reads an OXSTS model on its semantic library and never learns which language the model came from. A verification case is a class of the model that carries its own property. The compiler takes one case through instantiation, inlining and flattening, optimizing between them, to a transition system: variables, an initial transition, a main transition and the property. [How OXSTS Compiles](../learn/oxsts/compilation/index.mdx) shows the phases, and [The OXSTS Language](../learn/oxsts/language/index.md) specifies the language.
 
-- The meaning of a language is written as a library, not built into a translator, so it can be read, varied and verified like any model.
-- A frontend translates strictly: a construct it does not support is a diagnostic on the construct, never a model that means something else.
-- Every backend implements the language as the specification defines it; what a backend cannot express is a refusal it states before it runs.
-- What the site states of the tool is generated from the tool or checked against it where it can be: the command-line help, the construct tables, the standard library, the settings and the examples.
+### The Portfolio {#portfolio}
+
+A portfolio is a strategy for the backend runs: which backends run under which configurations, side by side, and how the verdict is decided from their answers. Every backend receives the same transition system, refuses up front what its model checker cannot express, translates the rest into the checker's input, runs it, and reads back a verdict and, as evidence, the states it found. A backend is trusted in one direction, and a portfolio takes a verdict only where that direction backs it. A case without variables and transitions is decided with no backend. [Portfolios and Verdicts](../learn/backends/portfolios-and-verdicts.mdx) explains the strategies.
+
+### The Verifier {#verifier}
+
+The verifier drives the path: it finds the cases of a model, has each one compiled and verified by the portfolio, and back-annotates the evidence into a witness, an OXSTS model of the one execution the backend found, from which every trace is made. Validating a witness is a request of its own: the witness is verified again, as any model is. [Inlined Models](../learn/oxsts/language/library-and-output/inlined-models.md#witnesses) says what a witness is, and [Portfolios and Verdicts](../learn/backends/portfolios-and-verdicts.mdx#validation) how it is validated.
+
+## What Runs the Path {#what-runs-the-path}
+
+The launchers run the path on the command line, one for each language, with the same options, output and exit codes. Language servers bring each language into an editor, whose extension runs them and shows a case's witness and trace. Live is a server that hosts the same language servers and verifications for many visitors, with a browser application over it; where a language server runs in the browser, the server receives only the translated OXSTS.
+
+## The Modules
+
+<ModuleGraph graph={modules} />
+
+Each module of the build stands above the modules it depends on, counting what its production code and the artifacts it builds take from other modules, and leaving out what only its tests take. An edge is drawn only where no longer path leads to the same module, and the list names every dependency. A framed group is a folder under `subprojects/` that holds the modules of one frontend, one backend or live. `:logging`, `:utils` and `:guice-common` serve the other modules, and `:website` builds this site. The [API documentation](pathname:///api/) is generated from the code.

@@ -11,18 +11,18 @@ plugins {
 }
 
 // the timed case is one of crossroads' further cases, so the model is compiled with them
-val sysmlCompiledCorpus = configurations.dependencyScope("sysmlCompiledCorpus")
-val sysmlCompiledCorpusFiles = configurations.resolvable("sysmlCompiledCorpusFiles") {
-    extendsFrom(sysmlCompiledCorpus.get())
+val nightlyTestSysmlCompiledCorpus = configurations.dependencyScope("nightlyTestSysmlCompiledCorpus")
+val nightlyTestSysmlCompiledCorpusFiles = configurations.resolvable("nightlyTestSysmlCompiledCorpusFiles") {
+    extendsFrom(nightlyTestSysmlCompiledCorpus.get())
     attributes(semantifyrArtifact("compiled-corpus"))
 }
 
 dependencies {
-    sysmlCompiledCorpus(project(":sysml-wrapper"))
+    nightlyTestSysmlCompiledCorpus(project(":sysml-wrapper"))
 }
 
 val syncSysmlCrossroads = tasks.register<Sync>("syncSysmlCrossroads") {
-    from(sysmlCompiledCorpusFiles) {
+    from(nightlyTestSysmlCompiledCorpusFiles) {
         include("crossroads.oxsts")
     }
     from(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/libraries/default")) {

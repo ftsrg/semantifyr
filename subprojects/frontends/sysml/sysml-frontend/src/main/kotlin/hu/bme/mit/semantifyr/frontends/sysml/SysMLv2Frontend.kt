@@ -30,6 +30,7 @@ import hu.bme.mit.semantifyr.verifier.toJavaDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.eclipse.xtext.resource.FileExtensionProvider
 import java.nio.file.Path
 import kotlin.io.path.nameWithoutExtension
 import kotlin.time.Duration
@@ -260,7 +261,7 @@ class SysMLv2Frontend private constructor(
             val effectiveLoader = loader ?: effectiveOxstsInjector.getInstance(SemantifyrLoader::class.java)
             val discoverer = effectiveOxstsInjector.getInstance(VerificationCaseDiscoverer::class.java)
 
-            val resolvedLibraryPaths = extractVariantLibrary() + additionalLibraryPaths
+            val resolvedLibraryPaths = extractVariantLibrary(effectiveOxstsInjector.getInstance(FileExtensionProvider::class.java)) + additionalLibraryPaths
 
             val (compiledOxsts, transformationDuration) = measureTimedValue {
                 compiledOxstsOverride ?: run {
@@ -302,7 +303,7 @@ class SysMLv2Frontend private constructor(
             )
         }
 
-        private fun extractVariantLibrary(): List<Path> {
+        private fun extractVariantLibrary(fileExtensionProvider: FileExtensionProvider): List<Path> {
             val libraryPath = Path.of(
                 System.getProperty("user.home"),
                 ".semantifyr",
@@ -310,6 +311,7 @@ class SysMLv2Frontend private constructor(
                 variant.name.lowercase(),
             )
             val library = ClasspathBasedOxstsLibrary(
+                fileExtensionProvider,
                 javaClass.classLoader,
                 variant.resourcePrefix,
                 libraryPath,
