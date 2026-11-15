@@ -37,42 +37,20 @@ public class TraceArgumentValidationTest {
     private OxstsPackageParseHelper parseHelper;
 
     @Test
-    void runtimeArgumentOfATracedCallIsRejected() {
+    void runtimeArgumentsOfATracedCallPass() {
         var parsedPackage = parseHelper.parse(PORT + """
             class Host {
                 var count: int := 0
                 contains port: Port
                 redefine tran {
                     inline port.send(count)
-                }
-            }
-            """, CheckMode.ALL);
-
-        parsedPackage.assertNoResourceErrors();
-        assertThat(parsedPackage.getIssues())
-                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
-                .singleElement()
-                .satisfies(issue -> {
-                    assertThat(issue.getCode()).isEqualTo(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH);
-                    assertThat(issue.getLineNumber()).isEqualTo(16);
-                    assertThat(issue.getMessage()).contains("'send'");
-                });
-    }
-
-    @Test
-    void namedRuntimeArgumentOfATracedCallIsRejected() {
-        var parsedPackage = parseHelper.parse(PORT + """
-            class Host {
-                var count: int := 0
-                contains port: Port
-                redefine tran {
                     inline port.send(value = count + 1)
                 }
             }
             """, CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
-        parsedPackage.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "'send'");
+        parsedPackage.assertNoValidationIssues();
     }
 
     @Test

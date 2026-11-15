@@ -10,9 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.backend.transformation.BackendNameMangler
-import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.DataTypeDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
@@ -32,7 +30,6 @@ data class UppaalVariable(
 
 @VerificationScoped
 class UppaalVariableTransformer @Inject constructor(
-    private val builtinAnnotationHandler: BuiltinAnnotationHandler,
     private val builtinSymbolResolver: BuiltinSymbolResolver,
 ) {
 
@@ -48,7 +45,7 @@ class UppaalVariableTransformer @Inject constructor(
     }
 
     fun isClock(variableDeclaration: VariableDeclaration): Boolean {
-        return builtinAnnotationHandler.isClockVariable(variableDeclaration)
+        return variableDeclaration.typeSpecification?.domain === builtinSymbolResolver.clockDatatype(variableDeclaration)
     }
 
     fun describe(variableDeclaration: VariableDeclaration): UppaalVariable {
@@ -61,26 +58,16 @@ class UppaalVariableTransformer @Inject constructor(
     }
 
     private fun resolveKind(variableDeclaration: VariableDeclaration): UppaalVariableKind {
-        if (isClock(variableDeclaration)) {
-            return resolveClockKind(variableDeclaration)
-        }
         val domain = variableDeclaration.typeSpecification?.domain
             ?: error("Variable ${variableDeclaration.name} has no type specification")
 
         return when {
+            domain === builtinSymbolResolver.clockDatatype(variableDeclaration) -> UppaalVariableKind.Clock
             domain is EnumDeclaration -> UppaalVariableKind.Enum
             domain === builtinSymbolResolver.intDatatype(variableDeclaration) -> UppaalVariableKind.Integer
             domain === builtinSymbolResolver.boolDatatype(variableDeclaration) -> UppaalVariableKind.Boolean
             else -> throw BackendUnsupportedException("Uppaal does not support variables of type ${domain.name} (${variableDeclaration.name})")
         }
-    }
-
-    private fun resolveClockKind(variableDeclaration: VariableDeclaration): UppaalVariableKind {
-        val domain = variableDeclaration.typeSpecification?.domain
-        if (domain !is DataTypeDeclaration) {
-            throw BackendUnsupportedException("Uppaal supports @Clock only on data-typed variables (${variableDeclaration.name})")
-        }
-        return UppaalVariableKind.Clock
     }
 
     fun nameOf(enumDeclaration: EnumDeclaration): String {

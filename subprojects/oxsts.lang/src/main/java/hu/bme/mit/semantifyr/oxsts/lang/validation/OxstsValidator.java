@@ -20,6 +20,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.OppositeHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.PropertyTypeHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.clock.ClockTestAnalysis;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EvaluationFailureException;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluatorProvider;
@@ -114,6 +115,9 @@ public class OxstsValidator extends AbstractOxstsValidator {
     private BuiltinAnnotationHandler builtinAnnotationHandler;
 
     @Inject
+    private ClockTestAnalysis clockTestAnalysis;
+
+    @Inject
     private IGlobalScopeProvider globalScopeProvider;
 
     @Inject
@@ -173,6 +177,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String INCORRECT_ANNOTATION_TARGET = ISSUE_PREFIX + "INCORRECT_ANNOTATION_TARGET";
     public static final String AMBIGUOUS_REFERENCE = ISSUE_PREFIX + "AMBIGUOUS_REFERENCE";
     public static final String DECLARED_IN_ANOTHER_FILE = ISSUE_PREFIX + "DECLARED_IN_ANOTHER_FILE";
+    public static final String INCORRECT_CLOCK_USE = ISSUE_PREFIX + "INCORRECT_CLOCK_USE";
+    public static final String CLOCK_TEST_NOT_CLOSED = ISSUE_PREFIX + "CLOCK_TEST_NOT_CLOSED";
 
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
@@ -1020,7 +1026,6 @@ public class OxstsValidator extends AbstractOxstsValidator {
             target = "containment features";
             targeted = annotated instanceof FeatureDeclaration feature && feature.getKind() == FeatureKind.CONTAINMENT;
         } else if (BuiltinSymbolResolver.CONTROL_ANNOTATION_NAME.equals(name)
-                || BuiltinSymbolResolver.CLOCK_ANNOTATION_NAME.equals(name)
                 || BuiltinSymbolResolver.NON_OPTIMIZABLE_ANNOTATION_NAME.equals(name)) {
             target = "variables";
             targeted = annotated instanceof VariableDeclaration;
@@ -1038,7 +1043,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     }
 
     @Check
-    public void checkTracedCallArgumentModality(CallSuffixExpression callSuffixExpression) {
+    public void checkTracedCallArgumentType(CallSuffixExpression callSuffixExpression) {
         // a half-written navigation carries its own syntax or linking diagnostic
         if (callSuffixExpression.getPrimary() instanceof NavigationSuffixExpression navigation
                 && (navigation.getMember() == null || navigation.getMember().eIsProxy())) {
@@ -1058,13 +1063,6 @@ public class OxstsValidator extends AbstractOxstsValidator {
                                 + "' are not yet supported by the compiler, the witness cannot record a record value.",
                         argument,
                         UNSUPPORTED_FEATURE);
-            } else if (argument.getExpression() != null) {
-                checkModalityAtMost(
-                        argument.getExpression(),
-                        Modality.COMPILE_TIME,
-                        "Argument of a call to the traced transition '"
-                                + NamingUtil.getName(transitionDeclaration)
-                                + "' must be evaluable at compile time, the witness records its value");
             }
         }
     }
@@ -1083,6 +1081,10 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
         TypeEvaluation parameterType =
                 typeEvaluatorProvider.getEvaluator(parameter).fromTypeSpecification(parameter.getTypeSpecification());
+        // a clock argument or parameter is refused by the clock checks
+        if (typeCompatibility.isClock(expressionType, argument) || typeCompatibility.isClock(parameterType, argument)) {
+            return;
+        }
         if (!typeCompatibility.isAssignable(parameterType, expressionType, argument)) {
             acceptError(
                     "Argument of type "
@@ -1173,7 +1175,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
                 .getEvaluator(variableDeclaration)
                 .fromTypeSpecification(variableDeclaration.getTypeSpecification());
         var actual = evaluateTypeSafely(initializer);
-        if (actual == null) {
+        if (actual == null || typeCompatibility.isClock(declared, variableDeclaration)) {
             return;
         }
         if (!typeCompatibility.isAssignable(declared, actual, variableDeclaration)) {
@@ -1704,7 +1706,10 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
         var lhsType = evaluateTypeSafely(lhs);
         var rhsType = evaluateTypeSafely(rhs);
-        if (lhsType == null || rhsType == null) {
+        if (lhsType == null
+                || rhsType == null
+                || typeCompatibility.isClock(lhsType, assignmentOperation)
+                || typeCompatibility.isClock(rhsType, assignmentOperation)) {
             return;
         }
         if (!typeCompatibility.isAssignable(lhsType, rhsType, assignmentOperation)) {
@@ -1837,6 +1842,26 @@ public class OxstsValidator extends AbstractOxstsValidator {
         var leftType = evaluateTypeSafely(left);
         var rightType = evaluateTypeSafely(right);
         if (leftType == null || rightType == null) {
+            return;
+        }
+        var leftClock = typeCompatibility.isClock(leftType, operator);
+        var rightClock = typeCompatibility.isClock(rightType, operator);
+        if (leftClock && rightClock) {
+            acceptError(
+                    "Two clocks cannot be compared; a clock is compared with an integer.",
+                    operator,
+                    INCORRECT_CLOCK_USE);
+            return;
+        }
+        if (leftClock || rightClock) {
+            var boundType = leftClock ? rightType : leftType;
+            if (!typeCompatibility.isInt(boundType, operator)
+                    && typeCompatibility.unwrappedDomain(boundType) != builtinSymbolResolver.intDatatype(operator)) {
+                acceptError(
+                        "A clock is compared with an integer, found " + formatType(boundType) + ".",
+                        operator,
+                        INCORRECT_CLOCK_USE);
+            }
             return;
         }
         if (!typeCompatibility.isComparable(leftType, rightType, operator)) {
@@ -1994,6 +2019,128 @@ public class OxstsValidator extends AbstractOxstsValidator {
             return;
         }
         rejectIfUnboundedMultiplicity(typeSpec.getMultiplicity(), variableDeclaration);
+    }
+
+    @Check
+    public void checkClockDeclaration(VariableDeclaration variableDeclaration) {
+        if (OxstsUtils.isLoopVariable(variableDeclaration) || !clockTestAnalysis.isClock(variableDeclaration)) {
+            return;
+        }
+        if (variableDeclaration.eContainer() instanceof RecordDeclaration) {
+            acceptError(
+                    "A record field cannot be a clock.",
+                    variableDeclaration,
+                    OxstsPackage.Literals.VARIABLE_DECLARATION__TYPE_SPECIFICATION,
+                    0,
+                    INCORRECT_CLOCK_USE);
+            return;
+        }
+        var typeSpecification = variableDeclaration.getTypeSpecification();
+        if (typeSpecification.getMultiplicity() != null) {
+            RangeEvaluation range;
+            try {
+                range = multiplicityRangeEvaluator.evaluate(typeSpecification);
+            } catch (RuntimeException e) {
+                range = null;
+            }
+            if (range == null || range.getLowerBound() != 1 || range.getUpperBound() != 1) {
+                acceptError(
+                        "A clock holds exactly one value, so it cannot be an array element or optional.",
+                        typeSpecification,
+                        INCORRECT_CLOCK_USE);
+                return;
+            }
+        }
+        var initializer = variableDeclaration.getExpression();
+        if (initializer != null && !isLiteralZero(initializer)) {
+            acceptError(
+                    "A clock starts at 0, so its initializer is 0.",
+                    variableDeclaration,
+                    OxstsPackage.Literals.VARIABLE_DECLARATION__EXPRESSION,
+                    0,
+                    INCORRECT_CLOCK_USE);
+        }
+    }
+
+    @Check
+    public void checkClockParameter(ParameterDeclaration parameterDeclaration) {
+        var typeSpecification = parameterDeclaration.getTypeSpecification();
+        if (typeSpecification != null
+                && typeSpecification.getDomain() != null
+                && typeSpecification.getDomain() == builtinSymbolResolver.clockDatatype(parameterDeclaration)) {
+            acceptError(
+                    "A parameter cannot be a clock.",
+                    parameterDeclaration,
+                    OxstsPackage.Literals.PARAMETER_DECLARATION__TYPE_SPECIFICATION,
+                    0,
+                    INCORRECT_CLOCK_USE);
+        }
+    }
+
+    @Check
+    public void checkClockReset(AssignmentOperation assignmentOperation) {
+        var reference = assignmentOperation.getReference();
+        var expression = assignmentOperation.getExpression();
+        if (reference == null
+                || expression == null
+                || clockTestAnalysis.referencedClock(reference) == null
+                || isLiteralZero(expression)) {
+            return;
+        }
+        acceptError(
+                "A clock is reset only to 0.",
+                assignmentOperation,
+                OxstsPackage.Literals.ASSIGNMENT_OPERATION__EXPRESSION,
+                0,
+                INCORRECT_CLOCK_USE);
+    }
+
+    @Check
+    public void checkClockRead(Expression expression) {
+        if (!(expression instanceof ElementReference || expression instanceof NavigationSuffixExpression)
+                || clockTestAnalysis.referencedClock(expression) == null) {
+            return;
+        }
+        var container = expression.eContainer();
+        String message;
+        if (EcoreUtil2.getContainerOfType(expression, PropertyDeclaration.class) != null) {
+            message =
+                    "A property cannot read a clock; a timing requirement is modelled as a value that a timed branch sets.";
+        } else if (container instanceof AssignmentOperation assignment && assignment.getReference() == expression) {
+            return;
+        } else if (container instanceof ComparisonOperator) {
+            return;
+        } else if (container instanceof HavocOperation) {
+            message = "A clock cannot be havocked; it is reset to 0 by assignment.";
+        } else if (container instanceof Argument) {
+            message = "A clock cannot be passed as an argument.";
+        } else if (container instanceof ArithmeticBinaryOperator || container instanceof ArithmeticUnaryOperator) {
+            message = "Arithmetic on a clock is not allowed; a clock is only compared with an integer.";
+        } else {
+            message = "A clock is read only in a comparison with an integer.";
+        }
+        acceptError(message, expression, INCORRECT_CLOCK_USE);
+    }
+
+    @Check
+    public void checkClockTestsClosed(TransitionDeclaration transitionDeclaration) {
+        if (transitionDeclaration.getKind() == TransitionKind.INIT) {
+            return;
+        }
+        for (var branch : transitionDeclaration.getBranches()) {
+            for (var test : clockTestAnalysis.unclosedTests(branch)) {
+                acceptWarning(
+                        "This clock test is not closed, so a backend that explores whole delays does not trust a proof of this model; a closed test stands in an assume, not negated, as <=, >= or ==.",
+                        test,
+                        null,
+                        -1,
+                        CLOCK_TEST_NOT_CLOSED);
+            }
+        }
+    }
+
+    private static boolean isLiteralZero(Expression expression) {
+        return expression instanceof LiteralInteger literal && literal.getValue() == 0;
     }
 
     @Check
@@ -2200,7 +2347,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
             return;
         }
         var type = evaluateTypeSafely(expression);
-        if (type == null) {
+        if (type == null || typeCompatibility.isClock(type, expression)) {
             return;
         }
         if (!typeCompatibility.isBoolean(type, expression)) {
@@ -2213,7 +2360,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
             return;
         }
         var type = evaluateTypeSafely(expression);
-        if (type == null) {
+        if (type == null || typeCompatibility.isClock(type, expression)) {
             return;
         }
         if (!typeCompatibility.isNumeric(type, expression)) {

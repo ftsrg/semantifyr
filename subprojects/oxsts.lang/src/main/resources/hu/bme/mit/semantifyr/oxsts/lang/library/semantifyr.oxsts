@@ -35,6 +35,11 @@ extern datatype bool
 extern datatype string
 
 /*
+ * Clocks measure time. A clock starts at 0, advances by the wait before every main step, is reset to 0 by assignment and is read only in comparisons with integers.
+ */
+extern datatype clock
+
+/*
  * The Control annotation signals that this variable might be important to track during verification.
  */
 annotation Control
@@ -77,11 +82,6 @@ annotation Shared
  * Calls to transitions annotated with @Trace will be traced back in the verification case witness, containing the bindings of it's parameters at the call site.
  */
 annotation Trace
-
-/*
- * Variables annotated with @Clock allows time-aware backends to handle them in a more optimal way.
- */
-annotation Clock
 
 /*
  * Variables annotated with @NonOptimizable are excluded from optimizer passes that could remove or fold them.

@@ -116,8 +116,7 @@ public class VariableInitializerValidationTest {
         var parsedPackage = parseHelper.parse("""
             package test
             class Timer {
-                @Clock
-                var elapsed: int
+                var elapsed: clock
             }
             """, CheckMode.ALL);
 

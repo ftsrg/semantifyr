@@ -613,30 +613,10 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     }
 
     @Test
-    suspend fun `a clock must be data-typed`() {
-        val message = unsupportedMessage(
-            """
-                @semantifyr::Clock
-                var elapsed : test::colors::Color := test::colors::Color::Red
-                init {
-                }
-                tran {
-                }
-                prop {
-                    AG true
-                }
-            """,
-        )
-
-        assertThat(message).isEqualTo("Uppaal supports @Clock only on data-typed variables (elapsed)")
-    }
-
-    @Test
     suspend fun `a clock is reset only to zero`() {
         val message = unsupportedMessage(
             """
-                @semantifyr::Clock
-                var elapsed : int := 0
+                var elapsed : clock := 0
                 init {
                 }
                 tran {
@@ -655,8 +635,7 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `a clock is not reset to an expression`() {
         val message = unsupportedMessage(
             """
-                @semantifyr::Clock
-                var elapsed : int := 0
+                var elapsed : clock := 0
                 var counter : int := 0
                 init {
                 }
@@ -676,8 +655,7 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `a clock is not havoced`() {
         val message = unsupportedMessage(
             """
-                @semantifyr::Clock
-                var elapsed : int := 0
+                var elapsed : clock := 0
                 init {
                 }
                 tran {
@@ -696,8 +674,7 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     suspend fun `a clock is reset to zero`() {
         val edges = edges(
             """
-                @semantifyr::Clock
-                var elapsed : int := 0
+                var elapsed : clock := 0
                 init {
                 }
                 tran {

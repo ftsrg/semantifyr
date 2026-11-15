@@ -33,7 +33,6 @@ public class AnnotationTargetValidationTest {
                 @Shared
                 contains item: Item
                 @Control
-                @Clock
                 @NonOptimizable
                 var count: int := 0
                 @Trace
