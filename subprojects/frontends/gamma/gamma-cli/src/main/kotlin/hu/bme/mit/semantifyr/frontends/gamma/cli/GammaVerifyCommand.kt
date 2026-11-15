@@ -16,7 +16,6 @@ import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.path
 import com.google.inject.Injector
-import hu.bme.mit.semantifyr.cli.common.CaseOutcome
 import hu.bme.mit.semantifyr.cli.common.CommandExit
 import hu.bme.mit.semantifyr.cli.common.ExitCode
 import hu.bme.mit.semantifyr.cli.common.options.ArtifactOptionGroup
@@ -91,8 +90,7 @@ class GammaVerifyCommand(
 
         val exitCode = cases.maxOf { case ->
             verifyCase(output, case.qualifiedName) {
-                val result = frontend.verify(case)
-                CaseOutcome(result.verification, result.reportPath)
+                frontend.verify(case).reportPath
             }
         }
         if (exitCode != ExitCode.Success) {

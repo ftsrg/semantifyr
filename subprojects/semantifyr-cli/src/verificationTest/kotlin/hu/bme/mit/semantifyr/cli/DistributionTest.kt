@@ -41,8 +41,9 @@ class DistributionTest : DistributionTestBase("semantifyr") {
         assertThat(run.exitCode).describedAs(run.stderr).isEqualTo(5)
         assertThat(jsonLineFormat.decodeFromString<VerifyOutcomeLine>(run.stdout.trim()).exitCode).isEqualTo(5)
         val report = reportOf(run)
-        assertThat(Json.decodeFromString<VerificationReport>(report.readText()).result.verdict).isEqualTo(VerificationVerdict.Failed)
-        assertThat(report.resolveSibling("witness.json")).exists()
+        val verificationReport = Json.decodeFromString<VerificationReport>(report.readText())
+        assertThat(verificationReport.result.verdict).isEqualTo(VerificationVerdict.Failed)
+        assertThat(verificationReport.trace).isNotNull()
     }
 
     @Test

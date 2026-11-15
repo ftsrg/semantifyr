@@ -15,9 +15,11 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.switch
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.verifier.BackAnnotationException
-import hu.bme.mit.semantifyr.verifier.VerificationResult
+import hu.bme.mit.semantifyr.verifier.VerificationReport
+import kotlinx.serialization.json.Json
 import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.io.path.readText
 
 enum class VerifyOutput {
     Text,
@@ -32,20 +34,15 @@ fun SuspendingCliktCommand.verifyOutputOption() = mutuallyExclusiveOptions(
         .help("One JSON object per case, one per line."),
 ).single().default(VerifyOutput.Text)
 
-class CaseOutcome(
-    val result: VerificationResult,
-    val report: Path,
-)
-
 suspend fun SuspendingCliktCommand.verifyCase(
     output: VerifyOutput,
     caseName: String,
-    verify: suspend () -> CaseOutcome,
+    verify: suspend () -> Path,
 ): ExitCode {
     if (output == VerifyOutput.Text) {
         echo("Verifying $caseName ...")
     }
-    val outcome = try {
+    val reportPath = try {
         verify()
     } catch (exception: CancellationException) {
         throw exception
@@ -80,9 +77,9 @@ suspend fun SuspendingCliktCommand.verifyCase(
         echo("error: Compiling $caseName failed: $message", err = true)
         return ExitCode.Compilation
     }
-    val result = outcome.result
+    val report = reportPath.toAbsolutePath().normalize()
+    val result = Json.decodeFromString<VerificationReport>(report.readText()).result
     val exitCode = ExitCode.of(result.verdict)
-    val report = outcome.report.toAbsolutePath().normalize()
     when (output) {
         VerifyOutput.Text -> {
             val message = result.message?.let {

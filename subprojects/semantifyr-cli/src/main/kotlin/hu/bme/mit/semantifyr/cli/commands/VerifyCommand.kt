@@ -10,7 +10,6 @@ import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.parameters.groups.provideDelegate
 import com.google.inject.Inject
 import com.google.inject.Injector
-import hu.bme.mit.semantifyr.cli.common.CaseOutcome
 import hu.bme.mit.semantifyr.cli.common.CommandExit
 import hu.bme.mit.semantifyr.cli.common.ExitCode
 import hu.bme.mit.semantifyr.cli.common.options.ArtifactOptionGroup
@@ -75,7 +74,8 @@ class VerifyCommand @Inject constructor(
 
         val exitCode = cases.maxOf { case ->
             verifyCase(output, case.qualifiedName) {
-                CaseOutcome(verifier.verify(case), caseReportPath(artifactOptions.resolvedOutputDirectory, case))
+                verifier.verify(case)
+                caseReportPath(artifactOptions.resolvedOutputDirectory, case)
             }
         }
         if (exitCode != ExitCode.Success) {
