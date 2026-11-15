@@ -29,43 +29,43 @@ export const NODES: Node[] = [
     order: 1,
     path: 'the model',
     type: 'inlined oxsts',
-    x: 150,
+    x: 135,
     y: 8,
   },
   {
     order: 2,
     path: 'root',
     type: 'BothLampsCanBeOn',
-    x: 150,
+    x: 135,
     y: 118,
   },
   {
     order: 3,
     path: 'root.hall',
     type: 'Hall',
-    x: 150,
+    x: 135,
     y: 228,
   },
   {
     order: 4,
     path: 'root.hall.left',
     type: 'Lamp',
-    x: 20,
-    y: 358,
+    x: 5,
+    y: 392,
   },
   {
     order: 5,
     path: 'root.hall.right',
     type: 'Spot',
-    x: 280,
-    y: 358,
+    x: 265,
+    y: 392,
   },
   {
     order: 6,
     path: 'root.hall.left.fuse',
     type: 'Fuse',
-    x: 150,
-    y: 508,
+    x: 135,
+    y: 556,
   },
 ];
 
@@ -104,9 +104,11 @@ export const EDGES: Edge[] = [
   },
 ];
 
-const WIDTH = 200;
+const WIDTH = 230;
 const HEIGHT = 74;
 const CENTER = 250;
+// the middle of a box right of its order's disc, so that a long path keeps clear of it
+const TEXT_CENTER = 15 + WIDTH / 2;
 
 export function nodeAt(index: number): Node {
   const node = NODES[index];
@@ -119,7 +121,7 @@ export function nodeAt(index: number): Node {
 export default function InstanceTree(): React.JSX.Element {
   return (
     <figure className={styles.tree}>
-      <svg viewBox="0 0 500 590" role="img" aria-label="The instance tree: the model contains root, an instance of BothLampsCanBeOn, which contains root.hall, a Hall; root.hall contains root.hall.left, a Lamp, and root.hall.right, a Spot; both lamps hold one shared fuse, root.hall.left.fuse, a Fuse">
+      <svg viewBox="0 0 500 640" role="img" aria-label="The instance tree: the model contains root, an instance of BothLampsCanBeOn, which contains root.hall, a Hall; root.hall contains root.hall.left, a Lamp, and root.hall.right, a Spot; both lamps hold one shared fuse, root.hall.left.fuse, a Fuse">
         {EDGES.map((edge) => {
           const from = nodeAt(edge.from);
           const to = nodeAt(edge.to);
@@ -133,7 +135,7 @@ export default function InstanceTree(): React.JSX.Element {
           return (
             <g key={`${edge.from} ${edge.to}`}>
               <line x1={x1} y1={y1} x2={x2} y2={y2} className={styles.edge} />
-              <text x={labelX + (left ? -10 : 10)} y={y2 + (y1 - y2) * 0.3 + 4} className={left ? styles.edgeLabelLeft : styles.edgeLabelRight}>{edge.feature}</text>
+              <text x={labelX + (left ? -14 : 14)} y={y2 + (y1 - y2) * 0.3 + 4} className={left ? styles.edgeLabelLeft : styles.edgeLabelRight}>{edge.feature}</text>
             </g>
           );
         })}
@@ -143,8 +145,8 @@ export default function InstanceTree(): React.JSX.Element {
               <rect x={node.x} y={node.y} width={WIDTH} height={HEIGHT} rx={8} />
               <circle cx={node.x + 18} cy={node.y + 18} r={11} className={styles.orderDisc} />
               <text x={node.x + 18} y={node.y + 23} className={styles.order}>{node.order}</text>
-              <text x={node.x + WIDTH / 2} y={node.y + 30} className={styles.boxTitle}>{node.path}</text>
-              <text x={node.x + WIDTH / 2} y={node.y + 54} className={styles.boxLine}>{node.type}</text>
+              <text x={node.x + TEXT_CENTER} y={node.y + 30} className={styles.boxTitle}>{node.path}</text>
+              <text x={node.x + TEXT_CENTER} y={node.y + 54} className={styles.boxLine}>{node.type}</text>
             </g>
           );
         })}
