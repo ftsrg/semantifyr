@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import com.google.inject.Injector
 import com.google.inject.Module
 import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
+import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScopeBlocking
@@ -230,7 +231,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
 
         assumePortfolioAvailable(verificationPortfolio, environment)
         val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment)
-        if (result.verdict != expectedVerdict && !result.isTrusted && hasUnclosedClockTest(case, outputDirectory)) {
+        if (result.verdict != expectedVerdict && result.soundness == SoundnessDirection.UnderApproximating && !result.isTrusted && hasUnclosedClockTest(case, outputDirectory)) {
             logger.info { "Result: ${result.verdict}, untrusted, as whole delays under-approximate a model whose clock tests are not all closed" }
             return
         }
