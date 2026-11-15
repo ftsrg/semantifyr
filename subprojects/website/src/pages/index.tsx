@@ -12,7 +12,7 @@ import { terms } from '@semantifyr/editor-common/terms';
 import Architecture from '@site/src/components/Architecture';
 import { EmbeddedExample } from '@site/src/components/LiveEmbed/EmbeddedExample';
 import { useLiveBackendUrl } from '@site/src/lib/live';
-import { addressOf, isPart, learnParts } from '@site/src/map';
+import { addressOf, learnParts } from '@site/src/map';
 import crossroads from '@served-examples/sysml/crossroads';
 import Layout from '@theme/Layout';
 import ThemedImage from '@theme/ThemedImage';
@@ -27,7 +27,7 @@ const STILL_LINES = 22;
 
 function partAddress(label: string): string {
   const part = learnParts.flatMap((candidate) => {
-    return [candidate, ...(candidate.parts ?? []).filter(isPart)];
+    return [candidate, ...(candidate.parts ?? [])];
   }).find((candidate) => {
     return candidate.label === label;
   });

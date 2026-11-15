@@ -15,7 +15,7 @@ import { servedExamples, type CaseManifest, type ServedExample } from '@semantif
 import type { PrismTheme } from 'prism-react-renderer';
 import remarkFences from './src/plugins/remarkFences';
 import sourceAliases from './source-aliases.json';
-import { addressOf, isPart, learnParts, sections, SOURCE_CODE, type LearnPart } from './src/map';
+import { addressOf, learnParts, sections, SOURCE_CODE, type LearnPart } from './src/map';
 
 // the code blocks take their colours from live's grammars in theme/CodeBlock/Content; the block itself from the tokens
 const codeBlockTheme: PrismTheme = {
@@ -63,7 +63,7 @@ function servedExamplesPlugin(): Plugin {
 function directoriesOf(part: LearnPart): string[] {
   return [
     ...(part.directory === undefined ? [] : [part.directory]),
-    ...(part.parts ?? []).filter(isPart).flatMap(directoriesOf),
+    ...(part.parts ?? []).flatMap(directoriesOf),
   ];
 }
 
