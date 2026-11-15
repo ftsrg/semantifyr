@@ -31,9 +31,12 @@ class Room {
     contains left: Lamp
     contains right: Lamp
 
+    var lastToggled: Lamp[0..1] := nothing
+
     redefine tran {
         inline left.toggle()
         inline right.toggle()
+        lastToggled := right
     }
 }
 
