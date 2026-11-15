@@ -58,11 +58,18 @@ describe('the SysML v2 language server of the fork, in the page', () => {
     await page.keyboard.type('port probe : Sens')
     await page.keyboard.press('Control+Space')
     await expect.poll(async () => {
-      return page.locator('.suggest-widget .monaco-list-row').allInnerTexts()
+      return page.locator('.suggest-widget .monaco-list-row').filter({ visible: true }).allInnerTexts()
     }, { timeout: 30_000 }).toEqual(expect.arrayContaining([expect.stringContaining('Sensors')]))
     await page.keyboard.press('Escape')
+    await expect.poll(async () => {
+      return page.locator('.suggest-widget').filter({ visible: true }).count()
+    }, { timeout: 30_000 }).toBe(0)
 
-    await clickToken(page, 'private import ScalarValues::Integer;', 'Integer')
+    // a click while the completion list closes is lost on WebKit
+    await expect.poll(async () => {
+      await clickToken(page, 'private import ScalarValues::Integer;', 'Integer')
+      return page.locator('.statusbar .status-end').innerText()
+    }, { timeout: 30_000, interval: 1000 }).toContain('Ln 1,')
     await page.keyboard.press('F12')
     await expect.poll(async () => {
       return page.locator('.tabs [role="tab"][aria-selected="true"]').innerText()
