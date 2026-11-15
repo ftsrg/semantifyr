@@ -62,7 +62,7 @@ class SmartFullPortfolioStagesTest {
     }
 
     @Test
-    fun `with more configurations than slots the stages run one after another, each cut at its window`(
+    fun `with more configurations than slots the stages run one after another beside the configurations listed in a row`(
         @TempDir output: Path,
     ) = runTest {
         val theta = scripted<ThetaConfig>("theta")
@@ -85,71 +85,150 @@ class SmartFullPortfolioStagesTest {
             "safe-dfs@0s",
             "bounded-kinduction@0s",
             "cegar-expl@0s",
-            "cegar-expl@10s",
             "cegar-pred-cart@10s",
             "bounded-imc@10s",
             "cegar-expl-pred-combined@10s",
-            "cegar-expl@40s",
-            "cegar-pred-cart@40s",
             "ic3@40s",
             "collapse@40s",
             "bitstate@40s",
+        )
+        assertThat(theta.cancellations + spin.cancellations).containsExactlyInAnyOrder(
+            "bounded-bmc@10s",
+            "safe-dfs@10s",
+            "bounded-kinduction@10s",
+            "bounded-imc@40s",
+            "cegar-expl-pred-combined@40s",
+            "ic3@2m",
+            "collapse@2m",
+            "bitstate@2m",
+            "cegar-expl@2m",
+            "cegar-pred-cart@2m",
         )
         assertThat(result.message).contains(
             "first stage: ",
             "second stage: ",
             "last stage: ",
-            "theta:cegar-expl-pred-combined cut",
+            "running from the first stage: theta:cegar-expl cut",
+            "running from the second stage: theta:cegar-pred-cart cut",
         ).doesNotContain("never started")
         assertThat(messages).contains(
-            "first stage: racing 4 backend configurations within 10s",
-            "second stage: racing 4 backend configurations within 30s",
-            "last stage: racing 5 backend configurations until the case's time runs out",
+            "first stage: racing 3 backend configurations within 10s",
+            "running from the first stage: racing 1 backend configurations until the case's time runs out",
+            "second stage: racing 2 backend configurations within 30s",
+            "running from the second stage: racing 1 backend configurations until the case's time runs out",
+            "last stage: racing 3 backend configurations until the case's time runs out",
         )
     }
 
     @Test
-    fun `with more legs than slots as many start as there are slots and the rest never start`(
+    fun `a configuration listed in every stage that needs 25 s answers 25 s after the first stage's start, started once`(
+        @TempDir output: Path,
+    ) = runTest {
+        val theta = scripted<ThetaConfig>(
+            "theta",
+            mapOf(
+                "cegar-expl" to ScriptedAnswer(25.seconds, VerificationVerdict.Passed),
+            ),
+        )
+        val spin = scripted<SpinConfig>("spin")
+        val portfolio = smart(theta = theta, spin = spin)
+
+        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(9), ExecutionEnvironment.Empty, ProgressContext.Silent)
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(currentTime).isEqualTo(25_000)
+        assertThat(
+            startsOf(theta).filter {
+                it.startsWith("cegar-expl@")
+            },
+        ).containsExactly("cegar-expl@0s")
+        assertThat(theta.cancellations).doesNotContain("cegar-expl@10s")
+    }
+
+    @Test
+    fun `a trusted answer beside the stages ends the case in the middle of a stage and cuts that stage's legs`(
+        @TempDir output: Path,
+    ) = runTest {
+        val theta = scripted<ThetaConfig>(
+            "theta",
+            mapOf(
+                "cegar-expl" to ScriptedAnswer(15.seconds, VerificationVerdict.Passed),
+            ),
+        )
+        val spin = scripted<SpinConfig>("spin")
+        val portfolio = smart(theta = theta, spin = spin)
+
+        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(9), ExecutionEnvironment.Empty, ProgressContext.Silent)
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(currentTime).isEqualTo(15_000)
+        assertThat(theta.cancellations).containsExactlyInAnyOrder(
+            "bounded-bmc@10s",
+            "bounded-kinduction@10s",
+            "cegar-pred-cart@15s",
+            "bounded-imc@15s",
+            "cegar-expl-pred-combined@15s",
+        )
+    }
+
+    @Test
+    fun `a trusted answer in a stage cuts the legs running beside it`(
+        @TempDir output: Path,
+    ) = runTest {
+        val theta = scripted<ThetaConfig>(
+            "theta",
+            mapOf(
+                "bounded-imc" to ScriptedAnswer(5.seconds, VerificationVerdict.Passed),
+            ),
+        )
+        val spin = scripted<SpinConfig>("spin")
+        val portfolio = smart(theta = theta, spin = spin)
+
+        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(9), ExecutionEnvironment.Empty, ProgressContext.Silent)
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(currentTime).isEqualTo(15_000)
+        assertThat(theta.cancellations).contains(
+            "cegar-expl@15s",
+            "cegar-pred-cart@15s",
+            "cegar-expl-pred-combined@15s",
+        )
+    }
+
+    @Test
+    fun `with more legs than slots only as many start at once as there are slots`(
         @TempDir output: Path,
     ) = runTest {
         val theta = scripted<ThetaConfig>("theta")
         val spin = scripted<SpinConfig>("spin")
         val portfolio = smart(theta = theta, spin = spin)
 
-        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(2), ExecutionEnvironment.Empty, ProgressContext.Silent)
+        portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(2), ExecutionEnvironment.Empty, ProgressContext.Silent)
 
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Timeout)
-        val starts = theta.starts + spin.starts
-        for (stageStart in listOf(0.seconds, 10.seconds, 40.seconds)) {
-            assertThat(
-                starts.count {
-                    it.at == stageStart
-                },
-            ).describedAs("legs started at $stageStart").isEqualTo(2)
-        }
-        assertThat(starts).hasSize(6)
-        assertThat(Regex(" cut").findAll(result.message!!).count()).isEqualTo(6)
-        assertThat(Regex(" never started").findAll(result.message!!).count()).isEqualTo(7)
+        assertThat(
+            (theta.starts + spin.starts).count {
+                it.at == Duration.ZERO
+            },
+        ).isEqualTo(2)
     }
 
     @Test
-    fun `a configuration run in several stages keeps the artifacts of each run`(
+    fun `a configuration that runs again in a later stage keeps the artifacts of each run`(
         @TempDir output: Path,
     ) = runTest {
-        val theta = scripted<ThetaConfig>("theta")
-        val portfolio = smart(theta = theta, spin = scripted<SpinConfig>("spin"))
+        val uppaal = scripted<UppaalConfig>("uppaal")
+        val portfolio = smart(theta = scripted<ThetaConfig>("theta"), uppaal = uppaal, spin = scripted<SpinConfig>("spin"))
 
         portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(9), ExecutionEnvironment.Empty, ProgressContext.Silent)
 
-        val explicitRuns = theta.starts.filter {
-            it.configuration == "cegar-expl"
+        val overApproximationRuns = uppaal.starts.filter {
+            it.configuration == "over-approximation"
         }.map {
             it.artifactOutputPath
         }
-        assertThat(explicitRuns).containsExactlyInAnyOrder(
-            output.resolve("first/theta-cegar-expl"),
-            output.resolve("second/theta-cegar-expl"),
-            output.resolve("last/theta-cegar-expl"),
+        assertThat(overApproximationRuns).containsExactlyInAnyOrder(
+            output.resolve("first/uppaal-over-approx"),
+            output.resolve("last/uppaal-over-approx"),
         )
     }
 
@@ -157,11 +236,10 @@ class SmartFullPortfolioStagesTest {
     fun `a configuration that ended on its own is not started again and Spin's variants stay out after its plain search ended`(
         @TempDir output: Path,
     ) = runTest {
-        val theta = scripted<ThetaConfig>(
-            "theta",
+        val uppaal = scripted<UppaalConfig>(
+            "uppaal",
             mapOf(
-                "bounded-kinduction" to ScriptedAnswer(1.seconds, VerificationVerdict.Inconclusive),
-                "cegar-expl" to ScriptedAnswer(1.seconds, VerificationVerdict.Inconclusive),
+                "over-approximation" to ScriptedAnswer(1.seconds, VerificationVerdict.Inconclusive),
             ),
         )
         val spin = scripted<SpinConfig>(
@@ -170,21 +248,17 @@ class SmartFullPortfolioStagesTest {
                 "safe-dfs" to ScriptedAnswer(1.seconds, VerificationVerdict.Inconclusive),
             ),
         )
-        val portfolio = smart(theta = theta, spin = spin)
+        val portfolio = smart(theta = scripted<ThetaConfig>("theta"), uppaal = uppaal, spin = spin)
 
         val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(9), ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Timeout)
-        assertThat(startsOf(theta) + startsOf(spin)).containsExactlyInAnyOrder(
-            "bounded-bmc@0s",
+        assertThat(startsOf(uppaal)).containsExactlyInAnyOrder(
+            "over-approximation@0s",
+            "default@0s",
+        )
+        assertThat(startsOf(spin)).containsExactly(
             "safe-dfs@0s",
-            "bounded-kinduction@0s",
-            "cegar-expl@0s",
-            "cegar-pred-cart@10s",
-            "bounded-imc@10s",
-            "cegar-expl-pred-combined@10s",
-            "cegar-pred-cart@40s",
-            "ic3@40s",
         )
     }
 
@@ -212,15 +286,16 @@ class SmartFullPortfolioStagesTest {
     }
 
     @Test
-    fun `the second window is what is left of the third when it starts`(
+    fun `the first stage ends when its own legs have ended and the second window is what is left of the third`(
         @TempDir output: Path,
     ) = runTest {
-        val answers = mapOf(
-            "bounded-bmc" to ScriptedAnswer(1.seconds, VerificationVerdict.Inconclusive),
-            "bounded-kinduction" to ScriptedAnswer(1.seconds, VerificationVerdict.Inconclusive),
-            "cegar-expl" to ScriptedAnswer(1.seconds, VerificationVerdict.Inconclusive),
+        val theta = scripted<ThetaConfig>(
+            "theta",
+            mapOf(
+                "bounded-bmc" to ScriptedAnswer(1.seconds, VerificationVerdict.Inconclusive),
+                "bounded-kinduction" to ScriptedAnswer(1.seconds, VerificationVerdict.Inconclusive),
+            ),
         )
-        val theta = scripted<ThetaConfig>("theta", answers)
         val spin = scripted<SpinConfig>(
             "spin",
             mapOf(
@@ -234,7 +309,7 @@ class SmartFullPortfolioStagesTest {
         assertThat(startsOf(theta)).contains(
             "cegar-pred-cart@1s",
             "bounded-imc@1s",
-            "cegar-pred-cart@20s",
+            "ic3@20s",
         )
     }
 
@@ -251,14 +326,13 @@ class SmartFullPortfolioStagesTest {
             "bounded-bmc@0s",
             "bounded-kinduction@0s",
             "cegar-expl@0s",
-            "cegar-expl@10s",
             "cegar-pred-cart@10s",
             "ic3@10s",
         )
     }
 
     @Test
-    fun `on a case of 24 s the first stage runs within 8 s, the second is skipped and the last follows`(
+    fun `on a case of 24 s the first stage runs within 8 s, the second is skipped and the last follows with the configuration listed from the second`(
         @TempDir output: Path,
     ) = runTest {
         val theta = scripted<ThetaConfig>("theta")
@@ -274,12 +348,16 @@ class SmartFullPortfolioStagesTest {
             "safe-dfs@0s",
             "bounded-kinduction@0s",
             "cegar-expl@0s",
-            "cegar-expl@8s",
             "cegar-pred-cart@8s",
             "ic3@8s",
             "collapse@8s",
             "bitstate@8s",
         )
+        assertThat(
+            theta.starts.single {
+                it.configuration == "cegar-pred-cart"
+            }.artifactOutputPath,
+        ).isEqualTo(output.resolve("last/theta-cegar-pred"))
     }
 
     @Test
@@ -309,14 +387,9 @@ class SmartFullPortfolioStagesTest {
             "nuxmv:bmc-invar@0s",
             "theta:cegar-expl@0s",
             "nuxmv:bdd-invar@0s",
-            "theta:cegar-expl@10s",
             "theta:cegar-pred-cart@10s",
-            "nuxmv:ic3-invar@10s",
             "theta:bounded-imc@10s",
             "theta:cegar-expl-pred-combined@10s",
-            "theta:cegar-expl@40s",
-            "nuxmv:ic3-invar@40s",
-            "theta:cegar-pred-cart@40s",
             "uppaal:over-approximation@40s",
             "theta:ic3@40s",
             "spin:collapse@40s",
@@ -353,7 +426,7 @@ class SmartFullPortfolioStagesTest {
     fun `a staged verification cancelled from outside cancels its legs and frees their permits`(
         @TempDir output: Path,
     ) = runTest {
-        val gate = LimitedConcurrencyGate(2)
+        val gate = LimitedConcurrencyGate(9)
         val theta = SlowBackend<ThetaConfig>("theta", delayMillis = 60_000)
         val spin = SlowBackend<SpinConfig>("spin", delayMillis = 60_000)
         val portfolio = SmartFullPortfolio(
@@ -371,11 +444,11 @@ class SmartFullPortfolioStagesTest {
         verification.cancelAndJoin()
 
         assertThat(verification.isCancelled).isTrue
-        assertThat(theta.invocations.get() + spin.invocations.get()).isEqualTo(2)
-        assertThat(theta.cancellations.get() + spin.cancellations.get()).isEqualTo(2)
+        assertThat(theta.invocations.get() + spin.invocations.get()).isEqualTo(4)
+        assertThat(theta.cancellations.get() + spin.cancellations.get()).isEqualTo(4)
         withTimeout(1_000) {
             coroutineScope {
-                repeat(2) {
+                repeat(9) {
                     launch {
                         gate.withPermit {
                             delay(10)
@@ -408,7 +481,7 @@ class SmartFullPortfolioStagesTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(result.metadata.backendId).isEqualTo("theta")
-        assertThat(currentTime).isEqualTo(40_000)
+        assertThat(currentTime).isEqualTo(30_000)
     }
 
     private fun startsOf(backend: ScriptedBackend<*>): List<String> {

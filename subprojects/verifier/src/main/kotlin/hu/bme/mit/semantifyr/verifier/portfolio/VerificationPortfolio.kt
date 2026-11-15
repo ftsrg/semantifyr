@@ -378,7 +378,7 @@ abstract class VerificationPortfolio(
         val progressPrefix = if (stage == null) {
             ""
         } else {
-            "$stage stage: "
+            "$stage: "
         }
         var received = 0
         var decided: BackendVerificationResult? = null
@@ -509,7 +509,7 @@ abstract class VerificationPortfolio(
             return ", observed ${describeRuns(runs)}"
         }
         val described = stages.entries.joinToString("; ") { (stage, stageRuns) ->
-            "$stage stage: ${describeRuns(stageRuns)}"
+            "$stage: ${describeRuns(stageRuns)}"
         }
         return ", observed $described"
     }
@@ -544,7 +544,7 @@ abstract class VerificationPortfolio(
         return if (stage == null) {
             ""
         } else {
-            " in the $stage stage"
+            " in $stage"
         }
     }
 }

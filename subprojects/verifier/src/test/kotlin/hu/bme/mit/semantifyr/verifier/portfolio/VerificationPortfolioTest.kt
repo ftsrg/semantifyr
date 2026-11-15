@@ -23,6 +23,7 @@ import hu.bme.mit.semantifyr.verifier.noopGate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -728,11 +729,11 @@ class VerificationPortfolioTest {
         }
         val decisive = FakeBackend.delayed("decisive", 10, VerificationVerdict.Passed)
 
-        val outcome = portfolio.runFirstDecisive(portfolio.case(noopGate, progress = progress), window = 5.seconds, stage = "first") {
+        val outcome = portfolio.runFirstDecisive(portfolio.case(noopGate, progress = progress), window = 5.seconds, stage = "first stage") {
             enqueue(decisive)
         }
 
-        assertThat(outcome.runs.single().stage).isEqualTo("first")
+        assertThat(outcome.runs.single().stage).isEqualTo("first stage")
         assertThat(messages).containsExactly("first stage: result 1/1: Passed")
     }
 
@@ -740,9 +741,9 @@ class VerificationPortfolioTest {
     fun `the case's result is Timeout when a leg was last cut or never started`() {
         val outcome = portfolio.runUndecided(
             listOf(
-                LegRun("a", "first", LegEnd.Cut),
-                LegRun("a", "last", finished("a", VerificationVerdict.Inconclusive)),
-                LegRun("b", "last", LegEnd.NeverStarted),
+                LegRun("a", "first stage", LegEnd.Cut),
+                LegRun("a", "last stage", finished("a", VerificationVerdict.Inconclusive)),
+                LegRun("b", "last stage", LegEnd.NeverStarted),
             ),
         )
 
@@ -755,9 +756,9 @@ class VerificationPortfolioTest {
     fun `the case's result is classified over how every leg last ended`() {
         val outcome = portfolio.runUndecided(
             listOf(
-                LegRun("a", "first", LegEnd.Cut),
-                LegRun("b", "first", finished("b", VerificationVerdict.NotSupported)),
-                LegRun("a", "last", finished("a", VerificationVerdict.Inconclusive)),
+                LegRun("a", "first stage", LegEnd.Cut),
+                LegRun("b", "first stage", finished("b", VerificationVerdict.NotSupported)),
+                LegRun("a", "last stage", finished("a", VerificationVerdict.Inconclusive)),
             ),
         )
 
@@ -770,8 +771,8 @@ class VerificationPortfolioTest {
     fun `the case's result is NotSupported when every leg refused`() {
         val outcome = portfolio.runUndecided(
             listOf(
-                LegRun("a", "first", finished("a", VerificationVerdict.NotSupported)),
-                LegRun("b", "last", finished("b", VerificationVerdict.NotSupported)),
+                LegRun("a", "first stage", finished("a", VerificationVerdict.NotSupported)),
+                LegRun("b", "last stage", finished("b", VerificationVerdict.NotSupported)),
             ),
         )
 
@@ -782,8 +783,8 @@ class VerificationPortfolioTest {
     fun `the case's result is Errored when every leg failed`() {
         val outcome = portfolio.runUndecided(
             listOf(
-                LegRun("a", "first", LegEnd.Threw(IllegalStateException("broken"))),
-                LegRun("b", "last", finished("b", VerificationVerdict.Errored)),
+                LegRun("a", "first stage", LegEnd.Threw(IllegalStateException("broken"))),
+                LegRun("b", "last stage", finished("b", VerificationVerdict.Errored)),
             ),
         )
 
@@ -830,6 +831,48 @@ class VerificationPortfolioTest {
                 }
             }
         }
+    }
+
+    @Test
+    fun `two gates side by side on one case share its slots and cancelling one leaves the other running`() = runTest {
+        val portfolio = TestPortfolio(timeSource = testScheduler.timeSource)
+        val case = portfolio.case(LimitedConcurrencyGate(2))
+        val cancelledLegs = List(2) {
+            FakeBackend.delayed("cancelled-$it", 60_000, VerificationVerdict.Passed)
+        }
+        val running = FakeBackend.delayed("running", 10_000, VerificationVerdict.Passed)
+
+        val cancelledGate = launch {
+            portfolio.runFirstDecisive(case, window = Duration.INFINITE) {
+                for (leg in cancelledLegs) {
+                    enqueue(leg)
+                }
+            }
+        }
+        val runningGate = async {
+            portfolio.runFirstDecisive(case, window = Duration.INFINITE) {
+                enqueue(running)
+            }
+        }
+        advanceTimeBy(1_000)
+        val startedBeforeCancel = (cancelledLegs + running).sumOf {
+            it.invocations.get()
+        }
+        cancelledGate.cancelAndJoin()
+        val outcome = runningGate.await()
+
+        assertThat(startedBeforeCancel).isEqualTo(2)
+        assertThat(
+            cancelledLegs.sumOf {
+                it.cancellations.get()
+            },
+        ).isEqualTo(
+            cancelledLegs.sumOf {
+                it.invocations.get()
+            },
+        )
+        assertThat(running.cancellations.get()).isZero
+        assertThat(outcome.orFail("expected the gate left running to decide").metadata.backendId).isEqualTo("running")
     }
 
     @Test

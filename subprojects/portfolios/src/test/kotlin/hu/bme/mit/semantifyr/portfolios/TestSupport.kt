@@ -152,6 +152,7 @@ class ScriptedBackend<T : BackendConfig>(
 ) : VerificationBackend<T>() {
 
     val starts = mutableListOf<ScriptedStart>()
+    val cancellations = mutableListOf<String>()
 
     override suspend fun verify(
         parentInjector: Injector,
@@ -161,7 +162,12 @@ class ScriptedBackend<T : BackendConfig>(
     ): BackendVerificationResult {
         starts += ScriptedStart(config.id, now(), request.artifactOutputPath)
         val answer = answers[config.id] ?: ScriptedAnswer(Duration.INFINITE, VerificationVerdict.Inconclusive)
-        delay(answer.after)
+        try {
+            delay(answer.after)
+        } catch (cancellation: CancellationException) {
+            cancellations += "${config.id}@${now()}"
+            throw cancellation
+        }
         return judgedResult(id, answer.verdict, config, request)
     }
 }

@@ -16,6 +16,7 @@ plugins {
 
 dependencies {
     implementation(project(":logging"))
+    implementation(libs.kotlinx.coroutines.core)
 
     api(project(":verifier"))
     api(project(":theta-backend"))
