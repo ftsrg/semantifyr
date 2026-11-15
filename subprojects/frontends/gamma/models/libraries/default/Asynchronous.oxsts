@@ -12,15 +12,8 @@ import semantifyr::gamma::ports
 
 class Clock {
     refers rate: int
-    refers deltaTime: int = 1
 
-    var elapsed: int := 0
-
-    tran passTime() {
-        if (elapsed < rate) {
-            elapsed := elapsed + deltaTime
-        }
-    }
+    var elapsed: clock := 0
 
     prop isUp(): bool {
         return elapsed >= rate
@@ -87,6 +80,8 @@ abstract class AsynchronousAdapter : Component {
 
     tran tickClocks() {
         inline for (clock in clocks) {
+            // no wait passes a tick, so the clock ticks once every rate
+            assume(clock.elapsed <= clock.rate)
             if (clock.isUp()) {
                 clock.elapsed := 0
                 inline for (queue in queues) {
@@ -165,16 +160,6 @@ abstract class AsynchronousAdapter : Component {
         }
     }
 
-    redefine tran passTime() {
-        inline wrapped.passTime()
-        inline for (clock in clocks) {
-            inline clock.passTime()
-        }
-    }
-
-    redefine tran startTimeouts() {
-        inline wrapped.startTimeouts()
-    }
 }
 
 abstract class MessageDispatch {
@@ -234,18 +219,6 @@ abstract class AsynchronousComposite : Component {
     redefine tran havocInputEvents() {
         inline for (adapter in adapters) {
             inline adapter.havocInputEvents()
-        }
-    }
-
-    redefine tran passTime() {
-        inline for (adapter in adapters) {
-            inline adapter.passTime()
-        }
-    }
-
-    redefine tran startTimeouts() {
-        inline for (adapter in adapters) {
-            inline adapter.startTimeouts()
         }
     }
 }

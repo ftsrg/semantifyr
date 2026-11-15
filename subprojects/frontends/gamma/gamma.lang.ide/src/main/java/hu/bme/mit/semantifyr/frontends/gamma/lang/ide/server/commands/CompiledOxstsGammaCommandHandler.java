@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.frontends.gamma.lang.ide.server.commands;
 
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage;
 import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaNameMap;
+import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaTime;
 import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaToOxstsSerializer;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
@@ -61,7 +62,8 @@ public class CompiledOxstsGammaCommandHandler extends AbstractCommandHandler<Str
         }
         try {
             return CompiledOxstsResult.compiled(
-                    new GammaToOxstsSerializer(new GammaNameMap()).transformToOxsts(gammaModel));
+                    new GammaToOxstsSerializer(new GammaNameMap(), GammaTime.unitMilliseconds(gammaModel))
+                            .transformToOxsts(gammaModel));
         } catch (RuntimeException e) {
             LOGGER.info("LSP gamma.compiled.oxsts: {} does not compile", arguments.getURI(), e);
             return CompiledOxstsResult.errored("The model does not compile: " + e.getMessage());

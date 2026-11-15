@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.frontends.gamma
 import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaNameMap
+import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaTime
 import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaToOxstsSerializer
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
@@ -22,6 +23,7 @@ class CompiledGammaModel(
     val modelPath: Path,
     val importedPaths: List<Path>,
     val nameMap: GammaNameMap,
+    val timeUnitMilliseconds: Int,
 )
 
 @Singleton
@@ -31,7 +33,7 @@ class GammaCompiler {
 
     fun compile(gammaModel: GammaModelPackage, outputPath: Path): GammaNameMap {
         val nameMap = GammaNameMap()
-        write(gammaModel, outputPath, nameMap)
+        write(gammaModel, outputPath, nameMap, GammaTime.unitMilliseconds(gammaModel))
         return nameMap
     }
 
@@ -39,13 +41,14 @@ class GammaCompiler {
     @OptIn(ExperimentalPathApi::class)
     fun compileWithImports(gammaModel: GammaModelPackage, outputDirectory: Path): CompiledGammaModel {
         val nameMap = GammaNameMap()
+        val timeUnitMilliseconds = GammaTime.unitMilliseconds(gammaModel)
         val modelPath = outputDirectory.resolve(MODEL_FILE_NAME)
-        write(gammaModel, modelPath, nameMap)
+        write(gammaModel, modelPath, nameMap, timeUnitMilliseconds)
 
         val importsDirectory = importsDirectory(outputDirectory)
         importsDirectory.deleteRecursively()
         val fileNames = mutableSetOf<String>()
-        val importedPaths = reachablePackages(gammaModel).map {
+        val importedPaths = GammaTime.reachablePackages(gammaModel).map {
             val baseName = it.eResource().uri.trimFileExtension().lastSegment()
             var fileName = "$baseName.oxsts"
             var number = 2
@@ -54,44 +57,20 @@ class GammaCompiler {
                 number++
             }
             val path = importsDirectory.resolve(fileName)
-            write(it, path, nameMap)
+            write(it, path, nameMap, timeUnitMilliseconds)
             path
         }
-        return CompiledGammaModel(modelPath, importedPaths, nameMap)
-    }
-
-    private fun reachablePackages(gammaModel: GammaModelPackage): List<GammaModelPackage> {
-        val reached = linkedSetOf(gammaModel)
-        val pending = ArrayDeque(listOf(gammaModel))
-        while (pending.isNotEmpty()) {
-            val current = pending.removeFirst()
-            val importedPackages = current.imports.map {
-                it.importedPackage
-            }
-            val packageNames = importedPackages.map {
-                it.name
-            }.toSet() + current.name
-            val loadedPackages = current.eResource().resourceSet.resources.flatMap {
-                it.contents
-            }.filterIsInstance<GammaModelPackage>().filter {
-                it.name in packageNames
-            }
-            for (candidate in importedPackages + loadedPackages) {
-                if (reached.add(candidate)) {
-                    pending += candidate
-                }
-            }
-        }
-        return reached.drop(1)
+        return CompiledGammaModel(modelPath, importedPaths, nameMap, timeUnitMilliseconds)
     }
 
     private fun write(
         gammaModel: GammaModelPackage,
         outputPath: Path,
         nameMap: GammaNameMap,
+        timeUnitMilliseconds: Int,
     ) {
         logger.info { "Compiling Gamma package '${gammaModel.name}' to '$outputPath'" }
-        val output = GammaToOxstsSerializer(nameMap).transformToOxsts(gammaModel)
+        val output = GammaToOxstsSerializer(nameMap, timeUnitMilliseconds).transformToOxsts(gammaModel)
         outputPath.parent?.createDirectories()
         outputPath.writeText(output)
     }

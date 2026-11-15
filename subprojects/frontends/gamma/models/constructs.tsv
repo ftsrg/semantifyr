@@ -24,7 +24,7 @@ Statecharts	Internal transitions	unsupported	no			Future work.
 Statecharts	State and statechart invariants	unsupported	no			Future work.
 Triggers, guards and actions	Event triggers and timeout triggers	conformant	no	models/semantics/Timeouts.gamma	when timeout short	
 Triggers, guards and actions	A timeout is set to one value	conformant	no	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaValidatorTest.kt	a timeout is set to one value	The validator rejects different values, as Gamma's does.
-Triggers, guards and actions	A timeout set from a variable, its value read at the trigger	conformant	no	models/semantics/Timeouts.gamma	set delay := limit ms	
+Triggers, guards and actions	A timeout set to a value other than a constant	unsupported	no			The mapper refuses it with a diagnostic.
 Triggers, guards and actions	Guards, `raise`, `set` of a timeout and assignment	conformant	no	models/semantics/GuardEvaluation.gamma	when control.go [left]	
 Triggers, guards and actions	Complex triggers, `any`, `cycle`, the `else` guard	unsupported	no			Future work.
 Triggers, guards and actions	Blocks, local variables, `if`, `switch`, loops, choice, `havoc`, `assert`, `deactivate`	unsupported	no			Future work. Gamma's own transformation rejects `deactivate`.
@@ -52,7 +52,7 @@ Composition	A full queue drops the incoming message	conformant	no	models/semanti
 Composition	A full queue with `discard = oldest` drops its oldest message and takes the incoming one	conformant	no	models/semantics/Queues.gamma	discard = oldest	
 Composition	Control specifications `run`, `reset-queue`, `reset-queues` and `reset-other-queues` on `any`, an event, a port's events or a clock	conformant	no	models/semantics/ControlSpecifications.gamma	when signals.second / reset-other-queues	
 Composition	The `reset` control function, the wrapped component's variables, events, parameters, regions and history back at their initial values and its statechart entered again in place of the run	conformant	no	models/semantics/ControlSpecifications.gamma	when commands.restart / reset	
-Composition	Clocks	abstracted	no	models/semantics/Clocks.gamma	clock ticker (rate = 2 s)	A clock counts the fixed delta of every step, as timeouts do.
+Composition	Clocks	abstracted	no	models/semantics/Clocks.gamma	clock ticker (rate = 2 s)	A clock ticks once every rate: no step waits past its next tick.
 Composition	Asynchronous and scheduled-asynchronous composites and the execution list	conformant	no	models/semantics/ScheduledAsynchronous.gamma	execute buffered, buffered	
 Composition	Asynchronous statecharts, unfolded into Gamma's default adapter	conformant	no	models/semantics/AsynchronousStatechart.gamma	@Asynchronous	
 Composition	Queues as written, a queue the environment fills at its capacity and the queue of an adapter at the root kept	deviating	no	models/semantics/AsynchronousStatechart.gamma	TheDefaultAdapterServesTheNextMessageInALaterCycle	Gamma's default analysis shrinks a queue the environment fills to the smaller of its capacity and the adapter's turns in a cycle, and gives a simplifiable adapter at the root no queue; the frontend keeps every queue as written, as Gamma's route with that optimization switched off does inside a composite.
@@ -65,8 +65,7 @@ Composition	The queue size and overflow atoms of a property, `initial execute` o
 Composition	The `full-step` control function	unsupported	no			The mapper refuses it with a diagnostic, since Gamma's analysis consumes the message without running the component where its code generator runs it to completion.
 Time	Timeouts in seconds and milliseconds	conformant	no	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaGrammarTest.kt	a timeout is set in seconds or milliseconds	
 Time	Timeouts in nanoseconds, microseconds and hours	planned	no			The grammar does not have these units.
-Time	Time passing	abstracted	no	models/semantics/Timeouts.gamma	TheShorterTimeoutIsUpFirst	Every step advances time by a fixed delta of one second. Gamma adds a delay of a range the analysis constrains.
-Time	A havocked delay between steps	planned	no			The trace design decides time.
+Time	Time passing	abstracted	no	models/semantics/Timeouts.gamma	OneStepPassesTheValuesOfBothTimeouts	Before every step time passes by any amount, zero and fractions included, as in the timed XSTS Gamma writes without a scheduling constraint; Gamma's analysis with one takes a whole delay in its range.
 Properties and cases	Verification cases, `verification case N of Component { property }`	deviating	no	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaGrammarTest.kt	a verification case names its component	Gamma keeps properties in a separate property file. A case names its component in its header and holds the property expression as its body.
 Properties and cases	Atoms `state`, `variable` and `raise` over `and`, `or` and `not`, `AG` and `EF`	deviating	no	models/semantics/Events.gamma	EF (raise output.first and raise output.second)	The atoms resolve in the component's scope, without a named instance and without `self`.
 Properties and cases	Temporal operators beyond `AG` and `EF`, CTL* and LTL	unsupported	no			Waits for the properties design.

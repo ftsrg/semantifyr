@@ -30,6 +30,7 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RaiseEventAction
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RecordLiteralExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RecordType
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Region
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SetTimeoutAction
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ShallowHistoryState
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.State
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StateNode
@@ -151,6 +152,13 @@ object UnmappedGammaConstructs {
             is ClockDeclaration -> {
                 if (GammaUtils.evaluateInteger(element.value) == null) {
                     "the rate of clock '${element.name}' other than a constant"
+                } else {
+                    null
+                }
+            }
+            is SetTimeoutAction -> {
+                if (GammaUtils.evaluateInteger(element.value) == null) {
+                    "the value of timeout '${element.timeout?.name}' other than a constant"
                 } else {
                     null
                 }

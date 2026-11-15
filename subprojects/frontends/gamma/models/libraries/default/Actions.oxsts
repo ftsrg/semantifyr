@@ -38,7 +38,7 @@ class SetTimeoutAction : Action {
     refers timeout: Timeout[1]
 
     redefine tran {
-        timeout.clock := 0
+        inline timeout.set()
     }
 }
 

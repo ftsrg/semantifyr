@@ -231,11 +231,10 @@
                 { "name": "TheShorterTimeoutIsUpFirst", "verdict": "Passed", "tier": "Integration" },
                 { "name": "TheLongerTimeoutUpFirstUnreachable", "verdict": "Failed", "tier": "Integration" },
                 { "name": "TimeoutIsUpAfterItsValue", "verdict": "Passed", "tier": "Integration" },
+                { "name": "OneStepPassesTheValuesOfBothTimeouts", "verdict": "Passed", "tier": "Integration" },
                 { "name": "TimeoutUpBeforeItsValueUnreachable", "verdict": "Failed", "tier": "Integration" },
                 { "name": "TimeoutStaysUpOnceUp", "verdict": "Passed", "tier": "Integration" },
-                { "name": "TimeoutResetOnceItFiredUnreachable", "verdict": "Failed", "tier": "Integration" },
-                { "name": "TheValueIsReadAtTheTrigger", "verdict": "Passed", "tier": "Integration" },
-                { "name": "TheValueReadAtTheSettingUnreachable", "verdict": "Failed", "tier": "Integration" }
+                { "name": "TimeoutResetOnceItFiredUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
