@@ -70,10 +70,6 @@ The binary operators are left-associative, and a range takes one `..` or `..<`. 
 
 As in Java, `&&` binds tighter than `^^`, which binds tighter than `||`: `a || b && c` parses as `a || (b && c)`. The validator warns on an operand that is another of the three written without parentheses (`OXSTS.MIXED_BOOLEAN_OPERATORS`) and names the reading.
 
-:::note
-Until November 2026 the three boolean operators shared one level and read left to right, so `a || b && c` meant `(a || b) && c`.
-:::
-
 ```oxsts issue=OXSTS.MIXED_BOOLEAN_OPERATORS
 class Switch {
   var up: bool := false
