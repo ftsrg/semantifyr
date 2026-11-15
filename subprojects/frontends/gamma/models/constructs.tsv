@@ -24,6 +24,7 @@ Statecharts	Internal transitions	unsupported	no			Future work.
 Statecharts	State and statechart invariants	unsupported	no			Future work.
 Triggers, guards and actions	Event triggers and timeout triggers	conformant	no	models/semantics/Timeouts.gamma	when timeout short	
 Triggers, guards and actions	A timeout is set to one value	conformant	no	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaValidatorTest.kt	a timeout is set to one value	The validator rejects different values, as Gamma's does.
+Triggers, guards and actions	A timeout set from a variable, its value read at the trigger	conformant	no	models/semantics/Timeouts.gamma	set delay := limit ms	
 Triggers, guards and actions	Guards, `raise`, `set` of a timeout and assignment	conformant	no	models/semantics/GuardEvaluation.gamma	when control.go [left]	
 Triggers, guards and actions	Complex triggers, `any`, `cycle`, the `else` guard	unsupported	no			Future work.
 Triggers, guards and actions	Blocks, local variables, `if`, `switch`, loops, choice, `havoc`, `assert`, `deactivate`	unsupported	no			Future work. Gamma's own transformation rejects `deactivate`.
