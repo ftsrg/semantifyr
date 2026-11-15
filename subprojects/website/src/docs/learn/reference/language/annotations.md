@@ -45,7 +45,7 @@ class Counter {
 Annotation arguments are positional or named, every named one after all positional ones (`OXSTS.POSITIONAL_ARGUMENT_AFTER_NAMED`), each parameter bound at most once (`OXSTS.PARAMETER_BOUND_TWICE`), and each argument fitting its parameter's type, as for a call ([Calls and Arguments](expressions.md#calls-and-arguments)). Arguments must be constants: annotations are read without an instance, so the validator rejects a reference to a feature or variable (`OXSTS.EXPRESSION_MODALITY_TOO_HIGH`).
 
 ```oxsts
-@VerificationCase(summary = "Reaches the limit")
+@VerificationCase("Reaches the limit")
 class Reaches10 {
   var value: int := 0
 
@@ -54,6 +54,8 @@ class Reaches10 {
   }
 }
 ```
+
+An argument can also name the parameter it binds:
 
 ```oxsts
 @Tag(category = "slow")
@@ -67,7 +69,7 @@ Multiple annotations may be applied to a single declaration. Each starts on its 
 
 ```oxsts
 @VerificationCase
-@Tag(category = "slow")
+@Tag("slow")
 class LargeTest {
   var value: int := 0
 
@@ -99,7 +101,7 @@ class Counter {
   var value: int := 0
 
 // hide-end
-  @Description(text = "Increments the counter by one")
+  @Description("Increments the counter by one")
   tran increment() {
     value := value + 1
   }

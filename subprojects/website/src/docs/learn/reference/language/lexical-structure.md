@@ -65,7 +65,7 @@ class Lamp {
 ```oxsts
 annotation Measured(unit: string, scale: real, label: string[0..1])
 
-@Measured(unit = "metres", scale = 2.5E+6, label = "length\tin metres")
+@Measured("metres", 2.5E+6, "length\tin metres")
 class Rail {
   var length: int := 2147483647
   var offset: int := -2147483647 - 1
@@ -75,7 +75,7 @@ class Rail {
 ```oxsts issue=org.eclipse.xtext.diagnostics.Diagnostic.Syntax.Range
 annotation Note(text: string)
 
-@Note(text = "a \q here")
+@Note("a \q here")
 class Rail {
 }
 ```
