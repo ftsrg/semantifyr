@@ -52,7 +52,7 @@ export async function startOxstsClient(context: ExtensionContext, witnesses: Wit
 
     const oxstsTestController = new VerificationTestController(client, {
         languageId: 'oxsts',
-        fileGlob: '**/*.oxsts',
+        fileGlob: '**/*.{semantifyr,sem,oxsts}',
         controllerId: 'oxsts.verification',
         controllerLabel: 'Semantifyr Verification Cases',
         discoverCommand: 'oxsts.case.discover',

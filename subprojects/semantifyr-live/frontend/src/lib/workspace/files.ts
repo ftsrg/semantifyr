@@ -46,10 +46,16 @@ interface HandleItem {
   getAsFileSystemHandle?: () => Promise<FileHandle | null>
 }
 
+export const OXSTS_EXTENSIONS = [
+  '.semantifyr',
+  '.sem',
+  '.oxsts',
+]
+
 const EXTENSIONS_OF_LANGUAGE: Readonly<Record<string, readonly string[]>> = {
   sysml: ['.sysml', '.kerml'],
   gamma: ['.gamma', '.gcd', '.get'],
-  oxsts: ['.oxsts'],
+  oxsts: OXSTS_EXTENSIONS,
 }
 
 const MODEL_EXTENSIONS = Object.values(EXTENSIONS_OF_LANGUAGE).flat()

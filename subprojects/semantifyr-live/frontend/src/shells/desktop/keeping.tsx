@@ -146,7 +146,7 @@ export function DropTarget(): React.JSX.Element {
       </div>
       <Icon name="upload" />
       <div className="drop-target-title">Drop to open the file</div>
-      <div className="drop-target-detail">A .sysml, .gamma or .oxsts file opens in its language. Live opens single files; imports of other files are not resolved.</div>
+      <div className="drop-target-detail">A .sysml, .gamma, .semantifyr, .sem or .oxsts file opens in its language. Live opens single files; imports of other files are not resolved.</div>
     </div>
   )
 }

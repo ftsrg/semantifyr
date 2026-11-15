@@ -86,6 +86,8 @@ val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
 val npmCheck = tasks.register<NpmTask>("npmCheck") {
     configureSharedInputs()
 
+    inputs.file(project(":oxsts.lang").layout.projectDirectory.file("src/main/java/hu/bme/mit/semantifyr/oxsts/lang/GenerateOxsts.mwe2")).withPathSensitivity(PathSensitivity.NONE)
+
     npmCommand.set(listOf("run", "check"))
 
     stampOnSuccess()

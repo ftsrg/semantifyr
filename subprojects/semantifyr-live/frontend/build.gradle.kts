@@ -209,6 +209,7 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
     inputs.file(project.layout.projectDirectory.file("index.html")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(rootProject.layout.projectDirectory.file("REUSE.toml")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneLoadTestModels).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(project(":oxsts.lang").layout.projectDirectory.file("src/main/java/hu/bme/mit/semantifyr/oxsts/lang/GenerateOxsts.mwe2")).withPathSensitivity(PathSensitivity.NONE)
 
     npmCommand.set(listOf("run", "check"))
 

@@ -28,6 +28,7 @@ import type { ResolvedColorMode } from '../util/colorMode';
 import { observeSocketClose, type SocketClose } from './reconnectController';
 import type { ModelDocuments } from './modelDocuments';
 import { DERIVED_SCHEME, fileUriOfLibrary, isLibraryFileUri, LIBRARY_SCHEME, libraryUriOf, serverUriOfLibrary, TRACE_SCHEME } from './readOnlyDocuments';
+import { OXSTS_EXTENSIONS } from '../workspace/files';
 
 // Synced from :semantifyr-vscode by the cloneVscodeLanguageAssets Gradle task.
 import oxstsGrammar from '../../vscode/imported/syntaxes/oxsts.tmLanguage.json';
@@ -58,7 +59,7 @@ const EDITOR_OPTIONS: editor.IStandaloneEditorConstructionOptions = {
 } as const;
 
 const LANGUAGE_DEFS = [
-  { id: 'oxsts', extensions: ['.oxsts'], aliases: ['OxSTS', 'oxsts'], scopeName: 'source.oxsts', grammarPath: './syntaxes/oxsts.tmLanguage.json' },
+  { id: 'oxsts', extensions: OXSTS_EXTENSIONS, aliases: ['OxSTS', 'oxsts'], scopeName: 'source.oxsts', grammarPath: './syntaxes/oxsts.tmLanguage.json' },
   { id: 'gamma', extensions: ['.gamma', '.gcd', '.get'], aliases: ['Gamma', 'gamma'], scopeName: 'source.gamma', grammarPath: './syntaxes/gamma.tmLanguage.json' },
   { id: 'sysml', extensions: ['.sysml'], aliases: ['SysML v2', 'sysml'], scopeName: 'source.sysml', grammarPath: './syntaxes/sysml.tmLanguage.json' },
 ];
