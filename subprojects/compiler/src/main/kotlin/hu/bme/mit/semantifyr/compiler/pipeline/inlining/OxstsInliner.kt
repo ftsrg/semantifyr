@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.compiler.pipeline.clock.ClockBoundChecker
 import hu.bme.mit.semantifyr.compiler.pipeline.context.InlinedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.context.InstantiatedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
@@ -30,6 +31,7 @@ class OxstsInliner @Inject constructor(
     private val expressionCallInlinerProvider: ExpressionCallInliner.Factory,
     private val transitionCallTraceTransformer: TransitionCallTraceTransformer,
     private val propertyExpressionNormalizationPass: PropertyExpressionNormalizationPass,
+    private val clockBoundChecker: ClockBoundChecker,
 ) {
 
     private val logger by loggerFactory()
@@ -46,6 +48,8 @@ class OxstsInliner @Inject constructor(
 
         logger.debug { "Inlining property expression" }
         inlineExpressionCalls(instanceTree.rootInstance, inlinedOxsts.property)
+
+        clockBoundChecker.check(inlinedOxsts)
 
         logger.debug { "Declaring transition call tracer state" }
         transitionCallTraceTransformer.declareTracers(inlinedOxsts)
