@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { VerificationCaseResult, VerificationCaseSpecification, VerificationTrace } from '@semantifyr/editor-common';
+import type { ResultTrace, VerificationCaseResult, VerificationCaseSpecification, VerificationReport } from '@semantifyr/editor-common';
 
 export const modelUri = 'file:///workspace/lamp.oxsts';
 
@@ -24,27 +24,75 @@ export const reachableCase: VerificationCaseSpecification = {
     location: { uri: modelUri, range: { start: { line: 9, character: 0 }, end: { line: 12, character: 1 } } },
 };
 
-export const counterexample: VerificationTrace = {
-    callTrace: {
-        initializedStep: { traces: [{ self: 'root', calledTransition: 'init', arguments: [], innerTraces: null }] },
-        steps: [
-            {
-                traces: [{
-                    self: 'root',
-                    calledTransition: 'main',
-                    arguments: [],
-                    innerTraces: [{ self: 'root.lamp', calledTransition: 'toggle', arguments: [{ parameter: 'brightness', value: '2' }], innerTraces: null }],
-                }],
-            },
-        ],
-    },
-    witnessState: {
-        initializedStep: { values: [{ variable: 'root.lamp.on', value: 'false' }, { variable: 'root.lamp.brightness', value: '0' }] },
-        steps: [{ values: [{ variable: 'root.lamp.on', value: 'true' }, { variable: 'root.lamp.brightness', value: '2' }] }],
-    },
+export const counterexample: ResultTrace = {
+    root: 'root',
+    transitions: [
+        {
+            transition: 'lamp::Lamp::toggle',
+            parameters: [{ parameter: 'brightness', type: { kind: 'datatype', name: 'semantifyr::int', element: null, size: null } }],
+        },
+    ],
+    variables: [
+        { variable: 'root.lamp.on', type: { kind: 'datatype', name: 'semantifyr::bool', element: null, size: null }, slot: null },
+        { variable: 'root.lamp.brightness', type: { kind: 'datatype', name: 'semantifyr::int', element: null, size: null }, slot: null },
+    ],
+    initial: { state: 0, calls: [] },
+    states: [
+        { values: { 'root.lamp.on': false, 'root.lamp.brightness': 0 } },
+        { values: { 'root.lamp.on': true, 'root.lamp.brightness': 2 } },
+    ],
+    steps: [
+        {
+            source: 0,
+            target: 1,
+            elapsed: 0,
+            calls: [{ self: 'root.lamp', transition: 'lamp::Lamp::toggle', arguments: { brightness: 2 }, calls: [] }],
+        },
+    ],
+    missingCalls: null,
+    kind: 'run',
     witnessUri,
 };
 
-export function result(status: VerificationCaseResult['status'], trace: VerificationTrace | null = null, message: string | null = null): VerificationCaseResult {
-    return { status, message, backendId: 'theta-cegar-expl', portfolioId: 'theta', metrics: null, trace };
+function reportOf(status: VerificationCaseResult['status'], trace: ResultTrace | null): VerificationReport {
+    return {
+        version: 2,
+        kind: trace?.kind ?? 'run',
+        verificationCase: 'lamp::Safe',
+        portfolioId: 'theta',
+        optimization: { enabled: [] },
+        timeout: 'PT5M',
+        result: {
+            metadata: { backendId: 'theta-cegar-expl', startedAt: '2026-11-15T10:00:00Z' },
+            verdict: status === 'failed' ? 'Failed' : 'Passed',
+            soundness: 'Exact',
+            isTrusted: true,
+            metrics: {
+                totalDuration: 'PT1S',
+                backend: null,
+                verifier: {
+                    compilationDuration: 'PT0S',
+                    compilation: {
+                        createDuration: 'PT0S',
+                        instantiationDuration: 'PT0S',
+                        inliningDuration: 'PT0S',
+                        flatteningDuration: 'PT0S',
+                        inliningOptimization: { duration: 'PT0S', passes: [], analyses: [] },
+                        flatteningOptimization: { duration: 'PT0S', passes: [], analyses: [] },
+                        inputSize: { variables: 0, operations: 0, expressions: 0 },
+                        inlinedSize: { variables: 0, operations: 0, expressions: 0 },
+                        flattenedSize: { variables: 0, operations: 0, expressions: 0 },
+                    },
+                    backAnnotationDuration: 'PT0S',
+                    portfolioDuration: 'PT0S',
+                },
+            },
+            message: null,
+        },
+        trace,
+    };
+}
+
+export function result(status: VerificationCaseResult['status'], trace: ResultTrace | null = null, message: string | null = null): VerificationCaseResult {
+    return { status, message, backendId: 'theta-cegar-expl', portfolioId: 'theta', metrics: null, report: reportOf(status, trace), witnessUri: trace?.witnessUri ?? null };
 }

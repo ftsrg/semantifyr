@@ -92,45 +92,150 @@ export interface VerificationMetrics {
     compilation?: CompilationMetrics;
 }
 
-export interface TraceArgument {
+export const ReportKind = {
+    Run: "run",
+    Recheck: "re-check",
+} as const;
+
+export type ReportKind = (typeof ReportKind)[keyof typeof ReportKind];
+
+export type ReportVerdict =
+    | "Passed"
+    | "Failed"
+    | "Inconclusive"
+    | "Timeout"
+    | "Errored"
+    | "NotSupported";
+
+export type SoundnessDirection =
+    | "Exact"
+    | "OverApproximating"
+    | "UnderApproximating";
+
+// an enum literal, an instance path, a fraction and an integer too large for a number are strings, the report's types telling them apart
+export type ReportValue =
+    | boolean
+    | number
+    | string
+    | null
+    | ReportValue[]
+    | { [field: string]: ReportValue };
+
+// a whole amount is a number, any other the string numerator/denominator in lowest terms
+export type Fraction = number | string;
+
+export type ReportTypeKind =
+    | "datatype"
+    | "enum"
+    | "class"
+    | "record"
+    | "feature"
+    | "array";
+
+export interface ReportType {
+    kind: ReportTypeKind;
+    name: string | null;
+    element: ReportType | null;
+    size: number | null;
+}
+
+export interface ObservedParameter {
     parameter: string;
-    value: string;
+    type: ReportType;
 }
 
-export interface TraceEntry {
-    self: string;
-    calledTransition: string;
-    arguments: TraceArgument[];
-    innerTraces: TraceEntry[] | null;
+export interface ObservedTransition {
+    transition: string;
+    parameters: ObservedParameter[];
 }
 
-export interface CallTraceStep {
-    traces: TraceEntry[];
+export interface ObservedSlot {
+    array: string;
+    index: number;
+    size: number | null;
 }
 
-export interface CallTrace {
-    initializedStep: CallTraceStep;
-    steps: CallTraceStep[];
-}
-
-export interface WitnessStateValue {
+export interface ObservedVariable {
     variable: string;
-    value: string;
+    type: ReportType;
+    slot: ObservedSlot | null;
 }
 
-export interface WitnessStateStep {
-    values: WitnessStateValue[];
+export interface ReportCall {
+    self: string;
+    transition: string;
+    arguments: Record<string, ReportValue>;
+    calls: ReportCall[];
 }
 
-export interface WitnessState {
-    initializedStep: WitnessStateStep;
-    steps: WitnessStateStep[];
+export interface ReportInitialEntry {
+    state: number;
+    calls: ReportCall[];
 }
 
-export interface VerificationTrace {
-    callTrace: CallTrace;
-    witnessState: WitnessState;
-    witnessUri: string | null;
+export interface ReportState {
+    values: Record<string, ReportValue>;
+}
+
+export interface ReportStep {
+    source: number;
+    target: number;
+    elapsed: Fraction;
+    calls: ReportCall[];
+}
+
+export interface ReportTrace {
+    root: string;
+    transitions: ObservedTransition[];
+    variables: ObservedVariable[];
+    initial: ReportInitialEntry;
+    states: ReportState[];
+    steps: ReportStep[];
+    missingCalls: string | null;
+}
+
+export interface ReportBackendMetrics {
+    preparationDuration: string;
+    verificationDuration: string;
+    backAnnotationDuration: string;
+}
+
+export interface ReportVerifierMetrics {
+    compilationDuration: string;
+    compilation: CompilationMetrics;
+    backAnnotationDuration: string;
+    portfolioDuration: string;
+}
+
+export interface ReportMetrics {
+    totalDuration: string;
+    backend: ReportBackendMetrics | null;
+    verifier: ReportVerifierMetrics;
+}
+
+export interface ReportResult {
+    metadata: {
+        backendId: string | null;
+        startedAt: string;
+    };
+    verdict: ReportVerdict;
+    soundness: SoundnessDirection;
+    isTrusted: boolean;
+    metrics: ReportMetrics;
+    message: string | null;
+}
+
+export interface VerificationReport {
+    version: number;
+    kind: ReportKind;
+    verificationCase: string;
+    portfolioId: string;
+    optimization: {
+        enabled: string[];
+    };
+    timeout: string;
+    result: ReportResult;
+    trace: ReportTrace | null;
 }
 
 export interface VerificationCaseResult {
@@ -139,7 +244,10 @@ export interface VerificationCaseResult {
     backendId: string | null;
     portfolioId: string | null;
     metrics: VerificationMetrics | null;
-    trace: VerificationTrace | null;
+    // as the report's file holds it, absent when the verification wrote none
+    report: VerificationReport | null;
+    // the file the trace's text was written to, the witness model or a frontend's own trace
+    witnessUri: string | null;
 }
 
 export const WitnessValidationStatus = {

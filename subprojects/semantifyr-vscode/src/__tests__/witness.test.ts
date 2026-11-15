@@ -9,7 +9,7 @@ import { renderTrace, WitnessView } from '../witness.js';
 import { registerOutputChannel } from '../outputChannel.js';
 import { counterexample, resolutionNote, result, witnessUri } from './fixtures.js';
 import { createExtensionContext, resetVscode, state, TestItem, TestMessage, Uri, ViewColumn, commands, window, workspace } from './stubs/vscode.js';
-import type { WitnessValidationResult } from '@semantifyr/editor-common';
+import type { ResultTrace, WitnessValidationResult } from '@semantifyr/editor-common';
 
 describe('renderTrace', () => {
     it('lists the calls and the state changes of each step', () => {
@@ -18,13 +18,13 @@ describe('renderTrace', () => {
             '',
             'Verdict: failed (backend theta-cegar-expl, portfolio theta)',
             '',
+            'Report: Run',
+            '',
             `Witness: ${witnessUri}`,
             '',
             '## Init',
             '',
-            'Calls:',
-            '',
-            '- `root.init()`',
+            'No calls.',
             '',
             'State:',
             '',
@@ -37,8 +37,7 @@ describe('renderTrace', () => {
             '',
             'Calls:',
             '',
-            '- `root.main()`',
-            '  - `root.lamp.toggle(brightness=2)`',
+            '- `root.lamp.lamp::Lamp::toggle(brightness=2)`',
             '',
             'Changes:',
             '',
@@ -56,7 +55,7 @@ describe('renderTrace', () => {
     ])('labels the opened file %s as %s', (uri, label) => {
         const trace = { ...counterexample, witnessUri: uri };
 
-        expect(renderTrace('Safe', result('failed', trace), trace).split('\n')[4]).toBe(`${label}: ${uri}`);
+        expect(renderTrace('Safe', result('failed', trace), trace).split('\n')[6]).toBe(`${label}: ${uri}`);
     });
 
     it('appends the message of a passed verdict to the verdict line', () => {
@@ -84,9 +83,11 @@ describe('renderTrace', () => {
     });
 
     it('leaves out a missing witness and origin', () => {
-        const trace = {
-            callTrace: { initializedStep: { traces: [] }, steps: [{ traces: [] }] },
-            witnessState: { initializedStep: { values: [] }, steps: [{ values: [{ variable: 'root.mode', value: 'A | B' }] }] },
+        const trace: ResultTrace = {
+            ...counterexample,
+            initial: { state: 0, calls: [] },
+            states: [{ values: {} }, { values: { 'root.mode': 'A | B' } }],
+            steps: [{ source: 0, target: 1, elapsed: 0, calls: [] }],
             witnessUri: null,
         };
 
@@ -96,6 +97,8 @@ describe('renderTrace', () => {
             '# Reachable',
             '',
             'Verdict: passed',
+            '',
+            'Report: Run',
             '',
             '## Init',
             '',
@@ -114,6 +117,29 @@ describe('renderTrace', () => {
             '| `root.mode` | `A \\| B` |',
             '',
         ].join('\n'));
+    });
+});
+
+describe('renderTrace of what the report adds', () => {
+    it('names a re-check', () => {
+        const trace: ResultTrace = { ...counterexample, kind: 're-check' };
+
+        expect(renderTrace('Safe', result('failed', trace), trace).split('\n')[4]).toBe('Report: Re-check');
+    });
+
+    it('gives each step its elapsed time in a timed model', () => {
+        const trace: ResultTrace = { ...counterexample, steps: [{ source: 0, target: 1, elapsed: '3/2', calls: [] }] };
+
+        expect(renderTrace('Safe', result('failed', trace), trace)).toContain('## Step 1\n\nElapsed: 3/2\n');
+    });
+
+    it('says why the calls are missing', () => {
+        const trace: ResultTrace = { ...counterexample, missingCalls: 'no trace variables came back', steps: [{ source: 0, target: 1, elapsed: 0, calls: [] }] };
+
+        const document = renderTrace('Safe', result('failed', trace), trace);
+
+        expect(document).toContain('The calls of this trace could not be obtained: no trace variables came back');
+        expect(document).toContain('## Step 1\n\nCalls missing.\n');
     });
 });
 

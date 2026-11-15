@@ -5,85 +5,154 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { lastNameSegment, shortenPath, traceCalls, traceStates } from "../trace.ts";
-import type { TraceEntry } from "../wire.ts";
+import { formatReportValue, lastNameSegment, resultTraceOf, shortenPath, traceCalls, traceStates } from "../trace.ts";
+import type { ReportCall, ReportTrace, VerificationReport } from "../wire.ts";
 
-function entry(self: string, calledTransition: string, innerTraces: TraceEntry[] | null = null): TraceEntry {
-    return { self, calledTransition, arguments: [], innerTraces };
+function call(self: string, transition: string, calls: ReportCall[] = []): ReportCall {
+    return { self, transition, arguments: {}, calls };
+}
+
+function trace(overrides: Partial<ReportTrace>): ReportTrace {
+    return {
+        root: "root",
+        transitions: [],
+        variables: [],
+        initial: { state: 0, calls: [] },
+        states: [{ values: {} }],
+        steps: [],
+        missingCalls: null,
+        ...overrides,
+    };
 }
 
 describe("traceStates", () => {
-    it("gives each step its changes with the previous values and every variable known at it", () => {
-        const states = traceStates({
-            initializedStep: { values: [{ variable: "root.lamp.on", value: "false" }, { variable: "root.lamp.level", value: "0" }] },
-            steps: [
-                { values: [{ variable: "root.lamp.on", value: "true" }] },
-                { values: [{ variable: "root.lamp.on", value: "true" }, { variable: "root.lamp.level", value: "2" }] },
-            ],
-        });
+    const lamp = trace({
+        states: [
+            { values: { "root.lamp.on": false, "root.lamp.level": 0 } },
+            { values: { "root.lamp.on": true, "root.lamp.level": 0 } },
+            { values: { "root.lamp.on": true } },
+        ],
+        steps: [
+            { source: 0, target: 1, elapsed: 0, calls: [] },
+            { source: 1, target: 2, elapsed: 0, calls: [] },
+            { source: 2, target: 0, elapsed: 0, calls: [] },
+        ],
+    });
+
+    it("starts at the initial state and gives each step the values its target holds, those its source held otherwise marked as changes", () => {
+        const states = traceStates(lamp);
 
         expect(states.start).toEqual([{ variable: "root.lamp.on", value: "false" }, { variable: "root.lamp.level", value: "0" }]);
-        expect(states.steps).toEqual([
-            {
-                changes: [{ variable: "root.lamp.on", value: "true", previous: "false" }],
-                variables: [{ variable: "root.lamp.on", value: "true", changed: true }, { variable: "root.lamp.level", value: "0", changed: false }],
-            },
-            {
-                changes: [{ variable: "root.lamp.level", value: "2", previous: "0" }],
-                variables: [{ variable: "root.lamp.on", value: "true", changed: false }, { variable: "root.lamp.level", value: "2", changed: true }],
-            },
+        expect(states.steps[0]).toEqual({
+            elapsed: "0",
+            changes: [{ variable: "root.lamp.on", value: "true", previous: "false" }],
+            variables: [{ variable: "root.lamp.on", value: "true", changed: true }, { variable: "root.lamp.level", value: "0", changed: false }],
+        });
+    });
+
+    it("claims nothing for a value the target state does not hold", () => {
+        expect(traceStates(lamp).steps[1]).toEqual({
+            elapsed: "0",
+            changes: [],
+            variables: [{ variable: "root.lamp.on", value: "true", changed: false }],
+        });
+    });
+
+    it("compares a step back to an earlier state with its own source", () => {
+        expect(traceStates(lamp).steps[2]?.changes).toEqual([
+            { variable: "root.lamp.on", value: "false", previous: "true" },
+            { variable: "root.lamp.level", value: "0", previous: undefined },
         ]);
+    });
+
+    it("shows elapsed time for a model that keeps a clock or lets time pass, and none for one that does neither", () => {
+        const waited = trace({ states: [{ values: {} }, { values: {} }], steps: [{ source: 0, target: 1, elapsed: "3/2", calls: [] }] });
+        const clocked = trace({ variables: [{ variable: "root.timer", type: { kind: "datatype", name: "semantifyr::clock", element: null, size: null }, slot: null }] });
+
+        expect(traceStates(waited)).toMatchObject({ timed: true, steps: [{ elapsed: "3/2" }] });
+        expect(traceStates(clocked).timed).toBe(true);
+        expect(traceStates(lamp).timed).toBe(false);
+    });
+});
+
+describe("formatReportValue", () => {
+    it("writes every JSON value of a report", () => {
+        expect([true, 3, "Red", null, "9007199254740993", [1, 2], { x: 1, inner: { on: false } }].map((value) => {
+            return formatReportValue(value);
+        })).toEqual(["true", "3", "Red", "null", "9007199254740993", "[1, 2]", "{x: 1, inner: {on: false}}"]);
     });
 });
 
 describe("traceCalls", () => {
-    const trace = {
-        initializedStep: { traces: [] },
+    const calls = trace({
+        root: "system",
+        states: [{ values: {} }, { values: {} }, { values: {} }],
         steps: [
             {
-                traces: [
-                    entry("root.track.transition", "Transition::fire", [entry("root.track.port", "Port::send")]),
-                    entry("root", "Case::passTime"),
+                source: 0,
+                target: 1,
+                elapsed: 0,
+                calls: [
+                    { self: "system.track.transition", transition: "Transition::fire", arguments: { item: { speed: 2 } }, calls: [call("system.track.port", "Port::send")] },
+                    call("system", "Case::passTime"),
                 ],
             },
-            { traces: [] },
+            { source: 1, target: 2, elapsed: 0, calls: [] },
         ],
-    };
+    });
 
-    it("starts every step with the environment's call on the root instance, init first and main after it, which encloses the recorded calls", () => {
-        const calls = traceCalls(trace);
+    it("starts every step with the environment's call on the report's root, init first and main after it, which encloses the recorded calls", () => {
+        const result = traceCalls(calls);
 
-        expect(calls.initialized.calls.map((call) => {
-            return [call.self, call.calledTransition, call.enclosing, call.depth];
+        expect(result.initialized.calls.map((entry) => {
+            return [entry.self, entry.transition, entry.enclosing, entry.depth];
         })).toEqual([
-            ["root", "init", null, 0],
+            ["system", "init", null, 0],
         ]);
-        expect(calls.steps.map((step) => {
-            return step.calls.map((call) => {
-                return [call.self, call.calledTransition, call.enclosing, call.depth];
+        expect(result.steps.map((step) => {
+            return step.calls.map((entry) => {
+                return [entry.self, entry.transition, entry.enclosing, entry.depth];
             });
         })).toEqual([
             [
-                ["root", "main", null, 0],
-                ["root.track.transition", "Transition::fire", 0, 1],
-                ["root.track.port", "Port::send", 1, 2],
-                ["root", "Case::passTime", 0, 1],
+                ["system", "main", null, 0],
+                ["system.track.transition", "Transition::fire", 0, 1],
+                ["system.track.port", "Port::send", 1, 2],
+                ["system", "Case::passTime", 0, 1],
             ],
             [
-                ["root", "main", null, 0],
+                ["system", "main", null, 0],
             ],
         ]);
     });
 
+    it("gives a call its argument values", () => {
+        expect(traceCalls(calls).steps[0]?.calls[1]?.arguments).toEqual([{ parameter: "item", value: "{speed: 2}" }]);
+    });
+
     it("has a lifeline for the root instance, then one per instance in the order of its first call", () => {
-        expect(traceCalls(trace).lifelines).toEqual(["root", "root.track.transition", "root.track.port"]);
+        expect(traceCalls(calls).lifelines).toEqual(["system", "system.track.transition", "system.track.port"]);
     });
 
     it("has no lifeline and no step when no call was recorded", () => {
-        const calls = traceCalls({ initializedStep: { traces: [] }, steps: [{ traces: [] }] });
+        const result = traceCalls(trace({ states: [{ values: {} }, { values: {} }], steps: [{ source: 0, target: 1, elapsed: 0, calls: [] }] }));
 
-        expect(calls.lifelines).toEqual([]);
-        expect(calls.steps).toEqual([]);
+        expect(result.lifelines).toEqual([]);
+        expect(result.steps).toEqual([]);
+    });
+});
+
+describe("resultTraceOf", () => {
+    const report = { kind: "re-check", trace: trace({}) } as VerificationReport;
+
+    it("pairs the report's trace with its kind and the file its text was written to", () => {
+        expect(resultTraceOf({ status: "failed", message: null, backendId: null, portfolioId: null, metrics: null, report, witnessUri: "file:///workspace/witness.oxsts" }))
+            .toMatchObject({ root: "root", kind: "re-check", witnessUri: "file:///workspace/witness.oxsts" });
+    });
+
+    it("has no trace for a result without a report or a report without a trace", () => {
+        expect(resultTraceOf({ status: "errored", message: null, backendId: null, portfolioId: null, metrics: null, report: null, witnessUri: null })).toBeNull();
+        expect(resultTraceOf({ status: "passed", message: null, backendId: null, portfolioId: null, metrics: null, report: { ...report, trace: null }, witnessUri: null })).toBeNull();
     });
 });
 

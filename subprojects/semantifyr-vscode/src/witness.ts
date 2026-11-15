@@ -6,18 +6,21 @@
 
 import { type CancellationToken, commands, EventEmitter, type ExtensionContext, ProgressLocation, type TestItem, type TextDocumentContentProvider, Uri, ViewColumn, window, workspace } from "vscode";
 import {
-    type CallTraceStep,
     formatTraceCall,
+    missingCallsMessage,
     noWitnessMessage,
-    type TraceEntry,
+    type ReportCall,
+    reportKindLabel,
+    type ResultTrace,
+    resultTraceOf,
+    type StateChange,
+    traceStates,
     traceStepLabel,
+    type TraceValue,
     type VerificationCaseResult,
-    type VerificationTrace,
-    type WitnessStateChange,
     witnessOpenFailureMessage,
     type WitnessValidationResult,
     WitnessValidationStatus,
-    witnessStateChanges,
     witnessValidationLabel,
     witnessValidationStatusOf,
 } from "@semantifyr/editor-common";
@@ -33,7 +36,7 @@ export type WitnessValidator = (token: CancellationToken) => Promise<WitnessVali
 
 interface RecordedWitness {
     result: VerificationCaseResult;
-    trace: VerificationTrace;
+    trace: ResultTrace;
     traceUri: Uri;
     validator: WitnessValidator | undefined;
     validation: WitnessValidationResult | null | undefined;
@@ -64,12 +67,13 @@ export class WitnessView implements TextDocumentContentProvider {
     }
 
     record(testItem: TestItem, result: VerificationCaseResult, validator?: WitnessValidator) {
-        if (!result.trace) {
+        const trace = resultTraceOf(result);
+        if (!trace) {
             this.witnesses.delete(testItem);
             return;
         }
         const traceUri = this.witnesses.get(testItem)?.traceUri ?? this.createTraceUri(testItem.label);
-        const witness = { result, trace: result.trace, traceUri, validator, validation: undefined };
+        const witness = { result, trace, traceUri, validator, validation: undefined };
         this.witnesses.set(testItem, witness);
         this.render(testItem.label, witness);
     }
@@ -194,22 +198,26 @@ export function renderValidation(validation: WitnessValidationResult | null): st
     return `${label}${renderOrigin(validation)}${message}`;
 }
 
-export function renderTrace(label: string, result: VerificationCaseResult, trace: VerificationTrace, validation?: WitnessValidationResult | null): string {
+export function renderTrace(label: string, result: VerificationCaseResult, trace: ResultTrace, validation?: WitnessValidationResult | null): string {
     const message = result.message ? ` - ${result.message}` : "";
     const lines = [`# ${label}`, "", `Verdict: ${result.status}${renderOrigin(result)}${message}`];
     if (validation !== undefined) {
         lines.push("", `Validation: ${renderValidation(validation)}`);
     }
+    lines.push("", `Report: ${reportKindLabel(trace.kind)}`);
     if (trace.witnessUri !== null) {
         lines.push("", `${witnessLabel(trace.witnessUri)}: ${trace.witnessUri}`);
     }
-
-    const callSteps = [trace.callTrace.initializedStep, ...trace.callTrace.steps];
-    const stateChanges = witnessStateChanges(trace.witnessState);
-    for (let index = 0; index < Math.max(callSteps.length, stateChanges.length); index++) {
-        const calls = callSteps[index];
-        lines.push("", `## ${traceStepLabel(index)}`, "", ...renderCalls(calls), "", ...renderChanges(index === 0, stateChanges[index] ?? []));
+    if (trace.missingCalls !== null) {
+        lines.push("", missingCallsMessage(trace.missingCalls));
     }
+
+    const states = traceStates(trace);
+    lines.push("", `## ${traceStepLabel(0)}`, "", ...renderCalls(trace, trace.initial.calls), "", ...renderStart(states.start));
+    trace.steps.forEach((step, index) => {
+        const elapsed = states.timed ? ["", `Elapsed: ${states.steps[index]?.elapsed ?? ""}`] : [];
+        lines.push("", `## ${traceStepLabel(index + 1)}`, ...elapsed, "", ...renderCalls(trace, step.calls), "", ...renderChanges(states.steps[index]?.changes ?? []));
+    });
     return `${lines.join("\n")}\n`;
 }
 
@@ -225,29 +233,37 @@ function renderOrigin(result: { backendId: string | null; portfolioId: string | 
     return origin.length === 0 ? "" : ` (${origin.join(", ")})`;
 }
 
-function renderCalls(step: CallTraceStep | null | undefined): string[] {
-    const traces = step?.traces ?? [];
-    if (traces.length === 0) {
-        return ["No calls."];
+function renderCalls(trace: ResultTrace, calls: readonly ReportCall[]): string[] {
+    if (calls.length === 0) {
+        return [trace.missingCalls === null ? "No calls." : "Calls missing."];
     }
-    return ["Calls:", "", ...traces.flatMap((entry) => renderCall(entry, ""))];
+    return ["Calls:", "", ...calls.flatMap((call) => renderCall(call, ""))];
 }
 
-function renderCall(entry: TraceEntry, indent: string): string[] {
-    const inner = (entry.innerTraces ?? []).flatMap((child) => renderCall(child, `${indent}  `));
-    return [`${indent}- \`${formatTraceCall(entry)}\``, ...inner];
+function renderCall(call: ReportCall, indent: string): string[] {
+    const inner = call.calls.flatMap((child) => renderCall(child, `${indent}  `));
+    return [`${indent}- \`${formatTraceCall(call)}\``, ...inner];
 }
 
-function renderChanges(initial: boolean, changes: WitnessStateChange[]): string[] {
+function renderStart(values: readonly TraceValue[]): string[] {
+    if (values.length === 0) {
+        return ["No state."];
+    }
+    return ["State:", "", ...renderTable(values)];
+}
+
+function renderChanges(changes: readonly StateChange[]): string[] {
     if (changes.length === 0) {
-        return [initial ? "No state." : "No changes."];
+        return ["No changes."];
     }
+    return ["Changes:", "", ...renderTable(changes)];
+}
+
+function renderTable(values: readonly TraceValue[]): string[] {
     return [
-        initial ? "State:" : "Changes:",
-        "",
         "| Variable | Value |",
         "| --- | --- |",
-        ...changes.map((change) => `| \`${escapeCell(change.variable)}\` | \`${escapeCell(change.value)}\` |`),
+        ...values.map((value) => `| \`${escapeCell(value.variable)}\` | \`${escapeCell(value.value)}\` |`),
     ];
 }
 

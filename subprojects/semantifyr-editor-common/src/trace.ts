@@ -4,8 +4,26 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { CallTrace, CallTraceStep, TraceArgument, TraceEntry, WitnessState, WitnessStateValue } from "./wire.ts";
-import { witnessStateChanges, type WitnessStateChange } from "./witness.ts";
+import type { Fraction, ReportCall, ReportKind, ReportState, ReportTrace, ReportValue, VerificationCaseResult } from "./wire.ts";
+
+const CLOCK_TYPE = "semantifyr::clock";
+
+// the trace of a result, with the report's kind and the file the trace's text was written to
+export interface ResultTrace extends ReportTrace {
+    kind: ReportKind;
+    witnessUri: string | null;
+}
+
+export interface TraceValue {
+    variable: string;
+    value: string;
+}
+
+export interface StateChange {
+    variable: string;
+    value: string;
+    previous: string | undefined;
+}
 
 export interface TraceVariable {
     variable: string;
@@ -14,19 +32,27 @@ export interface TraceVariable {
 }
 
 export interface TraceStateStep {
-    changes: WitnessStateChange[];
-    // every variable known at this step, a value the step leaves out kept from before
+    elapsed: string;
+    changes: StateChange[];
+    // every value the step's target state holds
     variables: TraceVariable[];
 }
 
 export interface TraceStates {
-    start: WitnessStateValue[];
+    start: TraceValue[];
     steps: TraceStateStep[];
+    // a model that keeps a clock or lets time pass shows each step's elapsed time
+    timed: boolean;
+}
+
+export interface TraceArgument {
+    parameter: string;
+    value: string;
 }
 
 export interface TraceCall {
     self: string;
-    calledTransition: string;
+    transition: string;
     arguments: TraceArgument[];
     // the index of the call that encloses this one in its step, null for the call the environment makes
     enclosing: number | null;
@@ -45,62 +71,103 @@ export interface TraceCalls {
     lifelines: string[];
 }
 
-export function traceStates(state: WitnessState): TraceStates {
-    const [, ...stepChanges] = witnessStateChanges(state);
-    const current = new Map<string, string>();
-    for (const value of state.initializedStep.values) {
-        current.set(value.variable, value.value);
+export function resultTraceOf(result: VerificationCaseResult | null | undefined): ResultTrace | null {
+    const report = result?.report;
+    if (!result || !report?.trace) {
+        return null;
     }
-    const steps = stepChanges.map((changes) => {
-        for (const change of changes) {
-            current.set(change.variable, change.value);
-        }
-        const changed = new Set(changes.map((change) => {
-            return change.variable;
-        }));
-        const variables = [...current].map(([variable, value]) => {
-            return { variable, value, changed: changed.has(variable) };
-        });
-        return { changes, variables };
-    });
-    return { start: state.initializedStep.values, steps };
+    return { ...report.trace, kind: report.kind, witnessUri: result.witnessUri ?? null };
 }
 
-function flatten(entries: readonly TraceEntry[], enclosing: number | null, depth: number, calls: TraceCall[]): void {
+export function formatReportValue(value: ReportValue): string {
+    if (value === null) {
+        return "null";
+    }
+    if (Array.isArray(value)) {
+        return `[${value.map((element) => {
+            return formatReportValue(element);
+        }).join(", ")}]`;
+    }
+    if (typeof value === "object") {
+        return `{${Object.entries(value).map(([field, fieldValue]) => {
+            return `${field}: ${formatReportValue(fieldValue)}`;
+        }).join(", ")}}`;
+    }
+    return String(value);
+}
+
+export function formatFraction(fraction: Fraction): string {
+    return String(fraction);
+}
+
+function valuesOf(state: ReportState | undefined): TraceValue[] {
+    return Object.entries(state?.values ?? {}).map(([variable, value]) => {
+        return { variable, value: formatReportValue(value) };
+    });
+}
+
+export function isTimed(trace: ReportTrace): boolean {
+    return trace.steps.some((step) => {
+        return step.elapsed !== 0;
+    }) || trace.variables.some((variable) => {
+        return variable.type.name === CLOCK_TYPE;
+    });
+}
+
+// a step shows the values its target state holds that its source state does not, an absent value claiming nothing
+export function traceStates(trace: ReportTrace): TraceStates {
+    const steps = trace.steps.map((step) => {
+        const previous = new Map(valuesOf(trace.states[step.source]).map((entry) => {
+            return [entry.variable, entry.value];
+        }));
+        const variables = valuesOf(trace.states[step.target]).map((entry) => {
+            return { ...entry, changed: previous.get(entry.variable) !== entry.value };
+        });
+        const changes = variables.filter((entry) => {
+            return entry.changed;
+        }).map((entry) => {
+            return { variable: entry.variable, value: entry.value, previous: previous.get(entry.variable) };
+        });
+        return { elapsed: formatFraction(step.elapsed), changes, variables };
+    });
+    return { start: valuesOf(trace.states[trace.initial.state]), steps, timed: isTimed(trace) };
+}
+
+function argumentsOf(call: ReportCall): TraceArgument[] {
+    return Object.entries(call.arguments).map(([parameter, value]) => {
+        return { parameter, value: formatReportValue(value) };
+    });
+}
+
+function flatten(entries: readonly ReportCall[], enclosing: number | null, depth: number, calls: TraceCall[]): void {
     for (const entry of entries) {
         const index = calls.length;
-        calls.push({ self: entry.self, calledTransition: entry.calledTransition, arguments: entry.arguments, enclosing, depth });
-        flatten(entry.innerTraces ?? [], index, depth + 1, calls);
+        calls.push({ self: entry.self, transition: entry.transition, arguments: argumentsOf(entry), enclosing, depth });
+        flatten(entry.calls, index, depth + 1, calls);
     }
 }
 
-function rootOf(steps: readonly CallTraceStep[]): string | null {
-    for (const step of steps) {
-        const first = step.traces[0];
-        if (first) {
-            return first.self.split(".")[0] ?? first.self;
-        }
-    }
-    return null;
-}
-
-function callStepOf(root: string, transition: string, entries: readonly TraceEntry[]): TraceCallStep {
-    const calls: TraceCall[] = [{ self: root, calledTransition: transition, arguments: [], enclosing: null, depth: 0 }];
+function callStepOf(root: string, transition: string, entries: readonly ReportCall[]): TraceCallStep {
+    const calls: TraceCall[] = [{ self: root, transition, arguments: [], enclosing: null, depth: 0 }];
     flatten(entries, 0, 1, calls);
     return { calls };
 }
 
 // the environment runs init once and main for every step after it, on the root instance; nothing recorded leaves nothing to show
-export function traceCalls(trace: CallTrace): TraceCalls {
-    const root = rootOf([trace.initializedStep, ...trace.steps]);
-    if (root === null) {
+export function traceCalls(trace: ReportTrace): TraceCalls {
+    const recorded = [trace.initial.calls, ...trace.steps.map((step) => {
+        return step.calls;
+    })].some((calls) => {
+        return calls.length > 0;
+    });
+    if (!recorded) {
         return { initialized: { calls: [] }, steps: [], lifelines: [] };
     }
-    const initialized = callStepOf(root, "init", trace.initializedStep.traces);
+    const initialized = callStepOf(trace.root, "init", trace.initial.calls);
     const steps = trace.steps.map((step) => {
-        return callStepOf(root, "main", step.traces);
+        return callStepOf(trace.root, "main", step.calls);
     });
-    const lifelines = new Set<string>([root]);
+    const lifelines = new Set<string>([trace.root]);
     for (const step of [initialized, ...steps]) {
         for (const call of step.calls) {
             lifelines.add(call.self);
