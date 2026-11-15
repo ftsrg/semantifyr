@@ -31,7 +31,13 @@ enum class CompilationPass {
     DeadCodeRemoval,
     UnusedVariableElimination,
     PropertyExpressionNormalization,
-    Flattening,
+    VariablePullDown,
+    VariableReferenceRewriting,
+    LocalInstanceDomainRegistration,
+    RecordFlattening,
+    ArrayFlattening,
+    FeatureTypedVariableRewriting,
+    StaticExpressionRewriting,
 }
 
 @Serializable
