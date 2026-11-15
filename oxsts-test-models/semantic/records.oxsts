@@ -478,39 +478,61 @@ class RecordParameterViolated {
     }
 }
 
+class ReadingStore {
+    refers capacity: int
+    var readings: Reading[capacity] := [Reading { value = 0 }, ...]
+
+    tran bump(index: int) {
+        inline if (capacity > 0) {
+            readings[index].value := readings[index].value + 1
+            readings[index].valid := true
+        }
+    }
+}
+
 @VerificationCase
 @Tag("expect-pass")
 class RecordArrayRuntimeIndexReach {
-    var readings: Reading[3] := [Reading { value = 0 }, ...]
+    contains store: ReadingStore {
+        redefine refers capacity: int = 3
+    }
+    contains none: ReadingStore {
+        redefine refers capacity: int = 0
+    }
     var index: int := 0
 
     redefine tran {
         havoc(index)
         assume(0 <= index && index < 3)
-        readings[index].value := readings[index].value + 1
-        readings[index].valid := true
+        inline store.bump(index)
+        inline none.bump(index)
     }
 
     prop {
-        return EF (readings[2].value == 2 && readings[2].valid && !readings[0].valid)
+        return EF (store.readings[2].value == 2 && store.readings[2].valid && !store.readings[0].valid)
     }
 }
 
 @VerificationCase
 @Tag("expect-fail")
 class RecordArrayRuntimeIndexViolated {
-    var readings: Reading[3] := [Reading { value = 0 }, ...]
+    contains store: ReadingStore {
+        redefine refers capacity: int = 3
+    }
+    contains none: ReadingStore {
+        redefine refers capacity: int = 0
+    }
     var index: int := 0
 
     redefine tran {
         havoc(index)
         assume(0 <= index && index < 3)
-        readings[index].value := readings[index].value + 1
-        readings[index].valid := true
+        inline store.bump(index)
+        inline none.bump(index)
     }
 
     prop {
-        return AG !readings[2].valid
+        return AG !store.readings[2].valid
     }
 }
 

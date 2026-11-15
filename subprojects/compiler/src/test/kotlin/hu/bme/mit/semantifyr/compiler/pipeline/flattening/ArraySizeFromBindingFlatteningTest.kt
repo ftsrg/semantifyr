@@ -529,4 +529,58 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
             }.`as`(operation).hasMessageContaining("This array has 3 slots where 'c' of instance 'root.store' holds 2.")
         }
     }
+
+    @Test
+    fun `a lower bound above the upper for an instance is an error that names the instance`() {
+        assertThatThrownBy {
+            flatten(
+                "Host",
+                """
+                    package flattening::size_from_binding
+                    class Store {
+                        refers capacity: int
+                        var slots: int[2..capacity] := [0, ...]
+                    }
+                    @VerificationCase
+                    class Host {
+                        contains store: Store {
+                            redefine refers capacity: int = 1
+                        }
+                        prop {
+                            return AG true
+                        }
+                    }
+                """,
+            )
+        }.hasMessageContaining("The size of 'slots' of instance 'root.store' is 2..1")
+    }
+
+    @Test
+    fun `an initial value longer than the size stands at a size of none`() {
+        val flattened = flatten(
+            "Host",
+            """
+                package flattening::size_from_binding
+                class Store {
+                    refers capacity: int
+                    var slots: int[capacity] := [1, 2, 3, ...]
+                }
+                @VerificationCase
+                class Host {
+                    contains store: Store {
+                        redefine refers capacity: int = 0
+                    }
+                    var count: int := 0
+                    redefine tran {
+                        count := count + 1
+                    }
+                    prop {
+                        return AG count >= 0
+                    }
+                }
+            """,
+        )
+
+        assertThat(flattened.slotNames("store")).isEmpty()
+    }
 }

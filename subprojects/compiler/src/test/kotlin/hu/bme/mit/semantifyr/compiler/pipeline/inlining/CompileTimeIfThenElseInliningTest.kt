@@ -134,4 +134,40 @@ class CompileTimeIfThenElseInliningTest : InliningTestBase() {
         """
         assertThat(compiles("Case", source)).hasSize(1)
     }
+
+    @Test
+    fun `a compile-time guard is decided in an assignment and in the guard of an if of a transition`() {
+        val source = """
+            package inlining::tests::compile_time_if_then_else_transition
+            class Store {
+                refers capacity: int
+                var items: int[capacity] := [0, ...]
+                var count: int := 0
+                tran put(value: int) {
+                    count := if capacity > 0 then items[0] + value else value
+                    if (if capacity > 0 then items[0] > 0 else false) {
+                        count := 0
+                    }
+                }
+            }
+            @VerificationCase
+            class Case {
+                contains store: Store {
+                    redefine refers capacity: int = 0
+                }
+                var value: int := 0
+                redefine tran {
+                    inline store.put(value)
+                }
+                prop {
+                    return AG store.count >= 0
+                }
+            }
+        """
+        prepare("Case", source, OptimizationConfig.NONE) {
+            val main = inlineAll(it).inlinedOxsts.mainTransition
+            assertThat(main.eAllOfType<IfThenElse>().toList()).isEmpty()
+            assertThat(main.eAllOfType<IndexingSuffixExpression>().toList()).isEmpty()
+        }
+    }
 }
