@@ -490,4 +490,43 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
         val main = serialize(flattened.inlinedOxsts.mainTransition)
         assertThat(main).contains(quoted(member("root", "fixedItems") + "_0") + " := -1")
     }
+
+    @Test
+    fun `an if-then-else whose branches differ in size is an error at the branch that names the instance`() {
+        val sizes = """
+            package flattening::size_from_binding
+            class Store {
+                refers n: int = 2
+                refers m: int = 3
+                var a: int[n] := [0, ...]
+                var b: int[m] := [0, ...]
+                var c: int[n] := [0, ...]
+                var flag: bool := false
+                var same: bool := false
+                tran step() {
+                    %s
+                }
+            }
+            @VerificationCase
+            class Host {
+                contains store: Store
+                redefine tran {
+                    inline store.step()
+                }
+                prop {
+                    return AG !store.same
+                }
+            }
+        """
+        for (operation in listOf(
+            "c := if flag then a else b",
+            "c := if flag then b else a",
+            "same := c == (if flag then a else b)",
+            "same := (if flag then b else a) == c",
+        )) {
+            assertThatThrownBy {
+                flatten("Host", sizes.format(operation))
+            }.`as`(operation).hasMessageContaining("This array has 3 slots where 'c' of instance 'root.store' holds 2.")
+        }
+    }
 }

@@ -147,12 +147,17 @@ class ArrayFlatteningPass @Inject constructor(
                 EcoreUtil2.replace(indexing, indexInto(primary, indexing.index))
             }
         }
-        // a literal of one value counts as an array of one where it meets an array
+        // a literal of one value counts as an array of one where it meets an array, and each branch of an if-then-else is an array of its own
         fun checkLength(
             expression: Expression,
             slotCount: Int,
             array: Expression,
         ) {
+            if (expression is IfThenElse) {
+                checkLength(expression.then, slotCount, array)
+                checkLength(expression.`else`, slotCount, array)
+                return
+            }
             val length = (expression as? ArrayLiteral)?.values?.size ?: slotCountOf(expression) ?: return
             if (length != slotCount) {
                 val name = arrayOf(array)?.let {
@@ -163,12 +168,12 @@ class ArrayFlatteningPass @Inject constructor(
         }
 
         for (comparison in inlinedOxsts.eAllOfType<ComparisonOperator>().toList()) {
-            val slotCount = slotCountOf(comparison.left) ?: slotCountOf(comparison.right) ?: continue
-            if (slotCountOf(comparison.left) != null) {
-                checkLength(comparison.right, slotCount, comparison.left)
-            } else {
-                checkLength(comparison.left, slotCount, comparison.right)
-            }
+            val named = listOf(comparison.left, comparison.right).firstOrNull {
+                arrayOf(it) != null
+            } ?: comparison.left
+            val slotCount = slotCountOf(named) ?: slotCountOf(comparison.left) ?: slotCountOf(comparison.right) ?: continue
+            checkLength(comparison.left, slotCount, named)
+            checkLength(comparison.right, slotCount, named)
             val slotComparisons = (0 until slotCount).map { index ->
                 OxstsFactory.createComparisonOperator().also {
                     it.op = comparison.op
