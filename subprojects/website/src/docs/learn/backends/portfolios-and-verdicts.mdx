@@ -10,7 +10,7 @@ Verifying a case [compiles](../oxsts/compilation/index.mdx) it to a transition s
 
 ## Backends side by side
 
-A portfolio is made of legs, each one backend under one configuration. A portfolio runs every leg whose backend is installed, each writing its files to a directory of its own in the case's directory, as many at once as a bound allows, by default the number of the machine's processors; a leg beyond the bound waits for a free place, and the legs start in the portfolio's order as places free. Before its backend runs, a leg checks whether the backend can translate the model, and answers Not supported, naming the constructs it refuses, when it cannot; each [backend's page](index.mdx) lists what it refuses. A model left with no variable, no `init` and no transition is decided without any backend.
+A portfolio is made of legs, each one backend under one configuration. A portfolio runs every leg whose backend is installed, each writing its files to a directory of its own in the case's directory, as many at once as a bound allows, by default the number of the machine's processors; a leg beyond the bound waits for a free place. Which legs take the places first is not fixed, so on a machine with fewer places than legs the outcome can differ between runs. Before its backend runs, a leg checks whether the backend can translate the model, and answers Not supported, naming the constructs it refuses, when it cannot; each [backend's page](index.mdx) lists what it refuses. A model left with no variable, no `init` and no transition is decided without any backend.
 
 ## Stages
 
@@ -22,7 +22,7 @@ A portfolio may run its legs in stages, one after another, each stage starting w
 - The second, within thirty seconds, holds the provers that need tens of seconds: `theta:cegar-expl`, `theta:cegar-pred-cart`, `nuxmv:ic3-invar`, `theta:bounded-imc` and `theta:cegar-expl-pred-combined`.
 - The last runs until the case's time runs out: `theta:cegar-expl`, `nuxmv:ic3-invar`, `theta:cegar-pred-cart`, `uppaal:over-approximation`, `theta:ic3`, `spin:collapse` and `spin:bitstate`, Spin's two only when `spin:safe-dfs` was stopped or never started in the first stage.
 
-A leg that ended on its own, with an answer, a refusal or an error, does not run again in a later stage. The two windows together take at most a third of the case's time, the first served first, and a stage left with a window under ten seconds is skipped, so on a short case only the last stage runs.
+A leg that ended on its own, with an answer, a refusal or an error, does not run again in a later stage. The two windows together take at most a third of the time the portfolio is given, which is what the compilation left of the case's time limit. The first stage runs on every case, within ten seconds or that third when it is shorter; the second gets what is left of the third, up to thirty seconds, and is skipped when that is under ten seconds.
 
 ## Soundness directions
 
