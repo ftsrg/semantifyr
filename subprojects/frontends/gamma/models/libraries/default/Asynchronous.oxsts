@@ -48,7 +48,6 @@ abstract class MessageQueue {
         return size >= capacity
     }
 
-    // pops the oldest message, gives its event and parameters to the wrapped component and applies its control specification
     abstract tran receive()
 
     abstract tran shift()
@@ -96,7 +95,6 @@ abstract class AsynchronousAdapter : Component {
         }
     }
 
-    // one message per turn, served by rank: descending priority, the first declared first among equal ones
     tran receiveMessage() {
         var received: bool := false
         inline for (turn in queues) {
@@ -116,7 +114,6 @@ abstract class AsynchronousAdapter : Component {
         inline wrapped.main()
     }
 
-    // Gamma's component reset is the wrapped component's initializing action: every variable assigned its initial value, every region deactivated, then the entry
     tran resetComponent() {
         inline wrapped.restore()
         inline wrapped.init()
@@ -140,7 +137,6 @@ abstract class AsynchronousAdapter : Component {
     redefine tran resetOutputEvents() {
     }
 
-    // a queue of lower priority takes environment messages only while it and the queues above hold fewer than the adapter's runs in a cycle
     redefine tran havocInputEvents() {
         inline for (queue in queues) {
             inline if (queue.environmental) {
@@ -178,7 +174,6 @@ abstract class AsynchronousAdapter : Component {
 }
 
 abstract class MessageDispatch {
-    // the mapper writes one dispatch per output event a channel carries into a queue that stores it
     refers source: AsynchronousAdapter
     refers event: Event
     refers target: MessageQueue
