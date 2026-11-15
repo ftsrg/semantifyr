@@ -36,6 +36,10 @@ class GammaQueueCapacityTests {
             "QueueOfOneDeliversInOrderTestCase",
             "QueueOfOneDeliversEveryMessageTestCase",
             "QueueOfOneHoldingTwoUnreachableTestCase",
+            "DroppingQueueOfThreeKeepsTheOrderTestCase",
+            "DroppingQueueOfThreeDropsTheOldestTestCase",
+            "DroppingQueueOfOneDropsTheOldestTestCase",
+            "DroppingQueueOfOneKeepingTheOldestUnreachableTestCase",
             "QueueOfNoneHoldsNothingTestCase",
         ],
     )

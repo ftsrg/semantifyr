@@ -1760,6 +1760,36 @@ class GammaToOxstsSerializerTest {
     }
 
     @Test
+    fun `stored messages whose port and event names join alike are numbered in model order`() {
+        val lines = oxstsLines(
+            """
+                package test
+                interface Wide {
+                    in event b_c
+                }
+                interface Narrow {
+                    in event c
+                }
+                @Asynchronous
+                statechart Receiver [
+                    port a : provides Wide,
+                    port a_b : provides Narrow
+                ] {
+                }
+            """,
+        )
+
+        assertThat(lines).containsSequence(
+            "contains message_a_b_c: StoredMessage subsets runningMessages {",
+            "redefine refers port: Port = wrapped._a",
+        )
+        assertThat(lines).containsSequence(
+            "contains message_a_b_c_2: StoredMessage subsets runningMessages {",
+            "redefine refers port: Port = wrapped._a_b",
+        )
+    }
+
+    @Test
     fun `the mapper writes no queue or dispatch class`() {
         val lines = asynchronousLines()
 

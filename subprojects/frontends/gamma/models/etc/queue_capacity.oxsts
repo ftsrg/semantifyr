@@ -11,6 +11,7 @@ import semantifyr::gamma::asynchronous
 
 abstract class QueueHarness {
     refers queueCapacity: int
+    refers dropsOldest: bool = false
 
     contains origin: Event {
         contains value: IntegerParameter subsets parameters
@@ -23,6 +24,7 @@ abstract class QueueHarness {
         redefine refers priority: int = 1
         redefine refers position: int = 0
         redefine refers rank: int = 0
+        redefine refers discardsOldest: bool = dropsOldest
         contains numbered: StoredMessage subsets messages {
             redefine refers event: Event = destination
             contains value: StoredInteger subsets parameters {
@@ -34,20 +36,25 @@ abstract class QueueHarness {
 
     var sent: int := 0
     var received: int := 0
+    var lastValue: int := -1
     var inOrder: bool := true
 
     redefine tran {
         choice {
-            if (!queue.isFull() && sent < 5) {
-                origin.value.value := sent
-                inline queue.enqueue(queue.numbered, origin)
-                sent := sent + 1
+            if (sent < 5) {
+                inline queue.dropOldestWhenFull()
+                if (!queue.isFull()) {
+                    origin.value.value := sent
+                    inline queue.enqueue(queue.numbered, origin)
+                    sent := sent + 1
+                }
             }
         } or {
             if (!queue.isEmpty()) {
                 inline destination.reset()
                 inline queue.receive()
-                inOrder := inOrder && destination.isRaised && destination.value.value == received
+                inOrder := inOrder && destination.isRaised && (destination.value.value == received || (dropsOldest && destination.value.value > lastValue))
+                lastValue := destination.value.value
                 received := received + 1
             }
         }
@@ -60,6 +67,16 @@ class QueueOfThree : QueueHarness {
 
 class QueueOfOne : QueueHarness {
     redefine refers queueCapacity: int = 1
+}
+
+class DroppingQueueOfThree : QueueHarness {
+    redefine refers queueCapacity: int = 3
+    redefine refers dropsOldest: bool = true
+}
+
+class DroppingQueueOfOne : QueueHarness {
+    redefine refers queueCapacity: int = 1
+    redefine refers dropsOldest: bool = true
 }
 
 class QueueOfNone : QueueHarness {
@@ -119,5 +136,37 @@ class QueueOfOneHoldingTwoUnreachableTestCase : QueueOfOne {
 class QueueOfNoneHoldsNothingTestCase : QueueOfNone {
     prop {
         return AG (queue.size == 0 && received == 0)
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class DroppingQueueOfThreeKeepsTheOrderTestCase : DroppingQueueOfThree {
+    prop {
+        return AG inOrder
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class DroppingQueueOfThreeDropsTheOldestTestCase : DroppingQueueOfThree {
+    prop {
+        return EF (received == 1 && lastValue == 1)
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class DroppingQueueOfOneDropsTheOldestTestCase : DroppingQueueOfOne {
+    prop {
+        return EF (received == 1 && lastValue == 4)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class DroppingQueueOfOneKeepingTheOldestUnreachableTestCase : DroppingQueueOfOne {
+    prop {
+        return EF (sent == 2 && received == 0 && queue.numbered.value.values[0] == 0)
     }
 }

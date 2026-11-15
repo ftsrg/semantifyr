@@ -211,49 +211,69 @@ class MessageQueue {
                 }
             }
             inline shift()
-            inline if (runningMessages != nothing) {
-                var runs: bool := false
-                inline for (message in runningMessages) {
-                    runs := runs || head == message
-                }
-                if (runs) {
-                    inline adapter.run()
-                }
-            }
-            inline if (resettingMessages != nothing) {
-                var resets: bool := false
-                inline for (message in resettingMessages) {
-                    resets := resets || head == message
-                }
-                if (resets) {
-                    inline adapter.resetComponent()
+            inline if (runningMessages == messages) {
+                inline adapter.run()
+            } else {
+                inline if (runningMessages != nothing) {
+                    var runs: bool := false
+                    inline for (message in runningMessages) {
+                        runs := runs || head == message
+                    }
+                    if (runs) {
+                        inline adapter.run()
+                    }
                 }
             }
-            inline if (clearingMessages != nothing) {
-                var clears: bool := false
-                inline for (message in clearingMessages) {
-                    clears := clears || head == message
-                }
-                if (clears) {
-                    inline clear()
-                }
-            }
-            inline if (clearingAllMessages != nothing) {
-                var clearsAll: bool := false
-                inline for (message in clearingAllMessages) {
-                    clearsAll := clearsAll || head == message
-                }
-                if (clearsAll) {
-                    inline adapter.clearQueues()
+            inline if (resettingMessages == messages) {
+                inline adapter.resetComponent()
+            } else {
+                inline if (resettingMessages != nothing) {
+                    var resets: bool := false
+                    inline for (message in resettingMessages) {
+                        resets := resets || head == message
+                    }
+                    if (resets) {
+                        inline adapter.resetComponent()
+                    }
                 }
             }
-            inline if (clearingOtherMessages != nothing) {
-                var clearsOthers: bool := false
-                inline for (message in clearingOtherMessages) {
-                    clearsOthers := clearsOthers || head == message
+            inline if (clearingMessages == messages) {
+                inline clear()
+            } else {
+                inline if (clearingMessages != nothing) {
+                    var clears: bool := false
+                    inline for (message in clearingMessages) {
+                        clears := clears || head == message
+                    }
+                    if (clears) {
+                        inline clear()
+                    }
                 }
-                if (clearsOthers) {
-                    inline adapter.clearOtherQueues(self)
+            }
+            inline if (clearingAllMessages == messages) {
+                inline adapter.clearQueues()
+            } else {
+                inline if (clearingAllMessages != nothing) {
+                    var clearsAll: bool := false
+                    inline for (message in clearingAllMessages) {
+                        clearsAll := clearsAll || head == message
+                    }
+                    if (clearsAll) {
+                        inline adapter.clearQueues()
+                    }
+                }
+            }
+            inline if (clearingOtherMessages == messages) {
+                inline adapter.clearOtherQueues(self)
+            } else {
+                inline if (clearingOtherMessages != nothing) {
+                    var clearsOthers: bool := false
+                    inline for (message in clearingOtherMessages) {
+                        clearsOthers := clearsOthers || head == message
+                    }
+                    if (clearsOthers) {
+                        inline adapter.clearOtherQueues(self)
+                    }
                 }
             }
         }
