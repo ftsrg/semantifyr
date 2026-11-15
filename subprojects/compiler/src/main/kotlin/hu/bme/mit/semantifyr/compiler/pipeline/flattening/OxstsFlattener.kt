@@ -102,6 +102,8 @@ class OxstsFlattener @Inject constructor(
         val variableMappings = mutableMapOf<Instance, Map<VariableDeclaration, VariableDeclaration>>()
         val flattenedEvaluationTransformer = FlatExpressionEvaluationTransformer()
 
+        registerRootInstanceDomains(inlinedOxsts, instanceTree, variableInstanceDomain)
+
         logger.debug { "Pulling down variables" }
         pullDownVariables(inlinedOxsts, instanceTree, variableInstanceDomain, variableHolders, variableMappings)
 
@@ -178,6 +180,21 @@ class OxstsFlattener @Inject constructor(
                 inlinedOxsts.variables += actualVariable
             }
             variableMappings[instance] = instanceMappings
+        }
+    }
+
+    // the compiler declares variables on the root, such as a traced call's recorded instance argument
+    private fun registerRootInstanceDomains(
+        inlinedOxsts: InlinedOxsts,
+        instanceTree: InstanceTree,
+        variableInstanceDomain: MutableMap<VariableDeclaration, Set<Instance>>,
+    ) {
+        val builtinAnything = builtinSymbolResolver.anythingClass(inlinedOxsts)
+
+        for (variable in inlinedOxsts.variables) {
+            val domain = variable.typeSpecification?.domain as? ClassDeclaration ?: continue
+            variableInstanceDomain[variable] = instanceCollector.instancesOfType(instanceTree.rootInstance, domain)
+            variable.typeSpecification.domain = builtinAnything
         }
     }
 

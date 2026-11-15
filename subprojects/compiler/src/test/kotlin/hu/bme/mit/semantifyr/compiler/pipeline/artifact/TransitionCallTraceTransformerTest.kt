@@ -64,7 +64,8 @@ class TransitionCallTraceTransformerTest {
             mockTransitionDeclaration(),
             emptyCallExpression,
             emptyBody,
-        )
+            emptyMap(),
+        ).tracerAssignment
 
         assertThat(operation).isInstanceOf(AssignmentOperation::class.java)
         val reference = operation.reference as ElementReference
@@ -84,7 +85,8 @@ class TransitionCallTraceTransformerTest {
             mockTransitionDeclaration(),
             emptyCallExpression,
             emptyBody,
-        )
+            emptyMap(),
+        ).tracerAssignment
 
         val variable = (operation.reference as ElementReference).element as VariableDeclaration
         assertThat(variable.typeSpecification.domain).isSameAs(boolDatatype)
@@ -100,9 +102,9 @@ class TransitionCallTraceTransformerTest {
     fun `consecutive trace calls allocate distinct tracer variables`() {
         val transformer = newTransformer()
 
-        val firstName = tracerVariableNameOf(transformer.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression, emptyBody))
-        val secondName = tracerVariableNameOf(transformer.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression, emptyBody))
-        val thirdName = tracerVariableNameOf(transformer.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression, emptyBody))
+        val firstName = tracerVariableNameOf(transformer.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression, emptyBody, emptyMap()).tracerAssignment)
+        val secondName = tracerVariableNameOf(transformer.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression, emptyBody, emptyMap()).tracerAssignment)
+        val thirdName = tracerVariableNameOf(transformer.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression, emptyBody, emptyMap()).tracerAssignment)
 
         assertThat(listOf(firstName, secondName, thirdName)).doesNotHaveDuplicates()
         listOf(firstName, secondName, thirdName).forEach {
@@ -137,8 +139,8 @@ class TransitionCallTraceTransformerTest {
                 transition.branches += OxstsFactory.createSequenceOperation()
             }
         }
-        val firstAssignment = transformer.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression, emptyBody)
-        val secondAssignment = transformer.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression, emptyBody)
+        val firstAssignment = transformer.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression, emptyBody, emptyMap()).tracerAssignment
+        val secondAssignment = transformer.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression, emptyBody, emptyMap()).tracerAssignment
         val firstVariable = (firstAssignment.reference as ElementReference).element as VariableDeclaration
         val secondVariable = (secondAssignment.reference as ElementReference).element as VariableDeclaration
 
@@ -162,7 +164,7 @@ class TransitionCallTraceTransformerTest {
         val transformer = newTransformer()
         val transition = mockTransitionDeclaration()
 
-        val operation = transformer.traceTransitionCall(instance, container, transition, emptyCallExpression, emptyBody)
+        val operation = transformer.traceTransitionCall(instance, container, transition, emptyCallExpression, emptyBody, emptyMap()).tracerAssignment
         val variable = (operation.reference as ElementReference).element as VariableDeclaration
         val map = transformer.finalize(inlinedOxstsCalling(operation))
 
@@ -175,8 +177,8 @@ class TransitionCallTraceTransformerTest {
     @Test
     fun `finalize drops the tracers whose assignment left the model`() {
         val transformer = newTransformer()
-        val calledAssignment = transformer.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression, emptyBody)
-        val uncalledAssignment = transformer.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression, emptyBody)
+        val calledAssignment = transformer.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression, emptyBody, emptyMap()).tracerAssignment
+        val uncalledAssignment = transformer.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression, emptyBody, emptyMap()).tracerAssignment
         val calledVariable = (calledAssignment.reference as ElementReference).element as VariableDeclaration
         val uncalledVariable = (uncalledAssignment.reference as ElementReference).element as VariableDeclaration
         val inlinedOxsts = inlinedOxstsCalling(calledAssignment)
@@ -213,7 +215,7 @@ class TransitionCallTraceTransformerTest {
             }
         }
         whenever(evaluator.evaluate(argumentExpression)).thenReturn(IntegerEvaluation(3))
-        val operation = transformer.traceTransitionCall(instance, container, transition, callExpression, emptyBody)
+        val operation = transformer.traceTransitionCall(instance, container, transition, callExpression, emptyBody, emptyMap()).tracerAssignment
         val variable = (operation.reference as ElementReference).element as VariableDeclaration
         val trace = transformer.finalize(inlinedOxstsCalling(operation)).getTransitionCallTrace(variable)
 
@@ -245,7 +247,7 @@ class TransitionCallTraceTransformerTest {
             }
         }
         whenever(evaluator.evaluate(secondExpression)).thenReturn(IntegerEvaluation(3))
-        val operation = transformer.traceTransitionCall(instance, container, transition, callExpression, emptyBody)
+        val operation = transformer.traceTransitionCall(instance, container, transition, callExpression, emptyBody, emptyMap()).tracerAssignment
         val variable = (operation.reference as ElementReference).element as VariableDeclaration
         val trace = transformer.finalize(inlinedOxstsCalling(operation)).getTransitionCallTrace(variable)
 

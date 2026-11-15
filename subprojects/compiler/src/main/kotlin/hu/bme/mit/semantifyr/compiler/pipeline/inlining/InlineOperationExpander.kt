@@ -175,37 +175,45 @@ class InlineOperationExpander @Inject constructor(
             inlined
         }
 
-        val body = if (arguments.temporaries.isEmpty()) {
+        val tracedCall = if (builtinAnnotationHandler.isTransitionTraced(actualTransition)) {
+            transitionCallTraceTransformer.traceTransitionCall(
+                instance,
+                containerInstance,
+                actualTransition,
+                callExpression,
+                inlinedBranches,
+                arguments.runtimeArguments,
+            )
+        } else {
+            null
+        }
+
+        val steps = buildList {
+            tracedCall?.let {
+                add(it.tracerAssignment)
+            }
+            addAll(arguments.temporaries)
+            tracedCall?.let {
+                addAll(it.argumentRecords)
+            }
+        }
+        val body = if (steps.isEmpty()) {
             inlinedBranches
         } else {
             OxstsFactory.createSequenceOperation().also {
-                it.steps += arguments.temporaries
+                it.steps += steps
                 it.steps += inlinedBranches
             }
         }
 
         rewriteLocalVariables(body, containerInstance)
 
-        if (!builtinAnnotationHandler.isTransitionTraced(actualTransition)) {
-            return body
-        }
-
-        val tracerAssignment = transitionCallTraceTransformer.traceTransitionCall(
-            instance,
-            containerInstance,
-            actualTransition,
-            callExpression,
-            body,
-        )
-
-        return OxstsFactory.createSequenceOperation().also {
-            it.steps += tracerAssignment
-            it.steps += body
-        }
+        return body
     }
 
     private class ArgumentBinding(
         val temporaries: List<LocalVarDeclarationOperation>,
+        val runtimeArguments: Map<ParameterDeclaration, LocalVarDeclarationOperation>,
         val bindings: Map<ParameterDeclaration, Expression>,
     )
 
@@ -215,6 +223,7 @@ class InlineOperationExpander @Inject constructor(
         callExpression: CallSuffixExpression,
     ): ArgumentBinding {
         val temporaries = sortedMapOf<Int, LocalVarDeclarationOperation>()
+        val runtimeArguments = linkedMapOf<ParameterDeclaration, LocalVarDeclarationOperation>()
         val bindings = mutableMapOf<ParameterDeclaration, Expression>()
 
         for ((index, parameter) in transitionDeclaration.parameters.withIndex()) {
@@ -234,12 +243,13 @@ class InlineOperationExpander @Inject constructor(
             }
             SourceLocation.recordOrigin(argument.expression, temporary)
             temporaries[callExpression.arguments.indexOf(argument)] = temporary
+            runtimeArguments[parameter] = temporary
             bindings[parameter] = OxstsFactory.createElementReference(temporary).also {
                 SourceLocation.recordOrigin(argument.expression, it)
             }
         }
 
-        return ArgumentBinding(temporaries.values.toList(), bindings)
+        return ArgumentBinding(temporaries.values.toList(), runtimeArguments, bindings)
     }
 
     private fun rewriteLocalVariables(operation: Operation, containerInstance: Instance) {
