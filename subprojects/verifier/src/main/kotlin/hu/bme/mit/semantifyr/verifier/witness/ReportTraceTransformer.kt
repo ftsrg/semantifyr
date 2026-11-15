@@ -27,8 +27,7 @@ import hu.bme.mit.semantifyr.verifier.ReportState
 import hu.bme.mit.semantifyr.verifier.ReportStep
 import hu.bme.mit.semantifyr.verifier.ReportTrace
 import hu.bme.mit.semantifyr.verifier.ReportType
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
+import hu.bme.mit.semantifyr.verifier.ReportValue
 
 class ReportTraceTransformer @Inject constructor(
     private val oxstsQualifiedNameProvider: OxstsQualifiedNameProvider,
@@ -38,7 +37,7 @@ class ReportTraceTransformer @Inject constructor(
     private class ReportEntry(
         val key: String,
         val type: ReportType,
-        val value: JsonElement,
+        val value: ReportValue,
         val slot: ObservedSlot? = null,
     )
 
@@ -192,7 +191,7 @@ class ReportTraceTransformer @Inject constructor(
         return groups.map { (key, group) ->
             when (group) {
                 is EntryGroup.Single -> group.entry
-                is EntryGroup.Record -> ReportEntry(key, group.type, group.fields.toJson())
+                is EntryGroup.Record -> ReportEntry(key, group.type, group.fields.toValue())
             }
         }
     }
@@ -213,13 +212,13 @@ class ReportTraceTransformer @Inject constructor(
     }
 
     private class RecordFields {
-        val values = linkedMapOf<String, JsonElement>()
+        val values = linkedMapOf<String, ReportValue>()
         val nested = linkedMapOf<String, RecordFields>()
 
-        fun toJson(): JsonObject {
-            return JsonObject(
+        fun toValue(): ReportValue {
+            return ReportValue.Record(
                 values + nested.mapValues {
-                    it.value.toJson()
+                    it.value.toValue()
                 },
             )
         }

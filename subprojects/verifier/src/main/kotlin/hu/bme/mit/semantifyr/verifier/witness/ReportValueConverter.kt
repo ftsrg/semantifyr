@@ -8,7 +8,6 @@ package hu.bme.mit.semantifyr.verifier.witness
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.witness.Fraction
-import hu.bme.mit.semantifyr.backend.witness.isExactJsonInteger
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluationVisitor
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.ExpressionEvaluationSerializer
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
@@ -43,12 +42,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TypeSpecification
 import hu.bme.mit.semantifyr.verifier.ReportType
 import hu.bme.mit.semantifyr.verifier.ReportTypeKind
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import java.math.BigInteger
+import hu.bme.mit.semantifyr.verifier.ReportValue
 
 class ReportValueConverter @Inject constructor(
     private val oxstsQualifiedNameProvider: OxstsQualifiedNameProvider,
@@ -58,18 +52,8 @@ class ReportValueConverter @Inject constructor(
     private val multiplicityRangeEvaluator: MultiplicityRangeEvaluator,
 ) {
 
-    fun integer(value: BigInteger): JsonElement {
-        if (isExactJsonInteger(value)) {
-            return JsonPrimitive(value.toLong())
-        }
-        return JsonPrimitive(value.toString())
-    }
-
-    fun fraction(value: Fraction): JsonElement {
-        if (value.isWhole) {
-            return integer(value.numerator)
-        }
-        return JsonPrimitive(value.toString())
+    fun fraction(value: Fraction): ReportValue {
+        return ReportValue.Rational(value)
     }
 
     fun path(expression: Expression): String {
@@ -80,19 +64,19 @@ class ReportValueConverter @Inject constructor(
         return expressionEvaluationSerializer.serialize(evaluation)
     }
 
-    fun value(expression: Expression): JsonElement {
+    fun value(expression: Expression): ReportValue {
         return when (expression) {
-            is LiteralInteger -> integer(expression.value.toBigInteger())
-            is LiteralBoolean -> JsonPrimitive(expression.isValue)
-            is LiteralReal -> JsonPrimitive(expression.value)
-            is LiteralString -> JsonPrimitive(expression.value)
-            is LiteralNothing -> JsonNull
-            is ArrayLiteral -> JsonArray(
+            is LiteralInteger -> ReportValue.Integer(expression.value.toBigInteger())
+            is LiteralBoolean -> ReportValue.Bool(expression.isValue)
+            is LiteralReal -> ReportValue.Real(expression.value)
+            is LiteralString -> ReportValue.Text(expression.value)
+            is LiteralNothing -> ReportValue.NoInstance
+            is ArrayLiteral -> ReportValue.Array(
                 expression.values.map {
                     value(it)
                 },
             )
-            is RecordLiteral -> JsonObject(
+            is RecordLiteral -> ReportValue.Record(
                 expression.fields.associate {
                     it.field.name to value(it.expression)
                 },
@@ -101,15 +85,15 @@ class ReportValueConverter @Inject constructor(
         }
     }
 
-    private fun reference(expression: Expression): JsonElement {
+    private fun reference(expression: Expression): ReportValue {
         val literal = (expression as? ElementReference)?.element as? EnumLiteral
         if (literal != null) {
-            return JsonPrimitive(literal.name)
+            return ReportValue.EnumLiteral(literal.name)
         }
-        return JsonPrimitive(path(expression))
+        return ReportValue.Instance(path(expression))
     }
 
-    fun value(evaluation: ExpressionEvaluation): JsonElement {
+    fun value(evaluation: ExpressionEvaluation): ReportValue {
         return evaluationConverter.convert(evaluation)
     }
 
@@ -145,59 +129,59 @@ class ReportValueConverter @Inject constructor(
 
     private val evaluationConverter = EvaluationConverter()
 
-    private inner class EvaluationConverter : CompileTimeExpressionEvaluationVisitor<JsonElement>() {
-        fun convert(evaluation: ExpressionEvaluation): JsonElement {
+    private inner class EvaluationConverter : CompileTimeExpressionEvaluationVisitor<ReportValue>() {
+        fun convert(evaluation: ExpressionEvaluation): ReportValue {
             return visit(evaluation)
         }
 
-        override fun visit(evaluation: ArrayEvaluation): JsonElement {
-            return JsonArray(
+        override fun visit(evaluation: ArrayEvaluation): ReportValue {
+            return ReportValue.Array(
                 evaluation.elements.map {
                     visit(it)
                 },
             )
         }
 
-        override fun visit(evaluation: BooleanEvaluation): JsonElement {
-            return JsonPrimitive(evaluation.value)
+        override fun visit(evaluation: BooleanEvaluation): ReportValue {
+            return ReportValue.Bool(evaluation.value)
         }
 
-        override fun visit(evaluation: EnumLiteralEvaluation): JsonElement {
-            return JsonPrimitive(evaluation.literal.name)
+        override fun visit(evaluation: EnumLiteralEvaluation): ReportValue {
+            return ReportValue.EnumLiteral(evaluation.literal.name)
         }
 
-        override fun visit(evaluation: InfinityEvaluation): JsonElement {
-            return JsonPrimitive(expressionEvaluationSerializer.serialize(evaluation))
+        override fun visit(evaluation: InfinityEvaluation): ReportValue {
+            return ReportValue.Text(expressionEvaluationSerializer.serialize(evaluation))
         }
 
-        override fun visit(evaluation: IntegerEvaluation): JsonElement {
-            return integer(evaluation.value.toBigInteger())
+        override fun visit(evaluation: IntegerEvaluation): ReportValue {
+            return ReportValue.Integer(evaluation.value.toBigInteger())
         }
 
-        override fun visit(evaluation: NothingEvaluation): JsonElement {
-            return JsonNull
+        override fun visit(evaluation: NothingEvaluation): ReportValue {
+            return ReportValue.NoInstance
         }
 
-        override fun visit(evaluation: RangeEvaluation): JsonElement {
-            return JsonPrimitive(expressionEvaluationSerializer.serialize(evaluation))
+        override fun visit(evaluation: RangeEvaluation): ReportValue {
+            return ReportValue.Text(expressionEvaluationSerializer.serialize(evaluation))
         }
 
-        override fun visit(evaluation: RealEvaluation): JsonElement {
-            return JsonPrimitive(evaluation.value)
+        override fun visit(evaluation: RealEvaluation): ReportValue {
+            return ReportValue.Real(evaluation.value)
         }
 
-        override fun visit(evaluation: StringEvaluation): JsonElement {
-            return JsonPrimitive(evaluation.value)
+        override fun visit(evaluation: StringEvaluation): ReportValue {
+            return ReportValue.Text(evaluation.value)
         }
 
-        override fun visit(evaluation: InstanceEvaluation): JsonElement {
+        override fun visit(evaluation: InstanceEvaluation): ReportValue {
             val paths = evaluation.instances.map {
-                JsonPrimitive(path(instanceReferenceProvider.getReference(it)))
+                ReportValue.Instance(path(instanceReferenceProvider.getReference(it)))
             }
             if (paths.size == 1) {
                 return paths.single()
             }
-            return JsonArray(paths)
+            return ReportValue.Array(paths)
         }
     }
 }

@@ -40,6 +40,7 @@ import hu.bme.mit.semantifyr.verifier.ReportKind
 import hu.bme.mit.semantifyr.verifier.ReportStep
 import hu.bme.mit.semantifyr.verifier.ReportType
 import hu.bme.mit.semantifyr.verifier.ReportTypeKind
+import hu.bme.mit.semantifyr.verifier.ReportValue
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.VerificationReport
@@ -49,11 +50,11 @@ import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonPrimitive
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.entry
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import java.math.BigInteger
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.readText
@@ -272,7 +273,7 @@ class BackAnnotationFidelityTest {
         assertThat(trace.root).isEqualTo("root")
         assertThat(trace.initial).isEqualTo(ReportInitialEntry(state = 0, calls = emptyList()))
         assertThat(trace.states).hasSize(2)
-        assertThat(trace.states[1].values).containsEntry("root.kitchen.lamp.on", JsonPrimitive(true))
+        assertThat(trace.states[1].values).containsEntry("root.kitchen.lamp.on", ReportValue.Bool(true))
         assertThat(trace.steps).containsExactly(
             ReportStep(
                 source = 0,
@@ -283,7 +284,7 @@ class BackAnnotationFidelityTest {
                         self = "root.kitchen.lamp",
                         transition = "semantifyr::verification::lang::tracing::Lamp::toggle",
                         arguments = mapOf(
-                            "partner" to JsonPrimitive("root.hall.lamp"),
+                            "partner" to ReportValue.Text("root.hall.lamp"),
                         ),
                         calls = emptyList(),
                     ),
@@ -337,8 +338,8 @@ class BackAnnotationFidelityTest {
 
         val trace = readReport(output, case).trace!!
         assertThat(trace.states.single().values).containsExactly(
-            entry("root.slots[0]", JsonPrimitive(0)),
-            entry("root.slots[2]", JsonPrimitive(4)),
+            entry("root.slots[0]", ReportValue.Integer(BigInteger.ZERO)),
+            entry("root.slots[2]", ReportValue.Integer(BigInteger.valueOf(4))),
         )
         assertThat(trace.variables.last().slot).isEqualTo(ObservedSlot(array = "root.slots", index = 2, size = 3))
     }
@@ -358,7 +359,7 @@ class BackAnnotationFidelityTest {
         }
 
         val trace = readReport(output, case).trace!!
-        assertThat(trace.states.single().values["root.robot.position"].toString()).isEqualTo("""{"x":3}""")
+        assertThat(trace.states.single().values["root.robot.position"]).isEqualTo(ReportValue.Record(mapOf("x" to ReportValue.Integer(BigInteger.valueOf(3)))))
         assertThat(trace.variables.single().type.kind).isEqualTo(ReportTypeKind.Record)
     }
 
@@ -379,7 +380,7 @@ class BackAnnotationFidelityTest {
             )
         }
 
-        assertThat(readReport(output, case).trace!!.states.single().values).containsEntry("root.queue[0]", JsonPrimitive("root.second"))
+        assertThat(readReport(output, case).trace!!.states.single().values).containsEntry("root.queue[0]", ReportValue.Text("root.second"))
     }
 
     private fun flattenedName(vararg path: String): String {

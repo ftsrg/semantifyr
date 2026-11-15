@@ -11,13 +11,12 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.math.BigInteger
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -51,16 +50,16 @@ class VerificationReportTest {
         states = listOf(
             ReportState(
                 mapOf(
-                    "root.lamp.on" to JsonPrimitive(false),
-                    "root.lamp.color" to JsonPrimitive("Red"),
-                    "root.lamp.partner" to JsonNull,
-                    "root.counts[1]" to JsonPrimitive("9007199254740992"),
+                    "root.lamp.on" to ReportValue.Bool(false),
+                    "root.lamp.color" to ReportValue.EnumLiteral("Red"),
+                    "root.lamp.partner" to ReportValue.NoInstance,
+                    "root.counts[1]" to ReportValue.Integer(BigInteger.TWO.pow(53)),
                 ),
             ),
             ReportState(
                 mapOf(
-                    "root.lamp.on" to JsonPrimitive(true),
-                    "root.lamp.partner" to JsonPrimitive("root.hall"),
+                    "root.lamp.on" to ReportValue.Bool(true),
+                    "root.lamp.partner" to ReportValue.Instance("root.hall"),
                 ),
             ),
         ),
@@ -74,7 +73,7 @@ class VerificationReportTest {
                         self = "root.lamp",
                         transition = "example::Lamp::toggle",
                         arguments = mapOf(
-                            "partner" to JsonPrimitive("root.hall"),
+                            "partner" to ReportValue.Instance("root.hall"),
                         ),
                         calls = emptyList(),
                     ),
@@ -112,16 +111,16 @@ class VerificationReportTest {
 
     @Test
     fun `the report carries its version and whether it is a run's or a re-check's`() {
-        assertThat(encoded(report(ReportKind.Run, null))["version"]).isEqualTo(JsonPrimitive(REPORT_VERSION))
-        assertThat(encoded(report(ReportKind.Run, null))["kind"]).isEqualTo(JsonPrimitive("run"))
-        assertThat(encoded(report(ReportKind.Recheck, null))["kind"]).isEqualTo(JsonPrimitive("re-check"))
+        assertThat(encoded(report(ReportKind.Run, null))["version"].toString()).isEqualTo("$REPORT_VERSION")
+        assertThat(encoded(report(ReportKind.Run, null))["kind"].toString()).isEqualTo("\"run\"")
+        assertThat(encoded(report(ReportKind.Recheck, null))["kind"].toString()).isEqualTo("\"re-check\"")
     }
 
     @Test
     fun `the trace names the root instance and lists the observed transitions and variable types once`() {
         val trace = encoded(report(ReportKind.Run, trace))["trace"]!!.jsonObject
 
-        assertThat(trace["root"]).isEqualTo(JsonPrimitive("root"))
+        assertThat(trace["root"].toString()).isEqualTo("\"root\"")
         assertThat(trace["transitions"]!!.jsonArray.single().jsonObject["parameters"].toString())
             .isEqualTo("""[{"parameter":"partner","type":{"kind":"class","name":"example::Lamp","element":null,"size":null}}]""")
         assertThat(trace["variables"]!!.jsonArray.last().toString())
@@ -151,15 +150,24 @@ class VerificationReportTest {
     fun `missing calls are stated with their reason`() {
         val withoutCalls = trace.copy(missingCalls = "the calls were not recorded")
 
-        assertThat(encoded(report(ReportKind.Run, trace))["trace"]!!.jsonObject["missingCalls"]).isEqualTo(JsonNull)
-        assertThat(encoded(report(ReportKind.Run, withoutCalls))["trace"]!!.jsonObject["missingCalls"])
-            .isEqualTo(JsonPrimitive("the calls were not recorded"))
+        assertThat(encoded(report(ReportKind.Run, trace))["trace"]!!.jsonObject["missingCalls"].toString()).isEqualTo("null")
+        assertThat(encoded(report(ReportKind.Run, withoutCalls))["trace"]!!.jsonObject["missingCalls"].toString())
+            .isEqualTo("\"the calls were not recorded\"")
     }
 
     @Test
-    fun `the report reads back as written`() {
-        val written = report(ReportKind.Recheck, trace)
+    fun `the report reads back to the JSON it was written as`() {
+        val written = json.encodeToString(report(ReportKind.Recheck, trace))
 
-        assertThat(json.decodeFromString<VerificationReport>(json.encodeToString(written))).isEqualTo(written)
+        assertThat(json.encodeToString(json.decodeFromString<VerificationReport>(written))).isEqualTo(written)
+    }
+
+    @Test
+    fun `a string value reads back as text, which the type list resolves`() {
+        val read = json.decodeFromString<VerificationReport>(json.encodeToString(report(ReportKind.Run, trace)))
+
+        assertThat(read.trace!!.states[0].values).containsEntry("root.lamp.color", ReportValue.Text("Red"))
+        assertThat(read.trace!!.states[0].values).containsEntry("root.lamp.on", ReportValue.Bool(false))
+        assertThat(read.trace!!.states[0].values).containsEntry("root.lamp.partner", ReportValue.NoInstance)
     }
 }

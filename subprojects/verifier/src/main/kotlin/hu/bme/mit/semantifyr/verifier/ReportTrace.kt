@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.verifier
 import hu.bme.mit.semantifyr.backend.witness.Fraction
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
 
 @Serializable
 enum class ReportTypeKind {
@@ -67,7 +66,7 @@ data class ObservedVariable(
 data class ReportCall(
     val self: String,
     val transition: String,
-    val arguments: Map<String, JsonElement>,
+    val arguments: Map<String, ReportValue>,
     val calls: List<ReportCall>,
 )
 
@@ -79,7 +78,7 @@ data class ReportInitialEntry(
 
 @Serializable
 data class ReportState(
-    val values: Map<String, JsonElement>,
+    val values: Map<String, ReportValue>,
 )
 
 @Serializable
