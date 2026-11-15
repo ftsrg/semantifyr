@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
@@ -26,9 +27,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
-/**
- * Variable reads and writes that are relevant to the 'prop' expression
- */
 data class ConeOfInfluenceInfo(
     val relevantVariables: Set<VariableDeclaration>,
     val relevantAssignments: Set<Operation>,
@@ -71,6 +69,15 @@ class ConeOfInfluenceComputation(
         for (variable in variablesReadsIn(inlinedOxsts.property.expression)) {
             if (relevantVariables.add(variable)) {
                 variableWorklist.add(variable)
+            }
+        }
+
+        // what an observed call shows must hold in the execution shown, so its guards and arguments are kept
+        for (variable in inlinedOxsts.variables) {
+            if (TransitionTracerNames.isTracerName(variable.name) || TransitionTracerNames.isArgumentName(variable.name)) {
+                if (relevantVariables.add(variable)) {
+                    variableWorklist.add(variable)
+                }
             }
         }
 
