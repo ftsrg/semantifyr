@@ -520,6 +520,29 @@ class BackAnnotationFidelityTest {
         assertThat(readWitnessModel(output, case)).containsPattern("assume\\(.*counter\\.tick == 1\\)")
     }
 
+    @Test
+    suspend fun `a class without features reports its root and derives its witness model`(@TempDir output: Path) {
+        val case = loadCase("control_flow.oxsts", "semantifyr::verification::lang::control_flow::ChoiceBranch1Reach")
+
+        verifyWithWitness(case, output) { model ->
+            val x = model.variables.single {
+                it.name.endsWith("x")
+            }.name
+            linearInlinedWitness(
+                model,
+                listOf(
+                    model.state(x to 0),
+                    model.state(x to 1),
+                ),
+            )
+        }
+
+        val trace = readReport(output, case).trace!!
+        assertThat(trace.root).isEqualTo("root")
+        assertThat(trace.states.last().values).containsEntry("root.x", ReportValue.Integer(BigInteger.ONE))
+        assertThat(readWitnessModel(output, case)).contains("assume(root.x == 1)")
+    }
+
     private fun timedWitness(model: InlinedOxsts): InlinedWitness {
         val elapsed = model.variables.single {
             it.name == flattenedName("root", "timer", "elapsed")
