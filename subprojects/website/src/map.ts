@@ -12,7 +12,6 @@ export interface LearnPart {
   opening: { doc: string } | { index: string };
   // the folder whose pages, but its index, the part holds
   directory?: string;
-  // the parts the part holds in place of a folder's pages
   parts?: LearnPart[];
 }
 

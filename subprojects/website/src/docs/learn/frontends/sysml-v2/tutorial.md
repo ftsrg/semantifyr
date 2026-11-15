@@ -12,7 +12,7 @@ import ServedExamples from '@site/src/components/ServedExamples';
 
 # Verifying SysML v2 Models
 
-Semantifyr verifies SysML v2 models by translating them into OXSTS on top of a semantic library that defines what SysML v2 parts, ports, items and state machines do. This tutorial models a room with a switch and a lamp, verifies three requirements in Live, and reads the trace of a requirement that does not hold. All you need is a browser; [SysML v2 on the Command Line](command-line.mdx) runs the same model on your machine.
+Semantifyr verifies SysML v2 models by translating them into OXSTS on top of a semantic library that defines what SysML v2 parts, ports, items and state machines do. This tutorial models a room with a switch and a lamp, verifies three requirements in Live, and reads the [trace](../../verifying/witnesses-and-traces.mdx#the-trace) of a requirement that does not hold. All you need is a browser; [SysML v2 on the Command Line](command-line.mdx) runs the same model on your machine.
 
 ## The Model
 

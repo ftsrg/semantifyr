@@ -15,13 +15,14 @@ import room from '@served-examples/sysml/room';
 
 # SysML v2 on the Command Line
 
-`semantifyr-sysml` verifies SysML v2 models. Its distribution, `semantifyr-sysml-<version>.zip`, carries Theta, the SysML v2 semantic library in `libraries/sysmlv2` and the [tutorial](tutorial.md) model as `models/smoke/room.sysml`. It translates a model to OXSTS with the bundled SysIDE fork, which runs on Node.js, so it needs `node` (<NodeVersion /> or newer) on `PATH`; without it, translating fails with exit code 4 and a message naming `node`. The translator reads every `.sysml` and `.kerml` file below the model's directory as the model's workspace, so keep other models and the artifact directory out of that directory. Translations are cached under `~/.semantifyr/sysml-cache`, keyed by the model and its workspace ([Folders](../../reference/command-line.mdx#folders)).
+`semantifyr-sysml` verifies SysML v2 models. Its distribution, `semantifyr-sysml-<version>.zip`, carries Theta, the SysML v2 semantic library in `libraries/sysmlv2` and the [tutorial](tutorial.md) model as `models/smoke/room.sysml`. It translates a model to OXSTS with the bundled SysIDE fork, which runs on Node.js, so it needs `node` on `PATH`; without it, translating fails with exit code 4 and a message naming `node`. The translator reads every `.sysml` and `.kerml` file below the model's directory as the model's workspace, so keep other models and the artifact directory out of that directory. Translations are cached under `~/.semantifyr/sysml-cache`, keyed by the model and its workspace ([Folders](../../reference/command-line.mdx#folders)).
 
 This page verifies the room of the [SysML v2 tutorial](tutorial.md); `semantifyr` runs an OXSTS model the same way, as [Verifying on the Command Line](../../verifying/command-line.mdx) shows, and `semantifyr-gamma` a [Gamma model](../gamma/command-line.mdx).
 
 ## Requirements
 
 - A Java 25 runtime found through `JAVA_HOME` or `PATH`.
+- Node.js <NodeVersion /> or newer on `PATH`.
 - The `semantifyr-sysml` command-line distribution ([Installing It](../../start/install.md#the-command-line)). It carries the translator from SysML v2 to OXSTS and the SysML v2 semantic library, so Node.js is the only prerequisite SysML v2 adds.
 
 `SEMANTIFYR_HOME` below is the installed distribution, `subprojects/frontends/sysml/sysml-cli/build/install/semantifyr-sysml` in a clone of the repository: it holds the launcher in `bin/`, Theta in `theta-xsts-cli/` and the semantic library in `libraries/`; an unzipped `semantifyr-sysml-<version>.zip` has the same layout. The commands on this page are written for Linux and macOS shells; on Windows, use `bin\semantifyr-sysml.bat`.
@@ -50,7 +51,7 @@ For each case, the command prints its name, `PASSED` or `FAILED` with the time i
 
 `--artifact-directory ../room-artifacts` keeps the translated model in `compiled/default/room.oxsts`, with its name map `room.names.json` beside it, and the artifacts of every case in a directory of its own; a case with a witness has `witness.json`, `trace.json`, `witness.oxsts` and `trace.sysml` among them. [Artifacts](../../reference/artifacts.mdx) describes each file.
 
-The trace of `LampLitOnlyWhileSwitchOnViolated`, which the tutorial reads, is in `trace.json` and `witness.json` in `../room-artifacts/room.LampLitOnlyWhileSwitchOnViolated/`, and `trace.sysml` next to them is the model of the *SysML trace* view.
+The trace of `LampLitOnlyWhileSwitchOnViolated`, which the tutorial reads, is in `trace.json` and `witness.json` in `../room-artifacts/room.semantifyr.sysml.model.LampLitOnlyWhileSwitchOnViolated/`, and `trace.sysml` next to them is the model of the *SysML trace* view.
 
 ## Commands
 

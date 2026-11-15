@@ -15,7 +15,7 @@ import levelCrossing from '@served-examples/oxsts/level-crossing';
 
 ## The Model
 
-Save the model as `level-crossing.oxsts` in an empty directory:
+Save the model as `level-crossing.oxsts` in an empty directory, `/tmp/level-crossing` on this page:
 
 <CodeBlock language="oxsts" title="level-crossing.oxsts">{levelCrossing.text}</CodeBlock>
 
@@ -55,7 +55,7 @@ Each case ran on the default `smart` portfolio, and the command exited with stat
 
 ## The Witness
 
-The failed case's directory, its name cut short with a hash as [the case directory](../reference/artifacts.mdx#the-case-directory) gives, on a machine with all four backends:
+The failed case's directory, its name cut short with a hash as [the case directory](../reference/artifacts.mdx#the-case-directory) gives, holds a directory for each leg of `smart` that started before the race ended, in this run on a machine with all four backends:
 
 ```bash
 ls -1 artifacts/level-crossing.example.levelcrossing.BarrierDownWhileTr-e3f8b4e8

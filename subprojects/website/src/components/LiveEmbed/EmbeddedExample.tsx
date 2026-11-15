@@ -62,7 +62,6 @@ function EmbedFrame({ url, initialHeight, onShown }: FrameProps): React.JSX.Elem
   return <iframe ref={frame} className={styles.frame} style={{ height }} src={url} title={terms.live.term} allow="clipboard-write" />;
 }
 
-// an editor's window with an arrow into it
 function OpenIcon(): React.JSX.Element {
   return (
     <svg className={controlStyles.controlIcon} viewBox="0 0 24 24" aria-hidden="true">

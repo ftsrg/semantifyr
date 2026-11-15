@@ -48,7 +48,7 @@ Predict both verdicts, then press **Open** and **Verify all**:
 
 </details>
 
-A trace is an execution that shows a case's answer: for an `EF` case one that reaches what it asks for, for an `AG` case one that breaks it. Where no such execution exists, there is no trace. Open the trace of `EastCanTurnGreen`. `@Trace` on the light's main transition fills the *Calls* view: each step names the light that switched, `root.intersection.north` or `root.intersection.east`, beside the colors in *Steps*.
+A [trace](../verifying/witnesses-and-traces.mdx#the-trace) is an execution that shows a case's answer: for an `EF` case one that reaches what it asks for, for an `AG` case one that breaks it. Where no such execution exists, there is no trace. Open the trace of `EastCanTurnGreen`. `@Trace` on the light's main transition fills the *Calls* view: each step names the light that switched, `root.intersection.north` or `root.intersection.east`, beside the colors in *Steps*.
 
 ## A Second Requirement
 
@@ -69,7 +69,7 @@ At a real intersection a light turns green only once the crossing traffic has st
 
 ## Reading the Trace
 
-The [trace](../verifying/witnesses-and-traces.mdx#the-trace) of an `AG` case is an execution that breaks it. Open the trace of `NorthGreenOnlyWhileEastRed` and read *Steps* to its last state.
+The trace of an `AG` case is an execution that breaks it. Open the trace of `NorthGreenOnlyWhileEastRed` and read *Steps* to its last state.
 
 In its last state north is green while east is yellow. Going back through the steps: east turned yellow, and from then on north was free to switch, since its guard waits only while east is green; north turned green before east turned red. The guard keeps the lights from being green together, and nothing more: a light may turn green while the other is still yellow, and no case asked about it until now.
 

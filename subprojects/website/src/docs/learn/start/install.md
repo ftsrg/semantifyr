@@ -19,7 +19,7 @@ Use it to work on models in your own folders and repositories.
 
 - [Visual Studio Code](https://code.visualstudio.com/) 1.109 or newer
 - A Java 25 runtime, found through `JAVA_HOME` or `PATH`, which runs the bundled language servers
-- At least one backend: Theta (`theta-xsts-cli` on `PATH`, or Docker), Spin (`spin` and `gcc` on `PATH`), nuXmv (`nuXmv` on `PATH`) or Uppaal (`verifyta` on `PATH`)
+- At least one backend, [Theta](../reference/backends/theta.mdx), [Spin](../reference/backends/spin.mdx), [nuXmv](../reference/backends/nuxmv.mdx) or [Uppaal](../reference/backends/uppaal.mdx), installed as its page says
 
 **Install**
 
