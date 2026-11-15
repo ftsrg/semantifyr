@@ -7,6 +7,7 @@
 /// <reference types="webpack/module" />
 
 import { lineDiff } from '@site/src/lib/lineDiff';
+import { EDGES, nodeAt, type Node } from './InstanceTree';
 
 export interface Frame {
   file: string;
@@ -25,7 +26,6 @@ const MAXIMUM_LINE_LENGTH = 60;
 
 // written by the phases Gradle task: the artifacts of the model's one case, with a frame after every single rewrite
 const artifacts = require.context('@phases', true, /\/pipeline\/.*\.oxsts$/);
-const models = require.context('@oxsts-phases-models', false, /\.oxsts$/);
 
 const STEP = /^pipeline\/steps\/\d+_([a-z]+)\.oxsts$/;
 
@@ -57,15 +57,6 @@ function frame(file: string): Frame {
     throw new Error(`The compiler wrote no ${file}`);
   }
   return { file, text };
-}
-
-function sourceModel(): Frame {
-  const keys = models.keys();
-  const key = keys[0];
-  if (keys.length !== 1 || key === undefined) {
-    throw new Error(`oxsts-test-models/phases holds ${keys.length} models, the pages show one`);
-  }
-  return { file: key.slice(2), text: textOf(models, key) };
 }
 
 function changed(before: string, after: string, kind: 'added' | 'removed'): string[] {
@@ -101,6 +92,24 @@ function replacedCall(before: string, after: string): string {
   return call;
 }
 
+// the one variable a step stops reading: named in the lines it removes and in none it adds
+function substitutedVariable(before: string, after: string): string {
+  const named = (lines: string[]): Set<string> => {
+    return new Set(lines.flatMap((line) => {
+      return line.match(/'[^']+'/g) ?? [];
+    }));
+  };
+  const added = named(changed(before, after, 'added'));
+  const gone = [...named(changed(before, after, 'removed'))].filter((variable) => {
+    return !added.has(variable);
+  });
+  const variable = gone[0];
+  if (gone.length !== 1 || variable === undefined) {
+    throw new Error(`A substitution stopped reading ${gone.length} variables, the caption names one`);
+  }
+  return variable;
+}
+
 function receiverOf(call: string): string {
   return call.slice(0, call.lastIndexOf('.'));
 }
@@ -128,6 +137,31 @@ const CAPTIONS: Readonly<Record<string, Caption>> = {
   },
   flattening: () => {
     return 'Every variable of every instance becomes one variable of the model, named by the path of its instance, and `contains root` goes: no instance is left.';
+  },
+  unusedvariableelimination: (before, after) => {
+    const declaration = changed(before.text, after.text, 'removed').find((line) => {
+      return line.startsWith('var ');
+    });
+    if (declaration !== undefined) {
+      const variable = /^var ('[^']+')/.exec(declaration)?.[1];
+      return `Nothing reads \`${variable}\` any more, so its declaration goes.`;
+    }
+    const variable = substitutedVariable(before.text, after.text);
+    const initial = before.text.split('\n').find((line) => {
+      return line.startsWith(`var ${variable}: `);
+    })?.split(' := ')[1];
+    if (initial === undefined) {
+      throw new Error(`The step ${after.file} substitutes ${variable}, which declares no initial value`);
+    }
+    return `Nothing writes \`${variable}\`, so every read of it becomes its initial value, \`${initial}\`.`;
+  },
+  redundantoperationremoval: (before, after) => {
+    const removed = changed(before.text, after.text, 'removed');
+    const operation = removed[0];
+    if (removed.length !== 1 || operation === undefined || changed(before.text, after.text, 'added').length !== 0) {
+      throw new Error(`The step ${after.file} removes ${removed.length} lines, the caption names one`);
+    }
+    return `\`${operation}\` neither blocks a step nor changes a variable, so it goes.`;
   },
 };
 
@@ -163,6 +197,50 @@ function stepsThrough(frames: { frame: Frame, pass: string }[], start: Frame): W
   });
 }
 
+function nameOf(node: Node): string {
+  return node.order === 1 ? 'The model' : `\`${node.path}\``;
+}
+
+// the tree after the first placements, one instance a line under its holder, a shared instance under each of its holders
+function treeAfter(placements: number): Frame {
+  const placed = EDGES.slice(0, placements);
+  const lines: string[] = [];
+  const write = (index: number, depth: number, expanded: boolean): void => {
+    const node = nodeAt(index);
+    lines.push(`${'    '.repeat(depth)}${index === 0 ? node.path : `${node.path}: ${node.type}`}`);
+    if (!expanded) {
+      return;
+    }
+    for (const edge of placed) {
+      if (edge.from === index) {
+        const first = placed.find((other) => {
+          return other.to === edge.to;
+        });
+        write(edge.to, depth + 1, first === edge);
+      }
+    }
+  };
+  write(0, 0, true);
+  return { file: placements === 0 ? 'the instance tree before instantiation' : `the instance tree after placement ${placements}`, text: lines.join('\n') };
+}
+
+function instantiationSteps(): WalkStep[] {
+  return EDGES.map((edge, index) => {
+    const holder = nodeAt(edge.from);
+    const held = nodeAt(edge.to);
+    const shared = EDGES.slice(0, index).some((other) => {
+      return other.to === edge.to;
+    });
+    let caption = `${nameOf(holder)} gets an instance for \`${edge.feature}\`: \`${held.path}\`, a \`${held.type}\`.`;
+    if (shared) {
+      caption = `${nameOf(holder)} gets no instance of its own for \`${edge.feature}\`, which is \`@Shared\`: the instance placed before, \`${held.path}\`, is placed in its slot too.`;
+    } else if (edge.redefinedIn !== undefined) {
+      caption = `${nameOf(holder)} gets an instance for \`${edge.feature}\`: \`${held.path}\`, a \`${held.type}\`, since \`${edge.redefinedIn}\` redefines the containment with that class.`;
+    }
+    return { caption, before: treeAfter(index), after: treeAfter(index + 1) };
+  });
+}
+
 function walks(): { instantiation: WalkStep[], inlining: WalkStep[], flattening: WalkStep[] } {
   const instantiated = frame('pipeline/instantiated.oxsts');
   const inlined = frame('pipeline/inlined.oxsts');
@@ -175,25 +253,20 @@ function walks(): { instantiation: WalkStep[], inlining: WalkStep[], flattening:
     .map((file) => {
       return { frame: frame(file), pass: STEP.exec(file)?.[1] ?? '' };
     });
-  // the inlining's frames end with the model inlining writes; the flattening writes its own frame only after its optimizations, so none may run between
+  // the inlining's frames end with the model inlining writes
   const lastInlining = steps.findLastIndex((step) => {
     return step.frame.text === inlined.text;
   });
   if (lastInlining === -1) {
     throw new Error('No step of the compiler wrote the model inlining ends with');
   }
+  // the flattening's own frame first, then a frame for each optimization that fires
   const flattening = steps.slice(lastInlining + 1);
-  if (flattening.length !== 1 || flattening[0]?.frame.text !== flattened.text) {
-    throw new Error(`After inlining the compiler wrote ${flattening.length} steps, the flattening's frame alone shows the flattening`);
+  if (flattening.at(-1)?.frame.text !== flattened.text) {
+    throw new Error(`The last of the ${flattening.length} steps after inlining is not the model flattening writes`);
   }
   return {
-    instantiation: checked('instantiation', [
-      {
-        caption: 'The compiler wraps the case in a root: the model contains `root`, an instance of the case, and calls its `init`, its main transition and its property. Instantiation leaves this text as it is: what it builds is the instance tree.',
-        before: sourceModel(),
-        after: instantiated,
-      },
-    ]),
+    instantiation: checked('instantiation', instantiationSteps()),
     inlining: checked('inlining', stepsThrough(steps.slice(0, lastInlining + 1), instantiated)),
     flattening: checked('flattening', stepsThrough(flattening, inlined)),
   };

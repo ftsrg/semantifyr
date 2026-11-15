@@ -15,6 +15,14 @@ export interface Node {
   y: number;
 }
 
+export interface Edge {
+  from: number;
+  to: number;
+  feature: string;
+  // the class whose redefinition of the containment chose the type of the instance
+  redefinedIn?: string;
+}
+
 // the instance tree of oxsts-test-models/phases/room.oxsts, drawn by hand since the compiler keeps the tree in memory; the numbers are the order in which instantiation reaches the instances
 export const NODES: Node[] = [
   {
@@ -33,21 +41,36 @@ export const NODES: Node[] = [
   },
   {
     order: 3,
-    path: 'root.left',
-    type: 'Lamp',
-    x: 20,
-    y: 248,
+    path: 'root.hall',
+    type: 'Hall',
+    x: 150,
+    y: 228,
   },
   {
     order: 4,
-    path: 'root.right',
+    path: 'root.hall.left',
     type: 'Lamp',
+    x: 20,
+    y: 358,
+  },
+  {
+    order: 5,
+    path: 'root.hall.right',
+    type: 'Spot',
     x: 280,
-    y: 248,
+    y: 358,
+  },
+  {
+    order: 6,
+    path: 'root.hall.left.fuse',
+    type: 'Fuse',
+    x: 150,
+    y: 508,
   },
 ];
 
-export const EDGES: { from: number, to: number, feature: string }[] = [
+// in the order instantiation places the instances
+export const EDGES: Edge[] = [
   {
     from: 0,
     to: 1,
@@ -56,36 +79,61 @@ export const EDGES: { from: number, to: number, feature: string }[] = [
   {
     from: 1,
     to: 2,
+    feature: 'contains hall',
+  },
+  {
+    from: 2,
+    to: 3,
     feature: 'contains left',
   },
   {
-    from: 1,
-    to: 3,
+    from: 2,
+    to: 4,
     feature: 'contains right',
+    redefinedIn: 'Hall',
+  },
+  {
+    from: 3,
+    to: 5,
+    feature: 'contains fuse',
+  },
+  {
+    from: 4,
+    to: 5,
+    feature: 'contains fuse',
   },
 ];
 
 const WIDTH = 200;
 const HEIGHT = 74;
+const CENTER = 250;
+
+export function nodeAt(index: number): Node {
+  const node = NODES[index];
+  if (node === undefined) {
+    throw new Error('An edge of the instance tree names no node');
+  }
+  return node;
+}
 
 export default function InstanceTree(): React.JSX.Element {
   return (
     <figure className={styles.tree}>
-      <svg viewBox="0 0 500 330" role="img" aria-label="The instance tree: the model contains root, an instance of BothLampsCanBeOn, which contains root.left and root.right, two instances of Lamp">
+      <svg viewBox="0 0 500 590" role="img" aria-label="The instance tree: the model contains root, an instance of BothLampsCanBeOn, which contains root.hall, a Hall; root.hall contains root.hall.left, a Lamp, and root.hall.right, a Spot; both lamps hold one shared fuse, root.hall.left.fuse, a Fuse">
         {EDGES.map((edge) => {
-          const from = NODES[edge.from];
-          const to = NODES[edge.to];
-          if (from === undefined || to === undefined) {
-            throw new Error('An edge of the instance tree names no node');
-          }
+          const from = nodeAt(edge.from);
+          const to = nodeAt(edge.to);
           const x1 = from.x + WIDTH / 2;
           const y1 = from.y + HEIGHT;
           const x2 = to.x + WIDTH / 2;
           const y2 = to.y;
+          const labelX = x2 + (x1 - x2) * 0.3;
+          // a label stands on the side of the edge away from the middle, so that the two edges into the shared fuse keep theirs apart
+          const left = labelX < CENTER;
           return (
-            <g key={edge.feature}>
+            <g key={`${edge.from} ${edge.to}`}>
               <line x1={x1} y1={y1} x2={x2} y2={y2} className={styles.edge} />
-              <text x={x2 + (x1 - x2) * 0.3 + (x2 < x1 ? -10 : 10)} y={y2 + (y1 - y2) * 0.3 + 4} className={x2 < x1 ? styles.edgeLabelLeft : styles.edgeLabelRight}>{edge.feature}</text>
+              <text x={labelX + (left ? -10 : 10)} y={y2 + (y1 - y2) * 0.3 + 4} className={left ? styles.edgeLabelLeft : styles.edgeLabelRight}>{edge.feature}</text>
             </g>
           );
         })}

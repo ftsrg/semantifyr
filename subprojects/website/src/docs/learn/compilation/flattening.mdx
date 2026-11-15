@@ -22,4 +22,4 @@ What the phase writes, `pipeline/flattened.oxsts`, is what `semantifyr compile` 
 
 <PhaseWalk steps={flattening} label="Flattening, step by step" />
 
-Every instance gets its own copy of each variable its class declares, here one `on` for `root.left` and one for `root.right`. This model has no record, array or instance-typed variable, and no optimization changes it, so the walk is one step. The compiler writes the flattening's frame only once its optimizations are done; on a model they change, each optimization that fires writes a frame of its own before it, the first of them showing the flattening already done.
+Every instance gets its own copy of each variable its class declares, here one `on` for `root.hall.left` and one for `root.hall.right`, and one `ok` for the fuse both lamps share, which both `assume`s read. This model has no record, array or instance-typed variable. The compiler writes the flattening's frame before its optimizations run, and each optimization that fires writes a frame of its own after it: nothing writes the fuse's `ok`, so its reads become `true` and the variable goes, and then each `assume(true)` goes.

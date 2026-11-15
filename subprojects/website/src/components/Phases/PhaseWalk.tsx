@@ -24,8 +24,6 @@ const LESS_MOTION = '(prefers-reduced-motion: reduce)';
 interface Props {
   steps: WalkStep[];
   label: string;
-  // off where the after is no edit of the before, which a line's marks would claim
-  marks?: boolean;
 }
 
 type Mark = 'same' | 'added' | 'removed';
@@ -74,16 +72,6 @@ function linesOf(step: WalkStep): ShownStep {
   return { before, after, unified };
 }
 
-function unmarkedLinesOf(step: WalkStep): ShownStep {
-  const unmarked = (text: string): ShownLine[] => {
-    return tokensOf(text).map((tokens) => {
-      return { tokens, mark: 'same' };
-    });
-  };
-  const after = unmarked(step.after.text);
-  return { before: unmarked(step.before.text), after, unified: after };
-}
-
 const SPOKEN: Readonly<Record<Mark, string>> = {
   same: '',
   added: 'Added: ',
@@ -129,7 +117,7 @@ function Pane({ title, lines, appearing }: { title: string, lines: ShownLine[], 
   );
 }
 
-export default function PhaseWalk({ steps, label, marks = true }: Props): React.JSX.Element {
+export default function PhaseWalk({ steps, label }: Props): React.JSX.Element {
   const [index, setIndex] = useState(0);
   // null until the browser has been asked for its width: the server's markup holds both views, and the style sheet shows the one the width calls for
   const [view, setView] = useState<View | null>(null);
@@ -144,8 +132,8 @@ export default function PhaseWalk({ steps, label, marks = true }: Props): React.
     throw new Error(`The walk ${label} has no step`);
   }
   const lines = useMemo(() => {
-    return marks ? linesOf(step) : unmarkedLinesOf(step);
-  }, [step, marks]);
+    return linesOf(step);
+  }, [step]);
 
   useEffect(() => {
     const follow = (): void => {

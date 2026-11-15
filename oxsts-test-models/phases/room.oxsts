@@ -1,9 +1,17 @@
 package room
 
+class Fuse {
+    var ok: bool := true
+}
+
 class Lamp {
+    @Shared
+    contains fuse: Fuse
+
     var on: bool := false
 
     tran toggle() {
+        assume(fuse.ok)
         on := !on
     }
 
@@ -12,20 +20,36 @@ class Lamp {
     }
 }
 
-@VerificationCase
-class BothLampsCanBeOn {
+class Spot : Lamp {
+    redefine tran toggle() {
+        assume(fuse.ok)
+        on := true
+    }
+}
+
+class Room {
     contains left: Lamp
     contains right: Lamp
 
     redefine tran {
-        choice {
-            inline left.toggle()
-        } or {
-            inline right.toggle()
-        }
+        inline left.toggle()
+        inline right.toggle()
+    }
+}
+
+class Hall : Room {
+    redefine contains right: Spot
+}
+
+@VerificationCase
+class BothLampsCanBeOn {
+    contains hall: Hall
+
+    redefine tran {
+        inline hall.main()
     }
 
     prop {
-        return EF left.isOn() && right.isOn()
+        return EF hall.left.isOn() && hall.right.isOn()
     }
 }
