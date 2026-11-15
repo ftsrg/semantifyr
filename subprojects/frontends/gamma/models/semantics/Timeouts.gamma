@@ -78,13 +78,17 @@ statechart Assigned {
         state Waiting {
             entry / set delay := limit ms; limit := 3000;
         }
-        state Done
+        state Done {
+            entry / set delay := limit ms;
+        }
     }
 
     transition from ClockInitial to Ticking
     transition from Ticking to Ticking when timeout tick [seconds < 4] / seconds := seconds + 1;
     transition from MainInitial to Waiting
     transition from Waiting to Done when timeout delay
+    // set again every time it is up, so the clock of a timeout set from a variable stays bounded
+    transition from Done to Done when timeout delay
 }
 
 verification case TheShorterTimeoutIsUpFirst of Machine {
