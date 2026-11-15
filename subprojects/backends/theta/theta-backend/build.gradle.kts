@@ -24,6 +24,16 @@ dependencies {
     testImplementation(testFixtures(project(":backend")))
 }
 
+testing {
+    suites {
+        named<JvmTestSuite>("verificationTest") {
+            dependencies {
+                implementation(libs.kotlinx.serialization.json)
+            }
+        }
+    }
+}
+
 tasks.named("test") {
     inputs.files(tasks.named("cloneOxstsTestModels"))
 }
