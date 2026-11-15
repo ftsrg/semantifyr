@@ -19,7 +19,6 @@ import com.google.inject.Injector
 import hu.bme.mit.semantifyr.cli.common.CaseOutcome
 import hu.bme.mit.semantifyr.cli.common.CommandExit
 import hu.bme.mit.semantifyr.cli.common.ExitCode
-import hu.bme.mit.semantifyr.cli.common.checkInputFile
 import hu.bme.mit.semantifyr.cli.common.options.ArtifactOptionGroup
 import hu.bme.mit.semantifyr.cli.common.options.BackendOptionGroup
 import hu.bme.mit.semantifyr.cli.common.options.CompilationOptionGroup
@@ -45,11 +44,15 @@ class GammaVerifyCommand(
 
     private val model by argument("model path")
         .path()
-        .help("Gamma model file.")
+        .help("A Gamma model file, ending in .gamma or .gcd.")
 
     private val caseNames by option("--case-name")
         .multiple()
         .help("Qualified name of a case, repeatable.")
+
+    private val workspace by option("--workspace")
+        .path(mustExist = true, canBeFile = false)
+        .help("The directory whose Gamma files, in it and below it, the model's imports resolve in; by default the Gamma files of the model's own directory, and none below it.")
 
     private val backendOptions by BackendOptionGroup {
         portfolios
@@ -68,11 +71,11 @@ class GammaVerifyCommand(
             "verify model=$model portfolio=${portfolio.id} environment=${backendOptions.resolved} timeout=${backendOptions.timeout}"
         }
 
-        checkInputFile("Model", model, GAMMA_FILE_SUFFIX)
+        checkGammaModel(model)
         artifactOptions.checkOutputDirectory()
         backendOptions.checkAvailable()
 
-        val gammaModel = readGammaModel(gammaInjector, model)
+        val gammaModel = readGammaModel(gammaInjector, model, workspace)
         val cases = selectCases(gammaInjector.getInstance(GammaVerificationCaseDiscoverer::class.java).discover(gammaModel))
 
         val frontend = GammaFrontend.builder()

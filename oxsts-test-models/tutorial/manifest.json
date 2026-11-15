@@ -1,0 +1,135 @@
+{
+    "models": [
+        {
+            "file": "one-light.oxsts",
+            "cases": [
+                { "name": "TrafficLight", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "intersection-step1.oxsts",
+            "cases": [
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "EastCanTurnGreen", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "intersection-step2.oxsts",
+            "cases": [
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "EastCanTurnGreen", "verdict": "Passed" },
+                { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Failed" }
+            ]
+        },
+        {
+            "file": "intersection.oxsts",
+            "cases": [
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "EastCanTurnGreen", "verdict": "Passed" },
+                { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "green-time-step1.oxsts",
+            "cases": [
+                { "name": "NorthCanTurnYellow", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "green-time-step2.oxsts",
+            "cases": [
+                { "name": "NorthCanTurnYellow", "verdict": "Passed" },
+                { "name": "NorthGreenForThreeSteps", "verdict": "Failed" }
+            ]
+        },
+        {
+            "file": "green-time.oxsts",
+            "cases": [
+                { "name": "NorthCanTurnYellow", "verdict": "Passed" },
+                { "name": "NorthGreenForThreeSteps", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "library-step1.oxsts",
+            "cases": [
+                { "name": "LightCanTurnYellow", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "library-step2.oxsts",
+            "cases": [
+                { "name": "LightCanTurnYellow", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "library.oxsts",
+            "cases": [
+                { "name": "LightCanTurnYellow", "verdict": "Passed" },
+                { "name": "PedestriansCanWalk", "verdict": "Passed" },
+                { "name": "WalkOnlyWhileRed", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "hierarchy-step1.oxsts",
+            "cases": [
+                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NeverGreenInStandby", "verdict": "Failed" }
+            ]
+        },
+        {
+            "file": "hierarchy-step2.oxsts",
+            "cases": [
+                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NeverGreenInStandby", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "hierarchy-step3.oxsts",
+            "cases": [
+                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NeverGreenInStandby", "verdict": "Passed" },
+                { "name": "GreenLampOnlyInGreen", "verdict": "Failed" }
+            ]
+        },
+        {
+            "file": "hierarchy-step4.oxsts",
+            "cases": [
+                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NeverGreenInStandby", "verdict": "Passed" },
+                { "name": "GreenLampOnlyInGreen", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "hierarchy-step5.oxsts",
+            "cases": [
+                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NeverGreenInStandby", "verdict": "Passed" },
+                { "name": "GreenLampOnlyInGreen", "verdict": "Passed" },
+                { "name": "NoStandbyWithoutPause", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "hierarchy.oxsts",
+            "cases": [
+                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NeverGreenInStandby", "verdict": "Passed" },
+                { "name": "GreenLampOnlyInGreen", "verdict": "Passed" },
+                { "name": "NoStandbyWithoutPause", "verdict": "Passed" },
+                { "name": "EmergencyStopsTraffic", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "level-crossing.oxsts",
+            "cases": [
+                { "name": "BarrierDownWhileTrainInCrossing", "verdict": "Failed" },
+                { "name": "TwoTrainsCanBeInTheCrossing", "verdict": "Passed" }
+            ]
+        }
+    ]
+}

@@ -4,15 +4,17 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.backend.VerificationVerdict
-import hu.bme.mit.semantifyr.frontends.gamma.GammaVerificationCase
+import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaCorpus
+import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaCorpusEntry
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaFrontendTestHelper
 import hu.bme.mit.semantifyr.portfolios.Portfolios
+import hu.bme.mit.semantifyr.portfolios.testing.ExampleLanguage
+import hu.bme.mit.semantifyr.portfolios.testing.ServedExamples
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import java.util.stream.Stream
-import kotlin.io.path.Path
+import kotlin.io.path.name
 
 class GammaVerificationTests {
 
@@ -20,75 +22,48 @@ class GammaVerificationTests {
         private val helper = GammaFrontendTestHelper()
         private val artifactRoot = GammaFrontendTestHelper.testArtifactRoot(GammaVerificationTests::class.java)
 
-        private val MODELS_ROOT = Path("build", "test-models")
-        private val SIMPLE = MODELS_ROOT.resolve("Simple.gamma")
-        private val CROSSROADS = MODELS_ROOT.resolve("Crossroads.gamma")
-        private val SPACECRAFT = MODELS_ROOT.resolve("Spacecraft.gamma")
-        private val LEVEL_CROSSING = MODELS_ROOT.resolve("LevelCrossing.gamma")
-
-        private fun argumentsFor(sourcePath: java.nio.file.Path): Stream<Arguments> {
-            return helper.discoverAsArguments(sourcePath)
-        }
-
+        // a served case is verified by the served-case test alone
         @JvmStatic
-        fun `Simple Model Verification Cases Should Pass`(): Stream<Arguments> {
-            return argumentsFor(SIMPLE)
-        }
-
-        @JvmStatic
-        fun `Crossroads Model Verification Cases Should Pass`(): Stream<Arguments> {
-            return argumentsFor(CROSSROADS)
-        }
-
-        @JvmStatic
-        fun `Level Crossing Cases Reach Their Expected Verdict`(): Stream<Arguments> {
-            return argumentsFor(LEVEL_CROSSING)
-        }
-
-        @JvmStatic
-        fun `Spacecraft Model Verification Cases Should Pass`(): Stream<Arguments> {
-            return argumentsFor(SPACECRAFT)
+        fun `Example Cases Reach Their Expected Verdict`(): List<GammaCorpusEntry> {
+            val served = ServedExamples.load().of(ExampleLanguage.Gamma)
+            return GammaCorpus.load(GammaCorpus.examples).filter { entry ->
+                served.none {
+                    it.path.name == entry.model.file && entry.case.name in it.cases
+                }
+            }
         }
     }
 
-    private suspend fun assertPasses(gammaVerificationCase: GammaVerificationCase) {
-        val frontend = helper.buildFrontend(
-            portfolio = Portfolios.SmartFull,
-            outputDirectory = artifactRoot,
-        )
-        helper.checkVerificationCase(frontend, gammaVerificationCase)
-    }
-
-    @ParameterizedTest
+    @ParameterizedTest(name = "{0}")
     @MethodSource
-    suspend fun `Simple Model Verification Cases Should Pass`(gammaVerificationCase: GammaVerificationCase) {
-        assertPasses(gammaVerificationCase)
-    }
-
-    @ParameterizedTest
-    @MethodSource
-    suspend fun `Crossroads Model Verification Cases Should Pass`(gammaVerificationCase: GammaVerificationCase) {
-        assertPasses(gammaVerificationCase)
-    }
-
-    @ParameterizedTest
-    @MethodSource
-    suspend fun `Spacecraft Model Verification Cases Should Pass`(gammaVerificationCase: GammaVerificationCase) {
-        assertPasses(gammaVerificationCase)
-    }
-
-    @ParameterizedTest
-    @MethodSource
-    suspend fun `Level Crossing Cases Reach Their Expected Verdict`(gammaVerificationCase: GammaVerificationCase) {
-        val expectedVerdict = if (gammaVerificationCase.qualifiedName.endsWith("BarrierDownWhileTrainInCrossing")) {
-            VerificationVerdict.Failed
-        } else {
-            VerificationVerdict.Passed
+    suspend fun `Example Cases Reach Their Expected Verdict`(entry: GammaCorpusEntry) {
+        val gammaVerificationCase = helper.discoverInWorkspace(entry.directory, entry.model.file).single {
+            it.declaration.name == entry.case.name
         }
         val frontend = helper.buildFrontend(
             portfolio = Portfolios.SmartFull,
             outputDirectory = artifactRoot,
         )
-        helper.checkVerificationCase(frontend, gammaVerificationCase, expectedVerdict)
+        helper.checkVerificationCase(frontend, gammaVerificationCase, entry.case.expectedVerdict)
+    }
+
+    @Test
+    suspend fun `A passing EF case returns its witness with a Gamma trace`() {
+        val entry = GammaCorpus.load(GammaCorpus.examples).single {
+            it.case.name == "LeaderStatechartIdleReachable"
+        }
+        val gammaVerificationCase = helper.discoverInWorkspace(entry.directory, entry.model.file).single {
+            it.declaration.name == entry.case.name
+        }
+        val frontend = helper.buildFrontend(
+            portfolio = Portfolios.SmartFull,
+            outputDirectory = artifactRoot,
+        )
+
+        val witness = helper.checkVerificationCase(frontend, gammaVerificationCase, entry.case.expectedVerdict).witness
+
+        assertThat(witness).describedAs("An EF case that passes has a witness").isNotNull()
+        assertThat(witness!!.gammaTracePath).exists()
+        assertThat(witness.gammaTrace.steps).hasSize(1 + witness.trace.witnessState.steps.size)
     }
 }

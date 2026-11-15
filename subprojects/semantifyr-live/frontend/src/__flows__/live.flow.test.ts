@@ -22,7 +22,7 @@ describe('each language on the running image', () => {
   for (const address of [
     '/sysml/level-crossing',
     '/gamma/level-crossing',
-    '/oxsts/basics',
+    '/oxsts/intersection',
   ]) {
     test(`verifies every case of ${address} and opens a trace`, async ({ flow }) => {
       const page = await flow.open(address)

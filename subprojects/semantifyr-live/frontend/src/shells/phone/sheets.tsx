@@ -7,8 +7,9 @@
 import type React from 'react'
 import { useState } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
+import { LanguageMark } from '@semantifyr/editor-common/marks'
 
-import type { LiveExample, LiveFlavor } from '../../examples'
+import { listedExamples, type LiveExample, type LiveFlavor } from '../../examples'
 import { LANGUAGE_ORDER, presentationOf } from '../../lib/language/presentation'
 import type { LanguageUnit } from '../../lib/language/types'
 import { changeSettings } from '../../lib/stores/settings'
@@ -18,9 +19,9 @@ import type { Live } from '../../lib/workspace/live'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import { portfolioChoices, portfolioName, type PortfolioChoice } from '../../lib/workspace/portfolioChoices'
 import { sharedResultsOf } from '../../lib/workspace/sharedResults'
+import { BLANK_MODEL, DOCUMENTATION, LIBRARY, libraryOf, NO_PROBLEMS, ONE_BACKEND, PROBLEMS, THEMES, VALIDATION } from '../../texts'
 import { Icon, type IconName } from '../../ui/icons'
-import { LanguageMark } from '../../ui/marks'
-import { AboutDialog, DeveloperDialog } from '../desktop/Dialogs'
+import { AboutDialog, DeveloperDialog, DocumentationLink } from '../desktop/Dialogs'
 import { pickFile } from '../desktop/keeping'
 import { shareLink } from '../desktop/SharePopover'
 import { useCurrentDocument, useFlavor } from '../hooks'
@@ -35,12 +36,6 @@ export type Overlay =
 interface SheetProps {
   open: boolean
   onClose: () => void
-}
-
-const FLAVOUR_LABELS: Readonly<Record<string, string>> = {
-  'oxsts': 'Plain',
-  'oxsts-with-gamma-library': 'Gamma library',
-  'oxsts-with-sysmlv2-library': 'SysML v2 library',
 }
 
 function orderedUnits(units: readonly LanguageUnit[]): LanguageUnit[] {
@@ -92,10 +87,9 @@ function Chooser({ onClose }: { onClose: () => void }): React.JSX.Element | null
     return null
   }
   const unit = registry.unitOf(chosen.id)
+  const libraryDetail = libraryOf(chosen.id).detail
   const presentation = presentationOf(chosen.languageId)
-  const examples = chosen.examples.filter((example) => {
-    return example.id !== 'blank'
-  })
+  const examples = listedExamples(chosen)
   const blank = chosen.examples.find((example) => {
     return example.id === 'blank'
   })
@@ -137,8 +131,8 @@ function Chooser({ onClose }: { onClose: () => void }): React.JSX.Element | null
       {unit && unit.flavors.length > 1
         ? (
           <div className="chooser-flavours">
-            <span className="chooser-flavours-label">Flavour</span>
-            <div className="segmented segmented-plain" role="group" aria-label="Flavour">
+            <span className="chooser-flavours-label">{LIBRARY.heading}</span>
+            <div className="segmented segmented-plain" role="group" aria-label={LIBRARY.heading}>
               {unit.flavors.map((flavor) => {
                 return (
                   <button
@@ -150,15 +144,18 @@ function Chooser({ onClose }: { onClose: () => void }): React.JSX.Element | null
                       setChosen(flavor)
                     }}
                   >
-                    {FLAVOUR_LABELS[flavor.id] ?? flavor.displayName}
+                    {libraryOf(flavor.id).label}
                   </button>
                 )
               })}
             </div>
+            {libraryDetail === null ? null : <span className="chooser-library-detail">{libraryDetail}</span>}
           </div>
         )
         : null}
-      <p className="chooser-intro">{presentation.detail}</p>
+      <p className="chooser-intro">
+        {presentation.detail}
+      </p>
       <div className="chooser-list" data-language={chosen.languageId}>
         <div className="section-label">{`${presentation.name} examples`}</div>
         {examples.map((example) => {
@@ -176,7 +173,7 @@ function Chooser({ onClose }: { onClose: () => void }): React.JSX.Element | null
               <span className="chooser-check">{isCurrent ? <Icon name="check" size="small" /> : null}</span>
               <span className="chooser-label">{example.label}</span>
               <span className="chooser-count">{count === null ? '' : `${count} ${count === 1 ? 'case' : 'cases'}`}</span>
-              <span className="chooser-detail">{example.description}</span>
+              {example.description === null ? null : <span className="chooser-detail">{example.description}</span>}
             </button>
           )
         })}
@@ -194,7 +191,7 @@ function Chooser({ onClose }: { onClose: () => void }): React.JSX.Element | null
                 <span className="chooser-check">
                   <Icon name="file" size="small" />
                 </span>
-                <span className="chooser-label">Blank model</span>
+                <span className="chooser-label">{BLANK_MODEL}</span>
               </button>
             </>
           )
@@ -217,9 +214,9 @@ export function ChooserSheet({ open, onClose }: SheetProps): React.JSX.Element {
 }
 
 const THEME_CHOICES: readonly { value: ColorModePreference, label: string }[] = [
-  { value: 'system', label: 'System' },
-  { value: 'light', label: 'Light' },
-  { value: 'dark', label: 'Dark' },
+  { value: 'system', label: THEMES.system },
+  { value: 'light', label: THEMES.light },
+  { value: 'dark', label: THEMES.dark },
 ]
 
 function MenuEntry({ icon, label, detail, onClick }: { icon: IconName, label: string, detail?: string, onClick: () => void }): React.JSX.Element {
@@ -311,13 +308,13 @@ export function MenuSheet({ open, onClose, onPortfolios, colorMode }: SheetProps
       />
       <div className="sheet-item sheet-switch">
         <Icon name="shield-check" />
-        <span>Validate automatically</span>
+        <span>{VALIDATION.automatically}</span>
         <button
           type="button"
           className="switch-row"
           role="switch"
           aria-checked={settings.autoValidate}
-          aria-label="Validate automatically"
+          aria-label={VALIDATION.automatically}
           onClick={() => {
             changeSettings(live.settings, { autoValidate: !settings.autoValidate })
           }}
@@ -325,6 +322,10 @@ export function MenuSheet({ open, onClose, onPortfolios, colorMode }: SheetProps
           <span className="switch" />
         </button>
       </div>
+      <DocumentationLink className="sheet-item">
+        <Icon name="book" />
+        <span>{DOCUMENTATION.label}</span>
+      </DocumentationLink>
       <AboutDialog className="sheet-item">
         <Icon name="info" />
         <span>About</span>
@@ -392,10 +393,11 @@ export function PortfolioSheet({ kind, onClose }: { kind: 'verification' | 'vali
     <Sheet open={kind !== null} onClose={onClose} className="sheet-bottom" label={kind === 'validation' ? 'Validation portfolio' : 'Verification portfolio'}>
       <div className="sheet-grabber" />
       <Dialog.Title className="sheet-title">{kind === 'validation' ? 'Validation portfolio' : 'Verification portfolio'}</Dialog.Title>
+      {kind === 'validation' ? <p className="sheet-note">{VALIDATION.explained}</p> : null}
       <div role="menu">
         {choices.combined.map(item)}
-        {choices.singleEngine.length > 0 ? <div className="sheet-title">Single engine</div> : null}
-        {choices.singleEngine.map(item)}
+        {choices.singleBackend.length > 0 ? <div className="sheet-title">{ONE_BACKEND}</div> : null}
+        {choices.singleBackend.map(item)}
       </div>
     </Sheet>
   )
@@ -408,10 +410,10 @@ export function ProblemsSheet({ open, onClose, onReveal }: SheetProps & { onReve
     return problem.severity === 'error' || problem.severity === 'warning'
   })
   return (
-    <Sheet open={open} onClose={onClose} className="sheet-bottom" label="Problems in the model">
+    <Sheet open={open} onClose={onClose} className="sheet-bottom" label={PROBLEMS}>
       <div className="sheet-grabber" />
-      <Dialog.Title className="sheet-title">Problems in the model</Dialog.Title>
-      {listed.length === 0 ? <div className="sheet-item">No problems.</div> : null}
+      <Dialog.Title className="sheet-title">{PROBLEMS}</Dialog.Title>
+      {listed.length === 0 ? <div className="sheet-item">{NO_PROBLEMS}</div> : null}
       {listed.map((problem, index) => {
         return (
           <button

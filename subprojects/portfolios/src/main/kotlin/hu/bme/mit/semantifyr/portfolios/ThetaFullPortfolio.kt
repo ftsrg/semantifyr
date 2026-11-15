@@ -28,9 +28,9 @@ import kotlin.time.Clock
 class ThetaFullPortfolio(
     private val theta: VerificationBackend<ThetaConfig> = ThetaBackend(),
 ) : VerificationPortfolio() {
-    override val id: String = "theta-full"
-    override val displayName: String = "Theta full portfolio"
-    override val description: String = "Races the Theta CEGAR and k-induction configurations in parallel and takes the first verdict."
+    override val id: String = "theta"
+    override val displayName: String = "Theta"
+    override val description: String = "Runs Theta's CEGAR and k-induction configurations side by side and takes the first answer."
 
     private val tasks: List<PortfolioTask<ThetaConfig>> = listOf(
         PortfolioTask(theta, ThetaConfig.CegarExpl, "cegarexpl"),
@@ -50,7 +50,7 @@ class ThetaFullPortfolio(
             AvailabilityReport.Available
         } else {
             AvailabilityReport.Unavailable(
-                reason = "No Theta executor is available on this host.",
+                reason = "Theta cannot be run.",
             )
         }
     }
@@ -72,7 +72,7 @@ class ThetaFullPortfolio(
                 ),
                 verdict = VerificationVerdict.Inconclusive,
                 metrics = BackendMetrics(),
-                message = "$id: no available Theta executor",
+                message = "Theta cannot be run.",
             )
         }
         progress.reportProgress("racing ${tasks.size} Theta configurations")

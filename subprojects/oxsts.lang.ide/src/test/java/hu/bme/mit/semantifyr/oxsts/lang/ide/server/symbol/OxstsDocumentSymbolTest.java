@@ -33,8 +33,8 @@ class OxstsDocumentSymbolTest extends OxstsLanguageServerTest {
     }
 
     @Test
-    void outlineOfTheBasicsTutorialHasOneKindPerDeclarationSimpleNamesAndSignatures() throws Exception {
-        var document = openModel(TestModels.basics());
+    void outlineOfTheTrafficLightsHasOneKindPerDeclarationSimpleNamesAndSignatures() throws Exception {
+        var document = openModel(TestModels.TRAFFIC_LIGHTS);
 
         var symbols = languageServer
                 .documentSymbol(new DocumentSymbolParams(document))
@@ -46,7 +46,7 @@ class OxstsDocumentSymbolTest extends OxstsLanguageServerTest {
         }
         assertThat(symbols).allMatch(Either::isRight);
         assertThat(outline.toString()).isEqualTo("""
-                Package example::trafficlight::basics
+                Package example::trafficlights
                     Enum LightColor
                         EnumMember Red
                         EnumMember Yellow

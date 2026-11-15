@@ -128,10 +128,10 @@ class OxstsFlattener @Inject constructor(
         logger.debug { "Rewriting static expressions" }
         rewriteStaticExpressions(inlinedOxsts, instanceTree, variableInstanceDomain, flattenedEvaluationTransformer)
 
+        compilationArtifactManager.commitStep(CompilationPass.Flattening)
+
         logger.info { "Running post-flattening optimizers" }
         val optimization = flattenedPhaseOptimizer.optimize(inlinedCompilationContext)
-
-        compilationArtifactManager.commitStep(CompilationPass.Flattening)
 
         val instanceIdMapping = flattenedEvaluationTransformer.buildMapping()
 

@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.library.ClasspathBasedOxstsLibrary
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
+import org.eclipse.xtext.resource.FileExtensionProvider
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -60,7 +61,7 @@ class SysMLLibraryRuleTests {
     ) {
         val outputDirectory = artifactRoot.resolve(variant.name.lowercase())
         val extractionDirectory = outputDirectory.resolve("library").createDirectories()
-        val library = ClasspathBasedOxstsLibrary(javaClass.classLoader, variant.name.lowercase(), extractionDirectory)
+        val library = ClasspathBasedOxstsLibrary(injector.getInstance(FileExtensionProvider::class.java), javaClass.classLoader, variant.name.lowercase(), extractionDirectory)
         val context = loader.startContext()
             .loadLibraryPaths(listOf(library.extractedLibraryPath))
             .loadModelPaths(listOf(fixture))

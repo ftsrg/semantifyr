@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: EPL-2.0
 
-model/
+/model/
 /src/main/xtext-gen/
 /src/testFixtures/xtext-gen/
+/src/main/emf-gen/

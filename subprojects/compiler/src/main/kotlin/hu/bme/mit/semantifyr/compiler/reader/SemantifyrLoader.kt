@@ -12,7 +12,6 @@ import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.oxsts.lang.library.LibraryAdapterFinder
-import hu.bme.mit.semantifyr.oxsts.lang.library.OxstsLibrary
 import hu.bme.mit.semantifyr.oxsts.lang.utils.ResourceUriProvider
 import hu.bme.mit.semantifyr.oxsts.lang.utils.SelfContainedResource
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -21,14 +20,15 @@ import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.xtext.EcoreUtil2
+import org.eclipse.xtext.resource.FileExtensionProvider
 import org.eclipse.xtext.resource.XtextResource
 import org.eclipse.xtext.resource.XtextResourceSet
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.nio.file.Path
 import kotlin.io.path.PathWalkOption
+import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
-import kotlin.io.path.name
 import kotlin.io.path.walk
 import java.nio.file.Files as NioFiles
 
@@ -43,6 +43,7 @@ class SemantifyrLoader @Inject constructor(
     private val resourceSetLoader: ResourceSetLoader,
     private val libraryAdapterFinder: LibraryAdapterFinder,
     private val resourceUriProvider: ResourceUriProvider,
+    private val fileExtensionProvider: FileExtensionProvider,
 ) {
 
     private val logger by loggerFactory()
@@ -129,7 +130,7 @@ class SemantifyrLoader @Inject constructor(
 
         fun loadModel(path: Path): SemantifyrLoaderContext {
             if (! isOxstsFile(path)) {
-                logger.warn { "Tried to load non-oxsts file, skipping: $path" }
+                logger.warn { "Skipped $path, which is not an OXSTS file" }
             }
 
             val resource = loadFile(resourceSet, path)
@@ -148,7 +149,7 @@ class SemantifyrLoader @Inject constructor(
 
         fun loadLibrary(path: Path): SemantifyrLoaderContext {
             if (! isOxstsFile(path)) {
-                logger.warn { "Tried to load non-oxsts file, skipping: $path" }
+                logger.warn { "Skipped $path, which is not an OXSTS file" }
             }
 
             val resource = loadFile(resourceSet, path)
@@ -195,7 +196,7 @@ class SemantifyrLoader @Inject constructor(
     }
 
     private fun isOxstsFile(path: Path): Boolean {
-        return path.name.endsWith(OxstsLibrary.FILE_NAME_SUFFIX)
+        return fileExtensionProvider.isValid(path.extension)
     }
 
     private fun modelPathsUnder(path: Path): Sequence<Path> {

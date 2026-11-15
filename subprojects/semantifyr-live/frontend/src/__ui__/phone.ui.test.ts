@@ -7,7 +7,7 @@
 import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
-import { casesListed, results, test } from './harness'
+import { casesListed, results, servedExample, test, titleOf } from './harness'
 
 const PHONE = { width: 390, height: 844, touch: true }
 const TABLET = { width: 1024, height: 768, touch: true }
@@ -66,7 +66,7 @@ describe('the phone', () => {
   })
 
   test('opens the menu as a sheet, and a model is chosen from its chooser', async ({ ui }) => {
-    const page = await ui.open('/oxsts/basics', PHONE)
+    const page = await ui.open('/oxsts/intersection', PHONE)
     await ready(page)
 
     await page.getByRole('button', { name: 'Menu' }).click()
@@ -77,11 +77,11 @@ describe('the phone', () => {
     await page.getByRole('button', { name: 'Choose a model' }).click()
     const chooser = page.getByRole('dialog', { name: 'Choose a model' })
     await chooser.getByRole('group', { name: 'Language' }).getByRole('button', { name: /Gamma/ }).click()
-    await chooser.locator('.chooser-item', { hasText: 'Crossroads' }).click()
+    await chooser.locator('.chooser-item', { hasText: servedExample('gamma', 'crossroads').label }).click()
 
     await expect.poll(async () => {
       return page.title()
-    }).toBe('Crossroads - Gamma - Semantifyr Live')
+    }).toBe(titleOf('gamma', 'crossroads'))
   })
 })
 
@@ -92,7 +92,7 @@ describe('touch input', () => {
     ['tablet', TABLET],
   ] as const) {
     test(`locks the model of the ${shell} until Edit is pressed, and again when Done`, async ({ ui }) => {
-      const page = await ui.open('/oxsts/basics', viewport)
+      const page = await ui.open('/oxsts/intersection', viewport)
       await ready(page)
 
       await phone(page).lines.tap()

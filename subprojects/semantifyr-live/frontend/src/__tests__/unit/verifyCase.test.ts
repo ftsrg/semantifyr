@@ -48,14 +48,14 @@ describe('verifyCase over a vscode-jsonrpc connection', () => {
   it('sends the command as by-name parameters when no token is given', async () => {
     const { connection, writer } = connect();
 
-    void verifyCase(connection, 'oxsts.case.verify', { uri, range }, { portfolio: 'smart-full' }).catch(() => null);
+    void verifyCase(connection, 'oxsts.case.verify', { uri, range }, { portfolio: 'smart' }).catch(() => null);
 
     await vi.waitFor(() => {
       expect(writer.messages).toHaveLength(1);
     });
     expect((writer.messages[0] as RequestMessage).params).toEqual({
       command: 'oxsts.case.verify',
-      arguments: [{ uri, range, portfolio: 'smart-full' }],
+      arguments: [{ uri, range, portfolio: 'smart' }],
     });
     connection.dispose();
   });
@@ -64,7 +64,7 @@ describe('verifyCase over a vscode-jsonrpc connection', () => {
     const { connection, writer } = connect();
     const source = new CancellationTokenSource();
 
-    void verifyCase(connection, 'oxsts.case.verify', { uri, range }, { portfolio: 'smart-full', token: source.token }).catch(() => null);
+    void verifyCase(connection, 'oxsts.case.verify', { uri, range }, { portfolio: 'smart', token: source.token }).catch(() => null);
     await vi.waitFor(() => {
       expect(writer.messages).toHaveLength(1);
     });
@@ -75,7 +75,7 @@ describe('verifyCase over a vscode-jsonrpc connection', () => {
     });
     expect((writer.messages[0] as RequestMessage).params).toEqual({
       command: 'oxsts.case.verify',
-      arguments: [{ uri, range, portfolio: 'smart-full' }],
+      arguments: [{ uri, range, portfolio: 'smart' }],
     });
     connection.dispose();
   });

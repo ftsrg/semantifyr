@@ -12,14 +12,15 @@ import type { VerificationState } from '../lib/verification/engine'
 import { ShellRoot } from '../shells/ShellRoot'
 import { caseOf, finished, seedLive, type Seed } from './seededLive'
 
-import '../ui/tokens.css'
+import '@semantifyr/editor-common/tokens.css'
+import '@semantifyr/editor-common/marks.css'
 import '../ui/components.css'
 import '../ui/base.css'
 
 // Goal: the margin shows the marks of the shown document's cases alone, one state each, after another editor showed the same model;
 // a read-only tab closes on a middle click; the documents menu filters a long list; a discovery that failed says why
 
-const BARRIER = caseOf('BarrierDownWhileTrainInCrossingViolated', 4)
+const BARRIER = caseOf('BarrierDownWhileTrainInCrossing', 4)
 const TWO_TRAINS = caseOf('TwoTrainsCanBeInTheCrossing', 8)
 
 function text(selector: string): string {

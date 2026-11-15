@@ -1,0 +1,7 @@
+package manual::StructRecieverGuardMachine::StructRecieverGuardMachineWrapper_verification
+
+import manual::StructRecieverGuardMachine
+
+verification case StructRecieverGuardMachineStructRecieverGuardMachineStateReachable of StructRecieverGuardMachineWrapper {
+    EF state structRecieverGuardMachine.StructRecieverGuardMachine_.StructRecieverGuardMachine__State
+}

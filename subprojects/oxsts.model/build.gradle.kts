@@ -13,6 +13,12 @@ plugins {
 
 val metamodel = sourceSets.create("metamodel")
 
+java {
+    registerFeature("metamodel") {
+        usingSourceSet(metamodel)
+    }
+}
+
 dependencies {
     api(libs.ecore)
 

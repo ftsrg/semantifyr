@@ -1,0 +1,51 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package Triggers
+
+interface Control {
+    in event first
+    in event second
+}
+
+statechart Machine [
+    port control : provides Control
+] {
+    var entered : integer
+    var looped : integer
+
+    region Main {
+        initial MainInitial
+        state Idle
+        state Active
+    }
+
+    transition from MainInitial to Idle
+    transition from Idle to Active when control.first / entered := 1;
+    transition from Idle to Active when control.second / entered := 2;
+    transition from Active to Active when control.first / looped := 1;
+    transition from Active to Active when control.second / looped := 2;
+}
+
+verification case TransitionOnTheFirstTriggerFires of Machine {
+    EF (state Main.Active and variable entered = 1)
+}
+
+verification case TransitionOnTheSecondTriggerFires of Machine {
+    EF (state Main.Active and variable entered = 2)
+}
+
+verification case SelfTransitionOnTheFirstTriggerFires of Machine {
+    EF variable looped = 1
+}
+
+verification case SelfTransitionOnTheSecondTriggerFires of Machine {
+    EF variable looped = 2
+}
+
+verification case TransitionWithoutItsTriggerUnreachable of Machine {
+    EF (state Main.Active and variable entered = 0)
+}

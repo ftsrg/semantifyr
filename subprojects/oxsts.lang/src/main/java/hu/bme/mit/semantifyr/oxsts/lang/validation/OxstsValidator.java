@@ -138,7 +138,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     @Inject
     private ResourceDescriptionProvider resourceDescriptionProvider;
 
-    private static final String ISSUE_PREFIX = "OXSTS.";
+    public static final String ISSUE_PREFIX = "OXSTS.";
     public static final String DUPLICATE_NAME_ISSUE = ISSUE_PREFIX + "DUPLICATE_NAME";
     public static final String DATA_TYPE_NOT_IN_BUILTIN_ISSUE = ISSUE_PREFIX + "DATA_TYPE_NOT_IN_BUILTIN";
     public static final String REDEFINED_NOT_FOUND_ISSUE = ISSUE_PREFIX + "REDEFINED_NOT_FOUND";
@@ -152,8 +152,11 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String INCORRECT_SUBSETS = ISSUE_PREFIX + "INCORRECT_SUBSETS";
     public static final String ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED =
             ISSUE_PREFIX + "ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED";
+    // only the commented-out check of a feature's abstract members raises it
+    @InternalIssue
     public static final String ABSTRACT_FEATURE_INHERITED_MEMBERS_NOT_REDEFINED =
             ISSUE_PREFIX + "ABSTRACT_FEATURE_INHERITED_MEMBERS_NOT_REDEFINED";
+
     public static final String ABSTRACT_FEATURE_NOT_REALIZED = ISSUE_PREFIX + "ABSTRACT_FEATURE_NOT_REALIZED";
     public static final String INCORRECT_ASSIGNMENT = ISSUE_PREFIX + "INCORRECT_ASSIGNMENT";
     public static final String INCORRECT_CALLED_ELEMENT = ISSUE_PREFIX + "INCORRECT_CALLED_ELEMENT";
@@ -366,7 +369,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
                 var redefined = redefinitionHandler.getRedefinedDeclaration(redefinableDeclaration);
                 if (redefined == null) {
                     acceptError(
-                            "Could not find redefined declaration.",
+                            "No supertype declares a member named '" + NamingUtil.getName(redefinableDeclaration)
+                                    + "' to redefine.",
                             redefinableDeclaration,
                             OxstsPackage.Literals.NAMED_ELEMENT__NAME,
                             0,
@@ -374,7 +378,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
                 }
             } catch (Exception e) {
                 acceptError(
-                        "Could not find redefined declaration.",
+                        "No supertype declares a member named '" + NamingUtil.getName(redefinableDeclaration)
+                                + "' to redefine.",
                         redefinableDeclaration,
                         OxstsPackage.Literals.NAMED_ELEMENT__NAME,
                         0,
@@ -844,8 +849,11 @@ public class OxstsValidator extends AbstractOxstsValidator {
             }
         }
         if (!unbound.isEmpty()) {
+            var quoted = unbound.stream().map(name -> "'" + name + "'").collect(Collectors.joining(", "));
             acceptError(
-                    "Missing argument(s) for non-optional parameter(s): " + String.join(", ", unbound) + ".",
+                    unbound.size() == 1
+                            ? "Missing an argument for the required parameter " + quoted + "."
+                            : "Missing arguments for the required parameters " + quoted + ".",
                     callSuffixExpression,
                     INVALID_CALL_ARGUMENTS_COUND,
                     unbound.toArray(String[]::new));
@@ -922,7 +930,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
                 var optionalName = firstOptional.getName() != null ? firstOptional.getName() : "<unnamed>";
                 var paramName = parameter.getName() != null ? parameter.getName() : "<unnamed>";
                 acceptError(
-                        "Non-optional parameter '"
+                        "Required parameter '"
                                 + paramName
                                 + "' cannot follow optional parameter '"
                                 + optionalName
@@ -1345,7 +1353,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
             rejectParameterWrite(parameter, assignmentOperation, OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE);
         } else if (!(written instanceof VariableDeclaration)) {
             acceptError(
-                    "Only variables can be assigned to!",
+                    "Only a variable can be assigned.",
                     assignmentOperation,
                     OxstsPackage.Literals.ASSIGNMENT_OPERATION__REFERENCE,
                     0,
@@ -1506,7 +1514,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
 
         if (!OxstsUtils.isCallable(called)) {
             acceptError(
-                    "Element " + called.getName() + " is not callable!",
+                    "'" + called.getName() + "' is not a transition or a property, so it cannot be called.",
                     callSuffixExpression,
                     OxstsPackage.Literals.POSTFIX_UNARY_EXPRESSION__PRIMARY,
                     0,
@@ -2432,7 +2440,10 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
 
         if (variableDeclaration.getTypeSpecification() == null) {
-            acceptError("Variables may not have implicit types!", variableDeclaration, VARIABLE_WITH_IMPLICIT_TYPE);
+            acceptError(
+                    "Variable '" + variableDeclaration.getName() + "' needs a declared type.",
+                    variableDeclaration,
+                    VARIABLE_WITH_IMPLICIT_TYPE);
         }
     }
 

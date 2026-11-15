@@ -157,7 +157,7 @@ class AdminHandlerTest {
             queuedCount = 0,
             workingDirectory = "/tmp/test",
             activeVerifications = listOf(
-                ActiveVerificationInfo(verificationId = "req-1", portfolioId = "smart-full", kind = VerificationKind.Verify, state = VerificationState.Running),
+                ActiveVerificationInfo(verificationId = "req-1", portfolioId = "smart", kind = VerificationKind.Verify, state = VerificationState.Running),
             ),
         )
         installAdmin(createHandler(sessionInfos = listOf(testSession)))
@@ -182,7 +182,7 @@ class AdminHandlerTest {
         assertThat(status.load.uptime.isPositive()).isTrue
         assertThat(status.sessions[0].activeVerifications).hasSize(1)
         assertThat(status.sessions[0].activeVerifications[0].verificationId).isEqualTo("req-1")
-        assertThat(status.sessions[0].activeVerifications[0].portfolioId).isEqualTo("smart-full")
+        assertThat(status.sessions[0].activeVerifications[0].portfolioId).isEqualTo("smart")
     }
 
     @Test

@@ -587,7 +587,7 @@ class PackageInliningOperationTest : InliningTestBase() {
         ) {
             assertThatThrownBy { inlineAll(it) }
                 .isInstanceOf(IllegalStateException::class.java)
-                .hasMessageContaining("No argument for the required parameter 'value'")
+                .hasMessageContaining("Missing an argument for the required parameter 'value'")
         }
     }
 

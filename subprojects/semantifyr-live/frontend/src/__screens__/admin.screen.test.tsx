@@ -35,8 +35,8 @@ const SESSIONS: SessionInfo[] = [
     queuedCount: 1,
     workingDirectory: '/var/lib/semantifyr/work/3f9c1a52-7b0e-4d1e-9a64-0c7d2b5e8f11',
     activeVerifications: [
-      { verificationId: 'verification-8812', portfolioId: 'smart-full', kind: 'Verify', state: 'Running', elapsed: 'PT4.2S' },
-      { verificationId: 'verification-8813', portfolioId: 'theta-full', kind: 'Validate', state: 'Queued', elapsed: 'PT0S' },
+      { verificationId: 'verification-8812', portfolioId: 'smart', kind: 'Verify', state: 'Running', elapsed: 'PT4.2S' },
+      { verificationId: 'verification-8813', portfolioId: 'theta', kind: 'Validate', state: 'Queued', elapsed: 'PT0S' },
     ],
   },
   {
@@ -94,9 +94,9 @@ const CONFIG: AdminConfigResponse = {
   sessionManager: { maxSessionsGlobal: 256, semanticLibrariesDirectory: '/srv/libraries', rootWorkDirectory: '/var/lib/semantifyr/work' },
   verification: { concurrency: 4, timeout: 'PT1M' },
   portfolios: [
-    { id: 'smart-full', engines: ['nuxmv', 'spin', 'theta'] },
-    { id: 'all-agree-full', engines: ['nuxmv', 'spin', 'theta', 'uppaal'] },
-    { id: 'theta-full', engines: ['theta'] },
+    { id: 'smart', engines: ['nuxmv', 'spin', 'theta'] },
+    { id: 'all-agree', engines: ['nuxmv', 'spin', 'theta', 'uppaal'] },
+    { id: 'theta', engines: ['theta'] },
     { id: 'nuxmv-ic3-invar', engines: ['nuxmv'] },
     { id: 'spin-safe-dfs', engines: ['spin'] },
     { id: 'uppaal-default', engines: ['uppaal'] },
@@ -145,7 +145,7 @@ function fakeServer(sessions: SessionInfo[], refusal?: ApiError): FakeServer {
         portfolios: CONFIG.portfolios.map((portfolio, index) => {
           return { id: portfolio.id, displayName: ['Auto', 'All agree', 'Theta', 'nuXmv', 'Spin', 'Uppaal'][index] ?? portfolio.id, description: '', available: portfolio.id !== 'uppaal-default' }
         }),
-        defaultPortfolio: 'smart-full',
+        defaultPortfolio: 'smart',
       })
     },
     fetchFlavors: () => {

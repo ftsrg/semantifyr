@@ -31,15 +31,16 @@ import hu.bme.mit.semantifyr.cli.common.verifyOutputOption
 import hu.bme.mit.semantifyr.frontends.sysml.SysMLv2Frontend
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
-import hu.bme.mit.semantifyr.oxsts.lang.library.OxstsLibrary
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.caseReportPath
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
+import org.eclipse.xtext.resource.FileExtensionProvider
 
 class SysMLVerifyCommand @Inject constructor(
     verificationCaseDiscoverer: VerificationCaseDiscoverer,
     private val injector: Injector,
+    private val fileExtensionProvider: FileExtensionProvider,
 ) : SuspendingCliktCommand("verify") {
     private val logger by loggerFactory()
 
@@ -54,7 +55,7 @@ class SysMLVerifyCommand @Inject constructor(
     private val libraries by option("-l", "--library")
         .path()
         .multiple()
-        .help("OXSTS library file or directory, repeatable.")
+        .help("An OXSTS library added to the bundled SysML v2 library, repeatable.")
 
     private val caseSpecificationOptions by VerificationCaseSpecificationOptionGroup(verificationCaseDiscoverer)
     private val backendOptions by BackendOptionGroup {
@@ -76,7 +77,7 @@ class SysMLVerifyCommand @Inject constructor(
 
         checkInputFile("Model", model, SYSML_FILE_SUFFIX)
         for (library in libraries) {
-            checkInputPath("Library", library, OxstsLibrary.FILE_NAME_SUFFIX)
+            checkInputPath("Library", library, fileExtensionProvider.fileExtensions)
         }
         artifactOptions.checkOutputDirectory()
         backendOptions.checkAvailable()

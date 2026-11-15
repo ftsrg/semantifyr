@@ -37,12 +37,14 @@ class NuxmvSmokeTest {
             .loadModels(Path("build/test-models/smoke"))
             .buildAndResolve()
 
+        val case = helper.collectVerificationCases(context).single()
         helper.checkVerificationCase(
             context = context,
-            case = helper.collectVerificationCases(context).single(),
+            case = case,
             verificationPortfolio = SingleBackendPortfolio(NuxmvBackend(), NuxmvConfig.Ic3Invar),
             validationPortfolio = SingleBackendPortfolio(NuxmvBackend(), NuxmvConfig.Ic3Invar),
             outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(NuxmvSmokeTest::class.java),
+            expectedVerdict = helper.expectedVerdictFromTags(case),
         )
     }
 }

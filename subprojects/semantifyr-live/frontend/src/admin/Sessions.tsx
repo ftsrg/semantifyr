@@ -5,11 +5,11 @@
  */
 
 import type React from 'react'
+import { LanguageMark, VerdictMark } from '@semantifyr/editor-common/marks'
 
 import type { ActiveVerificationInfo, FlavorInfo, SessionInfo } from '../lib/api'
 import { useStore } from '../lib/stores/useStore'
 import { Icon } from '../ui/icons'
-import { LanguageMark, VerdictMark } from '../ui/marks'
 import { AdminIcon } from './adminIcons'
 import type { AdminStore } from './adminStore'
 import { durationLabel, filterSessions, flavourRowOf, kindLabel } from './adminView'

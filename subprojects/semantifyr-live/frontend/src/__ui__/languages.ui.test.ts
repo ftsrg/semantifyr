@@ -4,14 +4,21 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { servedExamples } from '@semantifyr/editor-common/examples'
 import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
+import { BLANK_MODEL } from '../texts'
 import { casesListed, LIVE_URL, results, test } from './harness'
+
+const REPOSITORY = fileURLToPath(new URL('../../../../../', import.meta.url))
 
 describe('the language switch', () => {
   test('offers SysML v2, Gamma and OXSTS, and opens a session of the language chosen', async ({ ui }) => {
-    const page = await ui.open('/oxsts/basics')
+    const page = await ui.open('/oxsts/intersection')
     await casesListed(page)
 
     expect(await page.locator('.language-switch [role=group] button').allInnerTexts()).toEqual(['SysML v2', 'Gamma', 'OXSTS'])
@@ -23,12 +30,12 @@ describe('the language switch', () => {
   })
 
   test('lists the OXSTS flavours under OXSTS, and a flavour opens its own session', async ({ ui }) => {
-    const page = await ui.open('/oxsts/basics')
+    const page = await ui.open('/oxsts/intersection')
     await casesListed(page)
 
     await page.locator('.flavour-button').click()
-    expect(await page.getByRole('menuitem').locator('.menu-item-label').allInnerTexts()).toEqual(['Plain', 'With the Gamma library', 'With the SysML v2 library'])
-    await page.getByRole('menuitem', { name: /With the SysML v2 library/ }).click()
+    expect(await page.getByRole('menuitem').locator('.menu-item-label').allInnerTexts()).toEqual(['None', 'Gamma', 'SysML v2'])
+    await page.getByRole('menuitem', { name: /SysML v2's semantics/ }).click()
 
     await casesListed(page)
     expect((await ui.backend.openSession()).flavorId).toBe('oxsts-with-sysmlv2-library')
@@ -81,18 +88,19 @@ const LANGUAGES = [
 ]
 
 const FLAVOURS = [
-  'Plain',
-  'With the Gamma library',
-  'With the SysML v2 library',
+  'None',
+  'Gamma\'s semantics',
+  'SysML v2\'s semantics',
 ]
 
+// the labels live's menus list, and the blank model
 const EXAMPLES = [
-  'Level crossing',
-  'Tutorial: Basics',
-  'Tutorial: Intermediate',
-  'Leader-worker',
-  'Door access',
-  'Blank model',
+  ...new Set(servedExamples.filter((example) => {
+    return example.hidden !== true
+  }).map((example) => {
+    return example.label
+  })),
+  BLANK_MODEL,
 ]
 
 const WAITS = [
@@ -102,14 +110,14 @@ const WAITS = [
   2000,
 ]
 
-// the examples whose every case the tall page shows at once
-const LONG_EXAMPLES = new Set([
-  'advanced',
-  'crossroads',
-  'spacecraft',
-  'compressedspacecraft',
-  'orion-protocol',
-])
+// the tall page's editor renders this many lines at most, so a longer model shows the marks of a part of its cases
+const LINES_SHOWN = 250
+
+const LONG_EXAMPLES = new Set(servedExamples.filter((example) => {
+  return readFileSync(join(REPOSITORY, example.file), 'utf-8').split('\n').length > LINES_SHOWN
+}).map((example) => {
+  return example.id
+}))
 
 // a fixed sequence, so a failure is replayed as it happened
 function stepsOf(count: number, seed: number): { step: Step, wait: number }[] {
@@ -230,7 +238,7 @@ function exampleOf(path: string): string {
 
 describe('switching many times', () => {
   test('ends every switch of language, flavour and example, in varied order and timing, with the cases listed and the marks of the shown document alone', async ({ ui }) => {
-    const page = await ui.open('/oxsts/basics', { height: 5800 })
+    const page = await ui.open('/oxsts/intersection', { height: 5800 })
     const done: string[] = []
     for (const { step, wait } of stepsOf(44, 7)) {
       await take(page, step)

@@ -85,7 +85,7 @@ function deferred<T>(): { promise: Promise<T>, resolve: (value: T) => void } {
 }
 
 function reported(caseInfo: VerificationCaseSpecification, state: ActiveVerificationInfo['state']): ActiveVerificationInfo {
-  return { verificationId: `verify-${caseInfo.id}`, portfolioId: 'smart-full', kind: 'Verify', state, elapsed: 'PT0S', location: caseInfo.location }
+  return { verificationId: `verify-${caseInfo.id}`, portfolioId: 'smart', kind: 'Verify', state, elapsed: 'PT0S', location: caseInfo.location }
 }
 
 function verificationOf(test: TestLive): VerificationState {
@@ -264,7 +264,7 @@ describe('Live', () => {
             refusals--
             throw new Error('the server is not answering')
           }
-          return { portfolios: [{ id: 'smart-full', displayName: 'Smart full', description: '', available: true }], defaultPortfolio: 'smart-full' }
+          return { portfolios: [{ id: 'smart', displayName: 'Smart full', description: '', available: true }], defaultPortfolio: 'smart' }
         },
       },
     })
@@ -279,7 +279,7 @@ describe('Live', () => {
     await vi.waitFor(() => {
       expect(verificationOf(open!).phase).toBe('done')
     })
-    expect(routed.portfolios).toEqual(['smart-full'])
+    expect(routed.portfolios).toEqual(['smart'])
   })
 
   it('opens the address the visitor moved to while the server did not answer', async () => {
@@ -295,7 +295,7 @@ describe('Live', () => {
           return [...servedFlavors]
         },
         fetchPortfolios: async () => {
-          return { portfolios: [], defaultPortfolio: 'smart-full' }
+          return { portfolios: [], defaultPortfolio: 'smart' }
         },
       },
     })
@@ -373,7 +373,7 @@ describe('Live', () => {
     open.live.settings.update((settings) => {
       return { ...settings, verificationPortfolioId: 'retired' }
     })
-    expect(open.live.verificationPortfolioId()).toBe('smart-full')
+    expect(open.live.verificationPortfolioId()).toBe('smart')
   })
 
   it('opens the default language on a bare address, and says which name of an address it did not find', async () => {

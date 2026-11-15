@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.conventions.corpusModels
+import hu.bme.mit.semantifyr.gradle.conventions.readsServedExamples
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 
 plugins {
@@ -12,6 +14,7 @@ plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.integration")
     id("hu.bme.mit.semantifyr.gradle.conventions.nightly")
     kotlin("jvm")
+    kotlin("plugin.serialization")
 }
 
 dependencies {
@@ -24,10 +27,12 @@ dependencies {
 
     testImplementation(libs.kotlinx.serialization.json)
 
+    testFixturesImplementation(libs.kotlinx.serialization.json)
     testFixturesApi(project(":gamma.lang"))
     testFixturesApi(testFixtures(project(":gamma.lang")))
     testFixturesApi(testFixtures(project(":verifier")))
     testFixturesApi(project(":portfolios"))
+    testFixturesApi(testFixtures(project(":portfolios")))
 }
 
 val syncGammaLibrary = tasks.register<Sync>("syncGammaLibrary") {
@@ -44,9 +49,15 @@ tasks.processResources {
     from(syncGammaLibrary)
 }
 
+tasks.named<Test>("integrationTest") {
+    readsServedExamples()
+}
+
 tasks.withType<Test>().configureEach {
     inputs.files(syncGammaTestModels)
     inputs.dir(layout.projectDirectory.dir("../models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("../models/constructs.tsv")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(layout.projectDirectory.dir("../models").asFileTree.matching { include("corpus/**", "semantics/**") }).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 val compiledExamplesDir = layout.buildDirectory.dir("compiled-examples")
@@ -66,16 +77,17 @@ fun gammaExampleTask(name: String) = tasks.register<JavaExec>("compileGammaExamp
     }
 }
 
-val compileGammaExampleCrossroads = gammaExampleTask("Crossroads")
-val compileGammaExampleLevelCrossing = gammaExampleTask("LevelCrossing")
-val compileGammaExampleSimple = gammaExampleTask("Simple")
-val compileGammaExampleSpacecraft = gammaExampleTask("Spacecraft")
+// a file that imports another holds a model's further cases, which nothing consumes compiled
+val compileGammaExampleTasks = corpusModels(examplesSourceDir).filter { model ->
+    providers.fileContents(examplesSourceDir.file(model.file)).asText.get().lines().none {
+        it.startsWith("import ")
+    }
+}.map {
+    gammaExampleTask(it.name)
+}
 
 val compileGammaExamples = tasks.register("compileGammaExamples") {
-    inputs.files(compileGammaExampleCrossroads)
-    inputs.files(compileGammaExampleLevelCrossing)
-    inputs.files(compileGammaExampleSimple)
-    inputs.files(compileGammaExampleSpacecraft)
+    inputs.files(compileGammaExampleTasks)
 }
 
 configurations.consumable("compiledExamplesElements") {

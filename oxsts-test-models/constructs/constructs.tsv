@@ -29,4 +29,4 @@ Multiple inheritance `class C : A, B`	reject	constructs/multiple_inheritance.oxs
 `fun` declarations	parse	constructs/function_declaration.oxsts	-
 `pattern` declarations	parse	constructs/pattern_declaration.oxsts	-
 Temporal operator below the property root `AG (EF x)`, `b := AG x`	reject	constructs/nested_temporal_operator.oxsts	OXSTS.MISPLACED_TEMPORAL_OPERATOR
-AF, EG, AX, EX temporal operators	parse	constructs/af_operator.oxsts	-
+CTL* properties	parse	constructs/af_operator.oxsts	-

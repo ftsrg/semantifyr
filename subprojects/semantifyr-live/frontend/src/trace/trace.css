@@ -13,7 +13,6 @@
 .case-trace-body.is-calls { overflow: hidden; display: flex; flex-direction: column; padding: 0 var(--space-3) var(--space-3); }
 .case-trace-body.is-calls .calls-scroll { flex: 1; min-height: 0; height: auto; }
 .case-trace-body.is-text { overflow: hidden; display: flex; flex-direction: column; padding: 0 var(--space-5) var(--space-5); }
-.case-trace-body.is-outdated > *:not(.case-trace-outdated) { opacity: 0.5; filter: saturate(0.6); }
 .case-trace-outdated {
   flex: none;
   display: flex;

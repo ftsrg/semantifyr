@@ -33,7 +33,7 @@ class OxstsWorkspaceSymbolTest extends OxstsLanguageServerTest {
                 }
                 """);
         var libraryUri = addLibraryFile("Lamps.oxsts", library.text());
-        openModel(TestModels.basics());
+        openModel(TestModels.TRAFFIC_LIGHTS);
 
         var symbols = symbols("switchOn");
 
@@ -47,7 +47,7 @@ class OxstsWorkspaceSymbolTest extends OxstsLanguageServerTest {
 
     @Test
     void workspaceSymbolsFindTheBuiltinLibraryOutsideTheWorkspace() throws Exception {
-        openModel(TestModels.basics());
+        openModel(TestModels.TRAFFIC_LIGHTS);
 
         var symbols = symbols("Anything");
 

@@ -1,0 +1,23 @@
+package complexStatechart::complex::TopDownComplexStatechart_verification
+
+import complexStatechart::complex
+
+verification case StateAReachable of TopDown {
+    EF state main.A_
+}
+
+verification case StateAAReachable of TopDown {
+    EF state A.AA
+}
+
+verification case StateBAReachable of TopDown {
+    EF state B.BA
+}
+
+verification case StateBReachable of TopDown {
+    EF state main.B_
+}
+
+verification case StateCReachable of TopDown {
+    EF state main.C_
+}

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import { servedExamplesOf } from '@semantifyr/editor-common/examples'
 import { describe, expect } from 'vitest'
 
 import { casesListed, editor, results, seenStatusTexts, statesOf, test, watchStatusTexts } from './harness'
@@ -16,7 +17,7 @@ describe('a server that does not answer at page load', () => {
   for (const [address, text] of [
     ['/sysml/level-crossing', 'part def'],
     ['/gamma/level-crossing', 'statechart'],
-    ['/oxsts/basics', 'package'],
+    ['/oxsts/intersection', 'package'],
   ] as const) {
     test(`shows the model of ${address} and retries until it answers`, async ({ ui }) => {
       let reachable = false
@@ -51,7 +52,7 @@ describe('a session the server refuses', () => {
       }
       return 'accept'
     }
-    const page = await ui.open('/oxsts/basics', { before: watchStatusTexts })
+    const page = await ui.open('/oxsts/intersection', { before: watchStatusTexts })
 
     await expect.poll(async () => {
       return page.locator('.connection').innerText()
@@ -70,7 +71,7 @@ describe('a session the server refuses', () => {
 
 describe('a session the server terminates', () => {
   test('stays terminated with the model on screen until Reconnect is pressed, which starts a new session', async ({ ui }) => {
-    const page = await ui.open('/oxsts/basics')
+    const page = await ui.open('/oxsts/intersection')
     await casesListed(page)
 
     ui.backend.session().close(TERMINATED, 'Session terminated by an administrator')
@@ -103,7 +104,7 @@ describe('a lost connection', () => {
         })
       })
     })
-    const page = await ui.open('/oxsts/basics')
+    const page = await ui.open('/oxsts/intersection')
     await casesListed(page)
     await results(page).verifyAll.click()
     await expect.poll(async () => {
@@ -117,7 +118,11 @@ describe('a lost connection', () => {
     }).toMatch(/Connection lost. Reconnecting/)
     await expect.poll(async () => {
       return statesOf(results(page).rows, 'status-')
-    }).toEqual(['not-run', 'not-run'])
+    }).toEqual(servedExamplesOf('oxsts').find((example) => {
+      return example.id === 'intersection'
+    })?.cases.map(() => {
+      return 'not-run'
+    }))
     await expect.poll(async () => {
       return results(page).rows.first().locator('.case-message').innerText()
     }).toContain('cancelled')

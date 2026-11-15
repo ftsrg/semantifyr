@@ -113,7 +113,7 @@ class CompileCommandTest {
     suspend fun `the compilation step artifact writes the model after each pass`(@TempDir directory: Path) {
         val artifacts = directory.resolve("artifacts")
 
-        val result = runCli("compile", "--artifacts", "none", "--enable-artifact", "CompilationStep", "-o", directory.resolve("smoke.inlined.oxsts").toString(), "-d", artifacts.toString(), smokeModel.toString())
+        val result = runCli("compile", "--artifacts", "none", "--enable-artifact", "compilation-step", "-o", directory.resolve("smoke.inlined.oxsts").toString(), "-d", artifacts.toString(), smokeModel.toString())
 
         assertThat(result.statusCode).describedAs(result.output).isZero()
         val steps = artifacts.listDirectoryEntries().single().resolve("pipeline/steps")
@@ -123,10 +123,10 @@ class CompileCommandTest {
 
     @Test
     suspend fun `the output model is no artifact kind`(@TempDir directory: Path) {
-        val result = runCli("compile", "--enable-artifact", "OutputModel", "-o", directory.resolve("smoke.inlined.oxsts").toString(), "-d", directory.resolve("artifacts").toString(), smokeModel.toString())
+        val result = runCli("compile", "--enable-artifact", "output-model", "-o", directory.resolve("smoke.inlined.oxsts").toString(), "-d", directory.resolve("artifacts").toString(), smokeModel.toString())
 
         assertThat(result.statusCode).isEqualTo(2)
-        assertThat(result.stderr).contains("OutputModel")
+        assertThat(result.stderr).contains("output-model")
     }
 
     @Test

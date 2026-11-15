@@ -1,4 +1,9 @@
-private import ScalarValues::Integer;
+doc
+/*
+ * Two railway tracks cross a road at one barrier, which a controller lowers and lifts on the tracks' reports.
+ * Each track reports a train approaching and a train leaving; the controller lowers the barrier on an approach and lifts it when a train leaves.
+ * The cases ask whether a train can be in the crossing while the barrier is up, and whether trains on both tracks can be in it at once.
+ */
 
 item def ApproachSignal;
 item def NearSignal;
@@ -95,7 +100,7 @@ part def LevelCrossing {
     flow from controller.barrier to barrier.controller;
 }
 
-verification def BarrierDownWhileTrainInCrossingViolated {
+verification def BarrierDownWhileTrainInCrossing {
     subject system : LevelCrossing;
 
     objective {

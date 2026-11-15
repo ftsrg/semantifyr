@@ -155,16 +155,16 @@ class ApiRoutesHandlerTest {
         // The six demo entries. Availability depends on host binaries, so we assert presence
         // rather than the boolean.
         assertThat(ids).containsExactly(
-            "smart-full",
-            "all-agree-full",
-            "theta-full",
+            "smart",
+            "all-agree",
+            "theta",
             "nuxmv-ic3-invar",
             "spin-safe-dfs",
             "uppaal-default",
         )
-        val auto = response.portfolios.first { it.id == "smart-full" }
-        assertThat(auto.displayName).isEqualTo("Auto")
-        assertThat(response.defaultPortfolio).isEqualTo("smart-full")
+        val smart = response.portfolios.first { it.id == "smart" }
+        assertThat(smart.displayName).isEqualTo("Smart")
+        assertThat(response.defaultPortfolio).isEqualTo("smart")
     }
 
     @Test

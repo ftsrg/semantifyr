@@ -14,11 +14,13 @@ import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
+import org.eclipse.xtext.resource.FileExtensionProvider
 
 class ListCommand @Inject constructor(
     semantifyrLoader: SemantifyrLoader,
+    fileExtensionProvider: FileExtensionProvider,
     verificationCaseDiscoverer: VerificationCaseDiscoverer,
-) : BaseSemantifyrCommand("list", semantifyrLoader) {
+) : BaseSemantifyrCommand("list", semantifyrLoader, fileExtensionProvider) {
     private val logger by loggerFactory()
 
     private val caseSpecificationOptions by VerificationCaseSpecificationOptionGroup(verificationCaseDiscoverer)

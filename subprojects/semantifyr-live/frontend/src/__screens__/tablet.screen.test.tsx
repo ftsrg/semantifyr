@@ -20,8 +20,8 @@ const ORIENTATIONS: Readonly<Record<string, { width: number, height: number }>> 
   landscape: { width: 1024, height: 768 },
 }
 
-const BARRIER = caseOf('BarrierDownWhileTrainInCrossingViolated', 97)
-const TWO_TRAINS = caseOf('TwoTrainsCanBeInTheCrossing', 112)
+const BARRIER = caseOf('BarrierDownWhileTrainInCrossing', 102)
+const TWO_TRAINS = caseOf('TwoTrainsCanBeInTheCrossing', 117)
 
 // a toolbar group is the width its neighbour leaves it, and the fonts decide whether its last button runs into the gap after it, which expectApart bounds
 const UNCLIPPED = [
@@ -30,7 +30,6 @@ const UNCLIPPED = [
   '.counts',
   '.case-outcome',
   '.status-end',
-  '.orientation-text',
 ]
 
 function discovered(cases: VerificationCaseState[], phase: VerificationState['phase'] = 'idle'): VerificationState {
@@ -50,7 +49,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
   'first': {
     seed: { verification: discovered([{ caseInfo: BARRIER, status: 'stale' }, { caseInfo: TWO_TRAINS, status: 'stale' }]) },
     expectState: () => {
-      expect(count('.orientation .orientation-text')).toBe(1)
+      expect(count('.orientation')).toBe(0)
       expect(count('.case-row.status-not-run')).toBe(2)
     },
   },
@@ -63,7 +62,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
   },
   // the widest toolbar: a flavour menu and the longest example name
   'oxsts': {
-    seed: { flavorId: 'oxsts', exampleId: 'intermediate', verification: discovered([{ caseInfo: caseOf('GreenColorIsReachable', 40, 'file:///workspace/snippet.oxsts'), status: 'stale' }]) },
+    seed: { flavorId: 'oxsts', exampleId: 'library', verification: discovered([{ caseInfo: caseOf('GreenColorIsReachable', 40, 'file:///workspace/snippet.oxsts'), status: 'stale' }]) },
     expectState: () => {
       expect(count('.flavour-button')).toBe(1)
       expect(count('.segmented-option[data-language=oxsts][aria-pressed=true]')).toBe(1)

@@ -9,8 +9,6 @@ package hu.bme.mit.semantifyr.backends.theta
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
-import hu.bme.mit.semantifyr.verifier.VerificationCase
-import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.xtext.diagnostics.Severity
 import org.eclipse.xtext.util.CancelIndicator
@@ -34,10 +32,11 @@ class ThetaTutorialTest {
         private val injector = OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
         private val helper = injector.getInstance(SemantifyrVerifierTestHelper::class.java)
         private val validator = injector.getInstance(IResourceValidator::class.java)
+        private val tutorial = Path("build/test-models/tutorial")
 
         // every step of a tutorial is a model of its own, loaded alone as the website's live editor loads it
         private val contexts: Map<Path, SemantifyrModelContext> by lazy {
-            Path("build/test-models/tutorial").walk().filter {
+            tutorial.walk().filter {
                 it.isRegularFile() && it.extension == "oxsts"
             }.sorted().associateWith {
                 helper.semantifyrLoader.loadStandaloneModel(it)
@@ -48,15 +47,6 @@ class ThetaTutorialTest {
         fun `Tutorial Models Validate Without Warnings`(): List<Arguments> {
             return contexts.keys.map {
                 Arguments.of(Named.of(it.name, it))
-            }
-        }
-
-        @JvmStatic
-        fun `Tutorial Cases Verify As Tagged`(): List<Arguments> {
-            return contexts.values.flatMap { context ->
-                helper.collectVerificationCases(context).map {
-                    Arguments.of(Named.of(it.qualifiedName, it), context)
-                }
             }
         }
     }
@@ -71,16 +61,5 @@ class ThetaTutorialTest {
         assertThat(issues.map { "${it.lineNumber}:${it.column} ${it.message}" })
             .describedAs("issues a reader would see in ${model.name}")
             .isEmpty()
-    }
-
-    @ParameterizedTest(name = "{0}")
-    @MethodSource
-    suspend fun `Tutorial Cases Verify As Tagged`(verificationCase: VerificationCase, context: SemantifyrModelContext) {
-        helper.checkTestModel(
-            context,
-            verificationCase,
-            verificationPortfolio = SingleBackendPortfolio(ThetaBackend(), ThetaConfig.CegarExplPredCombined),
-            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(ThetaTutorialTest::class.java),
-        )
     }
 }

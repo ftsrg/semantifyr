@@ -1,0 +1,42 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package AsynchronousStatechart
+
+interface Signals {
+    in event first
+    in event second
+}
+
+@Asynchronous
+@TransitionPriority = order-based
+statechart Receiver [
+    port signals : provides Signals
+] {
+    timeout late
+    region Main {
+        initial MainInitial
+        state Waiting
+        state GotFirst {
+            entry / set late := 1 s;
+        }
+        state Both
+        state Late
+    }
+
+    transition from MainInitial to Waiting
+    transition from Waiting to GotFirst when signals.first
+    transition from GotFirst to Late when timeout late
+    transition from GotFirst to Both when signals.second
+}
+
+verification case TheDefaultAdapterServesOneMessagePerCycleUnreachable of Receiver {
+    EF state Main.Both
+}
+
+verification case TheDefaultAdapterServesTheNextMessageInALaterCycle of Receiver {
+    EF state Main.Late
+}

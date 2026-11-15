@@ -24,8 +24,8 @@ class ReferenceTraceTest {
     @Test
     fun `the crossroads reference trace validates against the crossroads model`() {
         val workspace = temporaryDirectory.resolve("workspace").createDirectories()
-        MODELS.resolve("examples").resolve(MODEL).copyTo(workspace.resolve(MODEL))
-        MODELS.resolve("examples").resolve(VERIFICATION).copyTo(workspace.resolve(VERIFICATION))
+        CORPUS.resolve(MODEL).copyTo(workspace.resolve(MODEL))
+        CORPUS.resolve(VERIFICATION).copyTo(workspace.resolve(VERIFICATION))
         val trace = MODELS.resolve("etc").resolve(TRACE).copyTo(workspace.resolve(TRACE))
 
         SysMLv2Compiler(temporaryDirectory.resolve("cache")).validate(trace)
@@ -59,12 +59,15 @@ class ReferenceTraceTest {
 
     private fun crossroadsWorkspace(): Path {
         val workspace = temporaryDirectory.resolve("workspace").createDirectories()
-        MODELS.resolve("examples").resolve(VERIFICATION).copyTo(workspace.resolve(VERIFICATION))
-        return MODELS.resolve("examples").resolve(MODEL).copyTo(workspace.resolve(MODEL))
+        CORPUS.resolve(VERIFICATION).copyTo(workspace.resolve(VERIFICATION))
+        return CORPUS.resolve(MODEL).copyTo(workspace.resolve(MODEL))
     }
 
     companion object {
         private val MODELS = Path("..", "models")
+
+        // the reference case is a further case of crossroads, which the build appends to the model
+        private val CORPUS = Path("build", "corpus")
         private const val MODEL = "crossroads.sysml"
         private const val VERIFICATION = "Verification.sysml"
         private const val TRACE = "crossroads-green.trace.sysml"

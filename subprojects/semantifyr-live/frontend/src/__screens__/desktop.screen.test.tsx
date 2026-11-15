@@ -5,9 +5,10 @@
  */
 
 import * as vscode from 'vscode'
+import type { PortfolioInfo } from '@semantifyr/editor-common'
 import { createRoot } from 'react-dom/client'
 import { describe, expect, it, onTestFinished } from 'vitest'
-import { page, server } from 'vitest/browser'
+import { page, server, userEvent } from 'vitest/browser'
 
 import { toVscodeDiagnostics, type ProblemEntry } from '../lib/session/problems'
 import { connectionLost } from '../lib/stores/connection'
@@ -15,13 +16,21 @@ import type { ResolvedColorMode } from '../lib/util/colorMode'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
 import { modelOxstsTabOf } from '../lib/workspace/libraryTabs'
 import { ShellRoot } from '../shells/ShellRoot'
+import { ABOUT, CASE_MESSAGES, DOCUMENTATION, noCases, PRIVACY_URL, SOURCE_CODE_URL, TRACE_HINTS, VALIDATION, WEBSITE_URL } from '../texts'
 import { caseOf, CONNECTED, finished, seedLive, type Seed } from './seededLive'
 
 // Goal: every desktop state the mockup draws lays out inside the viewport in both themes, with the real editor;
 // the proof is the layout itself, measured in a browser, never the pixels
 
-const BARRIER = caseOf('BarrierDownWhileTrainInCrossingViolated', 97)
-const TWO_TRAINS = caseOf('TwoTrainsCanBeInTheCrossing', 112)
+const PORTFOLIOS: PortfolioInfo[] = [
+  { id: 'smart', displayName: 'Smart', description: 'Runs the installed backends side by side and takes the first trusted answer.', available: true },
+  { id: 'all-agree', displayName: 'All agree', description: 'Runs every installed backend and requires their trusted answers to agree.', available: true },
+  { id: 'theta', displayName: 'Theta', description: 'Runs Theta\'s CEGAR and k-induction configurations side by side and takes the first answer.', available: true },
+  { id: 'spin-safe-dfs', displayName: 'Spin', description: 'Runs the safe-dfs configuration of spin alone.', available: true },
+]
+
+const BARRIER = caseOf('BarrierDownWhileTrainInCrossing', 102)
+const TWO_TRAINS = caseOf('TwoTrainsCanBeInTheCrossing', 117)
 
 const BACKGROUNDS: Readonly<Record<ResolvedColorMode, string>> = {
   light: 'rgb(241, 238, 231)',
@@ -37,7 +46,6 @@ const UNCLIPPED = [
   '.case-outcome',
   '.status-message',
   '.status-end',
-  '.orientation-text',
   '.initialization-step',
 ]
 
@@ -85,7 +93,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
   'first': {
     seed: { verification: discovered([notRun(BARRIER), notRun(TWO_TRAINS)]) },
     expectState: () => {
-      expect(text('.orientation-text')).toContain('Press Verify all')
+      expect(count('.orientation')).toBe(0)
       expect(count('.case-row.status-not-run')).toBe(2)
       expect(count('.results-header .button-primary')).toBe(1)
     },
@@ -166,6 +174,30 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     expectState: () => {
       expect(count('.case-row.is-outdated .outdated-tag')).toBe(2)
       expect(text('[data-testid=status-message]')).toContain('outdated')
+      for (const word of document.querySelectorAll<HTMLElement>('.case-row.is-outdated .verdict-word')) {
+        expect(word.innerText).toMatch(/^(Failed|Passed)$/)
+        expect(getComputedStyle(word).opacity, 'the verdict word of an outdated result in full').toBe('1')
+      }
+    },
+  },
+  'example-menu-by-keyboard': {
+    seed: { verification: discovered([notRun(BARRIER), notRun(TWO_TRAINS)]) },
+    act: async () => {
+      document.querySelector<HTMLElement>('.example-button')!.focus()
+      await userEvent.keyboard('{Enter}')
+      await expect.poll(() => {
+        return count('[role=menu] [role=menuitem]')
+      }).toBeGreaterThan(2)
+      await userEvent.keyboard('{ArrowDown}')
+      await expect.poll(() => {
+        return count('[role=menu] [role=menuitem][data-highlighted]')
+      }).toBe(1)
+    },
+    expectState: () => {
+      const highlighted = document.querySelector<HTMLElement>('[role=menu] [role=menuitem][data-highlighted]')!
+      const other = document.querySelector<HTMLElement>('[role=menu] [role=menuitem]:not([data-highlighted]):not(.is-current)')!
+      expect(getComputedStyle(highlighted).boxShadow, 'a bar beside the highlighted entry').toContain('inset')
+      expect(getComputedStyle(other).boxShadow).toBe('none')
     },
   },
   'address-unknown-example': {
@@ -235,15 +267,38 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       }).toBe(1)
     },
     expectState: () => {
-      const about = text('.dialog')
-      expect(about).toContain('research prototype')
-      expect(about).toContain('deletes the folder when the session ends')
-      expect(about).toContain('network address of each session')
-      expect(about).toContain('the name and verdict of each case it ran')
-      expect(about).toContain('The text of your model is never logged')
-      expect(about).not.toContain('No model and no result is kept')
-      expect(about).not.toContain('collects no personal data')
-      expect(about).not.toContain('only while it verifies')
+      expect(document.querySelector<HTMLAnchorElement>('.toolbar a.button[href]')?.href).toBe(DOCUMENTATION.url)
+      expect(text('.dialog-lead')).toBe(ABOUT.sentences.join(' '))
+      expect(document.querySelector<HTMLAnchorElement>('.dialog-body > a')?.href).toBe(PRIVACY_URL)
+      expect([...document.querySelectorAll<HTMLAnchorElement>('.dialog-links a')].map((link) => {
+        return link.href
+      })).toEqual([`${WEBSITE_URL}/`, SOURCE_CODE_URL])
+    },
+  },
+  'settings': {
+    seed: { verification: discovered([notRun(BARRIER), notRun(TWO_TRAINS)]), portfolios: PORTFOLIOS },
+    act: async () => {
+      document.querySelector<HTMLElement>('[aria-label="Portfolios and validation"]')!.click()
+      await expect.poll(() => {
+        return count('.portfolio-item')
+      }).toBe(4)
+    },
+    expectState: () => {
+      expect(text('.settings-popover').toLowerCase()).toContain('one backend')
+      expect(text('.settings-note')).toBe(VALIDATION.explained)
+    },
+  },
+  'inconclusive-without-message': {
+    seed: { verification: discovered([{ caseInfo: BARRIER, status: 'inconclusive', resultStatus: 'inconclusive', metrics: { totalDuration: 'PT2.9S', preparationDuration: 'PT0S', verificationDuration: 'PT2.9S', backAnnotationDuration: 'PT0S' }, backendId: 'theta', portfolioId: 'smart' }, finished(TWO_TRAINS, 'passed', 0.8)], 'done'), selection: BARRIER.id },
+    expectState: () => {
+      expect(text(`.case-row[data-case="${BARRIER.id}"]`)).toContain(CASE_MESSAGES.inconclusive)
+      expect(text('.empty-hint')).toBe(TRACE_HINTS.inconclusive)
+    },
+  },
+  'no-cases': {
+    seed: { verification: discovered([]) },
+    expectState: () => {
+      expect(text('.empty-hint')).toBe(noCases('sysml'))
     },
   },
   'gamma': {
@@ -259,7 +314,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     expectState: () => {
       expect(count('.segmented-option[data-language=oxsts][aria-pressed=true]')).toBe(1)
       expect(count('.tab-model .language-mark[data-language=oxsts]')).toBe(1)
-      expect(text('.flavour-button')).toContain('Plain')
+      expect(text('.flavour-button')).toContain('No library')
       expect(count('.model-oxsts-button')).toBe(0)
     },
   },

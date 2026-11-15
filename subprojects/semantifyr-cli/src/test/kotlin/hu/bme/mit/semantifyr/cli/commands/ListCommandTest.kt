@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.cli.commands
 
 import hu.bme.mit.semantifyr.cli.SMOKE_CASE
+import hu.bme.mit.semantifyr.cli.oxstsExtensions
 import hu.bme.mit.semantifyr.cli.runCli
 import hu.bme.mit.semantifyr.cli.smokeDirectory
 import hu.bme.mit.semantifyr.cli.smokeModel
@@ -49,6 +50,18 @@ class ListCommandTest {
     }
 
     @Test
+    suspend fun `lists the cases of a model file of every extension`(@TempDir directory: Path) {
+        for (extension in oxstsExtensions) {
+            val model = smokeModel.copyTo(directory.resolve("smoke.$extension"))
+
+            val result = runCli("list", model.toString())
+
+            assertThat(result.statusCode).describedAs("$extension: ${result.output}").isZero()
+            assertThat(result.stdout).describedAs(extension).contains(SMOKE_CASE)
+        }
+    }
+
+    @Test
     suspend fun `a missing model path is an input error`(@TempDir directory: Path) {
         val result = runCli("list", directory.resolve("absent.oxsts").toString())
 
@@ -57,11 +70,13 @@ class ListCommandTest {
     }
 
     @Test
-    suspend fun `a model file without the oxsts extension is an input error`() {
+    suspend fun `a model file of another kind is an input error naming the extensions of the language`() {
         val result = runCli("list", testModels.resolve("constructs/constructs.tsv").toString())
 
         assertThat(result.statusCode).isEqualTo(3)
-        assertThat(result.stderr).contains(".oxsts")
+        for (extension in oxstsExtensions) {
+            assertThat(result.stderr).contains(".$extension")
+        }
     }
 
     @Test
@@ -71,7 +86,10 @@ class ListCommandTest {
         val result = runCli("list", directory.toString())
 
         assertThat(result.statusCode).isEqualTo(3)
-        assertThat(result.stderr).contains("contains no .oxsts file")
+        for (extension in oxstsExtensions) {
+            assertThat(result.stderr).contains(".$extension")
+        }
+        assertThat(result.stderr).contains("contains no")
     }
 
     @Test
@@ -113,11 +131,13 @@ class ListCommandTest {
     }
 
     @Test
-    suspend fun `a model the validator rejects is a compilation error`() {
-        val result = runCli("list", testModels.resolve("constructs/multiple_inheritance.oxsts").toString())
+    suspend fun `a model the validator rejects is a compilation error naming each issue at its place`() {
+        val model = testModels.resolve("constructs/multiple_inheritance.oxsts")
+
+        val result = runCli("list", model.toString())
 
         assertThat(result.statusCode).isEqualTo(4)
-        assertThat(result.stderr).contains("multiple_inheritance.oxsts")
+        assertThat(result.stderr).startsWith("error: ").containsPattern("multiple_inheritance\\.oxsts:\\d+:\\d+: .+ \\[OXSTS\\.\\w+]")
     }
 
     @Test

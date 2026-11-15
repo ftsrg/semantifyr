@@ -4,11 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useContext } from 'react';
 import BrowserOnly from '@docusaurus/BrowserOnly';
 import CodeBlock from '@theme-original/CodeBlock';
 import type CodeBlockType from '@theme/CodeBlock';
 import type { WrapperProps } from '@docusaurus/types';
+import { FenceContext, OpenLinkContext } from '@site/src/lib/fence';
 
 const OpenInLiveLink = lazy(() => import('./OpenInLiveLink'));
 
@@ -51,20 +52,24 @@ export default function CodeBlockWrapper(props: Props): React.JSX.Element {
   const language = extractLanguage(props);
   const metastring = (props as { metastring?: string }).metastring ?? '';
   const open = OPEN_KEYWORD.test(metastring);
-  const code = language !== null && open ? extractText((props as { children?: React.ReactNode }).children) : '';
+  const fence = useContext(FenceContext);
+  const code = language !== null && open ? fence?.model ?? extractText((props as { children?: React.ReactNode }).children) : '';
+
+  const link = code && language
+    ? (
+      <BrowserOnly>
+        {() => (
+          <Suspense fallback={null}>
+            <OpenInLiveLink language={language} code={code} address={fence?.address} />
+          </Suspense>
+        )}
+      </BrowserOnly>
+    )
+    : null;
 
   return (
-    <>
+    <OpenLinkContext.Provider value={link}>
       <CodeBlock {...props} />
-      {code && language && (
-        <BrowserOnly>
-          {() => (
-            <Suspense fallback={null}>
-              <OpenInLiveLink language={language} code={code} />
-            </Suspense>
-          )}
-        </BrowserOnly>
-      )}
-    </>
+    </OpenLinkContext.Provider>
   );
 }

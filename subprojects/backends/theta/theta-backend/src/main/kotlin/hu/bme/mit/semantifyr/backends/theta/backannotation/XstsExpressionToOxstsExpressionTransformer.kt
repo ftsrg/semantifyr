@@ -62,10 +62,10 @@ class XstsExpressionToOxstsExpressionTransformer @Inject constructor(
         }
         val typeSpecification = variable.typeSpecification?.takeIf {
             it.multiplicity != null
-        } ?: error("Theta's counterexample holds an array for the variable ${variable.name}, which is not an array")
+        } ?: error("Theta's output holds an array for the variable ${variable.name}, which is not an array")
         val slotCount = multiplicityRangeEvaluator.evaluate(typeSpecification).upperBound
         if (slotCount == RangeEvaluation.INFINITY) {
-            throw UnrepresentableWitnessValueException("Theta's counterexample holds an array for ${variable.name}, whose size is unbounded")
+            throw UnrepresentableWitnessValueException("Theta's output holds an array for ${variable.name}, whose size is unbounded")
         }
         return OxstsFactory.createArrayLiteral().also {
             for (index in 0..<slotCount) {
@@ -84,13 +84,13 @@ class XstsExpressionToOxstsExpressionTransformer @Inject constructor(
         return when (value) {
             is IntegerValue -> {
                 if (!value.value.fitsInt()) {
-                    throw UnrepresentableWitnessValueException("Theta's counterexample holds ${value.value}, beyond the 32-bit integers of OXSTS")
+                    throw UnrepresentableWitnessValueException("Theta's output holds ${value.value}, beyond the 32-bit integers of OXSTS")
                 }
                 OxstsFactory.createLiteralInteger(value.value.toInt())
             }
             is BooleanValue -> OxstsFactory.createLiteralBoolean(value.value)
             is EnumValue -> OxstsFactory.createElementReference(thetaDomainTransformer.getOriginal(value.literal))
-            is ArrayValue -> error("Theta's counterexample holds an array of arrays, which OXSTS has not")
+            is ArrayValue -> error("Theta's output holds an array of arrays, which OXSTS has not")
         }
     }
 }
@@ -104,7 +104,7 @@ private object XstsValueEvaluator : XstsExpressionVisitor<XstsValue>() {
     private fun integer(expression: XstsExpression): BigInteger {
         val value = visit(expression)
         check(value is IntegerValue) {
-            "Expected an integer in Theta's counterexample, got $value"
+            "Expected an integer in Theta's output, got $value"
         }
         return value.value
     }
@@ -112,7 +112,7 @@ private object XstsValueEvaluator : XstsExpressionVisitor<XstsValue>() {
     private fun boolean(expression: XstsExpression): Boolean {
         val value = visit(expression)
         check(value is BooleanValue) {
-            "Expected a boolean in Theta's counterexample, got $value"
+            "Expected a boolean in Theta's output, got $value"
         }
         return value.value
     }
@@ -120,7 +120,7 @@ private object XstsValueEvaluator : XstsExpressionVisitor<XstsValue>() {
     private fun array(expression: XstsExpression): ArrayValue {
         val value = visit(expression)
         check(value is ArrayValue) {
-            "Expected an array in Theta's counterexample, got $value"
+            "Expected an array in Theta's output, got $value"
         }
         return value
     }
@@ -182,7 +182,7 @@ private object XstsValueEvaluator : XstsExpressionVisitor<XstsValue>() {
     override fun visit(expression: ElementReferenceExpression): XstsValue {
         val element = expression.element
         check(element is EnumLiteral) {
-            "A value in Theta's counterexample refers to $element, not to an enum literal"
+            "A value in Theta's output refers to $element, not to an enum literal"
         }
         return EnumValue(element)
     }
@@ -238,7 +238,7 @@ private object XstsValueEvaluator : XstsExpressionVisitor<XstsValue>() {
 
     private fun checkIntegerIndexed(indexType: Type?) {
         check(indexType == null || indexType is IntegerType) {
-            "Theta's counterexample holds an array indexed by $indexType, OXSTS arrays are indexed by integers"
+            "Theta's output holds an array indexed by $indexType, OXSTS arrays are indexed by integers"
         }
     }
 }

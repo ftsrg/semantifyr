@@ -10,18 +10,19 @@ plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.nightly")
 }
 
-val sysmlCompiledExamples = configurations.dependencyScope("sysmlCompiledExamples")
-val sysmlCompiledExamplesFiles = configurations.resolvable("sysmlCompiledExamplesFiles") {
-    extendsFrom(sysmlCompiledExamples.get())
-    attributes(semantifyrArtifact("compiled-examples"))
+// the timed case is one of crossroads' further cases, so the model is compiled with them
+val nightlyTestSysmlCompiledCorpus = configurations.dependencyScope("nightlyTestSysmlCompiledCorpus")
+val nightlyTestSysmlCompiledCorpusFiles = configurations.resolvable("nightlyTestSysmlCompiledCorpusFiles") {
+    extendsFrom(nightlyTestSysmlCompiledCorpus.get())
+    attributes(semantifyrArtifact("compiled-corpus"))
 }
 
 dependencies {
-    sysmlCompiledExamples(project(":sysml-wrapper"))
+    nightlyTestSysmlCompiledCorpus(project(":sysml-wrapper"))
 }
 
 val syncSysmlCrossroads = tasks.register<Sync>("syncSysmlCrossroads") {
-    from(sysmlCompiledExamplesFiles) {
+    from(nightlyTestSysmlCompiledCorpusFiles) {
         include("crossroads.oxsts")
     }
     from(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/libraries/default")) {

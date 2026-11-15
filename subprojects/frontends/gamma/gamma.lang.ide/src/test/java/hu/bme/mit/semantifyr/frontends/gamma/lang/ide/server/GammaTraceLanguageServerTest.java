@@ -83,21 +83,23 @@ class GammaTraceLanguageServerTest {
     @Test
     void aTraceNextToItsModelLinksAgainstTheModelInTheIndex() throws Exception {
         var model = copy(MODELS.resolve("examples/Crossroads.gamma"), "Crossroads.gamma");
-        var trace =
-                copy(MODELS.resolve("etc/crossroads-ACanBeGreen.trace.gamma"), "Crossroads-ACanBeGreen.trace.gamma");
+        var cases = copy(MODELS.resolve("examples/CrossroadsFurtherCases.gamma"), "CrossroadsFurtherCases.gamma");
+        var trace = copy(MODELS.resolve("etc/crossroads-ACanBeGreen.trace.get"), "Crossroads-ACanBeGreen.get");
 
         initialize();
 
         assertThat(errors(client.awaitDiagnostics(model))).isEmpty();
+        assertThat(errors(client.awaitDiagnostics(cases))).isEmpty();
         assertThat(errors(client.awaitDiagnostics(trace))).isEmpty();
     }
 
     @Test
     void anOpenedTraceLinksAgainstTheModelInTheIndex() throws Exception {
         copy(MODELS.resolve("examples/Crossroads.gamma"), "Crossroads.gamma");
+        copy(MODELS.resolve("examples/CrossroadsFurtherCases.gamma"), "CrossroadsFurtherCases.gamma");
         initialize();
-        var trace = workspace.resolve("trace.gamma");
-        var text = Files.readString(MODELS.resolve("etc/crossroads-ACanBeGreen.trace.gamma"));
+        var trace = workspace.resolve("trace.get");
+        var text = Files.readString(MODELS.resolve("etc/crossroads-ACanBeGreen.trace.get"));
 
         languageServer.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri(trace), "gamma", 1, text)));
 
@@ -106,9 +108,9 @@ class GammaTraceLanguageServerTest {
 
     @Test
     void aTraceFollowsTheCaseItTracesWhenTheModelChanges() throws Exception {
-        var model = copy(MODELS.resolve("examples/Crossroads.gamma"), "Crossroads.gamma");
-        var trace =
-                copy(MODELS.resolve("etc/crossroads-ACanBeGreen.trace.gamma"), "Crossroads-ACanBeGreen.trace.gamma");
+        copy(MODELS.resolve("examples/Crossroads.gamma"), "Crossroads.gamma");
+        var model = copy(MODELS.resolve("examples/CrossroadsFurtherCases.gamma"), "CrossroadsFurtherCases.gamma");
+        var trace = copy(MODELS.resolve("etc/crossroads-ACanBeGreen.trace.get"), "Crossroads-ACanBeGreen.get");
         initialize();
         client.awaitDiagnostics(model);
         client.awaitDiagnostics(trace);
@@ -126,12 +128,11 @@ class GammaTraceLanguageServerTest {
     @Test
     void aTraceOfAnUnknownCaseReportsAnError() throws Exception {
         copy(MODELS.resolve("examples/Crossroads.gamma"), "Crossroads.gamma");
-        var trace = workspace.resolve("Unknown.trace.gamma");
+        var trace = workspace.resolve("Unknown.get");
         Files.writeString(trace, """
-                package Crossroads
+                import Crossroads
 
-                trace UnknownTrace of NoSuchCase {
-                }
+                trace UnknownTrace of NoSuchCase
                 """);
 
         initialize();
@@ -147,7 +148,7 @@ class GammaTraceLanguageServerTest {
         var cases = (List<?>) executeCommand("gamma.case.discover", new JsonPrimitive(uri(model)));
         var location = cases.stream()
                 .map(VerificationCaseSpecification.class::cast)
-                .filter(it -> it.label().equals("ACanBeGreen"))
+                .filter(it -> it.label().equals("RoadBCanGetGreen"))
                 .findFirst()
                 .orElseThrow()
                 .location();
@@ -158,7 +159,7 @@ class GammaTraceLanguageServerTest {
 
         assertThat(result.status()).isEqualTo(WitnessValidationStatus.ERRORED);
         assertThat(result.verdict()).isNull();
-        assertThat(result.message()).isEqualTo("Case Crossroads.ACanBeGreen has no witness yet, verify it first");
+        assertThat(result.message()).isEqualTo("Case Crossroads.RoadBCanGetGreen has no witness yet, verify it first");
         assertThat(result.portfolioId())
                 .isEqualTo(Portfolios.INSTANCE.getDefault().getId());
     }
@@ -172,7 +173,7 @@ class GammaTraceLanguageServerTest {
         var result = (CompiledOxstsResult) executeCommand("gamma.compiled.oxsts", new JsonPrimitive(uri(model)));
 
         assertThat(result.status()).isEqualTo(CompiledOxstsResult.COMPILED);
-        assertThat(result.oxsts()).startsWith("package Simple");
+        assertThat(result.oxsts()).startsWith("package _Simple");
         assertThat(result.message()).isNull();
     }
 

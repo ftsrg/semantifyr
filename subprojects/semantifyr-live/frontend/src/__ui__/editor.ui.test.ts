@@ -11,7 +11,7 @@ import { editorKeysOf } from '../testBrowser'
 import { casesListed, editor, test } from './harness'
 
 const BUILTIN = 'file:///workspace/.semantifyr/builtin/semantifyr.oxsts'
-const TRACE_ANNOTATION_LINE = 78
+const TRACE_ANNOTATION_LINE = 80
 
 // the text of the line the cursor is on in the document shown
 async function currentLine(page: Page): Promise<string> {
@@ -33,7 +33,7 @@ describe('going to a definition', () => {
       const position = { line: TRACE_ANNOTATION_LINE, character: 11 }
       return [{ uri: BUILTIN, range: { start: position, end: position } }]
     })
-    const page = await ui.open('/oxsts/basics')
+    const page = await ui.open('/oxsts/intersection')
     await casesListed(page)
 
     await page.locator('section.editor .view-line', { hasText: '@Trace' }).first().click()
@@ -48,7 +48,7 @@ describe('going to a definition', () => {
     await page.keyboard.press('Alt+ArrowLeft')
     await expect.poll(async () => {
       return editor(page).selectedTab.innerText()
-    }).toContain('basics.oxsts')
+    }).toContain('intersection.oxsts')
   })
 })
 
@@ -81,7 +81,7 @@ describe('going to a definition from inside a read-only document', () => {
       const position = { line, character: 0 }
       return [{ uri: BUILTIN, range: { start: position, end: position } }]
     })
-    const page = await ui.open('/oxsts/basics')
+    const page = await ui.open('/oxsts/intersection')
     await casesListed(page)
     await page.locator('section.editor .view-line', { hasText: '@Trace' }).first().click()
     await page.keyboard.press('F12')
@@ -107,17 +107,17 @@ describe('going to a definition from inside a read-only document', () => {
       if (request.method !== 'textDocument/definition') {
         return recorded()
       }
-      const position = { line: 70, character: 6 }
+      const position = { line: 48, character: 6 }
       return [{ uri: STATECHARTS, range: { start: position, end: position } }]
     })
-    const page = await ui.open('/gamma/level-crossing')
+    const page = await ui.open('/gamma/level-crossing', { height: 1600 })
     await casesListed(page)
     await page.locator('.results-header .model-oxsts-button').click()
     await expect.poll(async () => {
-      return page.locator('section.editor .view-line', { hasText: 'class Track : Statechart' }).count()
+      return page.locator('section.editor .view-line', { hasText: 'class _Track : Statechart' }).count()
     }).toBe(1)
 
-    await page.locator('section.editor .view-line', { hasText: 'class Track : Statechart' }).click()
+    await page.locator('section.editor .view-line', { hasText: 'class _Track : Statechart' }).click()
     await page.keyboard.press('F12')
 
     await expect.poll(async () => {

@@ -37,12 +37,14 @@ class SpinSmokeTest {
             .loadModels(Path("build/test-models/smoke"))
             .buildAndResolve()
 
+        val case = helper.collectVerificationCases(context).single()
         helper.checkVerificationCase(
             context = context,
-            case = helper.collectVerificationCases(context).single(),
+            case = case,
             verificationPortfolio = SingleBackendPortfolio(SpinBackend(), SpinConfig.SafeDfs),
             validationPortfolio = SingleBackendPortfolio(SpinBackend(), SpinConfig.SafeDfs),
             outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(SpinSmokeTest::class.java),
+            expectedVerdict = helper.expectedVerdictFromTags(case),
         )
     }
 }

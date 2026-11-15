@@ -20,7 +20,7 @@ class MemberCompletionTest extends OxstsLanguageServerTest {
     @Test
     void completionAfterADotInAnInlineCallOffersTheTransitionsOfTheFeatureType() throws Exception {
         var model = MarkedText.of("""
-                package example::trafficlight::basics
+                package example::trafficlights
 
                 enum LightColor {
                     Red,

@@ -15,9 +15,15 @@ import org.eclipse.emf.mwe2.ecore.EcoreGenerator
 import java.io.File
 
 fun main(args: Array<String>) {
-    val sourceDirectory = File(args[0]).absoluteFile
-    val modelDirectory = File(args[1]).absoluteFile
-    val ePackage = Oxsts.toEPackage()
+    generateModel(Oxsts, File(args[0]).absoluteFile, File(args[1]).absoluteFile)
+}
+
+fun generateModel(
+    metaPackage: MetaPackage,
+    sourceDirectory: File,
+    modelDirectory: File,
+) {
+    val ePackage = metaPackage.toEPackage()
 
     EcorePlugin.getPlatformResourceMap()["emf-gen"] = URI.createFileURI("$sourceDirectory/")
     val resourceSet = ResourceSetImpl()

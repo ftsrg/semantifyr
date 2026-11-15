@@ -110,10 +110,36 @@ class GammaVerifyCommandTest {
     }
 
     @Test
+    suspend fun `a workspace resolves imports from another directory`(@TempDir artifacts: Path) {
+        val portfolio = fakePortfolio("fixed", VerificationVerdict.Passed)
+        val model = Path("src/test/resources/workspace/models/Panel.gamma")
+
+        val withoutWorkspace = runGammaCli("verify", "--portfolio", portfolio.id, "-d", artifacts.toString(), model.toString(), portfolios = listOf(portfolio))
+        val withWorkspace = runGammaCli(
+            "verify", "--portfolio", portfolio.id, "-d", artifacts.toString(),
+            "--workspace", "src/test/resources/workspace",
+            model.toString(),
+            portfolios = listOf(portfolio),
+        )
+
+        assertThat(withoutWorkspace.statusCode).describedAs(withoutWorkspace.output).isEqualTo(4)
+        assertThat(withoutWorkspace.stderr).contains("Toggle")
+        assertThat(withWorkspace.statusCode).describedAs(withWorkspace.output).isZero()
+    }
+
+    @Test
     suspend fun `the root command names its launcher`() {
         val result = runGammaCli("--version")
 
         assertThat(result.statusCode).isZero()
         assertThat(result.stdout).startsWith("semantifyr-gamma version ")
+    }
+
+    @Test
+    suspend fun `the launcher can list the portfolios`() {
+        val result = runGammaCli("--help")
+
+        assertThat(result.statusCode).isZero()
+        assertThat(result.stdout).containsPattern("\\n\\s+portfolios\\s+List the portfolios")
     }
 }

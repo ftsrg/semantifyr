@@ -50,7 +50,7 @@ suspend fun verifyEndToEnd(
                         id = 3,
                         command = verifyCommand,
                         arguments = listOf(
-                            VerificationCaseRequest(documentUri, selectedCase.location().range, "smart-full"),
+                            VerificationCaseRequest(documentUri, selectedCase.location().range, "smart"),
                         ),
                     ),
                 ),

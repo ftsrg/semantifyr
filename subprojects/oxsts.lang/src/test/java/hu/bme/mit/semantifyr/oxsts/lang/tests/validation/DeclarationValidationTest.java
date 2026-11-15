@@ -544,7 +544,7 @@ public class DeclarationValidationTest {
             """, CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
-        parsedPackage.assertHasValidationIssue(OxstsValidator.INCORRECT_CALLED_ELEMENT, "not callable");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.INCORRECT_CALLED_ELEMENT, "cannot be called");
     }
 
     @Test
@@ -558,7 +558,7 @@ public class DeclarationValidationTest {
             """, CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
-        parsedPackage.assertHasValidationIssue(OxstsValidator.INCORRECT_ASSIGNMENT, "Only variables");
+        parsedPackage.assertHasValidationIssue(OxstsValidator.INCORRECT_ASSIGNMENT, "Only a variable can be assigned");
     }
 
     @Test

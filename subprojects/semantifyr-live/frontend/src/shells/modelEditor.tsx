@@ -6,6 +6,7 @@
 
 import type React from 'react'
 import { useEffect, useRef } from 'react'
+import type { LiveEditorLines } from '@semantifyr/editor-common'
 
 import type { LiveFlavor } from '../examples'
 import { setLibraryReader } from '../lib/session/monaco'
@@ -23,6 +24,9 @@ interface EditorOptions {
   verdictMarks: boolean
   wrapping?: boolean
   onContentHeight?: (height: number) => void
+  openAt?: LiveEditorLines
+  onShown?: () => void
+  tabLeaves?: boolean
 }
 
 function EditorHost({ document, flavor, colorMode, options }: { document: DocumentRecord, flavor: LiveFlavor, colorMode: ResolvedColorMode, options: EditorOptions }): React.JSX.Element {
@@ -50,6 +54,9 @@ function EditorHost({ document, flavor, colorMode, options }: { document: Docume
       verdictMarks: mountedOptions.verdictMarks,
       wrapping: mountedOptions.wrapping === true,
       ...(mountedOptions.onContentHeight ? { onContentHeight: mountedOptions.onContentHeight } : {}),
+      ...(mountedOptions.openAt ? { openAt: mountedOptions.openAt } : {}),
+      ...(mountedOptions.onShown ? { onShown: mountedOptions.onShown } : {}),
+      tabLeaves: mountedOptions.tabLeaves === true,
     })
     return () => {
       void binding.dispose()
@@ -60,7 +67,7 @@ function EditorHost({ document, flavor, colorMode, options }: { document: Docume
 }
 
 // the model in the one editor of the embed and the phone, which have no tabs
-export function ModelEditor({ colorMode, verdictMarks, wrapping, onContentHeight }: { colorMode: ResolvedColorMode } & EditorOptions): React.JSX.Element | null {
+export function ModelEditor({ colorMode, verdictMarks, wrapping, onContentHeight, openAt, onShown, tabLeaves }: { colorMode: ResolvedColorMode } & EditorOptions): React.JSX.Element | null {
   const live = useLive()
   const flavor = useFlavor(live)
   const document = useCurrentDocument(live)
@@ -74,7 +81,7 @@ export function ModelEditor({ colorMode, verdictMarks, wrapping, onContentHeight
   if (!flavor || !document) {
     return null
   }
-  return <EditorHost key={flavor.languageId} document={document} flavor={flavor} colorMode={colorMode} options={{ verdictMarks, wrapping: wrapping === true, ...(onContentHeight ? { onContentHeight } : {}) }} />
+  return <EditorHost key={flavor.languageId} document={document} flavor={flavor} colorMode={colorMode} options={{ verdictMarks, wrapping: wrapping === true, ...(onContentHeight ? { onContentHeight } : {}), ...(openAt ? { openAt } : {}), ...(onShown ? { onShown } : {}), tabLeaves: tabLeaves === true }} />
 }
 
 // a read-only document the editor opened, a library's definition or a trace's text, and the way back

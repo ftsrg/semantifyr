@@ -1,0 +1,12 @@
+package manual::GuardMachine
+
+
+
+
+ cascade GuardMachineWrapper [
+ 	port portA : requires portA
+ ] {
+ 	component guardMachine : GuardMachine
+ 	
+ 	bind portA -> guardMachine.portA
+ }

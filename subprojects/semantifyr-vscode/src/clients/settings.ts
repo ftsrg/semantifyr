@@ -16,7 +16,7 @@ import type {
 export function readSemantifyrSettings(): ServerSettings {
     const config = workspace.getConfiguration("semantifyr");
     return {
-        portfolio: config.get<string>("portfolio", "smart-full"),
+        portfolio: config.get<string>("portfolio", "smart"),
         timeoutSeconds: config.get<number>("timeoutSeconds", 300),
         theta: {
             executor: config.get<ThetaExecutor>("theta.executor", "auto"),

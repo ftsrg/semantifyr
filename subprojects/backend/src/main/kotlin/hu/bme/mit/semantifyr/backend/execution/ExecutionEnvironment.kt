@@ -48,7 +48,7 @@ class ExecutionEnvironment private constructor(
             get(key).isAvailable()
         }.getOrElse {
             return AvailabilityReport.Unavailable(
-                reason = "${key.name}: probe failed: ${it.message ?: it::class.simpleName}",
+                reason = "${key.name} could not be started: ${it.message ?: it::class.simpleName}",
                 hints = key.unavailableHints,
             )
         }
@@ -56,7 +56,7 @@ class ExecutionEnvironment private constructor(
             AvailabilityReport.Available
         } else {
             AvailabilityReport.Unavailable(
-                reason = "${key.name}: configured executor is not available on this host",
+                reason = "${key.name} cannot be run on this machine",
                 hints = key.unavailableHints,
             )
         }

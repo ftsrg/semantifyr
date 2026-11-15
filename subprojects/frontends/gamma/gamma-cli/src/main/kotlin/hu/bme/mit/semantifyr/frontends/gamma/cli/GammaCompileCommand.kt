@@ -16,7 +16,6 @@ import com.github.ajalt.clikt.parameters.types.path
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.cli.common.CommandExit
 import hu.bme.mit.semantifyr.cli.common.ExitCode
-import hu.bme.mit.semantifyr.cli.common.checkInputFile
 import hu.bme.mit.semantifyr.frontends.gamma.GammaCompiler
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
@@ -31,11 +30,15 @@ class GammaCompileCommand(
 
     private val model by argument("model path")
         .path()
-        .help("Gamma model file.")
+        .help("A Gamma model file, ending in .gamma or .gcd.")
 
     private val outputPath by option("-o", "--output")
         .path(canBeDir = false)
-        .help("Output file.")
+        .help("The output file; the model's path with .oxsts in place of its ending by default.")
+
+    private val workspace by option("--workspace")
+        .path(mustExist = true, canBeFile = false)
+        .help("The directory whose Gamma files, in it and below it, the model's imports resolve in; by default the Gamma files of the model's own directory, and none below it.")
 
     override fun help(context: Context): String {
         return "Compile a Gamma model to OXSTS."
@@ -46,9 +49,9 @@ class GammaCompileCommand(
             "compile model=$model output=$outputPath"
         }
 
-        checkInputFile("Model", model, GAMMA_FILE_SUFFIX)
+        checkGammaModel(model)
         val target = outputPath ?: model.resolveSibling("${model.nameWithoutExtension}.oxsts")
-        val gammaModel = readGammaModel(gammaInjector, model)
+        val gammaModel = readGammaModel(gammaInjector, model, workspace)
 
         echo("Compiling $model to $target")
         try {

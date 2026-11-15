@@ -27,7 +27,7 @@ export const passedResult: VerificationCaseResult = {
   status: 'passed',
   message: null,
   backendId: 'theta-cegar',
-  portfolioId: 'smart-full',
+  portfolioId: 'smart',
   metrics: sampleMetrics,
   trace: null,
 };
@@ -36,7 +36,7 @@ export const failedResult: VerificationCaseResult = {
   status: 'failed',
   message: 'property fails',
   backendId: 'theta-cegar',
-  portfolioId: 'smart-full',
+  portfolioId: 'smart',
   metrics: sampleMetrics,
   trace: sampleTrace,
 };

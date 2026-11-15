@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import { SYNTAX_RULES } from '@semantifyr/editor-common/syntax'
 import * as vscode from 'vscode'
 
 import type { ResolvedColorMode } from '../util/colorMode'
@@ -75,8 +76,8 @@ export function editorColorsFrom(read: TokenReader): EditorColors {
     'editorSuggestWidget.foreground': token('text-primary'),
     'editorSuggestWidget.selectedBackground': token('surface-selected'),
     'editorSuggestWidget.selectedForeground': token('text-primary'),
-    'editorSuggestWidget.highlightForeground': token('accent'),
-    'editorSuggestWidget.focusHighlightForeground': token('accent'),
+    'editorSuggestWidget.highlightForeground': token('accent-ink'),
+    'editorSuggestWidget.focusHighlightForeground': token('accent-ink'),
     'peekView.border': token('border-strong'),
     'peekViewEditor.background': token('surface-readonly'),
     'peekViewResult.background': token('surface-panel'),
@@ -86,15 +87,15 @@ export function editorColorsFrom(read: TokenReader): EditorColors {
     'list.activeSelectionForeground': token('text-primary'),
     'list.inactiveSelectionBackground': token('surface-selected'),
     'list.focusOutline': token('border-strong'),
-    'list.highlightForeground': token('accent'),
+    'list.highlightForeground': token('accent-ink'),
     'input.background': token('surface-inset'),
     'input.border': token('border'),
     'input.foreground': token('text-primary'),
-    'inputOption.activeBorder': token('accent'),
-    'focusBorder': token('accent'),
-    'textLink.foreground': token('accent'),
-    'textLink.activeForeground': token('accent-hover'),
-    'editorLink.activeForeground': token('accent'),
+    'inputOption.activeBorder': token('accent-ink'),
+    'focusBorder': token('accent-ink'),
+    'textLink.foreground': token('accent-ink'),
+    'textLink.activeForeground': token('accent-ink'),
+    'editorLink.activeForeground': token('accent-ink'),
     'scrollbarSlider.background': token('surface-selected'),
     'scrollbarSlider.hoverBackground': token('surface-selected'),
     'scrollbarSlider.activeBackground': token('surface-selected'),
@@ -108,20 +109,15 @@ export function editorColorsFrom(read: TokenReader): EditorColors {
   const number = token('syntax-number')
   const comment = token('syntax-comment')
   const operator = token('syntax-operator')
-  const punctuation = token('syntax-punctuation')
   const functionColor = token('syntax-function')
   return {
     workbench,
-    textMateRules: [
-      { scope: ['comment', 'punctuation.definition.comment'], settings: { foreground: comment, fontStyle: 'italic' } },
-      { scope: ['string', 'punctuation.definition.string'], settings: { foreground: string } },
-      { scope: ['constant.numeric'], settings: { foreground: number } },
-      { scope: ['constant.language', 'keyword', 'keyword.control', 'storage.type', 'storage.modifier'], settings: { foreground: keyword } },
-      { scope: ['keyword.operator'], settings: { foreground: operator } },
-      { scope: ['punctuation'], settings: { foreground: punctuation } },
-      { scope: ['entity.name.type', 'entity.name.class', 'support.type'], settings: { foreground: type } },
-      { scope: ['entity.name.function', 'support.function'], settings: { foreground: functionColor } },
-    ],
+    textMateRules: SYNTAX_RULES.map((rule) => {
+      return {
+        scope: [...rule.scopes],
+        settings: rule.italic ? { foreground: token(rule.token), fontStyle: 'italic' } : { foreground: token(rule.token) },
+      }
+    }),
     semanticRules: {
       namespace: name,
       type,

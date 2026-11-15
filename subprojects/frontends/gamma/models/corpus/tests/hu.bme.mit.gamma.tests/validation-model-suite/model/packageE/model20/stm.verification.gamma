@@ -1,0 +1,27 @@
+package validation::package_e_20::stm_verification
+
+import validation::package_e_20
+
+verification case StateC1Reachable of statemachine {
+    EF state Main.C1
+}
+
+verification case StateS1Reachable of statemachine {
+    EF state R1.S1
+}
+
+verification case StateS2Reachable of statemachine {
+    EF state R1.S2
+}
+
+verification case StateS3Reachable of statemachine {
+    EF state R1.S3
+}
+
+verification case StateS4Reachable of statemachine {
+    EF state R2.S4
+}
+
+verification case StateS5Reachable of statemachine {
+    EF state Main.S5
+}

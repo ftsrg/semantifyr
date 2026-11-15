@@ -5,14 +5,13 @@
  */
 
 a.button { text-decoration: none; }
-:where(button, [tabindex], a):focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 1px; }
+:where(button, [tabindex], a):focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 1px; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 .floating { z-index: 40; outline: none; }
 .floating > .menu { position: relative; outline: none; }
 .menu-item { color: var(--text-primary); font-size: var(--text-body); }
-.menu-item[data-highlighted] { background: var(--surface-hover); }
-.menu-item:focus-visible { outline: none; background: var(--surface-hover); }
+.menu-item[data-highlighted], .menu-item:focus-visible { outline: none; background: var(--surface-selected); box-shadow: inset 3px 0 0 var(--accent-ink); }
 .menu-heading { display: block; }
 
 .scrim { position: fixed; inset: 0; z-index: 50; }
@@ -34,5 +33,5 @@ a.button { text-decoration: none; }
 .verdict-glyph-not-run::before, .verdict-glyph-queued::before { border: 1.5px dashed var(--verdict-pending); }
 .verdict-glyph-queued::after { background: var(--verdict-pending); -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M8 4.9V8l2.1 1.4' fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.7'/></svg>"); mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M8 4.9V8l2.1 1.4' fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.7'/></svg>"); }
 .verdict-glyph-running::before { border: 1.5px solid color-mix(in srgb, var(--text-secondary) 22%, transparent); border-top-color: var(--text-secondary); animation: verdict-glyph-spin 0.9s linear infinite; }
-.verdict-glyph-outdated { opacity: 0.4; }
+.verdict-glyph-outdated { opacity: 0.75; }
 @keyframes verdict-glyph-spin { to { transform: translate(-50%, -50%) rotate(360deg); } }

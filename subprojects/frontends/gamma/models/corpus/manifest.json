@@ -1,0 +1,594 @@
+{
+    "models": [
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Asynchronous/Statechart/Adder.verification.gamma",
+            "cases": [
+                { "name": "StateAReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Asynchronous/Statechart/Counter.verification.gamma",
+            "cases": [
+                { "name": "StateAReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateBReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Asynchronous/Statechart/Subtractor.verification.gamma",
+            "cases": [
+                { "name": "StateAReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Asynchronous/System/AsynchronousSystem.verification.gamma",
+            "cases": [
+                { "name": "StateAdderAReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateSubtractorAReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateCounterAReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateCounterBReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "CounterReturnsToA", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Clock/Adapter/Adder.verification.gamma",
+            "cases": [
+                { "name": "StateXReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Clock/Adapter/Subtractor.verification.gamma",
+            "cases": [
+                { "name": "StateYReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Clock/Statechart/Adder.verification.gamma",
+            "cases": [
+                { "name": "StateXReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Clock/Statechart/Counter.verification.gamma",
+            "cases": [
+                { "name": "StateAReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateBReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Clock/Statechart/Subtractor.verification.gamma",
+            "cases": [
+                { "name": "StateYReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Clock/System/ClockSystem.verification.gamma",
+            "cases": [
+                { "name": "StateAdderXReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateSubtractorYReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateCounterAReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateCounterBReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "CounterReturnsToA", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/ComplexStatechart/ComplexStatechart/BottomUpComplexStatechart.verification.gamma",
+            "cases": [
+                { "name": "StateAReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateAAReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateABReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateABAAReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateABABReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateABBAReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateABBBReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateBAReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateBBReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateBReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateCReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/ComplexStatechart/ComplexStatechart/TopDownComplexStatechart.verification.gamma",
+            "cases": [
+                { "name": "StateAReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateAAReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateBAReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateBReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateCReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Crossroads/Controller/Controller.verification.gamma",
+            "cases": [
+                { "name": "StateOperatingReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateInitReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateGReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateSecondaryPreparesReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StatePriorityPreparesReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StatePriorityReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateSecondaryReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Crossroads/Controller/ControllerAdapter.verification.gamma",
+            "cases": [
+                { "name": "StateOperatingReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateInitReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateGReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateSecondaryPreparesReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StatePriorityPreparesReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StatePriorityReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateSecondaryReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Crossroads/Monitor/Monitor.verification.gamma",
+            "cases": [
+                { "name": "StateErrorReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateOtherReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateRedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateGreenReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Crossroads/System/Cascade/Crossroad.verification.gamma",
+            "cases": [
+                { "name": "ControllerOperatingReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "ControllerInitReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "ControllerGReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "ControllerSecondaryPreparesReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "ControllerPriorityPreparesReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "ControllerPriorityReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "ControllerSecondaryReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "PriorInterruptedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "PriorBlackReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "PriorBlinkingYellowReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "PriorNormalReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "PriorYellowReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "PriorRedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "PriorGreenReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "SecondInterruptedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "SecondBlackReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "SecondBlinkingYellowReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "SecondNormalReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "SecondYellowReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "SecondRedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "SecondGreenReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "PriorTransitionFromInterruptedToNormalFires", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "PriorTransitionFromYellowToRedFires", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "SecondTransitionFromInterruptedToNormalFires", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "SecondTransitionFromYellowToRedFires", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Crossroads/System/Monitored/MonitoredCrossroad.verification.gamma",
+            "cases": [
+                { "name": "CrossroadControllerOperatingReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "CrossroadControllerInitReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "CrossroadControllerGReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "CrossroadControllerSecondaryPreparesReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "CrossroadControllerPriorityPreparesReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "CrossroadControllerPriorityReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "CrossroadControllerSecondaryReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "CrossroadPriorInterruptedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "CrossroadPriorBlackReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "CrossroadPriorBlinkingYellowReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "CrossroadPriorNormalReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "CrossroadPriorYellowReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "CrossroadPriorRedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "CrossroadPriorGreenReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "CrossroadSecondInterruptedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "CrossroadSecondBlackReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "CrossroadSecondBlinkingYellowReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "CrossroadSecondNormalReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "CrossroadSecondYellowReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "CrossroadSecondRedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "CrossroadSecondGreenReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "MonitorOtherReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "MonitorRedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "MonitorGreenReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Crossroads/System/ScheduledAsynchronous/Crossroad.verification.gamma",
+            "cases": [
+                { "name": "StateControllerOperatingReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateControllerInitReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateControllerGReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateControllerSecondaryPreparesReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateControllerPriorityPreparesReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateControllerPriorityReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateControllerSecondaryReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StatePriorInterruptedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StatePriorBlackReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StatePriorBlinkingYellowReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StatePriorNormalReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StatePriorYellowReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StatePriorRedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StatePriorGreenReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateSecondInterruptedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateSecondBlackReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateSecondBlinkingYellowReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateSecondNormalReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateSecondYellowReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateSecondRedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateSecondGreenReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Crossroads/System/Synchronous/Crossroad.verification.gamma",
+            "cases": [
+                { "name": "ControllerOperatingReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "ControllerInitReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "ControllerGReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "ControllerSecondaryPreparesReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "ControllerPriorityPreparesReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "ControllerPriorityReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "ControllerSecondaryReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "PriorInterruptedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "PriorBlackReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "PriorBlinkingYellowReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "PriorNormalReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "PriorYellowReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "PriorRedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "PriorGreenReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "SecondInterruptedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "SecondBlackReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "SecondBlinkingYellowReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "SecondNormalReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "SecondYellowReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "SecondRedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "SecondGreenReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Crossroads/TrafficLight/AsynchronousTrafficLightCtrl.verification.gamma",
+            "cases": [
+                { "name": "StateInterruptedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateBlackReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateBlinkingYellowReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateNormalReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateYellowReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateRedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateGreenReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Crossroads/TrafficLight/TrafficLightCtrl.verification.gamma",
+            "cases": [
+                { "name": "StateInterruptedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateBlackReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateBlinkingYellowReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateNormalReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateYellowReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateRedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateGreenReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Crossroads/TrafficLight/TrafficLightCtrlAdapter.verification.gamma",
+            "cases": [
+                { "name": "StateInterruptedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateBlackReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateBlinkingYellowReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateNormalReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateYellowReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateRedReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateGreenReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Manual/model/EmbeddedStructMachineVarMachine/EmbeddedStructMachineVarMachine.verification.gamma",
+            "cases": [
+                { "name": "StateEmbeddedStructMachineVarMachineStateReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Manual/model/EmbeddedStructMachineVarMachine/EmbeddedStructMachineVarMachineWrapper.verification.gamma",
+            "cases": [
+                { "name": "EmbeddedStructMachineVarMachineEmbeddedStructMachineVarMachineStateReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Manual/model/GuardMachine/GuardMachine.verification.gamma",
+            "cases": [
+                { "name": "StateGuardMachineStateReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Manual/model/GuardMachine/GuardMachineWrapper.verification.gamma",
+            "cases": [
+                { "name": "GuardMachineGuardMachineStateReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Manual/model/MachineVarMachine/MachineVarMachine.verification.gamma",
+            "cases": [
+                { "name": "StateMachineVarMachineStateReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Manual/model/MachineVarMachine/MachineVarMachineWrapper.verification.gamma",
+            "cases": [
+                { "name": "MachineVarMachineMachineVarMachineStateReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Manual/model/StructMachineVarMachine/StructMachineVarMachine.verification.gamma",
+            "cases": [
+                { "name": "StateStructMachineVarMachineStateReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Manual/model/StructMachineVarMachine/StructMachineVarMachineWrapper.verification.gamma",
+            "cases": [
+                { "name": "StructMachineVarMachineStructMachineVarMachineStateReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Manual/model/StructRecieverGuardMachine/StructRecieverGuardMachine.verification.gamma",
+            "cases": [
+                { "name": "StateStructRecieverGuardMachineStateReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Manual/model/StructRecieverGuardMachine/StructRecieverGuardMachineWrapper.verification.gamma",
+            "cases": [
+                { "name": "StructRecieverGuardMachineStructRecieverGuardMachineStateReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Manual/model/StructRecieverMachine/StructRecieverMachine.verification.gamma",
+            "cases": [
+                { "name": "StateStructRecieverMachineStateReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/Manual/model/StructRecieverMachine/StructRecieverMachineWrapper.verification.gamma",
+            "cases": [
+                { "name": "StructRecieverMachineStructRecieverMachineStateReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/model/SSM/GroundStation/GroundStation.verification.gamma",
+            "cases": [
+                { "name": "StateIdleReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateOperationReachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateWaitingReachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageA/model01/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS1Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageA/model02/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS0Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS1Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageA/model03/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS0Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS1Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageA/model04/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS0Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS1Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS2Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageA/model05/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS0Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS1Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS2Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS3Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageA/model06/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS0Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS1Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS2Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageA/model07/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS0Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS1Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS3Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageA/model08/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS0Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS1Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS2Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS3Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageB/model09/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS1Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageB/model10/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS0Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS1Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageC/model11/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS0Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS1Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageC/model22/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS0Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "TransitionFromS0ToS0Fires", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageD/model12/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS0Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS1Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS11Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS12Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageD/model13/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS0Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS1Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS11Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS12Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageD/model14/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS0Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS1Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS11Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS12Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageD/model15/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS0Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS1Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS11Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS12Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageD/model23/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS0Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS1Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS11Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageE/model16/stm.verification.gamma",
+            "cases": [
+                { "name": "StateC1Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS1Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS2Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS3Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS4Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageE/model17/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS0Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateC1Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS1Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS11Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS2Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS22Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageE/model20/stm.verification.gamma",
+            "cases": [
+                { "name": "StateC1Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS1Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS2Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS3Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS4Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS5Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageE/model21/stm.verification.gamma",
+            "cases": [
+                { "name": "StateC1Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS11Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS12Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS13Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS14Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageF/model24/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS0Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "TransitionFromS0ToS0Fires", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageF/model25/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS0Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "TransitionFromS0ToS0Fires", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageF/model26/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS0Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageF/model27/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS0Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageF/model28/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS0Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS1Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS2Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "TransitionFromS1ToS1Fires", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageF/model30/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS0Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "TransitionFromS0ToS0Fires", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageF/model31/stm.verification.gamma",
+            "cases": [
+                { "name": "StateS0Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS1Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        },
+        {
+            "file": "tests/hu.bme.mit.gamma.tests/validation-model-suite/model/packageF/model32/stm.verification.gamma",
+            "cases": [
+                { "name": "StateC1Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS1Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS2Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS3Reachable", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "StateS4Reachable", "verdict": "Passed", "tier": "Nightly" }
+            ]
+        }
+    ]
+}

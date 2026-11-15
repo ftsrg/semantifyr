@@ -12,6 +12,7 @@
 
 /* a tablet: the buttons and the languages not chosen keep their icons and drop their words, which stay their names */
 @media (max-width: 1099.98px) {
+  .toolbar-group-end { gap: var(--space-1); }
   .toolbar-group-end > .button-quiet { gap: 0; padding: 0 var(--space-3); font-size: 0; }
   .toolbar-group-end > .button-quiet .icon { width: 16px; height: 16px; }
   .toolbar-group-end .save-split-save { gap: 0; padding: 0 var(--space-3); font-size: 0; }

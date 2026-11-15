@@ -5,23 +5,23 @@
  */
 
 import type React from 'react'
+import { type VerdictStatus, LanguageMark, VerdictMark } from '@semantifyr/editor-common/marks'
 
 import { parseLiveEditorUrl } from '@semantifyr/editor-common'
-import { findExample } from '../../examples'
 import { initializationStepsOf, presentationOf } from '../../lib/language/presentation'
 import { areCasesKnown, initializationOf } from '../../lib/stores/initialization'
 import { useStore } from '../../lib/stores/useStore'
 import type { ResolvedColorMode } from '../../lib/util/colorMode'
-import { caseRowOf, countsOf, type CaseCounts, type CaseRow, type RowStatus } from '../../lib/workspace/caseRows'
+import { caseRowOf, countsOf, type CaseCounts, type CaseRow } from '../../lib/workspace/caseRows'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import { stepTimeText } from '../../lib/workspace/shellStatus'
+import { noCases, SERVER_NOT_ANSWERING, VERDICT_WORDS, VERIFY_ALL_HELD } from '../../texts'
 import { Icon } from '../../ui/icons'
-import { LanguageMark, ValidationMark, VerdictMark } from '../../ui/marks'
-import { addressProblemText } from '../desktop/Orientation'
+import { ValidationMark } from '../../ui/marks'
+import { addressProblemText } from '../desktop/AddressError'
 import { documentLabel, useCurrentDocument, useFlavor, useNow } from '../hooks'
 import { BackToModel, ModelEditor } from '../modelEditor'
 import { useShell } from '../shellContext'
-import { dismissOrientation } from '../shellState'
 import { EditControl, useTouchInput } from '../touch'
 import type { TraceSlot } from '../traceSlot'
 
@@ -47,46 +47,6 @@ export function AddressError(): React.JSX.Element | null {
         aria-label="Dismiss"
         onClick={() => {
           live.address.set(null)
-        }}
-      >
-        <Icon name="close" size="small" />
-      </button>
-    </div>
-  )
-}
-
-function Orientation(): React.JSX.Element | null {
-  const live = useLive()
-  const shell = useShell()
-  const document = useCurrentDocument(live)
-  const flavor = useFlavor(live)
-  const verification = useCurrentVerification(live)
-  const dismissed = useStore(shell.dismissedOrientations)
-  if (!document || !flavor || document.shared || dismissed.has(document.key)) {
-    return null
-  }
-  const example = findExample(flavor, document.example.id)
-  if (!example) {
-    return null
-  }
-  const count = verification.discovery === 'discovered' ? verification.cases.length : null
-  const cases = count === null ? '' : count === 0 ? ' It has no verification cases yet.' : ` It has ${count} verification ${count === 1 ? 'case' : 'cases'}.`
-  return (
-    <div className="phone-orientation">
-      <span className="orientation-mark" />
-      <span className="orientation-text">
-        <strong>{`${example.label}.`}</strong>
-        {` ${example.description}${cases} Press `}
-        <strong>Verify all</strong>
-        {count === 1 ? ' to check it.' : ' to check them.'}
-      </span>
-      <button
-        type="button"
-        className="phone-icon-button"
-        title="Dismiss"
-        aria-label="Dismiss"
-        onClick={() => {
-          dismissOrientation(shell, document.key)
         }}
       >
         <Icon name="close" size="small" />
@@ -133,7 +93,6 @@ export function ModelPane({ colorMode, hidden }: { colorMode: ResolvedColorMode,
   const editing = useStore(shell.editing)
   return (
     <section className={`pane pane-model${editing ? ' is-editing' : ''}`} data-language={flavor?.languageId} aria-label="Model" hidden={hidden}>
-      {editing ? null : <Orientation />}
       <ModelBar />
       <BackToModel />
       <div className="pane-editor">
@@ -143,11 +102,11 @@ export function ModelPane({ colorMode, hidden }: { colorMode: ResolvedColorMode,
   )
 }
 
-const COUNT_GROUPS: readonly { status: RowStatus & keyof CaseCounts, label: string }[] = [
-  { status: 'passed', label: 'Passed' },
-  { status: 'failed', label: 'Failed' },
-  { status: 'inconclusive', label: 'Inconclusive' },
-  { status: 'error', label: 'Error' },
+const COUNT_GROUPS: readonly { status: VerdictStatus & keyof CaseCounts, label: string }[] = [
+  { status: 'passed', label: VERDICT_WORDS.passed },
+  { status: 'failed', label: VERDICT_WORDS.failed },
+  { status: 'inconclusive', label: VERDICT_WORDS.inconclusive },
+  { status: 'error', label: VERDICT_WORDS.error },
 ]
 
 function Counts({ counts }: { counts: CaseCounts }): React.JSX.Element {
@@ -194,7 +153,7 @@ function Initialization(): React.JSX.Element {
   })
   const failed = failedStep !== undefined
   const note = waiting
-    ? 'The server is not answering. The model can be edited and its verification cases are known once it answers.'
+    ? SERVER_NOT_ANSWERING
     : failedStep?.reason ?? (failed ? 'The verification cases are listed once a session has found them.' : null)
   return (
     <div className="phone-init" data-language={languageId}>
@@ -223,7 +182,7 @@ function Initialization(): React.JSX.Element {
         ? (
           <div className="phone-init-pressed">
             <Icon name="clock" />
-            <span>Verify all is pressed. Every case runs as soon as initialization has finished.</span>
+            <span>{VERIFY_ALL_HELD}</span>
           </div>
         )
         : null}
@@ -297,6 +256,7 @@ function useCasesListed(): boolean {
 
 export function ResultsPane({ onPane }: { onPane: (pane: Pane) => void }): React.JSX.Element {
   const live = useLive()
+  const flavor = useFlavor(live)
   const verification = useCurrentVerification(live)
   const selection = useStore(live.selection)
   const listed = useCasesListed()
@@ -330,7 +290,7 @@ export function ResultsPane({ onPane }: { onPane: (pane: Pane) => void }): React
                   return <CaseRowView key={row.id} row={row} selected={row.id === selection} onOpen={open} />
                 })}
               </div>
-              {rows.length === 0 ? <p className="pane-hint">The model has no verification cases.</p> : null}
+              {rows.length === 0 ? <p className="pane-hint">{noCases(flavor?.languageId ?? '')}</p> : null}
             </>
           )
           : <Initialization />}

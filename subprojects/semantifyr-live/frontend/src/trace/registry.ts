@@ -6,10 +6,11 @@
 
 import type React from 'react'
 import type { VerificationTrace } from '@semantifyr/editor-common'
+import type { VerdictStatus } from '@semantifyr/editor-common/marks'
 
 import type { LanguageRuntime } from '../lib/language/types'
-import type { RowStatus } from '../lib/workspace/caseRows'
 import type { ReadOnlyDocument } from '../lib/workspace/documentTabs'
+import { TRACE_BANNERS } from '../texts'
 import { CallsView } from './CallsView'
 import { StepsView } from './StepsView'
 import { textView, type TraceTextSource } from './TextView'
@@ -17,7 +18,7 @@ import { textView, type TraceTextSource } from './TextView'
 export interface TraceViewProps {
   trace: VerificationTrace
   caseName: string
-  verdict: RowStatus
+  verdict: VerdictStatus
   expandedStep: number | null
   expandStep: (step: number | null) => void
   runtime: LanguageRuntime | null
@@ -63,7 +64,7 @@ function witness(label: string, uriOf: (trace: VerificationTrace, runtime: Langu
         fileUri,
         label: `${context.caseName}.witness.oxsts`,
         languageId: 'oxsts',
-        banner: `The trace of ${context.caseName}, as the verifier returned it in OXSTS.`,
+        banner: TRACE_BANNERS.witness(context.caseName),
       }
       : null
   })
@@ -77,7 +78,7 @@ function languageTrace(label: string, languageId: string, fileName: (caseName: s
         fileUri: context.trace.witnessUri,
         label: fileName(context.caseName),
         languageId,
-        banner: `The trace of ${context.caseName}, written in ${languageName}.`,
+        banner: TRACE_BANNERS.own(context.caseName, languageName),
       }
       : null
   })
@@ -114,7 +115,7 @@ const TRACE_LANGUAGES: Readonly<Record<string, TraceLanguage>> = {
   gamma: {
     views: [
       languageTrace('Gamma trace', 'gamma', (caseName) => {
-        return `${caseName}.trace.gamma`
+        return `${caseName}.trace.get`
       }, 'Gamma'),
       steps('OXSTS steps'),
       CALLS,

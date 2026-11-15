@@ -116,6 +116,7 @@ describe("liveEditorUrl and parseLiveEditorUrl", () => {
             view: null,
             theme: null,
             frame: null,
+            lines: null,
             compressedModel: null,
             case: null,
             compressedVerdicts: null,
@@ -125,17 +126,18 @@ describe("liveEditorUrl and parseLiveEditorUrl", () => {
     it("replace the parts of the base the link names and keep its other query parameters", async () => {
         const url = await liveEditorUrl("https://live.semantifyr.org/gamma/crossroads?backend=http://localhost:18080&view=embed&library=gamma#model=abc", {
             language: "oxsts",
-            example: "basics",
+            example: "intersection",
         });
 
         expect(new URL(url).searchParams.get("backend")).toBe("http://localhost:18080");
         expect(parsed(url)).toMatchObject({
             language: "oxsts",
-            example: "basics",
+            example: "intersection",
             library: null,
             view: null,
             theme: null,
             frame: null,
+            lines: null,
             compressedModel: null,
         });
     });
@@ -163,6 +165,17 @@ describe("liveEditorUrl and parseLiveEditorUrl", () => {
         expect(parsed(await liveEditorUrl(url, { language: "gamma" })).frame).toBeNull();
     });
 
+    it("carry the lines an embed opens at, and read no range that is empty or starts before the first line", async () => {
+        const url = await liveEditorUrl("https://live.semantifyr.org/", { language: "oxsts", view: "edit-only", lines: { first: 10, last: 12 } });
+
+        expect(url).toBe("https://live.semantifyr.org/oxsts?view=edit-only&lines=10-12");
+        expect(parsed(url).lines).toEqual({ first: 10, last: 12 });
+        expect(parsed("https://live.semantifyr.org/oxsts?lines=4-4").lines).toEqual({ first: 4, last: 4 });
+        expect(parsed("https://live.semantifyr.org/oxsts?lines=12-10").lines).toBeNull();
+        expect(parsed("https://live.semantifyr.org/oxsts?lines=0-3").lines).toBeNull();
+        expect(parsed("https://live.semantifyr.org/oxsts?lines=3").lines).toBeNull();
+    });
+
     it("do not read today's mode, example, code and embed parameters", () => {
         expect(parsed("https://live.semantifyr.org/?mode=gamma&example=Crossroads&code=abc&embed=1")).toEqual({
             language: null,
@@ -171,6 +184,7 @@ describe("liveEditorUrl and parseLiveEditorUrl", () => {
             view: null,
             theme: null,
             frame: null,
+            lines: null,
             compressedModel: null,
             case: null,
             compressedVerdicts: null,

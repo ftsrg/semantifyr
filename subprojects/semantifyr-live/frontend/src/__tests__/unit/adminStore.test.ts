@@ -38,7 +38,7 @@ function fakeApi(overrides: Partial<LiveServerApi> = {}): LiveServerApi {
   return {
     httpBase: 'http://live.example',
     fetchPortfolios: vi.fn(() => {
-      return Promise.resolve({ portfolios: [], defaultPortfolio: 'smart-full' })
+      return Promise.resolve({ portfolios: [], defaultPortfolio: 'smart' })
     }),
     fetchFlavors: vi.fn(() => {
       return Promise.resolve([])

@@ -64,7 +64,7 @@ class CexWitnessTransformer {
 
         require(initialState.isInitial)
         requireNotNull(initializedState) {
-            "Counterexample has no initialized state"
+            "Theta's output has no initialized state"
         }
         require(initializedState.isInitialized)
 

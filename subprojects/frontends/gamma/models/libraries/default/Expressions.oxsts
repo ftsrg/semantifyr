@@ -118,6 +118,21 @@ class UnaryMinusExpression : UnaryOperatorExpression {
     }
 }
 
+abstract class FieldAccessExpression : Expression {
+    contains operand: Expression[1]
+
+    abstract prop updated(original: any, value: any): any
+}
+
+class FieldUpdateExpression : Expression {
+    contains field: FieldAccessExpression[1]
+    contains value: Expression[1]
+
+    redefine prop evaluate(): any {
+        return field.updated(field.operand.evaluate(), value.evaluate())
+    }
+}
+
 abstract class TemporalOperatorExpression : Expression {
     contains body: Expression[1]
 }

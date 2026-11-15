@@ -66,7 +66,7 @@ class LiveVerificationExecutorTest {
 
     @Test
     fun `a result without a trace is returned unchanged`() = runTest {
-        val raw = VerificationCaseResult("passed", "ok", "theta", "smart-full", null, null)
+        val raw = VerificationCaseResult("passed", "ok", "theta", "smart", null, null)
         val fixture = Fixture(raw)
         assertThat(executor.execute(fixture.requestManager, fixture.documents, noArgs())).isSameAs(raw)
     }
@@ -78,7 +78,7 @@ class LiveVerificationExecutorTest {
             "failed",
             "counterexample",
             "theta",
-            "smart-full",
+            "smart",
             null,
             VerificationTrace(null, null, serverUri),
         )
@@ -97,7 +97,7 @@ class LiveVerificationExecutorTest {
             "failed",
             "counterexample",
             "theta",
-            "smart-full",
+            "smart",
             null,
             VerificationTrace(null, null, outsideUri),
         )

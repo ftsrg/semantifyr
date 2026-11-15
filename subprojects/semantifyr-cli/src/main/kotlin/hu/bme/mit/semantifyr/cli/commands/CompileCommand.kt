@@ -27,6 +27,7 @@ import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.caseDirectory
 import hu.bme.mit.semantifyr.verifier.caseDirectoryName
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
+import org.eclipse.xtext.resource.FileExtensionProvider
 import org.eclipse.xtext.resource.SaveOptions
 import org.eclipse.xtext.serializer.ISerializer
 import java.nio.file.Files
@@ -37,10 +38,11 @@ import kotlin.io.path.nameWithoutExtension
 
 class CompileCommand @Inject constructor(
     semantifyrLoader: SemantifyrLoader,
+    fileExtensionProvider: FileExtensionProvider,
     verificationCaseDiscoverer: VerificationCaseDiscoverer,
     private val serializer: ISerializer,
     private val injector: Injector,
-) : BaseSemantifyrCommand("compile", semantifyrLoader) {
+) : BaseSemantifyrCommand("compile", semantifyrLoader, fileExtensionProvider) {
     private val logger by loggerFactory()
 
     private val caseSpecificationOptions by VerificationCaseSpecificationOptionGroup(verificationCaseDiscoverer)
@@ -49,10 +51,10 @@ class CompileCommand @Inject constructor(
 
     private val outputPath by option("-o", "--output")
         .path(mustExist = false, canBeFile = true, canBeDir = true)
-        .help("Output file, or directory for several cases.")
+        .help("The output file, or the output directory for several cases.")
 
     override fun help(context: Context): String {
-        return "Compile cases to inlined OXSTS."
+        return "Compile each case of an OXSTS model to inlined OXSTS."
     }
 
     override suspend fun run() {

@@ -214,7 +214,7 @@ export function renderTrace(label: string, result: VerificationCaseResult, trace
 }
 
 function witnessLabel(witnessUri: string): string {
-    return witnessUri.endsWith(".gamma") ? "Gamma trace" : "Witness";
+    return witnessUri.endsWith(".get") ? "Gamma trace" : "Witness";
 }
 
 function renderOrigin(result: { backendId: string | null; portfolioId: string | null }): string {

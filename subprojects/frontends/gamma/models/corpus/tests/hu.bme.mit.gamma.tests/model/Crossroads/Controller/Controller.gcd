@@ -1,0 +1,56 @@
+package crossroads::controller
+import crossroads::interfaces
+@TransitionPriority = order-based
+statechart Controller [
+	port PriorityControl : provides Control
+	port PoliceInterrupt : requires PoliceInterrupt
+	port SecondaryControl : provides Control
+	port SecondaryPolice : provides PoliceInterrupt
+	port PriorityPolice : provides PoliceInterrupt
+] {
+	var a : integer
+	timeout SecondaryPreparesTimeout3
+	timeout PriorityTimeout4
+	timeout PriorityPreparesTimeout5
+	timeout SecondaryTimeout6
+	timeout InitTimeout7
+	region main_region {
+		state Operating {
+			region operating {
+				state Init {
+					entry / set InitTimeout7 := 2 s; raise PriorityControl.toggle;
+					region r {
+						initial Entry2
+						state G_
+					}
+				}
+				shallow history Entry1
+				state SecondaryPrepares {
+					entry / set SecondaryPreparesTimeout3 := 1 s; raise SecondaryControl.toggle;
+				}
+				state PriorityPrepares {
+					entry / set PriorityPreparesTimeout5 := 1 s; raise PriorityControl.toggle;
+				}
+				state Priority {
+					entry / set PriorityTimeout4 := 2 s; raise PriorityControl.toggle; raise
+						SecondaryControl.toggle;
+				}
+				state Secondary {
+					entry / set SecondaryTimeout6 := 2 s; raise PriorityControl.toggle; raise
+						SecondaryControl.toggle;
+				}
+			}
+		}
+		initial Entry0
+	}
+	transition from Entry0 to Operating
+	transition from Entry1 to Init
+	transition from Entry2 to G_
+	transition from Init to PriorityPrepares when timeout InitTimeout7
+	transition from Operating to Operating when PoliceInterrupt.police / raise PriorityPolice.police;
+		raise SecondaryPolice.police;
+	transition from Priority to PriorityPrepares when timeout PriorityTimeout4 [true /= false]
+	transition from PriorityPrepares to Secondary when timeout PriorityPreparesTimeout5
+	transition from Secondary to SecondaryPrepares when timeout SecondaryTimeout6
+	transition from SecondaryPrepares to Priority when timeout SecondaryPreparesTimeout3
+}

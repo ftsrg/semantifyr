@@ -11,37 +11,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
+import hu.bme.mit.semantifyr.website.DocumentationFences.Fence;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Pattern;
+import java.util.Objects;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.eclipse.emf.ecore.EObject;
+import org.eclipse.xtext.diagnostics.Diagnostic;
 import org.eclipse.xtext.diagnostics.Severity;
 import org.eclipse.xtext.resource.XtextResourceSet;
 import org.eclipse.xtext.testing.util.ParseHelper;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.eclipse.xtext.validation.CheckMode;
 import org.eclipse.xtext.validation.IResourceValidator;
+import org.eclipse.xtext.validation.Issue;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-// A fence opened with ```oxsts fragment is a fragment and skipped; every other oxsts fence is a whole model.
 @InjectWithOxsts
 public class DocumentationFenceTest {
 
-    private static final Path DOCUMENTATION = Path.of("src/docs");
-
-    private static final Pattern OPENING_FENCE = Pattern.compile("^(\\s*)```oxsts(\\s.*)?$");
-
-    private static final Pattern PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+([\\w:]+)");
-
     @Inject
-    private ParseHelper<OxstsModelPackage> parseHelper;
+    private ParseHelper<EObject> parseHelper;
 
     @Inject
     private Provider<XtextResourceSet> resourceSetProvider;
@@ -49,75 +43,32 @@ public class DocumentationFenceTest {
     @Inject
     private IResourceValidator resourceValidator;
 
-    record Fence(Path page, int line, String text) {
-
-        String location() {
-            return DOCUMENTATION.relativize(page) + ":" + line;
-        }
-
-        String packageName() {
-            var matcher = PACKAGE_DECLARATION.matcher(text);
-            if (matcher.find()) {
-                return matcher.group(1);
-            }
-            return null;
-        }
+    static Stream<Arguments> fencesValidate() throws IOException {
+        return DocumentationFences.allFences().stream().map(fence -> {
+            return Arguments.of(Named.of(fence.location(), fence));
+        });
     }
 
-    static Stream<Arguments> completeFencesValidate() throws IOException {
-        try (var paths = Files.walk(DOCUMENTATION)) {
-            var pages = paths.filter(path -> {
-                        var name = path.getFileName().toString();
-                        return name.endsWith(".md") || name.endsWith(".mdx");
-                    })
-                    .sorted()
-                    .toList();
-            var arguments = new ArrayList<Arguments>();
-            for (var page : pages) {
-                for (var fence : completeFences(page)) {
-                    arguments.add(Arguments.of(Named.of(fence.location(), fence)));
-                }
-            }
-            return arguments.stream();
-        }
-    }
-
-    private static List<Fence> completeFences(Path page) throws IOException {
-        var lines = Files.readAllLines(page);
-        var fences = new ArrayList<Fence>();
-        var index = 0;
-        while (index < lines.size()) {
-            var opening = OPENING_FENCE.matcher(lines.get(index));
-            if (!opening.matches()) {
-                index++;
-                continue;
-            }
-            var openingLine = index + 1;
-            var indentation = opening.group(1).length();
-            var infoWords = opening.group(2) == null ? "" : opening.group(2);
-            var text = new StringBuilder();
-            index++;
-            while (index < lines.size() && !lines.get(index).trim().equals("```")) {
-                var line = lines.get(index);
-                text.append(line.length() >= indentation ? line.substring(indentation) : line.strip())
-                        .append('\n');
-                index++;
-            }
-            index++;
-            if (!List.of(infoWords.trim().split("\\s+")).contains("fragment")) {
-                fences.add(new Fence(page, openingLine, text.toString()));
-            }
-        }
-        return fences;
+    private static String locationOf(Fence fence, Issue issue) {
+        var index = issue.getLineNumber() - 1;
+        var pageLine = index >= 0 && index < fence.model().size()
+                ? fence.model().get(index).pageLine()
+                : fence.line();
+        return DocumentationFences.DOCUMENTATION.relativize(fence.page()) + ":" + pageLine;
     }
 
     @ParameterizedTest(name = "{0}")
     @MethodSource
-    void completeFencesValidate(Fence fence) throws Exception {
+    void fencesValidate(Fence fence) throws Exception {
         var resourceSet = resourceSetProvider.get();
-        for (var sibling : completeFences(fence.page())) {
-            if (sibling.line() != fence.line() && sibling.packageName() != null) {
-                parseHelper.parse(sibling.text(), resourceSet);
+        if (!fence.continued()) {
+            for (var sibling : DocumentationFences.fences(fence.page())) {
+                if (sibling.line() != fence.line()
+                        && !sibling.continued()
+                        && sibling.issue() == null
+                        && sibling.declaresPackage()) {
+                    parseHelper.parse(sibling.text(), resourceSet);
+                }
             }
         }
         var model = parseHelper.parse(fence.text(), resourceSet);
@@ -125,14 +76,41 @@ public class DocumentationFenceTest {
                 .filter(issue -> {
                     return issue.getSeverity() == Severity.ERROR || issue.getSeverity() == Severity.WARNING;
                 })
+                .toList();
+        var syntaxErrors = issues.stream()
+                .filter(issue -> {
+                    return Diagnostic.SYNTAX_DIAGNOSTIC.equals(issue.getCode());
+                })
+                .toList();
+        // what follows a syntax error says nothing of the fence
+        if (!syntaxErrors.isEmpty()) {
+            issues = syntaxErrors;
+        }
+        var described = issues.stream()
                 .map(issue -> {
-                    return DOCUMENTATION.relativize(fence.page()) + ":" + (fence.line() + issue.getLineNumber()) + " "
-                            + issue.getMessage();
+                    return locationOf(fence, issue) + " " + issue.getCode() + " " + issue.getMessage();
                 })
                 .toList();
 
-        assertThat(issues)
-                .as("issues of the oxsts fence at %s", fence.location())
-                .isEmpty();
+        if (fence.issue() == null) {
+            assertThat(described)
+                    .as("issues of the oxsts fence at %s", fence.location())
+                    .isEmpty();
+        } else {
+            var codes = issues.stream()
+                    .map(issue -> {
+                        return Objects.toString(issue.getCode(), "no code");
+                    })
+                    .collect(Collectors.toCollection(TreeSet::new));
+            assertThat(codes)
+                    .as(
+                            "the issue codes of the oxsts fence at %s, which names %s: %s",
+                            fence.location(), fence.issue(), described)
+                    .containsExactly(expectedCode(fence.issue()));
+        }
+    }
+
+    private static String expectedCode(String issue) {
+        return issue.equals(DocumentationFences.SYNTAX) ? Diagnostic.SYNTAX_DIAGNOSTIC : issue;
     }
 }

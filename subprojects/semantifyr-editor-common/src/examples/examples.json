@@ -1,0 +1,360 @@
+{
+  "languages": {
+    "sysml": {
+      "blank": ""
+    },
+    "gamma": {
+      "blank": "package model\n"
+    },
+    "oxsts": {
+      "blank": ""
+    }
+  },
+  "examples": [
+    {
+      "id": "level-crossing",
+      "language": "sysml",
+      "file": "subprojects/frontends/sysml/models/examples/level_crossing.sysml",
+      "label": "Level crossing",
+      "reason": "The simplest model, four small state machines that pass items, and the one requirement a reader checks first.",
+      "page": "learn/frontends/sysml-v2",
+      "cases": [
+        "BarrierDownWhileTrainInCrossing",
+        "TwoTrainsCanBeInTheCrossing"
+      ]
+    },
+    {
+      "id": "crossroads",
+      "language": "sysml",
+      "file": "subprojects/frontends/sysml/models/examples/crossroads.sysml",
+      "label": "Crossroads",
+      "reason": "Nested states, entry and exit actions and timed transitions, in two lights that one controller cycles by items.",
+      "page": "learn/frontends/sysml-v2",
+      "cases": [
+        "PoliceCanInterrupt",
+        "LightACanBlink",
+        "RoadBCanGetGreen",
+        "NeverBothGreen"
+      ]
+    },
+    {
+      "id": "spacecraft",
+      "language": "sysml",
+      "file": "subprojects/frontends/sysml/models/examples/compressedspacecraft.sysml",
+      "label": "Spacecraft",
+      "reason": "Parallel regions and integer attributes with guards and assignments, in a spacecraft that transmits while its battery recharges.",
+      "page": "learn/frontends/sysml-v2",
+      "cases": [
+        "TransmissionCanStart",
+        "ChargeNeverBelow40",
+        "CanTransmitWhileRecharging"
+      ]
+    },
+    {
+      "id": "landing-gear",
+      "language": "sysml",
+      "file": "subprojects/frontends/sysml/models/examples/landing_gear.sysml",
+      "label": "Landing gear",
+      "reason": "A sequence of doors and gear that the pilot may reverse at any moment, from a known verification benchmark, in plain state machines that exchange items.",
+      "page": "learn/frontends/sysml-v2",
+      "cases": [
+        "GearCanBeRetracted",
+        "BayClosedInCruise",
+        "GearMovesOnlyWithDoorsOpen"
+      ]
+    },
+    {
+      "id": "room",
+      "language": "sysml",
+      "file": "subprojects/frontends/sysml/models/tutorial/room.sysml",
+      "label": "Room",
+      "reason": "A switch and a lamp, the model Verifying SysML v2 Models walks through and runs from its page.",
+      "page": "learn/frontends/sysml-v2/verifying",
+      "cases": [
+        "LampLitReachable",
+        "LampNeverLitViolated",
+        "LampLitOnlyWhileSwitchOnViolated"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "level-crossing",
+      "language": "gamma",
+      "file": "subprojects/frontends/gamma/models/examples/LevelCrossing.gamma",
+      "label": "Level crossing",
+      "reason": "The simplest model, small statecharts that pass events over channels, and the one requirement a reader checks first, which Verifying Gamma Models walks through.",
+      "page": "learn/frontends/gamma/verifying",
+      "cases": [
+        "BarrierDownWhileTrainInCrossing",
+        "TwoTrainsCanBeInTheCrossing"
+      ]
+    },
+    {
+      "id": "crossroads",
+      "language": "gamma",
+      "file": "subprojects/frontends/gamma/models/examples/Crossroads.gamma",
+      "label": "Crossroads",
+      "reason": "Hierarchical states, entry and exit actions and timeouts, in two lights that one controller cycles by events over channels.",
+      "page": "learn/frontends/gamma",
+      "cases": [
+        "PoliceCanInterrupt",
+        "LightACanBlink",
+        "RoadBCanGetGreen",
+        "NeverBothGreen"
+      ]
+    },
+    {
+      "id": "spacecraft",
+      "language": "gamma",
+      "file": "subprojects/frontends/gamma/models/examples/Spacecraft.gamma",
+      "label": "Spacecraft",
+      "reason": "Orthogonal regions and integer variables with guards and assignments, in a spacecraft that transmits while its battery recharges.",
+      "page": "learn/frontends/gamma",
+      "cases": [
+        "TransmissionCanStart",
+        "ChargeNeverBelow30",
+        "CanTransmitWhileRecharging"
+      ]
+    },
+    {
+      "id": "landing-gear",
+      "language": "gamma",
+      "file": "subprojects/frontends/gamma/models/examples/LandingGear.gamma",
+      "label": "Landing gear",
+      "reason": "A sequence of doors and gear that the pilot may reverse at any moment, from a known verification benchmark, in plain statecharts that exchange events.",
+      "page": "learn/frontends/gamma",
+      "cases": [
+        "GearCanBeRetracted",
+        "BayClosedInCruise",
+        "GearMovesOnlyWithDoorsOpen"
+      ]
+    },
+    {
+      "id": "level-crossing",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/level-crossing.oxsts",
+      "label": "Level crossing",
+      "reason": "The simplest model, four small classes, and the one requirement a reader checks first.",
+      "page": "learn/oxsts/language",
+      "cases": [
+        "BarrierDownWhileTrainInCrossing",
+        "TwoTrainsCanBeInTheCrossing"
+      ]
+    },
+    {
+      "id": "one-light",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/one-light.oxsts",
+      "label": "Lesson 1: One light",
+      "reason": "The model the first lesson ends in: one traffic light that cycles through its colors, and the question whether it can turn yellow.",
+      "page": "learn/oxsts/lessons/one-light",
+      "cases": [
+        "TrafficLight"
+      ]
+    },
+    {
+      "id": "intersection",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/intersection.oxsts",
+      "label": "Lesson 2: Intersection",
+      "reason": "The model the second lesson ends in: two lights that take turns, a requirement it took a second case to state, and the trace that found the gap.",
+      "page": "learn/oxsts/lessons/intersection",
+      "cases": [
+        "NeverBothGreen",
+        "EastCanTurnGreen",
+        "NorthGreenOnlyWhileEastRed"
+      ]
+    },
+    {
+      "id": "green-time",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/green-time.oxsts",
+      "label": "Lesson 3: Green time",
+      "reason": "The model the third lesson ends in: an integer counter that holds a light green, and a case that counts the steps on its own.",
+      "page": "learn/oxsts/lessons/green-time",
+      "cases": [
+        "NorthCanTurnYellow",
+        "NorthGreenForThreeSteps"
+      ]
+    },
+    {
+      "id": "library",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/library.oxsts",
+      "label": "Lesson 4: Library",
+      "reason": "The model the fourth lesson ends in: a small statechart library that a traffic light and a pedestrian light are both built on.",
+      "page": "learn/oxsts/lessons/library",
+      "cases": [
+        "LightCanTurnYellow",
+        "PedestriansCanWalk",
+        "WalkOnlyWhileRed"
+      ]
+    },
+    {
+      "id": "hierarchy",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/hierarchy.oxsts",
+      "label": "Lesson 5: Hierarchy",
+      "reason": "The model the fifth lesson ends in: nested states, entry actions, events from an operator and an emergency that overrides the lights.",
+      "page": "learn/oxsts/lessons/hierarchy",
+      "cases": [
+        "LightCanTurnGreen",
+        "NeverBothGreen",
+        "NeverGreenInStandby",
+        "GreenLampOnlyInGreen",
+        "NoStandbyWithoutPause",
+        "EmergencyStopsTraffic"
+      ]
+    },
+    {
+      "id": "intersection-step1",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/intersection-step1.oxsts",
+      "label": "The Intersection, step 1",
+      "reason": "A step of lesson 2, run from its page.",
+      "page": "learn/oxsts/lessons/intersection",
+      "cases": [
+        "NeverBothGreen",
+        "EastCanTurnGreen"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "intersection-step2",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/intersection-step2.oxsts",
+      "label": "The Intersection, step 2",
+      "reason": "A step of lesson 2, run from its page.",
+      "page": "learn/oxsts/lessons/intersection",
+      "cases": [
+        "NeverBothGreen",
+        "EastCanTurnGreen",
+        "NorthGreenOnlyWhileEastRed"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "green-time-step1",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/green-time-step1.oxsts",
+      "label": "The Minimum Green Time, step 1",
+      "reason": "A step of lesson 3, run from its page.",
+      "page": "learn/oxsts/lessons/green-time",
+      "cases": [
+        "NorthCanTurnYellow"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "green-time-step2",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/green-time-step2.oxsts",
+      "label": "The Minimum Green Time, step 2",
+      "reason": "A step of lesson 3, run from its page.",
+      "page": "learn/oxsts/lessons/green-time",
+      "cases": [
+        "NorthCanTurnYellow",
+        "NorthGreenForThreeSteps"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "library-step1",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/library-step1.oxsts",
+      "label": "A Statechart Library, step 1",
+      "reason": "A step of lesson 4, run from its page.",
+      "page": "learn/oxsts/lessons/library",
+      "cases": [
+        "LightCanTurnYellow"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "library-step2",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/library-step2.oxsts",
+      "label": "A Statechart Library, step 2",
+      "reason": "A step of lesson 4, run from its page.",
+      "page": "learn/oxsts/lessons/library",
+      "cases": [
+        "LightCanTurnYellow"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "hierarchy-step1",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/hierarchy-step1.oxsts",
+      "label": "Hierarchy, Events and the Environment, step 1",
+      "reason": "A step of lesson 5, run from its page.",
+      "page": "learn/oxsts/lessons/hierarchy",
+      "cases": [
+        "LightCanTurnGreen",
+        "NeverBothGreen",
+        "NeverGreenInStandby"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "hierarchy-step2",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/hierarchy-step2.oxsts",
+      "label": "Hierarchy, Events and the Environment, step 2",
+      "reason": "A step of lesson 5, run from its page.",
+      "page": "learn/oxsts/lessons/hierarchy",
+      "cases": [
+        "LightCanTurnGreen",
+        "NeverBothGreen",
+        "NeverGreenInStandby"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "hierarchy-step3",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/hierarchy-step3.oxsts",
+      "label": "Hierarchy, Events and the Environment, step 3",
+      "reason": "A step of lesson 5, run from its page.",
+      "page": "learn/oxsts/lessons/hierarchy",
+      "cases": [
+        "LightCanTurnGreen",
+        "NeverBothGreen",
+        "NeverGreenInStandby",
+        "GreenLampOnlyInGreen"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "hierarchy-step4",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/hierarchy-step4.oxsts",
+      "label": "Hierarchy, Events and the Environment, step 4",
+      "reason": "A step of lesson 5, run from its page.",
+      "page": "learn/oxsts/lessons/hierarchy",
+      "cases": [
+        "LightCanTurnGreen",
+        "NeverBothGreen",
+        "NeverGreenInStandby",
+        "GreenLampOnlyInGreen"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "hierarchy-step5",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/hierarchy-step5.oxsts",
+      "label": "Hierarchy, Events and the Environment, step 5",
+      "reason": "A step of lesson 5, run from its page.",
+      "page": "learn/oxsts/lessons/hierarchy",
+      "cases": [
+        "LightCanTurnGreen",
+        "NeverBothGreen",
+        "NeverGreenInStandby",
+        "GreenLampOnlyInGreen",
+        "NoStandbyWithoutPause"
+      ],
+      "hidden": true
+    }
+  ]
+}

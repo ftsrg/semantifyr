@@ -260,11 +260,11 @@ class VerifyCommandTest {
     }
 
     @Test
-    suspend fun `an unknown portfolio is a usage error`() {
+    suspend fun `an unknown portfolio is a usage error that lists the portfolios`() {
         val result = runCli("verify", "--portfolio", "no-such-portfolio", smokeModel.toString())
 
         assertThat(result.statusCode).isEqualTo(2)
-        assertThat(result.stderr).contains("unknown portfolio 'no-such-portfolio'")
+        assertThat(result.stderr).contains("no-such-portfolio").contains("smart, all-agree, theta, theta-cegar-expl")
     }
 
     @Test

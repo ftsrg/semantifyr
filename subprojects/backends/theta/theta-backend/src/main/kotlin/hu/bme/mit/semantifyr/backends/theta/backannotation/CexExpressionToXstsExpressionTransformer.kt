@@ -44,13 +44,13 @@ class CexExpressionToXstsExpressionTransformer(
                     UnaryOp.MINUS -> integerValue(expression.body).negate()
                 }
             }
-            else -> error("Unexpected operand of a sign in a counterexample: $expression")
+            else -> error("Unexpected operand of a sign in Theta's output: $expression")
         }
     }
 
     private fun integerLiteral(value: BigInteger): Expression {
         if (!value.fitsInt()) {
-            throw UnrepresentableWitnessValueException("Theta's counterexample holds $value, beyond the 32-bit integers of OXSTS")
+            throw UnrepresentableWitnessValueException("Theta's output holds $value, beyond the 32-bit integers of OXSTS")
         }
         return XstsFactory.eINSTANCE.createLiteralInteger().also {
             it.value = value.toInt()

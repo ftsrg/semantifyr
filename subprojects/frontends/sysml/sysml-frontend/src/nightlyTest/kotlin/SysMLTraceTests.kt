@@ -19,8 +19,8 @@ class SysMLTraceTests {
         private val helper = SysMLv2FrontendTestHelper()
         private val artifactRoot = SysMLv2FrontendTestHelper.testArtifactRoot(SysMLTraceTests::class.java)
 
-        // 74 corpus, 4 guarded initial transition and 3 tutorial witnesses among the 116 plus 3 cases the integration suites verify
-        private const val EXPECTED_TRACES = 81
+        // whether a case has a witness follows from its property's root operator and its verdict, which the manifest does not hold: 76 corpus, 4 guarded initial transition and 3 tutorial witnesses among the 118 plus 3 cases the integration suites verify
+        private const val EXPECTED_TRACES = 83
     }
 
     @Test
@@ -37,9 +37,11 @@ class SysMLTraceTests {
             val frontend = helper.buildFrontend(guardedModel, Portfolios.SmartFull, artifactRoot.resolve(variant.name.lowercase()), variant)
             frontend to SysMLv2FrontendTestHelper.guardedInitialTransitionEntries(variant)
         }
-        val tutorial = SysMLv2FrontendTestHelper.TUTORIAL_MODELS.map { source ->
-            val frontend = helper.buildFrontend(source, Portfolios.SmartFull, artifactRoot.resolve(source.nameWithoutExtension))
-            frontend to helper.tutorialEntries(frontend, source)
+        val tutorial = SysMLv2FrontendTestHelper.tutorialEntries.groupBy {
+            it.model
+        }.map { (model, entries) ->
+            val source = SysMLv2FrontendTestHelper.TUTORIAL_ROOT.resolve(model.file)
+            helper.buildFrontend(source, Portfolios.SmartFull, artifactRoot.resolve(source.nameWithoutExtension)) to entries
         }
 
         val traces = (corpus + guarded + tutorial).flatMap { (frontend, entries) ->

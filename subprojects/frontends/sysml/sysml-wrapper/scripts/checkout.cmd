@@ -28,7 +28,8 @@ git config core.autocrlf false
 echo Adding remote
 git remote add origin "%REMOTE_URL%" 2> nul || rem
 echo Fetch latest
-git fetch
+rem detached maintenance would change .git while Gradle reads it as the task's output
+git -c maintenance.auto=false fetch
 echo Checkout commit
 git reset "%COMMIT%" --hard
 

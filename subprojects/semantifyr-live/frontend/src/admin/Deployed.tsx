@@ -5,10 +5,10 @@
  */
 
 import type React from 'react'
+import { LanguageMark } from '@semantifyr/editor-common/marks'
 
 import { useStore } from '../lib/stores/useStore'
 import { formatIsoDuration } from '../lib/util/duration'
-import { LanguageMark } from '../ui/marks'
 import type { AdminStore } from './adminStore'
 import { flavourRows, sessionsPerFlavor } from './adminView'
 
@@ -57,7 +57,7 @@ export function Deployed({ store }: { store: AdminStore }): React.JSX.Element | 
         <h2 className="section-label">Deployed</h2>
       </div>
       <div className="admin-deployed-body">
-        <Group title="Backend">
+        <Group title="Server">
           <dl>
             <Fact label="Version" value={info.version} mono />
             <Fact label="Commit" value={info.commit} mono />
@@ -98,7 +98,7 @@ export function Deployed({ store }: { store: AdminStore }): React.JSX.Element | 
             })}
           </ul>
         </Group>
-        <Group title="Flavours">
+        <Group title="Libraries">
           <ul className="admin-rows">
             {flavourRows(flavors).map((flavor) => {
               const count = counts.get(flavor.id) ?? 0

@@ -332,7 +332,7 @@ describe('verification', () => {
 
 describe('witness validation', () => {
     const byCase = { validateWitnessCommand: 'gamma.witness.validate', validateWitnessByCase: true };
-    const valid: WitnessValidationResult = { status: 'valid', verdict: 'failed', message: null, backendId: 'theta-bmc', portfolioId: 'smart-full', metrics: null };
+    const valid: WitnessValidationResult = { status: 'valid', verdict: 'failed', message: null, backendId: 'theta-bmc', portfolioId: 'smart', metrics: null };
 
     function validateWitnessOf(item: TestItem) {
         return state.commands.get('semantifyr.witness.validate')!(item);
@@ -370,7 +370,7 @@ describe('witness validation', () => {
             method: 'workspace/executeCommand',
             parameters: { command: 'gamma.witness.validate', arguments: [{ uri: modelUri, range: safeCase.location.range }] },
         });
-        expect(window.showInformationMessage).toHaveBeenLastCalledWith('Safe: Witness valid (backend theta-bmc, portfolio smart-full)');
+        expect(window.showInformationMessage).toHaveBeenLastCalledWith('Safe: Witness valid (backend theta-bmc, portfolio smart)');
     });
 
     it('sends the witness location for a validation by witness', async () => {
@@ -417,7 +417,7 @@ describe('witness validation', () => {
         expect(validations()).toHaveLength(1);
         const event = testRun.events.at(-1) as { kind: string; message: { message: string } };
         expect(event.kind).toBe('failed');
-        expect(event.message.message).toBe('property violated\nValidation: Witness valid (backend theta-bmc, portfolio smart-full)');
+        expect(event.message.message).toBe('property violated\nValidation: Witness valid (backend theta-bmc, portfolio smart)');
     });
 
     it('validates the witness of an OXSTS case at the witness model, which may lie outside the workspace', async () => {
@@ -436,14 +436,14 @@ describe('witness validation', () => {
 
     it('validates on the validation portfolio when one is set', async () => {
         state.configuration.set('semantifyr.verification.autoValidate', true);
-        state.configuration.set('semantifyr.verification.validationPortfolio', 'all-agree-full');
+        state.configuration.set('semantifyr.verification.validationPortfolio', 'all-agree');
         await setUp(byCase);
         verify = () => result('failed', counterexample);
         validate = () => valid;
 
         await run([caseItem('lamp::Safe')]);
 
-        expect((validations()[0]!.parameters as ExecuteCommandParams).arguments).toEqual([{ uri: modelUri, range: safeCase.location.range, portfolio: 'all-agree-full' }]);
+        expect((validations()[0]!.parameters as ExecuteCommandParams).arguments).toEqual([{ uri: modelUri, range: safeCase.location.range, portfolio: 'all-agree' }]);
     });
 
     it('adds the validation of a passed verdict with a witness to the output at the case', async () => {
@@ -455,7 +455,7 @@ describe('witness validation', () => {
         const testRun = await run([caseItem('lamp::Reachable')]);
 
         expect(testRun.outcome(caseItem('lamp::Reachable'))).toBe('passed');
-        expect(testRun.output.map((output) => output.text)).toEqual(['Validation: Witness invalid (backend theta-bmc, portfolio smart-full) - spurious\r\n']);
+        expect(testRun.output.map((output) => output.text)).toEqual(['Validation: Witness invalid (backend theta-bmc, portfolio smart) - spurious\r\n']);
     });
 
     it('validates nothing when auto-validation is off or the result has no witness', async () => {

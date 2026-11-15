@@ -14,8 +14,6 @@ import java.util.stream.Stream;
 import org.eclipse.emf.ecore.EObject;
 
 public class OxstsUtils {
-    public static final String LIBRARY_EXTENSION = "oxsts";
-
     private OxstsUtils() {
         throw new IllegalStateException("This is a static utility class and should not be instantiated directly");
     }

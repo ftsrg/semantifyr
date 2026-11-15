@@ -461,7 +461,7 @@ export class MockSession {
       verificationId: `verification-${this.nextVerificationId++}`,
       kind,
       location: { uri: location.uri, range: location.range },
-      portfolioId: location.portfolio ?? 'smart-full',
+      portfolioId: location.portfolio ?? 'smart',
       state: 'Queued',
       token: `progress-${id}`,
       abort,

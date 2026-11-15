@@ -25,13 +25,15 @@ import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.verifier.caseDirectory
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
+import org.eclipse.xtext.resource.FileExtensionProvider
 import kotlin.io.path.createTempDirectory
 
 class MetricsCommand @Inject constructor(
     semantifyrLoader: SemantifyrLoader,
+    fileExtensionProvider: FileExtensionProvider,
     verificationCaseDiscoverer: VerificationCaseDiscoverer,
     private val injector: Injector,
-) : BaseSemantifyrCommand("metrics", semantifyrLoader) {
+) : BaseSemantifyrCommand("metrics", semantifyrLoader, fileExtensionProvider) {
     private val logger by loggerFactory()
 
     private val caseSpecificationOptions by VerificationCaseSpecificationOptionGroup(verificationCaseDiscoverer)
@@ -42,7 +44,7 @@ class MetricsCommand @Inject constructor(
         .help("One JSON object per case, one per line.")
 
     override fun help(context: Context): String {
-        return "Print the model sizes of cases."
+        return "Print the size of each case's model before inlining, after inlining and after flattening."
     }
 
     override suspend fun run() {

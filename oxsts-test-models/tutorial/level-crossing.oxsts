@@ -1,7 +1,7 @@
-/*
- * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
- *
- * SPDX-License-Identifier: EPL-2.0
+/**
+ * Two railway tracks cross a road at one barrier, which a controller lowers and lifts on the tracks' reports.
+ * Each track reports a train approaching and a train leaving; the controller lowers the barrier on an approach and lifts it when a train leaves.
+ * The cases ask whether a train can be in the crossing while the barrier is up, and whether trains on both tracks can be in it at once.
  */
 
 package example::levelcrossing
@@ -120,7 +120,6 @@ class LevelCrossing {
 }
 
 @VerificationCase
-@Tag("expect-fail")
 class BarrierDownWhileTrainInCrossing : LevelCrossing {
     prop {
         return AG (!(trackA.state == TrackState::InCrossing || trackB.state == TrackState::InCrossing) || barrier.state == BarrierState::Down)
@@ -128,7 +127,6 @@ class BarrierDownWhileTrainInCrossing : LevelCrossing {
 }
 
 @VerificationCase
-@Tag("expect-pass")
 class TwoTrainsCanBeInTheCrossing : LevelCrossing {
     prop {
         return EF (trackA.state == TrackState::InCrossing && trackB.state == TrackState::InCrossing)

@@ -1,0 +1,7 @@
+package manual::EmbeddedStructMachineVarMachine::EmbeddedStructMachineVarMachine_verification
+
+import manual::EmbeddedStructMachineVarMachine
+
+verification case StateEmbeddedStructMachineVarMachineStateReachable of EmbeddedStructMachineVarMachine {
+    EF state EmbeddedStructMachineVarMachine_.EmbeddedStructMachineVarMachine__State
+}

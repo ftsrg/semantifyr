@@ -18,6 +18,7 @@ import { libraryTabOf, openModelOxsts } from '../../lib/workspace/libraryTabs'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import { traceLanguageOf, type TraceView } from '../../trace/registry'
 import { openTraceText } from '../../trace/TextView'
+import { DOCUMENTS } from '../../texts'
 import { Icon } from '../../ui/icons'
 
 const LIBRARY_HEADINGS: Readonly<Record<LibraryKind, string>> = {
@@ -83,7 +84,7 @@ function TraceEntry({ view, label, runtime, close }: { view: TraceView | undefin
   return (
     <Entry
       label={label}
-      detail={source ? source.label : 'select a case with a trace'}
+      detail={source ? source.label : DOCUMENTS.noTrace}
       disabled={!source}
       document={view.id}
       onOpen={() => {
@@ -162,8 +163,8 @@ export function DocumentsMenu({ runtime, flavor, modelLabel }: { runtime: Langua
               : null}
             <div className="documents-list">
               <Group heading="Selected case">
-                <TraceEntry view={viewOf('own')} label="Trace of the selected case" runtime={runtime} close={close} />
-                <TraceEntry view={viewOf('witness')} label={viewOf('own') ? 'OXSTS of the trace' : 'Trace of the selected case'} runtime={runtime} close={close} />
+                <TraceEntry view={viewOf('own')} label={DOCUMENTS.trace} runtime={runtime} close={close} />
+                <TraceEntry view={viewOf('witness')} label={DOCUMENTS.witness} runtime={runtime} close={close} />
               </Group>
               {hasModelOxsts
                 ? (
