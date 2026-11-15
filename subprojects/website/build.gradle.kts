@@ -6,6 +6,7 @@
 
 import com.github.gradle.node.npm.task.NpmTask
 import groovy.json.JsonSlurper
+import hu.bme.mit.semantifyr.gradle.conventions.TestInputScopes
 import hu.bme.mit.semantifyr.gradle.conventions.javaRuntimeLibrary
 import hu.bme.mit.semantifyr.gradle.conventions.readsServedExamples
 import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
@@ -13,6 +14,8 @@ import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.servedExampleSources
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
 import hu.bme.mit.semantifyr.gradle.conventions.testChromium
+import hu.bme.mit.semantifyr.gradle.conventions.testInputScope
+import org.gradle.testing.base.TestingExtension
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
@@ -48,7 +51,7 @@ val sysmlWorkerFiles = configurations.resolvable("sysmlWorkerFiles") {
 }
 
 // the launchers' runtime classpaths, so that a module a launcher gains is read by the terms test without a list of its own
-val launcherModules = configurations.dependencyScope("launcherModules")
+val launcherModules = testInputScope("launcherModules")
 val launcherModulesGraph = configurations.resolvable("launcherModulesGraph") {
     extendsFrom(launcherModules.get())
     attributes(javaRuntimeLibrary())
@@ -60,7 +63,8 @@ val liveScreenshotsFiles = configurations.resolvable("liveScreenshotsFiles") {
     attributes(semantifyrArtifact("screenshots"))
 }
 
-val liveWebDistribution = configurations.dependencyScope("liveWebDistribution")
+// the keyboard walk serves live beside the site
+val liveWebDistribution = testInputScope("liveWebDistribution")
 val liveWebDistributionFiles = configurations.resolvable("liveWebDistributionFiles") {
     extendsFrom(liveWebDistribution.get())
     attributes(semantifyrArtifact("web-distribution"))
@@ -388,6 +392,67 @@ npmAssemble.configure {
 // the instance tree's test reads the model
 npmCheck.configure {
     inputs.file(phasesModel).withPropertyName("phasesModel").withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
+// every module with the modules its production code depends on, read once every module is configured; what a test suite, the test fixtures or a test input scope declare does not count
+val buildModules = objects.listProperty<String>()
+
+gradle.projectsEvaluated {
+    val repository = rootProject.projectDir
+    buildModules.set(
+        rootProject.subprojects.sortedBy {
+            it.path
+        }.map { module ->
+            val testing = module.extensions.findByName("testing") as? TestingExtension
+            val testSourceSets = testing?.suites?.names.orEmpty() + "testFixtures"
+            val testInputs = module.extensions.findByType<TestInputScopes>()?.names.orEmpty()
+            val dependencies = module.configurations.filter { configuration ->
+                configuration.name !in testInputs && testSourceSets.none {
+                    configuration.name.startsWith(it) && configuration.name.getOrNull(it.length)?.isUpperCase() != false
+                }
+            }.flatMap {
+                it.dependencies.withType<ProjectDependency>()
+            }.map {
+                it.path
+            }.filter {
+                it != module.path && it != rootProject.path
+            }.distinct().sorted()
+            (listOf(module.path, module.projectDir.relativeTo(repository).invariantSeparatorsPath) + dependencies).joinToString(" ")
+        },
+    )
+}
+
+class ModulesArgument(
+    @get:Input val modules: ListProperty<String>,
+) : CommandLineArgumentProvider {
+    override fun asArguments(): Iterable<String> {
+        return modules.get()
+    }
+}
+
+// written for the alias @module-graph
+val moduleGraph = tasks.register<JavaExec>("moduleGraph") {
+    val outputFile = layout.buildDirectory.file("module-graph/modules.json")
+    classpath = generate.runtimeClasspath
+    mainClass = "hu.bme.mit.semantifyr.website.modules.GenerateModuleGraphKt"
+    argumentProviders.add(ModulesArgument(buildModules))
+    outputs.file(outputFile)
+    outputs.cacheIf { true }
+    doFirst {
+        standardOutput = outputFile.get().asFile.outputStream()
+    }
+    doLast {
+        standardOutput.close()
+    }
+}
+
+npmAssemble.configure {
+    inputs.files(moduleGraph).withPropertyName("moduleGraph").withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
+// the module picture's tests read the graph
+npmCheck.configure {
+    inputs.files(moduleGraph).withPropertyName("moduleGraph").withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 val projectDirectories = rootProject.allprojects.associate {

@@ -1,0 +1,249 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+.path,
+.graph {
+  margin: 0 0 2.5rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-large);
+  background: var(--surface-panel);
+}
+
+.path {
+  container-type: inline-size;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'model'
+    'frontend'
+    'entry'
+    'oxsts-model'
+    'compiler'
+    'transition-system'
+    'portfolio'
+    'verdict'
+    'verifier'
+    'trace';
+  row-gap: 28px;
+}
+
+.box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 2px solid;
+  border-radius: var(--radius-medium);
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.box:hover {
+  color: var(--text-primary);
+  text-decoration: none;
+  background: var(--accent-soft);
+}
+
+.box:focus-visible {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 2px;
+}
+
+.artifact {
+  border-color: var(--language-sysml);
+  background: var(--surface-raised);
+}
+
+.component {
+  border-color: var(--accent);
+  background: var(--surface-editor);
+}
+
+.title {
+  font-size: 15px;
+  font-weight: var(--weight-semibold);
+  line-height: 1.3;
+}
+
+.line {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.arrow {
+  position: absolute;
+  display: none;
+  fill: none;
+  stroke: var(--text-secondary);
+  stroke-width: 2;
+  overflow: visible;
+}
+
+.down {
+  display: block;
+  top: 100%;
+  left: 50%;
+  width: 26px;
+  height: 13px;
+  transform: translate(-50%, 7px) rotate(90deg);
+}
+
+.entry {
+  position: relative;
+  justify-self: center;
+  padding: 4px 10px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-medium);
+  color: var(--text-secondary);
+  font-size: 13px;
+  text-align: center;
+}
+
+.around {
+  margin-top: 28px;
+  padding: 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-medium);
+}
+
+.aroundTitle {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: var(--weight-semibold);
+}
+
+.aroundBoxes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+@container (min-width: 880px) {
+  .grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-areas:
+      '. . entry . . .'
+      'model frontend oxsts-model compiler transition-system portfolio'
+      'trace trace verifier verifier verdict portfolio';
+    column-gap: 30px;
+    row-gap: 30px;
+  }
+
+  .entry {
+    align-self: end;
+  }
+
+  .down {
+    display: none;
+  }
+
+  .entry .down {
+    display: block;
+  }
+
+  .right,
+  .left {
+    display: block;
+    top: 50%;
+    left: 100%;
+    width: 30px;
+    height: 12px;
+    transform: translate(2px, -50%);
+  }
+
+  .left {
+    transform: translate(2px, -50%) rotate(180deg);
+  }
+
+  .aroundBoxes {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.graph {
+  overflow-x: auto;
+}
+
+.graph svg {
+  display: block;
+  margin: 0 auto;
+}
+
+.legend {
+  margin: 12px 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.node rect {
+  fill: var(--surface-raised);
+  stroke: var(--border-strong);
+  stroke-width: 1.5;
+}
+
+.node text {
+  fill: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.node:focus {
+  outline: none;
+}
+
+.node:focus-visible rect {
+  stroke: var(--accent-ink);
+  stroke-width: 3;
+}
+
+.groupFrame {
+  fill: none;
+  stroke: var(--language-sysml);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.groupLabel {
+  fill: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.dependency {
+  fill: none;
+  stroke: var(--text-tertiary);
+  stroke-width: 1;
+  opacity: 0.55;
+}
+
+.faded .dependency {
+  opacity: 0.12;
+}
+
+.faded .dependency.lit {
+  stroke: var(--accent-ink);
+  stroke-width: 2;
+  opacity: 1;
+}
+
+.faded .node rect {
+  opacity: 0.45;
+}
+
+.faded .node.lit rect {
+  opacity: 1;
+  stroke: var(--accent-ink);
+}

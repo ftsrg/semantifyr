@@ -37,18 +37,18 @@ val syncSysmlLibrary = tasks.register<Sync>("syncSysmlLibrary") {
 }
 
 // the corpus as the tests read it, each served model with its further cases appended
-val sysmlCorpus = configurations.dependencyScope("sysmlCorpus")
-val sysmlCorpusFiles = configurations.resolvable("sysmlCorpusFiles") {
-    extendsFrom(sysmlCorpus.get())
+val testSysmlCorpus = configurations.dependencyScope("testSysmlCorpus")
+val testSysmlCorpusFiles = configurations.resolvable("testSysmlCorpusFiles") {
+    extendsFrom(testSysmlCorpus.get())
     attributes(semantifyrArtifact("sysml-corpus"))
 }
 
 dependencies {
-    sysmlCorpus(project(":sysml-wrapper"))
+    testSysmlCorpus(project(":sysml-wrapper"))
 }
 
 val syncSysmlTestModels = tasks.register<Sync>("syncSysmlTestModels") {
-    from(sysmlCorpusFiles)
+    from(testSysmlCorpusFiles)
     into(layout.buildDirectory.dir("test-models"))
 }
 
