@@ -1,5 +1,6 @@
 ---
 title: Standard Library
+slug: /learn/language/standard-library
 sidebar_position: 14
 description: The declarations of the standard library every OXSTS file imports, its builtin class, datatypes and annotations, rendered from semantifyr.oxsts.
 ---

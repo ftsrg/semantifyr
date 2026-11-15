@@ -14,7 +14,9 @@ import styles from './styles.module.css';
 type ListedItem = Exclude<PropSidebarItem, { type: 'html' }> & { href: string };
 
 function listed(items: readonly PropSidebarItem[]): ListedItem[] {
-  return items.filter((item): item is ListedItem => {
+  return items.flatMap((item) => {
+    return item.type === 'category' && item.href === undefined ? listed(item.items) : [item];
+  }).filter((item): item is ListedItem => {
     return item.type !== 'html' && item.href !== undefined;
   });
 }

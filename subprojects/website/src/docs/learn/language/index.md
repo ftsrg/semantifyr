@@ -13,6 +13,12 @@ OXSTS is the **declarative-operational** language of Semantifyr, in which the [s
 
 These pages specify OXSTS, one construct a page, for lookup in any order; the [OXSTS lessons](../lessons/index.md) teach it, and [How OXSTS Compiles](../compilation/index.mdx) shows what the compiler makes of a model. [What Is Supported](library-and-output/supported.mdx) lists the constructs the compiler supports, rejects or plans.
 
+## The Pages
+
+- Foundations: [Lexical Structure](foundations/lexical-structure.md), [Packages and Imports](foundations/packages-and-imports.md), [Datatypes](foundations/datatypes.md), [Types](foundations/types.md), [Expressions](foundations/expressions.md).
+- Classes and Behaviour: [Classes](classes-and-behaviour/classes.md), [Variables](classes-and-behaviour/variables.md), [Features](classes-and-behaviour/features.md), [Properties](classes-and-behaviour/properties.md), [Transitions](classes-and-behaviour/transitions.md), [Operations](classes-and-behaviour/operations.md), [Inline Operations](classes-and-behaviour/inline-operations.md).
+- Library and Output: [Annotations](library-and-output/annotations.md), [Standard Library](library-and-output/standard-library.md), [Inlined Models](library-and-output/inlined-models.md), [What Is Supported](library-and-output/supported.mdx).
+
 ## The Language at a Glance
 
 OXSTS borrows familiar object-oriented vocabulary, but every concept has a precise role in the verification pipeline:
