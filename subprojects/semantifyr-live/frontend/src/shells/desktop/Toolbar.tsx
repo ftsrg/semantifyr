@@ -21,7 +21,7 @@ import { BLANK_MODEL, LIBRARY, libraryButton, libraryOf, SHARED_MODEL, THEMES } 
 import { Icon, type IconName } from '../../ui/icons'
 import { Logo } from '../../ui/marks'
 import { useAddressedModel, useCurrentDocument, useFlavor } from '../hooks'
-import { AboutDialog, DeveloperDialog } from './Dialogs'
+import { AboutDialog, DeveloperDialog, DocumentationLink } from './Dialogs'
 import { ConnectionIndicator } from './ConnectionIndicator'
 import { OpenButton, SaveSplit } from './keeping'
 import { SharePopover } from './SharePopover'
@@ -375,6 +375,7 @@ export function Toolbar(): React.JSX.Element {
         <OpenButton />
         <SaveSplit />
         <SharePopover />
+        <DocumentationLink />
         <AboutDialog />
         <DeveloperDialog />
         <span className="separator" />

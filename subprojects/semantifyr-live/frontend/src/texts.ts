@@ -13,6 +13,11 @@ export const SHORT_NAME = terms.live.short ?? terms.live.term
 export const WEBSITE_URL = 'https://semantifyr.org'
 export const PRIVACY_URL = `${WEBSITE_URL}/learn/verifying/live/privacy/`
 
+export const DOCUMENTATION = {
+  label: 'Documentation',
+  url: `${WEBSITE_URL}/learn/`,
+}
+
 export const SOURCE_CODE_URL = 'https://github.com/ftsrg/semantifyr'
 
 export const PAGE_DESCRIPTION = 'Verify a SysML v2, Gamma or OXSTS model in your browser and read its traces in its own language.'

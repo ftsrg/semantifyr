@@ -261,7 +261,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     },
     expectState: () => {
       const entries = text('.sheet-bottom')
-      for (const entry of ['Open a file', 'Share', 'Verification', 'Validation', 'Validate automatically', 'About', 'Developer panel', 'Theme']) {
+      for (const entry of ['Open a file', 'Share', 'Verification', 'Validation', 'Validate automatically', 'Documentation', 'About', 'Developer panel', 'Theme']) {
         expect(entries).toContain(entry)
       }
       expect(text('.sheet-bottom .sheet-item:nth-of-type(2)')).toMatch(/^Share\s+Model$/)

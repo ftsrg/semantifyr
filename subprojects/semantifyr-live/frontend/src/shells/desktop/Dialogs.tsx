@@ -14,7 +14,7 @@ import type { LspMetrics } from '../../lib/session/lspMetrics'
 import { useStore } from '../../lib/stores/useStore'
 import { formatDuration, formatIsoDuration } from '../../lib/util/duration'
 import { useLive } from '../../lib/workspace/liveContext'
-import { ABOUT, DEVELOPER, PRIVACY_URL, SHORT_NAME, SOURCE_CODE_URL, WEBSITE_URL } from '../../texts'
+import { ABOUT, DEVELOPER, DOCUMENTATION, PRIVACY_URL, SHORT_NAME, SOURCE_CODE_URL, WEBSITE_URL } from '../../texts'
 import { Icon } from '../../ui/icons'
 import { Logo } from '../../ui/marks'
 import { useLanguage } from '../hooks'
@@ -25,6 +25,19 @@ const PAGE_START = Date.now()
 interface TriggerProps {
   className?: string
   children?: React.ReactNode
+}
+
+export function DocumentationLink({ className, children }: TriggerProps): React.JSX.Element {
+  return (
+    <a className={className ?? 'button button-quiet'} href={DOCUMENTATION.url} target="_blank" rel="noreferrer">
+      {children ?? (
+        <>
+          <Icon name="book" />
+          {DOCUMENTATION.label}
+        </>
+      )}
+    </a>
+  )
 }
 
 export function AboutDialog({ className, children }: TriggerProps): React.JSX.Element {

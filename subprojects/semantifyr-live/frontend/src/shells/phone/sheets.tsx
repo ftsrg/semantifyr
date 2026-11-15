@@ -19,9 +19,9 @@ import type { Live } from '../../lib/workspace/live'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import { portfolioChoices, portfolioName, type PortfolioChoice } from '../../lib/workspace/portfolioChoices'
 import { sharedResultsOf } from '../../lib/workspace/sharedResults'
-import { BLANK_MODEL, LIBRARY, libraryOf, NO_PROBLEMS, ONE_BACKEND, PROBLEMS, THEMES, VALIDATION } from '../../texts'
+import { BLANK_MODEL, DOCUMENTATION, LIBRARY, libraryOf, NO_PROBLEMS, ONE_BACKEND, PROBLEMS, THEMES, VALIDATION } from '../../texts'
 import { Icon, type IconName } from '../../ui/icons'
-import { AboutDialog, DeveloperDialog } from '../desktop/Dialogs'
+import { AboutDialog, DeveloperDialog, DocumentationLink } from '../desktop/Dialogs'
 import { pickFile } from '../desktop/keeping'
 import { shareLink } from '../desktop/SharePopover'
 import { useCurrentDocument, useFlavor } from '../hooks'
@@ -322,6 +322,10 @@ export function MenuSheet({ open, onClose, onPortfolios, colorMode }: SheetProps
           <span className="switch" />
         </button>
       </div>
+      <DocumentationLink className="sheet-item">
+        <Icon name="book" />
+        <span>{DOCUMENTATION.label}</span>
+      </DocumentationLink>
       <AboutDialog className="sheet-item">
         <Icon name="info" />
         <span>About</span>

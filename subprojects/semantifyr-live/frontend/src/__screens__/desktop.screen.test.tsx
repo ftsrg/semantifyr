@@ -16,7 +16,7 @@ import type { ResolvedColorMode } from '../lib/util/colorMode'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
 import { modelOxstsTabOf } from '../lib/workspace/libraryTabs'
 import { ShellRoot } from '../shells/ShellRoot'
-import { ABOUT, CASE_MESSAGES, noCases, PRIVACY_URL, SOURCE_CODE_URL, TRACE_HINTS, VALIDATION, WEBSITE_URL } from '../texts'
+import { ABOUT, CASE_MESSAGES, DOCUMENTATION, noCases, PRIVACY_URL, SOURCE_CODE_URL, TRACE_HINTS, VALIDATION, WEBSITE_URL } from '../texts'
 import { caseOf, CONNECTED, finished, seedLive, type Seed } from './seededLive'
 
 // Goal: every desktop state the mockup draws lays out inside the viewport in both themes, with the real editor;
@@ -267,6 +267,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       }).toBe(1)
     },
     expectState: () => {
+      expect(document.querySelector<HTMLAnchorElement>('.toolbar a.button[href]')?.href).toBe(DOCUMENTATION.url)
       expect(text('.dialog-lead')).toBe(ABOUT.sentences.join(' '))
       expect(document.querySelector<HTMLAnchorElement>('.dialog-body > a')?.href).toBe(PRIVACY_URL)
       expect([...document.querySelectorAll<HTMLAnchorElement>('.dialog-links a')].map((link) => {
