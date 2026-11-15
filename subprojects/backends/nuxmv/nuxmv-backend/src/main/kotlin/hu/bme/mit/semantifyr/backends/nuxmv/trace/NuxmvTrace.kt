@@ -8,6 +8,8 @@ package hu.bme.mit.semantifyr.backends.nuxmv.trace
 
 data class NuxmvTraceState(
     val variableValues: Map<String, String>,
+    // the inputs of the step that reached this state, none for the first
+    val inputValues: Map<String, String>,
 )
 
 data class NuxmvTrace(

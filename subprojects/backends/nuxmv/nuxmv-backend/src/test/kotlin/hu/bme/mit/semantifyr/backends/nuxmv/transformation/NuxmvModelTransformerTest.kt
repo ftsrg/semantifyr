@@ -73,6 +73,77 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
     }
 
     @Test
+    suspend fun `a clock is a real that every main step advances by the step's delay before its transition`() {
+        val artifacts = transform(
+            """
+                var elapsed : clock := 0
+                var late : bool := false
+                init {
+                }
+                tran {
+                    assume(elapsed >= 6)
+                    late := true
+                    elapsed := 0
+                }
+                prop {
+                    AG !late
+                }
+            """,
+        )
+
+        assertThat(artifacts.smv).isEqualTo(
+            """
+                MODULE main
+                VAR
+                    elapsed : real;
+                    late : boolean;
+                    elapsed__init_b0_seed : real;
+                    late__init_b0_seed : boolean;
+                    late__tran_b0_1 : boolean;
+                    elapsed__tran_b0_1 : real;
+                IVAR
+                    delay_0 : real;
+                INIT
+                    (
+                          (elapsed__init_b0_seed = 0)
+                        & (late__init_b0_seed = FALSE)
+                        & (elapsed = elapsed__init_b0_seed)
+                        & (late = late__init_b0_seed)
+                    )
+                TRANS
+                    (
+                          (delay_0 >= 0)
+                        & (((elapsed + delay_0) >= 6))
+                        & (late__tran_b0_1 = TRUE)
+                        & (elapsed__tran_b0_1 = 0)
+                        & (next(elapsed) = elapsed__tran_b0_1)
+                        & (next(late) = late__tran_b0_1)
+                    )
+
+            """.trimIndent(),
+        )
+    }
+
+    @Test
+    suspend fun `a model without a clock waits no time and has no delay`() {
+        val lines = smvLines(
+            """
+                var late : bool := false
+                init {
+                }
+                tran {
+                    late := true
+                }
+                prop {
+                    AG !late
+                }
+            """,
+        )
+
+        assertThat(lines).doesNotContain("IVAR", "delay_0 : real;")
+    }
+
+    @Test
     suspend fun `a variable havoced in init starts unconstrained`() {
         val lines = smvLines(
             """

@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
 enum class NuxmvVariableKind {
+    Clock,
     Integer,
     Boolean,
     Enum,
@@ -39,6 +40,10 @@ class NuxmvVariableTransformer @Inject constructor(
         return mangler.nameOf(variableDeclaration)
     }
 
+    fun isClock(variableDeclaration: VariableDeclaration): Boolean {
+        return variableDeclaration.typeSpecification?.domain === builtinSymbolResolver.clockDatatype(variableDeclaration)
+    }
+
     fun describe(variableDeclaration: VariableDeclaration): NuxmvVariable {
         return descriptionCache.getOrPut(variableDeclaration) {
             val name = nameOf(variableDeclaration)
@@ -53,6 +58,7 @@ class NuxmvVariableTransformer @Inject constructor(
             ?: error("Variable ${variableDeclaration.name} has no type specification")
 
         return when {
+            domain === builtinSymbolResolver.clockDatatype(variableDeclaration) -> NuxmvVariableKind.Clock
             domain is EnumDeclaration -> NuxmvVariableKind.Enum
             domain === builtinSymbolResolver.intDatatype(variableDeclaration) -> NuxmvVariableKind.Integer
             domain === builtinSymbolResolver.boolDatatype(variableDeclaration) -> NuxmvVariableKind.Boolean

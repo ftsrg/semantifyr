@@ -12,9 +12,11 @@ import hu.bme.mit.semantifyr.backend.BackendTestModels
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.backend.boolean
 import hu.bme.mit.semantifyr.backend.enumeration
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.integer
+import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backends.nuxmv.NuxmvExecutorKey
 import hu.bme.mit.semantifyr.backends.nuxmv.ReplayingNuxmvExecutor
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
@@ -132,6 +134,32 @@ class NuxmvBackendReplayTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(result.inlinedWitness!!.transitionStates.last().integer("chosen")).isEqualTo(4)
+    }
+
+    @Test
+    suspend fun `a clock trace states each step's delay as its exact elapsed time`() {
+        val result = verifyFixture("clocks", "ClockStrictTestDenseReach")
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
+        val witness = result.inlinedWitness!!
+        assertThat(witness.initializedState.elapsed).isEqualTo(Fraction.ZERO)
+        val reached = witness.transitionStates.last()
+        assertThat(reached.boolean("\$\$root\$\$between")).isTrue()
+        assertThat(reached.elapsed.numerator.signum()).isPositive()
+        assertThat(reached.elapsed.numerator).isLessThan(reached.elapsed.denominator)
+    }
+
+    @Test
+    suspend fun `a clock trace states every kept clock's value after the step`() {
+        val result = verifyFixture("clocks", "ClockZeroDelayAfterResetViolated")
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        val reached = result.inlinedWitness!!.transitionStates.last()
+        val clockValues = reached.clockValues.associate {
+            it.variable.name to it.value
+        }
+        assertThat(clockValues.getValue("\$\$root\$\$lap")).isEqualTo(Fraction.ZERO)
+        assertThat(clockValues.getValue("\$\$root\$\$total")).isEqualTo(Fraction.of(1))
     }
 
     @Test
