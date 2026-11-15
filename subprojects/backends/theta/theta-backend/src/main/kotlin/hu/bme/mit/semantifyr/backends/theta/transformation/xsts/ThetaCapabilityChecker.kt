@@ -42,7 +42,7 @@ class ThetaCapabilityChecker @Inject constructor(
 
     private fun describeUnsupportedType(variable: VariableDeclaration): String? {
         val domain = variable.typeSpecification?.domain as? DataTypeDeclaration ?: return null
-        if (domain === builtinSymbolResolver.intDatatype(variable) || domain === builtinSymbolResolver.boolDatatype(variable)) {
+        if (domain === builtinSymbolResolver.intDatatype(variable) || domain === builtinSymbolResolver.boolDatatype(variable) || domain === builtinSymbolResolver.clockDatatype(variable)) {
             return null
         }
         return "variables of type ${domain.name}"

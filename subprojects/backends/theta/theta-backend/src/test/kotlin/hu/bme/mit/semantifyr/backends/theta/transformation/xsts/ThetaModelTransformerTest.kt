@@ -6,7 +6,9 @@
 
 package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
+import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
+import hu.bme.mit.semantifyr.backend.transformation.WholeDelayLowering
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -32,7 +34,7 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
 
     private suspend fun xsts(body: String): String {
         return withTransformer {
-            serialize(it.transform(parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors, paints), testXstsUri))
+            serialize(it.transform(parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors, paints), testXstsUri, null))
         }
     }
 
@@ -221,7 +223,7 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
     @Test
     suspend fun `tracers are declared outside the control set`() {
         val xsts = withTransformer {
-            it.transform(compile("tracing", "TracedChoiceBranchReach"), testXstsUri)
+            it.transform(compile("tracing", "TracedChoiceBranchReach"), testXstsUri, null)
         }
 
         val tracers = xsts.variableDeclarations.filter {
@@ -530,5 +532,67 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
                 """,
             )
         }
+    }
+
+    @Inject
+    private lateinit var wholeDelayLowering: WholeDelayLowering
+
+    @Test
+    suspend fun `every main step starts with a bounded whole delay that advances each clock up to its saturation, and init waits for nothing`() {
+        val inlinedOxsts = parse(
+            """
+                inlined oxsts of semantifyr::Anything
+                var elapsed : clock := 0
+                var late : bool := false
+                init {
+                }
+                tran {
+                    assume(elapsed <= 2)
+                    choice {
+                        assume(elapsed >= 2)
+                        late := true
+                        elapsed := 0
+                    } or {
+                    }
+                }
+                prop {
+                    AG !late
+                }
+            """.trimIndent(),
+        )
+
+        val xsts = withTransformer {
+            serialize(it.transform(inlinedOxsts, testXstsUri, wholeDelayLowering.lower(inlinedOxsts)))
+        }
+
+        assertThat(xsts).isEqualTo(
+            """
+
+                var elapsed: integer = 0
+                var late: boolean = false
+                var __semantifyr_delay: integer = 0
+                ctrl var __semantifyr_initialized: boolean = false
+                trans {
+                	havoc __semantifyr_delay;
+                	assume __semantifyr_delay >= 0 && __semantifyr_delay <= 3;
+                	elapsed := if elapsed + __semantifyr_delay >= 3 then 3 else elapsed + __semantifyr_delay;
+                	assume elapsed <= 2;
+                	choice {
+                		assume elapsed >= 2;
+                		late := true;
+                		elapsed := 0;
+                	} or {
+                	}
+                }
+                init {
+                	__semantifyr_initialized := true;
+                }
+                env {
+                }
+                prop { !__semantifyr_initialized || !late
+                }
+
+            """.trimIndent(),
+        )
     }
 }

@@ -52,6 +52,7 @@ class ThetaDomainTransformer @Inject constructor(
         return when (dataTypeDeclaration) {
             builtinSymbolResolver.intDatatype(dataTypeDeclaration) -> XstsFactory.createIntegerType()
             builtinSymbolResolver.boolDatatype(dataTypeDeclaration) -> XstsFactory.createBooleanType()
+            builtinSymbolResolver.clockDatatype(dataTypeDeclaration) -> XstsFactory.createIntegerType()
             else -> throw BackendUnsupportedException("Theta does not support variables of type ${dataTypeDeclaration.name}")
         }
     }

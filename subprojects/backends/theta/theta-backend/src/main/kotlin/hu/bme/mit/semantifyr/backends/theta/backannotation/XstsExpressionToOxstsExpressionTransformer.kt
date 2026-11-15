@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backends.theta.backannotation
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaDomainTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
@@ -71,6 +72,12 @@ class XstsExpressionToOxstsExpressionTransformer @Inject constructor(
                 it.values += literal(value.elements[index.toBigInteger()] ?: value.default)
             }
         }
+    }
+
+    fun transformInteger(expression: XstsExpression): BigInteger {
+        val value = XstsValueEvaluator.evaluate(expression) as? IntegerValue
+            ?: throw WitnessFailedException("Theta's counterexample holds a value that is no integer where an integer is expected")
+        return value.value
     }
 
     private fun literal(value: XstsValue): Expression {

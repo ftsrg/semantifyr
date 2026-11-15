@@ -13,6 +13,7 @@ import com.google.inject.assistedinject.AssistedInject
 import com.google.inject.assistedinject.FactoryModuleBuilder
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
+import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationBackend
 import hu.bme.mit.semantifyr.backend.VerificationContext
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
@@ -20,6 +21,8 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScope
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
+import hu.bme.mit.semantifyr.backend.transformation.WholeDelay
+import hu.bme.mit.semantifyr.backend.transformation.WholeDelayLowering
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backends.theta.artifacts.ThetaArtifactManager
 import hu.bme.mit.semantifyr.backends.theta.backannotation.CexReader
@@ -36,6 +39,7 @@ import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -84,6 +88,7 @@ class ThetaVerificationContext @AssistedInject constructor(
     private val cexWitnessTransformer: CexWitnessTransformer,
     private val xstsWitnessTransformer: XstsWitnessTransformer,
     private val inlinedWitnessTransformer: InlinedWitnessTransformer,
+    private val wholeDelayLowering: WholeDelayLowering,
 ) : VerificationContext<XstsModel, ThetaVerdict>(
     backendId = "theta:${config.id}",
     soundness = config.soundness,
@@ -92,10 +97,18 @@ class ThetaVerificationContext @AssistedInject constructor(
 
     private val artifactManager = ThetaArtifactManager(request.artifactOutputPath)
 
+    private var wholeDelay: WholeDelay? = null
+
+    override fun declareSoundness(inlinedOxsts: InlinedOxsts): SoundnessDirection {
+        return wholeDelayLowering.soundness(inlinedOxsts, super.declareSoundness(inlinedOxsts))
+    }
+
     override suspend fun prepare(): XstsModel {
         currentCoroutineContext().ensureActive()
         logger.info { "[$backendId] transforming InlinedOxsts -> XSTS" }
-        val xsts = thetaModelTransformer.transform(request.inlinedOxsts, artifactManager.xstsUri)
+        val lowered = wholeDelayLowering.lower(request.inlinedOxsts)
+        wholeDelay = lowered
+        val xsts = thetaModelTransformer.transform(request.inlinedOxsts, artifactManager.xstsUri, lowered)
         currentCoroutineContext().ensureActive()
         xstsModelCreator.save(xsts)
         return xsts
@@ -148,7 +161,8 @@ class ThetaVerificationContext @AssistedInject constructor(
         val cexModel = cexReader.loadCexModel(cexPath)
         val cexWitness = cexWitnessTransformer.transform(cexModel)
         val xstsWitness = xstsWitnessTransformer.transform(xsts, cexWitness)
-        return inlinedWitnessTransformer.transform(request.inlinedOxsts, xstsWitness)
+        val witness = inlinedWitnessTransformer.transform(request.inlinedOxsts, xstsWitness)
+        return wholeDelay?.restore(witness) ?: witness
     }
 
     interface Factory {

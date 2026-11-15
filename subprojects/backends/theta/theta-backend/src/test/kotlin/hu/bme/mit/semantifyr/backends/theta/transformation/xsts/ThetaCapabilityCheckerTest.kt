@@ -38,13 +38,16 @@ class ThetaCapabilityCheckerTest : ThetaTransformationTestBase() {
                 var counter : int := 0
                 var flag : bool := false
                 var color : test::colors::Color := test::colors::Color::Red
+                var elapsed : clock := 0
                 init {
                     havoc(flag)
                 }
                 tran {
                     choice {
                         assume(counter < 3)
+                        assume(elapsed <= 2)
                         counter := counter + 1
+                        elapsed := 0
                     } or {
                         if (flag) {
                             color := test::colors::Color::Green

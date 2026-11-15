@@ -7,6 +7,8 @@
 package hu.bme.mit.semantifyr.backends.theta.backannotation
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backend.transformation.WHOLE_DELAY_VARIABLE_NAME
+import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
@@ -25,10 +27,15 @@ class InlinedWitnessTransformer @Inject constructor(
         }
 
         fun transform(xstsAssumptionWitnessState: XstsWitnessState) = mappings.getOrPut(xstsAssumptionWitnessState) {
-            val stateVariableValues = xstsAssumptionWitnessState.variableValues
+            val (delays, stateVariableValues) = xstsAssumptionWitnessState.variableValues.partition {
+                it.variableDeclaration.name == WHOLE_DELAY_VARIABLE_NAME
+            }
 
             WitnessState(
                 transformStateValues(stateVariableValues),
+                elapsed = delays.singleOrNull()?.let {
+                    Fraction.of(xstsExpressionToOxstsExpressionTransformer.transformInteger(it.value))
+                } ?: Fraction.ZERO,
             )
         }
 
