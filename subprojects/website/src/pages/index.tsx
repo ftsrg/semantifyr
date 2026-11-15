@@ -54,7 +54,7 @@ const DOORS = [
     language: 'oxsts',
     title: 'Define semantics in OXSTS',
     text: 'Write the semantics of a language of your own as a library in OXSTS, the language both frontends are built on, and verify its models the same way.',
-    part: 'Lessons',
+    part: 'OXSTS',
   },
 ] as const;
 
