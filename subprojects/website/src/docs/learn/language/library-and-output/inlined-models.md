@@ -10,7 +10,7 @@ An inlined model is the form in which the compiler writes a case after each of i
 
 ## Syntax
 
-An inlined model opens with `inlined oxsts of`, or `witness of` for a [witness](../../reference/artifacts.mdx#witnessoxsts), and the qualified name of the class. Then come, in this order, its variables, optionally a feature that holds the instance of the class, the `init` transition, the main transition, each with its branches separated by `or`, and the property, an expression in `prop { }` without `return`. It has no package and no imports. The feature is named `root` in the instantiated and the inlined model and in the witness, and the members of instances are named by their paths from it, such as `root.counter.value`; the flattened model has no feature left.
+An inlined model opens with `inlined oxsts of`, or `witness of` for a [witness](../../verifying/witnesses-and-traces.mdx#the-witness), and the qualified name of the class. Then come, in this order, its variables, optionally a feature that holds the instance of the class, the `init` transition, the main transition, each with its branches separated by `or`, and the property, an expression in `prop { }` without `return`. It has no package and no imports. The feature is named `root` in the instantiated and the inlined model and in the witness, and the members of instances are named by their paths from it, such as `root.counter.value`; the flattened model has no feature left.
 
 ```oxsts
 inlined oxsts of semantifyr::Anything
