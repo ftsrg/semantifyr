@@ -110,6 +110,13 @@ function substitutedVariable(before: string, after: string): string {
   return variable;
 }
 
+// the path of the instance tree a variable of the model is named after
+function pathOf(variable: string): string {
+  return variable.replace(/'/g, '').split('$$').filter((part) => {
+    return part !== '';
+  }).join('.');
+}
+
 function receiverOf(call: string): string {
   return call.slice(0, call.lastIndexOf('.'));
 }
@@ -135,8 +142,55 @@ const CAPTIONS: Readonly<Record<string, Caption>> = {
     const call = replacedCall(before.text, after.text);
     return `\`${call}\` gives way to the expression the property returns, as the class of \`${receiverOf(call)}\` defines it, its names written as paths from \`root\`.`;
   },
-  flattening: () => {
-    return 'Every variable of every instance becomes one variable of the model, named by the path of its instance, and `contains root` goes: no instance is left.';
+  variablepulldown: (before, after) => {
+    const declared = changed(before.text, after.text, 'added').filter((line) => {
+      return line.startsWith('var ');
+    });
+    const variable = /^var ('[^']+')/.exec(declared[0] ?? '')?.[1];
+    if (variable === undefined) {
+      throw new Error(`The step ${after.file} declares no variable`);
+    }
+    const holdsInstance = declared.some((line) => {
+      return line.includes(': Anything');
+    });
+    return `Every variable of every instance is declared as a variable of the model, named by its path: \`${variable}\` for \`${pathOf(variable)}\`.${holdsInstance ? ' A variable that holds an instance is typed `Anything` until the instances are numbered.' : ''} The transition and the property still use the instances' variables.`;
+  },
+  variablereferencerewriting: (before, after) => {
+    const rewritten = changed(before.text, after.text, 'added').flatMap((line) => {
+      return line.match(/'[^']+'/g) ?? [];
+    });
+    const variable = rewritten[0];
+    if (variable === undefined) {
+      throw new Error(`The step ${after.file} rewrites no use of a variable`);
+    }
+    const instanceValue = after.text.split('\n').some((line) => {
+      return / := root[\w.]*$/.test(line);
+    });
+    return `Every use of a variable through an instance path is rewritten to the variable of the model: \`${pathOf(variable)}\` becomes \`${variable}\`.${instanceValue ? ' An instance assigned as a value is no variable and keeps its path.' : ''}`;
+  },
+  staticexpressionrewriting: (before, after) => {
+    const added = changed(before.text, after.text, 'added');
+    const numbered = changed(before.text, after.text, 'removed').flatMap((line) => {
+      const assigned = /^(.+) := (root[\w.]*)$/.exec(line);
+      const number = added.find((replacement) => {
+        return replacement.startsWith(`${assigned?.[1]} := `);
+      })?.split(' := ')[1];
+      return assigned === null || number === undefined ? [] : [`\`${assigned[2]}\` the number \`${number}\``];
+    });
+    return [
+      ...before.text.includes(': Anything') ? ['A variable that holds an instance becomes an `int`.'] : [],
+      ...before.text.includes('nothing') ? ['`nothing` becomes `-1`.'] : [],
+      ...numbered.length === 0 ? [] : [`Every instance an expression names becomes its number, here ${numbered.join(' and ')}.`],
+      '`contains root` goes: no instance is left.',
+    ].join(' ');
+  },
+  deadcoderemoval: (before, after) => {
+    const removed = changed(before.text, after.text, 'removed');
+    const store = removed[0];
+    if (removed.length !== 1 || store === undefined || !store.includes(' := ') || changed(before.text, after.text, 'added').length !== 0) {
+      throw new Error(`The step ${after.file} removes ${removed.length} lines, the caption names one assignment`);
+    }
+    return `\`${store}\` stores a value nothing reads, so it goes.`;
   },
   unusedvariableelimination: (before, after) => {
     const declaration = changed(before.text, after.text, 'removed').find((line) => {
@@ -245,7 +299,7 @@ function walks(): { instantiation: WalkStep[], inlining: WalkStep[], flattening:
   const instantiated = frame('pipeline/instantiated.oxsts');
   const inlined = frame('pipeline/inlined.oxsts');
   const flattened = frame('pipeline/flattened.oxsts');
-  const steps = [...files.keys()]
+  const frames = [...files.keys()]
     .filter((file) => {
       return STEP.test(file);
     })
@@ -253,6 +307,10 @@ function walks(): { instantiation: WalkStep[], inlining: WalkStep[], flattening:
     .map((file) => {
       return { frame: frame(file), pass: STEP.exec(file)?.[1] ?? '' };
     });
+  // a frame that writes the text of the one before it is no step: inlining writes one when it resolves an instance path to the instance it names
+  const steps = frames.filter((step, index) => {
+    return step.frame.text !== (frames[index - 1]?.frame ?? instantiated).text;
+  });
   // the inlining's frames end with the model inlining writes
   const lastInlining = steps.findLastIndex((step) => {
     return step.frame.text === inlined.text;
@@ -260,10 +318,18 @@ function walks(): { instantiation: WalkStep[], inlining: WalkStep[], flattening:
   if (lastInlining === -1) {
     throw new Error('No step of the compiler wrote the model inlining ends with');
   }
-  // the flattening's own frame first, then a frame for each optimization that fires
+  // a frame for each rewrite of the flattening that changes the model, then one for each optimization that fires
   const flattening = steps.slice(lastInlining + 1);
   if (flattening.at(-1)?.frame.text !== flattened.text) {
     throw new Error(`The last of the ${flattening.length} steps after inlining is not the model flattening writes`);
+  }
+  const unused = Object.keys(CAPTIONS).filter((pass) => {
+    return !steps.some((step) => {
+      return step.pass === pass;
+    });
+  });
+  if (unused.length !== 0) {
+    throw new Error(`No step of the compiler is of the passes ${unused.join(', ')}, which the walk has captions for`);
   }
   return {
     instantiation: checked('instantiation', instantiationSteps()),
