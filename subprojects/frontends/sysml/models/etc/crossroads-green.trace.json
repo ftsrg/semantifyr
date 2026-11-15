@@ -90,16 +90,6 @@
         {
             "traces": [
                 {
-                    "self": "root",
-                    "calledTransition": "semantifyr::sysml::verification::VerificationCaseDefinition::passTime",
-                    "arguments": [],
-                    "innerTraces": null
-                }
-            ]
-        },
-        {
-            "traces": [
-                {
                     "self": "root.system.controller.Behaviour.Operating.transition1",
                     "calledTransition": "semantifyr::sysml::states::Transition::fire",
                     "arguments": [],
@@ -139,17 +129,46 @@
                             "innerTraces": null
                         }
                     ]
-                },
-                {
-                    "self": "root",
-                    "calledTransition": "semantifyr::sysml::verification::VerificationCaseDefinition::passTime",
-                    "arguments": [],
-                    "innerTraces": null
                 }
             ]
         },
         {
             "traces": [
+                {
+                    "self": "root.system.controller.Behaviour.Operating.transition2",
+                    "calledTransition": "semantifyr::sysml::states::Transition::fire",
+                    "arguments": [],
+                    "innerTraces": [
+                        {
+                            "self": "root.system.controller.Behaviour.Operating.BothRed",
+                            "calledTransition": "semantifyr::sysml::states::State::exit",
+                            "arguments": [
+                                {
+                                    "parameter": "commonState",
+                                    "value": "root.system.controller.Behaviour.Operating"
+                                }
+                            ],
+                            "innerTraces": null
+                        },
+                        {
+                            "self": "root.system.controller.Behaviour.Operating.transition2.action.send1",
+                            "calledTransition": "semantifyr::sysml::actions::SendItemAction::send",
+                            "arguments": [],
+                            "innerTraces": null
+                        },
+                        {
+                            "self": "root.system.controller.Behaviour.Operating.TrafficOnA",
+                            "calledTransition": "semantifyr::sysml::states::State::enter",
+                            "arguments": [
+                                {
+                                    "parameter": "commonState",
+                                    "value": "root.system.controller.Behaviour.Operating"
+                                }
+                            ],
+                            "innerTraces": null
+                        }
+                    ]
+                },
                 {
                     "self": "root.system.trafficLightA.Behaviour.Normal.transition1",
                     "calledTransition": "semantifyr::sysml::states::Transition::fire",
@@ -221,104 +240,11 @@
                             ]
                         }
                     ]
-                },
-                {
-                    "self": "root",
-                    "calledTransition": "semantifyr::sysml::verification::VerificationCaseDefinition::passTime",
-                    "arguments": [],
-                    "innerTraces": null
                 }
             ]
         },
         {
             "traces": [
-                {
-                    "self": "root.system.controller.Behaviour.Operating.transition2",
-                    "calledTransition": "semantifyr::sysml::states::Transition::fire",
-                    "arguments": [],
-                    "innerTraces": [
-                        {
-                            "self": "root.system.controller.Behaviour.Operating.BothRed",
-                            "calledTransition": "semantifyr::sysml::states::State::exit",
-                            "arguments": [
-                                {
-                                    "parameter": "commonState",
-                                    "value": "root.system.controller.Behaviour.Operating"
-                                }
-                            ],
-                            "innerTraces": null
-                        },
-                        {
-                            "self": "root.system.controller.Behaviour.Operating.transition2.action.send1",
-                            "calledTransition": "semantifyr::sysml::actions::SendItemAction::send",
-                            "arguments": [],
-                            "innerTraces": null
-                        },
-                        {
-                            "self": "root.system.controller.Behaviour.Operating.TrafficOnA",
-                            "calledTransition": "semantifyr::sysml::states::State::enter",
-                            "arguments": [
-                                {
-                                    "parameter": "commonState",
-                                    "value": "root.system.controller.Behaviour.Operating"
-                                }
-                            ],
-                            "innerTraces": null
-                        }
-                    ]
-                },
-                {
-                    "self": "root",
-                    "calledTransition": "semantifyr::sysml::verification::VerificationCaseDefinition::passTime",
-                    "arguments": [],
-                    "innerTraces": null
-                }
-            ]
-        },
-        {
-            "traces": [
-                {
-                    "self": "root.system.controller.Behaviour.transition1",
-                    "calledTransition": "semantifyr::sysml::states::Transition::fire",
-                    "arguments": [],
-                    "innerTraces": [
-                        {
-                            "self": "root.system.controller.Behaviour.Operating",
-                            "calledTransition": "semantifyr::sysml::states::State::exit",
-                            "arguments": [
-                                {
-                                    "parameter": "commonState",
-                                    "value": "root.system.controller.Behaviour"
-                                }
-                            ],
-                            "innerTraces": null
-                        },
-                        {
-                            "self": "root.system.controller.Behaviour.Interrupted",
-                            "calledTransition": "semantifyr::sysml::states::State::enter",
-                            "arguments": [
-                                {
-                                    "parameter": "commonState",
-                                    "value": "root.system.controller.Behaviour"
-                                }
-                            ],
-                            "innerTraces": [
-                                {
-                                    "self": "root.system.controller.Behaviour.Interrupted.entryAction.send1",
-                                    "calledTransition": "semantifyr::sysml::actions::SendItemAction::send",
-                                    "arguments": [],
-                                    "innerTraces": null
-                                },
-                                {
-                                    "self": "root.system.controller.Behaviour.Interrupted.entryAction.send2",
-                                    "calledTransition": "semantifyr::sysml::actions::SendItemAction::send",
-                                    "arguments": [],
-                                    "innerTraces": null
-                                }
-                            ]
-                        }
-                    ]
-                },
                 {
                     "self": "root.system.trafficLightA.Behaviour.Normal.transition2",
                     "calledTransition": "semantifyr::sysml::states::Transition::fire",
@@ -354,12 +280,6 @@
                             ]
                         }
                     ]
-                },
-                {
-                    "self": "root",
-                    "calledTransition": "semantifyr::sysml::verification::VerificationCaseDefinition::passTime",
-                    "arguments": [],
-                    "innerTraces": null
                 }
             ]
         }

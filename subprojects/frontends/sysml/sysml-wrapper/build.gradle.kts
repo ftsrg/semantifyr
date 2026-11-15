@@ -25,7 +25,7 @@ dependencies {
     testImplementation(testFixtures(project(":compiler")))
 }
 
-val sysmlCommit = "83977a1411597b10571b15488eb63d8b8b85f79f" // fix: the details of the untyped flow and of accept when say what happens, without the retired kind words
+val sysmlCommit = "63c25260a81b6831bfc18dc6cd2e4b3e58c50b13" // feat: the SysML trace takes its case from the report, with a real report as the fixture
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 
@@ -314,8 +314,7 @@ tasks.test {
     inputs.files(appendFurtherCases).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(
         layout.projectDirectory.file("../models/etc/crossroads-green.trace.sysml"),
-        layout.projectDirectory.file("../models/etc/crossroads-green.trace.json"),
-        layout.projectDirectory.file("../models/etc/crossroads-green.witness.json"),
+        layout.projectDirectory.file("../models/etc/crossroads-green.report.json"),
         layout.projectDirectory.file("../models/etc/crossroads-green.witness.oxsts"),
     ).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("../models/libraries/default")).withPathSensitivity(PathSensitivity.RELATIVE)
