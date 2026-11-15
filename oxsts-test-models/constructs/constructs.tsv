@@ -22,6 +22,7 @@ Record literal `Point { x = 0 }`	pass	semantic/records.oxsts	RecordLiteralAssign
 Arrays of records, array fields in records	reject	constructs/record_array.oxsts	OXSTS.UNSUPPORTED_FEATURE
 Record-typed features	reject	constructs/record_feature.oxsts	OXSTS.UNSUPPORTED_FEATURE
 Record argument of a traced call	reject	constructs/record_trace_argument.oxsts	OXSTS.UNSUPPORTED_FEATURE
+Clock variables `var c: clock`	pass	semantic/clocks.oxsts	ClockDeadlineOnOtherPathReach
 Ordering on non-numeric values `Red < Green`	reject	constructs/enum_ordering.oxsts	OXSTS.TYPE_MISMATCH
 `derived refers` without `opposite`	reject	constructs/derived_without_opposite.oxsts	OXSTS.UNSUPPORTED_FEATURE
 Multiple inheritance `class C : A, B`	reject	constructs/multiple_inheritance.oxsts	OXSTS.MULTIPLE_INHERITANCE

@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backends.theta
 
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaCapabilityChecker
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
@@ -46,7 +47,12 @@ class ThetaSemanticOptimizationParityTest {
 
         @JvmStatic
         fun `Every Optimization Keeps The Verdict Of No Optimization`(): List<Arguments> {
-            return helper.collectVerificationCasesAsArguments(context)
+            return helper.collectAcceptedCasesAsArguments(
+                context,
+                ThetaBackendModule(),
+                ThetaCapabilityChecker::class.java,
+                SemantifyrVerifierTestHelper.testArtifactRoot(ThetaSemanticOptimizationParityTest::class.java).resolve("capability-check"),
+            )
         }
     }
 

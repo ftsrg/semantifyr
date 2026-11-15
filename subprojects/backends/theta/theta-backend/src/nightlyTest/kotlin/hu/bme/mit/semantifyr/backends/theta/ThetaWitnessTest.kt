@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.backends.theta
 
+import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaCapabilityChecker
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
@@ -40,7 +41,12 @@ class ThetaWitnessTest {
 
         @JvmStatic
         fun `Witnesses Re-verify Through All Backends`(): List<Arguments> {
-            return helper.collectVerificationCasesAsArguments(context)
+            return helper.collectAcceptedCasesAsArguments(
+                context,
+                ThetaBackendModule(),
+                ThetaCapabilityChecker::class.java,
+                SemantifyrVerifierTestHelper.testArtifactRoot(ThetaWitnessTest::class.java).resolve("capability-check"),
+            )
         }
     }
 
