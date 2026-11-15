@@ -24,6 +24,7 @@ import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.VerificationResult
 import hu.bme.mit.semantifyr.verifier.VerificationResultDto
 import hu.bme.mit.semantifyr.verifier.caseDirectory
+import hu.bme.mit.semantifyr.verifier.caseReportPath
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import hu.bme.mit.semantifyr.verifier.toJavaDto
@@ -111,13 +112,10 @@ class SysMLv2Frontend private constructor(
     private fun writeSysMLTrace(case: VerificationCase) {
         val tracePath = sysmlTracePath(case)
         try {
-            val artifacts = caseDirectory(sysmlConfiguration.outputDirectory, case)
             sharedSysMLv2Compiler.trace(
                 sourcePath = sysmlConfiguration.sourcePath,
-                witnessPath = artifacts.resolve("witness.json"),
-                tracePath = artifacts.resolve("trace.json"),
+                reportPath = caseReportPath(sysmlConfiguration.outputDirectory, case),
                 nameMapPath = nameMapPath(compiledOxstsPath),
-                caseName = case.qualifiedName.substringAfterLast("::"),
                 outputPath = tracePath,
             )
             logger.info { "SysMLv2 case '${case.qualifiedName}' wrote its SysML trace to '$tracePath'" }
