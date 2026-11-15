@@ -190,6 +190,23 @@ public class LiteralSyntaxTest {
                 .containsExactly(1, 2, 3);
     }
 
+    @Test
+    void arrayLiteralEndingInRepeatKeepsItsWrittenValues() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Host {
+                refers capacity: int
+                var slots: int[capacity] := [1, 2, ...]
+            }
+            """);
+        parsedPackage.assertNoResourceErrors();
+        var initializer = (ArrayLiteral)
+                parsedPackage.classByName("Host").variableByName("slots").initializer();
+        assertThat(initializer.isRepeatsLast()).isTrue();
+        assertThat(initializer.getValues().stream().map(value -> ((LiteralInteger) value).getValue()))
+                .containsExactly(1, 2);
+    }
+
     private static final String RECORDS = """
             package test
             record Point {

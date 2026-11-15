@@ -152,9 +152,14 @@ public class TypeCompatibility {
         }
         var range = left.getRange();
         if (range != null && right.getRange() != null) {
-            range = RangeEvaluation.of(
-                    Math.min(range.getLowerBound(), right.getRange().getLowerBound()),
-                    Math.max(range.getUpperBound(), right.getRange().getUpperBound()));
+            var lowerBound = Math.min(range.getLowerBound(), right.getRange().getLowerBound());
+            if (range.isPerInstance() || right.getRange().isPerInstance()) {
+                range = RangeEvaluation.perInstance(lowerBound);
+            } else {
+                range = RangeEvaluation.of(
+                        lowerBound,
+                        Math.max(range.getUpperBound(), right.getRange().getUpperBound()));
+            }
         }
         return new ImmutableTypeEvaluation(joinDomain(left.getDomain(), right.getDomain(), context), range);
     }
@@ -166,6 +171,9 @@ public class TypeCompatibility {
         var range = type.getRange();
         if (range == null) {
             return type;
+        }
+        if (range.isPerInstance()) {
+            return new ImmutableTypeEvaluation(type.getDomain(), RangeEvaluation.perInstance(0));
         }
         return new ImmutableTypeEvaluation(
                 type.getDomain(), RangeEvaluation.of(Math.min(0, range.getLowerBound()), range.getUpperBound()));
@@ -240,6 +248,9 @@ public class TypeCompatibility {
         if (assignee == null || assigned == null) {
             return true;
         }
+        if (assignee.isPerInstance() || assigned.isPerInstance()) {
+            return isPerInstanceAssignable(assignee, assigned);
+        }
         var assigneeLowerBound = assignee.getLowerBound();
         var assigneeUpperBound = assignee.getUpperBound();
         var assignedLowerBound = assigned.getLowerBound();
@@ -252,6 +263,19 @@ public class TypeCompatibility {
         }
 
         return assignedLowerBound >= assigneeLowerBound;
+    }
+
+    // the sizes are compared for each instance by the compiler; here only an array meets an array, and a slot that may
+    // hold nothing one that admits it
+    private boolean isPerInstanceAssignable(RangeEvaluation assignee, RangeEvaluation assigned) {
+        if (!isArray(assignee) || !isArray(assigned)) {
+            return false;
+        }
+        return assignee.getLowerBound() == 0 || assigned.getLowerBound() > 0;
+    }
+
+    private static boolean isArray(RangeEvaluation range) {
+        return range.getUpperBound() != RangeEvaluation.INFINITY && range.getUpperBound() > 1;
     }
 
     private boolean isSubclassOf(ClassDeclaration candidate, ClassDeclaration target) {

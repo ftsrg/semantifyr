@@ -15,6 +15,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.DataTypeDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DefiniteMultiplicity;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Multiplicity;
@@ -174,8 +175,17 @@ public class OxstsDeclarationRenderer {
     protected String renderMultiplicity(Multiplicity multiplicity) {
         return switch (multiplicity) {
             case UnboundedMultiplicity ignored -> "[]";
-            case DefiniteMultiplicity definite -> "[" + expressionSerializer.serialize(definite.getExpression()) + "]";
+            case DefiniteMultiplicity definite -> "[" + renderSize(definite.getExpression()) + "]";
             case null, default -> "";
         };
+    }
+
+    // a size from a binding is shown as written, its references not qualified
+    protected String renderSize(Expression size) {
+        var node = NodeModelUtils.getNode(size);
+        if (node == null) {
+            return expressionSerializer.serialize(size);
+        }
+        return NodeModelUtils.getTokenText(node);
     }
 }
