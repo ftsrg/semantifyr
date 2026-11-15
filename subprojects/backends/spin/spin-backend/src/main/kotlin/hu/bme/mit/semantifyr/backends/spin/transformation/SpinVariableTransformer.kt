@@ -55,6 +55,7 @@ class SpinVariableTransformer @Inject constructor(
         return when {
             domain is EnumDeclaration -> SpinVariableKind.Enum
             domain === builtinSymbolResolver.intDatatype(variableDeclaration) -> SpinVariableKind.Integer
+            domain === builtinSymbolResolver.clockDatatype(variableDeclaration) -> SpinVariableKind.Integer
             domain === builtinSymbolResolver.boolDatatype(variableDeclaration) -> SpinVariableKind.Boolean
             else -> throw BackendUnsupportedException("Spin does not support variables of type ${domain.name} (${variableDeclaration.name})")
         }

@@ -7,6 +7,8 @@
 package hu.bme.mit.semantifyr.backends.spin.trace
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backend.transformation.WHOLE_DELAY_VARIABLE_NAME
+import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
@@ -42,9 +44,16 @@ class SpinInlinedOxstsWitnessTransformer @Inject constructor(
             }
         }
 
+        var delay = Fraction.ZERO
         val states = trace.states.mapNotNull { state ->
             for ((name, raw) in state.variableValues) {
                 if (name == SPIN_STABLE_FLAG) {
+                    continue
+                }
+                if (name == WHOLE_DELAY_VARIABLE_NAME) {
+                    delay = raw.toBigIntegerOrNull()?.let {
+                        Fraction.of(it)
+                    } ?: throw WitnessFailedException("Spin's replay holds $raw for the delay, which is no whole amount")
                     continue
                 }
                 val variable = nameToVariable[name] ?: throw WitnessFailedException("Spin's replay holds $name, which names no variable of the model")
@@ -62,7 +71,7 @@ class SpinInlinedOxstsWitnessTransformer @Inject constructor(
                     WitnessStateValue(variable, it.copy())
                 }
             }
-            WitnessState(values)
+            WitnessState(values, elapsed = delay)
         }
 
         return linearInlinedWitness(inlinedOxsts, states)

@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backends.spin.transformation
 
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
+import hu.bme.mit.semantifyr.backend.transformation.WHOLE_DELAY_VARIABLE_NAME
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -643,5 +644,68 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
                 """,
             )
         }
+    }
+
+    @Test
+    suspend fun `every main step starts with a bounded whole delay that advances each clock up to its saturation, and init waits for nothing`() {
+        val artifacts = transform(
+            """
+                var elapsed : clock := 0
+                var late : bool := false
+                init {
+                }
+                tran {
+                    assume(elapsed <= 2)
+                    choice {
+                        assume(elapsed >= 2)
+                        late := true
+                        elapsed := 0
+                    } or {
+                    }
+                }
+                prop {
+                    AG !late
+                }
+            """,
+        )
+
+        assertThat(artifacts.promela).isEqualTo(
+            """
+                int elapsed = 0;
+                bool late = false;
+
+                bool $SPIN_STABLE_FLAG = false;
+
+                int $WHOLE_DELAY_VARIABLE_NAME = 0;
+
+                init {
+                    atomic {
+                        $SPIN_STABLE_FLAG = false;
+                        skip;
+                        $SPIN_STABLE_FLAG = true;
+                    }
+                    do
+                    :: atomic {
+                        $SPIN_STABLE_FLAG = false;
+                        select ($WHOLE_DELAY_VARIABLE_NAME : 0 .. 3);
+                        elapsed = (elapsed + $WHOLE_DELAY_VARIABLE_NAME >= 3 -> 3 : elapsed + $WHOLE_DELAY_VARIABLE_NAME);
+                        ((elapsed <= 2));
+                        if
+                        :: atomic {
+                            ((elapsed >= 2));
+                            late = true;
+                            elapsed = 0;
+                        }
+                        :: skip
+                        fi;
+                        $SPIN_STABLE_FLAG = true;
+                    }
+                    od;
+                }
+
+                ltl p { [] (!$SPIN_STABLE_FLAG || (!(late))) }
+
+            """.trimIndent(),
+        )
     }
 }

@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backends.spin.transformation
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backend.transformation.WHOLE_DELAY_VARIABLE_NAME
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.utils.text.IndentingStringBuilder
@@ -59,6 +60,11 @@ class SpinDeclarationRenderer @Inject constructor(
 
     fun renderStableFlag(builder: IndentingStringBuilder) {
         builder.appendLine("bool $SPIN_STABLE_FLAG = false;")
+        builder.appendLine()
+    }
+
+    fun renderDelay(builder: IndentingStringBuilder) {
+        builder.appendLine("int $WHOLE_DELAY_VARIABLE_NAME = 0;")
         builder.appendLine()
     }
 }
