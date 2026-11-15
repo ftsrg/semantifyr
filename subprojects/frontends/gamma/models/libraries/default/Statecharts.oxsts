@@ -178,7 +178,6 @@ class Region {
     tran fire() {
         inline if (statechart.regionSchedule == RegionSchedule::BottomUp) {
             choice {
-                // fire state transitions if inner transitions are not enabled (bottom-up)
                 inline assumeNoInnerTransitionEnabled()
                 inline fireLocalTransitions()
             } or {
@@ -188,7 +187,6 @@ class Region {
             choice {
                 inline fireLocalTransitions()
             } or {
-                // fire inner transitions if local transitions are not enabled (top-down)
                 inline assumeNoLocalTransitionEnabled()
                 inline fireInnerTransitions()
             }

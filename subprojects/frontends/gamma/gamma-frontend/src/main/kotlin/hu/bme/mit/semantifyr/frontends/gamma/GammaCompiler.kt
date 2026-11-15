@@ -35,7 +35,6 @@ class GammaCompiler {
         return nameMap
     }
 
-    // every package the model reaches through its imports or its own name is emitted as an OXSTS package of its own
     @OptIn(ExperimentalPathApi::class)
     fun compileWithImports(gammaModel: GammaModelPackage, outputDirectory: Path): CompiledGammaModel {
         val nameMap = GammaNameMap()
