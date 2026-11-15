@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-.path,
-.graph {
+.path {
   margin: 0 0 2.5rem;
   padding: 1.5rem;
   border: 1px solid var(--border);
@@ -169,81 +168,4 @@
   .aroundBoxes {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-}
-
-.graph {
-  overflow-x: auto;
-}
-
-.graph svg {
-  display: block;
-  margin: 0 auto;
-}
-
-.legend {
-  margin: 12px 0 0;
-  color: var(--text-secondary);
-  font-size: 13px;
-}
-
-.node rect {
-  fill: var(--surface-raised);
-  stroke: var(--border-strong);
-  stroke-width: 1.5;
-}
-
-.node text {
-  fill: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: 13px;
-  text-anchor: middle;
-  dominant-baseline: central;
-}
-
-.node:focus {
-  outline: none;
-}
-
-.node:focus-visible rect {
-  stroke: var(--accent-ink);
-  stroke-width: 3;
-}
-
-.groupFrame {
-  fill: none;
-  stroke: var(--language-sysml);
-  stroke-width: 1.5;
-  stroke-dasharray: 4 3;
-}
-
-.groupLabel {
-  fill: var(--text-secondary);
-  font-family: var(--font-mono);
-  font-size: 11px;
-}
-
-.dependency {
-  fill: none;
-  stroke: var(--text-tertiary);
-  stroke-width: 1;
-  opacity: 0.55;
-}
-
-.faded .dependency {
-  opacity: 0.12;
-}
-
-.faded .dependency.lit {
-  stroke: var(--accent-ink);
-  stroke-width: 2;
-  opacity: 1;
-}
-
-.faded .node rect {
-  opacity: 0.45;
-}
-
-.faded .node.lit rect {
-  opacity: 1;
-  stroke: var(--accent-ink);
 }
