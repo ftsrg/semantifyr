@@ -21,6 +21,7 @@ import hu.bme.mit.semantifyr.backend.scopes.VerificationScope
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backends.nuxmv.NuxmvExecutionSpecification
 import hu.bme.mit.semantifyr.backends.nuxmv.NuxmvExecutor
 import hu.bme.mit.semantifyr.backends.nuxmv.NuxmvExecutorKey
@@ -182,12 +183,9 @@ class NuxmvVerificationContext @AssistedInject constructor(
             return null
         }
         val trace = nuxmvTraceParser.parse(artifactManager.logFile)
-        if (trace == null) {
-            logger.warn { "[$backendId] no trace parseable from ${artifactManager.logFile.name}. Witness will be omitted" }
-            return null
-        }
+            ?: throw WitnessFailedException("nuXmv's output holds no trace")
         logger.info { "[$backendId] parsed nuXmv trace with ${trace.states.size} state(s). Building witness" }
-        return nuxmvInlinedOxstsWitnessTransformer.transform(request.inlinedOxsts, trace)
+        return nuxmvInlinedOxstsWitnessTransformer.transform(request.inlinedOxsts, trace, artifacts.auxiliaryNames)
     }
 
     interface Factory {

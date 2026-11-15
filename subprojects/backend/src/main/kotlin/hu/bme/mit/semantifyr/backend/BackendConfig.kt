@@ -19,13 +19,16 @@ enum class SoundnessDirection {
         if (!verdict.isDecisive) {
             return false
         }
-        val witnessed = (verdict == VerificationVerdict.Failed) != (property is EF)
         return when (this) {
             Exact -> true
-            OverApproximating -> !witnessed
-            UnderApproximating -> witnessed
+            OverApproximating -> !hasTrace(verdict, property)
+            UnderApproximating -> hasTrace(verdict, property)
         }
     }
+}
+
+fun hasTrace(verdict: VerificationVerdict, property: Expression): Boolean {
+    return verdict.isDecisive && (verdict == VerificationVerdict.Failed) != (property is EF)
 }
 
 interface BackendConfig {

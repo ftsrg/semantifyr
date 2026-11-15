@@ -89,12 +89,28 @@ class ThetaBackendReplayTest {
     }
 
     @Test
-    suspend fun `a counterexample that does not parse fails the witness and keeps the verdict`() {
+    suspend fun `a counterexample that does not parse fails the run`() {
         val result = verify("MalformedCounterexample", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
 
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
         assertThat(result.inlinedWitness).isNull()
         assertThat(result.message).contains("(counter #b1)")
+    }
+
+    @Test
+    suspend fun `a name of the counterexample that does not map back fails the run`() {
+        val result = verify("CounterExceedsBoundUnmappedName", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(result.message).contains("ghost, which names no variable of the model")
+    }
+
+    @Test
+    suspend fun `a violated invariant without its counterexample fails the run`() {
+        val result = verify("CounterExceedsBoundWithoutTrace", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(result.message).contains("without its trace")
     }
 
     @Test

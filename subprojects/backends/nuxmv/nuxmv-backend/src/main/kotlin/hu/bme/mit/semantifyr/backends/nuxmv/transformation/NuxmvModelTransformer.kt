@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.utils.text.IndentingStringBuilder
 data class NuxmvArtifacts(
     val smv: String,
     val property: NuxmvProperty,
+    val auxiliaryNames: Set<String>,
 )
 
 class NuxmvModelTransformer @Inject constructor(
@@ -42,15 +43,22 @@ class NuxmvModelTransformer @Inject constructor(
 
         val builder = IndentingStringBuilder()
         builder.appendLine("MODULE main")
-        nuxmvDeclarationRenderer.renderVariablesSection(builder, nuxmvVariables, allPrimedDeclarations(allResults))
+        val primedDeclarations = allPrimedDeclarations(allResults)
+        val frozenVariables = allFrozenVariables(allResults)
+        nuxmvDeclarationRenderer.renderVariablesSection(builder, nuxmvVariables, primedDeclarations)
         nuxmvDeclarationRenderer.renderInputVariablesSection(builder, allInputVariables(allResults))
-        nuxmvDeclarationRenderer.renderFrozenVariablesSection(builder, allFrozenVariables(allResults))
+        nuxmvDeclarationRenderer.renderFrozenVariablesSection(builder, frozenVariables)
         nuxmvFormulaRenderer.renderInitSection(builder, variables, initResults.map { it.branch }, initializedVariables)
         nuxmvFormulaRenderer.renderTransSection(builder, variables, tranResults.map { it.branch })
 
         return NuxmvArtifacts(
             builder.toString(),
             nuxmvPropertyTransformer.transform(inlinedOxsts.property),
+            primedDeclarations.map {
+                it.name
+            }.toSet() + frozenVariables.map {
+                it.name
+            },
         )
     }
 

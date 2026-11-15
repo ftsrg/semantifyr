@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.backends.spin.trace
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
 import hu.bme.mit.semantifyr.backend.witness.linearInlinedWitness
@@ -16,6 +17,7 @@ import hu.bme.mit.semantifyr.backends.spin.transformation.SpinVariableKind
 import hu.bme.mit.semantifyr.backends.spin.transformation.SpinVariableTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
@@ -27,9 +29,10 @@ class SpinInlinedOxstsWitnessTransformer @Inject constructor(
 ) {
 
     fun transform(inlinedOxsts: InlinedOxsts, trace: SpinTrace): InlinedWitness {
-        val nameToVar = inlinedOxsts.variables.associateBy {
+        val nameToVariable = inlinedOxsts.eAllOfType<VariableDeclaration>().associateBy {
             spinVariableTransformer.nameOf(it)
         }
+        val stateVariables = inlinedOxsts.variables.toSet()
 
         // the replay prints a global only when it changes, so every value starts from its declaration
         val running = mutableMapOf<VariableDeclaration, Expression>()
@@ -41,9 +44,14 @@ class SpinInlinedOxstsWitnessTransformer @Inject constructor(
 
         val states = trace.states.mapNotNull { state ->
             for ((name, raw) in state.variableValues) {
-                val variable = nameToVar[name] ?: continue
-                val value = parseValue(variable, raw) ?: continue
-                running[variable] = value
+                if (name == SPIN_STABLE_FLAG) {
+                    continue
+                }
+                val variable = nameToVariable[name] ?: throw WitnessFailedException("Spin's replay holds $name, which names no variable of the model")
+                if (variable !in stateVariables) {
+                    continue
+                }
+                running[variable] = parseValue(variable, raw) ?: throw WitnessFailedException("Spin's replay holds $raw for $name, which is no value of its type")
             }
             val stable = state.variableValues[SPIN_STABLE_FLAG]
             if (stable != "1" && stable != "true") {

@@ -21,6 +21,7 @@ import hu.bme.mit.semantifyr.backend.scopes.VerificationScope
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backends.spin.SpinExecutionSpecification
 import hu.bme.mit.semantifyr.backends.spin.SpinExecutor
 import hu.bme.mit.semantifyr.backends.spin.SpinExecutorKey
@@ -198,14 +199,10 @@ class SpinVerificationContext @AssistedInject constructor(
         )
         val replayResult = executor.replayTrail(replaySpec)
         if (replayResult.exitCode != 0 && replayResult.exitCode != 1) {
-            logger.warn { "[$backendId] spin replay failed with exit code ${replayResult.exitCode}; witness not produced" }
-            return null
+            throw WitnessFailedException("Spin's replay of its trail failed with exit code ${replayResult.exitCode}")
         }
         val trace = spinTraceParser.parse(artifactManager.replayLogFile)
-        if (trace == null) {
-            logger.warn { "[$backendId] no parseable steps in spin replay; witness not produced" }
-            return null
-        }
+            ?: throw WitnessFailedException("Spin's replay of its trail holds no step")
         logger.info { "[$backendId] parsed Spin trace with ${trace.states.size} state(s); building witness" }
         return spinInlinedOxstsWitnessTransformer.transform(request.inlinedOxsts, trace)
     }

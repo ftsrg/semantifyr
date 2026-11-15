@@ -9,11 +9,14 @@ package hu.bme.mit.semantifyr.backend
 import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.oxsts.lang.utils.SourceLocation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.emf.ecore.EObject
 import kotlin.coroutines.cancellation.CancellationException
@@ -51,6 +54,14 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
         } catch (c: CancellationException) {
             logger.debug { "[$backendId] cancelled" }
             throw c
+        } catch (e: WitnessFailedException) {
+            logger.warn { "[$backendId] trace not read back: ${e.message}" }
+            BackendVerificationResult(
+                verdict = VerificationVerdict.Errored,
+                metadata = metadata,
+                metrics = BackendMetrics(),
+                message = "$backendId's trace could not be read back: ${e.message}",
+            )
         } catch (e: BackendUnsupportedException) {
             logger.info { "[$backendId] verification not supported: ${e.message}" }
             BackendVerificationResult(
@@ -119,22 +130,20 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
         logger.info { "[$backendId] returned $rawVerdict in $verificationDuration" }
 
         val verdict = interpret(rawVerdict, artifacts)
+        val property = request.inlinedOxsts.property.expression
+        val declaredSoundness = declareSoundness(request.inlinedOxsts)
+        val isTrusted = declaredSoundness.trusts(verdict, property)
 
-        var witnessFailure: String? = null
         val (witness, witnessDuration) = measureTimedValue {
-            try {
-                buildWitness(rawVerdict, artifacts)
-            } catch (exception: WitnessFailedException) {
-                logger.warn { "[$backendId] witness not produced: ${exception.message}" }
-                witnessFailure = "Witness not produced: ${exception.message}"
-                null
-            }
+            buildWitness(rawVerdict, artifacts)
         }
-        val backAnnotationDuration = if (witness != null) {
-            logger.info { "[$backendId] back-annotated witness in $witnessDuration" }
-            witnessDuration
+        if (witness == null) {
+            if (isTrusted && hasTrace(verdict, property)) {
+                throw WitnessFailedException("$backendId gave a $verdict verdict without its trace")
+            }
         } else {
-            Duration.ZERO
+            checkTraceVariables(witness)
+            logger.info { "[$backendId] back-annotated witness in $witnessDuration" }
         }
 
         return BackendVerificationResult(
@@ -143,13 +152,41 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
             metrics = BackendMetrics(
                 preparationDuration = preparationDuration,
                 verificationDuration = verificationDuration,
-                backAnnotationDuration = backAnnotationDuration,
+                backAnnotationDuration = if (witness == null) {
+                    Duration.ZERO
+                } else {
+                    witnessDuration
+                },
             ),
             inlinedWitness = witness,
-            soundness = soundness,
-            isTrusted = soundness.trusts(verdict, request.inlinedOxsts.property.expression),
-            message = witnessFailure,
+            soundness = declaredSoundness,
+            isTrusted = isTrusted,
         )
+    }
+
+    private fun checkTraceVariables(witness: InlinedWitness) {
+        val traceVariables = request.inlinedOxsts.variables.filter {
+            TransitionTracerNames.isTracerName(it.name)
+        }
+        if (traceVariables.isEmpty()) {
+            return
+        }
+        val states = listOf(witness.initializedState) + witness.transitionStates
+        for ((index, state) in states.withIndex()) {
+            val values = state.values.associate {
+                it.variable to it.value
+            }
+            for (variable in traceVariables) {
+                if (values[variable] !is LiteralBoolean) {
+                    throw WitnessFailedException("the trace variable ${variable.name} has no value in state $index")
+                }
+            }
+        }
+    }
+
+    // a backend's run declares its direction from the model it verifies, by default its configuration's
+    protected open fun declareSoundness(inlinedOxsts: InlinedOxsts): SoundnessDirection {
+        return soundness
     }
 
     protected abstract suspend fun prepare(): TArtifacts

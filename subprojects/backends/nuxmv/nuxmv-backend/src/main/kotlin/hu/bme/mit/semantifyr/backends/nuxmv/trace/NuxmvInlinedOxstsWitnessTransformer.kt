@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.backends.nuxmv.trace
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
 import hu.bme.mit.semantifyr.backend.witness.linearInlinedWitness
@@ -15,6 +16,7 @@ import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvVariableKind
 import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvVariableTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -24,19 +26,29 @@ class NuxmvInlinedOxstsWitnessTransformer @Inject constructor(
     private val nuxmvVariableTransformer: NuxmvVariableTransformer,
 ) {
 
-    fun transform(inlinedOxsts: InlinedOxsts, trace: NuxmvTrace): InlinedWitness {
-        val nameToVar = inlinedOxsts.variables.associateBy {
+    fun transform(
+        inlinedOxsts: InlinedOxsts,
+        trace: NuxmvTrace,
+        auxiliaryNames: Set<String>,
+    ): InlinedWitness {
+        val nameToVariable = inlinedOxsts.eAllOfType<VariableDeclaration>().associateBy {
             nuxmvVariableTransformer.nameOf(it)
         }
+        val stateVariables = inlinedOxsts.variables.toSet()
 
         val running = mutableMapOf<VariableDeclaration, Expression>()
         val updated = mutableSetOf<VariableDeclaration>()
 
         val states = trace.states.map {
             for ((name, raw) in it.variableValues) {
-                val variable = nameToVar[name] ?: continue
-                val value = parseValue(variable, raw) ?: continue
-                running[variable] = value
+                if (name in auxiliaryNames) {
+                    continue
+                }
+                val variable = nameToVariable[name] ?: throw WitnessFailedException("nuXmv's trace holds $name, which names no variable of the model")
+                if (variable !in stateVariables) {
+                    continue
+                }
+                running[variable] = parseValue(variable, raw) ?: throw WitnessFailedException("nuXmv's trace holds $raw for $name, which is no value of its type")
                 updated += variable
             }
             val values = inlinedOxsts.variables.mapNotNull { variable ->

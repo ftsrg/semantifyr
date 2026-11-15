@@ -180,7 +180,7 @@ class UppaalVerificationContext @AssistedInject constructor(
         }
         val trace = uppaalTraceParser.parse(artifactManager.logFile)
         if (trace == null) {
-            logger.info { "[$backendId] no diagnostic trace in ${artifactManager.logFile.name}; witness not produced" }
+            logger.info { "[$backendId] no diagnostic trace in ${artifactManager.logFile.name}" }
             return null
         }
         logger.info { "[$backendId] parsed Uppaal trace with ${trace.states.size} state(s); building witness" }

@@ -59,6 +59,23 @@ class SmartFullPortfolioTest {
     }
 
     @Test
+    suspend fun `a run whose trace cannot be read back fails and the race carries on`(
+        @TempDir output: Path,
+    ) {
+        val portfolio = SmartFullPortfolio(
+            theta = UnreadableTraceBackend("theta"),
+            uppaal = SlowBackend("uppaal", delayMillis = 100, verdict = VerificationVerdict.Failed),
+            nuxmv = SlowBackend("nuxmv", delayMillis = 100, verdict = VerificationVerdict.Failed),
+            spin = SlowBackend("spin", delayMillis = 100, verdict = VerificationVerdict.Failed),
+        )
+
+        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        assertThat(result.metadata.backendId).isNotEqualTo("theta")
+    }
+
+    @Test
     suspend fun `a Passed from an under-approximating leg does not win the race`(
         @TempDir output: Path,
     ) {

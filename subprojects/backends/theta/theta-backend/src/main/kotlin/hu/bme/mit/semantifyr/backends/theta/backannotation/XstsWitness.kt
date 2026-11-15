@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.backends.theta.backannotation
 
+import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaModelTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.LocalVarNames
 import hu.bme.mit.semantifyr.xsts.lang.xsts.Expression
@@ -58,9 +59,7 @@ class XstsWitnessTransformer {
 
         private fun transform(variableValue: CexWitnessStateVariableValue): XstsWitnessStateVariableValue {
             val index = declarationOrder[variableValue.variableName]
-            check(index != null) {
-                "Variable with name ${variableValue.variableName} not found!"
-            }
+                ?: throw WitnessFailedException("Theta's counterexample holds ${variableValue.variableName}, which names no variable of the model")
             val variable = xstsModel.variableDeclarations[index]
 
             return XstsWitnessStateVariableValue(

@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.backends.uppaal.trace
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
 import hu.bme.mit.semantifyr.backend.witness.linearInlinedWitness
@@ -15,6 +16,7 @@ import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalVariableKind
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalVariableTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
@@ -26,7 +28,7 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
 ) {
 
     fun transform(inlinedOxsts: InlinedOxsts, trace: UppaalTrace): InlinedWitness {
-        val nameToVariable = inlinedOxsts.variables.associateBy {
+        val nameToVariable = inlinedOxsts.eAllOfType<VariableDeclaration>().associateBy {
             uppaalVariableTransformer.nameOf(it)
         }
         val boundaryStates = trace.states.filter {
@@ -36,8 +38,9 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
         val running = mutableMapOf<VariableDeclaration, Expression>()
         val updated = mutableSetOf<VariableDeclaration>()
 
+        val stateVariables = inlinedOxsts.variables.toSet()
         val states = boundaryStates.mapNotNull {
-            updateRunningValues(it, nameToVariable, running, updated)
+            updateRunningValues(it, nameToVariable, stateVariables, running, updated)
             if (it.isStable()) {
                 buildWitnessState(inlinedOxsts.variables, running, updated)
             } else {
@@ -45,8 +48,8 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
             }
         }
 
-        require(states.isNotEmpty()) {
-            "Cannot build witness from an Uppaal trace without an initialized state"
+        if (states.isEmpty()) {
+            throw WitnessFailedException("Uppaal's trace has no initialized state")
         }
 
         return linearInlinedWitness(inlinedOxsts, states)
@@ -55,13 +58,21 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
     private fun updateRunningValues(
         state: UppaalTraceState,
         nameToVariable: Map<String, VariableDeclaration>,
+        stateVariables: Set<VariableDeclaration>,
         running: MutableMap<VariableDeclaration, Expression>,
         updated: MutableSet<VariableDeclaration>,
     ) {
         for ((name, raw) in state.variableValues) {
-            val variable = nameToVariable[name] ?: continue
-            val value = parseValue(variable, raw) ?: continue
-            running[variable] = value
+            val variable = nameToVariable[name] ?: throw WitnessFailedException("Uppaal's trace holds $name, which names no variable of the model")
+            if (variable !in stateVariables) {
+                continue
+            }
+            val kind = uppaalVariableTransformer.describe(variable).kind
+            // a clock's value is not part of the witness yet
+            if (kind == UppaalVariableKind.Clock) {
+                continue
+            }
+            running[variable] = parseValue(variable, kind, raw) ?: throw WitnessFailedException("Uppaal's trace holds $raw for $name, which is no value of its type")
             updated += variable
         }
     }
@@ -94,8 +105,11 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
         }
     }
 
-    private fun parseValue(variable: VariableDeclaration, raw: String): Expression? {
-        val kind = uppaalVariableTransformer.describe(variable).kind
+    private fun parseValue(
+        variable: VariableDeclaration,
+        kind: UppaalVariableKind,
+        raw: String,
+    ): Expression? {
         return when (kind) {
             UppaalVariableKind.Integer -> raw.toIntOrNull()?.let {
                 OxstsFactory.createLiteralInteger(it)

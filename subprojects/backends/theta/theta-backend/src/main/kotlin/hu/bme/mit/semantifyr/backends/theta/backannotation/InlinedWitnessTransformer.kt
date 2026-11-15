@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.backends.theta.backannotation
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -47,7 +48,7 @@ class InlinedWitnessTransformer @Inject constructor(
 
         private fun resolveOxstsVariable(variableName: String): VariableDeclaration {
             return variablesByName[variableName]
-                ?: error("Variable with name $variableName not found!")
+                ?: throw WitnessFailedException("Theta's counterexample holds $variableName, which names no variable of the model")
         }
     }
 
