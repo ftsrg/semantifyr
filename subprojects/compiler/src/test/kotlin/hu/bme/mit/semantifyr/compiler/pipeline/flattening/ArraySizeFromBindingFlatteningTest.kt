@@ -209,6 +209,35 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
     }
 
     @Test
+    fun `a literal of one value is an array of one where the instance has one slot and a length error elsewhere`() {
+        val sizes = store + """
+            @VerificationCase
+            class Host {
+                contains store: Store {
+                    redefine refers capacity: int = %d
+                }
+                var same: bool := false
+                redefine tran {
+                    store.slots := [5]
+                    same := store.slots == [5]
+                    same := [5] != store.slots
+                }
+                prop {
+                    return AG !same
+                }
+            }
+        """
+        val flattened = flatten("Host", sizes.format(1))
+
+        val main = serialize(flattened.inlinedOxsts.mainTransition)
+        val slot = quoted(member("root", "store", "slots") + "_0")
+        assertThat(main).contains("$slot := 5", "$slot == 5", "5 != $slot")
+        assertThatThrownBy {
+            flatten("Host", sizes.format(2))
+        }.hasMessageContaining("This array has 1 slots where 'slots' of instance 'root.store' holds 2.")
+    }
+
+    @Test
     fun `two arrays of different sizes compared or assigned are an error that names the instance`() {
         val sizes = store + """
             @VerificationCase
@@ -395,5 +424,9 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
         val main = serialize(flattened.inlinedOxsts.mainTransition)
         assertThat(main).contains("var 'slot${LocalVarNames.LOCAL_VAR_SUFFIX}")
         assertThat(flattened.inlinedOxsts.eAllOfType<IndexingSuffixExpression>().toList()).isEmpty()
+    }
+
+    private fun quoted(name: String): String {
+        return "'$name'"
     }
 }

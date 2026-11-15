@@ -1200,6 +1200,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (initializer instanceof ArrayLiteral literal && literal.isRepeatsLast()) {
             actual = new ImmutableTypeEvaluation(actual.getDomain(), declared.getRange());
         }
+        actual = asArrayOfOne(initializer, actual, declared);
         if (!typeCompatibility.isAssignable(declared, actual, variableDeclaration)) {
             acceptError(
                     "Initializer of type "
@@ -1734,6 +1735,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (lhsType == null || rhsType == null) {
             return;
         }
+        rhsType = asArrayOfOne(rhs, rhsType, lhsType);
         if (!typeCompatibility.isAssignable(lhsType, rhsType, assignmentOperation)) {
             acceptError(
                     "Cannot assign value of type "
@@ -1866,6 +1868,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (leftType == null || rightType == null) {
             return;
         }
+        leftType = asArrayOfOne(left, leftType, rightType);
+        rightType = asArrayOfOne(right, rightType, leftType);
         if (!typeCompatibility.isComparable(leftType, rightType, operator)) {
             acceptError(
                     "Cannot compare values of type " + formatType(leftType) + " and " + formatType(rightType) + ".",
@@ -1905,6 +1909,23 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     operator,
                     TYPE_MISMATCH);
         }
+    }
+
+    // a literal of one value types as a single value; against a size each instance decides it is an array of one, its
+    // length checked per instance
+    private static TypeEvaluation asArrayOfOne(Expression expression, TypeEvaluation type, TypeEvaluation other) {
+        if (expression instanceof ArrayLiteral literal
+                && !literal.isRepeatsLast()
+                && literal.getValues().size() == 1
+                && other != null
+                && other.getRange() != null
+                && other.getRange().isPerInstance()
+                && type.getRange() != null) {
+            return new ImmutableTypeEvaluation(
+                    type.getDomain(),
+                    RangeEvaluation.perInstance(type.getRange().getLowerBound()));
+        }
+        return type;
     }
 
     private static boolean isFixedSizeArray(TypeEvaluation type) {

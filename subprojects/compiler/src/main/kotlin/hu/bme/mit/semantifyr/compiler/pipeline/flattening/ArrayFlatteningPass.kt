@@ -147,12 +147,13 @@ class ArrayFlatteningPass @Inject constructor(
                 EcoreUtil2.replace(indexing, indexInto(primary, indexing.index))
             }
         }
+        // a literal of one value counts as an array of one where it meets an array
         fun checkLength(
             expression: Expression,
             slotCount: Int,
             array: Expression,
         ) {
-            val length = slotCountOf(expression) ?: return
+            val length = (expression as? ArrayLiteral)?.values?.size ?: slotCountOf(expression) ?: return
             if (length != slotCount) {
                 val name = arrayOf(array)?.let {
                     describe(it)
@@ -165,6 +166,8 @@ class ArrayFlatteningPass @Inject constructor(
             val slotCount = slotCountOf(comparison.left) ?: slotCountOf(comparison.right) ?: continue
             if (slotCountOf(comparison.left) != null) {
                 checkLength(comparison.right, slotCount, comparison.left)
+            } else {
+                checkLength(comparison.left, slotCount, comparison.right)
             }
             val slotComparisons = (0 until slotCount).map { index ->
                 OxstsFactory.createComparisonOperator().also {

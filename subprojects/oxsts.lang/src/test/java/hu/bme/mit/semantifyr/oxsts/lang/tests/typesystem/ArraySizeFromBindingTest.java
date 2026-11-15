@@ -129,7 +129,9 @@ public class ArraySizeFromBindingTest {
                 tran read() {
                     value := slots
                     slots := value
+                    slots := 7
                     same := slots == 0
+                    same := 7 == slots
                 }
             }
             """, CheckMode.ALL);
@@ -138,10 +140,51 @@ public class ArraySizeFromBindingTest {
                 .filteredOn(issue -> {
                     return issue.getSeverity() == Severity.ERROR;
                 })
-                .hasSize(4)
+                .hasSize(6)
                 .allSatisfy(issue -> {
                     assertThat(issue.getCode()).isEqualTo(OxstsValidator.TYPE_MISMATCH);
                 });
+    }
+
+    @Test
+    void literalOfOneValueAgainstASizeFromABindingIsAnArrayWhoseLengthTheCompilerChecks() {
+        var parsedPackage = parseHelper.parse(STORE + """
+            class Store {
+                refers capacity: int
+                var slots: int[capacity] := [7]
+                var same: bool := false
+
+                tran reset() {
+                    slots := [7]
+                    same := slots == [7]
+                    same := [7] != slots
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
+    }
+
+    @Test
+    void literalOfOneValueStaysASingleValueForAMultiplicityWrittenAsOne() {
+        var parsedPackage = parseHelper.parse(STORE + """
+            class Counter {
+                var count: int[1] := [0]
+                var optional: int[0..1] := [0]
+                var plain: int := [0]
+
+                tran step() {
+                    count := count + 1
+                    count := [3]
+                    plain := count
+                    optional := [count]
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     @Test
