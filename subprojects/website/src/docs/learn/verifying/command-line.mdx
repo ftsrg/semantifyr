@@ -1,0 +1,81 @@
+---
+title: Verifying on the Command Line
+sidebar_label: On the Command Line
+sidebar_position: 5
+description: Verify the cases of an OXSTS model with the semantifyr command, read their verdicts and find the witness of a failed case on disk.
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import CaseVerdict from '@site/src/components/CaseVerdict';
+import levelCrossing from '@served-examples/oxsts/level-crossing';
+
+# Verifying on the Command Line
+
+`semantifyr` verifies the cases of an OXSTS model on your machine, with every installed backend, by hand or in scripts and CI. This page verifies the OXSTS level crossing. [Installing It](../start/install.md#the-command-line) builds the command, `bin/semantifyr` of its distribution, and [Command Line](../reference/command-line.mdx) lists its options; a SysML v2 or a Gamma model is verified by its frontend's launcher, [`semantifyr-sysml`](../frontends/sysml-v2/command-line.mdx) or [`semantifyr-gamma`](../frontends/gamma/command-line.mdx).
+
+## The Model
+
+Save the model as `level-crossing.oxsts` in an empty directory:
+
+<CodeBlock language="oxsts" title="level-crossing.oxsts">{levelCrossing.text}</CodeBlock>
+
+In that directory, list its cases:
+
+```bash
+semantifyr list level-crossing.oxsts
+```
+
+```text
+Found 2 verification case(s):
+  example::levelcrossing::BarrierDownWhileTrainInCrossing
+  example::levelcrossing::TwoTrainsCanBeInTheCrossing
+```
+
+## Verifying
+
+Verify every case, with the artifacts in `artifacts/`:
+
+```bash
+semantifyr verify level-crossing.oxsts --artifact-directory artifacts
+```
+
+```text
+Verifying example::levelcrossing::BarrierDownWhileTrainInCrossing ...
+  FAILED (2.722987532s)
+  report: /tmp/level-crossing/artifacts/level-crossing.example.levelcrossing.BarrierDownWhileTr-e3f8b4e8/report.json
+Verifying example::levelcrossing::TwoTrainsCanBeInTheCrossing ...
+  PASSED (510.379622ms)
+  report: /tmp/level-crossing/artifacts/level-crossing.example.levelcrossing.TwoTrainsCanBeInTheCrossing/report.json
+```
+
+Each case ran on the default `smart` portfolio, and the command exited with status 5, since a case failed ([exit codes](../reference/command-line.mdx#exit-codes)). The cases end with these verdicts:
+
+- <CaseVerdict example={levelCrossing} name="BarrierDownWhileTrainInCrossing" />
+- <CaseVerdict example={levelCrossing} name="TwoTrainsCanBeInTheCrossing" />
+
+## The Witness
+
+The failed case's directory, its name cut short with a hash as [the case directory](../reference/artifacts.mdx#the-case-directory) gives, on a machine with all four backends:
+
+```bash
+ls -1 artifacts/level-crossing.example.levelcrossing.BarrierDownWhileTr-e3f8b4e8
+```
+
+```text
+mapping.json
+nuxmv-bmc
+nuxmv-ic3
+pipeline
+report.json
+spin-safe-dfs
+theta-bmc
+theta-cegar-combined
+theta-cegar-expl
+theta-kinduction
+trace.json
+uppaal-default
+witness.json
+witness.oxsts
+```
+
+Beside the report and the compiled models under `pipeline/`, each backend run has a directory of its own, and `witness.oxsts`, `witness.json` and `trace.json` are the [witness](witnesses-and-traces.mdx) of the run that breaks the case. [Artifacts](../reference/artifacts.mdx) describes each file.
