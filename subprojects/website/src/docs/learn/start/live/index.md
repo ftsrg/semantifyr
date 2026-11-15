@@ -15,10 +15,10 @@ import LiveLimit from '@site/src/components/LiveLimit';
 ## Trying It
 
 1. Open [Live](https://live.semantifyr.org). It opens on a SysML v2 example, the level crossing.
-2. Pick a language in the toolbar's switch, SysML v2, Gamma or OXSTS, and a model in the example menu beside it.
-3. Press **Verify all** above the cases, or a case's own run button. Each case gets its verdict as the server answers.
-4. Select a case with a trace to read it below the cases: for SysML v2 as a SysML v2 model, for Gamma in Gamma's trace language, and for every language as the steps and calls of the OXSTS model.
-5. Edit the model; the cases follow your edits. **Save** writes the model to a file, and **Share** puts the model and its results into a link.
+2. Pick a language and one of its example models in the toolbar.
+3. Press **Verify all**. Each case gets its verdict as the server answers.
+4. Select a case with a trace to read it below the cases.
+5. Edit the model, then **Save** it to a file or **Share** it.
 
 The public instance stops a verification after <LiveLimit />.
 
