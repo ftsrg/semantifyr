@@ -22,7 +22,7 @@ A verification runs the component of its case in steps, from the state its `init
 
 ## Time
 
-Every step advances time by a fixed delta of one second, the same for every timeout. A timeout that was never set is up from the start. A timeout that is set counts down by the delta in every step while it is above zero, and is up from the moment it reaches zero: it stays up until it is set again. A timeout is therefore up after as many steps as its value has started seconds, so a timeout shorter than a second, 500 ms say, is up after the first step, as a timeout of one second is, and one of 1500 ms after the second.
+Every step advances time by a fixed delta of one second, the same for every timeout. A timeout that was never set is up from the start. A timeout that is set starts its clock from zero, the clock counts up by the delta in every step, and the timeout is up from the moment its clock reaches its value, which is read whenever its trigger is checked: it stays up until it is set again, unless its value is a variable that grows past the clock. A timeout is therefore up after as many steps as its value has started seconds, so a timeout shorter than a second, 500 ms say, is up after the first step, as a timeout of one second is, and one of 1500 ms after the second.
 
 ## Events
 
