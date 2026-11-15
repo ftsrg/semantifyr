@@ -105,6 +105,16 @@ class SysMLVerifyCommandTest {
     }
 
     @Test
+    suspend fun `a library of another kind is an input error naming the extensions of OXSTS`() {
+        val result = runSysMLCli("verify", "-l", tutorialModel.toString(), tutorialModel.toString())
+
+        assertThat(result.statusCode).isEqualTo(3)
+        for (extension in oxstsExtensions) {
+            assertThat(result.stderr).contains(".$extension")
+        }
+    }
+
+    @Test
     suspend fun `the root command names its launcher`() {
         val result = runSysMLCli("--version")
 

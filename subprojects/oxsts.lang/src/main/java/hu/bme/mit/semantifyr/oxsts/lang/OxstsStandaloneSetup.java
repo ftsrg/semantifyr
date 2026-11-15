@@ -11,12 +11,11 @@ import com.google.inject.Injector;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsPackage;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.Resource;
+import org.eclipse.xtext.resource.FileExtensionProvider;
 import org.eclipse.xtext.resource.IResourceServiceProvider;
 
 /** Initialization support for running Xtext languages without Equinox extension registry. */
 public class OxstsStandaloneSetup extends OxstsStandaloneSetupGenerated {
-
-    private static final String EXTENSION = "oxsts";
 
     @Override
     public Injector createInjectorAndDoEMFRegistration() {
@@ -35,7 +34,10 @@ public class OxstsStandaloneSetup extends OxstsStandaloneSetupGenerated {
     public void register(Injector injector) {
         var resourceFactoryMap = Resource.Factory.Registry.INSTANCE.getExtensionToFactoryMap();
         var serviceProviderMap = IResourceServiceProvider.Registry.INSTANCE.getExtensionToFactoryMap();
-        if (resourceFactoryMap.containsKey(EXTENSION) && serviceProviderMap.containsKey(EXTENSION)) {
+        var extensions = injector.getInstance(FileExtensionProvider.class).getFileExtensions();
+        if (extensions.stream()
+                .allMatch(extension ->
+                        resourceFactoryMap.containsKey(extension) && serviceProviderMap.containsKey(extension))) {
             return;
         }
         super.register(injector);

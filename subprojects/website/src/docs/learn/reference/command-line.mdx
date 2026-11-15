@@ -1,7 +1,7 @@
 ---
 title: Command Line
 sidebar_position: 1
-description: The semantifyr command and the options, output, verdicts, report and exit codes the three launchers share.
+description: The semantifyr, semantifyr-sysml and semantifyr-gamma commands, and the options, output, verdicts, report and exit codes the three launchers share.
 ---
 
 import CodeBlock from '@theme/CodeBlock';
@@ -11,6 +11,12 @@ import compile from '@cli-reference/compile.txt';
 import list from '@cli-reference/list.txt';
 import metrics from '@cli-reference/metrics.txt';
 import portfolios from '@cli-reference/portfolios-help.txt';
+import sysmlHelp from '@cli-reference/sysml-help.txt';
+import sysmlVerify from '@cli-reference/sysml-verify.txt';
+import sysmlCompile from '@cli-reference/sysml-compile.txt';
+import gammaHelp from '@cli-reference/gamma-help.txt';
+import gammaVerify from '@cli-reference/gamma-verify.txt';
+import gammaCompile from '@cli-reference/gamma-compile.txt';
 import exitCodes from '@generated-reference/exit-codes.json';
 import reportFields from '@generated-reference/report-fields.json';
 import verdicts from '@generated-reference/verdicts.json';
@@ -20,7 +26,7 @@ import ReportFields from '@site/src/components/ReportFields';
 
 # Command Line
 
-The `semantifyr` command lists, compiles, measures and verifies the verification cases of OXSTS models. `semantifyr-sysml` for [SysML v2 models](../frontends/sysml-v2/command-line.mdx) and `semantifyr-gamma` for [Gamma models](../frontends/gamma/command-line.mdx) share its verification options, output and exit codes. [Installing It](../start/install.md#the-command-line) builds each launcher, its distribution carrying the Theta backend. They need a Java 25 runtime and at least one verification backend.
+The `semantifyr` command lists, compiles, measures and verifies the verification cases of OXSTS models. [`semantifyr-sysml`](#semantifyr-sysml) for SysML v2 models and [`semantifyr-gamma`](#semantifyr-gamma) for Gamma models share its verification options, output and exit codes. [Install](../start/install.md#the-command-line) builds each launcher, its distribution carrying the Theta backend. They need a Java 25 runtime and at least one verification backend.
 
 <CodeBlock language="text">{help}</CodeBlock>
 
@@ -91,6 +97,44 @@ For each case, `metrics` prints the size of the input model, of the inlined mode
 <CodeBlock language="text">{portfolios}</CodeBlock>
 
 The portfolio ids are listed under [Portfolios](portfolios.mdx).
+
+## `semantifyr-sysml`
+
+`semantifyr-sysml` verifies SysML v2 models. Its distribution, `semantifyr-sysml-<version>.zip`, carries Theta, the SysML v2 semantic library in `libraries/sysmlv2` and the model of [Verifying SysML v2 Models](../frontends/sysml-v2/verifying.md) as `models/smoke/room.sysml`. It translates a model to OXSTS with the bundled SysIDE fork, which runs on Node.js, so it needs `node` on `PATH`; without it, translating fails with exit code 4 and a message naming `node`. The translator reads every `.sysml` and `.kerml` file below the model's directory as the model's workspace, so keep other models and the artifact directory out of that directory. Translations are cached under `~/.semantifyr/sysml-cache`, keyed by the model and its workspace ([Folders](#folders)).
+
+<CodeBlock language="text">{sysmlHelp}</CodeBlock>
+
+### `semantifyr-sysml verify` {#sysml-verify}
+
+<CodeBlock language="text">{sysmlVerify}</CodeBlock>
+
+`verify` translates the model and verifies its cases with the options, output and [exit codes](#exit-codes) of [`semantifyr verify`](#verify). The case names start with `semantifyr::sysml::model`, the package the translator gives every model. The translated model stays under the artifact directory, and for each case with a witness `verify` writes the witness as a SysML v2 model, `trace.sysml`, next to the case's `report.json` ([Artifacts](artifacts.mdx), [SysML v2 traces](../frontends/sysml-v2/traces.mdx)); a witness the generator cannot express keeps its verdict, gets no `trace.sysml` and a warning in the log.
+
+The translation is verified on top of the bundled SysML v2 semantic library, the state-level library in `libraries/sysmlv2`. `--library` loads OXSTS files in addition to it and does not replace it.
+
+### `semantifyr-sysml compile` {#sysml-compile}
+
+<CodeBlock language="text">{sysmlCompile}</CodeBlock>
+
+`compile` writes the OXSTS translation of the model to `--output`, by default next to the model with the `.oxsts` extension, and the name map from the model's elements to the OXSTS beside it with the `.names.json` extension. A construct the translator refuses is an error at its line and no OXSTS is written; a warning is printed and the translation written ([Supported Language](../frontends/sysml-v2/supported.mdx)). `semantifyr` verifies it together with that library: `semantifyr verify -l <semantifyr-sysml distribution>/libraries/sysmlv2 room.oxsts`.
+
+## `semantifyr-gamma`
+
+`semantifyr-gamma` verifies Gamma models, `.gamma` or `.gcd` files in the [sub-language of Gamma](../frontends/gamma/supported.mdx) the frontend supports, written in Gamma's syntax: statecharts, their composition and their verification cases. The Gamma models in the model's directory are its workspace, in which its imports resolve; `--workspace <directory>` makes the `.gamma` and `.gcd` files of that directory, recursively, the workspace instead, for a model that imports from another directory. It compiles a model to OXSTS on top of the bundled Gamma semantic library. Its distribution, `semantifyr-gamma-<version>.zip`, carries Theta, the library in `libraries/gamma` and the example model `models/smoke/Simple.gamma`.
+
+<CodeBlock language="text">{gammaHelp}</CodeBlock>
+
+### `semantifyr-gamma verify` {#gamma-verify}
+
+<CodeBlock language="text">{gammaVerify}</CodeBlock>
+
+`verify` compiles the model and verifies its cases with the options, output and [exit codes](#exit-codes) of [`semantifyr verify`](#verify). A case is named by its Gamma qualified name, such as `Simple.WorkerStatechartIdleReachable`; without `--case-name`, `verify` verifies every case of the model. For each case with a witness, `verify` writes the witness as a Gamma execution trace, `trace.get`, next to the case's `report.json` ([Artifacts](artifacts.mdx), [Gamma traces](../frontends/gamma/traces.mdx)).
+
+### `semantifyr-gamma compile` {#gamma-compile}
+
+<CodeBlock language="text">{gammaCompile}</CodeBlock>
+
+`compile` writes the OXSTS model of a Gamma model to `--output`, by default next to the model with the `.oxsts` extension. Every Gamma name is written with a leading underscore, `Main` as `_Main`, so none equals a library member or an OXSTS keyword. `semantifyr` verifies it together with that library: `semantifyr verify -l <semantifyr-gamma distribution>/libraries/gamma Simple.oxsts`.
 
 ## Folders
 

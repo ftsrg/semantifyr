@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.cli.common.execute
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
+import org.eclipse.xtext.resource.FileExtensionProvider
 import kotlin.io.path.Path
 
 val tutorialModel = Path("../models/tutorial/room.sysml")
@@ -19,6 +20,10 @@ val semanticModels = Path("../../../../oxsts-test-models/semantic")
 
 private val injector by lazy {
     OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
+}
+
+val oxstsExtensions by lazy {
+    injector.getInstance(FileExtensionProvider::class.java).fileExtensions
 }
 
 suspend fun runSysMLCli(

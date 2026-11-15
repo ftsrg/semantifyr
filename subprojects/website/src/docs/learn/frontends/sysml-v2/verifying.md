@@ -1,18 +1,19 @@
 ---
 title: 'Verifying SysML v2 Models'
-sidebar_position: 3
-description: A tutorial that models a room with a switch and a lamp in SysML v2, verifies three requirements in Live and reads a trace.
+sidebar_position: 1
+description: A walkthrough that models a room with a switch and a lamp in SysML v2, verifies three requirements in Live and with semantifyr-sysml, and reads a trace.
 ---
 
 import CodeBlock from '@theme/CodeBlock';
 import CaseVerdict from '@site/src/components/CaseVerdict';
 import LiveEmbed, { selectDeclarations } from '@site/src/components/LiveEmbed';
+import NodeVersion from '@site/src/components/NodeVersion';
 import room from '@served-examples/sysml/room';
 import ServedExamples from '@site/src/components/ServedExamples';
 
 # Verifying SysML v2 Models
 
-Semantifyr verifies SysML v2 models by translating them into OXSTS on top of a semantic library that defines what SysML v2 parts, ports, items and state machines do. This tutorial models a room with a switch and a lamp, verifies three requirements in Live, and reads the [trace](traces.mdx) of a requirement that does not hold. All you need is a browser; [SysML v2 on the Command Line](command-line.mdx) runs the same model on your machine.
+Semantifyr verifies SysML v2 models by translating them into OXSTS on top of a semantic library that defines what SysML v2 parts, ports, items and state machines do. This walkthrough models a room with a switch and a lamp, verifies three requirements in Live and on your machine, and reads the [trace](traces.mdx) of a requirement that does not hold. All Live needs is a browser.
 
 ## The Model
 
@@ -38,7 +39,7 @@ Finally, the room puts the two parts together:
 
 The room's own `button` port is bound to the switch's button, and a flow connects the switch's output to the lamp's input.
 
-The semantic library executes such a model in steps. In each step, the environment may put an item on each port of the verified part; here that means someone may or may not press the button. Then every state machine with an enabled transition fires one, and every region of a parallel state does the same; an item fires at most one transition per part. At the end of the step the flows move the items sent in it to the receiving ports, which hold them for the next step only: an item that the receiver does not accept in that step is dropped. [Semantic Assumptions](assumptions.md) lists every assumption the library makes, and [What Is Supported](supported.mdx) the constructs the translator reads.
+The semantic library executes such a model in steps. In each step, the environment may put an item on each port of the verified part; here that means someone may or may not press the button. Then every state machine with an enabled transition fires one, and every region of a parallel state does the same; an item fires at most one transition per part. At the end of the step the flows move the items sent in it to the receiving ports, which hold them for the next step only: an item that the receiver does not accept in that step is dropped. [Supported Language](supported.mdx) lists the constructs the translator reads and every assumption the library makes.
 
 ## Requirements and Verification Cases
 
@@ -46,7 +47,7 @@ Requirements talk to the verifier through three calculation definitions, declare
 
 <CodeBlock language="sysmlv2">{selectDeclarations(room.text, ['import', 'eventually', 'mustAlways', 'isStateActive'])}</CodeBlock>
 
-Semantifyr recognizes them by their names: `eventually` (short name `EF`) states that some execution reaches a situation, `mustAlways` (short name `AG`) that every execution stays in one, and `isStateActive` asks whether a state is currently active. The SysML v2 example models in the repository keep these definitions in a separate `Verification.sysml` next to the models; this tutorial keeps them in the model file, so that one file is all you need.
+Semantifyr recognizes them by their names: `eventually` (short name `EF`) states that some execution reaches a situation, `mustAlways` (short name `AG`) that every execution stays in one, and `isStateActive` asks whether a state is currently active. The SysML v2 example models in the repository keep these definitions in a separate `Verification.sysml` next to the models; this walkthrough keeps them in the model file, so that one file is all you need.
 
 A verification case is a `verification def` whose subject is the system under verification and whose objective is a requirement over it. The first case asks whether the lamp can ever be lit:
 
@@ -64,7 +65,7 @@ The complete model is one file. **Open** in the corner of the code block below s
 
 <LiveEmbed example={room} />
 
-## Verifying
+## Verifying in Live
 
 The editor lists the three cases, a line each, under **Verify all**, which runs them all, once the SysML v2 language server in your browser has found them. The language server goes on initializing after that; a verification asked for meanwhile waits and starts by itself when it is done. Each case is verified by Live's portfolio and takes a few seconds.
 
@@ -78,6 +79,28 @@ The editor lists the three cases, a line each, under **Verify all**, which runs 
 </details>
 
 The model is yours to edit, as one file. The cases follow your edits, and a construct the translator does not support gets a diagnostic on that construct and keeps the model from being verified. **Open in Live** opens the model in Live itself, where *OXSTS of the model*, in the read-only documents menu, opens the translation of the current file, an OXSTS model that instantiates the classes of the SysML v2 semantic library.
+
+## Verifying Locally
+
+`semantifyr-sysml` verifies the same file on your machine. It needs:
+
+- A Java 25 runtime found through `JAVA_HOME` or `PATH`.
+- Node.js <NodeVersion /> or newer on `PATH`.
+- The `semantifyr-sysml` command-line distribution ([Install](../../start/install.md#the-command-line)). It carries the translator from SysML v2 to OXSTS and the SysML v2 semantic library, so Node.js is the only prerequisite SysML v2 adds.
+
+`SEMANTIFYR_HOME` below is the installed distribution, `subprojects/frontends/sysml/sysml-cli/build/install/semantifyr-sysml` in a clone of the repository: it holds the launcher in `bin/`, Theta in `theta-xsts-cli/` and the semantic library in `libraries/`; an unzipped `semantifyr-sysml-<version>.zip` has the same layout. The commands below are written for Linux and macOS shells; on Windows, use `bin\semantifyr-sysml.bat`.
+
+Create an empty directory and save the complete model in it as `room.sysml`. In that directory, verify the model:
+
+```bash
+"$SEMANTIFYR_HOME/bin/semantifyr-sysml" verify room.sysml --artifact-directory ../room-artifacts
+```
+
+The `verify` command translates `room.sysml` to OXSTS, an OXSTS model that instantiates the classes of the SysML v2 semantic library, which takes about a minute. It then finds the three verification cases and verifies each with the default `smart` portfolio, which races every installed backend. The artifacts go outside the model's directory, since the translator reads every SysML v2 file below it ([`semantifyr-sysml`](../../reference/command-line.mdx#semantifyr-sysml)).
+
+For each case, the command prints its name, `PASSED` or `FAILED` with the time it took, and the path of its `report.json`, and it exits with status 5 when a case fails (the [exit codes](../../reference/command-line.mdx#exit-codes)).
+
+`--artifact-directory ../room-artifacts` keeps the translated model in `compiled/default/room.oxsts`, with its name map `room.names.json` beside it, and the artifacts of every case in a directory of its own; a case with a witness has `witness.json`, `trace.json`, `witness.oxsts` and `trace.sysml` among them. [Artifacts](../../reference/artifacts.mdx) describes each file.
 
 ## Reading the Witness
 
@@ -96,6 +119,8 @@ After **Verify all** the trace of the first failed case opens by itself. A faile
 The requirement fails because the parts communicate asynchronously: the lamp follows the switch one step later. Whether that is a defect of the design or of the requirement is for the engineer to decide.
 
 The *SysML trace* view tells the same story in SysML v2: the package `LampLitOnlyWhileSwitchOnViolatedTrace` holds a verification usage of the case with the verdict `fail` and a part definition `Run` that specializes `Room`, whose `switch` and `lamp` redefine the room's parts. Their exhibited states hold the occurred states and the fired transitions, each with its trigger and the toggles its effect sent, and every leaf state names the first and last tick it lasted. Time slices order the run: `init`, a zero-duration `stepK` for each step in which a transition fired, and a `dwellK` for the tick that ends step K. Since the trace refines `Room`, any SysML v2 tool reads it next to the model.
+
+On your machine the trace of `LampLitOnlyWhileSwitchOnViolated` is in `trace.json` and `witness.json` in `../room-artifacts/room.semantifyr.sysml.model.LampLitOnlyWhileSwitchOnViolated/`, and `trace.sysml` next to them is the model of the *SysML trace* view.
 
 The verifier finds a witness for `LampLitReachable` the same way: an execution in which the lamp lights up. A passing `mustAlways` requirement or a failing `eventually` requirement has no witness, since no single execution proves it.
 

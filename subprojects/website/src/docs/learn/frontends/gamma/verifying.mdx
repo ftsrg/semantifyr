@@ -1,0 +1,115 @@
+---
+title: Verifying Gamma Models
+sidebar_position: 1
+description: A walkthrough that verifies the Gamma level crossing in Live and with semantifyr-gamma, a case that passes and one that fails, and reads the trace of the failed one.
+---
+
+import CaseVerdict from '@site/src/components/CaseVerdict';
+import CodeBlock from '@theme/CodeBlock';
+import LiveEmbed, { selectDeclarations } from '@site/src/components/LiveEmbed';
+import levelCrossing from '@served-examples/gamma/level-crossing';
+import ServedExamples from '@site/src/components/ServedExamples';
+
+# Verifying Gamma Models
+
+Semantifyr verifies a Gamma model by compiling it into OXSTS on the Gamma semantic library, which holds Gamma's execution semantics. This walkthrough verifies the level crossing that Live serves, in Live and on your machine, and reads the [trace](traces.mdx) of a case that fails.
+
+## The Model
+
+Two tracks cross a road at one barrier. Each track reports its trains to a controller, and the controller tells the barrier to go down and up. The events they exchange are declared by three interfaces:
+
+<CodeBlock language="gamma">{selectDeclarations(levelCrossing.text, ['Sensors', 'TrackReports', 'BarrierCommands'])}</CodeBlock>
+
+A track follows a train from `Free` through `Approaching` and `Near` to `InCrossing` on its sensors' events. It reports `trainApproaching` when a train approaches and `trainLeft` when it leaves:
+
+<CodeBlock language="gamma">{selectDeclarations(levelCrossing.text, ['Track'])}</CodeBlock>
+
+The controller lowers the barrier on the first report of an approach, from either track, and lifts it on the first report that a train left:
+
+<CodeBlock language="gamma">{selectDeclarations(levelCrossing.text, ['Controller', 'Barrier'])}</CodeBlock>
+
+The synchronous composite `LevelCrossing` holds a statechart of each kind, two tracks among them, binds the tracks' sensors to its own ports and connects the reports and the commands by channels:
+
+<CodeBlock language="gamma">{selectDeclarations(levelCrossing.text, ['LevelCrossing'])}</CodeBlock>
+
+The Gamma semantic library runs the composite in steps. In each step the environment may raise any of the input events of its ports, here the sensors of both tracks, and then every statechart runs once. A synchronous composite passes an event over its channels only after every statechart has run, so the controller takes a track's report in the step after it, and the barrier the controller's command in the step after that. [Supported Language](supported.mdx#semantic-assumptions) states the step, time and events as the library has them.
+
+## Verification Cases
+
+A verification case names its component and holds its property. The first case claims that no train is ever in the crossing while the barrier is up; `AG` states that every reachable state satisfies the condition:
+
+<CodeBlock language="gamma">{selectDeclarations(levelCrossing.text, ['BarrierDownWhileTrainInCrossing'])}</CodeBlock>
+
+The second asks whether trains on both tracks can be in the crossing at once; `EF` states that some run reaches the condition:
+
+<CodeBlock language="gamma">{selectDeclarations(levelCrossing.text, ['TwoTrainsCanBeInTheCrossing'])}</CodeBlock>
+
+Before you run the first, think about whether it holds. The complete model is one file. **Open** in the corner of the code block below shows it in an editor on this page:
+
+<LiveEmbed example={levelCrossing} />
+
+## Verifying in Live
+
+The editor lists the two cases, a line each, under **Verify all**, which runs them all, once the Gamma language server on Live's server has found them. Each case is verified by Live's portfolio.
+
+<details>
+<summary>The verdicts Live shows</summary>
+
+- <CaseVerdict example={levelCrossing} name="BarrierDownWhileTrainInCrossing" />
+- <CaseVerdict example={levelCrossing} name="TwoTrainsCanBeInTheCrossing" />
+
+</details>
+
+The model is yours to edit, as one file. **Open in Live** opens the model in Live itself, where *OXSTS of the model*, in the read-only documents menu, opens the OXSTS model that the current file compiles to, on the Gamma semantic library.
+
+## Verifying Locally
+
+`semantifyr-gamma` verifies the same file on your machine. It needs a Java 25 runtime found through `JAVA_HOME` or `PATH`, and the `semantifyr-gamma` command-line distribution ([Install](../../start/install.md#the-command-line)), which carries the Theta backend and the Gamma semantic library.
+
+`SEMANTIFYR_HOME` below is the installed distribution, `subprojects/frontends/gamma/gamma-cli/build/install/semantifyr-gamma` in a clone of the repository: it holds the launcher in `bin/`, Theta in `theta-xsts-cli/` and the semantic library in `libraries/`. The commands below are written for Linux and macOS shells; on Windows, use `bin\semantifyr-gamma.bat`.
+
+Save the complete model as `LevelCrossing.gamma` in an empty directory, `/tmp/level-crossing` on this page, and verify it there:
+
+```bash
+"$SEMANTIFYR_HOME/bin/semantifyr-gamma" verify LevelCrossing.gamma --artifact-directory artifacts
+```
+
+```text
+Verifying LevelCrossing.BarrierDownWhileTrainInCrossing ...
+  FAILED (8.728717s)
+  report: /tmp/level-crossing/artifacts/LevelCrossing.BarrierDownWhileTrainInCrossing/verification/model._LevelCrossing._BarrierDownWhileTrainInCrossing/report.json
+Verifying LevelCrossing.TwoTrainsCanBeInTheCrossing ...
+  PASSED (1.764080125s)
+  report: /tmp/level-crossing/artifacts/LevelCrossing.TwoTrainsCanBeInTheCrossing/verification/model._LevelCrossing._TwoTrainsCanBeInTheCrossing/report.json
+```
+
+Each case ran on the default `smart` portfolio, which races every installed backend, and the command exited with status 5, since a case failed ([exit codes](../../reference/command-line.mdx#exit-codes)). Beside `report.json`, the directory of a case with a witness holds the trace, `trace.get`, and the witness it was written from, `witness.oxsts`, `witness.json` and `trace.json`; [Artifacts](../../reference/artifacts.mdx) describes each file.
+
+## Reading the Trace
+
+A case with a witness says **Trace** at the end of its line in Live, and a click on the line opens its trace below it, in four views:
+
+- *Gamma trace*: the witness as a Gamma execution trace, `trace.get`, the steps of the run with what the environment raised in each and the transitions that fired ([Gamma traces](traces.mdx)).
+- *OXSTS steps*: the values of the model's state in every step of the witness, starting from the initial state that initialization produces.
+- *Calls*: per step, the traced calls of the Gamma semantic library.
+- *OXSTS witness*: the witness as an OXSTS model.
+
+After **Verify all** the trace of the first failed case opens by itself. Which run a trace shows depends on the backend that answered, so the trace Live shows may differ from the one below, which nuXmv found in the run above. In most of its steps the environment raises several sensor events at once, and a track takes the one its state has a transition for. The trace of `BarrierDownWhileTrainInCrossing` has seven steps:
+
+1. Initialization: both tracks are `Free`, the controller is `Idle` and the barrier is `Up`.
+2. A train approaches on track B, which reports `trainApproaching`.
+3. Track B's train is `Near`. The controller takes the report, moves to `TrainPresent` and raises `lower`.
+4. Track B's train enters the crossing and the barrier goes `Down`. A train approaches on track A, which reports `trainApproaching`.
+5. Track A's train is `Near`. The controller is in `TrainPresent` and has no transition for track A's report, and the report is lost, since a statechart's input events are reset after it runs. Track B's train leaves, and track B reports `trainLeft`.
+6. The controller takes track B's report, moves to `Idle` and raises `lift`. A second train approaches on track B.
+7. The barrier takes the `lift` and goes `Up` while track A's train enters the crossing. The controller takes track B's second report, moves to `TrainPresent` and raises `lower`; the trace ends with the barrier `Up`.
+
+The case fails because the controller follows one train at a time: it loses an approach reported while a train is present and lifts the barrier when that train leaves, whatever the other track holds.
+
+The verifier finds a witness for `TwoTrainsCanBeInTheCrossing` the same way: a run in which a train approaches on each track in the same step, the controller lowers the barrier on track A's report, and both trains enter the crossing as it goes down. A passed `AG` case and a failed `EF` case have no witness, since no single run proves it.
+
+## The Model in Live
+
+The level crossing opens in Live by its own address:
+
+<ServedExamples />

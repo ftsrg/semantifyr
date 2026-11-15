@@ -6,24 +6,30 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.library.builtin;
 
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.oxsts.lang.library.ClasspathBasedOxstsLibrary;
 import java.nio.file.Path;
 import java.util.List;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.xtext.naming.QualifiedName;
+import org.eclipse.xtext.resource.FileExtensionProvider;
 
 @Singleton
 public class BuiltinLibrary extends ClasspathBasedOxstsLibrary {
 
     public static final QualifiedName BUILTIN_LIBRARY_NAME = QualifiedName.create("semantifyr");
 
+    private static final String BUILTIN_FILE_SUFFIX = ".oxsts";
+
     private static final String RESOURCE_PREFIX = "hu/bme/mit/semantifyr/oxsts/lang/library";
 
     private URI builtinLibraryUri;
 
-    public BuiltinLibrary() {
+    @Inject
+    public BuiltinLibrary(FileExtensionProvider fileExtensionProvider) {
         super(
+                fileExtensionProvider,
                 BuiltinLibrary.class.getClassLoader(),
                 RESOURCE_PREFIX,
                 Path.of(System.getProperty("user.home")).resolve(".semantifyr").resolve("builtin"));
@@ -31,7 +37,7 @@ public class BuiltinLibrary extends ClasspathBasedOxstsLibrary {
 
     public URI getBuiltinResourceUri() {
         if (builtinLibraryUri == null) {
-            builtinLibraryUri = resolveUri(BUILTIN_LIBRARY_NAME);
+            builtinLibraryUri = resolveUri(BUILTIN_LIBRARY_NAME, BUILTIN_FILE_SUFFIX);
         }
 
         return builtinLibraryUri;

@@ -15,16 +15,23 @@ import java.nio.file.Path;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.xtext.naming.QualifiedName;
+import org.eclipse.xtext.resource.FileExtensionProvider;
 
 public abstract class PathBasedOxstsLibrary implements OxstsLibrary {
 
     @Inject
     protected ResourceUriProvider resourceUriProvider;
 
+    protected final FileExtensionProvider fileExtensionProvider;
+
+    protected PathBasedOxstsLibrary(FileExtensionProvider fileExtensionProvider) {
+        this.fileExtensionProvider = fileExtensionProvider;
+    }
+
     protected abstract Path getLibraryPath();
 
-    protected URI resolveUri(QualifiedName name) {
-        var path = LibraryResolutionUtil.qualifiedNameToPath(name);
+    protected URI resolveUri(QualifiedName name, String suffix) {
+        var path = LibraryResolutionUtil.qualifiedNameToPath(name, suffix);
         var absolutePath = getLibraryPath().resolve(path);
         return resourceUriProvider.createFileUri(absolutePath);
     }
@@ -33,7 +40,7 @@ public abstract class PathBasedOxstsLibrary implements OxstsLibrary {
         try (var fileStream = Files.walk(getLibraryPath(), FileVisitOption.FOLLOW_LINKS)) {
             return fileStream
                     .map(Path::toFile)
-                    .filter(file -> file.getName().endsWith(FILE_NAME_SUFFIX))
+                    .filter(file -> LibraryResolutionUtil.hasLanguageExtension(fileExtensionProvider, file.getName()))
                     .map(file -> resourceUriProvider.createFileUri(file.toPath()))
                     .toList();
         } catch (IOException e) {
