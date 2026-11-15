@@ -15,7 +15,6 @@ import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ExecutionTrace
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclaration
-import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaNameMap
 import hu.bme.mit.semantifyr.frontends.gamma.serialization.markName
 import hu.bme.mit.semantifyr.frontends.gamma.serialization.markQualifiedName
 import hu.bme.mit.semantifyr.frontends.gamma.trace.GammaTraceGenerator
@@ -24,10 +23,12 @@ import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.library.ClasspathBasedOxstsLibrary
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.ProgressContext
+import hu.bme.mit.semantifyr.verifier.ReportTrace
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.Trace
 import hu.bme.mit.semantifyr.verifier.TraceDto
 import hu.bme.mit.semantifyr.verifier.VerificationResult
+import hu.bme.mit.semantifyr.verifier.VerificationReport
 import hu.bme.mit.semantifyr.verifier.VerificationResultDto
 import hu.bme.mit.semantifyr.verifier.WitnessValidationResultDto
 import hu.bme.mit.semantifyr.verifier.caseReportPath
@@ -37,6 +38,7 @@ import hu.bme.mit.semantifyr.verifier.toJavaDto
 import hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult
 import hu.bme.mit.semantifyr.verifier.witness.WitnessValidator
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import org.eclipse.xtext.EcoreUtil2
 import org.eclipse.xtext.resource.FileExtensionProvider
 import org.eclipse.xtext.resource.SaveOptions
@@ -45,6 +47,7 @@ import java.nio.file.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.time.Duration
 import kotlin.time.toKotlinDuration
@@ -143,6 +146,9 @@ class GammaFrontend @Inject private constructor(
     val timeout: Duration?
         get() = gammaFrontendConfiguration.timeout
 
+    val libraryPaths: List<Path>
+        get() = gammaFrontendConfiguration.libraryPaths
+
     suspend fun verify(
         gammaVerificationCase: GammaVerificationCase,
         progress: ProgressContext = ProgressContext.Silent,
@@ -167,30 +173,31 @@ class GammaFrontend @Inject private constructor(
         val semantifyrVerifier = buildVerifier(verificationDirectory)
 
         val result = semantifyrVerifier.verify(oxstsVerificationCase, progress)
-        val witness = result.trace?.let {
-            val witnessUri = it.backAnnotatedModel.eResource().uri
-            require(witnessUri.isFile) {
-                "Witness resource has no file URI, got '$witnessUri'"
+        val reportPath = caseReportPath(verificationDirectory, oxstsVerificationCase)
+        val reportTrace = Json.decodeFromString<VerificationReport>(reportPath.readText()).trace
+        val witness = reportTrace?.let {
+            val trace = requireNotNull(result.trace) {
+                "The report of '$qualifiedName' has a trace the result does not carry"
             }
-            val witnessPath = Path.of(witnessUri.toFileString())
-            val gammaTracePath = witnessPath.resolveSibling("trace.get")
-            val gammaTrace = writeGammaTrace(gammaVerificationCase, it, compiledModel.nameMap, gammaTracePath)
-            GammaWitness(it, witnessPath, compiledModel.modelPath, gammaTrace, gammaTracePath)
+            val witnessPath = reportPath.resolveSibling(WITNESS_FILE_NAME)
+            val gammaTracePath = reportPath.resolveSibling(GAMMA_TRACE_FILE_NAME)
+            val gammaTrace = writeGammaTrace(gammaVerificationCase, it, compiledModel, gammaTracePath)
+            GammaWitness(trace, witnessPath, compiledModel.modelPath, gammaTrace, gammaTracePath)
         }
         logger.info { "Gamma case '$qualifiedName' -> ${result.verdict}" }
         if (witness != null) {
             logger.info { "Gamma case '$qualifiedName' produced witness at '${witness.witnessPath}'" }
         }
-        return GammaVerificationResult(result, witness, caseReportPath(verificationDirectory, oxstsVerificationCase))
+        return GammaVerificationResult(result, witness, reportPath)
     }
 
     private fun writeGammaTrace(
         gammaVerificationCase: GammaVerificationCase,
-        trace: Trace,
-        nameMap: GammaNameMap,
+        reportTrace: ReportTrace,
+        compiledModel: CompiledGammaModel,
         gammaTracePath: Path,
     ): ExecutionTrace {
-        val gammaTrace = gammaTraceGenerator.generate(gammaVerificationCase.declaration, trace.callTrace, trace.witnessState, nameMap)
+        val gammaTrace = gammaTraceGenerator.generate(gammaVerificationCase.declaration, reportTrace, compiledModel.nameMap, compiledModel.timeUnitMilliseconds)
         gammaTracePath.writeText(gammaSerializer.serialize(gammaTrace, SaveOptions.newBuilder().format().options))
         logger.info { "Gamma case '${gammaVerificationCase.qualifiedName}' wrote its Gamma trace to '$gammaTracePath'" }
         return gammaTrace
@@ -212,7 +219,7 @@ class GammaFrontend @Inject private constructor(
             return null
         }
         return verificationDirectory.listDirectoryEntries().map {
-            it.resolve("witness.oxsts")
+            it.resolve(WITNESS_FILE_NAME)
         }.singleOrNull {
             it.isRegularFile()
         }
@@ -444,6 +451,9 @@ class GammaFrontend @Inject private constructor(
     }
 
     companion object {
+        private const val WITNESS_FILE_NAME = "witness.oxsts"
+        private const val GAMMA_TRACE_FILE_NAME = "trace.get"
+
         @JvmStatic
         fun builder(): Builder {
             return Builder()

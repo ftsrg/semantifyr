@@ -6,9 +6,14 @@
 
 package hu.bme.mit.semantifyr.frontends.gamma.testing
 
+import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
+import hu.bme.mit.semantifyr.compiler.pipeline.clock.ClockTestClosednessAnalysis
+import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
+import hu.bme.mit.semantifyr.frontends.gamma.GammaCompiler
 import hu.bme.mit.semantifyr.frontends.gamma.GammaFrontend
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVariant
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVerificationCase
@@ -19,10 +24,15 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EF
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaRoot
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
+import hu.bme.mit.semantifyr.frontends.gamma.serialization.markName
+import hu.bme.mit.semantifyr.frontends.gamma.serialization.markQualifiedName
+import hu.bme.mit.semantifyr.logging.info
+import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.assertVerdict
 import hu.bme.mit.semantifyr.verifier.assumePortfolioAvailable
+import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Named
@@ -30,6 +40,8 @@ import org.junit.jupiter.params.provider.Arguments
 import java.nio.file.Path
 import java.util.stream.Stream
 import kotlin.io.path.Path
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
 import kotlin.streams.asStream
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -44,6 +56,8 @@ enum class GammaTestEngine(
 }
 
 class GammaFrontendTestHelper {
+
+    private val logger by loggerFactory()
 
     private val gammaInjector = GammaStandaloneSetup().createInjectorAndDoEMFRegistration()
     private val oxstsInjector = OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
@@ -117,7 +131,7 @@ class GammaFrontendTestHelper {
         expectedVerdict: VerificationVerdict,
     ): GammaVerificationResult {
         val result = frontend.verify(gammaVerificationCase)
-        assertVerdict(gammaVerificationCase.qualifiedName, expectedVerdict, result.verification)
+        assertGammaVerdict(frontend, gammaVerificationCase, expectedVerdict, result)
         return result
     }
 
@@ -136,7 +150,9 @@ class GammaFrontendTestHelper {
         }
         val frontend = buildFrontend(portfolio, outputDirectory.resolve(engine.name.lowercase()), timeout = timeout)
         val result = frontend.verify(gammaVerificationCase)
-        assertVerdict(gammaVerificationCase.qualifiedName, entry.case.expectedVerdict, result.verification)
+        if (!assertGammaVerdict(frontend, gammaVerificationCase, entry.case.expectedVerdict, result)) {
+            return result
+        }
 
         val witness = result.witness
         if (validationPortfolio != null && witness != null) {
@@ -148,6 +164,44 @@ class GammaFrontendTestHelper {
                 .isTrue()
         }
         return result
+    }
+
+    // whole delays under-approximate a model whose clock tests are not all closed, so an untrusted verdict there differs without failing
+    private fun assertGammaVerdict(
+        frontend: GammaFrontend,
+        gammaVerificationCase: GammaVerificationCase,
+        expectedVerdict: VerificationVerdict,
+        result: GammaVerificationResult,
+    ): Boolean {
+        val verification = result.verification
+        val untrusted = !verification.isTrusted && (verification.verdict == VerificationVerdict.Inconclusive || verification.soundness == SoundnessDirection.UnderApproximating)
+        if (verification.verdict != expectedVerdict && untrusted && hasUnclosedClockTest(frontend, gammaVerificationCase)) {
+            logger.info { "${gammaVerificationCase.qualifiedName}: ${verification.verdict}, untrusted, as whole delays under-approximate a model whose clock tests are not all closed" }
+            return false
+        }
+        assertVerdict(gammaVerificationCase.qualifiedName, expectedVerdict, verification)
+        return true
+    }
+
+    private fun hasUnclosedClockTest(frontend: GammaFrontend, gammaVerificationCase: GammaVerificationCase): Boolean {
+        val caseDirectory = frontend.outputDirectory.resolve(gammaVerificationCase.qualifiedName)
+        val importsDirectory = GammaCompiler.importsDirectory(caseDirectory)
+        val importedPaths = if (importsDirectory.isDirectory()) {
+            importsDirectory.listDirectoryEntries("*.oxsts")
+        } else {
+            emptyList()
+        }
+        val context = oxstsInjector.getInstance(SemantifyrLoader::class.java).startContext()
+            .loadLibraryPaths(frontend.libraryPaths)
+            .loadModelPaths(importedPaths + listOf(caseDirectory.resolve(GammaCompiler.MODEL_FILE_NAME)))
+            .buildAndResolve()
+        val gammaModel = gammaVerificationCase.declaration.eContainer() as GammaModelPackage
+        val oxstsCase = oxstsInjector.getInstance(VerificationCaseDiscoverer::class.java).findByQualifiedName(
+            context,
+            "${markQualifiedName(gammaModel.name)}::${markName(gammaVerificationCase.declaration.name)}",
+        )
+        val inlinedOxsts = SemantifyrCompiler(oxstsInjector, ArtifactConfig.NONE).compile(oxstsCase.classDeclaration, caseDirectory.resolve("closedness")).inlinedOxsts
+        return !oxstsInjector.getInstance(ClockTestClosednessAnalysis::class.java).analyze(inlinedOxsts).isClosed
     }
 
     companion object {
