@@ -67,8 +67,8 @@
       "id": "room",
       "language": "sysml",
       "file": "subprojects/frontends/sysml/models/tutorial/room.sysml",
-      "label": "SysML v2 tutorial: Room",
-      "reason": "The model the SysML v2 tutorial builds and runs from its page.",
+      "label": "Room",
+      "reason": "A switch and a lamp, the model Verifying SysML v2 Models walks through and runs from its page.",
       "page": "learn/frontends/sysml-v2/verifying",
       "cases": [
         "LampLitReachable",
@@ -82,8 +82,8 @@
       "language": "gamma",
       "file": "subprojects/frontends/gamma/models/examples/LevelCrossing.gamma",
       "label": "Level crossing",
-      "reason": "The simplest model, small statecharts that pass events over channels, and the one requirement a reader checks first.",
-      "page": "learn/frontends/gamma",
+      "reason": "The simplest model, small statecharts that pass events over channels, and the one requirement a reader checks first, which Verifying Gamma Models walks through.",
+      "page": "learn/frontends/gamma/verifying",
       "cases": [
         "BarrierDownWhileTrainInCrossing",
         "TwoTrainsCanBeInTheCrossing"
