@@ -37,7 +37,6 @@ object Portfolios {
     val ThetaIc3: VerificationPortfolio = SingleBackendPortfolio(ThetaBackend(), ThetaConfig.Ic3)
 
     val UppaalDefault: VerificationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.Default)
-    val UppaalBreadthFirst: VerificationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.BreadthFirst)
     val UppaalDepthFirst: VerificationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.DepthFirst)
     val UppaalRandomDepthFirst: VerificationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.RandomDepthFirst)
     val UppaalOverApproximation: VerificationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.OverApproximation)
@@ -69,7 +68,6 @@ object Portfolios {
         ThetaBoundedImc,
         ThetaIc3,
         UppaalDefault,
-        UppaalBreadthFirst,
         UppaalDepthFirst,
         UppaalRandomDepthFirst,
         UppaalOverApproximation,

@@ -98,12 +98,10 @@ class AllAgreeFullPortfolio(
         }
         progress.reportProgress("running ${available.size} backend(s)")
 
-        val outcome = all(gate, request.timeout, progress) {
+        val outcome = all(startCase(request, gate, progress)) {
             available.forEach {
-                async {
-                    gate.withPermit {
-                        it.run(parentInjector, request.withSubPath(it.subPath), environment)
-                    }
+                leg(it.leg.id) {
+                    it.run(parentInjector, request.withSubPath(it.subPath), environment)
                 }
             }
         }

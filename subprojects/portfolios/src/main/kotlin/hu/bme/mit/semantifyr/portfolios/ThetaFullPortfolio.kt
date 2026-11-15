@@ -76,12 +76,10 @@ class ThetaFullPortfolio(
             )
         }
         progress.reportProgress("racing ${tasks.size} Theta configurations")
-        val outcome = firstDecisive(gate, request.timeout, progress) {
+        val outcome = firstDecisive(startCase(request, gate, progress)) {
             for (task in tasks) {
-                async {
-                    gate.withPermit {
-                        task.run(parentInjector, request.withSubPath(task.subPath), environment)
-                    }
+                leg(task.leg.id) {
+                    task.run(parentInjector, request.withSubPath(task.subPath), environment)
                 }
             }
         }
