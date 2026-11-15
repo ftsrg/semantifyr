@@ -262,6 +262,6 @@ tasks.register<Tar>("liveImageContext") {
         into("build/staging/web")
     }
     from(cloneShippedTheta) {
-        into("build/theta-xsts-cli")
+        into("build/shipped-theta-xsts-cli")
     }
 }
