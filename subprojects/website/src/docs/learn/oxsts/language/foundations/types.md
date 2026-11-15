@@ -41,7 +41,7 @@ class Gauge {
 A value fits a slot, a variable, a parameter, a feature's binding or a property's return, when its domain and its multiplicity fit the slot's; one that does not is rejected.
 
 - A domain fits itself and `any`. A class fits each of its superclasses. Where the slot's domain is a feature, a feature fits only if it [subsets](../classes-and-behaviour/features.md#subsets) the slot's, directly or through others, and a class or a datatype fits if it fits the feature's own class or datatype. Where the slot's domain is a class or a datatype, a feature fits if its class or datatype does.
-- A multiplicity fits when its lower bound is not below the slot's and its upper bound is not above it: a `[1]` value fits a `[0..1]` slot, while a `[0..1]` value does not fit a `[1]` slot. `nothing` fits a slot whose lower bound is 0.
+- A multiplicity fits when its lower bound is not below the slot's and its upper bound is not above it: a `[1]` value fits a `[0..1]` slot, while a `[0..1]` value does not fit a `[1]` slot. `nothing` fits a slot whose lower bound is 0. An array whose size comes from a binding fits any array slot and any array fits it, the two sizes compared when each instance is compiled; it and a single value never fit each other.
 - There is no conversion between datatypes: an `int` does not fit a `real` slot, and an enumeration literal fits only its own enumeration.
 
 ```oxsts

@@ -22,10 +22,10 @@ Expressions compute values. They appear in [property](../classes-and-behaviour/p
 | String | `"hello"` |
 | Nothing | `nothing` |
 | Infinity | `*` |
-| Array | `[a, b, c]`, `[]` |
+| Array | `[a, b, c]`, `[]`, `[0, ...]` |
 | Record (see [Records](datatypes.md#records)) | `Point { x = 0, y = 0 }` |
 
-[Lexical Structure](lexical-structure.md#literals) gives the forms of the literals, and [Datatypes](datatypes.md) their types. The values of an array literal share a type, and `[a, b, c]` has the multiplicity `[3]`.
+[Lexical Structure](lexical-structure.md#literals) gives the forms of the literals, and [Datatypes](datatypes.md) their types. The values of an array literal share a type, and `[a, b, c]` has the multiplicity `[3]`. A literal ending in `...`, such as `[0, ...]`, is the initial value of an array and takes its length from it ([Variables](../classes-and-behaviour/variables.md#multiplicity-on-the-type)).
 
 ## `self`
 
