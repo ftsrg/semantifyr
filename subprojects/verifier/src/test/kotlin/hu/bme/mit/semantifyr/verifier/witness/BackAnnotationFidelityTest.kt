@@ -15,6 +15,7 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
+import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.linearInlinedWitness
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
@@ -27,16 +28,30 @@ import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
+import hu.bme.mit.semantifyr.verifier.ObservedParameter
+import hu.bme.mit.semantifyr.verifier.ObservedSlot
+import hu.bme.mit.semantifyr.verifier.ObservedTransition
+import hu.bme.mit.semantifyr.verifier.ObservedVariable
 import hu.bme.mit.semantifyr.verifier.ProgressContext
+import hu.bme.mit.semantifyr.verifier.REPORT_VERSION
+import hu.bme.mit.semantifyr.verifier.ReportCall
+import hu.bme.mit.semantifyr.verifier.ReportInitialEntry
+import hu.bme.mit.semantifyr.verifier.ReportKind
+import hu.bme.mit.semantifyr.verifier.ReportStep
+import hu.bme.mit.semantifyr.verifier.ReportType
+import hu.bme.mit.semantifyr.verifier.ReportTypeKind
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
+import hu.bme.mit.semantifyr.verifier.VerificationReport
 import hu.bme.mit.semantifyr.verifier.caseDirectoryName
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.entry
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
@@ -236,6 +251,137 @@ class BackAnnotationFidelityTest {
             )
     }
 
+    @Test
+    suspend fun `the report of a run names the root and holds the states, the steps and their calls`(@TempDir output: Path) {
+        val case = loadCase("tracing.oxsts", tracingCase)
+
+        verifyWithWitness(case, output) { model ->
+            linearInlinedWitness(
+                model,
+                listOf(
+                    model.state(kitchenOn to false, hallOn to false, kitchenTracer to false, hallTracer to false),
+                    model.state(kitchenOn to true, hallOn to false, kitchenTracer to true, hallTracer to false),
+                ),
+            )
+        }
+
+        val report = readReport(output, case)
+        val trace = report.trace!!
+        assertThat(report.version).isEqualTo(REPORT_VERSION)
+        assertThat(report.kind).isEqualTo(ReportKind.Run)
+        assertThat(trace.root).isEqualTo("root")
+        assertThat(trace.initial).isEqualTo(ReportInitialEntry(state = 0, calls = emptyList()))
+        assertThat(trace.states).hasSize(2)
+        assertThat(trace.states[1].values).containsEntry("root.kitchen.lamp.on", JsonPrimitive(true))
+        assertThat(trace.steps).containsExactly(
+            ReportStep(
+                source = 0,
+                target = 1,
+                elapsed = Fraction.ZERO,
+                calls = listOf(
+                    ReportCall(
+                        self = "root.kitchen.lamp",
+                        transition = "semantifyr::verification::lang::tracing::Lamp::toggle",
+                        arguments = mapOf(
+                            "partner" to JsonPrimitive("root.hall.lamp"),
+                        ),
+                        calls = emptyList(),
+                    ),
+                ),
+            ),
+        )
+    }
+
+    @Test
+    suspend fun `the report lists the observed transitions and the type of every variable a state holds`(@TempDir output: Path) {
+        val case = loadCase("tracing.oxsts", tracingCase)
+
+        verifyWithWitness(case, output) { model ->
+            linearInlinedWitness(
+                model,
+                listOf(
+                    model.state(kitchenOn to false, hallOn to false, kitchenTracer to false, hallTracer to false),
+                ),
+            )
+        }
+
+        val trace = readReport(output, case).trace!!
+        assertThat(trace.transitions).containsExactly(
+            ObservedTransition(
+                transition = "semantifyr::verification::lang::tracing::Lamp::toggle",
+                parameters = listOf(
+                    ObservedParameter("partner", ReportType(ReportTypeKind.Class, "semantifyr::verification::lang::tracing::Lamp")),
+                ),
+            ),
+        )
+        assertThat(trace.variables).contains(
+            ObservedVariable("root.kitchen.lamp.on", ReportType(ReportTypeKind.Datatype, "semantifyr::bool")),
+        )
+    }
+
+    @Test
+    suspend fun `the report holds an array slot by slot with the array it belongs to`(@TempDir output: Path) {
+        val case = loadCase("arrays.oxsts", arraysCase)
+        val slots = (0..2).map {
+            flattenedName("root", "slots_$it")
+        }
+
+        verifyWithWitness(case, output) { model ->
+            linearInlinedWitness(
+                model,
+                listOf(
+                    model.state(slots[0] to 0, slots[2] to 4),
+                ),
+            )
+        }
+
+        val trace = readReport(output, case).trace!!
+        assertThat(trace.states.single().values).containsExactly(
+            entry("root.slots[0]", JsonPrimitive(0)),
+            entry("root.slots[2]", JsonPrimitive(4)),
+        )
+        assertThat(trace.variables.last().slot).isEqualTo(ObservedSlot(array = "root.slots", index = 2, size = 3))
+    }
+
+    @Test
+    suspend fun `the report holds a record as an object of its kept fields`(@TempDir output: Path) {
+        val case = loadCase("records.oxsts", recordsCase)
+        val positionX = flattenedName("root", "robot", "position") + "${RecordFlatteningPass.FIELD_SEPARATOR}x"
+
+        verifyWithWitness(case, output) { model ->
+            linearInlinedWitness(
+                model,
+                listOf(
+                    model.state(positionX to 3),
+                ),
+            )
+        }
+
+        val trace = readReport(output, case).trace!!
+        assertThat(trace.states.single().values["root.robot.position"].toString()).isEqualTo("""{"x":3}""")
+        assertThat(trace.variables.single().type.kind).isEqualTo(ReportTypeKind.Record)
+    }
+
+    @Test
+    suspend fun `an instance reference in the report is a path from the root`(@TempDir output: Path) {
+        val case = loadCase("arrays.oxsts", classTypedArraysCase)
+        val slots = (0..1).map {
+            flattenedName("root", "queue_$it")
+        }
+
+        verifyWithWitness(case, output) { model ->
+            val secondId = (model.variables.single { it.name == slots[1] }.expression as LiteralInteger).value
+            linearInlinedWitness(
+                model,
+                listOf(
+                    model.state(slots[0] to secondId),
+                ),
+            )
+        }
+
+        assertThat(readReport(output, case).trace!!.states.single().values).containsEntry("root.queue[0]", JsonPrimitive("root.second"))
+    }
+
     private fun flattenedName(vararg path: String): String {
         return path.joinToString("") {
             "${InstanceNames.INSTANCE_NAME_SEPARATOR}$it"
@@ -292,6 +438,10 @@ class BackAnnotationFidelityTest {
 
     private fun readWitnessState(output: Path, case: VerificationCase): WitnessState {
         return Json.decodeFromString(caseDirectory(output, case).resolve("witness.json").readText())
+    }
+
+    private fun readReport(output: Path, case: VerificationCase): VerificationReport {
+        return Json.decodeFromString(caseDirectory(output, case).resolve("report.json").readText())
     }
 
     private fun readWitnessModel(output: Path, case: VerificationCase): String {

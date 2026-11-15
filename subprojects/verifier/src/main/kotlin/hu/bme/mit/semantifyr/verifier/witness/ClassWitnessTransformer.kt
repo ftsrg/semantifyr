@@ -48,17 +48,30 @@ class ClassWitnessTransformer @Inject constructor(
                     val value = it.value
                     value is LiteralBoolean && value.isValue
                 },
+                witnessState.clockValues.filter {
+                    it.variable in compilation.flatteningInfo.variableHolders
+                }.map {
+                    ClassWitnessClockValue(locate(it.variable), it.value)
+                },
+                witnessState.elapsed,
             )
         }
 
         private fun transform(variableValue: WitnessStateValue): ClassWitnessStateValue {
-            val holder = compilation.flatteningInfo.variableHolders[variableValue.variable]
-                ?: error("Witness value references variable '${variableValue.variable.name}' with no holder instance in flatteningInfo.variableHolders. Synthetic root-level variables should be filtered out before reaching transform(WitnessStateValue).")
-            val arraySlot = compilation.flatteningInfo.arraySlots[variableValue.variable]
-            val recordField = compilation.flatteningInfo.recordFields[variableValue.variable]
+            return ClassWitnessStateValue(
+                locate(variableValue.variable),
+                backAnnotateInstancePointers(variableValue.variable, variableValue.value),
+            )
+        }
+
+        private fun locate(variable: VariableDeclaration): ClassWitnessVariable {
+            val holder = compilation.flatteningInfo.variableHolders[variable]
+                ?: error("Witness value references variable '${variable.name}' with no holder instance in flatteningInfo.variableHolders. Synthetic root-level variables should be filtered out before reaching locate(VariableDeclaration).")
+            val arraySlot = compilation.flatteningInfo.arraySlots[variable]
+            val recordField = compilation.flatteningInfo.recordFields[variable]
             val originalVariable = arraySlot?.arrayVariable
                 ?: recordField?.recordVariable
-                ?: compilation.flatteningInfo.resolveOriginalVariable(holder, variableValue.variable)
+                ?: compilation.flatteningInfo.resolveOriginalVariable(holder, variable)
             val holderReference = instanceReferenceProvider.getReference(holder)
             val memberReference = OxstsFactory.createNavigationSuffixExpression().also {
                 it.primary = holderReference
@@ -78,9 +91,12 @@ class ClassWitnessTransformer @Inject constructor(
                 else -> memberReference
             }
 
-            return ClassWitnessStateValue(
+            return ClassWitnessVariable(
                 variableReference,
-                backAnnotateInstancePointers(variableValue.variable, variableValue.value),
+                memberReference,
+                originalVariable,
+                arraySlot,
+                recordField,
             )
         }
 

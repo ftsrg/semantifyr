@@ -1,0 +1,235 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package hu.bme.mit.semantifyr.verifier.witness
+
+import com.google.inject.Inject
+import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionCallTrace
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
+import hu.bme.mit.semantifyr.verifier.ObservedParameter
+import hu.bme.mit.semantifyr.verifier.ObservedSlot
+import hu.bme.mit.semantifyr.verifier.ObservedTransition
+import hu.bme.mit.semantifyr.verifier.ObservedVariable
+import hu.bme.mit.semantifyr.verifier.ReportCall
+import hu.bme.mit.semantifyr.verifier.ReportInitialEntry
+import hu.bme.mit.semantifyr.verifier.ReportState
+import hu.bme.mit.semantifyr.verifier.ReportStep
+import hu.bme.mit.semantifyr.verifier.ReportTrace
+import hu.bme.mit.semantifyr.verifier.ReportType
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+
+class ReportTraceTransformer @Inject constructor(
+    private val oxstsQualifiedNameProvider: OxstsQualifiedNameProvider,
+    private val reportValueConverter: ReportValueConverter,
+) {
+
+    private class ReportEntry(
+        val key: String,
+        val type: ReportType,
+        val value: JsonElement,
+        val slot: ObservedSlot? = null,
+    )
+
+    fun transform(classWitness: ClassWitness, compilation: FlattenedCompilationContext): ReportTrace {
+        val siteOrder = siteOrder(compilation)
+        val path = listOf(classWitness.initializedState) + classWitness.transitionStates
+        val states = path.distinct()
+        val entries = states.map {
+            entries(it)
+        }
+        val variables = linkedMapOf<String, ObservedVariable>()
+        for (stateEntries in entries) {
+            for (entry in stateEntries) {
+                variables.putIfAbsent(entry.key, ObservedVariable(entry.key, entry.type, entry.slot))
+            }
+        }
+        return ReportTrace(
+            root = rootName(compilation),
+            transitions = observedTransitions(compilation, siteOrder),
+            variables = variables.values.toList(),
+            initial = ReportInitialEntry(
+                state = 0,
+                calls = calls(classWitness.initializedState, compilation, siteOrder),
+            ),
+            states = entries.map { stateEntries ->
+                ReportState(
+                    stateEntries.associate {
+                        it.key to it.value
+                    },
+                )
+            },
+            steps = path.zipWithNext { source, target ->
+                ReportStep(
+                    source = states.indexOf(source),
+                    target = states.indexOf(target),
+                    elapsed = target.elapsed,
+                    calls = calls(target, compilation, siteOrder),
+                )
+            },
+        )
+    }
+
+    private fun rootName(compilation: FlattenedCompilationContext): String {
+        val root = compilation.rootInstance.children.singleOrNull()?.domain as? NamedElement
+            ?: error("the inlined model has no single root instance")
+        return root.name
+    }
+
+    private fun siteOrder(compilation: FlattenedCompilationContext): Map<VariableDeclaration, Int> {
+        val order = linkedMapOf<VariableDeclaration, Int>()
+        for (assignment in compilation.inlinedOxsts.eAllOfType<AssignmentOperation>()) {
+            val variable = (assignment.reference as? ElementReference)?.element as? VariableDeclaration ?: continue
+            val value = assignment.expression
+            if (TransitionTracerNames.isTracerName(variable.name) && value is LiteralBoolean && value.isValue) {
+                order.putIfAbsent(variable, order.size)
+            }
+        }
+        return order
+    }
+
+    private fun observedTransitions(compilation: FlattenedCompilationContext, siteOrder: Map<VariableDeclaration, Int>): List<ObservedTransition> {
+        val traceVariables = compilation.inlinedOxsts.variables.filter {
+            TransitionTracerNames.isTracerName(it.name)
+        }.sortedBy {
+            siteOrder[it] ?: Int.MAX_VALUE
+        }
+        return traceVariables.map {
+            compilation.transitionCallTraces.getTransitionCallTrace(it).transitionDeclaration
+        }.distinct().map { transition ->
+            ObservedTransition(
+                transition = oxstsQualifiedNameProvider.getFullyQualifiedNameString(transition),
+                parameters = transition.parameters.map {
+                    ObservedParameter(it.name, reportValueConverter.type(it.typeSpecification))
+                },
+            )
+        }
+    }
+
+    private fun calls(
+        state: ClassWitnessState,
+        compilation: FlattenedCompilationContext,
+        siteOrder: Map<VariableDeclaration, Int>,
+    ): List<ReportCall> {
+        val sites = state.activatedTraces.map {
+            it.variable
+        }.sortedBy {
+            siteOrder[it] ?: Int.MAX_VALUE
+        }.map {
+            compilation.transitionCallTraces.getTransitionCallTrace(it)
+        }
+        val activated = sites.toSet()
+        val childrenByParent = sites.groupBy {
+            it.parent?.takeIf { parent ->
+                parent in activated
+            }
+        }
+
+        fun build(site: TransitionCallTrace): ReportCall {
+            return ReportCall(
+                self = reportValueConverter.path(site.self),
+                transition = oxstsQualifiedNameProvider.getFullyQualifiedNameString(site.transitionDeclaration),
+                arguments = site.arguments.associate {
+                    it.parameterDeclaration.name to reportValueConverter.value(it.evaluation)
+                },
+                calls = childrenByParent[site].orEmpty().map {
+                    build(it)
+                },
+            )
+        }
+
+        return childrenByParent[null].orEmpty().map {
+            build(it)
+        }
+    }
+
+    private fun entries(state: ClassWitnessState): List<ReportEntry> {
+        val groups = linkedMapOf<String, EntryGroup>()
+        for (stateValue in state.values) {
+            val variable = stateValue.variable
+            val recordField = variable.recordField
+            when {
+                variable.arraySlot != null -> {
+                    val key = reportValueConverter.path(variable.reference)
+                    groups[key] = EntryGroup.Single(slotEntry(key, stateValue))
+                }
+                recordField != null -> {
+                    val group = groups.getOrPut(reportValueConverter.path(variable.declaredReference)) {
+                        EntryGroup.Record(reportValueConverter.type(variable.declaredVariable.typeSpecification))
+                    } as EntryGroup.Record
+                    val fields = recordField.fields.dropLast(1).fold(group.fields) { fields, field ->
+                        fields.nested.getOrPut(field.name) {
+                            RecordFields()
+                        }
+                    }
+                    fields.values[recordField.fields.last().name] = reportValueConverter.value(stateValue.value)
+                }
+                else -> {
+                    val key = reportValueConverter.path(variable.reference)
+                    groups[key] = EntryGroup.Single(
+                        ReportEntry(key, reportValueConverter.type(variable.declaredVariable.typeSpecification), reportValueConverter.value(stateValue.value)),
+                    )
+                }
+            }
+        }
+        for (clockValue in state.clockValues) {
+            val key = reportValueConverter.path(clockValue.variable.reference)
+            groups[key] = EntryGroup.Single(
+                ReportEntry(key, reportValueConverter.type(clockValue.variable.declaredVariable.typeSpecification), reportValueConverter.fraction(clockValue.value)),
+            )
+        }
+        return groups.map { (key, group) ->
+            when (group) {
+                is EntryGroup.Single -> group.entry
+                is EntryGroup.Record -> ReportEntry(key, group.type, group.fields.toJson())
+            }
+        }
+    }
+
+    private fun slotEntry(key: String, stateValue: ClassWitnessStateValue): ReportEntry {
+        val variable = stateValue.variable
+        val typeSpecification = variable.declaredVariable.typeSpecification
+        return ReportEntry(
+            key,
+            reportValueConverter.elementType(typeSpecification),
+            reportValueConverter.value(stateValue.value),
+            ObservedSlot(
+                array = reportValueConverter.path(variable.declaredReference),
+                index = variable.arraySlot!!.index,
+                size = reportValueConverter.type(typeSpecification).size,
+            ),
+        )
+    }
+
+    private class RecordFields {
+        val values = linkedMapOf<String, JsonElement>()
+        val nested = linkedMapOf<String, RecordFields>()
+
+        fun toJson(): JsonObject {
+            return JsonObject(
+                values + nested.mapValues {
+                    it.value.toJson()
+                },
+            )
+        }
+    }
+
+    private sealed interface EntryGroup {
+        class Single(val entry: ReportEntry) : EntryGroup
+
+        class Record(val type: ReportType) : EntryGroup {
+            val fields = RecordFields()
+        }
+    }
+}
