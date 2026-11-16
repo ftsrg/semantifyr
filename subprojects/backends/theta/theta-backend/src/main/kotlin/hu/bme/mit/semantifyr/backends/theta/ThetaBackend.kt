@@ -144,7 +144,7 @@ class ThetaVerificationContext @AssistedInject constructor(
     }
 
     private fun buildInlinedWitness(xsts: XstsModel, cexPath: Path): InlinedWitness {
-        logger.info { "[$backendId] building inlined-oxsts witness from CEX" }
+        logger.info { "[$backendId] building the inlined witness from CEX" }
         val cexModel = cexReader.loadCexModel(cexPath)
         val cexWitness = cexWitnessTransformer.transform(cexModel)
         val xstsWitness = xstsWitnessTransformer.transform(xsts, cexWitness)
