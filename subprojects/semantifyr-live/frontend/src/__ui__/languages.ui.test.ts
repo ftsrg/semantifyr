@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { servedExamples } from '@semantifyr/editor-common/examples'
-import type { Page } from 'playwright'
+import type { Locator, Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
 import { BLANK_MODEL } from '../texts'
@@ -145,6 +145,16 @@ function stepsOf(count: number, seed: number): { step: Step, wait: number }[] {
   })
 }
 
+// the editor takes the focus once it has started, which closes a menu opened before, so a closed menu is opened again
+async function opened(trigger: Locator, content: Locator): Promise<void> {
+  await expect.poll(async () => {
+    if (await trigger.getAttribute('aria-expanded') !== 'true') {
+      await trigger.click()
+    }
+    return content.count()
+  }).toBeGreaterThan(0)
+}
+
 async function take(page: Page, step: Step): Promise<void> {
   switch (step.kind) {
     case 'language':
@@ -155,12 +165,12 @@ async function take(page: Page, step: Step): Promise<void> {
       if (await flavour.count() === 0) {
         return
       }
-      await flavour.click()
+      await opened(flavour, page.getByRole('menuitem'))
       await page.getByRole('menuitem', { name: new RegExp(step.name) }).click()
       return
     }
     case 'example': {
-      await page.locator('.example-button').click()
+      await opened(page.locator('.example-button'), page.getByRole('menuitem'))
       const item = page.getByRole('menuitem', { name: new RegExp(`^${step.name}`) })
       if (await item.count() === 0) {
         await page.getByRole('menuitem').first().click()
@@ -176,10 +186,12 @@ async function take(page: Page, step: Step): Promise<void> {
       }
       return
     }
-    case 'library':
-      await page.getByRole('button', { name: 'Read-only documents' }).click()
-      await page.locator('.documents-group:not([aria-label="Selected case"]):not([aria-label="Model"]) .menu-item').first().click()
+    case 'library': {
+      const documents = page.locator('.documents-group:not([aria-label="Selected case"]):not([aria-label="Model"]) .menu-item')
+      await opened(page.getByRole('button', { name: 'Read-only documents' }), documents)
+      await documents.first().click()
       return
+    }
     case 'model':
       await page.locator('.tabs [role="tab"]').first().click()
       return
