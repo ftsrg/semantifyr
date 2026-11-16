@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { ReportCall, ReportState, ResultTrace, VerificationReport } from '@semantifyr/editor-common'
+import type { Fraction, ReportCall, ReportState, ResultTrace, VerificationReport } from '@semantifyr/editor-common'
 
 import { findExample, liveFlavors } from '../examples'
 import type { VerificationCaseState } from '../lib/verification/engine'
@@ -115,7 +115,14 @@ const CALLS = [
   ],
 ]
 
-function traceOf(witnessUri: string, recorded = true): ResultTrace {
+// a timed trace waits before each step, a whole amount, a fraction and no time
+const ELAPSED: readonly Fraction[] = [
+  1,
+  '3/2',
+  0,
+]
+
+function traceOf(witnessUri: string, recorded: boolean, timed: boolean): ResultTrace {
   return {
     root: 'root',
     transitions: [],
@@ -125,7 +132,7 @@ function traceOf(witnessUri: string, recorded = true): ResultTrace {
     initial: { state: 0, calls: [] },
     states: [values(START), values(STEP_ONE), values(STEP_TWO), values(STEP_THREE)],
     steps: CALLS.map((calls, index) => {
-      return { source: index, target: index + 1, elapsed: 0, calls: recorded ? calls : [] }
+      return { source: index, target: index + 1, elapsed: timed ? ELAPSED[index] ?? 0 : 0, calls: recorded ? calls : [] }
     }),
     missingCalls: null,
     kind: 'run',
@@ -163,7 +170,7 @@ const VALIDATION = {
   trace: null,
 } as unknown as VerificationReport
 
-export function caseState(language: Language, options: { validated: boolean, recorded: boolean }): VerificationCaseState {
+export function caseState(language: Language, options: { validated: boolean, recorded: boolean, timed?: boolean }): VerificationCaseState {
   const flavor = liveFlavors(servedFlavors).find((candidate) => {
     return candidate.id === language.flavorId
   })
@@ -179,7 +186,7 @@ export function caseState(language: Language, options: { validated: boolean, rec
     metrics: { totalDuration: 'PT2.9S', preparationDuration: 'PT0S', verificationDuration: 'PT2.9S', backAnnotationDuration: 'PT0S' },
     backendId: 'theta:cegar',
     portfolioId: 'smart',
-    trace: traceOf(language.traceUri, options.recorded),
+    trace: traceOf(language.traceUri, options.recorded, options.timed ?? false),
     ...(options.validated
       ? { waited: 30_000, validationWaited: 4_000, witnessValidation: 'valid' as const, validationReport: VALIDATION, validationPortfolioIdUsed: 'smart' }
       : {}),

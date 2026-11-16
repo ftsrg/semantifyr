@@ -48,6 +48,7 @@ interface TraceState {
   language: string
   validated?: boolean
   recorded?: boolean
+  timed?: boolean
   view: string
   act?: () => Promise<void>
   expectState: () => Promise<void> | void
@@ -98,6 +99,7 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
       expect(count('.call-arrow.from-environment')).toBe(count('.band'))
       expect(count('.call-arrow:not(.from-environment)')).toBe(5)
       expect(count('.call-arrow-label')).toBeGreaterThan(0)
+      expect(count('[data-testid=calls-elapsed]'), 'an untimed trace shows no time').toBe(0)
       for (const label of document.querySelectorAll('.call-arrow-label')) {
         const [line, head] = [...label.parentElement!.querySelectorAll('path')].map((path) => {
           return path.getBoundingClientRect()
@@ -106,6 +108,25 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
         expect(text.left, `${label.textContent} inside its arrow`).toBeGreaterThanOrEqual(Math.min(line!.left, head!.left) - 0.5)
         expect(text.right, `${label.textContent} inside its arrow`).toBeLessThanOrEqual(Math.max(line!.right, head!.right) + 0.5)
       }
+    },
+  },
+  'sysml-calls-timed': {
+    language: 'sysml',
+    timed: true,
+    view: 'calls',
+    expectState: () => {
+      const times = [...document.querySelectorAll('[data-testid=calls-elapsed]')]
+      expect(times.map((time) => {
+        return time.querySelector('text')?.textContent
+      })).toEqual(['1', '3/2', '0'])
+      const bands = [...document.querySelectorAll('.band-fill')].map((band) => {
+        return band.getBoundingClientRect()
+      })
+      times.forEach((time, index) => {
+        const clock = time.getBoundingClientRect()
+        expect(clock.top, `the time of step ${index + 1} below the step before it`).toBeGreaterThanOrEqual(bands[index]!.bottom - 0.5)
+        expect(clock.bottom, `the time of step ${index + 1} above its step`).toBeLessThanOrEqual(bands[index + 1]!.top + 0.5)
+      })
     },
   },
   'sysml-witness': {
@@ -394,7 +415,7 @@ describe('the trace area', () => {
       it(`shows ${name} in the desktop column in the ${colorMode} theme`, async () => {
         await page.viewport(1440, 900)
         const language = LANGUAGES[state.language]!
-        const { live, shell } = seedWithTrace(language, caseState(language, { validated: state.validated ?? false, recorded: state.recorded ?? true }))
+        const { live, shell } = seedWithTrace(language, caseState(language, { validated: state.validated ?? false, recorded: state.recorded ?? true, timed: state.timed ?? false }))
         const container = document.createElement('div')
         document.body.append(container)
         const root = createRoot(container)

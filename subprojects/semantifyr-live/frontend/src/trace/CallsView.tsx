@@ -6,7 +6,7 @@
 
 import type React from 'react'
 import { useMemo } from 'react'
-import { lastNameSegment, missingCallsMessage, shortenPath, traceCalls, type TraceCall, type TraceCallStep } from '@semantifyr/editor-common'
+import { lastNameSegment, missingCallsMessage, shortenPath, traceCalls, traceStates, type TraceCall, type TraceCallStep } from '@semantifyr/editor-common'
 
 import { Icon } from '../ui/icons'
 import type { TraceViewProps } from './registry'
@@ -24,6 +24,8 @@ const ARROW_MARGIN = 14
 const WIDEST_ARROW = 2 * COLUMN
 const LABEL_PADDING = 4
 const LABEL_RISE = 6
+const TIME_ROW = 22
+const CLOCK_RADIUS = 5.5
 
 interface PlacedCall {
   call: TraceCall
@@ -35,11 +37,24 @@ interface PlacedCall {
   label: string
 }
 
+// the time that elapsed before a step, drawn above its band
+interface ElapsedTime {
+  middle: number
+  amount: string
+}
+
 interface Band {
   number: number
   top: number
   bottom: number
   calls: PlacedCall[]
+  elapsed: ElapsedTime | null
+}
+
+interface CallStep {
+  number: number
+  step: TraceCallStep
+  elapsed: string | null
 }
 
 interface Diagram {
@@ -133,7 +148,7 @@ function lifelinePositions(steps: readonly { step: TraceCallStep }[], lifelines:
   return positions
 }
 
-function layout(steps: readonly { number: number, step: TraceCallStep }[], lifelines: readonly string[]): Diagram {
+function layout(steps: readonly CallStep[], lifelines: readonly string[]): Diagram {
   const positions = lifelinePositions(steps, lifelines)
   const environment = positions[0] ?? GUTTER
   const columns = new Map(lifelines.map((id, index) => {
@@ -144,7 +159,13 @@ function layout(steps: readonly { number: number, step: TraceCallStep }[], lifel
   }))
   let width = (positions.at(-1) ?? environment) + COLUMN / 2
   let y = 0
-  const bands = steps.map(({ number, step }) => {
+  const bands = steps.map(({ number, step, elapsed }) => {
+    let time: ElapsedTime | null = null
+    if (elapsed !== null) {
+      time = { middle: y + TIME_ROW / 2, amount: elapsed }
+      width = Math.max(width, environment + 2 * CLOCK_RADIUS + elapsed.length * CHARACTER_WIDTH + 16)
+      y += TIME_ROW
+    }
     const top = y
     let cursor = top + BAND_PADDING
     const placed: PlacedCall[] = []
@@ -172,7 +193,7 @@ function layout(steps: readonly { number: number, step: TraceCallStep }[], lifel
     })
     cursor += BAND_PADDING
     y = cursor
-    return { number, top, bottom: cursor, calls: placed }
+    return { number, top, bottom: cursor, calls: placed, elapsed: time }
   })
   return {
     environment,
@@ -189,6 +210,18 @@ function layout(steps: readonly { number: number, step: TraceCallStep }[], lifel
 interface Caller {
   center: number
   reach: number
+}
+
+// the environment waits before every step, so the clock sits on its lifeline
+function Elapsed({ time, environment }: { time: ElapsedTime, environment: number }): React.JSX.Element {
+  return (
+    <g className="band-time" data-testid="calls-elapsed">
+      <title>{`elapsed ${time.amount}`}</title>
+      <circle className="band-time-clock" cx={environment} cy={time.middle} r={CLOCK_RADIUS} />
+      <path className="band-time-hands" d={`M${environment} ${time.middle - 3} V${time.middle} l2 1.5`} />
+      <text className="band-time-amount" x={environment + CLOCK_RADIUS + 5} y={time.middle + 4}>{time.amount}</text>
+    </g>
+  )
 }
 
 function Arrow({ placed, caller, fromEnvironment }: { placed: PlacedCall, caller: Caller, fromEnvironment: boolean }): React.JSX.Element {
@@ -221,8 +254,10 @@ function Arrow({ placed, caller, fromEnvironment }: { placed: PlacedCall, caller
 export function CallsView({ trace }: TraceViewProps): React.JSX.Element {
   const diagram = useMemo(() => {
     const calls = traceCalls(trace)
+    const states = traceStates(trace)
     const steps = [calls.initialized, ...calls.steps].map((step, number) => {
-      return { number, step }
+      const elapsed = states.timed && number > 0 ? states.steps[number - 1]?.elapsed ?? null : null
+      return { number, step, elapsed }
     })
     return calls.lifelines.length > 0 ? layout(steps, calls.lifelines) : null
   }, [trace])
@@ -275,6 +310,9 @@ export function CallsView({ trace }: TraceViewProps): React.JSX.Element {
           <line className="lifeline lifeline-environment" x1={diagram.environment} y1="0" x2={diagram.environment} y2={diagram.height} />
           {diagram.lifelines.map((lifeline) => {
             return <line key={lifeline.id} className="lifeline" x1={lifeline.x} y1="0" x2={lifeline.x} y2={diagram.height} />
+          })}
+          {diagram.bands.map((band) => {
+            return band.elapsed === null ? null : <Elapsed key={`time-${band.number}`} time={band.elapsed} environment={diagram.environment} />
           })}
           {diagram.bands.map((band) => {
             return band.calls.map((placed, index) => {
