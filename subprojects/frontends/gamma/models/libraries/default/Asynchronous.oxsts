@@ -159,7 +159,6 @@ abstract class AsynchronousAdapter : Component {
             inline queue.receiveEnvironmentMessage()
         }
     }
-
 }
 
 abstract class MessageDispatch {

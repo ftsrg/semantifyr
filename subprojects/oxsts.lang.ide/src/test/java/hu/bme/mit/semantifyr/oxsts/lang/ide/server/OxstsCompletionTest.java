@@ -268,7 +268,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
         assertThat(labels(items))
                 .contains(
                         "redefine tran schedule()",
-                        "redefine tran passTime()",
+                        "redefine tran restore()",
                         "redefine contains regions: Region[0..*]",
                         "redefine refers regionSchedule: RegionSchedule");
         assertThat(item(items, "redefine contains regions: Region[0..*]").getDetail())
@@ -295,9 +295,9 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
                 """));
 
         assertThat(labels(items))
-                .contains("passTime", "schedule", "assumeNoTransitionEnabled", "regions")
+                .contains("restore", "schedule", "assumeNoTransitionEnabled", "regions")
                 .doesNotContain("regionSchedule");
-        assertThat(item(items, "passTime").getDetail()).isEqualTo("passTime()");
+        assertThat(item(items, "restore").getDetail()).isEqualTo("restore()");
         assertThat(item(items, "regions")).satisfies(item -> {
             assertThat(item.getKind()).isEqualTo(CompletionItemKind.Property);
             assertThat(item.getDetail()).isEqualTo("contains Region[0..*]");
