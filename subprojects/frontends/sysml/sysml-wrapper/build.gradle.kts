@@ -25,7 +25,7 @@ dependencies {
     testImplementation(testFixtures(project(":compiler")))
 }
 
-val sysmlCommit = "63c25260a81b6831bfc18dc6cd2e4b3e58c50b13" // feat: the SysML trace takes its case from the report, with a real report as the fixture
+val sysmlCommit = "e0794f56a0f5ee3ff9652d66406223f24c4f2bbc" // fix: the reserved member names follow the library's time signals, passTime gone
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 
