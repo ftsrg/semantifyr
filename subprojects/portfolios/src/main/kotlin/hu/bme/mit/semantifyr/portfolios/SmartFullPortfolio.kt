@@ -64,7 +64,8 @@ class SmartFullPortfolio(
     private val thetaCegarPred = PortfolioTask(theta, ThetaConfig.CegarPredCart, "theta-cegar-pred")
     private val thetaCegarCombined = PortfolioTask(theta, ThetaConfig.CegarExplPredCombined, "theta-cegar-combined")
     private val thetaIc3 = PortfolioTask(theta, ThetaConfig.Ic3, "theta-ic3")
-    private val nuxmvBmc = PortfolioTask(nuxmv, NuxmvConfig.BmcInvar, "nuxmv-bmc")
+    private val thetaChc = PortfolioTask(theta, ThetaConfig.Chc, "theta-chc")
+    private val nuxmvKInduction = PortfolioTask(nuxmv, NuxmvConfig.KInductionInvar, "nuxmv-kinduction")
     private val nuxmvIc3 = PortfolioTask(nuxmv, NuxmvConfig.Ic3Invar, "nuxmv-ic3")
     private val nuxmvBdd = PortfolioTask(nuxmv, NuxmvConfig.BddInvar, "nuxmv-bdd")
     private val spinSafeDfs = PortfolioTask(spin, SpinConfig.SafeDfs, "spin-safe-dfs")
@@ -82,7 +83,7 @@ class SmartFullPortfolio(
             nuxmvIc3,
             uppaalDefault,
             thetaKInduction,
-            nuxmvBmc,
+            nuxmvKInduction,
             thetaCegarExpl,
             nuxmvBdd,
         ),
@@ -95,6 +96,7 @@ class SmartFullPortfolio(
         tasks = listOf(
             thetaCegarExpl,
             thetaCegarPred,
+            thetaChc,
             nuxmvIc3,
             thetaImc,
             thetaCegarCombined,
@@ -109,6 +111,7 @@ class SmartFullPortfolio(
             thetaCegarExpl,
             nuxmvIc3,
             thetaCegarPred,
+            thetaChc,
             uppaalOverApproximation,
             thetaIc3,
             spinCollapse,

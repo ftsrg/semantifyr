@@ -82,7 +82,7 @@ class NuxmvBackendReplayTest {
         val artifactDirectory = cleanArtifactDirectory("ChoiceBound")
         val inlinedOxsts = models.compile("control_flow", "ChoiceBound", artifactDirectory)
 
-        verify("ChoiceBound", inlinedOxsts, artifactDirectory, NuxmvConfig.BmcInvar.copy(bound = 50))
+        verify("ChoiceBound", inlinedOxsts, artifactDirectory, NuxmvConfig.KInductionInvar.copy(bound = 50))
 
         val commands = artifactDirectory.resolve("commands.cmd").readText()
         assertThat(commands).contains("msat_check_invar_bmc -a een-sorensson -k 50 -p \"")
@@ -91,7 +91,7 @@ class NuxmvBackendReplayTest {
     @Test
     fun `a bound must be positive`() {
         assertThatThrownBy {
-            NuxmvConfig.BmcInvar.copy(bound = 0)
+            NuxmvConfig.KInductionInvar.copy(bound = 0)
         }.isInstanceOf(IllegalArgumentException::class.java)
     }
 

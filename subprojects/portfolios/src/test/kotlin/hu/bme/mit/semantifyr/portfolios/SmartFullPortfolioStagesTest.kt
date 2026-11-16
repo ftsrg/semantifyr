@@ -52,11 +52,11 @@ class SmartFullPortfolioStagesTest {
         )
         val portfolio = smart(theta = theta)
 
-        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(7), ExecutionEnvironment.Empty, ProgressContext.Silent)
+        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(8), ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(currentTime).isEqualTo(50_000)
-        assertThat(theta.starts).hasSize(7).allMatch {
+        assertThat(theta.starts).hasSize(8).allMatch {
             it.at == Duration.ZERO
         }
     }
@@ -86,6 +86,7 @@ class SmartFullPortfolioStagesTest {
             "bounded-kinduction@0s",
             "cegar-expl@0s",
             "cegar-pred-cart@10s",
+            "chc@10s",
             "bounded-imc@10s",
             "cegar-expl-pred-combined@10s",
             "ic3@40s",
@@ -103,6 +104,7 @@ class SmartFullPortfolioStagesTest {
             "bitstate@2m",
             "cegar-expl@2m",
             "cegar-pred-cart@2m",
+            "chc@2m",
         )
         assertThat(result.message).contains(
             "first stage: ",
@@ -115,7 +117,7 @@ class SmartFullPortfolioStagesTest {
             "first stage: racing 3 backend configurations within 10s",
             "running from the first stage: racing 1 backend configurations until the case's time runs out",
             "second stage: racing 2 backend configurations within 30s",
-            "running from the second stage: racing 1 backend configurations until the case's time runs out",
+            "running from the second stage: racing 2 backend configurations until the case's time runs out",
             "last stage: racing 3 backend configurations until the case's time runs out",
         )
     }
@@ -166,6 +168,7 @@ class SmartFullPortfolioStagesTest {
             "bounded-bmc@10s",
             "bounded-kinduction@10s",
             "cegar-pred-cart@15s",
+            "chc@15s",
             "bounded-imc@15s",
             "cegar-expl-pred-combined@15s",
         )
@@ -327,6 +330,7 @@ class SmartFullPortfolioStagesTest {
             "bounded-kinduction@0s",
             "cegar-expl@0s",
             "cegar-pred-cart@10s",
+            "chc@10s",
             "ic3@10s",
         )
     }
@@ -349,6 +353,7 @@ class SmartFullPortfolioStagesTest {
             "bounded-kinduction@0s",
             "cegar-expl@0s",
             "cegar-pred-cart@8s",
+            "chc@8s",
             "ic3@8s",
             "collapse@8s",
             "bitstate@8s",
@@ -358,6 +363,26 @@ class SmartFullPortfolioStagesTest {
                 it.configuration == "cegar-pred-cart"
             }.artifactOutputPath,
         ).isEqualTo(output.resolve("last/theta-cegar-pred"))
+    }
+
+    @Test
+    fun `a violation reported by Horn solving decides nothing and the other legs run on`(
+        @TempDir output: Path,
+    ) = runTest {
+        val theta = scripted<ThetaConfig>(
+            "theta",
+            mapOf(
+                "chc" to ScriptedAnswer(1.seconds, VerificationVerdict.Failed),
+                "cegar-expl" to ScriptedAnswer(30.seconds, VerificationVerdict.Failed),
+            ),
+        )
+        val portfolio = smart(theta = theta, spin = scripted<SpinConfig>("spin"))
+
+        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(9), ExecutionEnvironment.Empty, ProgressContext.Silent)
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        assertThat(result.isTrusted).isTrue
+        assertThat(currentTime).isEqualTo(30_000)
     }
 
     @Test
@@ -384,10 +409,11 @@ class SmartFullPortfolioStagesTest {
             "nuxmv:ic3-invar@0s",
             "uppaal:default@0s",
             "theta:bounded-kinduction@0s",
-            "nuxmv:bmc-invar@0s",
+            "nuxmv:kinduction-invar@0s",
             "theta:cegar-expl@0s",
             "nuxmv:bdd-invar@0s",
             "theta:cegar-pred-cart@10s",
+            "theta:chc@10s",
             "theta:bounded-imc@10s",
             "theta:cegar-expl-pred-combined@10s",
             "uppaal:over-approximation@40s",
@@ -411,7 +437,8 @@ class SmartFullPortfolioStagesTest {
             "theta:cegar-pred-cart",
             "theta:cegar-expl-pred-combined",
             "theta:ic3",
-            "nuxmv:bmc-invar",
+            "theta:chc",
+            "nuxmv:kinduction-invar",
             "nuxmv:ic3-invar",
             "nuxmv:bdd-invar",
             "spin:safe-dfs",

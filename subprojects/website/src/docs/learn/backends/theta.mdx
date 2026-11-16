@@ -2,12 +2,12 @@
 title: Theta
 sidebar_position: 3
 backend: true
-description: The Theta backend, its exact verdicts, which a portfolio trusts, and the constructs it refuses before it runs.
+description: The Theta backend, its exact verdicts, its Horn solving configuration that is trusted only for a proof, and the constructs it refuses before it runs.
 ---
 
 # Theta
 
-[Theta](https://github.com/ftsrg/theta) verifies the XSTS translation of a case with unbounded integers, and its verdicts are exact, so a portfolio trusts every one of them. It needs `theta-xsts-cli` on `PATH`, or Docker. It treats a `@Clock` variable as an ordinary variable. Before it runs, it reports a case Not supported when the case holds a construct listed below, naming each construct and its source line.
+[Theta](https://github.com/ftsrg/theta) verifies the XSTS translation of a case with unbounded integers, and the verdicts of its configurations are exact, so a portfolio trusts every one of them, except those of `chc`. That configuration is Horn solving: Theta encodes the case as constrained Horn clauses and solves them with its bundled Z3. It reports a violation without a trace, so a portfolio trusts it only for a verdict that needs no witness, an invariant that holds or a state that is unreachable; a violation it reports is not trusted and carries no witness. It needs `theta-xsts-cli` on `PATH`, or Docker. It treats a `@Clock` variable as an ordinary variable. Before it runs, it reports a case Not supported when the case holds a construct listed below, naming each construct and its source line.
 
 ## What the backend refuses
 
