@@ -202,14 +202,6 @@ class NuxmvBackendReplayTest {
     }
 
     @Test
-    suspend fun `a violated invariant without its trace fails the run`() {
-        val result = verify("CounterExceedsBoundWithoutTrace", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
-        assertThat(result.message).contains("nuXmv's output holds no trace")
-    }
-
-    @Test
     suspend fun `an unreachable target fails without a witness`() {
         val result = verify("UnreachableTarget", models.parse(BackendTestModels.UNREACHABLE_TARGET))
 

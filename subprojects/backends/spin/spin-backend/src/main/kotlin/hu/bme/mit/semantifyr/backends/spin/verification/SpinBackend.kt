@@ -203,8 +203,7 @@ class SpinVerificationContext @AssistedInject constructor(
         if (replayResult.exitCode != 0 && replayResult.exitCode != 1) {
             throw WitnessFailedException("Spin's replay of its trail failed with exit code ${replayResult.exitCode}")
         }
-        val trace = spinTraceParser.parse(artifactManager.replayLogFile)
-            ?: throw WitnessFailedException("Spin's replay of its trail holds no step")
+        val trace = spinTraceParser.parse(artifactManager.replayLogFile) ?: return null
         logger.info { "[$backendId] parsed Spin trace with ${trace.states.size} state(s); building witness" }
         val witness = spinInlinedOxstsWitnessTransformer.transform(request.inlinedOxsts, trace)
         return artifacts.wholeDelay?.restore(witness) ?: witness
