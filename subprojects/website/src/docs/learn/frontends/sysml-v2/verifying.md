@@ -100,7 +100,7 @@ The `verify` command translates `room.sysml` to a Semantifyr model that instanti
 
 For each case, the command prints its name, `PASSED` or `FAILED` with the time it took, and the path of its `report.json`, and it exits with status 5 when a case fails (the [exit codes](../../reference/command-line.mdx#exit-codes)).
 
-`--artifact-directory ../room-artifacts` keeps the translated model in `compiled/default/room.semantifyr`, with its name map `room.names.json` beside it, and the artifacts of every case in a directory of its own; a case with a witness has `witness.json`, `trace.json`, `witness.semantifyr` and `trace.sysml` among them. [Artifacts](../../reference/artifacts.mdx) describes each file.
+`--artifact-directory ../room-artifacts` keeps the translated model in `compiled/default/room.semantifyr`, with its name map `room.names.json` beside it, and the artifacts of every case in a directory of its own; a case with a witness has `witness.semantifyr` and `trace.sysml` beside its `report.json`. [Artifacts](../../reference/artifacts.mdx) describes each file.
 
 ## Reading the Witness
 
@@ -118,9 +118,9 @@ After **Verify all** the trace of the first failed case opens by itself. A faile
 
 The requirement fails because the parts communicate asynchronously: the lamp follows the switch one step later. Whether that is a defect of the design or of the requirement is for the engineer to decide.
 
-The *SysML trace* view tells the same story in SysML v2: the package `LampLitOnlyWhileSwitchOnViolatedTrace` holds a verification usage of the case with the verdict `fail` and a part definition `Run` that specializes `Room`, whose `switch` and `lamp` redefine the room's parts. Their exhibited states hold the occurred states and the fired transitions, each with its trigger and the toggles its effect sent, and every leaf state names the first and last tick it lasted. Time slices order the run: `init`, a zero-duration `stepK` for each step in which a transition fired, and a `dwellK` for the tick that ends step K. Since the trace refines `Room`, any SysML v2 tool reads it next to the model.
+The *SysML trace* view tells the same story in SysML v2: the package `LampLitOnlyWhileSwitchOnViolatedTrace` holds a verification usage of the case with the verdict `fail` and a part definition `Run` that specializes `Room`, whose `switch` and `lamp` redefine the room's parts. Their exhibited states hold the occurred states and the fired transitions, each with its trigger and the toggles its effect sent. Time slices order the run: `init` and a zero-duration `stepK` for each step in which a transition fired; the room keeps no time, so no step waits and the trace has no `dwellK`. Since the trace refines `Room`, any SysML v2 tool reads it next to the model.
 
-On your machine the trace of `LampLitOnlyWhileSwitchOnViolated` is in `trace.json` and `witness.json` in `../room-artifacts/room.semantifyr.sysml.model.LampLitOnlyWhileSwitchOnViolated/`, and `trace.sysml` next to them is the model of the *SysML trace* view.
+On your machine the run of `LampLitOnlyWhileSwitchOnViolated` is in `report.json` in `../room-artifacts/room.semantifyr.sysml.model.LampLitOnlyWhileSwitchOnViolated/`, and `trace.sysml` next to it is the model of the *SysML trace* view.
 
 The verifier finds a witness for `LampLitReachable` the same way: an execution in which the lamp lights up. A passing `mustAlways` requirement or a failing `eventually` requirement has no witness, since no single execution proves it.
 
