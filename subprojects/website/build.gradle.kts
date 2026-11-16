@@ -180,8 +180,6 @@ val generatedReference = listOf(
     generatedReferenceTask("exit-codes"),
     generatedReferenceTask("report-fields"),
     generatedReferenceTask("verdicts"),
-    generatedReferenceTask("trace-fields"),
-    generatedReferenceTask("witness-fields"),
 )
 
 tasks.npmInstall {

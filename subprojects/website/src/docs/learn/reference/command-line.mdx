@@ -18,11 +18,9 @@ import gammaHelp from '@cli-reference/gamma-help.txt';
 import gammaVerify from '@cli-reference/gamma-verify.txt';
 import gammaCompile from '@cli-reference/gamma-compile.txt';
 import exitCodes from '@generated-reference/exit-codes.json';
-import reportFields from '@generated-reference/report-fields.json';
 import verdicts from '@generated-reference/verdicts.json';
 import ExitCodeTable from '@site/src/components/ExitCodeTable';
 import LauncherVerdicts from '@site/src/components/LauncherVerdicts';
-import ReportFields from '@site/src/components/ReportFields';
 
 # Command Line
 
@@ -54,13 +52,9 @@ With `--json` it prints one JSON object per case and line, as each case finishes
 {"case":"semantifyr::verification::smoke::CounterReachesThree","exitCode":4,"phase":"compilation","error":"Property body must have a temporal operator (`AG` or `EF`) at the top level."}
 ```
 
-`report.json` holds the rest, in these fields:
+`report.json` holds the rest, as [The report](artifacts.mdx#the-report) lists it.
 
-<ReportFields fields={reportFields} />
-
-`result.metadata.backendId` names the backend configuration that answered and `result.message` carries its message.
-
-`result.soundness` and `result.isTrusted` say how far the verdict can be trusted. `result.soundness` is the [soundness direction](../backends/portfolios-and-verdicts.mdx#soundness-directions) of the backend configuration that answered. `result.isTrusted` says whether that direction backs the verdict, and a portfolio reports `PASSED` or `FAILED` only for an answer it backs. A portfolio of one backend configuration turns an answer it does not back into `INCONCLUSIVE`, with no witness and a message that names the backend, its verdict and its direction. A portfolio of several passes over such an answer, and when none of its configurations gives one it backs, it ends in `TIMEOUT`, `ERRORED`, `NOT_SUPPORTED` or `INCONCLUSIVE`, with a message that names what the configurations answered or, when every one failed, their failures.
+A portfolio reports `PASSED` or `FAILED` only for an answer that the [soundness direction](../backends/portfolios-and-verdicts.mdx#soundness-directions) of its run backs, which the report records in `result.soundness` and `result.isTrusted`. A portfolio of one backend configuration turns an answer it does not back into `INCONCLUSIVE`, with no witness and a message that names the backend, its verdict and its direction. A portfolio of several passes over such an answer, and when none of its configurations gives one it backs, it ends in `TIMEOUT`, `ERRORED`, `NOT_SUPPORTED` or `INCONCLUSIVE`, with a message that names what the configurations answered or, when every one failed, their failures.
 
 ### Verdicts
 
