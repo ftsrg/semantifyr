@@ -763,7 +763,7 @@ function toValidationOutcome(response: WitnessValidationResult | null): WitnessV
   }
 }
 
-function withoutValidationReport(caseState: VerificationCaseState): VerificationCaseState {
+function withoutValidationServerStateAndAskedAt(caseState: VerificationCaseState): VerificationCaseState {
   const { validationServerState: _validationServerState, validationAskedAt: _validationAskedAt, ...rest } = caseState
   return rest
 }
@@ -772,7 +772,7 @@ function applyValidationOutcome(
   caseState: VerificationCaseState,
   outcome: WitnessValidationOutcome,
 ): VerificationCaseState {
-  const { validationReport: _validationReport, ...rest } = withoutValidationReport(caseState)
+  const { validationReport: _validationReport, ...rest } = withoutValidationServerStateAndAskedAt(caseState)
   return {
     ...rest,
     validating: false,
@@ -784,7 +784,7 @@ function applyValidationOutcome(
 }
 
 function askedForValidation(caseState: VerificationCaseState): VerificationCaseState {
-  const { validationWaited: _validationWaited, ...rest } = withoutValidationReport(caseState)
+  const { validationWaited: _validationWaited, ...rest } = withoutValidationServerStateAndAskedAt(caseState)
   return { ...rest, validating: true, validationAskedAt: Date.now() }
 }
 
