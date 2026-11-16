@@ -91,7 +91,6 @@ abstract class ShellBasedBackendExecutor : BackendExecutor {
             } finally {
                 withContext(NonCancellable) {
                     process.destroyTree()
-                    process.waitFor()
                 }
             }
         }
