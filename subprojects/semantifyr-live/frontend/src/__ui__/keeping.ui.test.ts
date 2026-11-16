@@ -104,14 +104,14 @@ const unsavedMark = (page: Page) => {
 describe('opening a file', () => {
   test('through Open takes the picked file as the model, named by the file', async ({ ui, skip }) => {
     skip(TEST_BROWSER !== 'chromium', NO_PICKERS)
-    const page = await ui.open('/oxsts/level-crossing', { before: stubPickers })
+    const page = await ui.open('/language/level-crossing', { before: stubPickers })
     await casesListed(page)
 
     await openFile(page, 'mine.semantifyr', INTERSECTION)
 
     await expect.poll(async () => {
       return page.title()
-    }).toBe('mine.semantifyr - OXSTS - Semantifyr Live')
+    }).toBe('mine.semantifyr - Semantifyr Language - Semantifyr Live')
     await casesListed(page)
     expect(await results(page).rows.count()).toBe(servedExamplesOf('oxsts').find((example) => {
       return example.id === 'intersection'
@@ -119,7 +119,7 @@ describe('opening a file', () => {
   })
 
   test('through Open, where the browser has no file picker, takes the file chosen in the file dialog', async ({ ui }) => {
-    const page = await ui.open('/oxsts/level-crossing', { before: withFileDialog })
+    const page = await ui.open('/language/level-crossing', { before: withFileDialog })
     await casesListed(page)
 
     await page.locator('.toolbar').getByRole('button', { name: 'Open' }).click()
@@ -133,11 +133,11 @@ describe('opening a file', () => {
 
     await expect.poll(async () => {
       return page.title()
-    }).toBe('mine.semantifyr - OXSTS - Semantifyr Live')
+    }).toBe('mine.semantifyr - Semantifyr Language - Semantifyr Live')
   })
 
   test('by a drop opens the dropped file in its language', async ({ ui }) => {
-    const page = await ui.open('/oxsts/intersection')
+    const page = await ui.open('/language/intersection')
     await casesListed(page)
     ui.backend.answer('discover', () => {
       return []
@@ -154,14 +154,14 @@ describe('opening a file', () => {
 
     await expect.poll(async () => {
       return page.title()
-    }).toBe('dropped.semantifyr - OXSTS - Semantifyr Live')
+    }).toBe('dropped.semantifyr - Semantifyr Language - Semantifyr Live')
   })
 })
 
 describe('saving', () => {
   test('with Ctrl+S from inside the editor writes the edits back into the opened file and clears the unsaved mark', async ({ ui, skip }) => {
     skip(TEST_BROWSER !== 'chromium', NO_PICKERS)
-    const page = await ui.open('/oxsts/level-crossing', { before: stubPickers })
+    const page = await ui.open('/language/level-crossing', { before: stubPickers })
     await casesListed(page)
     await openFile(page, 'mine.semantifyr', INTERSECTION)
     await casesListed(page)
@@ -185,7 +185,7 @@ describe('saving', () => {
 
   test('with Save as asks for a place under the suggested name and saves there', async ({ ui, skip }) => {
     skip(TEST_BROWSER !== 'chromium', NO_PICKERS)
-    const page = await ui.open('/oxsts/intersection', { before: stubPickers })
+    const page = await ui.open('/language/intersection', { before: stubPickers })
     await casesListed(page)
     await typeAtTheEnd(page, '\n// edited\n')
 
@@ -200,11 +200,11 @@ describe('saving', () => {
     expect((await diskOf(page)).suggested).toEqual(['intersection.semantifyr'])
     await expect.poll(async () => {
       return page.title()
-    }).toBe('saved.semantifyr - OXSTS - Semantifyr Live')
+    }).toBe('saved.semantifyr - Semantifyr Language - Semantifyr Live')
   })
 
   test('downloads under the model\'s name where the browser has no save dialog', async ({ ui }) => {
-    const page = await ui.open('/oxsts/intersection', { before: withoutPickers })
+    const page = await ui.open('/language/intersection', { before: withoutPickers })
     await casesListed(page)
     await typeAtTheEnd(page, '\n// edited\n')
 
@@ -217,7 +217,7 @@ describe('saving', () => {
 
 describe('leaving the page', () => {
   test('with edits not saved to a file brings the browser\'s warning, and without them none', async ({ ui }) => {
-    const page = await ui.open('/oxsts/intersection')
+    const page = await ui.open('/language/intersection')
     await casesListed(page)
     await editorWorkerLoaded(page)
     const dialogs: string[] = []
@@ -242,7 +242,7 @@ describe('leaving the page', () => {
 
 describe('a share link with results', () => {
   test('opens with the sharer\'s verdicts, runs the verification and flags a verdict that came out differently', async ({ ui }) => {
-    const page = await ui.open('/oxsts/level-crossing?library=gamma')
+    const page = await ui.open('/language/level-crossing?library=gamma')
     await casesListed(page)
     await results(page).verifyAll.click()
     await expect.poll(async () => {

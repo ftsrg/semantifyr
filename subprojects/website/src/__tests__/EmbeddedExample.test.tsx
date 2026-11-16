@@ -75,7 +75,7 @@ describe('an embedded example', () => {
     expect(screen.getByRole('status').textContent).toBe('Opening the editor');
     expect(screen.getByText('var value: int := 0').closest('[aria-busy]')?.getAttribute('aria-busy')).toBe('true');
     const address = new URL(loading.src);
-    expect(address.origin + address.pathname).toBe('https://live.example/oxsts');
+    expect(address.origin + address.pathname).toBe('https://live.example/language');
     expect(Object.fromEntries(address.searchParams)).toEqual({ view: 'edit-only', theme: 'light', lines: '2-2' });
     expect(await decodeCompressedBase64Url(new URLSearchParams(address.hash.slice(1)).get('model') ?? '')).toBe(MODEL);
     expect(screen.getByRole('button', { name: 'Close the editor' })).toBeTruthy();

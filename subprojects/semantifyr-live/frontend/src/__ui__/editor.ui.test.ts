@@ -33,7 +33,7 @@ describe('going to a definition', () => {
       const position = { line: TRACE_ANNOTATION_LINE, character: 11 }
       return [{ uri: BUILTIN, range: { start: position, end: position } }]
     })
-    const page = await ui.open('/oxsts/intersection')
+    const page = await ui.open('/language/intersection')
     await casesListed(page)
 
     await page.locator('section.editor .view-line', { hasText: '@Trace' }).first().click()
@@ -81,7 +81,7 @@ describe('going to a definition from inside a read-only document', () => {
       const position = { line, character: 0 }
       return [{ uri: BUILTIN, range: { start: position, end: position } }]
     })
-    const page = await ui.open('/oxsts/intersection')
+    const page = await ui.open('/language/intersection')
     await casesListed(page)
     await page.locator('section.editor .view-line', { hasText: '@Trace' }).first().click()
     await page.keyboard.press('F12')

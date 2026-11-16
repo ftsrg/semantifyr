@@ -36,7 +36,7 @@ describe('the first screen', () => {
   })
 
   test('opens the language, the flavour and the example the address names', async ({ ui }) => {
-    const page = await ui.open('/oxsts/crossroads?library=gamma')
+    const page = await ui.open('/language/crossroads?library=gamma')
 
     await expect.poll(async () => {
       return page.title()
@@ -53,7 +53,7 @@ describe('an address that names what Live does not have', () => {
   for (const [address, requested, opened] of [
     ['/kerml/level-crossing', 'language "kerml"', titleOf('sysml', 'level-crossing')],
     ['/gamma/level-crosing', 'example "level-crosing"', titleOf('gamma', 'level-crossing')],
-    ['/oxsts/crossroads?library=uml', 'library "uml"', titleOf('oxsts', 'level-crossing')],
+    ['/language/crossroads?library=uml', 'library "uml"', titleOf('oxsts', 'level-crossing')],
   ] as const) {
     test(`says the ${requested} was not found and opens its replacement`, async ({ ui }) => {
       const page = await ui.open(address)
@@ -68,7 +68,7 @@ describe('an address that names what Live does not have', () => {
   }
 
   test('says a model of the fragment that cannot be read was not, and opens the example', async ({ ui }) => {
-    const page = await ui.open('/oxsts/intersection#model=garbled')
+    const page = await ui.open('/language/intersection#model=garbled')
 
     await expect.poll(async () => {
       return page.locator('.orientation.is-error').innerText()
@@ -83,11 +83,11 @@ describe('an address that names what Live does not have', () => {
       return []
     })
     const model = await encodeCompressedBase64Url('package shared\n')
-    const page = await ui.open(`/oxsts#model=${model}`)
+    const page = await ui.open(`/language#model=${model}`)
 
     await expect.poll(async () => {
       return page.title()
-    }).toBe('Shared model - OXSTS - Semantifyr Live')
+    }).toBe('Shared model - Semantifyr Language - Semantifyr Live')
     await expect.poll(async () => {
       return (await editor(page).lines.innerText()).replace(/\u00a0/g, ' ')
     }).toContain('package shared')
@@ -96,18 +96,18 @@ describe('an address that names what Live does not have', () => {
 
 describe('the history of a visit', () => {
   test('pushes a switch of example, language and flavour, and Back and Forward reopen each with its text', async ({ ui }) => {
-    const page = await ui.open('/oxsts/intersection')
+    const page = await ui.open('/language/intersection')
     await casesListed(page)
 
     await chooseExample(page, servedExample('oxsts', 'library').label)
     await expect.poll(async () => {
       return pathOf(page)
-    }).toBe('/oxsts/library')
+    }).toBe('/language/library')
     await page.locator('.flavour-button').click()
     await page.getByRole('menuitem', { name: /Gamma's semantics/ }).click()
     await expect.poll(async () => {
       return pathOf(page)
-    }).toBe('/oxsts/level-crossing?library=gamma')
+    }).toBe('/language/level-crossing?library=gamma')
     await page.locator('.language-switch [role=group] button', { hasText: 'Gamma' }).click()
     await expect.poll(async () => {
       return pathOf(page)
@@ -124,10 +124,10 @@ describe('the history of a visit', () => {
     }
 
     expect(visited).toEqual([
-      `/oxsts/level-crossing?library=gamma ${titleOf('gamma', 'level-crossing', 'oxsts')}`,
-      `/oxsts/library ${titleOf('oxsts', 'library')}`,
-      `/oxsts/intersection ${titleOf('oxsts', 'intersection')}`,
-      `/oxsts/library ${titleOf('oxsts', 'library')}`,
+      `/language/level-crossing?library=gamma ${titleOf('gamma', 'level-crossing', 'oxsts')}`,
+      `/language/library ${titleOf('oxsts', 'library')}`,
+      `/language/intersection ${titleOf('oxsts', 'intersection')}`,
+      `/language/library ${titleOf('oxsts', 'library')}`,
     ])
     await expect.poll(async () => {
       return editor(page).lines.innerText()

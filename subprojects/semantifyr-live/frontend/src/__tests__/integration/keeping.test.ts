@@ -322,7 +322,7 @@ describe('a link with results', () => {
   it('starts the verification by itself and keeps the sharer\'s selected case selected when the run ends', async () => {
     const verified: number[] = []
     const encoded = await encodeCompressedBase64Url(JSON.stringify([['a', 'passed'], ['b', 'passed']]))
-    const search = `/oxsts#case=a&verdicts=${encoded}`
+    const search = `/language#case=a&verdicts=${encoded}`
     open = createTestLive(answering([caseAt('a', 1), caseAt('b', 2)], verified))
     open.live.start(search)
     await vi.waitFor(() => {
@@ -346,7 +346,7 @@ describe('a link with results', () => {
   it('forgets the sharer\'s verdicts when the model is edited', async () => {
     const encoded = await encodeCompressedBase64Url(JSON.stringify([['a', 'passed']]))
     open = createTestLive(answering([caseAt('a', 1)]))
-    open.live.start(`/oxsts#verdicts=${encoded}`)
+    open.live.start(`/language#verdicts=${encoded}`)
     await vi.waitFor(() => {
       expect(open!.live.sharedResults.get()).not.toBeNull()
     })
@@ -359,7 +359,7 @@ describe('a link with results', () => {
 
   it('opens the model and says so when the results cannot be read', async () => {
     open = createTestLive(answering([caseAt('a', 1)]))
-    open.live.start('/oxsts#verdicts=garbled')
+    open.live.start('/language#verdicts=garbled')
     await vi.waitFor(() => {
       expect(open!.live.workspace.get().runtime).not.toBeNull()
     })
@@ -371,7 +371,7 @@ describe('a link with results', () => {
 
   it('opens as it does today without results', async () => {
     open = createTestLive(answering([]))
-    open.live.start('/oxsts')
+    open.live.start('/language')
     await vi.waitFor(() => {
       expect(open!.live.workspace.get().runtime).not.toBeNull()
     })

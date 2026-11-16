@@ -29,8 +29,8 @@ fun testFlavor(
 ): Flavor {
     return Flavor(
         id = id,
-        displayName = "OXSTS",
-        description = "The OXSTS modelling language, no extra libraries.",
+        displayName = "Semantifyr Language",
+        description = "Semantifyr's language for semantics",
         language = language,
         workspaceLayout = workspaceLayout,
         verificationCommand = verificationCommand,

@@ -85,7 +85,7 @@ describe('an open trace text', () => {
   it('follows a rerun of its case, and closes when the case has no trace or another model is shown', async () => {
     const session = sessionClient()
     open = createTestLive(session.client)
-    open.live.start('/oxsts')
+    open.live.start('/language')
     await vi.waitFor(() => {
       expect(open!.live.workspace.get().runtime).not.toBeNull()
     })

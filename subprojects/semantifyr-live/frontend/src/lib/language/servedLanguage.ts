@@ -24,7 +24,7 @@ interface CompiledDocument {
 }
 
 function compiledOxsts(documentUri: string, text: string | null, message: string | null): DerivedDocument {
-  return { id: 'oxsts', label: 'OXSTS', uri: documentUri.replace(/\.[^./]*$/, OXSTS_EXTENSION), languageId: 'oxsts', text, message }
+  return { id: 'oxsts', label: 'Semantifyr model', uri: documentUri.replace(/\.[^./]*$/, OXSTS_EXTENSION), languageId: 'oxsts', text, message }
 }
 
 // The OXSTS the server compiles the model to, asked for after each edit while anyone shows it

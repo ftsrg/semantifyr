@@ -61,8 +61,8 @@ async function showView(page: Page, view: string): Promise<void> {
 
 describe('the trace of each language', () => {
   for (const [address, views] of [
-    ['/oxsts/level-crossing?library=gamma', ['steps', 'calls', 'witness']],
-    ['/oxsts/level-crossing?library=sysml', ['steps', 'calls', 'witness']],
+    ['/language/level-crossing?library=gamma', ['steps', 'calls', 'witness']],
+    ['/language/level-crossing?library=sysml', ['steps', 'calls', 'witness']],
     ['/gamma/level-crossing', ['own', 'steps', 'calls', 'witness']],
     ['/sysml/level-crossing', ['own', 'steps', 'calls', 'witness']],
   ] as const) {
@@ -114,7 +114,7 @@ describe('the views of a trace', () => {
       }
       return text
     })
-    const page = await traced(ui, '/oxsts/level-crossing?library=gamma')
+    const page = await traced(ui, '/language/level-crossing?library=gamma')
     await showView(page, 'witness')
     await caseTrace(page).locator('.frame-open').click()
     await expect.poll(async () => {

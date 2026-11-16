@@ -59,7 +59,7 @@ function casesStep(state: InitializationState): InitializationState['steps'][num
 
 async function openConnected(client: LspClient, retries: readonly number[], timeoutMs = 1000, initializing = false): Promise<TestLive> {
   const test = createTestLive(client, undefined, { discoveryRetryMs: retries, discoveryTimeoutMs: timeoutMs, initializing })
-  test.live.start('/oxsts')
+  test.live.start('/language')
   await vi.waitFor(() => {
     expect(test.live.workspace.get().runtime).not.toBeNull()
   })
@@ -176,7 +176,7 @@ describe('finding the verification cases', () => {
       sendNotification: () => {},
     }
     open = createTestLive(client, undefined, { initializing: true, initializationTimeoutMs: 400 })
-    open.live.start('/oxsts')
+    open.live.start('/language')
     await vi.waitFor(() => {
       expect(open!.live.workspace.get().runtime).not.toBeNull()
     })

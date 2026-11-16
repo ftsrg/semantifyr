@@ -118,7 +118,7 @@ final class DocumentationFences {
                             })
                             .findFirst()
                             .orElseThrow(() -> new IllegalStateException(
-                                    "the registry serves no /oxsts/" + served.group(1) + " for " + page));
+                                    "the registry serves no /language/" + served.group(1) + " for " + page));
                     var model = repository.resolve(example.file()).normalize();
                     if (!models.contains(model)) {
                         models.add(model);

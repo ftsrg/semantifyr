@@ -86,6 +86,7 @@ export interface LiveEditorLink {
 }
 
 export interface LiveEditorAddress {
+    // the language's name in the address, which languageOfAddressName reads
     language: string | null;
     example: string | null;
     library: string | null;
@@ -113,10 +114,30 @@ function pathOf(segments: (string | undefined)[]): string {
     }).join("");
 }
 
+// the address names a language by its id, but for the Semantifyr Language, whose id the code keeps
+const ADDRESS_NAMES: Readonly<Record<string, string>> = {
+    oxsts: "language",
+};
+
+export function addressNameOf(language: string): string {
+    return ADDRESS_NAMES[language] ?? language;
+}
+
+// undefined for a name no language has in the address, the id of a language whose address name differs among them
+export function languageOfAddressName(name: string): string | undefined {
+    const renamed = Object.entries(ADDRESS_NAMES).find(([, addressName]) => {
+        return addressName === name;
+    });
+    if (renamed !== undefined) {
+        return renamed[0];
+    }
+    return Object.hasOwn(ADDRESS_NAMES, name) ? undefined : name;
+}
+
 // an example's address, /<language>/<example>, which names it everywhere
 export function liveExampleUrl(base: string, language: string, example: string): string {
     const url = new URL(base);
-    url.pathname = pathOf([language, example]);
+    url.pathname = pathOf([addressNameOf(language), example]);
     url.search = "";
     url.hash = "";
     return url.toString();
@@ -124,7 +145,7 @@ export function liveExampleUrl(base: string, language: string, example: string):
 
 export async function liveEditorUrl(base: string, link: LiveEditorLink): Promise<string> {
     const url = new URL(base);
-    url.pathname = pathOf([link.language, link.example]);
+    url.pathname = pathOf([addressNameOf(link.language), link.example]);
     setOrDelete(url.searchParams, "library", link.library);
     setOrDelete(url.searchParams, "view", link.view);
     setOrDelete(url.searchParams, "theme", link.theme);

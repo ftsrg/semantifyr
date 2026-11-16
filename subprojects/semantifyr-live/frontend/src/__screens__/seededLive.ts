@@ -161,7 +161,7 @@ function runtimeOf(flavor: LiveFlavor, connection: ConnectionState, steps: Initi
     connection: constantStore(connection),
     initialization: createStore(steps),
     derivedDocuments: constantStore([]),
-    modelOxsts: constantStore<DerivedDocument | null>(modelOxsts === undefined ? null : { id: 'oxsts', label: 'OXSTS', uri: 'file:///workspace/snippet.semantifyr', languageId: 'oxsts', text: modelOxsts }),
+    modelOxsts: constantStore<DerivedDocument | null>(modelOxsts === undefined ? null : { id: 'oxsts', label: 'Semantifyr model', uri: 'file:///workspace/snippet.semantifyr', languageId: 'oxsts', text: modelOxsts }),
     libraryDocuments: constantStore(libraryDocumentsOf(flavor.id, LIBRARY_LISTING)),
     api: new SemantifyrLiveApi(() => {
       return undefined

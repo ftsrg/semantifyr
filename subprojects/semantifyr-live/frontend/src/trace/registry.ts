@@ -106,9 +106,9 @@ const TRACE_LANGUAGES: Readonly<Record<string, TraceLanguage>> = {
       languageTrace('SysML trace', 'sysml', (caseName) => {
         return `${caseName}Trace.sysml`
       }, 'SysML v2'),
-      steps('OXSTS steps'),
+      steps('Steps'),
       CALLS,
-      witness('OXSTS witness', (trace, runtime) => {
+      witness('Witness', (trace, runtime) => {
         return trace.witnessUri ? runtime?.witnessUriOf?.(trace.witnessUri) : null
       }),
     ],
@@ -118,9 +118,9 @@ const TRACE_LANGUAGES: Readonly<Record<string, TraceLanguage>> = {
       languageTrace('Gamma trace', 'gamma', (caseName) => {
         return `${caseName}.trace.get`
       }, 'Gamma'),
-      steps('OXSTS steps'),
+      steps('Steps'),
       CALLS,
-      witness('OXSTS witness', gammaWitnessOf),
+      witness('Witness', gammaWitnessOf),
     ],
   },
   oxsts: OXSTS_TRACE,

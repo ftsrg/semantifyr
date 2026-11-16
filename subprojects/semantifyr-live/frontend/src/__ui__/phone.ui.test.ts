@@ -43,7 +43,7 @@ async function ready(page: Page): Promise<void> {
 
 describe('the phone', () => {
   test('shows one pane at a time, the results and the trace of a run among them', async ({ ui }) => {
-    const page = await ui.open('/oxsts/level-crossing?library=gamma', PHONE)
+    const page = await ui.open('/language/level-crossing?library=gamma', PHONE)
     await ready(page)
     expect(await phone(page).shell.getAttribute('data-pane')).toBe('model')
 
@@ -66,7 +66,7 @@ describe('the phone', () => {
   })
 
   test('opens the menu as a sheet, and a model is chosen from its chooser', async ({ ui }) => {
-    const page = await ui.open('/oxsts/intersection', PHONE)
+    const page = await ui.open('/language/intersection', PHONE)
     await ready(page)
 
     await page.getByRole('button', { name: 'Menu' }).click()
@@ -92,7 +92,7 @@ describe('touch input', () => {
     ['tablet', TABLET],
   ] as const) {
     test(`locks the model of the ${shell} until Edit is pressed, and again when Done`, async ({ ui }) => {
-      const page = await ui.open('/oxsts/intersection', viewport)
+      const page = await ui.open('/language/intersection', viewport)
       await ready(page)
 
       await phone(page).lines.tap()
@@ -114,7 +114,7 @@ describe('touch input', () => {
   }
 
   test('keeps the on-screen keyboard closed over read-only documents, tapped or not, until a mouse shows itself', async ({ ui }) => {
-    const page = await ui.open('/oxsts/level-crossing?library=gamma', TABLET)
+    const page = await ui.open('/language/level-crossing?library=gamma', TABLET)
     await casesListed(page)
     await results(page).verifyAll.tap()
     await expect.poll(async () => {

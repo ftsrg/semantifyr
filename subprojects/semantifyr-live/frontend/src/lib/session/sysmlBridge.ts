@@ -239,7 +239,7 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
       return caseNameOf(specification) === caseName
     })
     if (!target) {
-      return errored(`The OXSTS of the model has no case named ${caseName}`)
+      return errored(`The Semantifyr model the model compiles to has no case named ${caseName}`)
     }
     verifiedCaseLocations.set(rangeKey(target.location.range), {
       uri: options.fileUri,

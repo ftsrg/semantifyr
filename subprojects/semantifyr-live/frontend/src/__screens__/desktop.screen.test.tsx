@@ -306,7 +306,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     expectState: () => {
       expect(count('.segmented-option[data-language=gamma][aria-pressed=true]')).toBe(1)
       expect(count('.tab-model .language-mark[data-language=gamma]')).toBe(1)
-      expect(text('.results-header .model-oxsts-button')).toBe('OXSTS')
+      expect(text('.results-header .model-oxsts-button')).toBe('Semantifyr model')
     },
   },
   'oxsts': {

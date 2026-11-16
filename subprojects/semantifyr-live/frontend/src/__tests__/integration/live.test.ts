@@ -127,7 +127,7 @@ describe('Live', () => {
   it('keeps the edits and the verdicts of an example across a switch to another example and back, on one runtime', async () => {
     const routed = routedClient([caseAt('a', 1)])
     const [first, second] = testFlavors()[0].examples
-    open = await openConnected(routed, `/oxsts/${first!.id}`)
+    open = await openConnected(routed, `/language/${first!.id}`)
     await runAll(open)
     open.models.edit(MODEL_URI, 'edited model')
 
@@ -144,7 +144,7 @@ describe('Live', () => {
     const routed = routedClient([caseAt('a', 1)])
     const [plain, withGamma] = testFlavors()
     const first = plain.examples[0]!
-    open = await openConnected(routed, `/oxsts/${first.id}`)
+    open = await openConnected(routed, `/language/${first.id}`)
     open.models.edit(MODEL_URI, 'edited model')
 
     open.live.selectModel(withGamma!.id, withGamma!.examples[0]!.id)
@@ -300,7 +300,7 @@ describe('Live', () => {
       },
     })
     const gamma = testFlavors()[3]!
-    open.live.start('/oxsts')
+    open.live.start('/language')
     await vi.waitFor(() => {
       expect(open!.live.catalog.get().status).toBe('waiting')
     })
@@ -395,7 +395,7 @@ describe('Live', () => {
     await open.live.dispose()
 
     open = createTestLive(routed.client)
-    open.live.start('/oxsts/missing')
+    open.live.start('/language/missing')
     await vi.waitFor(() => {
       expect(open!.live.address.get()).toMatchObject({ kind: 'example', requested: 'missing', flavorId: 'oxsts' })
     })

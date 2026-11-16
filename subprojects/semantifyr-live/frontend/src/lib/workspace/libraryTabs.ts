@@ -14,8 +14,8 @@ import type { Live } from './live'
 export const MODEL_OXSTS_TAB_ID = 'model-oxsts'
 
 const SEMANTIC_LIBRARY_BANNERS: Readonly<Record<string, string>> = {
-  'States.semantifyr': 'How Semantifyr reads SysML v2 state machines: part of its semantic library, in OXSTS.',
-  'Statecharts.semantifyr': 'How Semantifyr reads Gamma statecharts: part of its semantic library, in OXSTS.',
+  'States.semantifyr': 'How Semantifyr reads SysML v2 state machines: part of its semantic library, in the Semantifyr Language.',
+  'Statecharts.semantifyr': 'How Semantifyr reads Gamma statecharts: part of its semantic library, in the Semantifyr Language.',
 }
 
 function bannerOf(fileUri: string): string {
@@ -24,9 +24,9 @@ function bannerOf(fileUri: string): string {
     return 'From the SysML v2 standard library.'
   }
   if (fileUri.startsWith('file:///workspace/.semantifyr/')) {
-    return 'The OXSTS library every model builds on.'
+    return 'The standard library every Semantifyr model builds on: the builtin class Anything, the datatypes and the annotations.'
   }
-  return SEMANTIC_LIBRARY_BANNERS[fileName] ?? 'Part of Semantifyr\'s semantic library, in OXSTS.'
+  return SEMANTIC_LIBRARY_BANNERS[fileName] ?? 'Part of Semantifyr\'s semantic library, in the Semantifyr Language.'
 }
 
 // KerML files of the SysML library read as SysML, which the editor knows
@@ -54,13 +54,13 @@ export function modelOxstsTabOf(modelLabel: string, text: string): ReadOnlyDocum
     label,
     uri: derivedUriOf(MODEL_OXSTS_TAB_ID, label),
     languageId: 'oxsts',
-    banner: `The OXSTS that ${modelLabel} compiles to. It follows your edits.`,
+    banner: `The Semantifyr model that ${modelLabel} compiles to. It follows your edits.`,
     text,
   }
 }
 
 export function modelOxstsText(text: string | null, message: string | null | undefined): string {
-  return text ?? `// ${message ?? 'The OXSTS shows once the model compiles.'}\n`
+  return text ?? `// ${message ?? 'The Semantifyr model shows once the model compiles.'}\n`
 }
 
 export function openModelOxsts(live: Live, runtime: LanguageRuntime, modelLabel: string): void {

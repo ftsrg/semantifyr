@@ -62,7 +62,7 @@ object FlavorRegistry {
     val flavors = listOf(
         Flavor(
             id = "oxsts",
-            displayName = "OXSTS",
+            displayName = "Semantifyr Language",
             description = "Semantifyr's language for semantics",
             language = Language.Oxsts,
             workspaceLayout = WorkspaceLayout.SingleFile,
@@ -73,7 +73,7 @@ object FlavorRegistry {
         ),
         Flavor(
             id = "oxsts-with-gamma-library",
-            displayName = "OXSTS with the Gamma library",
+            displayName = "Semantifyr Language with the Gamma library",
             description = "Gamma's semantics",
             language = Language.Oxsts,
             workspaceLayout = WorkspaceLayout.WithLibrary(
@@ -87,7 +87,7 @@ object FlavorRegistry {
         ),
         Flavor(
             id = "oxsts-with-sysmlv2-library",
-            displayName = "OXSTS with the SysML v2 library",
+            displayName = "Semantifyr Language with the SysML v2 library",
             description = "SysML v2's semantics",
             language = Language.Oxsts,
             workspaceLayout = WorkspaceLayout.WithLibrary(
