@@ -62,7 +62,7 @@ class VerificationContextTest {
 
     private class ScriptedContext(
         override val executor: CountingExecutor = CountingExecutor(),
-        private val prepareStep: () -> String = { "artifacts" },
+        private val preparationFailure: Exception? = null,
         private val runStep: suspend () -> String? = { "pass" },
         private val witness: InlinedWitness? = null,
         inlinedOxsts: InlinedOxsts = modelChecking(OxstsFactory.createAG()),
@@ -78,7 +78,10 @@ class VerificationContextTest {
 
         override suspend fun prepare(): String {
             phases += "prepare"
-            return prepareStep()
+            if (preparationFailure != null) {
+                throw preparationFailure
+            }
+            return "artifacts"
         }
 
         override suspend fun run(artifacts: String): String? {
@@ -273,7 +276,7 @@ class VerificationContextTest {
 
     @Test
     suspend fun `an unsupported construct during preparation is NotSupported with its message`() {
-        val context = ScriptedContext(prepareStep = { throw BackendUnsupportedException("Spin does not support for-operations") })
+        val context = ScriptedContext(preparationFailure = BackendUnsupportedException("Spin does not support for-operations"))
 
         val result = context.execute()
 
