@@ -25,9 +25,9 @@ const MAXIMUM_STEPS = 9;
 const MAXIMUM_LINE_LENGTH = 60;
 
 // written by the phases Gradle task: the artifacts of the model's one case, with a frame after every single rewrite
-const artifacts = require.context('@phases', true, /\/pipeline\/.*\.oxsts$/);
+const artifacts = require.context('@phases', true, /\/pipeline\/.*\.semantifyr$/);
 
-const STEP = /^pipeline\/steps\/\d+_([a-z]+)\.oxsts$/;
+const STEP = /^pipeline\/steps\/\d+_([a-z]+)\.semantifyr$/;
 
 function textOf(read: (key: string) => unknown, key: string): string {
   return (read(key) as string).replace(/\n$/, '');
@@ -311,9 +311,9 @@ function instantiationSteps(): WalkStep[] {
 }
 
 function walks(): { instantiation: WalkStep[], inlining: WalkStep[], flattening: WalkStep[] } {
-  const instantiated = frame('pipeline/instantiated.oxsts');
-  const inlined = frame('pipeline/inlined.oxsts');
-  const flattened = frame('pipeline/flattened.oxsts');
+  const instantiated = frame('pipeline/instantiated.semantifyr');
+  const inlined = frame('pipeline/inlined.semantifyr');
+  const flattened = frame('pipeline/flattened.semantifyr');
   const frames = [...files.keys()]
     .filter((file) => {
       return STEP.test(file);

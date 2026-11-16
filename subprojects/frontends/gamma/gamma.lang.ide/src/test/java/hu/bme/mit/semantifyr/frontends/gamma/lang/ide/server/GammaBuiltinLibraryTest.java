@@ -22,7 +22,7 @@ class GammaBuiltinLibraryTest {
 
         var library = injector.getInstance(BuiltinLibrary.class);
 
-        assertThat(library.getExtractedLibraryPath().resolve("semantifyr.oxsts"))
+        assertThat(library.getExtractedLibraryPath().resolve("standard.semantifyr"))
                 .isRegularFile();
     }
 }

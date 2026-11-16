@@ -9,6 +9,7 @@ import { CompiledOxstsStatus, type CompiledOxstsResult } from '@semantifyr/edito
 import type { LiveFlavor } from '../../examples'
 import type { ModelDocuments } from '../session/modelDocuments'
 import { createDemandStore, type Store } from '../stores/store'
+import { OXSTS_EXTENSION } from '../workspace/files'
 import { libraryDocumentsStore } from './libraries'
 import { initializationStepsOf } from './presentation'
 import { createServedRuntime, type ServedRuntime } from './servedRuntime'
@@ -23,7 +24,7 @@ interface CompiledDocument {
 }
 
 function compiledOxsts(documentUri: string, text: string | null, message: string | null): DerivedDocument {
-  return { id: 'oxsts', label: 'OXSTS', uri: documentUri.replace(/\.[^./]*$/, '.oxsts'), languageId: 'oxsts', text, message }
+  return { id: 'oxsts', label: 'OXSTS', uri: documentUri.replace(/\.[^./]*$/, OXSTS_EXTENSION), languageId: 'oxsts', text, message }
 }
 
 // The OXSTS the server compiles the model to, asked for after each edit while anyone shows it

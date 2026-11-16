@@ -132,7 +132,7 @@
     {
       "id": "level-crossing",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/level-crossing.oxsts",
+      "file": "oxsts-test-models/tutorial/level-crossing.semantifyr",
       "label": "Level crossing",
       "reason": "The simplest model, four small classes, and the one requirement a reader checks first.",
       "page": "learn/oxsts/language",
@@ -144,7 +144,7 @@
     {
       "id": "one-light",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/one-light.oxsts",
+      "file": "oxsts-test-models/tutorial/one-light.semantifyr",
       "label": "Lesson 1: One light",
       "reason": "The model the first lesson ends in: one traffic light that cycles through its colors, and the question whether it can turn yellow.",
       "page": "learn/oxsts/lessons/one-light",
@@ -155,7 +155,7 @@
     {
       "id": "intersection",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/intersection.oxsts",
+      "file": "oxsts-test-models/tutorial/intersection.semantifyr",
       "label": "Lesson 2: Intersection",
       "reason": "The model the second lesson ends in: two lights that take turns, a requirement it took a second case to state, and the trace that found the gap.",
       "page": "learn/oxsts/lessons/intersection",
@@ -168,7 +168,7 @@
     {
       "id": "green-time",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/green-time.oxsts",
+      "file": "oxsts-test-models/tutorial/green-time.semantifyr",
       "label": "Lesson 3: Green time",
       "reason": "The model the third lesson ends in: an integer counter that holds a light green, and a case that counts the steps on its own.",
       "page": "learn/oxsts/lessons/green-time",
@@ -180,7 +180,7 @@
     {
       "id": "library",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/library.oxsts",
+      "file": "oxsts-test-models/tutorial/library.semantifyr",
       "label": "Lesson 4: Library",
       "reason": "The model the fourth lesson ends in: a small statechart library that a traffic light and a pedestrian light are both built on.",
       "page": "learn/oxsts/lessons/library",
@@ -193,7 +193,7 @@
     {
       "id": "hierarchy",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/hierarchy.oxsts",
+      "file": "oxsts-test-models/tutorial/hierarchy.semantifyr",
       "label": "Lesson 5: Hierarchy",
       "reason": "The model the fifth lesson ends in: nested states, entry actions, events from an operator and an emergency that overrides the lights.",
       "page": "learn/oxsts/lessons/hierarchy",
@@ -209,7 +209,7 @@
     {
       "id": "intersection-step1",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/intersection-step1.oxsts",
+      "file": "oxsts-test-models/tutorial/intersection-step1.semantifyr",
       "label": "The Intersection, step 1",
       "reason": "A step of lesson 2, run from its page.",
       "page": "learn/oxsts/lessons/intersection",
@@ -222,7 +222,7 @@
     {
       "id": "intersection-step2",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/intersection-step2.oxsts",
+      "file": "oxsts-test-models/tutorial/intersection-step2.semantifyr",
       "label": "The Intersection, step 2",
       "reason": "A step of lesson 2, run from its page.",
       "page": "learn/oxsts/lessons/intersection",
@@ -236,7 +236,7 @@
     {
       "id": "green-time-step1",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/green-time-step1.oxsts",
+      "file": "oxsts-test-models/tutorial/green-time-step1.semantifyr",
       "label": "The Minimum Green Time, step 1",
       "reason": "A step of lesson 3, run from its page.",
       "page": "learn/oxsts/lessons/green-time",
@@ -248,7 +248,7 @@
     {
       "id": "green-time-step2",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/green-time-step2.oxsts",
+      "file": "oxsts-test-models/tutorial/green-time-step2.semantifyr",
       "label": "The Minimum Green Time, step 2",
       "reason": "A step of lesson 3, run from its page.",
       "page": "learn/oxsts/lessons/green-time",
@@ -261,7 +261,7 @@
     {
       "id": "library-step1",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/library-step1.oxsts",
+      "file": "oxsts-test-models/tutorial/library-step1.semantifyr",
       "label": "A Statechart Library, step 1",
       "reason": "A step of lesson 4, run from its page.",
       "page": "learn/oxsts/lessons/library",
@@ -273,7 +273,7 @@
     {
       "id": "library-step2",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/library-step2.oxsts",
+      "file": "oxsts-test-models/tutorial/library-step2.semantifyr",
       "label": "A Statechart Library, step 2",
       "reason": "A step of lesson 4, run from its page.",
       "page": "learn/oxsts/lessons/library",
@@ -285,7 +285,7 @@
     {
       "id": "hierarchy-step1",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/hierarchy-step1.oxsts",
+      "file": "oxsts-test-models/tutorial/hierarchy-step1.semantifyr",
       "label": "Hierarchy, Events and the Environment, step 1",
       "reason": "A step of lesson 5, run from its page.",
       "page": "learn/oxsts/lessons/hierarchy",
@@ -299,7 +299,7 @@
     {
       "id": "hierarchy-step2",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/hierarchy-step2.oxsts",
+      "file": "oxsts-test-models/tutorial/hierarchy-step2.semantifyr",
       "label": "Hierarchy, Events and the Environment, step 2",
       "reason": "A step of lesson 5, run from its page.",
       "page": "learn/oxsts/lessons/hierarchy",
@@ -313,7 +313,7 @@
     {
       "id": "hierarchy-step3",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/hierarchy-step3.oxsts",
+      "file": "oxsts-test-models/tutorial/hierarchy-step3.semantifyr",
       "label": "Hierarchy, Events and the Environment, step 3",
       "reason": "A step of lesson 5, run from its page.",
       "page": "learn/oxsts/lessons/hierarchy",
@@ -328,7 +328,7 @@
     {
       "id": "hierarchy-step4",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/hierarchy-step4.oxsts",
+      "file": "oxsts-test-models/tutorial/hierarchy-step4.semantifyr",
       "label": "Hierarchy, Events and the Environment, step 4",
       "reason": "A step of lesson 5, run from its page.",
       "page": "learn/oxsts/lessons/hierarchy",
@@ -343,7 +343,7 @@
     {
       "id": "hierarchy-step5",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/hierarchy-step5.oxsts",
+      "file": "oxsts-test-models/tutorial/hierarchy-step5.semantifyr",
       "label": "Hierarchy, Events and the Environment, step 5",
       "reason": "A step of lesson 5, run from its page.",
       "page": "learn/oxsts/lessons/hierarchy",

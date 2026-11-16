@@ -6,7 +6,7 @@ description: OXSTS classes, their declaration, abstract classes, inheritance, re
 ---
 
 import LibraryDeclaration from '@site/src/components/LibraryDeclaration';
-import library from '@oxsts-library/semantifyr.oxsts';
+import library from '@oxsts-library/standard.semantifyr';
 
 # Classes
 

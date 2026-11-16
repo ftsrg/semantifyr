@@ -13,15 +13,19 @@ import com.github.ajalt.clikt.parameters.arguments.help
 import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.path
+import com.google.inject.Inject
 import hu.bme.mit.semantifyr.cli.common.CommandExit
 import hu.bme.mit.semantifyr.cli.common.ExitCode
 import hu.bme.mit.semantifyr.cli.common.checkInputFile
 import hu.bme.mit.semantifyr.frontends.sysml.wrapper.SysMLv2Compiler
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
+import org.eclipse.xtext.resource.FileExtensionProvider
 import kotlin.io.path.nameWithoutExtension
 
-class SysMLCompileCommand : SuspendingCliktCommand("compile") {
+class SysMLCompileCommand @Inject constructor(
+    private val fileExtensionProvider: FileExtensionProvider,
+) : SuspendingCliktCommand("compile") {
     private val logger by loggerFactory()
 
     override val printHelpOnEmptyArgs = true
@@ -44,7 +48,7 @@ class SysMLCompileCommand : SuspendingCliktCommand("compile") {
         }
 
         checkInputFile("Model", model, SYSML_FILE_SUFFIX)
-        val target = outputPath ?: model.resolveSibling("${model.nameWithoutExtension}.oxsts")
+        val target = outputPath ?: model.resolveSibling("${model.nameWithoutExtension}.${fileExtensionProvider.primaryFileExtension}")
 
         echo("Compiling $model to $target")
         try {

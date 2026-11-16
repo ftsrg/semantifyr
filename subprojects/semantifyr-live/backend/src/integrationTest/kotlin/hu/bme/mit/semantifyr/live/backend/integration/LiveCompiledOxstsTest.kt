@@ -100,7 +100,7 @@ class LiveCompiledOxstsTest {
     suspend fun `the compiled oxsts given to the gamma session goes to its definitions in the gamma library and on inside it`(@TempDir temporaryDirectory: Path) {
         StagedTestSupport.assumeStaged()
         val modelSource = stagedModel(StagedTestSupport.gammaTestModelsDirectory, "semantifyr.live.gammaTestModels", "Simple.gamma")
-        val compiledUri = "file:///workspace/.live-derived/model-oxsts/Simple.oxsts"
+        val compiledUri = "file:///workspace/.live-derived/model-oxsts/Simple.semantifyr"
         withRealServer(config(temporaryDirectory)) { client, port ->
             client.webSocket("ws://localhost:$port/ws/lsp/gamma") {
                 openGammaModel(modelSource)
@@ -113,9 +113,9 @@ class LiveCompiledOxstsTest {
                 send(Frame.Text(LspWire.request(id = 6, method = "textDocument/semanticTokens/full", params = SemanticTokensParams(TextDocumentIdentifier(statechart.uri)))))
                 val tokens = awaitResponseFor(id = 6)
 
-                assertThat(statechart.uri).isEqualTo("file:///workspace/Library/Statecharts.oxsts")
+                assertThat(statechart.uri).isEqualTo("file:///workspace/Library/Statecharts.semantifyr")
                 assertThat(statecharts.lines()[statechart.range.start.line]).startsWith("class Statechart")
-                assertThat(component.uri).isEqualTo("file:///workspace/Library/Components.oxsts")
+                assertThat(component.uri).isEqualTo("file:///workspace/Library/Components.semantifyr")
                 assertThat(tokens.get("result").isJsonNull).isTrue
             }
         }

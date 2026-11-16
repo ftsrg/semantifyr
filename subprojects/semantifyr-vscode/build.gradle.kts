@@ -107,7 +107,7 @@ val npmIntegrationTest = tasks.register<NpmTask>("npmIntegrationTest") {
     inputs.files(cloneDistribution)
     inputs.files(npmAssemble)
     inputs.files(cloneTheta)
-    inputs.file(rootProject.layout.projectDirectory.file("oxsts-test-models/smoke/smoke.oxsts"))
+    inputs.file(rootProject.layout.projectDirectory.file("oxsts-test-models/smoke/smoke.semantifyr"))
 
     npmCommand.set(listOf("run", "test:integration"))
     environment.put("PATH", thetaDirectory.zip(providers.environmentVariable("PATH")) { directory, path ->

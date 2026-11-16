@@ -65,7 +65,7 @@ class SemantifyrVerifierTestHelperTest {
     }
 
     private suspend fun check(portfolio: VerificationPortfolio): Throwable? {
-        val context = helper.semantifyrLoader.loadStandaloneModel(Path("../../oxsts-test-models/simple/simple.oxsts"))
+        val context = helper.semantifyrLoader.loadStandaloneModel(Path("../../oxsts-test-models/simple/simple.semantifyr"))
         val case = helper.collectVerificationCases(context).first {
             it.qualifiedName.endsWith("::Incrementing")
         }

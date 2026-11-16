@@ -37,7 +37,7 @@ class SemantifyrGammaCommand(
     "Verify Gamma models with Semantifyr, a framework to support the declarative definition of engineering model semantics.",
     listOf(
         GammaVerifyCommand(gammaInjector, oxstsInjector),
-        GammaCompileCommand(gammaInjector),
+        GammaCompileCommand(gammaInjector, oxstsInjector),
         PortfoliosCommand(),
     ),
 )

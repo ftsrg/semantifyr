@@ -35,7 +35,7 @@ class ThetaWitnessReparseTest {
     @Test
     suspend fun `traced choice branch witness reparses and re-verifies`() {
         val result = helper.checkWitnessReparses(
-            modelPath = Path("build/test-models/semantic/tracing.oxsts"),
+            modelPath = Path("build/test-models/semantic/tracing.semantifyr"),
             qualifiedName = "semantifyr::verification::lang::tracing::TracedChoiceBranchReach",
             verificationPortfolio = portfolio,
             outputDirectory = outputDirectory,
@@ -50,7 +50,7 @@ class ThetaWitnessReparseTest {
     @Test
     suspend fun `array witness reparses and re-verifies`() {
         val result = helper.checkWitnessReparses(
-            modelPath = Path("build/test-models/semantic/arrays.oxsts"),
+            modelPath = Path("build/test-models/semantic/arrays.semantifyr"),
             qualifiedName = "semantifyr::verification::lang::arrays::ArraySlotIndependenceReach",
             verificationPortfolio = portfolio,
             outputDirectory = outputDirectory,

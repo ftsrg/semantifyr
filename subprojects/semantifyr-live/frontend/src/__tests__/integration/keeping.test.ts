@@ -24,7 +24,7 @@ vi.mock('../../lib/session/monaco', () => {
 // Goal: what a visit keeps of a piece of work: which documents are unsaved, what saving does where the browser allows and
 // where it does not, which language a file opens in, and what a link with results starts
 
-const MODEL_URI = 'file:///workspace/snippet.oxsts'
+const MODEL_URI = 'file:///workspace/snippet.semantifyr'
 
 function caseAt(id: string, line: number): VerificationCaseSpecification {
   return {
@@ -121,7 +121,7 @@ describe('the unsaved state of the visit', () => {
     const written: string[] = []
 
     open.live.openFile({
-      name: 'crossing.oxsts',
+      name: 'crossing.semantifyr',
       text: 'file text',
       write: async (text) => {
         written.push(text)
@@ -129,13 +129,13 @@ describe('the unsaved state of the visit', () => {
     })
 
     const record = open.live.documents.get().get(open.live.workspace.get().documentKey!)!
-    expect(record).toMatchObject({ shared: true, text: 'file text', file: { name: 'crossing.oxsts' } })
+    expect(record).toMatchObject({ shared: true, text: 'file text', file: { name: 'crossing.semantifyr' } })
     expect(open.models.read(MODEL_URI)).toBe('file text')
     expect(open.live.unsaved.get()).toBe(false)
 
     open.models.edit(MODEL_URI, 'file text, edited')
     expect(open.live.unsaved.get()).toBe(true)
-    expect(await saveDocument(open.live, recordingAccess(), 'ignored.oxsts')).toBe('written')
+    expect(await saveDocument(open.live, recordingAccess(), 'ignored.semantifyr')).toBe('written')
     expect(written).toEqual(['file text, edited'])
     expect(open.live.unsaved.get()).toBe(false)
   })
@@ -151,7 +151,7 @@ describe('the unsaved state of the visit', () => {
 
   it('writes neither the model nor a verdict to the browser\'s storage', async () => {
     open = await openConnected('', answering([caseAt('a', 1)]))
-    open.live.openFile({ name: 'opened.oxsts', text: 'file text', write: null })
+    open.live.openFile({ name: 'opened.semantifyr', text: 'file text', write: null })
     open.models.edit(MODEL_URI, 'edited model')
     open.live.markSaved(null, 'edited model')
     await vi.waitFor(() => {
@@ -173,12 +173,12 @@ describe('the unsaved state of the visit', () => {
 
   it('drops the verdicts of the document a file replaces', async () => {
     open = await openConnected('', answering([caseAt('a', 1)]))
-    open.live.openFile({ name: 'first.oxsts', text: 'first', write: null })
+    open.live.openFile({ name: 'first.semantifyr', text: 'first', write: null })
     await vi.waitFor(() => {
       expect(open!.live.verification.get().get('oxsts#shared')?.cases).toHaveLength(1)
     })
 
-    open.live.openFile({ name: 'second.oxsts', text: 'second', write: null })
+    open.live.openFile({ name: 'second.semantifyr', text: 'second', write: null })
 
     expect(open.live.verification.get().get('oxsts#shared')?.cases ?? []).toHaveLength(0)
   })
@@ -198,7 +198,7 @@ describe('saving', () => {
     open.models.edit(MODEL_URI, 'edited model')
     const written: string[] = []
     const file: DocumentFile = {
-      name: 'chosen.oxsts',
+      name: 'chosen.semantifyr',
       write: async (text) => {
         written.push(text)
       },
@@ -209,21 +209,21 @@ describe('saving', () => {
       },
     })
 
-    expect(await saveDocument(open.live, access, 'suggested.oxsts')).toBe('saved')
+    expect(await saveDocument(open.live, access, 'suggested.semantifyr')).toBe('saved')
     expect(open.live.unsaved.get()).toBe(false)
     open.models.edit(MODEL_URI, 'edited again')
-    expect(await saveDocument(open.live, access, 'suggested.oxsts')).toBe('written')
+    expect(await saveDocument(open.live, access, 'suggested.semantifyr')).toBe('written')
     expect(written).toEqual(['edited again'])
   })
 
   it('downloads where the browser has no way back into a file, under the file\'s name', async () => {
     open = await openConnected()
-    open.live.openFile({ name: 'opened.oxsts', text: 'file text', write: null })
+    open.live.openFile({ name: 'opened.semantifyr', text: 'file text', write: null })
     open.models.edit(MODEL_URI, 'edited model')
     const access = recordingAccess()
 
-    expect(await saveDocument(open.live, access, 'suggested.oxsts')).toBe('downloaded')
-    expect(access.downloads).toEqual([{ name: 'opened.oxsts', text: 'edited model' }])
+    expect(await saveDocument(open.live, access, 'suggested.semantifyr')).toBe('downloaded')
+    expect(access.downloads).toEqual([{ name: 'opened.semantifyr', text: 'edited model' }])
     expect(open.live.unsaved.get()).toBe(false)
   })
 
@@ -232,7 +232,7 @@ describe('saving', () => {
     const old: string[] = []
     const chosen: string[] = []
     open.live.openFile({
-      name: 'old.oxsts',
+      name: 'old.semantifyr',
       text: 'file text',
       write: async (text) => {
         old.push(text)
@@ -242,7 +242,7 @@ describe('saving', () => {
     const access = recordingAccess({
       saveAs: async () => {
         return {
-          name: 'new.oxsts',
+          name: 'new.semantifyr',
           write: async (text) => {
             chosen.push(text)
           },
@@ -250,12 +250,12 @@ describe('saving', () => {
       },
     })
 
-    expect(await saveDocumentAs(open.live, access, 'suggested.oxsts')).toBe('saved')
+    expect(await saveDocumentAs(open.live, access, 'suggested.semantifyr')).toBe('saved')
     expect(old).toEqual([])
     expect(open.live.unsaved.get()).toBe(false)
-    expect(open.live.documents.get().get(open.live.workspace.get().documentKey!)?.file?.name).toBe('new.oxsts')
+    expect(open.live.documents.get().get(open.live.workspace.get().documentKey!)?.file?.name).toBe('new.semantifyr')
     open.models.edit(MODEL_URI, 'edited again')
-    expect(await saveDocument(open.live, access, 'suggested.oxsts')).toBe('written')
+    expect(await saveDocument(open.live, access, 'suggested.semantifyr')).toBe('written')
     expect(chosen).toEqual(['edited again'])
   })
 
@@ -264,8 +264,8 @@ describe('saving', () => {
     open.models.edit(MODEL_URI, 'edited model')
     const access = recordingAccess()
 
-    expect(await saveDocumentAs(open.live, access, 'suggested.oxsts')).toBe('downloaded')
-    expect(access.downloads).toEqual([{ name: 'suggested.oxsts', text: 'edited model' }])
+    expect(await saveDocumentAs(open.live, access, 'suggested.semantifyr')).toBe('downloaded')
+    expect(access.downloads).toEqual([{ name: 'suggested.semantifyr', text: 'edited model' }])
     expect(open.live.unsaved.get()).toBe(false)
   })
 
@@ -278,7 +278,7 @@ describe('saving', () => {
       },
     })
 
-    expect(await saveDocumentAs(open.live, access, 'suggested.oxsts')).toBe('cancelled')
+    expect(await saveDocumentAs(open.live, access, 'suggested.semantifyr')).toBe('cancelled')
     expect(open.live.unsaved.get()).toBe(true)
   })
 
@@ -291,14 +291,14 @@ describe('saving', () => {
       },
     })
 
-    expect(await saveDocument(open.live, access, 'suggested.oxsts')).toBe('cancelled')
+    expect(await saveDocument(open.live, access, 'suggested.semantifyr')).toBe('cancelled')
     expect(open.live.unsaved.get()).toBe(true)
   })
 
   it('falls back to the save dialog when the browser refuses the write into the file', async () => {
     open = await openConnected()
     open.live.openFile({
-      name: 'opened.oxsts',
+      name: 'opened.semantifyr',
       text: 'file text',
       write: async () => {
         throw new DOMException('refused', 'NotAllowedError')
@@ -306,7 +306,7 @@ describe('saving', () => {
     })
     const access = recordingAccess()
 
-    expect(await saveDocument(open.live, access, 'suggested.oxsts')).toBe('downloaded')
+    expect(await saveDocument(open.live, access, 'suggested.semantifyr')).toBe('downloaded')
   })
 })
 

@@ -65,7 +65,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     seed: { flavorId: 'oxsts-with-gamma-library', verification: discovered([], 'idle') },
     act: async () => {
       const diagnostics = vscode.languages.createDiagnosticCollection('fixes')
-      diagnostics.set(vscode.Uri.parse('file:///workspace/snippet.oxsts'), toVscodeDiagnostics([
+      diagnostics.set(vscode.Uri.parse('file:///workspace/snippet.semantifyr'), toVscodeDiagnostics([
         { severity: 'error', startLine: 0, startColumn: 0, endLine: 0, endColumn: 3, message: 'broken', source: 'oxsts' },
       ]))
       onTestFinished(() => {

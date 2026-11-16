@@ -19,12 +19,16 @@ import hu.bme.mit.semantifyr.cli.common.ExitCode
 import hu.bme.mit.semantifyr.frontends.gamma.GammaCompiler
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
+import org.eclipse.xtext.resource.FileExtensionProvider
 import kotlin.io.path.nameWithoutExtension
 
 class GammaCompileCommand(
     private val gammaInjector: Injector,
+    oxstsInjector: Injector,
 ) : SuspendingCliktCommand("compile") {
     private val logger by loggerFactory()
+
+    private val oxstsFileExtension = oxstsInjector.getInstance(FileExtensionProvider::class.java).primaryFileExtension
 
     override val printHelpOnEmptyArgs = true
 
@@ -34,7 +38,7 @@ class GammaCompileCommand(
 
     private val outputPath by option("-o", "--output")
         .path(canBeDir = false)
-        .help("The output file; the model's path with .oxsts in place of its ending by default.")
+        .help("The output file; the model's path with .$oxstsFileExtension in place of its ending by default.")
 
     private val workspace by option("--workspace")
         .path(mustExist = true, canBeFile = false)
@@ -50,7 +54,7 @@ class GammaCompileCommand(
         }
 
         checkGammaModel(model)
-        val target = outputPath ?: model.resolveSibling("${model.nameWithoutExtension}.oxsts")
+        val target = outputPath ?: model.resolveSibling("${model.nameWithoutExtension}.$oxstsFileExtension")
         val gammaModel = readGammaModel(gammaInjector, model, workspace)
 
         echo("Compiling $model to $target")

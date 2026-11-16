@@ -181,11 +181,11 @@ describe('validateResult', () => {
     id: 'model::Case',
     label: 'Case',
     location: {
-      uri: 'file:///workspace/snippet.oxsts',
+      uri: 'file:///workspace/snippet.semantifyr',
       range: { start: { line: 4, character: 0 }, end: { line: 9, character: 1 } },
     },
   }
-  const witnessUri = 'file:///workspace/.artifacts/Case/witness.oxsts'
+  const witnessUri = 'file:///workspace/.artifacts/Case/witness.semantifyr'
 
   function resultWith(witness: string | null): VerificationCaseResult {
     return {

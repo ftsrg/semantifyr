@@ -10,6 +10,7 @@ import type { VerdictStatus } from '@semantifyr/editor-common/marks'
 
 import type { LanguageRuntime } from '../lib/language/types'
 import type { ReadOnlyDocument } from '../lib/workspace/documentTabs'
+import { OXSTS_EXTENSION } from '../lib/workspace/files'
 import { TRACE_BANNERS } from '../texts'
 import { CallsView } from './CallsView'
 import { StepsView } from './StepsView'
@@ -62,7 +63,7 @@ function witness(label: string, uriOf: (trace: VerificationTrace, runtime: Langu
       ? {
         tabId: 'trace-witness',
         fileUri,
-        label: `${context.caseName}.witness.oxsts`,
+        label: `${context.caseName}.witness${OXSTS_EXTENSION}`,
         languageId: 'oxsts',
         banner: TRACE_BANNERS.witness(context.caseName),
       }
@@ -86,7 +87,7 @@ function languageTrace(label: string, languageId: string, fileName: (caseName: s
 
 // the Gamma frontend writes its trace beside the witness
 function gammaWitnessOf(trace: VerificationTrace): string | null {
-  return trace.witnessUri?.replace(/[^/]*$/, 'witness.oxsts') ?? null
+  return trace.witnessUri?.replace(/[^/]*$/, `witness${OXSTS_EXTENSION}`) ?? null
 }
 
 const OXSTS_TRACE: TraceLanguage = {

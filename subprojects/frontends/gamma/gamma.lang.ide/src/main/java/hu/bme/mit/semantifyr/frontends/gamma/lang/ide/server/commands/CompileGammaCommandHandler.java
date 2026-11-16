@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.frontends.gamma.lang.ide.server.commands;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.frontends.gamma.GammaCompiler;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage;
+import hu.bme.mit.semantifyr.lang.ide.server.OxstsInjector;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
 import java.nio.file.Path;
@@ -16,6 +17,7 @@ import java.util.List;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
+import org.eclipse.xtext.resource.FileExtensionProvider;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +28,9 @@ public class CompileGammaCommandHandler extends AbstractCommandHandler<String, R
 
     @Inject
     private GammaCompiler gammaCompiler;
+
+    @Inject
+    private OxstsInjector oxstsInjector;
 
     @Override
     public String getId() {
@@ -72,13 +77,15 @@ public class CompileGammaCommandHandler extends AbstractCommandHandler<String, R
         return targetPath.toString();
     }
 
-    private static Path oxstsTargetPath(URI sourceUri) {
+    private Path oxstsTargetPath(URI sourceUri) {
         if (!sourceUri.isFile()) {
             throw new IllegalArgumentException("gamma.compile only supports file:// URIs (got: " + sourceUri + ")");
         }
         // toFileString() keeps an empty authority, yielding \\\C:\... on Windows
         var sourcePath = Path.of(java.net.URI.create(sourceUri.toString()));
-        var targetName = stripExtension(sourcePath.getFileName().toString()) + ".oxsts";
+        var fileExtension =
+                oxstsInjector.get().getInstance(FileExtensionProvider.class).getPrimaryFileExtension();
+        var targetName = stripExtension(sourcePath.getFileName().toString()) + "." + fileExtension;
         return sourcePath.resolveSibling(targetName);
     }
 

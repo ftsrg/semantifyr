@@ -17,7 +17,7 @@ if (!url) {
   throw new Error('SEMANTIFYR_LIVE_URL is not set');
 }
 const api = createApi(url);
-const model = readFileSync(new URL('../../../../../oxsts-test-models/smoke/smoke.oxsts', import.meta.url), 'utf-8');
+const model = readFileSync(new URL('../../../../../oxsts-test-models/smoke/smoke.semantifyr', import.meta.url), 'utf-8');
 
 async function connect(flavorId: string) {
   const webSocket = new WebSocket(`${normalizeBaseUrl(api.httpBase).ws}/ws/lsp/${encodeURIComponent(flavorId)}`);

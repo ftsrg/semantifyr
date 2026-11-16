@@ -14,6 +14,7 @@ import type { LanguageRuntime, LibraryDocument, LibraryKind } from '../../lib/la
 import { fileNameOf } from '../../lib/session/readOnlyDocuments'
 import { useStore } from '../../lib/stores/useStore'
 import { caseRowOf } from '../../lib/workspace/caseRows'
+import { OXSTS_EXTENSION } from '../../lib/workspace/files'
 import { libraryTabOf, openModelOxsts } from '../../lib/workspace/libraryTabs'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import { traceLanguageOf, type TraceView } from '../../trace/registry'
@@ -122,7 +123,7 @@ export function DocumentsMenu({ runtime, flavor, modelLabel }: { runtime: Langua
     setOpen(false)
     setFilter('')
   }
-  const modelOxstsLabel = modelLabel.replace(/\.[^.]*$/, '.oxsts')
+  const modelOxstsLabel = modelLabel.replace(/\.[^.]*$/, OXSTS_EXTENSION)
   const filtered = libraries.length > FILTERED_FROM
   const shown = libraries.filter((library) => {
     return matches(filter, decodeURIComponent(fileNameOf(library.uri)), folderOf(library))

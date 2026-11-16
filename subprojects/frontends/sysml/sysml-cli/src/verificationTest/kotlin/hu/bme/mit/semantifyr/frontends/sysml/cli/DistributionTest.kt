@@ -28,6 +28,6 @@ class DistributionTest : DistributionTestBase("semantifyr-sysml") {
 
     @Test
     fun `the distribution carries the SysML v2 semantic library`() {
-        assertThat(home.resolve("libraries/sysmlv2")).isDirectoryContaining("glob:**.oxsts")
+        assertThat(home.resolve("libraries/sysmlv2")).isDirectoryContaining("glob:**.semantifyr")
     }
 }

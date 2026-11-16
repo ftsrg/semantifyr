@@ -77,7 +77,7 @@ class SemantifyrVerifierImplTest {
     @Inject
     private lateinit var serializer: ISerializer
 
-    private val modelPath = Path("../../oxsts-test-models/simple/simple.oxsts")
+    private val modelPath = Path("../../oxsts-test-models/simple/simple.semantifyr")
 
     @Test
     suspend fun `successful portfolio verdict propagates to VerificationResult`(@TempDir output: Path) {
@@ -145,7 +145,7 @@ class SemantifyrVerifierImplTest {
         val result = build(portfolio, output).verify(loadFirstCase())
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
-        assertThat(result.message).isEqualTo("scripted does not support simple.oxsts:12: variables of type int (x)")
+        assertThat(result.message).isEqualTo("scripted does not support simple.semantifyr:12: variables of type int (x)")
     }
 
     @Test
@@ -282,7 +282,7 @@ class SemantifyrVerifierImplTest {
         val case = loadFirstCase()
         verifier.verify(case)
         val caseDirectory = output.resolve(caseDirectoryName(case))
-        val witness = loadWitness(case, caseDirectory.resolve("witness.oxsts"))
+        val witness = loadWitness(case, caseDirectory.resolve("witness.semantifyr"))
         val before = serializer.serialize(witness)
 
         val first = verifier.verify(witness)
@@ -292,7 +292,7 @@ class SemantifyrVerifierImplTest {
         assertThat(second.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(serializer.serialize(witness)).isEqualTo(before)
         assertThat(caseDirectory.resolve("report.json").exists()).isTrue
-        assertThat(caseDirectory.resolve("witness.oxsts").exists()).isTrue
+        assertThat(caseDirectory.resolve("witness.semantifyr").exists()).isTrue
         assertThat(caseDirectory.resolve("validation").resolve("report.json").exists()).isTrue
     }
 

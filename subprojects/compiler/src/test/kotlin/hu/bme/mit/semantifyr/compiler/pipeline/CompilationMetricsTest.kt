@@ -116,7 +116,7 @@ class CompilationMetricsTest {
     }
 
     private fun compileSmokeCase(optimization: OptimizationConfig): CompilationMetrics {
-        val context = loader.loadStandaloneModel(Path("../../oxsts-test-models/smoke/smoke.oxsts"))
+        val context = loader.loadStandaloneModel(Path("../../oxsts-test-models/smoke/smoke.semantifyr"))
         val classDeclaration = context.modelResources.asSequence().flatMap {
             it.contents
         }.filterIsInstance<OxstsModelPackage>().flatMap {

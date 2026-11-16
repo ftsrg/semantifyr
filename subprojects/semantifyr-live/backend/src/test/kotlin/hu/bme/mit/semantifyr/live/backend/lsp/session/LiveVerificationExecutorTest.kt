@@ -73,7 +73,7 @@ class LiveVerificationExecutorTest {
 
     @Test
     fun `a witness URI inside the workspace is rewritten and the inline source dropped`() = runTest {
-        val serverUri = "file:/abs/sessions/x/.artifacts/Case/witness.oxsts"
+        val serverUri = "file:/abs/sessions/x/.artifacts/Case/witness.semantifyr"
         val raw = VerificationCaseResult(
             "failed",
             "counterexample",
@@ -83,16 +83,16 @@ class LiveVerificationExecutorTest {
             VerificationTrace(null, null, serverUri),
         )
         val fixture = Fixture(raw)
-        whenever(fixture.documents.toClientUri(serverUri)).thenReturn("file:///workspace/.artifacts/Case/witness.oxsts")
+        whenever(fixture.documents.toClientUri(serverUri)).thenReturn("file:///workspace/.artifacts/Case/witness.semantifyr")
 
         val result = executor.execute(fixture.requestManager, fixture.documents, noArgs()) as VerificationCaseResult
         assertThat(result.status()).isEqualTo("failed")
-        assertThat(result.trace().witnessUri()).isEqualTo("file:///workspace/.artifacts/Case/witness.oxsts")
+        assertThat(result.trace().witnessUri()).isEqualTo("file:///workspace/.artifacts/Case/witness.semantifyr")
     }
 
     @Test
     fun `a witness URI outside the workspace is left untouched`() = runTest {
-        val outsideUri = "file:///tmp/elsewhere/witness.oxsts"
+        val outsideUri = "file:///tmp/elsewhere/witness.semantifyr"
         val raw = VerificationCaseResult(
             "failed",
             "counterexample",
@@ -110,7 +110,7 @@ class LiveVerificationExecutorTest {
     @Test
     fun `an on-disk-but-untracked target document is pre-opened before the command runs`() = runTest {
         val fixture = Fixture("ignored").apply { runWritesInline() }
-        val uri = "file:///workspace/.artifacts/Case/witness.oxsts"
+        val uri = "file:///workspace/.artifacts/Case/witness.semantifyr"
         whenever(fixture.documents.find(uri)).thenReturn(null)
         whenever(fixture.documents.existsOnDisk(uri)).thenReturn(true)
         whenever(fixture.documents.openExistingByClient(uri)).thenReturn(mock<SessionDocument>())
@@ -123,7 +123,7 @@ class LiveVerificationExecutorTest {
     @Test
     fun `an already-tracked target document is not re-opened`() = runTest {
         val fixture = Fixture("ignored")
-        val uri = "file:///workspace/snippet.oxsts"
+        val uri = "file:///workspace/snippet.semantifyr"
         whenever(fixture.documents.find(uri)).thenReturn(mock<SessionDocument>())
 
         executor.execute(fixture.requestManager, fixture.documents, argsWithUri(uri))

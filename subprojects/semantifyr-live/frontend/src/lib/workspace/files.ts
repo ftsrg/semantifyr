@@ -46,8 +46,11 @@ interface HandleItem {
   getAsFileSystemHandle?: () => Promise<FileHandle | null>
 }
 
+// the one live writes
+export const OXSTS_EXTENSION = '.semantifyr'
+
 export const OXSTS_EXTENSIONS = [
-  '.semantifyr',
+  OXSTS_EXTENSION,
   '.sem',
   '.oxsts',
 ]

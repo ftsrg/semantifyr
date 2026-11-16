@@ -21,6 +21,6 @@ class LiveGammaLanguageSetupTest {
             .createInjectorAndDoEMFRegistration()
             .getInstance(LanguageServices::class.java)
 
-        assertThat(services.builtinLibrary.extractedLibraryPath.resolve("semantifyr.oxsts")).isRegularFile()
+        assertThat(services.builtinLibrary.extractedLibraryPath.resolve("standard.semantifyr")).isRegularFile()
     }
 }

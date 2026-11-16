@@ -104,13 +104,13 @@ class FlatteningStepsTest : FlatteningTestBase() {
                 it.name.lowercase()
             },
         )
-        val texts = listOf(temporaryDirectory.resolve("pipeline/inlined.oxsts").readText()) + frames.map {
+        val texts = listOf(temporaryDirectory.resolve("pipeline/inlined.semantifyr").readText()) + frames.map {
             it.readText()
         }
         assertThat(texts.zipWithNext()).noneMatch {
             it.first == it.second
         }
-        assertThat(frames.last().readText()).isEqualTo(temporaryDirectory.resolve("pipeline/flattened.oxsts").readText())
+        assertThat(frames.last().readText()).isEqualTo(temporaryDirectory.resolve("pipeline/flattened.semantifyr").readText())
     }
 
     @Test

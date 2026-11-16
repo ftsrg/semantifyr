@@ -66,7 +66,7 @@ class WebSocketLspConnectorTest {
             on { supportedMethods() } doReturn ServiceEndpoints.getSupportedMethods(HoverServer::class.java)
         }
         val registry = SimpleMeterRegistry()
-        val hover = """{"jsonrpc":"2.0","id":1,"method":"textDocument/hover","params":{"textDocument":{"uri":"file:///workspace/a.oxsts"},"position":{"line":0,"character":0}}}"""
+        val hover = """{"jsonrpc":"2.0","id":1,"method":"textDocument/hover","params":{"textDocument":{"uri":"file:///workspace/a.semantifyr"},"position":{"line":0,"character":0}}}"""
         val unknown = """{"jsonrpc":"2.0","id":2,"method":"made/up","params":{}}"""
 
         coroutineScope {

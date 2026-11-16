@@ -23,7 +23,7 @@ dependencies {
 
 val syncSysmlCrossroads = tasks.register<Sync>("syncSysmlCrossroads") {
     from(nightlyTestSysmlCompiledCorpusFiles) {
-        include("crossroads.oxsts")
+        include("crossroads.$oxstsFileExtension")
     }
     from(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/libraries/default")) {
         into("library")

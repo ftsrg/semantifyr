@@ -41,12 +41,12 @@ data class FlavorResponse(
     val compiledOxstsCommand: String?,
 ) {
     companion object {
-        fun fromFlavor(flavor: Flavor) = FlavorResponse(
+        fun fromFlavor(flavor: Flavor, fileName: String) = FlavorResponse(
             id = flavor.id,
             displayName = flavor.displayName,
             description = flavor.description,
             languageId = flavor.language.id,
-            fileName = flavor.fileName,
+            fileName = fileName,
             verificationCommand = flavor.verificationCommand,
             discoveryCommand = flavor.discoveryCommand,
             validateWitnessCommand = flavor.validateWitnessCommand,

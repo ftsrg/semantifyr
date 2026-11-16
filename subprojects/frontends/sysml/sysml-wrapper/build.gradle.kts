@@ -8,6 +8,7 @@ import com.github.gradle.node.pnpm.task.PnpmTask
 import com.github.gradle.node.task.NodeTask
 import hu.bme.mit.semantifyr.gradle.conventions.AppendFurtherCases
 import hu.bme.mit.semantifyr.gradle.conventions.corpusModels
+import hu.bme.mit.semantifyr.gradle.conventions.oxstsFileExtension
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import org.apache.tools.ant.taskdefs.condition.Os
 
@@ -228,7 +229,7 @@ fun sysmlCompileTask(taskName: String, sourceDirectory: Provider<Directory>, wor
         it.file("$name.sysml")
     }
     val targetFile = targetDirectory.map {
-        it.file("$name.oxsts")
+        it.file("$name.$oxstsFileExtension")
     }
     inputs.files(workspace).withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.file(targetFile)
@@ -316,7 +317,7 @@ tasks.test {
         layout.projectDirectory.file("../models/etc/crossroads-green.trace.sysml"),
         layout.projectDirectory.file("../models/etc/crossroads-green.trace.json"),
         layout.projectDirectory.file("../models/etc/crossroads-green.witness.json"),
-        layout.projectDirectory.file("../models/etc/crossroads-green.witness.oxsts"),
+        layout.projectDirectory.file("../models/etc/crossroads-green.witness.semantifyr"),
     ).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("../models/libraries/default")).withPathSensitivity(PathSensitivity.RELATIVE)
 }

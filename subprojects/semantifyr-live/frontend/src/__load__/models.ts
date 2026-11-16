@@ -61,7 +61,7 @@ function textOf(example: ServedExample): string {
     return readFileSync(join(repository, example.file), 'utf-8')
   }
   const name = fileNameOf(example)
-  const compiled = join(compiledSysmlDirectory, `${name.slice(0, name.lastIndexOf('.'))}.oxsts`)
+  const compiled = join(compiledSysmlDirectory, `${name.slice(0, name.lastIndexOf('.'))}.semantifyr`)
   if (!existsSync(compiled)) {
     throw new Error(`${compiled} is missing: run ./gradlew :semantifyr-live-frontend:cloneLoadTestModels first`)
   }

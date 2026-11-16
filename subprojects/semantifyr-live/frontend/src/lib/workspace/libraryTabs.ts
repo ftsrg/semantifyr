@@ -7,14 +7,15 @@
 import { SYSML_LIBRARY_PREFIX } from '../language/libraries'
 import type { LanguageRuntime } from '../language/types'
 import { derivedUriOf, fileNameOf, fileUriOfLibrary, LIBRARY_SCHEME, libraryUriOf } from '../session/readOnlyDocuments'
+import { OXSTS_EXTENSION } from './files'
 import type { ReadOnlyDocument } from './documentTabs'
 import type { Live } from './live'
 
 export const MODEL_OXSTS_TAB_ID = 'model-oxsts'
 
 const SEMANTIC_LIBRARY_BANNERS: Readonly<Record<string, string>> = {
-  'States.oxsts': 'How Semantifyr reads SysML v2 state machines: part of its semantic library, in OXSTS.',
-  'Statecharts.oxsts': 'How Semantifyr reads Gamma statecharts: part of its semantic library, in OXSTS.',
+  'States.semantifyr': 'How Semantifyr reads SysML v2 state machines: part of its semantic library, in OXSTS.',
+  'Statecharts.semantifyr': 'How Semantifyr reads Gamma statecharts: part of its semantic library, in OXSTS.',
 }
 
 function bannerOf(fileUri: string): string {
@@ -47,7 +48,7 @@ export function libraryTabOf(uri: string, languageId: string): ReadOnlyDocument 
 }
 
 export function modelOxstsTabOf(modelLabel: string, text: string): ReadOnlyDocument {
-  const label = modelLabel.replace(/\.[^.]*$/, '.oxsts')
+  const label = modelLabel.replace(/\.[^.]*$/, OXSTS_EXTENSION)
   return {
     id: MODEL_OXSTS_TAB_ID,
     label,

@@ -6,7 +6,7 @@ description: The declarations of the standard library every OXSTS file imports, 
 ---
 
 import StandardLibrary, { tocOf } from '@site/src/components/StandardLibrary';
-import library from '@oxsts-library/semantifyr.oxsts';
+import library from '@oxsts-library/standard.semantifyr';
 
 export const toc = tocOf(library);
 

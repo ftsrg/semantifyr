@@ -1,20 +1,20 @@
 {
     "models": [
         {
-            "file": "one-light.oxsts",
+            "file": "one-light.semantifyr",
             "cases": [
                 { "name": "TrafficLight", "verdict": "Passed" }
             ]
         },
         {
-            "file": "intersection-step1.oxsts",
+            "file": "intersection-step1.semantifyr",
             "cases": [
                 { "name": "NeverBothGreen", "verdict": "Passed" },
                 { "name": "EastCanTurnGreen", "verdict": "Passed" }
             ]
         },
         {
-            "file": "intersection-step2.oxsts",
+            "file": "intersection-step2.semantifyr",
             "cases": [
                 { "name": "NeverBothGreen", "verdict": "Passed" },
                 { "name": "EastCanTurnGreen", "verdict": "Passed" },
@@ -22,7 +22,7 @@
             ]
         },
         {
-            "file": "intersection.oxsts",
+            "file": "intersection.semantifyr",
             "cases": [
                 { "name": "NeverBothGreen", "verdict": "Passed" },
                 { "name": "EastCanTurnGreen", "verdict": "Passed" },
@@ -30,39 +30,39 @@
             ]
         },
         {
-            "file": "green-time-step1.oxsts",
+            "file": "green-time-step1.semantifyr",
             "cases": [
                 { "name": "NorthCanTurnYellow", "verdict": "Passed" }
             ]
         },
         {
-            "file": "green-time-step2.oxsts",
+            "file": "green-time-step2.semantifyr",
             "cases": [
                 { "name": "NorthCanTurnYellow", "verdict": "Passed" },
                 { "name": "NorthGreenForThreeSteps", "verdict": "Failed" }
             ]
         },
         {
-            "file": "green-time.oxsts",
+            "file": "green-time.semantifyr",
             "cases": [
                 { "name": "NorthCanTurnYellow", "verdict": "Passed" },
                 { "name": "NorthGreenForThreeSteps", "verdict": "Passed" }
             ]
         },
         {
-            "file": "library-step1.oxsts",
+            "file": "library-step1.semantifyr",
             "cases": [
                 { "name": "LightCanTurnYellow", "verdict": "Passed" }
             ]
         },
         {
-            "file": "library-step2.oxsts",
+            "file": "library-step2.semantifyr",
             "cases": [
                 { "name": "LightCanTurnYellow", "verdict": "Passed" }
             ]
         },
         {
-            "file": "library.oxsts",
+            "file": "library.semantifyr",
             "cases": [
                 { "name": "LightCanTurnYellow", "verdict": "Passed" },
                 { "name": "PedestriansCanWalk", "verdict": "Passed" },
@@ -70,7 +70,7 @@
             ]
         },
         {
-            "file": "hierarchy-step1.oxsts",
+            "file": "hierarchy-step1.semantifyr",
             "cases": [
                 { "name": "LightCanTurnGreen", "verdict": "Passed" },
                 { "name": "NeverBothGreen", "verdict": "Passed" },
@@ -78,7 +78,7 @@
             ]
         },
         {
-            "file": "hierarchy-step2.oxsts",
+            "file": "hierarchy-step2.semantifyr",
             "cases": [
                 { "name": "LightCanTurnGreen", "verdict": "Passed" },
                 { "name": "NeverBothGreen", "verdict": "Passed" },
@@ -86,7 +86,7 @@
             ]
         },
         {
-            "file": "hierarchy-step3.oxsts",
+            "file": "hierarchy-step3.semantifyr",
             "cases": [
                 { "name": "LightCanTurnGreen", "verdict": "Passed" },
                 { "name": "NeverBothGreen", "verdict": "Passed" },
@@ -95,7 +95,7 @@
             ]
         },
         {
-            "file": "hierarchy-step4.oxsts",
+            "file": "hierarchy-step4.semantifyr",
             "cases": [
                 { "name": "LightCanTurnGreen", "verdict": "Passed" },
                 { "name": "NeverBothGreen", "verdict": "Passed" },
@@ -104,7 +104,7 @@
             ]
         },
         {
-            "file": "hierarchy-step5.oxsts",
+            "file": "hierarchy-step5.semantifyr",
             "cases": [
                 { "name": "LightCanTurnGreen", "verdict": "Passed" },
                 { "name": "NeverBothGreen", "verdict": "Passed" },
@@ -114,7 +114,7 @@
             ]
         },
         {
-            "file": "hierarchy.oxsts",
+            "file": "hierarchy.semantifyr",
             "cases": [
                 { "name": "LightCanTurnGreen", "verdict": "Passed" },
                 { "name": "NeverBothGreen", "verdict": "Passed" },
@@ -125,7 +125,7 @@
             ]
         },
         {
-            "file": "level-crossing.oxsts",
+            "file": "level-crossing.semantifyr",
             "cases": [
                 { "name": "BarrierDownWhileTrainInCrossing", "verdict": "Failed" },
                 { "name": "TwoTrainsCanBeInTheCrossing", "verdict": "Passed" }

@@ -6,7 +6,7 @@ description: The inlined model, the form in which the compiler writes a compiled
 ---
 
 import CodeBlock from '@theme/CodeBlock';
-import witnessModel from '@sysml-reference-trace/crossroads-green.witness.oxsts';
+import witnessModel from '@sysml-reference-trace/crossroads-green.witness.semantifyr';
 
 # Inlined Models
 
@@ -53,14 +53,14 @@ Its variables are the state, `init` gives the initial states from the variables'
 
 ## Witnesses
 
-A witness is the run behind a verdict, a Failed `AG` or a Passed `EF` property, which the verifier back-annotates into OXSTS as `witness.oxsts` in the case's directory: an inlined model, `witness of` the verified class, that has exactly that execution. It declares `var step: int := 0` and holds the class as `root`. Its `init` assumes `step == 0`, runs the class's `init`, assumes the value of every variable in the initial state and sets the next step; each further step is a branch of its main transition that assumes the step's number, runs the class's main transition, assumes the values of the state after it and sets the number of the next step. Its property is the class's own for a passed `EF` and its negation for a failed `AG`.
+A witness is the run behind a verdict, a Failed `AG` or a Passed `EF` property, which the verifier back-annotates into OXSTS as `witness.semantifyr` in the case's directory: an inlined model, `witness of` the verified class, that has exactly that execution. It declares `var step: int := 0` and holds the class as `root`. Its `init` assumes `step == 0`, runs the class's `init`, assumes the value of every variable in the initial state and sets the next step; each further step is a branch of its main transition that assumes the step's number, runs the class's main transition, assumes the values of the state after it and sets the number of the next step. Its property is the class's own for a passed `EF` and its negation for a failed `AG`.
 
 Beside it, [`witness.json`](../../../reference/artifacts.mdx#witnessjson) holds the state of each step and [`trace.json`](../../../reference/artifacts.mdx#tracejson) the traced calls of each step, from which the editors and the frontends show the trace.
 
 The SysML v2 reference witness, of the case `TrafficLightABehaviorNormalGreenUnreachableViolated` of the crossroads model, which the SysML v2 frontend's tests check:
 
 <details>
-<summary><code>witness.oxsts</code></summary>
+<summary><code>witness.semantifyr</code></summary>
 
 <CodeBlock language="oxsts">{witnessModel}</CodeBlock>
 

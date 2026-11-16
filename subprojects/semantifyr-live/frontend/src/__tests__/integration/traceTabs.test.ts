@@ -30,7 +30,7 @@ const CASE: VerificationCaseSpecification = {
   id: 'a',
   label: 'a',
   location: {
-    uri: 'file:///workspace/snippet.oxsts',
+    uri: 'file:///workspace/snippet.semantifyr',
     range: { start: { line: 1, character: 0 }, end: { line: 1, character: 1 } },
   },
 }
@@ -99,12 +99,12 @@ describe('an open trace text', () => {
     await verified(open)
     const firstTrace = open.live.verification.get().get(documentKey!)!.cases[0]!.trace!
     const stop = followTraceTabs(open.live, open.runtime(), 'oxsts')
-    open.live.tabs.open(traceTabOf({ tabId: 'trace-witness', fileUri: 'file:///workspace/first/witness.oxsts', label: 'a.witness.oxsts', languageId: 'oxsts', banner: '' }, 'first witness', { documentKey: documentKey!, caseId: 'a', view: 'witness', shown: firstTrace }))
+    open.live.tabs.open(traceTabOf({ tabId: 'trace-witness', fileUri: 'file:///workspace/first/witness.semantifyr', label: 'a.witness.semantifyr', languageId: 'oxsts', banner: '' }, 'first witness', { documentKey: documentKey!, caseId: 'a', view: 'witness', shown: firstTrace }))
 
-    session.answer({ ...failedResult, trace: { ...sampleTrace, witnessUri: 'file:///workspace/second/witness.oxsts' } })
+    session.answer({ ...failedResult, trace: { ...sampleTrace, witnessUri: 'file:///workspace/second/witness.semantifyr' } })
     await verified(open)
     await vi.waitFor(() => {
-      expect(witnessTab(open!)?.text).toBe('witness at file:///workspace/second/witness.oxsts')
+      expect(witnessTab(open!)?.text).toBe('witness at file:///workspace/second/witness.semantifyr')
     })
     expect(open.live.tabs.state.get().active).toBe('trace-witness')
 
@@ -117,7 +117,7 @@ describe('an open trace text', () => {
     session.answer(failedResult)
     await verified(open)
     const trace = open.live.verification.get().get(documentKey!)!.cases[0]!.trace!
-    open.live.tabs.open(traceTabOf({ tabId: 'trace-witness', fileUri: 'file:///workspace/third/witness.oxsts', label: 'a.witness.oxsts', languageId: 'oxsts', banner: '' }, 'third witness', { documentKey: documentKey!, caseId: 'a', view: 'witness', shown: trace }))
+    open.live.tabs.open(traceTabOf({ tabId: 'trace-witness', fileUri: 'file:///workspace/third/witness.semantifyr', label: 'a.witness.semantifyr', languageId: 'oxsts', banner: '' }, 'third witness', { documentKey: documentKey!, caseId: 'a', view: 'witness', shown: trace }))
     const other = open.live.catalog.get().registry!.flavorOf('oxsts')!.examples[1]!
     open.live.selectModel('oxsts', other.id)
     expect(witnessTab(open)).toBeUndefined()

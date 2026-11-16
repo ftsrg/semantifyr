@@ -12,7 +12,7 @@ function oxstsFlavor(id: string, displayName: string): FlavorInfo {
     displayName,
     description: `${displayName} description`,
     languageId: 'oxsts',
-    fileName: 'snippet.oxsts',
+    fileName: 'snippet.semantifyr',
     verificationCommand: 'oxsts.case.verify',
     discoveryCommand: 'oxsts.case.discover',
     validateWitnessCommand: 'oxsts.case.validateWitness',

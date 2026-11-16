@@ -36,9 +36,13 @@ class GammaCompiler {
     }
 
     @OptIn(ExperimentalPathApi::class)
-    fun compileWithImports(gammaModel: GammaModelPackage, outputDirectory: Path): CompiledGammaModel {
+    fun compileWithImports(
+        gammaModel: GammaModelPackage,
+        outputDirectory: Path,
+        fileExtension: String,
+    ): CompiledGammaModel {
         val nameMap = GammaNameMap()
-        val modelPath = outputDirectory.resolve(MODEL_FILE_NAME)
+        val modelPath = modelPath(outputDirectory, fileExtension)
         write(gammaModel, modelPath, nameMap)
 
         val importsDirectory = importsDirectory(outputDirectory)
@@ -46,10 +50,10 @@ class GammaCompiler {
         val fileNames = mutableSetOf<String>()
         val importedPaths = reachablePackages(gammaModel).map {
             val baseName = it.eResource().uri.trimFileExtension().lastSegment()
-            var fileName = "$baseName.oxsts"
+            var fileName = "$baseName.$fileExtension"
             var number = 2
             while (!fileNames.add(fileName)) {
-                fileName = "${baseName}_$number.oxsts"
+                fileName = "${baseName}_$number.$fileExtension"
                 number++
             }
             val path = importsDirectory.resolve(fileName)
@@ -96,7 +100,9 @@ class GammaCompiler {
     }
 
     companion object {
-        const val MODEL_FILE_NAME = "model.oxsts"
+        fun modelPath(outputDirectory: Path, fileExtension: String): Path {
+            return outputDirectory.resolve("model.$fileExtension")
+        }
 
         fun importsDirectory(outputDirectory: Path): Path {
             return outputDirectory.resolve("imports")

@@ -8,7 +8,7 @@ description: How the compiler turns an OXSTS model into the transition system a 
 
 import CodeBlock from '@theme/CodeBlock';
 import PhaseChain from '@site/src/components/Phases/PhaseChain';
-import room from '@oxsts-phases-models/room.oxsts';
+import room from '@oxsts-phases-models/room.semantifyr';
 
 # How OXSTS Compiles
 
@@ -20,8 +20,8 @@ An OXSTS model, written by hand or translated from another language by a [fronte
 2. [Inlining](inlining.mdx) replaces every call by its body, as the class of the instance it is called on defines it, until the case is one transition over instance paths such as `root.hall.top.on`.
 3. [Flattening](flattening.mdx) turns every variable of every instance into one variable of the model and leaves no instance: the transition system.
 
-The three pages step through what the compiler does with this one model, `room.oxsts` below. Every model they show is the compiler's own output, written when the site is built and shown whole; only the instance tree and instantiation's walk through it are drawn by hand, since the compiler keeps the tree in memory.
+The three pages step through what the compiler does with this one model, `room.semantifyr` below. Every model they show is the compiler's own output, written when the site is built and shown whole; only the instance tree and instantiation's walk through it are drawn by hand, since the compiler keeps the tree in memory.
 
-<CodeBlock language="oxsts" title="room.oxsts">{room}</CodeBlock>
+<CodeBlock language="oxsts" title="room.semantifyr">{room}</CodeBlock>
 
 The command line writes the same files for any model: `semantifyr compile --artifacts=debug` keeps the model after each phase and after every single step in the case's directory, as [the command line's page](../../reference/command-line.mdx) describes.

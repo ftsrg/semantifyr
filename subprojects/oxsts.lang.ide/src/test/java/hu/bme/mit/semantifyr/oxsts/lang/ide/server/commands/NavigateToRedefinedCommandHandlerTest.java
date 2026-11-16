@@ -71,7 +71,7 @@ class NavigateToRedefinedCommandHandlerTest {
     void aRedefiningDeclarationNavigatesToTheRedefinedOne() {
         var redefined = mock(RedefinableDeclaration.class);
         var resource = mock(Resource.class);
-        var uri = URI.createURI("file:///workspace/model.oxsts");
+        var uri = URI.createURI("file:///workspace/model.semantifyr");
         var serviceProvider = mock(IResourceServiceProvider.class);
         var documentExtensions = mock(DocumentExtensions.class);
         var location = new Location(uri.toString(), new Range(new Position(1, 4), new Position(1, 9)));

@@ -252,7 +252,7 @@ export default {
         },
         module: {
           rules: [
-            { test: /\.(oxsts|sysml|gamma|get|txt|tsv)$/, type: 'asset/source' },
+            { test: /\.(semantifyr|sysml|gamma|get|txt|tsv)$/, type: 'asset/source' },
             // a JSON file a page shows as it is written
             { test: /\.json$/, resourceQuery: /raw/, type: 'asset/source' },
           ],

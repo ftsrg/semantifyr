@@ -27,7 +27,7 @@ import java.nio.file.Path
 abstract class BaseSemantifyrCommand(
     name: String,
     private val semantifyrLoader: SemantifyrLoader,
-    private val fileExtensionProvider: FileExtensionProvider,
+    protected val fileExtensionProvider: FileExtensionProvider,
 ) : SuspendingCliktCommand(name) {
     override val printHelpOnEmptyArgs = true
 

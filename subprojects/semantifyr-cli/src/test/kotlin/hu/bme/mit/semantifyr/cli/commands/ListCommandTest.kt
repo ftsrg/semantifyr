@@ -41,7 +41,7 @@ class ListCommandTest {
 
     @Test
     suspend fun `accepts a library file and lists none of its cases`() {
-        val library = testModels.resolve("semantic/arithmetic.oxsts")
+        val library = testModels.resolve("semantic/arithmetic.semantifyr")
 
         val result = runCli("list", "-l", library.toString(), smokeModel.toString())
 
@@ -63,10 +63,10 @@ class ListCommandTest {
 
     @Test
     suspend fun `a missing model path is an input error`(@TempDir directory: Path) {
-        val result = runCli("list", directory.resolve("absent.oxsts").toString())
+        val result = runCli("list", directory.resolve("absent.semantifyr").toString())
 
         assertThat(result.statusCode).isEqualTo(3)
-        assertThat(result.stderr).contains("absent.oxsts").contains("does not exist")
+        assertThat(result.stderr).contains("absent.semantifyr").contains("does not exist")
     }
 
     @Test
@@ -94,7 +94,7 @@ class ListCommandTest {
 
     @Test
     suspend fun `an unreadable model file is an input error`(@TempDir directory: Path) {
-        val model = smokeModel.copyTo(directory.resolve("smoke.oxsts"))
+        val model = smokeModel.copyTo(directory.resolve("smoke.semantifyr"))
         assumeTrue(model.toFile().setReadable(false) && !model.isReadable(), "the file system cannot revoke read access")
 
         val result = runCli("list", model.toString())
@@ -113,7 +113,7 @@ class ListCommandTest {
 
     @Test
     suspend fun `a model with a syntax error is a compilation error`(@TempDir directory: Path) {
-        val model = directory.resolve("broken.oxsts")
+        val model = directory.resolve("broken.semantifyr")
         model.writeText(
             """
             package broken
@@ -127,17 +127,17 @@ class ListCommandTest {
         val result = runCli("list", model.toString())
 
         assertThat(result.statusCode).isEqualTo(4)
-        assertThat(result.stderr).contains("broken.oxsts")
+        assertThat(result.stderr).contains("broken.semantifyr")
     }
 
     @Test
     suspend fun `a model the validator rejects is a compilation error naming each issue at its place`() {
-        val model = testModels.resolve("constructs/multiple_inheritance.oxsts")
+        val model = testModels.resolve("constructs/multiple_inheritance.semantifyr")
 
         val result = runCli("list", model.toString())
 
         assertThat(result.statusCode).isEqualTo(4)
-        assertThat(result.stderr).startsWith("error: ").containsPattern("multiple_inheritance\\.oxsts:\\d+:\\d+: .+ \\[OXSTS\\.\\w+]")
+        assertThat(result.stderr).startsWith("error: ").containsPattern("multiple_inheritance\\.semantifyr:\\d+:\\d+: .+ \\[OXSTS\\.\\w+]")
     }
 
     @Test

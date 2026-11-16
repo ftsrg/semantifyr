@@ -12,7 +12,7 @@ const caseLocation = {
     range: { start: { line: 4, character: 0 }, end: { line: 6, character: 1 } },
 };
 
-const witnessUri = "file:///workspace/.artifacts/crossroads.ACanBeGreen/verification/theta/witness.oxsts";
+const witnessUri = "file:///workspace/.artifacts/crossroads.ACanBeGreen/verification/theta/witness.semantifyr";
 
 function recordingClient(response: unknown) {
     const sendRequest = vi.fn<LspClient["sendRequest"]>(async () => {

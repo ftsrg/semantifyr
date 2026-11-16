@@ -48,7 +48,7 @@ async function setUp(validation: Partial<VerificationTestControllerConfig> = {})
     witnesses.register(context as never);
     const testController = new VerificationTestController(client as never, {
         languageId: 'oxsts',
-        fileGlob: '**/*.oxsts',
+        fileGlob: '**/*.semantifyr',
         controllerId: 'oxsts.verification',
         controllerLabel: 'Semantifyr Verification Cases',
         discoverCommand: 'oxsts.case.discover',
@@ -97,7 +97,7 @@ describe('discovery', () => {
 
         expect(requests).toEqual([{ method: 'workspace/executeCommand', parameters: { command: 'oxsts.case.discover', arguments: [modelUri] } }]);
         const fileItem = controller.items.get(modelUri)!;
-        expect(fileItem.label).toBe('lamp.oxsts');
+        expect(fileItem.label).toBe('lamp.semantifyr');
         expect([...fileItem.children].map(([id]) => id)).toEqual(['lamp::Safe', 'lamp::Reachable']);
         expect(caseItem('lamp::Reachable').range).toEqual({ start: { line: 9, character: 0 }, end: { line: 12, character: 1 } });
     });
@@ -118,7 +118,7 @@ describe('discovery', () => {
         await setUp();
 
         cases = [safeCase];
-        state.watchers.find((watcher) => watcher.glob === '**/*.oxsts')!.changed.fire(Uri.parse(modelUri));
+        state.watchers.find((watcher) => watcher.glob === '**/*.semantifyr')!.changed.fire(Uri.parse(modelUri));
         await expect.poll(() => controller.items.get(modelUri)?.children.size).toBe(1);
     });
 });
@@ -179,7 +179,7 @@ describe('rediscovery on edits', () => {
 });
 
 describe('generated artifacts', () => {
-    const artifactUri = 'file:///workspace/.artifacts/lamp.Safe/pipeline/flattened.oxsts';
+    const artifactUri = 'file:///workspace/.artifacts/lamp.Safe/pipeline/flattened.semantifyr';
 
     it('are not discovered in the workspace', async () => {
         state.files = [Uri.parse(modelUri), Uri.parse(artifactUri)];
@@ -193,7 +193,7 @@ describe('generated artifacts', () => {
     it('are not discovered when they are written, opened or edited', async () => {
         await setUp();
 
-        const watcher = state.watchers.find((it) => it.glob === '**/*.oxsts')!;
+        const watcher = state.watchers.find((it) => it.glob === '**/*.semantifyr')!;
         watcher.created.fire(Uri.parse(artifactUri));
         watcher.changed.fire(Uri.parse(artifactUri));
         state.documentOpened.fire(openDocument(Uri.parse(artifactUri)));
@@ -321,7 +321,7 @@ describe('verification', () => {
         verify = () => result('passed', counterexample);
         await run([caseItem('lamp::Reachable')]);
         await showWitness(caseItem('lamp::Reachable'));
-        expect((window.showTextDocument.mock.calls[0]![0] as Uri).toString()).toBe('file:///tmp/semantifyr/lamp.Safe/witness.oxsts');
+        expect((window.showTextDocument.mock.calls[0]![0] as Uri).toString()).toBe('file:///tmp/semantifyr/lamp.Safe/witness.semantifyr');
 
         verify = () => result('passed');
         await run([caseItem('lamp::Reachable')]);
@@ -430,7 +430,7 @@ describe('witness validation', () => {
 
         expect(validations().map((request) => request.parameters)).toEqual([{
             command: 'oxsts.case.validateWitness',
-            arguments: [{ uri: 'file:/tmp/semantifyr/lamp.Safe/witness.oxsts', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } }],
+            arguments: [{ uri: 'file:/tmp/semantifyr/lamp.Safe/witness.semantifyr', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } }],
         }]);
     });
 

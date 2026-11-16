@@ -109,7 +109,7 @@ describe('the views of a trace', () => {
     let witness = ''
     ui.backend.answer('read', (request, recorded) => {
       const text = recorded()
-      if (request.uri.endsWith('/witness.oxsts')) {
+      if (request.uri.endsWith('/witness.semantifyr')) {
         witness = text ?? ''
       }
       return text
@@ -119,7 +119,7 @@ describe('the views of a trace', () => {
     await caseTrace(page).locator('.frame-open').click()
     await expect.poll(async () => {
       return editor(page).selectedTab.innerText()
-    }).toMatch(/\.witness\.oxsts$/)
+    }).toMatch(/\.witness\.semantifyr$/)
     ui.backend.answer('read', () => {
       return null
     })

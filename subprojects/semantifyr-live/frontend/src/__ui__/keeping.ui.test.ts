@@ -13,7 +13,7 @@ import { describe, expect } from 'vitest'
 import { editorKeysOf, TEST_BROWSER } from '../testBrowser'
 import { casesListed, editor, editorWorkerLoaded, results, statesOf, test } from './harness'
 
-const INTERSECTION = readFileSync(join(import.meta.dirname, '../snippets/imported/tutorial/intersection.oxsts'), 'utf-8')
+const INTERSECTION = readFileSync(join(import.meta.dirname, '../snippets/imported/tutorial/intersection.semantifyr'), 'utf-8')
 
 interface Disk {
   // the file the open picker gives, the name the save picker gives
@@ -25,7 +25,7 @@ interface Disk {
 
 // the browser's file pickers, answering from window.disk, which a test fills before it presses Open or Save
 function stubPickers(): void {
-  const disk: Disk = { opened: null, savedAs: 'saved.oxsts', writes: [], suggested: [] }
+  const disk: Disk = { opened: null, savedAs: 'saved.semantifyr', writes: [], suggested: [] }
   const handleOf = (name: string, text: string) => {
     return {
       kind: 'file',
@@ -107,11 +107,11 @@ describe('opening a file', () => {
     const page = await ui.open('/oxsts/level-crossing', { before: stubPickers })
     await casesListed(page)
 
-    await openFile(page, 'mine.oxsts', INTERSECTION)
+    await openFile(page, 'mine.semantifyr', INTERSECTION)
 
     await expect.poll(async () => {
       return page.title()
-    }).toBe('mine.oxsts - OXSTS - Semantifyr Live')
+    }).toBe('mine.semantifyr - OXSTS - Semantifyr Live')
     await casesListed(page)
     expect(await results(page).rows.count()).toBe(servedExamplesOf('oxsts').find((example) => {
       return example.id === 'intersection'
@@ -125,7 +125,7 @@ describe('opening a file', () => {
     await page.locator('.toolbar').getByRole('button', { name: 'Open' }).click()
     await page.evaluate((text) => {
       const transfer = new DataTransfer()
-      transfer.items.add(new File([text], 'mine.oxsts'))
+      transfer.items.add(new File([text], 'mine.semantifyr'))
       const dialog = (window as unknown as { fileDialog: HTMLInputElement }).fileDialog
       dialog.files = transfer.files
       dialog.dispatchEvent(new Event('change'))
@@ -133,7 +133,7 @@ describe('opening a file', () => {
 
     await expect.poll(async () => {
       return page.title()
-    }).toBe('mine.oxsts - OXSTS - Semantifyr Live')
+    }).toBe('mine.semantifyr - OXSTS - Semantifyr Live')
   })
 
   test('by a drop opens the dropped file in its language', async ({ ui }) => {
@@ -145,7 +145,7 @@ describe('opening a file', () => {
 
     await page.evaluate(() => {
       const transfer = new DataTransfer()
-      transfer.items.add(new File(['package dropped\n'], 'dropped.oxsts'))
+      transfer.items.add(new File(['package dropped\n'], 'dropped.semantifyr'))
       const target = document.querySelector('section.editor') ?? document.body
       for (const type of ['dragenter', 'dragover', 'drop']) {
         target.dispatchEvent(new DragEvent(type, { dataTransfer: transfer, bubbles: true, cancelable: true }))
@@ -154,7 +154,7 @@ describe('opening a file', () => {
 
     await expect.poll(async () => {
       return page.title()
-    }).toBe('dropped.oxsts - OXSTS - Semantifyr Live')
+    }).toBe('dropped.semantifyr - OXSTS - Semantifyr Live')
   })
 })
 
@@ -163,7 +163,7 @@ describe('saving', () => {
     skip(TEST_BROWSER !== 'chromium', NO_PICKERS)
     const page = await ui.open('/oxsts/level-crossing', { before: stubPickers })
     await casesListed(page)
-    await openFile(page, 'mine.oxsts', INTERSECTION)
+    await openFile(page, 'mine.semantifyr', INTERSECTION)
     await casesListed(page)
 
     await typeAtTheEnd(page, '\n// edited\n')
@@ -176,7 +176,7 @@ describe('saving', () => {
       return (await diskOf(page)).writes.map((write) => {
         return write.name
       })
-    }).toEqual(['mine.oxsts'])
+    }).toEqual(['mine.semantifyr'])
     expect((await diskOf(page)).writes[0]!.text).toContain('// edited')
     await expect.poll(async () => {
       return unsavedMark(page).count()
@@ -196,11 +196,11 @@ describe('saving', () => {
       return (await diskOf(page)).writes.map((write) => {
         return write.name
       })
-    }).toEqual(['saved.oxsts'])
-    expect((await diskOf(page)).suggested).toEqual(['intersection.oxsts'])
+    }).toEqual(['saved.semantifyr'])
+    expect((await diskOf(page)).suggested).toEqual(['intersection.semantifyr'])
     await expect.poll(async () => {
       return page.title()
-    }).toBe('saved.oxsts - OXSTS - Semantifyr Live')
+    }).toBe('saved.semantifyr - OXSTS - Semantifyr Live')
   })
 
   test('downloads under the model\'s name where the browser has no save dialog', async ({ ui }) => {
@@ -211,7 +211,7 @@ describe('saving', () => {
     const download = page.waitForEvent('download')
     await page.locator('.toolbar').getByRole('button', { name: 'Save', exact: true }).click()
 
-    expect((await download).suggestedFilename()).toBe('intersection.oxsts')
+    expect((await download).suggestedFilename()).toBe('intersection.semantifyr')
   })
 })
 

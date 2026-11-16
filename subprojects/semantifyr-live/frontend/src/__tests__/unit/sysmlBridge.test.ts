@@ -15,7 +15,7 @@ const oxstsRange = { start: { line: 40, character: 0 }, end: { line: 60, charact
 const callTrace = { steps: [] }
 const witnessState = { steps: [] }
 const nameMap = { modelHash: 'abc' }
-const witnessUri = 'file:///workspace/.artifacts/case/witness.oxsts'
+const witnessUri = 'file:///workspace/.artifacts/case/witness.semantifyr'
 
 interface Command {
   command: string

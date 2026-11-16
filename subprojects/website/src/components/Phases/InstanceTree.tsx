@@ -23,7 +23,7 @@ export interface Edge {
   redefinedIn?: string;
 }
 
-// the instance tree of oxsts-test-models/phases/room.oxsts, drawn by hand since the compiler keeps the tree in memory; the numbers are the order in which instantiation reaches the instances
+// the instance tree of oxsts-test-models/phases/room.semantifyr, drawn by hand since the compiler keeps the tree in memory; the numbers are the order in which instantiation reaches the instances
 export const NODES: Node[] = [
   {
     order: 1,

@@ -34,7 +34,7 @@ class CapturingWriter extends AbstractMessageWriter {
   end(): void {}
 }
 
-const uri = 'file:///workspace/snippet.oxsts';
+const uri = 'file:///workspace/snippet.semantifyr';
 const range = { start: { line: 1, character: 0 }, end: { line: 3, character: 1 } };
 
 function connect() {

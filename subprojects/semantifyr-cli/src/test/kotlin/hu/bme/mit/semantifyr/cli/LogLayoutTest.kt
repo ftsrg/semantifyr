@@ -56,6 +56,6 @@ class LogLayoutTest {
 
     @Test
     fun `a line below the default level keeps the time, the thread and the class`() {
-        assertThat(format(Level.INFO, "compile model=smoke.oxsts")).contains("[INFO ]").contains("SemantifyrLoader - compile model=smoke.oxsts")
+        assertThat(format(Level.INFO, "compile model=smoke.semantifyr")).contains("[INFO ]").contains("SemantifyrLoader - compile model=smoke.semantifyr")
     }
 }

@@ -23,7 +23,7 @@ vi.mock('../../lib/session/monaco', () => {
   return {}
 })
 
-const MODEL_URI = 'file:///workspace/snippet.oxsts'
+const MODEL_URI = 'file:///workspace/snippet.semantifyr'
 
 function caseAt(id: string, line: number): VerificationCaseSpecification {
   return {
@@ -653,7 +653,7 @@ describe('Live', () => {
   it('closes the read-only tabs with the language they belong to and keeps them on an example switch', async () => {
     const routed = routedClient([])
     open = await openConnected(routed)
-    open.live.tabs.open({ id: 'library', label: 'semantifyr.oxsts', uri: 'live-library:/workspace/.semantifyr/builtin/semantifyr.oxsts', languageId: 'oxsts', banner: '' })
+    open.live.tabs.open({ id: 'library', label: 'standard.semantifyr', uri: 'live-library:/workspace/.semantifyr/builtin/standard.semantifyr', languageId: 'oxsts', banner: '' })
 
     open.live.selectModel('oxsts', testFlavors()[0].examples[1]!.id)
     expect(open.live.tabs.state.get().tabs).toHaveLength(1)

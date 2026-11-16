@@ -21,13 +21,13 @@ import org.eclipse.emf.common.util.URI as EmfURI
 class SessionDocumentTest {
 
     private fun document(text: String): SessionDocument {
-        val serverUri = "file:///workspace/test.oxsts"
+        val serverUri = "file:///workspace/test.semantifyr"
         val emfUri = EmfURI.createURI(serverUri)
         val languageServices = LiveOxstsLanguageSetup(emptyGlobalsModule())
             .createInjectorAndDoEMFRegistration()
             .getInstance(LanguageServices::class.java)
         val resource = languageServices.newResourceSet().createResource(emfUri) as XtextResource
-        return SessionDocument(serverUri, emfUri, resource, Path.of("/tmp/test.oxsts"), text)
+        return SessionDocument(serverUri, emfUri, resource, Path.of("/tmp/test.semantifyr"), text)
     }
 
     private fun fullChange(text: String): TextDocumentContentChangeEvent {

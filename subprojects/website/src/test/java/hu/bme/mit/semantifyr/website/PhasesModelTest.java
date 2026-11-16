@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 @InjectWithOxsts
 public class PhasesModelTest {
 
-    private static final Path MODEL = Path.of("../../oxsts-test-models/phases/room.oxsts");
+    private static final Path MODEL = Path.of("../../oxsts-test-models/phases/room.semantifyr");
 
     @Inject
     private ParseHelper<OxstsModelPackage> parseHelper;
