@@ -34,6 +34,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -62,7 +63,7 @@ private class RecordingBackend(
         environment: ExecutionEnvironment,
     ): BackendVerificationResult {
         starts += "${config.id}@${now()}"
-        directories += fakeRequest().artifactOutputPath.relativize(request.artifactOutputPath).toString()
+        directories += fakeRequest().artifactOutputPath.relativize(request.artifactOutputPath).invariantSeparatorsPathString
         val answer = answers[config.id] ?: Answer(Duration.INFINITE, VerificationVerdict.Inconclusive)
         try {
             delay(answer.after)
