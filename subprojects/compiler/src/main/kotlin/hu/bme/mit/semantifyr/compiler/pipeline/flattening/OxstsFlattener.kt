@@ -211,7 +211,6 @@ class OxstsFlattener @Inject constructor(
                 }
             }
             val holder = variableHolders[arrayVariable] ?: continue
-            // a field of an array of records is an array of its own, and its slots name the record's slot and then the field
             val recordField = recordFields[arrayVariable]
             val originalVariable = recordField?.recordVariable ?: variableMappings.getValue(holder).entries.single {
                 it.value == arrayVariable

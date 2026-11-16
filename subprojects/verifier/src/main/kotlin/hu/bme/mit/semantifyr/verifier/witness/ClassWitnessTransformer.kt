@@ -64,7 +64,6 @@ class ClassWitnessTransformer @Inject constructor(
                 it.primary = holderReference
                 it.member = originalVariable
             }
-            // a slot of an array of records is both, named by its slot and then its field
             val slotReference = if (arraySlot != null) {
                 OxstsFactory.createIndexingSuffixExpression().also {
                     it.primary = memberReference

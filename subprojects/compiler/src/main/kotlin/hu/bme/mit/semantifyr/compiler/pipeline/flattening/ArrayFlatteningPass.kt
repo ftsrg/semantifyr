@@ -90,7 +90,7 @@ class ArrayFlatteningPass @Inject constructor(
         return size.upperBound.toInt()
     }
 
-    // the inlining removes the uses an instance guards, so a use left here is one an instance of size none would make
+    // inlining removed the guarded uses, so a use left here belongs to an instance of size none
     private fun rejectUsesWithoutStorage(
         inlinedOxsts: InlinedOxsts,
         slotCounts: Map<VariableDeclaration, Int>,
@@ -150,7 +150,6 @@ class ArrayFlatteningPass @Inject constructor(
                 EcoreUtil2.replace(indexing, indexInto(primary, indexing.index))
             }
         }
-        // a literal of one value counts as an array of one where it meets an array, and each branch of an if-then-else is an array of its own
         fun checkLength(
             expression: Expression,
             slotCount: Int,

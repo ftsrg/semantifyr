@@ -265,8 +265,7 @@ public class TypeCompatibility {
         return assignedLowerBound >= assigneeLowerBound;
     }
 
-    // the sizes are compared for each instance by the compiler; here only an array meets an array, and a slot that may
-    // hold nothing one that admits it
+    // sizes are compared per instance by the compiler, so here an array only has to meet an array
     private boolean isPerInstanceAssignable(RangeEvaluation assignee, RangeEvaluation assigned) {
         if (!isArray(assignee) || !isArray(assigned)) {
             return false;

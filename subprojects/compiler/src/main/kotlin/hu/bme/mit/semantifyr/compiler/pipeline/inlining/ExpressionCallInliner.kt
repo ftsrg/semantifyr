@@ -221,7 +221,6 @@ class ExpressionCallInliner @AssistedInject constructor(
         return type.domain?.name ?: "<unknown>"
     }
 
-    // a compile-time guard is decided here, as an inline if is, so the branch not taken holds no use
     override fun visit(expression: IfThenElse) {
         val decision = decisionOrNull(expression.guard)
         if (decision != null) {
@@ -239,7 +238,6 @@ class ExpressionCallInliner @AssistedInject constructor(
         processorQueue.addFirst(expression.`else`)
     }
 
-    // a guard that is not decided here, a parameter's or one the compile-time evaluator cannot evaluate, stays to run time
     private fun decisionOrNull(guard: Expression): Boolean? {
         if (expressionModalityEvaluatorProvider.evaluate(guard) == Modality.RUNTIME) {
             return null

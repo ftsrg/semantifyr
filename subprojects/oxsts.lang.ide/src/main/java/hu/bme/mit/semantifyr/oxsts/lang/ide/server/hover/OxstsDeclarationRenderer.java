@@ -180,7 +180,6 @@ public class OxstsDeclarationRenderer {
         };
     }
 
-    // a size from a binding is shown as written, its references not qualified
     protected String renderSize(Expression size) {
         var node = NodeModelUtils.getNode(size);
         if (node == null) {

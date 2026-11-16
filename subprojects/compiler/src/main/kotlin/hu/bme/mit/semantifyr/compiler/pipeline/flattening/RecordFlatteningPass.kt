@@ -77,7 +77,6 @@ class RecordFlatteningPass @Inject constructor(
                     "$FIELD_SEPARATOR${field.name}"
                 }
                 it.typeSpecification = path.last().typeSpecification.copy()
-                // an array of records is one array per leaf field
                 it.typeSpecification.multiplicity = recordVariable.typeSpecification.multiplicity?.copy()
             }
         }
@@ -300,7 +299,7 @@ private class RecordRewriting(
         }
     }
 
-    // a record written at an index that reads one of its own fields would read the new value after the first field
+    // an index that reads the record's own fields would change once the first field is written
     private fun saveWrittenIndex(assignment: AssignmentOperation): List<Operation> {
         var target = assignment.reference
         while (target is NavigationSuffixExpression) {

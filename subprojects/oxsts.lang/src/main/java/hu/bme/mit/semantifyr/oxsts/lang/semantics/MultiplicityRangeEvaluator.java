@@ -79,7 +79,6 @@ public class MultiplicityRangeEvaluator {
         return holder instanceof VariableDeclaration || holder instanceof ParameterDeclaration;
     }
 
-    // a lower bound of none admits nothing in a slot; one that is not constant is taken as one, never as none
     private long lowerBoundOf(Expression expression) {
         if (!(expression instanceof RangeExpression range)) {
             return 1;

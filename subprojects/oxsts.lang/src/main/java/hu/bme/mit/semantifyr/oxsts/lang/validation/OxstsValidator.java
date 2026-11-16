@@ -1196,7 +1196,6 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (actual == null) {
             return;
         }
-        // the literal takes its length from the declaration; anywhere else it is refused by its placement
         if (initializer instanceof ArrayLiteral literal && literal.isRepeatsLast()) {
             actual = new ImmutableTypeEvaluation(actual.getDomain(), declared.getRange());
         }
@@ -1912,8 +1911,6 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
     }
 
-    // a literal of one value types as a single value; against a size each instance decides it is an array of one, its
-    // length checked per instance
     private static TypeEvaluation asArrayOfOne(Expression expression, TypeEvaluation type, TypeEvaluation other) {
         if (expression instanceof ArrayLiteral literal
                 && !literal.isRepeatsLast()
@@ -1929,8 +1926,6 @@ public class OxstsValidator extends AbstractOxstsValidator {
         return type;
     }
 
-    // a slot read is one value, while a slot written takes what the array's lower bound admits, nothing at a lower
-    // bound of 0
     private TypeEvaluation asWrittenSlot(Expression target, TypeEvaluation type) {
         if (!(target instanceof IndexingSuffixExpression indexing)
                 || type instanceof InvalidTypeEvaluation
