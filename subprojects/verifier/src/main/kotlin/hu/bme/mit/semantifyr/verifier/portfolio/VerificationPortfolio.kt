@@ -383,13 +383,13 @@ abstract class VerificationPortfolio(
         var received = 0
         var decided: BackendVerificationResult? = null
 
-        fun receive(index: Int) {
-            received++
+        fun receive(index: Int, count: Int): BackendVerificationResult? {
             val end = ends.get(index)
-            if (end is LegEnd.Finished) {
-                case.progress.reportProgress("${progressPrefix}result $received/$total: ${end.result.verdict}")
-                decided = onResult(LegResult(legs[index].name, end.result))
+            if (end !is LegEnd.Finished) {
+                return null
             }
+            case.progress.reportProgress("${progressPrefix}result $count/$total: ${end.result.verdict}")
+            return onResult(LegResult(legs[index].name, end.result))
         }
 
         for ((index, leg) in legs.withIndex()) {
@@ -405,7 +405,8 @@ abstract class VerificationPortfolio(
 
         withTimeoutOrNull(minOf(window, case.timeLeft())) {
             while (received < total && decided == null) {
-                receive(finished.receive())
+                received++
+                decided = receive(finished.receive(), received)
             }
         }
 
@@ -417,7 +418,8 @@ abstract class VerificationPortfolio(
 
         while (decided == null) {
             val index = finished.tryReceive().getOrNull() ?: break
-            receive(index)
+            received++
+            decided = receive(index, received)
         }
 
         val runs = legs.mapIndexed { index, leg ->
