@@ -25,7 +25,7 @@ class SemantifyrCommand @Inject constructor(
     portfoliosCommand: PortfoliosCommand,
 ) : RootCommand(
     "semantifyr",
-    "Verify OXSTS models with Semantifyr, a framework to support the declarative definition of engineering model semantics.",
+    "Verify models written in the Semantifyr Language, the language of Semantifyr, a framework to support the declarative definition of engineering model semantics.",
     listOf(
         verifyCommand,
         compileCommand,

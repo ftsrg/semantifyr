@@ -13,15 +13,15 @@
 
 A framework to support the declarative definition of engineering model semantics.
 
-Semantifyr lets you define what a modeling language means once, as a semantic library written in its own language, OXSTS, and then verify the models of that language with established model checkers. SysML v2 and Gamma are its frontends: a model of either is compiled through its semantic library to a transition system, checked by Theta, nuXmv, Spin or Uppaal, and the trace of a case comes back in the language of the model.
+Semantifyr lets you define what a modeling language means once, as a semantic library written in its own language, the Semantifyr Language, and then verify the models of that language with established model checkers. SysML v2 and Gamma are its frontends: a model of either is compiled through its semantic library to a transition system, checked by Theta, nuXmv, Spin or Uppaal, and the trace of a case comes back in the language of the model.
 
 ## Try it
 
-[Semantifyr Live](https://live.semantifyr.org) verifies SysML v2, Gamma and OXSTS models in the browser, with nothing to install.
+[Semantifyr Live](https://live.semantifyr.org) verifies SysML v2, Gamma and Semantifyr models in the browser, with nothing to install.
 
 ## Install
 
-Semantifyr has three launchers, `semantifyr` for OXSTS, `semantifyr-sysml` for SysML v2 and `semantifyr-gamma` for Gamma, each with the Theta backend inside, which runs on Linux x64, and a VS Code extension for OXSTS and Gamma. They need Java 25; `semantifyr-sysml` also needs Node.js 22. nuXmv, Spin and Uppaal are used when they are on `PATH`.
+Semantifyr has three launchers, `semantifyr` for the Semantifyr Language, `semantifyr-sysml` for SysML v2 and `semantifyr-gamma` for Gamma, each with the Theta backend inside, which runs on Linux x64, and a VS Code extension for the Semantifyr Language and Gamma. They need Java 25; `semantifyr-sysml` also needs Node.js 22. nuXmv, Spin and Uppaal are used when they are on `PATH`.
 
 No release is published yet. Until the first one, build a launcher with `./gradlew :semantifyr-cli:installDist`, `:sysml-cli:installDist` or `:gamma-cli:installDist`, and the extension with `./gradlew :semantifyr-vscode:bundleExtension`; the [website](https://semantifyr.org/learn/install/) says where each lands.
 
@@ -35,7 +35,7 @@ Each case gets a verdict and a report; `--help` lists the options, and `portfoli
 
 ## Learn
 
-The [website](https://semantifyr.org/) has the tutorials, the command line, the backends and the reference of OXSTS.
+The [website](https://semantifyr.org/) has the tutorials, the command line, the backends and the specification of the Semantifyr Language.
 
 ## Status
 

@@ -39,7 +39,7 @@ public class CompileGammaCommandHandler extends AbstractCommandHandler<String, R
 
     @Override
     public String getTitle() {
-        return "Compile Gamma to OXSTS";
+        return "Compile Gamma to the Semantifyr Language";
     }
 
     @Override

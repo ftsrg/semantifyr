@@ -246,7 +246,7 @@ class GammaFrontend @Inject private constructor(
             "Witness file does not exist: '$witnessPath'"
         }
         require(compiledModelPath.isRegularFile()) {
-            "Compiled OXSTS model does not exist: '$compiledModelPath'"
+            "Compiled Semantifyr model does not exist: '$compiledModelPath'"
         }
         val importsDirectory = GammaCompiler.importsDirectory(baseDirectory)
         val importedPaths = if (importsDirectory.isDirectory()) {

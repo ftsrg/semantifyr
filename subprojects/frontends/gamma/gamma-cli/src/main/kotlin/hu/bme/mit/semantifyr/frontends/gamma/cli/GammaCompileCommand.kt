@@ -45,7 +45,7 @@ class GammaCompileCommand(
         .help("The directory whose Gamma files, in it and below it, the model's imports resolve in; by default the Gamma files of the model's own directory, and none below it.")
 
     override fun help(context: Context): String {
-        return "Compile a Gamma model to OXSTS."
+        return "Compile a Gamma model to a Semantifyr model."
     }
 
     override suspend fun run() {

@@ -39,7 +39,7 @@ class SysMLCompileCommand @Inject constructor(
         .help("Output file.")
 
     override fun help(context: Context): String {
-        return "Compile a SysML v2 model to OXSTS."
+        return "Compile a SysML v2 model to a Semantifyr model."
     }
 
     override suspend fun run() {

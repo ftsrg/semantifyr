@@ -26,7 +26,7 @@ class ListCommand @Inject constructor(
     private val caseSpecificationOptions by VerificationCaseSpecificationOptionGroup(verificationCaseDiscoverer)
 
     override fun help(context: Context): String {
-        return "List the cases of an OXSTS model."
+        return "List the cases of a Semantifyr model."
     }
 
     override suspend fun run() {

@@ -49,7 +49,7 @@ class SysMLv2Compiler(
 
         val entry = cacheEntry(sourcePath, outputPath.extension)
         if (Files.isRegularFile(entry)) {
-            logger.info { "Reusing cached OXSTS '$entry' for SysMLv2 source '$sourcePath'" }
+            logger.info { "Reusing the cached Semantifyr model '$entry' for SysMLv2 source '$sourcePath'" }
         } else {
             compileIntoCache(sourcePath, entry)
         }
@@ -57,7 +57,7 @@ class SysMLv2Compiler(
         Files.createDirectories(outputPath.toAbsolutePath().parent)
         copyAtomically(nameMapPath(entry), nameMapPath(outputPath))
         copyAtomically(entry, outputPath)
-        logger.debug { "Copied cached OXSTS '$entry' and its name map to '$outputPath'" }
+        logger.debug { "Copied the cached Semantifyr model '$entry' and its name map to '$outputPath'" }
         return outputPath
     }
 

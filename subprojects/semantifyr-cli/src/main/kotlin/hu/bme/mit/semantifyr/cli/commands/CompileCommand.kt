@@ -54,7 +54,7 @@ class CompileCommand @Inject constructor(
         .help("The output file, or the output directory for several cases.")
 
     override fun help(context: Context): String {
-        return "Compile each case of an OXSTS model to inlined OXSTS."
+        return "Compile each case of a Semantifyr model to an inlined model."
     }
 
     override suspend fun run() {

@@ -46,7 +46,7 @@ class LogLayoutTest {
 
     @Test
     fun `a warning is one line with its word and message and nothing of the log`() {
-        assertThat(format(Level.WARN, "Skipped notes.txt, which is not an OXSTS file")).isEqualTo("warning: Skipped notes.txt, which is not an OXSTS file${System.lineSeparator()}")
+        assertThat(format(Level.WARN, "Skipped notes.txt, which is not a file of the Semantifyr Language")).isEqualTo("warning: Skipped notes.txt, which is not a file of the Semantifyr Language${System.lineSeparator()}")
     }
 
     @Test

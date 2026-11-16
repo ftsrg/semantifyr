@@ -30,7 +30,7 @@ public class CompiledOxstsGammaCommandHandler extends AbstractCommandHandler<Str
 
     @Override
     public String getTitle() {
-        return "Show compiled OXSTS";
+        return "Show the compiled Semantifyr model";
     }
 
     @Override
