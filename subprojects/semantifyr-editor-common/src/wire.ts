@@ -92,12 +92,9 @@ export interface VerificationMetrics {
     compilation?: CompilationMetrics;
 }
 
-export const ReportKind = {
-    Run: "run",
-    Recheck: "re-check",
-} as const;
-
-export type ReportKind = (typeof ReportKind)[keyof typeof ReportKind];
+export type ReportKind =
+    | "run"
+    | "re-check";
 
 export type ReportVerdict =
     | "Passed"
