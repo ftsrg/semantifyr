@@ -24,9 +24,9 @@ class ThetaCapabilityCheckerTest : ThetaTransformationTestBase() {
         annotation Note(text: string)
     """
 
-    private fun unsupported(body: String): List<String> {
+    private fun unsupported(body: String, type: Class<out ThetaCapabilityChecker> = ThetaCapabilityChecker::class.java): List<String> {
         val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors, notes)
-        return capabilityChecker().check(inlinedOxsts).map {
+        return capabilityChecker(type).check(inlinedOxsts).map {
             it.description
         }
     }
@@ -147,5 +147,29 @@ class ThetaCapabilityCheckerTest : ThetaTransformationTestBase() {
     @Test
     fun `a clock bound at the largest 32-bit integer is reported, since its saturation is one above it`() {
         assertThat(unsupportedWithClockBound(2147483647)).containsExactly("clocks bounded at the largest 32-bit integer")
+    }
+
+    @Test
+    fun `Horn solving refuses a clock test that is not closed, which the other configurations accept`() {
+        val strictTest = """
+            var elapsed : clock := 0
+            var late : bool := false
+            init {
+            }
+            tran {
+                choice {
+                    assume(elapsed > 2)
+                    late := true
+                    elapsed := 0
+                } or {
+                }
+            }
+            prop {
+                AG !late
+            }
+        """
+
+        assertThat(unsupported(strictTest, ThetaHornCapabilityChecker::class.java)).containsExactly("clock tests that are not closed")
+        assertThat(unsupported(strictTest)).isEmpty()
     }
 }

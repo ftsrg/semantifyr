@@ -39,22 +39,23 @@ export function useLanguage(live: Live): CurrentLanguage | null {
   return flavor ? { id: flavor.languageId, presentation: presentationOf(flavor.languageId) } : null
 }
 
-// the time, ticking while asked to
+// the time, read at every render so that a state changed between two ticks is not shown against the last tick
 export function useNow(intervalMs: number | null): number {
-  const [now, setNow] = useState(Date.now)
+  const [, setTicks] = useState(0)
   useEffect(() => {
     if (intervalMs === null) {
       return
     }
-    setNow(Date.now())
     const timer = setInterval(() => {
-      setNow(Date.now())
+      setTicks((ticks) => {
+        return ticks + 1
+      })
     }, intervalMs)
     return () => {
       clearInterval(timer)
     }
   }, [intervalMs])
-  return now
+  return Date.now()
 }
 
 // the file name the model is shown under, after its example

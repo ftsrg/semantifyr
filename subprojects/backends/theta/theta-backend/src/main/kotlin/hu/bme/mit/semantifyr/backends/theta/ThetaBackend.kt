@@ -13,6 +13,7 @@ import com.google.inject.assistedinject.AssistedInject
 import com.google.inject.assistedinject.FactoryModuleBuilder
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
+import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationBackend
 import hu.bme.mit.semantifyr.backend.VerificationContext
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
@@ -31,6 +32,7 @@ import hu.bme.mit.semantifyr.backends.theta.trace.ThetaLogVerdictParser
 import hu.bme.mit.semantifyr.backends.theta.trace.ThetaVerdict
 import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaArtifacts
 import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaCapabilityChecker
+import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaHornCapabilityChecker
 import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaModelTransformer
 import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.XstsModelCreator
 import hu.bme.mit.semantifyr.logging.debug
@@ -77,7 +79,8 @@ class ThetaVerificationContext @AssistedInject constructor(
     @param:Assisted private val config: ThetaConfig,
     @param:Assisted override val executor: ThetaXstsExecutor,
     @Assisted request: BackendVerificationRequest,
-    override val capabilityChecker: ThetaCapabilityChecker,
+    thetaCapabilityChecker: ThetaCapabilityChecker,
+    thetaHornCapabilityChecker: ThetaHornCapabilityChecker,
     private val thetaModelTransformer: ThetaModelTransformer,
     private val xstsModelCreator: XstsModelCreator,
     private val thetaLogVerdictParser: ThetaLogVerdictParser,
@@ -91,6 +94,12 @@ class ThetaVerificationContext @AssistedInject constructor(
     soundness = wholeDelayLowering.soundness(request.inlinedOxsts, config.soundness),
     request = request,
 ) {
+
+    override val capabilityChecker = if (config.soundness == SoundnessDirection.OverApproximating) {
+        thetaHornCapabilityChecker
+    } else {
+        thetaCapabilityChecker
+    }
 
     private val artifactManager = ThetaArtifactManager(request.artifactOutputPath)
 

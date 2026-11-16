@@ -20,7 +20,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.RangeExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.emf.ecore.EObject
 
-class ThetaCapabilityChecker @Inject constructor(
+open class ThetaCapabilityChecker @Inject constructor(
     private val thetaDomainTransformer: ThetaDomainTransformer,
     private val wholeDelayLowering: WholeDelayLowering,
 ) : BackendCapabilityChecker() {

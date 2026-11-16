@@ -25,7 +25,8 @@ class PortfoliosTest {
         assertThat(Portfolios.SmartFull.legs).contains(
             PortfolioLeg("theta:cegar-expl", SoundnessDirection.Exact),
             PortfolioLeg("theta:cegar-expl-pred-combined", SoundnessDirection.Exact),
-            PortfolioLeg("nuxmv:bmc-invar", SoundnessDirection.Exact),
+            PortfolioLeg("theta:chc", SoundnessDirection.OverApproximating),
+            PortfolioLeg("nuxmv:kinduction-invar", SoundnessDirection.Exact),
             PortfolioLeg("nuxmv:ic3-invar", SoundnessDirection.Exact),
             PortfolioLeg("spin:safe-dfs", SoundnessDirection.UnderApproximating),
             PortfolioLeg("uppaal:default", SoundnessDirection.UnderApproximating),

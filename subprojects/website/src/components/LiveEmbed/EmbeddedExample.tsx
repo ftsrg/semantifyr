@@ -12,6 +12,7 @@ import { liveEditorUrl, liveExampleUrl, normalizeBaseUrl, type LiveEditorLines, 
 import { terms } from '@semantifyr/editor-common/terms';
 import { FenceContext } from '@site/src/lib/fence';
 import { useLiveBackendUrl } from '@site/src/lib/live';
+import OpenInLiveLink from '@site/src/theme/CodeBlock/OpenInLiveLink';
 import controlStyles from '@site/src/theme/CodeBlock/Buttons/styles.module.css';
 import styles from './styles.module.css';
 
@@ -27,7 +28,10 @@ export interface EmbeddedExampleProps {
   open?: boolean;
 }
 
-type Phase = 'closed' | 'loading' | 'open';
+type Phase = 'closed' | 'loading' | 'unanswered' | 'open';
+
+// above the 7 to 10 seconds a desktop takes; a phone may take 90, so the frame keeps loading after it
+export const UNANSWERED_AFTER_MILLISECONDS = 15_000;
 
 interface FrameProps {
   url: string;
@@ -102,6 +106,20 @@ export function EmbeddedExample({ model, example, shown, lines, language, librar
     };
   }, [opened, liveBackendUrl, language, example, library, view, colorMode, model, first, last]);
 
+  useEffect(() => {
+    if (phase !== 'loading') {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setPhase((current) => {
+        return current === 'loading' ? 'unanswered' : current;
+      });
+    }, UNANSWERED_AFTER_MILLISECONDS);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [phase]);
+
   // the block comes back where the editor's top was, and the focus to its control
   useLayoutEffect(() => {
     if (phase !== 'closed' || closedAt.current === null || !block.current) {
@@ -114,7 +132,7 @@ export function EmbeddedExample({ model, example, shown, lines, language, librar
 
   const shownByLive = useCallback(() => {
     setPhase((current) => {
-      return current === 'loading' ? 'open' : current;
+      return current === 'loading' || current === 'unanswered' ? 'open' : current;
     });
   }, []);
 
@@ -139,15 +157,22 @@ export function EmbeddedExample({ model, example, shown, lines, language, librar
             Open
           </button>
         )
-        : phase === 'loading' ? <span className={styles.loadingLabel} role="status">Opening the editor</span> : null,
+        : phase === 'open'
+          ? null
+          : (
+            <>
+              <span className={styles.loadingLabel} role="status">{phase === 'loading' ? 'Opening the editor' : `${terms.live.term} is not answering`}</span>
+              {phase === 'unanswered' ? <OpenInLiveLink language={language} code={model} address={address} /> : null}
+            </>
+          ),
     };
-  }, [model, address, phase]);
+  }, [model, address, phase, language]);
 
   return (
     <div ref={block} className={`${styles.embed}${phase === 'loading' ? ` ${styles.loading}` : ''}`} aria-busy={phase === 'loading'}>
       <div ref={code} hidden={phase === 'open'}>
         <FenceContext.Provider value={fence}>
-          <CodeBlock language={language === 'sysml' ? 'sysmlv2' : language} metastring={open ? 'open' : ''}>
+          <CodeBlock language={language === 'sysml' ? 'sysmlv2' : language} metastring={open && phase !== 'unanswered' ? 'open' : ''}>
             {shown}
           </CodeBlock>
         </FenceContext.Provider>

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.portfolios
+package hu.bme.mit.semantifyr.verifier.portfolio
 
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendConfig
@@ -12,7 +12,6 @@ import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationBackend
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
-import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 
 class PortfolioTask<T : BackendConfig>(
     private val backend: VerificationBackend<T>,

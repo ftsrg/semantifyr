@@ -387,12 +387,12 @@ describe('Verify all', () => {
     const status = page.locator('[data-testid=status-message]')
     await expect.poll(async () => {
       return status.innerText()
-    }).toBe('Initializing the language server of the Semantifyr Language')
+    }).toBe('Initializing the Semantifyr language server')
 
     await results(page).row(BARRIER).getByRole('button', { name: `Run ${BARRIER}` }).click()
     await expect.poll(async () => {
       return status.innerText()
-    }).toBe(`Verify ${BARRIER} waits: initializing the language server of the Semantifyr Language`)
+    }).toBe(`Verify ${BARRIER} waits: initializing the Semantifyr language server`)
     expect(await rowStates(page)).toEqual(['queued', 'not-run'])
     diagnostics.open()
 
