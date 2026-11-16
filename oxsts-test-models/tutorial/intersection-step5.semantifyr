@@ -1,0 +1,60 @@
+/**
+ * Two traffic lights at an intersection, modelled in one class with a color for each.
+ * Each light has a guard on its change to green.
+ */
+
+package example::trafficlight::intersection::step5
+
+enum LightColor {
+    Red,
+    Yellow,
+    Green,
+}
+
+class Intersection {
+    var north: LightColor := LightColor::Red
+    var east: LightColor := LightColor::Red
+
+    redefine tran {
+        choice {
+            assume(north == LightColor::Red && east != LightColor::Green)
+            north := LightColor::Green
+        } or {
+            assume(north == LightColor::Green)
+            north := LightColor::Yellow
+        } or {
+            assume(north == LightColor::Yellow)
+            north := LightColor::Red
+        } or {
+            assume(east == LightColor::Red && north != LightColor::Green)
+            east := LightColor::Green
+        } or {
+            assume(east == LightColor::Green)
+            east := LightColor::Yellow
+        } or {
+            assume(east == LightColor::Yellow)
+            east := LightColor::Red
+        }
+    }
+}
+
+@VerificationCase
+class EastCanTurnGreen : Intersection {
+    prop {
+        return EF (east == LightColor::Green)
+    }
+}
+
+@VerificationCase
+class NeverBothGreen : Intersection {
+    prop {
+        return AG !(north == LightColor::Green && east == LightColor::Green)
+    }
+}
+
+@VerificationCase
+class NorthGreenOnlyWhileEastRed : Intersection {
+    prop {
+        return AG (north != LightColor::Green || east == LightColor::Red)
+    }
+}

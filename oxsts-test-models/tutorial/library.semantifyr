@@ -1,6 +1,6 @@
 /**
- * A traffic light and a pedestrian light at a crossing, both built on one small statechart library.
- * The library says once how a statechart steps, and each light only lists its states and transitions.
+ * A traffic light and a pedestrian light written as data on a small statechart library of states and transitions.
+ * Two traffic lights meet at an intersection, and a traffic light and a pedestrian light at a crossing.
  */
 
 package example::trafficlight::library
@@ -21,13 +21,9 @@ class Transition {
     refers from: State
     refers to: State
 
-    prop isEnabled(): bool {
-        return from.isActive()
-    }
-
     @Trace
     redefine tran {
-        assume(isEnabled())
+        assume(from.isActive())
         inline to.activate()
     }
 }
@@ -37,12 +33,6 @@ class Statechart {
     contains transitions: Transition[0..*]
 
     var activeState: states[0..1] := nothing
-
-    redefine tran {
-        inline for choice (transition in transitions) {
-            inline transition.main()
-        }
-    }
 }
 
 class TrafficLight : Statechart {
@@ -66,6 +56,16 @@ class TrafficLight : Statechart {
     redefine init {
         inline red.activate()
     }
+
+    redefine tran {
+        choice {
+            inline redToGreen.main()
+        } or {
+            inline greenToYellow.main()
+        } or {
+            inline yellowToRed.main()
+        }
+    }
 }
 
 class PedestrianLight : Statechart {
@@ -83,6 +83,34 @@ class PedestrianLight : Statechart {
 
     redefine init {
         inline stop.activate()
+    }
+
+    redefine tran {
+        choice {
+            inline stopToWalk.main()
+        } or {
+            inline walkToStop.main()
+        }
+    }
+}
+
+class Intersection {
+    contains north: TrafficLight
+    contains east: TrafficLight
+
+    redefine init {
+        inline north.init()
+        inline east.init()
+    }
+
+    redefine tran {
+        choice {
+            assume(east.red.isActive())
+            inline north.main()
+        } or {
+            assume(north.red.isActive())
+            inline east.main()
+        }
     }
 }
 
@@ -107,52 +135,43 @@ class Crossing {
 }
 
 @VerificationCase
-class LightCanTurnYellow {
-    contains light: TrafficLight
-
-    redefine init {
-        inline light.init()
-    }
-
-    redefine tran {
-        inline light.main()
-    }
-
+class LightCanTurnYellow : TrafficLight {
     prop {
-        return EF light.yellow.isActive()
+        return EF yellow.isActive()
     }
 }
 
 @VerificationCase
-class PedestriansCanWalk {
-    contains crossing: Crossing
-
-    redefine init {
-        inline crossing.init()
-    }
-
-    redefine tran {
-        inline crossing.main()
-    }
-
+class EastCanTurnGreen : Intersection {
     prop {
-        return EF crossing.pedestrians.walk.isActive()
+        return EF east.green.isActive()
     }
 }
 
 @VerificationCase
-class WalkOnlyWhileRed {
-    contains crossing: Crossing
-
-    redefine init {
-        inline crossing.init()
-    }
-
-    redefine tran {
-        inline crossing.main()
-    }
-
+class NeverBothGreen : Intersection {
     prop {
-        return AG (!crossing.pedestrians.walk.isActive() || crossing.light.red.isActive())
+        return AG !(north.green.isActive() && east.green.isActive())
+    }
+}
+
+@VerificationCase
+class NorthGreenOnlyWhileEastRed : Intersection {
+    prop {
+        return AG (!north.green.isActive() || east.red.isActive())
+    }
+}
+
+@VerificationCase
+class PedestriansCanWalk : Crossing {
+    prop {
+        return EF pedestrians.walk.isActive()
+    }
+}
+
+@VerificationCase
+class WalkOnlyWhileRed : Crossing {
+    prop {
+        return AG (!pedestrians.walk.isActive() || light.red.isActive())
     }
 }

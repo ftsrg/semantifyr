@@ -1,5 +1,5 @@
 /**
- * A traffic light built on a small library of states.
+ * A traffic light written as data on a small statechart library of states and transitions.
  */
 
 package example::trafficlight::library::step1
@@ -16,8 +16,20 @@ class State {
     }
 }
 
+class Transition {
+    refers from: State
+    refers to: State
+
+    @Trace
+    redefine tran {
+        assume(from.isActive())
+        inline to.activate()
+    }
+}
+
 class Statechart {
     contains states: State[0..*] opposite parent
+    contains transitions: Transition[0..*]
 
     var activeState: states[0..1] := nothing
 }
@@ -27,37 +39,37 @@ class TrafficLight : Statechart {
     contains yellow: State subsets states
     contains green: State subsets states
 
+    contains redToGreen: Transition subsets transitions {
+        redefine refers from: State[1] = red
+        redefine refers to: State[1] = green
+    }
+    contains greenToYellow: Transition subsets transitions {
+        redefine refers from: State[1] = green
+        redefine refers to: State[1] = yellow
+    }
+    contains yellowToRed: Transition subsets transitions {
+        redefine refers from: State[1] = yellow
+        redefine refers to: State[1] = red
+    }
+
     redefine init {
         inline red.activate()
     }
 
     redefine tran {
         choice {
-            assume(red.isActive())
-            inline green.activate()
+            inline redToGreen.main()
         } or {
-            assume(green.isActive())
-            inline yellow.activate()
+            inline greenToYellow.main()
         } or {
-            assume(yellow.isActive())
-            inline red.activate()
+            inline yellowToRed.main()
         }
     }
 }
 
 @VerificationCase
-class LightCanTurnYellow {
-    contains light: TrafficLight
-
-    redefine init {
-        inline light.init()
-    }
-
-    redefine tran {
-        inline light.main()
-    }
-
+class LightCanTurnYellow : TrafficLight {
     prop {
-        return EF light.yellow.isActive()
+        return EF yellow.isActive()
     }
 }

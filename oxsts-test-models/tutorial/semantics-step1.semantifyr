@@ -1,0 +1,165 @@
+/**
+ * A traffic light and a pedestrian light written as data on a small statechart library,
+ * whose rule runs every transition of a statechart in each step, one after the other.
+ */
+
+package example::trafficlight::semantics::step1
+
+class State {
+    container parent: Statechart opposite states
+
+    prop isActive(): bool {
+        return parent.activeState == self
+    }
+
+    tran activate() {
+        parent.activeState := self
+    }
+}
+
+class Transition {
+    refers from: State
+    refers to: State
+
+    @Trace
+    redefine tran {
+        assume(from.isActive())
+        inline to.activate()
+    }
+}
+
+class Statechart {
+    contains states: State[0..*] opposite parent
+    contains transitions: Transition[0..*]
+
+    var activeState: states[0..1] := nothing
+
+    redefine tran {
+        inline for (transition in transitions) {
+            inline transition.main()
+        }
+    }
+}
+
+class TrafficLight : Statechart {
+    contains red: State subsets states
+    contains yellow: State subsets states
+    contains green: State subsets states
+
+    contains redToGreen: Transition subsets transitions {
+        redefine refers from: State[1] = red
+        redefine refers to: State[1] = green
+    }
+    contains greenToYellow: Transition subsets transitions {
+        redefine refers from: State[1] = green
+        redefine refers to: State[1] = yellow
+    }
+    contains yellowToRed: Transition subsets transitions {
+        redefine refers from: State[1] = yellow
+        redefine refers to: State[1] = red
+    }
+
+    redefine init {
+        inline red.activate()
+    }
+}
+
+class PedestrianLight : Statechart {
+    contains stop: State subsets states
+    contains walk: State subsets states
+
+    contains stopToWalk: Transition subsets transitions {
+        redefine refers from: State[1] = stop
+        redefine refers to: State[1] = walk
+    }
+    contains walkToStop: Transition subsets transitions {
+        redefine refers from: State[1] = walk
+        redefine refers to: State[1] = stop
+    }
+
+    redefine init {
+        inline stop.activate()
+    }
+}
+
+class Intersection {
+    contains north: TrafficLight
+    contains east: TrafficLight
+
+    redefine init {
+        inline north.init()
+        inline east.init()
+    }
+
+    redefine tran {
+        choice {
+            assume(east.red.isActive())
+            inline north.main()
+        } or {
+            assume(north.red.isActive())
+            inline east.main()
+        }
+    }
+}
+
+class Crossing {
+    contains light: TrafficLight
+    contains pedestrians: PedestrianLight
+
+    redefine init {
+        inline light.init()
+        inline pedestrians.init()
+    }
+
+    redefine tran {
+        choice {
+            assume(pedestrians.stop.isActive())
+            inline light.main()
+        } or {
+            assume(light.red.isActive())
+            inline pedestrians.main()
+        }
+    }
+}
+
+@VerificationCase
+class LightCanTurnYellow : TrafficLight {
+    prop {
+        return EF yellow.isActive()
+    }
+}
+
+@VerificationCase
+class EastCanTurnGreen : Intersection {
+    prop {
+        return EF east.green.isActive()
+    }
+}
+
+@VerificationCase
+class NeverBothGreen : Intersection {
+    prop {
+        return AG !(north.green.isActive() && east.green.isActive())
+    }
+}
+
+@VerificationCase
+class NorthGreenOnlyWhileEastRed : Intersection {
+    prop {
+        return AG (!north.green.isActive() || east.red.isActive())
+    }
+}
+
+@VerificationCase
+class PedestriansCanWalk : Crossing {
+    prop {
+        return EF pedestrians.walk.isActive()
+    }
+}
+
+@VerificationCase
+class WalkOnlyWhileRed : Crossing {
+    prop {
+        return AG (!pedestrians.walk.isActive() || light.red.isActive())
+    }
+}

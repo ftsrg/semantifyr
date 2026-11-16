@@ -1,5 +1,5 @@
 /**
- * A traffic light built on a small statechart library, whose transitions are data.
+ * A traffic light and a pedestrian light, both written as data on a small statechart library of states and transitions.
  */
 
 package example::trafficlight::library::step2
@@ -20,13 +20,9 @@ class Transition {
     refers from: State
     refers to: State
 
-    prop isEnabled(): bool {
-        return from.isActive()
-    }
-
     @Trace
     redefine tran {
-        assume(isEnabled())
+        assume(from.isActive())
         inline to.activate()
     }
 }
@@ -36,12 +32,6 @@ class Statechart {
     contains transitions: Transition[0..*]
 
     var activeState: states[0..1] := nothing
-
-    redefine tran {
-        inline for choice (transition in transitions) {
-            inline transition.main()
-        }
-    }
 }
 
 class TrafficLight : Statechart {
@@ -65,21 +55,54 @@ class TrafficLight : Statechart {
     redefine init {
         inline red.activate()
     }
+
+    redefine tran {
+        choice {
+            inline redToGreen.main()
+        } or {
+            inline greenToYellow.main()
+        } or {
+            inline yellowToRed.main()
+        }
+    }
 }
 
-@VerificationCase
-class LightCanTurnYellow {
-    contains light: TrafficLight
+class PedestrianLight : Statechart {
+    contains stop: State subsets states
+    contains walk: State subsets states
+
+    contains stopToWalk: Transition subsets transitions {
+        redefine refers from: State[1] = stop
+        redefine refers to: State[1] = walk
+    }
+    contains walkToStop: Transition subsets transitions {
+        redefine refers from: State[1] = walk
+        redefine refers to: State[1] = stop
+    }
 
     redefine init {
-        inline light.init()
+        inline stop.activate()
     }
 
     redefine tran {
-        inline light.main()
+        choice {
+            inline stopToWalk.main()
+        } or {
+            inline walkToStop.main()
+        }
     }
+}
 
+@VerificationCase
+class LightCanTurnYellow : TrafficLight {
     prop {
-        return EF light.yellow.isActive()
+        return EF yellow.isActive()
+    }
+}
+
+@VerificationCase
+class PedestriansCanWalk : PedestrianLight {
+    prop {
+        return EF walk.isActive()
     }
 }

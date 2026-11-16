@@ -142,52 +142,60 @@
       ]
     },
     {
-      "id": "one-light",
-      "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/one-light.semantifyr",
-      "label": "Lesson 1: One light",
-      "reason": "The model the first lesson ends in: one traffic light that cycles through its colors, and the question whether it can turn yellow.",
-      "page": "learn/language/lessons/one-light",
-      "cases": [
-        "TrafficLight"
-      ]
-    },
-    {
       "id": "intersection",
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/intersection.semantifyr",
-      "label": "Lesson 2: Intersection",
-      "reason": "The model the second lesson ends in: two lights that take turns, a requirement it took a second case to state, and the trace that found the gap.",
+      "label": "Lesson 1: Intersection",
+      "reason": "The model the first lesson ends in: two traffic lights modelled directly in one class, the requirements they must meet, and the guard that a trace showed to be too weak.",
       "page": "learn/language/lessons/intersection",
       "cases": [
-        "NeverBothGreen",
         "EastCanTurnGreen",
+        "NeverBothGreen",
         "NorthGreenOnlyWhileEastRed"
-      ]
-    },
-    {
-      "id": "green-time",
-      "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/green-time.semantifyr",
-      "label": "Lesson 3: Green time",
-      "reason": "The model the third lesson ends in: an integer counter that holds a light green, and a case that counts the steps on its own.",
-      "page": "learn/language/lessons/green-time",
-      "cases": [
-        "NorthCanTurnYellow",
-        "NorthGreenForThreeSteps"
       ]
     },
     {
       "id": "library",
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/library.semantifyr",
-      "label": "Lesson 4: Library",
-      "reason": "The model the fourth lesson ends in: a small statechart library that a traffic light and a pedestrian light are both built on.",
+      "label": "Lesson 2: Library",
+      "reason": "The model the second lesson ends in: a small statechart library of states and transitions, and a traffic light and a pedestrian light written as data on it.",
       "page": "learn/language/lessons/library",
       "cases": [
         "LightCanTurnYellow",
+        "EastCanTurnGreen",
+        "NeverBothGreen",
+        "NorthGreenOnlyWhileEastRed",
         "PedestriansCanWalk",
         "WalkOnlyWhileRed"
+      ]
+    },
+    {
+      "id": "semantics",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/semantics.semantifyr",
+      "label": "Lesson 3: Semantics",
+      "reason": "The model of the third lesson: the lights of the second lesson as data alone, on a library that says once which transition of a statechart fires in a step.",
+      "page": "learn/language/lessons/semantics",
+      "cases": [
+        "LightCanTurnYellow",
+        "EastCanTurnGreen",
+        "NeverBothGreen",
+        "NorthGreenOnlyWhileEastRed",
+        "PedestriansCanWalk",
+        "WalkOnlyWhileRed"
+      ]
+    },
+    {
+      "id": "green-time",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/green-time.semantifyr",
+      "label": "Lesson 4: Green time",
+      "reason": "The model the fourth lesson ends in: an integer counter that holds a light green, and a case that counts the steps on its own.",
+      "page": "learn/language/lessons/green-time",
+      "cases": [
+        "NorthCanTurnYellow",
+        "NorthGreenForThreeSteps"
       ]
     },
     {
@@ -211,11 +219,10 @@
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/intersection-step1.semantifyr",
       "label": "The Intersection, step 1",
-      "reason": "A step of lesson 2, run from its page.",
+      "reason": "A step of lesson 1, run from its page.",
       "page": "learn/language/lessons/intersection",
       "cases": [
-        "NeverBothGreen",
-        "EastCanTurnGreen"
+        "LightCanTurnGreen"
       ],
       "hidden": true
     },
@@ -224,37 +231,51 @@
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/intersection-step2.semantifyr",
       "label": "The Intersection, step 2",
-      "reason": "A step of lesson 2, run from its page.",
+      "reason": "A step of lesson 1, run from its page.",
       "page": "learn/language/lessons/intersection",
       "cases": [
-        "NeverBothGreen",
+        "LightCanTurnGreen",
+        "LightCanTurnYellow"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "intersection-step3",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/intersection-step3.semantifyr",
+      "label": "The Intersection, step 3",
+      "reason": "A step of lesson 1, run from its page.",
+      "page": "learn/language/lessons/intersection",
+      "cases": [
         "EastCanTurnGreen",
+        "NeverBothGreen"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "intersection-step4",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/intersection-step4.semantifyr",
+      "label": "The Intersection, step 4",
+      "reason": "A step of lesson 1, run from its page.",
+      "page": "learn/language/lessons/intersection",
+      "cases": [
+        "EastCanTurnGreen",
+        "NeverBothGreen"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "intersection-step5",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/intersection-step5.semantifyr",
+      "label": "The Intersection, step 5",
+      "reason": "A step of lesson 1, run from its page.",
+      "page": "learn/language/lessons/intersection",
+      "cases": [
+        "EastCanTurnGreen",
+        "NeverBothGreen",
         "NorthGreenOnlyWhileEastRed"
-      ],
-      "hidden": true
-    },
-    {
-      "id": "green-time-step1",
-      "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/green-time-step1.semantifyr",
-      "label": "The Minimum Green Time, step 1",
-      "reason": "A step of lesson 3, run from its page.",
-      "page": "learn/language/lessons/green-time",
-      "cases": [
-        "NorthCanTurnYellow"
-      ],
-      "hidden": true
-    },
-    {
-      "id": "green-time-step2",
-      "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/green-time-step2.semantifyr",
-      "label": "The Minimum Green Time, step 2",
-      "reason": "A step of lesson 3, run from its page.",
-      "page": "learn/language/lessons/green-time",
-      "cases": [
-        "NorthCanTurnYellow",
-        "NorthGreenForThreeSteps"
       ],
       "hidden": true
     },
@@ -263,7 +284,7 @@
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/library-step1.semantifyr",
       "label": "A Statechart Library, step 1",
-      "reason": "A step of lesson 4, run from its page.",
+      "reason": "A step of lesson 2, run from its page.",
       "page": "learn/language/lessons/library",
       "cases": [
         "LightCanTurnYellow"
@@ -275,10 +296,69 @@
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/library-step2.semantifyr",
       "label": "A Statechart Library, step 2",
-      "reason": "A step of lesson 4, run from its page.",
+      "reason": "A step of lesson 2, run from its page.",
       "page": "learn/language/lessons/library",
       "cases": [
-        "LightCanTurnYellow"
+        "LightCanTurnYellow",
+        "PedestriansCanWalk"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "library-step3",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/library-step3.semantifyr",
+      "label": "A Statechart Library, step 3",
+      "reason": "A step of lesson 2, run from its page.",
+      "page": "learn/language/lessons/library",
+      "cases": [
+        "LightCanTurnYellow",
+        "PedestriansCanWalk",
+        "EastCanTurnGreen",
+        "NeverBothGreen",
+        "NorthGreenOnlyWhileEastRed"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "semantics-step1",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/semantics-step1.semantifyr",
+      "label": "Changing the Semantics, step 1",
+      "reason": "A step of lesson 3, run from its page.",
+      "page": "learn/language/lessons/semantics",
+      "cases": [
+        "LightCanTurnYellow",
+        "EastCanTurnGreen",
+        "NeverBothGreen",
+        "NorthGreenOnlyWhileEastRed",
+        "PedestriansCanWalk",
+        "WalkOnlyWhileRed"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "green-time-step1",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/green-time-step1.semantifyr",
+      "label": "The Minimum Green Time, step 1",
+      "reason": "A step of lesson 4, run from its page.",
+      "page": "learn/language/lessons/green-time",
+      "cases": [
+        "NorthCanTurnYellow"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "green-time-step2",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/green-time-step2.semantifyr",
+      "label": "The Minimum Green Time, step 2",
+      "reason": "A step of lesson 4, run from its page.",
+      "page": "learn/language/lessons/green-time",
+      "cases": [
+        "NorthCanTurnYellow",
+        "NorthGreenForThreeSteps"
       ],
       "hidden": true
     },

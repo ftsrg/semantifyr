@@ -1,101 +1,232 @@
 ---
 title: 'The Intersection'
-sidebar_position: 2
-description: The second lesson of the Semantifyr Language. Put two traffic lights at an intersection and verify that they are never green together, that they still switch, and that a light turns green only while the other is red.
+sidebar_position: 1
+description: The first lesson of the Semantifyr Language. Model a traffic light and an intersection of two directly, require what must always hold, and repair the model from the trace of its failure.
 ---
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
 import CaseVerdict from '@site/src/components/CaseVerdict';
 import step1 from '@served-examples/oxsts/intersection-step1';
 import step2 from '@served-examples/oxsts/intersection-step2';
+import step3 from '@served-examples/oxsts/intersection-step3';
+import step4 from '@served-examples/oxsts/intersection-step4';
+import step5 from '@served-examples/oxsts/intersection-step5';
 import intersection from '@served-examples/oxsts/intersection';
 
 # The Intersection
 
-**What you verify:** that two lights at an intersection are never green together, that they still switch, and that a light turns green only while the other is red.
+**What you verify:** that two traffic lights at an intersection are never green together, and a second requirement that the obvious design breaks.
 
-This lesson starts from the light of [One Light](one-light.md).
+A browser is enough for this lesson. Each model on the page opens in Live, the editor and verifier of Semantifyr, in the place of its code block. From the first task on you build each step yourself, in the editor you have open; a solution under each task opens the step as it is meant to be.
 
-## Two Lights
+## One Light
 
-The light is no longer a case itself. It gains a named [property](../specification/classes-and-behaviour/properties.md), `isColor`, which tells whether the light shows a color:
+A traffic light that switches between red and green. Every file of the language starts with its package, and this one declares the colors as an [enumeration](../specification/foundations/datatypes.md#enumerations):
+
+<LiveEmbed example={step1} show={['package', 'LightColor']} />
+
+The light is a [class](../specification/classes-and-behaviour/classes.md). Its state is one [variable](../specification/classes-and-behaviour/variables.md), `color`, which starts at `LightColor::Red`. Its behavior is its main transition, which it writes as `redefine tran`, since every class inherits an empty one:
 
 <LiveEmbed example={step1} show={['TrafficLight']} />
 
-The parameter `color` has the name of the variable, so the body reaches the variable as `self.color`; [`self`](../specification/foundations/expressions.md#self) is the light the property is asked of. Ignore `@Trace` until the trace below.
+The main transition is a [`choice`](../specification/classes-and-behaviour/operations.md#choice) of two branches. Each branch starts with an [`assume`](../specification/classes-and-behaviour/operations.md#assumption): a branch whose assumption does not hold in the current state cannot be taken. The assignment `:=` then sets the next color.
 
-The intersection [contains](../specification/classes-and-behaviour/features.md#contains) two lights, `north` and `east`, each a light of its own. In each step one of them switches: `inline north.main()` runs north's main transition in the intersection's step, an [inline call](../specification/classes-and-behaviour/inline-operations.md#inline-call). The main transitions of contained lights run only where a main transition calls them; the verifier runs the case's alone.
+This is how a model runs, the one rule everything else builds on:
 
-Two lights must not be green together, so a light switches only while the other is not green:
+- The model starts in the state its variables' initial values give.
+- Every step runs the main transition once. A `choice` takes any branch that can be taken, and the verifier looks at every one of them.
+- A step in which no branch can be taken does not happen.
 
-<LiveEmbed example={step1} show={['Intersection']} />
+## A Question
 
-## Never Both Green
+A question about the light is a verification case:
 
-The first case contains an intersection, steps it, and asks with [`AG`](../specification/foundations/expressions.md#temporal-operators), "always globally", whether the two lights are never green at the same time, in every state of every execution. The second asks whether east can turn green at all:
+<LiveEmbed example={step1} show={['LightCanTurnGreen']} />
 
-<LiveEmbed example={step1} show={['NeverBothGreen', 'EastCanTurnGreen']} />
+`@VerificationCase` marks a class the verifier checks. `LightCanTurnGreen : TrafficLight` [extends](../specification/classes-and-behaviour/classes.md#inheritance) the light, so the case is the light with a question added: the [property](../specification/classes-and-behaviour/properties.md#the-verification-property) at its bottom. [`EF`](../specification/foundations/expressions.md#temporal-operators), "exists finally", asks whether some execution reaches a state where the expression holds: can the light ever be green?
 
-A model that never moves would answer the first question just as well as a correct one. The second makes sure the lights still switch.
-
-Predict both verdicts, then press **Open** and **Verify all**:
+Press **Open** in the corner of the code block above. The editor opens in its place with the model, and under it a line for the case. Press **Verify all**. The line shows that the case is running, then its verdict:
 
 <details>
-<summary>The verdicts Live shows</summary>
+<summary>The verdict Live shows</summary>
 
-- <CaseVerdict example={step1} name="NeverBothGreen" />
-- <CaseVerdict example={step1} name="EastCanTurnGreen" />
+- <CaseVerdict example={step1} name="LightCanTurnGreen" />
 
 </details>
 
-A [trace](../../frontends/index.mdx) is an execution that shows a case's answer: for an `EF` case one that reaches what it asks for, for an `AG` case one that breaks it. Where no such execution exists, there is no trace. Open the trace of `EastCanTurnGreen`. `@Trace` on the light's main transition fills the *Calls* view: each step names the light that switched, `root.intersection.north` or `root.intersection.east`, beside the colors in *Steps*.
+Once the run ends, the trace of the case opens below its line: the execution the verifier found. Its *Steps* view lists the state at the start and what each step changed. A state, a step, and a trace made of them: that is all a verifier sees of a model.
+
+The editor checks the model as you type: misspell a color and a red underline names the problem, and `Ctrl+Space` offers what can be written where the cursor is. [Try in the Browser](../../start/live/index.md) lists every control of the editor.
+
+## Yellow
+
+Real traffic lights warn before they turn red. Change the light in the editor you have open:
+
+- `Yellow` is a color of the light.
+- A green light turns yellow, and a yellow light turns red.
+- A second case, `LightCanTurnYellow`, asks whether the light can ever be yellow.
+
+Verify all and compare:
+
+<details>
+<summary>The verdicts to expect</summary>
+
+- <CaseVerdict example={step2} name="LightCanTurnGreen" />
+- <CaseVerdict example={step2} name="LightCanTurnYellow" />
+
+</details>
+
+In which step is the light first yellow? Then leave out the branch from yellow to red and verify again: why does `LightCanTurnYellow` answer as it does?
+
+<details>
+<summary>Solution</summary>
+
+<LiveEmbed example={step2} />
+
+</details>
+
+## Always
+
+`EF` asks for one execution. A requirement asks about all of them: [`AG`](../specification/foundations/expressions.md#temporal-operators), "always globally", asks whether the expression holds in every state of every execution. This case requires that the light is never yellow:
+
+```oxsts
+// hide-start
+package example::lessons::intersection::always
+
+enum LightColor {
+    Red,
+    Yellow,
+    Green,
+}
+
+class TrafficLight {
+    var color: LightColor := LightColor::Red
+
+    redefine tran {
+        choice {
+            assume(color == LightColor::Red)
+            color := LightColor::Green
+        } or {
+            assume(color == LightColor::Green)
+            color := LightColor::Yellow
+        } or {
+            assume(color == LightColor::Yellow)
+            color := LightColor::Red
+        }
+    }
+}
+
+// hide-end
+@VerificationCase
+class LightIsNeverYellow : TrafficLight {
+    prop {
+        return AG !(color == LightColor::Yellow)
+    }
+}
+```
+
+`!` is not, `&&` and `||` are and and or, and `!=` is not equal ([expressions](../specification/foundations/expressions.md#boolean-operators)). Add the case to the model you have open and verify it. The trace of an `AG` case is an execution that breaks it, as the trace of an `EF` case is one that reaches what it asks for. Compare the trace of `LightIsNeverYellow` with the trace of `LightCanTurnYellow`.
+
+## Two Lights
+
+At an intersection a north light and an east light share the crossing. Model it as you modelled the light, in one class:
+
+- A class `Intersection` replaces the light. It has two color variables, `north` and `east`, both red at the start.
+- In each step one of the two lights changes its color, in the cycle of the light.
+- A case `EastCanTurnGreen` asks whether east can turn green.
+- A case `NeverBothGreen` requires that north and east are never green together.
+
+Predict both verdicts, then verify:
+
+<details>
+<summary>The verdicts to expect</summary>
+
+- <CaseVerdict example={step3} name="EastCanTurnGreen" />
+- <CaseVerdict example={step3} name="NeverBothGreen" />
+
+</details>
+
+Read the trace of `NeverBothGreen` step by step. What in the model would have had to stop its last step?
+
+<details>
+<summary>Solution</summary>
+
+<LiveEmbed example={step3} />
+
+</details>
+
+## A Guard
+
+Make the intersection safe. Change only the branches in which a light turns green:
+
+- `NeverBothGreen` passes.
+- `EastCanTurnGreen` still passes.
+
+<details>
+<summary>The verdicts to expect</summary>
+
+- <CaseVerdict example={step4} name="EastCanTurnGreen" />
+- <CaseVerdict example={step4} name="NeverBothGreen" />
+
+</details>
+
+A guard that never lets a light turn green would make `NeverBothGreen` pass too. Which case tells you that your guard is not one of those?
+
+<details>
+<summary>Solution</summary>
+
+<LiveEmbed example={step4} />
+
+</details>
 
 ## A Second Requirement
 
-At a real intersection a light turns green only once the crossing traffic has stopped, that is, while the other light is red. Write that down as a case, for north:
+At a real intersection a light turns green only once the crossing traffic has stopped, that is, while the other light is red. Write it down for north:
 
-<LiveEmbed example={step2} show={['NorthGreenOnlyWhileEastRed']} />
+- A case `NorthGreenOnlyWhileEastRed` requires that north is green only while east is red. "If a, then b" is written `!a || b`.
 
-`!a || b` reads "if a, then b". Does the guard of the intersection make it hold? Decide, then run the step:
+Does your guard make it hold? Decide, then verify:
 
 <details>
-<summary>The verdicts Live shows</summary>
+<summary>The verdicts to expect</summary>
 
-- <CaseVerdict example={step2} name="NeverBothGreen" />
-- <CaseVerdict example={step2} name="EastCanTurnGreen" />
-- <CaseVerdict example={step2} name="NorthGreenOnlyWhileEastRed" />
+- <CaseVerdict example={step5} name="EastCanTurnGreen" />
+- <CaseVerdict example={step5} name="NeverBothGreen" />
+- <CaseVerdict example={step5} name="NorthGreenOnlyWhileEastRed" />
 
 </details>
 
-## Reading the Trace
+These are the verdicts of the solution's guard; if yours gives another verdict, open the solution and verify its guard. Read the trace of `NorthGreenOnlyWhileEastRed` to its last state: what color is east, and which step let north turn green?
 
-The trace of an `AG` case is an execution that breaks it. Open the trace of `NorthGreenOnlyWhileEastRed` and read *Steps* to its last state.
+<details>
+<summary>Solution</summary>
 
-In its last state north is green while east is yellow. Going back through the steps: east turned yellow, and from then on north was free to switch, since its guard waits only while east is green; north turned green before east turned red. The guard keeps the lights from being green together, and nothing more: a light may turn green while the other is still yellow, and no case asked about it until now.
+<LiveEmbed example={step5} />
+
+</details>
 
 ## The Fix
 
-A light switches only while the other is red:
-
-<LiveEmbed example={intersection} show={['Intersection']} />
-
-Verify the fixed model with its three cases:
+The problem is in the guard. Find and fix it.
 
 <details>
-<summary>The verdicts Live shows</summary>
+<summary>The verdicts to expect</summary>
 
-- <CaseVerdict example={intersection} name="NeverBothGreen" />
 - <CaseVerdict example={intersection} name="EastCanTurnGreen" />
+- <CaseVerdict example={intersection} name="NeverBothGreen" />
 - <CaseVerdict example={intersection} name="NorthGreenOnlyWhileEastRed" />
 
 </details>
 
-`EastCanTurnGreen` still matters: a guard that stopped both lights would leave no state with two greens, or with a green beside a yellow, as well.
+Does east, too, turn green only while north is red? Write the case, and predict its verdict before you verify it.
 
-The whole model:
+<details>
+<summary>Solution</summary>
 
 <LiveEmbed example={intersection} />
 
+</details>
+
 ## What You Can Do Now
 
-You can compose parts with `contains` and inline calls, state a requirement as an `AG` case, and read a trace back into the model. The next lesson gives a light a minimum green time and counts with integers: [The Minimum Green Time](green-time.md).
+You can model a system directly in a class, ask whether a state can be reached, require that something holds in every state, read the trace of a failure back into the model and repair it. The guard that kept the lights from being green together looked right, and it took a second requirement to show what it let through. The next lesson writes once, as a small library, what a light is made of, and builds lights on it as data: [A Statechart Library](library.md).

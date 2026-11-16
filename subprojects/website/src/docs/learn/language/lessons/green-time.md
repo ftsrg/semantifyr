@@ -1,7 +1,7 @@
 ---
 title: 'The Minimum Green Time'
-sidebar_position: 3
-description: The third lesson of the Semantifyr Language. Hold a green light for at least three steps with an integer counter, and check it with a case that counts on its own.
+sidebar_position: 4
+description: The fourth lesson of the Semantifyr Language. Hold a green light for at least three steps with an integer counter, and check it with a case that counts on its own.
 ---
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
