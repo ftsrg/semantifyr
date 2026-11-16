@@ -27,7 +27,7 @@ class SysMLFifoCapacityTests {
         private val discoverer = injector.getInstance(VerificationCaseDiscoverer::class.java)
         private val verifierTestHelper = injector.getInstance(SemantifyrVerifierTestHelper::class.java)
         private val artifactRoot = SysMLv2FrontendTestHelper.testArtifactRoot(SysMLFifoCapacityTests::class.java)
-        private val fixture = Path("..", "models", "etc", "fifo_capacity.oxsts")
+        private val fixture = Path("..", "models", "etc", "fifo_capacity.semantifyr")
     }
 
     @ParameterizedTest
