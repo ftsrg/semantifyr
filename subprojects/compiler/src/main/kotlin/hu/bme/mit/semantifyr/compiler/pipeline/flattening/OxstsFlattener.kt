@@ -31,7 +31,6 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.Flattened
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.parentSequence
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.treeSequence
 import hu.bme.mit.semantifyr.logging.debug
@@ -40,8 +39,6 @@ import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.scoping.domain.DomainMemberCollectionProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.IntegerEvaluation
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
@@ -128,11 +125,7 @@ class OxstsFlattener @Inject constructor(
         val recordFields = registerRecordFields(recordFieldVariables, variableHolders, variableMappings)
 
         logger.debug { "Flattening array variables" }
-        val arraySlotVariables = arrayFlatteningPass.flattenArrays(
-            inlinedOxsts,
-            arraySizeEvaluator(instanceTree),
-            arrayDescriber(variableHolders, variableMappings, recordFields),
-        )
+        val arraySlotVariables = arrayFlatteningPass.flattenArrays(inlinedOxsts, instanceTree)
         logger.debug { "Flattened ${arraySlotVariables.size} array variable(s)" }
         if (arraySlotVariables.isNotEmpty()) {
             compilationArtifactManager.commitStep(CompilationPass.ArrayFlattening)
@@ -201,39 +194,6 @@ class OxstsFlattener @Inject constructor(
             variableMappings[instance] = instanceMappings
         }
         return inlinedOxsts.variables.size > variableCount
-    }
-
-    // the multiplicity was rewritten to the holder's path by the pull-down, so the root evaluates it on the instance
-    private fun arraySizeEvaluator(instanceTree: InstanceTree): (Expression) -> RangeEvaluation {
-        val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(instanceTree.rootInstance)
-        return { expression ->
-            when (val size = evaluator.evaluate(expression)) {
-                is IntegerEvaluation -> RangeEvaluation.of(size.value.toLong())
-                is RangeEvaluation -> size
-                else -> sourceError(expression, "The size of an array must evaluate to an integer or a range.")
-            }
-        }
-    }
-
-    private fun arrayDescriber(
-        variableHolders: Map<VariableDeclaration, Instance>,
-        variableMappings: Map<Instance, Map<VariableDeclaration, VariableDeclaration>>,
-        recordFields: Map<VariableDeclaration, RecordField>,
-    ): (VariableDeclaration) -> String {
-        return { variable ->
-            val holder = variableHolders[variable]
-            if (holder == null) {
-                "'${variable.name}'"
-            } else {
-                val originalVariable = recordFields[variable]?.recordVariable ?: variableMappings.getValue(holder).entries.single {
-                    it.value == variable
-                }.key
-                val path = holder.parentSequence().toList().asReversed().drop(1).joinToString(".") {
-                    it.domain.name
-                }
-                "'${originalVariable.name}' of instance '$path'"
-            }
-        }
     }
 
     private fun registerArraySlots(

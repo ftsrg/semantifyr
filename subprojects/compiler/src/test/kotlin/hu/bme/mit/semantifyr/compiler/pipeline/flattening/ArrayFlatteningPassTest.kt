@@ -12,6 +12,8 @@ import hu.bme.mit.semantifyr.compiler.pipeline.CompilationModule
 import hu.bme.mit.semantifyr.compiler.pipeline.CompilationRequest
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.LocalVarNames
+import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
+import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceTree
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.serializeFormatted
@@ -597,15 +599,10 @@ class ArrayFlatteningPassTest {
     private fun flattenArrays(inlined: InlinedOxsts): Map<VariableDeclaration, List<VariableDeclaration>> {
         val child = injector.createChildInjector(CompilationModule(ArtifactConfig.NONE, OptimizationConfig.NONE))
         return withCompilationScopeBlocking(CompilationRequest(inlined, temporaryDirectory)) {
-            child.getInstance(ArrayFlatteningPass::class.java).flattenArrays(
-                inlined,
-                {
-                    error("An inlined fixture has no instance to size an array on")
-                },
-                {
-                    "'${it.name}'"
-                },
-            )
+            val instanceTree = object : InstanceTree {
+                override val rootInstance = Instance(inlined.classDeclaration, parent = null, tree = this)
+            }
+            child.getInstance(ArrayFlatteningPass::class.java).flattenArrays(inlined, instanceTree)
         }
     }
 

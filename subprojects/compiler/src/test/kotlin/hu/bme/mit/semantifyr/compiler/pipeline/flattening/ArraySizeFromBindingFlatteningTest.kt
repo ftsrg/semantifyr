@@ -182,7 +182,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                     }
                 """,
             )
-        }.hasMessageContaining("'slots' of instance 'root.none' has a size of none and no storage")
+        }.hasMessageContaining("'${member("root", "none", "slots")}' has a size of none and no storage")
     }
 
     @Test
@@ -205,7 +205,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                     }
                 """,
             )
-        }.hasMessageContaining("This array has 3 slots where 'slots' of instance 'root.pair' holds 2.")
+        }.hasMessageContaining("This array has 3 slots where '${member("root", "pair", "slots")}' holds 2.")
     }
 
     @Test
@@ -234,7 +234,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
         assertThat(main).contains("$slot := 5", "$slot == 5", "5 != $slot")
         assertThatThrownBy {
             flatten("Host", sizes.format(2))
-        }.hasMessageContaining("This array has 1 slots where 'slots' of instance 'root.store' holds 2.")
+        }.hasMessageContaining("This array has 1 slots where '${member("root", "store", "slots")}' holds 2.")
     }
 
     @Test
@@ -259,10 +259,10 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
         """
         assertThatThrownBy {
             flatten("Host", sizes.format("same := pair.slots == triple.slots"))
-        }.hasMessageContaining("This array has 3 slots where 'slots' of instance 'root.pair' holds 2.")
+        }.hasMessageContaining("This array has 3 slots where '${member("root", "pair", "slots")}' holds 2.")
         assertThatThrownBy {
             flatten("Host", sizes.format("triple.slots := pair.slots"))
-        }.hasMessageContaining("This array has 2 slots where 'slots' of instance 'root.triple' holds 3.")
+        }.hasMessageContaining("This array has 2 slots where '${member("root", "triple", "slots")}' holds 3.")
     }
 
     @Test
@@ -287,7 +287,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                     }
                 """,
             )
-        }.hasMessageContaining("Array literal has 3 values but 'slots' of instance 'root.pair' holds 2 slots.")
+        }.hasMessageContaining("Array literal has 3 values but '${member("root", "pair", "slots")}' holds 2 slots.")
     }
 
     @Test
@@ -307,7 +307,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                     }
                 """,
             )
-        }.hasMessageContaining("Array index 2 is out of bounds for 'slots' of instance 'root.pair' (size 2).")
+        }.hasMessageContaining("Array index 2 is out of bounds for '${member("root", "pair", "slots")}' (size 2).")
     }
 
     @Test
@@ -327,7 +327,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                     }
                 """,
             )
-        }.hasMessageContaining("The size of 'slots' of instance 'root.broken' is -1..-1")
+        }.hasMessageContaining("The size of '${member("root", "broken", "slots")}' is -1..-1")
     }
 
     @Test
@@ -526,7 +526,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
         )) {
             assertThatThrownBy {
                 flatten("Host", sizes.format(operation))
-            }.`as`(operation).hasMessageContaining("This array has 3 slots where 'c' of instance 'root.store' holds 2.")
+            }.`as`(operation).hasMessageContaining("This array has 3 slots where '${member("root", "store", "c")}' holds 2.")
         }
     }
 
@@ -552,7 +552,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                     }
                 """,
             )
-        }.hasMessageContaining("The size of 'slots' of instance 'root.store' is 2..1")
+        }.hasMessageContaining("The size of '${member("root", "store", "slots")}' is 2..1")
     }
 
     @Test
