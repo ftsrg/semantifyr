@@ -66,7 +66,7 @@ class VerificationContextTest {
         private val runStep: suspend () -> String? = { "pass" },
         private val witness: InlinedWitness? = null,
         inlinedOxsts: InlinedOxsts = modelChecking(OxstsFactory.createAG()),
-        transitionCallTraces: TransitionCallTraceMap? = null,
+        transitionCallTraces: TransitionCallTraceMap = TransitionCallTraceMap(emptyMap()),
         soundness: SoundnessDirection = SoundnessDirection.Exact,
         override val capabilityChecker: BackendCapabilityChecker = RejectingVariables(),
     ) : VerificationContext<String, String>(

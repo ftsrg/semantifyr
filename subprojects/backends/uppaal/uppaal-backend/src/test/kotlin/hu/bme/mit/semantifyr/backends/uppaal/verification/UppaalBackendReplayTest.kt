@@ -23,6 +23,7 @@ import hu.bme.mit.semantifyr.backends.uppaal.UppaalExecutionResult
 import hu.bme.mit.semantifyr.backends.uppaal.UppaalExecutionSpecification
 import hu.bme.mit.semantifyr.backends.uppaal.UppaalExecutor
 import hu.bme.mit.semantifyr.backends.uppaal.UppaalExecutorKey
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.assertj.core.api.Assertions.assertThat
@@ -49,18 +50,20 @@ class UppaalBackendReplayTest {
     private suspend fun verify(
         case: String,
         inlinedOxsts: InlinedOxsts,
+        transitionCallTraces: TransitionCallTraceMap,
         artifactDirectory: Path = cleanArtifactDirectory(case),
     ): BackendVerificationResult {
         val environment = ExecutionEnvironment.builder().put(UppaalExecutorKey) {
             ReplayingUppaalExecutor(case)
         }.build()
-        val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory)
+        val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory, transitionCallTraces = transitionCallTraces)
         return UppaalBackend().verify(injector, UppaalConfig.Default, request, environment)
     }
 
     private suspend fun verifyFixture(file: String, className: String): BackendVerificationResult {
         val artifactDirectory = cleanArtifactDirectory(className)
-        return verify(className, models.compile(file, className, artifactDirectory), artifactDirectory)
+        val compilation = models.compileFlattened(file, className, artifactDirectory)
+        return verify(className, compilation.inlinedOxsts, compilation.transitionCallTraces, artifactDirectory)
     }
 
     @Test
@@ -117,7 +120,7 @@ class UppaalBackendReplayTest {
 
     @Test
     suspend fun `a model verifyta rejects is Errored with verifyta's message`() {
-        val result = verify("RejectedModel", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+        val result = verify("RejectedModel", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
         assertThat(result.message).contains("Duplicate definition of On.")
@@ -125,7 +128,7 @@ class UppaalBackendReplayTest {
 
     @Test
     suspend fun `a violated invariant fails with a witness through the violating states`() {
-        val result = verify("CounterExceedsBound", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+        val result = verify("CounterExceedsBound", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
@@ -139,7 +142,7 @@ class UppaalBackendReplayTest {
 
     @Test
     suspend fun `a value of the trace that cannot be read fails the run`() {
-        val result = verify("CounterExceedsBoundUnreadableValue", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+        val result = verify("CounterExceedsBoundUnreadableValue", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
         assertThat(result.message).contains("1.5 for counter")
@@ -148,7 +151,7 @@ class UppaalBackendReplayTest {
 
     @Test
     suspend fun `a name of the trace that does not map back fails the run`() {
-        val result = verify("CounterExceedsBoundUnmappedName", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+        val result = verify("CounterExceedsBoundUnmappedName", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
         assertThat(result.message).contains("ghost, which names no variable of the model")
@@ -156,7 +159,7 @@ class UppaalBackendReplayTest {
 
     @Test
     suspend fun `an unreachable target fails without a witness`() {
-        val result = verify("UnreachableTarget", models.parse(BackendTestModels.UNREACHABLE_TARGET))
+        val result = verify("UnreachableTarget", models.parse(BackendTestModels.UNREACHABLE_TARGET), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(result.inlinedWitness).isNull()
@@ -195,6 +198,7 @@ class UppaalBackendReplayTest {
                     }
                 """,
             ),
+            TransitionCallTraceMap(emptyMap()),
         )
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
@@ -223,7 +227,7 @@ class UppaalBackendReplayTest {
                 }
             """,
         )
-        val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory)
+        val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory, transitionCallTraces = TransitionCallTraceMap(emptyMap()))
 
         val result = UppaalBackend().verify(injector, UppaalConfig.OverApproximation, request, environment)
 
@@ -266,6 +270,7 @@ class UppaalBackendReplayTest {
                     }
                 """,
             ),
+            TransitionCallTraceMap(emptyMap()),
         )
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
@@ -290,7 +295,7 @@ class UppaalBackendReplayTest {
                 }
             }
         }.build()
-        val request = BackendVerificationRequest(models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), artifactDirectory)
+        val request = BackendVerificationRequest(models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), artifactDirectory, transitionCallTraces = TransitionCallTraceMap(emptyMap()))
         val result = UppaalBackend().verify(injector, UppaalConfig.Default, request, environment)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)

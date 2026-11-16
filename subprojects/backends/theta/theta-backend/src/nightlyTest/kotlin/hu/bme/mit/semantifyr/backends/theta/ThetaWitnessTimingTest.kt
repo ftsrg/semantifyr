@@ -50,9 +50,11 @@ class ThetaWitnessTimingTest {
     suspend fun `back-annotating Theta's crossroads witness stays within its limit`() {
         val outputDirectory = Path("build", "test-artifacts", "ThetaWitnessTimingTest")
         val caseClass = SysMLCrossroads.caseClass(injector.getInstance(SemantifyrLoader::class.java))
-        val inlinedOxsts = SemantifyrCompiler(injector, ArtifactConfig.NONE).compile(caseClass, outputDirectory).inlinedOxsts
+        val compilation = SemantifyrCompiler(injector, ArtifactConfig.NONE).compile(caseClass, outputDirectory)
+        val inlinedOxsts = compilation.inlinedOxsts
         val thetaDirectory = outputDirectory.resolve("theta").createDirectories()
-        val result = ThetaBackend().verify(injector, ThetaConfig.CegarExpl, BackendVerificationRequest(inlinedOxsts, thetaDirectory), ExecutionEnvironment.Empty)
+        val request = BackendVerificationRequest(inlinedOxsts, thetaDirectory, transitionCallTraces = compilation.transitionCallTraces)
+        val result = ThetaBackend().verify(injector, ThetaConfig.CegarExpl, request, ExecutionEnvironment.Empty)
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
 
         val thetaInjector = injector.createChildInjector(ThetaBackendModule())

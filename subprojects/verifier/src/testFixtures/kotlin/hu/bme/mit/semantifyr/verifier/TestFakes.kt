@@ -17,6 +17,7 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
@@ -49,6 +50,7 @@ fun fakeRequest(): BackendVerificationRequest {
             }
         },
         artifactOutputPath = Paths.get(System.getProperty("java.io.tmpdir")),
+        transitionCallTraces = TransitionCallTraceMap(emptyMap()),
     )
 }
 

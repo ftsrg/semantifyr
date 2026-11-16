@@ -19,6 +19,7 @@ import hu.bme.mit.semantifyr.backend.integer
 import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backends.nuxmv.NuxmvExecutorKey
 import hu.bme.mit.semantifyr.backends.nuxmv.ReplayingNuxmvExecutor
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.assertj.core.api.Assertions.assertThat
@@ -46,19 +47,21 @@ class NuxmvBackendReplayTest {
     private suspend fun verify(
         case: String,
         inlinedOxsts: InlinedOxsts,
+        transitionCallTraces: TransitionCallTraceMap,
         artifactDirectory: Path = cleanArtifactDirectory(case),
         config: NuxmvConfig = NuxmvConfig.Ic3Invar,
     ): BackendVerificationResult {
         val environment = ExecutionEnvironment.builder().put(NuxmvExecutorKey) {
             ReplayingNuxmvExecutor(case)
         }.build()
-        val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory)
+        val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory, transitionCallTraces = transitionCallTraces)
         return NuxmvBackend().verify(injector, config, request, environment)
     }
 
     private suspend fun verifyFixture(file: String, className: String): BackendVerificationResult {
         val artifactDirectory = cleanArtifactDirectory(className)
-        return verify(className, models.compile(file, className, artifactDirectory), artifactDirectory)
+        val compilation = models.compileFlattened(file, className, artifactDirectory)
+        return verify(className, compilation.inlinedOxsts, compilation.transitionCallTraces, artifactDirectory)
     }
 
     @Test
@@ -82,9 +85,9 @@ class NuxmvBackendReplayTest {
     @Test
     suspend fun `the bound of a configuration reaches the check command`() {
         val artifactDirectory = cleanArtifactDirectory("ChoiceBound")
-        val inlinedOxsts = models.compile("control_flow", "ChoiceBound", artifactDirectory)
+        val compilation = models.compileFlattened("control_flow", "ChoiceBound", artifactDirectory)
 
-        verify("ChoiceBound", inlinedOxsts, artifactDirectory, NuxmvConfig.BmcInvar.copy(bound = 50))
+        verify("ChoiceBound", compilation.inlinedOxsts, compilation.transitionCallTraces, artifactDirectory, NuxmvConfig.BmcInvar.copy(bound = 50))
 
         val commands = artifactDirectory.resolve("commands.cmd").readText()
         assertThat(commands).contains("msat_check_invar_bmc -a een-sorensson -k 50 -p \"")
@@ -130,6 +133,7 @@ class NuxmvBackendReplayTest {
                     }
                 """,
             ),
+            TransitionCallTraceMap(emptyMap()),
         )
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
@@ -164,7 +168,7 @@ class NuxmvBackendReplayTest {
 
     @Test
     suspend fun `a model nuXmv rejects is Errored with nuXmv's message`() {
-        val result = verify("RejectedModel", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+        val result = verify("RejectedModel", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
         assertThat(result.message).contains("\"y\" undefined")
@@ -172,7 +176,7 @@ class NuxmvBackendReplayTest {
 
     @Test
     suspend fun `a violated invariant fails with a witness through the violating states`() {
-        val result = verify("CounterExceedsBound", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+        val result = verify("CounterExceedsBound", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
@@ -186,7 +190,7 @@ class NuxmvBackendReplayTest {
 
     @Test
     suspend fun `a value of the trace that cannot be read fails the run`() {
-        val result = verify("CounterExceedsBoundUnreadableValue", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+        val result = verify("CounterExceedsBoundUnreadableValue", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
         assertThat(result.message).contains("1.5 for counter")
@@ -195,7 +199,7 @@ class NuxmvBackendReplayTest {
 
     @Test
     suspend fun `a name of the trace that does not map back fails the run`() {
-        val result = verify("CounterExceedsBoundUnmappedName", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+        val result = verify("CounterExceedsBoundUnmappedName", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
         assertThat(result.message).contains("ghost, which names no variable of the model")
@@ -203,7 +207,7 @@ class NuxmvBackendReplayTest {
 
     @Test
     suspend fun `an unreachable target fails without a witness`() {
-        val result = verify("UnreachableTarget", models.parse(BackendTestModels.UNREACHABLE_TARGET))
+        val result = verify("UnreachableTarget", models.parse(BackendTestModels.UNREACHABLE_TARGET), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(result.inlinedWitness).isNull()
@@ -242,6 +246,7 @@ class NuxmvBackendReplayTest {
                     }
                 """,
             ),
+            TransitionCallTraceMap(emptyMap()),
         )
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)

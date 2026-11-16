@@ -15,6 +15,7 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.verifier.FakeBackend
 import hu.bme.mit.semantifyr.verifier.FakeConfig
@@ -132,6 +133,7 @@ class SingleBackendPortfolioTest {
         return BackendVerificationRequest(
             inlinedOxsts = inlinedOxsts,
             artifactOutputPath = Paths.get(System.getProperty("java.io.tmpdir")),
+            transitionCallTraces = TransitionCallTraceMap(emptyMap()),
         )
     }
 

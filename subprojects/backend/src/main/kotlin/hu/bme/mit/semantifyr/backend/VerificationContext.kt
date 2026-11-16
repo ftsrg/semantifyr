@@ -162,12 +162,11 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
     }
 
     private fun checkTraceVariables(witness: InlinedWitness) {
-        val transitionCallTraces = request.transitionCallTraces ?: return
         val traceVariables = request.inlinedOxsts.variables.filter {
-            it in transitionCallTraces.tracerVariables
+            it in request.transitionCallTraces.tracerVariables
         }
         val argumentVariables = request.inlinedOxsts.variables.filter {
-            it in transitionCallTraces.argumentVariables
+            it in request.transitionCallTraces.argumentVariables
         }
         if (traceVariables.isEmpty() && argumentVariables.isEmpty()) {
             return

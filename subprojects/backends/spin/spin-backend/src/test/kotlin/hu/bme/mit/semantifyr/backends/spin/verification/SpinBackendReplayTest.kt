@@ -18,6 +18,7 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.integer
 import hu.bme.mit.semantifyr.backends.spin.ReplayingSpinExecutor
 import hu.bme.mit.semantifyr.backends.spin.SpinExecutorKey
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.assertj.core.api.Assertions.assertThat
@@ -44,18 +45,20 @@ class SpinBackendReplayTest {
     private suspend fun verify(
         case: String,
         inlinedOxsts: InlinedOxsts,
+        transitionCallTraces: TransitionCallTraceMap,
         artifactDirectory: Path = cleanArtifactDirectory(case),
     ): BackendVerificationResult {
         val environment = ExecutionEnvironment.builder().put(SpinExecutorKey) {
             ReplayingSpinExecutor(case)
         }.build()
-        val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory)
+        val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory, transitionCallTraces = transitionCallTraces)
         return SpinBackend().verify(injector, SpinConfig.SafeDfs, request, environment)
     }
 
     private suspend fun verifyFixture(file: String, className: String): BackendVerificationResult {
         val artifactDirectory = cleanArtifactDirectory(className)
-        return verify(className, models.compile(file, className, artifactDirectory), artifactDirectory)
+        val compilation = models.compileFlattened(file, className, artifactDirectory)
+        return verify(className, compilation.inlinedOxsts, compilation.transitionCallTraces, artifactDirectory)
     }
 
     @Test
@@ -76,7 +79,7 @@ class SpinBackendReplayTest {
 
     @Test
     suspend fun `a model spin rejects is Errored with spin's message`() {
-        val result = verify("RejectedModel", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+        val result = verify("RejectedModel", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
         assertThat(result.message).contains("duplicate `else")
@@ -84,7 +87,7 @@ class SpinBackendReplayTest {
 
     @Test
     suspend fun `a pan that stops on its state vector is Errored with pan's message`() {
-        val result = verify("VectorTooSmall", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+        val result = verify("VectorTooSmall", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
         assertThat(result.message).contains("VECTORSZ too small")
@@ -92,7 +95,7 @@ class SpinBackendReplayTest {
 
     @Test
     suspend fun `a violated invariant fails with a witness through the violating states`() {
-        val result = verify("CounterExceedsBound", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+        val result = verify("CounterExceedsBound", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
@@ -106,7 +109,7 @@ class SpinBackendReplayTest {
 
     @Test
     suspend fun `a value of the trace that cannot be read fails the run`() {
-        val result = verify("CounterExceedsBoundUnreadableValue", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+        val result = verify("CounterExceedsBoundUnreadableValue", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
         assertThat(result.message).contains("1.5 for counter")
@@ -115,7 +118,7 @@ class SpinBackendReplayTest {
 
     @Test
     suspend fun `a name of the trace that does not map back fails the run`() {
-        val result = verify("CounterExceedsBoundUnmappedName", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+        val result = verify("CounterExceedsBoundUnmappedName", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
         assertThat(result.message).contains("ghost, which names no variable of the model")
@@ -123,7 +126,7 @@ class SpinBackendReplayTest {
 
     @Test
     suspend fun `unchanged values carry over from the declarations and the previous state`() {
-        val result = verify("OneOfSeveralChanges", models.parse(BackendTestModels.SATURATING_ONE_OF_SEVERAL_CHANGES))
+        val result = verify("OneOfSeveralChanges", models.parse(BackendTestModels.SATURATING_ONE_OF_SEVERAL_CHANGES), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
@@ -147,7 +150,7 @@ class SpinBackendReplayTest {
 
     @Test
     suspend fun `an unreachable target fails without a witness`() {
-        val result = verify("UnreachableTarget", models.parse(BackendTestModels.UNREACHABLE_TARGET))
+        val result = verify("UnreachableTarget", models.parse(BackendTestModels.UNREACHABLE_TARGET), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(result.inlinedWitness).isNull()
@@ -176,6 +179,7 @@ class SpinBackendReplayTest {
                     }
                 """,
             ),
+            TransitionCallTraceMap(emptyMap()),
         )
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
@@ -222,6 +226,7 @@ class SpinBackendReplayTest {
                     }
                 """,
             ),
+            TransitionCallTraceMap(emptyMap()),
         )
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
@@ -230,7 +235,7 @@ class SpinBackendReplayTest {
 
     @Test
     suspend fun `an unbounded integer the property depends on is NotSupported before dispatch`() {
-        val result = verify("UnboundedCounter", models.parse(BackendTestModels.COUNTER_EXCEEDS_BOUND))
+        val result = verify("UnboundedCounter", models.parse(BackendTestModels.COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
         assertThat(result.message).matches("spin:safe-dfs does not support \\S+:2: unbounded integer variables \\(counter\\)")
@@ -243,7 +248,7 @@ class SpinBackendReplayTest {
         val environment = ExecutionEnvironment.builder().put(SpinExecutorKey) {
             ReplayingSpinExecutor("UnboundedArraySlots")
         }.build()
-        val request = BackendVerificationRequest(compilation.inlinedOxsts, artifactDirectory, compilation.flatteningInfo)
+        val request = BackendVerificationRequest(compilation.inlinedOxsts, artifactDirectory, compilation.flatteningInfo, compilation.transitionCallTraces)
         val result = SpinBackend().verify(injector, SpinConfig.SafeDfs, request, environment)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)

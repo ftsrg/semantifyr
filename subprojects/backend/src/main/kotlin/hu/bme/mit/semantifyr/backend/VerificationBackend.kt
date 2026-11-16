@@ -26,7 +26,7 @@ data class BackendVerificationRequest(
     val inlinedOxsts: InlinedOxsts,
     val artifactOutputPath: Path,
     val flatteningInfo: FlatteningInfo? = null,
-    val transitionCallTraces: TransitionCallTraceMap? = null,
+    val transitionCallTraces: TransitionCallTraceMap,
     val timeout: Duration = Duration.INFINITE,
 )
 

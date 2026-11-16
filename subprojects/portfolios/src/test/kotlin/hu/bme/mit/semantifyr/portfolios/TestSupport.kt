@@ -20,6 +20,7 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import kotlinx.coroutines.delay
@@ -222,6 +223,7 @@ fun stubRequest(
     return BackendVerificationRequest(
         inlinedOxsts = inlinedOxsts,
         artifactOutputPath = outputDirectory,
+        transitionCallTraces = TransitionCallTraceMap(emptyMap()),
         timeout = timeout,
     )
 }
