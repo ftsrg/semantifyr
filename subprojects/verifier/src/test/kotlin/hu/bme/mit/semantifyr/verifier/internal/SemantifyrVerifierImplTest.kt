@@ -22,6 +22,8 @@ import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.backend.witness.WitnessState
+import hu.bme.mit.semantifyr.backend.witness.linearInlinedWitness
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
@@ -32,6 +34,8 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.verifier.BackAnnotationException
 import hu.bme.mit.semantifyr.verifier.ProgressContext
+import hu.bme.mit.semantifyr.verifier.REPORT_VERSION
+import hu.bme.mit.semantifyr.verifier.ReportKind
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.VerificationReport
@@ -222,6 +226,22 @@ class SemantifyrVerifierImplTest {
 
         assertThat(outcome.reportPath).isEqualTo(output.resolve("simple.${case.qualifiedName.replace("::", ".")}").resolve("report.json"))
         assertThat(Json.decodeFromString<VerificationReport>(outcome.reportPath.readText())).isEqualTo(outcome.report)
+    }
+
+    @Test
+    suspend fun `a verdict with a witness returns the run's report with its trace and writes the witness`(@TempDir output: Path) {
+        val portfolio = ScriptedPortfolio { request, _ ->
+            decisiveResult(VerificationVerdict.Passed).copy(
+                inlinedWitness = linearInlinedWitness(request.inlinedOxsts, listOf(WitnessState(emptyList()), WitnessState(emptyList()))),
+            )
+        }
+
+        val outcome = build(portfolio, output).verify(loadFirstCase())
+
+        assertThat(outcome.report.version).isEqualTo(REPORT_VERSION)
+        assertThat(outcome.report.kind).isEqualTo(ReportKind.Run)
+        assertThat(outcome.report.trace!!.steps).hasSize(1)
+        assertThat(outcome.witnessPath).exists()
     }
 
     @Test
