@@ -119,6 +119,9 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
       expect(times.map((time) => {
         return time.querySelector('text')?.textContent
       })).toEqual(['1', '3/2', '0'])
+      for (const amount of ['1', '3/2', '0']) {
+        expect(page.getByRole('img', { name: `elapsed ${amount}`, exact: true }).elements(), `the time ${amount} named for a screen reader`).toHaveLength(1)
+      }
       const bands = [...document.querySelectorAll('.band-fill')].map((band) => {
         return band.getBoundingClientRect()
       })

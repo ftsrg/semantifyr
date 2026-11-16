@@ -215,7 +215,7 @@ interface Caller {
 // the environment waits before every step, so the clock sits on its lifeline
 function Elapsed({ time, environment }: { time: ElapsedTime, environment: number }): React.JSX.Element {
   return (
-    <g className="band-time" data-testid="calls-elapsed">
+    <g className="band-time" data-testid="calls-elapsed" role="img" aria-label={`elapsed ${time.amount}`}>
       <title>{`elapsed ${time.amount}`}</title>
       <circle className="band-time-clock" cx={environment} cy={time.middle} r={CLOCK_RADIUS} />
       <path className="band-time-hands" d={`M${environment} ${time.middle - 3} V${time.middle} l2 1.5`} />
