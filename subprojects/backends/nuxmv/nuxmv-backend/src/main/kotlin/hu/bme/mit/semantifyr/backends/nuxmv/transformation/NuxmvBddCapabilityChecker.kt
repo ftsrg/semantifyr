@@ -11,7 +11,6 @@ import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.emf.ecore.EObject
 
-// the translation declares every integer unbounded and every clock real, and the BDD engine builds no FSM over infinite precision variables
 class NuxmvBddCapabilityChecker @Inject constructor(
     builtinSymbolResolver: BuiltinSymbolResolver,
 ) : NuxmvCapabilityChecker(builtinSymbolResolver) {

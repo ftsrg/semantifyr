@@ -37,7 +37,6 @@ interface PlacedCall {
   label: string
 }
 
-// the time that elapsed before a step, drawn above its band
 interface ElapsedTime {
   middle: number
   amount: string
@@ -212,7 +211,6 @@ interface Caller {
   reach: number
 }
 
-// the environment waits before every step, so the clock sits on its lifeline
 function Elapsed({ time, environment }: { time: ElapsedTime, environment: number }): React.JSX.Element {
   return (
     <g className="band-time" data-testid="calls-elapsed" role="img" aria-label={`elapsed ${time.amount}`}>

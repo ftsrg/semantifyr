@@ -16,7 +16,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 
-// a bound and what the verified property calls are known only once the calls are inlined
 class ClockBoundChecker @Inject constructor(
     private val clockTestAnalysis: ClockTestAnalysis,
     private val expressionModalityEvaluatorProvider: ExpressionModalityEvaluatorProvider,

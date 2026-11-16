@@ -17,7 +17,6 @@ object GammaTime {
 
     private const val MILLISECONDS_PER_SECOND = 1000
 
-    // the greatest unit every time value of the model is a whole number of, so the clock bounds stay as small as the model allows
     @JvmStatic
     fun unitMilliseconds(gammaModel: GammaModelPackage): Int {
         val packages = listOf(gammaModel) + reachablePackages(gammaModel)
@@ -67,7 +66,6 @@ object GammaTime {
         return timeouts + clocks
     }
 
-    // every package the model reaches through its imports or its own name
     fun reachablePackages(gammaModel: GammaModelPackage): List<GammaModelPackage> {
         val reached = linkedSetOf(gammaModel)
         val pending = ArrayDeque(listOf(gammaModel))

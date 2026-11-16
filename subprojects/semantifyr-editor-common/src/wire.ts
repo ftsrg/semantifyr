@@ -109,7 +109,6 @@ export type SoundnessDirection =
     | "OverApproximating"
     | "UnderApproximating";
 
-// an enum literal, an instance path, a fraction and an integer too large for a number are strings, the report's types telling them apart
 export type ReportValue =
     | boolean
     | number
@@ -118,7 +117,6 @@ export type ReportValue =
     | ReportValue[]
     | { [field: string]: ReportValue };
 
-// a whole amount is a number, any other the string numerator/denominator in lowest terms
 export type Fraction = number | string;
 
 export type ReportTypeKind =
@@ -241,9 +239,7 @@ export interface VerificationCaseResult {
     backendId: string | null;
     portfolioId: string | null;
     metrics: VerificationMetrics | null;
-    // as the report's file holds it, absent when the verification wrote none
     report: VerificationReport | null;
-    // the file the trace's text was written to, the witness model or a frontend's own trace
     witnessUri: string | null;
 }
 
@@ -263,7 +259,6 @@ export interface WitnessValidationResult {
     verdict: VerificationStatus | null;
     message: string | null;
     portfolioId: string | null;
-    // null only when the validation errored before a run
     report: VerificationReport | null;
 }
 

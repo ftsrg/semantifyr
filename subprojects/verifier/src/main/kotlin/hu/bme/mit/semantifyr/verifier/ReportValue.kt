@@ -38,7 +38,6 @@ sealed interface ReportValue {
 
     data class Real(val value: Double) : ReportValue
 
-    // a JSON string whose kind, an enum literal, an instance path or an integer too large for a number, the report's type list gives
     data class Text(val value: String) : ReportValue
 
     data class EnumLiteral(val name: String) : ReportValue

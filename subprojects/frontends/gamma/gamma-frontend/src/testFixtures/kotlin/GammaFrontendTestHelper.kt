@@ -167,7 +167,6 @@ class GammaFrontendTestHelper {
         return result
     }
 
-    // whole delays under-approximate a model whose clock tests are not all closed, so an untrusted verdict there differs without failing
     private fun assertGammaVerdict(
         frontend: GammaFrontend,
         gammaVerificationCase: GammaVerificationCase,

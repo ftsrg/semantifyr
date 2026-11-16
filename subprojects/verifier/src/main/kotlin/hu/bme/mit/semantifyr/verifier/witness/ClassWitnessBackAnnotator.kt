@@ -292,7 +292,6 @@ class ClassWitnessBackAnnotator @Inject constructor(
             }
         }
 
-        // the common denominator of every amount the report states, so that each counts a whole number of scaled units
         private fun timeScale(): BigInteger {
             val amounts = reportTrace.steps.map {
                 it.elapsed

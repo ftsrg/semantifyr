@@ -61,7 +61,6 @@ function runKindOf(title: string | undefined): 'verify' | 'validate' | null {
   return null
 }
 
-// the answers the mock replays, filed by flavor and by the text of the document they were given for
 export function fixturesOf(transcript: Transcript): Map<string, FlavorFixture> {
   const fixtures = new Map<string, FlavorFixture>()
   for (const session of transcript.sessions) {

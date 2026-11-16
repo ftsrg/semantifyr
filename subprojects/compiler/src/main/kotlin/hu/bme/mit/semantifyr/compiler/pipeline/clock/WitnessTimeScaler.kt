@@ -15,7 +15,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.eclipse.xtext.EcoreUtil2
 
-// a witness states its own time and clock values already scaled, so only the bounds the inlining brought in count the scale
 class WitnessTimeScaler @Inject constructor(
     private val clockTestAnalysis: ClockTestAnalysis,
 ) {

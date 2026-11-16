@@ -116,7 +116,6 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         val deadline = markNow() + semantifyrVerifierConfiguration.timeout
         progressContext.reportProgress("Compiling ${case.qualifiedName}")
         logger.info { "Compiling inlined of '${case.qualifiedName}'" }
-        // the model re-verified here usually lies in the case directory, a witness the verify left there
         val validationDirectory = prepareDirectory(caseRecheckDirectory(semantifyrVerifierConfiguration.outputDirectory, case))
         val clone = semantifyrLoader.fromResourceSet(inlinedOxsts.eResource().resourceSet, emptyMap())
             .resourceSet

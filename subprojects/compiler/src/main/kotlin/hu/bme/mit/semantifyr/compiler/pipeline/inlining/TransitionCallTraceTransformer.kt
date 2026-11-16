@@ -134,7 +134,6 @@ class TransitionCallTraceTransformer @Inject constructor(
         enclose(expansion, enclosingTrace)
     }
 
-    // a recorded argument is reset with its tracer, so a step that does not run the call keeps no value of an earlier one
     fun declareTracers(inlinedOxsts: InlinedOxsts) {
         val tracerVariables = tracerAssignments.entries.flatMap { (assignment, trace) ->
             listOf(assignment.assignedVariable) + trace.recordedArguments.map {
@@ -188,7 +187,6 @@ class TransitionCallTraceTransformer @Inject constructor(
         )
     }
 
-    // the inlined model cannot name a feature, so an instance argument is recorded as an optional instance of its class
     private fun createArgumentVariable(
         tracerIndex: Int,
         parameter: ParameterDeclaration,

@@ -23,7 +23,6 @@ class WitnessClockValue(
 class WitnessState(
     val values: List<WitnessStateValue>,
     val clockValues: List<WitnessClockValue> = emptyList(),
-    // the time waited in the step that reached this state
     val elapsed: Fraction = Fraction.ZERO,
 )
 

@@ -72,7 +72,6 @@ class ConeOfInfluenceComputation(
             }
         }
 
-        // what an observed call shows must hold in the execution shown, so its guards and arguments are kept
         for (variable in inlinedOxsts.variables) {
             if (TransitionTracerNames.isTracerName(variable.name) || TransitionTracerNames.isArgumentName(variable.name)) {
                 if (relevantVariables.add(variable)) {

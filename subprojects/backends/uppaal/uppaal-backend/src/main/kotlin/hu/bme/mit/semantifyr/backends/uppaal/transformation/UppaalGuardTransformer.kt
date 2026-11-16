@@ -47,7 +47,6 @@ class UppaalGuard(
     }
 }
 
-// Uppaal takes a clock only in a conjunction of bounds, so a condition over clocks becomes a disjunction of such guards
 class UppaalGuardTransformer @Inject constructor(
     private val uppaalExpressionTransformer: UppaalExpressionTransformer,
     private val uppaalVariableTransformer: UppaalVariableTransformer,
@@ -166,7 +165,6 @@ class UppaalGuardTransformer @Inject constructor(
         val clock: VariableDeclaration,
     )
 
-    // a clock read through a variable holding an instance is a conditional over the candidates' clocks
     private fun leavesOf(expression: Expression): List<ClockLeaf> {
         if (expression is IfThenElse) {
             val thenLeaves = leavesOf(expression.then).map {

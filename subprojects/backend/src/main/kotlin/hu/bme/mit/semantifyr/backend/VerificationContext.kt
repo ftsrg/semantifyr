@@ -192,7 +192,6 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
         }
     }
 
-    // a backend's run declares its direction from the model it verifies, by default its configuration's
     protected open fun declareSoundness(inlinedOxsts: InlinedOxsts): SoundnessDirection {
         return soundness
     }

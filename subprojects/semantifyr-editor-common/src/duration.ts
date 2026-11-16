@@ -6,7 +6,6 @@
 
 const ISO_DURATION = /^P(?:(\d+(?:\.\d+)?)W)?(?:(\d+(?:\.\d+)?)D)?(?:T(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?)?$/;
 
-// a duration that does not parse counts as none
 export function isoDurationToMs(iso: string): number {
     const match = ISO_DURATION.exec(iso);
     if (match === null) {

@@ -90,7 +90,6 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
                 continue
             }
             val kind = uppaalVariableTransformer.describe(variable).kind
-            // a clock's value is solved anew from the path, since Uppaal prints it rounded or as a zone
             if (kind == UppaalVariableKind.Clock) {
                 continue
             }

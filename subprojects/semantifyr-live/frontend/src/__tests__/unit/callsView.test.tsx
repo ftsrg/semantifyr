@@ -106,7 +106,6 @@ describe('the text of a call in the calls view', () => {
   })
 })
 
-// Goal: what the report adds to a call reaches the view: its argument values, run-time ones included, and why the calls are missing
 describe('what the report adds to the calls view', () => {
   it('gives a call its argument values', () => {
     const container = show(traceOf(entry('root.child', 'pass', [], { speed: 3, item: { weight: 2 } })))

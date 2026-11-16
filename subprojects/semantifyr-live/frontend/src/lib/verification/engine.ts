@@ -83,10 +83,8 @@ export interface VerificationCaseState {
   validationWaited?: number
   metrics?: VerificationMetrics
   backendId?: string
-  // the direction in which the run's verdict is sound, from its report
   soundness?: SoundnessDirection
   portfolioId?: string
-  // the validation's own report, absent when the validation wrote none
   validationReport?: VerificationReport
   validationPortfolioIdUsed?: string
   // the status of the result shown, kept while a new run of the case is queued or running

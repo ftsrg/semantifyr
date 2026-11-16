@@ -56,7 +56,6 @@ class NuxmvDeclarationRenderer @Inject constructor(
 
     private fun renderType(variable: NuxmvVariable): String {
         return when (variable.kind) {
-            // a clock advances by the step's real-valued delay
             NuxmvVariableKind.Clock -> "real"
             NuxmvVariableKind.Integer -> "integer"
             NuxmvVariableKind.Boolean -> "boolean"

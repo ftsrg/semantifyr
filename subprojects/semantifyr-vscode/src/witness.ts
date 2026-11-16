@@ -199,7 +199,6 @@ export function renderValidation(validation: WitnessValidationResult | null): st
     return `${label}${renderValidationOrigin(validation)}${message}`;
 }
 
-// the validation's backend, duration and soundness come from its own report
 function renderValidationOrigin(validation: WitnessValidationResult): string {
     const result = validation.report?.result;
     if (result === undefined) {

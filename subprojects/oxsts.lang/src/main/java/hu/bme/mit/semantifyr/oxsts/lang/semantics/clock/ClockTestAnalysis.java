@@ -66,7 +66,6 @@ public class ClockTestAnalysis {
         return isClockValued(comparison.getLeft()) || isClockValued(comparison.getRight());
     }
 
-    // a read through a variable holding an instance is a conditional over the candidates' clocks
     public boolean isClockValued(Expression expression) {
         if (expression instanceof IfThenElse ifThenElse) {
             return isClockValued(ifThenElse.getThen()) || isClockValued(ifThenElse.getElse());
@@ -160,7 +159,6 @@ public class ClockTestAnalysis {
         return result;
     }
 
-    // polarity is null where the expression stands both negated and not in the negation normal form
     private void collect(
             Expression expression,
             Boolean polarity,
@@ -244,8 +242,6 @@ public class ClockTestAnalysis {
         return true;
     }
 
-    // a choice among clocks compared with a bound is the comparison of each clock under its guard, so it is closed
-    // exactly when the comparison is
     private List<Expression> clockLeaves(Expression expression) {
         if (expression instanceof IfThenElse ifThenElse) {
             var thenLeaves = clockLeaves(ifThenElse.getThen());
@@ -263,7 +259,6 @@ public class ClockTestAnalysis {
         return null;
     }
 
-    // two references name the same clock when they walk the same path, so a reset is matched by structure
     private static List<Object> keyOf(Expression expression) {
         return switch (expression) {
             case ElementReference reference -> new ArrayList<>(List.of(reference.getElement()));

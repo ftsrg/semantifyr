@@ -80,7 +80,6 @@ private fun typeOf(descriptor: SerialDescriptor): String {
     }
 }
 
-// a held class shows its fields instead
 private fun heldTypeOf(descriptor: SerialDescriptor): String {
     val held = heldDescriptorOf(descriptor)
     if (held.kind == StructureKind.CLASS) {

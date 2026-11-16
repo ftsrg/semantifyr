@@ -86,7 +86,6 @@ class SysMLv2Compiler(
             .resolve("${sourcePath.fileName}-${sha256Hex(files)}.$fileExtension")
     }
 
-    // the trace command takes the case from the report, validates the trace in the model's workspace and writes nothing when it does not validate
     fun trace(
         sourcePath: Path,
         reportPath: Path,

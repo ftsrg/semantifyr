@@ -94,7 +94,6 @@ class NuxmvModelTransformer @Inject constructor(
         }
     }
 
-    // a main step waits before its transition, every clock advancing by the same amount, and init passes no time
     private fun waitSeed(clocks: List<VariableDeclaration>): NuxmvBranch {
         if (clocks.isEmpty()) {
             return NuxmvBranch()

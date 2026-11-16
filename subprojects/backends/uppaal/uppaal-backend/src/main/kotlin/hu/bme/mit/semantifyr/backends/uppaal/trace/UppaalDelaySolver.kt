@@ -25,7 +25,6 @@ private class DifferenceConstraint(
     val bound: Long,
 )
 
-// a clock read is the step's instant minus that of its last reset, so the path's tests are difference constraints over the instants, solved on the coarsest grid of 1/q up to the path's length plus one with a strict test given one grain of slack
 class UppaalDelaySolver {
 
     fun solve(clocks: List<VariableDeclaration>, steps: List<List<UppaalClockEdge>>): List<UppaalTimedState> {
@@ -80,7 +79,6 @@ class UppaalDelaySolver {
         val weight: Long,
     )
 
-    // instant[to] >= instant[from] + weight, in units of 1/grain, solved as a longest path from the initial instant
     private fun earliestInstants(
         count: Int,
         constraints: List<DifferenceConstraint>,

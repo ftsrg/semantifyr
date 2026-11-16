@@ -23,7 +23,6 @@ public record VerificationCaseResult(
         VerificationReport report,
         String witnessUri) {
 
-    // the verifier writes the report and the witness model of a case beside each other
     public static VerificationCaseResult fromCaseDirectory(Path caseDirectory, String fileExtension, String portfolioId)
             throws IOException {
         var report = VerificationReportAdapter.read(caseDirectory.resolve("report.json"));

@@ -20,7 +20,6 @@ class ClockTestClosedness(
 
 }
 
-// every test in init is exempt, since init passes no time
 class ClockTestClosednessAnalysis @Inject constructor(
     private val clockTestAnalysis: ClockTestAnalysis,
 ) {

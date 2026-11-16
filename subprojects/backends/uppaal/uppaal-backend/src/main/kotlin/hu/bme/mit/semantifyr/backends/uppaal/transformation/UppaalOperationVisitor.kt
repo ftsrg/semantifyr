@@ -110,7 +110,6 @@ class UppaalOperationVisitor @AssistedInject constructor(
         renderGuarded(sourceId, targetId, uppaalGuardTransformer.disjunctsOf(operation.expression))
     }
 
-    // the path through a clock guard enters a location of its own, so the trace names the guard it took
     private fun renderGuarded(
         source: String,
         target: String,

@@ -11,7 +11,6 @@ import hu.bme.mit.semantifyr.backends.uppaal.ir.UppaalLocation
 import hu.bme.mit.semantifyr.backends.uppaal.ir.UppaalLocationKind
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
-// a guard's atoms are tested before its resets take effect
 class UppaalClockEdge(
     val clockAtoms: List<UppaalClockAtom>,
     val resets: List<VariableDeclaration>,
@@ -22,7 +21,6 @@ class UppaalEmissionContext {
     val locations = mutableListOf<UppaalLocation>()
     val edges = mutableListOf<UppaalEdge>()
 
-    // keyed by the name of the location the edge enters, which no other edge enters
     val clockEdges = mutableMapOf<String, UppaalClockEdge>()
     private var nextLocationId = 0
     private var nextHavocId = 0

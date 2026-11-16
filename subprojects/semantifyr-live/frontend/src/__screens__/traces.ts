@@ -115,7 +115,6 @@ const CALLS = [
   ],
 ]
 
-// a timed trace waits before each step, a whole amount, a fraction and no time
 const ELAPSED: readonly Fraction[] = [
   1,
   '3/2',
@@ -154,7 +153,6 @@ export const LANGUAGES: Readonly<Record<string, Language>> = {
   oxsts: { flavorId: 'oxsts', exampleId: 'level-crossing', caseName: 'BarrierDownWhileTrainInCrossing', definition: 'class BarrierDownWhileTrainInCrossing', traceUri: OXSTS_WITNESS_URI },
 }
 
-// the run details read the validation's backend, duration and soundness from its report
 const VALIDATION = {
   version: 2,
   kind: 're-check',

@@ -144,7 +144,7 @@ class UppaalVerificationContext @AssistedInject constructor(
         return verdict
     }
 
-    // the concrete trace rounds its delays and fails on long runs of small ones, so the delays are solved anew on the symbolic path
+    // Uppaal's concrete trace rounds its delays and fails on long runs of small ones
     private fun symbolicTraceFlag(): List<String> {
         val hasClocks = request.inlinedOxsts.variables.any {
             uppaalVariableTransformer.isClock(it)

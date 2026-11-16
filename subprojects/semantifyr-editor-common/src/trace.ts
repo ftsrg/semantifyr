@@ -8,7 +8,6 @@ import type { Fraction, ReportCall, ReportState, ReportTrace, ReportValue, Verif
 
 const CLOCK_TYPE = "semantifyr::clock";
 
-// the trace of a result, with the file the trace's text was written to
 export interface ResultTrace extends ReportTrace {
     witnessUri: string | null;
 }
@@ -33,14 +32,12 @@ export interface TraceVariable {
 export interface TraceStateStep {
     elapsed: string;
     changes: StateChange[];
-    // every value the step's target state holds
     variables: TraceVariable[];
 }
 
 export interface TraceStates {
     start: TraceValue[];
     steps: TraceStateStep[];
-    // a model that keeps a clock or lets time pass shows each step's elapsed time
     timed: boolean;
 }
 
@@ -113,7 +110,6 @@ export function isTimed(trace: ReportTrace): boolean {
     });
 }
 
-// a step shows the values its target state holds that its source state does not, an absent value claiming nothing
 export function traceStates(trace: ReportTrace): TraceStates {
     const steps = trace.steps.map((step) => {
         const previous = new Map(valuesOf(trace.states[step.source]).map((entry) => {

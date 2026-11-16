@@ -116,7 +116,6 @@ class GammaTraceGenerator @Inject constructor(
         }
     }
 
-    // the report counts time in the unit the mapper wrote the model's time values in
     private fun createTimeElapseAct(elapsed: Fraction, timeUnitMilliseconds: Int): Act {
         val milliseconds = Fraction.of(elapsed.numerator * timeUnitMilliseconds.toBigInteger(), elapsed.denominator)
         return factory.createTimeElapseAct().also {

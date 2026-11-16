@@ -198,7 +198,6 @@ class OxstsFlattener @Inject constructor(
         return inlinedOxsts.variables.size > variableCount
     }
 
-    // the compiler declares variables on the root, such as a traced call's recorded instance argument
     private fun registerRootInstanceDomains(
         inlinedOxsts: InlinedOxsts,
         instanceTree: InstanceTree,

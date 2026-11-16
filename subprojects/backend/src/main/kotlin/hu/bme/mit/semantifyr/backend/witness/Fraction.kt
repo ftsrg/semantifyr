@@ -19,7 +19,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 import java.math.BigInteger
 
-// the largest integer every JSON reader holds exactly, an IEEE double's 53 bits
 val MAX_EXACT_JSON_INTEGER: BigInteger = BigInteger.TWO.pow(53) - BigInteger.ONE
 
 fun isExactJsonInteger(value: BigInteger): Boolean {

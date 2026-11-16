@@ -32,14 +32,11 @@ const val WHOLE_DELAY_VARIABLE_NAME = "__semantifyr_delay"
 // a clock and a delay together stay below 2^31 in the 32-bit integers of Spin
 private const val LARGEST_SATURATION = 1 shl 30
 
-// every integer above a clock's largest bound passes the same tests, so the clock stops at the first of them
 class WholeDelayClock(
     val variable: VariableDeclaration,
     val saturation: Int,
 )
 
-// a step waits a whole delay of 0 to longestDelay, the longest delay after which every clock is saturated, so every whole delay
-// reaches a state one of these reaches
 class WholeDelay(
     val clocks: List<WholeDelayClock>,
 ) {
@@ -99,7 +96,6 @@ class WholeDelay(
         return WitnessState(values, clockValues, state.elapsed)
     }
 
-    // a saturated clock was not reset in the step, since a reset follows the wait and sets it to 0
     private fun clockValue(
         variable: VariableDeclaration,
         raw: Int,
@@ -146,7 +142,6 @@ class WholeDelayLowering @Inject constructor(
         )
     }
 
-    // whole delays reach the states of dense time only when every clock test is closed
     fun soundness(inlinedOxsts: InlinedOxsts, configured: SoundnessDirection): SoundnessDirection {
         if (clockTestClosednessAnalysis.analyze(inlinedOxsts).isClosed) {
             return configured

@@ -81,7 +81,6 @@ class NuxmvInlinedOxstsWitnessTransformer @Inject constructor(
         return linearInlinedWitness(inlinedOxsts, states)
     }
 
-    // a model that keeps no clock waits no time, and the first state is the initialized one
     private fun elapsedOf(
         index: Int,
         state: NuxmvTraceState,
@@ -94,7 +93,6 @@ class NuxmvInlinedOxstsWitnessTransformer @Inject constructor(
         return parseReal(raw) ?: throw WitnessFailedException("nuXmv's trace holds $raw for the delay of step $index, which is no amount of time")
     }
 
-    // nuXmv prints a real as f'n/d, or as a decimal when it is one
     private fun parseReal(raw: String): Fraction? {
         val negative = raw.startsWith("-")
         val magnitude = raw.removePrefix("-")

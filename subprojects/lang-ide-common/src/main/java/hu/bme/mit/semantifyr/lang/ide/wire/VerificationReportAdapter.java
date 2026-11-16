@@ -20,7 +20,6 @@ import kotlin.Unit;
 import kotlinx.serialization.json.Json;
 import kotlinx.serialization.json.JsonKt;
 
-// the wire carries the report in the serialization of its file, nulls included, never in Gson's reading of its types
 public final class VerificationReportAdapter extends TypeAdapter<VerificationReport> {
 
     private static final Json JSON = JsonKt.Json(Json.Default, builder -> {

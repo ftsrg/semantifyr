@@ -82,7 +82,6 @@ class ReportTraceTransformer @Inject constructor(
     }
 
     private fun rootName(compilation: FlattenedCompilationContext): String {
-        // a package-level global is a child of the root instance as well, named by its qualified name
         val root = compilation.rootInstance.children.map {
             it.domain
         }.singleOrNull {
@@ -156,7 +155,6 @@ class ReportTraceTransformer @Inject constructor(
         }
     }
 
-    // a recorded argument holds the value of the site's last run in the step
     private fun arguments(site: TransitionCallTrace, state: ClassWitnessState): Map<String, ReportValue> {
         val compileTime = site.arguments.associate {
             it.parameterDeclaration to reportValueConverter.value(it.evaluation)
