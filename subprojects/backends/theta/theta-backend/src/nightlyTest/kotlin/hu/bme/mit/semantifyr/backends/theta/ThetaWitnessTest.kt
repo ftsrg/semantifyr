@@ -46,7 +46,7 @@ class ThetaWitnessTest {
                 ThetaBackendModule(),
                 ThetaCapabilityChecker::class.java,
                 SemantifyrVerifierTestHelper.testArtifactRoot(ThetaWitnessTest::class.java).resolve("capability-check"),
-                wholeDelayConfiguration = ThetaConfig.CegarExplPredCombined,
+                exploresWholeDelays = true,
             )
         }
     }

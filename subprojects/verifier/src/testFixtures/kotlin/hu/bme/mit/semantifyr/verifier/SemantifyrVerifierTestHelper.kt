@@ -10,7 +10,7 @@ import com.google.inject.Inject
 import com.google.inject.Injector
 import com.google.inject.Module
 import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
-import hu.bme.mit.semantifyr.backend.BackendConfig
+import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScopeBlocking
@@ -94,7 +94,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         capabilityChecker: Class<out BackendCapabilityChecker>,
         outputDirectory: Path,
         filter: CaseFilter = CaseFilter.All,
-        wholeDelayConfiguration: BackendConfig? = null,
+        exploresWholeDelays: Boolean = false,
     ): List<Arguments> {
         val backendInjector = injector.createChildInjector(backendModule)
         val compiler = SemantifyrCompiler(injector, ArtifactConfig.NONE)
@@ -111,24 +111,20 @@ class SemantifyrVerifierTestHelper @Inject constructor(
                     "Leaving out ${case.qualifiedName}: ${capabilityChecker.simpleName} refuses $refusals"
                 }
             }
-            unsupported.isEmpty() && (wholeDelayConfiguration == null || !narrowsWholeDelay(case.qualifiedName, inlinedOxsts, wholeDelayConfiguration))
+            unsupported.isEmpty() && !(exploresWholeDelays && underApproximatedByWholeDelays(case.qualifiedName, inlinedOxsts))
         }.map {
             Arguments.of(Named.of(it.qualifiedName, it))
         }
     }
 
-    fun narrowsWholeDelay(
-        name: String,
-        inlinedOxsts: InlinedOxsts,
-        configuration: BackendConfig,
-    ): Boolean {
+    fun underApproximatedByWholeDelays(name: String, inlinedOxsts: InlinedOxsts): Boolean {
         val soundness = withVerificationScopeBlocking {
-            injector.getInstance(WholeDelayLowering::class.java).soundness(inlinedOxsts, configuration.soundness)
+            injector.getInstance(WholeDelayLowering::class.java).soundness(inlinedOxsts, SoundnessDirection.Exact)
         }
-        if (soundness == configuration.soundness) {
+        if (soundness == SoundnessDirection.Exact) {
             return false
         }
-        logger.info { "Leaving out $name: whole delays make ${configuration.id} $soundness on it" }
+        logger.info { "Leaving out $name: whole delays under-approximate it" }
         return true
     }
 

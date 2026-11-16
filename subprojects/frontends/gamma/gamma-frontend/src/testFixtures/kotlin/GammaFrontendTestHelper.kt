@@ -6,11 +6,8 @@
 
 package hu.bme.mit.semantifyr.frontends.gamma.testing
 
-import hu.bme.mit.semantifyr.backend.BackendConfig
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backends.spin.verification.SpinConfig
-import hu.bme.mit.semantifyr.backends.theta.ThetaConfig
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
@@ -50,11 +47,11 @@ import kotlin.time.Duration.Companion.minutes
 
 enum class GammaTestEngine(
     val portfolio: VerificationPortfolio,
-    val wholeDelayConfiguration: BackendConfig? = null,
+    val exploresWholeDelays: Boolean = false,
 ) {
-    Theta(Portfolios.ThetaBoundedKInduction, ThetaConfig.BoundedKInduction),
+    Theta(Portfolios.ThetaBoundedKInduction, true),
     Nuxmv(Portfolios.NuxmvIc3Invar),
-    Spin(Portfolios.SpinSafeDfs, SpinConfig.SafeDfs),
+    Spin(Portfolios.SpinSafeDfs, true),
     Uppaal(Portfolios.UppaalDefault),
 }
 
@@ -98,8 +95,7 @@ class GammaFrontendTestHelper {
             }
             if (gammaVerificationCase.declaration.expression is EF) {
                 GammaTestEngine.entries.asSequence().filter { engine ->
-                    val configuration = engine.wholeDelayConfiguration
-                    configuration == null || !verifierHelper.narrowsWholeDelay("${gammaVerificationCase.qualifiedName} on $engine", inlinedOxstsOf(gammaVerificationCase), configuration)
+                    !(engine.exploresWholeDelays && verifierHelper.underApproximatedByWholeDelays("${gammaVerificationCase.qualifiedName} on $engine", inlinedOxstsOf(gammaVerificationCase)))
                 }.map {
                     Arguments.of(Named.of(gammaVerificationCase.qualifiedName, entry), it)
                 }

@@ -52,7 +52,7 @@ class ThetaSemanticOptimizationParityTest {
                 ThetaBackendModule(),
                 ThetaCapabilityChecker::class.java,
                 SemantifyrVerifierTestHelper.testArtifactRoot(ThetaSemanticOptimizationParityTest::class.java).resolve("capability-check"),
-                wholeDelayConfiguration = ThetaConfig.CegarExplPredCombined,
+                exploresWholeDelays = true,
             )
         }
     }
