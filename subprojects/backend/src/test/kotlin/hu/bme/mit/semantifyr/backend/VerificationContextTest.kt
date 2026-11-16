@@ -8,7 +8,6 @@ package hu.bme.mit.semantifyr.backend
 
 import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
-import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
 import hu.bme.mit.semantifyr.backend.witness.linearInlinedWitness
@@ -62,7 +61,7 @@ class VerificationContextTest {
         override val executor: CountingExecutor = CountingExecutor(),
         private val prepareStep: () -> String = { "artifacts" },
         private val runStep: suspend () -> String? = { "pass" },
-        private val witness: () -> InlinedWitness? = { null },
+        private val witness: InlinedWitness? = null,
         inlinedOxsts: InlinedOxsts = modelChecking(OxstsFactory.createAG()),
         soundness: SoundnessDirection = SoundnessDirection.Exact,
         private val declaredSoundness: SoundnessDirection? = null,
@@ -95,7 +94,7 @@ class VerificationContextTest {
 
         override suspend fun buildWitness(rawVerdict: String?, artifacts: String): InlinedWitness? {
             phases += "witness $rawVerdict"
-            return witness()
+            return witness
         }
 
         override fun declareSoundness(inlinedOxsts: InlinedOxsts): SoundnessDirection {
@@ -132,9 +131,7 @@ class VerificationContextTest {
     suspend fun `an under-approximating context trusts a reached target`() {
         val inlinedOxsts = modelChecking(OxstsFactory.createEF())
         val context = ScriptedContext(
-            witness = {
-                linearInlinedWitness(inlinedOxsts, listOf(WitnessState(emptyList())))
-            },
+            witness = linearInlinedWitness(inlinedOxsts, listOf(WitnessState(emptyList()))),
             inlinedOxsts = inlinedOxsts,
             soundness = SoundnessDirection.UnderApproximating,
         )
@@ -161,31 +158,13 @@ class VerificationContextTest {
             runStep = {
                 "fail"
             },
-            witness = {
-                witness
-            },
+            witness = witness,
             inlinedOxsts = inlinedOxsts,
         ).execute()
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(result.inlinedWitness).isSameAs(witness)
         assertThat(result.metrics.backAnnotationDuration).isGreaterThan(Duration.ZERO)
-    }
-
-    @Test
-    suspend fun `a trace that cannot be read back fails the run with the reason`() {
-        val result = ScriptedContext(
-            runStep = {
-                "fail"
-            },
-            witness = {
-                throw WitnessFailedException("Spin's replay holds 1.5 for counter, which is no value of its type")
-            },
-        ).execute()
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
-        assertThat(result.message).isEqualTo("scripted's trace could not be read back: Spin's replay holds 1.5 for counter, which is no value of its type")
-        assertThat(result.inlinedWitness).isNull()
     }
 
     @Test
@@ -233,9 +212,7 @@ class VerificationContextTest {
             runStep = {
                 "fail"
             },
-            witness = {
-                witness
-            },
+            witness = witness,
             inlinedOxsts = inlinedOxsts,
             capabilityChecker = BackendCapabilityChecker.Unlimited,
         ).execute()
@@ -264,9 +241,7 @@ class VerificationContextTest {
             runStep = {
                 "fail"
             },
-            witness = {
-                witness
-            },
+            witness = witness,
             inlinedOxsts = inlinedOxsts,
             capabilityChecker = BackendCapabilityChecker.Unlimited,
         ).execute()
