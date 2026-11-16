@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.backend.transformation
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
@@ -29,12 +28,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
 const val WHOLE_DELAY_VARIABLE_NAME = "__semantifyr_delay"
 
-// a clock and a delay together stay below 2^31 in the 32-bit integers of Spin
-private const val LARGEST_SATURATION = 1 shl 30
-
 class WholeDelayClock(
     val variable: VariableDeclaration,
-    val saturation: Int,
+    val saturation: Long,
 )
 
 class WholeDelay(
@@ -99,7 +95,7 @@ class WholeDelay(
     private fun clockValue(
         variable: VariableDeclaration,
         raw: Int,
-        saturation: Int,
+        saturation: Long,
         previousValues: Map<VariableDeclaration, Fraction>,
         elapsed: Fraction,
     ): Fraction {
@@ -137,7 +133,7 @@ class WholeDelayLowering @Inject constructor(
         }
         return WholeDelay(
             clocks.map {
-                WholeDelayClock(it, saturationOf(it, largestBounds[it] ?: 0))
+                WholeDelayClock(it, (largestBounds[it] ?: 0) + 1L)
             },
         )
     }
@@ -147,13 +143,6 @@ class WholeDelayLowering @Inject constructor(
             return configured
         }
         return SoundnessDirection.UnderApproximating
-    }
-
-    private fun saturationOf(clock: VariableDeclaration, largestBound: Int): Int {
-        if (largestBound >= LARGEST_SATURATION) {
-            throw BackendUnsupportedException("A whole-delay backend takes clock bounds below $LARGEST_SATURATION (${clock.name})")
-        }
-        return largestBound + 1
     }
 
     private fun boundOf(test: ComparisonOperator): Int? {

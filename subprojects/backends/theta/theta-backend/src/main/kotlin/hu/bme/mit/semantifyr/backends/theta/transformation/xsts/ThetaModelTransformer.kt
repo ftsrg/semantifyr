@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.transformation.WHOLE_DELAY_VARIABLE_NAME
 import hu.bme.mit.semantifyr.backend.transformation.WholeDelay
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
@@ -87,7 +88,7 @@ class ThetaModelTransformer @Inject constructor(
                     it.expression = XstsFactory.createBooleanOperator().also { range ->
                         range.left = comparison(reference(delay), ComparisonOp.GREATER_EQ, integerLiteral(0))
                         range.op = BooleanOp.AND
-                        range.right = comparison(reference(delay), ComparisonOp.LESS_EQ, integerLiteral(wholeDelay.longestDelay))
+                        range.right = comparison(reference(delay), ComparisonOp.LESS_EQ, saturationLiteral(wholeDelay.longestDelay))
                     }
                 },
             ) + wholeDelay.clocks.map {
@@ -100,13 +101,13 @@ class ThetaModelTransformer @Inject constructor(
     private fun advance(
         clock: XstsTopLevelVariableDeclaration,
         delay: XstsTopLevelVariableDeclaration,
-        saturation: Int,
+        saturation: Long,
     ): XstsOperation {
         return XstsFactory.createAssignmentOperation().also {
             it.reference = reference(clock)
             it.expression = XstsFactory.createIfThenElseExpression().also { saturated ->
-                saturated.guard = comparison(sum(clock, delay), ComparisonOp.GREATER_EQ, integerLiteral(saturation))
-                saturated.then = integerLiteral(saturation)
+                saturated.guard = comparison(sum(clock, delay), ComparisonOp.GREATER_EQ, saturationLiteral(saturation))
+                saturated.then = saturationLiteral(saturation)
                 saturated.`else` = sum(clock, delay)
             }
         }
@@ -130,6 +131,13 @@ class ThetaModelTransformer @Inject constructor(
             it.op = op
             it.right = right
         }
+    }
+
+    private fun saturationLiteral(saturation: Long): XstsExpression {
+        if (saturation > Int.MAX_VALUE) {
+            throw BackendUnsupportedException("An XSTS integer literal cannot hold the clock saturation $saturation")
+        }
+        return integerLiteral(saturation.toInt())
     }
 
     private fun integerLiteral(value: Int): XstsExpression {
