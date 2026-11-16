@@ -21,7 +21,7 @@ describe('the language switch', () => {
     const page = await ui.open('/language/intersection')
     await casesListed(page)
 
-    expect(await page.locator('.language-switch [role=group] button').allInnerTexts()).toEqual(['SysML v2', 'Gamma', 'Semantifyr Language'])
+    expect(await page.locator('.language-switch [role=group] button').allInnerTexts()).toEqual(['SysML v2', 'Gamma', 'Semantifyr'])
     await page.locator('.language-switch [role=group] button', { hasText: 'Gamma' }).click()
 
     await casesListed(page)
@@ -84,7 +84,7 @@ type Step =
 const LANGUAGES = [
   'SysML v2',
   'Gamma',
-  'Semantifyr Language',
+  'Semantifyr',
 ]
 
 const FLAVOURS = [

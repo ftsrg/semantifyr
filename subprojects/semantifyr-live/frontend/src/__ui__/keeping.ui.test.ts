@@ -111,7 +111,7 @@ describe('opening a file', () => {
 
     await expect.poll(async () => {
       return page.title()
-    }).toBe('mine.semantifyr - Semantifyr Language - Semantifyr Live')
+    }).toBe('mine.semantifyr - Semantifyr - Semantifyr Live')
     await casesListed(page)
     expect(await results(page).rows.count()).toBe(servedExamplesOf('oxsts').find((example) => {
       return example.id === 'intersection'
@@ -133,7 +133,7 @@ describe('opening a file', () => {
 
     await expect.poll(async () => {
       return page.title()
-    }).toBe('mine.semantifyr - Semantifyr Language - Semantifyr Live')
+    }).toBe('mine.semantifyr - Semantifyr - Semantifyr Live')
   })
 
   test('by a drop opens the dropped file in its language', async ({ ui }) => {
@@ -154,7 +154,7 @@ describe('opening a file', () => {
 
     await expect.poll(async () => {
       return page.title()
-    }).toBe('dropped.semantifyr - Semantifyr Language - Semantifyr Live')
+    }).toBe('dropped.semantifyr - Semantifyr - Semantifyr Live')
   })
 })
 
@@ -200,7 +200,7 @@ describe('saving', () => {
     expect((await diskOf(page)).suggested).toEqual(['intersection.semantifyr'])
     await expect.poll(async () => {
       return page.title()
-    }).toBe('saved.semantifyr - Semantifyr Language - Semantifyr Live')
+    }).toBe('saved.semantifyr - Semantifyr - Semantifyr Live')
   })
 
   test('downloads under the model\'s name where the browser has no save dialog', async ({ ui }) => {

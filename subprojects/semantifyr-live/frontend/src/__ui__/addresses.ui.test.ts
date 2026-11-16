@@ -87,7 +87,7 @@ describe('an address that names what Live does not have', () => {
 
     await expect.poll(async () => {
       return page.title()
-    }).toBe('Shared model - Semantifyr Language - Semantifyr Live')
+    }).toBe('Shared model - Semantifyr - Semantifyr Live')
     await expect.poll(async () => {
       return (await editor(page).lines.innerText()).replace(/\u00a0/g, ' ')
     }).toContain('package shared')

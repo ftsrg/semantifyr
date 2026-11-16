@@ -150,7 +150,7 @@ function fakeServer(sessions: SessionInfo[], refusal?: ApiError): FakeServer {
     },
     fetchFlavors: () => {
       return Promise.resolve(servedFlavors.map((flavor) => {
-        return flavor.id === 'oxsts' ? { ...flavor, displayName: 'Semantifyr Language' } : flavor
+        return flavor.id === 'oxsts' ? { ...flavor, displayName: 'Semantifyr' } : flavor
       }))
     },
     fetchFlavor: () => {
@@ -229,11 +229,11 @@ function states(): Readonly<Record<string, ScreenState>> {
         expect([...document.querySelectorAll('.admin-deployed .admin-row-name')].map((row) => {
           return `${row.textContent}: ${row.parentElement?.querySelector('.admin-row-count')?.textContent ?? ''}`
         }).filter((row) => {
-          return /Semantifyr Language|Gamma|SysML/.test(row)
+          return /Semantifyr|Gamma|SysML/.test(row)
         })).toEqual([
-          'Semantifyr Language: 1',
-          'Semantifyr Language with the Gamma library: 1',
-          'Semantifyr Language with the SysML v2 library: 0',
+          'Semantifyr: 1',
+          'Semantifyr with the Gamma library: 1',
+          'Semantifyr with the SysML v2 library: 0',
           'Gamma: 1',
           'SysML v2: 2',
         ])
