@@ -21,6 +21,8 @@ import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
@@ -28,6 +30,7 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.atomic.AtomicReferenceArray
 import kotlin.time.Duration
@@ -36,8 +39,10 @@ import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
 class PortfolioCase internal constructor(
+    internal val parentInjector: Injector,
     val request: BackendVerificationRequest,
     val gate: ConcurrencyGate,
+    internal val environment: ExecutionEnvironment,
     val progress: ProgressContext,
     private val start: TimeMark,
 ) {
@@ -54,11 +59,25 @@ class PortfolioCase internal constructor(
     }
 }
 
-class PortfolioScope internal constructor() {
+class PortfolioScope internal constructor(
+    private val case: PortfolioCase,
+) {
     internal val legs = mutableListOf<LegSpecification>()
 
     fun leg(name: String, block: suspend () -> BackendVerificationResult) {
         legs += LegSpecification(name, block)
+    }
+
+    fun legs(tasks: List<PortfolioTask<*>>) {
+        for (task in tasks) {
+            leg(task, task.subPath)
+        }
+    }
+
+    internal fun leg(task: PortfolioTask<*>, subPath: String) {
+        leg(task.leg.id) {
+            task.run(case.parentInjector, case.request.withSubPath(subPath), case.environment)
+        }
     }
 }
 
@@ -217,11 +236,13 @@ abstract class VerificationPortfolio(
     ): BackendVerificationResult
 
     protected fun startCase(
+        parentInjector: Injector,
         request: BackendVerificationRequest,
         gate: ConcurrencyGate,
+        environment: ExecutionEnvironment,
         progress: ProgressContext,
     ): PortfolioCase {
-        return PortfolioCase(request, gate, progress, timeSource.markNow())
+        return PortfolioCase(parentInjector, request, gate, environment, progress, timeSource.markNow())
     }
 
     protected suspend fun firstDecisive(
@@ -230,7 +251,7 @@ abstract class VerificationPortfolio(
         stage: String? = null,
         block: PortfolioScope.() -> Unit,
     ): PortfolioOutcome {
-        val scope = PortfolioScope()
+        val scope = PortfolioScope(case)
         scope.block()
 
         require(scope.legs.isNotEmpty()) { "$id: firstDecisive requires at least one job" }
@@ -259,7 +280,7 @@ abstract class VerificationPortfolio(
         stage: String? = null,
         block: PortfolioScope.() -> Unit,
     ): PortfolioOutcome {
-        val scope = PortfolioScope()
+        val scope = PortfolioScope(case)
         scope.block()
 
         require(scope.legs.isNotEmpty()) { "$id: firstNDecisive requires at least one job" }
@@ -298,7 +319,7 @@ abstract class VerificationPortfolio(
         stage: String? = null,
         block: PortfolioScope.() -> Unit,
     ): PortfolioOutcome {
-        val scope = PortfolioScope()
+        val scope = PortfolioScope(case)
         scope.block()
 
         require(scope.legs.isNotEmpty()) { "$id: all requires at least one job" }
@@ -356,8 +377,122 @@ abstract class VerificationPortfolio(
         }
     }
 
+    protected suspend fun staged(case: PortfolioCase, stages: PortfolioStages): PortfolioOutcome {
+        val availability = availability(case.environment)
+        if (availability is AvailabilityReport.Unavailable) {
+            logger.info { "$id: no available backends on this host" }
+            return PortfolioOutcome.NoDecision(availability.reason, emptyList())
+        }
+        val available = stages.tasks.filter {
+            it.isAvailable(case.environment)
+        }
+        if (available.size <= case.slots) {
+            logger.info { "$id: racing ${available.size} configurations on ${case.slots} slots (timeout ${case.time})" }
+            case.progress.reportProgress("racing ${available.size} backend configurations")
+            return firstDecisive(case) {
+                legs(available)
+            }
+        }
+        return runStages(case, stages.stages, available)
+    }
+
     protected fun undecided(runs: List<LegRun>): PortfolioOutcome {
         return classify(runs, null)
+    }
+
+    // a task listed in stages in a row runs once, from the first of them, in a gate of its own beside the stages
+    private suspend fun runStages(
+        case: PortfolioCase,
+        stages: List<PortfolioStage>,
+        available: List<PortfolioTask<*>>,
+    ): PortfolioOutcome {
+        val runs = CopyOnWriteArrayList<LegRun>()
+        val decided = CompletableDeferred<PortfolioOutcome?>()
+
+        fun listedIn(task: PortfolioTask<*>, stageIndex: Int): Boolean {
+            return stageIndex in stages.indices && stages[stageIndex].lists(task)
+        }
+
+        fun endedOnItsOwn(task: PortfolioTask<*>): Boolean {
+            return runs.any {
+                it.leg == task.leg.id && it.end.endedOnItsOwn
+            }
+        }
+
+        return coroutineScope {
+            val work = launch {
+                coroutineScope {
+                    val pendingThrough = mutableListOf<PortfolioTask<*>>()
+                    for ((index, stage) in stages.withIndex()) {
+                        pendingThrough += stage.legs.map {
+                            it.task
+                        }.filter {
+                            it in available && listedIn(it, index + 1) && !listedIn(it, index - 1)
+                        }
+                        val window = stage.window(case)
+                        if (minOf(window, case.timeLeft()) < stage.skippedUnder) {
+                            logger.info { "$id: skipping the ${stage.name} stage, its window of $window is shorter than ${stage.skippedUnder}" }
+                            continue
+                        }
+                        if (pendingThrough.isNotEmpty()) {
+                            val throughTasks = pendingThrough.toList()
+                            pendingThrough.clear()
+                            launch {
+                                val outcome = runGate(stage, "running from the ${stage.name} stage", throughTasks, Duration.INFINITE, case)
+                                runs += outcome.runs
+                                if (outcome is PortfolioOutcome.Decided) {
+                                    decided.complete(outcome)
+                                }
+                            }
+                        }
+                        val stageTasks = stage.legs.filter { stageLeg ->
+                            val task = stageLeg.task
+                            val runsThrough = listedIn(task, index + 1) || listedIn(task, index - 1)
+                            task in available && !runsThrough && !endedOnItsOwn(task) && stageLeg.unlessEndedOnItsOwn.none {
+                                endedOnItsOwn(it)
+                            }
+                        }.map {
+                            it.task
+                        }
+                        if (stageTasks.isEmpty()) {
+                            logger.info { "$id: the ${stage.name} stage has no configuration of its own to start" }
+                            continue
+                        }
+                        val outcome = runGate(stage, "${stage.name} stage", stageTasks, window, case)
+                        runs += outcome.runs
+                        if (outcome is PortfolioOutcome.Decided) {
+                            decided.complete(outcome)
+                            return@coroutineScope
+                        }
+                    }
+                }
+                decided.complete(null)
+            }
+            val outcome = decided.await()
+            work.cancelAndJoin()
+            outcome ?: undecided(runs.toList())
+        }
+    }
+
+    private suspend fun runGate(
+        stage: PortfolioStage,
+        label: String,
+        tasks: List<PortfolioTask<*>>,
+        window: Duration,
+        case: PortfolioCase,
+    ): PortfolioOutcome {
+        val within = if (window.isInfinite()) {
+            "until the case's time runs out"
+        } else {
+            "within $window"
+        }
+        logger.info { "$id: $label, racing ${tasks.size} configurations on ${case.slots} slots $within" }
+        case.progress.reportProgress("$label: racing ${tasks.size} backend configurations $within")
+        return firstDecisive(case, window, label) {
+            for (task in tasks) {
+                leg(task, "${stage.name}/${task.subPath}")
+            }
+        }
     }
 
     // no leg starts after the close, and each leg's end is read only once every leg has stopped

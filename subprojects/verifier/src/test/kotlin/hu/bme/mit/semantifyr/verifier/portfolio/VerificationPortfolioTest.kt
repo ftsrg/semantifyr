@@ -73,7 +73,7 @@ private class TestPortfolio(
         timeout: Duration = Duration.INFINITE,
         progress: ProgressContext = ProgressContext.Silent,
     ): PortfolioCase {
-        return startCase(fakeRequest().copy(timeout = timeout), gate, progress)
+        return startCase(mock(), fakeRequest().copy(timeout = timeout), gate, ExecutionEnvironment.Empty, progress)
     }
 
     suspend fun runFirstDecisive(

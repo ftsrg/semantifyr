@@ -7,12 +7,9 @@
 package hu.bme.mit.semantifyr.portfolios
 
 import com.google.inject.Injector
-import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationBackend
-import hu.bme.mit.semantifyr.backend.VerificationMetadata
-import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
@@ -24,19 +21,12 @@ import hu.bme.mit.semantifyr.backends.theta.ThetaBackend
 import hu.bme.mit.semantifyr.backends.theta.ThetaConfig
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalBackend
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
-import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
-import hu.bme.mit.semantifyr.verifier.portfolio.LegRun
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioCase
-import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioOutcome
+import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioStages
+import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioTask
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
-import hu.bme.mit.semantifyr.verifier.portfolio.withSubPath
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -74,68 +64,58 @@ class SmartFullPortfolio(
     private val uppaalDefault = PortfolioTask(uppaal, UppaalConfig.Default, "uppaal-default")
     private val uppaalOverApproximation = PortfolioTask(uppaal, UppaalConfig.OverApproximation, "uppaal-over-approx")
 
-    private val firstStage = SmartStage(
-        name = "first",
-        tasks = listOf(
-            thetaBmc,
-            spinSafeDfs,
-            uppaalOverApproximation,
-            nuxmvIc3,
-            uppaalDefault,
-            thetaKInduction,
-            nuxmvKInduction,
-            thetaCegarExpl,
-            nuxmvBdd,
-        ),
-    ) { case ->
-        minOf(firstWindow, case.time * windowShare)
+    private val stages = PortfolioStages {
+        stage("first", ::firstStageWindow) {
+            legs(
+                thetaBmc,
+                spinSafeDfs,
+                uppaalOverApproximation,
+                nuxmvIc3,
+                uppaalDefault,
+                thetaKInduction,
+                nuxmvKInduction,
+                thetaCegarExpl,
+                nuxmvBdd,
+            )
+        }
+        stage("second", ::secondStageWindow, skippedUnder = shortestSecondWindow) {
+            legs(
+                thetaCegarExpl,
+                thetaCegarPred,
+                thetaChc,
+                nuxmvIc3,
+                thetaImc,
+                thetaCegarCombined,
+            )
+        }
+        stage("last") {
+            legs(
+                thetaCegarExpl,
+                nuxmvIc3,
+                thetaCegarPred,
+                thetaChc,
+                uppaalOverApproximation,
+                thetaIc3,
+            )
+            // a plain search that ended on its own has finished the space, refused the model or stopped at the depth its variants share
+            unlessEndedOnItsOwn(spinSafeDfs) {
+                legs(
+                    spinCollapse,
+                    spinBitstate,
+                )
+            }
+        }
     }
 
-    private val secondStage = SmartStage(
-        name = "second",
-        tasks = listOf(
-            thetaCegarExpl,
-            thetaCegarPred,
-            thetaChc,
-            nuxmvIc3,
-            thetaImc,
-            thetaCegarCombined,
-        ),
-    ) { case ->
-        minOf(secondWindow, case.time * windowShare - case.elapsed())
+    override val executorKeys: Set<ExecutorKey<*>> = stages.tasks.map {
+        it.executorKey
+    }.toSet()
+    override val legs = stages.tasks.map {
+        it.leg
     }
-
-    private val lastStage = SmartStage(
-        name = "last",
-        tasks = listOf(
-            thetaCegarExpl,
-            nuxmvIc3,
-            thetaCegarPred,
-            thetaChc,
-            uppaalOverApproximation,
-            thetaIc3,
-            spinCollapse,
-            spinBitstate,
-        ),
-    ) {
-        Duration.INFINITE
-    }
-
-    private val stages = listOf(
-        firstStage,
-        secondStage,
-        lastStage,
-    )
-
-    private val tasks = stages.flatMap {
-        it.tasks
-    }.distinct()
-
-    override val executorKeys: Set<ExecutorKey<*>> = tasks.map { it.executorKey }.toSet()
-    override val legs = tasks.map { it.leg }
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
-        val anyAvailable = tasks.any {
+        val anyAvailable = stages.tasks.any {
             it.isAvailable(environment)
         }
         return if (anyAvailable) {
@@ -158,156 +138,15 @@ class SmartFullPortfolio(
         progress: ProgressContext,
     ): BackendVerificationResult {
         val startedAt = Clock.System.now()
-        val case = startCase(request, gate, progress)
-        val available = tasks.filter {
-            it.isAvailable(environment)
-        }
-        if (available.isEmpty()) {
-            logger.info { "$id: no available backends on this host" }
-            return BackendVerificationResult(
-                metadata = VerificationMetadata(
-                    backendId = null,
-                    startedAt = startedAt,
-                ),
-                verdict = VerificationVerdict.Inconclusive,
-                metrics = BackendMetrics(),
-                message = "No backend is installed.",
-            )
-        }
-
-        if (available.size <= case.slots) {
-            logger.info { "$id: racing ${available.size} configurations on ${case.slots} slots (timeout ${request.timeout})" }
-            progress.reportProgress("racing ${available.size} backend configurations")
-            val outcome = firstDecisive(case) {
-                for (task in available) {
-                    leg(task.leg.id) {
-                        task.run(parentInjector, request.withSubPath(task.subPath), environment)
-                    }
-                }
-            }
-            return outcome.toBackendVerificationResult(startedAt)
-        }
-
-        return runStages(case, available, parentInjector, environment).toBackendVerificationResult(startedAt)
+        val outcome = staged(startCase(parentInjector, request, gate, environment, progress), stages)
+        return outcome.toBackendVerificationResult(startedAt)
     }
 
-    // a configuration listed in consecutive stages runs once, from the first of them, in a gate of its own beside the stages
-    private suspend fun runStages(
-        case: PortfolioCase,
-        available: List<PortfolioTask<*>>,
-        parentInjector: Injector,
-        environment: ExecutionEnvironment,
-    ): PortfolioOutcome {
-        val runs = CopyOnWriteArrayList<LegRun>()
-        val decided = CompletableDeferred<PortfolioOutcome?>()
-        return coroutineScope {
-            val work = launch {
-                coroutineScope {
-                    val pendingThrough = mutableListOf<PortfolioTask<*>>()
-                    for ((index, stage) in stages.withIndex()) {
-                        pendingThrough += stage.tasks.filter {
-                            it in available && startsRunningThrough(it, index)
-                        }
-                        val window = stage.window(case)
-                        if (stage == secondStage && minOf(window, case.timeLeft()) < shortestSecondWindow) {
-                            logger.info { "$id: skipping the ${stage.name} stage, its window of $window is shorter than $shortestSecondWindow" }
-                            continue
-                        }
-                        if (pendingThrough.isNotEmpty()) {
-                            val throughTasks = pendingThrough.toList()
-                            pendingThrough.clear()
-                            launch {
-                                val outcome = runGate(stage, "running from the ${stage.name} stage", throughTasks, Duration.INFINITE, case, parentInjector, environment)
-                                runs += outcome.runs
-                                if (outcome is PortfolioOutcome.Decided) {
-                                    decided.complete(outcome)
-                                }
-                            }
-                        }
-                        val stageTasks = stage.tasks.filter {
-                            it in available && !runsThrough(it, index) && !endedOnItsOwn(it, runs) && runsInStage(it, stage, runs)
-                        }
-                        if (stageTasks.isEmpty()) {
-                            logger.info { "$id: the ${stage.name} stage has no configuration of its own to start" }
-                            continue
-                        }
-                        val outcome = runGate(stage, "${stage.name} stage", stageTasks, window, case, parentInjector, environment)
-                        runs += outcome.runs
-                        if (outcome is PortfolioOutcome.Decided) {
-                            decided.complete(outcome)
-                            return@coroutineScope
-                        }
-                    }
-                }
-                decided.complete(null)
-            }
-            val outcome = decided.await()
-            work.cancelAndJoin()
-            outcome ?: undecided(runs.toList())
-        }
+    private fun firstStageWindow(case: PortfolioCase): Duration {
+        return minOf(firstWindow, case.time * windowShare)
     }
 
-    private suspend fun runGate(
-        stage: SmartStage,
-        label: String,
-        gateTasks: List<PortfolioTask<*>>,
-        window: Duration,
-        case: PortfolioCase,
-        parentInjector: Injector,
-        environment: ExecutionEnvironment,
-    ): PortfolioOutcome {
-        val within = if (window.isInfinite()) {
-            "until the case's time runs out"
-        } else {
-            "within $window"
-        }
-        logger.info { "$id: $label, racing ${gateTasks.size} configurations on ${case.slots} slots $within" }
-        case.progress.reportProgress("$label: racing ${gateTasks.size} backend configurations $within")
-        return firstDecisive(case, window, label) {
-            for (task in gateTasks) {
-                leg(task.leg.id) {
-                    task.run(parentInjector, case.request.withSubPath("${stage.name}/${task.subPath}"), environment)
-                }
-            }
-        }
+    private fun secondStageWindow(case: PortfolioCase): Duration {
+        return minOf(secondWindow, case.time * windowShare - case.elapsed())
     }
-
-    private fun startsRunningThrough(task: PortfolioTask<*>, stageIndex: Int): Boolean {
-        return listedIn(task, stageIndex + 1) && !listedIn(task, stageIndex - 1)
-    }
-
-    private fun runsThrough(task: PortfolioTask<*>, stageIndex: Int): Boolean {
-        return listedIn(task, stageIndex + 1) || listedIn(task, stageIndex - 1)
-    }
-
-    private fun listedIn(task: PortfolioTask<*>, stageIndex: Int): Boolean {
-        return stageIndex in stages.indices && task in stages[stageIndex].tasks
-    }
-
-    private fun endedOnItsOwn(task: PortfolioTask<*>, runs: List<LegRun>): Boolean {
-        return runs.any {
-            it.leg == task.leg.id && it.end.endedOnItsOwn
-        }
-    }
-
-    // a plain search that ended on its own has finished the space, refused the model or stopped at the depth its variants share
-    private fun runsInStage(
-        task: PortfolioTask<*>,
-        stage: SmartStage,
-        runs: List<LegRun>,
-    ): Boolean {
-        if (stage != lastStage || (task != spinCollapse && task != spinBitstate)) {
-            return true
-        }
-        val depthFirstRun = runs.firstOrNull {
-            it.stage == "${firstStage.name} stage" && it.leg == spinSafeDfs.leg.id
-        }
-        return depthFirstRun?.end?.endedOnItsOwn != true
-    }
-
-    private class SmartStage(
-        val name: String,
-        val tasks: List<PortfolioTask<*>>,
-        val window: (PortfolioCase) -> Duration,
-    )
 }

@@ -21,8 +21,8 @@ import hu.bme.mit.semantifyr.backends.theta.ThetaConfig
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
+import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioTask
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
-import hu.bme.mit.semantifyr.verifier.portfolio.withSubPath
 import kotlin.time.Clock
 
 class ThetaFullPortfolio(
@@ -76,12 +76,8 @@ class ThetaFullPortfolio(
             )
         }
         progress.reportProgress("racing ${tasks.size} Theta configurations")
-        val outcome = firstDecisive(startCase(request, gate, progress)) {
-            for (task in tasks) {
-                leg(task.leg.id) {
-                    task.run(parentInjector, request.withSubPath(task.subPath), environment)
-                }
-            }
+        val outcome = firstDecisive(startCase(parentInjector, request, gate, environment, progress)) {
+            legs(tasks)
         }
         return outcome.toBackendVerificationResult(startedAt)
     }
