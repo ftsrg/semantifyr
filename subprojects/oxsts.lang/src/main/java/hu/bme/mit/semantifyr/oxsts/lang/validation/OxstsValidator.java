@@ -1073,6 +1073,38 @@ public class OxstsValidator extends AbstractOxstsValidator {
                         UNSUPPORTED_FEATURE);
             }
         }
+        var parameters = transitionDeclaration.getParameters();
+        for (int i = 0; i < parameters.size(); i++) {
+            var argument = OxstsUtils.getArgumentFor(callSuffixExpression.getArguments(), parameters.get(i), i);
+            if (argument != null && argument.getExpression() != null) {
+                checkTracedArgumentRecordable(argument, parameters.get(i));
+            }
+        }
+    }
+
+    private void checkTracedArgumentRecordable(Argument argument, ParameterDeclaration parameter) {
+        if (parameter.getTypeSpecification() == null) {
+            return;
+        }
+        var domain = parameter.getTypeSpecification().getDomain();
+        if (domain instanceof FeatureDeclaration feature && feature.getTypeSpecification() != null) {
+            domain = feature.getTypeSpecification().getDomain();
+        }
+        if (domain != builtinSymbolResolver.realDatatype(parameter) && domain != builtinSymbolResolver.stringDatatype(parameter)) {
+            return;
+        }
+        Modality modality;
+        try {
+            modality = modalityEvaluatorProvider.evaluate(argument.getExpression());
+        } catch (RuntimeException e) {
+            return;
+        }
+        if (modality == Modality.RUNTIME) {
+            acceptError(
+                    "A run-time argument of type '" + domain.getName() + "' cannot be recorded for the traced call.",
+                    argument,
+                    UNSUPPORTED_FEATURE);
+        }
     }
 
     private void checkArgumentAssignableToParameter(Argument argument, ParameterDeclaration parameter) {

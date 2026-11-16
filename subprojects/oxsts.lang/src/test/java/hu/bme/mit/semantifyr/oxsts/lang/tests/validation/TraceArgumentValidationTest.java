@@ -127,4 +127,59 @@ public class TraceArgumentValidationTest {
                     assertThat(issue.getMessage()).contains("Record arguments of the traced transition 'send'");
                 });
     }
+
+    @Test
+    void runtimeRealOrStringArgumentOfATracedCallIsRejected() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Display {
+                var reading: real := 0.0
+                var label: string := ""
+                @Trace
+                tran show(value: real, text: string) {
+                    reading := value
+                    label := text
+                }
+            }
+            class Host {
+                var level: real := 0.5
+                var name: string := "a"
+                contains display: Display
+                redefine tran {
+                    inline display.show(level, name)
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.getIssues())
+                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .extracting(issue -> issue.getMessage())
+                .containsExactlyInAnyOrder(
+                        "A run-time argument of type 'real' cannot be recorded for the traced call.",
+                        "A run-time argument of type 'string' cannot be recorded for the traced call.");
+    }
+
+    @Test
+    void constantRealArgumentOfATracedCallPasses() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Display {
+                var reading: real := 0.0
+                @Trace
+                tran show(value: real) {
+                    reading := value
+                }
+            }
+            class Host {
+                contains display: Display
+                redefine tran {
+                    inline display.show(1.5)
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationIssues();
+    }
 }
