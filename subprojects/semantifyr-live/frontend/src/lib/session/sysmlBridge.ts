@@ -258,7 +258,7 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
   ): Promise<WitnessValidationResult> => {
     const witnessUri = witnessUris.get(request.uri)
     if (!witnessUri) {
-      return { status: 'errored', verdict: null, message: 'No witness to validate', backendId: null, portfolioId: null, metrics: null, report: null }
+      return { status: 'errored', verdict: null, message: 'No witness to validate', portfolioId: null, report: null }
     }
     return (await executeCommand(
       oxstsClient(),

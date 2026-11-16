@@ -24,6 +24,7 @@ import hu.bme.mit.semantifyr.logging.error
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
+import hu.bme.mit.semantifyr.verifier.VerificationMetricsDto
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Timer
@@ -309,7 +310,7 @@ class SessionVerificationManager @Inject constructor(
     private fun recordFinished(entry: Entry, result: Any?) {
         val (backendId, verdict) = when (result) {
             is VerificationCaseResult -> result.backendId() to result.status()
-            is WitnessValidationResult -> result.backendId() to result.status()
+            is WitnessValidationResult -> result.report()?.result?.metadata?.backendId to result.status()
             else -> null to null
         }
         Timer.builder("semantifyr.live.verification")
@@ -321,7 +322,9 @@ class SessionVerificationManager @Inject constructor(
             .record((entry.runningSince ?: entry.startedAt).elapsedNow().toJavaDuration())
         val metrics = when (result) {
             is VerificationCaseResult -> result.metrics()
-            is WitnessValidationResult -> result.metrics()
+            is WitnessValidationResult -> result.report()?.let {
+                VerificationMetrics.fromDto(VerificationMetricsDto.fromMetrics(it.result.metrics))
+            }
             else -> null
         }
         if (metrics != null && backendId != null) {

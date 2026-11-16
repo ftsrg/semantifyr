@@ -78,19 +78,19 @@ describe('renderTrace', () => {
     });
 
     it('adds the witness validation below the verdict', () => {
-        const validation: WitnessValidationResult = { status: 'invalid', verdict: 'passed', message: 'spurious', backendId: 'theta-bmc', portfolioId: 'smart', metrics: null, report: null };
+        const validation: WitnessValidationResult = { status: 'invalid', verdict: 'passed', message: 'spurious', portfolioId: 'smart', report: null };
 
         const document = renderTrace('Safe', result('failed', counterexample), counterexample, validation);
 
         expect(document.split('\n').slice(2, 5)).toEqual([
             'Verdict: failed (backend theta-cegar-expl, portfolio theta, exact)',
             '',
-            'Validation: Witness invalid (backend theta-bmc, portfolio smart) - spurious',
+            'Validation: Witness invalid (portfolio smart) - spurious',
         ]);
     });
 
     it('names the validation\'s backend, duration and soundness from its report', () => {
-        const validation: WitnessValidationResult = { status: 'valid', verdict: 'failed', message: null, backendId: null, portfolioId: 'smart', metrics: null, report: validationReport() };
+        const validation: WitnessValidationResult = { status: 'valid', verdict: 'failed', message: null, portfolioId: 'smart', report: validationReport() };
 
         const document = renderTrace('Safe', result('failed', counterexample), counterexample, validation);
 
@@ -268,7 +268,7 @@ describe('WitnessView validation', () => {
     }
 
     function validation(status: WitnessValidationResult['status'], message: string | null = null): WitnessValidationResult {
-        return { status, verdict: null, message, backendId: null, portfolioId: 'smart', metrics: null, report: null };
+        return { status, verdict: null, message, portfolioId: 'smart', report: null };
     }
 
     function traceDocument(): string {

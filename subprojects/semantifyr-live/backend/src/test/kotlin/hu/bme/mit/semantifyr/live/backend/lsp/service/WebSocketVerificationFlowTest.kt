@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseSpecification
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationStatus
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationStatus
+import hu.bme.mit.semantifyr.lang.ide.wire.VerificationReportAdapter
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.ServerConfig
 import hu.bme.mit.semantifyr.live.backend.SessionManagerConfig
@@ -49,6 +50,30 @@ import kotlin.time.Duration.Companion.milliseconds
 class WebSocketVerificationFlowTest {
 
     private val cannedResult = VerificationCaseResult("passed", "ok", "theta", "smart", null, null, null)
+
+    private val validationReport = VerificationReportAdapter.decode(
+        """
+        {
+            "version": 2,
+            "kind": "re-check",
+            "verificationCase": "example::Case",
+            "portfolioId": "smart",
+            "optimization": {
+                "enabled": []
+            },
+            "timeout": "PT5M",
+            "result": {
+                "metadata": {
+                    "backendId": "theta",
+                    "startedAt": "2026-11-16T10:00:00Z"
+                },
+                "verdict": "Passed",
+                "metrics": {}
+            },
+            "trace": null
+        }
+        """.trimIndent(),
+    )
 
     private val documentUri = "file:///workspace/snippet.oxsts"
 
@@ -437,7 +462,7 @@ class WebSocketVerificationFlowTest {
     fun `finished verifications are timed by kind, backend and verdict`(@TempDir tmp: Path) = testApplication {
         val executor = FakeVerificationExecutor {
             if (it.command == "oxsts.case.validateWitness") {
-                WitnessValidationResult("valid", null, null, "theta", "smart", null, null)
+                WitnessValidationResult("valid", null, null, "smart", validationReport)
             } else {
                 cannedResult
             }

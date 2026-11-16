@@ -186,9 +186,7 @@ function erroredValidation(error: unknown): WitnessValidationResult {
         status: WitnessValidationStatus.Errored,
         verdict: null,
         message: error instanceof Error ? error.message : String(error),
-        backendId: null,
         portfolioId: null,
-        metrics: null,
         report: null,
     };
 }
@@ -206,7 +204,7 @@ export function renderValidation(validation: WitnessValidationResult | null): st
 function renderValidationOrigin(validation: WitnessValidationResult): string {
     const result = validation.report?.result;
     if (result === undefined) {
-        return renderOrigin(validation);
+        return renderOrigin({ backendId: null, portfolioId: validation.portfolioId });
     }
     return renderOrigin(
         { backendId: result.metadata.backendId, portfolioId: validation.portfolioId },

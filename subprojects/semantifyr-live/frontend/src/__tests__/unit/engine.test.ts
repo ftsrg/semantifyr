@@ -24,7 +24,6 @@ import { sampleCase } from '../fixtures/cases';
 import {
   failedResult,
   passedResult,
-  sampleMetrics,
   sampleValidationReport,
   sampleTrace,
 } from '../fixtures/verification-results';
@@ -137,8 +136,6 @@ describe('runAllVerifications', () => {
       return {
         status: 'valid',
         message: null,
-        metrics: sampleMetrics,
-        backendId: 'theta-cegar',
         portfolioId: 'smart',
         report: sampleValidationReport,
       };
@@ -176,7 +173,7 @@ describe('runAllVerifications', () => {
       if ((parameters as { command?: string }).command === 'gamma.case.verify') {
         return failedResult;
       }
-      return { status: 'valid', verdict: 'passed', message: null, backendId: null, portfolioId: 'smart', metrics: null };
+      return { status: 'valid', verdict: 'passed', message: null, portfolioId: 'smart', report: null };
     });
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
@@ -335,9 +332,7 @@ describe('validateWitness', () => {
     const sendRequest = vi.fn<LspClient['sendRequest']>(async () => ({
       status: 'invalid',
       message: 'spurious counterexample',
-      backendId: 'theta-bmc',
       portfolioId: 'smart',
-      metrics: sampleMetrics,
       report: sampleValidationReport,
     }));
     const client: LspClient = { sendRequest, sendNotification: () => {} };
@@ -387,9 +382,7 @@ describe('dispatchAutoValidation', () => {
   it('flips validating=true synchronously and folds the validation result back in', async () => {
     const sendRequest = vi.fn<LspClient['sendRequest']>(async () => ({
       status: 'valid',
-      backendId: 'theta-cegar',
       portfolioId: 'smart',
-      metrics: sampleMetrics,
       report: sampleValidationReport,
     }));
     const client: LspClient = { sendRequest, sendNotification: () => {} };

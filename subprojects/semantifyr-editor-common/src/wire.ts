@@ -265,10 +265,8 @@ export interface WitnessValidationResult {
     status: WitnessValidationStatus;
     verdict: VerificationStatus | null;
     message: string | null;
-    backendId: string | null;
     portfolioId: string | null;
-    metrics: VerificationMetrics | null;
-    // the validation's own report, absent when the validation wrote none
+    // null only when the validation errored before a run
     report: VerificationReport | null;
 }
 

@@ -65,7 +65,7 @@ describe("witnessValidationStatusOf", () => {
         WitnessValidationStatus.Cancelled,
         WitnessValidationStatus.Errored,
     ])("keeps the status %s", (status) => {
-        expect(witnessValidationStatusOf({ status, verdict: null, message: null, backendId: null, portfolioId: null, metrics: null, report: null })).toBe(status);
+        expect(witnessValidationStatusOf({ status, verdict: null, message: null, portfolioId: null, report: null })).toBe(status);
     });
 
     it("treats no result and an unknown status as errored", () => {

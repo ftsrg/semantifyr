@@ -59,4 +59,17 @@ class WitnessValidationResultTest {
                         .report())
                 .isEqualTo(report);
     }
+
+    @Test
+    void aValidationThatErredBeforeARunCarriesNoReport() {
+        var wire = CommandGson.INSTANCE
+                .toJsonTree(WitnessValidationResult.errored("no witness", "smart"))
+                .getAsJsonObject();
+
+        assertThat(wire.get("status").getAsString()).isEqualTo(WitnessValidationStatus.ERRORED);
+        assertThat(CommandGson.INSTANCE
+                        .fromJson(wire, WitnessValidationResult.class)
+                        .report())
+                .isNull();
+    }
 }
