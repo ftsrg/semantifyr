@@ -39,7 +39,7 @@ describe('the session filter', () => {
     expect(matching('edit only')).toEqual(['cccc3333'])
     expect(matching('SysML v2')).toEqual(['aaaa1111', 'dddd4444'])
     expect(matching('sysml')).toEqual(['aaaa1111', 'dddd4444'])
-    expect(matching('Semantifyr Language with the SysML')).toEqual(['dddd4444'])
+    expect(matching('Semantifyr with the SysML')).toEqual(['dddd4444'])
     expect(matching('192.168')).toEqual(['cccc3333'])
   })
 
