@@ -1,0 +1,150 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+.picture {
+  margin: 0 0 1.5rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-large);
+  background: var(--surface-panel);
+}
+
+.figure {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.label {
+  fill: var(--text-primary);
+  font-family: var(--font-sans);
+  font-weight: 700;
+}
+
+.caption {
+  fill: var(--text-secondary);
+  font-family: var(--font-sans);
+}
+
+.code {
+  fill: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.failed {
+  fill: var(--verdict-failed);
+  font-family: var(--font-sans);
+  font-weight: 700;
+}
+
+.broken {
+  fill: var(--verdict-failed-soft);
+  stroke: var(--verdict-failed);
+  stroke-width: 2;
+}
+
+.arrow,
+.line {
+  stroke: var(--text-secondary);
+  stroke-width: 2;
+  fill: none;
+}
+
+.dashed {
+  stroke: var(--text-secondary);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  fill: none;
+}
+
+.head {
+  fill: var(--text-secondary);
+}
+
+.hollow {
+  fill: var(--surface-panel);
+  stroke: var(--text-secondary);
+  stroke-width: 1.5;
+}
+
+.rule {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+
+.start {
+  fill: var(--text-primary);
+}
+
+.state {
+  fill: var(--surface-raised);
+  stroke: var(--language-oxsts);
+  stroke-width: 2;
+}
+
+.classBox {
+  fill: var(--surface-raised);
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.object {
+  fill: var(--surface-editor);
+  stroke: var(--border-strong);
+  stroke-width: 1.5;
+}
+
+.road {
+  fill: var(--surface-inset);
+}
+
+.crossing {
+  fill: var(--surface-inset);
+  stroke: var(--border-strong);
+  stroke-dasharray: 4 4;
+}
+
+.lane {
+  stroke: var(--border-strong);
+  stroke-width: 2;
+  stroke-dasharray: 10 8;
+}
+
+.zebra {
+  fill: var(--text-tertiary);
+}
+
+.housing {
+  fill: var(--surface-chrome);
+  stroke: var(--border-strong);
+  stroke-width: 1.5;
+}
+
+.red {
+  fill: #d0352b;
+}
+
+.yellow {
+  fill: #e5a50a;
+}
+
+.green {
+  fill: #2c9a4b;
+}
+
+:global([data-theme='dark']) .red {
+  fill: #f0645a;
+}
+
+:global([data-theme='dark']) .yellow {
+  fill: #f2c14e;
+}
+
+:global([data-theme='dark']) .green {
+  fill: #4cc46e;
+}
