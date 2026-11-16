@@ -167,14 +167,14 @@ class SemantifyrVerifierTestHelper @Inject constructor(
 
     private fun assertWitnessFilesPersisted(artifactsRoot: Path, case: VerificationCase) {
         val caseDirectory = artifactsRoot.resolve(caseDirectoryName(case))
-        val witnessFile = caseDirectory.resolve("witness.oxsts")
+        val witnessFile = caseDirectory.resolve("witness.semantifyr")
         val traceFile = caseDirectory.resolve("trace.json")
 
         assertThat(witnessFile.exists())
-            .describedAs("witness.oxsts must be written for ${case.qualifiedName} at $witnessFile")
+            .describedAs("witness.semantifyr must be written for ${case.qualifiedName} at $witnessFile")
             .isTrue()
         assertThat(witnessFile.fileSize())
-            .describedAs("witness.oxsts for ${case.qualifiedName} must be non-empty")
+            .describedAs("witness.semantifyr for ${case.qualifiedName} must be non-empty")
             .isGreaterThan(0)
 
         assertThat(traceFile.exists())
@@ -250,9 +250,9 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment)
         assertVerdict(case.qualifiedName, expectedVerdictFromTags(case), result)
 
-        val witnessPath = outputDirectory.resolve(caseDirectoryName(case)).resolve("witness.oxsts")
+        val witnessPath = outputDirectory.resolve(caseDirectoryName(case)).resolve("witness.semantifyr")
         assertThat(witnessPath.exists())
-            .describedAs("witness.oxsts must be written for ${case.qualifiedName} at $witnessPath")
+            .describedAs("witness.semantifyr must be written for ${case.qualifiedName} at $witnessPath")
             .isTrue()
 
         val reparsedContext = semantifyrLoader.startContext()

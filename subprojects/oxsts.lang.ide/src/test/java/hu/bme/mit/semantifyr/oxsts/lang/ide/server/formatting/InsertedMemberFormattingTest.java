@@ -50,7 +50,7 @@ class InsertedMemberFormattingTest {
                 }
                 """;
         var resourceSet = injector.getInstance(XtextResourceSet.class);
-        var resource = resourceSet.createResource(URI.createURI("shapes.oxsts"));
+        var resource = resourceSet.createResource(URI.createURI("shapes.semantifyr"));
         resource.load(new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8)), Map.of());
         var square =
                 (ClassDeclaration) ((OxstsModelPackage) resource.getContents().getFirst())

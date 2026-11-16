@@ -18,10 +18,10 @@ import org.junit.jupiter.api.Test;
 
 class DirectoryDeleteAwareWorkspaceManagerTest {
 
-    private static final URI MODEL = URI.createURI("file:///workspace/lamp.oxsts");
+    private static final URI MODEL = URI.createURI("file:///workspace/lamp.semantifyr");
 
     private static final URI WITNESS =
-            URI.createURI("file:/tmp/semantifyr-1/lamp.Safe/verification/theta/witness.oxsts");
+            URI.createURI("file:/tmp/semantifyr-1/lamp.Safe/verification/theta/witness.semantifyr");
 
     private final ProjectManager project = mock(ProjectManager.class);
 
@@ -57,7 +57,7 @@ class DirectoryDeleteAwareWorkspaceManagerTest {
         workspaceManager.witnessOwners.record(WITNESS, MODEL);
 
         assertThat(workspaceManager.getProjectManager(
-                        URI.createURI("file:///tmp/semantifyr-1/lamp.Safe/verification/theta/witness.oxsts")))
+                        URI.createURI("file:///tmp/semantifyr-1/lamp.Safe/verification/theta/witness.semantifyr")))
                 .isSameAs(project);
     }
 

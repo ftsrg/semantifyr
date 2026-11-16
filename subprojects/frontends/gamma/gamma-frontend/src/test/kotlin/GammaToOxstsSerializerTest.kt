@@ -1963,7 +1963,7 @@ class GammaToOxstsSerializerTest {
 
         assertThatThrownBy {
             GammaToOxstsSerializer(GammaNameMap()).transformToOxsts(gammaPackage)
-        }.isInstanceOf(UnmappedGammaConstructException::class.java).hasMessageContaining(construct).hasMessageContaining("is not mapped to OXSTS yet").hasMessageMatching("(?s).*:\\d+: .*")
+        }.isInstanceOf(UnmappedGammaConstructException::class.java).hasMessageContaining(construct).hasMessageContaining("is not mapped to the Semantifyr Language yet").hasMessageMatching("(?s).*:\\d+: .*")
     }
 
     @ParameterizedTest(name = "{0}")

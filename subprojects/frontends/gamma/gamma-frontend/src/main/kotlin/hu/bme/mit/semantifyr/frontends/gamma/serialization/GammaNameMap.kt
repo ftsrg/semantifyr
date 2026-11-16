@@ -34,7 +34,7 @@ class GammaNameMap {
         }
         val declared = scopeMembers.putIfAbsent(name, element)
         check(declared == null || declared == element) {
-            "Two Gamma elements are emitted as '$name' in one OXSTS scope"
+            "Two Gamma elements are emitted as '$name' in one scope of the Semantifyr model"
         }
         return name
     }

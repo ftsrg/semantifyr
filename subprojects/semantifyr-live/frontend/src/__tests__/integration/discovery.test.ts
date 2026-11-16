@@ -25,7 +25,7 @@ const CASES: VerificationCaseSpecification[] = [
     id: 'a',
     label: 'Case a',
     location: {
-      uri: 'file:///workspace/snippet.oxsts',
+      uri: 'file:///workspace/snippet.semantifyr',
       range: { start: { line: 1, character: 0 }, end: { line: 1, character: 1 } },
     },
   },
@@ -59,7 +59,7 @@ function casesStep(state: InitializationState): InitializationState['steps'][num
 
 async function openConnected(client: LspClient, retries: readonly number[], timeoutMs = 1000, initializing = false): Promise<TestLive> {
   const test = createTestLive(client, undefined, { discoveryRetryMs: retries, discoveryTimeoutMs: timeoutMs, initializing })
-  test.live.start('/oxsts')
+  test.live.start('/language')
   await vi.waitFor(() => {
     expect(test.live.workspace.get().runtime).not.toBeNull()
   })
@@ -80,7 +80,7 @@ describe('finding the verification cases', () => {
   it('asks again a session that did not have the document yet, and lists the cases', async () => {
     const session = discoveryClient(async (attempt) => {
       if (attempt === 1) {
-        throw new Error('No resource registered for uri=file:///workspace/snippet.oxsts')
+        throw new Error('No resource registered for uri=file:///workspace/snippet.semantifyr')
       }
       return CASES
     })
@@ -95,7 +95,7 @@ describe('finding the verification cases', () => {
 
   it('ends initialization with the reason once a session keeps refusing', async () => {
     const session = discoveryClient(async () => {
-      throw new Error('No resource registered for uri=file:///workspace/snippet.oxsts')
+      throw new Error('No resource registered for uri=file:///workspace/snippet.semantifyr')
     })
     open = await openConnected(session.client, [10, 10])
 
@@ -103,7 +103,7 @@ describe('finding the verification cases', () => {
       expect(casesStep(open!.live.initialization.get())?.state).toBe('failed')
     })
     expect(session.attempts()).toBeGreaterThanOrEqual(3)
-    expect(casesStep(open.live.initialization.get())?.reason).toBe('The verification cases could not be listed. No resource registered for uri=file:///workspace/snippet.oxsts')
+    expect(casesStep(open.live.initialization.get())?.reason).toBe('The verification cases could not be listed. No resource registered for uri=file:///workspace/snippet.semantifyr')
   })
 
   it('ends initialization with what it waited for when a session never answers', async () => {
@@ -132,7 +132,7 @@ describe('finding the verification cases', () => {
     })
 
     refusing = false
-    open.models.edit('file:///workspace/snippet.oxsts', 'edited model')
+    open.models.edit('file:///workspace/snippet.semantifyr', 'edited model')
 
     await vi.waitFor(() => {
       expect(isInitialized(open!.live.initialization.get())).toBe(true)
@@ -143,7 +143,7 @@ describe('finding the verification cases', () => {
     let documentKnown = false
     const session = discoveryClient(async () => {
       if (!documentKnown) {
-        throw new Error('No resource registered for uri=file:///workspace/snippet.oxsts')
+        throw new Error('No resource registered for uri=file:///workspace/snippet.semantifyr')
       }
       return CASES
     })
@@ -176,7 +176,7 @@ describe('finding the verification cases', () => {
       sendNotification: () => {},
     }
     open = createTestLive(client, undefined, { initializing: true, initializationTimeoutMs: 400 })
-    open.live.start('/oxsts')
+    open.live.start('/language')
     await vi.waitFor(() => {
       expect(open!.live.workspace.get().runtime).not.toBeNull()
     })

@@ -12,7 +12,7 @@ import ServedExamples from '@site/src/components/ServedExamples';
 
 # Verifying Gamma Models
 
-Semantifyr verifies a Gamma model by compiling it into OXSTS on the Gamma semantic library, which holds Gamma's execution semantics. This walkthrough verifies the level crossing that Live serves, in Live and on your machine, and reads the [trace](traces.mdx) of a case that fails.
+Semantifyr verifies a Gamma model by compiling it into a Semantifyr model on the Gamma semantic library, which holds Gamma's execution semantics. This walkthrough verifies the level crossing that Live serves, in Live and on your machine, and reads the [trace](traces.mdx) of a case that fails.
 
 ## The Model
 
@@ -60,7 +60,7 @@ The editor lists the two cases, a line each, under **Verify all**, which runs th
 
 </details>
 
-The model is yours to edit, as one file. **Open in Live** opens the model in Live itself, where *OXSTS of the model*, in the read-only documents menu, opens the OXSTS model that the current file compiles to, on the Gamma semantic library.
+The model is yours to edit, as one file. **Open in Live** opens the model in Live itself, where *Semantifyr model*, in the read-only documents menu, opens the Semantifyr model that the current file compiles to, on the Gamma semantic library.
 
 ## Verifying Locally
 
@@ -83,16 +83,16 @@ Verifying LevelCrossing.TwoTrainsCanBeInTheCrossing ...
   report: /tmp/level-crossing/artifacts/LevelCrossing.TwoTrainsCanBeInTheCrossing/verification/model._LevelCrossing._TwoTrainsCanBeInTheCrossing/report.json
 ```
 
-Each case ran on the default `smart` portfolio, which runs the installed backends with the quick configurations first ([stages](../../backends/portfolios-and-verdicts.mdx#stages)), and the command exited with status 5, since a case failed ([exit codes](../../reference/command-line.mdx#exit-codes)). Beside `report.json`, the directory of a case with a witness holds the trace, `trace.get`, and the witness it was written from, `witness.oxsts`, `witness.json` and `trace.json`; [Artifacts](../../reference/artifacts.mdx) describes each file.
+Each case ran on the default `smart` portfolio, which runs the installed backends with the quick configurations first ([stages](../../backends/portfolios-and-verdicts.mdx#stages)), and the command exited with status 5, since a case failed ([exit codes](../../reference/command-line.mdx#exit-codes)). Beside `report.json`, the directory of a case with a witness holds the trace, `trace.get`, and the witness it was written from, `witness.semantifyr`, `witness.json` and `trace.json`; [Artifacts](../../reference/artifacts.mdx) describes each file.
 
 ## Reading the Trace
 
 A case with a witness says **Trace** at the end of its line in Live, and a click on the line opens its trace below it, in four views:
 
 - *Gamma trace*: the witness as a Gamma execution trace, `trace.get`, the steps of the run with what the environment raised in each and the transitions that fired ([Gamma traces](traces.mdx)).
-- *OXSTS steps*: the values of the model's state in every step of the witness, starting from the initial state that initialization produces.
+- *Steps*: the values of the model's state in every step of the witness, starting from the initial state that initialization produces.
 - *Calls*: per step, the traced calls of the Gamma semantic library.
-- *OXSTS witness*: the witness as an OXSTS model.
+- *Witness*: the witness as a Semantifyr model.
 
 After **Verify all** the trace of the first failed case opens by itself. Which run a trace shows depends on the backend that answered, so the trace Live shows may differ from the one below, which nuXmv found in the run above. In most of its steps the environment raises several sensor events at once, and a track takes the one its state has a transition for. The trace of `BarrierDownWhileTrainInCrossing` has seven steps:
 

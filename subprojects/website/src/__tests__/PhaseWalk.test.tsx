@@ -19,18 +19,18 @@ import type { WalkStep } from '../components/Phases/walks';
 const STEPS: WalkStep[] = [
   {
     caption: 'First `a` goes.',
-    before: { file: 'zero.oxsts', text: 'a\nb' },
-    after: { file: 'one.oxsts', text: 'b' },
+    before: { file: 'zero.semantifyr', text: 'a\nb' },
+    after: { file: 'one.semantifyr', text: 'b' },
   },
   {
     caption: 'Then `c` comes.',
-    before: { file: 'one.oxsts', text: 'b' },
-    after: { file: 'two.oxsts', text: 'b\nc' },
+    before: { file: 'one.semantifyr', text: 'b' },
+    after: { file: 'two.semantifyr', text: 'b\nc' },
   },
   {
     caption: 'Last `d` comes.',
-    before: { file: 'two.oxsts', text: 'b\nc' },
-    after: { file: 'three.oxsts', text: 'b\nc\nd' },
+    before: { file: 'two.semantifyr', text: 'b\nc' },
+    after: { file: 'three.semantifyr', text: 'b\nc\nd' },
   },
 ];
 
@@ -117,7 +117,7 @@ describe('a walk through a phase', () => {
     press('One pane');
 
     expect(announced()).toBe('Step 2 of 3. Then c comes.');
-    expect(screen.getByText('two.oxsts')).toBeTruthy();
+    expect(screen.getByText('two.semantifyr')).toBeTruthy();
   });
 
   it('marks a removed and an added line by a strike and a spoken word, and a copy of the line is its code alone', () => {

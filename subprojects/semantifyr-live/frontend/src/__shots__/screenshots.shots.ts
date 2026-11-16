@@ -57,7 +57,7 @@ describe('the screenshots', () => {
     })
 
     test(`the embedded editor on the intersection lesson, verified, ${theme}`, async ({ ui }) => {
-      const page = await ui.open(`/oxsts/intersection?view=embed&theme=${theme}`, { width: 800, height: 720 })
+      const page = await ui.open(`/language/intersection?view=embed&theme=${theme}`, { width: 800, height: 720 })
       const cases = page.locator('.embed-case')
       await expect.poll(async () => {
         return cases.count()

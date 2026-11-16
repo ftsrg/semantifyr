@@ -1,7 +1,7 @@
 {
   "name": "semantifyr",
   "displayName": "Semantifyr",
-  "description": "Edit and verify OXSTS and Gamma models with Semantifyr, a framework to support the declarative definition of engineering model semantics.",
+  "description": "Edit and verify Semantifyr and Gamma models with Semantifyr, a framework to support the declarative definition of engineering model semantics.",
   "version": "0.0.0",
   "type": "module",
   "publisher": "ftsrg",
@@ -138,7 +138,7 @@
           ".oxsts"
         ],
         "aliases": [
-          "OXSTS",
+          "Semantifyr Language",
           "oxsts"
         ],
         "configuration": "./language-configuration.json",

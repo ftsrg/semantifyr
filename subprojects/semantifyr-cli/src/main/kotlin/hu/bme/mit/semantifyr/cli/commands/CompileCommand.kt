@@ -54,7 +54,7 @@ class CompileCommand @Inject constructor(
         .help("The output file, or the output directory for several cases.")
 
     override fun help(context: Context): String {
-        return "Compile each case of an OXSTS model to inlined OXSTS."
+        return "Compile each case of a Semantifyr model to an inlined model."
     }
 
     override suspend fun run() {
@@ -70,7 +70,7 @@ class CompileCommand @Inject constructor(
         } else {
             val directory = validateMultipleCasesOutput(cases.size)
             cases.map {
-                directory.resolve("${caseDirectoryName(it)}.oxsts")
+                directory.resolve("${caseDirectoryName(it)}.${fileExtensionProvider.primaryFileExtension}")
             }
         }
         val compiler = SemantifyrCompiler(injector, artifactOptions.resolved, compilationOptions.resolved)
@@ -80,7 +80,7 @@ class CompileCommand @Inject constructor(
     }
 
     private fun validateSingleCaseOutput(): Path {
-        val target = outputPath ?: model.resolveSibling("${model.nameWithoutExtension}.inlined.oxsts")
+        val target = outputPath ?: model.resolveSibling("${model.nameWithoutExtension}.inlined.${fileExtensionProvider.primaryFileExtension}")
         if (Files.isDirectory(target)) {
             throw CommandExit(ExitCode.Usage, "--output '$target' is a directory, but only one case is selected. Provide a file path or omit the flag.")
         }

@@ -71,7 +71,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     suspend fun `call trace lists only the calls that fired in each step`(@TempDir output: Path) {
-        val case = loadCase("tracing.oxsts", tracingCase)
+        val case = loadCase("tracing.semantifyr", tracingCase)
 
         verifyWithWitness(case, output) { model ->
             linearInlinedWitness(
@@ -100,7 +100,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     suspend fun `trace receivers and arguments are feature paths from the root instance`(@TempDir output: Path) {
-        val case = loadCase("tracing.oxsts", tracingCase)
+        val case = loadCase("tracing.semantifyr", tracingCase)
 
         verifyWithWitness(case, output) { model ->
             linearInlinedWitness(
@@ -129,7 +129,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     suspend fun `array slot values reach the witness state and the back-annotated witness`(@TempDir output: Path) {
-        val case = loadCase("arrays.oxsts", arraysCase)
+        val case = loadCase("arrays.semantifyr", arraysCase)
         val slots = (0..2).map {
             flattenedName("root", "slots_$it")
         }
@@ -162,7 +162,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     suspend fun `record field values reach the witness state and the back-annotated witness by field path`(@TempDir output: Path) {
-        val case = loadCase("records.oxsts", recordsCase)
+        val case = loadCase("records.semantifyr", recordsCase)
         val positionX = flattenedName("root", "robot", "position") + "${RecordFlatteningPass.FIELD_SEPARATOR}x"
 
         verifyWithWitness(case, output) { model ->
@@ -183,7 +183,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     suspend fun `class-typed array slots back-annotate to the instance path they hold`(@TempDir output: Path) {
-        val case = loadCase("arrays.oxsts", classTypedArraysCase)
+        val case = loadCase("arrays.semantifyr", classTypedArraysCase)
         val slots = (0..1).map {
             flattenedName("root", "queue_$it")
         }
@@ -207,7 +207,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     suspend fun `the witness starts at the initialized step with the call of init`(@TempDir output: Path) {
-        val case = loadCase("tracing.oxsts", tracingCase)
+        val case = loadCase("tracing.semantifyr", tracingCase)
 
         verifyWithWitness(case, output) { model ->
             linearInlinedWitness(
@@ -295,7 +295,7 @@ class BackAnnotationFidelityTest {
     }
 
     private fun readWitnessModel(output: Path, case: VerificationCase): String {
-        return caseDirectory(output, case).resolve("witness.oxsts").readText()
+        return caseDirectory(output, case).resolve("witness.semantifyr").readText()
     }
 
     private class WitnessPortfolio(

@@ -261,6 +261,35 @@ class ShellBasedBackendExecutorTest {
     }
 
     @Test
+    @DisabledOnOs(OS.WINDOWS, disabledReason = "the launchers are shell scripts")
+    suspend fun `a cancelled run returns after a descendant that ignores the polite destroy has exited`() {
+        val executor = launcher("stubborn.sh", "sh -c \"trap '' TERM; sleep \$1\"")
+        val workingDirectory = workingDirectory()
+        val marker = "${3600 + Random.nextInt(1000)}.${Random.nextInt(1000)}"
+
+        try {
+            coroutineScope {
+                val run = async {
+                    executor.run(listOf(marker), workingDirectory)
+                }
+                withTimeout(10.seconds) {
+                    while (liveProcessesWithArgument(marker).isEmpty()) {
+                        delay(10.milliseconds)
+                    }
+                }
+
+                run.cancelAndJoin()
+            }
+
+            assertThat(liveProcessesWithArgument(marker)).isEmpty()
+        } finally {
+            liveProcessesWithArgument(marker).forEach {
+                it.destroyForcibly()
+            }
+        }
+    }
+
+    @Test
     fun `the probe succeeds when the tool answers with exit code zero`() {
         assertThat(stub().probe()).isTrue()
     }

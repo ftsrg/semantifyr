@@ -29,7 +29,7 @@ Every JVM module has the test suite `test`, and a module whose tests run real ba
 
 The TypeScript packages run their Vitest suites in their `npmCheck` task, beside the type check and the linter, which `check` runs too. Live's frontend adds `screenTest` and `uiTest`, which drive its screens and its built application in a browser, and the website `walkTest`, a walk by keyboard through the built site.
 
-Run the level that holds what you changed, as a task of the module you changed: `./gradlew :website:test` runs the website's unit tests, which validate every OXSTS code example of these pages, and `./gradlew :website:npmCheck` its type check, linter and Vitest suites. A change of these pages also needs `./gradlew :website:assemble`, which fails on a broken link, and a change of their controls `./gradlew :website:walkTest`. CI runs `./gradlew build` on Linux, Windows and macOS, and on Linux the browser levels and `integrationTest` as well.
+Run the level that holds what you changed, as a task of the module you changed: `./gradlew :website:test` runs the website's unit tests, which validate every code example of these pages in the Semantifyr Language, and `./gradlew :website:npmCheck` its type check, linter and Vitest suites. A change of these pages also needs `./gradlew :website:assemble`, which fails on a broken link, and a change of their controls `./gradlew :website:walkTest`. CI runs `./gradlew build` on Linux, Windows and macOS, and on Linux the browser levels and `integrationTest` as well.
 
 ## What a Review Checks
 

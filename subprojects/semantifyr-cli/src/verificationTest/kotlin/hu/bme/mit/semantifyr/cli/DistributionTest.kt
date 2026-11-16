@@ -35,7 +35,7 @@ class DistributionTest : DistributionTestBase("semantifyr") {
         val run = run(
             "verify", "--json", "--theta-executor", "shell", "--portfolio", "theta-cegar-expl-pred-combined", "-d", "artifacts",
             "--case-name", "semantifyr::verification::lang::local_vars::LocalVariableUninitializedBound",
-            testModels.resolve("semantic/local_vars.oxsts").toString(),
+            testModels.resolve("semantic/local_vars.semantifyr").toString(),
         )
 
         assertThat(run.exitCode).describedAs(run.stderr).isEqualTo(5)

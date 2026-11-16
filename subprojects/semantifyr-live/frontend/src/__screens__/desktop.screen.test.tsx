@@ -232,7 +232,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
   'tab-model-oxsts': {
     seed: { verification: RESULTS, modelOxsts: MODEL_OXSTS, tab: modelOxstsTabOf('level-crossing.sysml', MODEL_OXSTS) },
     expectState: () => {
-      expect(text('.tab.is-readonly[aria-selected=true]')).toContain('level-crossing.oxsts')
+      expect(text('.tab.is-readonly[aria-selected=true]')).toContain('level-crossing.semantifyr')
       expect(text('.readonly-banner')).toContain('compiles to')
       expect(text('.monaco-editor .view-lines')).toContain('class LevelCrossing')
     },
@@ -306,11 +306,11 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     expectState: () => {
       expect(count('.segmented-option[data-language=gamma][aria-pressed=true]')).toBe(1)
       expect(count('.tab-model .language-mark[data-language=gamma]')).toBe(1)
-      expect(text('.results-header .model-oxsts-button')).toBe('OXSTS')
+      expect(text('.results-header .model-oxsts-button')).toBe('Semantifyr model')
     },
   },
   'oxsts': {
-    seed: { flavorId: 'oxsts', exampleId: 'level-crossing', verification: discovered([notRun(caseOf('BarrierDownWhileTrainInCrossing', 90, 'file:///workspace/snippet.oxsts'))]) },
+    seed: { flavorId: 'oxsts', exampleId: 'level-crossing', verification: discovered([notRun(caseOf('BarrierDownWhileTrainInCrossing', 90, 'file:///workspace/snippet.semantifyr'))]) },
     expectState: () => {
       expect(count('.segmented-option[data-language=oxsts][aria-pressed=true]')).toBe(1)
       expect(count('.tab-model .language-mark[data-language=oxsts]')).toBe(1)

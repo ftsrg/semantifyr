@@ -6,6 +6,7 @@
 
 import com.github.gradle.node.npm.task.NpmTask
 import hu.bme.mit.semantifyr.gradle.conventions.ExampleDescriptions
+import hu.bme.mit.semantifyr.gradle.conventions.oxstsFileExtension
 import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.servedExamples
@@ -69,7 +70,7 @@ fun servedFiles(language: String): List<RegularFile> {
 // live's libraries show the compiled form of the served models alone
 fun compiledFiles(language: String): List<String> {
     return servedExamples(language).map {
-        "${it.name}.oxsts"
+        "${it.name}.$oxstsFileExtension"
     }
 }
 

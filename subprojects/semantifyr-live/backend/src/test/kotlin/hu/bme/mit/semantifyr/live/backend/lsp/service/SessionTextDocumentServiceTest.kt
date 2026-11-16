@@ -38,7 +38,7 @@ import java.util.concurrent.CompletableFuture
 
 class SessionTextDocumentServiceTest {
 
-    private val unknownUri = "file:///workspace/never-opened.oxsts"
+    private val unknownUri = "file:///workspace/never-opened.semantifyr"
 
     private class Fixture {
         val documents = mock<SessionDocumentManager>()

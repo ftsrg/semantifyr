@@ -19,16 +19,18 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import org.eclipse.emf.common.util.URI
+import org.eclipse.xtext.resource.FileExtensionProvider
 import java.nio.file.Path
 
 class InlinedOxstsModelCreator @Inject constructor(
     private val builtinSymbolResolver: BuiltinSymbolResolver,
     private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
+    private val fileExtensionProvider: FileExtensionProvider,
 ) {
 
     fun create(classDeclaration: ClassDeclaration, outputDirectory: Path): CreatedCompilationContext {
         val resourceSet = classDeclaration.eResource().resourceSet
-        val uri = URI.createFileURI(outputDirectory.resolve("inlined.oxsts").toAbsolutePath().toString())
+        val uri = URI.createFileURI(outputDirectory.resolve("inlined.${fileExtensionProvider.primaryFileExtension}").toAbsolutePath().toString())
 
         val inlinedOxsts = OxstsFactory.createInlinedOxsts()
         inlinedOxsts.classDeclaration = classDeclaration

@@ -61,7 +61,7 @@ class MetricsCommandTest {
 
     @Test
     suspend fun `prints one line per selected case`() {
-        val result = runCli("metrics", "--json", "--include-tag", "expect-fail", testModels.resolve("semantic/local_vars.oxsts").toString())
+        val result = runCli("metrics", "--json", "--include-tag", "expect-fail", testModels.resolve("semantic/local_vars.semantifyr").toString())
 
         assertThat(result.statusCode).describedAs(result.output).isZero()
         assertThat(jsonLines<MetricsLine>(result.stdout)).isNotEmpty()
@@ -69,7 +69,7 @@ class MetricsCommandTest {
 
     @Test
     suspend fun `the json line carries every size field even when it is zero`(@TempDir directory: Path) {
-        val model = directory.resolve("stateless.oxsts")
+        val model = directory.resolve("stateless.semantifyr")
         model.writeText(
             """
             package stateless

@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.live.backend.server
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.live.backend.BuildInfo
+import hu.bme.mit.semantifyr.live.backend.Flavor
 import hu.bme.mit.semantifyr.live.backend.FlavorRegistry
 import hu.bme.mit.semantifyr.live.backend.PortfolioRegistry
 import hu.bme.mit.semantifyr.live.backend.ServerStatus
@@ -17,18 +18,21 @@ import hu.bme.mit.semantifyr.live.backend.data.FlavorsResponse
 import hu.bme.mit.semantifyr.live.backend.data.HealthResponse
 import hu.bme.mit.semantifyr.live.backend.data.InfoResponse
 import hu.bme.mit.semantifyr.live.backend.data.PortfoliosResponse
+import hu.bme.mit.semantifyr.live.backend.lsp.language.LanguageServiceRegistry
 import hu.bme.mit.semantifyr.live.backend.lsp.session.SessionManager
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import io.ktor.server.application.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.eclipse.xtext.resource.FileExtensionProvider
 
 @Singleton
 class ApiRoutesHandler @Inject constructor(
     private val sessionManager: SessionManager,
     private val serverStatus: ServerStatus,
     private val libraryListing: LibraryListing,
+    private val languageServiceRegistry: LanguageServiceRegistry,
 ) {
 
     fun Application.configure() {
@@ -53,7 +57,7 @@ class ApiRoutesHandler @Inject constructor(
                 call.respond(
                     FlavorsResponse(
                         flavors = FlavorRegistry.flavors.map {
-                            FlavorResponse.fromFlavor(it)
+                            FlavorResponse.fromFlavor(it, documentNameOf(it))
                         },
                     ),
                 )
@@ -70,6 +74,11 @@ class ApiRoutesHandler @Inject constructor(
                 )
             }
         }
+    }
+
+    private fun documentNameOf(flavor: Flavor): String {
+        val fileExtension = languageServiceRegistry.injectorFor(flavor).getInstance(FileExtensionProvider::class.java).primaryFileExtension
+        return "snippet.$fileExtension"
     }
 
     private fun Route.crossOriginGet(path: String, body: RoutingHandler) {

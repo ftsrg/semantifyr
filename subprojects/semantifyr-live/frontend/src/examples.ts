@@ -7,10 +7,11 @@
 import type { FlavorInfo } from '@semantifyr/editor-common';
 import { fileNameOf, servedExamplesOf, servedLanguages, type ExampleLanguage, type ServedExample } from '@semantifyr/editor-common/examples';
 import { presentationOf } from './lib/language/presentation';
+import { OXSTS_EXTENSION } from './lib/workspace/files';
 import { SYSML_FLAVOR_INFO } from './lib/session/sysmlBridge';
 import { BLANK_MODEL, compiledDescription, compiledLabel } from './texts';
 
-const importedOxsts = import.meta.glob('./snippets/imported/tutorial/*.oxsts', {
+const importedOxsts = import.meta.glob('./snippets/imported/tutorial/*.semantifyr', {
   query: '?raw',
   import: 'default',
   eager: true,
@@ -79,7 +80,7 @@ function compiledExamples(language: ExampleLanguage, flavor: string): LiveExampl
     return served.hidden !== true;
   }).flatMap((served) => {
     const name = fileNameOf(served);
-    const code = importedText(files, `./snippets/imported/${directory}/${name.slice(0, name.lastIndexOf('.'))}.oxsts`);
+    const code = importedText(files, `./snippets/imported/${directory}/${name.slice(0, name.lastIndexOf('.'))}${OXSTS_EXTENSION}`);
     return code === null ? [] : [{ id: served.id, flavor, label: compiledLabel(served.label, presentationOf(language).name), description: compiledDescription(presentationOf(language).name), code, served }];
   });
 }

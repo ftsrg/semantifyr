@@ -13,7 +13,7 @@ import ServedExamples from '@site/src/components/ServedExamples';
 
 # Verifying SysML v2 Models
 
-Semantifyr verifies SysML v2 models by translating them into OXSTS on top of a semantic library that defines what SysML v2 parts, ports, items and state machines do. This walkthrough models a room with a switch and a lamp, verifies three requirements in Live and on your machine, and reads the [trace](traces.mdx) of a requirement that does not hold. All Live needs is a browser.
+Semantifyr verifies SysML v2 models by translating them into Semantifyr models on top of a semantic library that defines what SysML v2 parts, ports, items and state machines do. This walkthrough models a room with a switch and a lamp, verifies three requirements in Live and on your machine, and reads the [trace](traces.mdx) of a requirement that does not hold. All Live needs is a browser.
 
 ## The Model
 
@@ -78,7 +78,7 @@ The editor lists the three cases, a line each, under **Verify all**, which runs 
 
 </details>
 
-The model is yours to edit, as one file. The cases follow your edits, and a construct the translator does not support gets a diagnostic on that construct and keeps the model from being verified. **Open in Live** opens the model in Live itself, where *OXSTS of the model*, in the read-only documents menu, opens the translation of the current file, an OXSTS model that instantiates the classes of the SysML v2 semantic library.
+The model is yours to edit, as one file. The cases follow your edits, and a construct the translator does not support gets a diagnostic on that construct and keeps the model from being verified. **Open in Live** opens the model in Live itself, where *Semantifyr model*, in the read-only documents menu, opens the translation of the current file, a Semantifyr model that instantiates the classes of the SysML v2 semantic library.
 
 ## Verifying Locally
 
@@ -86,7 +86,7 @@ The model is yours to edit, as one file. The cases follow your edits, and a cons
 
 - A Java 25 runtime found through `JAVA_HOME` or `PATH`.
 - Node.js <NodeVersion /> or newer on `PATH`.
-- The `semantifyr-sysml` command-line distribution ([Install](../../start/install.md#the-command-line)). It carries the translator from SysML v2 to OXSTS and the SysML v2 semantic library, so Node.js is the only prerequisite SysML v2 adds.
+- The `semantifyr-sysml` command-line distribution ([Install](../../start/install.md#the-command-line)). It carries the translator from SysML v2 to the Semantifyr Language and the SysML v2 semantic library, so Node.js is the only prerequisite SysML v2 adds.
 
 `SEMANTIFYR_HOME` below is the installed distribution, `subprojects/frontends/sysml/sysml-cli/build/install/semantifyr-sysml` in a clone of the repository: it holds the launcher in `bin/`, Theta in `theta-xsts-cli/` and the semantic library in `libraries/`; an unzipped `semantifyr-sysml-<version>.zip` has the same layout. The commands below are written for Linux and macOS shells; on Windows, use `bin\semantifyr-sysml.bat`.
 
@@ -96,22 +96,22 @@ Create an empty directory and save the complete model in it as `room.sysml`. In 
 "$SEMANTIFYR_HOME/bin/semantifyr-sysml" verify room.sysml --artifact-directory ../room-artifacts
 ```
 
-The `verify` command translates `room.sysml` to OXSTS, an OXSTS model that instantiates the classes of the SysML v2 semantic library, which takes about a minute. It then finds the three verification cases and verifies each with the default `smart` portfolio, which runs the installed backends with the quick configurations first ([stages](../../backends/portfolios-and-verdicts.mdx#stages)). The artifacts go outside the model's directory, since the translator reads every SysML v2 file below it ([`semantifyr-sysml`](../../reference/command-line.mdx#semantifyr-sysml)).
+The `verify` command translates `room.sysml` to a Semantifyr model that instantiates the classes of the SysML v2 semantic library, which takes about a minute. It then finds the three verification cases and verifies each with the default `smart` portfolio, which runs the installed backends with the quick configurations first ([stages](../../backends/portfolios-and-verdicts.mdx#stages)). The artifacts go outside the model's directory, since the translator reads every SysML v2 file below it ([`semantifyr-sysml`](../../reference/command-line.mdx#semantifyr-sysml)).
 
 For each case, the command prints its name, `PASSED` or `FAILED` with the time it took, and the path of its `report.json`, and it exits with status 5 when a case fails (the [exit codes](../../reference/command-line.mdx#exit-codes)).
 
-`--artifact-directory ../room-artifacts` keeps the translated model in `compiled/default/room.oxsts`, with its name map `room.names.json` beside it, and the artifacts of every case in a directory of its own; a case with a witness has `witness.json`, `trace.json`, `witness.oxsts` and `trace.sysml` among them. [Artifacts](../../reference/artifacts.mdx) describes each file.
+`--artifact-directory ../room-artifacts` keeps the translated model in `compiled/default/room.semantifyr`, with its name map `room.names.json` beside it, and the artifacts of every case in a directory of its own; a case with a witness has `witness.json`, `trace.json`, `witness.semantifyr` and `trace.sysml` among them. [Artifacts](../../reference/artifacts.mdx) describes each file.
 
 ## Reading the Witness
 
 A case with a witness says **Trace** at the end of its line, and a click on the line opens its trace below it, in four views:
 
 - *SysML trace*: the witness as a SysML v2 model, a package `<case>Trace` whose part definition `Run` specializes the verified part definition and declares the states, transitions and sends of this execution in time order ([SysML v2 traces](traces.mdx)).
-- *OXSTS steps*: the values of the model's state in every step of the witness, starting from the initial state that initialization produces. State names are paths from the verified instance, `root`, shortened to their last segments, with the whole path on hover.
+- *Steps*: the values of the model's state in every step of the witness, starting from the initial state that initialization produces. State names are paths from the verified instance, `root`, shortened to their last segments, with the whole path on hover.
 - *Calls*: per step, the traced calls of the semantic library: the transitions that fired, the states entered and left, and the send actions that ran.
-- *OXSTS witness*: the witness as an OXSTS model.
+- *Witness*: the witness as a Semantifyr model.
 
-After **Verify all** the trace of the first failed case opens by itself. A failed `mustAlways` requirement has a trace. Open the trace of `LampLitOnlyWhileSwitchOnViolated` and read it in *Calls* and *OXSTS steps*. The shortest trace has two steps:
+After **Verify all** the trace of the first failed case opens by itself. A failed `mustAlways` requirement has a trace. Open the trace of `LampLitOnlyWhileSwitchOnViolated` and read it in *Calls* and *Steps*. The shortest trace has two steps:
 
 1. The button is pressed: `root.system.switch.Behaviour.turnOn` fires and the switch's output sends a `Toggle`. Afterwards the switch is `On`, the lamp is still `Dark`, and the toggle waits on `root.system.lamp.input`.
 2. The button is pressed again: `turnOff` fires and sends a second `Toggle`, while the lamp accepts the first one and `root.system.lamp.Behaviour.lightUp` fires. Afterwards the switch is `Off` and the lamp is `Lit`.

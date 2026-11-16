@@ -12,10 +12,10 @@ import { flavorFixture, textKey } from '../../__ui__/mock/fixtures'
 import { encodeMessage, notification, parseMessage, request, type Message, type ResponseMessage } from '../../__ui__/mock/jsonRpc'
 import { MockSession, type Answers } from '../../__ui__/mock/session'
 
-const URI = 'file:///workspace/snippet.oxsts'
+const URI = 'file:///workspace/snippet.semantifyr'
 
 // the fixtures are recorded from a checkout with LF line ends
-const INTERSECTION = readFileSync(join(import.meta.dirname, '../../snippets/imported/tutorial/intersection.oxsts'), 'utf-8').replaceAll('\r\n', '\n')
+const INTERSECTION = readFileSync(join(import.meta.dirname, '../../snippets/imported/tutorial/intersection.semantifyr'), 'utf-8').replaceAll('\r\n', '\n')
 
 interface Harness {
   session: MockSession

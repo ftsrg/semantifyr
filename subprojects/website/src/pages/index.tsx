@@ -52,9 +52,9 @@ const DOORS = [
   },
   {
     language: 'oxsts',
-    title: 'Define semantics in OXSTS',
-    text: 'Write the semantics of a language of your own as a library in OXSTS, the language both frontends are built on, and verify its models the same way.',
-    part: 'OXSTS',
+    title: 'Define semantics in the Semantifyr Language',
+    text: 'Write the semantics of a language of your own as a library in the Semantifyr Language, which both frontends are built on, and verify its models the same way.',
+    part: 'Language',
   },
 ] as const;
 
@@ -92,12 +92,12 @@ function Ways(): React.JSX.Element {
     <div className={styles.ways}>
       <div className={styles.way}>
         <h2 className={styles.wayTitle}>Learn</h2>
-        <p className={styles.wayText}>From a first verification in the browser to the full specification of OXSTS.</p>
+        <p className={styles.wayText}>From a first verification in the browser to the full specification of the Semantifyr Language.</p>
         <Link to="/learn/">Go to Learn</Link>
       </div>
       <div className={styles.way}>
         <h2 className={styles.wayTitle}>{terms.live.term}</h2>
-        <p className={styles.wayText}>Edit and verify SysML v2, Gamma and OXSTS models in the browser, with nothing to install.</p>
+        <p className={styles.wayText}>Edit and verify SysML v2, Gamma and Semantifyr models in the browser, with nothing to install.</p>
         <a href={liveUrl}>Open Live</a>
       </div>
       <div className={styles.way}>

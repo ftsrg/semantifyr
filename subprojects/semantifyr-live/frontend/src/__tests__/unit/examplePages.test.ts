@@ -7,6 +7,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
+import { liveExampleUrl } from '@semantifyr/editor-common'
 import { fileNameOf, servedExamples } from '@semantifyr/editor-common/examples'
 import { describe, expect, it } from 'vitest'
 
@@ -60,7 +61,7 @@ describe('an example\'s page', () => {
     expect(pages.map((page) => {
       return page.fileName
     })).toEqual(servedExamples.map((example) => {
-      return `${example.language}/${example.id}/index.html`
+      return `${new URL(liveExampleUrl('https://live.example/', example.language, example.id)).pathname.slice(1)}/index.html`
     }))
   })
 

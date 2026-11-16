@@ -20,7 +20,7 @@ export const sampleMetrics: VerificationMetrics = {
 export const sampleTrace: VerificationTrace = {
   callTrace: { initializedStep: { traces: [] }, steps: [] },
   witnessState: { initializedStep: { values: [] }, steps: [] },
-  witnessUri: 'inmemory:///workspace/snippet.witness.oxsts',
+  witnessUri: 'inmemory:///workspace/snippet.witness.semantifyr',
 };
 
 export const passedResult: VerificationCaseResult = {

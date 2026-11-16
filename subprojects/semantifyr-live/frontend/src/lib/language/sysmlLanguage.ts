@@ -28,7 +28,7 @@ const MAPPING_DELAY_MS = 300
 
 function mappedOxsts(text: string | null): readonly DerivedDocument[] {
   return [
-    { id: 'oxsts', label: 'OXSTS', uri: SYSML_OXSTS_URI, languageId: 'oxsts', text },
+    { id: 'oxsts', label: 'Semantifyr model', uri: SYSML_OXSTS_URI, languageId: 'oxsts', text },
   ]
 }
 

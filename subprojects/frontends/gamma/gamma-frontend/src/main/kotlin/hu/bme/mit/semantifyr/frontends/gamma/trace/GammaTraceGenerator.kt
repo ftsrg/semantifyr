@@ -291,7 +291,6 @@ class GammaTraceGenerator @Inject constructor(
             return resolveOrNull(path) ?: error("Instance path '$path' has no Gamma element")
         }
 
-        // a port of an inner instance is named on the traced component through the bindings that reach it
         fun tracedPort(path: List<EObject>): PortDeclaration? {
             val instances = path.filterIsInstance<ComponentInstance>()
             var port = path.last() as PortDeclaration

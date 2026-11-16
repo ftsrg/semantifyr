@@ -88,7 +88,7 @@ class GammaVerifyCommandTest {
 
     @Test
     suspend fun `an OXSTS model is an input error`(@TempDir directory: Path) {
-        val model = directory.resolve("model.oxsts")
+        val model = directory.resolve("model.semantifyr")
         model.writeText("package model\n")
 
         val result = runGammaCli("verify", model.toString())

@@ -6,7 +6,7 @@
 
 import type React from 'react'
 import { useEffect, useState } from 'react'
-import { decodeCompressedBase64Url, parseLiveEditorUrl } from '@semantifyr/editor-common'
+import { decodeCompressedBase64Url, languageOfAddressName, parseLiveEditorUrl } from '@semantifyr/editor-common'
 
 import { findExample, liveFlavors } from '../../examples'
 
@@ -20,7 +20,7 @@ export function AddressModel(): React.JSX.Element | null {
       return
     }
     const [sysml] = liveFlavors([])
-    if (address.language === null || address.language === sysml.languageId) {
+    if (address.language === null || languageOfAddressName(address.language) === sysml.languageId) {
       setText((findExample(sysml, address.example) ?? sysml.examples[0])?.code ?? null)
     }
   }, [])

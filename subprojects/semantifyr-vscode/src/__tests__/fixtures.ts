@@ -6,9 +6,9 @@
 
 import type { VerificationCaseResult, VerificationCaseSpecification, VerificationTrace } from '@semantifyr/editor-common';
 
-export const modelUri = 'file:///workspace/lamp.oxsts';
+export const modelUri = 'file:///workspace/lamp.semantifyr';
 
-export const witnessUri = 'file:/tmp/semantifyr/lamp.Safe/witness.oxsts';
+export const witnessUri = 'file:/tmp/semantifyr/lamp.Safe/witness.semantifyr';
 
 export const resolutionNote = "Portfolio 'all-agree' resolved to Passed from theta:cegar-expl-pred-combined over spin:safe-dfs=Failed (not trusted, UnderApproximating)";
 

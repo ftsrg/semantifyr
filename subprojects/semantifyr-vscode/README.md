@@ -6,15 +6,15 @@
 
 # Semantifyr for VS Code
 
-Edit and verify OXSTS and Gamma models with [Semantifyr](https://semantifyr.org/), a framework to support the declarative definition of engineering model semantics. The extension runs Semantifyr's language servers in VS Code, lists the verification cases of your models in the Testing view, runs them on the backends you have installed, and opens the witness and the trace of a case beside the model.
+Edit and verify Semantifyr and Gamma models with [Semantifyr](https://semantifyr.org/), a framework to support the declarative definition of engineering model semantics. The extension runs Semantifyr's language servers in VS Code, lists the verification cases of your models in the Testing view, runs them on the backends you have installed, and opens the witness and the trace of a case beside the model.
 
 ## Features
 
-- Editing OXSTS and Gamma: highlighting, diagnostics as you type, completion, hover, navigation and formatting.
+- Editing the Semantifyr Language and Gamma: highlighting, diagnostics as you type, completion, hover, navigation and formatting.
 - Verification: each case is a test in the Testing view; run one, a file or all of them, and read the verdict on the case.
 - Witness and trace: where a verdict comes with a witness, **Show Witness** opens it beside the model, for a Gamma case as a Gamma execution trace, and the trace with the calls and the state changes of each step.
 - Witness validation: a witness is verified again after each run, and **Validate Witness** repeats it.
-- Gamma to OXSTS: **Semantifyr: Compile Gamma File** writes the OXSTS that a Gamma model compiles to.
+- Gamma to the Semantifyr Language: **Semantifyr: Compile Gamma File** writes the Semantifyr model that a Gamma model compiles to.
 
 ## Requirements
 

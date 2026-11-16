@@ -65,7 +65,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     seed: { flavorId: 'oxsts-with-gamma-library', verification: discovered([], 'idle') },
     act: async () => {
       const diagnostics = vscode.languages.createDiagnosticCollection('fixes')
-      diagnostics.set(vscode.Uri.parse('file:///workspace/snippet.oxsts'), toVscodeDiagnostics([
+      diagnostics.set(vscode.Uri.parse('file:///workspace/snippet.semantifyr'), toVscodeDiagnostics([
         { severity: 'error', startLine: 0, startColumn: 0, endLine: 0, endColumn: 3, message: 'broken', source: 'oxsts' },
       ]))
       onTestFinished(() => {
@@ -73,7 +73,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       })
     },
     expectState: () => {
-      expect(text('.status-language')).toBe('OXSTS, Gamma library')
+      expect(text('.status-language')).toBe('Semantifyr Language, Gamma library')
       expect(document.querySelector('.problem-counts')?.getAttribute('aria-label')).toBe('Problems in the model: 1 error, 0 warnings')
     },
   },

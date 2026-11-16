@@ -261,14 +261,15 @@ class SysMLv2Frontend private constructor(
             val effectiveLoader = loader ?: effectiveOxstsInjector.getInstance(SemantifyrLoader::class.java)
             val discoverer = effectiveOxstsInjector.getInstance(VerificationCaseDiscoverer::class.java)
 
-            val resolvedLibraryPaths = extractVariantLibrary(effectiveOxstsInjector.getInstance(FileExtensionProvider::class.java)) + additionalLibraryPaths
+            val fileExtensionProvider = effectiveOxstsInjector.getInstance(FileExtensionProvider::class.java)
+            val resolvedLibraryPaths = extractVariantLibrary(fileExtensionProvider) + additionalLibraryPaths
 
             val (compiledOxsts, transformationDuration) = measureTimedValue {
                 compiledOxstsOverride ?: run {
                     val target = resolvedOutputDirectory
                         .resolve("compiled")
                         .resolve(variant.name.lowercase())
-                        .resolve("${resolvedSource.nameWithoutExtension}.oxsts")
+                        .resolve("${resolvedSource.nameWithoutExtension}.${fileExtensionProvider.primaryFileExtension}")
                     sharedSysMLv2Compiler.compile(
                         sourcePath = resolvedSource,
                         outputPath = target,

@@ -24,7 +24,7 @@ class LibraryDefinitionTest extends OxstsLanguageServerTest {
                     var on: bool := false
                 }
                 """);
-        var libraryUri = addLibraryFile("Lamps.oxsts", library.text());
+        var libraryUri = addLibraryFile("Lamps.semantifyr", library.text());
         var model = MarkedText.of("""
                 package example::garage
 

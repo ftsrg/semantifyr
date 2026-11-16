@@ -33,7 +33,7 @@ function caseAt(id: string, line: number): VerificationCaseSpecification {
   return {
     id: `example::${id}`,
     label: `example::${id}`,
-    location: { uri: 'file:///workspace/snippet.oxsts', range: { start: { line, character: 0 }, end: { line, character: 1 } } },
+    location: { uri: 'file:///workspace/snippet.semantifyr', range: { start: { line, character: 0 }, end: { line, character: 1 } } },
   }
 }
 
@@ -288,7 +288,7 @@ describe('the portfolios', () => {
 describe('the read-only tabs', () => {
   it('opens a document once, shows it and updates its text, and returns to the model when it closes', () => {
     const tabs = createDocumentTabs()
-    const document = { id: 'oxsts', label: 'a.oxsts', uri: 'live-derived:/oxsts/a.oxsts', languageId: 'oxsts', banner: '', text: 'one' }
+    const document = { id: 'oxsts', label: 'a.semantifyr', uri: 'live-derived:/oxsts/a.semantifyr', languageId: 'oxsts', banner: '', text: 'one' }
     tabs.open(document)
     tabs.open(document, { start: { line: 1, character: 0 }, end: { line: 1, character: 2 } })
     expect(tabs.state.get()).toMatchObject({ active: 'oxsts', selection: { id: 'oxsts', sequence: 1 } })
@@ -300,9 +300,9 @@ describe('the read-only tabs', () => {
   })
 
   it('names a library file under a scheme of its own, whichever address the language gives it', () => {
-    const builtin = 'file:///workspace/.semantifyr/builtin/semantifyr.oxsts'
+    const builtin = 'file:///workspace/.semantifyr/builtin/standard.semantifyr'
     expect(isLibraryFileUri(builtin)).toBe(true)
-    expect(isLibraryFileUri('file:///workspace/snippet.oxsts')).toBe(false)
+    expect(isLibraryFileUri('file:///workspace/snippet.semantifyr')).toBe(false)
     expect(fileUriOfLibrary(libraryUriOf(builtin))).toBe(builtin)
     const worker = `${window.location.origin}/sysml-worker/library/Kernel%20Libraries/ScalarValues.kerml`
     expect(libraryUriOf(worker)).toBe('live-library:/sysml-library/Kernel%20Libraries/ScalarValues.kerml')

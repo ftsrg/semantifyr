@@ -120,7 +120,7 @@ describe('the keyboard', () => {
 
   for (const view of ['embed', 'edit-only']) {
     test(`leaves the editor of an embed by Tab, in the ${view} view`, async ({ ui }) => {
-      const page = await ui.open(`/oxsts/level-crossing?library=gamma&view=${view}`)
+      const page = await ui.open(`/language/level-crossing?library=gamma&view=${view}`)
       await expect.poll(async () => {
         return page.locator('.view-lines').first().innerText()
       }).toContain('package')

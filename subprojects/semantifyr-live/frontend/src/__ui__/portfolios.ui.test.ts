@@ -9,7 +9,7 @@ import { describe, expect } from 'vitest'
 
 import { casesListed, results, statesOf, test } from './harness'
 
-const LEVEL_CROSSING = '/oxsts/level-crossing?library=gamma'
+const LEVEL_CROSSING = '/language/level-crossing?library=gamma'
 const BARRIER = '_BarrierDownWhileTrainInCrossing'
 
 async function choose(page: Page, kind: 'Verification' | 'Validation', portfolio: string): Promise<void> {

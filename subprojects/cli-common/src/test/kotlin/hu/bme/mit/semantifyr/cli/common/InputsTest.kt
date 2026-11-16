@@ -66,4 +66,16 @@ class InputsTest {
             assertThat(it.message).endsWith("contains no .first, .second or .third file.")
         }
     }
+
+    @Test
+    fun `a file of another kind is refused with a message naming the one extension`(@TempDir directory: Path) {
+        val file = directory.resolve("notes.txt")
+        file.writeText("notes")
+
+        assertThatThrownBy {
+            checkInputPath("Model", file, listOf("first"))
+        }.isInstanceOfSatisfying(CommandExit::class.java) {
+            assertThat(it.message).endsWith("neither a directory nor a file ending in .first.")
+        }
+    }
 }
