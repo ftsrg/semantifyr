@@ -405,8 +405,9 @@ abstract class VerificationPortfolio(
 
         withTimeoutOrNull(minOf(window, case.timeLeft())) {
             while (received < total && decided == null) {
+                val index = finished.receive()
                 received++
-                decided = receive(finished.receive(), received)
+                decided = receive(index, received)
             }
         }
 
