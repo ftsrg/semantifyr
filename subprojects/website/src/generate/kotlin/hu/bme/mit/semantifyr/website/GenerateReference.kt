@@ -7,9 +7,9 @@
 package hu.bme.mit.semantifyr.website
 
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
-import hu.bme.mit.semantifyr.backend.witness.FractionSerializer
 import hu.bme.mit.semantifyr.cli.common.ExitCode
 import hu.bme.mit.semantifyr.cli.common.verdictTag
+import hu.bme.mit.semantifyr.verifier.FractionSerializer
 import hu.bme.mit.semantifyr.verifier.ReportValueSerializer
 import hu.bme.mit.semantifyr.verifier.VerificationReport
 import kotlinx.serialization.Serializable

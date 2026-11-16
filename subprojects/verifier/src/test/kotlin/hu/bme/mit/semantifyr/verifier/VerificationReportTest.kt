@@ -144,6 +144,8 @@ class VerificationReportTest {
         assertThat(trace["steps"]!!.jsonArray[0].toString())
             .isEqualTo("""{"source":0,"target":1,"elapsed":"3/2","calls":[{"self":"root.lamp","transition":"example::Lamp::toggle","arguments":{"partner":"root.hall"},"calls":[]}]}""")
         assertThat(trace["steps"]!!.jsonArray[1].toString()).isEqualTo("""{"source":1,"target":0,"elapsed":0,"calls":[]}""")
+        assertThat(json.encodeToString(ReportStep(source = 0, target = 1, elapsed = Fraction.of(BigInteger.TWO.pow(53)), calls = emptyList())))
+            .isEqualTo("""{"source":0,"target":1,"elapsed":"9007199254740992","calls":[]}""")
     }
 
     @Test

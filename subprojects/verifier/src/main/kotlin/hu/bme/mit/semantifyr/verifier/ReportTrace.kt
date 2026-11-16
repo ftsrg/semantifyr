@@ -88,6 +88,7 @@ data class ReportState(
 data class ReportStep(
     val source: Int,
     val target: Int,
+    @Serializable(with = FractionSerializer::class)
     val elapsed: Fraction,
     val calls: List<ReportCall>,
 )
