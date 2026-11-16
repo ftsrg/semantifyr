@@ -2,7 +2,7 @@
 title: Install
 slug: /learn/install
 sidebar_position: 4
-description: Install the VS Code extension for OXSTS and Gamma, or the command-line launchers for OXSTS, SysML v2 and Gamma, built from the repository.
+description: Install the VS Code extension for the Semantifyr Language and Gamma, or the command-line launchers for the Semantifyr Language, SysML v2 and Gamma, built from the repository.
 ---
 
 import NodeVersion from '@site/src/components/NodeVersion';
@@ -10,7 +10,7 @@ import Planned from '@site/src/components/Planned';
 
 # Install
 
-Semantifyr runs on your machine as a VS Code extension, for OXSTS and Gamma, and as three command-line launchers, `semantifyr` for OXSTS, `semantifyr-sysml` for SysML v2 and `semantifyr-gamma` for Gamma. The extension edits and verifies OXSTS and Gamma models and the launchers models of all three languages, both with the same compiler as [Live](live/index.md); verification runs on the backends installed on your machine. Until a release is published, both are built from a clone of the [repository](https://github.com/ftsrg/semantifyr), which needs Git and a Java 25 runtime and downloads everything else.
+Semantifyr runs on your machine as a VS Code extension, for the Semantifyr Language and Gamma, and as three command-line launchers, `semantifyr` for the Semantifyr Language, `semantifyr-sysml` for SysML v2 and `semantifyr-gamma` for Gamma. The extension edits and verifies Semantifyr and Gamma models and the launchers models of all three languages, both with the same compiler as [Live](live/index.md); verification runs on the backends installed on your machine. Until a release is published, both are built from a clone of the [repository](https://github.com/ftsrg/semantifyr), which needs Git and a Java 25 runtime and downloads everything else.
 
 ## The VS Code Extension
 
@@ -26,7 +26,7 @@ Use it to work on models in your own folders and repositories.
 
 1. Build the extension with `./gradlew :semantifyr-vscode:bundleExtension`, which writes `subprojects/semantifyr-vscode/build/semantifyr-<version>.vsix`.
 2. In VS Code, run **Extensions: Install from VSIX...** from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and select the `.vsix` file.
-3. Open a folder that holds an OXSTS or a Gamma model, a `.oxsts`, `.gamma` or `.gcd` file. The extension starts by itself and lists the model's verification cases in the *Testing* view.
+3. Open a folder that holds a Semantifyr or a Gamma model, a `.semantifyr`, `.gamma` or `.gcd` file. The extension starts by itself and lists the model's verification cases in the *Testing* view.
 
 [Try in VS Code](vscode.md) shows how to verify a case and read its witness and trace, and [its settings](../reference/vscode-settings.mdx) choose the portfolio, the timeout and the rest.
 

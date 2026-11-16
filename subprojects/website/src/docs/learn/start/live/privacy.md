@@ -13,7 +13,7 @@ description: What Semantifyr Live's server keeps of your model, what it logs and
 
 The editor sends your model to the server over your session's connection. The server holds it, and what its verifications write, such as the compiled model, the witness and the trace, in a working folder of your session. It deletes the folder when the session ends: when you close or reload the page, or when the connection ends. A folder left behind by a crash is deleted when the server starts again. Nothing of your model is kept anywhere else.
 
-For a SysML v2 model, the translation into OXSTS runs in your browser, and the server receives the OXSTS alone.
+For a SysML v2 model, the translation into a Semantifyr model runs in your browser, and the server receives the Semantifyr model alone.
 
 ## Your browser
 

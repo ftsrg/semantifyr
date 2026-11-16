@@ -10,7 +10,7 @@ import { describe, expect } from 'vitest'
 import { editorKeysOf } from '../testBrowser'
 import { casesListed, editor, test } from './harness'
 
-const BUILTIN = 'file:///workspace/.semantifyr/builtin/semantifyr.oxsts'
+const BUILTIN = 'file:///workspace/.semantifyr/builtin/standard.semantifyr'
 const TRACE_ANNOTATION_LINE = 80
 
 // the text of the line the cursor is on in the document shown
@@ -33,7 +33,7 @@ describe('going to a definition', () => {
       const position = { line: TRACE_ANNOTATION_LINE, character: 11 }
       return [{ uri: BUILTIN, range: { start: position, end: position } }]
     })
-    const page = await ui.open('/oxsts/intersection')
+    const page = await ui.open('/language/intersection')
     await casesListed(page)
 
     await page.locator('section.editor .view-line', { hasText: '@Trace' }).first().click()
@@ -41,14 +41,14 @@ describe('going to a definition', () => {
 
     await expect.poll(async () => {
       return editor(page).selectedTab.innerText()
-    }).toContain('semantifyr.oxsts')
+    }).toContain('standard.semantifyr')
     await expect.poll(async () => {
       return currentLine(page)
     }).toBe('annotation Trace')
     await page.keyboard.press('Alt+ArrowLeft')
     await expect.poll(async () => {
       return editor(page).selectedTab.innerText()
-    }).toContain('intersection.oxsts')
+    }).toContain('intersection.semantifyr')
   })
 })
 
@@ -81,7 +81,7 @@ describe('going to a definition from inside a read-only document', () => {
       const position = { line, character: 0 }
       return [{ uri: BUILTIN, range: { start: position, end: position } }]
     })
-    const page = await ui.open('/oxsts/intersection')
+    const page = await ui.open('/language/intersection')
     await casesListed(page)
     await page.locator('section.editor .view-line', { hasText: '@Trace' }).first().click()
     await page.keyboard.press('F12')
@@ -95,14 +95,14 @@ describe('going to a definition from inside a read-only document', () => {
     await expect.poll(async () => {
       return currentLine(page)
     }).toBe('extern datatype string')
-    expect(await editor(page).selectedTab.innerText()).toContain('semantifyr.oxsts')
+    expect(await editor(page).selectedTab.innerText()).toContain('standard.semantifyr')
     const session = ui.backend.session()
-    expect(definitionsAsked(session)).toEqual(['file:///workspace/snippet.oxsts', BUILTIN])
-    expect(opened(session)).toEqual(['file:///workspace/snippet.oxsts'])
+    expect(definitionsAsked(session)).toEqual(['file:///workspace/snippet.semantifyr', BUILTIN])
+    expect(opened(session)).toEqual(['file:///workspace/snippet.semantifyr'])
   })
 
   test('of the OXSTS of a Gamma model names it under the derived address the session holds it by, and a library answer opens the library tab', async ({ ui }) => {
-    const STATECHARTS = 'file:///workspace/Library/Statecharts.oxsts'
+    const STATECHARTS = 'file:///workspace/Library/Statecharts.semantifyr'
     ui.backend.answer('feature', (request, recorded) => {
       if (request.method !== 'textDocument/definition') {
         return recorded()
@@ -122,14 +122,14 @@ describe('going to a definition from inside a read-only document', () => {
 
     await expect.poll(async () => {
       return editor(page).selectedTab.innerText()
-    }).toContain('Statecharts.oxsts')
+    }).toContain('Statecharts.semantifyr')
     await expect.poll(async () => {
       return currentLine(page)
     }).toBe('class Statechart : Component {')
     const session = ui.backend.session()
     const derived = definitionsAsked(session)
     expect(derived).toHaveLength(1)
-    expect(derived[0]).toMatch(/^file:\/\/\/workspace\/\.live-derived\/.*\.oxsts$/)
+    expect(derived[0]).toMatch(/^file:\/\/\/workspace\/\.live-derived\/.*\.semantifyr$/)
     expect(opened(session)).toContain(derived[0])
   })
 })
@@ -146,7 +146,7 @@ describe('the OXSTS of the model', () => {
     await page.locator('.results-header .model-oxsts-button').click()
     await expect.poll(async () => {
       return editor(page).selectedTab.innerText()
-    }).toContain('level-crossing.oxsts')
+    }).toContain('level-crossing.semantifyr')
     await expect.poll(async () => {
       return editor(page).lines.innerText()
     }).toContain('package')
@@ -154,7 +154,7 @@ describe('the OXSTS of the model', () => {
     await editor(page).lines.click()
     await page.keyboard.press((await editorKeysOf(page)).endOfDocument)
     await page.keyboard.type('\n// edited\n')
-    await editor(page).tabs.filter({ hasText: 'level-crossing.oxsts' }).click()
+    await editor(page).tabs.filter({ hasText: 'level-crossing.semantifyr' }).click()
     await expect.poll(async () => {
       return page.locator('.readonly-banner').count()
     }).toBe(1)

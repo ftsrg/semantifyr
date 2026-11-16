@@ -12,7 +12,7 @@ import constructs from '@sysml-constructs/constructs.tsv';
 
 The SysML v2 frontend takes the part of the language that describes behaviour at the level of states: part and port definitions with their usages, items sent over flows between ports, attributes of type Integer and Boolean, exhibited state machines, and verification cases whose objectives are requirements over a part.
 
-Every SysML v2 construct the translator reads, generated from its registry with its outcome: a planned or an unsupported construct is a diagnostic located on it and no OXSTS is written; every other one is accepted and translated unless its detail says it is not, and one with a warning draws a warning that says what the model should know.
+Every SysML v2 construct the translator reads, generated from its registry with its outcome: a planned or an unsupported construct is a diagnostic located on it and no Semantifyr model is written; every other one is accepted and translated unless its detail says it is not, and one with a warning draws a warning that says what the model should know.
 
 <SysmlConstructTable table={constructs} />
 

@@ -15,7 +15,7 @@ export interface PathBox {
   line: string;
   // the section under the picture that describes the box
   section: string;
-  kind: 'artifact' | 'component';
+  kind: 'artifact' | 'component' | 'external';
 }
 
 // in the order a model takes through them; the picture turns at the portfolio and comes back below
@@ -36,7 +36,7 @@ export const PATH: PathBox[] = [
   },
   {
     id: 'oxsts-model',
-    title: 'OXSTS model',
+    title: 'Semantifyr model',
     line: 'on the semantic library',
     section: 'compiler',
     kind: 'artifact',
@@ -58,7 +58,7 @@ export const PATH: PathBox[] = [
   {
     id: 'portfolio',
     title: 'Portfolio',
-    line: 'backends side by side',
+    line: 'backends side by side, one verdict',
     section: 'portfolio',
     kind: 'component',
   },
@@ -72,7 +72,7 @@ export const PATH: PathBox[] = [
   {
     id: 'verifier',
     title: 'Verifier',
-    line: 'makes the evidence a witness in OXSTS',
+    line: 'makes the evidence a witness, a Semantifyr model',
     section: 'verifier',
     kind: 'component',
   },
@@ -84,6 +84,23 @@ export const PATH: PathBox[] = [
     kind: 'artifact',
   },
 ];
+
+// the portfolio holds the backends, each of which runs the one tool drawn outside Semantifyr
+export const BACKENDS: PathBox = {
+  id: 'backends',
+  title: 'Backends',
+  line: 'one per model checker',
+  section: 'backends',
+  kind: 'component',
+};
+
+export const MODEL_CHECKER: PathBox = {
+  id: 'model-checker',
+  title: 'Model checker',
+  line: 'outside Semantifyr',
+  section: 'backends',
+  kind: 'external',
+};
 
 // what runs the path
 export const AROUND: PathBox[] = [
@@ -118,6 +135,14 @@ function Arrow({ direction }: { direction: 'right' | 'left' | 'down' }): React.R
   );
 }
 
+function Exchange(): React.ReactNode {
+  return (
+    <svg className={styles.exchange} viewBox="0 0 24 12" aria-hidden="true">
+      <path d="M 3 6 H 21 M 7 1 L 2 6 L 7 11 M 17 1 L 22 6 L 17 11" />
+    </svg>
+  );
+}
+
 function Box({ box, arrow, down, placed }: { box: PathBox; arrow?: 'right' | 'left' | undefined; down: boolean; placed: boolean }): React.ReactNode {
   return (
     <a href={`#${box.section}`} className={clsx(styles.box, styles[box.kind])} style={placed ? { gridArea: box.id } : undefined}>
@@ -126,6 +151,28 @@ function Box({ box, arrow, down, placed }: { box: PathBox; arrow?: 'right' | 'le
       {arrow === undefined ? null : <Arrow direction={arrow} />}
       {down ? <Arrow direction="down" /> : null}
     </a>
+  );
+}
+
+function Station({ portfolio }: { portfolio: PathBox }): React.ReactNode {
+  return (
+    <div className={styles.station} style={{ gridArea: portfolio.id }}>
+      <div className={styles.frame} />
+      <a href={`#${portfolio.section}`} className={styles.frameTitle}>
+        <strong className={styles.title}>{portfolio.title}</strong>
+        <span className={styles.line}>{portfolio.line}</span>
+      </a>
+      <a href={`#${BACKENDS.section}`} className={clsx(styles.box, styles[BACKENDS.kind], styles.stack)}>
+        <strong className={styles.title}>{BACKENDS.title}</strong>
+        <span className={styles.line}>{BACKENDS.line}</span>
+      </a>
+      <Exchange />
+      <a href={`#${MODEL_CHECKER.section}`} className={clsx(styles.box, styles[MODEL_CHECKER.kind], styles.checker)}>
+        <strong className={styles.title}>{MODEL_CHECKER.title}</strong>
+        <span className={styles.line}>{MODEL_CHECKER.line}</span>
+      </a>
+      <Arrow direction="down" />
+    </div>
   );
 }
 
@@ -153,12 +200,14 @@ export default function ComponentPath(): React.JSX.Element {
             box.id === 'oxsts-model'
               ? (
                   <div key="entry" className={styles.entry} style={{ gridArea: 'entry' }}>
-                    <span>or an OXSTS model, written directly</span>
+                    <span>or a Semantifyr model, written directly</span>
                     <Arrow direction="down" />
                   </div>
                 )
               : null,
-            <Box key={box.id} box={box} arrow={arrowOf(index, turn)} down={index < PATH.length - 1} placed />,
+            box.id === 'portfolio'
+              ? <Station key={box.id} portfolio={box} />
+              : <Box key={box.id} box={box} arrow={arrowOf(index, turn)} down={index < PATH.length - 1} placed />,
           ];
         })}
       </div>

@@ -106,10 +106,10 @@ function parseLibrary(library: string): Declaration[] {
       }
     }
     if (match === null) {
-      throw new Error(`semantifyr.oxsts has a line the standard library page cannot place: ${line}`);
+      throw new Error(`standard.semantifyr has a line the standard library page cannot place: ${line}`);
     }
     if (comment === null) {
-      throw new Error(`semantifyr.oxsts declares ${match.name} without the comment that describes it`);
+      throw new Error(`standard.semantifyr declares ${match.name} without the comment that describes it`);
     }
     const declarationLines = [line];
     let depth = braceDepthOf(line);

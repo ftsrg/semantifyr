@@ -1,34 +1,34 @@
 construct	outcome	fixture	detail
 Exclusive range `a..<b`	pass	hu.bme.mit.semantifyr.compiler.pipeline.inlining.InlineOperationExpanderTest	inline seq for over an exclusive range stops before the upper bound
-Array literals `[a, b, c]`	pass	semantic/arrays.oxsts	ArrayLiteralInitializer0Reach
-Indexing `a[K]` (constant)	pass	semantic/arrays.oxsts	ArraySlotIndependenceReach
-Indexing `a[i]` (runtime)	pass	semantic/arrays.oxsts	ArrayRuntimeIndexReach
-Array `[lb..ub]` multiplicity	pass	semantic/arrays.oxsts	ArrayRangedMultiplicityReach
-Class-typed arrays	pass	semantic/arrays.oxsts	ClassTypedArrayReach
-Feature-typed arrays	pass	semantic/arrays.oxsts	FeatureTypedArrayHavocBound
+Array literals `[a, b, c]`	pass	semantic/arrays.semantifyr	ArrayLiteralInitializer0Reach
+Indexing `a[K]` (constant)	pass	semantic/arrays.semantifyr	ArraySlotIndependenceReach
+Indexing `a[i]` (runtime)	pass	semantic/arrays.semantifyr	ArrayRuntimeIndexReach
+Array `[lb..ub]` multiplicity	pass	semantic/arrays.semantifyr	ArrayRangedMultiplicityReach
+Class-typed arrays	pass	semantic/arrays.semantifyr	ClassTypedArrayReach
+Feature-typed arrays	pass	semantic/arrays.semantifyr	FeatureTypedArrayHavocBound
 Array size from a binding `int[capacity]`, `[0..capacity]`	pass	hu.bme.mit.semantifyr.compiler.pipeline.flattening.ArraySizeFromBindingFlatteningTest	each instance holds as many slots as its binding gives, the last written value filling the rest
 Array literal ending in `...` `[0, ...]`	pass	hu.bme.mit.semantifyr.compiler.pipeline.flattening.ArraySizeFromBindingFlatteningTest	each instance holds as many slots as its binding gives, the last written value filling the rest
-Local arrays	pass	semantic/arrays.oxsts	LocalArrayRuntimeIndexReach
+Local arrays	pass	semantic/arrays.semantifyr	LocalArrayRuntimeIndexReach
 Local arrays of class or feature type	pass	hu.bme.mit.semantifyr.compiler.pipeline.flattening.LocalInstanceFlatteningTest	each slot of a feature-typed local array chooses among the instances of the feature
-Parameter arrays	reject	constructs/parameter_array.oxsts	OXSTS.UNSUPPORTED_FEATURE
-Unbounded variable multiplicity `[]`, `[lb..*]`	reject	constructs/unbounded_variable.oxsts	OXSTS.TYPE_MISMATCH
+Parameter arrays	reject	constructs/parameter_array.semantifyr	OXSTS.UNSUPPORTED_FEATURE
+Unbounded variable multiplicity `[]`, `[lb..*]`	reject	constructs/unbounded_variable.semantifyr	OXSTS.TYPE_MISMATCH
 Call through a variable `v.t()`	pass	hu.bme.mit.semantifyr.compiler.pipeline.inlining.VariableDispatchInliningTest	a call through a class-typed variable chooses among the instances of the class
-Positional argument after a named one `f(a = 1, 2)`	reject	constructs/positional_after_named_argument.oxsts	OXSTS.POSITIONAL_ARGUMENT_AFTER_NAMED
-Member read through a variable `v.x`	pass	semantic/member_dispatch.oxsts	MemberReadThroughVariableReach
-Write through a variable `v.x := e`	reject	constructs/write_through_variable.oxsts	OXSTS.UNSUPPORTED_FEATURE
-Optional read through a variable `v?.x`	reject	constructs/optional_read_through_variable.oxsts	OXSTS.UNSUPPORTED_FEATURE
-Optional call through a variable `v?.t()`	reject	constructs/optional_call_through_variable.oxsts	OXSTS.UNSUPPORTED_FEATURE
-Call through a many-valued feature `workers.step()`	reject	constructs/call_through_many_valued_feature.oxsts	OXSTS.CALL_THROUGH_MANY_VALUED_FEATURE
-`record X { ... }`	pass	semantic/records.oxsts	RecordFieldWriteReach
-Record literal `Point { x = 0 }`	pass	semantic/records.oxsts	RecordLiteralAssignReach
-Arrays of records in a class-level variable	pass	semantic/records.oxsts	RecordArrayRuntimeIndexReach
-Array fields in records	reject	constructs/record_array_field.oxsts	OXSTS.UNSUPPORTED_FEATURE
-Record-typed features	reject	constructs/record_feature.oxsts	OXSTS.UNSUPPORTED_FEATURE
-Record argument of a traced call	reject	constructs/record_trace_argument.oxsts	OXSTS.UNSUPPORTED_FEATURE
-Ordering on non-numeric values `Red < Green`	reject	constructs/enum_ordering.oxsts	OXSTS.TYPE_MISMATCH
-`derived refers` without `opposite`	reject	constructs/derived_without_opposite.oxsts	OXSTS.UNSUPPORTED_FEATURE
-Multiple inheritance `class C : A, B`	reject	constructs/multiple_inheritance.oxsts	OXSTS.MULTIPLE_INHERITANCE
-`fun` declarations	parse	constructs/function_declaration.oxsts	-
-`pattern` declarations	parse	constructs/pattern_declaration.oxsts	-
-Temporal operator below the property root `AG (EF x)`, `b := AG x`	reject	constructs/nested_temporal_operator.oxsts	OXSTS.MISPLACED_TEMPORAL_OPERATOR
-CTL* properties	parse	constructs/af_operator.oxsts	-
+Positional argument after a named one `f(a = 1, 2)`	reject	constructs/positional_after_named_argument.semantifyr	OXSTS.POSITIONAL_ARGUMENT_AFTER_NAMED
+Member read through a variable `v.x`	pass	semantic/member_dispatch.semantifyr	MemberReadThroughVariableReach
+Write through a variable `v.x := e`	reject	constructs/write_through_variable.semantifyr	OXSTS.UNSUPPORTED_FEATURE
+Optional read through a variable `v?.x`	reject	constructs/optional_read_through_variable.semantifyr	OXSTS.UNSUPPORTED_FEATURE
+Optional call through a variable `v?.t()`	reject	constructs/optional_call_through_variable.semantifyr	OXSTS.UNSUPPORTED_FEATURE
+Call through a many-valued feature `workers.step()`	reject	constructs/call_through_many_valued_feature.semantifyr	OXSTS.CALL_THROUGH_MANY_VALUED_FEATURE
+`record X { ... }`	pass	semantic/records.semantifyr	RecordFieldWriteReach
+Record literal `Point { x = 0 }`	pass	semantic/records.semantifyr	RecordLiteralAssignReach
+Arrays of records in a class-level variable	pass	semantic/records.semantifyr	RecordArrayRuntimeIndexReach
+Array fields in records	reject	constructs/record_array_field.semantifyr	OXSTS.UNSUPPORTED_FEATURE
+Record-typed features	reject	constructs/record_feature.semantifyr	OXSTS.UNSUPPORTED_FEATURE
+Record argument of a traced call	reject	constructs/record_trace_argument.semantifyr	OXSTS.UNSUPPORTED_FEATURE
+Ordering on non-numeric values `Red < Green`	reject	constructs/enum_ordering.semantifyr	OXSTS.TYPE_MISMATCH
+`derived refers` without `opposite`	reject	constructs/derived_without_opposite.semantifyr	OXSTS.UNSUPPORTED_FEATURE
+Multiple inheritance `class C : A, B`	reject	constructs/multiple_inheritance.semantifyr	OXSTS.MULTIPLE_INHERITANCE
+`fun` declarations	parse	constructs/function_declaration.semantifyr	-
+`pattern` declarations	parse	constructs/pattern_declaration.semantifyr	-
+Temporal operator below the property root `AG (EF x)`, `b := AG x`	reject	constructs/nested_temporal_operator.semantifyr	OXSTS.MISPLACED_TEMPORAL_OPERATOR
+CTL* properties	parse	constructs/af_operator.semantifyr	-

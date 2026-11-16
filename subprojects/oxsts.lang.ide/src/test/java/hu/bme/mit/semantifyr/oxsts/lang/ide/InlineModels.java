@@ -8,7 +8,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide;
 
 public final class InlineModels {
 
-    public static final String TRAFFIC_LIGHT_FILE_NAME = "Lights.oxsts";
+    public static final String TRAFFIC_LIGHT_FILE_NAME = "Lights.semantifyr";
 
     public static final String TRAFFIC_LIGHT = """
             package example::lights
@@ -71,7 +71,7 @@ public final class InlineModels {
             }
             """;
 
-    public static final String LAMP_LIBRARY_FILE_NAME = "Lamps.oxsts";
+    public static final String LAMP_LIBRARY_FILE_NAME = "Lamps.semantifyr";
 
     public static final String LAMP_LIBRARY = """
             package example::library

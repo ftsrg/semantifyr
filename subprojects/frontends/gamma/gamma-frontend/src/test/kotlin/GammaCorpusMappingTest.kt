@@ -38,7 +38,7 @@ class GammaCorpusMappingTest {
 
         val refusals = files.zip(roots).mapIndexedNotNull { index, (file, root) ->
             runCatching {
-                gammaCompiler.compileWithImports(root as GammaModelPackage, temporaryDirectory.resolve("$index"))
+                gammaCompiler.compileWithImports(root as GammaModelPackage, temporaryDirectory.resolve("$index"), "semantifyr")
             }.exceptionOrNull()?.let {
                 "$file: ${it.message}"
             }

@@ -5,12 +5,12 @@ description: What a backend is, what it receives from the compiler, what it refu
 
 # Backends
 
-A backend is a model checker that Semantifyr runs on the formal model of a verification case. It never sees the engineering language: whatever the frontend, the compiler hands it the case as a [transition system](../oxsts/compilation/index.mdx), which the backend translates into its own input language, and [Artifacts](../reference/artifacts.mdx) lists what each run writes.
+A backend is a model checker that Semantifyr runs on the formal model of a verification case. It never sees the engineering language: whatever the frontend, the compiler hands it the case as a [transition system](../language/compilation/index.mdx), which the backend translates into its own input language, and [Artifacts](../reference/artifacts.mdx) lists what each run writes.
 
 Before it runs, a backend checks that it can translate the model, and answers Not supported, naming each construct it refuses, when it cannot; each backend's page lists what it refuses and why.
 
 A backend's answer is a verdict on the case's property, trusted in the direction of the configuration that gave it: an exact one both ways, an under-approximating one when it finds a trace, an over-approximating one when it finds none. A portfolio runs the backends side by side and decides the verdict from the answers it trusts, as [Portfolios and Verdicts](portfolios-and-verdicts.mdx) explains.
 
-Where the verdict rests on a run the backend found, the run comes back with it, back-annotated into a [witness](../oxsts/language/library-and-output/inlined-models.md#witnesses) of the model, from which the trace is read.
+Where the verdict rests on a run the backend found, the run comes back with it, back-annotated into a [witness](../language/specification/library-and-output/inlined-models.md#witnesses) of the model, from which the trace is read.
 
 Currently implemented backends: [Theta](theta.mdx), [nuXmv](nuxmv.mdx), [Spin](spin.mdx), [Uppaal](uppaal.mdx).

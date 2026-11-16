@@ -4,7 +4,7 @@ Types and expressions	Record types, nested records, record-typed variables and e
 Types and expressions	Arithmetic, comparison and boolean operators with Gamma's precedence for `not`, equality, ordering, `and` and `or`	conformant	no	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaGrammarTest.kt	not binds tighter than and	
 Types and expressions	Variables with a non-literal initial value	planned	no			The mapper refuses it with a diagnostic.
 Types and expressions	Enumeration, array, rational, decimal and subrange types, constants	unsupported	no			Future work.
-Types and expressions	`xor`, `imply`, the conditional expression, `div`, `mod`, `forall`, `exists` and select expressions	unsupported	no			Future work. `div` and `mod` wait for OXSTS operators.
+Types and expressions	`xor`, `imply`, the conditional expression, `div`, `mod`, `forall`, `exists` and select expressions	unsupported	no			Future work. `div` and `mod` wait for operators of the Semantifyr Language.
 Types and expressions	Functions, procedures and lambdas	unsupported	no			Future work.
 Statecharts	Regions, simple and composite states, nested regions	conformant	no	models/semantics/Hierarchy.gamma	region Inner	
 Statecharts	Initial pseudostates	conformant	no	models/semantics/Hierarchy.gamma	initial MainInitial	

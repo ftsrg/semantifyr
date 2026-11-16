@@ -30,7 +30,7 @@ import java.nio.file.Path
 
 class WebSocketSyntaxErrorTest {
 
-    private val uri = "file:///workspace/snippet.oxsts"
+    private val uri = "file:///workspace/snippet.semantifyr"
 
     private val validModel = """
         package test

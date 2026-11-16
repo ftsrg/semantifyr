@@ -106,16 +106,25 @@ class OxstsFlattener @Inject constructor(
         val flattenedEvaluationTransformer = FlatExpressionEvaluationTransformer()
 
         logger.debug { "Pulling down variables" }
-        pullDownVariables(inlinedOxsts, instanceTree, variableInstanceDomain, variableHolders, variableMappings)
+        if (pullDownVariables(inlinedOxsts, instanceTree, variableInstanceDomain, variableHolders, variableMappings)) {
+            compilationArtifactManager.commitStep(CompilationPass.VariablePullDown)
+        }
 
         logger.debug { "Rewriting variable references (${inlinedOxsts.variables.size} variable(s))" }
-        rewriteVariableReferences(inlinedOxsts, instanceTree, variableMappings)
+        if (rewriteVariableReferences(inlinedOxsts, instanceTree, variableMappings)) {
+            compilationArtifactManager.commitStep(CompilationPass.VariableReferenceRewriting)
+        }
 
-        registerLocalInstanceDomains(inlinedOxsts, variableInstanceDomain)
+        if (registerLocalInstanceDomains(inlinedOxsts, variableInstanceDomain)) {
+            compilationArtifactManager.commitStep(CompilationPass.LocalInstanceDomainRegistration)
+        }
 
         logger.debug { "Flattening record variables" }
         val recordFieldVariables = recordFlatteningPass.flattenRecords(inlinedOxsts)
         logger.debug { "Flattened ${recordFieldVariables.size} record variable(s)" }
+        if (recordFieldVariables.isNotEmpty()) {
+            compilationArtifactManager.commitStep(CompilationPass.RecordFlattening)
+        }
         val recordFields = registerRecordFields(recordFieldVariables, variableHolders, variableMappings)
 
         logger.debug { "Flattening array variables" }
@@ -125,15 +134,19 @@ class OxstsFlattener @Inject constructor(
             arrayDescriber(variableHolders, variableMappings, recordFields),
         )
         logger.debug { "Flattened ${arraySlotVariables.size} array variable(s)" }
+        if (arraySlotVariables.isNotEmpty()) {
+            compilationArtifactManager.commitStep(CompilationPass.ArrayFlattening)
+        }
         val arraySlots = registerArraySlots(arraySlotVariables, variableHolders, variableMappings, variableInstanceDomain, recordFields)
 
         logger.debug { "Rewriting feature-typed variables" }
-        rewriteFeatureTypedVariables(inlinedOxsts, variableInstanceDomain)
+        if (rewriteFeatureTypedVariables(inlinedOxsts, variableInstanceDomain)) {
+            compilationArtifactManager.commitStep(CompilationPass.FeatureTypedVariableRewriting)
+        }
 
         logger.debug { "Rewriting static expressions" }
         rewriteStaticExpressions(inlinedOxsts, instanceTree, variableInstanceDomain, flattenedEvaluationTransformer)
-
-        compilationArtifactManager.commitStep(CompilationPass.Flattening)
+        compilationArtifactManager.commitStep(CompilationPass.StaticExpressionRewriting)
 
         logger.info { "Running post-flattening optimizers" }
         val optimization = flattenedPhaseOptimizer.optimize(inlinedCompilationContext)
@@ -164,8 +177,9 @@ class OxstsFlattener @Inject constructor(
         variableInstanceDomain: MutableMap<VariableDeclaration, Set<Instance>>,
         variableHolders: MutableMap<VariableDeclaration, Instance>,
         variableMappings: MutableMap<Instance, Map<VariableDeclaration, VariableDeclaration>>,
-    ) {
+    ): Boolean {
         val builtinAnything = builtinSymbolResolver.anythingClass(inlinedOxsts)
+        val variableCount = inlinedOxsts.variables.size
 
         for (instance in instanceTree.rootInstance.treeSequence().drop(1)) { // drop the root instance
             val memberCollection = domainMemberCollectionProvider.getMemberCollection(instance.domain)
@@ -186,6 +200,7 @@ class OxstsFlattener @Inject constructor(
             }
             variableMappings[instance] = instanceMappings
         }
+        return inlinedOxsts.variables.size > variableCount
     }
 
     // the multiplicity was rewritten to the holder's path by the pull-down, so the root evaluates it on the instance
@@ -274,17 +289,18 @@ class OxstsFlattener @Inject constructor(
     private fun registerLocalInstanceDomains(
         inlinedOxsts: InlinedOxsts,
         variableInstanceDomain: MutableMap<VariableDeclaration, Set<Instance>>,
-    ) {
+    ): Boolean {
         val builtinAnything = builtinSymbolResolver.anythingClass(inlinedOxsts)
 
-        for (local in inlinedOxsts.eAllOfType<LocalVarDeclarationOperation>()) {
-            if (local.typeSpecification?.domain !is ClassDeclaration) {
-                continue
-            }
+        val instanceLocals = inlinedOxsts.eAllOfType<LocalVarDeclarationOperation>().filter {
+            it.typeSpecification?.domain is ClassDeclaration
+        }.toList()
+        for (local in instanceLocals) {
             variableInstanceDomain[local] = localVariableManager.instanceDomainOf(local)
                 ?: sourceError(local, "No instance domain registered for local variable '${local.name}'.")
             local.typeSpecification.domain = builtinAnything
         }
+        return instanceLocals.isNotEmpty()
     }
 
     private fun pullDownVariable(
@@ -322,7 +338,7 @@ class OxstsFlattener @Inject constructor(
         inlinedOxsts: InlinedOxsts,
         instanceTree: InstanceTree,
         variableMappings: Map<Instance, Map<VariableDeclaration, VariableDeclaration>>,
-    ) {
+    ): Boolean {
         val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(instanceTree.rootInstance)
 
         val variableReferences = inlinedOxsts.eAllOfType<NavigationSuffixExpression>().filter {
@@ -340,32 +356,23 @@ class OxstsFlattener @Inject constructor(
             val instanceVariableReference = OxstsFactory.createElementReference(instanceVariable)
             EcoreUtil2.replace(variableReference, instanceVariableReference)
         }
+        return variableReferences.isNotEmpty()
     }
 
     private fun rewriteFeatureTypedVariables(
         inlinedOxsts: InlinedOxsts,
         variableInstanceDomain: Map<VariableDeclaration, Set<Instance>>,
-    ) {
+    ): Boolean {
         val featureTypedVariables = variableInstanceDomain.keys
 
-        val references = inlinedOxsts.eAllOfType<ElementReference>().filter {
-            it.element in featureTypedVariables
+        val havocs = inlinedOxsts.eAllOfType<ElementReference>().filter {
+            it.element in featureTypedVariables && it.eContainer() is HavocOperation
         }.toList()
 
-        for (reference in references) {
-            transformFeatureTypedVariableReference(reference, variableInstanceDomain)
+        for (reference in havocs) {
+            transformFeatureTypedVariableReference(reference, reference.eContainer() as HavocOperation, variableInstanceDomain)
         }
-    }
-
-    private fun transformFeatureTypedVariableReference(
-        elementReference: ElementReference,
-        variableInstanceDomain: Map<VariableDeclaration, Set<Instance>>,
-    ) {
-        val container = elementReference.eContainer()
-
-        when (container) {
-            is HavocOperation -> transformFeatureTypedVariableReference(elementReference, container, variableInstanceDomain)
-        }
+        return havocs.isNotEmpty()
     }
 
     private fun transformFeatureTypedVariableReference(

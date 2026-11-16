@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import { addressNameOf } from '@semantifyr/editor-common'
 import { fileNameOf, servedExamples } from '@semantifyr/editor-common/examples'
 
 import { exampleDescription, exampleTitle, LANGUAGES } from './texts'
@@ -26,7 +27,7 @@ export function examplePages(template: string, commentOf: (fileName: string) => 
   return servedExamples.map((example) => {
     const language = LANGUAGES[example.language]?.name ?? example.language
     return {
-      fileName: `${example.language}/${example.id}/index.html`,
+      fileName: `${addressNameOf(example.language)}/${example.id}/index.html`,
       source: withHead(template, exampleTitle(example.label, language), exampleDescription(example.label, language, commentOf(fileNameOf(example)))),
     }
   })

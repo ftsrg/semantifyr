@@ -32,7 +32,7 @@ class ReferenceWitnessTest {
         val workspace = temporaryDirectory.resolve("workspace").createDirectories()
         val model = CORPUS.resolve(MODEL).copyTo(workspace.resolve(MODEL))
         CORPUS.resolve(VERIFICATION).copyTo(workspace.resolve(VERIFICATION))
-        val compiled = SysMLv2Compiler(temporaryDirectory.resolve("cache")).compile(model, temporaryDirectory.resolve("crossroads.oxsts"))
+        val compiled = SysMLv2Compiler(temporaryDirectory.resolve("cache")).compile(model, temporaryDirectory.resolve("crossroads.semantifyr"))
 
         val context = loader.startContext()
             .loadLibraries(MODELS.resolve("libraries").resolve("default"))
@@ -52,6 +52,6 @@ class ReferenceWitnessTest {
         private val CORPUS = Path("build", "corpus")
         private const val MODEL = "crossroads.sysml"
         private const val VERIFICATION = "Verification.sysml"
-        private const val WITNESS = "crossroads-green.witness.oxsts"
+        private const val WITNESS = "crossroads-green.witness.semantifyr"
     }
 }

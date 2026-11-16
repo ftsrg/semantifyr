@@ -65,7 +65,7 @@ async function startRuntime(): Promise<{
   const [flavor] = liveFlavors(servedFlavors)
   const runtime = createServedRuntime({
     backendUrl: 'http://localhost:8080',
-    documentUri: 'file:///workspace/snippet.oxsts',
+    documentUri: 'file:///workspace/snippet.semantifyr',
     flavor,
     socketFlavorId: flavor.id,
     clientLanguageId: flavor.languageId,

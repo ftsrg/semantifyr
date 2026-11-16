@@ -71,13 +71,14 @@ class UnsavedEditsCommandHandlerTest {
     @BeforeEach
     void setUp() throws Exception {
         injector = new OxstsIdeSetup().createInjectorAndDoEMFRegistration();
-        Files.writeString(workspace.resolve("decided.oxsts"), SAVED_MODEL);
+        Files.writeString(workspace.resolve("decided.semantifyr"), SAVED_MODEL);
         var workspaceManager = injector.getInstance(WorkspaceManager.class);
         workspaceManager.initialize(
                 List.of(new WorkspaceFolder(workspace.toUri().toString(), "workspace")),
                 (uri, issues) -> {},
                 CancelIndicator.NullImpl);
-        var modelUri = URI.createURI(workspace.resolve("decided.oxsts").toUri().toString());
+        var modelUri =
+                URI.createURI(workspace.resolve("decided.semantifyr").toUri().toString());
         workspaceManager.didOpen(modelUri, 1, EDITED_MODEL).build(CancelIndicator.NullImpl);
         XtextResource resource = workspaceManager.doRead(modelUri, (document, xtextResource) -> xtextResource);
         onlyInBuffer =

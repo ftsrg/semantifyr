@@ -134,7 +134,7 @@ class WebSocketSessionTest {
         installSemantifyrApp(webSockets = true) {
             installSemantifyrLiveBackend(testInjector(config(tmp)))
         }
-        val uri = "file:///workspace/snippet.oxsts"
+        val uri = "file:///workspace/snippet.semantifyr"
         val model = """
             package test
 
@@ -242,8 +242,8 @@ class WebSocketSessionTest {
             installSemantifyrLiveBackend(testInjector(config(tmp)))
         }
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
-            openWith("file:///workspace/snippet.oxsts")
-            val cases = discover(id = 2, uri = "file:///workspace/snippet.oxsts")
+            openWith("file:///workspace/snippet.semantifyr")
+            val cases = discover(id = 2, uri = "file:///workspace/snippet.semantifyr")
             assertThat(cases).isNotEmpty
             assertThat(
                 cases.map {
@@ -261,8 +261,8 @@ class WebSocketSessionTest {
             installSemantifyrLiveBackend(testInjector(config(tmp)))
         }
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
-            openWith("file:///workspace/snippet.oxsts")
-            send(Frame.Text(LspWire.semanticTokensFullRequest(id = 2, uri = "file:///workspace/snippet.oxsts")))
+            openWith("file:///workspace/snippet.semantifyr")
+            send(Frame.Text(LspWire.semanticTokensFullRequest(id = 2, uri = "file:///workspace/snippet.semantifyr")))
             val tokens = awaitResponseFor(id = 2).resultAs(SemanticTokens::class.java)
             assertThat(tokens.data).isNotEmpty
         }
@@ -288,7 +288,7 @@ class WebSocketSessionTest {
                 }
             }
         """.trimIndent()
-        val uri = "file:///workspace/snippet.oxsts"
+        val uri = "file:///workspace/snippet.semantifyr"
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
             send(Frame.Text(LspWire.initializeRequest()))
             val capabilities = awaitResponseFor(id = 1).resultAs(InitializeResult::class.java).capabilities
@@ -315,9 +315,9 @@ class WebSocketSessionTest {
             installSemantifyrLiveBackend(testInjector(config(tmp)))
         }
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
-            openWith("file:///workspace/snippet.oxsts")
+            openWith("file:///workspace/snippet.semantifyr")
 
-            send(Frame.Text(LspWire.semanticTokensFullRequest(id = 2, uri = "file:///workspace/snippet.oxsts")))
+            send(Frame.Text(LspWire.semanticTokensFullRequest(id = 2, uri = "file:///workspace/snippet.semantifyr")))
             val baseline = awaitResponseFor(id = 2).resultAs(SemanticTokens::class.java)
             assertThat(baseline.data)
                 .withFailMessage("baseline semantic tokens were empty before any overwrite")
@@ -336,7 +336,7 @@ class WebSocketSessionTest {
             // OxstsStandaloneSetup constructions in the same JVM.
             OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
 
-            send(Frame.Text(LspWire.semanticTokensFullRequest(id = 3, uri = "file:///workspace/snippet.oxsts")))
+            send(Frame.Text(LspWire.semanticTokensFullRequest(id = 3, uri = "file:///workspace/snippet.semantifyr")))
             val afterOverwrite = awaitResponseFor(id = 3).resultAs(SemanticTokens::class.java)
             assertThat(afterOverwrite.data)
                 .withFailMessage("semantic tokens collapsed to empty after a duplicate OxstsStandaloneSetup ran")
@@ -346,7 +346,7 @@ class WebSocketSessionTest {
 
     @Test
     fun `inlay hints name a positional argument and resolve it to the parameter`(@TempDir tmp: Path) = testApplication {
-        val uri = "file:///workspace/snippet.oxsts"
+        val uri = "file:///workspace/snippet.semantifyr"
         val model = """
             package test
 
@@ -386,7 +386,7 @@ class WebSocketSessionTest {
         installSemantifyrApp(webSockets = true) {
             installSemantifyrLiveBackend(testInjector(config(tmp)))
         }
-        val uri = "file:///workspace/snippet.oxsts"
+        val uri = "file:///workspace/snippet.semantifyr"
         val model = """
             package test
 
@@ -425,12 +425,12 @@ class WebSocketSessionTest {
             installSemantifyrLiveBackend(testInjector(config(tmp)))
         }
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
-            openWith("file:///workspace/snippet.oxsts")
+            openWith("file:///workspace/snippet.semantifyr")
             repeat(20) {
                 send(
                     Frame.Text(
                         LspWire.didChangeNotification(
-                            uri = "file:///workspace/snippet.oxsts",
+                            uri = "file:///workspace/snippet.semantifyr",
                             version = it + 2,
                             text = "$modelWithCase\n// edit $it",
                         ),
@@ -438,7 +438,7 @@ class WebSocketSessionTest {
                 )
                 delay(10)
             }
-            assertThat(discover(id = 99, uri = "file:///workspace/snippet.oxsts")).isNotEmpty
+            assertThat(discover(id = 99, uri = "file:///workspace/snippet.semantifyr")).isNotEmpty
         }
     }
 
@@ -452,7 +452,7 @@ class WebSocketSessionTest {
             val results = (1..4).map {
                 async {
                     client.webSocket("/ws/lsp/oxsts") {
-                        val uri = "file:///workspace/s$it.oxsts"
+                        val uri = "file:///workspace/s$it.semantifyr"
                         openWith(uri)
                         delay(20L * it)
                         assertThat(discover(id = 2, uri = uri)).isNotEmpty

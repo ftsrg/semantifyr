@@ -7,7 +7,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { basename, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { VerificationStatus } from '@semantifyr/editor-common'
+import { addressNameOf, VerificationStatus } from '@semantifyr/editor-common'
 import { fileNameOf, servedExamples, type CaseManifest, type ExampleLanguage, type ServedExample } from '@semantifyr/editor-common/examples'
 
 import { SYSML_FLAVOR_ID, SYSML_OXSTS_FLAVOR_ID } from '../lib/session/sysmlBridge.ts'
@@ -61,7 +61,7 @@ function textOf(example: ServedExample): string {
     return readFileSync(join(repository, example.file), 'utf-8')
   }
   const name = fileNameOf(example)
-  const compiled = join(compiledSysmlDirectory, `${name.slice(0, name.lastIndexOf('.'))}.oxsts`)
+  const compiled = join(compiledSysmlDirectory, `${name.slice(0, name.lastIndexOf('.'))}.semantifyr`)
   if (!existsSync(compiled)) {
     throw new Error(`${compiled} is missing: run ./gradlew :semantifyr-live-frontend:cloneLoadTestModels first`)
   }
@@ -71,7 +71,7 @@ function textOf(example: ServedExample): string {
 export function servedModel(example: ServedExample): LoadTestModel {
   const expected = expectedVerdicts(join(repository, example.file))
   return {
-    name: `${example.language}/${example.id}`,
+    name: `${addressNameOf(example.language)}/${example.id}`,
     flavorId: flavorIdOf(example.language),
     text: textOf(example),
     cases: example.cases.map((name) => {
@@ -86,7 +86,7 @@ export function servedModels(addresses?: readonly string[]): LoadTestModel[] {
     ? servedExamples
     : addresses.map((address) => {
         const example = servedExamples.find((candidate) => {
-          return `${candidate.language}/${candidate.id}` === address
+          return `${addressNameOf(candidate.language)}/${candidate.id}` === address
         })
         if (example === undefined) {
           throw new Error(`the registry serves no ${address}`)

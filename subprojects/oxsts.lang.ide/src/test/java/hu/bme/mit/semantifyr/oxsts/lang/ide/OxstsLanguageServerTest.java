@@ -22,7 +22,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 public abstract class OxstsLanguageServerTest extends AbstractLanguageServerTest {
 
-    private static final String MODEL_FILE_NAME = "snippet.oxsts";
+    private static final String MODEL_FILE_NAME = "snippet.semantifyr";
 
     private static final String LIBRARY_DIRECTORY_NAME = "Library";
 

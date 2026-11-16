@@ -68,7 +68,7 @@ class ConstructStatusTest {
         fixture: String,
         detail: String,
     ) {
-        if (!fixture.endsWith(".oxsts")) {
+        if (!fixture.endsWith(".semantifyr")) {
             assertThat(outcome).isEqualTo("pass")
             assertTestExists(fixture, detail)
             return

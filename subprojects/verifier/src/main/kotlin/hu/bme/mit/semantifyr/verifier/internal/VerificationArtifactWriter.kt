@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.verifier.Trace
 import hu.bme.mit.semantifyr.verifier.VerificationReport
 import kotlinx.serialization.json.Json
 import org.eclipse.emf.common.util.URI
+import org.eclipse.xtext.resource.FileExtensionProvider
 import org.eclipse.xtext.resource.SaveOptions
 import org.eclipse.xtext.serializer.ISerializer
 import java.nio.file.Path
@@ -23,6 +24,7 @@ import kotlin.io.path.writeText
 
 class VerificationArtifactWriter @Inject constructor(
     private val serializer: ISerializer,
+    private val fileExtensionProvider: FileExtensionProvider,
 ) {
 
     private val logger by loggerFactory()
@@ -52,7 +54,7 @@ class VerificationArtifactWriter @Inject constructor(
         caseArtifactPath: Path,
         qualifiedName: String,
     ) {
-        val witnessPath = caseArtifactPath.resolve("witness.oxsts")
+        val witnessPath = caseArtifactPath.resolve("witness.${fileExtensionProvider.primaryFileExtension}")
         try {
             witnessPath.parent?.createDirectories()
             val witness = trace.backAnnotatedModel

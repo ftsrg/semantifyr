@@ -44,8 +44,8 @@ describe('activate', () => {
         await activate(createExtensionContext('/extension') as never);
 
         expect(LanguageClient.instances.map((instance) => [instance.id, instance.name])).toEqual([
-            ['oxstsLSP', 'OXSTS Language Server'],
-            ['gammaLSP', 'GAMMA Language Server'],
+            ['oxstsLSP', 'Semantifyr Language Server'],
+            ['gammaLSP', 'Gamma Language Server'],
         ]);
         for (const instance of LanguageClient.instances) {
             expect(instance.start).toHaveBeenCalledOnce();
@@ -76,12 +76,12 @@ describe('activate', () => {
     });
 
     it('discovers the cases of each workspace file on the server of its language', async () => {
-        state.files = [Uri.parse('file:///workspace/lamp.oxsts'), Uri.parse('file:///workspace/crossroads.gamma')];
+        state.files = [Uri.parse('file:///workspace/lamp.semantifyr'), Uri.parse('file:///workspace/crossroads.gamma')];
 
         await activate(createExtensionContext('/extension') as never);
 
         expect(requests).toEqual([
-            { client: 'oxstsLSP', parameters: { command: 'oxsts.case.discover', arguments: ['file:///workspace/lamp.oxsts'] } },
+            { client: 'oxstsLSP', parameters: { command: 'oxsts.case.discover', arguments: ['file:///workspace/lamp.semantifyr'] } },
             { client: 'gammaLSP', parameters: { command: 'gamma.case.discover', arguments: ['file:///workspace/crossroads.gamma'] } },
         ]);
     });
@@ -111,11 +111,11 @@ describe('activate', () => {
 
     it('peeks the locations the OXSTS server navigates to', async () => {
         await activate(createExtensionContext('/extension') as never);
-        const current = Uri.parse('file:///workspace/lamp.oxsts');
+        const current = Uri.parse('file:///workspace/lamp.semantifyr');
         Object.assign(window, { activeTextEditor: { document: { uri: current }, selection: { start: new Position(2, 4) } } });
 
         client('oxstsLSP').notificationHandlers.get('workspace/navigateTo')!({
-            locations: [{ uri: 'file:///workspace/library.oxsts', range: { start: { line: 1, character: 2 }, end: { line: 1, character: 8 } } }],
+            locations: [{ uri: 'file:///workspace/library.semantifyr', range: { start: { line: 1, character: 2 }, end: { line: 1, character: 8 } } }],
         } as never);
 
         await expect.poll(() => commands.executeCommand.mock.calls.find(([id]) => id === 'editor.action.goToLocations')).toBeDefined();
@@ -124,20 +124,20 @@ describe('activate', () => {
         expect(position).toEqual(new Position(2, 4));
         expect(mode).toBe('peek');
         expect(locations).toMatchObject([{ range: { start: { line: 1, character: 2 }, end: { line: 1, character: 8 } } }]);
-        expect(String((locations as { uri: Uri }[])[0]!.uri)).toBe('file:///workspace/library.oxsts');
+        expect(String((locations as { uri: Uri }[])[0]!.uri)).toBe('file:///workspace/library.semantifyr');
     });
 
     it('opens the inlined model of an Inline lens beside the source, read-only', async () => {
         await activate(createExtensionContext('/extension') as never);
         const middleware = client('oxstsLSP').clientOptions.middleware as ExecuteCommandMiddleware;
-        const request = { location: { uri: 'file:///workspace/lamp.oxsts' }, serializeSteps: true };
-        const next = vi.fn(async () => 'file:///tmp/semantifyr/lamp.Safe/inlined.oxsts');
+        const request = { location: { uri: 'file:///workspace/lamp.semantifyr' }, serializeSteps: true };
+        const next = vi.fn(async () => 'file:///tmp/semantifyr/lamp.Safe/inlined.semantifyr');
 
         await middleware.executeCommand('oxsts.class.inline', [request], next);
 
         expect(next).toHaveBeenCalledWith('oxsts.class.inline', [request]);
         const [target, options] = window.showTextDocument.mock.calls[0]!;
-        expect((target as Uri).toString()).toBe('file:///tmp/semantifyr/lamp.Safe/inlined.oxsts');
+        expect((target as Uri).toString()).toBe('file:///tmp/semantifyr/lamp.Safe/inlined.semantifyr');
         expect(options).toEqual({ viewColumn: ViewColumn.Beside, preview: false });
         expect(commands.executeCommand).toHaveBeenCalledWith('workbench.action.files.setActiveEditorReadonlyInSession');
     });
@@ -145,14 +145,14 @@ describe('activate', () => {
     it('opens the compiled model of a Compile lens beside the source, read-only', async () => {
         await activate(createExtensionContext('/extension') as never);
         const middleware = client('oxstsLSP').clientOptions.middleware as ExecuteCommandMiddleware;
-        const location = { uri: 'file:///tmp/semantifyr/lamp.Safe/inlined.oxsts' };
-        const next = vi.fn(async () => 'file:///tmp/semantifyr/lamp.Safe/compiled.oxsts');
+        const location = { uri: 'file:///tmp/semantifyr/lamp.Safe/inlined.semantifyr' };
+        const next = vi.fn(async () => 'file:///tmp/semantifyr/lamp.Safe/compiled.semantifyr');
 
         await middleware.executeCommand('oxsts.inlined.compile', [location], next);
 
         expect(next).toHaveBeenCalledWith('oxsts.inlined.compile', [location]);
         const [target, options] = window.showTextDocument.mock.calls[0]!;
-        expect((target as Uri).toString()).toBe('file:///tmp/semantifyr/lamp.Safe/compiled.oxsts');
+        expect((target as Uri).toString()).toBe('file:///tmp/semantifyr/lamp.Safe/compiled.semantifyr');
         expect(options).toEqual({ viewColumn: ViewColumn.Beside, preview: false });
         expect(commands.executeCommand).toHaveBeenCalledWith('workbench.action.files.setActiveEditorReadonlyInSession');
     });
@@ -160,9 +160,9 @@ describe('activate', () => {
     it('passes the other OXSTS commands through without opening anything', async () => {
         await activate(createExtensionContext('/extension') as never);
         const middleware = client('oxstsLSP').clientOptions.middleware as ExecuteCommandMiddleware;
-        const next = vi.fn(async () => 'file:///workspace/other.oxsts');
+        const next = vi.fn(async () => 'file:///workspace/other.semantifyr');
 
-        expect(await middleware.executeCommand('oxsts.inlined.verify', [], next)).toBe('file:///workspace/other.oxsts');
+        expect(await middleware.executeCommand('oxsts.inlined.verify', [], next)).toBe('file:///workspace/other.semantifyr');
 
         expect(window.showTextDocument).not.toHaveBeenCalled();
     });

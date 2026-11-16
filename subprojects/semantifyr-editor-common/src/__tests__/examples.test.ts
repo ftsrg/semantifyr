@@ -19,7 +19,7 @@ const DECLARED_CASE: Readonly<Record<ExampleLanguage, RegExp>> = {
 };
 
 const LANGUAGE_OF_EXTENSION: Readonly<Record<string, ExampleLanguage>> = {
-  '.oxsts': 'oxsts',
+  '.semantifyr': 'oxsts',
   '.gamma': 'gamma',
   '.gcd': 'gamma',
   '.sysml': 'sysml',

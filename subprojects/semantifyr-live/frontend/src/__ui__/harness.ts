@@ -21,7 +21,7 @@ export function servedExample(language: ExampleLanguage, id: string): ServedExam
     return candidate.language === language && candidate.id === id
   })
   if (example === undefined) {
-    throw new Error(`the registry serves no /${language}/${id}`)
+    throw new Error(`the registry serves no ${language} example ${id}`)
   }
   return example
 }

@@ -24,14 +24,14 @@ class CaseDirectoryNameTest {
 
     @Test
     fun `cases sharing a qualified name in different models get different directories`() {
-        assertThat(caseDirectoryName(case("power_subsystems.oxsts", "semantifyr::sysml::model::OffReachable"))).isEqualTo("power_subsystems.semantifyr.sysml.model.OffReachable")
-        assertThat(caseDirectoryName(case("aircraft_engine.oxsts", "semantifyr::sysml::model::OffReachable"))).isEqualTo("aircraft_engine.semantifyr.sysml.model.OffReachable")
+        assertThat(caseDirectoryName(case("power_subsystems.semantifyr", "semantifyr::sysml::model::OffReachable"))).isEqualTo("power_subsystems.semantifyr.sysml.model.OffReachable")
+        assertThat(caseDirectoryName(case("aircraft_engine.semantifyr", "semantifyr::sysml::model::OffReachable"))).isEqualTo("aircraft_engine.semantifyr.sysml.model.OffReachable")
     }
 
     @Test
     fun `a long name is bounded and stays distinct`() {
-        val reachable = caseDirectoryName(case("spacecraft.oxsts", "semantifyr::sysml::model::SpacecraftBehaviorCommunicationTransmittingConsumePowerConsumingReachable"))
-        val unreachable = caseDirectoryName(case("spacecraft.oxsts", "semantifyr::sysml::model::SpacecraftBehaviorCommunicationTransmittingConsumePowerConsumingUnreachable"))
+        val reachable = caseDirectoryName(case("spacecraft.semantifyr", "semantifyr::sysml::model::SpacecraftBehaviorCommunicationTransmittingConsumePowerConsumingReachable"))
+        val unreachable = caseDirectoryName(case("spacecraft.semantifyr", "semantifyr::sysml::model::SpacecraftBehaviorCommunicationTransmittingConsumePowerConsumingUnreachable"))
 
         assertThat(reachable).hasSize(64).startsWith("spacecraft.semantifyr.sysml.model.SpacecraftBehavior")
         assertThat(unreachable).hasSize(64).isNotEqualTo(reachable)
@@ -39,8 +39,8 @@ class CaseDirectoryNameTest {
 
     @Test
     fun `cases of models sharing a file stem get different directories`() {
-        assertThat(caseDirectoryName(case("first/model.oxsts", "first::Reach"))).isEqualTo("model.first.Reach")
-        assertThat(caseDirectoryName(case("second/model.oxsts", "second::Reach"))).isEqualTo("model.second.Reach")
+        assertThat(caseDirectoryName(case("first/model.semantifyr", "first::Reach"))).isEqualTo("model.first.Reach")
+        assertThat(caseDirectoryName(case("second/model.semantifyr", "second::Reach"))).isEqualTo("model.second.Reach")
     }
 
     @Test

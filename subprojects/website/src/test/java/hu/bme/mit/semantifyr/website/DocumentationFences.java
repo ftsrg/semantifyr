@@ -35,7 +35,8 @@ final class DocumentationFences {
 
     private static final Pattern PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+([\\w:]+)", Pattern.MULTILINE);
 
-    private static final Pattern IMPORT = Pattern.compile("^import\\s+\\w+\\s+from\\s+'(@[\\w-]+)/([^']+\\.oxsts)';?$");
+    private static final Pattern IMPORT =
+            Pattern.compile("^import\\s+\\w+\\s+from\\s+'(@[\\w-]+)/([^']+\\.semantifyr)';?$");
 
     private static final Pattern SERVED_IMPORT =
             Pattern.compile("^import\\s+\\w+\\s+from\\s+'@served-examples/oxsts/([\\w-]+)';?$");
@@ -117,7 +118,7 @@ final class DocumentationFences {
                             })
                             .findFirst()
                             .orElseThrow(() -> new IllegalStateException(
-                                    "the registry serves no /oxsts/" + served.group(1) + " for " + page));
+                                    "the registry serves no /language/" + served.group(1) + " for " + page));
                     var model = repository.resolve(example.file()).normalize();
                     if (!models.contains(model)) {
                         models.add(model);

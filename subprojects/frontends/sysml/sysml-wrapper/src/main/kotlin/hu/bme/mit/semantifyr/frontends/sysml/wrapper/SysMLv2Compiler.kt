@@ -19,11 +19,11 @@ import java.nio.file.StandardCopyOption
 import java.util.UUID
 import kotlin.io.path.extension
 import kotlin.io.path.invariantSeparatorsPathString
-import kotlin.io.path.name
+import kotlin.io.path.nameWithoutExtension
 
 // the translation writes its name map beside the OXSTS, which the trace generator reads
 fun nameMapPath(oxstsPath: Path): Path {
-    return oxstsPath.resolveSibling("${oxstsPath.name.removeSuffix(".oxsts")}.names.json")
+    return oxstsPath.resolveSibling("${oxstsPath.nameWithoutExtension}.names.json")
 }
 
 class SysMLv2Compiler(
@@ -47,9 +47,9 @@ class SysMLv2Compiler(
             "SysML v2 source does not exist or is not a regular file: $sourcePath"
         }
 
-        val entry = cacheEntry(sourcePath)
+        val entry = cacheEntry(sourcePath, outputPath.extension)
         if (Files.isRegularFile(entry)) {
-            logger.info { "Reusing cached OXSTS '$entry' for SysMLv2 source '$sourcePath'" }
+            logger.info { "Reusing the cached Semantifyr model '$entry' for SysMLv2 source '$sourcePath'" }
         } else {
             compileIntoCache(sourcePath, entry)
         }
@@ -57,7 +57,7 @@ class SysMLv2Compiler(
         Files.createDirectories(outputPath.toAbsolutePath().parent)
         copyAtomically(nameMapPath(entry), nameMapPath(outputPath))
         copyAtomically(entry, outputPath)
-        logger.debug { "Copied cached OXSTS '$entry' and its name map to '$outputPath'" }
+        logger.debug { "Copied the cached Semantifyr model '$entry' and its name map to '$outputPath'" }
         return outputPath
     }
 
@@ -71,7 +71,7 @@ class SysMLv2Compiler(
         }
     }
 
-    private fun cacheEntry(sourcePath: Path): Path {
+    private fun cacheEntry(sourcePath: Path, fileExtension: String): Path {
         // the CLI builds every SysML and KerML file under the model's directory as its workspace
         val workspace = sourcePath.toAbsolutePath().parent
         val files = Files.walk(workspace).use { walk ->
@@ -83,7 +83,7 @@ class SysMLv2Compiler(
         }
         return cacheDirectory
             .resolve(bundleDirectory.fileName.toString())
-            .resolve("${sourcePath.fileName}-${sha256Hex(files)}.oxsts")
+            .resolve("${sourcePath.fileName}-${sha256Hex(files)}.$fileExtension")
     }
 
     // the trace command validates the trace in the model's workspace and writes nothing when it does not validate
@@ -147,6 +147,7 @@ class SysMLv2Compiler(
         logger.info { "Compiling SysMLv2 source '$sourcePath' via bundled CLI '$cliPath'" }
 
         Files.createDirectories(entry.parent)
+        // the command line of sysml-2ls writes the name map beside an output ending in .oxsts alone
         val temporary = entry.resolveSibling(".tmp-${UUID.randomUUID()}.oxsts")
         try {
             runCli(

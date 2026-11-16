@@ -53,7 +53,7 @@ describe('runAllVerifications', () => {
     runAllVerifications(
       client,
       'oxsts.case.verify',
-      'file:///workspace/snippet.oxsts',
+      'file:///workspace/snippet.semantifyr',
       [sampleCase('a'), sampleCase('b')],
       setState,
       noopProgress,
@@ -74,7 +74,7 @@ describe('runAllVerifications', () => {
 
     expect(sendRequest.mock.calls[0]![1]).toEqual({
       command: 'oxsts.case.verify',
-      arguments: [{ uri: 'file:///workspace/snippet.oxsts', range: sampleCase('a').location.range, portfolio: 'smart' }],
+      arguments: [{ uri: 'file:///workspace/snippet.semantifyr', range: sampleCase('a').location.range, portfolio: 'smart' }],
     });
 
     expect(states[0]!.cases.every((verificationCase) => verificationCase.status === 'running')).toBe(true);
@@ -89,7 +89,7 @@ describe('runAllVerifications', () => {
     runAllVerifications(
       client,
       'oxsts.case.verify',
-      'file:///workspace/snippet.oxsts',
+      'file:///workspace/snippet.semantifyr',
       [sampleCase('a')],
       setState,
       noopProgress,
@@ -111,7 +111,7 @@ describe('runAllVerifications', () => {
     runAllVerifications(
       client,
       'oxsts.case.verify',
-      'file:///workspace/snippet.oxsts',
+      'file:///workspace/snippet.semantifyr',
       [sampleCase('a')],
       setState,
       noopProgress,
@@ -151,7 +151,7 @@ describe('runAllVerifications', () => {
     runAllVerifications(
       client,
       'oxsts.case.verify',
-      'file:///workspace/snippet.oxsts',
+      'file:///workspace/snippet.semantifyr',
       [sampleCase('a')],
       setState,
       noopProgress,
@@ -208,7 +208,7 @@ describe('runAllVerifications', () => {
     runAllVerifications(
       client,
       'oxsts.case.verify',
-      'file:///workspace/snippet.oxsts',
+      'file:///workspace/snippet.semantifyr',
       [sampleCase('a')],
       setState,
       noopProgress,
@@ -238,7 +238,7 @@ describe('verification statuses', () => {
     runAllVerifications(
       client,
       'oxsts.case.verify',
-      'file:///workspace/snippet.oxsts',
+      'file:///workspace/snippet.semantifyr',
       [sampleCase('a')],
       setState,
       noopProgress,
@@ -277,7 +277,7 @@ describe('discoverCases', () => {
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
     const { states, setState } = captureStates();
-    const discovery = discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.oxsts', setState);
+    const discovery = discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.semantifyr', setState);
 
     expect(states.at(-1)?.discovery).toBe('discovering');
     resolveDiscovery([sampleCase('a')]);
@@ -293,7 +293,7 @@ describe('discoverCases', () => {
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
     const { states, setState } = captureStates();
-    await discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.oxsts', setState);
+    await discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.semantifyr', setState);
 
     expect(states.at(-1)?.discovery).toBe('discovered');
     expect(states.at(-1)?.cases).toEqual([]);
@@ -309,7 +309,7 @@ describe('discoverCases', () => {
       discovery: 'discovered',
       cases: [{ caseInfo: sampleCase('a'), status: 'passed' }],
     });
-    await discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.oxsts', setState);
+    await discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.semantifyr', setState);
 
     expect(states.at(-1)?.cases[0]?.status).toBe('passed');
   });
@@ -321,7 +321,7 @@ describe('discoverCases', () => {
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
     const { states, setState } = captureStates();
-    await discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.oxsts', setState);
+    await discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.semantifyr', setState);
 
     expect(states.at(-1)?.discovery).toBe('idle');
   });
@@ -400,7 +400,7 @@ describe('dispatchAutoValidation', () => {
       client,
       'oxsts.case.validateWitness',
       'a',
-      { uri: 'inmemory:///workspace/snippet.witness.oxsts', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } },
+      { uri: 'inmemory:///workspace/snippet.witness.semantifyr', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } },
       setState,
       { validationPortfolioId: 'smart' },
     );
@@ -425,7 +425,7 @@ describe('the server\'s report of the session\'s verifications', () => {
     return {
       id,
       label: `Case ${id}`,
-      location: { uri: 'file:///workspace/snippet.oxsts', range: { start: { line, character: 2 }, end: { line, character: 9 } } },
+      location: { uri: 'file:///workspace/snippet.semantifyr', range: { start: { line, character: 2 }, end: { line, character: 9 } } },
     };
   };
   const entry = (kind: ActiveVerificationInfo['kind'], state: ActiveVerificationInfo['state'], location: VerificationCaseState['caseInfo']['location']): ActiveVerificationInfo => {
@@ -496,7 +496,7 @@ describe('cases asked for before they can be sent', () => {
 });
 
 describe('the wait of a case', () => {
-  const caseInfo = { ...sampleCase('a'), location: { uri: 'file:///workspace/snippet.oxsts', range: { start: { line: 3, character: 0 }, end: { line: 3, character: 1 } } } };
+  const caseInfo = { ...sampleCase('a'), location: { uri: 'file:///workspace/snippet.semantifyr', range: { start: { line: 3, character: 0 }, end: { line: 3, character: 1 } } } };
   const running = (now: number) => {
     return (state: VerificationState): VerificationState => {
       return applyServerReport(state, [{ verificationId: 'v', portfolioId: 'smart', kind: 'Verify', state: 'Running', elapsed: 'PT0S', location: caseInfo.location }], now);

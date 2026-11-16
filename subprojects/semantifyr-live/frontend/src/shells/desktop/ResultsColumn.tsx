@@ -8,7 +8,7 @@ import type React from 'react'
 import { useRef } from 'react'
 import { type VerdictStatus, LanguageMark, VerdictMark } from '@semantifyr/editor-common/marks'
 
-import { parseLiveEditorUrl } from '@semantifyr/editor-common'
+import { languageOfAddressName, parseLiveEditorUrl } from '@semantifyr/editor-common'
 import { initializationStepsOf, presentationOf } from '../../lib/language/presentation'
 import { areCasesKnown, initializationOf } from '../../lib/stores/initialization'
 import { changeSettings } from '../../lib/stores/settings'
@@ -148,21 +148,22 @@ function ModelOxstsButton({ compact }: { compact: boolean }): React.JSX.Element 
     <button
       type="button"
       className={`button model-oxsts-button ${compact ? 'button-icon' : 'button-small button-quiet'}`}
-      title="Open the OXSTS of the model"
-      aria-label="Open the OXSTS of the model"
+      title="Open the Semantifyr model the model compiles to"
+      aria-label="Open the Semantifyr model the model compiles to"
       onClick={() => {
         openModelOxsts(live, runtime, documentLabel(document, flavor))
       }}
     >
       <LanguageMark languageId="oxsts" />
-      {compact ? null : 'OXSTS'}
+      {compact ? null : 'Semantifyr model'}
     </button>
   )
 }
 
 // the language the address will open, while the server has not answered with its languages
 function addressedLanguage(): string {
-  return parseLiveEditorUrl(window.location).language ?? 'sysml'
+  const name = parseLiveEditorUrl(window.location).language
+  return (name === null ? undefined : languageOfAddressName(name)) ?? 'sysml'
 }
 
 function Initialization(): React.JSX.Element {

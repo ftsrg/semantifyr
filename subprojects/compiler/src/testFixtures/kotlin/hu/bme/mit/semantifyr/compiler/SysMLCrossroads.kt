@@ -19,7 +19,7 @@ object SysMLCrossroads {
     fun caseClass(loader: SemantifyrLoader): ClassDeclaration {
         val context = loader.startContext()
             .loadLibraries(directory.resolve("library"))
-            .loadModel(directory.resolve("crossroads.oxsts"))
+            .loadModel(directory.resolve("crossroads.semantifyr"))
             .buildAndResolve()
         return context.modelResources.single().allContents.asSequence().filterIsInstance<ClassDeclaration>().single {
             it.name == CASE

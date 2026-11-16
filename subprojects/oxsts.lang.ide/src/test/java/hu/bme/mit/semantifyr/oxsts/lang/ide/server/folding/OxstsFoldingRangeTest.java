@@ -43,13 +43,13 @@ class OxstsFoldingRangeTest extends OxstsLanguageServerTest {
 
     @Test
     void importsFoldAsOneRange() throws Exception {
-        addLibraryFile("Lamps.oxsts", """
+        addLibraryFile("Lamps.semantifyr", """
                 package example::lamps
 
                 class Lamp {
                 }
                 """);
-        addLibraryFile("Doors.oxsts", """
+        addLibraryFile("Doors.semantifyr", """
                 package example::doors
 
                 class Door {

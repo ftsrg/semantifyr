@@ -7,7 +7,7 @@
 /// <reference types="vite/client" />
 /// <reference types="vite-plugin-pwa/react" />
 
-declare module '*.oxsts?raw' {
+declare module '*.semantifyr?raw' {
   const content: string;
   export default content;
 }

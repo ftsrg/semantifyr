@@ -141,7 +141,6 @@ public class GammaUtils {
         return List.of();
     }
 
-    // an adapter offers its wrapped component's ports beside its own, as Gamma's adapter does
     public static List<PortDeclaration> getAllPorts(ComponentDeclaration component) {
         if (component == null) {
             return List.of();

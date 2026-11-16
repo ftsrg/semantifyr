@@ -7,7 +7,7 @@
 import type React from 'react'
 import { type VerdictStatus, LanguageMark, VerdictMark } from '@semantifyr/editor-common/marks'
 
-import { parseLiveEditorUrl } from '@semantifyr/editor-common'
+import { languageOfAddressName, parseLiveEditorUrl } from '@semantifyr/editor-common'
 import { initializationStepsOf, presentationOf } from '../../lib/language/presentation'
 import { areCasesKnown, initializationOf } from '../../lib/stores/initialization'
 import { useStore } from '../../lib/stores/useStore'
@@ -128,7 +128,8 @@ function Counts({ counts }: { counts: CaseCounts }): React.JSX.Element {
 
 // the language the address will open, while the server has not answered with its languages
 function addressedLanguage(): string {
-  return parseLiveEditorUrl(window.location).language ?? 'sysml'
+  const name = parseLiveEditorUrl(window.location).language
+  return (name === null ? undefined : languageOfAddressName(name)) ?? 'sysml'
 }
 
 function Initialization(): React.JSX.Element {

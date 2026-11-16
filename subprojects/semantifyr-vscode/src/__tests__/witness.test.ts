@@ -51,7 +51,7 @@ describe('renderTrace', () => {
     });
 
     it.each([
-        ['file:/tmp/semantifyr/lamp.Safe/witness.oxsts', 'Witness'],
+        ['file:/tmp/semantifyr/lamp.Safe/witness.semantifyr', 'Witness'],
         ['file:/tmp/semantifyr/crossroads.Green/trace.get', 'Gamma trace'],
     ])('labels the opened file %s as %s', (uri, label) => {
         const trace = { ...counterexample, witnessUri: uri };
@@ -118,7 +118,7 @@ describe('renderTrace', () => {
 });
 
 describe('WitnessView', () => {
-    const modelUri = Uri.parse('file:///workspace/lamp.oxsts');
+    const modelUri = Uri.parse('file:///workspace/lamp.semantifyr');
     let view: WitnessView;
     let item: TestItem;
 
@@ -141,7 +141,7 @@ describe('WitnessView', () => {
         await showWitness({ test: item, message: new TestMessage('property violated') });
 
         const [witnessTarget, witnessOptions] = window.showTextDocument.mock.calls[0]!;
-        expect((witnessTarget as Uri).toString()).toBe('file:///tmp/semantifyr/lamp.Safe/witness.oxsts');
+        expect((witnessTarget as Uri).toString()).toBe('file:///tmp/semantifyr/lamp.Safe/witness.semantifyr');
         expect(witnessOptions).toEqual({ viewColumn: ViewColumn.Beside, preview: false });
         expect(commands.executeCommand).toHaveBeenCalledWith('workbench.action.files.setActiveEditorReadonlyInSession');
 

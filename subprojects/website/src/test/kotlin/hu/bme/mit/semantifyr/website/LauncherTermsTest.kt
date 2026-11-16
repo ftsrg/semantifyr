@@ -28,12 +28,14 @@ private data class TermsFile(
 private data class Term(
     val term: String,
     val rejected: List<String>,
+    val kept: List<String> = emptyList(),
 )
 
 private data class RejectedWord(
     val word: String,
     val term: String,
     val pattern: Regex,
+    val kept: List<Regex>,
 )
 
 data class PrintedText(
@@ -241,11 +243,14 @@ class LauncherTermsTest {
             ignoreUnknownKeys = true
         }.decodeFromString<TermsFile>(repository.resolve("subprojects/semantifyr-editor-common/src/terms/terms.json").readText())
         (file.terms.values + file.outcomes.values).flatMap { term ->
+            val kept = term.kept.map {
+                Regex(it, RegexOption.MULTILINE)
+            }
             term.rejected.map { word ->
                 val words = word.split(Regex("\\s+")).joinToString("\\s+") {
                     Regex.escape(it)
                 }
-                RejectedWord(word, term.term, Regex("(?<![\\p{L}\\p{N}])$words(?![\\p{L}\\p{N}])", RegexOption.IGNORE_CASE))
+                RejectedWord(word, term.term, Regex("(?<![\\p{L}\\p{N}])$words(?![\\p{L}\\p{N}])", RegexOption.IGNORE_CASE), kept)
             }
         }
     }
@@ -292,8 +297,11 @@ class LauncherTermsTest {
 
     private fun rejectedIn(texts: List<PrintedText>): List<String> {
         return texts.flatMap { printed ->
-            rules.filter {
-                it.pattern.containsMatchIn(printed.text)
+            rules.filter { rule ->
+                val text = rule.kept.fold(printed.text) { remaining, pattern ->
+                    remaining.replace(pattern, " ")
+                }
+                rule.pattern.containsMatchIn(text)
             }.map {
                 "${printed.place}: \"${it.word}\", say \"${it.term}\""
             }

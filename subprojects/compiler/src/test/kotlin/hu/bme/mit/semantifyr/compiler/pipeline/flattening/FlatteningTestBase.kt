@@ -45,6 +45,7 @@ abstract class FlatteningTestBase {
         className: String,
         source: String,
         optimization: OptimizationConfig = OptimizationConfig.NONE,
+        artifacts: ArtifactConfig = ArtifactConfig.NONE,
     ): FlattenedCompilationContext {
         val parsed = parseHelper.parse(source.normalizedFixtureSource(), CheckMode.ALL)
         parsed.assertNoResourceErrors()
@@ -52,7 +53,7 @@ abstract class FlatteningTestBase {
         val classDeclaration = EcoreUtil2.eAllOfType(parsed.oxstsPackage, ClassDeclaration::class.java).single {
             it.name == className
         }
-        return SemantifyrCompiler(injector, ArtifactConfig.NONE, optimization).compile(classDeclaration, temporaryDirectory)
+        return SemantifyrCompiler(injector, artifacts, optimization).compile(classDeclaration, temporaryDirectory)
     }
 
     protected fun serialize(eObject: EObject): String {

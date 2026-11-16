@@ -24,7 +24,7 @@ class VerificationCaseDiscovererTest {
     @Inject
     private lateinit var discoverer: VerificationCaseDiscoverer
 
-    private val modelPath = Path("../../oxsts-test-models/simple/simple.oxsts")
+    private val modelPath = Path("../../oxsts-test-models/simple/simple.semantifyr")
 
     @Test
     fun `discover returns every class annotated with VerificationCase`() {

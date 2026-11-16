@@ -58,7 +58,7 @@ class SysMLVerifyCommandTest {
 
         val result = runSysMLCli(
             "verify", "-q", "--portfolio", portfolio.id, "-d", directory.resolve("artifacts").toString(),
-            "-l", semanticModels.resolve("arithmetic.oxsts").toString(),
+            "-l", semanticModels.resolve("arithmetic.semantifyr").toString(),
             "--case-name", "semantifyr::sysml::model::LampLitReachable",
             model.toString(),
             portfolios = listOf(portfolio),
@@ -82,10 +82,10 @@ class SysMLVerifyCommandTest {
 
     @Test
     suspend fun `an OXSTS model is an input error`() {
-        val result = runSysMLCli("verify", semanticModels.resolve("arithmetic.oxsts").toString())
+        val result = runSysMLCli("verify", semanticModels.resolve("arithmetic.semantifyr").toString())
 
         assertThat(result.statusCode).isEqualTo(3)
-        assertThat(result.stderr).contains("arithmetic.oxsts").contains(".sysml")
+        assertThat(result.stderr).contains("arithmetic.semantifyr").contains(".sysml")
     }
 
     @Test

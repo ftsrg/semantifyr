@@ -141,6 +141,31 @@ class ApiRoutesHandlerTest {
     }
 
     @Test
+    fun `flavors endpoint names a new document in the extension its language writes`() = testApplication {
+        val handler = createHandler()
+        installSemantifyrApp {
+            with(handler) {
+                configure()
+            }
+        }
+        val client = jsonClient()
+
+        val flavors = client.get("/api/flavors").body<FlavorsResponse>()
+
+        val fileNames = flavors.flavors.associate {
+            it.id to it.fileName
+        }
+        assertThat(fileNames).containsExactlyInAnyOrderEntriesOf(
+            mapOf(
+                "oxsts" to "snippet.semantifyr",
+                "oxsts-with-gamma-library" to "snippet.semantifyr",
+                "oxsts-with-sysmlv2-library" to "snippet.semantifyr",
+                "gamma" to "snippet.gamma",
+            ),
+        )
+    }
+
+    @Test
     fun `portfolios endpoint exposes the demo portfolio set`() = testApplication {
         val handler = createHandler()
         installSemantifyrApp {
@@ -193,9 +218,9 @@ class ApiRoutesHandlerTest {
         val semanticLibraries = tmp.resolve("semantic-libraries")
         val webRoot = tmp.resolve("web")
         val files = listOf(
-            "semantic-libraries/gamma/Statecharts.oxsts",
-            "semantic-libraries/gamma/Ports.oxsts",
-            "semantic-libraries/sysmlv2/States.oxsts",
+            "semantic-libraries/gamma/Statecharts.semantifyr",
+            "semantic-libraries/gamma/Ports.semantifyr",
+            "semantic-libraries/sysmlv2/States.semantifyr",
             "web/sysml-worker/library/Verification.sysml",
             "web/sysml-worker/library/Kernel Libraries/Kernel Data Type Library/ScalarValues.kerml",
             "web/sysml-worker/library/Kernel Libraries/Kernel Data Type Library/.meta.json",
@@ -219,10 +244,10 @@ class ApiRoutesHandlerTest {
 
         val libraries = jsonClient().get("/api/libraries").body<LibrariesResponse>()
 
-        assertThat(libraries.builtin).containsExactly("semantifyr.oxsts")
+        assertThat(libraries.builtin).containsExactly("standard.semantifyr")
         assertThat(libraries.semantic).containsOnlyKeys("oxsts-with-gamma-library", "oxsts-with-sysmlv2-library", "gamma")
-        assertThat(libraries.semantic["gamma"]).containsExactly("Ports.oxsts", "Statecharts.oxsts")
-        assertThat(libraries.semantic["oxsts-with-sysmlv2-library"]).containsExactly("States.oxsts")
+        assertThat(libraries.semantic["gamma"]).containsExactly("Ports.semantifyr", "Statecharts.semantifyr")
+        assertThat(libraries.semantic["oxsts-with-sysmlv2-library"]).containsExactly("States.semantifyr")
         assertThat(libraries.sysml).containsExactly("Kernel Libraries/Kernel Data Type Library/ScalarValues.kerml", "Verification.sysml")
     }
 }

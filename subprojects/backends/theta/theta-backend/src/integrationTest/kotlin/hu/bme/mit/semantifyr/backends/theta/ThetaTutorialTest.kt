@@ -37,7 +37,7 @@ class ThetaTutorialTest {
         // every step of a tutorial is a model of its own, loaded alone as the website's live editor loads it
         private val contexts: Map<Path, SemantifyrModelContext> by lazy {
             tutorial.walk().filter {
-                it.isRegularFile() && it.extension == "oxsts"
+                it.isRegularFile() && it.extension == "semantifyr"
             }.sorted().associateWith {
                 helper.semantifyrLoader.loadStandaloneModel(it)
             }

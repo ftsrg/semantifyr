@@ -40,7 +40,7 @@ import java.util.concurrent.CompletableFuture
 class SessionWorkspaceServiceTest {
 
     private fun verifyArgs(
-        uri: String = "file:///workspace/snippet.oxsts",
+        uri: String = "file:///workspace/snippet.semantifyr",
         portfolio: String? = "smart",
     ): JsonElement {
         return CommandGson.INSTANCE.toJsonTree(VerificationCaseRequest(uri, LspWire.range(), portfolio))

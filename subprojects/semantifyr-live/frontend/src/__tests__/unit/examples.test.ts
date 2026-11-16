@@ -155,11 +155,11 @@ describe('the registry\'s examples', () => {
 
   it('shows no description for a model whose file has no comment at its top', () => {
     const descriptions = {
-      './snippets/imported/descriptions/lights.oxsts.description': ' Two lights at a crossing.\n',
+      './snippets/imported/descriptions/lights.semantifyr.description': ' Two lights at a crossing.\n',
     };
 
-    expect(descriptionOf(descriptions, 'lights.oxsts')).toBe('Two lights at a crossing.');
-    expect(descriptionOf(descriptions, 'bare.oxsts')).toBeNull();
+    expect(descriptionOf(descriptions, 'lights.semantifyr')).toBe('Two lights at a crossing.');
+    expect(descriptionOf(descriptions, 'bare.semantifyr')).toBeNull();
   });
 });
 

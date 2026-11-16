@@ -76,7 +76,7 @@ class ConcurrentSessionTest {
         return try {
             withTimeout(90.seconds) {
                 httpClient.webSocket("ws://localhost:$port/ws/lsp/oxsts") {
-                    val uri = "file:///workspace/s$index.oxsts"
+                    val uri = "file:///workspace/s$index.semantifyr"
                     send(Frame.Text(LspWire.initializeRequest()))
                     awaitResponseFor(id = 1)
                     send(Frame.Text(LspWire.initializedNotification()))

@@ -20,7 +20,7 @@ public class BuiltinLibrary extends ClasspathBasedOxstsLibrary {
 
     public static final QualifiedName BUILTIN_LIBRARY_NAME = QualifiedName.create("semantifyr");
 
-    private static final String BUILTIN_FILE_SUFFIX = ".oxsts";
+    private static final QualifiedName BUILTIN_FILE_NAME = QualifiedName.create("standard");
 
     private static final String RESOURCE_PREFIX = "hu/bme/mit/semantifyr/oxsts/lang/library";
 
@@ -37,7 +37,7 @@ public class BuiltinLibrary extends ClasspathBasedOxstsLibrary {
 
     public URI getBuiltinResourceUri() {
         if (builtinLibraryUri == null) {
-            builtinLibraryUri = resolveUri(BUILTIN_LIBRARY_NAME, BUILTIN_FILE_SUFFIX);
+            builtinLibraryUri = resolveUri(BUILTIN_FILE_NAME, "." + fileExtensionProvider.getPrimaryFileExtension());
         }
 
         return builtinLibraryUri;

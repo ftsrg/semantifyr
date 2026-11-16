@@ -9,26 +9,27 @@ package hu.bme.mit.semantifyr.compiler.pipeline.artifact
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.CompilationRequest
 import org.eclipse.emf.common.util.URI
+import org.eclipse.xtext.resource.FileExtensionProvider
 import java.io.File
 import java.nio.file.Path
 
 private const val PIPELINE = "pipeline"
-private const val INSTANTIATED_MODEL = "$PIPELINE/instantiated.oxsts"
-private const val INLINED_MODEL = "$PIPELINE/inlined.oxsts"
-private const val FLATTENED_MODEL = "$PIPELINE/flattened.oxsts"
 private const val COMPILATION_STEPS = "$PIPELINE/steps"
 private const val MAPPING = "mapping.json"
 
 class ArtifactManager @Inject constructor(
     private val config: ArtifactConfig,
     private val request: CompilationRequest,
+    fileExtensionProvider: FileExtensionProvider,
 ) {
+
+    private val modelExtension = fileExtensionProvider.primaryFileExtension
 
     fun pathOf(artifactKind: ArtifactKind): String {
         return when (artifactKind) {
-            ArtifactKind.InstantiatedModel -> INSTANTIATED_MODEL
-            ArtifactKind.InlinedModel -> INLINED_MODEL
-            ArtifactKind.FlattenedModel -> FLATTENED_MODEL
+            ArtifactKind.InstantiatedModel -> "$PIPELINE/instantiated.$modelExtension"
+            ArtifactKind.InlinedModel -> "$PIPELINE/inlined.$modelExtension"
+            ArtifactKind.FlattenedModel -> "$PIPELINE/flattened.$modelExtension"
             ArtifactKind.CompilationStep -> COMPILATION_STEPS
             ArtifactKind.Mapping -> MAPPING
         }

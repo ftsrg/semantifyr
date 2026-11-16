@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.CompilationRequest
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.InlinedOxstsParseHelper
 import org.assertj.core.api.Assertions.assertThat
+import org.eclipse.xtext.resource.FileExtensionProvider
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
@@ -23,6 +24,9 @@ class ArtifactManagerTest {
 
     @Inject
     lateinit var parseHelper: InlinedOxstsParseHelper
+
+    @Inject
+    lateinit var fileExtensionProvider: FileExtensionProvider
 
     private val emptyInlined by lazy {
         parseHelper.parse(
@@ -41,7 +45,26 @@ class ArtifactManagerTest {
 
     private fun managerFor(config: ArtifactConfig): ArtifactManager {
         val request = CompilationRequest(inlinedOxsts = emptyInlined, outputDirectory = temporaryDirectory)
-        return ArtifactManager(config, request)
+        return ArtifactManager(config, request, fileExtensionProvider)
+    }
+
+    @Test
+    fun `the phase models are written in the language's primary extension`() {
+        val manager = managerFor(ArtifactConfig.DEBUG)
+
+        val models = listOf(
+            ArtifactKind.InstantiatedModel,
+            ArtifactKind.InlinedModel,
+            ArtifactKind.FlattenedModel,
+        ).map {
+            manager.pathOf(it)
+        }
+
+        assertThat(models).containsExactly(
+            "pipeline/instantiated.${fileExtensionProvider.primaryFileExtension}",
+            "pipeline/inlined.${fileExtensionProvider.primaryFileExtension}",
+            "pipeline/flattened.${fileExtensionProvider.primaryFileExtension}",
+        )
     }
 
     @Test
@@ -68,9 +91,9 @@ class ArtifactManagerTest {
     fun `resolveUri resolves a relative path against the output directory`() {
         val manager = managerFor(ArtifactConfig.DEBUG)
 
-        val uri = manager.resolveUri("sub/model.oxsts")
+        val uri = manager.resolveUri("sub/model.semantifyr")
 
-        assertThat(uri.toFileString()).isEqualTo(temporaryDirectory.resolve("sub/model.oxsts").toFile().absolutePath)
+        assertThat(uri.toFileString()).isEqualTo(temporaryDirectory.resolve("sub/model.semantifyr").toFile().absolutePath)
     }
 
     @Test

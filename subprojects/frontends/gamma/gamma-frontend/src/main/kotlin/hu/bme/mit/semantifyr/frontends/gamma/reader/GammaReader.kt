@@ -47,7 +47,6 @@ class GammaReader @Inject constructor(
         }
     }
 
-    // the Gamma models beside the read files, or under the given workspace, are what imports resolve in; only what the read files reach is validated
     fun readGammaFiles(
         files: List<File>,
         workspace: Path? = null,

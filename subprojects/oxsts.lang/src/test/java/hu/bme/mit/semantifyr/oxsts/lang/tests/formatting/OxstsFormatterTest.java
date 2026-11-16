@@ -64,7 +64,10 @@ public class OxstsFormatterTest {
         parsedPackage.assertNoResourceErrors();
         var resourceSet = parsedPackage.getOxstsPackage().eResource().getResourceSet();
         var copy = EcoreUtil.copy(parsedPackage.getOxstsPackage());
-        resourceSet.createResource(URI.createURI("copy.oxsts")).getContents().add(copy);
+        resourceSet
+                .createResource(URI.createURI("copy.semantifyr"))
+                .getContents()
+                .add(copy);
 
         var serialized =
                 serializer.serialize(copy, SaveOptions.newBuilder().format().getOptions());
@@ -92,7 +95,10 @@ public class OxstsFormatterTest {
         parsedPackage.assertNoResourceErrors();
         var resourceSet = parsedPackage.getOxstsPackage().eResource().getResourceSet();
         var copy = EcoreUtil.copy(parsedPackage.getOxstsPackage());
-        resourceSet.createResource(URI.createURI("copy.oxsts")).getContents().add(copy);
+        resourceSet
+                .createResource(URI.createURI("copy.semantifyr"))
+                .getContents()
+                .add(copy);
 
         var serialized =
                 serializer.serialize(copy, SaveOptions.newBuilder().format().getOptions());

@@ -71,8 +71,8 @@ describe("witness messages", () => {
     });
 
     it("names the witness that does not open and why", () => {
-        expect(witnessOpenFailureMessage("file:///tmp/witness.oxsts", new Error("file not found"))).toBe("Cannot open the witness file:///tmp/witness.oxsts: file not found");
-        expect(witnessOpenFailureMessage("file:///tmp/witness.oxsts", "closed")).toBe("Cannot open the witness file:///tmp/witness.oxsts: closed");
+        expect(witnessOpenFailureMessage("file:///tmp/witness.semantifyr", new Error("file not found"))).toBe("Cannot open the witness file:///tmp/witness.semantifyr: file not found");
+        expect(witnessOpenFailureMessage("file:///tmp/witness.semantifyr", "closed")).toBe("Cannot open the witness file:///tmp/witness.semantifyr: closed");
     });
 });
 

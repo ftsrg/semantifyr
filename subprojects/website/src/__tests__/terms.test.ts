@@ -150,10 +150,19 @@ function rejectedPattern(word: string): RegExp {
 const TERMS = [...Object.values(terms), ...Object.values(outcomeTerms)];
 
 const RULES = TERMS.flatMap((term) => {
+  const kept = (term.kept ?? []).map((pattern) => {
+    return new RegExp(pattern, 'gmu');
+  });
   return term.rejected.map((word) => {
-    return { word, term: term.term, pattern: rejectedPattern(word), explainedOn: term.explainedOn };
+    return { word, term: term.term, pattern: rejectedPattern(word), explainedOn: term.explainedOn, kept };
   });
 });
+
+function withoutKept(text: string, kept: RegExp[]): string {
+  return kept.reduce((remaining, pattern) => {
+    return remaining.replace(pattern, ' ');
+  }, text);
+}
 
 describe('the terms', () => {
   const files = SOURCES.flatMap(sourcesUnder);
@@ -174,7 +183,7 @@ describe('the terms', () => {
       return texts.flatMap(({ line, text }) => {
         return RULES
           .filter((rule) => {
-            return rule.explainedOn !== file && rule.pattern.test(text);
+            return rule.explainedOn !== file && rule.pattern.test(withoutKept(text, rule.kept));
           })
           .map((rule) => {
             return `${file}:${line}: "${rule.word}", say "${rule.term}"`;

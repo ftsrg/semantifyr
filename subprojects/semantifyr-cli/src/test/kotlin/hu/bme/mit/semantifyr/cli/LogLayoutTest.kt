@@ -46,7 +46,7 @@ class LogLayoutTest {
 
     @Test
     fun `a warning is one line with its word and message and nothing of the log`() {
-        assertThat(format(Level.WARN, "Skipped notes.txt, which is not an OXSTS file")).isEqualTo("warning: Skipped notes.txt, which is not an OXSTS file${System.lineSeparator()}")
+        assertThat(format(Level.WARN, "Skipped notes.txt, which is not a file of the Semantifyr Language")).isEqualTo("warning: Skipped notes.txt, which is not a file of the Semantifyr Language${System.lineSeparator()}")
     }
 
     @Test
@@ -56,6 +56,6 @@ class LogLayoutTest {
 
     @Test
     fun `a line below the default level keeps the time, the thread and the class`() {
-        assertThat(format(Level.INFO, "compile model=smoke.oxsts")).contains("[INFO ]").contains("SemantifyrLoader - compile model=smoke.oxsts")
+        assertThat(format(Level.INFO, "compile model=smoke.semantifyr")).contains("[INFO ]").contains("SemantifyrLoader - compile model=smoke.semantifyr")
     }
 }

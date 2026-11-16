@@ -119,7 +119,7 @@ function Drawing({ vertical, base }: { vertical: boolean, base: string }): React
 
 // the three phases in order, each leading to its page; drawn across a wide column and down a narrow one
 export default function PhaseChain(): React.JSX.Element {
-  const base = useBaseUrl('/learn/oxsts/compilation/');
+  const base = useBaseUrl('/learn/language/compilation/');
   return (
     <figure className={styles.chain}>
       <Drawing vertical={false} base={base} />

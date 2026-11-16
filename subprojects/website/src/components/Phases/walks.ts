@@ -25,9 +25,9 @@ const MAXIMUM_STEPS = 9;
 const MAXIMUM_LINE_LENGTH = 60;
 
 // written by the phases Gradle task: the artifacts of the model's one case, with a frame after every single rewrite
-const artifacts = require.context('@phases', true, /\/pipeline\/.*\.oxsts$/);
+const artifacts = require.context('@phases', true, /\/pipeline\/.*\.semantifyr$/);
 
-const STEP = /^pipeline\/steps\/\d+_([a-z]+)\.oxsts$/;
+const STEP = /^pipeline\/steps\/\d+_([a-z]+)\.semantifyr$/;
 
 function textOf(read: (key: string) => unknown, key: string): string {
   return (read(key) as string).replace(/\n$/, '');
@@ -110,6 +110,40 @@ function substitutedVariable(before: string, after: string): string {
   return variable;
 }
 
+const INSTANCE_PATH = /(?<![\w.'$])root(?:\.\w+)+/;
+
+// the number each instance path of a changed line became, pairing the lines a change removes with the lines it adds in their place
+function numbersOf(before: string, after: string): Map<string, string> {
+  const numbers = new Map<string, string>();
+  const removed: string[] = [];
+  let added = 0;
+  for (const line of lineDiff(before, after)) {
+    if (line.kind === 'same') {
+      removed.length = 0;
+      added = 0;
+    } else if (line.kind === 'removed') {
+      removed.push(line.text);
+    } else {
+      const replaced = removed[added++];
+      const path = replaced === undefined ? null : INSTANCE_PATH.exec(replaced);
+      if (replaced !== undefined && path !== null) {
+        const [prefix, suffix] = [replaced.slice(0, path.index), replaced.slice(path.index + path[0].length)];
+        if (line.text.startsWith(prefix) && line.text.endsWith(suffix)) {
+          numbers.set(path[0], line.text.slice(prefix.length, line.text.length - suffix.length));
+        }
+      }
+    }
+  }
+  return numbers;
+}
+
+// the path of the instance tree a variable of the model is named after
+function pathOf(variable: string): string {
+  return variable.replace(/'/g, '').split('$$').filter((part) => {
+    return part !== '';
+  }).join('.');
+}
+
 function receiverOf(call: string): string {
   return call.slice(0, call.lastIndexOf('.'));
 }
@@ -135,8 +169,43 @@ const CAPTIONS: Readonly<Record<string, Caption>> = {
     const call = replacedCall(before.text, after.text);
     return `\`${call}\` gives way to the expression the property returns, as the class of \`${receiverOf(call)}\` defines it, its names written as paths from \`root\`.`;
   },
-  flattening: () => {
-    return 'Every variable of every instance becomes one variable of the model, named by the path of its instance, and `contains root` goes: no instance is left.';
+  variablepulldown: (before, after) => {
+    const declared = changed(before.text, after.text, 'added').filter((line) => {
+      return line.startsWith('var ');
+    });
+    const variable = /^var ('[^']+')/.exec(declared[0] ?? '')?.[1];
+    if (variable === undefined) {
+      throw new Error(`The step ${after.file} declares no variable`);
+    }
+    const holdsInstance = declared.some((line) => {
+      return line.includes(': Anything');
+    });
+    return `Every variable of every instance is declared as a variable of the model, named by its path: \`${variable}\` for \`${pathOf(variable)}\`.${holdsInstance ? ' A variable that holds an instance is typed `Anything` until the instances are numbered.' : ''} The transition and the property still use the instances' variables.`;
+  },
+  variablereferencerewriting: (before, after) => {
+    const rewritten = changed(before.text, after.text, 'added').flatMap((line) => {
+      return line.match(/'[^']+'/g) ?? [];
+    });
+    const variable = rewritten[0];
+    if (variable === undefined) {
+      throw new Error(`The step ${after.file} rewrites no use of a variable`);
+    }
+    const instanceValue = after.text.split('\n').some((line) => {
+      return !line.startsWith('contains ') && INSTANCE_PATH.test(line);
+    });
+    return `Every use of a variable through an instance path is rewritten to the variable of the model: \`${pathOf(variable)}\` becomes \`${variable}\`.${instanceValue ? ' An instance named as a value, in a comparison or an assignment, is no variable and keeps its path.' : ''}`;
+  },
+  staticexpressionrewriting: (before, after) => {
+    const numbers = numbersOf(before.text, after.text);
+    const numbered = [...numbers].map(([instance, number]) => {
+      return `\`${instance}\` the number \`${number}\``;
+    });
+    return [
+      ...before.text.includes(': Anything') ? ['A variable that holds an instance becomes an `int`.'] : [],
+      ...before.text.includes('nothing') ? ['`nothing` becomes `-1`.'] : [],
+      ...numbered.length === 0 ? [] : [`Every instance an expression names becomes its number, here ${numbered.join(' and ')}.`],
+      '`contains root` goes: no instance is left.',
+    ].join(' ');
   },
   unusedvariableelimination: (before, after) => {
     const declaration = changed(before.text, after.text, 'removed').find((line) => {
@@ -242,10 +311,10 @@ function instantiationSteps(): WalkStep[] {
 }
 
 function walks(): { instantiation: WalkStep[], inlining: WalkStep[], flattening: WalkStep[] } {
-  const instantiated = frame('pipeline/instantiated.oxsts');
-  const inlined = frame('pipeline/inlined.oxsts');
-  const flattened = frame('pipeline/flattened.oxsts');
-  const steps = [...files.keys()]
+  const instantiated = frame('pipeline/instantiated.semantifyr');
+  const inlined = frame('pipeline/inlined.semantifyr');
+  const flattened = frame('pipeline/flattened.semantifyr');
+  const frames = [...files.keys()]
     .filter((file) => {
       return STEP.test(file);
     })
@@ -253,6 +322,10 @@ function walks(): { instantiation: WalkStep[], inlining: WalkStep[], flattening:
     .map((file) => {
       return { frame: frame(file), pass: STEP.exec(file)?.[1] ?? '' };
     });
+  // a frame that writes the text of the one before it is no step: inlining writes one when it resolves an instance path to the instance it names
+  const steps = frames.filter((step, index) => {
+    return step.frame.text !== (frames[index - 1]?.frame ?? instantiated).text;
+  });
   // the inlining's frames end with the model inlining writes
   const lastInlining = steps.findLastIndex((step) => {
     return step.frame.text === inlined.text;
@@ -260,10 +333,18 @@ function walks(): { instantiation: WalkStep[], inlining: WalkStep[], flattening:
   if (lastInlining === -1) {
     throw new Error('No step of the compiler wrote the model inlining ends with');
   }
-  // the flattening's own frame first, then a frame for each optimization that fires
+  // a frame for each rewrite of the flattening that changes the model, then one for each optimization that fires
   const flattening = steps.slice(lastInlining + 1);
   if (flattening.at(-1)?.frame.text !== flattened.text) {
     throw new Error(`The last of the ${flattening.length} steps after inlining is not the model flattening writes`);
+  }
+  const unused = Object.keys(CAPTIONS).filter((pass) => {
+    return !steps.some((step) => {
+      return step.pass === pass;
+    });
+  });
+  if (unused.length !== 0) {
+    throw new Error(`No step of the compiler is of the passes ${unused.join(', ')}, which the walk has captions for`);
   }
   return {
     instantiation: checked('instantiation', instantiationSteps()),
