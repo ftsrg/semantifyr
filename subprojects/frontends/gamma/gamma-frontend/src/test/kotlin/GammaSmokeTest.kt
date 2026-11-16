@@ -8,9 +8,13 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaFrontendTestHelper
 import hu.bme.mit.semantifyr.verifier.FakeBackend
 import hu.bme.mit.semantifyr.verifier.FakeConfig
+import hu.bme.mit.semantifyr.verifier.VerificationReport
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
+import kotlinx.serialization.json.Json
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import kotlin.io.path.Path
+import kotlin.io.path.readText
 
 class GammaSmokeTest {
 
@@ -24,5 +28,20 @@ class GammaSmokeTest {
         )
 
         helper.checkVerificationCase(frontend, helper.discover(Path("build", "test-models", "Simple.gamma")).first(), VerificationVerdict.Passed)
+    }
+
+    @Test
+    suspend fun `a gamma case's result names the report its verification wrote`() {
+        val frontend = helper.buildFrontend(
+            portfolio = SingleBackendPortfolio(FakeBackend.verdict("fake", VerificationVerdict.Passed), FakeConfig()),
+            outputDirectory = GammaFrontendTestHelper.testArtifactRoot(GammaSmokeTest::class.java).resolve("report"),
+        )
+        val case = helper.discover(Path("build", "test-models", "Simple.gamma")).first()
+
+        val result = frontend.verify(case)
+
+        val report = Json.decodeFromString<VerificationReport>(result.reportPath.readText())
+        assertThat(report.result.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(report.verificationCase).endsWith(case.declaration.name)
     }
 }
