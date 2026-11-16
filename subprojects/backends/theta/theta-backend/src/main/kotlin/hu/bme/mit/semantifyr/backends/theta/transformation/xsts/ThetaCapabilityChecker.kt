@@ -8,9 +8,12 @@ package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
+import hu.bme.mit.semantifyr.backend.UnsupportedConstruct
+import hu.bme.mit.semantifyr.backend.transformation.WholeDelayLowering
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DataTypeDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralReal
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RangeExpression
@@ -19,7 +22,17 @@ import org.eclipse.emf.ecore.EObject
 
 class ThetaCapabilityChecker @Inject constructor(
     private val thetaDomainTransformer: ThetaDomainTransformer,
+    private val wholeDelayLowering: WholeDelayLowering,
 ) : BackendCapabilityChecker() {
+
+    override fun checkModel(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {
+        val wholeDelay = wholeDelayLowering.lower(inlinedOxsts) ?: return emptyList()
+        return wholeDelay.clocks.filter {
+            it.saturation > Int.MAX_VALUE
+        }.map {
+            UnsupportedConstruct(it.variable, "clocks bounded at the largest 32-bit integer")
+        }
+    }
 
     override fun describeUnsupported(element: EObject): String? {
         return when (element) {

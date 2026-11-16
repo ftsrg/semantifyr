@@ -16,3 +16,4 @@ description: The Theta backend, its exact verdicts, which a portfolio trusts, ho
 - String literals: XSTS has no strings.
 - Array literals: the backend receives arrays split into one variable per slot and has no form for an array value.
 - For-operations over anything but a range: an XSTS loop runs over an integer range.
+- Clocks bounded at the largest 32-bit integer: a whole delay saturates a clock one above its largest bound, and an XSTS integer literal holds no value above 2<sup>31</sup> - 1.

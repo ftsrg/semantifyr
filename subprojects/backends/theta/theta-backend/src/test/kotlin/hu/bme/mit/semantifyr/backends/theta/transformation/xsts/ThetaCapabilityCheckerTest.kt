@@ -116,4 +116,36 @@ class ThetaCapabilityCheckerTest : ThetaTransformationTestBase() {
             "string literals",
         )
     }
+
+    private fun unsupportedWithClockBound(bound: Int): List<String> {
+        return unsupported(
+            """
+                var elapsed : clock := 0
+                var late : bool := false
+                init {
+                }
+                tran {
+                    choice {
+                        assume(elapsed >= $bound)
+                        late := true
+                        elapsed := 0
+                    } or {
+                    }
+                }
+                prop {
+                    AG !late
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `a clock bound one below the largest 32-bit integer is accepted`() {
+        assertThat(unsupportedWithClockBound(2147483646)).isEmpty()
+    }
+
+    @Test
+    fun `a clock bound at the largest 32-bit integer is reported, since its saturation is one above it`() {
+        assertThat(unsupportedWithClockBound(2147483647)).containsExactly("clocks bounded at the largest 32-bit integer")
+    }
 }
