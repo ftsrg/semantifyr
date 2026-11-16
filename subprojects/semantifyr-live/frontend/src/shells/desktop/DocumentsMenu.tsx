@@ -24,8 +24,8 @@ import { Icon } from '../../ui/icons'
 
 const LIBRARY_HEADINGS: Readonly<Record<LibraryKind, string>> = {
   'standard-library': 'SysML v2 standard library',
-  'library': 'Semantifyr Language standard library',
-  'semantic-library': 'Semantic library, in the Semantifyr Language',
+  'library': 'Semantifyr standard library',
+  'semantic-library': 'Semantic library, in Semantifyr',
 }
 
 const LIBRARY_ORDER: readonly LibraryKind[] = [

@@ -29,7 +29,7 @@ fun testFlavor(
 ): Flavor {
     return Flavor(
         id = id,
-        displayName = "Semantifyr Language",
+        displayName = "Semantifyr",
         description = "Semantifyr's language for semantics",
         language = language,
         workspaceLayout = workspaceLayout,

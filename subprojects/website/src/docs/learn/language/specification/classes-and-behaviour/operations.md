@@ -236,7 +236,7 @@ class Counter {
 
 ### `for`
 
-A runtime loop. Its range is an integer range, such as `1..count`, whose bounds may read the state, an expression of instances, such as a feature, or an expression of several values, such as an array; a single value of a datatype or an enumeration, such as an `int` variable, is rejected. Over a range the loop variable takes each integer of the range in turn, and over a feature it holds each instance, so that a call or a member read through it acts on that instance; it cannot be written. A `for` whose range is known at compile time can be an [`inline for`](inline-operations.md#inline-for-sequence), which the validator hints at. The pages of the backends, [Theta](../../../backends/theta.mdx), [nuXmv](../../../backends/nuxmv.mdx), [Spin](../../../backends/spin.mdx) and [Uppaal](../../../backends/uppaal.mdx), say what each does with it.
+A runtime loop. Its range is an integer range, such as `1..count`, whose bounds may read the state, an expression of instances, such as a feature, or an expression of several values, such as an array; a single value of a datatype or an enumeration, such as an `int` variable, is rejected. Over a range the loop variable takes each integer of the range in turn, and over a feature it holds each instance, so that a call or a member read through it acts on that instance; it cannot be written. A `for` whose range is known at compile time can be an [`inline for`](inline-operations.md#inline-for-sequence), which the validator hints at. What a backend does with it is on [the pages of the backends](../../../backends/index.mdx).
 
 ```oxsts
 // hide-start

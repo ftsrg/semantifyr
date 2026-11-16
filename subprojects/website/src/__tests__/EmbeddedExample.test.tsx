@@ -10,7 +10,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { decodeCompressedBase64Url } from '@semantifyr/editor-common';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { EmbeddedExample } from '../components/LiveEmbed/EmbeddedExample';
+import { EmbeddedExample, UNANSWERED_AFTER_MILLISECONDS } from '../components/LiveEmbed/EmbeddedExample';
 
 // Goal: an embedded example holds no frame until pressed, opens in place once live shows the model, and closes back to its control
 
@@ -35,6 +35,7 @@ const MODEL = 'class Counter {\nvar value: int := 0\n}';
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 function example(view: 'embed' | 'edit-only' = 'edit-only'): void {
@@ -42,7 +43,10 @@ function example(view: 'embed' | 'edit-only' = 'edit-only'): void {
 }
 
 async function frame(): Promise<HTMLIFrameElement> {
-  return await screen.findByTitle<HTMLIFrameElement>('Semantifyr Live');
+  const found = await screen.findByTitle<HTMLIFrameElement>('Semantifyr Live');
+  // the frame's message listener is registered by a passive effect, which may still be pending
+  await act(async () => {});
+  return found;
 }
 
 function report(from: HTMLIFrameElement, type: string): void {
@@ -112,5 +116,51 @@ describe('an embedded example', () => {
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Open' }));
     expect(screen.getByText('var value: int := 0').closest('[hidden]')).toBeNull();
     expect(scroll).toHaveBeenCalledOnce();
+  });
+});
+
+describe('an embedded example live does not answer', () => {
+  async function waiting(): Promise<HTMLIFrameElement> {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'], shouldAdvanceTime: true });
+    example();
+    fireEvent.click(screen.getByRole('button', { name: 'Open' }));
+    return await frame();
+  }
+
+  function waitOut(): void {
+    act(() => {
+      vi.advanceTimersByTime(UNANSWERED_AFTER_MILLISECONDS);
+    });
+  }
+
+  it('says so after the bound, offers live in a new tab and keeps loading', async () => {
+    const loading = await waiting();
+
+    waitOut();
+
+    expect(screen.getByRole('status').textContent).toBe('Semantifyr Live is not answering');
+    const link = await screen.findByRole('link', { name: 'Open in Live' });
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(new URL(link.getAttribute('href') ?? '').pathname).toBe('/language');
+    expect(await frame()).toBe(loading);
+  });
+
+  it('opens the editor and drops the notice when live shows the model after the bound', async () => {
+    const loading = await waiting();
+    waitOut();
+
+    report(loading, 'semantifyr-live:shown');
+
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Open in Live' })).toBeNull();
+    expect(screen.getByText('var value: int := 0').closest('[hidden]')).not.toBeNull();
+  });
+
+  it('never says so when live shows the model within the bound', async () => {
+    report(await waiting(), 'semantifyr-live:shown');
+
+    waitOut();
+
+    expect(screen.queryByText('Semantifyr Live is not answering')).toBeNull();
   });
 });

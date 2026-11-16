@@ -112,7 +112,7 @@
       "page": "learn/frontends/gamma",
       "cases": [
         "TransmissionCanStart",
-        "ChargeNeverBelow30",
+        "ChargeNeverBelow40",
         "CanTransmitWhileRecharging"
       ]
     },
