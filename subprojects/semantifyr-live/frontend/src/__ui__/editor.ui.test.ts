@@ -9,9 +9,19 @@ import { describe, expect } from 'vitest'
 
 import { editorKeysOf } from '../testBrowser'
 import { casesListed, editor, test } from './harness'
+import { flavorFixture } from './mock/fixtures'
 
 const BUILTIN = 'file:///workspace/.semantifyr/builtin/standard.semantifyr'
-const TRACE_ANNOTATION_LINE = 80
+
+function recordedLine(flavorId: string, uri: string, text: string): number {
+  const line = flavorFixture(flavorId).reads[uri]?.split('\n').indexOf(text) ?? -1
+  if (line < 0) {
+    throw new Error(`the ${flavorId} recording reads no line '${text}' in ${uri}`)
+  }
+  return line
+}
+
+const TRACE_ANNOTATION_LINE = recordedLine('oxsts', BUILTIN, 'annotation Trace')
 
 // the text of the line the cursor is on in the document shown
 async function currentLine(page: Page): Promise<string> {
@@ -72,7 +82,7 @@ function opened(session: { received: unknown[] }): string[] {
 
 describe('going to a definition from inside a read-only document', () => {
   test('of a library names the library file by its server address, sends no copy of it, and lands at the answer', async ({ ui }) => {
-    const STRING_LINE = 34
+    const STRING_LINE = recordedLine('oxsts', BUILTIN, 'extern datatype string')
     ui.backend.answer('feature', (request, recorded) => {
       if (request.method !== 'textDocument/definition') {
         return recorded()
@@ -107,7 +117,7 @@ describe('going to a definition from inside a read-only document', () => {
       if (request.method !== 'textDocument/definition') {
         return recorded()
       }
-      const position = { line: 48, character: 6 }
+      const position = { line: recordedLine('gamma', STATECHARTS, 'class Statechart : Component {'), character: 6 }
       return [{ uri: STATECHARTS, range: { start: position, end: position } }]
     })
     const page = await ui.open('/gamma/level-crossing', { height: 1600 })
