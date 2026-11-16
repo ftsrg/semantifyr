@@ -56,27 +56,20 @@ Each case ran on the default `smart` portfolio, and the command exited with stat
 
 ## The Witness
 
-The failed case's directory, its name cut short with a hash as [the case directory](../reference/artifacts.mdx#the-case-directory) gives, holds a directory for each leg of `smart` that started before the race ended, in this run on a machine with all four backends:
+The failed case's directory, its name cut short with a hash as [the case directory](../reference/artifacts.mdx#the-case-directory) gives, holds a directory for each [stage](../backends/portfolios-and-verdicts.mdx#stages) of `smart` that ran, on a machine with all four backends and fewer processors than their sixteen configurations, here the first stage alone:
 
 ```bash
 ls -1 artifacts/level-crossing.example.levelcrossing.BarrierDownWhileTr-e3f8b4e8
 ```
 
 ```text
+first
 mapping.json
-nuxmv-bmc
-nuxmv-ic3
 pipeline
 report.json
-spin-safe-dfs
-theta-bmc
-theta-cegar-combined
-theta-cegar-expl
-theta-kinduction
 trace.json
-uppaal-default
 witness.json
 witness.semantifyr
 ```
 
-Beside the report and the compiled models under `pipeline/`, each backend run has a directory of its own, and `witness.semantifyr`, `witness.json` and `trace.json` are the [witness](../language/specification/library-and-output/inlined-models.md#witnesses) of the run that breaks the case. [Artifacts](../reference/artifacts.mdx) describes each file.
+Beside the report and the compiled models under `pipeline/`, each backend run has a directory of its own in its stage's directory, such as `first/theta-bmc`, and `witness.semantifyr`, `witness.json` and `trace.json` are the [witness](../language/specification/library-and-output/inlined-models.md#witnesses) of the run that breaks the case. [Artifacts](../reference/artifacts.mdx) describes each file.

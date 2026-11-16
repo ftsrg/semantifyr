@@ -11,10 +11,12 @@ import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendTestModels
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
+import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.enumeration
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.integer
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import kotlinx.coroutines.Dispatchers
@@ -45,12 +47,13 @@ class ThetaBackendReplayTest {
         case: String,
         inlinedOxsts: InlinedOxsts,
         artifactDirectory: Path = cleanArtifactDirectory(case),
+        config: ThetaConfig = ThetaConfig.CegarExpl,
     ): BackendVerificationResult {
         val environment = ExecutionEnvironment.builder().put(ThetaExecutorKey) {
             ReplayingThetaExecutor(case)
         }.build()
         val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory)
-        return ThetaBackend().verify(injector, ThetaConfig.CegarExpl, request, environment)
+        return ThetaBackend().verify(injector, config, request, environment)
     }
 
     private suspend fun verifyFixture(file: String, className: String): BackendVerificationResult {
@@ -119,6 +122,28 @@ class ThetaBackendReplayTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(result.inlinedWitness!!.initializedState.values).isEmpty()
+    }
+
+    @Test
+    suspend fun `a violation found by Horn solving fails without a witness and is not trusted`() {
+        val result = verify("HornViolation", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), config = ThetaConfig.Chc)
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        assertThat(result.inlinedWitness).isNull()
+        assertThat(result.isTrusted).isFalse
+        assertThat(result.soundness).isEqualTo(SoundnessDirection.OverApproximating)
+    }
+
+    @Test
+    fun `Horn solving is trusted only for a verdict that needs no witness`() {
+        val invariant = OxstsFactory.createAG()
+        val reachability = OxstsFactory.createEF()
+        val soundness = ThetaConfig.Chc.soundness
+
+        assertThat(soundness.trusts(VerificationVerdict.Passed, invariant)).isTrue
+        assertThat(soundness.trusts(VerificationVerdict.Failed, reachability)).isTrue
+        assertThat(soundness.trusts(VerificationVerdict.Failed, invariant)).isFalse
+        assertThat(soundness.trusts(VerificationVerdict.Passed, reachability)).isFalse
     }
 
     @Test

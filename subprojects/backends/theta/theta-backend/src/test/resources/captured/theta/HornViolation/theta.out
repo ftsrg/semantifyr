@@ -1,0 +1,5 @@
+Starting encoding
+Added constraints to solver
+Check() finished (result: UNSAT)
+Counterexample found
+(SafetyResult Unsafe Trace length: 0)

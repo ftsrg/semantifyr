@@ -133,11 +133,26 @@ class SlowBackend<T : BackendConfig>(
     }
 }
 
-class OneConfigurationBackend<T : BackendConfig>(
+data class ScriptedAnswer(
+    val after: Duration,
+    val verdict: VerificationVerdict,
+)
+
+data class ScriptedStart(
+    val configuration: String,
+    val at: Duration,
+    val artifactOutputPath: Path,
+)
+
+class ScriptedBackend<T : BackendConfig>(
     override val id: String,
-    private val decidingConfig: T,
+    private val now: () -> Duration,
+    private val answers: Map<String, ScriptedAnswer> = emptyMap(),
     override val executorKey: ExecutorKey<BackendExecutor> = AvailableKey,
 ) : VerificationBackend<T>() {
+
+    val starts = mutableListOf<ScriptedStart>()
+    val cancellations = mutableListOf<String>()
 
     override suspend fun verify(
         parentInjector: Injector,
@@ -145,10 +160,15 @@ class OneConfigurationBackend<T : BackendConfig>(
         request: BackendVerificationRequest,
         environment: ExecutionEnvironment,
     ): BackendVerificationResult {
-        if (config != decidingConfig) {
-            delay(10_000)
+        starts += ScriptedStart(config.id, now(), request.artifactOutputPath)
+        val answer = answers[config.id] ?: ScriptedAnswer(Duration.INFINITE, VerificationVerdict.Inconclusive)
+        try {
+            delay(answer.after)
+        } catch (cancellation: CancellationException) {
+            cancellations += "${config.id}@${now()}"
+            throw cancellation
         }
-        return judgedResult(id, VerificationVerdict.Passed, config, request)
+        return judgedResult(id, answer.verdict, config, request)
     }
 }
 

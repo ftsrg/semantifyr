@@ -21,29 +21,96 @@ import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.job
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeoutOrNull
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicReferenceArray
 import kotlin.time.Duration
 import kotlin.time.Instant
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
+
+class PortfolioCase internal constructor(
+    internal val parentInjector: Injector,
+    val request: BackendVerificationRequest,
+    val gate: ConcurrencyGate,
+    internal val environment: ExecutionEnvironment,
+    val progress: ProgressContext,
+    private val start: TimeMark,
+) {
+    val time: Duration = request.timeout
+
+    val slots: Int = gate.slots
+
+    fun elapsed(): Duration {
+        return start.elapsedNow()
+    }
+
+    fun timeLeft(): Duration {
+        return (time - elapsed()).coerceAtLeast(Duration.ZERO)
+    }
+}
 
 class PortfolioScope internal constructor(
-    private val coroutineScope: CoroutineScope,
-    val gate: ConcurrencyGate,
+    private val case: PortfolioCase,
 ) {
-    internal val jobs = mutableListOf<Deferred<BackendVerificationResult>>()
+    internal val legs = mutableListOf<LegSpecification>()
 
-    fun async(block: suspend () -> BackendVerificationResult) {
-        jobs += coroutineScope.async {
-            block()
+    fun leg(name: String, block: suspend () -> BackendVerificationResult) {
+        legs += LegSpecification(name, block)
+    }
+
+    fun legs(tasks: List<PortfolioTask<*>>) {
+        for (task in tasks) {
+            leg(task, task.subPath)
+        }
+    }
+
+    internal fun leg(task: PortfolioTask<*>, subPath: String) {
+        leg(task.leg.id) {
+            task.run(case.parentInjector, case.request.withSubPath(subPath), case.environment)
         }
     }
 }
+
+internal class LegSpecification(
+    val name: String,
+    val block: suspend () -> BackendVerificationResult,
+)
+
+sealed interface LegEnd {
+    val endedOnItsOwn: Boolean
+
+    data class Finished(val result: BackendVerificationResult) : LegEnd {
+        override val endedOnItsOwn = true
+    }
+
+    data class Threw(val failure: Throwable) : LegEnd {
+        override val endedOnItsOwn = true
+    }
+
+    data object Cut : LegEnd {
+        override val endedOnItsOwn = false
+    }
+
+    data object NeverStarted : LegEnd {
+        override val endedOnItsOwn = false
+    }
+}
+
+data class LegRun(
+    val leg: String,
+    val stage: String?,
+    val end: LegEnd,
+)
 
 data class PortfolioLeg(
     val id: String,
@@ -55,7 +122,12 @@ fun BackendVerificationRequest.withSubPath(subpath: String): BackendVerification
 }
 
 sealed interface PortfolioOutcome {
-    data class Decided(val result: BackendVerificationResult) : PortfolioOutcome {
+    val runs: List<LegRun>
+
+    data class Decided(
+        val result: BackendVerificationResult,
+        override val runs: List<LegRun> = emptyList(),
+    ) : PortfolioOutcome {
         override fun toBackendVerificationResult(startedAt: Instant): BackendVerificationResult {
             return result.copy(
                 metadata = result.metadata.copy(startedAt = startedAt),
@@ -63,7 +135,10 @@ sealed interface PortfolioOutcome {
         }
     }
 
-    data class AllErrored(val failures: List<String>) : PortfolioOutcome {
+    data class AllErrored(
+        val failures: List<String>,
+        override val runs: List<LegRun>,
+    ) : PortfolioOutcome {
         override fun toBackendVerificationResult(startedAt: Instant): BackendVerificationResult {
             val firstMessage = failures.firstOrNull() ?: "(no message)"
             val trailingCount = (failures.size - 1).coerceAtLeast(0)
@@ -72,64 +147,75 @@ sealed interface PortfolioOutcome {
             } else {
                 firstMessage
             }
-            return BackendVerificationResult(
-                metadata = VerificationMetadata(
-                    backendId = null,
-                    startedAt = startedAt,
-                ),
-                verdict = VerificationVerdict.Errored,
-                metrics = BackendMetrics(),
-                message = "All portfolio jobs errored: $summary",
-            )
+            return undecidedResult(startedAt, VerificationVerdict.Errored, "All portfolio jobs errored: $summary")
         }
     }
 
-    data class NoDecision(val reason: String) : PortfolioOutcome {
+    data class NoDecision(
+        val reason: String,
+        override val runs: List<LegRun>,
+    ) : PortfolioOutcome {
         override fun toBackendVerificationResult(startedAt: Instant): BackendVerificationResult {
-            return BackendVerificationResult(
-                metadata = VerificationMetadata(
-                    backendId = null,
-                    startedAt = startedAt,
-                ),
-                verdict = VerificationVerdict.Inconclusive,
-                metrics = BackendMetrics(),
-                message = reason,
-            )
+            return undecidedResult(startedAt, VerificationVerdict.Inconclusive, reason)
         }
     }
 
-    data class TimedOut(val reason: String) : PortfolioOutcome {
+    data class TimedOut(
+        val reason: String,
+        override val runs: List<LegRun>,
+    ) : PortfolioOutcome {
         override fun toBackendVerificationResult(startedAt: Instant): BackendVerificationResult {
-            return BackendVerificationResult(
-                metadata = VerificationMetadata(
-                    backendId = null,
-                    startedAt = startedAt,
-                ),
-                verdict = VerificationVerdict.Timeout,
-                metrics = BackendMetrics(),
-                message = reason,
-            )
+            return undecidedResult(startedAt, VerificationVerdict.Timeout, reason)
         }
     }
 
-    data class AllNotSupported(val reason: String) : PortfolioOutcome {
+    data class AllNotSupported(
+        val reason: String,
+        override val runs: List<LegRun>,
+    ) : PortfolioOutcome {
         override fun toBackendVerificationResult(startedAt: Instant): BackendVerificationResult {
-            return BackendVerificationResult(
-                metadata = VerificationMetadata(
-                    backendId = null,
-                    startedAt = startedAt,
-                ),
-                verdict = VerificationVerdict.NotSupported,
-                metrics = BackendMetrics(),
-                message = reason,
-            )
+            return undecidedResult(startedAt, VerificationVerdict.NotSupported, reason)
         }
     }
 
     fun toBackendVerificationResult(startedAt: Instant): BackendVerificationResult
 }
 
-abstract class VerificationPortfolio {
+private fun undecidedResult(
+    startedAt: Instant,
+    verdict: VerificationVerdict,
+    message: String,
+): BackendVerificationResult {
+    return BackendVerificationResult(
+        metadata = VerificationMetadata(
+            backendId = null,
+            startedAt = startedAt,
+        ),
+        verdict = verdict,
+        metrics = BackendMetrics(),
+        message = message,
+    )
+}
+
+private class GateRace(
+    val decided: BackendVerificationResult?,
+    val runs: List<LegRun>,
+)
+
+private class LegResult(
+    val leg: String,
+    val result: BackendVerificationResult,
+)
+
+private enum class LegState {
+    Waiting,
+    Started,
+    Closed,
+}
+
+abstract class VerificationPortfolio(
+    private val timeSource: TimeSource = TimeSource.Monotonic,
+) {
 
     protected val logger by loggerFactory()
 
@@ -149,246 +235,454 @@ abstract class VerificationPortfolio {
         progress: ProgressContext,
     ): BackendVerificationResult
 
-    /**
-     * Launch every job registered in [block] in parallel, returns the first trusted result and cancels every still-running child.
-     * A decisive verdict outside its leg's soundness direction is not trusted and does not settle the race.
-     * When no trusted result arrives the outcome distinguishes "all jobs errored", "a job timed out or was still pending at timeout" and "every job finished without a trusted verdict" (Errored, Timeout, Inconclusive), naming every leg's verdict.
-     */
-    protected suspend fun firstDecisive(
+    protected fun startCase(
+        parentInjector: Injector,
+        request: BackendVerificationRequest,
         gate: ConcurrencyGate,
-        timeout: Duration = Duration.INFINITE,
-        progress: ProgressContext = ProgressContext.Silent,
+        environment: ExecutionEnvironment,
+        progress: ProgressContext,
+    ): PortfolioCase {
+        return PortfolioCase(parentInjector, request, gate, environment, progress, timeSource.markNow())
+    }
+
+    protected suspend fun firstDecisive(
+        case: PortfolioCase,
+        window: Duration = Duration.INFINITE,
+        stage: String? = null,
         block: PortfolioScope.() -> Unit,
-    ): PortfolioOutcome = supervisorScope {
-        val scope = PortfolioScope(this, gate)
+    ): PortfolioOutcome {
+        val scope = PortfolioScope(case)
         scope.block()
 
-        require(scope.jobs.isNotEmpty()) { "$id: firstDecisive requires at least one job" }
-        logger.info { "$id: firstDecisive over ${scope.jobs.size} job(s), timeout=$timeout" }
+        require(scope.legs.isNotEmpty()) { "$id: firstDecisive requires at least one job" }
+        logger.info { "$id: firstDecisive over ${scope.legs.size} job(s)${stageSuffix(stage)}, window=${describedBound(case, window)}" }
 
-        val outcome = receiveResultsWithTimeout(scope, timeout, progress) {
-            if (it.isTrusted) {
-                logger.info { "$id: job produced trusted ${it.verdict}" }
-                it
+        val race = race(case, window, stage, scope) {
+            if (it.result.isTrusted) {
+                logger.info { "$id: ${it.leg} produced trusted ${it.result.verdict}" }
+                it.result
             } else {
                 null
             }
         }
 
-        cancelRemainingJobs()
-        outcome
+        return if (race.decided != null) {
+            PortfolioOutcome.Decided(race.decided, race.runs)
+        } else {
+            classify(race.runs, describedBound(case, window))
+        }
     }
 
-    /**
-     * Launch every job registered in [block] in parallel. Waits for [count] trusted results.
-     * If they all agree, returns that verdict.
-     * On disagreement, fewer-than-[count] trusted results within [timeout], or too many job errors, returns a non-decided outcome.
-     */
     protected suspend fun firstNDecisive(
         count: Int,
-        gate: ConcurrencyGate,
-        timeout: Duration = Duration.INFINITE,
-        progress: ProgressContext = ProgressContext.Silent,
+        case: PortfolioCase,
+        window: Duration = Duration.INFINITE,
+        stage: String? = null,
         block: PortfolioScope.() -> Unit,
-    ): PortfolioOutcome = supervisorScope {
-        val scope = PortfolioScope(this, gate)
+    ): PortfolioOutcome {
+        val scope = PortfolioScope(case)
         scope.block()
 
-        require(scope.jobs.isNotEmpty()) { "$id: firstNDecisive requires at least one job" }
-        logger.info { "$id: firstNDecisive(n=$count) over ${scope.jobs.size} job(s), timeout=$timeout" }
+        require(scope.legs.isNotEmpty()) { "$id: firstNDecisive requires at least one job" }
+        logger.info { "$id: firstNDecisive(n=$count) over ${scope.legs.size} job(s)${stageSuffix(stage)}, window=${describedBound(case, window)}" }
 
-        val decisive = mutableListOf<BackendVerificationResult>()
-        val outcome = receiveResultsWithTimeout(scope, timeout, progress) { result ->
-            if (!result.isTrusted) {
-                return@receiveResultsWithTimeout null
+        val decisive = mutableListOf<LegResult>()
+        val race = race(case, window, stage, scope) {
+            if (!it.result.isTrusted) {
+                return@race null
             }
-            decisive += result
+            decisive += it
             if (decisive.size < count) {
-                return@receiveResultsWithTimeout null
+                return@race null
             }
-            val allAgree = decisive.map { it.verdict }.distinct().size == 1
+            val allAgree = decisive.map { decided ->
+                decided.result.verdict
+            }.distinct().size == 1
             if (allAgree) {
-                decisive.first()
+                decisive.first().result
             } else {
-                val breakdown = decisive.joinToString(", ") { "${it.metadata.backendId}=${it.verdict}" }
-                logger.warn { "$id: firstNDecisive(n=$count) disagreement among the first $count decisive results ($breakdown)" }
+                logger.warn { "$id: firstNDecisive(n=$count) disagreement among the first $count decisive results (${describeVerdicts(decisive)})" }
                 null
             }
         }
 
-        cancelRemainingJobs()
-
-        if (outcome !is PortfolioOutcome.Decided && decisive.size >= count) {
-            val breakdown = decisive.joinToString(", ") { "${it.metadata.backendId}=${it.verdict}" }
-            PortfolioOutcome.NoDecision("$id: firstNDecisive(n=$count) disagreement ($breakdown)")
-        } else {
-            outcome
+        return when {
+            race.decided != null -> PortfolioOutcome.Decided(race.decided, race.runs)
+            decisive.size >= count -> PortfolioOutcome.NoDecision("$id: firstNDecisive(n=$count) disagreement (${describeVerdicts(decisive)})", race.runs)
+            else -> classify(race.runs, describedBound(case, window))
         }
     }
 
-    /**
-     * Launch every job registered in [block] in parallel and wait for all of them (or [timeout]).
-     * If every trusted result agrees, returns that verdict and records the untrusted legs it overrules.
-     * Trusted results that disagree are Errored, since one of those legs is unsound; decisive results none of which is trusted are Inconclusive.
-     * Jobs that error, by throwing or by returning Errored, are surfaced as [PortfolioOutcome.AllErrored] when nothing else reported.
-     * Without a decisive result, the outcome is the undecided one that says most, naming every leg: [PortfolioOutcome.TimedOut] when a job timed out or was still pending at [timeout], else [PortfolioOutcome.NoDecision] unless every job errored or reported NotSupported.
-     */
     protected suspend fun all(
-        gate: ConcurrencyGate,
-        timeout: Duration = Duration.INFINITE,
-        progress: ProgressContext = ProgressContext.Silent,
+        case: PortfolioCase,
+        window: Duration = Duration.INFINITE,
+        stage: String? = null,
         block: PortfolioScope.() -> Unit,
-    ): PortfolioOutcome = supervisorScope {
-        val scope = PortfolioScope(this, gate)
+    ): PortfolioOutcome {
+        val scope = PortfolioScope(case)
         scope.block()
 
-        require(scope.jobs.isNotEmpty()) { "$id: all requires at least one job" }
-        logger.info { "$id: all over ${scope.jobs.size} job(s), timeout=$timeout" }
+        require(scope.legs.isNotEmpty()) { "$id: all requires at least one job" }
+        logger.info { "$id: all over ${scope.legs.size} job(s)${stageSuffix(stage)}, window=${describedBound(case, window)}" }
 
-        val collected = mutableListOf<BackendVerificationResult>()
-        val outcome = receiveResultsWithTimeout(scope, timeout, progress) { result ->
-            collected += result
+        val race = race(case, window, stage, scope) {
             null
         }
 
-        cancelRemainingJobs()
-
-        val decisive = collected.filter { it.isDecisive }
-        val trusted = decisive.filter { it.isTrusted }
-        when {
-            decisive.isEmpty() && collected.isEmpty() -> outcome
-            decisive.isEmpty() && collected.all { it.verdict == VerificationVerdict.NotSupported } -> allNotSupported(collected)
-            decisive.isEmpty() && (outcome is PortfolioOutcome.TimedOut || outcome is PortfolioOutcome.AllErrored) -> outcome
-            decisive.isEmpty() -> outcome
-            trusted.isEmpty() -> outcome
-            trusted.map { it.verdict }.distinct().size > 1 -> {
-                val breakdown = trusted.joinToString(", ") { "${it.metadata.backendId}=${it.verdict} (${it.soundness})" }
+        val decisive = race.runs.mapNotNull {
+            val end = it.end
+            if (end is LegEnd.Finished && end.result.isDecisive) {
+                LegResult(it.leg, end.result)
+            } else {
+                null
+            }
+        }
+        val trusted = decisive.filter {
+            it.result.isTrusted
+        }
+        return when {
+            trusted.isEmpty() -> classify(race.runs, describedBound(case, window))
+            trusted.map { it.result.verdict }.distinct().size > 1 -> {
+                val breakdown = trusted.joinToString(", ") {
+                    "${it.leg}=${it.result.verdict} (${it.result.soundness})"
+                }
                 logger.warn { "$id: trusted verdicts disagree ($breakdown), one of these legs is unsound" }
                 PortfolioOutcome.Decided(
                     BackendVerificationResult(
                         verdict = VerificationVerdict.Errored,
                         metadata = VerificationMetadata(
                             backendId = null,
-                            startedAt = trusted.first().metadata.startedAt,
+                            startedAt = trusted.first().result.metadata.startedAt,
                         ),
                         message = "Portfolio '$id' saw trusted verdicts disagree: $breakdown",
                     ),
+                    race.runs,
                 )
             }
             else -> {
                 val agreed = trusted.first()
-                val overruled = decisive.filter { it.verdict != agreed.verdict }
+                val overruled = decisive.filter {
+                    it.result.verdict != agreed.result.verdict
+                }
                 if (overruled.isEmpty()) {
-                    PortfolioOutcome.Decided(agreed)
+                    PortfolioOutcome.Decided(agreed.result, race.runs)
                 } else {
-                    val breakdown = overruled.joinToString(", ") { "${it.metadata.backendId}=${it.verdict} (not trusted, ${it.soundness})" }
-                    logger.info { "$id: resolved to ${agreed.verdict} over $breakdown" }
-                    PortfolioOutcome.Decided(agreed.copy(message = "Portfolio '$id' resolved to ${agreed.verdict} from ${agreed.metadata.backendId} over $breakdown"))
-                }
-            }
-        }
-    }
-
-    private suspend fun CoroutineScope.receiveResultsWithTimeout(
-        scope: PortfolioScope,
-        timeout: Duration,
-        progress: ProgressContext,
-        onResult: (BackendVerificationResult) -> BackendVerificationResult?,
-    ): PortfolioOutcome {
-        val results = funnelJobsIntoChannel(scope)
-        val total = scope.jobs.size
-        val errors = mutableListOf<Throwable>()
-        val collected = mutableListOf<BackendVerificationResult>()
-        var done = 0
-        val decided = withTimeoutOrNull(timeout) {
-            while (done < total) {
-                val received = results.receive()
-                done++
-                val result = received.getOrNull()
-                if (result == null) {
-                    val failure = received.exceptionOrNull()
-                    logger.warn { "$id: job errored: ${failure?.message ?: ""}" }
-                    if (failure != null) {
-                        errors += failure
+                    val breakdown = overruled.joinToString(", ") {
+                        "${it.leg}=${it.result.verdict} (not trusted, ${it.result.soundness})"
                     }
-                    continue
-                }
-                progress.reportProgress("result $done/$total: ${result.verdict}")
-                collected += result
-                val finalResult = onResult(result)
-                if (finalResult != null) {
-                    return@withTimeoutOrNull finalResult
+                    logger.info { "$id: resolved to ${agreed.result.verdict} over $breakdown" }
+                    PortfolioOutcome.Decided(agreed.result.copy(message = "Portfolio '$id' resolved to ${agreed.result.verdict} from ${agreed.leg} over $breakdown"), race.runs)
                 }
             }
-            null
-        }
-        val everyLegNotSupported = errors.isEmpty() &&
-            collected.isNotEmpty() &&
-            collected.all { it.verdict == VerificationVerdict.NotSupported }
-        val observed = describeObserved(collected, errors)
-        return when {
-            decided != null -> PortfolioOutcome.Decided(decided)
-            done < total -> PortfolioOutcome.TimedOut("$id: no trusted verdict within $timeout$observed")
-            everyLegNotSupported -> allNotSupported(collected)
-            errors.size + collected.count { it.verdict == VerificationVerdict.Errored } == total -> {
-                val failures = errors.map {
-                    "${it::class.simpleName}: ${it.message ?: ""}"
-                } + collected.map {
-                    "${it.metadata.backendId}: ${it.message ?: ""}"
-                }
-                PortfolioOutcome.AllErrored(failures)
-            }
-            collected.any { it.verdict == VerificationVerdict.Timeout } -> {
-                val backends = collected.filter { it.verdict == VerificationVerdict.Timeout }.joinToString(", ") { it.metadata.backendId ?: "?" }
-                PortfolioOutcome.TimedOut("$id: no trusted verdict, timed out: $backends$observed")
-            }
-            else -> PortfolioOutcome.NoDecision("$id: no trusted verdict$observed")
         }
     }
 
-    private fun allNotSupported(collected: List<BackendVerificationResult>): PortfolioOutcome.AllNotSupported {
-        val legs = collected.map {
-            "${it.metadata.backendId ?: "?"} (${it.message ?: "no construct reported"})"
-        }.distinct().joinToString(", ")
-        return PortfolioOutcome.AllNotSupported("$id: every backend reported NotSupported: $legs")
-    }
-
-    private fun describeObserved(collected: List<BackendVerificationResult>, errors: List<Throwable>): String {
-        val legs = collected.map {
-            if (it.isDecisive && !it.isTrusted) {
-                "${it.metadata.backendId}=${it.verdict} (not trusted, ${it.soundness})"
-            } else {
-                "${it.metadata.backendId}=${it.verdict}"
+    protected suspend fun staged(case: PortfolioCase, stages: PortfolioStages): PortfolioOutcome {
+        val availability = availability(case.environment)
+        if (availability is AvailabilityReport.Unavailable) {
+            logger.info { "$id: no available backends on this host" }
+            return PortfolioOutcome.NoDecision(availability.reason, emptyList())
+        }
+        val available = stages.tasks.filter {
+            it.isAvailable(case.environment)
+        }
+        if (available.size <= case.slots) {
+            logger.info { "$id: racing ${available.size} configurations on ${case.slots} slots (timeout ${case.time})" }
+            case.progress.reportProgress("racing ${available.size} backend configurations")
+            return firstDecisive(case) {
+                legs(available)
             }
-        } + errors.map {
-            "threw ${it::class.simpleName}"
         }
-        if (legs.isEmpty()) {
-            return ""
-        }
-        return ", observed ${legs.joinToString(", ")}"
+        return runStages(case, stages.stages, available)
     }
 
-    private fun CoroutineScope.funnelJobsIntoChannel(scope: PortfolioScope): Channel<Result<BackendVerificationResult>> {
-        val results = Channel<Result<BackendVerificationResult>>(Channel.UNLIMITED)
-        scope.jobs.forEach { deferred ->
+    protected fun undecided(runs: List<LegRun>): PortfolioOutcome {
+        return classify(runs, null)
+    }
+
+    // a task listed in stages in a row runs once, from the first of them, in a gate of its own beside the stages
+    private suspend fun runStages(
+        case: PortfolioCase,
+        stages: List<PortfolioStage>,
+        available: List<PortfolioTask<*>>,
+    ): PortfolioOutcome {
+        val runs = CopyOnWriteArrayList<LegRun>()
+        val decided = CompletableDeferred<PortfolioOutcome?>()
+
+        fun listedIn(task: PortfolioTask<*>, stageIndex: Int): Boolean {
+            return stageIndex in stages.indices && stages[stageIndex].lists(task)
+        }
+
+        fun endedOnItsOwn(task: PortfolioTask<*>): Boolean {
+            return runs.any {
+                it.leg == task.leg.id && it.end.endedOnItsOwn
+            }
+        }
+
+        return coroutineScope {
+            val work = launch {
+                coroutineScope {
+                    val pendingThrough = mutableListOf<PortfolioTask<*>>()
+                    for ((index, stage) in stages.withIndex()) {
+                        pendingThrough += stage.legs.map {
+                            it.task
+                        }.filter {
+                            it in available && listedIn(it, index + 1) && !listedIn(it, index - 1)
+                        }
+                        val window = stage.window(case)
+                        if (minOf(window, case.timeLeft()) < stage.skippedUnder) {
+                            logger.info { "$id: skipping the ${stage.name} stage, its window of $window is shorter than ${stage.skippedUnder}" }
+                            continue
+                        }
+                        if (pendingThrough.isNotEmpty()) {
+                            val throughTasks = pendingThrough.toList()
+                            pendingThrough.clear()
+                            launch {
+                                val outcome = runGate(stage, "running from the ${stage.name} stage", throughTasks, Duration.INFINITE, case)
+                                runs += outcome.runs
+                                if (outcome is PortfolioOutcome.Decided) {
+                                    decided.complete(outcome)
+                                }
+                            }
+                        }
+                        val stageTasks = stage.legs.filter { stageLeg ->
+                            val task = stageLeg.task
+                            val runsThrough = listedIn(task, index + 1) || listedIn(task, index - 1)
+                            task in available && !runsThrough && !endedOnItsOwn(task) && stageLeg.unlessEndedOnItsOwn.none {
+                                endedOnItsOwn(it)
+                            }
+                        }.map {
+                            it.task
+                        }
+                        if (stageTasks.isEmpty()) {
+                            logger.info { "$id: the ${stage.name} stage has no configuration of its own to start" }
+                            continue
+                        }
+                        val outcome = runGate(stage, "${stage.name} stage", stageTasks, window, case)
+                        runs += outcome.runs
+                        if (outcome is PortfolioOutcome.Decided) {
+                            decided.complete(outcome)
+                            return@coroutineScope
+                        }
+                    }
+                }
+                decided.complete(null)
+            }
+            val outcome = decided.await()
+            work.cancelAndJoin()
+            outcome ?: undecided(runs.toList())
+        }
+    }
+
+    private suspend fun runGate(
+        stage: PortfolioStage,
+        label: String,
+        tasks: List<PortfolioTask<*>>,
+        window: Duration,
+        case: PortfolioCase,
+    ): PortfolioOutcome {
+        val within = if (window.isInfinite()) {
+            "until the case's time runs out"
+        } else {
+            "within $window"
+        }
+        logger.info { "$id: $label, racing ${tasks.size} configurations on ${case.slots} slots $within" }
+        case.progress.reportProgress("$label: racing ${tasks.size} backend configurations $within")
+        return firstDecisive(case, window, label) {
+            for (task in tasks) {
+                leg(task, "${stage.name}/${task.subPath}")
+            }
+        }
+    }
+
+    // no leg starts after the close, and each leg's end is read only once every leg has stopped
+    private suspend fun race(
+        case: PortfolioCase,
+        window: Duration,
+        stage: String?,
+        scope: PortfolioScope,
+        onResult: (LegResult) -> BackendVerificationResult?,
+    ): GateRace = coroutineScope {
+        val legs = scope.legs
+        val total = legs.size
+        val states = List(total) {
+            AtomicReference(LegState.Waiting)
+        }
+        val ends = AtomicReferenceArray<LegEnd>(total)
+        val finished = Channel<Int>(Channel.UNLIMITED)
+        val progressPrefix = if (stage == null) {
+            ""
+        } else {
+            "$stage: "
+        }
+        var received = 0
+        var decided: BackendVerificationResult? = null
+
+        fun receive(index: Int, count: Int): BackendVerificationResult? {
+            val end = ends.get(index)
+            if (end !is LegEnd.Finished) {
+                return null
+            }
+            case.progress.reportProgress("${progressPrefix}result $count/$total: ${end.result.verdict}")
+            return onResult(LegResult(legs[index].name, end.result))
+        }
+
+        for ((index, leg) in legs.withIndex()) {
             launch {
-                val outcome = try {
-                    Result.success(deferred.await())
-                } catch (cancellation: CancellationException) {
-                    throw cancellation
-                } catch (throwable: Throwable) {
-                    logger.warn { "$id: job threw ${throwable::class.simpleName}: ${throwable.message ?: ""}" }
-                    Result.failure(throwable)
+                case.gate.withPermit {
+                    if (states[index].compareAndSet(LegState.Waiting, LegState.Started)) {
+                        ends.set(index, runLeg(leg))
+                        finished.trySend(index)
+                    }
                 }
-
-                results.send(outcome)
             }
         }
-        return results
+
+        withTimeoutOrNull(minOf(window, case.timeLeft())) {
+            while (received < total && decided == null) {
+                val index = finished.receive()
+                received++
+                decided = receive(index, received)
+            }
+        }
+
+        for (state in states) {
+            state.compareAndSet(LegState.Waiting, LegState.Closed)
+        }
+        coroutineContext.cancelChildren()
+        coroutineContext.job.children.toList().joinAll()
+
+        while (decided == null) {
+            val index = finished.tryReceive().getOrNull() ?: break
+            received++
+            decided = receive(index, received)
+        }
+
+        val runs = legs.mapIndexed { index, leg ->
+            val end = ends.get(index) ?: if (states[index].get() == LegState.Started) {
+                LegEnd.Cut
+            } else {
+                LegEnd.NeverStarted
+            }
+            LegRun(leg.name, stage, end)
+        }
+        GateRace(decided, runs)
     }
 
-    private fun CoroutineScope.cancelRemainingJobs() {
-        coroutineContext.cancelChildren()
+    private suspend fun runLeg(leg: LegSpecification): LegEnd {
+        return try {
+            LegEnd.Finished(leg.block())
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (throwable: Throwable) {
+            logger.warn { "$id: ${leg.name} threw ${throwable::class.simpleName}: ${throwable.message ?: ""}" }
+            LegEnd.Threw(throwable)
+        }
+    }
+
+    private fun classify(runs: List<LegRun>, bound: Duration?): PortfolioOutcome {
+        if (runs.isEmpty()) {
+            return PortfolioOutcome.NoDecision("$id: no leg ran", runs)
+        }
+        val lastRuns = runs.groupBy {
+            it.leg
+        }.values.map {
+            it.last()
+        }
+        val lastResults = lastRuns.mapNotNull {
+            (it.end as? LegEnd.Finished)?.let { finished ->
+                LegResult(it.leg, finished.result)
+            }
+        }
+        val observed = describeObserved(runs)
+        val timedOutLegs = lastResults.filter {
+            it.result.verdict == VerificationVerdict.Timeout
+        }
+        return when {
+            lastRuns.any { !it.end.endedOnItsOwn } -> {
+                val reason = if (bound == null) {
+                    "$id: no trusted verdict$observed"
+                } else {
+                    "$id: no trusted verdict within $bound$observed"
+                }
+                PortfolioOutcome.TimedOut(reason, runs)
+            }
+            lastResults.size == lastRuns.size && lastResults.all { it.result.verdict == VerificationVerdict.NotSupported } -> {
+                val legs = lastResults.joinToString(", ") {
+                    "${it.leg} (${it.result.message ?: "no construct reported"})"
+                }
+                PortfolioOutcome.AllNotSupported("$id: every leg reported NotSupported: $legs", runs)
+            }
+            lastRuns.all { it.end is LegEnd.Threw || (it.end as? LegEnd.Finished)?.result?.verdict == VerificationVerdict.Errored } -> {
+                val failures = lastRuns.map {
+                    when (val end = it.end) {
+                        is LegEnd.Threw -> "${it.leg}: ${end.failure::class.simpleName}: ${end.failure.message ?: ""}"
+                        is LegEnd.Finished -> "${it.leg}: ${end.result.message ?: ""}"
+                        else -> error("only failed legs reach here")
+                    }
+                }
+                PortfolioOutcome.AllErrored(failures, runs)
+            }
+            timedOutLegs.isNotEmpty() -> {
+                val legs = timedOutLegs.joinToString(", ") {
+                    it.leg
+                }
+                PortfolioOutcome.TimedOut("$id: no trusted verdict, timed out: $legs$observed", runs)
+            }
+            else -> PortfolioOutcome.NoDecision("$id: no trusted verdict$observed", runs)
+        }
+    }
+
+    private fun describeVerdicts(results: List<LegResult>): String {
+        return results.joinToString(", ") {
+            "${it.leg}=${it.result.verdict}"
+        }
+    }
+
+    private fun describeObserved(runs: List<LegRun>): String {
+        val stages = runs.groupBy {
+            it.stage
+        }
+        if (stages.keys == setOf(null)) {
+            return ", observed ${describeRuns(runs)}"
+        }
+        val described = stages.entries.joinToString("; ") { (stage, stageRuns) ->
+            "$stage: ${describeRuns(stageRuns)}"
+        }
+        return ", observed $described"
+    }
+
+    private fun describeRuns(runs: List<LegRun>): String {
+        return runs.joinToString(", ") {
+            describeRun(it)
+        }
+    }
+
+    private fun describeRun(run: LegRun): String {
+        return when (val end = run.end) {
+            is LegEnd.Finished -> {
+                val result = end.result
+                if (result.isDecisive && !result.isTrusted) {
+                    "${run.leg}=${result.verdict} (not trusted, ${result.soundness})"
+                } else {
+                    "${run.leg}=${result.verdict}"
+                }
+            }
+            is LegEnd.Threw -> "${run.leg} threw ${end.failure::class.simpleName}"
+            LegEnd.Cut -> "${run.leg} cut"
+            LegEnd.NeverStarted -> "${run.leg} never started"
+        }
+    }
+
+    private fun describedBound(case: PortfolioCase, window: Duration): Duration {
+        return minOf(window, case.time)
+    }
+
+    private fun stageSuffix(stage: String?): String {
+        return if (stage == null) {
+            ""
+        } else {
+            " in $stage"
+        }
     }
 }

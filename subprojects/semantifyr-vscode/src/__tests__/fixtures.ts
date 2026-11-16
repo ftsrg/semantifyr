@@ -10,7 +10,7 @@ export const modelUri = 'file:///workspace/lamp.semantifyr';
 
 export const witnessUri = 'file:/tmp/semantifyr/lamp.Safe/witness.semantifyr';
 
-export const resolutionNote = "Portfolio 'all-agree' resolved to Passed from theta over spin=Failed (not trusted, UnderApproximating)";
+export const resolutionNote = "Portfolio 'all-agree' resolved to Passed from theta:cegar-expl-pred-combined over spin:safe-dfs=Failed (not trusted, UnderApproximating)";
 
 export const safeCase: VerificationCaseSpecification = {
     id: 'lamp::Safe',

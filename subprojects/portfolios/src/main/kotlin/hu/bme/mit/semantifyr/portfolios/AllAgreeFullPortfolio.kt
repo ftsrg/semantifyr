@@ -27,8 +27,8 @@ import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
+import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioTask
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
-import hu.bme.mit.semantifyr.verifier.portfolio.withSubPath
 import kotlin.time.Clock
 
 class AllAgreeFullPortfolio(
@@ -98,14 +98,8 @@ class AllAgreeFullPortfolio(
         }
         progress.reportProgress("running ${available.size} backend(s)")
 
-        val outcome = all(gate, request.timeout, progress) {
-            available.forEach {
-                async {
-                    gate.withPermit {
-                        it.run(parentInjector, request.withSubPath(it.subPath), environment)
-                    }
-                }
-            }
+        val outcome = all(startCase(parentInjector, request, gate, environment, progress)) {
+            legs(available)
         }
 
         return outcome.toBackendVerificationResult(startedAt)
