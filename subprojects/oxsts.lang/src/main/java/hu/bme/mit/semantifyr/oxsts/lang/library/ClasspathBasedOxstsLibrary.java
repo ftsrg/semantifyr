@@ -38,7 +38,10 @@ public class ClasspathBasedOxstsLibrary extends PathBasedOxstsLibrary {
     public synchronized Path getExtractedLibraryPath() {
         if (extractedLibraryPath == null) {
             extractedLibraryPath = bundle.extractTo(baseDirectory);
-            LOGGER.debug("Classpath library of the Semantifyr Language under '{}' resolved to '{}'", baseDirectory, extractedLibraryPath);
+            LOGGER.debug(
+                    "Classpath library of the Semantifyr Language under '{}' resolved to '{}'",
+                    baseDirectory,
+                    extractedLibraryPath);
         }
         return extractedLibraryPath;
     }
