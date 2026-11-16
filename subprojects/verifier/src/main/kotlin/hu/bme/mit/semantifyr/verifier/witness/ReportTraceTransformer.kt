@@ -199,7 +199,7 @@ class ReportTraceTransformer @Inject constructor(
         for (clockValue in state.clockValues) {
             val key = reportValueConverter.path(clockValue.variable.reference)
             groups[key] = EntryGroup.Single(
-                ReportEntry(key, reportValueConverter.type(clockValue.variable.declaredVariable.typeSpecification), ReportValue.Rational(clockValue.value)),
+                ReportEntry(key, reportValueConverter.type(clockValue.variable.declaredVariable.typeSpecification), reportValueConverter.value(clockValue.value)),
             )
         }
         return groups.map { (key, group) ->

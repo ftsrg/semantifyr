@@ -51,15 +51,15 @@ class VerificationReportTest {
             ReportState(
                 mapOf(
                     "root.lamp.on" to ReportValue.Bool(false),
-                    "root.lamp.color" to ReportValue.EnumLiteral("Red"),
-                    "root.lamp.partner" to ReportValue.NoInstance,
+                    "root.lamp.color" to ReportValue.Text("Red"),
+                    "root.lamp.partner" to ReportValue.Null,
                     "root.counts[1]" to ReportValue.Integer(BigInteger.TWO.pow(53)),
                 ),
             ),
             ReportState(
                 mapOf(
                     "root.lamp.on" to ReportValue.Bool(true),
-                    "root.lamp.partner" to ReportValue.Instance("root.hall"),
+                    "root.lamp.partner" to ReportValue.Text("root.hall"),
                 ),
             ),
         ),
@@ -73,7 +73,7 @@ class VerificationReportTest {
                         self = "root.lamp",
                         transition = "example::Lamp::toggle",
                         arguments = mapOf(
-                            "partner" to ReportValue.Instance("root.hall"),
+                            "partner" to ReportValue.Text("root.hall"),
                         ),
                         calls = emptyList(),
                     ),
@@ -170,6 +170,6 @@ class VerificationReportTest {
 
         assertThat(read.trace!!.states[0].values).containsEntry("root.lamp.color", ReportValue.Text("Red"))
         assertThat(read.trace!!.states[0].values).containsEntry("root.lamp.on", ReportValue.Bool(false))
-        assertThat(read.trace!!.states[0].values).containsEntry("root.lamp.partner", ReportValue.NoInstance)
+        assertThat(read.trace!!.states[0].values).containsEntry("root.lamp.partner", ReportValue.Null)
     }
 }

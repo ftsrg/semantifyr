@@ -20,6 +20,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.clock.ClockTestAnalysis
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.DataTypeDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
@@ -243,24 +244,20 @@ class ClassWitnessBackAnnotator @Inject constructor(
                 is ReportValue.Real -> OxstsFactory.createLiteralReal().also {
                     it.value = value.value
                 }
-                is ReportValue.EnumLiteral -> enumLiteral(domain, value.name)
-                is ReportValue.Instance -> instance(value.path)
-                is ReportValue.NoInstance -> OxstsFactory.createLiteralNothing()
-                is ReportValue.Text -> when {
-                    domain is EnumDeclaration -> enumLiteral(domain, value.value)
-                    value.value in paths.instances -> instance(value.value)
-                    else -> OxstsFactory.createLiteralString().also {
+                is ReportValue.Null -> OxstsFactory.createLiteralNothing()
+                is ReportValue.Text -> when (domain) {
+                    is EnumDeclaration -> enumLiteral(domain, value.value)
+                    is DataTypeDeclaration -> OxstsFactory.createLiteralString().also {
                         it.value = value.value
                     }
+                    else -> instance(value.value)
                 }
-                is ReportValue.Rational -> error("a fraction is the value of a clock only")
                 is ReportValue.Array -> error("a state holds an array slot by slot")
                 is ReportValue.Record -> error("a record value is assumed field by field")
             }
         }
 
-        private fun enumLiteral(domain: DomainDeclaration, name: String): Expression {
-            val enumDeclaration = domain as? EnumDeclaration ?: error("the enum literal $name is reported for the type ${domain.name}")
+        private fun enumLiteral(enumDeclaration: EnumDeclaration, name: String): Expression {
             val literal = enumDeclaration.literals.singleOrNull {
                 it.name == name
             } ?: error("the enum ${enumDeclaration.name} has no literal $name")
@@ -285,7 +282,6 @@ class ClassWitnessBackAnnotator @Inject constructor(
 
         private fun clockValue(key: String, value: ReportValue): Fraction {
             return when (value) {
-                is ReportValue.Rational -> value.value
                 is ReportValue.Integer -> Fraction.of(value.value)
                 is ReportValue.Text -> Fraction.parse(value.value)
                 else -> error("the clock $key holds no amount of time")

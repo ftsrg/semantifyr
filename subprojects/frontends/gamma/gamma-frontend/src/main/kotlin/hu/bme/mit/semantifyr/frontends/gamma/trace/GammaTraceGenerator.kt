@@ -186,16 +186,8 @@ class GammaTraceGenerator @Inject constructor(
     }
 
     private fun resolveEvent(call: ReportCall, paths: InstancePaths): EventDeclaration {
-        val path = instancePath(call.arguments.values.single()) ?: error("Traced event of '${call.self}' is no instance")
+        val path = (call.arguments.values.single() as? ReportValue.Text)?.value ?: error("Traced event of '${call.self}' is no instance")
         return paths.resolve(path).last() as? EventDeclaration ?: error("Traced event '$path' is not a Gamma event")
-    }
-
-    private fun instancePath(value: ReportValue): String? {
-        return when (value) {
-            is ReportValue.Text -> value.value
-            is ReportValue.Instance -> value.path
-            else -> null
-        }
     }
 
     private fun createStateAssertions(state: ReportState, paths: InstancePaths): List<Expression> {
@@ -205,8 +197,8 @@ class GammaTraceGenerator @Inject constructor(
             val holder = paths.resolveOrNull(variable.substringBeforeLast('.')) ?: continue
             when (holder.lastOrNull()) {
                 is Region -> {
-                    instancePath(value)?.let {
-                        paths.resolveOrNull(it)
+                    (value as? ReportValue.Text)?.let {
+                        paths.resolveOrNull(it.value)
                     }?.let {
                         activeStates += it
                     }

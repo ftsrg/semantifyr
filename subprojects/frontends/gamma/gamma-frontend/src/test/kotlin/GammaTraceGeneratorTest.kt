@@ -78,7 +78,7 @@ class GammaTraceGeneratorTest {
             emptyList(),
             mapOf(
                 "root.component._Main.activeState" to instance("root.component._Main._Paused"),
-                "root.component._Main._Working._Progress.activeState" to ReportValue.NoInstance,
+                "root.component._Main._Working._Progress.activeState" to ReportValue.Null,
                 "root.component._Main._Working._Progress._ProgressHistory.lastState" to instance("root.component._Main._Working._Progress._Second"),
             ),
         )

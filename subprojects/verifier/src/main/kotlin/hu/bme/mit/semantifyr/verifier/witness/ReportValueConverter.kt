@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.verifier.witness
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluationVisitor
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.ExpressionEvaluationSerializer
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
@@ -69,7 +70,7 @@ class ReportValueConverter @Inject constructor(
             is LiteralBoolean -> ReportValue.Bool(expression.isValue)
             is LiteralReal -> ReportValue.Real(expression.value)
             is LiteralString -> ReportValue.Text(expression.value)
-            is LiteralNothing -> ReportValue.NoInstance
+            is LiteralNothing -> ReportValue.Null
             is ArrayLiteral -> ReportValue.Array(
                 expression.values.map {
                     value(it)
@@ -95,9 +96,16 @@ class ReportValueConverter @Inject constructor(
     private fun reference(expression: Expression): ReportValue {
         val literal = (expression as? ElementReference)?.element as? EnumLiteral
         if (literal != null) {
-            return ReportValue.EnumLiteral(literal.name)
+            return ReportValue.Text(literal.name)
         }
-        return ReportValue.Instance(path(expression))
+        return ReportValue.Text(path(expression))
+    }
+
+    fun value(amount: Fraction): ReportValue {
+        if (amount.isWhole) {
+            return ReportValue.Integer(amount.numerator)
+        }
+        return ReportValue.Text(amount.toString())
     }
 
     fun value(evaluation: ExpressionEvaluation): ReportValue {
@@ -155,7 +163,7 @@ class ReportValueConverter @Inject constructor(
         }
 
         override fun visit(evaluation: EnumLiteralEvaluation): ReportValue {
-            return ReportValue.EnumLiteral(evaluation.literal.name)
+            return ReportValue.Text(evaluation.literal.name)
         }
 
         override fun visit(evaluation: InfinityEvaluation): ReportValue {
@@ -167,7 +175,7 @@ class ReportValueConverter @Inject constructor(
         }
 
         override fun visit(evaluation: NothingEvaluation): ReportValue {
-            return ReportValue.NoInstance
+            return ReportValue.Null
         }
 
         override fun visit(evaluation: RangeEvaluation): ReportValue {
@@ -184,7 +192,7 @@ class ReportValueConverter @Inject constructor(
 
         override fun visit(evaluation: InstanceEvaluation): ReportValue {
             val paths = evaluation.instances.map {
-                ReportValue.Instance(path(instanceReferenceProvider.getReference(it)))
+                ReportValue.Text(path(instanceReferenceProvider.getReference(it)))
             }
             if (paths.size == 1) {
                 return paths.single()

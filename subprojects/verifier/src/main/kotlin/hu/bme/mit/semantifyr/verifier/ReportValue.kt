@@ -66,20 +66,11 @@ sealed interface ReportValue {
 
     data class Integer(val value: BigInteger) : ReportValue
 
-    data class Rational(
-        @Serializable(with = FractionSerializer::class)
-        val value: Fraction,
-    ) : ReportValue
-
     data class Real(val value: Double) : ReportValue
 
     data class Text(val value: String) : ReportValue
 
-    data class EnumLiteral(val name: String) : ReportValue
-
-    data class Instance(val path: String) : ReportValue
-
-    data object NoInstance : ReportValue
+    data object Null : ReportValue
 
     data class Array(val values: List<ReportValue>) : ReportValue
 
@@ -99,12 +90,9 @@ object ReportValueSerializer : KSerializer<ReportValue> {
         when (value) {
             is ReportValue.Bool -> encoder.encodeBoolean(value.value)
             is ReportValue.Integer -> encodeWhole(encoder, value.value)
-            is ReportValue.Rational -> FractionSerializer.serialize(encoder, value.value)
             is ReportValue.Real -> encoder.encodeDouble(value.value)
             is ReportValue.Text -> encoder.encodeString(value.value)
-            is ReportValue.EnumLiteral -> encoder.encodeString(value.name)
-            is ReportValue.Instance -> encoder.encodeString(value.path)
-            is ReportValue.NoInstance -> encoder.encodeNull()
+            is ReportValue.Null -> encoder.encodeNull()
             is ReportValue.Array -> encoder.encodeSerializableValue(arraySerializer, value.values)
             is ReportValue.Record -> encoder.encodeSerializableValue(recordSerializer, value.fields)
         }
@@ -117,7 +105,7 @@ object ReportValueSerializer : KSerializer<ReportValue> {
 
     private fun read(element: JsonElement): ReportValue {
         return when (element) {
-            is JsonNull -> ReportValue.NoInstance
+            is JsonNull -> ReportValue.Null
             is JsonArray -> ReportValue.Array(
                 element.map {
                     read(it)
