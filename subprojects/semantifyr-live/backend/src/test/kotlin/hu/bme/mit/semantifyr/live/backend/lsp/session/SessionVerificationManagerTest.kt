@@ -38,9 +38,9 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class SessionVerificationManagerTest {
 
-    private val documentUri = "file:///workspace/snippet.oxsts"
+    private val documentUri = "file:///workspace/snippet.semantifyr"
 
-    private val witnessUri = "file:///workspace/.artifacts/snippet.CaseA/witness.oxsts"
+    private val witnessUri = "file:///workspace/.artifacts/snippet.CaseA/witness.semantifyr"
 
     private val executorProvider = SharedExecutorProvider()
 

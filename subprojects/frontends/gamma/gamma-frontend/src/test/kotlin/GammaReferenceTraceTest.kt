@@ -128,7 +128,7 @@ class GammaReferenceTraceTest {
 
     private fun compileReferenceCase(): CompiledReferenceCase {
         val crossroadsCases = read(CROSSROADS_CASES).single() as GammaModelPackage
-        val compiledModel = gammaCompiler.compileWithImports(crossroadsCases, temporaryDirectory)
+        val compiledModel = gammaCompiler.compileWithImports(crossroadsCases, temporaryDirectory, "semantifyr")
         val verificationCase = crossroadsCases.verificationCases.single {
             it.name == "ACanBeGreen"
         }

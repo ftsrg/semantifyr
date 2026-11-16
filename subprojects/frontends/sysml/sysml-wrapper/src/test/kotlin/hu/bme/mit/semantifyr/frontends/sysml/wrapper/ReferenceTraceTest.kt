@@ -56,7 +56,7 @@ class ReferenceTraceTest {
     private fun generateTrace(report: Path, output: Path): Path {
         val compiler = SysMLv2Compiler(temporaryDirectory.resolve("cache"))
         val model = crossroadsWorkspace()
-        val compiled = compiler.compile(model, temporaryDirectory.resolve("compiled").resolve("crossroads.oxsts"))
+        val compiled = compiler.compile(model, temporaryDirectory.resolve("compiled").resolve("crossroads.semantifyr"))
         output.parent.createDirectories()
         return compiler.trace(model, report, nameMapPath(compiled), output)
     }

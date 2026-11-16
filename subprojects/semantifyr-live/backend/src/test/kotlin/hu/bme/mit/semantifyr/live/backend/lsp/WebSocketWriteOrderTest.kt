@@ -70,10 +70,10 @@ class WebSocketWriteOrderTest {
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
             initialize()
             for (name in names) {
-                send(Frame.Text(LspWire.didOpenNotification("file:///workspace/$name.oxsts", "oxsts", modelWithCase(name))))
+                send(Frame.Text(LspWire.didOpenNotification("file:///workspace/$name.semantifyr", "oxsts", modelWithCase(name))))
             }
             for ((index, name) in names.withIndex()) {
-                assertThat(caseLabels(index + 10, "file:///workspace/$name.oxsts")).containsExactly("$name::Case$name")
+                assertThat(caseLabels(index + 10, "file:///workspace/$name.semantifyr")).containsExactly("$name::Case$name")
             }
         }
     }
@@ -83,7 +83,7 @@ class WebSocketWriteOrderTest {
         installSemantifyrApp(webSockets = true) {
             installSemantifyrLiveBackend(testInjector(config(temporaryDirectory)))
         }
-        val uri = "file:///workspace/snippet.oxsts"
+        val uri = "file:///workspace/snippet.semantifyr"
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
             initialize()
             send(Frame.Text(LspWire.didOpenNotification(uri, "oxsts", modelWithCase("first"))))

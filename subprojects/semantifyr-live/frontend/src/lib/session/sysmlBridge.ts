@@ -18,10 +18,11 @@ import {
 import { SemantifyrLiveMethods, type ReadDocumentParams, type ReadDocumentResult, type VerificationsChangedParams } from '../api/lspExtensions.ts'
 import type { CancellationToken, LspClient } from '../verification/engine'
 import type { ProblemEntry } from './problems'
+import { OXSTS_EXTENSION } from '../workspace/files'
 
 export const SYSML_FLAVOR_ID = 'sysml'
 export const SYSML_OXSTS_FLAVOR_ID = 'oxsts-with-sysmlv2-library'
-export const SYSML_OXSTS_URI = 'file:///workspace/snippet.oxsts'
+export const SYSML_OXSTS_URI = `file:///workspace/snippet${OXSTS_EXTENSION}`
 export const SYSML_HIDDEN_LANGUAGE_ID = 'sysml-mapped-oxsts'
 
 const DISCOVER_COMMAND = 'sysml.case.discover'
@@ -237,7 +238,7 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
       return caseNameOf(specification) === caseName
     })
     if (!target) {
-      return errored(`The OXSTS of the model has no case named ${caseName}`)
+      return errored(`The Semantifyr model the model compiles to has no case named ${caseName}`)
     }
     verifiedCaseLocations.set(rangeKey(target.location.range), {
       uri: options.fileUri,

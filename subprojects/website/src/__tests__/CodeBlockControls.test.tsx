@@ -46,7 +46,7 @@ describe('the link into live', () => {
     const link = await screen.findByRole('link', { name: 'Open in Live' });
 
     const address = new URL(link.getAttribute('href') ?? '');
-    expect(address.origin + address.pathname).toBe('https://live.example/oxsts');
+    expect(address.origin + address.pathname).toBe('https://live.example/language');
     expect(link.getAttribute('target')).toBe('_blank');
     expect(link.textContent).not.toMatch(/[←-⇿]/u);
   });

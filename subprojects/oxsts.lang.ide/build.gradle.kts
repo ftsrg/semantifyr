@@ -37,7 +37,4 @@ tasks.named("test") {
             .withPropertyName(it)
             .withPathSensitivity(PathSensitivity.RELATIVE)
     }
-    inputs.file(layout.projectDirectory.file("../semantifyr-vscode/syntaxes/oxsts.tmLanguage.json"))
-        .withPropertyName("oxstsTextMateGrammar")
-        .withPathSensitivity(PathSensitivity.RELATIVE)
 }

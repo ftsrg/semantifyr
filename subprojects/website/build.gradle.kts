@@ -7,6 +7,7 @@
 import com.github.gradle.node.npm.task.NpmTask
 import groovy.json.JsonSlurper
 import hu.bme.mit.semantifyr.gradle.conventions.javaRuntimeLibrary
+import hu.bme.mit.semantifyr.gradle.conventions.oxstsFileExtension
 import hu.bme.mit.semantifyr.gradle.conventions.readsServedExamples
 import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
@@ -344,7 +345,7 @@ tasks.register<NpmTask>("walkTest") {
 }
 
 // written for the alias @phases
-val phasesModel = rootProject.layout.projectDirectory.file("oxsts-test-models/phases/room.oxsts")
+val phasesModel = rootProject.layout.projectDirectory.file("oxsts-test-models/phases/room.semantifyr")
 val phasesDir = layout.buildDirectory.dir("phases")
 
 val phases = tasks.register<JavaExec>("phases") {
@@ -364,7 +365,7 @@ val phases = tasks.register<JavaExec>("phases") {
         "--artifacts=debug",
         "--disable-artifact=mapping",
         "--artifact-directory=.",
-        "--output=compiled.oxsts",
+        "--output=compiled.$oxstsFileExtension",
         phasesModel.asFile.relativeTo(outputDirectory).invariantSeparatorsPath,
     )
     doFirst {

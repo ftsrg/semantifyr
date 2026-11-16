@@ -45,8 +45,8 @@ class LiveVerificationTest {
     @Test
     suspend fun `oxsts witness validation reports valid after a passing verification`(@TempDir tmp: Path) {
         StagedTestSupport.assumeStaged()
-        val documentUri = "file:///workspace/snippet.oxsts"
-        val modelSource = stagedModel(StagedTestSupport.oxstsTestModelsDirectory, "semantifyr.live.oxstsTestModels", "smoke.oxsts")
+        val documentUri = "file:///workspace/snippet.semantifyr"
+        val modelSource = stagedModel(StagedTestSupport.oxstsTestModelsDirectory, "semantifyr.live.oxstsTestModels", "smoke.semantifyr")
         withRealServer(config(tmp)) { client, port ->
             client.webSocket("ws://localhost:$port/ws/lsp/oxsts") {
                 send(Frame.Text(LspWire.initializeRequest()))
@@ -114,7 +114,7 @@ class LiveVerificationTest {
                 assertThat(awaitResponseFor(id = 7).resultAs(ReadDocumentResult::class.java).text).isEqualTo(witnessText)
                 assertThat(artifactsOnDisk(tmp, caseDirectoryName("snippet", selectedCase))).contains(
                     "report.json",
-                    "witness.oxsts",
+                    "witness.semantifyr",
                     "validation/report.json",
                 )
             }
@@ -201,7 +201,7 @@ class LiveVerificationTest {
                 val verificationDirectory = "model._Simple._LeaderStatechartIdleReachable"
                 assertThat(artifactsOnDisk(tmp, "Simple.LeaderStatechartIdleReachable")).contains(
                     "verification/$verificationDirectory/report.json",
-                    "verification/$verificationDirectory/witness.oxsts",
+                    "verification/$verificationDirectory/witness.semantifyr",
                     "verification/$verificationDirectory/trace.get",
                     "verification/$verificationDirectory/validation/report.json",
                 )
@@ -214,7 +214,7 @@ class LiveVerificationTest {
         verifyFirstCase(
             tmp = tmp,
             flavor = "oxsts-with-gamma-library",
-            modelSource = stagedModel(StagedTestSupport.gammaLibraryModelsDirectory, "semantifyr.live.gammaLibraryModels", "Simple.oxsts"),
+            modelSource = stagedModel(StagedTestSupport.gammaLibraryModelsDirectory, "semantifyr.live.gammaLibraryModels", "Simple.semantifyr"),
         )
     }
 
@@ -223,7 +223,7 @@ class LiveVerificationTest {
         verifyFirstCase(
             tmp = tmp,
             flavor = "oxsts-with-sysmlv2-library",
-            modelSource = stagedModel(StagedTestSupport.sysmlLibraryModelsDirectory, "semantifyr.live.sysmlLibraryModels", "door_access.oxsts"),
+            modelSource = stagedModel(StagedTestSupport.sysmlLibraryModelsDirectory, "semantifyr.live.sysmlLibraryModels", "door_access.semantifyr"),
         )
     }
 

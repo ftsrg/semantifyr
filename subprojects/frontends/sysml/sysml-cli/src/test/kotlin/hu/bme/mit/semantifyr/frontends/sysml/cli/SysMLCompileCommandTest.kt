@@ -24,7 +24,7 @@ class SysMLCompileCommandTest {
         val result = runSysMLCli("compile", model.toString())
 
         assertThat(result.statusCode).describedAs(result.output).isZero()
-        val target = model.resolveSibling("room.oxsts")
+        val target = model.resolveSibling("room.semantifyr")
         assertThat(result.stdout).isEqualTo("Compiling $model to $target\n")
         assertThat(target.readText()).contains("LampLitReachable")
     }
@@ -33,7 +33,7 @@ class SysMLCompileCommandTest {
     suspend fun `writes the OXSTS translation to the output path`(@TempDir directory: Path) {
         assumeNodeOnPath()
         val model = tutorialModel.copyTo(directory.resolve("model").createDirectories().resolve("room.sysml"))
-        val target = directory.resolve("out").resolve("translated.oxsts")
+        val target = directory.resolve("out").resolve("translated.semantifyr")
 
         val result = runSysMLCli("compile", "-o", target.toString(), model.toString())
 

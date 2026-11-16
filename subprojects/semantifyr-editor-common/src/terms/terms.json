@@ -3,12 +3,30 @@
     "live": {
       "term": "Semantifyr Live",
       "short": "Live",
-      "meaning": "The tool in the browser that edits and verifies SysML v2, Gamma and OXSTS models, with its server.",
+      "meaning": "The tool in the browser that edits and verifies SysML v2, Gamma and Semantifyr models, with its server.",
       "rejected": [
         "live editor",
         "live editors",
         "in-browser editor",
         "standalone live editor"
+      ]
+    },
+    "language": {
+      "term": "Semantifyr Language",
+      "meaning": "Semantifyr's language for semantics, in which the semantic libraries and every model Semantifyr verifies are written; a model written in it is a Semantifyr model. The code calls it OXSTS.",
+      "rejected": [
+        "OXSTS"
+      ],
+      "kept": [
+        "^\\s*```.*$",
+        "`[^`]*`",
+        "^import\\s.*$",
+        "\\blanguage=\"[^\"]*\"",
+        "\\binlined oxsts\\b",
+        "\\.oxsts\\b",
+        "\\boxsts(\\.\\w+)+",
+        "\\bOXSTS\\.[A-Z_]+",
+        "^OXSTS\\.$"
       ]
     },
     "backend": {
@@ -40,7 +58,7 @@
     },
     "witness": {
       "term": "witness",
-      "meaning": "The backend's evidence behind a trace, back-annotated into OXSTS.",
+      "meaning": "The backend's evidence behind a trace, back-annotated into a Semantifyr model.",
       "rejected": []
     },
     "validation": {
@@ -69,7 +87,7 @@
     },
     "library": {
       "term": "Library",
-      "meaning": "The semantic library an OXSTS model is written with: none, Gamma's semantics or SysML v2's semantics. The code calls the choice a flavor.",
+      "meaning": "The semantic library a Semantifyr model is written with: none, Gamma's semantics or SysML v2's semantics. The code calls the choice a flavor.",
       "rejected": [
         "flavour",
         "flavours",

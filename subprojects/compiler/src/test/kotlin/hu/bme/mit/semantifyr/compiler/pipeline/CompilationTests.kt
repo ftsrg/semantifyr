@@ -1352,7 +1352,7 @@ class CompilationTests {
         }.toSet()
         assertThat(emitted)
             .`as`("default config should emit the three staged model artifacts")
-            .contains("instantiated.oxsts", "inlined.oxsts", "flattened.oxsts")
+            .contains("instantiated.semantifyr", "inlined.semantifyr", "flattened.semantifyr")
     }
 
     private fun assertFlattenedContract(compiled: FlattenedCompilationContext) {

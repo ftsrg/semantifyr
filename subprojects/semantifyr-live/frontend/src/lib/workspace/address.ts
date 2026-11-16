@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { decodeCompressedBase64Url, decodeLiveVerdicts, parseLiveEditorUrl, type LiveEditorAddress } from '@semantifyr/editor-common'
+import { decodeCompressedBase64Url, decodeLiveVerdicts, languageOfAddressName, parseLiveEditorUrl, type LiveEditorAddress } from '@semantifyr/editor-common'
 
 import { bundledExamplesOf, findExample, type LiveExample, type LiveFlavor } from '../../examples'
 import { LANGUAGE_ORDER } from '../language/presentation'
@@ -35,8 +35,9 @@ export interface AddressedModel {
 }
 
 export function addressedModel(address: LiveEditorAddress, defaultLanguageId: string): AddressedModel {
+  const addressed = address.language === null ? undefined : languageOfAddressName(address.language)
   const languageId = LANGUAGE_ORDER.find((language) => {
-    return language === address.language
+    return language === addressed
   }) ?? defaultLanguageId
   const withLibrary = Object.entries(LIBRARIES).find(([flavorId, library]) => {
     return library === address.library && flavorId.startsWith(`${languageId}-`)
@@ -99,8 +100,9 @@ function flavorOfLanguage(registry: LanguageRegistry, language: string, library:
 // An unknown name opens what the address would have opened without it; the first unknown name is the one reported
 export async function resolveAddress(address: LiveEditorAddress, registry: LanguageRegistry, defaultFlavorId: string | undefined): Promise<InitialDocument> {
   const defaultFlavor = registry.flavorOf(defaultFlavorId) ?? registry.flavors[0]
-  const language = address.language === null ? undefined : flavorOfLanguage(registry, address.language, null)
-  const withLibrary = language && address.library !== null ? flavorOfLanguage(registry, address.language ?? '', address.library) : undefined
+  const languageId = address.language === null ? undefined : languageOfAddressName(address.language)
+  const language = languageId === undefined ? undefined : flavorOfLanguage(registry, languageId, null)
+  const withLibrary = language && address.library !== null ? flavorOfLanguage(registry, language.languageId, address.library) : undefined
   const flavor = withLibrary ?? language ?? defaultFlavor
   const fallback = flavor.examples[0]
   if (!fallback) {

@@ -14,6 +14,7 @@ import type { LanguageRuntime, LibraryDocument, LibraryKind } from '../../lib/la
 import { fileNameOf } from '../../lib/session/readOnlyDocuments'
 import { useStore } from '../../lib/stores/useStore'
 import { caseRowOf } from '../../lib/workspace/caseRows'
+import { OXSTS_EXTENSION } from '../../lib/workspace/files'
 import { libraryTabOf, openModelOxsts } from '../../lib/workspace/libraryTabs'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import { traceLanguageOf, type TraceView } from '../../trace/registry'
@@ -23,8 +24,8 @@ import { Icon } from '../../ui/icons'
 
 const LIBRARY_HEADINGS: Readonly<Record<LibraryKind, string>> = {
   'standard-library': 'SysML v2 standard library',
-  'library': 'OXSTS library',
-  'semantic-library': 'Semantic library, in OXSTS',
+  'library': 'Semantifyr Language standard library',
+  'semantic-library': 'Semantic library, in the Semantifyr Language',
 }
 
 const LIBRARY_ORDER: readonly LibraryKind[] = [
@@ -122,7 +123,7 @@ export function DocumentsMenu({ runtime, flavor, modelLabel }: { runtime: Langua
     setOpen(false)
     setFilter('')
   }
-  const modelOxstsLabel = modelLabel.replace(/\.[^.]*$/, '.oxsts')
+  const modelOxstsLabel = modelLabel.replace(/\.[^.]*$/, OXSTS_EXTENSION)
   const filtered = libraries.length > FILTERED_FROM
   const shown = libraries.filter((library) => {
     return matches(filter, decodeURIComponent(fileNameOf(library.uri)), folderOf(library))
@@ -170,7 +171,7 @@ export function DocumentsMenu({ runtime, flavor, modelLabel }: { runtime: Langua
                 ? (
                   <Group heading="Model">
                     <Entry
-                      label="OXSTS of the model"
+                      label="Semantifyr model"
                       detail={modelOxstsLabel}
                       document="model-oxsts"
                       onOpen={() => {

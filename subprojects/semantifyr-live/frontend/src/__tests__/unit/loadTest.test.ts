@@ -7,7 +7,7 @@
 // @vitest-environment node
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { VerificationStatus, type VerificationCaseResult } from '@semantifyr/editor-common'
+import { addressNameOf, VerificationStatus, type VerificationCaseResult } from '@semantifyr/editor-common'
 import { servedExamples } from '@semantifyr/editor-common/examples'
 import { servedModels } from '../../__load__/models.ts'
 import { boundOf, distribution, failures, fairness, formatBound, summarize } from '../../__load__/stats.ts'
@@ -70,7 +70,7 @@ describe('servedModels', () => {
     })).toEqual(servedExamples.filter((example) => {
       return example.cases.length > 0
     }).map((example) => {
-      return `${example.language}/${example.id}`
+      return `${addressNameOf(example.language)}/${example.id}`
     }))
     for (const model of models) {
       expect(model.cases.length, model.name).toBeGreaterThan(0)
@@ -181,11 +181,11 @@ describe('validateResult', () => {
     id: 'model::Case',
     label: 'Case',
     location: {
-      uri: 'file:///workspace/snippet.oxsts',
+      uri: 'file:///workspace/snippet.semantifyr',
       range: { start: { line: 4, character: 0 }, end: { line: 9, character: 1 } },
     },
   }
-  const witnessUri = 'file:///workspace/.artifacts/Case/witness.oxsts'
+  const witnessUri = 'file:///workspace/.artifacts/Case/witness.semantifyr'
 
   function resultWith(witness: string | null): VerificationCaseResult {
     return {

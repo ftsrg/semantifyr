@@ -12,7 +12,7 @@ import { readText } from './files';
 
 // Goal: the hand-drawn instance tree draws the instances instantiation builds for the pages' model and where it places them, in the order it reaches them
 
-const MODEL = readText(fileURLToPath(new URL('../../../../oxsts-test-models/phases/room.oxsts', import.meta.url)));
+const MODEL = readText(fileURLToPath(new URL('../../../../oxsts-test-models/phases/room.semantifyr', import.meta.url)));
 
 interface Containment {
   name: string;

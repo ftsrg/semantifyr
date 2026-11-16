@@ -78,7 +78,8 @@ public class VerifyGammaCaseCommandHandler
             VerifyGammaCommandParams arguments, ILanguageServerAccess access, CommandProgressContext progressContext) {
         var caseDeclaration = arguments.caseDeclaration();
         var gammaCase = gammaDiscoverer.mapDeclaration(caseDeclaration);
-        progressContext.begin("Verifying Gamma case " + gammaCase.getQualifiedName(), "Compiling Gamma to OXSTS");
+        progressContext.begin(
+                "Verifying Gamma case " + gammaCase.getQualifiedName(), "Compiling Gamma to the Semantifyr Language");
 
         LOGGER.info("LSP verification request for Gamma case '{}'", gammaCase.getQualifiedName());
 

@@ -95,13 +95,13 @@ class RenameTest extends OxstsLanguageServerTest {
 
     @Test
     void renameThatAnEarlierImportWouldCaptureIsRefused() {
-        addLibraryFile("A.oxsts", """
+        addLibraryFile("A.semantifyr", """
                 package example::a
 
                 class Widget {
                 }
                 """);
-        addLibraryFile("B.oxsts", """
+        addLibraryFile("B.semantifyr", """
                 package example::b
 
                 class Gadget {
@@ -122,7 +122,7 @@ class RenameTest extends OxstsLanguageServerTest {
         assertThatThrownBy(() -> rename(document, model.position(), "Gadget"))
                 .cause()
                 .isInstanceOf(ResponseErrorException.class)
-                .hasMessage("Gadget in snippet.oxsts already refers to example::b::Gadget");
+                .hasMessage("Gadget in snippet.semantifyr already refers to example::b::Gadget");
     }
 
     @Test

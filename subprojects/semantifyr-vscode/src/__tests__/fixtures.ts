@@ -6,9 +6,9 @@
 
 import type { ResultTrace, VerificationCaseResult, VerificationCaseSpecification, VerificationReport } from '@semantifyr/editor-common';
 
-export const modelUri = 'file:///workspace/lamp.oxsts';
+export const modelUri = 'file:///workspace/lamp.semantifyr';
 
-export const witnessUri = 'file:/tmp/semantifyr/lamp.Safe/witness.oxsts';
+export const witnessUri = 'file:/tmp/semantifyr/lamp.Safe/witness.semantifyr';
 
 export const resolutionNote = "Portfolio 'all-agree' resolved to Passed from theta over spin=Failed (not trusted, UnderApproximating)";
 

@@ -25,7 +25,7 @@ The SysML v2 library traces transition firing, state entry and exit, item sendin
 
 ## Form
 
-The reference trace, of the case `TrafficLightABehaviorNormalGreenUnreachableViolated` of the crossroads model, which the SysML v2 frontend's tests generate from its [witness](../../oxsts/language/library-and-output/inlined-models.md#witnesses) and validate:
+The reference trace, of the case `TrafficLightABehaviorNormalGreenUnreachableViolated` of the crossroads model, which the SysML v2 frontend's tests generate from its [witness](../../language/specification/library-and-output/inlined-models.md#witnesses) and validate:
 
 <CodeBlock language="sysmlv2">{trace}</CodeBlock>
 
@@ -46,4 +46,4 @@ A dwell lasts one tick, the duration the translation computes from the model: th
 
 ## The name map
 
-The translation writes a name map beside the OXSTS it makes, `<model>.names.json`, which the trace is generated through. It holds a hash of the model text, the tick, and one entry per translated element: its path in the SysML v2 model (names joined by `::`, an unnamed element by its index `#n` among its owner's elements, an instance of a usage with multiplicity `[n]` by `[k]`), its path in the OXSTS, and for parts and subjects the class their features continue in. A name map whose hash does not match the model is refused, and the shapes of the name map, `witness.json` and `trace.json` are checked before they are read.
+The translation writes a name map beside the Semantifyr model it makes, `<model>.names.json`, which the trace is generated through. It holds a hash of the model text, the tick, and one entry per translated element: its path in the SysML v2 model (names joined by `::`, an unnamed element by its index `#n` among its owner's elements, an instance of a usage with multiplicity `[n]` by `[k]`), its path in the Semantifyr model, and for parts and subjects the class their features continue in. A name map whose hash does not match the model is refused, and the shapes of the name map, `witness.json` and `trace.json` are checked before they are read.

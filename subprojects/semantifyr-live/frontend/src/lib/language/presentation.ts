@@ -10,6 +10,7 @@ import { InitializationSteps, type InitializationStepDefinition } from '../store
 export interface LanguagePresentation {
   name: string
   detail: string
+  server: string
 }
 
 // The order of the language switch; a language the server adds later goes after these
@@ -21,7 +22,7 @@ export const LANGUAGE_ORDER = [
 
 export function presentationOf(languageId: string): LanguagePresentation {
   const texts = LANGUAGES[languageId]
-  return texts ? { name: texts.name, detail: texts.detail } : { name: languageId, detail: '' }
+  return texts ? { name: texts.name, detail: texts.detail, server: texts.server } : { name: languageId, detail: '', server: `the ${languageId} language server` }
 }
 
 export function hostOf(backendUrl: string): string {
@@ -36,8 +37,8 @@ export function initializationStepsOf(languageId: string, backendUrl: string): I
   const presentation = presentationOf(languageId)
   return [
     { ...InitializationSteps.connect, label: `Connecting to ${hostOf(backendUrl)}` },
-    { ...InitializationSteps.server, label: `Starting the ${presentation.name} language server` },
-    { ...InitializationSteps.initialize, label: `Initializing the ${presentation.name} language server` },
+    { ...InitializationSteps.server, label: `Starting ${presentation.server}` },
+    { ...InitializationSteps.initialize, label: `Initializing ${presentation.server}` },
     InitializationSteps.cases,
   ]
 }

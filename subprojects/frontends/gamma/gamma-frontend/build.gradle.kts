@@ -5,6 +5,7 @@
  */
 
 import hu.bme.mit.semantifyr.gradle.conventions.corpusModels
+import hu.bme.mit.semantifyr.gradle.conventions.oxstsFileExtension
 import hu.bme.mit.semantifyr.gradle.conventions.readsServedExamples
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 
@@ -65,7 +66,7 @@ val examplesSourceDir = layout.projectDirectory.dir("../models/examples")
 
 fun gammaExampleTask(name: String) = tasks.register<JavaExec>("compileGammaExample_$name") {
     val sourceFile = examplesSourceDir.file("$name.gamma")
-    val targetFile = compiledExamplesDir.map { it.file("$name.oxsts") }
+    val targetFile = compiledExamplesDir.map { it.file("$name.$oxstsFileExtension") }
     inputs.file(sourceFile).withPathSensitivity(PathSensitivity.NAME_ONLY)
     inputs.files(sourceSets["main"].runtimeClasspath).withNormalizer(ClasspathNormalizer::class)
     outputs.file(targetFile)

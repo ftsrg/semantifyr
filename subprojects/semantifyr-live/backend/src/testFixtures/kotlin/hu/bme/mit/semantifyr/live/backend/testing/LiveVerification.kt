@@ -28,7 +28,7 @@ suspend fun verifyEndToEnd(
     pickCase: (List<VerificationCaseSpecification>) -> VerificationCaseSpecification,
     assertVerdict: (result: VerificationCaseResult) -> Unit,
     languageId: String = "oxsts",
-    documentUri: String = "file:///workspace/snippet.oxsts",
+    documentUri: String = "file:///workspace/snippet.semantifyr",
     discoverCommand: String = "oxsts.case.discover",
     verifyCommand: String = "oxsts.case.verify",
     verifyTimeout: Duration = 1.minutes,

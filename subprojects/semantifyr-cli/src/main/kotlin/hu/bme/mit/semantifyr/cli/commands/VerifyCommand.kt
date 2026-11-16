@@ -45,7 +45,7 @@ class VerifyCommand @Inject constructor(
     private val output by verifyOutputOption()
 
     override fun help(context: Context): String {
-        return "Verify the cases of an OXSTS model."
+        return "Verify the cases of a Semantifyr model."
     }
 
     override suspend fun run() {

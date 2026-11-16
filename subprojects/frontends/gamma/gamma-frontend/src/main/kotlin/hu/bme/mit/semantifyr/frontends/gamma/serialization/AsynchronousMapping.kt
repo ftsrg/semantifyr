@@ -126,7 +126,6 @@ object AsynchronousMapping {
         }
     }
 
-    // Gamma's unfolding of an asynchronous statechart: one queue of every input, run on any message
     private fun defaultAdapterOf(statechart: StatechartDeclaration): AdapterMapping {
         val capacity = statechart.capacity?.let {
             GammaUtils.evaluateInteger(it) ?: 0
@@ -170,7 +169,6 @@ object AsynchronousMapping {
         return AdapterMapping(adapter, wrappedComponent, clocks, queues)
     }
 
-    // a capacity other than a constant is refused before mapping, a queue of no capacity is ignored as in Gamma
     fun capacityOf(queue: MessageQueue): Int {
         return GammaUtils.evaluateInteger(queue.capacity) ?: 0
     }
@@ -227,7 +225,6 @@ object AsynchronousMapping {
         }
     }
 
-    // the first passing storing the event decides where it is delivered, as Gamma's getEventPassing does
     private fun targetOf(
         queue: MessageQueue,
         port: PortDeclaration,
@@ -325,7 +322,6 @@ object AsynchronousMapping {
         }
     }
 
-    // an output reaching several queues is delivered to each with its values and reset once, after the last
     fun dispatchesOf(composite: CompositeComponentDeclaration): List<DispatchMapping> {
         val dispatches = mutableListOf<DispatchMapping>()
         for (instance in adapterInstances(composite)) {

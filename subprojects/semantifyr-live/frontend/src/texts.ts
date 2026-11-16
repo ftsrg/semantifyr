@@ -20,7 +20,7 @@ export const DOCUMENTATION = {
 
 export const SOURCE_CODE_URL = 'https://github.com/ftsrg/semantifyr'
 
-export const PAGE_DESCRIPTION = 'Verify a SysML v2, Gamma or OXSTS model in your browser and read its traces in its own language.'
+export const PAGE_DESCRIPTION = 'Verify a SysML v2, Gamma or Semantifyr model in your browser and read its traces in its own language.'
 
 export const LIVE_URL = 'https://live.semantifyr.org'
 
@@ -38,7 +38,7 @@ export function exampleDescription(label: string, languageName: string, comment:
 export const ABOUT = {
   sentences: [
     'Semantifyr is a framework to support the declarative definition of engineering model semantics.',
-    `With ${SHORT_NAME} you verify a SysML v2, Gamma or OXSTS model in your browser and read its traces in its own language.`,
+    `With ${SHORT_NAME} you verify a SysML v2, Gamma or Semantifyr model in your browser and read its traces in its own language.`,
     `${SHORT_NAME} is a research prototype, made in a PhD project at the Budapest University of Technology and Economics.`,
     'Your model is deleted when you leave.',
   ],
@@ -50,6 +50,8 @@ export const ABOUT = {
 export interface LanguageTexts {
   name: string
   detail: string
+  // its language server, as a status names it
+  server: string
   // how a case is written, for a model that has none
   writeCase: string
 }
@@ -58,16 +60,19 @@ export const LANGUAGES: Readonly<Record<string, LanguageTexts>> = {
   sysml: {
     name: 'SysML v2',
     detail: 'OMG\'s Systems Modeling Language',
+    server: 'the SysML v2 language server',
     writeCase: 'Write a verification def that requires a constraint in mustAlways or eventually.',
   },
   gamma: {
     name: 'Gamma',
     detail: 'The Gamma Statechart Composition Framework',
+    server: 'the Gamma language server',
     writeCase: 'Write a verification case with a component and an AG or EF property.',
   },
   oxsts: {
-    name: 'OXSTS',
+    name: 'Semantifyr Language',
     detail: 'Semantifyr\'s language for semantics',
+    server: 'the language server of the Semantifyr Language',
     writeCase: 'Mark a class @VerificationCase and give it a prop that returns an AG or EF formula.',
   },
 }
@@ -182,7 +187,7 @@ export function tabHint(key: string): string {
 
 export const TRACE_BANNERS = {
   witness: (caseName: string): string => {
-    return `The witness of ${caseName}, in OXSTS.`
+    return `The witness of ${caseName}, a Semantifyr model.`
   },
   own: (caseName: string, languageName: string): string => {
     return `The trace of ${caseName}, in ${languageName}.`

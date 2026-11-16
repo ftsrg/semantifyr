@@ -84,13 +84,13 @@ class XstsExpressionToOxstsExpressionTransformer @Inject constructor(
         return when (value) {
             is IntegerValue -> {
                 if (!value.value.fitsInt()) {
-                    throw UnrepresentableWitnessValueException("Theta's output holds ${value.value}, beyond the 32-bit integers of OXSTS")
+                    throw UnrepresentableWitnessValueException("Theta's output holds ${value.value}, beyond the 32-bit integers of the Semantifyr Language")
                 }
                 OxstsFactory.createLiteralInteger(value.value.toInt())
             }
             is BooleanValue -> OxstsFactory.createLiteralBoolean(value.value)
             is EnumValue -> OxstsFactory.createElementReference(thetaDomainTransformer.getOriginal(value.literal))
-            is ArrayValue -> error("Theta's output holds an array of arrays, which OXSTS has not")
+            is ArrayValue -> error("Theta's output holds an array of arrays, which the Semantifyr Language has not")
         }
     }
 }
@@ -238,7 +238,7 @@ private object XstsValueEvaluator : XstsExpressionVisitor<XstsValue>() {
 
     private fun checkIntegerIndexed(indexType: Type?) {
         check(indexType == null || indexType is IntegerType) {
-            "Theta's output holds an array indexed by $indexType, OXSTS arrays are indexed by integers"
+            "Theta's output holds an array indexed by $indexType, the arrays of the Semantifyr Language are indexed by integers"
         }
     }
 }

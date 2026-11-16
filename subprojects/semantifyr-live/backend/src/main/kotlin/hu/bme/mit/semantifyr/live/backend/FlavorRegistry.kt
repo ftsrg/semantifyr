@@ -25,7 +25,6 @@ data class Flavor(
     val id: String,
     val displayName: String,
     val description: String,
-    val fileName: String,
     val language: Language,
     val workspaceLayout: WorkspaceLayout,
     val verificationCommand: String,
@@ -63,9 +62,8 @@ object FlavorRegistry {
     val flavors = listOf(
         Flavor(
             id = "oxsts",
-            displayName = "OXSTS",
+            displayName = "Semantifyr Language",
             description = "Semantifyr's language for semantics",
-            fileName = "snippet.oxsts",
             language = Language.Oxsts,
             workspaceLayout = WorkspaceLayout.SingleFile,
             verificationCommand = "oxsts.case.verify",
@@ -75,9 +73,8 @@ object FlavorRegistry {
         ),
         Flavor(
             id = "oxsts-with-gamma-library",
-            displayName = "OXSTS with the Gamma library",
+            displayName = "Semantifyr Language with the Gamma library",
             description = "Gamma's semantics",
-            fileName = "snippet.oxsts",
             language = Language.Oxsts,
             workspaceLayout = WorkspaceLayout.WithLibrary(
                 libraryRelativePath = Path.of("gamma"),
@@ -90,9 +87,8 @@ object FlavorRegistry {
         ),
         Flavor(
             id = "oxsts-with-sysmlv2-library",
-            displayName = "OXSTS with the SysML v2 library",
+            displayName = "Semantifyr Language with the SysML v2 library",
             description = "SysML v2's semantics",
-            fileName = "snippet.oxsts",
             language = Language.Oxsts,
             workspaceLayout = WorkspaceLayout.WithLibrary(
                 libraryRelativePath = Path.of("sysmlv2"),
@@ -111,7 +107,6 @@ object FlavorRegistry {
             id = "gamma",
             displayName = "Gamma",
             description = "The Gamma Statechart Composition Framework",
-            fileName = "snippet.gamma",
             language = Language.Gamma,
             workspaceLayout = WorkspaceLayout.WithLibrary(
                 libraryRelativePath = Path.of("gamma"),

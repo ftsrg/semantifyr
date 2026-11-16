@@ -59,7 +59,7 @@ const EDITOR_OPTIONS: editor.IStandaloneEditorConstructionOptions = {
 } as const;
 
 const LANGUAGE_DEFS = [
-  { id: 'oxsts', extensions: OXSTS_EXTENSIONS, aliases: ['OxSTS', 'oxsts'], scopeName: 'source.oxsts', grammarPath: './syntaxes/oxsts.tmLanguage.json' },
+  { id: 'oxsts', extensions: OXSTS_EXTENSIONS, aliases: ['Semantifyr Language', 'oxsts'], scopeName: 'source.oxsts', grammarPath: './syntaxes/oxsts.tmLanguage.json' },
   { id: 'gamma', extensions: ['.gamma', '.gcd', '.get'], aliases: ['Gamma', 'gamma'], scopeName: 'source.gamma', grammarPath: './syntaxes/gamma.tmLanguage.json' },
   { id: 'sysml', extensions: ['.sysml'], aliases: ['SysML v2', 'sysml'], scopeName: 'source.sysml', grammarPath: './syntaxes/sysml.tmLanguage.json' },
 ];

@@ -99,6 +99,8 @@ class GammaFrontend @Inject private constructor(
 
     private val logger by loggerFactory()
 
+    private val oxstsFileExtension = gammaFrontendConfiguration.oxstsInjector.getInstance(FileExtensionProvider::class.java).primaryFileExtension
+
     val outputDirectory: Path
         get() = gammaFrontendConfiguration.outputDirectory
 
@@ -118,7 +120,7 @@ class GammaFrontend @Inject private constructor(
 
         logger.info { "Verifying Gamma case '$qualifiedName'" }
 
-        val compiledModel = gammaCompiler.compileWithImports(gammaModel, baseDirectory)
+        val compiledModel = gammaCompiler.compileWithImports(gammaModel, baseDirectory, oxstsFileExtension)
 
         val context = semantifyrLoader.startContext()
             .loadLibraryPaths(gammaFrontendConfiguration.libraryPaths)
@@ -135,7 +137,7 @@ class GammaFrontend @Inject private constructor(
         val reportPath = caseReportPath(verificationDirectory, oxstsVerificationCase)
         val reportTrace = Json.decodeFromString<VerificationReport>(reportPath.readText()).trace
         val witness = reportTrace?.let {
-            val witnessPath = reportPath.resolveSibling(WITNESS_FILE_NAME)
+            val witnessPath = reportPath.resolveSibling("witness.$oxstsFileExtension")
             val gammaTracePath = reportPath.resolveSibling(GAMMA_TRACE_FILE_NAME)
             val gammaTrace = writeGammaTrace(gammaVerificationCase, it, compiledModel, gammaTracePath)
             GammaWitness(witnessPath, compiledModel.modelPath, gammaTrace, gammaTracePath)
@@ -166,7 +168,7 @@ class GammaFrontend @Inject private constructor(
             return null
         }
         return verificationDirectory.listDirectoryEntries().map {
-            it.resolve(WITNESS_FILE_NAME)
+            it.resolve("witness.$oxstsFileExtension")
         }.singleOrNull {
             it.isRegularFile()
         }
@@ -195,16 +197,16 @@ class GammaFrontend @Inject private constructor(
     }
 
     private fun loadWitnessModel(witnessPath: Path, baseDirectory: Path): InlinedOxsts {
-        val compiledModelPath = baseDirectory.resolve(GammaCompiler.MODEL_FILE_NAME)
+        val compiledModelPath = GammaCompiler.modelPath(baseDirectory, oxstsFileExtension)
         require(witnessPath.isRegularFile()) {
             "Witness file does not exist: '$witnessPath'"
         }
         require(compiledModelPath.isRegularFile()) {
-            "Compiled OXSTS model does not exist: '$compiledModelPath'"
+            "Compiled Semantifyr model does not exist: '$compiledModelPath'"
         }
         val importsDirectory = GammaCompiler.importsDirectory(baseDirectory)
         val importedPaths = if (importsDirectory.isDirectory()) {
-            importsDirectory.listDirectoryEntries("*.oxsts")
+            importsDirectory.listDirectoryEntries("*.$oxstsFileExtension")
         } else {
             emptyList()
         }
@@ -390,7 +392,6 @@ class GammaFrontend @Inject private constructor(
     }
 
     companion object {
-        private const val WITNESS_FILE_NAME = "witness.oxsts"
         private const val GAMMA_TRACE_FILE_NAME = "trace.get"
 
         @JvmStatic

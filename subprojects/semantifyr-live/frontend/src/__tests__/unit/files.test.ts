@@ -49,14 +49,14 @@ describe('the file a document opens in', () => {
     expect(languageOfFile('Library.KerML')).toBe('sysml')
     expect(languageOfFile('LevelCrossing.gamma')).toBe('gamma')
     expect(languageOfFile('LevelCrossing.get')).toBe('gamma')
-    expect(languageOfFile('snippet.oxsts')).toBe('oxsts')
+    expect(languageOfFile('snippet.semantifyr')).toBe('oxsts')
     expect(languageOfFile('notes.txt')).toBeNull()
   })
 
-  it('is the language of the extension, plain OXSTS for .oxsts', () => {
+  it('is the language of the extension, plain OXSTS for .semantifyr', () => {
     expect(flavorOfFile(registry, 'a.sysml', null).languageId).toBe('sysml')
     expect(flavorOfFile(registry, 'a.gamma', null).languageId).toBe('gamma')
-    expect(flavorOfFile(registry, 'a.oxsts', null).id).toBe('oxsts')
+    expect(flavorOfFile(registry, 'a.semantifyr', null).id).toBe('oxsts')
   })
 
   it('is the current language for a file of another extension', () => {

@@ -270,7 +270,6 @@ class GammaToOxstsSerializer(
         return "${markQualifiedName(gammaPackage.name)}::${accessClassNames(gammaPackage).getValue(field)}"
     }
 
-    // the names of a package's access classes depend on that package alone, so every package that reads a field names its class alike
     private fun accessClassNames(gammaPackage: GammaModelPackage): Map<FieldDeclaration, String> {
         return accessClassNamesByPackage.getOrPut(gammaPackage) {
             val taken = mutableSetOf<String>()
@@ -371,7 +370,6 @@ class GammaToOxstsSerializer(
         val subsets: String,
     )
 
-    // an inout event is an input and an output of the port, each half a feature of its own
     private fun eventHalves(event: EventDeclaration): List<EventHalf> {
         return when (event.direction) {
             EventDirection.IN -> listOf(EventHalf(markName(event.name), "inputEvents"))
@@ -424,7 +422,6 @@ class GammaToOxstsSerializer(
         }
     }
 
-    // an asynchronous statechart is unfolded into Gamma's default adapter around it, so its instances are of the adapter
     private fun componentClassName(component: ComponentDeclaration): String {
         if (component is StatechartDeclaration && component.isAsynchronous) {
             return "${markQualifiedName(gammaPackageOf(component).name)}::${adapterClassName(component)}"
@@ -452,7 +449,6 @@ class GammaToOxstsSerializer(
         return "${markQualifiedName(gammaPackage.name)}::$name"
     }
 
-    // an offered port is a reference typed Port, so its events are named on the port the adapter holds
     private fun adapterPortPath(adapter: ComponentDeclaration, port: PortDeclaration): String {
         if (adapter is AsynchronousAdapterDeclaration) {
             if (port in adapter.ports) {
@@ -485,7 +481,6 @@ class GammaToOxstsSerializer(
                 appendLine("redefine contains wrapped: ${qualifiedClassName(component)}")
             }
 
-            // the adapter offers the wrapped component's ports as its own, as in Gamma
             for (port in mapping.wrappedComponent.ports) {
                 val name = nameMap.declare(component, port, markName(port.name))
                 appendLine("refers $name: Port subsets ports = $wrappedFeature.$name")
@@ -508,7 +503,6 @@ class GammaToOxstsSerializer(
         }
     }
 
-    // a queue at the root receives from the environment unless it stores a clock; a composite decides per instance
     private fun IndentingStringBuilder.serializeQueueFeature(
         adapter: ComponentDeclaration,
         wrappedFeature: String,
@@ -696,7 +690,6 @@ class GammaToOxstsSerializer(
         }
     }
 
-    // the environment adds one message of an event of the queue, or none
     private fun IndentingStringBuilder.serializeEnvironmentMessage(queue: QueueMapping) {
         appendIndent("redefine tran receiveEnvironmentMessage()") {
             if (queue.portMessages.isEmpty()) {
@@ -1075,7 +1068,6 @@ class GammaToOxstsSerializer(
         }
     }
 
-    // the node's own transition is its default target, which the library holds on the node
     private fun IndentingStringBuilder.serialize(history: ShallowHistoryState) {
         val name = nameMap.declare(history.eContainer(), history, markName(history.name))
         val statechart = EcoreUtil2.getContainerOfType(history, StatechartDeclaration::class.java)
@@ -1154,7 +1146,6 @@ class GammaToOxstsSerializer(
         else -> error("Unknown trigger type: $trigger")
     }
 
-    // a target in another region is named from the lowest region holding both ends, which the transition's own scope reaches
     private fun targetPath(transition: Transition): List<String> {
         val sourceRegions = ancestorRegions(transition.from)
         val path = mutableListOf(markName(transition.to.name))
@@ -1188,7 +1179,6 @@ class GammaToOxstsSerializer(
         }
     }
 
-    // a provided port receives the input half of an inout event and raises its output half, a required port the reverse
     private fun inputEventPath(
         port: PortDeclaration,
         event: EventDeclaration,
@@ -1240,7 +1230,6 @@ class GammaToOxstsSerializer(
         else -> error("Unknown action type: $action")
     }
 
-    // a generated name starts with a lowercase word, so it never equals a marked Gamma name
     private fun deriveName(channel: Channel): String {
         val provided = "${channel.providedPort.instance.name}_${channel.providedPort.port.name}"
         val required = "${channel.requiredPort.instance.name}_${channel.requiredPort.port.name}"
@@ -1324,7 +1313,6 @@ class GammaToOxstsSerializer(
         }
     }
 
-    // a field write assigns the whole variable the record with that field updated, outermost field first
     private fun IndentingStringBuilder.serializeAssignedValue(
         accesses: List<RecordAccessExpression>,
         value: Expression,
@@ -1605,7 +1593,6 @@ class GammaToOxstsSerializer(
         }
     }
 
-    // a region, state or history node named like a statechart member shadows it inside the regions, so the member is reached through the statechart
     private fun memberReference(member: NamedElement): String {
         val statechart = member.eContainer() as? StatechartDeclaration ?: return markName(member.name)
         val shadowed = EcoreUtil2.eAllContents(statechart).asSequence().any {
@@ -1617,7 +1604,6 @@ class GammaToOxstsSerializer(
         return "(statechart as ${qualifiedClassName(statechart)}).${markName(member.name)}"
     }
 
-    // the elements of an asynchronous statechart live in the default adapter's wrapped component
     private fun instancePath(expression: InstanceElementExpression): List<String> {
         val path = mutableListOf(CASE_COMPONENT)
         if (isAsynchronousStatechart(GammaUtils.getTracedComponent(expression))) {

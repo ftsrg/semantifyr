@@ -96,7 +96,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     suspend fun `a step's calls list only the calls that fired in it`(@TempDir output: Path) {
-        val case = loadCase("tracing.oxsts", tracingCase)
+        val case = loadCase("tracing.semantifyr", tracingCase)
 
         verifyWithWitness(case, output) { model ->
             linearInlinedWitness(
@@ -125,7 +125,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     suspend fun `the back-annotated witness assumes each state by feature paths from the root instance`(@TempDir output: Path) {
-        val case = loadCase("tracing.oxsts", tracingCase)
+        val case = loadCase("tracing.semantifyr", tracingCase)
 
         verifyWithWitness(case, output) { model ->
             linearInlinedWitness(
@@ -146,7 +146,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     suspend fun `array slot values reach the report and the back-annotated witness`(@TempDir output: Path) {
-        val case = loadCase("arrays.oxsts", arraysCase)
+        val case = loadCase("arrays.semantifyr", arraysCase)
         val slots = (0..2).map {
             flattenedName("root", "slots_$it")
         }
@@ -179,7 +179,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     suspend fun `record field values reach the report and the back-annotated witness by field path`(@TempDir output: Path) {
-        val case = loadCase("records.oxsts", recordsCase)
+        val case = loadCase("records.semantifyr", recordsCase)
         val positionX = flattenedName("root", "robot", "position") + "${RecordFlatteningPass.FIELD_SEPARATOR}x"
 
         verifyWithWitness(case, output) { model ->
@@ -200,7 +200,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     suspend fun `class-typed array slots back-annotate to the instance path they hold`(@TempDir output: Path) {
-        val case = loadCase("arrays.oxsts", classTypedArraysCase)
+        val case = loadCase("arrays.semantifyr", classTypedArraysCase)
         val slots = (0..1).map {
             flattenedName("root", "queue_$it")
         }
@@ -225,7 +225,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     suspend fun `the witness starts at the initialized step with the call of init`(@TempDir output: Path) {
-        val case = loadCase("tracing.oxsts", tracingCase)
+        val case = loadCase("tracing.semantifyr", tracingCase)
 
         verifyWithWitness(case, output) { model ->
             linearInlinedWitness(
@@ -257,7 +257,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     suspend fun `the report of a run names the root and holds the states, the steps and their calls`(@TempDir output: Path) {
-        val case = loadCase("tracing.oxsts", tracingCase)
+        val case = loadCase("tracing.semantifyr", tracingCase)
 
         verifyWithWitness(case, output) { model ->
             linearInlinedWitness(
@@ -298,7 +298,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     suspend fun `the report lists the observed transitions and the type of every variable a state holds`(@TempDir output: Path) {
-        val case = loadCase("tracing.oxsts", tracingCase)
+        val case = loadCase("tracing.semantifyr", tracingCase)
 
         verifyWithWitness(case, output) { model ->
             linearInlinedWitness(
@@ -325,7 +325,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     suspend fun `the report holds an array slot by slot with the array it belongs to`(@TempDir output: Path) {
-        val case = loadCase("arrays.oxsts", arraysCase)
+        val case = loadCase("arrays.semantifyr", arraysCase)
         val slots = (0..2).map {
             flattenedName("root", "slots_$it")
         }
@@ -349,7 +349,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     suspend fun `the report holds a record as an object of its kept fields`(@TempDir output: Path) {
-        val case = loadCase("records.oxsts", recordsCase)
+        val case = loadCase("records.semantifyr", recordsCase)
         val positionX = flattenedName("root", "robot", "position") + "${RecordFlatteningPass.FIELD_SEPARATOR}x"
 
         verifyWithWitness(case, output) { model ->
@@ -368,7 +368,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     suspend fun `an instance reference in the report is a path from the root`(@TempDir output: Path) {
-        val case = loadCase("arrays.oxsts", classTypedArraysCase)
+        val case = loadCase("arrays.semantifyr", classTypedArraysCase)
         val slots = (0..1).map {
             flattenedName("root", "queue_$it")
         }
@@ -388,7 +388,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     suspend fun `a call with a run-time argument reports the value of its last run in the step`(@TempDir models: Path, @TempDir output: Path) {
-        val case = loadText(models, "run_time_argument.oxsts", RUN_TIME_ARGUMENT_MODEL, "semantifyr::verification::report::run_time_argument::RunTimeArgumentReach")
+        val case = loadText(models, "run_time_argument.semantifyr", RUN_TIME_ARGUMENT_MODEL, "semantifyr::verification::report::run_time_argument::RunTimeArgumentReach")
         val item = flattenedName("root", "port", "item")
         val tracer = TransitionTracerNames.tracerName(0)
         val argument = TransitionTracerNames.argumentName(0, "value")
@@ -410,7 +410,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     suspend fun `the witness model of a result with clocks assumes the scaled time and clock values after each step`(@TempDir models: Path, @TempDir output: Path) {
-        val case = loadText(models, "timed.oxsts", TIMED_MODEL, TIMED_CASE)
+        val case = loadText(models, "timed.semantifyr", TIMED_MODEL, TIMED_CASE)
 
         verifyWithWitness(case, output) { model ->
             timedWitness(model)
@@ -435,8 +435,8 @@ class BackAnnotationFidelityTest {
 
     @Test
     suspend fun `the scaled witness model reparses, validates and compiles with the model's clock bounds counting the scale`(@TempDir models: Path, @TempDir output: Path) {
-        val modelPath = models.resolve("timed.oxsts")
-        val case = loadText(models, "timed.oxsts", TIMED_MODEL, TIMED_CASE)
+        val modelPath = models.resolve("timed.semantifyr")
+        val case = loadText(models, "timed.semantifyr", TIMED_MODEL, TIMED_CASE)
 
         verifyWithWitness(case, output) { model ->
             timedWitness(model)
@@ -444,7 +444,7 @@ class BackAnnotationFidelityTest {
 
         val reparsed = loader.startContext()
             .loadModel(modelPath)
-            .loadModel(caseDirectory(output, case).resolve("witness.oxsts"))
+            .loadModel(caseDirectory(output, case).resolve("witness.semantifyr"))
             .buildAndResolve()
         val witness = reparsed.modelResources.last().contents.filterIsInstance<InlinedOxsts>().single()
         val compiled = SemantifyrCompiler(injector, ArtifactConfig.NONE, OptimizationConfig.NONE).compile(witness, models.resolve("recheck"))
@@ -462,7 +462,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     suspend fun `the report names a variable and a parameter typed by a feature by the feature's qualified name`(@TempDir models: Path, @TempDir output: Path) {
-        val case = loadText(models, "feature_typed.oxsts", FEATURE_TYPED_MODEL, "semantifyr::verification::report::feature_typed::FeatureTypedPick")
+        val case = loadText(models, "feature_typed.semantifyr", FEATURE_TYPED_MODEL, "semantifyr::verification::report::feature_typed::FeatureTypedPick")
         val current = flattenedName("root", "scheduler", "current")
         val tracer = TransitionTracerNames.tracerName(0)
 
@@ -493,7 +493,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     suspend fun `a model with a package-level global reports its root and derives its witness model`(@TempDir output: Path) {
-        val case = loadCase("globals.oxsts", "semantifyr::verification::lang::globals::GlobalTickReach")
+        val case = loadCase("globals.semantifyr", "semantifyr::verification::lang::globals::GlobalTickReach")
 
         verifyWithWitness(case, output) { model ->
             val tick = model.variables.single {
@@ -516,7 +516,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     suspend fun `a class without features reports its root and derives its witness model`(@TempDir output: Path) {
-        val case = loadCase("control_flow.oxsts", "semantifyr::verification::lang::control_flow::ChoiceBranch1Reach")
+        val case = loadCase("control_flow.semantifyr", "semantifyr::verification::lang::control_flow::ChoiceBranch1Reach")
 
         verifyWithWitness(case, output) { model ->
             val x = model.variables.single {
@@ -626,7 +626,7 @@ class BackAnnotationFidelityTest {
     }
 
     private fun readWitnessModel(output: Path, case: VerificationCase): String {
-        return caseDirectory(output, case).resolve("witness.oxsts").readText()
+        return caseDirectory(output, case).resolve("witness.semantifyr").readText()
     }
 
     companion object {

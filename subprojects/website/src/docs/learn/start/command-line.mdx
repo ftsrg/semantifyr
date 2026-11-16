@@ -3,7 +3,7 @@ title: Try in the Command Line
 sidebar_label: Try in the Command Line
 slug: /learn/command-line
 sidebar_position: 3
-description: Verify the cases of an OXSTS model with the semantifyr command, read their verdicts and find the witness of a failed case on disk.
+description: Verify the cases of a Semantifyr model with the semantifyr command, read their verdicts and find the witness of a failed case on disk.
 ---
 
 import CodeBlock from '@theme/CodeBlock';
@@ -12,18 +12,18 @@ import levelCrossing from '@served-examples/oxsts/level-crossing';
 
 # Try in the Command Line
 
-`semantifyr` verifies the cases of an OXSTS model on your machine, with every installed backend, by hand or in scripts and CI. This page verifies the OXSTS level crossing. [Install](install.md#the-command-line) builds the command, `bin/semantifyr` of its distribution, and [Command Line](../reference/command-line.mdx) lists its options; a SysML v2 or a Gamma model is verified by its frontend's launcher, [`semantifyr-sysml`](../frontends/sysml-v2/verifying.md#verifying-locally) or [`semantifyr-gamma`](../frontends/gamma/verifying.mdx#verifying-locally).
+`semantifyr` verifies the cases of a Semantifyr model on your machine, with every installed backend, by hand or in scripts and CI. This page verifies the level crossing in the Semantifyr Language. [Install](install.md#the-command-line) builds the command, `bin/semantifyr` of its distribution, and [Command Line](../reference/command-line.mdx) lists its options; a SysML v2 or a Gamma model is verified by its frontend's launcher, [`semantifyr-sysml`](../frontends/sysml-v2/verifying.md#verifying-locally) or [`semantifyr-gamma`](../frontends/gamma/verifying.mdx#verifying-locally).
 
 ## The Model
 
-Save the model as `level-crossing.oxsts` in an empty directory, `/tmp/level-crossing` on this page:
+Save the model as `level-crossing.semantifyr` in an empty directory, `/tmp/level-crossing` on this page:
 
-<CodeBlock language="oxsts" title="level-crossing.oxsts">{levelCrossing.text}</CodeBlock>
+<CodeBlock language="oxsts" title="level-crossing.semantifyr">{levelCrossing.text}</CodeBlock>
 
 In that directory, list its cases:
 
 ```bash
-semantifyr list level-crossing.oxsts
+semantifyr list level-crossing.semantifyr
 ```
 
 ```text
@@ -37,7 +37,7 @@ Found 2 verification case(s):
 Verify every case, with the artifacts in `artifacts/`:
 
 ```bash
-semantifyr verify level-crossing.oxsts --artifact-directory artifacts
+semantifyr verify level-crossing.semantifyr --artifact-directory artifacts
 ```
 
 ```text
@@ -76,7 +76,7 @@ theta-kinduction
 trace.json
 uppaal-default
 witness.json
-witness.oxsts
+witness.semantifyr
 ```
 
-Beside the report and the compiled models under `pipeline/`, each backend run has a directory of its own, and `witness.oxsts`, `witness.json` and `trace.json` are the [witness](../oxsts/language/library-and-output/inlined-models.md#witnesses) of the run that breaks the case. [Artifacts](../reference/artifacts.mdx) describes each file.
+Beside the report and the compiled models under `pipeline/`, each backend run has a directory of its own, and `witness.semantifyr`, `witness.json` and `trace.json` are the [witness](../language/specification/library-and-output/inlined-models.md#witnesses) of the run that breaks the case. [Artifacts](../reference/artifacts.mdx) describes each file.

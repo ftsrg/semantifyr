@@ -57,7 +57,7 @@ class ModelFileFormattingTest {
         var files = Stream.<Path>builder();
         for (var directory : MODEL_DIRECTORIES) {
             try (var paths = Files.list(directory)) {
-                paths.filter(path -> path.toString().endsWith(".oxsts"))
+                paths.filter(path -> path.toString().endsWith(".semantifyr"))
                         .sorted()
                         .forEach(files::add);
             }
@@ -78,14 +78,17 @@ class ModelFileFormattingTest {
     void formattingWhatTheSerializerWritesChangesNothing(Path modelFile) throws IOException {
         var resourceSet = injector.getInstance(XtextResourceSet.class);
         try (var siblings = Files.list(modelFile.getParent())) {
-            siblings.filter(path -> path.toString().endsWith(".oxsts")).forEach(path -> {
+            siblings.filter(path -> path.toString().endsWith(".semantifyr")).forEach(path -> {
                 resourceSet.getResource(fileUri(path), true);
             });
         }
         var parsed = resourceSet.getResource(fileUri(modelFile), true);
         EcoreUtil.resolveAll(resourceSet);
         var copy = EcoreUtil.copy(parsed.getContents().getFirst());
-        resourceSet.createResource(URI.createURI("copy.oxsts")).getContents().add(copy);
+        resourceSet
+                .createResource(URI.createURI("copy.semantifyr"))
+                .getContents()
+                .add(copy);
         var serialized = injector.getInstance(ISerializer.class)
                 .serialize(copy, SaveOptions.newBuilder().format().getOptions())
                 .replace("\t", "    ");
@@ -108,7 +111,7 @@ class ModelFileFormattingTest {
 
     private static XtextResource load(String text) throws IOException {
         var resource = (XtextResource)
-                injector.getInstance(XtextResourceSet.class).createResource(URI.createURI("model.oxsts"));
+                injector.getInstance(XtextResourceSet.class).createResource(URI.createURI("model.semantifyr"));
         resource.load(new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8)), Map.of());
         return resource;
     }

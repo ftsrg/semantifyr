@@ -14,7 +14,7 @@ const sysmlRange = { start: { line: 4, character: 0 }, end: { line: 9, character
 const oxstsRange = { start: { line: 40, character: 0 }, end: { line: 60, character: 1 } }
 const report = { version: 2, kind: 'run', verificationCase: 'semantifyr::sysml::model::LampNeverLit', trace: { root: 'root', steps: [] } } as unknown as VerificationReport
 const nameMap = { modelHash: 'abc' }
-const witnessUri = 'file:///workspace/.artifacts/case/witness.oxsts'
+const witnessUri = 'file:///workspace/.artifacts/case/witness.semantifyr'
 
 interface Command {
   command: string

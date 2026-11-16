@@ -11,6 +11,15 @@ import { LanguageClient, type LanguageClientOptions, type Middleware, type Serve
 import { DidChangeConfigurationNotification } from "vscode-languageclient";
 import { readSemantifyrPayload } from "./settings.js";
 
+const SERVER_NAMES: Readonly<Record<string, string>> = {
+    oxsts: "Semantifyr Language Server",
+    gamma: "Gamma Language Server",
+};
+
+function serverNameOf(language: string): string {
+    return SERVER_NAMES[language] ?? `${language} language server`;
+}
+
 function buildClientOptions(language: string, middleware: Middleware): LanguageClientOptions {
     return {
         documentSelector: [{ scheme: "file", language: language }],
@@ -54,7 +63,7 @@ export function createRemoteLspClient(port: number, language: string, middleware
 
     return new LanguageClient(
         `${language}LSP`,
-        `${language.toUpperCase()} Language Server`,
+        serverNameOf(language),
         serverOptions,
         buildClientOptions(language, middleware)
     );
@@ -69,7 +78,7 @@ export function createLspClient(lspExecutable: string, language: string, middlew
         server.listen(0, "127.0.0.1", () => {
             const address = server.address();
             if (address === null || typeof address === "string") {
-                reject(new Error(`Failed to obtain a port for the ${language} LSP socket`));
+                reject(new Error(`Failed to obtain a port for the socket of the ${serverNameOf(language)}`));
                 return;
             }
             const port = address.port;
@@ -82,14 +91,14 @@ export function createLspClient(lspExecutable: string, language: string, middlew
             child.on("error", reject);
             child.on("exit", (code) => {
                 server.close();
-                reject(new Error(`The ${language} language server exited with code ${String(code)} before connecting`));
+                reject(new Error(`The ${serverNameOf(language)} exited with code ${String(code)} before connecting`));
             });
         });
     });
 
     return new LanguageClient(
         `${language}LSP`,
-        `${language.toUpperCase()} Language Server`,
+        serverNameOf(language),
         serverOptions,
         buildClientOptions(language, middleware)
     );

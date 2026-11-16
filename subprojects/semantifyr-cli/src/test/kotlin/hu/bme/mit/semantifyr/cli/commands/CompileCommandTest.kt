@@ -28,7 +28,7 @@ class CompileCommandTest {
 
     @Test
     suspend fun `writes the inlined model of a single case`(@TempDir directory: Path) {
-        val target = directory.resolve("smoke.inlined.oxsts")
+        val target = directory.resolve("smoke.inlined.semantifyr")
 
         val result = runCli("compile", "-o", target.toString(), "-d", directory.resolve("artifacts").toString(), smokeModel.toString())
 
@@ -41,7 +41,7 @@ class CompileCommandTest {
     suspend fun `prints the directory of the artifacts of each case`(@TempDir directory: Path) {
         val artifacts = directory.resolve("artifacts")
 
-        val result = runCli("compile", "-o", directory.resolve("smoke.inlined.oxsts").toString(), "-d", artifacts.toString(), smokeModel.toString())
+        val result = runCli("compile", "-o", directory.resolve("smoke.inlined.semantifyr").toString(), "-d", artifacts.toString(), smokeModel.toString())
 
         assertThat(result.statusCode).describedAs(result.output).isZero()
         val caseDirectory = artifacts.resolve("smoke.semantifyr.verification.smoke.CounterReachesThree").toAbsolutePath().normalize()
@@ -51,7 +51,7 @@ class CompileCommandTest {
 
     @Test
     suspend fun `without an artifact directory the artifacts go to a temporary directory it prints`(@TempDir directory: Path) {
-        val result = runCli("compile", "-o", directory.resolve("smoke.inlined.oxsts").toString(), smokeModel.toString())
+        val result = runCli("compile", "-o", directory.resolve("smoke.inlined.semantifyr").toString(), smokeModel.toString())
 
         assertThat(result.statusCode).describedAs(result.output).isZero()
         val artifactsLine = result.stdout.lines().single {
@@ -81,17 +81,17 @@ class CompileCommandTest {
         val output = directory.resolve("inlined")
         val artifacts = directory.resolve("artifacts")
 
-        val result = runCli("compile", "-o", output.toString(), "-d", artifacts.toString(), "--include-tag", "expect-fail", testModels.resolve("semantic/local_vars.oxsts").toString())
+        val result = runCli("compile", "-o", output.toString(), "-d", artifacts.toString(), "--include-tag", "expect-fail", testModels.resolve("semantic/local_vars.semantifyr").toString())
 
         assertThat(result.statusCode).describedAs(result.output).isZero()
         val files = output.listDirectoryEntries().map {
             it.name
         }
         assertThat(files).hasSizeGreaterThan(1).allMatch {
-            it.matches(Regex("[A-Za-z0-9._-]+\\.oxsts"))
+            it.matches(Regex("[A-Za-z0-9._-]+\\.semantifyr"))
         }
         val directories = artifacts.listDirectoryEntries().map {
-            "${it.name}.oxsts"
+            "${it.name}.semantifyr"
         }
         assertThat(files).containsExactlyInAnyOrderElementsOf(directories)
     }
@@ -113,7 +113,7 @@ class CompileCommandTest {
     suspend fun `the compilation step artifact writes the model after each pass`(@TempDir directory: Path) {
         val artifacts = directory.resolve("artifacts")
 
-        val result = runCli("compile", "--artifacts", "none", "--enable-artifact", "compilation-step", "-o", directory.resolve("smoke.inlined.oxsts").toString(), "-d", artifacts.toString(), smokeModel.toString())
+        val result = runCli("compile", "--artifacts", "none", "--enable-artifact", "compilation-step", "-o", directory.resolve("smoke.inlined.semantifyr").toString(), "-d", artifacts.toString(), smokeModel.toString())
 
         assertThat(result.statusCode).describedAs(result.output).isZero()
         val steps = artifacts.listDirectoryEntries().single().resolve("pipeline/steps")
@@ -123,7 +123,7 @@ class CompileCommandTest {
 
     @Test
     suspend fun `the output model is no artifact kind`(@TempDir directory: Path) {
-        val result = runCli("compile", "--enable-artifact", "output-model", "-o", directory.resolve("smoke.inlined.oxsts").toString(), "-d", directory.resolve("artifacts").toString(), smokeModel.toString())
+        val result = runCli("compile", "--enable-artifact", "output-model", "-o", directory.resolve("smoke.inlined.semantifyr").toString(), "-d", directory.resolve("artifacts").toString(), smokeModel.toString())
 
         assertThat(result.statusCode).isEqualTo(2)
         assertThat(result.stderr).contains("output-model")
@@ -133,7 +133,7 @@ class CompileCommandTest {
     suspend fun `an artifact directory that cannot be written exits with the output code before compiling`(@TempDir directory: Path) {
         val readOnly = directory.resolve("read-only").createDirectories()
         assumeTrue(readOnly.toFile().setWritable(false) && !readOnly.isWritable(), "the file system cannot revoke write access")
-        val target = directory.resolve("smoke.inlined.oxsts")
+        val target = directory.resolve("smoke.inlined.semantifyr")
 
         val result = runCli("compile", "-o", target.toString(), "-d", readOnly.resolve("artifacts").toString(), smokeModel.toString())
 

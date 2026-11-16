@@ -20,7 +20,7 @@ export async function run() {
 
     const folder = workspace.workspaceFolders?.[0];
     assert.ok(folder, "no workspace folder is open");
-    const model = Uri.joinPath(folder.uri, "smoke.oxsts").toString();
+    const model = Uri.joinPath(folder.uri, "smoke.semantifyr").toString();
     const cases = await commands.executeCommand<VerificationCaseSpecification[]>("oxsts.case.discover", model);
     const [smokeCase] = cases;
     assert.ok(smokeCase, "the server discovered no case");

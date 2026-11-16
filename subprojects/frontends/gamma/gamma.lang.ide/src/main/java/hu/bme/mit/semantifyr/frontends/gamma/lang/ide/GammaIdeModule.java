@@ -6,9 +6,13 @@
 
 package hu.bme.mit.semantifyr.frontends.gamma.lang.ide;
 
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.ide.server.commands.GammaCommandService;
 import hu.bme.mit.semantifyr.lang.ide.editor.contentassist.FuzzyMatcher;
+import hu.bme.mit.semantifyr.lang.ide.server.OxstsInjector;
 import hu.bme.mit.semantifyr.lang.ide.server.formatting.SemantifyrFormattingService;
+import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinLibrary;
 import org.eclipse.xtext.ide.editor.contentassist.IPrefixMatcher;
 import org.eclipse.xtext.ide.server.commands.IExecutableCommandService;
 import org.eclipse.xtext.ide.server.formatting.FormattingService;
@@ -28,5 +32,11 @@ public class GammaIdeModule extends AbstractGammaIdeModule {
     @SuppressWarnings("unused")
     public Class<? extends FormattingService> bindFormattingService() {
         return SemantifyrFormattingService.class;
+    }
+
+    @Provides
+    @Singleton
+    BuiltinLibrary provideBuiltinLibrary(OxstsInjector oxstsInjector) {
+        return oxstsInjector.get().getInstance(BuiltinLibrary.class);
     }
 }

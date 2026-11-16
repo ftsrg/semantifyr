@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test;
 
 class InlineClassCommandHandlerTest {
 
-    private static final Path SMOKE_MODEL = Path.of("../../oxsts-test-models/smoke/smoke.oxsts");
+    private static final Path SMOKE_MODEL = Path.of("../../oxsts-test-models/smoke/smoke.semantifyr");
 
     private static final String SMOKE_CASE = "semantifyr::verification::smoke::CounterReachesThree";
 
@@ -67,7 +67,7 @@ class InlineClassCommandHandlerTest {
 
         var inlinedModel = inline(false);
 
-        assertThat(inlinedModel).hasFileName("flattened.oxsts").isRegularFile();
+        assertThat(inlinedModel).hasFileName("flattened.semantifyr").isRegularFile();
         assertThat(Files.readString(inlinedModel)).contains("CounterReachesThree");
         assertThat(inlinedModel.resolveSibling("steps")).doesNotExist();
         assertThat(resourceSet.getResources()).hasSize(resourceCount);

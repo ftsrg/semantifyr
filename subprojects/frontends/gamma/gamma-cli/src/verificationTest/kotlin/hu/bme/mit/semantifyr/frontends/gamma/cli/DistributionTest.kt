@@ -26,6 +26,6 @@ class DistributionTest : DistributionTestBase("semantifyr-gamma") {
 
     @Test
     fun `the distribution carries the Gamma semantic library`() {
-        assertThat(home.resolve("libraries/gamma")).isDirectoryContaining("glob:**.oxsts")
+        assertThat(home.resolve("libraries/gamma")).isDirectoryContaining("glob:**.semantifyr")
     }
 }

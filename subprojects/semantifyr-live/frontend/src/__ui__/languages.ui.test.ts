@@ -17,11 +17,11 @@ import { casesListed, LIVE_URL, results, test } from './harness'
 const REPOSITORY = fileURLToPath(new URL('../../../../../', import.meta.url))
 
 describe('the language switch', () => {
-  test('offers SysML v2, Gamma and OXSTS, and opens a session of the language chosen', async ({ ui }) => {
-    const page = await ui.open('/oxsts/intersection')
+  test('offers SysML v2, Gamma and the Semantifyr Language, and opens a session of the language chosen', async ({ ui }) => {
+    const page = await ui.open('/language/intersection')
     await casesListed(page)
 
-    expect(await page.locator('.language-switch [role=group] button').allInnerTexts()).toEqual(['SysML v2', 'Gamma', 'OXSTS'])
+    expect(await page.locator('.language-switch [role=group] button').allInnerTexts()).toEqual(['SysML v2', 'Gamma', 'Semantifyr Language'])
     await page.locator('.language-switch [role=group] button', { hasText: 'Gamma' }).click()
 
     await casesListed(page)
@@ -29,8 +29,8 @@ describe('the language switch', () => {
     expect(ui.backend.session(0).closed).not.toBeNull()
   })
 
-  test('lists the OXSTS flavours under OXSTS, and a flavour opens its own session', async ({ ui }) => {
-    const page = await ui.open('/oxsts/intersection')
+  test('lists the libraries under the Semantifyr Language, and a flavour opens its own session', async ({ ui }) => {
+    const page = await ui.open('/language/intersection')
     await casesListed(page)
 
     await page.locator('.flavour-button').click()
@@ -84,7 +84,7 @@ type Step =
 const LANGUAGES = [
   'SysML v2',
   'Gamma',
-  'OXSTS',
+  'Semantifyr Language',
 ]
 
 const FLAVOURS = [
@@ -238,7 +238,7 @@ function exampleOf(path: string): string {
 
 describe('switching many times', () => {
   test('ends every switch of language, flavour and example, in varied order and timing, with the cases listed and the marks of the shown document alone', async ({ ui }) => {
-    const page = await ui.open('/oxsts/intersection', { height: 5800 })
+    const page = await ui.open('/language/intersection', { height: 5800 })
     const done: string[] = []
     for (const { step, wait } of stepsOf(44, 7)) {
       await take(page, step)

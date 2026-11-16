@@ -50,7 +50,7 @@ class CexExpressionToXstsExpressionTransformer(
 
     private fun integerLiteral(value: BigInteger): Expression {
         if (!value.fitsInt()) {
-            throw UnrepresentableWitnessValueException("Theta's output holds $value, beyond the 32-bit integers of OXSTS")
+            throw UnrepresentableWitnessValueException("Theta's output holds $value, beyond the 32-bit integers of the Semantifyr Language")
         }
         return XstsFactory.eINSTANCE.createLiteralInteger().also {
             it.value = value.toInt()

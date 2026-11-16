@@ -4,7 +4,7 @@ Types and expressions	Record types, nested records, record-typed variables and e
 Types and expressions	Arithmetic, comparison and boolean operators with Gamma's precedence for `not`, equality, ordering, `and` and `or`	conformant	no	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaGrammarTest.kt	not binds tighter than and	
 Types and expressions	Variables with a non-literal initial value	planned	no			The mapper refuses it with a diagnostic.
 Types and expressions	Enumeration, array, rational, decimal and subrange types, constants	unsupported	no			Future work.
-Types and expressions	`xor`, `imply`, the conditional expression, `div`, `mod`, `forall`, `exists` and select expressions	unsupported	no			Future work. `div` and `mod` wait for OXSTS operators.
+Types and expressions	`xor`, `imply`, the conditional expression, `div`, `mod`, `forall`, `exists` and select expressions	unsupported	no			Future work. `div` and `mod` wait for operators of the Semantifyr Language.
 Types and expressions	Functions, procedures and lambdas	unsupported	no			Future work.
 Statecharts	Regions, simple and composite states, nested regions	conformant	no	models/semantics/Hierarchy.gamma	region Inner	
 Statecharts	Initial pseudostates	conformant	no	models/semantics/Hierarchy.gamma	initial MainInitial	
@@ -60,7 +60,7 @@ Composition	An event passing to another event, `->`	conformant	no	gamma.lang/src
 Composition	An output event reaching several queues, delivered to each with its parameter values	deviating	no	models/semantics/SeveralQueues.gamma	channel [ sender.values ] -o)- [ right.values ]	Gamma's transformation resets the parameters after the first queue, so a later queue receives the event with default values, and of several simple channels from one port it serves only the first.
 Composition	An output port led out to the system and carried by a channel into a queue is not reset by its dispatch, so it is delivered again at every later turn of its adapter until the adapter runs or resets the component	conformant	no	models/semantics/BroadcastPorts.gamma	bind signal -> sender.signal	
 Composition	An asynchronous composite inside an asynchronous composite, a queue holding messages of the environment and of other components or clock ticks	unsupported	no			The mapper refuses them with a diagnostic.
-Composition	Event parameters of record type in a queued message	planned	no			Waits for arrays of records in OXSTS.
+Composition	Event parameters of record type in a queued message	planned	no			Waits for arrays of records in the Semantifyr Language.
 Composition	The queue size and overflow atoms of a property, `initial execute` of a scheduled-asynchronous composite	unsupported	no			Future work.
 Composition	The `full-step` control function	unsupported	no			The mapper refuses it with a diagnostic, since Gamma's analysis consumes the message without running the component where its code generator runs it to completion.
 Time	Timeouts in seconds and milliseconds	conformant	no	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaGrammarTest.kt	a timeout is set in seconds or milliseconds	

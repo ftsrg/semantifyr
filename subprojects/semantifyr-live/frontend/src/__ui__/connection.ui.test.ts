@@ -17,7 +17,7 @@ describe('a server that does not answer at page load', () => {
   for (const [address, text] of [
     ['/sysml/level-crossing', 'part def'],
     ['/gamma/level-crossing', 'statechart'],
-    ['/oxsts/intersection', 'package'],
+    ['/language/intersection', 'package'],
   ] as const) {
     test(`shows the model of ${address} and retries until it answers`, async ({ ui }) => {
       let reachable = false
@@ -52,7 +52,7 @@ describe('a session the server refuses', () => {
       }
       return 'accept'
     }
-    const page = await ui.open('/oxsts/intersection', { before: watchStatusTexts })
+    const page = await ui.open('/language/intersection', { before: watchStatusTexts })
 
     await expect.poll(async () => {
       return page.locator('.connection').innerText()
@@ -71,7 +71,7 @@ describe('a session the server refuses', () => {
 
 describe('a session the server terminates', () => {
   test('stays terminated with the model on screen until Reconnect is pressed, which starts a new session', async ({ ui }) => {
-    const page = await ui.open('/oxsts/intersection')
+    const page = await ui.open('/language/intersection')
     await casesListed(page)
 
     ui.backend.session().close(TERMINATED, 'Session terminated by an administrator')
@@ -104,7 +104,7 @@ describe('a lost connection', () => {
         })
       })
     })
-    const page = await ui.open('/oxsts/intersection')
+    const page = await ui.open('/language/intersection')
     await casesListed(page)
     await results(page).verifyAll.click()
     await expect.poll(async () => {

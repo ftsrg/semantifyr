@@ -36,12 +36,12 @@ describe('a page that moves to another address in place', () => {
 
   it('opens the model the new address names', async () => {
     open = createTestLive(silent, servedFlavors)
-    open.live.start('/oxsts/intersection')
+    open.live.start('/language/intersection')
     await vi.waitFor(() => {
       expect(open!.live.workspace.get().runtime).not.toBeNull()
     })
 
-    open.live.openAddress(`/oxsts#model=${await encodeCompressedBase64Url('package linked')}`)
+    open.live.openAddress(`/language#model=${await encodeCompressedBase64Url('package linked')}`)
 
     await vi.waitFor(() => {
       expect(open!.live.currentText()).toBe('package linked')

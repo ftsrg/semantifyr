@@ -55,7 +55,7 @@ export const failedResult: VerificationCaseResult = {
   portfolioId: 'smart',
   metrics: sampleMetrics,
   report: sampleReport,
-  witnessUri: 'inmemory:///workspace/snippet.witness.oxsts',
+  witnessUri: 'inmemory:///workspace/snippet.witness.semantifyr',
 };
 
 export const sampleTrace: ResultTrace = resultTraceOf(failedResult)!;
