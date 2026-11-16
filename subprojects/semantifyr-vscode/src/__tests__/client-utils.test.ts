@@ -88,7 +88,7 @@ describe('createLspClient', () => {
             setTimeout(() => child.emit('exit', 1, null), 0);
         });
 
-        await expect(serverOptions('/extension/bin/oxsts.lang.ide')).rejects.toThrow('The oxsts language server exited with code 1 before connecting');
+        await expect(serverOptions('/extension/bin/oxsts.lang.ide')).rejects.toThrow('The Semantifyr Language Server exited with code 1 before connecting');
     });
 
     it('fails when the server cannot be started', async () => {

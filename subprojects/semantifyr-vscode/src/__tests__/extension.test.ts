@@ -44,8 +44,8 @@ describe('activate', () => {
         await activate(createExtensionContext('/extension') as never);
 
         expect(LanguageClient.instances.map((instance) => [instance.id, instance.name])).toEqual([
-            ['oxstsLSP', 'OXSTS Language Server'],
-            ['gammaLSP', 'GAMMA Language Server'],
+            ['oxstsLSP', 'Semantifyr Language Server'],
+            ['gammaLSP', 'Gamma Language Server'],
         ]);
         for (const instance of LanguageClient.instances) {
             expect(instance.start).toHaveBeenCalledOnce();

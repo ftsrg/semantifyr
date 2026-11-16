@@ -30,7 +30,7 @@ let controller: TestController;
 let witnesses: WitnessView;
 
 async function setUp(validation: Partial<VerificationTestControllerConfig> = {}) {
-    const client = new LanguageClient('oxstsLSP', 'OXSTS Language Server', undefined, {});
+    const client = new LanguageClient('oxstsLSP', 'Semantifyr Language Server', undefined, {});
     client.server.onRequest((method, parameters, token) => {
         requests.push({ method, parameters });
         const command = (parameters as ExecuteCommandParams).command;
