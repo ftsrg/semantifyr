@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlatteningInfo
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import kotlinx.serialization.Serializable
@@ -25,6 +26,7 @@ data class BackendVerificationRequest(
     val inlinedOxsts: InlinedOxsts,
     val artifactOutputPath: Path,
     val flatteningInfo: FlatteningInfo? = null,
+    val transitionCallTraces: TransitionCallTraceMap? = null,
     val timeout: Duration = Duration.INFINITE,
 )
 

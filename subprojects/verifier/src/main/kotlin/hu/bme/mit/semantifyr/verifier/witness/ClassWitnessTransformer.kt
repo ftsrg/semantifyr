@@ -12,7 +12,6 @@ import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceReferenceProvider
-import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.checkInterrupted
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator
@@ -32,13 +31,13 @@ class ClassWitnessTransformer @Inject constructor(
         fun transform(witnessState: WitnessState): ClassWitnessState {
             checkInterrupted()
             val (tracerVariableValues, nonTracerValues) = witnessState.values.partition {
-                TransitionTracerNames.isTracerName(it.variable.name)
+                it.variable in compilation.transitionCallTraces.tracerVariables
             }
             val realVariableValues = nonTracerValues.filter {
                 it.variable in compilation.flatteningInfo.variableHolders
             }
             val recordedArguments = nonTracerValues.filter {
-                TransitionTracerNames.isArgumentName(it.variable.name)
+                it.variable in compilation.transitionCallTraces.argumentVariables
             }.associate {
                 it.variable to backAnnotateInstancePointers(it.variable, it.value)
             }

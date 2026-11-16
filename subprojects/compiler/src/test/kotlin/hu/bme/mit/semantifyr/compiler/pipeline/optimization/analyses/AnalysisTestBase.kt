@@ -100,7 +100,7 @@ abstract class AnalysisTestBase {
 
     protected fun runConeOfInfluence(source: String): AnalyzedModel<ConeOfInfluenceInfo> {
         return withCompiled(source) { (inlined, evaluator) ->
-            AnalyzedModel(inlined, ConeOfInfluenceComputation(inlined, evaluator).compute())
+            AnalyzedModel(inlined, ConeOfInfluenceComputation(inlined, evaluator, emptySet()).compute())
         }
     }
 

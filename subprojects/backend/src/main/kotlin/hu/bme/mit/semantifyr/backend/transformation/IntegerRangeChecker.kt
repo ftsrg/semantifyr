@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.backend.transformation
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.UnsupportedConstruct
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ConeOfInfluenceComputation
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ConeOfInfluenceInfo
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.IntegerRange
@@ -82,7 +83,10 @@ class IntegerRangeChecker @Inject constructor(
     }
 
     private fun coneOf(inlinedOxsts: InlinedOxsts): ConeOfInfluenceInfo {
-        return ConeOfInfluenceComputation(inlinedOxsts, MetaConstantExpressionEvaluator()).compute()
+        val observedVariables = inlinedOxsts.variables.filter {
+            TransitionTracerNames.isTracerName(it.name) || TransitionTracerNames.isArgumentName(it.name)
+        }.toSet()
+        return ConeOfInfluenceComputation(inlinedOxsts, MetaConstantExpressionEvaluator(), observedVariables).compute()
     }
 
     private fun leavingArithmetic(

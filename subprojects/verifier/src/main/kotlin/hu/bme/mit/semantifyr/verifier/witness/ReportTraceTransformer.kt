@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.verifier.witness
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionCallTrace
-import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
@@ -95,7 +94,7 @@ class ReportTraceTransformer @Inject constructor(
         for (assignment in compilation.inlinedOxsts.eAllOfType<AssignmentOperation>()) {
             val variable = (assignment.reference as? ElementReference)?.element as? VariableDeclaration ?: continue
             val value = assignment.expression
-            if (TransitionTracerNames.isTracerName(variable.name) && value is LiteralBoolean && value.isValue) {
+            if (variable in compilation.transitionCallTraces.tracerVariables && value is LiteralBoolean && value.isValue) {
                 order.putIfAbsent(variable, order.size)
             }
         }
@@ -104,7 +103,7 @@ class ReportTraceTransformer @Inject constructor(
 
     private fun observedTransitions(compilation: FlattenedCompilationContext, siteOrder: Map<VariableDeclaration, Int>): List<ObservedTransition> {
         val traceVariables = compilation.inlinedOxsts.variables.filter {
-            TransitionTracerNames.isTracerName(it.name)
+            it in compilation.transitionCallTraces.tracerVariables
         }.sortedBy {
             siteOrder[it] ?: Int.MAX_VALUE
         }

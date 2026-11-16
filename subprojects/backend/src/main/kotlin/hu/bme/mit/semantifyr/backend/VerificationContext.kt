@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.backend
 import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
-import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
 import hu.bme.mit.semantifyr.logging.debug
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
@@ -165,11 +164,12 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
     }
 
     private fun checkTraceVariables(witness: InlinedWitness) {
+        val transitionCallTraces = request.transitionCallTraces ?: return
         val traceVariables = request.inlinedOxsts.variables.filter {
-            TransitionTracerNames.isTracerName(it.name)
+            it in transitionCallTraces.tracerVariables
         }
         val argumentVariables = request.inlinedOxsts.variables.filter {
-            TransitionTracerNames.isArgumentName(it.name)
+            it in transitionCallTraces.argumentVariables
         }
         if (traceVariables.isEmpty() && argumentVariables.isEmpty()) {
             return

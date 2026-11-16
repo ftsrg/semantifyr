@@ -11,7 +11,10 @@ import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
 import hu.bme.mit.semantifyr.backend.witness.linearInlinedWitness
-import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.RecordedArgumentTrace
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionCallTrace
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -63,13 +66,14 @@ class VerificationContextTest {
         private val runStep: suspend () -> String? = { "pass" },
         private val witness: InlinedWitness? = null,
         inlinedOxsts: InlinedOxsts = modelChecking(OxstsFactory.createAG()),
+        transitionCallTraces: TransitionCallTraceMap? = null,
         soundness: SoundnessDirection = SoundnessDirection.Exact,
         private val declaredSoundness: SoundnessDirection? = null,
         override val capabilityChecker: BackendCapabilityChecker = RejectingVariables(),
     ) : VerificationContext<String, String>(
         backendId = "scripted",
         soundness = soundness,
-        request = BackendVerificationRequest(inlinedOxsts, Path("build")),
+        request = BackendVerificationRequest(inlinedOxsts, Path("build"), transitionCallTraces = transitionCallTraces),
     ) {
         val phases = mutableListOf<String>()
 
@@ -195,7 +199,7 @@ class VerificationContextTest {
     @Test
     suspend fun `a trace variable without a value in a state fails the run`() {
         val tracer = OxstsFactory.createVariableDeclaration().also {
-            it.name = TransitionTracerNames.tracerName(0)
+            it.name = "tracer"
         }
         val inlinedOxsts = modelChecking(OxstsFactory.createAG()).also {
             it.variables += tracer
@@ -214,6 +218,11 @@ class VerificationContextTest {
             },
             witness = witness,
             inlinedOxsts = inlinedOxsts,
+            transitionCallTraces = TransitionCallTraceMap(
+                mapOf(
+                    tracer to transitionCallTrace(emptyList()),
+                ),
+            ),
             capabilityChecker = BackendCapabilityChecker.Unlimited,
         ).execute()
 
@@ -224,7 +233,7 @@ class VerificationContextTest {
     @Test
     suspend fun `a recorded argument without a value in a state fails the run`() {
         val argument = OxstsFactory.createVariableDeclaration().also {
-            it.name = TransitionTracerNames.argumentName(0, "value")
+            it.name = "argument"
         }
         val inlinedOxsts = modelChecking(OxstsFactory.createAG()).also {
             it.variables += argument
@@ -243,6 +252,15 @@ class VerificationContextTest {
             },
             witness = witness,
             inlinedOxsts = inlinedOxsts,
+            transitionCallTraces = TransitionCallTraceMap(
+                mapOf(
+                    OxstsFactory.createVariableDeclaration() to transitionCallTrace(
+                        listOf(
+                            RecordedArgumentTrace(OxstsFactory.createParameterDeclaration(), argument),
+                        ),
+                    ),
+                ),
+            ),
             capabilityChecker = BackendCapabilityChecker.Unlimited,
         ).execute()
 
@@ -362,4 +380,14 @@ private fun modelChecking(property: Expression): InlinedOxsts {
             declaration.expression = property
         }
     }
+}
+
+private fun transitionCallTrace(recordedArguments: List<RecordedArgumentTrace>): TransitionCallTrace {
+    return TransitionCallTrace(
+        self = InstanceEvaluation(emptySet()),
+        transitionDeclaration = OxstsFactory.createTransitionDeclaration(),
+        arguments = emptyList(),
+        recordedArguments = recordedArguments,
+        parent = null,
+    )
 }

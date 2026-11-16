@@ -134,12 +134,12 @@ class TransitionCallTraceTransformer @Inject constructor(
         enclose(expansion, enclosingTrace)
     }
 
+    fun observedVariables(): Set<VariableDeclaration> {
+        return variablesOf(tracerAssignments.entries).toSet()
+    }
+
     fun declareTracers(inlinedOxsts: InlinedOxsts) {
-        val tracerVariables = tracerAssignments.entries.flatMap { (assignment, trace) ->
-            listOf(assignment.assignedVariable) + trace.recordedArguments.map {
-                it.variable
-            }
-        }
+        val tracerVariables = variablesOf(tracerAssignments.entries)
         if (tracerVariables.isNotEmpty()) {
             inlinedOxsts.variables += tracerVariables
             for (branch in inlinedOxsts.mainTransition.branches) {
@@ -155,11 +155,10 @@ class TransitionCallTraceTransformer @Inject constructor(
         val (calledTraces, uncalledTraces) = tracerAssignments.entries.partition {
             EcoreUtil.isAncestor(inlinedOxsts, it.key)
         }
-        val uncalledVariables = uncalledTraces.flatMap { (assignment, trace) ->
-            listOf(assignment.assignedVariable) + trace.recordedArguments.map {
-                it.variable
-            }
-        }.toSet()
+        val uncalledVariables = variablesOf(uncalledTraces).toSet()
+        for ((assignment, _) in uncalledTraces) {
+            tracerAssignments.remove(assignment)
+        }
         if (uncalledVariables.isNotEmpty()) {
             val resets = inlinedOxsts.eAllOfType<AssignmentOperation>().filter {
                 (it.reference as? ElementReference)?.element in uncalledVariables
@@ -174,6 +173,14 @@ class TransitionCallTraceTransformer @Inject constructor(
                 it.key.assignedVariable to it.value
             },
         )
+    }
+
+    private fun variablesOf(traces: Collection<Map.Entry<AssignmentOperation, TransitionCallTrace>>): List<VariableDeclaration> {
+        return traces.flatMap { (assignment, trace) ->
+            listOf(assignment.assignedVariable) + trace.recordedArguments.map {
+                it.variable
+            }
+        }
     }
 
     private fun createTracerVariable(tracerIndex: Int, context: EObject): VariableDeclaration {

@@ -317,6 +317,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
             inlinedOxsts = inlinedOxsts,
             artifactOutputPath = caseDirectory,
             flatteningInfo = compilation.flatteningInfo,
+            transitionCallTraces = compilation.transitionCallTraces,
             timeout = deadline - markNow(),
         )
 

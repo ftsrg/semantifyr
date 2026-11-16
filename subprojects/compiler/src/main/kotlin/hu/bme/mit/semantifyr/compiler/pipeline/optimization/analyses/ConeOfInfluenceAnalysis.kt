@@ -10,7 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.context.EvaluableCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.MetaCompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
-import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionCallTraceTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
@@ -44,11 +44,12 @@ data class ConeOfInfluenceInfo(
 
 class ConeOfInfluenceAnalysis @Inject constructor(
     private val metaCompileTimeExpressionEvaluatorProvider: MetaCompileTimeExpressionEvaluatorProvider,
+    private val transitionCallTraceTransformer: TransitionCallTraceTransformer,
 ) : Analysis<ConeOfInfluenceInfo> {
 
     override fun compute(input: EvaluableCompilationContext): ConeOfInfluenceInfo {
         val evaluator = metaCompileTimeExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
-        return ConeOfInfluenceComputation(input.inlinedOxsts, evaluator).compute()
+        return ConeOfInfluenceComputation(input.inlinedOxsts, evaluator, transitionCallTraceTransformer.observedVariables()).compute()
     }
 
 }
@@ -56,6 +57,7 @@ class ConeOfInfluenceAnalysis @Inject constructor(
 class ConeOfInfluenceComputation(
     private val inlinedOxsts: InlinedOxsts,
     private val evaluator: MetaConstantExpressionEvaluator,
+    private val observedVariables: Set<VariableDeclaration>,
 ) {
 
     fun compute(): ConeOfInfluenceInfo {
@@ -72,11 +74,9 @@ class ConeOfInfluenceComputation(
             }
         }
 
-        for (variable in inlinedOxsts.variables) {
-            if (TransitionTracerNames.isTracerName(variable.name) || TransitionTracerNames.isArgumentName(variable.name)) {
-                if (relevantVariables.add(variable)) {
-                    variableWorklist.add(variable)
-                }
+        for (variable in observedVariables) {
+            if (relevantVariables.add(variable)) {
+                variableWorklist.add(variable)
             }
         }
 
