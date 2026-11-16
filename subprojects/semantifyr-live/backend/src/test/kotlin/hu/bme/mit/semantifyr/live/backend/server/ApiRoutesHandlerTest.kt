@@ -203,12 +203,12 @@ class ApiRoutesHandlerTest {
 
         for (path in listOf("/api/health", "/api/flavors", "/api/portfolios")) {
             val response = client.get(path) {
-                header(HttpHeaders.Origin, "https://ftsrg.mit.bme.hu")
+                header(HttpHeaders.Origin, "https://semantifyr.org")
             }
             assertThat(response.headers[HttpHeaders.AccessControlAllowOrigin]).`as`(path).isEqualTo("*")
         }
         val info = client.get("/api/info") {
-            header(HttpHeaders.Origin, "https://ftsrg.mit.bme.hu")
+            header(HttpHeaders.Origin, "https://semantifyr.org")
         }
         assertThat(info.headers[HttpHeaders.AccessControlAllowOrigin]).isNull()
     }

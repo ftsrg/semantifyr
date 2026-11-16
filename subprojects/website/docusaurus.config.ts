@@ -152,12 +152,14 @@ function siteState(): string {
   return `These pages describe the development branch of Semantifyr at commit <a href="https://github.com/ftsrg/semantifyr/commit/${commit}"><code>${commit.slice(0, 8)}</code></a>.`;
 }
 
+const baseUrl = '/';
+
 export default {
   title: 'Semantifyr',
   tagline: 'A framework to support the declarative definition of engineering model semantics',
   favicon: 'favicon.ico',
-  url: 'https://ftsrg.mit.bme.hu',
-  baseUrl: '/semantifyr/',
+  url: 'https://semantifyr.org',
+  baseUrl,
   baseUrlIssueBanner: false,
   trailingSlash: true,
   staticDirectories: ['static-imported-branding', 'build/live-screenshots', 'build/api-static'],
@@ -173,7 +175,7 @@ export default {
         rel: 'icon',
         type: 'image/png',
         sizes: '192x192',
-        href: '/semantifyr/img/logo-192.png',
+        href: `${baseUrl}img/logo-192.png`,
       },
     },
     {
@@ -182,7 +184,7 @@ export default {
         rel: 'icon',
         type: 'image/png',
         sizes: '512x512',
-        href: '/semantifyr/img/logo-512.png',
+        href: `${baseUrl}img/logo-512.png`,
       },
     },
     {
@@ -190,7 +192,7 @@ export default {
       attributes: {
         rel: 'apple-touch-icon',
         sizes: '180x180',
-        href: '/semantifyr/img/apple-touch-icon.png',
+        href: `${baseUrl}img/apple-touch-icon.png`,
       },
     },
   ],

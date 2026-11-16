@@ -13,8 +13,8 @@ import { filesUnder, readText } from './files';
 const REPOSITORY = fileURLToPath(new URL('../../../../', import.meta.url));
 const SITE = fileURLToPath(new URL('../../', import.meta.url));
 
-// both hosts the site's addresses are written with, and live's constant for the first
-const ADDRESS = /(?:https:\/\/semantifyr\.org|https:\/\/ftsrg\.mit\.bme\.hu\/semantifyr|\$\{WEBSITE_URL\})(\/[^\s"'`)\]>#]*)?/g;
+// the site's address, and live's constant for it
+const ADDRESS = /(?:https:\/\/semantifyr\.org|\$\{WEBSITE_URL\})(\/[^\s"'`)\]>#]*)?/g;
 
 // the docs are routed at the site's root unless a page names its slug, the pages beside them, and the generated listings at their slugs
 function siteAddresses(): Set<string> {
