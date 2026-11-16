@@ -96,9 +96,7 @@ function errored(message: string): VerificationCaseResult {
   return {
     status: VerificationStatus.Errored,
     message,
-    backendId: null,
     portfolioId: null,
-    metrics: null,
     report: null,
     witnessUri: null,
   }
@@ -259,7 +257,7 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
   ): Promise<WitnessValidationResult> => {
     const witnessUri = witnessUris.get(request.uri)
     if (!witnessUri) {
-      return { status: 'errored', verdict: null, message: 'No witness to validate', portfolioId: null, report: null }
+      return { status: 'errored', message: 'No witness to validate', portfolioId: null, report: null, witnessUri: null }
     }
     return (await executeCommand(
       oxstsClient(),

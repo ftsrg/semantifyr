@@ -6,9 +6,9 @@
 
 import { CancellationTokenSource, createMessageConnection, type MessageConnection } from 'vscode-jsonrpc/node'
 import { ConsoleLogger, toSocket, WebSocketMessageReader, WebSocketMessageWriter } from 'vscode-ws-jsonrpc'
-import { parse, toSeconds } from 'iso8601-duration'
 import {
   discoverVerificationCases,
+  isoDurationToMs,
   verifyCase,
   VerificationStatus,
   type FlavorInfo,
@@ -129,7 +129,7 @@ function caseName(verificationCase: VerificationCaseSpecification): string {
 }
 
 function milliseconds(duration: string | undefined): number | null {
-  return duration ? toSeconds(parse(duration)) * 1000 : null
+  return duration ? isoDurationToMs(duration) : null
 }
 
 function diagnosticsListener(connection: MessageConnection, uri: string) {
@@ -346,7 +346,7 @@ export async function runStudent(student: number, round: number, options: Studen
           sentAtMs: sentAt,
           wallMs: result.elapsedMs,
           queueMs: runningAt === null ? null : runningAt - sentAt,
-          serverMs: milliseconds(result.value?.metrics?.totalDuration),
+          serverMs: milliseconds(result.value?.report?.result.metrics.totalDuration),
         }
       }
       if (options.oneAtATime) {

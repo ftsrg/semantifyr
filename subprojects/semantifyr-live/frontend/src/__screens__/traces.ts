@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { Fraction, ReportCall, ReportState, ResultTrace, VerificationReport } from '@semantifyr/editor-common'
+import type { Fraction, ReportCall, ReportState, ReportTrace } from '@semantifyr/editor-common'
 
 import { findExample, liveFlavors } from '../examples'
 import type { VerificationCaseState } from '../lib/verification/engine'
 import { servedFlavors } from '../__tests__/fixtures/flavors'
-import { seedLive, type Seed, type Seeded } from './seededLive'
+import { reportOf, seedLive, type Seed, type Seeded } from './seededLive'
 
 // A failed case of the level crossing with its trace in each language, and a Live that reads the trace's documents
 
@@ -121,7 +121,7 @@ const ELAPSED: readonly Fraction[] = [
   0,
 ]
 
-function traceOf(witnessUri: string, recorded: boolean, timed: boolean): ResultTrace {
+function traceOf(recorded: boolean, timed: boolean): ReportTrace {
   return {
     root: 'root',
     transitions: [],
@@ -134,7 +134,6 @@ function traceOf(witnessUri: string, recorded: boolean, timed: boolean): ResultT
       return { source: index, target: index + 1, elapsed: timed ? ELAPSED[index] ?? 0 : 0, calls: recorded ? calls : [] }
     }),
     missingCalls: null,
-    witnessUri,
   }
 }
 
@@ -153,19 +152,7 @@ export const LANGUAGES: Readonly<Record<string, Language>> = {
   oxsts: { flavorId: 'oxsts', exampleId: 'level-crossing', caseName: 'BarrierDownWhileTrainInCrossing', definition: 'class BarrierDownWhileTrainInCrossing', traceUri: OXSTS_WITNESS_URI },
 }
 
-const VALIDATION = {
-  version: 2,
-  kind: 're-check',
-  verificationCase: 'example::levelcrossing::BarrierDownWhileTrainInCrossing',
-  portfolioId: 'smart',
-  result: {
-    metadata: { backendId: 'spin:safe', startedAt: '2026-11-16T10:00:00Z' },
-    verdict: 'Passed',
-    soundness: 'UnderApproximating',
-    metrics: { totalDuration: 'PT0.6S' },
-  },
-  trace: null,
-} as unknown as VerificationReport
+const VALIDATION = reportOf({ verdict: 'Passed', backendId: 'spin:safe', seconds: 0.6, soundness: 'UnderApproximating', kind: 're-check' })
 
 export function caseState(language: Language, options: { validated: boolean, recorded: boolean, timed?: boolean }): VerificationCaseState {
   const flavor = liveFlavors(servedFlavors).find((candidate) => {
@@ -180,11 +167,9 @@ export function caseState(language: Language, options: { validated: boolean, rec
     caseInfo: { id: language.caseName, label: language.caseName, location: { uri: fileUri, range: { start: { line, character: 0 }, end: { line, character: 1 } } } },
     status: 'failed',
     resultStatus: 'failed',
-    metrics: { totalDuration: 'PT2.9S', preparationDuration: 'PT0S', verificationDuration: 'PT2.9S', backAnnotationDuration: 'PT0S' },
-    backendId: 'theta:cegar',
-    soundness: 'UnderApproximating',
     portfolioId: 'smart',
-    trace: traceOf(language.traceUri, options.recorded, options.timed ?? false),
+    report: reportOf({ verdict: 'Failed', backendId: 'theta:cegar', seconds: 2.9, soundness: 'UnderApproximating', trace: traceOf(options.recorded, options.timed ?? false) }),
+    witnessUri: language.traceUri,
     ...(options.validated
       ? { waited: 30_000, validationWaited: 4_000, witnessValidation: 'valid' as const, validationReport: VALIDATION, validationPortfolioIdUsed: 'smart' }
       : {}),

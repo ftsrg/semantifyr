@@ -12,10 +12,9 @@ import {
     missingCallsMessage,
     noWitnessMessage,
     type ReportCall,
-    type ResultTrace,
-    resultTraceOf,
+    isTimed,
+    type ReportTrace,
     soundnessLabel,
-    type StateChange,
     traceStates,
     traceStepLabel,
     type TraceValue,
@@ -38,7 +37,6 @@ export type WitnessValidator = (token: CancellationToken) => Promise<WitnessVali
 
 interface RecordedWitness {
     result: VerificationCaseResult;
-    trace: ResultTrace;
     traceUri: Uri;
     validator: WitnessValidator | undefined;
     validation: WitnessValidationResult | null | undefined;
@@ -69,19 +67,18 @@ export class WitnessView implements TextDocumentContentProvider {
     }
 
     record(testItem: TestItem, result: VerificationCaseResult, validator?: WitnessValidator) {
-        const trace = resultTraceOf(result);
-        if (!trace) {
+        if (!result.report?.trace) {
             this.witnesses.delete(testItem);
             return;
         }
         const traceUri = this.witnesses.get(testItem)?.traceUri ?? this.createTraceUri(testItem.label);
-        const witness = { result, trace, traceUri, validator, validation: undefined };
+        const witness = { result, traceUri, validator, validation: undefined };
         this.witnesses.set(testItem, witness);
         this.render(testItem.label, witness);
     }
 
     private render(label: string, witness: RecordedWitness) {
-        this.documents.set(witness.traceUri.toString(), renderTrace(label, witness.result, witness.trace, witness.validation));
+        this.documents.set(witness.traceUri.toString(), renderTrace(label, witness.result, witness.validation));
         this.changeEmitter.fire(witness.traceUri);
     }
 
@@ -101,7 +98,7 @@ export class WitnessView implements TextDocumentContentProvider {
             return;
         }
         let column = ViewColumn.Beside;
-        const witnessUri = witness.trace.witnessUri;
+        const witnessUri = witness.result.witnessUri;
         if (witnessUri !== null) {
             try {
                 const editor = await window.showTextDocument(Uri.parse(witnessUri), { viewColumn: ViewColumn.Beside, preview: false });
@@ -183,10 +180,10 @@ function testItemOf(argument: ShowWitnessArgument): TestItem | undefined {
 function erroredValidation(error: unknown): WitnessValidationResult {
     return {
         status: WitnessValidationStatus.Errored,
-        verdict: null,
         message: error instanceof Error ? error.message : String(error),
         portfolioId: null,
         report: null,
+        witnessUri: null,
     };
 }
 
@@ -213,25 +210,33 @@ function renderValidationOrigin(validation: WitnessValidationResult): string {
     );
 }
 
-export function renderTrace(label: string, result: VerificationCaseResult, trace: ResultTrace, validation?: WitnessValidationResult | null): string {
+export function renderTrace(label: string, result: VerificationCaseResult, validation?: WitnessValidationResult | null): string {
     const message = result.message ? ` - ${result.message}` : "";
-    const soundness = result.report === null ? [] : [soundnessLabel(result.report.result.soundness)];
-    const lines = [`# ${label}`, "", `Verdict: ${result.status}${renderOrigin(result, soundness)}${message}`];
+    const report = result.report;
+    const soundness = report === null ? [] : [soundnessLabel(report.result.soundness)];
+    const origin = renderOrigin({ backendId: report?.result.metadata.backendId ?? null, portfolioId: result.portfolioId }, soundness);
+    const lines = [`# ${label}`, "", `Verdict: ${result.status}${origin}${message}`];
     if (validation !== undefined) {
         lines.push("", `Validation: ${renderValidation(validation)}`);
     }
-    if (trace.witnessUri !== null) {
-        lines.push("", `${witnessLabel(trace.witnessUri)}: ${trace.witnessUri}`);
+    if (result.witnessUri !== null) {
+        lines.push("", `${witnessLabel(result.witnessUri)}: ${result.witnessUri}`);
+    }
+    const trace = report?.trace;
+    if (!trace) {
+        return `${lines.join("\n")}\n`;
     }
     if (trace.missingCalls !== null) {
         lines.push("", missingCallsMessage(trace.missingCalls));
     }
 
     const states = traceStates(trace);
+    const timed = isTimed(trace);
     lines.push("", `## ${traceStepLabel(0)}`, "", ...renderCalls(trace, trace.initial.calls), "", ...renderStart(states.start));
     trace.steps.forEach((step, index) => {
-        const elapsed = states.timed ? ["", `Elapsed: ${states.steps[index]?.elapsed ?? ""}`] : [];
-        lines.push("", `## ${traceStepLabel(index + 1)}`, ...elapsed, "", ...renderCalls(trace, step.calls), "", ...renderChanges(states.steps[index]?.changes ?? []));
+        const elapsed = timed ? ["", `Elapsed: ${String(step.elapsed)}`] : [];
+        const changes = (states.steps[index] ?? []).filter((variable) => variable.changed);
+        lines.push("", `## ${traceStepLabel(index + 1)}`, ...elapsed, "", ...renderCalls(trace, step.calls), "", ...renderChanges(changes));
     });
     return `${lines.join("\n")}\n`;
 }
@@ -249,7 +254,7 @@ function renderOrigin(result: { backendId: string | null; portfolioId: string | 
     return origin.length === 0 ? "" : ` (${origin.join(", ")})`;
 }
 
-function renderCalls(trace: ResultTrace, calls: readonly ReportCall[]): string[] {
+function renderCalls(trace: ReportTrace, calls: readonly ReportCall[]): string[] {
     if (calls.length === 0) {
         return [trace.missingCalls === null ? "No calls." : "Calls missing."];
     }
@@ -268,7 +273,7 @@ function renderStart(values: readonly TraceValue[]): string[] {
     return ["State:", "", ...renderTable(values)];
 }
 
-function renderChanges(changes: readonly StateChange[]): string[] {
+function renderChanges(changes: readonly TraceValue[]): string[] {
     if (changes.length === 0) {
         return ["No changes."];
     }

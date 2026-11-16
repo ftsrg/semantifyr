@@ -121,7 +121,7 @@ function keptStatusOf(caseState: VerificationCaseState): VerificationCaseState['
 }
 
 function timeOf(caseState: VerificationCaseState): string | null {
-  const duration = caseState.metrics?.totalDuration
+  const duration = caseState.report?.result.metrics.totalDuration
   if (duration !== undefined) {
     return formatSeconds(isoDurationToMs(duration))
   }
@@ -145,7 +145,7 @@ export function caseRowOf(caseState: VerificationCaseState): CaseRow {
     outdated: finished && caseState.outdated === true,
     validation: finished ? validationOf(caseState) : null,
     validationMessage: caseState.validationMessage ?? null,
-    hasTrace: finished && caseState.trace !== undefined,
+    hasTrace: finished && Boolean(caseState.report?.trace),
     waiting: isWaiting(own),
     rerun: finished && isWaiting(own) ? own : null,
     shared: false,

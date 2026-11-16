@@ -89,7 +89,7 @@ describe(`live deployment at ${url}`, () => {
   it('verifies the smoke model on Spin alone', async () => {
     const results = await verifySmokeModel('spin-safe-dfs');
     for (const result of results) {
-      expect(result?.backendId).toMatch(/^spin:/);
+      expect(result?.report?.result.metadata.backendId).toMatch(/^spin:/);
     }
   });
 });

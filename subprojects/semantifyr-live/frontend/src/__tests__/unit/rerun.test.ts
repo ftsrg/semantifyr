@@ -12,7 +12,7 @@ import {
   type VerificationState,
 } from '../../lib/verification/engine'
 import { sampleCase } from '../fixtures/cases'
-import { passedResult, sampleTrace } from '../fixtures/verification-results'
+import { failedResult, passedResult, sampleReport } from '../fixtures/verification-results'
 
 function holder(initial: VerificationState): {
   state: () => VerificationState
@@ -31,7 +31,7 @@ const failedCase: VerificationState = {
   phase: 'done',
   discovery: 'discovered',
   cases: [
-    { caseInfo: sampleCase('a'), status: 'failed', resultStatus: 'failed', trace: sampleTrace, message: 'property fails' },
+    { caseInfo: sampleCase('a'), status: 'failed', resultStatus: 'failed', report: sampleReport, witnessUri: failedResult.witnessUri!, message: 'property fails' },
   ],
 }
 
@@ -67,7 +67,7 @@ describe('a run over cases that have results', () => {
     })
     handle.cancel()
 
-    expect(state().cases[0]).toMatchObject({ status: 'failed', trace: sampleTrace, message: 'property fails' })
+    expect(state().cases[0]).toMatchObject({ status: 'failed', report: sampleReport, message: 'property fails' })
   })
 
   it('marks a result outdated when the model was edited while it was verified', async () => {

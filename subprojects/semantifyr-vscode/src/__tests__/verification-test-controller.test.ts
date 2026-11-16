@@ -11,7 +11,7 @@ import type { VerificationCaseResult, VerificationCaseSpecification, WitnessVali
 import { VerificationTestController, type VerificationTestControllerConfig } from '../clients/verification-test-controller.js';
 import { WitnessView } from '../witness.js';
 import { registerOutputChannel } from '../outputChannel.js';
-import { counterexample, modelUri, reachableCase, resolutionNote, result, safeCase } from './fixtures.js';
+import { counterexample, modelUri, reachableCase, resolutionNote, result, safeCase, witnessUri } from './fixtures.js';
 import { CancellationTokenSource, createExtensionContext, openDocument, resetVscode, state, type TestController, type TestItem, Uri, window } from './stubs/vscode.js';
 import { LanguageClient } from './stubs/vscode-languageclient-node.js';
 
@@ -332,7 +332,7 @@ describe('verification', () => {
 
 describe('witness validation', () => {
     const byCase = { validateWitnessCommand: 'gamma.witness.validate', validateWitnessByCase: true };
-    const valid: WitnessValidationResult = { status: 'valid', verdict: 'failed', message: null, portfolioId: 'smart', report: null };
+    const valid: WitnessValidationResult = { status: 'valid', message: null, portfolioId: 'smart', report: null, witnessUri: null };
 
     function validateWitnessOf(item: TestItem) {
         return state.commands.get('semantifyr.witness.validate')!(item);
@@ -382,7 +382,7 @@ describe('witness validation', () => {
         await validateWitnessOf(caseItem('lamp::Safe'));
 
         expect((requests.at(-1)!.parameters as ExecuteCommandParams).arguments).toEqual([
-            { uri: counterexample.witnessUri, range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } },
+            { uri: witnessUri, range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } },
         ]);
     });
 

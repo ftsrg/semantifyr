@@ -4,41 +4,25 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { Fraction, ReportCall, ReportState, ReportTrace, ReportValue, VerificationCaseResult } from "./wire.ts";
+import type { ReportCall, ReportState, ReportTrace, ReportValue } from "./wire.ts";
 
 const CLOCK_TYPE = "semantifyr::clock";
-
-export interface ResultTrace extends ReportTrace {
-    witnessUri: string | null;
-}
 
 export interface TraceValue {
     variable: string;
     value: string;
 }
 
-export interface StateChange {
-    variable: string;
-    value: string;
-    previous: string | undefined;
-}
-
 export interface TraceVariable {
     variable: string;
     value: string;
+    previous: string | undefined;
     changed: boolean;
-}
-
-export interface TraceStateStep {
-    elapsed: string;
-    changes: StateChange[];
-    variables: TraceVariable[];
 }
 
 export interface TraceStates {
     start: TraceValue[];
-    steps: TraceStateStep[];
-    timed: boolean;
+    steps: TraceVariable[][];
 }
 
 export interface TraceArgument {
@@ -67,14 +51,6 @@ export interface TraceCalls {
     lifelines: string[];
 }
 
-export function resultTraceOf(result: VerificationCaseResult | null | undefined): ResultTrace | null {
-    const report = result?.report;
-    if (!result || !report?.trace) {
-        return null;
-    }
-    return { ...report.trace, witnessUri: result.witnessUri ?? null };
-}
-
 export function formatReportValue(value: ReportValue): string {
     if (value === null) {
         return "null";
@@ -90,10 +66,6 @@ export function formatReportValue(value: ReportValue): string {
         }).join(", ")}}`;
     }
     return String(value);
-}
-
-export function formatFraction(fraction: Fraction): string {
-    return String(fraction);
 }
 
 function valuesOf(state: ReportState | undefined): TraceValue[] {
@@ -115,17 +87,12 @@ export function traceStates(trace: ReportTrace): TraceStates {
         const previous = new Map(valuesOf(trace.states[step.source]).map((entry) => {
             return [entry.variable, entry.value];
         }));
-        const variables = valuesOf(trace.states[step.target]).map((entry) => {
-            return { ...entry, changed: previous.get(entry.variable) !== entry.value };
+        return valuesOf(trace.states[step.target]).map((entry) => {
+            const before = previous.get(entry.variable);
+            return { ...entry, previous: before, changed: before !== entry.value };
         });
-        const changes = variables.filter((entry) => {
-            return entry.changed;
-        }).map((entry) => {
-            return { variable: entry.variable, value: entry.value, previous: previous.get(entry.variable) };
-        });
-        return { elapsed: formatFraction(step.elapsed), changes, variables };
     });
-    return { start: valuesOf(trace.states[trace.initial.state]), steps, timed: isTimed(trace) };
+    return { start: valuesOf(trace.states[trace.initial.state]), steps };
 }
 
 function argumentsOf(call: ReportCall): TraceArgument[] {

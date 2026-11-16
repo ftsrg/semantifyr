@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { ResultTrace, VerificationCaseResult, VerificationCaseSpecification, VerificationReport } from '@semantifyr/editor-common';
+import type { ReportTrace, VerificationCaseResult, VerificationCaseSpecification, VerificationReport } from '@semantifyr/editor-common';
 
 export const modelUri = 'file:///workspace/lamp.semantifyr';
 
@@ -24,7 +24,7 @@ export const reachableCase: VerificationCaseSpecification = {
     location: { uri: modelUri, range: { start: { line: 9, character: 0 }, end: { line: 12, character: 1 } } },
 };
 
-export const counterexample: ResultTrace = {
+export const counterexample: ReportTrace = {
     root: 'root',
     transitions: [
         {
@@ -50,10 +50,9 @@ export const counterexample: ResultTrace = {
         },
     ],
     missingCalls: null,
-    witnessUri,
 };
 
-function reportOf(status: VerificationCaseResult['status'], trace: ResultTrace | null): VerificationReport {
+function reportOf(status: VerificationCaseResult['status'], trace: ReportTrace | null): VerificationReport {
     return {
         version: 2,
         kind: 'run',
@@ -92,8 +91,8 @@ function reportOf(status: VerificationCaseResult['status'], trace: ResultTrace |
     };
 }
 
-export function result(status: VerificationCaseResult['status'], trace: ResultTrace | null = null, message: string | null = null): VerificationCaseResult {
-    return { status, message, backendId: 'theta-cegar-expl', portfolioId: 'theta', metrics: null, report: reportOf(status, trace), witnessUri: trace?.witnessUri ?? null };
+export function result(status: VerificationCaseResult['status'], trace: ReportTrace | null = null, message: string | null = null): VerificationCaseResult {
+    return { status, message, portfolioId: 'theta', report: reportOf(status, trace), witnessUri: trace === null ? null : witnessUri };
 }
 
 export function validationReport(): VerificationReport {

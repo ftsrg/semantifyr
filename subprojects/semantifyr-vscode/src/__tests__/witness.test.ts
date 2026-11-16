@@ -9,11 +9,11 @@ import { renderTrace, WitnessView } from '../witness.js';
 import { registerOutputChannel } from '../outputChannel.js';
 import { counterexample, validationReport, resolutionNote, result, witnessUri } from './fixtures.js';
 import { createExtensionContext, resetVscode, state, TestItem, TestMessage, Uri, ViewColumn, commands, window, workspace } from './stubs/vscode.js';
-import type { ResultTrace, WitnessValidationResult } from '@semantifyr/editor-common';
+import type { ReportTrace, WitnessValidationResult } from '@semantifyr/editor-common';
 
 describe('renderTrace', () => {
     it('lists the calls and the state changes of each step', () => {
-        expect(renderTrace('Safe', result('failed', counterexample), counterexample)).toBe([
+        expect(renderTrace('Safe', result('failed', counterexample))).toBe([
             '# Safe',
             '',
             'Verdict: failed (backend theta-cegar-expl, portfolio theta, exact)',
@@ -51,19 +51,17 @@ describe('renderTrace', () => {
         ['file:/tmp/semantifyr/lamp.Safe/witness.semantifyr', 'Witness'],
         ['file:/tmp/semantifyr/crossroads.Green/trace.get', 'Gamma trace'],
     ])('labels the opened file %s as %s', (uri, label) => {
-        const trace = { ...counterexample, witnessUri: uri };
-
-        expect(renderTrace('Safe', result('failed', trace), trace).split('\n')[4]).toBe(`${label}: ${uri}`);
+        expect(renderTrace('Safe', { ...result('failed', counterexample), witnessUri: uri }).split('\n')[4]).toBe(`${label}: ${uri}`);
     });
 
     it('appends the message of a passed verdict to the verdict line', () => {
-        const document = renderTrace('Safe', result('passed', counterexample, resolutionNote), counterexample);
+        const document = renderTrace('Safe', result('passed', counterexample, resolutionNote));
 
         expect(document.split('\n')[2]).toBe(`Verdict: passed (backend theta-cegar-expl, portfolio theta, exact) - ${resolutionNote}`);
     });
 
     it.each([null, ''])('keeps the verdict line of a passed verdict with the message %j bare', (message) => {
-        const document = renderTrace('Safe', result('passed', counterexample, message), counterexample);
+        const document = renderTrace('Safe', result('passed', counterexample, message));
 
         expect(document.split('\n')[2]).toBe('Verdict: passed (backend theta-cegar-expl, portfolio theta, exact)');
     });
@@ -72,13 +70,13 @@ describe('renderTrace', () => {
         const passed = result('passed', counterexample);
         const underApproximating = { ...passed, report: { ...passed.report!, result: { ...passed.report!.result, soundness: 'UnderApproximating' as const } } };
 
-        expect(renderTrace('Safe', underApproximating, counterexample).split('\n')[2]).toBe('Verdict: passed (backend theta-cegar-expl, portfolio theta, under-approximating)');
+        expect(renderTrace('Safe', underApproximating).split('\n')[2]).toBe('Verdict: passed (backend theta-cegar-expl, portfolio theta, under-approximating)');
     });
 
     it('adds the witness validation below the verdict', () => {
-        const validation: WitnessValidationResult = { status: 'invalid', verdict: 'passed', message: 'spurious', portfolioId: 'smart', report: null };
+        const validation: WitnessValidationResult = { status: 'invalid', message: 'spurious', portfolioId: 'smart', report: null, witnessUri: null };
 
-        const document = renderTrace('Safe', result('failed', counterexample), counterexample, validation);
+        const document = renderTrace('Safe', result('failed', counterexample), validation);
 
         expect(document.split('\n').slice(2, 5)).toEqual([
             'Verdict: failed (backend theta-cegar-expl, portfolio theta, exact)',
@@ -88,23 +86,24 @@ describe('renderTrace', () => {
     });
 
     it('names the validation\'s backend, duration and soundness from its report', () => {
-        const validation: WitnessValidationResult = { status: 'valid', verdict: 'failed', message: null, portfolioId: 'smart', report: validationReport() };
+        const validation: WitnessValidationResult = { status: 'valid', message: null, portfolioId: 'smart', report: validationReport(), witnessUri: null };
 
-        const document = renderTrace('Safe', result('failed', counterexample), counterexample, validation);
+        const document = renderTrace('Safe', result('failed', counterexample), validation);
 
         expect(document.split('\n')[4]).toBe('Validation: Witness valid (backend spin-safe-dfs, portfolio smart, 1.5 s, under-approximating)');
     });
 
     it('leaves out a missing witness and origin', () => {
-        const trace: ResultTrace = {
+        const trace: ReportTrace = {
             ...counterexample,
             initial: { state: 0, calls: [] },
             states: [{ values: {} }, { values: { 'root.mode': 'A | B' } }],
             steps: [{ source: 0, target: 1, elapsed: 0, calls: [] }],
-            witnessUri: null,
         };
+        const passed = result('passed', trace);
+        const report = { ...passed.report!, result: { ...passed.report!.result, metadata: { ...passed.report!.result.metadata, backendId: null } } };
 
-        const document = renderTrace('Reachable', { ...result('passed', trace), backendId: null, portfolioId: null }, trace);
+        const document = renderTrace('Reachable', { ...passed, portfolioId: null, report, witnessUri: null });
 
         expect(document).toBe([
             '# Reachable',
@@ -133,15 +132,15 @@ describe('renderTrace', () => {
 
 describe('renderTrace of what the report adds', () => {
     it('gives each step its elapsed time in a timed model', () => {
-        const trace: ResultTrace = { ...counterexample, steps: [{ source: 0, target: 1, elapsed: '3/2', calls: [] }] };
+        const trace: ReportTrace = { ...counterexample, steps: [{ source: 0, target: 1, elapsed: '3/2', calls: [] }] };
 
-        expect(renderTrace('Safe', result('failed', trace), trace)).toContain('## Step 1\n\nElapsed: 3/2\n');
+        expect(renderTrace('Safe', result('failed', trace))).toContain('## Step 1\n\nElapsed: 3/2\n');
     });
 
     it('says why the calls are missing', () => {
-        const trace: ResultTrace = { ...counterexample, missingCalls: 'no trace variables came back', steps: [{ source: 0, target: 1, elapsed: 0, calls: [] }] };
+        const trace: ReportTrace = { ...counterexample, missingCalls: 'no trace variables came back', steps: [{ source: 0, target: 1, elapsed: 0, calls: [] }] };
 
-        const document = renderTrace('Safe', result('failed', trace), trace);
+        const document = renderTrace('Safe', result('failed', trace));
 
         expect(document).toContain('The calls of this trace could not be obtained: no trace variables came back');
         expect(document).toContain('## Step 1\n\nCalls missing.\n');
@@ -182,7 +181,7 @@ describe('WitnessView', () => {
         expect(document.uri.scheme).toBe('semantifyr-trace');
         expect(document.uri.path).toBe('/Safe.md');
         expect(document.languageId).toBe('markdown');
-        expect(document.getText()).toBe(renderTrace('Safe', result('failed', counterexample), counterexample));
+        expect(document.getText()).toBe(renderTrace('Safe', result('failed', counterexample)));
     });
 
     it('accepts the test item itself from the test explorer', async () => {
@@ -194,7 +193,7 @@ describe('WitnessView', () => {
     });
 
     it('opens only the trace when the result carries no witness file', async () => {
-        view.record(item as never, result('passed', { ...counterexample, witnessUri: null }));
+        view.record(item as never, { ...result('passed', counterexample), witnessUri: null });
 
         await showWitness(item);
 
@@ -258,7 +257,7 @@ describe('WitnessView validation', () => {
     }
 
     function validation(status: WitnessValidationResult['status'], message: string | null = null): WitnessValidationResult {
-        return { status, verdict: null, message, portfolioId: 'smart', report: null };
+        return { status, message, portfolioId: 'smart', report: null, witnessUri: null };
     }
 
     function traceDocument(): string {

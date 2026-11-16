@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { isoDurationToMs, type LibrariesResponse, type PortfolioInfo, type ResultTrace, type VerificationCaseSpecification } from '@semantifyr/editor-common'
+import { isoDurationToMs, type LibrariesResponse, type ModelSize, type OptimizationStats, type PortfolioInfo, type ReportKind, type ReportTrace, type ReportVerdict, type SoundnessDirection, type VerificationCaseSpecification, type VerificationReport } from '@semantifyr/editor-common'
 
 import { findExample, liveFlavors, type LiveFlavor } from '../examples'
 import { SemantifyrLiveApi } from '../lib/api/lspExtensions'
@@ -195,7 +195,7 @@ function ranFromStart(state: VerificationState, startedAt: number): Verification
   return {
     ...state,
     cases: state.cases.map((caseState) => {
-      const duration = caseState.metrics?.totalDuration
+      const duration = caseState.report?.result.metrics.totalDuration
       return duration === undefined ? caseState : { ...caseState, ranDuring: { start: startedAt, end: startedAt + isoDurationToMs(duration) } }
     }),
   }
@@ -290,7 +290,7 @@ export function caseOf(id: string, line: number, uri = 'file:///workspace/snippe
   }
 }
 
-const EMPTY_TRACE: ResultTrace = {
+const EMPTY_TRACE: ReportTrace = {
   root: 'root',
   transitions: [],
   variables: [],
@@ -298,7 +298,58 @@ const EMPTY_TRACE: ResultTrace = {
   states: [{ values: {} }],
   steps: [],
   missingCalls: null,
-  witnessUri: null,
+}
+
+const NO_OPTIMIZATION: OptimizationStats = { duration: 'PT0S', passes: [], analyses: [] }
+
+const NO_SIZE: ModelSize = { variables: 0, operations: 0, expressions: 0 }
+
+export interface ReportSeed {
+  verdict: ReportVerdict
+  backendId: string
+  seconds: number
+  soundness?: SoundnessDirection
+  kind?: ReportKind
+  trace?: ReportTrace | null
+}
+
+export function reportOf(seed: ReportSeed): VerificationReport {
+  return {
+    version: 2,
+    kind: seed.kind ?? 'run',
+    verificationCase: 'example::Case',
+    portfolioId: 'smart',
+    optimization: { enabled: [] },
+    timeout: 'PT5M',
+    result: {
+      metadata: { backendId: seed.backendId, startedAt: '2026-11-16T10:00:00Z' },
+      verdict: seed.verdict,
+      soundness: seed.soundness ?? 'Exact',
+      isTrusted: true,
+      metrics: {
+        totalDuration: `PT${seed.seconds}S`,
+        backend: { preparationDuration: 'PT0S', verificationDuration: `PT${seed.seconds}S`, backAnnotationDuration: 'PT0S' },
+        verifier: {
+          compilationDuration: 'PT0S',
+          compilation: {
+            createDuration: 'PT0S',
+            instantiationDuration: 'PT0S',
+            inliningDuration: 'PT0S',
+            flatteningDuration: 'PT0S',
+            inliningOptimization: NO_OPTIMIZATION,
+            flatteningOptimization: NO_OPTIMIZATION,
+            inputSize: NO_SIZE,
+            inlinedSize: NO_SIZE,
+            flattenedSize: NO_SIZE,
+          },
+          backAnnotationDuration: 'PT0S',
+          portfolioDuration: `PT${seed.seconds}S`,
+        },
+      },
+      message: null,
+    },
+    trace: seed.trace ?? null,
+  }
 }
 
 export function finished(caseInfo: VerificationCaseSpecification, status: 'passed' | 'failed', seconds: number): VerificationCaseState {
@@ -306,10 +357,8 @@ export function finished(caseInfo: VerificationCaseSpecification, status: 'passe
     caseInfo,
     status,
     resultStatus: status,
-    metrics: { totalDuration: `PT${seconds}S`, preparationDuration: 'PT0S', verificationDuration: `PT${seconds}S`, backAnnotationDuration: 'PT0S' },
-    backendId: 'theta',
     portfolioId: 'smart',
-    trace: EMPTY_TRACE,
+    report: reportOf({ verdict: status === 'passed' ? 'Passed' : 'Failed', backendId: 'theta', seconds, trace: EMPTY_TRACE }),
     witnessValidation: 'valid',
   }
 }

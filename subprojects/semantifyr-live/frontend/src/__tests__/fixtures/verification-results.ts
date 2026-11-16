@@ -4,27 +4,20 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import {
-  resultTraceOf,
-  type ResultTrace,
-  type VerificationCaseResult,
-  type VerificationMetrics,
-  type VerificationReport,
-} from '@semantifyr/editor-common';
-
-export const sampleMetrics: VerificationMetrics = {
-  totalDuration: 'PT1S',
-  preparationDuration: 'PT0.1S',
-  verificationDuration: 'PT0.8S',
-  backAnnotationDuration: 'PT0S',
-};
+import type { VerificationCaseResult, VerificationReport } from '@semantifyr/editor-common';
 
 export const sampleReport = {
   version: 2,
   kind: 'run',
   verificationCase: 'example::Case',
   portfolioId: 'smart',
-  result: { verdict: 'Failed', soundness: 'UnderApproximating', message: 'property fails' },
+  result: {
+    metadata: { backendId: 'theta-cegar', startedAt: '2026-11-16T10:00:00Z' },
+    verdict: 'Failed',
+    soundness: 'UnderApproximating',
+    metrics: { totalDuration: 'PT1S' },
+    message: 'property fails',
+  },
   trace: {
     root: 'root',
     transitions: [],
@@ -41,9 +34,7 @@ export const sampleValidationReport: VerificationReport = { ...sampleReport, kin
 export const passedResult: VerificationCaseResult = {
   status: 'passed',
   message: null,
-  backendId: 'theta-cegar',
   portfolioId: 'smart',
-  metrics: sampleMetrics,
   report: { ...sampleReport, trace: null },
   witnessUri: null,
 };
@@ -51,11 +42,7 @@ export const passedResult: VerificationCaseResult = {
 export const failedResult: VerificationCaseResult = {
   status: 'failed',
   message: 'property fails',
-  backendId: 'theta-cegar',
   portfolioId: 'smart',
-  metrics: sampleMetrics,
   report: sampleReport,
   witnessUri: 'inmemory:///workspace/snippet.witness.semantifyr',
 };
-
-export const sampleTrace: ResultTrace = resultTraceOf(failedResult)!;

@@ -5,7 +5,7 @@
  */
 
 import type React from 'react'
-import type { ResultTrace } from '@semantifyr/editor-common'
+import type { ReportTrace } from '@semantifyr/editor-common'
 import type { VerdictStatus } from '@semantifyr/editor-common/marks'
 
 import type { LanguageRuntime } from '../lib/language/types'
@@ -17,7 +17,9 @@ import { StepsView } from './StepsView'
 import { textView, type TraceTextSource } from './TextView'
 
 export interface TraceViewProps {
-  trace: ResultTrace
+  trace: ReportTrace
+  // the file the verification wrote its witness or the language's trace to
+  witnessUri: string | null
   caseName: string
   verdict: VerdictStatus
   expandedStep: number | null
@@ -34,7 +36,7 @@ export type TraceLayout =
   | 'calls'
   | 'text'
 
-export type TraceSourceContext = Pick<TraceViewProps, 'trace' | 'caseName' | 'runtime'>
+export type TraceSourceContext = Pick<TraceViewProps, 'witnessUri' | 'caseName' | 'runtime'>
 
 export interface TraceView {
   id: string
@@ -56,9 +58,9 @@ function steps(label: string): TraceView {
   return { id: 'steps', label, layout: 'list', View: StepsView }
 }
 
-function witness(label: string, uriOf: (trace: ResultTrace, runtime: LanguageRuntime | null) => string | null | undefined): TraceView {
+function witness(label: string, uriOf: (witnessUri: string | null, runtime: LanguageRuntime | null) => string | null | undefined): TraceView {
   return textView('witness', label, (context) => {
-    const fileUri = uriOf(context.trace, context.runtime)
+    const fileUri = uriOf(context.witnessUri, context.runtime)
     return fileUri
       ? {
         tabId: 'trace-witness',
@@ -73,10 +75,10 @@ function witness(label: string, uriOf: (trace: ResultTrace, runtime: LanguageRun
 
 function languageTrace(label: string, languageId: string, fileName: (caseName: string) => string, languageName: string): TraceView {
   return textView('own', label, (context) => {
-    return context.trace.witnessUri
+    return context.witnessUri
       ? {
         tabId: 'trace-text',
-        fileUri: context.trace.witnessUri,
+        fileUri: context.witnessUri,
         label: fileName(context.caseName),
         languageId,
         banner: TRACE_BANNERS.own(context.caseName, languageName),
@@ -86,16 +88,16 @@ function languageTrace(label: string, languageId: string, fileName: (caseName: s
 }
 
 // the Gamma frontend writes its trace beside the witness
-function gammaWitnessOf(trace: ResultTrace): string | null {
-  return trace.witnessUri?.replace(/[^/]*$/, `witness${OXSTS_EXTENSION}`) ?? null
+function gammaWitnessOf(witnessUri: string | null): string | null {
+  return witnessUri?.replace(/[^/]*$/, `witness${OXSTS_EXTENSION}`) ?? null
 }
 
 const OXSTS_TRACE: TraceLanguage = {
   views: [
     steps('Steps'),
     CALLS,
-    witness('Witness', (trace) => {
-      return trace.witnessUri
+    witness('Witness', (witnessUri) => {
+      return witnessUri
     }),
   ],
 }
@@ -108,8 +110,8 @@ const TRACE_LANGUAGES: Readonly<Record<string, TraceLanguage>> = {
       }, 'SysML v2'),
       steps('Steps'),
       CALLS,
-      witness('Witness', (trace, runtime) => {
-        return trace.witnessUri ? runtime?.witnessUriOf?.(trace.witnessUri) : null
+      witness('Witness', (witnessUri, runtime) => {
+        return witnessUri ? runtime?.witnessUriOf?.(witnessUri) : null
       }),
     ],
   },

@@ -5,8 +5,8 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { formatReportValue, lastNameSegment, resultTraceOf, shortenPath, traceCalls, traceStates } from "../trace.ts";
-import type { ReportCall, ReportTrace, VerificationReport } from "../wire.ts";
+import { formatReportValue, isTimed, lastNameSegment, shortenPath, traceCalls, traceStates } from "../trace.ts";
+import type { ReportCall, ReportTrace } from "../wire.ts";
 
 function call(self: string, transition: string, calls: ReportCall[] = []): ReportCall {
     return { self, transition, arguments: {}, calls };
@@ -43,35 +43,33 @@ describe("traceStates", () => {
         const states = traceStates(lamp);
 
         expect(states.start).toEqual([{ variable: "root.lamp.on", value: "false" }, { variable: "root.lamp.level", value: "0" }]);
-        expect(states.steps[0]).toEqual({
-            elapsed: "0",
-            changes: [{ variable: "root.lamp.on", value: "true", previous: "false" }],
-            variables: [{ variable: "root.lamp.on", value: "true", changed: true }, { variable: "root.lamp.level", value: "0", changed: false }],
-        });
-    });
-
-    it("claims nothing for a value the target state does not hold", () => {
-        expect(traceStates(lamp).steps[1]).toEqual({
-            elapsed: "0",
-            changes: [],
-            variables: [{ variable: "root.lamp.on", value: "true", changed: false }],
-        });
-    });
-
-    it("compares a step back to an earlier state with its own source", () => {
-        expect(traceStates(lamp).steps[2]?.changes).toEqual([
-            { variable: "root.lamp.on", value: "false", previous: "true" },
-            { variable: "root.lamp.level", value: "0", previous: undefined },
+        expect(states.steps[0]).toEqual([
+            { variable: "root.lamp.on", value: "true", previous: "false", changed: true },
+            { variable: "root.lamp.level", value: "0", previous: "0", changed: false },
         ]);
     });
 
-    it("shows elapsed time for a model that keeps a clock or lets time pass, and none for one that does neither", () => {
+    it("claims nothing for a value the target state does not hold", () => {
+        expect(traceStates(lamp).steps[1]).toEqual([{ variable: "root.lamp.on", value: "true", previous: "true", changed: false }]);
+    });
+
+    it("compares a step back to an earlier state with its own source", () => {
+        expect(traceStates(lamp).steps[2]).toEqual([
+            { variable: "root.lamp.on", value: "false", previous: "true", changed: true },
+            { variable: "root.lamp.level", value: "0", previous: undefined, changed: true },
+        ]);
+    });
+
+});
+
+describe("isTimed", () => {
+    it("holds for a model that keeps a clock or lets time pass, and not for one that does neither", () => {
         const waited = trace({ states: [{ values: {} }, { values: {} }], steps: [{ source: 0, target: 1, elapsed: "3/2", calls: [] }] });
         const clocked = trace({ variables: [{ variable: "root.timer", type: { kind: "datatype", name: "semantifyr::clock", element: null, size: null }, slot: null }] });
 
-        expect(traceStates(waited)).toMatchObject({ timed: true, steps: [{ elapsed: "3/2" }] });
-        expect(traceStates(clocked).timed).toBe(true);
-        expect(traceStates(lamp).timed).toBe(false);
+        expect(isTimed(waited)).toBe(true);
+        expect(isTimed(clocked)).toBe(true);
+        expect(isTimed(trace({ states: [{ values: {} }, { values: {} }], steps: [{ source: 0, target: 1, elapsed: 0, calls: [] }] }))).toBe(false);
     });
 });
 
@@ -137,20 +135,6 @@ describe("traceCalls", () => {
 
         expect(result.lifelines).toEqual([]);
         expect(result.steps).toEqual([]);
-    });
-});
-
-describe("resultTraceOf", () => {
-    const report = { kind: "run", trace: trace({}) } as VerificationReport;
-
-    it("pairs the report's trace with the file its text was written to", () => {
-        expect(resultTraceOf({ status: "failed", message: null, backendId: null, portfolioId: null, metrics: null, report, witnessUri: "file:///workspace/witness.semantifyr" }))
-            .toMatchObject({ root: "root", witnessUri: "file:///workspace/witness.semantifyr" });
-    });
-
-    it("has no trace for a result without a report or a report without a trace", () => {
-        expect(resultTraceOf({ status: "errored", message: null, backendId: null, portfolioId: null, metrics: null, report: null, witnessUri: null })).toBeNull();
-        expect(resultTraceOf({ status: "passed", message: null, backendId: null, portfolioId: null, metrics: null, report: { ...report, trace: null }, witnessUri: null })).toBeNull();
     });
 });
 

@@ -6,7 +6,7 @@
 
 import type React from 'react'
 import { useMemo } from 'react'
-import { lastNameSegment, missingCallsMessage, shortenPath, traceCalls, traceStates, type TraceCall, type TraceCallStep } from '@semantifyr/editor-common'
+import { isTimed, lastNameSegment, missingCallsMessage, shortenPath, traceCalls, type TraceCall, type TraceCallStep } from '@semantifyr/editor-common'
 
 import { Icon } from '../ui/icons'
 import type { TraceViewProps } from './registry'
@@ -252,9 +252,9 @@ function Arrow({ placed, caller, fromEnvironment }: { placed: PlacedCall, caller
 export function CallsView({ trace }: TraceViewProps): React.JSX.Element {
   const diagram = useMemo(() => {
     const calls = traceCalls(trace)
-    const states = traceStates(trace)
+    const timed = isTimed(trace)
     const steps = [calls.initialized, ...calls.steps].map((step, number) => {
-      const elapsed = states.timed && number > 0 ? states.steps[number - 1]?.elapsed ?? null : null
+      const elapsed = timed && number > 0 ? String(trace.steps[number - 1]?.elapsed) : null
       return { number, step, elapsed }
     })
     return calls.lifelines.length > 0 ? layout(steps, calls.lifelines) : null

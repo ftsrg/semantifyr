@@ -84,14 +84,6 @@ export interface CompilationMetrics {
     flattenedSize: ModelSize;
 }
 
-export interface VerificationMetrics {
-    totalDuration: string;
-    preparationDuration: string;
-    verificationDuration: string;
-    backAnnotationDuration: string;
-    compilation?: CompilationMetrics;
-}
-
 export type ReportKind =
     | "run"
     | "re-check";
@@ -236,9 +228,7 @@ export interface VerificationReport {
 export interface VerificationCaseResult {
     status: VerificationStatus;
     message: string | null;
-    backendId: string | null;
     portfolioId: string | null;
-    metrics: VerificationMetrics | null;
     report: VerificationReport | null;
     witnessUri: string | null;
 }
@@ -256,10 +246,10 @@ export type WitnessValidationStatus = (typeof WitnessValidationStatus)[keyof typ
 
 export interface WitnessValidationResult {
     status: WitnessValidationStatus;
-    verdict: VerificationStatus | null;
     message: string | null;
     portfolioId: string | null;
     report: VerificationReport | null;
+    witnessUri: string | null;
 }
 
 export const CompiledOxstsStatus = {

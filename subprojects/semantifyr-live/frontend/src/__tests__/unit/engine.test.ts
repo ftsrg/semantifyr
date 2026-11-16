@@ -24,8 +24,8 @@ import { sampleCase } from '../fixtures/cases';
 import {
   failedResult,
   passedResult,
+  sampleReport,
   sampleValidationReport,
-  sampleTrace,
 } from '../fixtures/verification-results';
 
 function captureStates(): {
@@ -44,7 +44,7 @@ function captureStates(): {
 const noopProgress = (_: (parameters: unknown) => void) => () => {};
 
 describe('runAllVerifications', () => {
-  it('sends every case at once and folds in each verdict with its metrics, backendId and soundness', async () => {
+  it('sends every case at once and folds in each verdict with its report', async () => {
     const responses = [passedResult, failedResult];
     const sendRequest = vi.fn<LspClient['sendRequest']>(async () => responses.shift() ?? null);
     const client: LspClient = { sendRequest, sendNotification: () => {} };
@@ -66,11 +66,10 @@ describe('runAllVerifications', () => {
 
     const final = states.at(-1)!;
     expect(final.cases.map((verificationCase) => verificationCase.status)).toEqual(['passed', 'failed']);
-    expect(final.cases[0]!.metrics?.totalDuration).toBe('PT1S');
-    expect(final.cases[0]!.backendId).toBe('theta-cegar');
+    expect(final.cases[0]!.report).toEqual(passedResult.report);
     expect(final.cases[0]!.portfolioId).toBe('smart');
-    expect(final.cases[1]!.soundness).toBe('UnderApproximating');
-    expect(final.cases[1]!.trace).toBeDefined();
+    expect(final.cases[1]!.report).toEqual(failedResult.report);
+    expect(final.cases[1]!.witnessUri).toBe(failedResult.witnessUri);
     expect(final.message).toMatch(/not every case passed/i);
 
     expect(sendRequest.mock.calls[0]![1]).toEqual({
@@ -173,7 +172,7 @@ describe('runAllVerifications', () => {
       if ((parameters as { command?: string }).command === 'gamma.case.verify') {
         return failedResult;
       }
-      return { status: 'valid', verdict: 'passed', message: null, portfolioId: 'smart', report: null };
+      return { status: 'valid', message: null, portfolioId: 'smart', report: null, witnessUri: null };
     });
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
@@ -391,7 +390,7 @@ describe('dispatchAutoValidation', () => {
     setState({
       phase: 'done',
       discovery: 'discovered',
-      cases: [{ caseInfo: sampleCase('a'), status: 'failed', trace: sampleTrace }],
+      cases: [{ caseInfo: sampleCase('a'), status: 'failed', report: sampleReport, witnessUri: failedResult.witnessUri! }],
     });
 
     dispatchAutoValidation(
@@ -462,9 +461,9 @@ describe('the server\'s report of the session\'s verifications', () => {
     const validating: VerificationState = {
       phase: 'done',
       discovery: 'discovered',
-      cases: [{ caseInfo: caseOnLine('a', 1), status: 'failed', validating: true, trace: sampleTrace }],
+      cases: [{ caseInfo: caseOnLine('a', 1), status: 'failed', validating: true, report: sampleReport, witnessUri: failedResult.witnessUri! }],
     };
-    const witness = { uri: sampleTrace.witnessUri!, range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } };
+    const witness = { uri: failedResult.witnessUri!, range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } };
     expect(applyServerReport(validating, [entry('Validate', 'Queued', witness)], 0).cases[0]).toMatchObject({ validationServerState: 'Queued' });
   });
 });

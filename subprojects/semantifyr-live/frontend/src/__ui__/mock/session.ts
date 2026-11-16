@@ -510,7 +510,7 @@ export class MockSession {
     this.active.delete(id)
     this.announce()
     if (abort.signal.aborted && kind === 'Validate') {
-      return { status: 'errored', verdict: null, message: 'java.util.concurrent.CancellationException', portfolioId: active.portfolioId, report: null }
+      return { status: 'errored', message: 'java.util.concurrent.CancellationException', portfolioId: active.portfolioId, report: null, witnessUri: null }
     }
     return result
   }

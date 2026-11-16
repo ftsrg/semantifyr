@@ -6,7 +6,7 @@
 
 import type React from 'react'
 import { useMemo } from 'react'
-import { shortenPath, traceStates } from '@semantifyr/editor-common'
+import { isTimed, shortenPath, traceStates } from '@semantifyr/editor-common'
 
 import { Icon } from '../ui/icons'
 import type { TraceViewProps } from './registry'
@@ -33,6 +33,7 @@ export function StepsView({ trace, verdict, expandedStep, expandStep }: TraceVie
   const states = useMemo(() => {
     return traceStates(trace)
   }, [trace])
+  const timed = isTimed(trace)
   return (
     <div className="steps" data-testid="trace-steps">
       <div className="step">
@@ -50,26 +51,29 @@ export function StepsView({ trace, verdict, expandedStep, expandStep }: TraceVie
           })}
         </div>
       </div>
-      {states.steps.map((step, index) => {
+      {states.steps.map((variables, index) => {
         const final = index === states.steps.length - 1
         const open = expandedStep === index
+        const changes = variables.filter((entry) => {
+          return entry.changed
+        })
         return (
           <div key={index} className={`step${final ? ` is-final status-${verdict}` : ''}${open ? ' is-open' : ''}`}>
             <span className="step-number">{index + 1}</span>
             <div className="step-items">
-              {states.timed
+              {timed
                 ? (
                   <div className="step-item is-time">
                     <Icon name="clock" />
                     <span>
                       {'elapsed '}
-                      <span className="reference">{step.elapsed}</span>
+                      <span className="reference">{String(trace.steps[index]?.elapsed)}</span>
                     </span>
                   </div>
                 )
                 : null}
-              {step.changes.length === 0 ? <div className="step-item is-input"><Icon name="value" /><span>no value changed</span></div> : null}
-              {step.changes.map((change) => {
+              {changes.length === 0 ? <div className="step-item is-input"><Icon name="value" /><span>no value changed</span></div> : null}
+              {changes.map((change) => {
                 return (
                   <div key={change.variable} className="step-item is-value">
                     <Icon name="value" />
@@ -86,7 +90,7 @@ export function StepsView({ trace, verdict, expandedStep, expandStep }: TraceVie
               {open
                 ? (
                   <div className="step-variables">
-                    {step.variables.map((entry) => {
+                    {variables.map((entry) => {
                       return (
                         <div key={entry.variable} className={`step-variable${entry.changed ? ' is-changed' : ''}`}>
                           <Variable path={entry.variable} />

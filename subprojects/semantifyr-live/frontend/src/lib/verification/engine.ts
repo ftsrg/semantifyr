@@ -11,10 +11,6 @@ import {
   type Location,
   type VerificationCaseResult,
   type VerificationCaseSpecification,
-  type ResultTrace,
-  resultTraceOf,
-  type SoundnessDirection,
-  type VerificationMetrics,
   type VerificationReport,
   type WitnessValidationResult,
   type WitnessValidationStatus,
@@ -34,11 +30,9 @@ export type VerificationCaseLocation = Location
 export type {
   Location,
   Range,
-  ResultTrace,
   VerificationCaseRequest,
   VerificationCaseResult,
   VerificationCaseSpecification,
-  VerificationMetrics,
   WitnessValidationStatus,
 } from '@semantifyr/editor-common'
 
@@ -61,7 +55,9 @@ export interface VerificationCaseState {
   caseInfo: VerificationCaseSpecification
   status: VerificationCaseStatus
   message?: string
-  trace?: ResultTrace
+  report?: VerificationReport
+  // the file the verification wrote its witness or the language's trace to
+  witnessUri?: string
   witnessValidation?: WitnessValidationStatus
   validationMessage?: string | undefined
   // True between the trace arriving and the follow-up validateWitness resolving.
@@ -81,9 +77,6 @@ export interface VerificationCaseState {
   waited?: number
   validationAskedAt?: number
   validationWaited?: number
-  metrics?: VerificationMetrics
-  backendId?: string
-  soundness?: SoundnessDirection
   portfolioId?: string
   validationReport?: VerificationReport
   validationPortfolioIdUsed?: string
@@ -223,7 +216,7 @@ function withReport(caseState: VerificationCaseState, active: readonly ActiveVer
     }
   }
   if (caseState.validating === true) {
-    const witnessUri = caseState.trace?.witnessUri
+    const witnessUri = caseState.witnessUri
     const reported = reportedState(active, 'Validate', (location) => {
       return location.uri === witnessUri || sameStart(location, caseState.caseInfo.location)
     })
@@ -345,21 +338,16 @@ export interface RunVerificationOptions {
 interface VerifyOutcome {
   status: VerificationCaseStatus
   message?: string
-  trace?: ResultTrace
-  metrics?: VerificationMetrics
-  backendId?: string
-  soundness?: SoundnessDirection
+  report?: VerificationReport
+  witnessUri?: string
 }
 
 function toVerifyOutcome(response: VerificationCaseResult | null): VerifyOutcome {
-  const trace = resultTraceOf(response)
   return {
     status: parseResultStatus(response),
     ...(response?.message != null ? { message: response.message } : {}),
-    ...(trace ? { trace } : {}),
-    ...(response?.metrics ? { metrics: response.metrics } : {}),
-    ...(response?.backendId ? { backendId: response.backendId } : {}),
-    ...(response?.report ? { soundness: response.report.result.soundness } : {}),
+    ...(response?.report ? { report: response.report } : {}),
+    ...(response?.witnessUri ? { witnessUri: response.witnessUri } : {}),
   }
 }
 
@@ -377,10 +365,8 @@ function applyVerifyOutcome(
     resultStatus: outcome.status,
     outdated: caseState.editedDuringRun === true,
     ...(outcome.message != null ? { message: outcome.message } : {}),
-    ...(outcome.trace ? { trace: outcome.trace } : {}),
-    ...(outcome.metrics ? { metrics: outcome.metrics } : {}),
-    ...(outcome.backendId ? { backendId: outcome.backendId } : {}),
-    ...(outcome.soundness ? { soundness: outcome.soundness } : {}),
+    ...(outcome.report ? { report: outcome.report } : {}),
+    ...(outcome.witnessUri ? { witnessUri: outcome.witnessUri } : {}),
     ...(portfolioId !== undefined ? { portfolioId } : {}),
   }
 }
@@ -425,7 +411,7 @@ function maybeDispatchAutoValidation(
   setState: StateUpdater,
   options: RunVerificationOptions,
 ): void {
-  const witnessUri = outcome.trace?.witnessUri
+  const witnessUri = outcome.witnessUri
   if (!witnessUri) {
     return
   }

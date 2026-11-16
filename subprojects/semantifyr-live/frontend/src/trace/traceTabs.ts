@@ -7,7 +7,7 @@
 import { useEffect } from 'react'
 
 import type { LanguageRuntime } from '../lib/language/types'
-import type { ResultTrace } from '@semantifyr/editor-common'
+import type { ReportTrace } from '@semantifyr/editor-common'
 import { caseRowOf } from '../lib/workspace/caseRows'
 import type { Live } from '../lib/workspace/live'
 import { traceLanguageOf } from './registry'
@@ -16,7 +16,7 @@ import { readText, traceTabOf } from './TextView'
 // an open trace text shows the last trace of the case it was opened for, and closes once that case has none or another document is shown
 export function followTraceTabs(live: Live, runtime: LanguageRuntime, languageId: string): () => void {
   const views = traceLanguageOf(languageId).views
-  const reading = new Map<string, ResultTrace>()
+  const reading = new Map<string, ReportTrace>()
 
   const follow = (): void => {
     const { documentKey } = live.workspace.get()
@@ -30,11 +30,11 @@ export function followTraceTabs(live: Live, runtime: LanguageRuntime, languageId
           return candidate.caseInfo.id === followed.caseId
         })
         : undefined
-      const trace = caseState?.trace
+      const trace = caseState?.report?.trace
       const view = views.find((candidate) => {
         return candidate.id === followed.view
       })
-      const source = caseState && trace && view?.source ? view.source({ trace, caseName: caseRowOf(caseState).name, runtime }) : null
+      const source = caseState && trace && view?.source ? view.source({ witnessUri: caseState.witnessUri ?? null, caseName: caseRowOf(caseState).name, runtime }) : null
       if (!trace || !source) {
         reading.delete(tab.id)
         live.tabs.close(tab.id)

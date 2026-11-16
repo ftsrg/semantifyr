@@ -5,7 +5,7 @@
  */
 
 import type React from 'react'
-import { formatSeconds, isoDurationToMs, type SoundnessDirection, soundnessLabel } from '@semantifyr/editor-common'
+import { formatSeconds, isoDurationToMs, soundnessLabel, type VerificationReport } from '@semantifyr/editor-common'
 
 import { useStore } from '../lib/stores/useStore'
 import type { VerificationCaseState } from '../lib/verification/engine'
@@ -23,20 +23,15 @@ function backendNameOf(backendId: string | null | undefined): string | null {
   return BACKEND_NAMES[backend] ?? backend
 }
 
-function runLine(
-  totalDuration: string | undefined,
-  portfolio: string,
-  backendId: string | null | undefined,
-  waited: number | undefined,
-  soundness?: SoundnessDirection,
-): string {
-  const backend = backendNameOf(backendId)
+function runLine(report: VerificationReport | undefined, portfolio: string, waited: number | undefined): string {
+  const result = report?.result
+  const backend = backendNameOf(result?.metadata.backendId)
   return [
-    totalDuration === undefined ? null : formatSeconds(isoDurationToMs(totalDuration)),
+    result === undefined ? null : formatSeconds(isoDurationToMs(result.metrics.totalDuration)),
     waitedPhrase(waited),
     portfolio,
     backend === null ? null : `decided by ${backend}`,
-    soundness === undefined ? null : soundnessLabel(soundness),
+    result === undefined ? null : soundnessLabel(result.soundness),
   ]
     .filter((part) => {
       return part !== null
@@ -45,8 +40,7 @@ function runLine(
 }
 
 function validationRunLine(caseState: VerificationCaseState, portfolio: (id: string | null | undefined) => string): string {
-  const result = caseState.validationReport?.result
-  return runLine(result?.metrics.totalDuration, portfolio(caseState.validationPortfolioIdUsed), result?.metadata.backendId, caseState.validationWaited, result?.soundness)
+  return runLine(caseState.validationReport, portfolio(caseState.validationPortfolioIdUsed), caseState.validationWaited)
 }
 
 function validationLine(caseState: VerificationCaseState, portfolio: (id: string | null | undefined) => string, chosen: string): string {
@@ -79,7 +73,7 @@ export function RunDetails({ caseState }: { caseState: VerificationCaseState }):
     <div className="run-details" data-testid="run-details">
       <span className="run-line">
         <span className="run-label">Verification</span>
-        <span>{runLine(caseState.metrics?.totalDuration, portfolio(caseState.portfolioId), caseState.backendId, caseState.waited, caseState.soundness)}</span>
+        <span>{runLine(caseState.report, portfolio(caseState.portfolioId), caseState.waited)}</span>
       </span>
       <span className="run-line">
         <span className="run-label">Validation</span>

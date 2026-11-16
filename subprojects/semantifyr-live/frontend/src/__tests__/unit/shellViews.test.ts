@@ -8,7 +8,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { VerificationCaseSpecification } from '@semantifyr/editor-common'
 import { verdictOfLauncherVerdict, verdictWords } from '@semantifyr/editor-common/terms'
 
-import { sampleTrace } from '../fixtures/verification-results'
+import { sampleReport } from '../fixtures/verification-results'
 
 import { editorColorsFrom, toHexColor } from '../../lib/session/editorTheme'
 import { fileUriOfLibrary, isLibraryFileUri, libraryUriOf } from '../../lib/session/readOnlyDocuments'
@@ -40,7 +40,7 @@ function caseAt(id: string, line: number): VerificationCaseSpecification {
 }
 
 function result(id: string, status: VerificationCaseState['status'], extra: Partial<VerificationCaseState> = {}): VerificationCaseState {
-  return { caseInfo: caseAt(id, 1), status, resultStatus: status, metrics: { totalDuration: 'PT2.9S', preparationDuration: 'PT0S', verificationDuration: 'PT0S', backAnnotationDuration: 'PT0S' }, ...extra }
+  return { caseInfo: caseAt(id, 1), status, resultStatus: status, report: { ...sampleReport, trace: null, result: { ...sampleReport.result, metrics: { ...sampleReport.result.metrics, totalDuration: 'PT2.9S' } } }, ...extra }
 }
 
 function statusInput(): ShellStatusInput {
@@ -104,9 +104,8 @@ describe('a case row', () => {
   })
 
   it('keeps the verdict of a case run again, with its trace and its count, until the new one arrives', () => {
-    const trace = sampleTrace
     const rows = [
-      result('a', 'failed', { status: 'running', serverState: 'Running', trace }),
+      result('a', 'failed', { status: 'running', serverState: 'Running', report: { ...sampleReport, result: { ...sampleReport.result, metrics: { ...sampleReport.result.metrics, totalDuration: 'PT2.9S' } } } }),
       result('b', 'passed', { status: 'queued' }),
       { caseInfo: caseAt('c', 1), status: 'queued' as const },
     ].map(caseRowOf)

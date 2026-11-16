@@ -5,7 +5,7 @@
  */
 
 import { render } from '@testing-library/react'
-import type { ReportCall, ReportValue, ResultTrace } from '@semantifyr/editor-common'
+import type { ReportCall, ReportTrace, ReportValue } from '@semantifyr/editor-common'
 import { describe, expect, it } from 'vitest'
 
 import { CallsView } from '../../trace/CallsView'
@@ -16,7 +16,7 @@ function entry(self: string, transition: string, calls: ReportCall[] = [], argum
   return { self, transition, arguments: argumentValues, calls }
 }
 
-function traceOf(...calls: ReportCall[]): ResultTrace {
+function traceOf(...calls: ReportCall[]): ReportTrace {
   return {
     root: 'root',
     transitions: [],
@@ -25,13 +25,12 @@ function traceOf(...calls: ReportCall[]): ResultTrace {
     states: [{ values: {} }, { values: {} }],
     steps: [{ source: 0, target: 1, elapsed: 0, calls }],
     missingCalls: null,
-    witnessUri: null,
   }
 }
 
-function show(trace: ResultTrace): HTMLElement {
+function show(trace: ReportTrace): HTMLElement {
   const { container } = render(
-    <CallsView trace={trace} caseName="Case" verdict="failed" expandedStep={null} expandStep={() => {}} runtime={null} openTab={null} growing={false} wrapping={false} />,
+    <CallsView trace={trace} witnessUri={null} caseName="Case" verdict="failed" expandedStep={null} expandStep={() => {}} runtime={null} openTab={null} growing={false} wrapping={false} />,
   )
   return container
 }
