@@ -33,7 +33,7 @@ class GammaCompiler {
 
     fun compile(gammaModel: GammaModelPackage, outputPath: Path): GammaNameMap {
         val nameMap = GammaNameMap()
-        write(gammaModel, outputPath, nameMap, GammaTime.unitMilliseconds(gammaModel))
+        write(gammaModel, outputPath, nameMap, timeUnitMilliseconds(gammaModel))
         return nameMap
     }
 
@@ -44,14 +44,14 @@ class GammaCompiler {
         fileExtension: String,
     ): CompiledGammaModel {
         val nameMap = GammaNameMap()
-        val timeUnitMilliseconds = GammaTime.unitMilliseconds(gammaModel)
+        val timeUnitMilliseconds = timeUnitMilliseconds(gammaModel)
         val modelPath = modelPath(outputDirectory, fileExtension)
         write(gammaModel, modelPath, nameMap, timeUnitMilliseconds)
 
         val importsDirectory = importsDirectory(outputDirectory)
         importsDirectory.deleteRecursively()
         val fileNames = mutableSetOf<String>()
-        val importedPaths = GammaTime.reachablePackages(gammaModel).map {
+        val importedPaths = reachablePackages(gammaModel).map {
             val baseName = it.eResource().uri.trimFileExtension().lastSegment()
             var fileName = "$baseName.$fileExtension"
             var number = 2
@@ -85,6 +85,36 @@ class GammaCompiler {
 
         fun importsDirectory(outputDirectory: Path): Path {
             return outputDirectory.resolve("imports")
+        }
+
+        @JvmStatic
+        fun timeUnitMilliseconds(gammaModel: GammaModelPackage): Int {
+            return GammaTime.unitMilliseconds(listOf(gammaModel) + reachablePackages(gammaModel))
+        }
+
+        private fun reachablePackages(gammaModel: GammaModelPackage): List<GammaModelPackage> {
+            val reached = linkedSetOf(gammaModel)
+            val pending = ArrayDeque(listOf(gammaModel))
+            while (pending.isNotEmpty()) {
+                val current = pending.removeFirst()
+                val importedPackages = current.imports.map {
+                    it.importedPackage
+                }
+                val packageNames = importedPackages.map {
+                    it.name
+                }.toSet() + current.name
+                val loadedPackages = current.eResource().resourceSet.resources.flatMap {
+                    it.contents
+                }.filterIsInstance<GammaModelPackage>().filter {
+                    it.name in packageNames
+                }
+                for (candidate in importedPackages + loadedPackages) {
+                    if (reached.add(candidate)) {
+                        pending += candidate
+                    }
+                }
+            }
+            return reached.drop(1)
         }
     }
 

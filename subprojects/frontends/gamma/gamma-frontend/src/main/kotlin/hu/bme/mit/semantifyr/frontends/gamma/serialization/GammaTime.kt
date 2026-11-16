@@ -17,9 +17,7 @@ object GammaTime {
 
     private const val MILLISECONDS_PER_SECOND = 1000
 
-    @JvmStatic
-    fun unitMilliseconds(gammaModel: GammaModelPackage): Int {
-        val packages = listOf(gammaModel) + reachablePackages(gammaModel)
+    fun unitMilliseconds(packages: List<GammaModelPackage>): Int {
         val values = packages.flatMap {
             timeValuesMilliseconds(it)
         }.filter {
@@ -33,7 +31,7 @@ object GammaTime {
         }
     }
 
-    fun milliseconds(value: Int, unit: TimeUnit): Int {
+    private fun milliseconds(value: Int, unit: TimeUnit): Int {
         if (unit == TimeUnit.SECOND) {
             return Math.multiplyExact(value, MILLISECONDS_PER_SECOND)
         }
@@ -64,30 +62,5 @@ object GammaTime {
             }
         }
         return timeouts + clocks
-    }
-
-    fun reachablePackages(gammaModel: GammaModelPackage): List<GammaModelPackage> {
-        val reached = linkedSetOf(gammaModel)
-        val pending = ArrayDeque(listOf(gammaModel))
-        while (pending.isNotEmpty()) {
-            val current = pending.removeFirst()
-            val importedPackages = current.imports.map {
-                it.importedPackage
-            }
-            val packageNames = importedPackages.map {
-                it.name
-            }.toSet() + current.name
-            val loadedPackages = current.eResource().resourceSet.resources.flatMap {
-                it.contents
-            }.filterIsInstance<GammaModelPackage>().filter {
-                it.name in packageNames
-            }
-            for (candidate in importedPackages + loadedPackages) {
-                if (reached.add(candidate)) {
-                    pending += candidate
-                }
-            }
-        }
-        return reached.drop(1)
     }
 }

@@ -6,12 +6,12 @@
 
 import com.google.inject.Inject
 import com.google.inject.Provider
+import hu.bme.mit.semantifyr.frontends.gamma.GammaCompiler
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.LiteralInteger
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.impl.LiteralExpressionImpl
 import hu.bme.mit.semantifyr.frontends.gamma.lang.tests.InjectWithGamma
 import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaNameMap
-import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaTime
 import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaToOxstsSerializer
 import hu.bme.mit.semantifyr.frontends.gamma.serialization.UnmappedGammaConstructException
 import org.assertj.core.api.Assertions.assertThat
@@ -41,7 +41,7 @@ class GammaToOxstsSerializerTest {
         val gammaPackage = parseHelper.parse(source)
         EcoreUtil.resolveAll(gammaPackage)
         assertThat(gammaPackage.eResource().errors).isEmpty()
-        return GammaToOxstsSerializer(GammaNameMap(), GammaTime.unitMilliseconds(gammaPackage)).transformToOxsts(gammaPackage).lines().map {
+        return GammaToOxstsSerializer(GammaNameMap(), GammaCompiler.timeUnitMilliseconds(gammaPackage)).transformToOxsts(gammaPackage).lines().map {
             it.trim()
         }
     }
@@ -194,7 +194,7 @@ class GammaToOxstsSerializerTest {
         )
         EcoreUtil.resolveAll(resourceSet)
 
-        val lines = GammaToOxstsSerializer(GammaNameMap(), GammaTime.unitMilliseconds(gammaPackage)).transformToOxsts(gammaPackage).lines().map {
+        val lines = GammaToOxstsSerializer(GammaNameMap(), GammaCompiler.timeUnitMilliseconds(gammaPackage)).transformToOxsts(gammaPackage).lines().map {
             it.trim()
         }
 
@@ -354,7 +354,7 @@ class GammaToOxstsSerializerTest {
         EcoreUtil.replace(literal, unknownLiteral)
 
         assertThatThrownBy {
-            GammaToOxstsSerializer(GammaNameMap(), GammaTime.unitMilliseconds(gammaPackage)).transformToOxsts(gammaPackage)
+            GammaToOxstsSerializer(GammaNameMap(), GammaCompiler.timeUnitMilliseconds(gammaPackage)).transformToOxsts(gammaPackage)
         }.isInstanceOf(IllegalStateException::class.java).hasMessage("test.gamma:10: the literal of type LiteralExpression is not supported")
     }
 
@@ -1930,7 +1930,7 @@ class GammaToOxstsSerializerTest {
         assertThat(gammaPackage.eResource().errors).isEmpty()
 
         assertThatThrownBy {
-            GammaToOxstsSerializer(GammaNameMap(), GammaTime.unitMilliseconds(gammaPackage)).transformToOxsts(gammaPackage)
+            GammaToOxstsSerializer(GammaNameMap(), GammaCompiler.timeUnitMilliseconds(gammaPackage)).transformToOxsts(gammaPackage)
         }.isInstanceOf(UnmappedGammaConstructException::class.java).hasMessageContaining(construct).hasMessageContaining("is not mapped to the Semantifyr Language yet").hasMessageMatching("(?s).*:\\d+: .*")
     }
 
@@ -1942,7 +1942,7 @@ class GammaToOxstsSerializerTest {
         assertThat(gammaPackage.eResource().errors).isEmpty()
 
         assertThatThrownBy {
-            GammaToOxstsSerializer(GammaNameMap(), GammaTime.unitMilliseconds(gammaPackage)).transformToOxsts(gammaPackage)
+            GammaToOxstsSerializer(GammaNameMap(), GammaCompiler.timeUnitMilliseconds(gammaPackage)).transformToOxsts(gammaPackage)
         }.isInstanceOf(UnmappedGammaConstructException::class.java).hasMessageContaining("$construct is refused").hasMessageMatching("(?s)test.gamma:\\d+: .*")
     }
 
