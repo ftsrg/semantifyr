@@ -185,6 +185,7 @@ export function caseState(language: Language, options: { validated: boolean, rec
     resultStatus: 'failed',
     metrics: { totalDuration: 'PT2.9S', preparationDuration: 'PT0S', verificationDuration: 'PT2.9S', backAnnotationDuration: 'PT0S' },
     backendId: 'theta:cegar',
+    soundness: 'UnderApproximating',
     portfolioId: 'smart',
     trace: traceOf(language.traceUri, options.recorded, options.timed ?? false),
     ...(options.validated

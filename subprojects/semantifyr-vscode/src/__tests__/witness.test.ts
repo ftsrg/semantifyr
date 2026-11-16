@@ -16,7 +16,7 @@ describe('renderTrace', () => {
         expect(renderTrace('Safe', result('failed', counterexample), counterexample)).toBe([
             '# Safe',
             '',
-            'Verdict: failed (backend theta-cegar-expl, portfolio theta)',
+            'Verdict: failed (backend theta-cegar-expl, portfolio theta, exact)',
             '',
             'Report: Run',
             '',
@@ -61,13 +61,20 @@ describe('renderTrace', () => {
     it('appends the message of a passed verdict to the verdict line', () => {
         const document = renderTrace('Safe', result('passed', counterexample, resolutionNote), counterexample);
 
-        expect(document.split('\n')[2]).toBe(`Verdict: passed (backend theta-cegar-expl, portfolio theta) - ${resolutionNote}`);
+        expect(document.split('\n')[2]).toBe(`Verdict: passed (backend theta-cegar-expl, portfolio theta, exact) - ${resolutionNote}`);
     });
 
     it.each([null, ''])('keeps the verdict line of a passed verdict with the message %j bare', (message) => {
         const document = renderTrace('Safe', result('passed', counterexample, message), counterexample);
 
-        expect(document.split('\n')[2]).toBe('Verdict: passed (backend theta-cegar-expl, portfolio theta)');
+        expect(document.split('\n')[2]).toBe('Verdict: passed (backend theta-cegar-expl, portfolio theta, exact)');
+    });
+
+    it('names the soundness of a verdict that is not exact from its report', () => {
+        const passed = result('passed', counterexample);
+        const underApproximating = { ...passed, report: { ...passed.report!, result: { ...passed.report!.result, soundness: 'UnderApproximating' as const } } };
+
+        expect(renderTrace('Safe', underApproximating, counterexample).split('\n')[2]).toBe('Verdict: passed (backend theta-cegar-expl, portfolio theta, under-approximating)');
     });
 
     it('adds the witness validation below the verdict', () => {
@@ -76,7 +83,7 @@ describe('renderTrace', () => {
         const document = renderTrace('Safe', result('failed', counterexample), counterexample, validation);
 
         expect(document.split('\n').slice(2, 5)).toEqual([
-            'Verdict: failed (backend theta-cegar-expl, portfolio theta)',
+            'Verdict: failed (backend theta-cegar-expl, portfolio theta, exact)',
             '',
             'Validation: Witness invalid (backend theta-bmc, portfolio smart) - spurious',
         ]);
@@ -104,7 +111,7 @@ describe('renderTrace', () => {
         expect(document).toBe([
             '# Reachable',
             '',
-            'Verdict: passed',
+            'Verdict: passed (exact)',
             '',
             'Report: Run',
             '',

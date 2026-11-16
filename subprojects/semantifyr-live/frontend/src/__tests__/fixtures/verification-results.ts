@@ -24,7 +24,7 @@ export const sampleReport = {
   kind: 'run',
   verificationCase: 'example::Case',
   portfolioId: 'smart',
-  result: { verdict: 'Failed', message: 'property fails' },
+  result: { verdict: 'Failed', soundness: 'UnderApproximating', message: 'property fails' },
   trace: {
     root: 'root',
     transitions: [],

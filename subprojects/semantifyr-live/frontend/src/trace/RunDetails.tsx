@@ -80,7 +80,7 @@ export function RunDetails({ caseState }: { caseState: VerificationCaseState }):
     <div className="run-details" data-testid="run-details">
       <span className="run-line">
         <span className="run-label">{caseState.trace?.kind === ReportKind.Recheck ? 'Validation' : 'Verification'}</span>
-        <span>{runLine(caseState.metrics?.totalDuration, portfolio(caseState.portfolioId), caseState.backendId, caseState.waited)}</span>
+        <span>{runLine(caseState.metrics?.totalDuration, portfolio(caseState.portfolioId), caseState.backendId, caseState.waited, caseState.soundness)}</span>
       </span>
       <span className="run-line">
         <span className="run-label">Validation</span>

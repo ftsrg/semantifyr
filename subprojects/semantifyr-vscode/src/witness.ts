@@ -228,7 +228,8 @@ function formatSeconds(isoDuration: string): string {
 
 export function renderTrace(label: string, result: VerificationCaseResult, trace: ResultTrace, validation?: WitnessValidationResult | null): string {
     const message = result.message ? ` - ${result.message}` : "";
-    const lines = [`# ${label}`, "", `Verdict: ${result.status}${renderOrigin(result)}${message}`];
+    const soundness = result.report === null ? [] : [soundnessLabel(result.report.result.soundness)];
+    const lines = [`# ${label}`, "", `Verdict: ${result.status}${renderOrigin(result, soundness)}${message}`];
     if (validation !== undefined) {
         lines.push("", `Validation: ${renderValidation(validation)}`);
     }

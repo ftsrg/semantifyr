@@ -13,6 +13,7 @@ import {
   type VerificationCaseSpecification,
   type ResultTrace,
   resultTraceOf,
+  type SoundnessDirection,
   type VerificationMetrics,
   type VerificationReport,
   type WitnessValidationResult,
@@ -82,6 +83,8 @@ export interface VerificationCaseState {
   validationWaited?: number
   metrics?: VerificationMetrics
   backendId?: string
+  // the direction in which the run's verdict is sound, from its report
+  soundness?: SoundnessDirection
   portfolioId?: string
   // the validation's own report, absent when the validation wrote none
   validationReport?: VerificationReport
@@ -347,6 +350,7 @@ interface VerifyOutcome {
   trace?: ResultTrace
   metrics?: VerificationMetrics
   backendId?: string
+  soundness?: SoundnessDirection
 }
 
 function toVerifyOutcome(response: VerificationCaseResult | null): VerifyOutcome {
@@ -357,6 +361,7 @@ function toVerifyOutcome(response: VerificationCaseResult | null): VerifyOutcome
     ...(trace ? { trace } : {}),
     ...(response?.metrics ? { metrics: response.metrics } : {}),
     ...(response?.backendId ? { backendId: response.backendId } : {}),
+    ...(response?.report ? { soundness: response.report.result.soundness } : {}),
   }
 }
 
@@ -377,6 +382,7 @@ function applyVerifyOutcome(
     ...(outcome.trace ? { trace: outcome.trace } : {}),
     ...(outcome.metrics ? { metrics: outcome.metrics } : {}),
     ...(outcome.backendId ? { backendId: outcome.backendId } : {}),
+    ...(outcome.soundness ? { soundness: outcome.soundness } : {}),
     ...(portfolioId !== undefined ? { portfolioId } : {}),
   }
 }

@@ -45,7 +45,7 @@ function captureStates(): {
 const noopProgress = (_: (parameters: unknown) => void) => () => {};
 
 describe('runAllVerifications', () => {
-  it('sends every case at once and folds in each verdict with its metrics + backendId', async () => {
+  it('sends every case at once and folds in each verdict with its metrics, backendId and soundness', async () => {
     const responses = [passedResult, failedResult];
     const sendRequest = vi.fn<LspClient['sendRequest']>(async () => responses.shift() ?? null);
     const client: LspClient = { sendRequest, sendNotification: () => {} };
@@ -70,6 +70,7 @@ describe('runAllVerifications', () => {
     expect(final.cases[0]!.metrics?.totalDuration).toBe('PT1S');
     expect(final.cases[0]!.backendId).toBe('theta-cegar');
     expect(final.cases[0]!.portfolioId).toBe('smart');
+    expect(final.cases[1]!.soundness).toBe('UnderApproximating');
     expect(final.cases[1]!.trace).toBeDefined();
     expect(final.message).toMatch(/not every case passed/i);
 
