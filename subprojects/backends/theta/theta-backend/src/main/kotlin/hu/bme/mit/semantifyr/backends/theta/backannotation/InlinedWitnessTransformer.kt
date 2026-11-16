@@ -10,21 +10,23 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.transformation.WHOLE_DELAY_VARIABLE_NAME
 import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
-import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
+import hu.bme.mit.semantifyr.backend.witness.TraceVariableResolver
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
+import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaVariableTransformer
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
 class InlinedWitnessTransformer @Inject constructor(
     private val xstsExpressionToOxstsExpressionTransformer: XstsExpressionToOxstsExpressionTransformer,
+    private val thetaVariableTransformer: ThetaVariableTransformer,
 ) {
 
-    private inner class TransformerContext(val inlinedOxsts: InlinedOxsts) {
+    private inner class TransformerContext(
+        inlinedOxsts: InlinedOxsts,
+        addedNames: Set<String>,
+    ) {
         val mappings = mutableMapOf<XstsWitnessState, WitnessState>()
-        val variablesByName: Map<String, VariableDeclaration> = inlinedOxsts.variables.associateBy {
-            it.name
-        }
+        val resolver = TraceVariableResolver(inlinedOxsts, thetaVariableTransformer, addedNames, "Theta's trace")
 
         fun transform(xstsAssumptionWitnessState: XstsWitnessState) = mappings.getOrPut(xstsAssumptionWitnessState) {
             val (delays, stateVariableValues) = xstsAssumptionWitnessState.variableValues.partition {
@@ -40,27 +42,26 @@ class InlinedWitnessTransformer @Inject constructor(
         }
 
         private fun transformStateValues(stateVariableValues: List<XstsWitnessStateVariableValue>): List<WitnessStateValue> {
-            return stateVariableValues.map {
+            return stateVariableValues.mapNotNull {
                 transform(it)
             }
         }
 
-        private fun transform(variableValue: XstsWitnessStateVariableValue): WitnessStateValue {
-            val variable = resolveOxstsVariable(variableValue.variableDeclaration.name)
+        private fun transform(variableValue: XstsWitnessStateVariableValue): WitnessStateValue? {
+            val variable = resolver.stateVariableOf(variableValue.variableDeclaration.name) ?: return null
             return WitnessStateValue(
                 variable,
                 xstsExpressionToOxstsExpressionTransformer.transform(variableValue.value, variable),
             )
         }
-
-        private fun resolveOxstsVariable(variableName: String): VariableDeclaration {
-            return variablesByName[variableName]
-                ?: throw WitnessFailedException("Theta's trace holds $variableName, which names no variable of the model")
-        }
     }
 
-    fun transform(inlinedOxsts: InlinedOxsts, xstsAssumptionWitness: XstsWitness): InlinedWitness {
-        val context = TransformerContext(inlinedOxsts)
+    fun transform(
+        inlinedOxsts: InlinedOxsts,
+        xstsAssumptionWitness: XstsWitness,
+        addedNames: Set<String>,
+    ): InlinedWitness {
+        val context = TransformerContext(inlinedOxsts, addedNames)
 
         val initializedState = context.transform(xstsAssumptionWitness.initializedState)
         val transitionStates = xstsAssumptionWitness.transitionStates.map {

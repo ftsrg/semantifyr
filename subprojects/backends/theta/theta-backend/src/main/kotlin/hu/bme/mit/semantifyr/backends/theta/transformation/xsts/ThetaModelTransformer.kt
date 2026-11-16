@@ -29,6 +29,7 @@ private typealias XstsSequenceOperation = SequenceOperation
 class ThetaArtifacts(
     val xsts: XstsModel,
     val wholeDelay: WholeDelay?,
+    val addedNames: Set<String>,
 )
 
 class ThetaModelTransformer @Inject constructor(
@@ -70,7 +71,13 @@ class ThetaModelTransformer @Inject constructor(
             thetaDomainTransformer.transform(it)
         }.distinct()
 
-        return ThetaArtifacts(xsts, wholeDelay)
+        val addedNames = setOfNotNull(
+            INITIALIZED_FLAG_NAME,
+            WHOLE_DELAY_VARIABLE_NAME.takeIf {
+                wholeDelay != null
+            },
+        )
+        return ThetaArtifacts(xsts, wholeDelay, addedNames)
     }
 
     private fun waitBeforeEveryStep(xsts: XstsModel, wholeDelay: WholeDelay) {

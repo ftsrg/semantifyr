@@ -56,16 +56,16 @@ class ThetaWitnessTimingTest {
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
 
         val thetaInjector = injector.createChildInjector(ThetaBackendModule())
-        val xsts = withVerificationScope {
-            thetaInjector.getInstance(ThetaModelTransformer::class.java).transform(inlinedOxsts, URI.createFileURI(thetaDirectory.resolve("timed.xsts").absolutePathString())).xsts
+        val artifacts = withVerificationScope {
+            thetaInjector.getInstance(ThetaModelTransformer::class.java).transform(inlinedOxsts, URI.createFileURI(thetaDirectory.resolve("timed.xsts").absolutePathString()))
         }
         val durations = warmRepetitions {
             measureTime {
                 val witness = withVerificationScope {
                     val cexModel = thetaInjector.getInstance(CexReader::class.java).loadCexModel(thetaDirectory.resolve("out.cex"))
                     val cexWitness = thetaInjector.getInstance(CexWitnessTransformer::class.java).transform(cexModel)
-                    val xstsWitness = thetaInjector.getInstance(XstsWitnessTransformer::class.java).transform(xsts, cexWitness)
-                    thetaInjector.getInstance(InlinedWitnessTransformer::class.java).transform(inlinedOxsts, xstsWitness)
+                    val xstsWitness = thetaInjector.getInstance(XstsWitnessTransformer::class.java).transform(artifacts.xsts, cexWitness)
+                    thetaInjector.getInstance(InlinedWitnessTransformer::class.java).transform(inlinedOxsts, xstsWitness, artifacts.addedNames)
                 }
                 assertThat(witness.transitionStates).isNotEmpty()
             }

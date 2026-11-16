@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.backends.theta.backannotation
 
 import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
-import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaModelTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.LocalVarNames
 import hu.bme.mit.semantifyr.xsts.lang.xsts.Expression
 import hu.bme.mit.semantifyr.xsts.lang.xsts.VariableDeclaration
@@ -48,7 +47,7 @@ class XstsWitnessTransformer {
         fun transform(cexAssumptionWitnessState: CexWitnessState) = mappings.getOrPut(cexAssumptionWitnessState) {
             XstsWitnessState(
                 cexAssumptionWitnessState.variableValues.filterNot {
-                    LocalVarNames.isLocalVar(it.variableName) || it.variableName == ThetaModelTransformer.INITIALIZED_FLAG_NAME
+                    LocalVarNames.isLocalVar(it.variableName)
                 }.sortedBy {
                     declarationOrder[it.variableName]
                 }.map {

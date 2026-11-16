@@ -150,7 +150,7 @@ class ThetaVerificationContext @AssistedInject constructor(
         val cexModel = cexReader.loadCexModel(cexPath)
         val cexWitness = cexWitnessTransformer.transform(cexModel)
         val xstsWitness = xstsWitnessTransformer.transform(artifacts.xsts, cexWitness)
-        val witness = inlinedWitnessTransformer.transform(request.inlinedOxsts, xstsWitness)
+        val witness = inlinedWitnessTransformer.transform(request.inlinedOxsts, xstsWitness, artifacts.addedNames)
         return artifacts.wholeDelay?.restore(witness) ?: witness
     }
 

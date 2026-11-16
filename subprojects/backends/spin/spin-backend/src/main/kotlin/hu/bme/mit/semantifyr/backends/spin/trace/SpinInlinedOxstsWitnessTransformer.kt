@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.transformation.WHOLE_DELAY_VARIABLE_NAME
 import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.backend.witness.TraceVariableResolver
 import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
@@ -19,7 +20,6 @@ import hu.bme.mit.semantifyr.backends.spin.transformation.SpinVariableKind
 import hu.bme.mit.semantifyr.backends.spin.transformation.SpinVariableTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
@@ -30,11 +30,12 @@ class SpinInlinedOxstsWitnessTransformer @Inject constructor(
     private val spinVariableTransformer: SpinVariableTransformer,
 ) {
 
-    fun transform(inlinedOxsts: InlinedOxsts, trace: SpinTrace): InlinedWitness {
-        val nameToVariable = inlinedOxsts.eAllOfType<VariableDeclaration>().associateBy {
-            spinVariableTransformer.nameOf(it)
-        }
-        val stateVariables = inlinedOxsts.variables.toSet()
+    fun transform(
+        inlinedOxsts: InlinedOxsts,
+        trace: SpinTrace,
+        addedNames: Set<String>,
+    ): InlinedWitness {
+        val resolver = TraceVariableResolver(inlinedOxsts, spinVariableTransformer, addedNames, "Spin's replay")
 
         // the replay prints a global only when it changes, so every value starts from its declaration
         val running = mutableMapOf<VariableDeclaration, Expression>()
@@ -47,19 +48,13 @@ class SpinInlinedOxstsWitnessTransformer @Inject constructor(
         var delay = Fraction.ZERO
         val states = trace.states.mapNotNull { state ->
             for ((name, raw) in state.variableValues) {
-                if (name == SPIN_STABLE_FLAG) {
-                    continue
-                }
                 if (name == WHOLE_DELAY_VARIABLE_NAME) {
                     delay = raw.toBigIntegerOrNull()?.let {
                         Fraction.of(it)
                     } ?: throw WitnessFailedException("Spin's replay holds $raw for the delay, which is no whole amount")
                     continue
                 }
-                val variable = nameToVariable[name] ?: throw WitnessFailedException("Spin's replay holds $name, which names no variable of the model")
-                if (variable !in stateVariables) {
-                    continue
-                }
+                val variable = resolver.stateVariableOf(name) ?: continue
                 running[variable] = parseValue(variable, raw) ?: throw WitnessFailedException("Spin's replay holds $raw for $name, which is no value of its type")
             }
             val stable = state.variableValues[SPIN_STABLE_FLAG]

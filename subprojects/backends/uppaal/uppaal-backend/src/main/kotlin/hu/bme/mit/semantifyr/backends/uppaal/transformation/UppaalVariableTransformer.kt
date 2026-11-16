@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.backend.transformation.BackendNameMangler
+import hu.bme.mit.semantifyr.backend.witness.BackendVariableNames
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
@@ -31,12 +32,12 @@ data class UppaalVariable(
 @VerificationScoped
 class UppaalVariableTransformer @Inject constructor(
     private val builtinSymbolResolver: BuiltinSymbolResolver,
-) {
+) : BackendVariableNames {
 
     private val mangler = BackendNameMangler()
     private val descriptionCache = mutableMapOf<VariableDeclaration, UppaalVariable>()
 
-    fun nameOf(variableDeclaration: VariableDeclaration): String {
+    override fun nameOf(variableDeclaration: VariableDeclaration): String {
         return mangler.nameOf(variableDeclaration)
     }
 

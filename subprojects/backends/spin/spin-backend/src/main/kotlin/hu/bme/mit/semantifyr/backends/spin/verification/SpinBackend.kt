@@ -205,7 +205,7 @@ class SpinVerificationContext @AssistedInject constructor(
         }
         val trace = spinTraceParser.parse(artifactManager.replayLogFile) ?: return null
         logger.info { "[$backendId] parsed Spin trace with ${trace.states.size} state(s); building witness" }
-        val witness = spinInlinedOxstsWitnessTransformer.transform(request.inlinedOxsts, trace)
+        val witness = spinInlinedOxstsWitnessTransformer.transform(request.inlinedOxsts, trace, artifacts.addedNames)
         return artifacts.wholeDelay?.restore(witness) ?: witness
     }
 

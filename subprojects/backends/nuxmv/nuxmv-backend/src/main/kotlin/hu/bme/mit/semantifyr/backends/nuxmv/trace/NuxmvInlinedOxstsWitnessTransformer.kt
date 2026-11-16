@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.backends.nuxmv.trace
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.backend.witness.TraceVariableResolver
 import hu.bme.mit.semantifyr.backend.witness.WitnessClockValue
 import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
@@ -19,7 +20,6 @@ import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvVariableKind
 import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvVariableTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -35,10 +35,7 @@ class NuxmvInlinedOxstsWitnessTransformer @Inject constructor(
         trace: NuxmvTrace,
         auxiliaryNames: Set<String>,
     ): InlinedWitness {
-        val nameToVariable = inlinedOxsts.eAllOfType<VariableDeclaration>().associateBy {
-            nuxmvVariableTransformer.nameOf(it)
-        }
-        val stateVariables = inlinedOxsts.variables.toSet()
+        val resolver = TraceVariableResolver(inlinedOxsts, nuxmvVariableTransformer, auxiliaryNames, "nuXmv's trace")
         val clocks = inlinedOxsts.variables.filter {
             nuxmvVariableTransformer.kindOf(it) == NuxmvVariableKind.Clock
         }
@@ -49,13 +46,7 @@ class NuxmvInlinedOxstsWitnessTransformer @Inject constructor(
 
         val states = trace.states.mapIndexed { index, state ->
             for ((name, raw) in state.variableValues) {
-                if (name in auxiliaryNames) {
-                    continue
-                }
-                val variable = nameToVariable[name] ?: throw WitnessFailedException("nuXmv's trace holds $name, which names no variable of the model")
-                if (variable !in stateVariables) {
-                    continue
-                }
+                val variable = resolver.stateVariableOf(name) ?: continue
                 val kind = nuxmvVariableTransformer.kindOf(variable)
                 if (kind == NuxmvVariableKind.Clock) {
                     runningClocks[variable] = parseReal(raw) ?: throw WitnessFailedException("nuXmv's trace holds $raw for $name, which is no value of a clock")
