@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.live.backend.integration
 
+import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseSpecification
@@ -196,7 +197,7 @@ class LiveVerificationTest {
                 assertThat(validation.status())
                     .describedAs("witness validation: $validation")
                     .isEqualTo(WitnessValidationStatus.VALID)
-                assertThat(validation.verdict()).isEqualTo("passed")
+                assertThat(validation.report()?.result?.verdict).isEqualTo(VerificationVerdict.Passed)
                 assertThat(validation.portfolioId()).isEqualTo("smart")
                 val verificationDirectory = "model._Simple._LeaderStatechartIdleReachable"
                 assertThat(artifactsOnDisk(tmp, "Simple.LeaderStatechartIdleReachable")).contains(

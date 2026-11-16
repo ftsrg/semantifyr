@@ -22,4 +22,6 @@ dependencies {
 
     implementation(project(":logging"))
     implementation(libs.kotlinx.serialization.json)
+
+    testImplementation(testFixtures(project(":verifier")))
 }

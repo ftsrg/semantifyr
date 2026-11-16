@@ -6,49 +6,39 @@
 
 package hu.bme.mit.semantifyr.lang.ide.server.wire;
 
-import hu.bme.mit.semantifyr.verifier.VerificationMetricsDto;
 import hu.bme.mit.semantifyr.verifier.VerificationOutcome;
 import hu.bme.mit.semantifyr.verifier.VerificationReport;
+import java.nio.file.Path;
 import org.eclipse.emf.common.util.URI;
 
 public record VerificationCaseResult(
-        String status,
-        String message,
-        String backendId,
-        String portfolioId,
-        VerificationMetrics metrics,
-        VerificationReport report,
-        String witnessUri) {
+        String status, String message, String portfolioId, VerificationReport report, String witnessUri) {
 
     public static VerificationCaseResult fromOutcome(VerificationOutcome outcome, String portfolioId) {
-        var witness = outcome.getWitnessPath();
-        var witnessUri = witness == null
-                ? null
-                : URI.createFileURI(witness.toAbsolutePath().toString()).toString();
-        return fromReport(outcome.getReport(), portfolioId, witnessUri);
+        return fromReport(outcome.getReport(), portfolioId, uriOf(outcome.getWitnessPath()));
     }
 
     public static VerificationCaseResult fromReport(VerificationReport report, String portfolioId, String witnessUri) {
         var result = report.getResult();
         return new VerificationCaseResult(
-                VerificationStatus.of(result.getVerdict()),
-                result.getMessage(),
-                result.getMetadata().getBackendId(),
-                portfolioId,
-                VerificationMetrics.fromDto(VerificationMetricsDto.Companion.fromMetrics(result.getMetrics())),
-                report,
-                witnessUri);
+                VerificationStatus.of(result.getVerdict()), result.getMessage(), portfolioId, report, witnessUri);
+    }
+
+    static String uriOf(Path witness) {
+        return witness == null
+                ? null
+                : URI.createFileURI(witness.toAbsolutePath().toString()).toString();
     }
 
     public static VerificationCaseResult errored(String message, String portfolioId) {
-        return new VerificationCaseResult(VerificationStatus.ERRORED, message, null, portfolioId, null, null, null);
+        return new VerificationCaseResult(VerificationStatus.ERRORED, message, portfolioId, null, null);
     }
 
     public static VerificationCaseResult timedOut(String message, String portfolioId) {
-        return new VerificationCaseResult(VerificationStatus.TIMEOUT, message, null, portfolioId, null, null, null);
+        return new VerificationCaseResult(VerificationStatus.TIMEOUT, message, portfolioId, null, null);
     }
 
     public static VerificationCaseResult cancelled(String message, String portfolioId) {
-        return new VerificationCaseResult(VerificationStatus.CANCELLED, message, null, portfolioId, null, null, null);
+        return new VerificationCaseResult(VerificationStatus.CANCELLED, message, portfolioId, null, null);
     }
 }

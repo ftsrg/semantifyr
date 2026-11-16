@@ -64,6 +64,7 @@ dependencies {
     testFixturesApi(libs.bundles.ktor.server)
     testFixturesApi(libs.bundles.ktor.client.test)
     testFixturesImplementation(libs.guice)
+    testFixturesApi(testFixtures(project(":verifier")))
 
     frontendDistribution(project(":semantifyr-live-frontend"))
 

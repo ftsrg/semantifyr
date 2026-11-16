@@ -27,14 +27,6 @@ public final class VerificationReportAdapter extends TypeAdapter<VerificationRep
 
     private static final TypeAdapter<JsonElement> ELEMENT = new Gson().getAdapter(JsonElement.class);
 
-    public static VerificationReport decode(String text) {
-        return JSON.decodeFromString(VerificationReport.Companion.serializer(), text);
-    }
-
-    public static String encode(VerificationReport report) {
-        return JSON.encodeToString(VerificationReport.Companion.serializer(), report);
-    }
-
     @Override
     public void write(JsonWriter out, VerificationReport report) throws IOException {
         if (report == null) {
@@ -44,7 +36,9 @@ public final class VerificationReportAdapter extends TypeAdapter<VerificationRep
         var serializeNulls = out.getSerializeNulls();
         out.setSerializeNulls(true);
         try {
-            ELEMENT.write(out, JsonParser.parseString(encode(report)));
+            ELEMENT.write(
+                    out,
+                    JsonParser.parseString(JSON.encodeToString(VerificationReport.Companion.serializer(), report)));
         } finally {
             out.setSerializeNulls(serializeNulls);
         }
@@ -56,6 +50,6 @@ public final class VerificationReportAdapter extends TypeAdapter<VerificationRep
         if (element.isJsonNull()) {
             return null;
         }
-        return decode(element.toString());
+        return JSON.decodeFromString(VerificationReport.Companion.serializer(), element.toString());
     }
 }

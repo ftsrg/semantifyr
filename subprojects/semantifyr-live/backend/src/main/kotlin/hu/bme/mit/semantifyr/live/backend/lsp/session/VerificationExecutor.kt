@@ -11,6 +11,7 @@ import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandGson
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
+import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult
 import hu.bme.mit.semantifyr.live.backend.exceptions.SyntaxErrorException
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionRequestManager
@@ -77,23 +78,20 @@ class LiveVerificationExecutor : VerificationExecutor {
     }
 
     private fun rewriteWitnessUri(sessionDocumentManager: SessionDocumentManager, result: Any?): Any? {
-        if (result !is VerificationCaseResult) {
-            return result
-        }
-        val serverUri = result.witnessUri() ?: return result
+        val serverUri = when (result) {
+            is VerificationCaseResult -> result.witnessUri()
+            is WitnessValidationResult -> result.witnessUri()
+            else -> null
+        } ?: return result
         val clientUri = sessionDocumentManager.toClientUri(serverUri)
         if (clientUri == serverUri) {
             logger.warn { "Witness URI is not inside the workspace, leaving it untouched: $serverUri" }
             return result
         }
-        return VerificationCaseResult(
-            result.status(),
-            result.message(),
-            result.backendId(),
-            result.portfolioId(),
-            result.metrics(),
-            result.report(),
-            clientUri,
-        )
+        return when (result) {
+            is VerificationCaseResult -> VerificationCaseResult(result.status(), result.message(), result.portfolioId(), result.report(), clientUri)
+            is WitnessValidationResult -> WitnessValidationResult(result.status(), result.message(), result.portfolioId(), result.report(), clientUri)
+            else -> result
+        }
     }
 }

@@ -77,17 +77,28 @@ fun fakeVerificationResult(
     )
 }
 
-fun fakeVerificationOutcome(verdict: VerificationVerdict = VerificationVerdict.Passed): VerificationOutcome {
-    val report = VerificationReport(
+@JvmOverloads
+fun fakeVerificationReport(
+    verdict: VerificationVerdict = VerificationVerdict.Passed,
+    backendId: String? = "test",
+    kind: ReportKind = ReportKind.Run,
+    metrics: VerificationMetrics = VerificationMetrics(),
+    trace: ReportTrace? = null,
+): VerificationReport {
+    return VerificationReport(
         version = REPORT_VERSION,
-        kind = ReportKind.Run,
+        kind = kind,
         verificationCase = "pkg::Foo",
         portfolioId = "test",
         optimization = OptimizationConfig.ALL,
         timeout = 1.minutes,
-        result = fakeVerificationResult(verdict),
+        result = fakeVerificationResult(verdict, backendId, metrics),
+        trace = trace,
     )
-    return VerificationOutcome(report, Paths.get("report.json"), null)
+}
+
+fun fakeVerificationOutcome(verdict: VerificationVerdict = VerificationVerdict.Passed): VerificationOutcome {
+    return VerificationOutcome(fakeVerificationReport(verdict), Paths.get("report.json"), null)
 }
 
 class AlwaysAvailableExecutor : BackendExecutor {

@@ -13,32 +13,30 @@ import hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult.Invalid;
 import hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult.Valid;
 
 public record WitnessValidationResult(
-        String status, String verdict, String message, String portfolioId, VerificationReport report) {
+        String status, String message, String portfolioId, VerificationReport report, String witnessUri) {
 
     public static WitnessValidationResult fromValidation(
             hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult validation, String portfolioId) {
-        var report = validation.getOutcome().getReport();
-        var verification = report.getResult();
+        var outcome = validation.getOutcome();
+        var report = outcome.getReport();
         return new WitnessValidationResult(
                 statusOf(validation),
-                VerificationStatus.of(verification.getVerdict()),
-                verification.getMessage(),
+                report.getResult().getMessage(),
                 portfolioId,
-                report);
+                report,
+                VerificationCaseResult.uriOf(outcome.getWitnessPath()));
     }
 
     public static WitnessValidationResult errored(String message, String portfolioId) {
-        return new WitnessValidationResult(WitnessValidationStatus.ERRORED, null, message, portfolioId, null);
+        return new WitnessValidationResult(WitnessValidationStatus.ERRORED, message, portfolioId, null, null);
     }
 
     public static WitnessValidationResult timedOut(String message, String portfolioId) {
-        return new WitnessValidationResult(
-                WitnessValidationStatus.TIMEOUT, VerificationStatus.TIMEOUT, message, portfolioId, null);
+        return new WitnessValidationResult(WitnessValidationStatus.TIMEOUT, message, portfolioId, null, null);
     }
 
     public static WitnessValidationResult cancelled(String message, String portfolioId) {
-        return new WitnessValidationResult(
-                WitnessValidationStatus.CANCELLED, VerificationStatus.CANCELLED, message, portfolioId, null);
+        return new WitnessValidationResult(WitnessValidationStatus.CANCELLED, message, portfolioId, null, null);
     }
 
     private static String statusOf(hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult validation) {

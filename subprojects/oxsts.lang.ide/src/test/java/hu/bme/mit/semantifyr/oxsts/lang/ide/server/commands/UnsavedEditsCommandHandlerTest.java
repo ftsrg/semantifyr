@@ -110,7 +110,7 @@ class UnsavedEditsCommandHandlerTest {
                 mock(CommandProgressContext.class));
 
         assertThat(result.status()).isEqualTo(VerificationStatus.FAILED);
-        assertThat(result.backendId()).isEqualTo("trivial");
+        assertThat(result.report().getResult().getMetadata().getBackendId()).isEqualTo("trivial");
     }
 
     @Test
