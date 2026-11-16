@@ -17,4 +17,4 @@ description: The Theta backend, its exact verdicts, which a portfolio trusts, ho
 - Array literals: the backend receives arrays split into one variable per slot and has no form for an array value.
 - For-operations over anything but a range: an XSTS loop runs over an integer range.
 
-A model that compares a clock with a bound of 2<sup>30</sup> or more is answered Not supported too, when the run is prepared and without a source line: a clock and a whole delay together stay within 32-bit integers.
+A model that compares a clock with a bound of 2<sup>30</sup> or more is Not supported as well; the run reports it while it is prepared, with no source line, since the whole-delay lowering Theta shares with Spin keeps a clock and a whole delay together within Spin's 32-bit integers, although Theta's own integers are unbounded.
