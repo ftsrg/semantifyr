@@ -25,7 +25,7 @@ dependencies {
     testImplementation(testFixtures(project(":compiler")))
 }
 
-val sysmlCommit = "e0794f56a0f5ee3ff9652d66406223f24c4f2bbc" // fix: the reserved member names follow the library's time signals, passTime gone
+val sysmlCommit = "1517ac8d92b775c384ba1803237b207cc80ec78c" // fix: the reserved class names drop ConstraintReferenceExpression, which the library no longer declares
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 
