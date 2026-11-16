@@ -141,7 +141,6 @@ class SingleBackendPortfolioTest {
         return InlinedWitness(
             initializedState = WitnessState(emptyList()),
             transitionStates = emptyList(),
-            nextStateMap = emptyMap(),
             inlinedOxsts = OxstsFactory.createInlinedOxsts(),
         )
     }

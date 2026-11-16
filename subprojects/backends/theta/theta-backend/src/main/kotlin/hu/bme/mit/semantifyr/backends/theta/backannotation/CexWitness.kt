@@ -43,7 +43,6 @@ private fun XstsState.toCexState(): CexWitnessState {
 class CexWitness(
     val initializedState: CexWitnessState,
     val transitionStates: List<CexWitnessState>,
-    val nextStateMap: Map<CexWitnessState, List<CexWitnessState>>,
 )
 
 private val XstsState.isTran
@@ -73,22 +72,9 @@ class CexWitnessTransformer {
             it.toCexState()
         }
 
-        val nextStateMap = buildMap {
-            if (cexStates.isEmpty()) {
-                put(initializedCexState, emptyList())
-            } else {
-                put(initializedCexState, listOf(cexStates.first()))
-
-                for (index in cexStates.indices.drop(1)) {
-                    put(cexStates[index - 1], listOf(cexStates[index]))
-                }
-            }
-        }
-
         return CexWitness(
             initializedCexState,
             cexStates,
-            nextStateMap,
         )
     }
 }

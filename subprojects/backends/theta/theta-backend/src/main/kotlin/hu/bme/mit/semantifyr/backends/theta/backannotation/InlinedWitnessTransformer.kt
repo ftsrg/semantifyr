@@ -25,15 +25,14 @@ class InlinedWitnessTransformer @Inject constructor(
         inlinedOxsts: InlinedOxsts,
         addedNames: Set<String>,
     ) {
-        val mappings = mutableMapOf<XstsWitnessState, WitnessState>()
         val resolver = TraceVariableResolver(inlinedOxsts, thetaVariableTransformer, addedNames, "Theta's trace")
 
-        fun transform(xstsAssumptionWitnessState: XstsWitnessState) = mappings.getOrPut(xstsAssumptionWitnessState) {
+        fun transform(xstsAssumptionWitnessState: XstsWitnessState): WitnessState {
             val (delays, stateVariableValues) = xstsAssumptionWitnessState.variableValues.partition {
                 it.variableDeclaration.name == WHOLE_DELAY_VARIABLE_NAME
             }
 
-            WitnessState(
+            return WitnessState(
                 transformStateValues(stateVariableValues),
                 elapsed = delays.singleOrNull()?.let {
                     Fraction.of(xstsExpressionToOxstsExpressionTransformer.transformInteger(it.value))
@@ -67,14 +66,10 @@ class InlinedWitnessTransformer @Inject constructor(
         val transitionStates = xstsAssumptionWitness.transitionStates.map {
             context.transform(it)
         }
-        val nextStateMap = xstsAssumptionWitness.nextStateMap.map {
-            context.transform(it.key) to it.value.map { context.transform(it) }
-        }.toMap()
 
         return InlinedWitness(
             initializedState,
             transitionStates,
-            nextStateMap,
             inlinedOxsts,
         )
     }

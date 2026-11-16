@@ -70,12 +70,9 @@ class TrivialVerifier @Inject constructor(
     }
 
     private fun trivialWitness(inlinedOxsts: InlinedOxsts): InlinedWitness {
-        val initializedState = WitnessState(values = emptyList())
-        val transitionState = WitnessState(values = emptyList())
         return InlinedWitness(
-            initializedState = initializedState,
-            transitionStates = listOf(transitionState),
-            nextStateMap = mapOf(initializedState to listOf(transitionState)),
+            initializedState = WitnessState(values = emptyList()),
+            transitionStates = listOf(WitnessState(values = emptyList())),
             inlinedOxsts = inlinedOxsts,
         )
     }

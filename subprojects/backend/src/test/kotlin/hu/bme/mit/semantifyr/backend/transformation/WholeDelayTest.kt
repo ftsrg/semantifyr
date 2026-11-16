@@ -219,7 +219,6 @@ class WholeDelayTest {
                 it.variable
             }.distinct(),
         ).containsExactly(late)
-        assertThat(restored.getNextStates(restored.initializedState)).containsExactly(restored.transitionStates.first())
     }
 
     @Test

@@ -38,31 +38,13 @@ class WholeDelay(
     }
 
     fun restore(witness: InlinedWitness): InlinedWitness {
-        val restored = mutableMapOf<WitnessState, WitnessState>()
         val initializedState = restoreState(witness.initializedState, null)
-        restored[witness.initializedState] = initializedState
-        val pending = ArrayDeque(listOf(witness.initializedState))
-        while (pending.isNotEmpty()) {
-            val state = pending.removeFirst()
-            for (next in witness.getNextStates(state)) {
-                if (next !in restored) {
-                    restored[next] = restoreState(next, restored.getValue(state))
-                    pending += next
-                }
-            }
+        val restored = witness.transitionStates.runningFold(initializedState) { previous, state ->
+            restoreState(state, previous)
         }
-        val transitionStates = witness.transitionStates.map {
-            restored[it] ?: restoreState(it, null)
-        }
-        val nextStateMap = witness.nextStateMap.map { (state, nextStates) ->
-            restored.getValue(state) to nextStates.map {
-                restored.getValue(it)
-            }
-        }.toMap()
         return InlinedWitness(
             initializedState = initializedState,
-            transitionStates = transitionStates,
-            nextStateMap = nextStateMap,
+            transitionStates = restored.drop(1),
             inlinedOxsts = witness.inlinedOxsts,
         )
     }
