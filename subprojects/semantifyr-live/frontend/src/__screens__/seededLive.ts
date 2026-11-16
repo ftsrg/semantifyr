@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { LibrariesResponse, PortfolioInfo, ResultTrace, VerificationCaseSpecification } from '@semantifyr/editor-common'
+import { isoDurationToMs, type LibrariesResponse, type PortfolioInfo, type ResultTrace, type VerificationCaseSpecification } from '@semantifyr/editor-common'
 
 import { findExample, liveFlavors, type LiveFlavor } from '../examples'
 import { SemantifyrLiveApi } from '../lib/api/lspExtensions'
@@ -17,7 +17,6 @@ import { connectionConnected, INITIAL_CONNECTION, type ConnectionState } from '.
 import { failStep, finishStep, initializationOf, InitializationSteps, startStep, type InitializationState } from '../lib/stores/initialization'
 import { createSettingsStore, type Settings } from '../lib/stores/settings'
 import { constantStore, createStore } from '../lib/stores/store'
-import { isoDurationToMs } from '../lib/util/duration'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
 import { createDocumentTabs, type ReadOnlyDocument } from '../lib/workspace/documentTabs'
 import { documentKey, documentUri, type AddressProblem, type Catalog, type DocumentRecord, type Live } from '../lib/workspace/live'

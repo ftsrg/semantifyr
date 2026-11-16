@@ -6,7 +6,9 @@
 
 import { type CancellationToken, commands, EventEmitter, type ExtensionContext, ProgressLocation, type TestItem, type TextDocumentContentProvider, Uri, ViewColumn, window, workspace } from "vscode";
 import {
+    formatSeconds,
     formatTraceCall,
+    isoDurationToMs,
     missingCallsMessage,
     noWitnessMessage,
     type ReportCall,
@@ -32,8 +34,6 @@ export const witnessMessageContext = "semantifyr.witness";
 export const validatableWitnessMessageContext = "semantifyr.witness.validatable";
 
 const traceScheme = "semantifyr-trace";
-
-const ISO_DURATION = /^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?$/;
 
 export type WitnessValidator = (token: CancellationToken) => Promise<WitnessValidationResult | null>;
 
@@ -209,19 +209,10 @@ function renderValidationOrigin(validation: WitnessValidationResult): string {
     return renderOrigin(
         { backendId: result.metadata.backendId, portfolioId: validation.portfolioId },
         [
-            formatSeconds(result.metrics.totalDuration),
+            formatSeconds(isoDurationToMs(result.metrics.totalDuration)),
             soundnessLabel(result.soundness),
         ],
     );
-}
-
-function formatSeconds(isoDuration: string): string {
-    const match = ISO_DURATION.exec(isoDuration);
-    if (match === null) {
-        return isoDuration;
-    }
-    const seconds = Number(match[1] ?? 0) * 3600 + Number(match[2] ?? 0) * 60 + Number(match[3] ?? 0);
-    return seconds < 10 ? `${seconds.toFixed(1)} s` : `${String(Math.round(seconds))} s`;
 }
 
 export function renderTrace(label: string, result: VerificationCaseResult, trace: ResultTrace, validation?: WitnessValidationResult | null): string {

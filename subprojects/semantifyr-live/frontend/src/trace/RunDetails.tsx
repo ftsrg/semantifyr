@@ -5,12 +5,11 @@
  */
 
 import type React from 'react'
-import { ReportKind, type SoundnessDirection, soundnessLabel } from '@semantifyr/editor-common'
+import { formatSeconds, isoDurationToMs, ReportKind, type SoundnessDirection, soundnessLabel } from '@semantifyr/editor-common'
 
 import { useStore } from '../lib/stores/useStore'
-import { isoDurationToMs } from '../lib/util/duration'
 import type { VerificationCaseState } from '../lib/verification/engine'
-import { formatSeconds, waitedPhrase } from '../lib/workspace/caseRows'
+import { waitedPhrase } from '../lib/workspace/caseRows'
 import { useLive } from '../lib/workspace/liveContext'
 import { portfolioName } from '../lib/workspace/portfolioChoices'
 import { BACKEND_NAMES } from '../texts'

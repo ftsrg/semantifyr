@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import { formatSeconds, isoDurationToMs } from '@semantifyr/editor-common'
 import type { VerdictStatus } from '@semantifyr/editor-common/marks'
 import { verdictOfStatus } from '@semantifyr/editor-common/terms'
 
 import { CASE_MESSAGES, VERDICT_WORDS } from '../../texts'
-import { isoDurationToMs } from '../util/duration'
 import type { VerificationCaseState } from '../verification/engine'
 
 export type ValidationMark =
@@ -52,11 +52,6 @@ const CANCELLED_MESSAGE = 'Verification cancelled'
 // a wait under a second is not worth saying
 export function waitedPhrase(milliseconds: number | undefined): string | null {
   return milliseconds === undefined || milliseconds < 1000 ? null : `waited ${formatSeconds(milliseconds)}`
-}
-
-export function formatSeconds(milliseconds: number): string {
-  const seconds = milliseconds / 1000
-  return seconds < 10 ? `${seconds.toFixed(1)} s` : `${Math.round(seconds)} s`
 }
 
 // a case sent to the server runs only once the server says so

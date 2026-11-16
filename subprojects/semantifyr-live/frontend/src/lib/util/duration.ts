@@ -33,23 +33,6 @@ export function formatIsoDuration(iso: string): string {
   return `${seconds}s`;
 }
 
-export function isoDurationToMs(iso: string): number {
-  let parsed;
-  try {
-    parsed = parseIso(iso);
-  } catch {
-    return 0;
-  }
-  return (
-    ((parsed.weeks ?? 0) * 7 * 86400 +
-      (parsed.days ?? 0) * 86400 +
-      (parsed.hours ?? 0) * 3600 +
-      (parsed.minutes ?? 0) * 60 +
-      (parsed.seconds ?? 0)) *
-    1000
-  );
-}
-
 export function formatIsoDurationDetailed(iso: string): string {
   let parsed;
   try {
