@@ -7,7 +7,7 @@
 // @vitest-environment node
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { VerificationStatus, type VerificationCaseResult } from '@semantifyr/editor-common'
+import { addressNameOf, VerificationStatus, type VerificationCaseResult } from '@semantifyr/editor-common'
 import { servedExamples } from '@semantifyr/editor-common/examples'
 import { servedModels } from '../../__load__/models.ts'
 import { boundOf, distribution, failures, fairness, formatBound, summarize } from '../../__load__/stats.ts'
@@ -70,7 +70,7 @@ describe('servedModels', () => {
     })).toEqual(servedExamples.filter((example) => {
       return example.cases.length > 0
     }).map((example) => {
-      return `${example.language}/${example.id}`
+      return `${addressNameOf(example.language)}/${example.id}`
     }))
     for (const model of models) {
       expect(model.cases.length, model.name).toBeGreaterThan(0)

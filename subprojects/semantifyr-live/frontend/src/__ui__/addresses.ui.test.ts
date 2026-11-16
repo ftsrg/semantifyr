@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { encodeCompressedBase64Url } from '@semantifyr/editor-common'
+import { encodeCompressedBase64Url, liveExampleUrl } from '@semantifyr/editor-common'
 import { servedExamples } from '@semantifyr/editor-common/examples'
 import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
@@ -137,11 +137,12 @@ describe('the history of a visit', () => {
 
 describe('the served examples', () => {
   for (const example of servedExamples) {
-    test(`opens /${example.language}/${example.id} at its address, with no banner over it`, async ({ ui }) => {
+    const address = new URL(liveExampleUrl('https://live.invalid/', example.language, example.id)).pathname
+    test(`opens ${address} at its address, with no banner over it`, async ({ ui }) => {
       ui.backend.answer('discover', () => {
         return []
       })
-      const page = await ui.open(`/${example.language}/${example.id}`)
+      const page = await ui.open(address)
 
       await expect.poll(async () => {
         return page.title()
