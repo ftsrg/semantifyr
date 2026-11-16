@@ -43,7 +43,10 @@ function example(view: 'embed' | 'edit-only' = 'edit-only'): void {
 }
 
 async function frame(): Promise<HTMLIFrameElement> {
-  return await screen.findByTitle<HTMLIFrameElement>('Semantifyr Live');
+  const found = await screen.findByTitle<HTMLIFrameElement>('Semantifyr Live');
+  // the frame's message listener is registered by a passive effect, which may still be pending
+  await act(async () => {});
+  return found;
 }
 
 function report(from: HTMLIFrameElement, type: string): void {
