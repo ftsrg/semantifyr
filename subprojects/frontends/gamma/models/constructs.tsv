@@ -74,5 +74,5 @@ Trace	The header of a trace names a verification case	deviating	no	gamma-fronten
 Trace	The fired-transition assert	extension	no	gamma-frontend/src/test/kotlin/GammaTraceLanguageTest.kt	a fired transition must exist	Gamma's trace language has no transition assertion.
 Trace	The `elapse` act with a denominator, `elapse 2000/3`	extension	no	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaGrammarTest.kt	an elapse takes a fraction of milliseconds, a whole one without a denominator	Gamma's `elapse` takes whole milliseconds; the time a step waits is exact, so a fraction of a millisecond is written over its denominator.
 Trace	A generated trace asserts no unraised event	abstracted	no	gamma-frontend/src/test/kotlin/GammaTraceGeneratorTest.kt	a generated trace asserts no unraised event	Gamma's back-annotation adds a negation for every unraised output event.
-Trace	The values of event parameters in a generated trace	planned	no			Waits for a traced call that records its runtime arguments.
+Trace	The values of event parameters in a generated trace	planned	no			The library traces the raise of an event without its parameters, and the trace generator writes a raise without arguments.
 Trace	The `assign` act, `schedule` of an instance, a final cycle	unsupported	no			Future work.
