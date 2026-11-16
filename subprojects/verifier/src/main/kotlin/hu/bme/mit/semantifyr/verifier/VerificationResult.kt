@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.verifier
 import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -19,7 +20,7 @@ data class VerificationResult(
     val soundness: SoundnessDirection = SoundnessDirection.Exact,
     val isTrusted: Boolean = verdict.isDecisive,
     val metrics: VerificationMetrics,
-    @Transient val trace: Trace? = null,
+    @Transient val witness: InlinedOxsts? = null,
     val message: String? = null,
 ) {
     val isPassed: Boolean

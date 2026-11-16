@@ -25,19 +25,13 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.ReportTrace
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
-import hu.bme.mit.semantifyr.verifier.Trace
-import hu.bme.mit.semantifyr.verifier.TraceDto
 import hu.bme.mit.semantifyr.verifier.VerificationReport
 import hu.bme.mit.semantifyr.verifier.VerificationResult
-import hu.bme.mit.semantifyr.verifier.VerificationResultDto
-import hu.bme.mit.semantifyr.verifier.WitnessValidationResultDto
 import hu.bme.mit.semantifyr.verifier.caseReportPath
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
-import hu.bme.mit.semantifyr.verifier.toJavaDto
 import hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult
 import hu.bme.mit.semantifyr.verifier.witness.WitnessValidator
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import org.eclipse.xtext.EcoreUtil2
 import org.eclipse.xtext.resource.FileExtensionProvider
@@ -58,7 +52,6 @@ data class GammaVerificationCase(
 )
 
 class GammaWitness(
-    val trace: Trace,
     val witnessPath: Path,
     val compiledModelPath: Path,
     val gammaTrace: ExecutionTrace,
@@ -70,46 +63,6 @@ data class GammaVerificationResult(
     val witness: GammaWitness?,
     val reportPath: Path,
 )
-
-data class GammaWitnessDto(
-    val trace: TraceDto,
-    val witnessPath: Path,
-    val compiledModelPath: Path,
-    val gammaTracePath: Path,
-) {
-    companion object {
-        fun fromGammaWitness(witness: GammaWitness): GammaWitnessDto {
-            return GammaWitnessDto(
-                trace = witness.trace.toJavaDto(),
-                witnessPath = witness.witnessPath,
-                compiledModelPath = witness.compiledModelPath,
-                gammaTracePath = witness.gammaTracePath,
-            )
-        }
-    }
-}
-
-data class GammaVerificationResultDto(
-    val verification: VerificationResultDto,
-    val witness: GammaWitnessDto?,
-) {
-    companion object {
-        fun fromGammaResult(result: GammaVerificationResult): GammaVerificationResultDto {
-            return GammaVerificationResultDto(
-                verification = result.verification.toJavaDto(),
-                witness = result.witness?.let { GammaWitnessDto.fromGammaWitness(it) },
-            )
-        }
-    }
-}
-
-fun GammaVerificationResult.toJavaDto(): GammaVerificationResultDto {
-    return GammaVerificationResultDto.fromGammaResult(this)
-}
-
-fun GammaWitness.toJavaDto(): GammaWitnessDto {
-    return GammaWitnessDto.fromGammaWitness(this)
-}
 
 enum class GammaVariant(
     internal val resourcePrefix: String,
@@ -176,13 +129,10 @@ class GammaFrontend @Inject private constructor(
         val reportPath = caseReportPath(verificationDirectory, oxstsVerificationCase)
         val reportTrace = Json.decodeFromString<VerificationReport>(reportPath.readText()).trace
         val witness = reportTrace?.let {
-            val trace = requireNotNull(result.trace) {
-                "The report of '$qualifiedName' has a trace the result does not carry"
-            }
             val witnessPath = reportPath.resolveSibling(WITNESS_FILE_NAME)
             val gammaTracePath = reportPath.resolveSibling(GAMMA_TRACE_FILE_NAME)
             val gammaTrace = writeGammaTrace(gammaVerificationCase, it, compiledModel, gammaTracePath)
-            GammaWitness(trace, witnessPath, compiledModel.modelPath, gammaTrace, gammaTracePath)
+            GammaWitness(witnessPath, compiledModel.modelPath, gammaTrace, gammaTracePath)
         }
         logger.info { "Gamma case '$qualifiedName' -> ${result.verdict}" }
         if (witness != null) {
@@ -201,15 +151,6 @@ class GammaFrontend @Inject private constructor(
         gammaTracePath.writeText(gammaSerializer.serialize(gammaTrace, SaveOptions.newBuilder().format().options))
         logger.info { "Gamma case '${gammaVerificationCase.qualifiedName}' wrote its Gamma trace to '$gammaTracePath'" }
         return gammaTrace
-    }
-
-    fun verifyBlocking(
-        case: GammaVerificationCase,
-        progress: ProgressContext = ProgressContext.Silent,
-    ): GammaVerificationResultDto {
-        return runBlocking {
-            verify(case, progress).toJavaDto()
-        }
     }
 
     // a verify run puts its one case's artifacts, the witness among them, in a single directory under verification/
@@ -271,16 +212,6 @@ class GammaFrontend @Inject private constructor(
             .filterIsInstance<InlinedOxsts>()
             .firstOrNull()
             ?: error("Witness file '$witnessPath' did not contain an InlinedOxsts")
-    }
-
-    fun validateWitnessBlocking(
-        gammaVerificationCase: GammaVerificationCase,
-        witnessPath: Path,
-        progress: ProgressContext = ProgressContext.Silent,
-    ): WitnessValidationResultDto {
-        return runBlocking {
-            validateWitness(gammaVerificationCase, witnessPath, progress = progress).toJavaDto()
-        }
     }
 
     private fun caseDirectory(gammaVerificationCase: GammaVerificationCase): Path {

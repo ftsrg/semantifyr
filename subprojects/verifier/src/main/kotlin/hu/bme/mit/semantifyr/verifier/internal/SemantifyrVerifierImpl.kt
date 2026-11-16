@@ -31,7 +31,6 @@ import hu.bme.mit.semantifyr.verifier.REPORT_VERSION
 import hu.bme.mit.semantifyr.verifier.ReportKind
 import hu.bme.mit.semantifyr.verifier.ReportTrace
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
-import hu.bme.mit.semantifyr.verifier.Trace
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.VerificationMetrics
 import hu.bme.mit.semantifyr.verifier.VerificationReport
@@ -42,7 +41,6 @@ import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.LimitedConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import hu.bme.mit.semantifyr.verifier.reportPath
-import hu.bme.mit.semantifyr.verifier.witness.CallTraceTransformer
 import hu.bme.mit.semantifyr.verifier.witness.ClassWitnessBackAnnotator
 import hu.bme.mit.semantifyr.verifier.witness.ClassWitnessTransformer
 import hu.bme.mit.semantifyr.verifier.witness.ReportTraceTransformer
@@ -83,7 +81,6 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
     @param:Assisted private val semantifyrVerifierConfiguration: SemantifyrVerifierConfiguration,
     private val classWitnessTransformer: ClassWitnessTransformer,
     private val classWitnessBackAnnotator: ClassWitnessBackAnnotator,
-    private val callTraceTransformer: CallTraceTransformer,
     private val reportTraceTransformer: ReportTraceTransformer,
     private val trivialVerifier: TrivialVerifier,
     private val verificationArtifactWriter: VerificationArtifactWriter,
@@ -266,7 +263,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
                     portfolioDuration = portfolioDuration,
                 ),
             ),
-            trace = backAnnotation?.trace,
+            witness = backAnnotation?.witness,
             message = outcome.message,
         )
 
@@ -274,7 +271,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
 
         writeReport(case, kind, caseDirectory, result, backAnnotation?.reportTrace)
         if (backAnnotation != null) {
-            verificationArtifactWriter.writeWitnessArtifacts(backAnnotation.trace, caseDirectory, qualifiedName)
+            verificationArtifactWriter.writeWitness(backAnnotation.witness, caseDirectory, qualifiedName)
         }
 
         return result
@@ -343,9 +340,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
             compilation,
             backendResult.verdict,
         )
-        val witnessState = callTraceTransformer.transformWitnessState(classWitness)
-        val callTrace = callTraceTransformer.transformCallTrace(classWitness, compilation.transitionCallTraces)
-        return BackAnnotation(Trace(backAnnotatedModel, witnessState, callTrace), reportTrace)
+        return BackAnnotation(backAnnotatedModel, reportTrace)
     }
 
     private suspend inline fun <T> runInTimeout(
@@ -394,7 +389,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
     )
 
     private class BackAnnotation(
-        val trace: Trace,
+        val witness: InlinedOxsts,
         val reportTrace: ReportTrace,
     )
 

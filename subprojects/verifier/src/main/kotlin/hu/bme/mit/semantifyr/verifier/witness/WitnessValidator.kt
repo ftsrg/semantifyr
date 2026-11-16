@@ -10,7 +10,6 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
-import hu.bme.mit.semantifyr.verifier.Trace
 import hu.bme.mit.semantifyr.verifier.VerificationResult
 import kotlinx.coroutines.runBlocking
 
@@ -42,30 +41,11 @@ class WitnessValidator {
 
     suspend fun validate(
         verifier: SemantifyrVerifier,
-        trace: Trace,
-        progress: ProgressContext = ProgressContext.Silent,
-    ): WitnessValidationResult {
-        return validate(verifier, trace.backAnnotatedModel, progress)
-    }
-
-    suspend fun validate(
-        verifier: SemantifyrVerifier,
         backAnnotatedModel: InlinedOxsts,
         progress: ProgressContext = ProgressContext.Silent,
     ): WitnessValidationResult {
         val verification = verifier.verify(backAnnotatedModel, progress)
         return WitnessValidationResult.from(verification)
-    }
-
-    @JvmOverloads
-    fun validateBlocking(
-        verifier: SemantifyrVerifier,
-        trace: Trace,
-        progress: ProgressContext = ProgressContext.Silent,
-    ): WitnessValidationResult {
-        return runBlocking {
-            validate(verifier, trace, progress)
-        }
     }
 
     @JvmOverloads

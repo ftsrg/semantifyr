@@ -16,7 +16,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.internal.SemantifyrVerifierConfiguration
 import hu.bme.mit.semantifyr.verifier.internal.SemantifyrVerifierImpl
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
-import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -29,19 +28,6 @@ interface SemantifyrVerifier {
 
     suspend fun verify(verificationCase: VerificationCase, progressContext: ProgressContext = ProgressContext.Silent): VerificationResult
     suspend fun verify(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext = ProgressContext.Silent): VerificationResult
-
-    fun verifyBlocking(verificationCase: VerificationCase) = runBlocking {
-        verify(verificationCase).toJavaDto()
-    }
-    fun verifyBlocking(verificationCase: VerificationCase, progressContext: ProgressContext) = runBlocking {
-        verify(verificationCase, progressContext).toJavaDto()
-    }
-    fun verifyBlocking(inlinedOxsts: InlinedOxsts) = runBlocking {
-        verify(inlinedOxsts).toJavaDto()
-    }
-    fun verifyBlocking(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext) = runBlocking {
-        verify(inlinedOxsts, progressContext).toJavaDto()
-    }
 
     class Builder internal constructor() {
         private var injector: Injector? = null

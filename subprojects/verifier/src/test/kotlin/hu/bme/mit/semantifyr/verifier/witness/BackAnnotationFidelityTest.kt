@@ -95,7 +95,7 @@ class BackAnnotationFidelityTest {
     private val hallTracer = TransitionTracerNames.tracerName(1)
 
     @Test
-    suspend fun `call trace lists only the calls that fired in each step`(@TempDir output: Path) {
+    suspend fun `a step's calls list only the calls that fired in it`(@TempDir output: Path) {
         val case = loadCase("tracing.oxsts", tracingCase)
 
         verifyWithWitness(case, output) { model ->
@@ -110,11 +110,11 @@ class BackAnnotationFidelityTest {
             )
         }
 
-        val callTrace = readCallTrace(output, case)
-        assertThat(callTrace.initializedStep.traces).isEmpty()
+        val trace = readReport(output, case).trace!!
+        assertThat(trace.initial.calls).isEmpty()
         assertThat(
-            callTrace.steps.map { step ->
-                step.traces.map { it.self }
+            trace.steps.map { step ->
+                step.calls.map { it.self }
             },
         ).containsExactly(
             listOf("root.hall.lamp"),
@@ -124,7 +124,7 @@ class BackAnnotationFidelityTest {
     }
 
     @Test
-    suspend fun `trace receivers and arguments are feature paths from the root instance`(@TempDir output: Path) {
+    suspend fun `the back-annotated witness assumes each state by feature paths from the root instance`(@TempDir output: Path) {
         val case = loadCase("tracing.oxsts", tracingCase)
 
         verifyWithWitness(case, output) { model ->
@@ -137,23 +137,15 @@ class BackAnnotationFidelityTest {
             )
         }
 
-        assertThat(readCallTrace(output, case).steps.single().traces).containsExactly(
-            TraceEntry(
-                self = "root.kitchen.lamp",
-                calledTransition = "semantifyr::verification::lang::tracing::Lamp::toggle",
-                arguments = listOf(TraceArgument("partner", "root.hall.lamp")),
-                innerTraces = null,
-            ),
-        )
-        assertThat(readWitnessState(output, case).steps.single().values).contains(
-            WitnessStateValue("root.kitchen.lamp.on", "true"),
-            WitnessStateValue("root.hall.lamp.on", "false"),
+        assertThat(readReport(output, case).trace!!.states.last().values).contains(
+            entry("root.kitchen.lamp.on", ReportValue.Bool(true)),
+            entry("root.hall.lamp.on", ReportValue.Bool(false)),
         )
         assertThat(readWitnessModel(output, case)).contains("root.kitchen.lamp.on == true")
     }
 
     @Test
-    suspend fun `array slot values reach the witness state and the back-annotated witness`(@TempDir output: Path) {
+    suspend fun `array slot values reach the report and the back-annotated witness`(@TempDir output: Path) {
         val case = loadCase("arrays.oxsts", arraysCase)
         val slots = (0..2).map {
             flattenedName("root", "slots_$it")
@@ -171,22 +163,22 @@ class BackAnnotationFidelityTest {
             )
         }
 
-        val witnessState = readWitnessState(output, case)
-        assertThat(witnessState.initializedStep.values).containsExactly(
-            WitnessStateValue("root.slots[0]", "0"),
-            WitnessStateValue("root.slots[1]", "0"),
-            WitnessStateValue("root.slots[2]", "0"),
+        val trace = readReport(output, case).trace!!
+        assertThat(trace.states[trace.initial.state].values).containsExactly(
+            entry("root.slots[0]", ReportValue.Integer(BigInteger.ZERO)),
+            entry("root.slots[1]", ReportValue.Integer(BigInteger.ZERO)),
+            entry("root.slots[2]", ReportValue.Integer(BigInteger.ZERO)),
         )
-        assertThat(witnessState.steps.last().values).containsExactly(
-            WitnessStateValue("root.slots[0]", "1"),
-            WitnessStateValue("root.slots[1]", "1"),
-            WitnessStateValue("root.slots[2]", "1"),
+        assertThat(trace.states.last().values).containsExactly(
+            entry("root.slots[0]", ReportValue.Integer(BigInteger.ONE)),
+            entry("root.slots[1]", ReportValue.Integer(BigInteger.ONE)),
+            entry("root.slots[2]", ReportValue.Integer(BigInteger.ONE)),
         )
         assertThat(readWitnessModel(output, case)).contains("root.slots[2] == 1")
     }
 
     @Test
-    suspend fun `record field values reach the witness state and the back-annotated witness by field path`(@TempDir output: Path) {
+    suspend fun `record field values reach the report and the back-annotated witness by field path`(@TempDir output: Path) {
         val case = loadCase("records.oxsts", recordsCase)
         val positionX = flattenedName("root", "robot", "position") + "${RecordFlatteningPass.FIELD_SEPARATOR}x"
 
@@ -200,8 +192,8 @@ class BackAnnotationFidelityTest {
             )
         }
 
-        assertThat(readWitnessState(output, case).steps.single().values).containsExactly(
-            WitnessStateValue("root.robot.position.x", "1"),
+        assertThat(readReport(output, case).trace!!.states.last().values).containsExactly(
+            entry("root.robot.position", ReportValue.Record(mapOf("x" to ReportValue.Integer(BigInteger.ONE)))),
         )
         assertThat(readWitnessModel(output, case)).contains("root.robot.position.x == 1")
     }
@@ -223,9 +215,10 @@ class BackAnnotationFidelityTest {
             )
         }
 
-        assertThat(readWitnessState(output, case).initializedStep.values).contains(
-            WitnessStateValue("root.queue[0]", "root.second"),
-            WitnessStateValue("root.queue[1]", "root.second"),
+        val trace = readReport(output, case).trace!!
+        assertThat(trace.states[trace.initial.state].values).contains(
+            entry("root.queue[0]", ReportValue.Text("root.second")),
+            entry("root.queue[1]", ReportValue.Text("root.second")),
         )
         assertThat(readWitnessModel(output, case)).contains("root.queue[0] == root.second")
     }
@@ -244,9 +237,10 @@ class BackAnnotationFidelityTest {
             )
         }
 
-        assertThat(readWitnessState(output, case).initializedStep.values).contains(
-            WitnessStateValue("root.kitchen.lamp.on", "false"),
-            WitnessStateValue("root.hall.lamp.on", "false"),
+        val trace = readReport(output, case).trace!!
+        assertThat(trace.states[trace.initial.state].values).contains(
+            entry("root.kitchen.lamp.on", ReportValue.Bool(false)),
+            entry("root.hall.lamp.on", ReportValue.Bool(false)),
         )
         assertThat(readWitnessModel(output, case))
             .contains("var step: int := 0")
@@ -618,21 +612,13 @@ class BackAnnotationFidelityTest {
             .build()
             .verify(case)
 
-        assertThat(result.trace)
+        assertThat(result.witness)
             .describedAs("back-annotation of ${case.qualifiedName} failed: ${result.message ?: "no message"}")
             .isNotNull()
     }
 
     private fun caseDirectory(output: Path, case: VerificationCase): Path {
         return output.resolve(caseDirectoryName(case))
-    }
-
-    private fun readCallTrace(output: Path, case: VerificationCase): CallTrace {
-        return Json.decodeFromString(caseDirectory(output, case).resolve("trace.json").readText())
-    }
-
-    private fun readWitnessState(output: Path, case: VerificationCase): WitnessState {
-        return Json.decodeFromString(caseDirectory(output, case).resolve("witness.json").readText())
     }
 
     private fun readReport(output: Path, case: VerificationCase): VerificationReport {

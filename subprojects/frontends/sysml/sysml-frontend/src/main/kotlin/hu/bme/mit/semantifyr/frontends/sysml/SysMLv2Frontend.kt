@@ -22,14 +22,11 @@ import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.VerificationResult
-import hu.bme.mit.semantifyr.verifier.VerificationResultDto
 import hu.bme.mit.semantifyr.verifier.caseDirectory
 import hu.bme.mit.semantifyr.verifier.caseReportPath
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
-import hu.bme.mit.semantifyr.verifier.toJavaDto
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.eclipse.xtext.resource.FileExtensionProvider
 import java.nio.file.Path
@@ -96,7 +93,7 @@ class SysMLv2Frontend private constructor(
         logger.info { "Verifying SysMLv2 case '${case.qualifiedName}' (variant=${variant.name})" }
         val result = verifier.verify(case, progress)
         logger.info { "SysMLv2 case '${case.qualifiedName}' -> ${result.verdict}" }
-        if (result.trace != null) {
+        if (result.witness != null) {
             withContext(Dispatchers.IO) {
                 writeSysMLTrace(case)
             }
@@ -121,15 +118,6 @@ class SysMLv2Frontend private constructor(
             logger.info { "SysMLv2 case '${case.qualifiedName}' wrote its SysML trace to '$tracePath'" }
         } catch (exception: Exception) {
             logger.warn(exception) { "Case ${case.qualifiedName} has no SysML v2 trace" }
-        }
-    }
-
-    fun verifyBlocking(
-        case: VerificationCase,
-        progress: ProgressContext = ProgressContext.Silent,
-    ): VerificationResultDto {
-        return runBlocking {
-            verify(case, progress).toJavaDto()
         }
     }
 

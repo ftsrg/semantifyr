@@ -63,14 +63,12 @@ fun fakeVerificationResult(
     verdict: VerificationVerdict = VerificationVerdict.Passed,
     backendId: String? = "test",
     metrics: VerificationMetrics = VerificationMetrics(),
-    trace: Trace? = null,
     message: String? = null,
 ): VerificationResult {
     return VerificationResult(
         metadata = fakeMetadata(backendId),
         verdict = verdict,
         metrics = metrics,
-        trace = trace,
         message = message,
     )
 }

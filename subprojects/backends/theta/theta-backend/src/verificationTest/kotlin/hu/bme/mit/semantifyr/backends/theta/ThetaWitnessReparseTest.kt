@@ -7,12 +7,15 @@
 package hu.bme.mit.semantifyr.backends.theta
 
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
+import hu.bme.mit.semantifyr.verifier.ReportValue
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.entry
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.math.BigInteger
 import kotlin.io.path.Path
 
 class ThetaWitnessReparseTest {
@@ -34,35 +37,31 @@ class ThetaWitnessReparseTest {
 
     @Test
     suspend fun `traced choice branch witness reparses and re-verifies`() {
-        val result = helper.checkWitnessReparses(
+        val checked = helper.checkWitnessReparses(
             modelPath = Path("build/test-models/semantic/tracing.oxsts"),
             qualifiedName = "semantifyr::verification::lang::tracing::TracedChoiceBranchReach",
             verificationPortfolio = portfolio,
             outputDirectory = outputDirectory,
         )
 
-        val callTrace = requireNotNull(result.trace).callTrace
-        assertThat(callTrace.steps).isNotEmpty().allSatisfy {
-            assertThat(it.traces).hasSize(1)
+        assertThat(requireNotNull(checked.report.trace).steps).isNotEmpty().allSatisfy {
+            assertThat(it.calls).hasSize(1)
         }
     }
 
     @Test
     suspend fun `array witness reparses and re-verifies`() {
-        val result = helper.checkWitnessReparses(
+        val checked = helper.checkWitnessReparses(
             modelPath = Path("build/test-models/semantic/arrays.oxsts"),
             qualifiedName = "semantifyr::verification::lang::arrays::ArraySlotIndependenceReach",
             verificationPortfolio = portfolio,
             outputDirectory = outputDirectory,
         )
 
-        val finalState = requireNotNull(result.trace).witnessState.steps.last().values.map {
-            it.variable to it.value
-        }
-        assertThat(finalState).contains(
-            "root.slots[0]" to "1",
-            "root.slots[1]" to "1",
-            "root.slots[2]" to "1",
+        assertThat(requireNotNull(checked.report.trace).states.last().values).contains(
+            entry("root.slots[0]", ReportValue.Integer(BigInteger.ONE)),
+            entry("root.slots[1]", ReportValue.Integer(BigInteger.ONE)),
+            entry("root.slots[2]", ReportValue.Integer(BigInteger.ONE)),
         )
     }
 }

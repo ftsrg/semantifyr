@@ -31,6 +31,7 @@ import hu.bme.mit.semantifyr.verifier.discovery.CaseFilter
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import hu.bme.mit.semantifyr.verifier.witness.WitnessValidator
+import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Named
 import org.junit.jupiter.params.provider.Arguments
@@ -39,8 +40,14 @@ import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.fileSize
+import kotlin.io.path.readText
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+
+class CheckedWitness(
+    val result: VerificationResult,
+    val report: VerificationReport,
+)
 
 class SemantifyrVerifierTestHelper @Inject constructor(
     val injector: Injector,
@@ -131,18 +138,23 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         assertVerdict(case.qualifiedName, expectedVerdict, result)
 
         if (expectsWitness(case, expectedVerdict)) {
-            assertThat(result.trace)
-                .describedAs("verdict $expectedVerdict for ${case.qualifiedName} must carry a Trace")
+            val witness = result.witness
+            assertThat(witness)
+                .describedAs("verdict $expectedVerdict for ${case.qualifiedName} must carry a back-annotated witness")
                 .isNotNull()
-            val trace = requireNotNull(result.trace)
-            assertThat(trace.backAnnotatedModel.classDeclaration)
+            requireNotNull(witness)
+            assertThat(witness.classDeclaration)
                 .describedAs("back-annotated model for ${case.qualifiedName} must reference the verified class")
                 .isNotNull()
-            assertThat(trace.backAnnotatedModel.isWitness)
+            assertThat(witness.isWitness)
                 .describedAs("back-annotated InlinedOxsts for ${case.qualifiedName} must be flagged as a witness")
                 .isTrue()
 
-            assertThat(listOf(trace.witnessState.initializedStep) + trace.witnessState.steps)
+            val trace = Json.decodeFromString<VerificationReport>(caseReportPath(outputDirectory, case).readText()).trace
+            assertThat(trace)
+                .describedAs("the report of ${case.qualifiedName} must carry a trace")
+                .isNotNull()
+            assertThat(requireNotNull(trace).states)
                 .describedAs("witness for ${case.qualifiedName} must carry state values, or it re-verifies vacuously")
                 .anySatisfy {
                     assertThat(it.values).isNotEmpty()
@@ -151,7 +163,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
             assertWitnessFilesPersisted(outputDirectory, case)
 
             if (validationPortfolio != null) {
-                assertWitnessRevalidates(case, trace, validationPortfolio, outputDirectory, timeout, environment, expectedVerdict)
+                assertWitnessRevalidates(case, witness, validationPortfolio, outputDirectory, timeout, environment, expectedVerdict)
             }
         }
     }
@@ -170,7 +182,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
     private fun assertWitnessFilesPersisted(artifactsRoot: Path, case: VerificationCase) {
         val caseDirectory = artifactsRoot.resolve(caseDirectoryName(case))
         val witnessFile = caseDirectory.resolve("witness.oxsts")
-        val traceFile = caseDirectory.resolve("trace.json")
+        val reportFile = caseDirectory.resolve("report.json")
 
         assertThat(witnessFile.exists())
             .describedAs("witness.oxsts must be written for ${case.qualifiedName} at $witnessFile")
@@ -179,11 +191,11 @@ class SemantifyrVerifierTestHelper @Inject constructor(
             .describedAs("witness.oxsts for ${case.qualifiedName} must be non-empty")
             .isGreaterThan(0)
 
-        assertThat(traceFile.exists())
-            .describedAs("trace.json must be written for ${case.qualifiedName} at $traceFile")
+        assertThat(reportFile.exists())
+            .describedAs("report.json must be written for ${case.qualifiedName} at $reportFile")
             .isTrue()
-        assertThat(traceFile.fileSize())
-            .describedAs("trace.json for ${case.qualifiedName} must be non-empty")
+        assertThat(reportFile.fileSize())
+            .describedAs("report.json for ${case.qualifiedName} must be non-empty")
             .isGreaterThan(0)
     }
 
@@ -238,9 +250,9 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         assertVerdict(case.qualifiedName, expectedVerdict, result, backendDiagnostics(outputDirectory, case))
         logger.info { "Result: ${result.verdict}" }
 
-        val trace = result.trace ?: return
+        val witness = result.witness ?: return
         val validation = validationPortfolio ?: return
-        assertWitnessRevalidates(case, trace, validation, outputDirectory, validationTimeout, environment, expectedVerdict)
+        assertWitnessRevalidates(case, witness, validation, outputDirectory, validationTimeout, environment, expectedVerdict)
     }
 
     private fun hasUnclosedClockTest(case: VerificationCase, outputDirectory: Path): Boolean {
@@ -257,7 +269,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         timeout: Duration = 1.minutes,
         environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
         validationPortfolio: VerificationPortfolio = verificationPortfolio,
-    ): VerificationResult {
+    ): CheckedWitness {
         val context = semantifyrLoader.loadStandaloneModel(modelPath)
         val case = verificationCaseDiscoverer.findByQualifiedName(context, qualifiedName)
         val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment)
@@ -280,12 +292,13 @@ class SemantifyrVerifierTestHelper @Inject constructor(
             .describedAs("Reparsed witness for ${case.qualifiedName} must re-verify Passed via ${validationPortfolio.id} but got ${outcome.verification.verdict} (${outcome.verification.message ?: "no message"})")
             .isTrue()
 
-        return result
+        val report = Json.decodeFromString<VerificationReport>(caseReportPath(outputDirectory, case).readText())
+        return CheckedWitness(result, report)
     }
 
     private suspend fun assertWitnessRevalidates(
         case: VerificationCase,
-        trace: Trace,
+        witness: InlinedOxsts,
         validation: VerificationPortfolio,
         outputDirectory: Path,
         timeout: Duration,
@@ -297,7 +310,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         logger.info { "Validating returned witness" }
 
         val verifier = buildVerifier(validation, timeout, outputDirectory, environment)
-        val outcome = WitnessValidator().validate(verifier, trace)
+        val outcome = WitnessValidator().validate(verifier, witness)
         assertThat(outcome.isValid)
             .describedAs("Witness for ${case.qualifiedName} (original verdict $originalVerdict) must re-verify Passed via ${validation.id} but got ${outcome.verification.verdict} (${outcome.verification.message ?: "no message"})")
             .isTrue()

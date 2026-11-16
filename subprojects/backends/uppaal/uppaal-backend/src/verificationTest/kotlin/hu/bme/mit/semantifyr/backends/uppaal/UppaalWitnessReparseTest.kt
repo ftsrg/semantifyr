@@ -50,7 +50,7 @@ class UppaalWitnessReparseTest {
     }
 
     private suspend fun checkStrictTestWitness(validationPortfolio: VerificationPortfolio) {
-        val result = helper.checkWitnessReparses(
+        val checked = helper.checkWitnessReparses(
             modelPath = Path("build/test-models/semantic/clocks.oxsts"),
             qualifiedName = "semantifyr::verification::lang::clocks::ClockStrictTestDenseReach",
             verificationPortfolio = portfolio,
@@ -58,6 +58,6 @@ class UppaalWitnessReparseTest {
             validationPortfolio = validationPortfolio,
         )
 
-        assertThat(requireNotNull(result.trace).backAnnotatedModel.timeScale).isEqualTo(2)
+        assertThat(requireNotNull(checked.result.witness).timeScale).isEqualTo(2)
     }
 }

@@ -10,7 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
-import hu.bme.mit.semantifyr.verifier.Trace
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.VerificationReport
 import kotlinx.serialization.json.Json
 import org.eclipse.emf.common.util.URI
@@ -37,25 +37,14 @@ class VerificationArtifactWriter @Inject constructor(
         reportPath.writeText(json.encodeToString(report))
     }
 
-    fun writeWitnessArtifacts(
-        trace: Trace,
-        caseArtifactPath: Path,
-        qualifiedName: String,
-    ) {
-        writeWitness(trace, caseArtifactPath, qualifiedName)
-        writeWitnessState(trace, caseArtifactPath, qualifiedName)
-        writeCallTrace(trace, caseArtifactPath, qualifiedName)
-    }
-
-    private fun writeWitness(
-        trace: Trace,
+    fun writeWitness(
+        witness: InlinedOxsts,
         caseArtifactPath: Path,
         qualifiedName: String,
     ) {
         val witnessPath = caseArtifactPath.resolve("witness.oxsts")
         try {
             witnessPath.parent?.createDirectories()
-            val witness = trace.backAnnotatedModel
             val resourceSet = witness.classDeclaration.eResource().resourceSet
             val witnessUri = URI.createFileURI(witnessPath.toAbsolutePath().toString())
             resourceSet.getResource(witnessUri, false)?.delete(emptyMap<Any, Any>())
@@ -66,36 +55,6 @@ class VerificationArtifactWriter @Inject constructor(
             logger.info { "[$qualifiedName] wrote witness artifact to $witnessPath" }
         } catch (exception: Exception) {
             logger.warn(exception) { "[$qualifiedName] failed to write witness artifact at $witnessPath" }
-        }
-    }
-
-    private fun writeWitnessState(
-        trace: Trace,
-        caseArtifactPath: Path,
-        qualifiedName: String,
-    ) {
-        val statePath = caseArtifactPath.resolve("witness.json")
-        try {
-            statePath.parent?.createDirectories()
-            statePath.writeText(json.encodeToString(trace.witnessState))
-            logger.info { "[$qualifiedName] wrote witness state artifact to $statePath" }
-        } catch (exception: Exception) {
-            logger.warn(exception) { "[$qualifiedName] failed to write witness state artifact at $statePath" }
-        }
-    }
-
-    private fun writeCallTrace(
-        trace: Trace,
-        caseArtifactPath: Path,
-        qualifiedName: String,
-    ) {
-        val tracePath = caseArtifactPath.resolve("trace.json")
-        try {
-            tracePath.parent?.createDirectories()
-            tracePath.writeText(json.encodeToString(trace.callTrace))
-            logger.info { "[$qualifiedName] wrote call trace artifact to $tracePath" }
-        } catch (exception: Exception) {
-            logger.warn(exception) { "[$qualifiedName] failed to write trace artifact at $tracePath" }
         }
     }
 

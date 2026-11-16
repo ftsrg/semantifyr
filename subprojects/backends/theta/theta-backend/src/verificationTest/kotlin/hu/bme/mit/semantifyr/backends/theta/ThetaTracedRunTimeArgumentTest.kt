@@ -89,7 +89,7 @@ class ThetaTracedRunTimeArgumentTest {
         )
 
         assertVerdict(case.qualifiedName, VerificationVerdict.Passed, result)
-        assertThat(result.trace).isNotNull()
+        assertThat(result.witness).isNotNull()
         val trace = Json.decodeFromString<VerificationReport>(caseReportPath(outputDirectory, case).readText()).trace!!
         assertThat(trace.variables).noneSatisfy {
             assertThat(it.variable).contains(TransitionTracerNames.ARGUMENT_PREFIX)
