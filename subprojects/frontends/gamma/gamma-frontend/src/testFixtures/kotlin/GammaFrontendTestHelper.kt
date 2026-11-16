@@ -11,7 +11,6 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
-import hu.bme.mit.semantifyr.compiler.pipeline.clock.ClockTestClosednessAnalysis
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.frontends.gamma.GammaCompiler
 import hu.bme.mit.semantifyr.frontends.gamma.GammaFrontend
@@ -29,6 +28,7 @@ import hu.bme.mit.semantifyr.frontends.gamma.serialization.markQualifiedName
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.clock.ClockTestAnalysis
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.assertVerdict
 import hu.bme.mit.semantifyr.verifier.assumePortfolioAvailable
@@ -202,7 +202,7 @@ class GammaFrontendTestHelper {
             "${markQualifiedName(gammaModel.name)}::${markName(gammaVerificationCase.declaration.name)}",
         )
         val inlinedOxsts = SemantifyrCompiler(oxstsInjector, ArtifactConfig.NONE).compile(oxstsCase.classDeclaration, caseDirectory.resolve("closedness")).inlinedOxsts
-        return !oxstsInjector.getInstance(ClockTestClosednessAnalysis::class.java).analyze(inlinedOxsts).isClosed
+        return oxstsInjector.getInstance(ClockTestAnalysis::class.java).unclosedTests(inlinedOxsts.mainTransition).isNotEmpty()
     }
 
     companion object {

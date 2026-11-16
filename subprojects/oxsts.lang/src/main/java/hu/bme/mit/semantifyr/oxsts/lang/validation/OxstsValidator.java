@@ -2082,9 +2082,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     @Check
     public void checkClockFeature(FeatureDeclaration featureDeclaration) {
         var typeSpecification = featureDeclaration.getTypeSpecification();
-        if (typeSpecification != null
-                && typeSpecification.getDomain() != null
-                && typeSpecification.getDomain() == builtinSymbolResolver.clockDatatype(featureDeclaration)) {
+        if (typeSpecification != null && typeCompatibility.isClock(typeSpecification.getDomain(), featureDeclaration)) {
             acceptError(
                     "A clock is declared only as a variable of a class, never as a feature.",
                     featureDeclaration,
@@ -2098,8 +2096,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public void checkClockParameter(ParameterDeclaration parameterDeclaration) {
         var typeSpecification = parameterDeclaration.getTypeSpecification();
         if (typeSpecification != null
-                && typeSpecification.getDomain() != null
-                && typeSpecification.getDomain() == builtinSymbolResolver.clockDatatype(parameterDeclaration)) {
+                && typeCompatibility.isClock(typeSpecification.getDomain(), parameterDeclaration)) {
             acceptError(
                     "A parameter cannot be a clock.",
                     parameterDeclaration,
@@ -2160,15 +2157,13 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (transitionDeclaration.getKind() == TransitionKind.INIT) {
             return;
         }
-        for (var branch : transitionDeclaration.getBranches()) {
-            for (var test : clockTestAnalysis.unclosedTests(branch)) {
-                acceptWarning(
-                        "This clock test is not closed, so a backend that explores whole delays does not trust a proof of this model; a closed test stands in an assume, not negated, as <=, >= or ==.",
-                        test,
-                        null,
-                        -1,
-                        CLOCK_TEST_NOT_CLOSED);
-            }
+        for (var test : clockTestAnalysis.unclosedTests(transitionDeclaration)) {
+            acceptWarning(
+                    "This clock test is not closed, so a backend that explores whole delays does not trust a proof of this model; a closed test stands in an assume, not negated, as <=, >= or ==.",
+                    test,
+                    null,
+                    -1,
+                    CLOCK_TEST_NOT_CLOSED);
         }
     }
 

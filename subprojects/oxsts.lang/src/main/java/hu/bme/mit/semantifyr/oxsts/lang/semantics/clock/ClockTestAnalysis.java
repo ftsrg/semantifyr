@@ -7,7 +7,7 @@
 package hu.bme.mit.semantifyr.oxsts.lang.semantics.clock;
 
 import com.google.inject.Inject;
-import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.TypeCompatibility;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AbstractForOperation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation;
@@ -29,6 +29,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -41,13 +42,12 @@ public class ClockTestAnalysis {
     private static final Object SELF = new Object();
 
     @Inject
-    private BuiltinSymbolResolver builtinSymbolResolver;
+    private TypeCompatibility typeCompatibility;
 
     public boolean isClock(VariableDeclaration variableDeclaration) {
         var typeSpecification = variableDeclaration.getTypeSpecification();
         return typeSpecification != null
-                && typeSpecification.getDomain() != null
-                && typeSpecification.getDomain() == builtinSymbolResolver.clockDatatype(variableDeclaration);
+                && typeCompatibility.isClock(typeSpecification.getDomain(), variableDeclaration);
     }
 
     public VariableDeclaration referencedClock(Expression expression) {
@@ -62,20 +62,38 @@ public class ClockTestAnalysis {
         return null;
     }
 
-    public boolean isClockTest(ComparisonOperator comparison) {
-        return isClockValued(comparison.getLeft()) || isClockValued(comparison.getRight());
+    public ClockTest clockTest(ComparisonOperator comparison) {
+        if (isClockValued(comparison.getLeft())) {
+            return new ClockTest(
+                    comparison,
+                    comparison.getLeft(),
+                    clockLeaves(comparison.getLeft()),
+                    comparison.getRight(),
+                    comparison.getOp());
+        }
+        if (isClockValued(comparison.getRight())) {
+            return new ClockTest(
+                    comparison,
+                    comparison.getRight(),
+                    clockLeaves(comparison.getRight()),
+                    comparison.getLeft(),
+                    mirrored(comparison.getOp()));
+        }
+        return null;
     }
 
-    public boolean isClockValued(Expression expression) {
+    private boolean isClockValued(Expression expression) {
         if (expression instanceof IfThenElse ifThenElse) {
             return isClockValued(ifThenElse.getThen()) || isClockValued(ifThenElse.getElse());
         }
         return expression != null && referencedClock(expression) != null;
     }
 
-    public List<ComparisonOperator> unclosedTests(Operation body) {
+    public List<ComparisonOperator> unclosedTests(TransitionDeclaration transition) {
         var unclosed = new ArrayList<ComparisonOperator>();
-        visit(body, new HashSet<>(), unclosed);
+        for (var branch : transition.getBranches()) {
+            visit(branch, new HashSet<>(), unclosed);
+        }
         return unclosed;
     }
 
@@ -170,8 +188,9 @@ public class ClockTestAnalysis {
         }
         switch (expression) {
             case ComparisonOperator comparison
-            when isClockTest(comparison) -> {
-                if (!isClosed(comparison, polarity, inAssumption) && !isReset(comparison, reset)) {
+            when clockTest(comparison) != null -> {
+                var test = clockTest(comparison);
+                if (!isClosed(test, polarity, inAssumption) && !isReset(test, reset)) {
                     unclosed.add(comparison);
                 }
             }
@@ -203,18 +222,26 @@ public class ClockTestAnalysis {
         }
     }
 
-    private boolean isClosed(ComparisonOperator comparison, Boolean polarity, boolean inAssumption) {
-        if (!inAssumption || polarity == null) {
+    private static boolean isClosed(ClockTest test, Boolean polarity, boolean inAssumption) {
+        if (!inAssumption || polarity == null || test.clockLeaves() == null) {
             return false;
         }
-        if (clockLeaves(comparison.getLeft()) == null && clockLeaves(comparison.getRight()) == null) {
-            return false;
-        }
-        var op = polarity ? comparison.getOp() : negated(comparison.getOp());
+        var op = polarity ? test.operator() : negated(test.operator());
         return op == ComparisonOp.LESS_EQ || op == ComparisonOp.GREATER_EQ || op == ComparisonOp.EQ;
     }
 
-    private static ComparisonOp negated(ComparisonOp op) {
+    public static ComparisonOp mirrored(ComparisonOp op) {
+        return switch (op) {
+            case LESS -> ComparisonOp.GREATER;
+            case LESS_EQ -> ComparisonOp.GREATER_EQ;
+            case GREATER -> ComparisonOp.LESS;
+            case GREATER_EQ -> ComparisonOp.LESS_EQ;
+            case EQ -> ComparisonOp.EQ;
+            case NOT_EQ -> ComparisonOp.NOT_EQ;
+        };
+    }
+
+    public static ComparisonOp negated(ComparisonOp op) {
         return switch (op) {
             case LESS -> ComparisonOp.GREATER_EQ;
             case LESS_EQ -> ComparisonOp.GREATER;
@@ -225,15 +252,11 @@ public class ClockTestAnalysis {
         };
     }
 
-    private boolean isReset(ComparisonOperator comparison, Set<List<Object>> reset) {
-        var leaves = clockLeaves(comparison.getLeft());
-        if (leaves == null) {
-            leaves = clockLeaves(comparison.getRight());
-        }
-        if (leaves == null) {
+    private static boolean isReset(ClockTest test, Set<List<Object>> reset) {
+        if (test.clockLeaves() == null) {
             return false;
         }
-        for (var leaf : leaves) {
+        for (var leaf : test.clockLeaves()) {
             var key = keyOf(leaf);
             if (key == null || !reset.contains(key)) {
                 return false;
