@@ -268,6 +268,8 @@ export interface WitnessValidationResult {
     backendId: string | null;
     portfolioId: string | null;
     metrics: VerificationMetrics | null;
+    // the validation's own report, absent when the validation wrote none
+    report: VerificationReport | null;
 }
 
 export const CompiledOxstsStatus = {

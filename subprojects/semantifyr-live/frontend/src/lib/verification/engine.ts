@@ -14,6 +14,7 @@ import {
   type ResultTrace,
   resultTraceOf,
   type VerificationMetrics,
+  type VerificationReport,
   type WitnessValidationResult,
   type WitnessValidationStatus,
   verifyCase,
@@ -82,8 +83,8 @@ export interface VerificationCaseState {
   metrics?: VerificationMetrics
   backendId?: string
   portfolioId?: string
-  validationMetrics?: VerificationMetrics
-  validationBackendId?: string
+  // the validation's own report, absent when the validation wrote none
+  validationReport?: VerificationReport
   validationPortfolioIdUsed?: string
   // the status of the result shown, kept while a new run of the case is queued or running
   resultStatus?: VerificationCaseStatus
@@ -722,8 +723,7 @@ export function verifySingleCase(
 export interface WitnessValidationOutcome {
   status: WitnessValidationStatus
   message?: string
-  metrics?: VerificationMetrics
-  backendId?: string
+  report?: VerificationReport
   portfolioId?: string
 }
 
@@ -752,8 +752,7 @@ function toValidationOutcome(response: WitnessValidationResult | null): WitnessV
   return {
     status: witnessValidationStatusOf(response),
     ...(response?.message != null ? { message: response.message } : {}),
-    ...(response?.metrics ? { metrics: response.metrics } : {}),
-    ...(response?.backendId ? { backendId: response.backendId } : {}),
+    ...(response?.report ? { report: response.report } : {}),
     ...(response?.portfolioId ? { portfolioId: response.portfolioId } : {}),
   }
 }
@@ -767,13 +766,13 @@ function applyValidationOutcome(
   caseState: VerificationCaseState,
   outcome: WitnessValidationOutcome,
 ): VerificationCaseState {
+  const { validationReport: _validationReport, ...rest } = withoutValidationReport(caseState)
   return {
-    ...withoutValidationReport(caseState),
+    ...rest,
     validating: false,
     witnessValidation: outcome.status,
     validationMessage: outcome.message,
-    ...(outcome.metrics ? { validationMetrics: outcome.metrics } : {}),
-    ...(outcome.backendId ? { validationBackendId: outcome.backendId } : {}),
+    ...(outcome.report ? { validationReport: outcome.report } : {}),
     ...(outcome.portfolioId ? { validationPortfolioIdUsed: outcome.portfolioId } : {}),
   }
 }

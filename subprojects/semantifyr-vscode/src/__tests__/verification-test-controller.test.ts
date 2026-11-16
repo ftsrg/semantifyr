@@ -332,7 +332,7 @@ describe('verification', () => {
 
 describe('witness validation', () => {
     const byCase = { validateWitnessCommand: 'gamma.witness.validate', validateWitnessByCase: true };
-    const valid: WitnessValidationResult = { status: 'valid', verdict: 'failed', message: null, backendId: 'theta-bmc', portfolioId: 'smart', metrics: null };
+    const valid: WitnessValidationResult = { status: 'valid', verdict: 'failed', message: null, backendId: 'theta-bmc', portfolioId: 'smart', metrics: null, report: null };
 
     function validateWitnessOf(item: TestItem) {
         return state.commands.get('semantifyr.witness.validate')!(item);

@@ -27,6 +27,7 @@ import hu.bme.mit.semantifyr.verifier.ReportTrace
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationReport
 import hu.bme.mit.semantifyr.verifier.VerificationResult
+import hu.bme.mit.semantifyr.verifier.caseRecheckReportPath
 import hu.bme.mit.semantifyr.verifier.caseReportPath
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
@@ -61,6 +62,11 @@ class GammaWitness(
 data class GammaVerificationResult(
     val verification: VerificationResult,
     val witness: GammaWitness?,
+    val reportPath: Path,
+)
+
+data class GammaWitnessValidation(
+    val validation: WitnessValidationResult,
     val reportPath: Path,
 )
 
@@ -171,10 +177,11 @@ class GammaFrontend @Inject private constructor(
         witnessPath: Path,
         portfolio: VerificationPortfolio = gammaFrontendConfiguration.portfolio,
         progress: ProgressContext = ProgressContext.Silent,
-    ): WitnessValidationResult {
+    ): GammaWitnessValidation {
         val qualifiedName = gammaVerificationCase.qualifiedName
         val baseDirectory = caseDirectory(gammaVerificationCase)
-        val verifier = buildVerifier(baseDirectory.resolve("verification"), portfolio)
+        val verificationDirectory = baseDirectory.resolve("verification")
+        val verifier = buildVerifier(verificationDirectory, portfolio)
 
         logger.info { "Validating witness for Gamma case '$qualifiedName' from '$witnessPath'" }
 
@@ -183,7 +190,8 @@ class GammaFrontend @Inject private constructor(
         logger.info {
             "Witness validation for Gamma case '$qualifiedName' -> ${result.verification.verdict} (${result::class.simpleName})"
         }
-        return result
+        val reportPath = caseRecheckReportPath(verificationDirectory, verificationCaseDiscoverer.caseOf(backAnnotatedModel.classDeclaration))
+        return GammaWitnessValidation(result, reportPath)
     }
 
     private fun loadWitnessModel(witnessPath: Path, baseDirectory: Path): InlinedOxsts {

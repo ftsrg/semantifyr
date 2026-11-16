@@ -13,8 +13,11 @@ import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult;
+import hu.bme.mit.semantifyr.lang.ide.wire.VerificationReportAdapter;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts;
+import hu.bme.mit.semantifyr.verifier.CaseDirectoryNameKt;
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier;
+import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer;
 import hu.bme.mit.semantifyr.verifier.witness.WitnessValidator;
 import java.util.List;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
@@ -35,6 +38,9 @@ public class ValidateWitnessClassCommandHandler
 
     @Inject
     protected WitnessValidator witnessValidator;
+
+    @Inject
+    protected VerificationCaseDiscoverer verificationCaseDiscoverer;
 
     @Override
     public String getId() {
@@ -91,7 +97,9 @@ public class ValidateWitnessClassCommandHandler
                 var validationResult = witnessValidator.validateBlocking(verifier, inlinedOxsts, progressContext);
                 LOGGER.info(
                         "LSP validateWitness {}", validationResult.getClass().getSimpleName());
-                return WitnessValidationResult.fromValidation(validationResult, portfolio.getId());
+                var report = VerificationReportAdapter.read(CaseDirectoryNameKt.caseRecheckReportPath(
+                        outputDirectory, verificationCaseDiscoverer.caseOf(inlinedOxsts.getClassDeclaration())));
+                return WitnessValidationResult.fromValidation(validationResult, report, portfolio.getId());
             } catch (Exception e) {
                 LOGGER.warn("Witness validation threw {}", e.getClass().getSimpleName(), e);
                 return WitnessValidationResult.errored(e.toString(), portfolio.getId());

@@ -100,10 +100,8 @@ public class VerifyInlinedOxstsCommandHandler
                         EmptyCoroutineContext.INSTANCE,
                         (scope, continuation) -> verifier.verify(inlinedOxsts, progressContext, continuation));
                 LOGGER.info("LSP verify {}", verification.getVerdict());
-                // a re-verified model writes its artifacts under its case's validation directory
-                var directory = CaseDirectoryNameKt.caseDirectory(
-                                outputDirectory, verificationCaseDiscoverer.caseOf(inlinedOxsts.getClassDeclaration()))
-                        .resolve("validation");
+                var directory = CaseDirectoryNameKt.caseRecheckDirectory(
+                        outputDirectory, verificationCaseDiscoverer.caseOf(inlinedOxsts.getClassDeclaration()));
                 return VerificationCaseResult.fromCaseDirectory(directory, portfolio.getId());
             } catch (Exception e) {
                 LOGGER.warn("Verification threw {}", e.getClass().getSimpleName(), e);

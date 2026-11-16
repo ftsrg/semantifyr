@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { ReportCall, ReportState, ResultTrace } from '@semantifyr/editor-common'
+import type { ReportCall, ReportState, ResultTrace, VerificationReport } from '@semantifyr/editor-common'
 
 import { findExample, liveFlavors } from '../examples'
 import type { VerificationCaseState } from '../lib/verification/engine'
@@ -148,6 +148,21 @@ export const LANGUAGES: Readonly<Record<string, Language>> = {
   oxsts: { flavorId: 'oxsts', exampleId: 'level-crossing', caseName: 'BarrierDownWhileTrainInCrossing', definition: 'class BarrierDownWhileTrainInCrossing', traceUri: OXSTS_WITNESS_URI },
 }
 
+// the run details read the validation's backend, duration and soundness from its report
+const VALIDATION = {
+  version: 2,
+  kind: 're-check',
+  verificationCase: 'example::levelcrossing::BarrierDownWhileTrainInCrossing',
+  portfolioId: 'smart',
+  result: {
+    metadata: { backendId: 'spin:safe', startedAt: '2026-11-16T10:00:00Z' },
+    verdict: 'Passed',
+    soundness: 'UnderApproximating',
+    metrics: { totalDuration: 'PT0.6S' },
+  },
+  trace: null,
+} as unknown as VerificationReport
+
 export function caseState(language: Language, options: { validated: boolean, recorded: boolean }): VerificationCaseState {
   const flavor = liveFlavors(servedFlavors).find((candidate) => {
     return candidate.id === language.flavorId
@@ -166,7 +181,7 @@ export function caseState(language: Language, options: { validated: boolean, rec
     portfolioId: 'smart',
     trace: traceOf(language.traceUri, options.recorded),
     ...(options.validated
-      ? { waited: 30_000, validationWaited: 4_000, witnessValidation: 'valid' as const, validationMetrics: { totalDuration: 'PT0.6S', preparationDuration: 'PT0S', verificationDuration: 'PT0.6S', backAnnotationDuration: 'PT0S' }, validationBackendId: 'spin:safe', validationPortfolioIdUsed: 'smart' }
+      ? { waited: 30_000, validationWaited: 4_000, witnessValidation: 'valid' as const, validationReport: VALIDATION, validationPortfolioIdUsed: 'smart' }
       : {}),
   }
 }

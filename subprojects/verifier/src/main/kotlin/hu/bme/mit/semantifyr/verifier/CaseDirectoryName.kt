@@ -31,6 +31,15 @@ fun caseReportPath(outputDirectory: Path, case: VerificationCase): Path {
     return reportPath(caseDirectory(outputDirectory, case))
 }
 
+// a re-check of the case's witness keeps out of the run's artifacts
+fun caseRecheckDirectory(outputDirectory: Path, case: VerificationCase): Path {
+    return caseDirectory(outputDirectory, case).resolve("validation")
+}
+
+fun caseRecheckReportPath(outputDirectory: Path, case: VerificationCase): Path {
+    return reportPath(caseRecheckDirectory(outputDirectory, case))
+}
+
 internal fun reportPath(caseDirectory: Path): Path {
     return caseDirectory.resolve("report.json")
 }

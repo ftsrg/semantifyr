@@ -437,7 +437,7 @@ class WebSocketVerificationFlowTest {
     fun `finished verifications are timed by kind, backend and verdict`(@TempDir tmp: Path) = testApplication {
         val executor = FakeVerificationExecutor {
             if (it.command == "oxsts.case.validateWitness") {
-                WitnessValidationResult("valid", null, null, "theta", "smart", null)
+                WitnessValidationResult("valid", null, null, "theta", "smart", null, null)
             } else {
                 cannedResult
             }

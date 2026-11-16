@@ -5,7 +5,7 @@
  */
 
 import { formatReportValue } from "./trace.ts";
-import { type ReportCall, ReportKind, type WitnessValidationResult, WitnessValidationStatus } from "./wire.ts";
+import { type ReportCall, ReportKind, type SoundnessDirection, type WitnessValidationResult, WitnessValidationStatus } from "./wire.ts";
 
 export function traceStepLabel(index: number): string {
     if (index === 0) {
@@ -26,7 +26,18 @@ export function missingCallsMessage(reason: string): string {
 }
 
 export function reportKindLabel(kind: ReportKind): string {
-    return kind === ReportKind.Recheck ? "Re-check" : "Run";
+    return kind === ReportKind.Recheck ? "Validation" : "Run";
+}
+
+export function soundnessLabel(soundness: SoundnessDirection): string {
+    switch (soundness) {
+        case "Exact":
+            return "exact";
+        case "OverApproximating":
+            return "over-approximating";
+        case "UnderApproximating":
+            return "under-approximating";
+    }
 }
 
 export function noWitnessMessage(caseLabel: string): string {

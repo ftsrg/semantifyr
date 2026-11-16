@@ -36,6 +36,8 @@ export const sampleReport = {
   },
 } as unknown as VerificationReport;
 
+export const sampleValidationReport: VerificationReport = { ...sampleReport, kind: 're-check', trace: null };
+
 export const passedResult: VerificationCaseResult = {
   status: 'passed',
   message: null,

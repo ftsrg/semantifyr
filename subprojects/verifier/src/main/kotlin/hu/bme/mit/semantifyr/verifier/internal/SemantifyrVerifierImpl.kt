@@ -37,6 +37,7 @@ import hu.bme.mit.semantifyr.verifier.VerificationReport
 import hu.bme.mit.semantifyr.verifier.VerificationResult
 import hu.bme.mit.semantifyr.verifier.VerifierMetrics
 import hu.bme.mit.semantifyr.verifier.caseDirectory
+import hu.bme.mit.semantifyr.verifier.caseRecheckDirectory
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.LimitedConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
@@ -115,8 +116,8 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         val deadline = markNow() + semantifyrVerifierConfiguration.timeout
         progressContext.reportProgress("Compiling ${case.qualifiedName}")
         logger.info { "Compiling inlined of '${case.qualifiedName}'" }
-        // the model re-verified here usually lies in the case directory, a witness the verify left there, so the run keeps out of the verify's artifacts
-        val validationDirectory = prepareDirectory(caseDirectoryFor(case).resolve("validation"))
+        // the model re-verified here usually lies in the case directory, a witness the verify left there
+        val validationDirectory = prepareDirectory(caseRecheckDirectory(semantifyrVerifierConfiguration.outputDirectory, case))
         val clone = semantifyrLoader.fromResourceSet(inlinedOxsts.eResource().resourceSet, emptyMap())
             .resourceSet
             .getEObject(EcoreUtil.getURI(inlinedOxsts), true) as InlinedOxsts

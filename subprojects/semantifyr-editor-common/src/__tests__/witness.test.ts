@@ -45,9 +45,9 @@ describe("witness messages", () => {
         expect(missingCallsMessage("the backend gave no trace variables")).toBe("The calls of this trace could not be obtained: the backend gave no trace variables");
     });
 
-    it("tells a re-check from a run", () => {
+    it("tells a validation from a run", () => {
         expect(reportKindLabel(ReportKind.Run)).toBe("Run");
-        expect(reportKindLabel(ReportKind.Recheck)).toBe("Re-check");
+        expect(reportKindLabel(ReportKind.Recheck)).toBe("Validation");
     });
 
     it("names the witness that does not open and why", () => {
@@ -65,7 +65,7 @@ describe("witnessValidationStatusOf", () => {
         WitnessValidationStatus.Cancelled,
         WitnessValidationStatus.Errored,
     ])("keeps the status %s", (status) => {
-        expect(witnessValidationStatusOf({ status, verdict: null, message: null, backendId: null, portfolioId: null, metrics: null })).toBe(status);
+        expect(witnessValidationStatusOf({ status, verdict: null, message: null, backendId: null, portfolioId: null, metrics: null, report: null })).toBe(status);
     });
 
     it("treats no result and an unknown status as errored", () => {

@@ -7,7 +7,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { renderTrace, WitnessView } from '../witness.js';
 import { registerOutputChannel } from '../outputChannel.js';
-import { counterexample, resolutionNote, result, witnessUri } from './fixtures.js';
+import { counterexample, validationReport, resolutionNote, result, witnessUri } from './fixtures.js';
 import { createExtensionContext, resetVscode, state, TestItem, TestMessage, Uri, ViewColumn, commands, window, workspace } from './stubs/vscode.js';
 import type { ResultTrace, WitnessValidationResult } from '@semantifyr/editor-common';
 
@@ -71,7 +71,7 @@ describe('renderTrace', () => {
     });
 
     it('adds the witness validation below the verdict', () => {
-        const validation: WitnessValidationResult = { status: 'invalid', verdict: 'passed', message: 'spurious', backendId: 'theta-bmc', portfolioId: 'smart', metrics: null };
+        const validation: WitnessValidationResult = { status: 'invalid', verdict: 'passed', message: 'spurious', backendId: 'theta-bmc', portfolioId: 'smart', metrics: null, report: null };
 
         const document = renderTrace('Safe', result('failed', counterexample), counterexample, validation);
 
@@ -80,6 +80,14 @@ describe('renderTrace', () => {
             '',
             'Validation: Witness invalid (backend theta-bmc, portfolio smart) - spurious',
         ]);
+    });
+
+    it('names the validation\'s backend, duration and soundness from its report', () => {
+        const validation: WitnessValidationResult = { status: 'valid', verdict: 'failed', message: null, backendId: null, portfolioId: 'smart', metrics: null, report: validationReport() };
+
+        const document = renderTrace('Safe', result('failed', counterexample), counterexample, validation);
+
+        expect(document.split('\n')[4]).toBe('Validation: Witness valid (backend spin-safe-dfs, portfolio smart, 1.5 s, under-approximating)');
     });
 
     it('leaves out a missing witness and origin', () => {
@@ -121,10 +129,10 @@ describe('renderTrace', () => {
 });
 
 describe('renderTrace of what the report adds', () => {
-    it('names a re-check', () => {
+    it('names a validation', () => {
         const trace: ResultTrace = { ...counterexample, kind: 're-check' };
 
-        expect(renderTrace('Safe', result('failed', trace), trace).split('\n')[4]).toBe('Report: Re-check');
+        expect(renderTrace('Safe', result('failed', trace), trace).split('\n')[4]).toBe('Report: Validation');
     });
 
     it('gives each step its elapsed time in a timed model', () => {
@@ -253,7 +261,7 @@ describe('WitnessView validation', () => {
     }
 
     function validation(status: WitnessValidationResult['status'], message: string | null = null): WitnessValidationResult {
-        return { status, verdict: null, message, backendId: null, portfolioId: 'smart', metrics: null };
+        return { status, verdict: null, message, backendId: null, portfolioId: 'smart', metrics: null, report: null };
     }
 
     function traceDocument(): string {

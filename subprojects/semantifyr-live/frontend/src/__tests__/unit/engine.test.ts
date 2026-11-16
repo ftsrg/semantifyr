@@ -25,6 +25,7 @@ import {
   failedResult,
   passedResult,
   sampleMetrics,
+  sampleValidationReport,
   sampleTrace,
 } from '../fixtures/verification-results';
 
@@ -138,6 +139,7 @@ describe('runAllVerifications', () => {
         metrics: sampleMetrics,
         backendId: 'theta-cegar',
         portfolioId: 'smart',
+        report: sampleValidationReport,
       };
     });
     const client: LspClient = { sendRequest, sendNotification: () => {} };
@@ -164,7 +166,7 @@ describe('runAllVerifications', () => {
     });
     expect(sendRequest).toHaveBeenCalledTimes(2);
     expect(states.some((state) => state.cases[0]?.validating === true)).toBe(true);
-    expect(states.at(-1)!.cases[0]!.validationBackendId).toBe('theta-cegar');
+    expect(states.at(-1)!.cases[0]!.validationReport).toEqual(sampleValidationReport);
   });
 
   it('sends the case location instead of the witness location when the command validates by case', async () => {
@@ -335,6 +337,7 @@ describe('validateWitness', () => {
       backendId: 'theta-bmc',
       portfolioId: 'smart',
       metrics: sampleMetrics,
+      report: sampleValidationReport,
     }));
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
@@ -345,7 +348,7 @@ describe('validateWitness', () => {
       { portfolioId: 'smart' },
     );
     expect(outcome.status).toBe('invalid');
-    expect(outcome.backendId).toBe('theta-bmc');
+    expect(outcome.report).toEqual(sampleValidationReport);
     expect(outcome.portfolioId).toBe('smart');
 
     const callArguments = sendRequest.mock.calls[0]!;
@@ -386,6 +389,7 @@ describe('dispatchAutoValidation', () => {
       backendId: 'theta-cegar',
       portfolioId: 'smart',
       metrics: sampleMetrics,
+      report: sampleValidationReport,
     }));
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
@@ -414,7 +418,7 @@ describe('dispatchAutoValidation', () => {
       const last = states.at(-1)!;
       expect(last.cases[0]!.witnessValidation).toBe('valid');
       expect(last.cases[0]!.validating).toBe(false);
-      expect(last.cases[0]!.validationBackendId).toBe('theta-cegar');
+      expect(last.cases[0]!.validationReport).toEqual(sampleValidationReport);
       expect(last.cases[0]!.validationPortfolioIdUsed).toBe('smart');
     });
   });

@@ -215,7 +215,7 @@ export async function validateResult(client: LspClient, running: RunningTracker,
     message: outcome.message ?? null,
     wallMs: performance.now() - sentAt,
     queueMs: runningAt === null ? null : runningAt - sentAt,
-    serverMs: milliseconds(outcome.metrics?.totalDuration),
+    serverMs: milliseconds(outcome.report?.result.metrics.totalDuration),
   }
 }
 

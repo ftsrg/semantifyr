@@ -13,6 +13,7 @@ import {
     reportKindLabel,
     type ResultTrace,
     resultTraceOf,
+    soundnessLabel,
     type StateChange,
     traceStates,
     traceStepLabel,
@@ -31,6 +32,8 @@ export const witnessMessageContext = "semantifyr.witness";
 export const validatableWitnessMessageContext = "semantifyr.witness.validatable";
 
 const traceScheme = "semantifyr-trace";
+
+const ISO_DURATION = /^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?$/;
 
 export type WitnessValidator = (token: CancellationToken) => Promise<WitnessValidationResult | null>;
 
@@ -186,6 +189,7 @@ function erroredValidation(error: unknown): WitnessValidationResult {
         backendId: null,
         portfolioId: null,
         metrics: null,
+        report: null,
     };
 }
 
@@ -195,7 +199,31 @@ export function renderValidation(validation: WitnessValidationResult | null): st
         return label;
     }
     const message = validation.message ? ` - ${validation.message}` : "";
-    return `${label}${renderOrigin(validation)}${message}`;
+    return `${label}${renderValidationOrigin(validation)}${message}`;
+}
+
+// the validation's backend, duration and soundness come from its own report
+function renderValidationOrigin(validation: WitnessValidationResult): string {
+    const result = validation.report?.result;
+    if (result === undefined) {
+        return renderOrigin(validation);
+    }
+    return renderOrigin(
+        { backendId: result.metadata.backendId, portfolioId: validation.portfolioId },
+        [
+            formatSeconds(result.metrics.totalDuration),
+            soundnessLabel(result.soundness),
+        ],
+    );
+}
+
+function formatSeconds(isoDuration: string): string {
+    const match = ISO_DURATION.exec(isoDuration);
+    if (match === null) {
+        return isoDuration;
+    }
+    const seconds = Number(match[1] ?? 0) * 3600 + Number(match[2] ?? 0) * 60 + Number(match[3] ?? 0);
+    return seconds < 10 ? `${seconds.toFixed(1)} s` : `${String(Math.round(seconds))} s`;
 }
 
 export function renderTrace(label: string, result: VerificationCaseResult, trace: ResultTrace, validation?: WitnessValidationResult | null): string {
@@ -225,10 +253,11 @@ function witnessLabel(witnessUri: string): string {
     return witnessUri.endsWith(".get") ? "Gamma trace" : "Witness";
 }
 
-function renderOrigin(result: { backendId: string | null; portfolioId: string | null }): string {
+function renderOrigin(result: { backendId: string | null; portfolioId: string | null }, facts: readonly string[] = []): string {
     const origin = [
         result.backendId === null ? undefined : `backend ${result.backendId}`,
         result.portfolioId === null ? undefined : `portfolio ${result.portfolioId}`,
+        ...facts,
     ].filter((part) => part !== undefined);
     return origin.length === 0 ? "" : ` (${origin.join(", ")})`;
 }

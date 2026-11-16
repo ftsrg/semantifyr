@@ -96,3 +96,17 @@ function reportOf(status: VerificationCaseResult['status'], trace: ResultTrace |
 export function result(status: VerificationCaseResult['status'], trace: ResultTrace | null = null, message: string | null = null): VerificationCaseResult {
     return { status, message, backendId: 'theta-cegar-expl', portfolioId: 'theta', metrics: null, report: reportOf(status, trace), witnessUri: trace?.witnessUri ?? null };
 }
+
+export function validationReport(): VerificationReport {
+    const report = reportOf('passed', null);
+    return {
+        ...report,
+        kind: 're-check',
+        result: {
+            ...report.result,
+            metadata: { ...report.result.metadata, backendId: 'spin-safe-dfs' },
+            soundness: 'UnderApproximating',
+            metrics: { ...report.result.metrics, totalDuration: 'PT1.503S' },
+        },
+    };
+}
