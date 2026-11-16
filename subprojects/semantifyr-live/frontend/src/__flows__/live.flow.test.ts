@@ -22,7 +22,7 @@ describe('each language on the running image', () => {
   for (const address of [
     '/sysml/level-crossing',
     '/gamma/level-crossing',
-    '/oxsts/basics',
+    '/language/intersection',
   ]) {
     test(`verifies every case of ${address} and opens a trace`, async ({ flow }) => {
       const page = await flow.open(address)
@@ -38,7 +38,7 @@ describe('each language on the running image', () => {
 })
 
 describe('the SysML v2 language server of the fork, in the page', () => {
-  test('hovers a name, completes one and goes to a definition in the standard library', async ({ flow }) => {
+  test('hovers a name and completes one', async ({ flow }) => {
     const page = await flow.open('/sysml/level-crossing')
     await expect.poll(async () => {
       return page.getByTestId('status-message').first().innerText()
@@ -64,12 +64,19 @@ describe('the SysML v2 language server of the fork, in the page', () => {
     await expect.poll(async () => {
       return page.locator('.suggest-widget').filter({ visible: true }).count()
     }, { timeout: 30_000 }).toBe(0)
+  })
 
-    // a click while the completion list closes is lost on WebKit
+  test('goes to a definition in the standard library', async ({ flow }) => {
+    const page = await flow.open('/sysml/spacecraft')
+    await expect.poll(async () => {
+      return page.getByTestId('status-message').first().innerText()
+    }, { timeout: SLOW }).toMatch(/^Ready/)
+
+    // a click while the editor settles is lost on WebKit
     await expect.poll(async () => {
       await clickToken(page, 'private import ScalarValues::Integer;', 'Integer')
       return page.locator('.statusbar .status-end').innerText()
-    }, { timeout: 30_000, interval: 1000 }).toContain('Ln 1,')
+    }, { timeout: 30_000, interval: 1000 }).toContain('Ln 9,')
     await page.keyboard.press('F12')
     await expect.poll(async () => {
       return page.locator('.tabs [role="tab"][aria-selected="true"]').innerText()

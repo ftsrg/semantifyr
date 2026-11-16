@@ -6,6 +6,7 @@
 
 import { describe, expect, it, vi } from 'vitest'
 import type { VerificationCaseSpecification } from '@semantifyr/editor-common'
+import { verdictOfLauncherVerdict, verdictWords } from '@semantifyr/editor-common/terms'
 
 import { editorColorsFrom, toHexColor } from '../../lib/session/editorTheme'
 import { fileUriOfLibrary, isLibraryFileUri, libraryUriOf } from '../../lib/session/readOnlyDocuments'
@@ -32,7 +33,7 @@ function caseAt(id: string, line: number): VerificationCaseSpecification {
   return {
     id: `example::${id}`,
     label: `example::${id}`,
-    location: { uri: 'file:///workspace/snippet.oxsts', range: { start: { line, character: 0 }, end: { line, character: 1 } } },
+    location: { uri: 'file:///workspace/snippet.semantifyr', range: { start: { line, character: 0 }, end: { line, character: 1 } } },
   }
 }
 
@@ -75,6 +76,22 @@ describe('a case row', () => {
     expect(caseRowOf(result('a', 'not_supported', { message: 'not supported: unbounded' }))).toMatchObject({ status: 'inconclusive', message: 'not supported: unbounded' })
     expect(caseRowOf(result('a', 'errored', { message: 'broke' }))).toMatchObject({ status: 'error', word: 'Error', message: 'broke' })
     expect(caseRowOf({ caseInfo: caseAt('a', 1), status: 'stale', message: 'Verification cancelled' })).toMatchObject({ status: 'not-run', word: 'Not run', message: 'cancelled', time: null })
+  })
+
+  it('shows each of the launcher\'s six verdicts as the terms map it, a timeout and a not supported answer as inconclusive with the exact verdict named', () => {
+    expect(Object.keys(verdictOfLauncherVerdict)).toHaveLength(6)
+    for (const [launcherVerdict, verdict] of Object.entries(verdictOfLauncherVerdict)) {
+      const status = launcherVerdict.toLowerCase() as VerificationCaseState['status']
+      expect(caseRowOf(result('a', status)), launcherVerdict).toMatchObject({ status: verdict, word: verdictWords[verdict] })
+    }
+    expect(verdictOfLauncherVerdict).toMatchObject({ TIMEOUT: 'inconclusive', NOT_SUPPORTED: 'inconclusive' })
+    expect(caseRowOf(result('a', 'timeout')).message).toBe('timed out')
+    expect(caseRowOf(result('a', 'not_supported')).message).toBe('not supported')
+  })
+
+  it('says what an inconclusive and an errored case mean when the server sent no message', () => {
+    expect(caseRowOf(result('a', 'inconclusive'))).toMatchObject({ status: 'inconclusive', message: 'No backend decided the case.' })
+    expect(caseRowOf(result('a', 'errored'))).toMatchObject({ status: 'error', message: 'The verification stopped on an error, with no verdict.' })
   })
 
   it('marks a result outdated and its validation, but not a case that waits', () => {
@@ -250,27 +267,28 @@ describe('the connection indicator', () => {
 })
 
 describe('the portfolios', () => {
-  it('offers Automatic and Cross-check, then the single engines the server has', () => {
+  it('offers Smart and All agree with the names and descriptions of the server, then the single-backend portfolios the server has', () => {
     const choices = portfolioChoices([
-      { id: 'smart-full', displayName: 'Auto', description: '', available: true },
-      { id: 'all-agree-full', displayName: 'All agree', description: '', available: true },
-      { id: 'theta-full', displayName: 'Theta', description: '', available: true },
+      { id: 'smart', displayName: 'Smart', description: 'Runs the installed backends side by side.', available: true },
+      { id: 'all-agree', displayName: 'All agree', description: '', available: true },
+      { id: 'theta', displayName: 'Theta', description: '', available: true },
       { id: 'nuxmv-ic3-invar', displayName: 'nuXmv', description: '', available: false },
     ])
-    expect(choices.combined.map((choice) => {
-      return choice.name
-    })).toEqual(['Automatic', 'Cross-check'])
-    expect(choices.singleEngine.map((choice) => {
+    expect(choices.combined).toEqual([
+      { id: 'smart', name: 'Smart', detail: 'Runs the installed backends side by side.' },
+      { id: 'all-agree', name: 'All agree', detail: null },
+    ])
+    expect(choices.singleBackend.map((choice) => {
       return choice.name
     })).toEqual(['Theta'])
-    expect(portfolioName([], null)).toBe('Automatic')
+    expect(portfolioName([], null)).toBe('Smart')
   })
 })
 
 describe('the read-only tabs', () => {
   it('opens a document once, shows it and updates its text, and returns to the model when it closes', () => {
     const tabs = createDocumentTabs()
-    const document = { id: 'oxsts', label: 'a.oxsts', uri: 'live-derived:/oxsts/a.oxsts', languageId: 'oxsts', banner: '', text: 'one' }
+    const document = { id: 'oxsts', label: 'a.semantifyr', uri: 'live-derived:/oxsts/a.semantifyr', languageId: 'oxsts', banner: '', text: 'one' }
     tabs.open(document)
     tabs.open(document, { start: { line: 1, character: 0 }, end: { line: 1, character: 2 } })
     expect(tabs.state.get()).toMatchObject({ active: 'oxsts', selection: { id: 'oxsts', sequence: 1 } })
@@ -282,9 +300,9 @@ describe('the read-only tabs', () => {
   })
 
   it('names a library file under a scheme of its own, whichever address the language gives it', () => {
-    const builtin = 'file:///workspace/.semantifyr/builtin/semantifyr.oxsts'
+    const builtin = 'file:///workspace/.semantifyr/builtin/standard.semantifyr'
     expect(isLibraryFileUri(builtin)).toBe(true)
-    expect(isLibraryFileUri('file:///workspace/snippet.oxsts')).toBe(false)
+    expect(isLibraryFileUri('file:///workspace/snippet.semantifyr')).toBe(false)
     expect(fileUriOfLibrary(libraryUriOf(builtin))).toBe(builtin)
     const worker = `${window.location.origin}/sysml-worker/library/Kernel%20Libraries/ScalarValues.kerml`
     expect(libraryUriOf(worker)).toBe('live-library:/sysml-library/Kernel%20Libraries/ScalarValues.kerml')

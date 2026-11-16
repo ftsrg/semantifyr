@@ -12,7 +12,7 @@ const caseLocation = {
     range: { start: { line: 4, character: 0 }, end: { line: 6, character: 1 } },
 };
 
-const witnessUri = "file:///workspace/.artifacts/crossroads.ACanBeGreen/verification/theta/witness.oxsts";
+const witnessUri = "file:///workspace/.artifacts/crossroads.ACanBeGreen/verification/theta/witness.semantifyr";
 
 function recordingClient(response: unknown) {
     const sendRequest = vi.fn<LspClient["sendRequest"]>(async () => {
@@ -34,15 +34,15 @@ const token: CancellationToken = {
 
 describe("validateWitness", () => {
     it("sends the location and the portfolio as the command's one argument", async () => {
-        const validation = { status: "valid", verdict: "failed", message: null, backendId: "theta-bmc", portfolioId: "smart-full", metrics: null };
+        const validation = { status: "valid", verdict: "failed", message: null, backendId: "theta-bmc", portfolioId: "smart", metrics: null };
         const { client, sendRequest } = recordingClient(validation);
 
-        const result = await validateWitness(client, "gamma.witness.validate", caseLocation, { portfolio: "smart-full" });
+        const result = await validateWitness(client, "gamma.witness.validate", caseLocation, { portfolio: "smart" });
 
         expect(result).toEqual(validation);
         expect(sendRequest.mock.calls).toEqual([[
             "workspace/executeCommand",
-            { command: "gamma.witness.validate", arguments: [{ ...caseLocation, portfolio: "smart-full" }] },
+            { command: "gamma.witness.validate", arguments: [{ ...caseLocation, portfolio: "smart" }] },
         ]]);
     });
 

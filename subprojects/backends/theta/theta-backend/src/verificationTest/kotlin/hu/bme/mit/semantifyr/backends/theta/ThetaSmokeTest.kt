@@ -35,12 +35,14 @@ class ThetaSmokeTest {
             .loadModels(Path("build/test-models/smoke"))
             .buildAndResolve()
 
+        val case = helper.collectVerificationCases(context).single()
         helper.checkVerificationCase(
             context = context,
-            case = helper.collectVerificationCases(context).single(),
+            case = case,
             verificationPortfolio = SingleBackendPortfolio(ThetaBackend(), ThetaConfig.CegarExplPredCombined),
             validationPortfolio = SingleBackendPortfolio(ThetaBackend(), ThetaConfig.CegarExplPredCombined),
             outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(ThetaSmokeTest::class.java),
+            expectedVerdict = helper.expectedVerdictFromTags(case),
         )
     }
 }

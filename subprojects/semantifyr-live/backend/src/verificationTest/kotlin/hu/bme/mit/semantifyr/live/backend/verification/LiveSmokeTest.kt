@@ -25,7 +25,7 @@ class LiveSmokeTest {
         verifyEndToEnd(
             tmp = tmp,
             flavor = "oxsts",
-            modelSource = stagedModel(StagedTestSupport.oxstsTestModelsDirectory, "semantifyr.live.oxstsTestModels", "smoke.oxsts"),
+            modelSource = stagedModel(StagedTestSupport.oxstsTestModelsDirectory, "semantifyr.live.oxstsTestModels", "smoke.semantifyr"),
             pickCase = {
                 it.pickByLabelSuffix("CounterReachesThree")
             },

@@ -6,8 +6,10 @@
 
 import com.github.gradle.node.pnpm.task.PnpmTask
 import com.github.gradle.node.task.NodeTask
+import hu.bme.mit.semantifyr.gradle.conventions.AppendFurtherCases
+import hu.bme.mit.semantifyr.gradle.conventions.corpusModels
+import hu.bme.mit.semantifyr.gradle.conventions.oxstsFileExtension
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
-import hu.bme.mit.semantifyr.gradle.conventions.sysmlCorpusModels
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
@@ -24,7 +26,7 @@ dependencies {
     testImplementation(testFixtures(project(":compiler")))
 }
 
-val sysmlCommit = "49f5a4694e04dcab65718d5bce4efb2838bf2712" // fix: trace input takes a missing innerTraces as null
+val sysmlCommit = "83977a1411597b10571b15488eb63d8b8b85f79f" // fix: the details of the untyped flow and of accept when say what happens, without the retired kind words
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 
@@ -202,25 +204,41 @@ tasks.processResources {
 }
 
 val compiledExamplesDir = layout.buildDirectory.dir("compiled-examples")
+val compiledCorpusDir = layout.buildDirectory.dir("compiled-corpus")
+val compiledTutorialDir = layout.buildDirectory.dir("compiled-tutorial")
 val examplesSourceDir = layout.projectDirectory.dir("../models/examples")
-// the CLI builds every SysML and KerML file under the model's directory as its workspace
-val examplesWorkspace = fileTree(examplesSourceDir) {
-    include("**/*.sysml", "**/*.kerml")
-}
+val corpusDir = layout.buildDirectory.dir("corpus")
 val cliBundleDir = layout.buildDirectory.dir("cli-bundle")
 
-fun sysmlExampleTask(name: String) = tasks.register<NodeTask>("compileSysmlExample_$name") {
+val appendFurtherCases = tasks.register<AppendFurtherCases>("appendFurtherCases") {
+    corpusDirectory.set(examplesSourceDir)
+    outputDirectory.set(corpusDir)
+}
+
+configurations.consumable("sysmlCorpusElements") {
+    attributes(semantifyrArtifact("sysml-corpus"))
+    outgoing.artifact(corpusDir) {
+        builtBy(appendFurtherCases)
+    }
+}
+
+// the CLI builds every SysML and KerML file under the model's directory as its workspace
+fun sysmlCompileTask(taskName: String, sourceDirectory: Provider<Directory>, workspace: FileCollection, name: String, targetDirectory: Provider<Directory>) = tasks.register<NodeTask>(taskName) {
     inputs.files(bundleCli)
-    val sourceFile = examplesSourceDir.file("$name.sysml")
-    val targetFile = compiledExamplesDir.map { it.file("$name.oxsts") }
-    inputs.files(examplesWorkspace).withPathSensitivity(PathSensitivity.RELATIVE)
+    val sourceFile = sourceDirectory.map {
+        it.file("$name.sysml")
+    }
+    val targetFile = targetDirectory.map {
+        it.file("$name.$oxstsFileExtension")
+    }
+    inputs.files(workspace).withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.file(targetFile)
     outputs.cacheIf { true }
     script = cliBundleDir.map { it.file("cli.cjs") }
     args = provider {
         listOf(
             "compile",
-            sourceFile.asFile.absolutePath,
+            sourceFile.get().asFile.absolutePath,
             cliBundleDir.get().dir("sysml.library").asFile.absolutePath,
             "-o",
             targetFile.get().asFile.absolutePath,
@@ -228,10 +246,20 @@ fun sysmlExampleTask(name: String) = tasks.register<NodeTask>("compileSysmlExamp
     }
 }
 
-val compileSysmlExampleTasks = sysmlCorpusModels(examplesSourceDir).filter {
-    it.isExample
+val examplesWorkspace = fileTree(examplesSourceDir) {
+    include("**/*.sysml", "**/*.kerml")
+}
+
+// every model on the default library, as live serves it: live shows the compiled served models, and the live backend's tests take others
+val compileSysmlExampleTasks = corpusModels(examplesSourceDir).filter {
+    !it.conformance
 }.map {
-    sysmlExampleTask(it.name)
+    sysmlCompileTask("compileSysmlExample_${it.name}", provider { examplesSourceDir }, examplesWorkspace, it.name, compiledExamplesDir)
+}
+
+val tutorialSourceDir = layout.projectDirectory.dir("../models/tutorial")
+val tutorialWorkspace = fileTree(tutorialSourceDir) {
+    include("**/*.sysml", "**/*.kerml")
 }
 
 val compileSysmlExamples = tasks.register("compileSysmlExamples") {
@@ -245,14 +273,51 @@ configurations.consumable("compiledExamplesElements") {
     }
 }
 
+// the tutorial's models are served on its page, and the load test sends them as live does
+val compileSysmlTutorialTasks = corpusModels(tutorialSourceDir).map {
+    sysmlCompileTask("compileSysmlTutorial_${it.name}", provider { tutorialSourceDir }, tutorialWorkspace, it.name, compiledTutorialDir)
+}
+
+val compileSysmlTutorial = tasks.register("compileSysmlTutorial") {
+    inputs.files(compileSysmlTutorialTasks)
+}
+
+configurations.consumable("compiledTutorialElements") {
+    attributes(semantifyrArtifact("compiled-tutorial"))
+    outgoing.artifact(compiledTutorialDir) {
+        builtBy(compileSysmlTutorial)
+    }
+}
+
+val corpusWorkspace = files(appendFurtherCases).asFileTree.matching {
+    include("**/*.sysml", "**/*.kerml")
+}
+
+// the models with further cases, compiled with them for the tests that take a further case
+val compileSysmlCorpusTasks = corpusModels(examplesSourceDir).filter {
+    examplesSourceDir.file("${it.name}.further-cases").asFile.isFile
+}.map {
+    sysmlCompileTask("compileSysmlCorpus_${it.name}", corpusDir, corpusWorkspace, it.name, compiledCorpusDir)
+}
+
+val compileSysmlCorpus = tasks.register("compileSysmlCorpus") {
+    inputs.files(compileSysmlCorpusTasks)
+}
+
+configurations.consumable("compiledCorpusElements") {
+    attributes(semantifyrArtifact("compiled-corpus"))
+    outgoing.artifact(compiledCorpusDir) {
+        builtBy(compileSysmlCorpus)
+    }
+}
+
 tasks.test {
+    inputs.files(appendFurtherCases).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(
-        examplesSourceDir.file("crossroads.sysml"),
-        examplesSourceDir.file("Verification.sysml"),
         layout.projectDirectory.file("../models/etc/crossroads-green.trace.sysml"),
         layout.projectDirectory.file("../models/etc/crossroads-green.trace.json"),
         layout.projectDirectory.file("../models/etc/crossroads-green.witness.json"),
-        layout.projectDirectory.file("../models/etc/crossroads-green.witness.oxsts"),
+        layout.projectDirectory.file("../models/etc/crossroads-green.witness.semantifyr"),
     ).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("../models/libraries/default")).withPathSensitivity(PathSensitivity.RELATIVE)
 }

@@ -6,7 +6,9 @@
     "typecheck": "tsc",
     "typecheck:watch": "tsc --watch",
     "lint": "eslint",
-    "check": "npm run typecheck && npm run lint",
+    "test": "vitest run",
+    "walk": "vitest run --config vitest.walk.config.mts",
+    "check": "npm run typecheck && npm run lint && npm run test",
     "assemble": "docusaurus build --out-dir build/docusaurus",
     "build": "npm run check && npm run assemble",
     "dev": "docusaurus start --no-open",
@@ -21,21 +23,25 @@
     "@docusaurus/plugin-sitemap": "^3.7.0",
     "@docusaurus/theme-classic": "^3.7.0",
     "@docusaurus/theme-common": "^3.7.0",
-    "@fontsource-variable/jetbrains-mono": "^5.2.5",
-    "@fontsource/open-sans": "^5.2.5",
+    "@easyops-cn/docusaurus-search-local": "^0.55.3",
     "@mdx-js/react": "^3.1.0",
     "@semantifyr/editor-common": "*",
     "clsx": "^2.1.1",
     "lightningcss": "^1.29.3",
     "prism-react-renderer": "^2.4.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "shiki": "^4.6.0"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "^3.7.0",
     "@docusaurus/types": "^3.7.0",
+    "@testing-library/react": "^16.3.0",
     "@types/node": "^22.13.14",
     "@types/react": "^19.0.12",
-    "@types/react-dom": "^19.0.4"
+    "@types/react-dom": "^19.0.4",
+    "jsdom": "^29.0.0",
+    "playwright": "^1.65.0",
+    "vitest": "^5.0.5"
   }
 }

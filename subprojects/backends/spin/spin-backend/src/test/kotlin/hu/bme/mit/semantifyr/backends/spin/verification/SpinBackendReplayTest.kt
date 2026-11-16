@@ -230,6 +230,6 @@ class SpinBackendReplayTest {
         val result = SpinBackend().verify(injector, SpinConfig.SafeDfs, request, environment)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
-        assertThat(result.message).matches("spin:safe-dfs does not support arrays.oxsts:\\d+: unbounded integer variables \\(slots\\)")
+        assertThat(result.message).matches("spin:safe-dfs does not support arrays.semantifyr:\\d+: unbounded integer variables \\(slots\\)")
     }
 }

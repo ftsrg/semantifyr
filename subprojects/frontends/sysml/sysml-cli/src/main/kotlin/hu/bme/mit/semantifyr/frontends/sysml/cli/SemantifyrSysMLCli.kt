@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.frontends.sysml.cli
 
 import com.github.ajalt.clikt.parsers.CommandLineParser
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.cli.common.PortfoliosCommand
 import hu.bme.mit.semantifyr.cli.common.RootCommand
 import hu.bme.mit.semantifyr.cli.common.execute
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
@@ -21,10 +22,11 @@ class SemantifyrSysMLCommand @Inject constructor(
     compileCommand: SysMLCompileCommand,
 ) : RootCommand(
     "semantifyr-sysml",
-    "Semantifyr for SysML v2 models.",
+    "Verify SysML v2 models with Semantifyr, a framework to support the declarative definition of engineering model semantics. It needs Node.js 22 or newer on PATH.",
     listOf(
         verifyCommand,
         compileCommand,
+        PortfoliosCommand(),
     ),
 )
 

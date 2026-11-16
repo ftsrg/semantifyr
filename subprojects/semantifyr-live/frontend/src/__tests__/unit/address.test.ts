@@ -47,17 +47,18 @@ describe('an address', () => {
 
   it('opens the language and the example its path names', async () => {
     expect(await resolved('/gamma/crossroads')).toMatchObject({ flavor: { id: 'gamma' }, example: { id: 'crossroads' }, shared: false, problem: null })
-    expect(await resolved('/oxsts')).toMatchObject({ flavor: { id: 'oxsts' }, example: { id: 'basics' } })
+    expect(await resolved('/language')).toMatchObject({ flavor: { id: 'oxsts' }, example: { id: 'level-crossing' } })
   })
 
   it('opens the flavour its library names, the example keeping its plain name', async () => {
-    expect(await resolved('/oxsts/crossroads?library=gamma')).toMatchObject({ flavor: { id: 'oxsts-with-gamma-library' }, example: { id: 'crossroads' }, problem: null })
-    expect(await resolved('/oxsts/level-crossing?library=sysml')).toMatchObject({ flavor: { id: 'oxsts-with-sysmlv2-library' }, example: { id: 'level-crossing' } })
+    expect(await resolved('/language/crossroads?library=gamma')).toMatchObject({ flavor: { id: 'oxsts-with-gamma-library' }, example: { id: 'crossroads' }, problem: null })
+    expect(await resolved('/language/level-crossing?library=sysml')).toMatchObject({ flavor: { id: 'oxsts-with-sysmlv2-library' }, example: { id: 'level-crossing' } })
   })
 
   it('says which name it did not find and what it opened in its place', async () => {
     expect(await resolved('/kerml/level-crossing')).toMatchObject({ flavor: { id: 'sysml' }, example: { id: 'level-crossing' }, problem: { kind: 'language', requested: 'kerml' } })
-    expect(await resolved('/oxsts/crossroads?library=uml')).toMatchObject({ flavor: { id: 'oxsts' }, example: { id: 'basics' }, problem: { kind: 'library', requested: 'uml' } })
+    expect(await resolved('/oxsts/intersection')).toMatchObject({ flavor: { id: 'sysml' }, example: { id: 'level-crossing' }, problem: { kind: 'language', requested: 'oxsts' } })
+    expect(await resolved('/language/crossroads?library=uml')).toMatchObject({ flavor: { id: 'oxsts' }, example: { id: 'level-crossing' }, problem: { kind: 'library', requested: 'uml' } })
     expect(await resolved('/gamma/level-crosing')).toMatchObject({ flavor: { id: 'gamma' }, example: { id: 'level-crossing' }, problem: { kind: 'example', requested: 'level-crosing' } })
   })
 
@@ -73,16 +74,16 @@ describe('an address', () => {
 
   it('gives only an embedded frame a fixed size', () => {
     expect(fixedFrame(readAddress('/gamma/level-crossing?view=embed&frame=fixed'))).toBe(true)
-    expect(fixedFrame(readAddress('/oxsts?view=edit-only&frame=fixed'))).toBe(true)
-    expect(fixedFrame(readAddress('/oxsts?frame=fixed'))).toBe(false)
-    expect(fixedFrame(readAddress('/oxsts?view=embed'))).toBe(false)
+    expect(fixedFrame(readAddress('/language?view=edit-only&frame=fixed'))).toBe(true)
+    expect(fixedFrame(readAddress('/language?frame=fixed'))).toBe(false)
+    expect(fixedFrame(readAddress('/language?view=embed'))).toBe(false)
   })
 
   it('gives only an embedded frame the colour mode of its page', () => {
-    expect(frameColorMode(readAddress('/oxsts?view=embed&theme=dark'))).toBe('dark')
-    expect(frameColorMode(readAddress('/oxsts?view=edit-only&theme=light'))).toBe('light')
-    expect(frameColorMode(readAddress('/oxsts?theme=dark'))).toBeNull()
-    expect(frameColorMode(readAddress('/oxsts?view=embed'))).toBeNull()
+    expect(frameColorMode(readAddress('/language?view=embed&theme=dark'))).toBe('dark')
+    expect(frameColorMode(readAddress('/language?view=edit-only&theme=light'))).toBe('light')
+    expect(frameColorMode(readAddress('/language?theme=dark'))).toBeNull()
+    expect(frameColorMode(readAddress('/language?view=embed'))).toBeNull()
   })
 
   it('does not read today\'s parameters', async () => {
@@ -92,17 +93,17 @@ describe('an address', () => {
   it('opens the model of its fragment as a shared model, or as an edit of the example its path names', async () => {
     const model = await encodeCompressedBase64Url('package edited')
 
-    expect(await resolved(`/oxsts#model=${model}`)).toMatchObject({ flavor: { id: 'oxsts' }, text: 'package edited', shared: true, replace: true })
-    expect(await resolved(`/oxsts/advanced#model=${model}`)).toMatchObject({ example: { id: 'advanced' }, text: 'package edited', shared: false })
-    expect(await resolved('/oxsts#model=garbled')).toMatchObject({ shared: false, text: findExample(testFlavors()[0], 'basics')?.code, problem: { kind: 'model' } })
+    expect(await resolved(`/language#model=${model}`)).toMatchObject({ flavor: { id: 'oxsts' }, text: 'package edited', shared: true, replace: true })
+    expect(await resolved(`/language/hierarchy#model=${model}`)).toMatchObject({ example: { id: 'hierarchy' }, text: 'package edited', shared: false })
+    expect(await resolved('/language#model=garbled')).toMatchObject({ shared: false, text: findExample(testFlavors()[0], 'level-crossing')?.code, problem: { kind: 'model' } })
   })
 
   it('carries the selected case and the verdicts apart, and the case alone when there are no verdicts', async () => {
     const verdicts = await encodeCompressedBase64Url(JSON.stringify([['a', 'failed']]))
 
-    expect((await resolved(`/oxsts#case=a&verdicts=${verdicts}`)).results).toEqual({ selectedCase: 'a', verdicts: new Map([['a', 'failed']]) })
-    expect(await resolved('/oxsts#case=b')).toMatchObject({ selectedCase: 'b' })
-    expect(await resolved('/oxsts#verdicts=garbled')).toMatchObject({ problem: { kind: 'results' } })
+    expect((await resolved(`/language#case=a&verdicts=${verdicts}`)).results).toEqual({ selectedCase: 'a', verdicts: new Map([['a', 'failed']]) })
+    expect(await resolved('/language#case=b')).toMatchObject({ selectedCase: 'b' })
+    expect(await resolved('/language#verdicts=garbled')).toMatchObject({ problem: { kind: 'results' } })
   })
 
   it('is what a share link of an untouched example with its results builds', async () => {

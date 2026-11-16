@@ -104,7 +104,7 @@ class GammaCompilationTests {
     @Test
     fun `compile creates parent directories when the target does not exist`(@TempDir temporaryDirectory: Path) {
         val gammaModel = gammaReader.readGammaFile(simpleGammaPath.toFile())
-        val nested = temporaryDirectory.resolve("nested").resolve("dirs").resolve("model.oxsts")
+        val nested = temporaryDirectory.resolve("nested").resolve("dirs").resolve("model.semantifyr")
 
         assertThat(Files.exists(nested.parent)).isFalse()
 
@@ -172,16 +172,16 @@ class GammaCompilationTests {
 
         val gammaVerificationCase = helper.discover(workspace.resolve("Machine.gcd")).single()
 
-        helper.checkVerificationCase(frontend, gammaVerificationCase)
+        helper.checkVerificationCase(frontend, gammaVerificationCase, VerificationVerdict.Passed)
 
         val caseDirectory = temporaryDirectory.resolve("artifacts").resolve(gammaVerificationCase.qualifiedName)
-        assertThat(caseDirectory.resolve("model.oxsts").readText()).contains("import _library::_control")
-        assertThat(caseDirectory.resolve("imports").resolve("Control.oxsts").readText()).startsWith("package _library::_control")
+        assertThat(caseDirectory.resolve("model.semantifyr").readText()).contains("import _library::_control")
+        assertThat(caseDirectory.resolve("imports").resolve("Control.semantifyr").readText()).startsWith("package _library::_control")
     }
 
     private fun compileSimple(temporaryDirectory: Path): Path {
         val gammaModel = gammaReader.readGammaFile(simpleGammaPath.toFile())
-        val target = temporaryDirectory.resolve("model.oxsts")
+        val target = temporaryDirectory.resolve("model.semantifyr")
         gammaCompiler.compile(gammaModel, target)
         return target
     }

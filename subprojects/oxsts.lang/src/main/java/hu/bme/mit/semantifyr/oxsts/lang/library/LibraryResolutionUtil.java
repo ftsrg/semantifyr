@@ -6,14 +6,20 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.library;
 
+import com.google.common.io.Files;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
 import org.eclipse.xtext.naming.QualifiedName;
+import org.eclipse.xtext.resource.FileExtensionProvider;
 
 public final class LibraryResolutionUtil {
     private LibraryResolutionUtil() {
         throw new IllegalStateException("This is a static utility class and should not be instantiated directly");
+    }
+
+    public static boolean hasLanguageExtension(FileExtensionProvider fileExtensionProvider, String fileName) {
+        return fileExtensionProvider.isValid(Files.getFileExtension(fileName));
     }
 
     public static Path arrayToPath(String[] array) {
@@ -21,10 +27,6 @@ public final class LibraryResolutionUtil {
             return null;
         }
         return Path.of(array[0], Arrays.stream(array).skip(1).toArray(String[]::new));
-    }
-
-    public static Path qualifiedNameToPath(QualifiedName qualifiedName) {
-        return qualifiedNameToPath(qualifiedName, OxstsLibrary.FILE_NAME_SUFFIX);
     }
 
     public static Path qualifiedNameToPath(QualifiedName qualifiedName, String suffix) {

@@ -10,6 +10,7 @@ import hu.bme.mit.semantifyr.utils.files.ClasspathBundle;
 import java.nio.file.Path;
 import java.util.List;
 import org.eclipse.emf.common.util.URI;
+import org.eclipse.xtext.resource.FileExtensionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,16 +22,26 @@ public class ClasspathBasedOxstsLibrary extends PathBasedOxstsLibrary {
     private final Path baseDirectory;
     private Path extractedLibraryPath;
 
-    public ClasspathBasedOxstsLibrary(ClassLoader classLoader, String resourcePrefix, Path baseDirectory) {
-        this.bundle =
-                new ClasspathBundle(classLoader, stripSlashes(resourcePrefix), name -> name.endsWith(FILE_NAME_SUFFIX));
+    public ClasspathBasedOxstsLibrary(
+            FileExtensionProvider fileExtensionProvider,
+            ClassLoader classLoader,
+            String resourcePrefix,
+            Path baseDirectory) {
+        super(fileExtensionProvider);
+        this.bundle = new ClasspathBundle(
+                classLoader,
+                stripSlashes(resourcePrefix),
+                name -> LibraryResolutionUtil.hasLanguageExtension(fileExtensionProvider, name));
         this.baseDirectory = baseDirectory;
     }
 
     public synchronized Path getExtractedLibraryPath() {
         if (extractedLibraryPath == null) {
             extractedLibraryPath = bundle.extractTo(baseDirectory);
-            LOGGER.debug("Classpath OXSTS library under '{}' resolved to '{}'", baseDirectory, extractedLibraryPath);
+            LOGGER.debug(
+                    "Classpath library of the Semantifyr Language under '{}' resolved to '{}'",
+                    baseDirectory,
+                    extractedLibraryPath);
         }
         return extractedLibraryPath;
     }

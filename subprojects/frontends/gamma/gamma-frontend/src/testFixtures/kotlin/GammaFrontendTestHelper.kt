@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.frontends.gamma.testing
 
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.frontends.gamma.GammaFrontend
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVariant
@@ -69,18 +70,17 @@ class GammaFrontendTestHelper {
         return gammaDiscoverer.discover(gammaModel)
     }
 
-    fun discoverWitnessCases(): List<GammaVerificationCase> {
-        return EXAMPLES.flatMap {
-            discover(Path("build", "test-models", it))
-        }.filter {
-            it.declaration.expression is EF
-        }
-    }
-
     fun witnessCasesOnEveryEngine(): Stream<Arguments> {
-        return discoverWitnessCases().asSequence().flatMap { gammaVerificationCase ->
-            GammaTestEngine.entries.asSequence().map {
-                Arguments.of(Named.of(gammaVerificationCase.qualifiedName, gammaVerificationCase), it)
+        return GammaCorpus.load(GammaCorpus.examples).asSequence().flatMap { entry ->
+            val gammaVerificationCase = discoverInWorkspace(entry.directory, entry.model.file).single {
+                it.declaration.name == entry.case.name
+            }
+            if (gammaVerificationCase.declaration.expression is EF) {
+                GammaTestEngine.entries.asSequence().map {
+                    Arguments.of(Named.of(gammaVerificationCase.qualifiedName, entry), it)
+                }
+            } else {
+                emptySequence()
             }
         }.asStream()
     }
@@ -97,12 +97,14 @@ class GammaFrontendTestHelper {
         variant: GammaVariant = GammaVariant.Default,
         timeout: Duration = 30.minutes,
         artifacts: ArtifactConfig = ArtifactConfig.ALL,
+        environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
     ): GammaFrontend {
         return GammaFrontend.builder()
             .variant(variant)
             .gammaInjector(gammaInjector)
             .oxstsInjector(oxstsInjector)
             .portfolio(portfolio)
+            .environment(environment)
             .timeout(timeout)
             .artifacts(artifacts)
             .outputDirectory(outputDirectory)
@@ -112,7 +114,7 @@ class GammaFrontendTestHelper {
     suspend fun checkVerificationCase(
         frontend: GammaFrontend,
         gammaVerificationCase: GammaVerificationCase,
-        expectedVerdict: VerificationVerdict = VerificationVerdict.Passed,
+        expectedVerdict: VerificationVerdict,
     ): GammaVerificationResult {
         val result = frontend.verify(gammaVerificationCase)
         assertVerdict(gammaVerificationCase.qualifiedName, expectedVerdict, result.verification)
@@ -121,7 +123,7 @@ class GammaFrontendTestHelper {
 
     suspend fun checkVerificationCaseOn(
         engine: GammaTestEngine,
-        gammaVerificationCase: GammaVerificationCase,
+        entry: GammaCorpusEntry,
         outputDirectory: Path,
         timeout: Duration,
         validationPortfolio: VerificationPortfolio? = null,
@@ -129,9 +131,12 @@ class GammaFrontendTestHelper {
         val portfolio = engine.portfolio
         assumePortfolioAvailable(portfolio)
 
+        val gammaVerificationCase = discoverInWorkspace(entry.directory, entry.model.file).single {
+            it.declaration.name == entry.case.name
+        }
         val frontend = buildFrontend(portfolio, outputDirectory.resolve(engine.name.lowercase()), timeout = timeout)
         val result = frontend.verify(gammaVerificationCase)
-        assertVerdict(gammaVerificationCase.qualifiedName, VerificationVerdict.Passed, result.verification)
+        assertVerdict(gammaVerificationCase.qualifiedName, entry.case.expectedVerdict, result.verification)
 
         val witness = result.witness
         if (validationPortfolio != null && witness != null) {
@@ -146,8 +151,6 @@ class GammaFrontendTestHelper {
     }
 
     companion object {
-        private val EXAMPLES = listOf("Simple.gamma", "Crossroads.gamma", "Spacecraft.gamma")
-
         @JvmStatic
         fun testArtifactRoot(testClass: Class<*>): Path {
             return Path("build", "test-artifacts", testClass.simpleName)

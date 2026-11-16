@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.conventions.readsServedExamples
+import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
+
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
@@ -22,6 +25,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
 
     testFixturesApi(project(":portfolios"))
+    testFixturesApi(testFixtures(project(":portfolios")))
     testFixturesApi(testFixtures(project(":verifier")))
     testFixturesImplementation(project(":logging"))
     testFixturesImplementation(libs.kotlinx.serialization.json)
@@ -32,13 +36,30 @@ val syncSysmlLibrary = tasks.register<Sync>("syncSysmlLibrary") {
     into(layout.buildDirectory.dir("libraries"))
 }
 
+// the corpus as the tests read it, each served model with its further cases appended
+val testSysmlCorpus = configurations.dependencyScope("testSysmlCorpus")
+val testSysmlCorpusFiles = configurations.resolvable("testSysmlCorpusFiles") {
+    extendsFrom(testSysmlCorpus.get())
+    attributes(semantifyrArtifact("sysml-corpus"))
+}
+
+dependencies {
+    testSysmlCorpus(project(":sysml-wrapper"))
+}
+
 val syncSysmlTestModels = tasks.register<Sync>("syncSysmlTestModels") {
-    from(layout.projectDirectory.dir("../models/examples"))
+    from(testSysmlCorpusFiles)
     into(layout.buildDirectory.dir("test-models"))
 }
 
 tasks.processResources {
     from(syncSysmlLibrary)
+}
+
+listOf("test", "integrationTest", "nightlyTest").forEach {
+    tasks.named<Test>(it) {
+        readsServedExamples()
+    }
 }
 
 tasks.withType<Test>().configureEach {

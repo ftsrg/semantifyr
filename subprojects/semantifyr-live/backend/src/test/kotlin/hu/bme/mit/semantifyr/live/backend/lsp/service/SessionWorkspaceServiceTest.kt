@@ -40,8 +40,8 @@ import java.util.concurrent.CompletableFuture
 class SessionWorkspaceServiceTest {
 
     private fun verifyArgs(
-        uri: String = "file:///workspace/snippet.oxsts",
-        portfolio: String? = "smart-full",
+        uri: String = "file:///workspace/snippet.semantifyr",
+        portfolio: String? = "smart",
     ): JsonElement {
         return CommandGson.INSTANCE.toJsonTree(VerificationCaseRequest(uri, LspWire.range(), portfolio))
     }
@@ -106,7 +106,7 @@ class SessionWorkspaceServiceTest {
         val requestCaptor = argumentCaptor<VerificationCaseRequest>()
         val kindCaptor = argumentCaptor<VerificationKind>()
         verify(fixture.sessionVerificationManager).launch(requestCaptor.capture(), kindCaptor.capture(), any())
-        assertThat(requestCaptor.firstValue.portfolio()).isEqualTo("smart-full")
+        assertThat(requestCaptor.firstValue.portfolio()).isEqualTo("smart")
         assertThat(kindCaptor.firstValue).isEqualTo(VerificationKind.Verify)
         verifyBlocking(fixture.verificationExecutor) { execute(any(), any(), any()) }
     }

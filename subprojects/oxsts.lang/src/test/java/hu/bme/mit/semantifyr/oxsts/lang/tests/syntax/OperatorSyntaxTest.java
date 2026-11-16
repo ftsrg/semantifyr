@@ -24,6 +24,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOperator;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.CastExpression;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF;
@@ -121,6 +122,10 @@ public class OperatorSyntaxTest {
         "left + middle < right, ((left + middle) < right)",
         "left < middle && middle <= right, ((left < middle) && (middle <= right))",
         "left == middle || !(middle != right), ((left == middle) || (!(middle != right)))",
+        "-left as int, (-(left as int))",
+        "left + middle as int, (left + (middle as int))",
+        "if left < middle then left else middle + right, (if (left < middle) then left else (middle + right))",
+        "left * if middle < right then middle else right, (left * (if (middle < right) then middle else right))",
     })
     void operatorsBindByTheirPrecedenceLevel(String expression, String expectedReading) {
         var parsedPackage = parseHelper.parse("""
@@ -243,6 +248,14 @@ public class OperatorSyntaxTest {
         }
         if (expression instanceof NegationOperator operator) {
             return "(!" + parenthesize(operator.getBody()) + ")";
+        }
+        if (expression instanceof CastExpression cast) {
+            return "(" + parenthesize(cast.getBody()) + " as "
+                    + NamingUtil.getName(cast.getTypespecification().getDomain()) + ")";
+        }
+        if (expression instanceof IfThenElse conditional) {
+            return "(if " + parenthesize(conditional.getGuard()) + " then " + parenthesize(conditional.getThen())
+                    + " else " + parenthesize(conditional.getElse()) + ")";
         }
         return NamingUtil.getName(((ElementReference) expression).getElement());
     }

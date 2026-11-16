@@ -66,41 +66,43 @@ const BACKEND = 'http://live.example'
 // the libraries' files as the server lists them, the standard library in part
 const LIBRARY_LISTING: LibrariesResponse = {
   builtin: [
-    'semantifyr.oxsts',
+    'standard.semantifyr',
   ],
   semantic: {
     'oxsts-with-gamma-library': [
-      'Actions.oxsts',
-      'Components.oxsts',
-      'Events.oxsts',
-      'Expressions.oxsts',
-      'Ports.oxsts',
-      'Statecharts.oxsts',
-      'Triggers.oxsts',
-      'Variables.oxsts',
-      'Verification.oxsts',
+      'Actions.semantifyr',
+      'Asynchronous.semantifyr',
+      'Components.semantifyr',
+      'Events.semantifyr',
+      'Expressions.semantifyr',
+      'Ports.semantifyr',
+      'Statecharts.semantifyr',
+      'Triggers.semantifyr',
+      'Variables.semantifyr',
+      'Verification.semantifyr',
     ],
     'oxsts-with-sysmlv2-library': [
-      'Actions.oxsts',
-      'Attributes.oxsts',
-      'Expressions.oxsts',
-      'Items.oxsts',
-      'Parts.oxsts',
-      'Ports.oxsts',
-      'States.oxsts',
-      'Triggers.oxsts',
-      'Verification.oxsts',
+      'Actions.semantifyr',
+      'Attributes.semantifyr',
+      'Expressions.semantifyr',
+      'Items.semantifyr',
+      'Parts.semantifyr',
+      'Ports.semantifyr',
+      'States.semantifyr',
+      'Triggers.semantifyr',
+      'Verification.semantifyr',
     ],
     'gamma': [
-      'Actions.oxsts',
-      'Components.oxsts',
-      'Events.oxsts',
-      'Expressions.oxsts',
-      'Ports.oxsts',
-      'Statecharts.oxsts',
-      'Triggers.oxsts',
-      'Variables.oxsts',
-      'Verification.oxsts',
+      'Actions.semantifyr',
+      'Asynchronous.semantifyr',
+      'Components.semantifyr',
+      'Events.semantifyr',
+      'Expressions.semantifyr',
+      'Ports.semantifyr',
+      'Statecharts.semantifyr',
+      'Triggers.semantifyr',
+      'Variables.semantifyr',
+      'Verification.semantifyr',
     ],
   },
   sysml: [
@@ -159,7 +161,7 @@ function runtimeOf(flavor: LiveFlavor, connection: ConnectionState, steps: Initi
     connection: constantStore(connection),
     initialization: createStore(steps),
     derivedDocuments: constantStore([]),
-    modelOxsts: constantStore<DerivedDocument | null>(modelOxsts === undefined ? null : { id: 'oxsts', label: 'OXSTS', uri: 'file:///workspace/snippet.oxsts', languageId: 'oxsts', text: modelOxsts }),
+    modelOxsts: constantStore<DerivedDocument | null>(modelOxsts === undefined ? null : { id: 'oxsts', label: 'Semantifyr model', uri: 'file:///workspace/snippet.semantifyr', languageId: 'oxsts', text: modelOxsts }),
     libraryDocuments: constantStore(libraryDocumentsOf(flavor.id, LIBRARY_LISTING)),
     api: new SemantifyrLiveApi(() => {
       return undefined
@@ -230,7 +232,7 @@ export function seedLive(seed: Seed): Seeded {
   shell.verifyBlocked.set(seed.verifyBlocked ?? false)
   const live: Live = {
     settings,
-    catalog: constantStore<Catalog>({ status: seed.catalog ?? 'ready', registry: ready ? registry : null, portfolios: seed.portfolios ?? [], defaultPortfolioId: 'smart-full' }),
+    catalog: constantStore<Catalog>({ status: seed.catalog ?? 'ready', registry: ready ? registry : null, portfolios: seed.portfolios ?? [], defaultPortfolioId: 'smart' }),
     workspace: constantStore(ready ? { flavor, documentKey: key, runtime } : { flavor: null, documentKey: null, runtime: null }),
     documents: constantStore(new Map(ready ? [[key, record]] : [])),
     connection: constantStore(connection),
@@ -275,7 +277,7 @@ export function seedLive(seed: Seed): Seeded {
     validateWitness: () => {},
     selectCase: () => {},
     verificationPortfolioId: () => {
-      return 'smart-full'
+      return 'smart'
     },
   }
   return { live, shell }
@@ -302,7 +304,7 @@ export function finished(caseInfo: VerificationCaseSpecification, status: 'passe
     resultStatus: status,
     metrics: { totalDuration: `PT${seconds}S`, preparationDuration: 'PT0S', verificationDuration: `PT${seconds}S`, backAnnotationDuration: 'PT0S' },
     backendId: 'theta',
-    portfolioId: 'smart-full',
+    portfolioId: 'smart',
     trace: EMPTY_TRACE,
     witnessValidation: 'valid',
   }

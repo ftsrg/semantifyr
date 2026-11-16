@@ -26,24 +26,24 @@ const SEMANTIC_LIBRARY_OF: Readonly<Record<string, string>> = {
 // the file each library is known by while the server's listing is not there
 const ENTRY_FILES: Readonly<Record<string, readonly { kind: LibraryKind, file: string }[]>> = {
   'oxsts': [
-    { kind: 'library', file: 'semantifyr.oxsts' },
+    { kind: 'library', file: 'standard.semantifyr' },
   ],
   'oxsts-with-gamma-library': [
-    { kind: 'library', file: 'semantifyr.oxsts' },
-    { kind: 'semantic-library', file: 'Statecharts.oxsts' },
+    { kind: 'library', file: 'standard.semantifyr' },
+    { kind: 'semantic-library', file: 'Statecharts.semantifyr' },
   ],
   'oxsts-with-sysmlv2-library': [
-    { kind: 'library', file: 'semantifyr.oxsts' },
-    { kind: 'semantic-library', file: 'States.oxsts' },
+    { kind: 'library', file: 'standard.semantifyr' },
+    { kind: 'semantic-library', file: 'States.semantifyr' },
   ],
   'gamma': [
-    { kind: 'library', file: 'semantifyr.oxsts' },
-    { kind: 'semantic-library', file: 'Statecharts.oxsts' },
+    { kind: 'library', file: 'standard.semantifyr' },
+    { kind: 'semantic-library', file: 'Statecharts.semantifyr' },
   ],
   'sysml': [
     { kind: 'standard-library', file: 'Kernel Libraries/Kernel Data Type Library/ScalarValues.kerml' },
-    { kind: 'library', file: 'semantifyr.oxsts' },
-    { kind: 'semantic-library', file: 'States.oxsts' },
+    { kind: 'library', file: 'standard.semantifyr' },
+    { kind: 'semantic-library', file: 'States.semantifyr' },
   ],
 }
 

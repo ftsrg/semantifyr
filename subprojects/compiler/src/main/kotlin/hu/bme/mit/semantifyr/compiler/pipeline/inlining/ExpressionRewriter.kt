@@ -80,7 +80,7 @@ class ExpressionRewriter @Inject constructor(
 
     fun omittedArgument(parameter: ParameterDeclaration, callSuffixExpression: CallSuffixExpression): Expression {
         if (multiplicityRangeEvaluator.evaluate(parameter.typeSpecification).lowerBound != 0L) {
-            sourceError(callSuffixExpression, "No argument for the required parameter '${parameter.name}'")
+            sourceError(callSuffixExpression, "Missing an argument for the required parameter '${parameter.name}'")
         }
         return OxstsFactory.createLiteralNothing()
     }

@@ -52,6 +52,25 @@ const FRAMES: readonly LiveEditorFrame[] = [
     "fixed",
 ];
 
+// the lines an embed opens scrolled to, counted from one, the last included
+export interface LiveEditorLines {
+    first: number;
+    last: number;
+}
+
+function linesOf(value: string | null): LiveEditorLines | null {
+    const match = /^(\d+)-(\d+)$/.exec(value ?? "");
+    if (!match) {
+        return null;
+    }
+    const first = Number(match[1]);
+    const last = Number(match[2]);
+    if (first < 1 || last < first) {
+        return null;
+    }
+    return { first, last };
+}
+
 // The path names the model, the query how it is shown, the fragment what the visitor made, which a browser never sends to the server
 export interface LiveEditorLink {
     language: string;
@@ -60,18 +79,21 @@ export interface LiveEditorLink {
     view?: LiveEditorView | undefined;
     theme?: LiveEditorTheme | undefined;
     frame?: LiveEditorFrame | undefined;
+    lines?: LiveEditorLines | undefined;
     model?: string | undefined;
     case?: string | undefined;
     verdicts?: readonly (readonly [string, string])[] | undefined;
 }
 
 export interface LiveEditorAddress {
+    // the language's name in the address, which languageOfAddressName reads
     language: string | null;
     example: string | null;
     library: string | null;
     view: LiveEditorView | null;
     theme: LiveEditorTheme | null;
     frame: LiveEditorFrame | null;
+    lines: LiveEditorLines | null;
     compressedModel: string | null;
     case: string | null;
     compressedVerdicts: string | null;
@@ -84,17 +106,51 @@ export interface LiveEditorLocation {
 }
 
 // Keeps the query parameters of the base URL that are not part of the link
-export async function liveEditorUrl(base: string, link: LiveEditorLink): Promise<string> {
-    const url = new URL(base);
-    url.pathname = [link.language, link.example].filter((segment) => {
+function pathOf(segments: (string | undefined)[]): string {
+    return segments.filter((segment) => {
         return segment !== undefined;
     }).map((segment) => {
         return `/${encodeURIComponent(segment)}`;
     }).join("");
+}
+
+// the address names a language by its id, but for the Semantifyr Language, whose id the code keeps
+const ADDRESS_NAMES: Readonly<Record<string, string>> = {
+    oxsts: "language",
+};
+
+export function addressNameOf(language: string): string {
+    return ADDRESS_NAMES[language] ?? language;
+}
+
+// undefined for a name no language has in the address, the id of a language whose address name differs among them
+export function languageOfAddressName(name: string): string | undefined {
+    const renamed = Object.entries(ADDRESS_NAMES).find(([, addressName]) => {
+        return addressName === name;
+    });
+    if (renamed !== undefined) {
+        return renamed[0];
+    }
+    return Object.hasOwn(ADDRESS_NAMES, name) ? undefined : name;
+}
+
+// an example's address, /<language>/<example>, which names it everywhere
+export function liveExampleUrl(base: string, language: string, example: string): string {
+    const url = new URL(base);
+    url.pathname = pathOf([addressNameOf(language), example]);
+    url.search = "";
+    url.hash = "";
+    return url.toString();
+}
+
+export async function liveEditorUrl(base: string, link: LiveEditorLink): Promise<string> {
+    const url = new URL(base);
+    url.pathname = pathOf([addressNameOf(link.language), link.example]);
     setOrDelete(url.searchParams, "library", link.library);
     setOrDelete(url.searchParams, "view", link.view);
     setOrDelete(url.searchParams, "theme", link.theme);
     setOrDelete(url.searchParams, "frame", link.frame);
+    setOrDelete(url.searchParams, "lines", link.lines === undefined ? undefined : `${link.lines.first}-${link.lines.last}`);
     const fragment = new URLSearchParams();
     if (link.model !== undefined) {
         fragment.set("model", await encodeCompressedBase64Url(link.model));
@@ -153,6 +209,7 @@ export function parseLiveEditorUrl(location: LiveEditorLocation): LiveEditorAddr
         frame: FRAMES.find((frame) => {
             return frame === query.get("frame");
         }) ?? null,
+        lines: linesOf(query.get("lines")),
         compressedModel: fragment.get("model"),
         case: fragment.get("case"),
         compressedVerdicts: fragment.get("verdicts"),

@@ -22,14 +22,14 @@ class GammaCompileCommandTest {
         val result = runGammaCli("compile", model.toString())
 
         assertThat(result.statusCode).describedAs(result.output).isZero()
-        val target = directory.resolve("Simple.oxsts")
+        val target = directory.resolve("Simple.semantifyr")
         assertThat(result.stdout).isEqualTo("Compiling $model to $target\n")
         assertThat(target.readText()).contains("WorkerStatechartIdleReachable")
     }
 
     @Test
     suspend fun `writes the OXSTS model to the output path`(@TempDir directory: Path) {
-        val target = directory.resolve("out").resolve("Simple.oxsts")
+        val target = directory.resolve("out").resolve("Simple.semantifyr")
 
         val result = runGammaCli("compile", "-o", target.toString(), simpleModel.toString())
 

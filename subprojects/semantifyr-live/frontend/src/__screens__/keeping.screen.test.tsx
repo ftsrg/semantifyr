@@ -16,8 +16,8 @@ import { caseOf, finished, seedLive, type Seed } from './seededLive'
 
 // Goal: each state of keeping work the mockup draws shows the element that tells it from the plain screen, in both themes
 
-const BARRIER = caseOf('BarrierDownWhileTrainInCrossingViolated', 97)
-const TWO_TRAINS = caseOf('TwoTrainsCanBeInTheCrossing', 112)
+const BARRIER = caseOf('BarrierDownWhileTrainInCrossing', 102)
+const TWO_TRAINS = caseOf('TwoTrainsCanBeInTheCrossing', 117)
 
 const BACKGROUNDS: Readonly<Record<ResolvedColorMode, string>> = {
   light: 'rgb(241, 238, 231)',

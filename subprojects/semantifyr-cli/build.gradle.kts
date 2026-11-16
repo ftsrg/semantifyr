@@ -16,6 +16,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
 
     testImplementation(testFixtures(project(":cli-common")))
+    testImplementation(libs.log4j.core)
 }
 
 application {

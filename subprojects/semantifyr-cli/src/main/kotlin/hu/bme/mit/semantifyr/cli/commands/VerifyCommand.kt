@@ -27,12 +27,14 @@ import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.caseReportPath
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
+import org.eclipse.xtext.resource.FileExtensionProvider
 
 class VerifyCommand @Inject constructor(
     semantifyrLoader: SemantifyrLoader,
+    fileExtensionProvider: FileExtensionProvider,
     verificationCaseDiscoverer: VerificationCaseDiscoverer,
     private val injector: Injector,
-) : BaseSemantifyrCommand("verify", semantifyrLoader) {
+) : BaseSemantifyrCommand("verify", semantifyrLoader, fileExtensionProvider) {
     private val logger by loggerFactory()
 
     internal var portfolios: List<VerificationPortfolio> = Portfolios.all
@@ -44,7 +46,7 @@ class VerifyCommand @Inject constructor(
     private val output by verifyOutputOption()
 
     override fun help(context: Context): String {
-        return "Verify the cases of an OXSTS model."
+        return "Verify the cases of a Semantifyr model."
     }
 
     override suspend fun run() {

@@ -104,7 +104,7 @@ describe('settings', () => {
     expect(createSettingsStore().get()).toMatchObject({
       theme: 'system',
       verificationPortfolioId: null,
-      validationPortfolioId: 'smart-full',
+      validationPortfolioId: 'smart',
       autoValidate: true,
     })
   })

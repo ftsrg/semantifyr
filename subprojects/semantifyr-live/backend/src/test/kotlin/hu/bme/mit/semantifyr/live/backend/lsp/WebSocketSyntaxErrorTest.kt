@@ -30,7 +30,7 @@ import java.nio.file.Path
 
 class WebSocketSyntaxErrorTest {
 
-    private val uri = "file:///workspace/snippet.oxsts"
+    private val uri = "file:///workspace/snippet.semantifyr"
 
     private val validModel = """
         package test
@@ -99,7 +99,7 @@ class WebSocketSyntaxErrorTest {
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
             val case = openValidModel()
             send(Frame.Text(LspWire.didChangeNotification(uri, 2, brokenModel)))
-            val request = VerificationCaseRequest(uri, case.location().range, "smart-full")
+            val request = VerificationCaseRequest(uri, case.location().range, "smart")
             send(Frame.Text(LspWire.executeCommandRequest(id = 3, command = "oxsts.case.verify", arguments = listOf(request))))
             val result = awaitResponseFor(id = 3).resultAs(VerificationCaseResult::class.java)
             assertThat(result.status()).isEqualTo("errored")

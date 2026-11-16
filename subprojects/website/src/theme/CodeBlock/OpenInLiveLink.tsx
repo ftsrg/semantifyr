@@ -7,19 +7,25 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
 import { liveEditorUrl, normalizeBaseUrl } from '@semantifyr/editor-common';
+import { terms } from '@semantifyr/editor-common/terms';
 import { useLiveBackendUrl } from '@site/src/lib/live';
-import styles from './styles.module.css';
+import styles from './Buttons/styles.module.css';
 
 interface Props {
   language: string;
   code: string;
+  address?: string | undefined;
 }
 
-export default function OpenInLiveLink({ language, code }: Props): React.JSX.Element | null {
+export default function OpenInLiveLink({ language, code, address }: Props): React.JSX.Element | null {
   const liveBackendUrl = useLiveBackendUrl();
-  const [href, setHref] = useState<string | null>(null);
+  const [href, setHref] = useState<string | null>(address ?? null);
 
   useEffect(() => {
+    if (address !== undefined) {
+      setHref(address);
+      return;
+    }
     let active = true;
     void liveEditorUrl(`${normalizeBaseUrl(liveBackendUrl).http}/`, { language, model: code }).then((url) => {
       if (active) {
@@ -29,17 +35,18 @@ export default function OpenInLiveLink({ language, code }: Props): React.JSX.Ele
     return () => {
       active = false;
     };
-  }, [liveBackendUrl, language, code]);
+  }, [liveBackendUrl, language, code, address]);
 
   if (href === null) {
     return null;
   }
 
   return (
-    <div className={styles.openLinkContainer}>
-      <a href={href} className={styles.openLink} target="_blank" rel="noopener noreferrer">
-        Open in live editor ↗
-      </a>
-    </div>
+    <a href={href} className={styles.control} target="_blank" rel="noopener noreferrer">
+      <svg className={styles.controlIcon} viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M7 17L17 7M9 7h8v8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      {`Open in ${terms.live.short ?? terms.live.term}`}
+    </a>
   );
 }

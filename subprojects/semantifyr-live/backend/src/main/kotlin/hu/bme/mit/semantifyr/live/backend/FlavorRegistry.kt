@@ -25,7 +25,6 @@ data class Flavor(
     val id: String,
     val displayName: String,
     val description: String,
-    val fileName: String,
     val language: Language,
     val workspaceLayout: WorkspaceLayout,
     val verificationCommand: String,
@@ -63,9 +62,8 @@ object FlavorRegistry {
     val flavors = listOf(
         Flavor(
             id = "oxsts",
-            displayName = "OXSTS",
-            description = "The OXSTS modelling language, no extra libraries.",
-            fileName = "snippet.oxsts",
+            displayName = "Semantifyr Language",
+            description = "Semantifyr's language for semantics",
             language = Language.Oxsts,
             workspaceLayout = WorkspaceLayout.SingleFile,
             verificationCommand = "oxsts.case.verify",
@@ -75,9 +73,8 @@ object FlavorRegistry {
         ),
         Flavor(
             id = "oxsts-with-gamma-library",
-            displayName = "OXSTS with the Gamma library",
-            description = "OXSTS with the Gamma statechart library available to import.",
-            fileName = "snippet.oxsts",
+            displayName = "Semantifyr Language with the Gamma library",
+            description = "Gamma's semantics",
             language = Language.Oxsts,
             workspaceLayout = WorkspaceLayout.WithLibrary(
                 libraryRelativePath = Path.of("gamma"),
@@ -90,9 +87,8 @@ object FlavorRegistry {
         ),
         Flavor(
             id = "oxsts-with-sysmlv2-library",
-            displayName = "OXSTS with the SysML v2 library",
-            description = "OXSTS with the SysML v2 library available to import.",
-            fileName = "snippet.oxsts",
+            displayName = "Semantifyr Language with the SysML v2 library",
+            description = "SysML v2's semantics",
             language = Language.Oxsts,
             workspaceLayout = WorkspaceLayout.WithLibrary(
                 libraryRelativePath = Path.of("sysmlv2"),
@@ -110,8 +106,7 @@ object FlavorRegistry {
         Flavor(
             id = "gamma",
             displayName = "Gamma",
-            description = "Gamma statechart source, compiled to OXSTS before verification.",
-            fileName = "snippet.gamma",
+            description = "The Gamma Statechart Composition Framework",
             language = Language.Gamma,
             workspaceLayout = WorkspaceLayout.WithLibrary(
                 libraryRelativePath = Path.of("gamma"),

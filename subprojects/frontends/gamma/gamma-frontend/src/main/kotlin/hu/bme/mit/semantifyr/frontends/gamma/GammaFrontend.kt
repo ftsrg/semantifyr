@@ -38,6 +38,7 @@ import hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult
 import hu.bme.mit.semantifyr.verifier.witness.WitnessValidator
 import kotlinx.coroutines.runBlocking
 import org.eclipse.xtext.EcoreUtil2
+import org.eclipse.xtext.resource.FileExtensionProvider
 import org.eclipse.xtext.resource.SaveOptions
 import org.eclipse.xtext.serializer.ISerializer
 import java.nio.file.Path
@@ -136,6 +137,8 @@ class GammaFrontend @Inject private constructor(
 
     private val logger by loggerFactory()
 
+    private val oxstsFileExtension = gammaFrontendConfiguration.oxstsInjector.getInstance(FileExtensionProvider::class.java).primaryFileExtension
+
     val outputDirectory: Path
         get() = gammaFrontendConfiguration.outputDirectory
 
@@ -152,7 +155,7 @@ class GammaFrontend @Inject private constructor(
 
         logger.info { "Verifying Gamma case '$qualifiedName'" }
 
-        val compiledModel = gammaCompiler.compileWithImports(gammaModel, baseDirectory)
+        val compiledModel = gammaCompiler.compileWithImports(gammaModel, baseDirectory, oxstsFileExtension)
 
         val context = semantifyrLoader.startContext()
             .loadLibraryPaths(gammaFrontendConfiguration.libraryPaths)
@@ -211,7 +214,7 @@ class GammaFrontend @Inject private constructor(
             return null
         }
         return verificationDirectory.listDirectoryEntries().map {
-            it.resolve("witness.oxsts")
+            it.resolve("witness.$oxstsFileExtension")
         }.singleOrNull {
             it.isRegularFile()
         }
@@ -238,16 +241,16 @@ class GammaFrontend @Inject private constructor(
     }
 
     private fun loadWitnessModel(witnessPath: Path, baseDirectory: Path): InlinedOxsts {
-        val compiledModelPath = baseDirectory.resolve(GammaCompiler.MODEL_FILE_NAME)
+        val compiledModelPath = GammaCompiler.modelPath(baseDirectory, oxstsFileExtension)
         require(witnessPath.isRegularFile()) {
             "Witness file does not exist: '$witnessPath'"
         }
         require(compiledModelPath.isRegularFile()) {
-            "Compiled OXSTS model does not exist: '$compiledModelPath'"
+            "Compiled Semantifyr model does not exist: '$compiledModelPath'"
         }
         val importsDirectory = GammaCompiler.importsDirectory(baseDirectory)
         val importedPaths = if (importsDirectory.isDirectory()) {
-            importsDirectory.listDirectoryEntries("*.oxsts")
+            importsDirectory.listDirectoryEntries("*.$oxstsFileExtension")
         } else {
             emptyList()
         }
@@ -400,7 +403,7 @@ class GammaFrontend @Inject private constructor(
             val loader = effectiveOxstsInjector.getInstance(SemantifyrLoader::class.java)
             val discoverer = effectiveOxstsInjector.getInstance(VerificationCaseDiscoverer::class.java)
 
-            val resolvedLibraryPaths = libraryOverride ?: extractVariantLibrary()
+            val resolvedLibraryPaths = libraryOverride ?: extractVariantLibrary(effectiveOxstsInjector.getInstance(FileExtensionProvider::class.java))
             logger.info { "Building GammaFrontend (variant=${variant.name}, libraryPaths=$resolvedLibraryPaths)" }
 
             val gammaFrontendConfiguration = GammaFrontendConfig(
@@ -425,7 +428,7 @@ class GammaFrontend @Inject private constructor(
             )
         }
 
-        private fun extractVariantLibrary(): List<Path> {
+        private fun extractVariantLibrary(fileExtensionProvider: FileExtensionProvider): List<Path> {
             val libraryPath = Path.of(
                 System.getProperty("user.home"),
                 ".semantifyr",
@@ -433,6 +436,7 @@ class GammaFrontend @Inject private constructor(
                 variant.name.lowercase(),
             )
             val library = ClasspathBasedOxstsLibrary(
+                fileExtensionProvider,
                 javaClass.classLoader,
                 variant.resourcePrefix,
                 libraryPath,

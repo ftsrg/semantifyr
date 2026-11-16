@@ -24,19 +24,19 @@ vi.mock('monaco-editor', () => {
 
 const LISTING: LibrariesResponse = {
   builtin: [
-    'semantifyr.oxsts',
+    'standard.semantifyr',
   ],
   semantic: {
     'oxsts-with-gamma-library': [
-      'Ports.oxsts',
-      'Statecharts.oxsts',
+      'Ports.semantifyr',
+      'Statecharts.semantifyr',
     ],
     'oxsts-with-sysmlv2-library': [
-      'States.oxsts',
+      'States.semantifyr',
     ],
     'gamma': [
-      'Ports.oxsts',
-      'Statecharts.oxsts',
+      'Ports.semantifyr',
+      'Statecharts.semantifyr',
     ],
   },
   sysml: [
@@ -52,8 +52,8 @@ describe('the library documents of a language', () => {
     })).toEqual([
       'standard-library file:///sysml-library/Kernel%20Libraries/Kernel%20Data%20Type%20Library/ScalarValues.kerml sysml',
       'standard-library file:///sysml-library/Systems%20Library/States.sysml sysml',
-      'library file:///workspace/.semantifyr/builtin/semantifyr.oxsts oxsts',
-      'semantic-library file:///workspace/Library/States.oxsts oxsts',
+      'library file:///workspace/.semantifyr/builtin/standard.semantifyr oxsts',
+      'semantic-library file:///workspace/Library/States.semantifyr oxsts',
     ])
   })
 
@@ -61,14 +61,14 @@ describe('the library documents of a language', () => {
     expect(libraryDocumentsOf('gamma', LISTING).map((library) => {
       return library.uri
     })).toEqual([
-      'file:///workspace/.semantifyr/builtin/semantifyr.oxsts',
-      'file:///workspace/Library/Ports.oxsts',
-      'file:///workspace/Library/Statecharts.oxsts',
+      'file:///workspace/.semantifyr/builtin/standard.semantifyr',
+      'file:///workspace/Library/Ports.semantifyr',
+      'file:///workspace/Library/Statecharts.semantifyr',
     ])
     expect(libraryDocumentsOf('oxsts', LISTING).map((library) => {
       return library.uri
     })).toEqual([
-      'file:///workspace/.semantifyr/builtin/semantifyr.oxsts',
+      'file:///workspace/.semantifyr/builtin/standard.semantifyr',
     ])
   })
 
@@ -76,8 +76,8 @@ describe('the library documents of a language', () => {
     expect(libraryDocumentsOf('oxsts-with-gamma-library', null).map((library) => {
       return library.uri
     })).toEqual([
-      'file:///workspace/.semantifyr/builtin/semantifyr.oxsts',
-      'file:///workspace/Library/Statecharts.oxsts',
+      'file:///workspace/.semantifyr/builtin/standard.semantifyr',
+      'file:///workspace/Library/Statecharts.semantifyr',
     ])
   })
 })

@@ -30,6 +30,7 @@ import hu.bme.mit.semantifyr.verifier.toJavaDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.eclipse.xtext.resource.FileExtensionProvider
 import java.nio.file.Path
 import kotlin.io.path.nameWithoutExtension
 import kotlin.time.Duration
@@ -121,7 +122,7 @@ class SysMLv2Frontend private constructor(
             )
             logger.info { "SysMLv2 case '${case.qualifiedName}' wrote its SysML trace to '$tracePath'" }
         } catch (exception: Exception) {
-            logger.warn(exception) { "SysMLv2 case '${case.qualifiedName}' has no SysML trace" }
+            logger.warn(exception) { "Case ${case.qualifiedName} has no SysML v2 trace" }
         }
     }
 
@@ -260,14 +261,15 @@ class SysMLv2Frontend private constructor(
             val effectiveLoader = loader ?: effectiveOxstsInjector.getInstance(SemantifyrLoader::class.java)
             val discoverer = effectiveOxstsInjector.getInstance(VerificationCaseDiscoverer::class.java)
 
-            val resolvedLibraryPaths = extractVariantLibrary() + additionalLibraryPaths
+            val fileExtensionProvider = effectiveOxstsInjector.getInstance(FileExtensionProvider::class.java)
+            val resolvedLibraryPaths = extractVariantLibrary(fileExtensionProvider) + additionalLibraryPaths
 
             val (compiledOxsts, transformationDuration) = measureTimedValue {
                 compiledOxstsOverride ?: run {
                     val target = resolvedOutputDirectory
                         .resolve("compiled")
                         .resolve(variant.name.lowercase())
-                        .resolve("${resolvedSource.nameWithoutExtension}.oxsts")
+                        .resolve("${resolvedSource.nameWithoutExtension}.${fileExtensionProvider.primaryFileExtension}")
                     sharedSysMLv2Compiler.compile(
                         sourcePath = resolvedSource,
                         outputPath = target,
@@ -302,7 +304,7 @@ class SysMLv2Frontend private constructor(
             )
         }
 
-        private fun extractVariantLibrary(): List<Path> {
+        private fun extractVariantLibrary(fileExtensionProvider: FileExtensionProvider): List<Path> {
             val libraryPath = Path.of(
                 System.getProperty("user.home"),
                 ".semantifyr",
@@ -310,6 +312,7 @@ class SysMLv2Frontend private constructor(
                 variant.name.lowercase(),
             )
             val library = ClasspathBasedOxstsLibrary(
+                fileExtensionProvider,
                 javaClass.classLoader,
                 variant.resourcePrefix,
                 libraryPath,

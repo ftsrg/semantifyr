@@ -109,7 +109,7 @@ class VerifyCommandTest {
     @Test
     suspend fun `every case runs and the highest exit code wins`(@TempDir artifacts: Path) {
         val portfolio = fakePortfolio("sequence", VerificationVerdict.Timeout, VerificationVerdict.Failed)
-        val model = testModels.resolve("semantic/arithmetic.oxsts")
+        val model = testModels.resolve("semantic/arithmetic.semantifyr")
 
         val result = runCli(
             "verify", "--json", "--portfolio", portfolio.id, "-d", artifacts.toString(),
@@ -139,7 +139,7 @@ class VerifyCommandTest {
 
     @Test
     suspend fun `an unavailable portfolio exits with the error code before loading the model`(@TempDir directory: Path) {
-        val model = directory.resolve("broken.oxsts")
+        val model = directory.resolve("broken.semantifyr")
         model.writeText(
             """
             package broken
@@ -156,7 +156,7 @@ class VerifyCommandTest {
 
     @Test
     suspend fun `a case that fails to compile does not stop the run and exits with the compilation code`(@TempDir directory: Path) {
-        val model = directory.resolve("untemporal.oxsts")
+        val model = directory.resolve("untemporal.semantifyr")
         model.writeText(
             """
             package untemporal
@@ -214,7 +214,7 @@ class VerifyCommandTest {
     @Test
     suspend fun `a directory with a model that fails to compile verifies the other models`(@TempDir directory: Path) {
         val models = directory.resolve("models").createDirectory()
-        models.resolve("untemporal.oxsts").writeText(
+        models.resolve("untemporal.semantifyr").writeText(
             """
             package untemporal
 
@@ -232,7 +232,7 @@ class VerifyCommandTest {
             }
             """.trimIndent(),
         )
-        smokeModel.copyTo(models.resolve("smoke.oxsts"))
+        smokeModel.copyTo(models.resolve("smoke.semantifyr"))
         val backend = FakeBackend.verdict("counted", VerificationVerdict.Passed)
         val portfolio = SingleBackendPortfolio(backend, FakeConfig("counted"))
 
@@ -256,15 +256,15 @@ class VerifyCommandTest {
         val result = runCli("verify", model.toString())
 
         assertThat(result.statusCode).isEqualTo(3)
-        assertThat(result.stderr).contains("room.sysml").contains(".oxsts")
+        assertThat(result.stderr).contains("room.sysml").contains(".semantifyr")
     }
 
     @Test
-    suspend fun `an unknown portfolio is a usage error`() {
+    suspend fun `an unknown portfolio is a usage error that lists the portfolios`() {
         val result = runCli("verify", "--portfolio", "no-such-portfolio", smokeModel.toString())
 
         assertThat(result.statusCode).isEqualTo(2)
-        assertThat(result.stderr).contains("unknown portfolio 'no-such-portfolio'")
+        assertThat(result.stderr).contains("no-such-portfolio").contains("smart, all-agree, theta, theta-cegar-expl")
     }
 
     @Test
@@ -294,7 +294,7 @@ class VerifyCommandTest {
 
     @Test
     suspend fun `a missing model is an input error before the portfolio is probed`(@TempDir directory: Path) {
-        val result = runCli("verify", "--portfolio", "absent", directory.resolve("absent.oxsts").toString(), portfolios = listOf(UnavailablePortfolio))
+        val result = runCli("verify", "--portfolio", "absent", directory.resolve("absent.semantifyr").toString(), portfolios = listOf(UnavailablePortfolio))
 
         assertThat(result.statusCode).isEqualTo(3)
     }

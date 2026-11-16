@@ -53,11 +53,11 @@ describe('runAllVerifications', () => {
     runAllVerifications(
       client,
       'oxsts.case.verify',
-      'file:///workspace/snippet.oxsts',
+      'file:///workspace/snippet.semantifyr',
       [sampleCase('a'), sampleCase('b')],
       setState,
       noopProgress,
-      { portfolioId: 'smart-full' },
+      { portfolioId: 'smart' },
     );
 
     await vi.waitFor(() => {
@@ -68,13 +68,13 @@ describe('runAllVerifications', () => {
     expect(final.cases.map((verificationCase) => verificationCase.status)).toEqual(['passed', 'failed']);
     expect(final.cases[0]!.metrics?.totalDuration).toBe('PT1S');
     expect(final.cases[0]!.backendId).toBe('theta-cegar');
-    expect(final.cases[0]!.portfolioId).toBe('smart-full');
+    expect(final.cases[0]!.portfolioId).toBe('smart');
     expect(final.cases[1]!.trace).toBeDefined();
-    expect(final.message).toMatch(/some cases failed/i);
+    expect(final.message).toMatch(/not every case passed/i);
 
     expect(sendRequest.mock.calls[0]![1]).toEqual({
       command: 'oxsts.case.verify',
-      arguments: [{ uri: 'file:///workspace/snippet.oxsts', range: sampleCase('a').location.range, portfolio: 'smart-full' }],
+      arguments: [{ uri: 'file:///workspace/snippet.semantifyr', range: sampleCase('a').location.range, portfolio: 'smart' }],
     });
 
     expect(states[0]!.cases.every((verificationCase) => verificationCase.status === 'running')).toBe(true);
@@ -89,7 +89,7 @@ describe('runAllVerifications', () => {
     runAllVerifications(
       client,
       'oxsts.case.verify',
-      'file:///workspace/snippet.oxsts',
+      'file:///workspace/snippet.semantifyr',
       [sampleCase('a')],
       setState,
       noopProgress,
@@ -111,7 +111,7 @@ describe('runAllVerifications', () => {
     runAllVerifications(
       client,
       'oxsts.case.verify',
-      'file:///workspace/snippet.oxsts',
+      'file:///workspace/snippet.semantifyr',
       [sampleCase('a')],
       setState,
       noopProgress,
@@ -137,7 +137,7 @@ describe('runAllVerifications', () => {
         message: null,
         metrics: sampleMetrics,
         backendId: 'theta-cegar',
-        portfolioId: 'smart-full',
+        portfolioId: 'smart',
       };
     });
     const client: LspClient = { sendRequest, sendNotification: () => {} };
@@ -145,17 +145,17 @@ describe('runAllVerifications', () => {
     const { states, setState } = captureStates();
     const getAutoValidateRequest = (): AutoValidateRequest => ({
       command: 'oxsts.case.validateWitness',
-      portfolioId: 'smart-full',
+      portfolioId: 'smart',
     });
 
     runAllVerifications(
       client,
       'oxsts.case.verify',
-      'file:///workspace/snippet.oxsts',
+      'file:///workspace/snippet.semantifyr',
       [sampleCase('a')],
       setState,
       noopProgress,
-      { portfolioId: 'smart-full', getAutoValidateRequest },
+      { portfolioId: 'smart', getAutoValidateRequest },
     );
 
     await vi.waitFor(() => {
@@ -173,7 +173,7 @@ describe('runAllVerifications', () => {
       if ((parameters as { command?: string }).command === 'gamma.case.verify') {
         return failedResult;
       }
-      return { status: 'valid', verdict: 'passed', message: null, backendId: null, portfolioId: 'smart-full', metrics: null };
+      return { status: 'valid', verdict: 'passed', message: null, backendId: null, portfolioId: 'smart', metrics: null };
     });
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
@@ -208,7 +208,7 @@ describe('runAllVerifications', () => {
     runAllVerifications(
       client,
       'oxsts.case.verify',
-      'file:///workspace/snippet.oxsts',
+      'file:///workspace/snippet.semantifyr',
       [sampleCase('a')],
       setState,
       noopProgress,
@@ -238,7 +238,7 @@ describe('verification statuses', () => {
     runAllVerifications(
       client,
       'oxsts.case.verify',
-      'file:///workspace/snippet.oxsts',
+      'file:///workspace/snippet.semantifyr',
       [sampleCase('a')],
       setState,
       noopProgress,
@@ -277,7 +277,7 @@ describe('discoverCases', () => {
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
     const { states, setState } = captureStates();
-    const discovery = discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.oxsts', setState);
+    const discovery = discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.semantifyr', setState);
 
     expect(states.at(-1)?.discovery).toBe('discovering');
     resolveDiscovery([sampleCase('a')]);
@@ -293,7 +293,7 @@ describe('discoverCases', () => {
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
     const { states, setState } = captureStates();
-    await discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.oxsts', setState);
+    await discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.semantifyr', setState);
 
     expect(states.at(-1)?.discovery).toBe('discovered');
     expect(states.at(-1)?.cases).toEqual([]);
@@ -309,7 +309,7 @@ describe('discoverCases', () => {
       discovery: 'discovered',
       cases: [{ caseInfo: sampleCase('a'), status: 'passed' }],
     });
-    await discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.oxsts', setState);
+    await discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.semantifyr', setState);
 
     expect(states.at(-1)?.cases[0]?.status).toBe('passed');
   });
@@ -321,7 +321,7 @@ describe('discoverCases', () => {
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
     const { states, setState } = captureStates();
-    await discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.oxsts', setState);
+    await discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.semantifyr', setState);
 
     expect(states.at(-1)?.discovery).toBe('idle');
   });
@@ -333,7 +333,7 @@ describe('validateWitness', () => {
       status: 'invalid',
       message: 'spurious counterexample',
       backendId: 'theta-bmc',
-      portfolioId: 'smart-full',
+      portfolioId: 'smart',
       metrics: sampleMetrics,
     }));
     const client: LspClient = { sendRequest, sendNotification: () => {} };
@@ -342,15 +342,15 @@ describe('validateWitness', () => {
       client,
       'oxsts.case.validateWitness',
       { uri: 'inmemory:///x', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } },
-      { portfolioId: 'smart-full' },
+      { portfolioId: 'smart' },
     );
     expect(outcome.status).toBe('invalid');
     expect(outcome.backendId).toBe('theta-bmc');
-    expect(outcome.portfolioId).toBe('smart-full');
+    expect(outcome.portfolioId).toBe('smart');
 
     const callArguments = sendRequest.mock.calls[0]!;
     const parameters = callArguments[1] as { arguments: { portfolio?: string }[] };
-    expect(parameters.arguments[0]).toEqual({ uri: 'inmemory:///x', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } }, portfolio: 'smart-full' });
+    expect(parameters.arguments[0]).toEqual({ uri: 'inmemory:///x', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } }, portfolio: 'smart' });
   });
 
   it('treats unknown response shapes as errored', async () => {
@@ -384,7 +384,7 @@ describe('dispatchAutoValidation', () => {
     const sendRequest = vi.fn<LspClient['sendRequest']>(async () => ({
       status: 'valid',
       backendId: 'theta-cegar',
-      portfolioId: 'smart-full',
+      portfolioId: 'smart',
       metrics: sampleMetrics,
     }));
     const client: LspClient = { sendRequest, sendNotification: () => {} };
@@ -400,9 +400,9 @@ describe('dispatchAutoValidation', () => {
       client,
       'oxsts.case.validateWitness',
       'a',
-      { uri: 'inmemory:///workspace/snippet.witness.oxsts', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } },
+      { uri: 'inmemory:///workspace/snippet.witness.semantifyr', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } },
       setState,
-      { validationPortfolioId: 'smart-full' },
+      { validationPortfolioId: 'smart' },
     );
 
     // First synchronous transition flips validating=true; the second (after the resolved
@@ -415,7 +415,7 @@ describe('dispatchAutoValidation', () => {
       expect(last.cases[0]!.witnessValidation).toBe('valid');
       expect(last.cases[0]!.validating).toBe(false);
       expect(last.cases[0]!.validationBackendId).toBe('theta-cegar');
-      expect(last.cases[0]!.validationPortfolioIdUsed).toBe('smart-full');
+      expect(last.cases[0]!.validationPortfolioIdUsed).toBe('smart');
     });
   });
 });
@@ -425,11 +425,11 @@ describe('the server\'s report of the session\'s verifications', () => {
     return {
       id,
       label: `Case ${id}`,
-      location: { uri: 'file:///workspace/snippet.oxsts', range: { start: { line, character: 2 }, end: { line, character: 9 } } },
+      location: { uri: 'file:///workspace/snippet.semantifyr', range: { start: { line, character: 2 }, end: { line, character: 9 } } },
     };
   };
   const entry = (kind: ActiveVerificationInfo['kind'], state: ActiveVerificationInfo['state'], location: VerificationCaseState['caseInfo']['location']): ActiveVerificationInfo => {
-    return { verificationId: `${kind}-${state}`, portfolioId: 'smart-full', kind, state, elapsed: 'PT0S', location };
+    return { verificationId: `${kind}-${state}`, portfolioId: 'smart', kind, state, elapsed: 'PT0S', location };
   };
   const sent: VerificationState = {
     phase: 'running',
@@ -496,10 +496,10 @@ describe('cases asked for before they can be sent', () => {
 });
 
 describe('the wait of a case', () => {
-  const caseInfo = { ...sampleCase('a'), location: { uri: 'file:///workspace/snippet.oxsts', range: { start: { line: 3, character: 0 }, end: { line: 3, character: 1 } } } };
+  const caseInfo = { ...sampleCase('a'), location: { uri: 'file:///workspace/snippet.semantifyr', range: { start: { line: 3, character: 0 }, end: { line: 3, character: 1 } } } };
   const running = (now: number) => {
     return (state: VerificationState): VerificationState => {
-      return applyServerReport(state, [{ verificationId: 'v', portfolioId: 'smart-full', kind: 'Verify', state: 'Running', elapsed: 'PT0S', location: caseInfo.location }], now);
+      return applyServerReport(state, [{ verificationId: 'v', portfolioId: 'smart', kind: 'Verify', state: 'Running', elapsed: 'PT0S', location: caseInfo.location }], now);
     };
   };
 

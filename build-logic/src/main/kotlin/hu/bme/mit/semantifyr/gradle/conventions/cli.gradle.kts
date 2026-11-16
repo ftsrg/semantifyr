@@ -12,6 +12,22 @@ plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.verification")
 }
 
+// the Theta the distribution ships
+val theta = configurations.dependencyScope("theta")
+val thetaFiles = configurations.resolvable("thetaFiles") {
+    extendsFrom(theta.get())
+    attributes(semantifyrArtifact("theta-xsts-cli"))
+}
+
+dependencies {
+    theta(project(":theta-executor"))
+}
+
+val cloneDistributionTheta = tasks.register<Sync>("cloneDistributionTheta") {
+    from(thetaFiles)
+    into(layout.buildDirectory.dir("distribution-theta-xsts-cli"))
+}
+
 // cmd.exe rejects a line over 8191 characters, which the expanded jar list exceeds under a long install path
 val windowsClasspathJar = tasks.register<Jar>("windowsClasspathJar") {
     val classPath = files(tasks.jar, configurations.runtimeClasspath).elements.map { elements ->
@@ -34,7 +50,7 @@ distributions.main {
         from(windowsClasspathJar) {
             into("lib")
         }
-        from(tasks.named("cloneTheta")) {
+        from(cloneDistributionTheta) {
             into("theta-xsts-cli")
             // archives get fixed permissions, which drop the launcher's execute bit
             filePermissions {

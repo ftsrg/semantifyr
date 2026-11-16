@@ -27,6 +27,7 @@ import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.caseDirectory
 import hu.bme.mit.semantifyr.verifier.caseDirectoryName
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
+import org.eclipse.xtext.resource.FileExtensionProvider
 import org.eclipse.xtext.resource.SaveOptions
 import org.eclipse.xtext.serializer.ISerializer
 import java.nio.file.Files
@@ -37,10 +38,11 @@ import kotlin.io.path.nameWithoutExtension
 
 class CompileCommand @Inject constructor(
     semantifyrLoader: SemantifyrLoader,
+    fileExtensionProvider: FileExtensionProvider,
     verificationCaseDiscoverer: VerificationCaseDiscoverer,
     private val serializer: ISerializer,
     private val injector: Injector,
-) : BaseSemantifyrCommand("compile", semantifyrLoader) {
+) : BaseSemantifyrCommand("compile", semantifyrLoader, fileExtensionProvider) {
     private val logger by loggerFactory()
 
     private val caseSpecificationOptions by VerificationCaseSpecificationOptionGroup(verificationCaseDiscoverer)
@@ -49,10 +51,10 @@ class CompileCommand @Inject constructor(
 
     private val outputPath by option("-o", "--output")
         .path(mustExist = false, canBeFile = true, canBeDir = true)
-        .help("Output file, or directory for several cases.")
+        .help("The output file, or the output directory for several cases.")
 
     override fun help(context: Context): String {
-        return "Compile cases to inlined OXSTS."
+        return "Compile each case of a Semantifyr model to an inlined model."
     }
 
     override suspend fun run() {
@@ -68,7 +70,7 @@ class CompileCommand @Inject constructor(
         } else {
             val directory = validateMultipleCasesOutput(cases.size)
             cases.map {
-                directory.resolve("${caseDirectoryName(it)}.oxsts")
+                directory.resolve("${caseDirectoryName(it)}.${fileExtensionProvider.primaryFileExtension}")
             }
         }
         val compiler = SemantifyrCompiler(injector, artifactOptions.resolved, compilationOptions.resolved)
@@ -78,7 +80,7 @@ class CompileCommand @Inject constructor(
     }
 
     private fun validateSingleCaseOutput(): Path {
-        val target = outputPath ?: model.resolveSibling("${model.nameWithoutExtension}.inlined.oxsts")
+        val target = outputPath ?: model.resolveSibling("${model.nameWithoutExtension}.inlined.${fileExtensionProvider.primaryFileExtension}")
         if (Files.isDirectory(target)) {
             throw CommandExit(ExitCode.Usage, "--output '$target' is a directory, but only one case is selected. Provide a file path or omit the flag.")
         }

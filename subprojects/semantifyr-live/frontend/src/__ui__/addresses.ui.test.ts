@@ -4,11 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { encodeCompressedBase64Url } from '@semantifyr/editor-common'
+import { encodeCompressedBase64Url, liveExampleUrl } from '@semantifyr/editor-common'
+import { servedExamples } from '@semantifyr/editor-common/examples'
 import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
-import { casesListed, editor, test } from './harness'
+import { casesListed, editor, servedExample, test, titleOf } from './harness'
 
 function pathOf(page: Page): string {
   const url = new URL(page.url())
@@ -26,7 +27,7 @@ describe('the first screen', () => {
 
     await expect.poll(async () => {
       return page.title()
-    }).toBe('Level crossing - SysML v2 - Semantifyr Live')
+    }).toBe(titleOf('sysml', 'level-crossing'))
     const session = await ui.backend.openSession()
     expect(session.query.get('language')).toBe('sysml')
     expect(session.query.get('kind')).toBe('full')
@@ -35,11 +36,11 @@ describe('the first screen', () => {
   })
 
   test('opens the language, the flavour and the example the address names', async ({ ui }) => {
-    const page = await ui.open('/oxsts/crossroads?library=gamma')
+    const page = await ui.open('/language/crossroads?library=gamma')
 
     await expect.poll(async () => {
       return page.title()
-    }).toBe('Crossroads (Gamma library) - OXSTS - Semantifyr Live')
+    }).toBe(titleOf('gamma', 'crossroads', 'oxsts'))
     expect((await ui.backend.openSession()).flavorId).toBe('oxsts-with-gamma-library')
     await expect.poll(async () => {
       return page.locator('.flavour-button').innerText()
@@ -50,9 +51,9 @@ describe('the first screen', () => {
 
 describe('an address that names what Live does not have', () => {
   for (const [address, requested, opened] of [
-    ['/kerml/level-crossing', 'language "kerml"', 'Level crossing - SysML v2 - Semantifyr Live'],
-    ['/gamma/level-crosing', 'example "level-crosing"', 'Level crossing - Gamma - Semantifyr Live'],
-    ['/oxsts/crossroads?library=uml', 'library "uml"', 'Tutorial: Basics - OXSTS - Semantifyr Live'],
+    ['/kerml/level-crossing', 'language "kerml"', titleOf('sysml', 'level-crossing')],
+    ['/gamma/level-crosing', 'example "level-crosing"', titleOf('gamma', 'level-crossing')],
+    ['/language/crossroads?library=uml', 'library "uml"', titleOf('oxsts', 'level-crossing')],
   ] as const) {
     test(`says the ${requested} was not found and opens its replacement`, async ({ ui }) => {
       const page = await ui.open(address)
@@ -67,14 +68,14 @@ describe('an address that names what Live does not have', () => {
   }
 
   test('says a model of the fragment that cannot be read was not, and opens the example', async ({ ui }) => {
-    const page = await ui.open('/oxsts/basics#model=garbled')
+    const page = await ui.open('/language/intersection#model=garbled')
 
     await expect.poll(async () => {
       return page.locator('.orientation.is-error').innerText()
     }).toContain('The model in the link could not be read')
     await expect.poll(async () => {
       return page.title()
-    }).toBe('Tutorial: Basics - OXSTS - Semantifyr Live')
+    }).toBe(titleOf('oxsts', 'intersection'))
   })
 
   test('opens a model of the fragment as a shared model', async ({ ui }) => {
@@ -82,11 +83,11 @@ describe('an address that names what Live does not have', () => {
       return []
     })
     const model = await encodeCompressedBase64Url('package shared\n')
-    const page = await ui.open(`/oxsts#model=${model}`)
+    const page = await ui.open(`/language#model=${model}`)
 
     await expect.poll(async () => {
       return page.title()
-    }).toBe('Shared model - OXSTS - Semantifyr Live')
+    }).toBe('Shared model - Semantifyr Language - Semantifyr Live')
     await expect.poll(async () => {
       return (await editor(page).lines.innerText()).replace(/\u00a0/g, ' ')
     }).toContain('package shared')
@@ -95,18 +96,18 @@ describe('an address that names what Live does not have', () => {
 
 describe('the history of a visit', () => {
   test('pushes a switch of example, language and flavour, and Back and Forward reopen each with its text', async ({ ui }) => {
-    const page = await ui.open('/oxsts/basics')
+    const page = await ui.open('/language/intersection')
     await casesListed(page)
 
-    await chooseExample(page, 'Tutorial: Intermediate')
+    await chooseExample(page, servedExample('oxsts', 'library').label)
     await expect.poll(async () => {
       return pathOf(page)
-    }).toBe('/oxsts/intermediate')
+    }).toBe('/language/library')
     await page.locator('.flavour-button').click()
-    await page.getByRole('menuitem', { name: /With the Gamma library/ }).click()
+    await page.getByRole('menuitem', { name: /Gamma's semantics/ }).click()
     await expect.poll(async () => {
       return pathOf(page)
-    }).toBe('/oxsts/level-crossing?library=gamma')
+    }).toBe('/language/level-crossing?library=gamma')
     await page.locator('.language-switch [role=group] button', { hasText: 'Gamma' }).click()
     await expect.poll(async () => {
       return pathOf(page)
@@ -123,13 +124,30 @@ describe('the history of a visit', () => {
     }
 
     expect(visited).toEqual([
-      '/oxsts/level-crossing?library=gamma Level crossing (Gamma library) - OXSTS - Semantifyr Live',
-      '/oxsts/intermediate Tutorial: Intermediate - OXSTS - Semantifyr Live',
-      '/oxsts/basics Tutorial: Basics - OXSTS - Semantifyr Live',
-      '/oxsts/intermediate Tutorial: Intermediate - OXSTS - Semantifyr Live',
+      `/language/level-crossing?library=gamma ${titleOf('gamma', 'level-crossing', 'oxsts')}`,
+      `/language/library ${titleOf('oxsts', 'library')}`,
+      `/language/intersection ${titleOf('oxsts', 'intersection')}`,
+      `/language/library ${titleOf('oxsts', 'library')}`,
     ])
     await expect.poll(async () => {
       return editor(page).lines.innerText()
-    }).toContain('intermediate')
+    }).toContain('library')
   })
+})
+
+describe('the served examples', () => {
+  for (const example of servedExamples) {
+    const address = new URL(liveExampleUrl('https://live.invalid/', example.language, example.id)).pathname
+    test(`opens ${address} at its address, with no banner over it`, async ({ ui }) => {
+      ui.backend.answer('discover', () => {
+        return []
+      })
+      const page = await ui.open(address)
+
+      await expect.poll(async () => {
+        return page.title()
+      }).toBe(titleOf(example.language, example.id))
+      expect(await page.locator('.orientation').count()).toBe(0)
+    })
+  }
 })

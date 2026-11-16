@@ -15,7 +15,8 @@ import { ShellRoot } from '../shells/ShellRoot'
 import { CaseTrace } from '../trace/CaseTrace'
 import { caseState, LANGUAGES, seedWithTrace } from './traces'
 
-import '../ui/tokens.css'
+import '@semantifyr/editor-common/tokens.css'
+import '@semantifyr/editor-common/marks.css'
 import '../ui/components.css'
 import '../ui/base.css'
 
@@ -57,8 +58,8 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
     language: 'sysml',
     view: 'own',
     expectState: async () => {
-      await editorShows('part def BarrierDownWhileTrainInCrossingViolatedTrace')
-      expect(text('.case-trace .trace-frame-bar')).toContain('BarrierDownWhileTrainInCrossingViolatedTrace.sysml')
+      await editorShows('part def BarrierDownWhileTrainInCrossingTrace')
+      expect(text('.case-trace .trace-frame-bar')).toContain('BarrierDownWhileTrainInCrossingTrace.sysml')
     },
   },
   'sysml-steps': {
@@ -127,7 +128,7 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
     language: 'gamma',
     view: 'steps',
     expectState: () => {
-      expect(text('.trace-views [aria-pressed=true]')).toBe('OXSTS steps')
+      expect(text('.trace-views [aria-pressed=true]')).toBe('Steps')
       expect(count('.step.is-final.status-failed')).toBe(1)
     },
   },
@@ -143,7 +144,7 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
     view: 'witness',
     expectState: async () => {
       await editorShows('witness of example::levelcrossing')
-      expect(text('.case-trace .trace-frame-bar')).toContain('BarrierDownWhileTrainInCrossing.witness.oxsts')
+      expect(text('.case-trace .trace-frame-bar')).toContain('BarrierDownWhileTrainInCrossing.witness.semantifyr')
     },
   },
   'oxsts-steps': {
@@ -183,8 +184,8 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
     validated: true,
     view: 'own',
     expectState: () => {
-      expect(text('[data-testid=run-details]')).toContain('2.9 s, waited 30 s, Automatic, decided by Theta')
-      expect(text('[data-testid=run-details]')).toContain('validated, 0.6 s, waited 4.0 s, Automatic, decided by Spin')
+      expect(text('[data-testid=run-details]')).toContain('2.9 s, waited 30 s, Smart, decided by Theta')
+      expect(text('[data-testid=run-details]')).toContain('validated, 0.6 s, waited 4.0 s, Smart, decided by Spin')
     },
   },
   'run-details-not-validated': {
@@ -309,13 +310,13 @@ describe('the text of a trace', () => {
         </ShellContext.Provider>
       </LiveContext.Provider>,
     )
-    await editorShows('part def BarrierDownWhileTrainInCrossingViolatedTrace')
+    await editorShows('part def BarrierDownWhileTrainInCrossingTrace')
     vi.advanceTimersByTime(4 * 60 * 1000)
     await new Promise((resolve) => {
       setTimeout(resolve, 500)
     })
     expect(count('.case-trace .trace-editor .monaco-editor')).toBe(1)
-    expect(text('.case-trace .trace-editor .view-lines')).toContain('part def BarrierDownWhileTrainInCrossingViolatedTrace')
+    expect(text('.case-trace .trace-editor .view-lines')).toContain('part def BarrierDownWhileTrainInCrossingTrace')
   })
 })
 
@@ -323,18 +324,18 @@ describe('the documents menu', () => {
   // the headings of the groups and the first entries under each
   const ENTRIES: Readonly<Record<string, { headings: readonly string[], first: readonly string[], filtered: boolean }>> = {
     sysml: {
-      headings: ['Selected case', 'Model', 'SysML v2 standard library', 'OXSTS library', 'Semantic library, in OXSTS'],
-      first: ['Trace of the selected case', 'OXSTS of the trace', 'OXSTS of the model', 'Collections.kerml', 'ScalarValues.kerml'],
+      headings: ['Selected case', 'Model', 'SysML v2 standard library', 'Semantifyr Language standard library', 'Semantic library, in the Semantifyr Language'],
+      first: ['Trace of the selected case', 'Witness of the selected case', 'Semantifyr model', 'Collections.kerml', 'ScalarValues.kerml'],
       filtered: true,
     },
     gamma: {
-      headings: ['Selected case', 'Model', 'OXSTS library', 'Semantic library, in OXSTS'],
-      first: ['Trace of the selected case', 'OXSTS of the trace', 'OXSTS of the model', 'semantifyr.oxsts', 'Actions.oxsts'],
+      headings: ['Selected case', 'Model', 'Semantifyr Language standard library', 'Semantic library, in the Semantifyr Language'],
+      first: ['Trace of the selected case', 'Witness of the selected case', 'Semantifyr model', 'standard.semantifyr', 'Actions.semantifyr'],
       filtered: false,
     },
     oxsts: {
-      headings: ['Selected case', 'OXSTS library'],
-      first: ['Trace of the selected case', 'semantifyr.oxsts'],
+      headings: ['Selected case', 'Semantifyr Language standard library'],
+      first: ['Witness of the selected case', 'standard.semantifyr'],
       filtered: false,
     },
   }
@@ -374,7 +375,7 @@ describe('the documents menu', () => {
       }
       const traceEntry = document.querySelector<HTMLElement>('.documents-menu [data-document=witness]')!
       const fileName = traceEntry.querySelector<HTMLElement>('.menu-item-detail')!.innerText
-      expect(fileName).toBe(`${language.caseName}.witness.oxsts`)
+      expect(fileName).toBe(`${language.caseName}.witness.semantifyr`)
       await page.screenshot({ path: `../../build/screens/${server.browser}/trace-documents-${languageName}-light.png` })
       await userEvent.click(traceEntry)
       await expect.poll(() => {

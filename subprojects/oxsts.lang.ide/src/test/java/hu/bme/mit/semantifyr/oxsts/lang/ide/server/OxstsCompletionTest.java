@@ -6,8 +6,8 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server;
 
-import static hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels.basicsWith;
 import static hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels.gammaLibrary;
+import static hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels.trafficLightsWith;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import hu.bme.mit.semantifyr.oxsts.lang.ide.MarkedText;
@@ -23,7 +23,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void containmentTypeOffersOnlyClasses() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 class Case {
                     contains other: <|>
                 }
@@ -34,13 +34,13 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
                 .doesNotContain("bool", "int", "any", "LightColor");
         assertThat(item(items, "TrafficLight")).satisfies(item -> {
             assertThat(item.getKind()).isEqualTo(CompletionItemKind.Class);
-            assertThat(item.getDetail()).isEqualTo("example::trafficlight::basics");
+            assertThat(item.getDetail()).isEqualTo("example::trafficlights");
         });
     }
 
     @Test
     void referenceTypeOffersClassesDataTypesAndEnums() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 class Case {
                     refers color: <|>
                 }
@@ -52,7 +52,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void expressionMemberOffersValuesAndNoTransitions() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 class Case {
                     contains light: TrafficLight
 
@@ -76,7 +76,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void statementStartOffersOnlyAssignableTargets() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 class Case {
                     contains light: TrafficLight
                     var counter: int := 0
@@ -92,7 +92,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void inlineStatementOffersTransitionsAndInstanceFeatures() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 class Case {
                     contains light: TrafficLight
                     var counter: int := 0
@@ -108,7 +108,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void inlineCallInsertsTheTransitionWithItsParameters() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 class Case {
                     contains light: TrafficLight
 
@@ -129,7 +129,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void callArgumentOffersTheNamedArgumentAndValuesOfTheParameterTypeFirst() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 class Case {
                     contains light: TrafficLight
 
@@ -156,7 +156,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void propertyArgumentInAnExpressionOffersTheNamedArgument() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 class Case {
                     contains light: TrafficLight
 
@@ -171,7 +171,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void redefineTransitionOffersTheInheritedSignaturesWithoutInit() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 class SpecialLight : TrafficLight {
                     redefine tran <|>
                 }
@@ -188,7 +188,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void classBodyOffersRedefinitionsOfInheritedMembers() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 class SpecialLight : TrafficLight {
                     redefine tran setColor(color: LightColor) {
                         self.color := color
@@ -216,7 +216,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void classBodyOffersAnAbstractFeatureAsContainsAndRefersRedefinitions() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 abstract class LightHolder {
                     features light: TrafficLight
                 }
@@ -238,7 +238,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void classBodyAfterAFeatureOffersTheRedefinitionsOfTheClassNotOfTheFeatureType() throws Exception {
-        var items = complete(MarkedText.of(basicsWith("""
+        var items = complete(MarkedText.of(trafficLightsWith("""
                 class Case {
                     contains light: TrafficLight
                     <|>

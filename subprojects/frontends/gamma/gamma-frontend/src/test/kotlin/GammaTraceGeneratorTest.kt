@@ -276,7 +276,7 @@ class GammaTraceGeneratorTest {
         steps: List<Pair<List<TraceEntry>, List<WitnessStateValue>>>,
     ): ExecutionTrace {
         val gammaPackage = gammaReader.readGammaFile(SEMANTICS.resolve(modelFile).toFile())
-        val nameMap = gammaCompiler.compile(gammaPackage, temporaryDirectory.resolve("model.oxsts"))
+        val nameMap = gammaCompiler.compile(gammaPackage, temporaryDirectory.resolve("model.semantifyr"))
         val verificationCase = gammaPackage.verificationCases.single {
             it.name == caseName
         }

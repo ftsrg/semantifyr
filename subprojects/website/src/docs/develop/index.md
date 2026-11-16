@@ -1,92 +1,40 @@
 ---
-title: Develop
+title: Architecture
 sidebar_position: 0
+hide_table_of_contents: true
+description: The path of a model through Semantifyr's components and what each of them is for, for a contributor about to read the code.
 ---
 
-# Developing Semantifyr
+import ComponentPath from '@site/src/components/Develop/ComponentPath';
 
-Semantifyr is open source. Contributions are welcome, whether that's a bug fix, a new frontend, a documentation improvement, or a discussion about an architectural change.
+# Architecture
 
-If you only want to *use* Semantifyr to verify models, the [Learn](../learn/index.md) section is a better starting point.
+<ComponentPath />
 
-## Getting in touch
+## The Path
 
-- [GitHub Issues](https://github.com/ftsrg/semantifyr/issues) for bug reports and feature requests.
-- [GitHub Discussions](https://github.com/ftsrg/semantifyr/discussions) for questions and design proposals.
-- The maintainers are listed in [`CONTRIBUTORS.md`](https://github.com/ftsrg/semantifyr/blob/main/CONTRIBUTORS.md).
+### Frontends {#frontends}
 
-For anything beyond a small fix, please open an issue or discussion first. A short conversation about scope and approach saves time during review.
+A frontend takes a model in an engineering language and translates it onto that language's semantic library, classes in the Semantifyr Language that state what the language's constructs mean. The meaning is then a model of its own, read, varied and verified like any other, and not the code of a translator. A construct the frontend does not translate is reported on the construct, and no model is written for it. At the end of the path the same frontend turns the witness into a trace in the model's language. A Semantifyr model written by hand needs no frontend. [Frontends](../learn/frontends/index.mdx) lists them.
 
-## Fork and clone
+### The Compiler {#compiler}
 
-We recommend forking the repository to your own GitHub account, then cloning your fork:
+The compiler reads a Semantifyr model on its semantic library and never learns which language the model came from. A verification case is a class of the model that carries its own property. The compiler takes one case through instantiation, inlining and flattening, optimizing between them, to a transition system: variables, an initial transition, a main transition and the property. [How a Semantifyr Model Compiles](../learn/language/compilation/index.mdx) shows the phases, and the [Semantifyr Language Specification](../learn/language/specification/index.md) specifies the language.
 
-```bash
-git clone https://github.com/<your-username>/semantifyr.git
-cd semantifyr
-```
+### The Backends {#backends}
 
-This gives you a place to push branches and open pull requests from.
+A backend connects Semantifyr to one model checker, a tool outside it. Every backend receives the same transition system and refuses up front, naming each construct, what its model checker cannot express; the rest it translates into the checker's input, runs the checker and reads back a verdict and, as evidence, the states it found. A backend is trusted in one direction, the one its configuration backs, and in both when the configuration is exact. [Backends](../learn/backends/index.mdx) says what each of them refuses.
 
-## Building from source
+### The Portfolio {#portfolio}
 
-**Prerequisites:** JDK 25 (the Gradle toolchain downloads it automatically) and Git. No separate Gradle or Node.js install is needed; the build manages both.
+A portfolio is a strategy for the backend runs: which backends run under which configurations, side by side, and how the verdict is decided from their answers, each taken only in the direction its backend is trusted. A case without variables and transitions is decided with no backend. [Portfolios and Verdicts](../learn/backends/portfolios-and-verdicts.mdx) explains the strategies.
 
-```bash
-./gradlew build
-```
+### The Verifier {#verifier}
 
-The first build downloads the JDK toolchain, a project-local Node distribution, the Theta CLI, and Maven dependencies. Subsequent builds use the Gradle cache and are much faster.
+The verifier drives the path: it finds the cases of a model, has each one compiled and verified by the portfolio, and back-annotates the evidence into a witness, a Semantifyr model of the one execution the backend found, from which every trace is made. Validating a witness is a request of its own: the witness is verified again, as any model is. [Inlined Models](../learn/language/specification/library-and-output/inlined-models.md#witnesses) says what a witness is, and [Portfolios and Verdicts](../learn/backends/portfolios-and-verdicts.mdx#validation) how it is validated.
 
-This runs the unit tests and the verification smoke tests, and assembles every artifact. Tests that need a backend binary skip when it is missing; the build provides Theta. The broader suites run separately:
+## What Runs the Path {#what-runs-the-path}
 
-```bash
-./gradlew integrationTest   # the semantic conformance and frontend corpus suites
-./gradlew nightlyTest       # long-running cases, Gamma's conformance suite and witness re-checks on all backends
-```
+The launchers run the path on the command line, one for each language, with the same options, output and exit codes. Language servers bring each language into an editor, whose extension runs them and shows a case's witness and trace. Live is a server that hosts the same language servers and verifications for many visitors, with a browser application over it; where a language server runs in the browser, the server receives only the translated Semantifyr model.
 
-A suite whose backend is missing skips as a whole; CI checks its engines before the build, so a missing one fails the job instead. A case passes only with the expected verdict: Inconclusive, Not supported, Timeout and Errored fail it. Each backend's conformance suite runs the semantic cases that backend's capability checker accepts; a case the checker accepts but the backend does not decide within the suite's timeout is left out by name in the suite class, with its measured time or the backend's reported stop. The models carry only the expected verdict.
-
-## Where to start
-
-The repository is organized under `subprojects/`:
-
-| Area | Path | Description |
-|------|------|-------------|
-| Language | `subprojects/oxsts.lang/` | Grammar, validator, scoping, type system |
-| Language server | `subprojects/oxsts.lang.ide/` | OXSTS language server |
-| Compiler | `subprojects/compiler/` | Instantiator, inliner, flattener, optimizer |
-| Verifier | `subprojects/verifier/` | Verification cases, verdicts, witnesses |
-| Backends | `subprojects/backends/` | Theta, nuXmv, Spin and Uppaal integrations |
-| Portfolios | `subprojects/portfolios/` | Backend configurations raced or combined per case |
-| Frontends | `subprojects/frontends/` | Gamma and SysML v2 frontends |
-| CLI | `subprojects/semantifyr-cli/`, `subprojects/cli-common/` | The `semantifyr` command-line interface and what the launchers share |
-| Frontend CLIs | `subprojects/frontends/sysml/sysml-cli/`, `subprojects/frontends/gamma/gamma-cli/` | The `semantifyr-sysml` and `semantifyr-gamma` launchers |
-| VS Code extension | `subprojects/semantifyr-vscode/` | Extension packaging and launch configs |
-| Live editor | `subprojects/semantifyr-live/` | The browser-based editor frontend and backend |
-| Website | `subprojects/website/` | This documentation site |
-
-[SysML v2 traces](sysml-trace.md) describes the form of a SysML v2 counterexample written as a SysML v2 model, and [Gamma traces](gamma-trace.md) the form of a Gamma witness written as a Gamma execution trace.
-
-## Load testing the live editor
-
-Before a class uses a live instance, simulate the class against it from a checkout, through npm (Node.js 22.18 or later) or Gradle:
-
-```bash
-npm ci
-npm run load-test -w @ftsrg/semantifyr-live-frontend -- --students 30 --ramp 60
-./gradlew :semantifyr-live-frontend:loadTest -PloadTest.args="--students 30 --ramp 60"
-```
-
-Each student opens a tutorial step model over the language server socket, verifies its cases, validates every witness as the editor's auto-validation does (`--validation-portfolio`, `smart-full` by default), edits the model, verifies again and disconnects once the validations are back. A validation takes a verification permit like a verify, and the report counts the validations and their queue wait apart from the verifications. `--url` selects the instance (staging by default) and `--help` lists the other options. The run stops when `/api/health` fails three times in a row, writes its measurements as JSON to `subprojects/semantifyr-live/frontend/build/load-test/`, and exits non-zero on an unexpected verdict, an error, a witness validation that comes back invalid or errored, or a p95 verification time above `--max-verify-p95` (120 s by default). Staging shares its machine with production: run a class-sized test there once, not in a loop.
-
-The Load test workflow runs it every night at 23:30 UTC from a GitHub runner against staging with 10 students joining over 30 s, fails on an unexpected verdict, an error, an invalid witness, an unreachable instance or a p95 above the default 120 s, and keeps the JSON report as an artifact for 30 days. Dispatching the workflow by hand takes `url`, `students` and `ramp` for a run against production or a larger class.
-
-## Contributing a change
-
-1. Create a branch on your fork.
-2. Make your changes. Run `./gradlew build` to verify.
-3. Ensure all files have [REUSE-compliant](https://reuse.software/) SPDX license headers.
-4. Open a pull request against `main`. Describe what changed and why.
-
-By contributing you agree that your contribution is licensed under the project's [Eclipse Public License v2.0](https://github.com/ftsrg/semantifyr/blob/main/LICENSE).
+The [API documentation](pathname:///api/) is generated from the code.

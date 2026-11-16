@@ -88,7 +88,7 @@ class GammaVerifyCommandTest {
 
     @Test
     suspend fun `an OXSTS model is an input error`(@TempDir directory: Path) {
-        val model = directory.resolve("model.oxsts")
+        val model = directory.resolve("model.semantifyr")
         model.writeText("package model\n")
 
         val result = runGammaCli("verify", model.toString())
@@ -133,5 +133,13 @@ class GammaVerifyCommandTest {
 
         assertThat(result.statusCode).isZero()
         assertThat(result.stdout).startsWith("semantifyr-gamma version ")
+    }
+
+    @Test
+    suspend fun `the launcher can list the portfolios`() {
+        val result = runGammaCli("--help")
+
+        assertThat(result.statusCode).isZero()
+        assertThat(result.stdout).containsPattern("\\n\\s+portfolios\\s+List the portfolios")
     }
 }

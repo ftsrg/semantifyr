@@ -6,19 +6,21 @@
 
 import type React from 'react'
 import { useRef } from 'react'
+import { type VerdictStatus, LanguageMark, VerdictMark } from '@semantifyr/editor-common/marks'
 
-import { parseLiveEditorUrl } from '@semantifyr/editor-common'
+import { languageOfAddressName, parseLiveEditorUrl } from '@semantifyr/editor-common'
 import { initializationStepsOf, presentationOf } from '../../lib/language/presentation'
 import { areCasesKnown, initializationOf } from '../../lib/stores/initialization'
 import { changeSettings } from '../../lib/stores/settings'
 import { useStore } from '../../lib/stores/useStore'
-import { countsOf, STATUS_WORDS, type CaseCounts, type CaseRow, type RowStatus } from '../../lib/workspace/caseRows'
+import { countsOf, type CaseCounts, type CaseRow } from '../../lib/workspace/caseRows'
 import { openModelOxsts } from '../../lib/workspace/libraryTabs'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import type { Live } from '../../lib/workspace/live'
 import { secondsToRetry, stepTimeText } from '../../lib/workspace/shellStatus'
+import { noCases, RUNNING_OR_QUEUED, SERVER_NOT_ANSWERING, TRACE_HINTS, VERDICT_WORDS, VERIFY_ALL_HELD } from '../../texts'
 import { Icon } from '../../ui/icons'
-import { LanguageMark, ValidationMark, VerdictMark } from '../../ui/marks'
+import { ValidationMark } from '../../ui/marks'
 import { documentLabel, useCurrentDocument, useFlavor, useNow } from '../hooks'
 import { useShell } from '../shellContext'
 import { verifyAll, type CountFilter } from '../shellState'
@@ -29,19 +31,19 @@ import { SettingsPopover } from './SettingsPopover'
 
 import './rerun.css'
 
-const COUNT_GROUPS: readonly { group: CountFilter, status: RowStatus, label: string }[] = [
-  { group: 'passed', status: 'passed', label: 'Passed' },
-  { group: 'failed', status: 'failed', label: 'Failed' },
-  { group: 'inconclusive', status: 'inconclusive', label: 'Inconclusive' },
-  { group: 'error', status: 'error', label: 'Error' },
-  { group: 'waiting', status: 'running', label: 'Running or queued' },
+const COUNT_GROUPS: readonly { group: CountFilter, status: VerdictStatus, label: string }[] = [
+  { group: 'passed', status: 'passed', label: VERDICT_WORDS.passed },
+  { group: 'failed', status: 'failed', label: VERDICT_WORDS.failed },
+  { group: 'inconclusive', status: 'inconclusive', label: VERDICT_WORDS.inconclusive },
+  { group: 'error', status: 'error', label: VERDICT_WORDS.error },
+  { group: 'waiting', status: 'running', label: RUNNING_OR_QUEUED },
 ]
 
 const COLUMN_MINIMUM = 360
 const COLUMN_MAXIMUM = 900
 const LIST_MINIMUM = 40
 
-function groupOf(status: RowStatus): CountFilter | null {
+function groupOf(status: VerdictStatus): CountFilter | null {
   switch (status) {
     case 'running':
     case 'queued':
@@ -146,21 +148,22 @@ function ModelOxstsButton({ compact }: { compact: boolean }): React.JSX.Element 
     <button
       type="button"
       className={`button model-oxsts-button ${compact ? 'button-icon' : 'button-small button-quiet'}`}
-      title="Open the OXSTS of the model"
-      aria-label="Open the OXSTS of the model"
+      title="Open the Semantifyr model the model compiles to"
+      aria-label="Open the Semantifyr model the model compiles to"
       onClick={() => {
         openModelOxsts(live, runtime, documentLabel(document, flavor))
       }}
     >
       <LanguageMark languageId="oxsts" />
-      {compact ? null : 'OXSTS'}
+      {compact ? null : 'Semantifyr model'}
     </button>
   )
 }
 
 // the language the address will open, while the server has not answered with its languages
 function addressedLanguage(): string {
-  return parseLiveEditorUrl(window.location).language ?? 'sysml'
+  const name = parseLiveEditorUrl(window.location).language
+  return (name === null ? undefined : languageOfAddressName(name)) ?? 'sysml'
 }
 
 function Initialization(): React.JSX.Element {
@@ -188,7 +191,7 @@ function Initialization(): React.JSX.Element {
   const retrying = secondsToRetry(connection, now)
   const trouble = waiting ? 'The server is not answering.' : connection.refused ? 'The server refused the session: it is at capacity.' : retrying === null ? null : 'The connection was lost.'
   const note = waiting
-    ? 'The server is not answering. The model can be edited and its verification cases are known once it answers.'
+    ? SERVER_NOT_ANSWERING
     : trouble !== null
       ? `${trouble} The editor works; the verification cases are known once a session is up.`
     : failedStep?.reason ?? (failed ? 'The verification cases are listed once a session has found them.' : null)
@@ -220,7 +223,7 @@ function Initialization(): React.JSX.Element {
         ? (
           <div className="initialization-pressed">
             <Icon name="clock" />
-            <span>Verify all is pressed. Every case runs as soon as initialization has finished.</span>
+            <span>{VERIFY_ALL_HELD}</span>
           </div>
         )
         : null}
@@ -286,7 +289,7 @@ function CaseRowView({ row, selected, canValidate }: { row: CaseRow, selected: b
           ? (
             <span className={`rerun-tag status-${row.rerun}`}>
               <VerdictMark status={row.rerun} />
-              {STATUS_WORDS[row.rerun]}
+              {VERDICT_WORDS[row.rerun]}
             </span>
           )
           : null}
@@ -386,19 +389,32 @@ function CaseList({ rows }: { rows: readonly CaseRow[] }): React.JSX.Element {
   )
 }
 
-function emptyHint(rows: readonly CaseRow[], selected: CaseRow | undefined): string {
-  if (selected?.status === 'passed') {
-    return 'Passed, and nothing to show: no state of the model fails the case.'
+function emptyHint(rows: readonly CaseRow[], selected: CaseRow | undefined, languageId: string): string {
+  if (rows.length === 0) {
+    return noCases(languageId)
   }
-  if (selected?.status === 'failed') {
-    return 'No trace came back for this case.'
+  switch (selected?.status) {
+    case 'passed':
+      return TRACE_HINTS.passed
+    case 'failed':
+      return TRACE_HINTS.failed
+    case 'inconclusive':
+      return TRACE_HINTS.inconclusive
+    case 'error':
+      return TRACE_HINTS.error
+    case 'not-run':
+    case 'running':
+    case 'queued':
+      return TRACE_HINTS.notYet
+    case undefined:
+      break
   }
   if (rows.some((row) => {
     return row.status !== 'not-run' && row.status !== 'running' && row.status !== 'queued'
   })) {
-    return 'Select a case to see its trace, where it has one.'
+    return TRACE_HINTS.select
   }
-  return 'Press Verify all. Each case is answered Passed or Failed, and where a run shows why, its trace appears here in the language of the model.'
+  return TRACE_HINTS.start
 }
 
 function TraceArea({ rows, slot }: { rows: readonly CaseRow[], slot: TraceSlot | undefined }): React.JSX.Element {
@@ -415,7 +431,7 @@ function TraceArea({ rows, slot }: { rows: readonly CaseRow[], slot: TraceSlot |
   if (!selected || !caseState || !flavor || !selected.hasTrace) {
     return (
       <section className="trace" aria-label="Trace">
-        <div className="empty-hint">{emptyHint(rows, selected)}</div>
+        <div className="empty-hint">{emptyHint(rows, selected, flavor?.languageId ?? '')}</div>
       </section>
     )
   }

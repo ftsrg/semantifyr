@@ -45,7 +45,7 @@ import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 class UnmappedGammaConstruct(
     val element: EObject,
     val construct: String,
-    val reason: String = "is not mapped to OXSTS yet",
+    val reason: String = "is not mapped to the Semantifyr Language yet",
 ) {
     val location: String
         get() {

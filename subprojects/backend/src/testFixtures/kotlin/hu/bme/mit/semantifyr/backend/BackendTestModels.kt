@@ -128,7 +128,7 @@ class BackendTestModels @Inject constructor(
         className: String,
         outputDirectory: Path,
     ): FlattenedCompilationContext {
-        val context = loader.loadStandaloneModel(Path("build/test-models/semantic/$file.oxsts"))
+        val context = loader.loadStandaloneModel(Path("build/test-models/semantic/$file.semantifyr"))
         val classDeclaration = context.modelResources.single().allContents.asSequence().filterIsInstance<ClassDeclaration>().single {
             it.name == className
         }

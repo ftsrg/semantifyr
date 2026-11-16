@@ -28,7 +28,7 @@ await esbuild.build({
 });
 
 const workspace = mkdtempSync(path.join(os.tmpdir(), 'semantifyr-vscode-'));
-copyFileSync(fileURLToPath(new URL('../../../../oxsts-test-models/smoke/smoke.oxsts', import.meta.url)), path.join(workspace, 'smoke.oxsts'));
+copyFileSync(fileURLToPath(new URL('../../../../oxsts-test-models/smoke/smoke.semantifyr', import.meta.url)), path.join(workspace, 'smoke.semantifyr'));
 
 // keeps the window off a desktop session, and a VS Code terminal would run Electron as plain Node
 delete process.env.DISPLAY;

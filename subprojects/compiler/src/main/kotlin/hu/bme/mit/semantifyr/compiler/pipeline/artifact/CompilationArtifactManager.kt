@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.CompilationRequest
 import hu.bme.mit.semantifyr.compiler.scopes.CompilationScoped
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import org.eclipse.xtext.resource.FileExtensionProvider
 import org.eclipse.xtext.resource.SaveOptions
 import org.eclipse.xtext.serializer.ISerializer
 import java.io.File
@@ -21,7 +22,10 @@ class CompilationArtifactManager @Inject constructor(
     val artifactManager: ArtifactManager,
     val artifactConfig: ArtifactConfig,
     request: CompilationRequest,
+    fileExtensionProvider: FileExtensionProvider,
 ) {
+
+    private val modelExtension = fileExtensionProvider.primaryFileExtension
 
     private val inlinedOxsts = request.inlinedOxsts
 
@@ -35,7 +39,7 @@ class CompilationArtifactManager @Inject constructor(
         artifactManager.withFile(ArtifactKind.CompilationStep) {
             it.mkdirs()
             val id = stepId++.toString().padStart(6, '0')
-            serializeInto(inlinedOxsts, it.resolve("${id}_${pass.name.lowercase()}.oxsts"))
+            serializeInto(inlinedOxsts, it.resolve("${id}_${pass.name.lowercase()}.$modelExtension"))
         }
     }
 

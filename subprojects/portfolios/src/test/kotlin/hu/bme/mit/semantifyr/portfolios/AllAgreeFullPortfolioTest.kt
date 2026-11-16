@@ -104,7 +104,7 @@ class AllAgreeFullPortfolioTest {
         val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
-        assertThat(result.message).contains("no available backends")
+        assertThat(result.message).contains("No backend is installed")
     }
 
     @Test

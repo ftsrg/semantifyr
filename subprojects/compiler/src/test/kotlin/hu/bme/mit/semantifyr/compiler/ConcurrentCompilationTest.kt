@@ -32,7 +32,7 @@ class ConcurrentCompilationTest {
     @TempDir
     lateinit var temporaryDirectory: Path
 
-    private val model = Path("../../oxsts-test-models/tutorial/advanced.oxsts")
+    private val model = Path("../../oxsts-test-models/tutorial/hierarchy.semantifyr")
 
     private val copiesOfEachCase = 4
 
@@ -93,7 +93,7 @@ class ConcurrentCompilationTest {
 
     private fun artifactsUnder(directory: Path): Map<String, String> {
         return directory.walk().filter {
-            it.isRegularFile() && it.toString().endsWith(".oxsts")
+            it.isRegularFile() && it.toString().endsWith(".semantifyr")
         }.associate {
             it.relativeTo(directory).toString() to it.readText()
         }

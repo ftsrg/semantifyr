@@ -12,7 +12,7 @@ import { editorKeysOf } from '../testBrowser'
 import { casesListed, editor, results, statesOf, test, type Ui } from './harness'
 import type { CaseRequest } from './mock/session'
 
-const LEVEL_CROSSING = '/oxsts/level-crossing?library=gamma'
+const LEVEL_CROSSING = '/language/level-crossing?library=gamma'
 const BARRIER = '_BarrierDownWhileTrainInCrossing'
 const TWO_TRAINS = '_TwoTrainsCanBeInTheCrossing'
 
@@ -387,12 +387,12 @@ describe('Verify all', () => {
     const status = page.locator('[data-testid=status-message]')
     await expect.poll(async () => {
       return status.innerText()
-    }).toBe('Initializing the OXSTS language server')
+    }).toBe('Initializing the language server of the Semantifyr Language')
 
     await results(page).row(BARRIER).getByRole('button', { name: `Run ${BARRIER}` }).click()
     await expect.poll(async () => {
       return status.innerText()
-    }).toBe(`Verify ${BARRIER} waits: initializing the OXSTS language server`)
+    }).toBe(`Verify ${BARRIER} waits: initializing the language server of the Semantifyr Language`)
     expect(await rowStates(page)).toEqual(['queued', 'not-run'])
     diagnostics.open()
 
@@ -438,7 +438,7 @@ describe('Verify all', () => {
     }).toEqual(['failed', 'passed'])
     expect(ui.backend.session().commands('oxsts.case.verify').map((argument) => {
       return (argument as { portfolio?: string }).portfolio
-    })).toEqual(['smart-full', 'smart-full'])
+    })).toEqual(['smart', 'smart'])
   })
 })
 

@@ -4,10 +4,13 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { readdirSync, readFileSync } from 'node:fs'
-import { basename } from 'node:path'
+import { existsSync, readFileSync } from 'node:fs'
+import { basename, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { VerificationStatus } from '@semantifyr/editor-common'
+import { addressNameOf, VerificationStatus } from '@semantifyr/editor-common'
+import { fileNameOf, servedExamples, type CaseManifest, type ExampleLanguage, type ServedExample } from '@semantifyr/editor-common/examples'
+
+import { SYSML_FLAVOR_ID, SYSML_OXSTS_FLAVOR_ID } from '../lib/session/sysmlBridge.ts'
 
 export interface DeclaredCase {
   name: string
@@ -15,34 +18,82 @@ export interface DeclaredCase {
 }
 
 export interface LoadTestModel {
+  // the example's address, <language>/<id>
   name: string
+  flavorId: string
   text: string
   cases: DeclaredCase[]
 }
 
-const tutorialDirectory = fileURLToPath(new URL('../../../../../oxsts-test-models/tutorial/', import.meta.url))
+const repository = fileURLToPath(new URL('../../../../../', import.meta.url))
 
-const annotatedClass = /((?:@\w+(?:\([^)]*\))?\s*)+)class\s+(\w+)/g
+// the build writes the compiled OXSTS of the served SysML v2 models here, as sysml-2ls's mapper gives it
+const compiledSysmlDirectory = fileURLToPath(new URL('../../build/load-test-models/sysml/', import.meta.url))
 
-export function declaredCases(text: string): DeclaredCase[] {
-  return [...text.matchAll(annotatedClass)].filter((match) => match[1]?.includes('@VerificationCase')).map((match) => {
-    const annotations = match[1] ?? ''
-    return {
-      name: match[2] ?? '',
-      expected: annotations.includes('@Tag("expect-pass")')
-        ? VerificationStatus.Passed
-        : annotations.includes('@Tag("expect-fail")')
-          ? VerificationStatus.Failed
-          : null,
-    }
+// as live sends a model: SysML v2 as its mapped OXSTS on the flavor live's SysML v2 language sends it on, the others on their own language's flavor
+function flavorIdOf(language: ExampleLanguage): string {
+  return language === SYSML_FLAVOR_ID ? SYSML_OXSTS_FLAVOR_ID : language
+}
+
+// a case of unknown verdict is benchmarked and expects nothing
+const MANIFEST_VERDICTS: Readonly<Record<'Passed' | 'Failed' | 'Unknown', VerificationStatus | null>> = {
+  Passed: VerificationStatus.Passed,
+  Failed: VerificationStatus.Failed,
+  Unknown: null,
+}
+
+export function expectedVerdicts(path: string): ReadonlyMap<string, VerificationStatus | null> {
+  const manifestPath = join(dirname(path), 'manifest.json')
+  if (!existsSync(manifestPath)) {
+    return new Map()
+  }
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8')) as CaseManifest
+  const model = manifest.models.find((candidate) => {
+    return candidate.file === basename(path)
   })
+  return new Map(model?.cases.map((declaredCase) => {
+    return [declaredCase.name, MANIFEST_VERDICTS[declaredCase.verdict]]
+  }))
 }
 
-export function readModel(path: string): LoadTestModel {
-  const text = readFileSync(path, 'utf-8')
-  return { name: basename(path, '.oxsts'), text, cases: declaredCases(text) }
+function textOf(example: ServedExample): string {
+  if (example.language !== 'sysml') {
+    return readFileSync(join(repository, example.file), 'utf-8')
+  }
+  const name = fileNameOf(example)
+  const compiled = join(compiledSysmlDirectory, `${name.slice(0, name.lastIndexOf('.'))}.semantifyr`)
+  if (!existsSync(compiled)) {
+    throw new Error(`${compiled} is missing: run ./gradlew :semantifyr-live-frontend:cloneLoadTestModels first`)
+  }
+  return readFileSync(compiled, 'utf-8')
 }
 
-export function tutorialStepModels(): LoadTestModel[] {
-  return readdirSync(tutorialDirectory).filter((name) => /-step\d+\.oxsts$/.test(name)).sort().map((name) => readModel(tutorialDirectory + name)).filter((model) => model.cases.length > 0)
+export function servedModel(example: ServedExample): LoadTestModel {
+  const expected = expectedVerdicts(join(repository, example.file))
+  return {
+    name: `${addressNameOf(example.language)}/${example.id}`,
+    flavorId: flavorIdOf(example.language),
+    text: textOf(example),
+    cases: example.cases.map((name) => {
+      return { name, expected: expected.get(name) ?? null }
+    }),
+  }
+}
+
+// every served example with a case, or the ones the addresses name
+export function servedModels(addresses?: readonly string[]): LoadTestModel[] {
+  const examples = addresses === undefined
+    ? servedExamples
+    : addresses.map((address) => {
+        const example = servedExamples.find((candidate) => {
+          return `${addressNameOf(candidate.language)}/${candidate.id}` === address
+        })
+        if (example === undefined) {
+          throw new Error(`the registry serves no ${address}`)
+        }
+        return example
+      })
+  return examples.filter((example) => {
+    return example.cases.length > 0
+  }).map(servedModel)
 }

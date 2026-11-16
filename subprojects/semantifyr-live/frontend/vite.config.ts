@@ -5,10 +5,13 @@
  */
 
 import { execSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import type { Plugin, Rollup } from 'vite';
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { examplePages, withHead } from './src/examplePages.ts';
+import { LIVE_URL, PAGE_DESCRIPTION, PRODUCT_NAME, SHORT_NAME } from './src/texts.ts';
 
 function getVersion(): string {
   const properties = readFileSync(new URL('../../../gradle.properties', import.meta.url), 'utf-8');
@@ -25,6 +28,41 @@ function getGitCommit(): string {
 
 const backendProxyTarget = process.env.VITE_BACKEND_PROXY_TARGET ?? 'http://localhost:18080';
 
+// a model without a comment has no description file
+function commentOf(fileName: string): string | null {
+  const file = new URL(`./src/snippets/imported/descriptions/${fileName}.description`, import.meta.url);
+  return existsSync(file) ? readFileSync(file, 'utf-8').trim() : null;
+}
+
+// one image serves staging and production, so the build knows no address of its own and the card is production's
+const CARD = `${LIVE_URL}/social-card.png`;
+
+function liveTexts(): Plugin {
+  return {
+    name: 'live-texts',
+    enforce: 'post',
+    transformIndexHtml: {
+      order: 'pre',
+      handler: (html, context) => {
+        const texts = html.replaceAll('%LIVE_NAME%', PRODUCT_NAME).replaceAll('%LIVE_CARD%', CARD);
+        return context.server === undefined ? texts : withHead(texts, PRODUCT_NAME, PAGE_DESCRIPTION);
+      },
+    },
+    generateBundle(_, bundle) {
+      const index = bundle['index.html'] as Rollup.OutputAsset;
+      const template = String(index.source);
+      index.source = withHead(template, PRODUCT_NAME, PAGE_DESCRIPTION);
+      for (const page of examplePages(template, commentOf)) {
+        this.emitFile({
+          type: 'asset',
+          fileName: page.fileName,
+          source: page.source,
+        });
+      }
+    },
+  };
+}
+
 export default defineConfig({
   // out of node_modules, which Gradle fingerprints as the install's output: a run's results would make the next run stale
   cacheDir: 'build/vite/app',
@@ -36,14 +74,15 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    liveTexts(),
     VitePWA({
       disable: process.env.VITEST === 'true',
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'logo-full-light.svg', 'logo-full-dark.svg'],
       manifest: {
-        name: 'Semantifyr Live',
-        short_name: 'Semantifyr',
-        description: 'Edit and verify Semantifyr models in your browser.',
+        name: PRODUCT_NAME,
+        short_name: SHORT_NAME,
+        description: PAGE_DESCRIPTION,
         lang: 'en',
         start_url: '/',
         scope: '/',
@@ -59,6 +98,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{css,html,ico,svg,png,json,webmanifest,woff,woff2,ttf}'],
+        // an example's page is for a link's preview alone, and offline the precached index.html serves every address
+        globIgnores: ['*/*/index.html'],
         // pages come from the network, so a returning browser starts the deployed build; the precached index.html is only the offline page
         navigateFallback: null,
         directoryIndex: null,

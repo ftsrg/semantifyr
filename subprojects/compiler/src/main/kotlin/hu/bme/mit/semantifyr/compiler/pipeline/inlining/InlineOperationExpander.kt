@@ -19,6 +19,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.parentSequence
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
+import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.ExpressionModalityEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.Modality
@@ -153,7 +154,7 @@ class InlineOperationExpander @Inject constructor(
         ) as TransitionDeclaration
 
         if (actualTransition.isAbstract) {
-            sourceError(transitionDeclaration, "Abstract transition can not be inlined!")
+            sourceError(transitionDeclaration, "Transition '${NamingUtil.getName(actualTransition)}' is abstract and '${containerInstance.domain.name}' does not redefine it")
         }
 
         val arguments = bindArguments(actualTransition, callExpression)

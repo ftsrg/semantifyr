@@ -7,8 +7,9 @@
 import type React from 'react'
 import { Menu } from '@base-ui/react/menu'
 import { liveEditorUrl, parseLiveEditorUrl } from '@semantifyr/editor-common'
+import { LanguageMark } from '@semantifyr/editor-common/marks'
 
-import type { LiveExample, LiveFlavor } from '../../examples'
+import { listedExamples, type LiveExample, type LiveFlavor } from '../../examples'
 import { LANGUAGE_ORDER, presentationOf } from '../../lib/language/presentation'
 import type { LanguageUnit } from '../../lib/language/types'
 import { changeSettings } from '../../lib/stores/settings'
@@ -16,23 +17,14 @@ import { useStore } from '../../lib/stores/useStore'
 import { documentKey, type Live } from '../../lib/workspace/live'
 import { useLive } from '../../lib/workspace/liveContext'
 import type { ColorModePreference } from '../../lib/util/colorMode'
+import { BLANK_MODEL, LIBRARY, libraryButton, libraryOf, SHARED_MODEL, THEMES } from '../../texts'
 import { Icon, type IconName } from '../../ui/icons'
-import { LanguageMark, Logo } from '../../ui/marks'
+import { Logo } from '../../ui/marks'
 import { useAddressedModel, useCurrentDocument, useFlavor } from '../hooks'
-import { AboutDialog, DeveloperDialog } from './Dialogs'
+import { AboutDialog, DeveloperDialog, DocumentationLink } from './Dialogs'
 import { ConnectionIndicator } from './ConnectionIndicator'
 import { OpenButton, SaveSplit } from './keeping'
 import { SharePopover } from './SharePopover'
-
-const FLAVOUR_TEXTS: Readonly<Record<string, { label: string, detail: string }>> = {
-  'oxsts': { label: 'Plain', detail: 'OXSTS on its own.' },
-  'oxsts-with-gamma-library': { label: 'With the Gamma library', detail: 'Gamma\'s semantics as an OXSTS library to build on.' },
-  'oxsts-with-sysmlv2-library': { label: 'With the SysML v2 library', detail: 'SysML v2\'s semantics as an OXSTS library to build on.' },
-}
-
-export function flavourText(flavor: LiveFlavor): { label: string, detail: string } {
-  return FLAVOUR_TEXTS[flavor.id] ?? { label: flavor.displayName, detail: flavor.description }
-}
 
 function orderedUnits(units: readonly LanguageUnit[]): LanguageUnit[] {
   const rank = (unit: LanguageUnit): number => {
@@ -136,17 +128,17 @@ function FlavourMenu({ flavor, flavors }: { flavor: LiveFlavor, flavors: readonl
   const live = useLive()
   return (
     <Menu.Root>
-      <Menu.Trigger className="button button-quiet flavour-button" title={`${presentationOf(flavor.languageId).name} flavour`}>
-        {flavourText(flavor).label}
+      <Menu.Trigger className="button button-quiet flavour-button" title={LIBRARY.heading}>
+        {libraryButton(flavor.id)}
         <Icon name="chevron-down" size="small" />
       </Menu.Trigger>
       <Menu.Portal>
         <Menu.Positioner className="floating" side="bottom" align="start" sideOffset={6}>
           <Menu.Popup className="menu flavour-menu">
             <Menu.Group>
-              <Menu.GroupLabel className="menu-heading">{`${presentationOf(flavor.languageId).name} flavour`}</Menu.GroupLabel>
+              <Menu.GroupLabel className="menu-heading">{LIBRARY.heading}</Menu.GroupLabel>
               {flavors.map((candidate) => {
-                const text = flavourText(candidate)
+                const text = libraryOf(candidate.id)
                 const current = candidate.id === flavor.id
                 return (
                   <Menu.Item
@@ -160,7 +152,7 @@ function FlavourMenu({ flavor, flavors }: { flavor: LiveFlavor, flavors: readonl
                   >
                     <span className={`radio${current ? ' is-checked' : ''}`} />
                     <span className="menu-item-label">{text.label}</span>
-                    <span className="menu-item-detail">{text.detail}</span>
+                    {text.detail === null ? null : <span className="menu-item-detail">{text.detail}</span>}
                   </Menu.Item>
                 )
               })}
@@ -181,11 +173,22 @@ function caseCountOf(live: ReturnType<typeof useLive>, flavor: LiveFlavor, examp
   return state?.discovery === 'discovered' ? state.cases.length : null
 }
 
+// the language the menu's examples are written in
+function LanguageIntro({ languageId }: { languageId: string }): React.JSX.Element {
+  const presentation = presentationOf(languageId)
+  return (
+    <div className="language-intro">
+      <LanguageMark languageId={languageId} />
+      <span className="language-intro-name">{`${presentation.name} examples`}</span>
+      <span className="language-intro-detail">{presentation.detail}</span>
+    </div>
+  )
+}
+
 function WaitingExampleMenu(): React.JSX.Element {
   const live = useLive()
   const model = useAddressedModel(live)
-  const presentation = presentationOf(model.languageId)
-  const triggerLabel = model.example?.label ?? 'Shared model'
+  const triggerLabel = model.example?.label ?? SHARED_MODEL
   return (
     <Menu.Root>
       <Menu.Trigger className="button button-quiet example-button" title={triggerLabel}>
@@ -197,13 +200,11 @@ function WaitingExampleMenu(): React.JSX.Element {
       <Menu.Portal>
         <Menu.Positioner className="floating" side="bottom" align="start" sideOffset={6}>
           <Menu.Popup className="menu examples-menu" data-language={model.languageId}>
-            <div className="language-intro">
-              <LanguageMark languageId={model.languageId} />
-              <span className="language-intro-name">{`${presentation.name} examples`}</span>
-              <span className="language-intro-detail">{presentation.detail}</span>
-            </div>
+            <LanguageIntro languageId={model.languageId} />
             <Menu.Separator className="menu-divider" />
-            {model.examples.map((example) => {
+            {[...listedExamples(model), ...model.examples.filter((example) => {
+              return example.served === null
+            })].map((example) => {
               const current = example.id === model.example?.id
               return (
                 <Menu.Item
@@ -214,9 +215,9 @@ function WaitingExampleMenu(): React.JSX.Element {
                   }}
                 >
                   <span>{current ? <span className="check"><Icon name="check" size="small" /></span> : null}</span>
-                  <span className="menu-item-label">{example.id === 'blank' ? 'Blank model' : example.label}</span>
+                  <span className="menu-item-label">{example.id === 'blank' ? BLANK_MODEL : example.label}</span>
                   <span className="menu-item-meta" />
-                  <span className="menu-item-detail">{example.description}</span>
+                  {example.description === null ? null : <span className="menu-item-detail">{example.description}</span>}
                 </Menu.Item>
               )
             })}
@@ -241,16 +242,13 @@ function ExampleMenu(): React.JSX.Element | null {
   if (!flavor || !document) {
     return null
   }
-  const presentation = presentationOf(flavor.languageId)
-  const examples = flavor.examples.filter((example) => {
-    return example.id !== 'blank'
-  })
+  const examples = listedExamples(flavor)
   const blank = flavor.examples.find((example) => {
     return example.id === 'blank'
   })
   const kept = document.shared ? undefined : live.documents.get().get(documentKey(flavor.id, '', true))
   const currentId = document.shared ? null : document.example.id
-  const triggerLabel = document.file?.name ?? (document.shared ? 'Shared model' : document.example.label)
+  const triggerLabel = document.file?.name ?? (document.shared ? SHARED_MODEL : document.example.label)
   return (
     <Menu.Root>
       <Menu.Trigger className="button button-quiet example-button" title={triggerLabel}>
@@ -262,11 +260,7 @@ function ExampleMenu(): React.JSX.Element | null {
       <Menu.Portal>
         <Menu.Positioner className="floating" side="bottom" align="start" sideOffset={6}>
           <Menu.Popup className="menu examples-menu" data-language={flavor.languageId}>
-            <div className="language-intro">
-              <LanguageMark languageId={flavor.languageId} />
-              <span className="language-intro-name">{`${presentation.name} examples`}</span>
-              <span className="language-intro-detail">{presentation.detail}</span>
-            </div>
+            <LanguageIntro languageId={flavor.languageId} />
             <Menu.Separator className="menu-divider" />
             {kept
               ? (
@@ -280,7 +274,7 @@ function ExampleMenu(): React.JSX.Element | null {
                     <span>
                       <Icon name="file" size="small" />
                     </span>
-                    <span className="menu-item-label">{kept.file?.name ?? 'Shared model'}</span>
+                    <span className="menu-item-label">{kept.file?.name ?? SHARED_MODEL}</span>
                     <span />
                   </Menu.Item>
                   <Menu.Separator className="menu-divider" />
@@ -301,7 +295,7 @@ function ExampleMenu(): React.JSX.Element | null {
                   <span>{current ? <span className="check"><Icon name="check" size="small" /></span> : null}</span>
                   <span className="menu-item-label">{example.label}</span>
                   <span className="menu-item-meta">{count === null ? '' : `${count} ${count === 1 ? 'case' : 'cases'}`}</span>
-                  <span className="menu-item-detail">{example.description}</span>
+                  {example.description === null ? null : <span className="menu-item-detail">{example.description}</span>}
                 </Menu.Item>
               )
             })}
@@ -318,7 +312,7 @@ function ExampleMenu(): React.JSX.Element | null {
                     <span>
                       <Icon name="file" size="small" />
                     </span>
-                    <span className="menu-item-label">Blank model</span>
+                    <span className="menu-item-label">{BLANK_MODEL}</span>
                     <span />
                   </Menu.Item>
                 </>
@@ -332,9 +326,9 @@ function ExampleMenu(): React.JSX.Element | null {
 }
 
 const THEME_CHOICES: readonly { value: ColorModePreference, icon: IconName, label: string }[] = [
-  { value: 'system', icon: 'monitor', label: 'System' },
-  { value: 'light', icon: 'sun', label: 'Light' },
-  { value: 'dark', icon: 'moon', label: 'Dark' },
+  { value: 'system', icon: 'monitor', label: THEMES.system },
+  { value: 'light', icon: 'sun', label: THEMES.light },
+  { value: 'dark', icon: 'moon', label: THEMES.dark },
 ]
 
 function ThemeSwitch(): React.JSX.Element {
@@ -381,6 +375,7 @@ export function Toolbar(): React.JSX.Element {
         <OpenButton />
         <SaveSplit />
         <SharePopover />
+        <DocumentationLink />
         <AboutDialog />
         <DeveloperDialog />
         <span className="separator" />

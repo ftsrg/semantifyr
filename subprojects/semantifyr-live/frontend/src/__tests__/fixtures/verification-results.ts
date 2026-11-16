@@ -20,14 +20,14 @@ export const sampleMetrics: VerificationMetrics = {
 export const sampleTrace: VerificationTrace = {
   callTrace: { initializedStep: { traces: [] }, steps: [] },
   witnessState: { initializedStep: { values: [] }, steps: [] },
-  witnessUri: 'inmemory:///workspace/snippet.witness.oxsts',
+  witnessUri: 'inmemory:///workspace/snippet.witness.semantifyr',
 };
 
 export const passedResult: VerificationCaseResult = {
   status: 'passed',
   message: null,
   backendId: 'theta-cegar',
-  portfolioId: 'smart-full',
+  portfolioId: 'smart',
   metrics: sampleMetrics,
   trace: null,
 };
@@ -36,7 +36,7 @@ export const failedResult: VerificationCaseResult = {
   status: 'failed',
   message: 'property fails',
   backendId: 'theta-cegar',
-  portfolioId: 'smart-full',
+  portfolioId: 'smart',
   metrics: sampleMetrics,
   trace: sampleTrace,
 };

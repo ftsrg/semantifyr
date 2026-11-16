@@ -57,8 +57,8 @@ class SessionSemantifyrExtensionsTest {
         val active = listOf(
             RunningVerification(
                 verificationId = "r-1",
-                location = Location("file:///x.oxsts", Range(Position(0, 0), Position(0, 0))),
-                portfolioId = "smart-full",
+                location = Location("file:///x.semantifyr", Range(Position(0, 0), Position(0, 0))),
+                portfolioId = "smart",
                 kind = VerificationKind.Verify,
                 state = VerificationState.Running,
                 elapsed = Duration.ZERO,

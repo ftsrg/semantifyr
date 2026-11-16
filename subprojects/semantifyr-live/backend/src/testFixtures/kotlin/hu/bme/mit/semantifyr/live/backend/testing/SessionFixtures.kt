@@ -21,7 +21,6 @@ fun emptyGlobalsModule(): Module {
 
 fun testFlavor(
     id: String = "oxsts",
-    fileName: String = "snippet.oxsts",
     language: Language = Language.Oxsts,
     workspaceLayout: WorkspaceLayout = WorkspaceLayout.SingleFile,
     verificationCommand: String = "oxsts.case.verify",
@@ -30,9 +29,8 @@ fun testFlavor(
 ): Flavor {
     return Flavor(
         id = id,
-        displayName = "OXSTS",
-        description = "The OXSTS modelling language, no extra libraries.",
-        fileName = fileName,
+        displayName = "Semantifyr Language",
+        description = "Semantifyr's language for semantics",
         language = language,
         workspaceLayout = workspaceLayout,
         verificationCommand = verificationCommand,

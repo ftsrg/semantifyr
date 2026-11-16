@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.cli.common.execute
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
+import org.eclipse.xtext.resource.FileExtensionProvider
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
@@ -20,11 +21,15 @@ import kotlin.io.path.writeText
 
 val testModels = Path("../../oxsts-test-models")
 val smokeDirectory = testModels.resolve("smoke")
-val smokeModel = smokeDirectory.resolve("smoke.oxsts")
+val smokeModel = smokeDirectory.resolve("smoke.semantifyr")
 const val SMOKE_CASE = "semantifyr::verification::smoke::CounterReachesThree"
 
 private val injector by lazy {
     OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
+}
+
+val oxstsExtensions by lazy {
+    injector.getInstance(FileExtensionProvider::class.java).fileExtensions
 }
 
 suspend fun runCli(
@@ -41,7 +46,7 @@ suspend fun runCli(
 fun writeSameStemModels(directory: Path): Path {
     val models = directory.resolve("models")
     for (name in listOf("first", "second")) {
-        models.resolve(name).createDirectories().resolve("model.oxsts").writeText(
+        models.resolve(name).createDirectories().resolve("model.semantifyr").writeText(
             """
             package $name
 

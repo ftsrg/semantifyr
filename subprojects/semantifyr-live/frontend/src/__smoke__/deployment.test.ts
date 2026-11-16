@@ -17,7 +17,7 @@ if (!url) {
   throw new Error('SEMANTIFYR_LIVE_URL is not set');
 }
 const api = createApi(url);
-const model = readFileSync(new URL('../../../../../oxsts-test-models/smoke/smoke.oxsts', import.meta.url), 'utf-8');
+const model = readFileSync(new URL('../../../../../oxsts-test-models/smoke/smoke.semantifyr', import.meta.url), 'utf-8');
 
 async function connect(flavorId: string) {
   const webSocket = new WebSocket(`${normalizeBaseUrl(api.httpBase).ws}/ws/lsp/${encodeURIComponent(flavorId)}`);
@@ -82,10 +82,10 @@ describe(`live deployment at ${url}`, () => {
   }
 
   it('verifies the smoke model over the language server socket', async () => {
-    await verifySmokeModel('smart-full');
+    await verifySmokeModel('smart');
   });
 
-  // smart-full answers with Theta first, so only a Spin portfolio shows that Spin can compile and run a search
+  // smart answers with Theta first, so only a Spin portfolio shows that Spin can compile and run a search
   it('verifies the smoke model on Spin alone', async () => {
     const results = await verifySmokeModel('spin-safe-dfs');
     for (const result of results) {

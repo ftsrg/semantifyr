@@ -6,8 +6,12 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.artifact
 
+import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.CompilationRequest
+import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import org.assertj.core.api.Assertions.assertThat
+import org.eclipse.xtext.resource.FileExtensionProvider
 import org.eclipse.xtext.serializer.ISerializer
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -22,9 +26,13 @@ import java.io.File
 import java.io.Writer
 import java.nio.file.Path
 
+@InjectWithOxsts
 class CompilationArtifactManagerTest {
     @TempDir
     lateinit var temporaryDirectory: Path
+
+    @Inject
+    lateinit var fileExtensionProvider: FileExtensionProvider
 
     private val serializer: ISerializer = mock()
     private val inlinedOxsts: InlinedOxsts = mock()
@@ -50,7 +58,16 @@ class CompilationArtifactManagerTest {
             }
         }
         val request = CompilationRequest(inlinedOxsts = inlinedOxsts, outputDirectory = temporaryDirectory)
-        return CompilationArtifactManager(serializer, artifactManager, config, request)
+        return CompilationArtifactManager(serializer, artifactManager, config, request, fileExtensionProvider)
+    }
+
+    @Test
+    fun `a step is written in the language's primary extension`() {
+        val manager = managerWith(steps = CompilationStepsConfig.All)
+
+        manager.commitStep(CompilationPass.ConstantFolding)
+
+        assertThat(temporaryDirectory.resolve("CompilationStep.out").toFile().list()).containsExactly("000000_constantfolding.${fileExtensionProvider.primaryFileExtension}")
     }
 
     @Test

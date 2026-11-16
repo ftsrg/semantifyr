@@ -1,0 +1,135 @@
+{
+    "models": [
+        {
+            "file": "one-light.semantifyr",
+            "cases": [
+                { "name": "TrafficLight", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "intersection-step1.semantifyr",
+            "cases": [
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "EastCanTurnGreen", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "intersection-step2.semantifyr",
+            "cases": [
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "EastCanTurnGreen", "verdict": "Passed" },
+                { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Failed" }
+            ]
+        },
+        {
+            "file": "intersection.semantifyr",
+            "cases": [
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "EastCanTurnGreen", "verdict": "Passed" },
+                { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "green-time-step1.semantifyr",
+            "cases": [
+                { "name": "NorthCanTurnYellow", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "green-time-step2.semantifyr",
+            "cases": [
+                { "name": "NorthCanTurnYellow", "verdict": "Passed" },
+                { "name": "NorthGreenForThreeSteps", "verdict": "Failed" }
+            ]
+        },
+        {
+            "file": "green-time.semantifyr",
+            "cases": [
+                { "name": "NorthCanTurnYellow", "verdict": "Passed" },
+                { "name": "NorthGreenForThreeSteps", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "library-step1.semantifyr",
+            "cases": [
+                { "name": "LightCanTurnYellow", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "library-step2.semantifyr",
+            "cases": [
+                { "name": "LightCanTurnYellow", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "library.semantifyr",
+            "cases": [
+                { "name": "LightCanTurnYellow", "verdict": "Passed" },
+                { "name": "PedestriansCanWalk", "verdict": "Passed" },
+                { "name": "WalkOnlyWhileRed", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "hierarchy-step1.semantifyr",
+            "cases": [
+                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NeverGreenInStandby", "verdict": "Failed" }
+            ]
+        },
+        {
+            "file": "hierarchy-step2.semantifyr",
+            "cases": [
+                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NeverGreenInStandby", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "hierarchy-step3.semantifyr",
+            "cases": [
+                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NeverGreenInStandby", "verdict": "Passed" },
+                { "name": "GreenLampOnlyInGreen", "verdict": "Failed" }
+            ]
+        },
+        {
+            "file": "hierarchy-step4.semantifyr",
+            "cases": [
+                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NeverGreenInStandby", "verdict": "Passed" },
+                { "name": "GreenLampOnlyInGreen", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "hierarchy-step5.semantifyr",
+            "cases": [
+                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NeverGreenInStandby", "verdict": "Passed" },
+                { "name": "GreenLampOnlyInGreen", "verdict": "Passed" },
+                { "name": "NoStandbyWithoutPause", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "hierarchy.semantifyr",
+            "cases": [
+                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NeverGreenInStandby", "verdict": "Passed" },
+                { "name": "GreenLampOnlyInGreen", "verdict": "Passed" },
+                { "name": "NoStandbyWithoutPause", "verdict": "Passed" },
+                { "name": "EmergencyStopsTraffic", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "level-crossing.semantifyr",
+            "cases": [
+                { "name": "BarrierDownWhileTrainInCrossing", "verdict": "Failed" },
+                { "name": "TwoTrainsCanBeInTheCrossing", "verdict": "Passed" }
+            ]
+        }
+    ]
+}

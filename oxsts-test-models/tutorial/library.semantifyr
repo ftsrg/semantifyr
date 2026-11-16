@@ -1,0 +1,158 @@
+/**
+ * A traffic light and a pedestrian light at a crossing, both built on one small statechart library.
+ * The library says once how a statechart steps, and each light only lists its states and transitions.
+ */
+
+package example::trafficlight::library
+
+class State {
+    container parent: Statechart opposite states
+
+    prop isActive(): bool {
+        return parent.activeState == self
+    }
+
+    tran activate() {
+        parent.activeState := self
+    }
+}
+
+class Transition {
+    refers from: State
+    refers to: State
+
+    prop isEnabled(): bool {
+        return from.isActive()
+    }
+
+    @Trace
+    redefine tran {
+        assume(isEnabled())
+        inline to.activate()
+    }
+}
+
+class Statechart {
+    contains states: State[0..*] opposite parent
+    contains transitions: Transition[0..*]
+
+    var activeState: states[0..1] := nothing
+
+    redefine tran {
+        inline for choice (transition in transitions) {
+            inline transition.main()
+        }
+    }
+}
+
+class TrafficLight : Statechart {
+    contains red: State subsets states
+    contains yellow: State subsets states
+    contains green: State subsets states
+
+    contains redToGreen: Transition subsets transitions {
+        redefine refers from: State[1] = red
+        redefine refers to: State[1] = green
+    }
+    contains greenToYellow: Transition subsets transitions {
+        redefine refers from: State[1] = green
+        redefine refers to: State[1] = yellow
+    }
+    contains yellowToRed: Transition subsets transitions {
+        redefine refers from: State[1] = yellow
+        redefine refers to: State[1] = red
+    }
+
+    redefine init {
+        inline red.activate()
+    }
+}
+
+class PedestrianLight : Statechart {
+    contains stop: State subsets states
+    contains walk: State subsets states
+
+    contains stopToWalk: Transition subsets transitions {
+        redefine refers from: State[1] = stop
+        redefine refers to: State[1] = walk
+    }
+    contains walkToStop: Transition subsets transitions {
+        redefine refers from: State[1] = walk
+        redefine refers to: State[1] = stop
+    }
+
+    redefine init {
+        inline stop.activate()
+    }
+}
+
+class Crossing {
+    contains light: TrafficLight
+    contains pedestrians: PedestrianLight
+
+    redefine init {
+        inline light.init()
+        inline pedestrians.init()
+    }
+
+    redefine tran {
+        choice {
+            assume(pedestrians.stop.isActive())
+            inline light.main()
+        } or {
+            assume(light.red.isActive())
+            inline pedestrians.main()
+        }
+    }
+}
+
+@VerificationCase
+class LightCanTurnYellow {
+    contains light: TrafficLight
+
+    redefine init {
+        inline light.init()
+    }
+
+    redefine tran {
+        inline light.main()
+    }
+
+    prop {
+        return EF light.yellow.isActive()
+    }
+}
+
+@VerificationCase
+class PedestriansCanWalk {
+    contains crossing: Crossing
+
+    redefine init {
+        inline crossing.init()
+    }
+
+    redefine tran {
+        inline crossing.main()
+    }
+
+    prop {
+        return EF crossing.pedestrians.walk.isActive()
+    }
+}
+
+@VerificationCase
+class WalkOnlyWhileRed {
+    contains crossing: Crossing
+
+    redefine init {
+        inline crossing.init()
+    }
+
+    redefine tran {
+        inline crossing.main()
+    }
+
+    prop {
+        return AG (!crossing.pedestrians.walk.isActive() || crossing.light.red.isActive())
+    }
+}

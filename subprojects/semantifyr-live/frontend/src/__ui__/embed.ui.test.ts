@@ -31,7 +31,7 @@ async function heightsOf(page: Page): Promise<number[]> {
 
 describe('the verifying embed', () => {
   test('verifies its cases, opens the trace of a case below it and tells the page the height it grows to', async ({ ui }) => {
-    const page = await ui.host(framing('/oxsts/level-crossing?library=gamma&view=embed', 'width: 760px; height: 600px'))
+    const page = await ui.host(framing('/language/level-crossing?library=gamma&view=embed', 'width: 760px; height: 600px'))
     const frame = page.frameLocator('iframe')
     const cases = frame.locator('.embed-case')
     await expect.poll(async () => {
@@ -66,7 +66,7 @@ describe('the verifying embed', () => {
   })
 
   test('as edit-only is the editor alone, on a session of its own kind', async ({ ui }) => {
-    const page = await ui.host(framing('/oxsts/basics?view=edit-only', 'width: 760px; height: 600px'))
+    const page = await ui.host(framing('/language/intersection?view=edit-only', 'width: 760px; height: 600px'))
     const frame = page.frameLocator('iframe')
 
     await expect.poll(async () => {
@@ -77,7 +77,7 @@ describe('the verifying embed', () => {
   })
 
   test('with frame=fixed reports no height, and its divider moves the results', async ({ ui }) => {
-    const page = await ui.host(framing('/oxsts/level-crossing?library=gamma&view=embed&frame=fixed', 'width: 1100px; height: 500px'))
+    const page = await ui.host(framing('/language/level-crossing?library=gamma&view=embed&frame=fixed', 'width: 1100px; height: 500px'))
     const frame = page.frameLocator('iframe')
     await expect.poll(async () => {
       return frame.locator('.embed-case').count()
@@ -100,7 +100,7 @@ describe('the verifying embed', () => {
 
   for (const theme of ['dark', 'light'] as const) {
     test(`shows the ${theme} theme its address names, whatever the system prefers, and stores none`, async ({ ui }) => {
-      const page = await ui.host(framing(`/oxsts/basics?view=embed&theme=${theme}`, 'width: 760px; height: 600px'))
+      const page = await ui.host(framing(`/language/intersection?view=embed&theme=${theme}`, 'width: 760px; height: 600px'))
       await page.emulateMedia({ colorScheme: theme === 'dark' ? 'light' : 'dark' })
       const frame = page.frames().find((candidate) => {
         return candidate.url().includes('view=embed')

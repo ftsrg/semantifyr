@@ -83,17 +83,20 @@ class GammaTraceLanguageServerTest {
     @Test
     void aTraceNextToItsModelLinksAgainstTheModelInTheIndex() throws Exception {
         var model = copy(MODELS.resolve("examples/Crossroads.gamma"), "Crossroads.gamma");
+        var cases = copy(MODELS.resolve("examples/CrossroadsFurtherCases.gamma"), "CrossroadsFurtherCases.gamma");
         var trace = copy(MODELS.resolve("etc/crossroads-ACanBeGreen.trace.get"), "Crossroads-ACanBeGreen.get");
 
         initialize();
 
         assertThat(errors(client.awaitDiagnostics(model))).isEmpty();
+        assertThat(errors(client.awaitDiagnostics(cases))).isEmpty();
         assertThat(errors(client.awaitDiagnostics(trace))).isEmpty();
     }
 
     @Test
     void anOpenedTraceLinksAgainstTheModelInTheIndex() throws Exception {
         copy(MODELS.resolve("examples/Crossroads.gamma"), "Crossroads.gamma");
+        copy(MODELS.resolve("examples/CrossroadsFurtherCases.gamma"), "CrossroadsFurtherCases.gamma");
         initialize();
         var trace = workspace.resolve("trace.get");
         var text = Files.readString(MODELS.resolve("etc/crossroads-ACanBeGreen.trace.get"));
@@ -105,7 +108,8 @@ class GammaTraceLanguageServerTest {
 
     @Test
     void aTraceFollowsTheCaseItTracesWhenTheModelChanges() throws Exception {
-        var model = copy(MODELS.resolve("examples/Crossroads.gamma"), "Crossroads.gamma");
+        copy(MODELS.resolve("examples/Crossroads.gamma"), "Crossroads.gamma");
+        var model = copy(MODELS.resolve("examples/CrossroadsFurtherCases.gamma"), "CrossroadsFurtherCases.gamma");
         var trace = copy(MODELS.resolve("etc/crossroads-ACanBeGreen.trace.get"), "Crossroads-ACanBeGreen.get");
         initialize();
         client.awaitDiagnostics(model);
@@ -144,7 +148,7 @@ class GammaTraceLanguageServerTest {
         var cases = (List<?>) executeCommand("gamma.case.discover", new JsonPrimitive(uri(model)));
         var location = cases.stream()
                 .map(VerificationCaseSpecification.class::cast)
-                .filter(it -> it.label().equals("ACanBeGreen"))
+                .filter(it -> it.label().equals("RoadBCanGetGreen"))
                 .findFirst()
                 .orElseThrow()
                 .location();
@@ -155,7 +159,7 @@ class GammaTraceLanguageServerTest {
 
         assertThat(result.status()).isEqualTo(WitnessValidationStatus.ERRORED);
         assertThat(result.verdict()).isNull();
-        assertThat(result.message()).isEqualTo("Case Crossroads.ACanBeGreen has no witness yet, verify it first");
+        assertThat(result.message()).isEqualTo("Case Crossroads.RoadBCanGetGreen has no witness yet, verify it first");
         assertThat(result.portfolioId())
                 .isEqualTo(Portfolios.INSTANCE.getDefault().getId());
     }

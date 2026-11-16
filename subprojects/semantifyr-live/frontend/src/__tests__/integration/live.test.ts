@@ -23,7 +23,7 @@ vi.mock('../../lib/session/monaco', () => {
   return {}
 })
 
-const MODEL_URI = 'file:///workspace/snippet.oxsts'
+const MODEL_URI = 'file:///workspace/snippet.semantifyr'
 
 function caseAt(id: string, line: number): VerificationCaseSpecification {
   return {
@@ -85,7 +85,7 @@ function deferred<T>(): { promise: Promise<T>, resolve: (value: T) => void } {
 }
 
 function reported(caseInfo: VerificationCaseSpecification, state: ActiveVerificationInfo['state']): ActiveVerificationInfo {
-  return { verificationId: `verify-${caseInfo.id}`, portfolioId: 'smart-full', kind: 'Verify', state, elapsed: 'PT0S', location: caseInfo.location }
+  return { verificationId: `verify-${caseInfo.id}`, portfolioId: 'smart', kind: 'Verify', state, elapsed: 'PT0S', location: caseInfo.location }
 }
 
 function verificationOf(test: TestLive): VerificationState {
@@ -127,7 +127,7 @@ describe('Live', () => {
   it('keeps the edits and the verdicts of an example across a switch to another example and back, on one runtime', async () => {
     const routed = routedClient([caseAt('a', 1)])
     const [first, second] = testFlavors()[0].examples
-    open = await openConnected(routed, `/oxsts/${first!.id}`)
+    open = await openConnected(routed, `/language/${first!.id}`)
     await runAll(open)
     open.models.edit(MODEL_URI, 'edited model')
 
@@ -144,7 +144,7 @@ describe('Live', () => {
     const routed = routedClient([caseAt('a', 1)])
     const [plain, withGamma] = testFlavors()
     const first = plain.examples[0]!
-    open = await openConnected(routed, `/oxsts/${first.id}`)
+    open = await openConnected(routed, `/language/${first.id}`)
     open.models.edit(MODEL_URI, 'edited model')
 
     open.live.selectModel(withGamma!.id, withGamma!.examples[0]!.id)
@@ -264,7 +264,7 @@ describe('Live', () => {
             refusals--
             throw new Error('the server is not answering')
           }
-          return { portfolios: [{ id: 'smart-full', displayName: 'Smart full', description: '', available: true }], defaultPortfolio: 'smart-full' }
+          return { portfolios: [{ id: 'smart', displayName: 'Smart full', description: '', available: true }], defaultPortfolio: 'smart' }
         },
       },
     })
@@ -279,7 +279,7 @@ describe('Live', () => {
     await vi.waitFor(() => {
       expect(verificationOf(open!).phase).toBe('done')
     })
-    expect(routed.portfolios).toEqual(['smart-full'])
+    expect(routed.portfolios).toEqual(['smart'])
   })
 
   it('opens the address the visitor moved to while the server did not answer', async () => {
@@ -295,12 +295,12 @@ describe('Live', () => {
           return [...servedFlavors]
         },
         fetchPortfolios: async () => {
-          return { portfolios: [], defaultPortfolio: 'smart-full' }
+          return { portfolios: [], defaultPortfolio: 'smart' }
         },
       },
     })
     const gamma = testFlavors()[3]!
-    open.live.start('/oxsts')
+    open.live.start('/language')
     await vi.waitFor(() => {
       expect(open!.live.catalog.get().status).toBe('waiting')
     })
@@ -373,7 +373,7 @@ describe('Live', () => {
     open.live.settings.update((settings) => {
       return { ...settings, verificationPortfolioId: 'retired' }
     })
-    expect(open.live.verificationPortfolioId()).toBe('smart-full')
+    expect(open.live.verificationPortfolioId()).toBe('smart')
   })
 
   it('opens the default language on a bare address, and says which name of an address it did not find', async () => {
@@ -395,7 +395,7 @@ describe('Live', () => {
     await open.live.dispose()
 
     open = createTestLive(routed.client)
-    open.live.start('/oxsts/missing')
+    open.live.start('/language/missing')
     await vi.waitFor(() => {
       expect(open!.live.address.get()).toMatchObject({ kind: 'example', requested: 'missing', flavorId: 'oxsts' })
     })
@@ -653,7 +653,7 @@ describe('Live', () => {
   it('closes the read-only tabs with the language they belong to and keeps them on an example switch', async () => {
     const routed = routedClient([])
     open = await openConnected(routed)
-    open.live.tabs.open({ id: 'library', label: 'semantifyr.oxsts', uri: 'live-library:/workspace/.semantifyr/builtin/semantifyr.oxsts', languageId: 'oxsts', banner: '' })
+    open.live.tabs.open({ id: 'library', label: 'standard.semantifyr', uri: 'live-library:/workspace/.semantifyr/builtin/standard.semantifyr', languageId: 'oxsts', banner: '' })
 
     open.live.selectModel('oxsts', testFlavors()[0].examples[1]!.id)
     expect(open.live.tabs.state.get().tabs).toHaveLength(1)

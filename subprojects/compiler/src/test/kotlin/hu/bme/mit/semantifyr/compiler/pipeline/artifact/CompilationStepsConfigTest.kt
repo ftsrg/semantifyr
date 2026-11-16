@@ -33,7 +33,7 @@ class CompilationStepsConfigTest {
         assertThat(config.shouldEmit(CompilationPass.ConstantFolding)).isTrue
         assertThat(config.shouldEmit(CompilationPass.OperationFlattening)).isTrue
         assertThat(config.shouldEmit(CompilationPass.DeadCodeRemoval)).isFalse
-        assertThat(config.shouldEmit(CompilationPass.Flattening)).isFalse
+        assertThat(config.shouldEmit(CompilationPass.VariablePullDown)).isFalse
     }
 
     @Test

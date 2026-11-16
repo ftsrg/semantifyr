@@ -58,7 +58,7 @@ class SysMLVerifyCommandTest {
 
         val result = runSysMLCli(
             "verify", "-q", "--portfolio", portfolio.id, "-d", directory.resolve("artifacts").toString(),
-            "-l", semanticModels.resolve("arithmetic.oxsts").toString(),
+            "-l", semanticModels.resolve("arithmetic.semantifyr").toString(),
             "--case-name", "semantifyr::sysml::model::LampLitReachable",
             model.toString(),
             portfolios = listOf(portfolio),
@@ -82,10 +82,10 @@ class SysMLVerifyCommandTest {
 
     @Test
     suspend fun `an OXSTS model is an input error`() {
-        val result = runSysMLCli("verify", semanticModels.resolve("arithmetic.oxsts").toString())
+        val result = runSysMLCli("verify", semanticModels.resolve("arithmetic.semantifyr").toString())
 
         assertThat(result.statusCode).isEqualTo(3)
-        assertThat(result.stderr).contains("arithmetic.oxsts").contains(".sysml")
+        assertThat(result.stderr).contains("arithmetic.semantifyr").contains(".sysml")
     }
 
     @Test
@@ -105,10 +105,28 @@ class SysMLVerifyCommandTest {
     }
 
     @Test
+    suspend fun `a library of another kind is an input error naming the extensions of OXSTS`() {
+        val result = runSysMLCli("verify", "-l", tutorialModel.toString(), tutorialModel.toString())
+
+        assertThat(result.statusCode).isEqualTo(3)
+        for (extension in oxstsExtensions) {
+            assertThat(result.stderr).contains(".$extension")
+        }
+    }
+
+    @Test
     suspend fun `the root command names its launcher`() {
         val result = runSysMLCli("--version")
 
         assertThat(result.statusCode).isZero()
         assertThat(result.stdout).startsWith("semantifyr-sysml version ")
+    }
+
+    @Test
+    suspend fun `the launcher can list the portfolios`() {
+        val result = runSysMLCli("--help")
+
+        assertThat(result.statusCode).isZero()
+        assertThat(result.stdout).containsPattern("\\n\\s+portfolios\\s+List the portfolios")
     }
 }

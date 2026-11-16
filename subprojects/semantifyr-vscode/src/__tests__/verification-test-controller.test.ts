@@ -30,7 +30,7 @@ let controller: TestController;
 let witnesses: WitnessView;
 
 async function setUp(validation: Partial<VerificationTestControllerConfig> = {}) {
-    const client = new LanguageClient('oxstsLSP', 'OXSTS Language Server', undefined, {});
+    const client = new LanguageClient('oxstsLSP', 'Semantifyr Language Server', undefined, {});
     client.server.onRequest((method, parameters, token) => {
         requests.push({ method, parameters });
         const command = (parameters as ExecuteCommandParams).command;
@@ -48,7 +48,7 @@ async function setUp(validation: Partial<VerificationTestControllerConfig> = {})
     witnesses.register(context as never);
     const testController = new VerificationTestController(client as never, {
         languageId: 'oxsts',
-        fileGlob: '**/*.oxsts',
+        fileGlob: '**/*.semantifyr',
         controllerId: 'oxsts.verification',
         controllerLabel: 'Semantifyr Verification Cases',
         discoverCommand: 'oxsts.case.discover',
@@ -97,7 +97,7 @@ describe('discovery', () => {
 
         expect(requests).toEqual([{ method: 'workspace/executeCommand', parameters: { command: 'oxsts.case.discover', arguments: [modelUri] } }]);
         const fileItem = controller.items.get(modelUri)!;
-        expect(fileItem.label).toBe('lamp.oxsts');
+        expect(fileItem.label).toBe('lamp.semantifyr');
         expect([...fileItem.children].map(([id]) => id)).toEqual(['lamp::Safe', 'lamp::Reachable']);
         expect(caseItem('lamp::Reachable').range).toEqual({ start: { line: 9, character: 0 }, end: { line: 12, character: 1 } });
     });
@@ -118,7 +118,7 @@ describe('discovery', () => {
         await setUp();
 
         cases = [safeCase];
-        state.watchers.find((watcher) => watcher.glob === '**/*.oxsts')!.changed.fire(Uri.parse(modelUri));
+        state.watchers.find((watcher) => watcher.glob === '**/*.semantifyr')!.changed.fire(Uri.parse(modelUri));
         await expect.poll(() => controller.items.get(modelUri)?.children.size).toBe(1);
     });
 });
@@ -179,7 +179,7 @@ describe('rediscovery on edits', () => {
 });
 
 describe('generated artifacts', () => {
-    const artifactUri = 'file:///workspace/.artifacts/lamp.Safe/pipeline/flattened.oxsts';
+    const artifactUri = 'file:///workspace/.artifacts/lamp.Safe/pipeline/flattened.semantifyr';
 
     it('are not discovered in the workspace', async () => {
         state.files = [Uri.parse(modelUri), Uri.parse(artifactUri)];
@@ -193,7 +193,7 @@ describe('generated artifacts', () => {
     it('are not discovered when they are written, opened or edited', async () => {
         await setUp();
 
-        const watcher = state.watchers.find((it) => it.glob === '**/*.oxsts')!;
+        const watcher = state.watchers.find((it) => it.glob === '**/*.semantifyr')!;
         watcher.created.fire(Uri.parse(artifactUri));
         watcher.changed.fire(Uri.parse(artifactUri));
         state.documentOpened.fire(openDocument(Uri.parse(artifactUri)));
@@ -321,7 +321,7 @@ describe('verification', () => {
         verify = () => result('passed', counterexample);
         await run([caseItem('lamp::Reachable')]);
         await showWitness(caseItem('lamp::Reachable'));
-        expect((window.showTextDocument.mock.calls[0]![0] as Uri).toString()).toBe('file:///tmp/semantifyr/lamp.Safe/witness.oxsts');
+        expect((window.showTextDocument.mock.calls[0]![0] as Uri).toString()).toBe('file:///tmp/semantifyr/lamp.Safe/witness.semantifyr');
 
         verify = () => result('passed');
         await run([caseItem('lamp::Reachable')]);
@@ -332,7 +332,7 @@ describe('verification', () => {
 
 describe('witness validation', () => {
     const byCase = { validateWitnessCommand: 'gamma.witness.validate', validateWitnessByCase: true };
-    const valid: WitnessValidationResult = { status: 'valid', verdict: 'failed', message: null, backendId: 'theta-bmc', portfolioId: 'smart-full', metrics: null };
+    const valid: WitnessValidationResult = { status: 'valid', verdict: 'failed', message: null, backendId: 'theta-bmc', portfolioId: 'smart', metrics: null };
 
     function validateWitnessOf(item: TestItem) {
         return state.commands.get('semantifyr.witness.validate')!(item);
@@ -370,7 +370,7 @@ describe('witness validation', () => {
             method: 'workspace/executeCommand',
             parameters: { command: 'gamma.witness.validate', arguments: [{ uri: modelUri, range: safeCase.location.range }] },
         });
-        expect(window.showInformationMessage).toHaveBeenLastCalledWith('Safe: Witness valid (backend theta-bmc, portfolio smart-full)');
+        expect(window.showInformationMessage).toHaveBeenLastCalledWith('Safe: Witness valid (backend theta-bmc, portfolio smart)');
     });
 
     it('sends the witness location for a validation by witness', async () => {
@@ -417,7 +417,7 @@ describe('witness validation', () => {
         expect(validations()).toHaveLength(1);
         const event = testRun.events.at(-1) as { kind: string; message: { message: string } };
         expect(event.kind).toBe('failed');
-        expect(event.message.message).toBe('property violated\nValidation: Witness valid (backend theta-bmc, portfolio smart-full)');
+        expect(event.message.message).toBe('property violated\nValidation: Witness valid (backend theta-bmc, portfolio smart)');
     });
 
     it('validates the witness of an OXSTS case at the witness model, which may lie outside the workspace', async () => {
@@ -430,20 +430,20 @@ describe('witness validation', () => {
 
         expect(validations().map((request) => request.parameters)).toEqual([{
             command: 'oxsts.case.validateWitness',
-            arguments: [{ uri: 'file:/tmp/semantifyr/lamp.Safe/witness.oxsts', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } }],
+            arguments: [{ uri: 'file:/tmp/semantifyr/lamp.Safe/witness.semantifyr', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } }],
         }]);
     });
 
     it('validates on the validation portfolio when one is set', async () => {
         state.configuration.set('semantifyr.verification.autoValidate', true);
-        state.configuration.set('semantifyr.verification.validationPortfolio', 'all-agree-full');
+        state.configuration.set('semantifyr.verification.validationPortfolio', 'all-agree');
         await setUp(byCase);
         verify = () => result('failed', counterexample);
         validate = () => valid;
 
         await run([caseItem('lamp::Safe')]);
 
-        expect((validations()[0]!.parameters as ExecuteCommandParams).arguments).toEqual([{ uri: modelUri, range: safeCase.location.range, portfolio: 'all-agree-full' }]);
+        expect((validations()[0]!.parameters as ExecuteCommandParams).arguments).toEqual([{ uri: modelUri, range: safeCase.location.range, portfolio: 'all-agree' }]);
     });
 
     it('adds the validation of a passed verdict with a witness to the output at the case', async () => {
@@ -455,7 +455,7 @@ describe('witness validation', () => {
         const testRun = await run([caseItem('lamp::Reachable')]);
 
         expect(testRun.outcome(caseItem('lamp::Reachable'))).toBe('passed');
-        expect(testRun.output.map((output) => output.text)).toEqual(['Validation: Witness invalid (backend theta-bmc, portfolio smart-full) - spurious\r\n']);
+        expect(testRun.output.map((output) => output.text)).toEqual(['Validation: Witness invalid (backend theta-bmc, portfolio smart) - spurious\r\n']);
     });
 
     it('validates nothing when auto-validation is off or the result has no witness', async () => {

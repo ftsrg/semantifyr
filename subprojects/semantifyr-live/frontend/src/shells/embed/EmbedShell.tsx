@@ -7,6 +7,7 @@
 import type React from 'react'
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { parseLiveEditorUrl } from '@semantifyr/editor-common'
+import { VerdictMark } from '@semantifyr/editor-common/marks'
 
 import type { LiveFlavor } from '../../examples'
 import { presentationOf } from '../../lib/language/presentation'
@@ -17,9 +18,10 @@ import type { VerificationCaseState } from '../../lib/verification/engine'
 import { fixedFrame } from '../../lib/workspace/address'
 import { caseRowOf, type CaseRow } from '../../lib/workspace/caseRows'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
+import { noCases, PRODUCT_NAME, SERVER_NOT_ANSWERING } from '../../texts'
 import { Icon } from '../../ui/icons'
-import { ValidationMark, VerdictMark } from '../../ui/marks'
-import { addressProblemText } from '../desktop/Orientation'
+import { ValidationMark } from '../../ui/marks'
+import { addressProblemText } from '../desktop/AddressError'
 import { shareLink } from '../desktop/SharePopover'
 import { useFlavor } from '../hooks'
 import { BackToModel, ModelEditor } from '../modelEditor'
@@ -30,7 +32,7 @@ import { StatusContent, useStatusLine } from '../statusLine'
 import { EditControl } from '../touch'
 import type { TraceSlot } from '../traceSlot'
 import { AddressModel } from './AddressModel'
-import { reportHeight } from './height'
+import { reportHeight, reportShown } from './height'
 
 import './embed.css'
 
@@ -78,7 +80,7 @@ function OpenInLive(): React.JSX.Element {
     <button
       type="button"
       className="button button-quiet open-live"
-      title="Opens Semantifyr Live with this model and its results in a new tab"
+      title={`Opens ${PRODUCT_NAME} with this model and its results in a new tab`}
       onClick={() => {
         // opened within the click, so no popup blocker stops it, and pointed at the link once it is built
         const opened = window.open('', '_blank')
@@ -226,12 +228,12 @@ function Cases({ slot, inlineTrace }: { slot: TraceSlot | undefined, inlineTrace
   const selection = useStore(live.selection)
   if (!listed || !flavor) {
     const text = catalog === 'waiting'
-      ? 'The server is not answering. The model can be edited and its verification cases are listed once it answers.'
+      ? SERVER_NOT_ANSWERING
       : `The verification cases are listed once ${flavor ? `the ${presentationOf(flavor.languageId).name}` : 'the'} language server has found them.`
     return <div className="embed-initializing">{text}</div>
   }
   if (verification.cases.length === 0) {
-    return <div className="embed-initializing">The model has no verification cases.</div>
+    return <div className="embed-initializing">{noCases(flavor.languageId)}</div>
   }
   return (
     <>
@@ -381,7 +383,8 @@ export default function EmbedShell({ colorMode, trace }: Props): React.JSX.Eleme
     }
   }, [])
   const editOnly = view === 'edit-only'
-  const fitted = editOnly && !fixed
+  const openAt = fixed ? null : address.lines
+  const fitted = (editOnly || openAt !== null) && !fixed
   return (
     <div
       ref={root}
@@ -393,7 +396,7 @@ export default function EmbedShell({ colorMode, trace }: Props): React.JSX.Eleme
       <AddressError />
       <BackToModel />
       <div className="embed-editor" style={fitted && contentHeight !== null ? { height: contentHeight } : undefined}>
-        {languageId === undefined ? <AddressModel /> : <ModelEditor colorMode={colorMode} verdictMarks={!editOnly} {...(fitted ? { onContentHeight: fit } : {})} />}
+        {languageId === undefined ? <AddressModel /> : <ModelEditor colorMode={colorMode} verdictMarks={!editOnly} tabLeaves onShown={reportShown} {...(fitted ? { onContentHeight: fit } : {})} {...(openAt ? { openAt } : {})} />}
         <EditControl className="embed-edit-control" />
       </div>
       {editOnly ? null : <Strip slot={trace} fixed={fixed} />}

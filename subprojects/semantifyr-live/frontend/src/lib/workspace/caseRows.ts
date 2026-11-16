@@ -4,17 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import type { VerdictStatus } from '@semantifyr/editor-common/marks'
+import { verdictOfStatus } from '@semantifyr/editor-common/terms'
+
+import { CASE_MESSAGES, VERDICT_WORDS } from '../../texts'
 import { isoDurationToMs } from '../util/duration'
 import type { VerificationCaseState } from '../verification/engine'
-
-export type RowStatus =
-  | 'passed'
-  | 'failed'
-  | 'inconclusive'
-  | 'error'
-  | 'not-run'
-  | 'running'
-  | 'queued'
 
 export type ValidationMark =
   | 'validation-queued'
@@ -25,7 +20,7 @@ export type ValidationMark =
 export interface CaseRow {
   id: string
   name: string
-  status: RowStatus
+  status: VerdictStatus
   word: string
   message: string | null
   time: string | null
@@ -52,16 +47,6 @@ export interface CaseCounts {
   total: number
 }
 
-export const STATUS_WORDS: Readonly<Record<RowStatus, string>> = {
-  'passed': 'Passed',
-  'failed': 'Failed',
-  'inconclusive': 'Inconclusive',
-  'error': 'Error',
-  'not-run': 'Not run',
-  'running': 'Running',
-  'queued': 'Queued',
-}
-
 const CANCELLED_MESSAGE = 'Verification cancelled'
 
 // a wait under a second is not worth saying
@@ -75,22 +60,12 @@ export function formatSeconds(milliseconds: number): string {
 }
 
 // a case sent to the server runs only once the server says so
-function ownStatusOf(caseState: VerificationCaseState): RowStatus {
+function ownStatusOf(caseState: VerificationCaseState): VerdictStatus {
   return caseState.status === 'running' && caseState.serverState !== 'Running' ? 'queued' : statusOf(caseState.status)
 }
 
-function statusOf(status: VerificationCaseState['status']): RowStatus {
+function statusOf(status: VerificationCaseState['status']): VerdictStatus {
   switch (status) {
-    case 'passed':
-      return 'passed'
-    case 'failed':
-      return 'failed'
-    case 'inconclusive':
-    case 'timeout':
-    case 'not_supported':
-      return 'inconclusive'
-    case 'errored':
-      return 'error'
     case 'running':
       return 'running'
     case 'queued':
@@ -98,22 +73,25 @@ function statusOf(status: VerificationCaseState['status']): RowStatus {
     case 'stale':
     case 'cancelled':
       return 'not-run'
+    default:
+      return verdictOfStatus(status)
   }
 }
 
 function messageOf(caseState: VerificationCaseState, status: VerificationCaseState['status']): string | null {
   switch (status) {
     case 'stale':
-      return caseState.message === CANCELLED_MESSAGE ? 'cancelled' : null
+      return caseState.message === CANCELLED_MESSAGE ? CASE_MESSAGES.cancelled : null
     case 'cancelled':
-      return 'cancelled'
+      return CASE_MESSAGES.cancelled
     case 'timeout':
-      return caseState.message ?? 'timed out'
+      return caseState.message ?? CASE_MESSAGES.timeout
     case 'not_supported':
-      return caseState.message ?? 'not supported'
+      return caseState.message ?? CASE_MESSAGES.notSupported
     case 'inconclusive':
+      return caseState.message ?? CASE_MESSAGES.inconclusive
     case 'errored':
-      return caseState.message ?? null
+      return caseState.message ?? CASE_MESSAGES.error
     default:
       return null
   }
@@ -134,7 +112,7 @@ function validationOf(caseState: VerificationCaseState): ValidationMark | null {
   }
 }
 
-function isWaiting(status: RowStatus): status is 'running' | 'queued' {
+function isWaiting(status: VerdictStatus): status is 'running' | 'queued' {
   return status === 'running' || status === 'queued'
 }
 
@@ -166,7 +144,7 @@ export function caseRowOf(caseState: VerificationCaseState): CaseRow {
     id: caseState.caseInfo.id,
     name: caseState.caseInfo.label.split('::').at(-1) ?? caseState.caseInfo.label,
     status,
-    word: STATUS_WORDS[status],
+    word: VERDICT_WORDS[status],
     message: messageOf(caseState, shown),
     time: finished ? timeOf(caseState) : null,
     outdated: finished && caseState.outdated === true,

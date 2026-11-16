@@ -45,9 +45,10 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
           SNAPSHOT: ${{ steps.version.outputs.snapshot }}
         run: .github/scripts/tag-release-image.sh "$IMAGE" "$VERSION" "$SNAPSHOT"
-      - name: Publish the extension to the marketplace
+      - name: Publish the extension to both marketplaces
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
           VERSION: ${{ steps.version.outputs.version }}
         run: .github/scripts/publish-extension.sh "distributions/semantifyr-$VERSION.vsix"
       - name: Create the GitHub release

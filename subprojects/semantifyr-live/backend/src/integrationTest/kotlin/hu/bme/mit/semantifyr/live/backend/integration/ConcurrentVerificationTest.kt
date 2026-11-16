@@ -90,7 +90,7 @@ class ConcurrentVerificationTest {
     @Test
     suspend fun `one session verifies more cases at once than there are permits and every case gets its verdict`(@TempDir tmp: Path) {
         StagedTestSupport.assumeStaged()
-        val documentUri = "file:///workspace/concurrent.oxsts"
+        val documentUri = "file:///workspace/concurrent.semantifyr"
         withRealServer(StagedTestSupport.config(tmp, verification = VerificationConfig(concurrency = 2))) { client, port ->
             client.webSocket("ws://localhost:$port/ws/lsp/oxsts") {
                 send(Frame.Text(LspWire.initializeRequest()))
@@ -110,7 +110,7 @@ class ConcurrentVerificationTest {
                             LspWire.executeCommandRequest(
                                 id = requestId,
                                 command = "oxsts.case.verify",
-                                arguments = listOf(VerificationCaseRequest(documentUri, case.location().range, "smart-full")),
+                                arguments = listOf(VerificationCaseRequest(documentUri, case.location().range, "smart")),
                             ),
                         ),
                     )

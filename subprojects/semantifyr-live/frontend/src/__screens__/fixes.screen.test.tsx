@@ -18,8 +18,8 @@ import { caseOf, finished, seedLive, type Seed } from './seededLive'
 
 // Goal: what the desktop shows while a case is run again, in both themes
 
-const BARRIER = caseOf('BarrierDownWhileTrainInCrossingViolated', 97)
-const TWO_TRAINS = caseOf('TwoTrainsCanBeInTheCrossing', 112)
+const BARRIER = caseOf('BarrierDownWhileTrainInCrossing', 102)
+const TWO_TRAINS = caseOf('TwoTrainsCanBeInTheCrossing', 117)
 
 function discovered(cases: VerificationCaseState[], phase: VerificationState['phase']): VerificationState {
   return { phase, discovery: 'discovered', cases }
@@ -65,7 +65,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     seed: { flavorId: 'oxsts-with-gamma-library', verification: discovered([], 'idle') },
     act: async () => {
       const diagnostics = vscode.languages.createDiagnosticCollection('fixes')
-      diagnostics.set(vscode.Uri.parse('file:///workspace/snippet.oxsts'), toVscodeDiagnostics([
+      diagnostics.set(vscode.Uri.parse('file:///workspace/snippet.semantifyr'), toVscodeDiagnostics([
         { severity: 'error', startLine: 0, startColumn: 0, endLine: 0, endColumn: 3, message: 'broken', source: 'oxsts' },
       ]))
       onTestFinished(() => {
@@ -73,7 +73,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       })
     },
     expectState: () => {
-      expect(text('.status-language')).toBe('OXSTS, with the Gamma library')
+      expect(text('.status-language')).toBe('Semantifyr Language, Gamma library')
       expect(document.querySelector('.problem-counts')?.getAttribute('aria-label')).toBe('Problems in the model: 1 error, 0 warnings')
     },
   },
@@ -84,8 +84,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       verification: discovered([finished(BARRIER, 'failed', 2.9), finished(TWO_TRAINS, 'passed', 0.8)], 'done'),
     },
     expectState: () => {
-      expect(text('.orientation-text')).toContain('Level crossing.')
-      expect(text('.orientation-text')).not.toContain('Press')
+      expect(document.querySelector('.orientation')).toBeNull()
     },
   },
   'server-not-answering-gamma': {

@@ -12,7 +12,7 @@ RUN apt-get update \
 
 COPY build/install/semantifyr-live-backend /opt/semantifyr/backend
 COPY build/staging /opt/semantifyr/staging
-COPY build/theta-xsts-cli /opt/theta-xsts-cli
+COPY build/shipped-theta-xsts-cli /opt/theta-xsts-cli
 
 ENV PATH="/opt/theta-xsts-cli:${PATH}"
 

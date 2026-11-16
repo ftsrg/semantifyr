@@ -45,7 +45,7 @@ import java.nio.file.Path
 
 class WebSocketNavigationTest {
 
-    private val modelUri = "file:///workspace/snippet.oxsts"
+    private val modelUri = "file:///workspace/snippet.semantifyr"
 
     private val builtinPrefix = "file:///workspace/.semantifyr/builtin/"
 

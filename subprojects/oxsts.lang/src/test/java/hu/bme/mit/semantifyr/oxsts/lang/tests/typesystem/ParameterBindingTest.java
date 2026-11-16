@@ -49,7 +49,8 @@ public class ParameterBindingTest {
             }
             """, CheckMode.ALL);
 
-        parsedPackage.assertHasValidationIssue(OxstsValidator.INVALID_CALL_ARGUMENTS_COUND, "non-optional");
+        parsedPackage.assertHasValidationIssue(
+                OxstsValidator.INVALID_CALL_ARGUMENTS_COUND, "Missing an argument for the required parameter 'amount'");
     }
 
     @Test

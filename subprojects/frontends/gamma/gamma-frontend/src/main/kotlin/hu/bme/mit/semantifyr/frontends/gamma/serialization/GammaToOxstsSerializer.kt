@@ -1516,7 +1516,7 @@ class GammaToOxstsSerializer(
         when (expression) {
             is LiteralInteger -> serialize(expression, redefines)
             is LiteralBoolean -> serialize(expression, redefines)
-            else -> error("")
+            else -> error(UnmappedGammaConstruct(expression, "the literal of type ${expression.eClass().name}", "is not supported"))
         }
     }
 

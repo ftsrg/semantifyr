@@ -8,8 +8,8 @@
     "types": ["node", "@docusaurus/module-type-aliases", "@docusaurus/theme-classic"],
     "noEmit": true,
     "allowImportingTsExtensions": true,
-    "paths": { "@site/*": ["./*"] }
+    "paths": { "@site/*": ["./*"], "@grammars/*": ["./build/grammars/*"] }
   },
-  "include": ["src", "docusaurus.config.ts", "sidebars.ts"],
+  "include": ["src", "docusaurus.config.ts", "sidebars.ts", "vitest.config.mts", "vitest.walk.config.mts"],
   "exclude": [".docusaurus", "node_modules", "build", "static-imported-branding"]
 }

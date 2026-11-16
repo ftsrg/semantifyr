@@ -32,8 +32,8 @@ class OxstsWorkspaceSymbolTest extends OxstsLanguageServerTest {
                     }
                 }
                 """);
-        var libraryUri = addLibraryFile("Lamps.oxsts", library.text());
-        openModel(TestModels.basics());
+        var libraryUri = addLibraryFile("Lamps.semantifyr", library.text());
+        openModel(TestModels.TRAFFIC_LIGHTS);
 
         var symbols = symbols("switchOn");
 
@@ -47,7 +47,7 @@ class OxstsWorkspaceSymbolTest extends OxstsLanguageServerTest {
 
     @Test
     void workspaceSymbolsFindTheBuiltinLibraryOutsideTheWorkspace() throws Exception {
-        openModel(TestModels.basics());
+        openModel(TestModels.TRAFFIC_LIGHTS);
 
         var symbols = symbols("Anything");
 
@@ -57,7 +57,7 @@ class OxstsWorkspaceSymbolTest extends OxstsLanguageServerTest {
                 .satisfies(symbol -> {
                     assertThat(symbol.getKind()).isEqualTo(SymbolKind.Class);
                     assertThat(symbol.getContainerName()).isEqualTo("semantifyr");
-                    assertThat(symbol.getLocation().getLeft().getUri()).endsWith("/semantifyr.oxsts");
+                    assertThat(symbol.getLocation().getLeft().getUri()).endsWith("/standard.semantifyr");
                 });
     }
 

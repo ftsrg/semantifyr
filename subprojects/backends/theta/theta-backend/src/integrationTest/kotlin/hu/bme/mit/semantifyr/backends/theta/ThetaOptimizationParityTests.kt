@@ -60,6 +60,7 @@ class ThetaOptimizationParityTests {
             outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(ThetaOptimizationParityTests::class.java).resolve(outputName),
             timeout = 2.minutes,
             optimization = optimization,
+            expectedVerdict = helper.expectedVerdictFromTags(case),
         )
     }
 }

@@ -14,16 +14,18 @@ import type { LanguageRuntime, LibraryDocument, LibraryKind } from '../../lib/la
 import { fileNameOf } from '../../lib/session/readOnlyDocuments'
 import { useStore } from '../../lib/stores/useStore'
 import { caseRowOf } from '../../lib/workspace/caseRows'
+import { OXSTS_EXTENSION } from '../../lib/workspace/files'
 import { libraryTabOf, openModelOxsts } from '../../lib/workspace/libraryTabs'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import { traceLanguageOf, type TraceView } from '../../trace/registry'
 import { openTraceText } from '../../trace/TextView'
+import { DOCUMENTS } from '../../texts'
 import { Icon } from '../../ui/icons'
 
 const LIBRARY_HEADINGS: Readonly<Record<LibraryKind, string>> = {
   'standard-library': 'SysML v2 standard library',
-  'library': 'OXSTS library',
-  'semantic-library': 'Semantic library, in OXSTS',
+  'library': 'Semantifyr Language standard library',
+  'semantic-library': 'Semantic library, in the Semantifyr Language',
 }
 
 const LIBRARY_ORDER: readonly LibraryKind[] = [
@@ -83,7 +85,7 @@ function TraceEntry({ view, label, runtime, close }: { view: TraceView | undefin
   return (
     <Entry
       label={label}
-      detail={source ? source.label : 'select a case with a trace'}
+      detail={source ? source.label : DOCUMENTS.noTrace}
       disabled={!source}
       document={view.id}
       onOpen={() => {
@@ -121,7 +123,7 @@ export function DocumentsMenu({ runtime, flavor, modelLabel }: { runtime: Langua
     setOpen(false)
     setFilter('')
   }
-  const modelOxstsLabel = modelLabel.replace(/\.[^.]*$/, '.oxsts')
+  const modelOxstsLabel = modelLabel.replace(/\.[^.]*$/, OXSTS_EXTENSION)
   const filtered = libraries.length > FILTERED_FROM
   const shown = libraries.filter((library) => {
     return matches(filter, decodeURIComponent(fileNameOf(library.uri)), folderOf(library))
@@ -162,14 +164,14 @@ export function DocumentsMenu({ runtime, flavor, modelLabel }: { runtime: Langua
               : null}
             <div className="documents-list">
               <Group heading="Selected case">
-                <TraceEntry view={viewOf('own')} label="Trace of the selected case" runtime={runtime} close={close} />
-                <TraceEntry view={viewOf('witness')} label={viewOf('own') ? 'OXSTS of the trace' : 'Trace of the selected case'} runtime={runtime} close={close} />
+                <TraceEntry view={viewOf('own')} label={DOCUMENTS.trace} runtime={runtime} close={close} />
+                <TraceEntry view={viewOf('witness')} label={DOCUMENTS.witness} runtime={runtime} close={close} />
               </Group>
               {hasModelOxsts
                 ? (
                   <Group heading="Model">
                     <Entry
-                      label="OXSTS of the model"
+                      label="Semantifyr model"
                       detail={modelOxstsLabel}
                       document="model-oxsts"
                       onOpen={() => {

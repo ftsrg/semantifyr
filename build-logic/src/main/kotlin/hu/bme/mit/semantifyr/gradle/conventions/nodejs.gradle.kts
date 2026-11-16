@@ -14,7 +14,8 @@ plugins {
 }
 
 node {
-    version = "22.23.4"
+    // .nvmrc is the one Node.js version: the workflows' set-up and the website read it too
+    version = providers.fileContents(layout.settingsDirectory.file(".nvmrc")).asText.get().trim()
     download = true
     // the Node.js repository is declared in settings, which forbids project repositories
     distBaseUrl = null

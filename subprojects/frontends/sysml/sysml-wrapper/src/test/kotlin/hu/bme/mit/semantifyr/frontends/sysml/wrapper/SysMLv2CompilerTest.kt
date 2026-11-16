@@ -44,17 +44,17 @@ class SysMLv2CompilerTest {
     fun `cache entry is shared across instances until a workspace file changes`() {
         val model = writeModel("door.sysml", "part def Door;\n")
 
-        SysMLv2Compiler(cacheDirectory).compile(model, temporaryDirectory.resolve("first.oxsts"))
+        SysMLv2Compiler(cacheDirectory).compile(model, temporaryDirectory.resolve("first.semantifyr"))
         val entry = cacheEntries().single {
-            it.toString().endsWith(".oxsts")
+            it.toString().endsWith(".semantifyr")
         }
         Files.writeString(entry, "cached")
 
-        val second = SysMLv2Compiler(cacheDirectory).compile(model, temporaryDirectory.resolve("second.oxsts"))
+        val second = SysMLv2Compiler(cacheDirectory).compile(model, temporaryDirectory.resolve("second.semantifyr"))
         assertThat(second).hasContent("cached")
 
         writeModel("window.sysml", "part def Window;\n")
-        val third = SysMLv2Compiler(cacheDirectory).compile(model, temporaryDirectory.resolve("third.oxsts"))
+        val third = SysMLv2Compiler(cacheDirectory).compile(model, temporaryDirectory.resolve("third.semantifyr"))
         assertThat(Files.readString(third)).contains("class Door")
         assertThat(nameMapPath(third)).isRegularFile()
         assertThat(cacheEntries()).hasSize(4)
@@ -65,7 +65,7 @@ class SysMLv2CompilerTest {
         val model = writeModel("broken.sysml", "part def Door {\n")
 
         assertThatThrownBy {
-            SysMLv2Compiler(cacheDirectory).compile(model, temporaryDirectory.resolve("broken.oxsts"))
+            SysMLv2Compiler(cacheDirectory).compile(model, temporaryDirectory.resolve("broken.semantifyr"))
         }.isInstanceOf(IllegalStateException::class.java)
         assertThat(cacheEntries()).isEmpty()
     }

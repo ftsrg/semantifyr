@@ -35,7 +35,7 @@ import java.nio.file.Path
 
 class WebSocketRenameTest {
 
-    private val lampsUri = "file:///workspace/Lamps.oxsts"
+    private val lampsUri = "file:///workspace/Lamps.semantifyr"
 
     private val lamps = """
         package example::library
@@ -49,7 +49,7 @@ class WebSocketRenameTest {
         }
     """.trimIndent()
 
-    private val garageUri = "file:///workspace/snippet.oxsts"
+    private val garageUri = "file:///workspace/snippet.semantifyr"
 
     private val garage = """
         package example::garage

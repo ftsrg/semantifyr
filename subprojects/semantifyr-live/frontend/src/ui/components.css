@@ -120,7 +120,7 @@ code, .mono { font-family: var(--font-mono); font-feature-settings: "calt" 0; }
 @keyframes cloud-flow { to { stroke-dashoffset: -26; } }
 @keyframes cloud-dots { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
 
-.language-mark { width: 14px; height: 14px; flex: none; color: var(--language); overflow: visible; }
+.language-mark { width: 14px; height: 14px; }
 
 .segmented {
   display: inline-flex;
@@ -154,18 +154,7 @@ code, .mono { font-family: var(--font-mono); font-feature-settings: "calt" 0; }
 .segmented-small .segmented-option { height: 22px; padding: 0 var(--space-4); font-size: var(--text-small); }
 .segmented-plain .segmented-option[aria-pressed="true"] { background: var(--surface-raised); box-shadow: 0 0 0 1px var(--border) inset, 0 1px 2px rgba(0, 0, 0, 0.08); }
 
-.verdict-mark { width: 16px; height: 16px; flex: none; overflow: visible; }
-.verdict-mark .ring { fill: none; stroke: var(--status); stroke-width: 1.5; }
-.verdict-mark .disc { fill: var(--status); }
-.verdict-mark .glyph { fill: none; stroke: var(--status); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-.verdict-mark .glyph-fill { fill: var(--status); }
-.verdict-mark .on-disc { stroke: var(--verdict-glyph-on-disc); stroke-width: 1.9; }
-.status-passed { --status: var(--verdict-passed); --status-soft: var(--verdict-passed-soft); }
-.status-failed { --status: var(--verdict-failed); --status-soft: var(--verdict-failed-soft); }
-.status-inconclusive { --status: var(--verdict-inconclusive); --status-soft: var(--verdict-inconclusive-soft); }
-.status-error { --status: var(--problem); --status-soft: var(--problem-soft); }
-.status-not-run, .status-queued { --status: var(--verdict-pending); --status-soft: transparent; }
-.status-running { --status: var(--text-secondary); --status-soft: transparent; }
+.verdict-mark { width: 16px; height: 16px; }
 
 .validation-mark { width: 13px; height: 13px; flex: none; overflow: visible; color: var(--text-tertiary); }
 .validation-mark .shield { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
@@ -200,7 +189,7 @@ code, .mono { font-family: var(--font-mono); font-feature-settings: "calt" 0; }
 }
 .count .verdict-mark { width: 15px; height: 15px; }
 .count:hover { background: var(--surface-hover); }
-.count.is-zero { color: var(--text-disabled); font-weight: var(--weight-medium); }
+.count.is-zero { color: var(--text-tertiary); font-weight: var(--weight-medium); }
 .count.is-zero .verdict-mark { opacity: 0.45; }
 .count[aria-pressed="true"] { background: var(--status-soft, var(--surface-selected)); border-color: color-mix(in srgb, var(--status) 40%, transparent); }
 .counts-total { margin-left: 3px; color: var(--text-tertiary); font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -357,7 +346,7 @@ code, .mono { font-family: var(--font-mono); font-feature-settings: "calt" 0; }
 .line-glyph.has-mark:hover .glyph-tip, .line-glyph.is-hovered .glyph-tip { display: inline-flex; }
 .code-line.is-hovered { z-index: 5; }
 .line-glyph .verdict-mark { width: 13px; height: 13px; }
-.line-glyph.is-outdated .verdict-mark { opacity: 0.4; }
+.line-glyph.is-outdated .verdict-mark { opacity: 0.75; }
 .line-text {
   padding-left: calc((var(--indent, 0) + 4) * 1ch);
   padding-right: var(--space-6);
@@ -443,7 +432,7 @@ code, .mono { font-family: var(--font-mono); font-feature-settings: "calt" 0; }
 .outdated-tag { margin-right: var(--space-2); color: var(--attention); font-size: var(--text-small); font-weight: var(--weight-medium); }
 .shared-tag { margin-right: var(--space-2); padding: 0 var(--space-3); border-radius: var(--radius-small); background: var(--surface-inset); color: var(--text-tertiary); font-size: var(--text-micro); font-weight: var(--weight-medium); line-height: 16px; }
 .differs-tag { display: inline-flex; align-items: center; gap: var(--space-2); margin-right: var(--space-2); color: var(--attention); font-size: var(--text-small); font-weight: var(--weight-medium); }
-.case-row.is-outdated .verdict-mark, .case-row.is-outdated .verdict-word, .case-row.is-outdated .case-time, .case-row.is-outdated .validation-mark { opacity: 0.5; }
+.case-row.is-outdated .verdict-mark, .case-row.is-outdated .validation-mark { opacity: 0.75; }
 .case-row.is-shared .verdict-mark, .case-row.is-shared .verdict-word { opacity: 0.7; }
 
 .section-label {
@@ -558,4 +547,3 @@ code, .mono { font-family: var(--font-mono); font-feature-settings: "calt" 0; }
 .problem-counts.has-problems { color: var(--text-primary); }
 .problem-counts.has-problems .icon:first-child { color: var(--problem); }
 .problem-counts.has-problems .icon:nth-of-type(2) { color: var(--attention); }
-.verdict-mark .spinner { stroke-width: 1.9; }

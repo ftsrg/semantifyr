@@ -6,7 +6,7 @@
 
 import * as vscode from 'vscode'
 import { editor as monacoEditor, KeyCode, KeyMod, Uri } from 'monaco-editor'
-import type { Range } from '@semantifyr/editor-common'
+import type { LiveEditorLines, Range } from '@semantifyr/editor-common'
 
 import type { ReadableStore } from '../stores/store'
 import type { ResolvedColorMode } from '../util/colorMode'
@@ -18,6 +18,7 @@ import type { Live } from '../workspace/live'
 import { createEditor, openDerivedDocument, openKeptDocument, setEditorOpener, typingOptionsOf, type EditorInstance } from './monaco'
 import { problemsOf } from './problems'
 import { LIBRARY_SCHEME } from './readOnlyDocuments'
+import { tabHint } from '../../texts'
 
 export interface CursorPosition {
   line: number
@@ -40,6 +41,12 @@ export interface TabbedEditorOptions {
   wrapping?: boolean
   // the height the model's text takes, for a host that grows with it
   onContentHeight?: (height: number) => void
+  // the lines the model opens scrolled to; a growing host takes their height instead of the text's
+  openAt?: LiveEditorLines
+  // called once the model is shown, scrolled to its lines
+  onShown?: () => void
+  // Tab moves the focus out of the model too, as in an embed
+  tabLeaves?: boolean
 }
 
 export interface TabbedEditor {
@@ -61,6 +68,11 @@ interface Place {
   tab: string | null
   line: number
   column: number
+}
+
+// the key of the editor's Toggle Tab Key Moves Focus
+export function tabFocusKey(): string {
+  return navigator.userAgent.includes('Macintosh') ? 'Control+Shift+M' : 'Control+M'
 }
 
 function readOnlyMessageOf(modelLocked: boolean): { value: string } {
@@ -91,6 +103,52 @@ function markOf(caseState: VerificationCaseState): monacoEditor.IModelDeltaDecor
 }
 
 // One editor instance for the model and its read-only tabs: each document keeps its view state, the model its undo history
+const READER_INPUTS = [
+  'wheel',
+  'pointerdown',
+  'keydown',
+  'touchstart',
+]
+
+// the code lenses arrive after the first layout and push the lines apart, so the range is measured and scrolled to again until the reader scrolls, clicks or types
+function holdLines(editor: monacoEditor.IStandaloneCodeEditor, host: HTMLElement, lines: LiveEditorLines, onContentHeight: ((height: number) => void) | undefined): () => void {
+  const lineHeight = editor.getOption(monacoEditor.EditorOption.lineHeight)
+  let held = true
+  let frame = 0
+  const hold = (): void => {
+    const last = Math.min(lines.last, editor.getModel()?.getLineCount() ?? lines.last)
+    const top = editor.getTopForLineNumber(lines.first)
+    onContentHeight?.(editor.getTopForLineNumber(last) + lineHeight - top)
+    // the host takes the new height in the next frame; scrolled before, the scroll is clamped to the old height
+    cancelAnimationFrame(frame)
+    frame = requestAnimationFrame(() => {
+      if (held) {
+        editor.layout()
+        editor.setScrollTop(editor.getTopForLineNumber(lines.first))
+      }
+    })
+  }
+  const release = (): void => {
+    held = false
+  }
+  hold()
+  const contentSize = editor.onDidContentSizeChange(() => {
+    if (held) {
+      hold()
+    }
+  })
+  for (const input of READER_INPUTS) {
+    host.addEventListener(input, release, { capture: true, passive: true })
+  }
+  return () => {
+    cancelAnimationFrame(frame)
+    contentSize.dispose()
+    for (const input of READER_INPUTS) {
+      host.removeEventListener(input, release, { capture: true })
+    }
+  }
+}
+
 export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
   const { live } = options
   const modelUri = options.document.uri
@@ -126,6 +184,13 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
     const takesText = (target: TextModel): boolean => {
       return target === model ? !modelLocked() : !(options.touchInput?.get() ?? false)
     }
+    // Tab leaves an embed and a document that takes no typing; the full editor's model keeps Tab for indenting and names the key that frees it
+    const keyboardOptionsOf = (target: TextModel): monacoEditor.IEditorOptions => {
+      if (options.tabLeaves === true || target !== model || modelLocked()) {
+        return { tabFocusMode: true, ariaLabel: 'Editor content' }
+      }
+      return { tabFocusMode: false, ariaLabel: `Editor content. Tab indents; ${tabHint(tabFocusKey())}.` }
+    }
     let wasLocked = false
     let everLocked = false
     const applyLock = (): void => {
@@ -133,7 +198,7 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
       everLocked ||= locked
       const shown = editor.getModel()
       if (shown === model) {
-        editor.updateOptions({ readOnly: locked, readOnlyMessage: readOnlyMessageOf(locked), ...typingOptionsOf(takesText(model)) })
+        editor.updateOptions({ readOnly: locked, readOnlyMessage: readOnlyMessageOf(locked), ...typingOptionsOf(takesText(model)), ...keyboardOptionsOf(model) })
         if (wasLocked && !locked) {
           editor.focus()
         }
@@ -162,7 +227,12 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
       layout.dispose()
     })
 
-    if (options.onContentHeight) {
+    const opening = options.openAt
+    if (opening) {
+      // the enclosing class's sticky line would cover the first line of the range
+      editor.updateOptions({ stickyScroll: { enabled: false } })
+      cleanups.push(holdLines(editor, options.host, opening, options.onContentHeight))
+    } else if (options.onContentHeight) {
       const report = options.onContentHeight
       const contentSize = editor.onDidContentSizeChange((event) => {
         report(event.contentHeight)
@@ -171,6 +241,17 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
         contentSize.dispose()
       })
       report(editor.getContentHeight())
+    }
+    if (options.onShown) {
+      const shown = options.onShown
+      // two frames: the host takes the range's height in the first, the editor scrolls in the second
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (!disposed) {
+            shown()
+          }
+        })
+      })
     }
 
     const refreshProblems = (): void => {
@@ -323,12 +404,12 @@ export function bindTabbedEditor(options: TabbedEditorOptions): TabbedEditor {
       editor.updateOptions({ stickyScroll: { enabled: false } })
       editor.setModel(target)
       const locked = target === model && modelLocked()
-      editor.updateOptions({ readOnly: readOnly || locked, readOnlyMessage: readOnlyMessageOf(locked), ...typingOptionsOf(takesText(target)) })
+      editor.updateOptions({ readOnly: readOnly || locked, readOnlyMessage: readOnlyMessageOf(locked), ...typingOptionsOf(takesText(target)), ...keyboardOptionsOf(target) })
       const saved = viewStates.get(target.uri.toString())
       if (saved) {
         editor.restoreViewState(saved)
       }
-      editor.updateOptions({ stickyScroll: { enabled: true } })
+      editor.updateOptions({ stickyScroll: { enabled: !opening } })
       const position = editor.getPosition()
       options.onCursor(readOnly || !position ? null : { line: position.lineNumber, column: position.column })
     }
