@@ -41,7 +41,11 @@ fun checkInputPath(
     val fileSuffixes = fileExtensions.map {
         ".$it"
     }
-    val accepted = "${fileSuffixes.dropLast(1).joinToString(", ")} or ${fileSuffixes.last()}"
+    val accepted = if (fileSuffixes.size == 1) {
+        fileSuffixes.single()
+    } else {
+        "${fileSuffixes.dropLast(1).joinToString(", ")} or ${fileSuffixes.last()}"
+    }
     if (!path.isDirectory()) {
         if (fileSuffixes.none { path.name.endsWith(it) }) {
             throw CommandExit(ExitCode.Input, "$kind path '$path' is neither a directory nor a file ending in $accepted.")
