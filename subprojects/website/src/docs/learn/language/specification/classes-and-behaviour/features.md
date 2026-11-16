@@ -2,7 +2,7 @@
 title: Features
 slug: /learn/language/specification/features
 sidebar_position: 8
-description: OXSTS features, the structural relationships between classes, resolved at instantiation, with their kinds, multiplicities, subsets, redefinition and bindings.
+description: The features of the Semantifyr Language, the structural relationships between classes, resolved at instantiation, with their kinds, multiplicities, subsets, redefinition and bindings.
 ---
 
 # Features

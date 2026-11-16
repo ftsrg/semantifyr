@@ -2,7 +2,7 @@
 title: Datatypes
 slug: /learn/language/specification/datatypes
 sidebar_position: 2
-description: The data values OXSTS can represent, the primitive datatypes, enumerations and records.
+description: The data values the Semantifyr Language can represent, the primitive datatypes, enumerations and records.
 ---
 
 # Datatypes

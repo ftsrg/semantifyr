@@ -1,7 +1,7 @@
 ---
 title: 'A Statechart Library'
 sidebar_position: 4
-description: The fourth OXSTS lesson. Write once how a statechart runs, build a traffic light on it, then a pedestrian light, and verify the crossing of the two.
+description: The fourth lesson of the Semantifyr Language. Write once how a statechart runs, build a traffic light on it, then a pedestrian light, and verify the crossing of the two.
 ---
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
@@ -14,7 +14,7 @@ import library from '@served-examples/oxsts/library';
 
 **What you verify:** that a light built on a library of states still turns yellow, which transition fires in each step, and that pedestrians at a crossing walk only while the traffic light is red.
 
-So far each light spelled out its own cycle in a `choice`. A statechart language says once how any state machine runs, and a machine then only lists its states and transitions. In OXSTS such a language is a library of classes, the way Semantifyr writes the semantics of SysML v2 and Gamma. This lesson builds a small one.
+So far each light spelled out its own cycle in a `choice`. A statechart language says once how any state machine runs, and a machine then only lists its states and transitions. In the Semantifyr Language such a language is a library of classes, the way Semantifyr writes the semantics of SysML v2 and Gamma. This lesson builds a small one.
 
 ## States
 

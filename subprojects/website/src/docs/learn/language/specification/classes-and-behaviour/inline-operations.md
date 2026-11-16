@@ -2,7 +2,7 @@
 title: Inline Operations
 slug: /learn/language/specification/inline-operations
 sidebar_position: 12
-description: OXSTS inline operations, resolved at compile time, the inline call, inline if, inline for and inline for choice.
+description: The inline operations of the Semantifyr Language, resolved at compile time, the inline call, inline if, inline for and inline for choice.
 ---
 
 # Inline Operations

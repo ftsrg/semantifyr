@@ -36,7 +36,7 @@ export const PATH: PathBox[] = [
   },
   {
     id: 'oxsts-model',
-    title: 'OXSTS model',
+    title: 'Semantifyr model',
     line: 'on the semantic library',
     section: 'compiler',
     kind: 'artifact',
@@ -72,7 +72,7 @@ export const PATH: PathBox[] = [
   {
     id: 'verifier',
     title: 'Verifier',
-    line: 'makes the evidence a witness in OXSTS',
+    line: 'makes the evidence a witness, a Semantifyr model',
     section: 'verifier',
     kind: 'component',
   },
@@ -200,7 +200,7 @@ export default function ComponentPath(): React.JSX.Element {
             box.id === 'oxsts-model'
               ? (
                   <div key="entry" className={styles.entry} style={{ gridArea: 'entry' }}>
-                    <span>or an OXSTS model, written directly</span>
+                    <span>or a Semantifyr model, written directly</span>
                     <Arrow direction="down" />
                   </div>
                 )

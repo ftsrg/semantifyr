@@ -2,7 +2,7 @@
 title: Annotations
 slug: /learn/language/specification/annotations
 sidebar_position: 13
-description: OXSTS annotations, how they are declared and applied, and the standard annotations the toolchain reads.
+description: The annotations of the Semantifyr Language, how they are declared and applied, and the standard annotations the toolchain reads.
 ---
 
 # Annotations

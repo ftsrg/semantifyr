@@ -2,7 +2,7 @@
 title: Types
 slug: /learn/language/specification/types
 sidebar_position: 3
-description: The OXSTS type system, the type of every expression and when a value fits where it is used.
+description: The type system of the Semantifyr Language, the type of every expression and when a value fits where it is used.
 ---
 
 # Types

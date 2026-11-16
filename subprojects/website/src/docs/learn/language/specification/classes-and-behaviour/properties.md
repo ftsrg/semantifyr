@@ -2,7 +2,7 @@
 title: Properties
 slug: /learn/language/specification/properties
 sidebar_position: 9
-description: OXSTS properties, the pure computations used for guards, queries and the verification property.
+description: The properties of the Semantifyr Language, the pure computations used for guards, queries and the verification property.
 ---
 
 # Properties

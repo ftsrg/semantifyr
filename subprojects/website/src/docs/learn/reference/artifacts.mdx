@@ -30,15 +30,15 @@ A case directory is named after the model file without its extension and the qua
 - `witness.semantifyr`, `witness.json` and `trace.json`, for a verdict with a [witness](../language/specification/library-and-output/inlined-models.md#witnesses). `semantifyr-sysml` writes `trace.sysml` beside them ([SysML v2 traces](../frontends/sysml-v2/traces.mdx)), `semantifyr-gamma` `trace.get` ([Gamma traces](../frontends/gamma/traces.mdx)).
 - `validation/`: the case directory of the last [witness validation](../backends/portfolios-and-verdicts.mdx#validation), with the same files.
 
-`semantifyr-sysml` writes the translation of the model into `compiled/default/<model>.semantifyr` at the top of the artifact directory, with its [name map](../frontends/sysml-v2/traces.mdx#the-name-map), `<model>.names.json`, beside it, and the case directories next to `compiled/`. `semantifyr-gamma` gives every case a directory named after its Gamma qualified name, holding the compiled model, `model.semantifyr`, one OXSTS package per imported Gamma package under `imports/`, and the case directory under `verification/`.
+`semantifyr-sysml` writes the translation of the model into `compiled/default/<model>.semantifyr` at the top of the artifact directory, with its [name map](../frontends/sysml-v2/traces.mdx#the-name-map), `<model>.names.json`, beside it, and the case directories next to `compiled/`. `semantifyr-gamma` gives every case a directory named after its Gamma qualified name, holding the compiled model, `model.semantifyr`, one package of the Semantifyr Language per imported Gamma package under `imports/`, and the case directory under `verification/`.
 
 ## Inlined models
 
-The models under `pipeline/`, `semantifyr compile`'s output and the witness are [inlined models](../language/specification/library-and-output/inlined-models.md), the form the language specifies; the pages on [how OXSTS compiles](../language/compilation/index.mdx) show those files for one model.
+The models under `pipeline/`, `semantifyr compile`'s output and the witness are [inlined models](../language/specification/library-and-output/inlined-models.md), the form the language specifies; the pages on [how a Semantifyr model compiles](../language/compilation/index.mdx) show those files for one model.
 
 ## `witness.json`
 
-The state of every step of the witness, named as in [`witness.semantifyr`](../language/specification/library-and-output/inlined-models.md#witnesses): `initializedStep` is the initial state, the one `init` produces, and `steps` holds one state for each step after it. Each value is OXSTS text: a literal, `nothing`, or an instance by its path, a global one by its qualified name.
+The state of every step of the witness, named as in [`witness.semantifyr`](../language/specification/library-and-output/inlined-models.md#witnesses): `initializedStep` is the initial state, the one `init` produces, and `steps` holds one state for each step after it. Each value is text in the Semantifyr Language: a literal, `nothing`, or an instance by its path, a global one by its qualified name.
 
 <ReportFields fields={witnessFields} />
 

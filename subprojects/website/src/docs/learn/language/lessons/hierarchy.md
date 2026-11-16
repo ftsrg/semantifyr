@@ -1,7 +1,7 @@
 ---
 title: 'Hierarchy, Events and the Environment'
 sidebar_position: 5
-description: The fifth OXSTS lesson. Grow the statechart library with nested states, entry actions and events, let an environment send them, and override the lights in an emergency.
+description: The fifth lesson of the Semantifyr Language. Grow the statechart library with nested states, entry actions and events, let an environment send them, and override the lights in an emergency.
 ---
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
@@ -170,4 +170,4 @@ The whole model:
 
 ## Where the Lessons End
 
-You can now read and write a statechart library with nested states, entry actions, events and an environment. The production libraries build on the same patterns: Gamma's adds orthogonal regions, exit actions, guards and transitions across levels of the hierarchy, and SysML v2's adds parallel states and time triggers. Every construct is in the [language reference](../specification/index.md), and [how OXSTS compiles](../compilation/index.mdx) shows how a model becomes what a backend checks.
+You can now read and write a statechart library with nested states, entry actions, events and an environment. The production libraries build on the same patterns: Gamma's adds orthogonal regions, exit actions, guards and transitions across levels of the hierarchy, and SysML v2's adds parallel states and time triggers. Every construct is in the [language reference](../specification/index.md), and [how a Semantifyr model compiles](../compilation/index.mdx) shows how a model becomes what a backend checks.

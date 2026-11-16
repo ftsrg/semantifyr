@@ -1,7 +1,7 @@
 ---
 title: 'One Light'
 sidebar_position: 1
-description: The first OXSTS lesson. Model one traffic light, ask whether it can turn yellow, and read the trace that answers.
+description: The first lesson of the Semantifyr Language. Model one traffic light, ask whether it can turn yellow, and read the trace that answers.
 ---
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
@@ -16,7 +16,7 @@ A browser is enough for this lesson. Each model on the page opens in Live, the e
 
 ## The Light
 
-A traffic light has three colors. Every OXSTS file starts with its package, and this one declares the colors as an [enumeration](../specification/foundations/datatypes.md#enumerations):
+A traffic light has three colors. Every file of the language starts with its package, and this one declares the colors as an [enumeration](../specification/foundations/datatypes.md#enumerations):
 
 <LiveEmbed example={step1} show={['package', 'LightColor']} />
 
@@ -55,7 +55,7 @@ Press **Open** in the corner of the code block above. The editor opens in its pl
 
 Once the run ends, the trace of the case opens below its line by itself: the execution the verifier found. A click on the line closes it, and another opens it again. Its *Steps* view lists the state at the start and the change of each step: `color` starts at `Red`, turns `Green` in step 1 and `Yellow` in step 2.
 
-The trace of an `EF` case is an execution that reaches what the case asks for. The other views show the same execution: *Witness* as an OXSTS model, and *Calls* the calls of transitions marked to be traced, of which this model has none yet.
+The trace of an `EF` case is an execution that reaches what the case asks for. The other views show the same execution: *Witness* as a Semantifyr model, and *Calls* the calls of transitions marked to be traced, of which this model has none yet.
 
 The editor checks the model as you type: misspell a color and a red underline names the problem, and `Ctrl+Space` offers what can be written where the cursor is. [Try in the Browser](../../start/live/index.md) lists every control of the editor.
 

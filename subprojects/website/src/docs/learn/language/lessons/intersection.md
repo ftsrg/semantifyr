@@ -1,7 +1,7 @@
 ---
 title: 'The Intersection'
 sidebar_position: 2
-description: The second OXSTS lesson. Put two traffic lights at an intersection and verify that they are never green together, that they still switch, and that a light turns green only while the other is red.
+description: The second lesson of the Semantifyr Language. Put two traffic lights at an intersection and verify that they are never green together, that they still switch, and that a light turns green only while the other is red.
 ---
 
 import LiveEmbed from '@site/src/components/LiveEmbed';

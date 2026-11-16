@@ -1,18 +1,18 @@
 ---
-title: How OXSTS Compiles
+title: How a Semantifyr Model Compiles
 sidebar_label: Overview
 sidebar_position: 0
 hide_table_of_contents: true
-description: How the compiler turns an OXSTS model into the transition system a backend checks, in three phases, instantiation, inlining and flattening.
+description: How the compiler turns a Semantifyr model into the transition system a backend checks, in three phases, instantiation, inlining and flattening.
 ---
 
 import CodeBlock from '@theme/CodeBlock';
 import PhaseChain from '@site/src/components/Phases/PhaseChain';
 import room from '@oxsts-phases-models/room.semantifyr';
 
-# How OXSTS Compiles
+# How a Semantifyr Model Compiles
 
-An OXSTS model, written by hand or translated from another language by a [frontend](../../frontends/index.mdx), describes a system by its structure: classes whose instances contain instances of other classes, and transitions that call other transitions. What a [backend](../../backends/index.mdx) checks is a transition system: variables, an initial transition, one transition the system takes again and again, and a property over the variables. The compiler turns the one into the other, for one verification case at a time, in three phases.
+A Semantifyr model, written by hand or translated from another language by a [frontend](../../frontends/index.mdx), describes a system by its structure: classes whose instances contain instances of other classes, and transitions that call other transitions. What a [backend](../../backends/index.mdx) checks is a transition system: variables, an initial transition, one transition the system takes again and again, and a property over the variables. The compiler turns the one into the other, for one verification case at a time, in three phases.
 
 <PhaseChain />
 

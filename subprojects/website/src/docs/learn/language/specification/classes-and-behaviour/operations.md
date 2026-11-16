@@ -2,7 +2,7 @@
 title: Operations
 slug: /learn/language/specification/operations
 sidebar_position: 11
-description: The runtime operations of OXSTS transition bodies, assignment, havoc, assumption, sequence, choice, if, for and local variables.
+description: The runtime operations of the transition bodies of the Semantifyr Language, assignment, havoc, assumption, sequence, choice, if, for and local variables.
 ---
 
 # Operations

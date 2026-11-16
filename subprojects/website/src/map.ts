@@ -42,11 +42,11 @@ export const learnParts: LearnPart[] = [
     directory: 'learn/backends',
   },
   {
-    label: 'OXSTS',
+    label: 'Language',
     opening: { doc: 'learn/language/index' },
     parts: [
       {
-        label: 'Language',
+        label: 'Specification',
         opening: { doc: 'learn/language/specification/index' },
         directory: 'learn/language/specification',
       },
