@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.frontends.gamma.lang.ide.server.commands;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import hu.bme.mit.semantifyr.frontends.gamma.GammaFrontend;
-import hu.bme.mit.semantifyr.frontends.gamma.GammaWitnessValidation;
 import hu.bme.mit.semantifyr.frontends.gamma.discovery.GammaVerificationCaseDiscoverer;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclaration;
 import hu.bme.mit.semantifyr.lang.ide.server.OxstsInjector;
@@ -18,7 +17,6 @@ import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult;
-import hu.bme.mit.semantifyr.lang.ide.wire.VerificationReportAdapter;
 import java.util.List;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.BuildersKt;
@@ -109,19 +107,16 @@ public class ValidateWitnessGammaCommandHandler
 
                 progressContext.checkIsCancelled();
 
-                var validation = BuildersKt.<GammaWitnessValidation>runBlocking(
+                var validation = BuildersKt.<hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult>runBlocking(
                         EmptyCoroutineContext.INSTANCE,
                         (scope, continuation) -> frontend.validateWitness(
                                 gammaCase, witnessPath, portfolio, progressContext, continuation));
                 LOGGER.info(
                         "LSP validate witness '{}' -> {}",
                         gammaCase.getQualifiedName(),
-                        validation.getValidation().getVerification().getVerdict());
+                        validation.getOutcome().getReport().getResult().getVerdict());
 
-                return WitnessValidationResult.fromValidation(
-                        validation.getValidation(),
-                        VerificationReportAdapter.read(validation.getReportPath()),
-                        portfolio.getId());
+                return WitnessValidationResult.fromValidation(validation, portfolio.getId());
             } catch (Exception e) {
                 LOGGER.error(
                         "LSP validate witness '{}' threw {}",

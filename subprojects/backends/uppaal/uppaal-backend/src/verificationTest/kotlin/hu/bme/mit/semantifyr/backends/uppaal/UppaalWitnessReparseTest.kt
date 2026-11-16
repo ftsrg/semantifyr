@@ -58,6 +58,6 @@ class UppaalWitnessReparseTest {
             validationPortfolio = validationPortfolio,
         )
 
-        assertThat(requireNotNull(checked.result.witness).timeScale).isEqualTo(2)
+        assertThat(requireNotNull(checked.report.result.witness).timeScale).isEqualTo(2)
     }
 }

@@ -10,7 +10,7 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
-import hu.bme.mit.semantifyr.verifier.fakeVerificationResult
+import hu.bme.mit.semantifyr.verifier.fakeVerificationOutcome
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.doReturn
@@ -24,23 +24,23 @@ class WitnessValidatorTest {
     @Test
     suspend fun `validate re-runs verification on the back-annotated model`() {
         val inlined = mock<InlinedOxsts>()
-        val verification = fakeVerificationResult(verdict = VerificationVerdict.Passed)
+        val outcome = fakeVerificationOutcome(verdict = VerificationVerdict.Passed)
         val verifier = mock<SemantifyrVerifier> {
-            onBlocking { verify(inlined, ProgressContext.Silent) } doReturn verification
+            onBlocking { verify(inlined, ProgressContext.Silent) } doReturn outcome
         }
 
         val result = WitnessValidator().validate(verifier, inlined)
 
         verify(verifier).verify(same(inlined), eq(ProgressContext.Silent))
         assertThat(result).isInstanceOf(WitnessValidationResult.Valid::class.java)
-        assertThat(result.verification).isSameAs(verification)
+        assertThat(result.outcome).isSameAs(outcome)
     }
 
     @Test
     suspend fun `validate propagates Failed verdict as Invalid`() {
         val inlined = mock<InlinedOxsts>()
         val verifier = mock<SemantifyrVerifier> {
-            onBlocking { verify(inlined, ProgressContext.Silent) } doReturn fakeVerificationResult(verdict = VerificationVerdict.Failed)
+            onBlocking { verify(inlined, ProgressContext.Silent) } doReturn fakeVerificationOutcome(verdict = VerificationVerdict.Failed)
         }
 
         val result = WitnessValidator().validate(verifier, inlined)
@@ -52,9 +52,9 @@ class WitnessValidatorTest {
     suspend fun `validate forwards a non-default progress context`() {
         val inlined = mock<InlinedOxsts>()
         val progress = ProgressContext.Silent.child("ctx")
-        val verification = fakeVerificationResult(verdict = VerificationVerdict.Inconclusive)
+        val outcome = fakeVerificationOutcome(verdict = VerificationVerdict.Inconclusive)
         val verifier = mock<SemantifyrVerifier> {
-            onBlocking { verify(inlined, progress) } doReturn verification
+            onBlocking { verify(inlined, progress) } doReturn outcome
         }
 
         val result = WitnessValidator().validate(verifier, inlined, progress)

@@ -16,10 +16,9 @@ public record WitnessValidationResult(
         String status, String verdict, String message, String portfolioId, VerificationReport report) {
 
     public static WitnessValidationResult fromValidation(
-            hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult validation,
-            VerificationReport report,
-            String portfolioId) {
-        var verification = validation.getVerification();
+            hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult validation, String portfolioId) {
+        var report = validation.getOutcome().getReport();
+        var verification = report.getResult();
         return new WitnessValidationResult(
                 statusOf(validation),
                 VerificationStatus.of(verification.getVerdict()),

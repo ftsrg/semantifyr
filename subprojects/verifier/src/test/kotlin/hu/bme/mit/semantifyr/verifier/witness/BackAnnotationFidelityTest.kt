@@ -611,6 +611,8 @@ class BackAnnotationFidelityTest {
             .optimization(OptimizationConfig.NONE)
             .build()
             .verify(case)
+            .report
+            .result
 
         assertThat(result.witness)
             .describedAs("back-annotation of ${case.qualifiedName} failed: ${result.message ?: "no message"}")

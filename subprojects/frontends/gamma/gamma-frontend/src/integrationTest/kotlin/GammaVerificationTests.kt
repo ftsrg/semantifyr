@@ -10,14 +10,11 @@ import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaFrontendTestHelper
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.portfolios.testing.ExampleLanguage
 import hu.bme.mit.semantifyr.portfolios.testing.ServedExamples
-import hu.bme.mit.semantifyr.verifier.VerificationReport
-import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import kotlin.io.path.name
-import kotlin.io.path.readText
 
 class GammaVerificationTests {
 
@@ -68,7 +65,7 @@ class GammaVerificationTests {
 
         assertThat(witness).describedAs("An EF case that passes has a witness").isNotNull()
         assertThat(witness!!.gammaTracePath).exists()
-        val reportTrace = requireNotNull(Json.decodeFromString<VerificationReport>(result.reportPath.readText()).trace)
+        val reportTrace = requireNotNull(result.outcome.report.trace)
         assertThat(witness.gammaTrace.steps).hasSize(1 + reportTrace.steps.size)
     }
 }

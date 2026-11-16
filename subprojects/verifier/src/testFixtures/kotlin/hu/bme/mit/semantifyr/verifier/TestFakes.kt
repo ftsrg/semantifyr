@@ -18,6 +18,7 @@ import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
@@ -27,6 +28,7 @@ import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
 
 fun fakeCase(qualifiedName: String = "pkg.Foo", vararg tags: String): VerificationCase {
     return VerificationCase(
@@ -73,6 +75,19 @@ fun fakeVerificationResult(
         metrics = metrics,
         message = message,
     )
+}
+
+fun fakeVerificationOutcome(verdict: VerificationVerdict = VerificationVerdict.Passed): VerificationOutcome {
+    val report = VerificationReport(
+        version = REPORT_VERSION,
+        kind = ReportKind.Run,
+        verificationCase = "pkg::Foo",
+        portfolioId = "test",
+        optimization = OptimizationConfig.ALL,
+        timeout = 1.minutes,
+        result = fakeVerificationResult(verdict),
+    )
+    return VerificationOutcome(report, Paths.get("report.json"), null)
 }
 
 class AlwaysAvailableExecutor : BackendExecutor {

@@ -14,8 +14,6 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import hu.bme.mit.semantifyr.verifier.VerificationReport;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import kotlin.Unit;
 import kotlinx.serialization.json.Json;
 import kotlinx.serialization.json.JsonKt;
@@ -28,10 +26,6 @@ public final class VerificationReportAdapter extends TypeAdapter<VerificationRep
     });
 
     private static final TypeAdapter<JsonElement> ELEMENT = new Gson().getAdapter(JsonElement.class);
-
-    public static VerificationReport read(Path reportPath) throws IOException {
-        return decode(Files.readString(reportPath));
-    }
 
     public static VerificationReport decode(String text) {
         return JSON.decodeFromString(VerificationReport.Companion.serializer(), text);

@@ -90,7 +90,7 @@ class GammaVerifyCommand(
 
         val exitCode = cases.maxOf { case ->
             verifyCase(output, case.qualifiedName) {
-                frontend.verify(case).reportPath
+                frontend.verify(case).outcome
             }
         }
         if (exitCode != ExitCode.Success) {

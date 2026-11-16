@@ -34,17 +34,19 @@ class VerificationArtifactWriter @Inject constructor(
         encodeDefaults = true
     }
 
-    fun writeReport(reportPath: Path, report: VerificationReport) {
-        reportPath.parent.createDirectories()
+    fun writeReport(caseDirectory: Path, report: VerificationReport): Path {
+        val reportPath = caseDirectory.resolve("report.json")
+        caseDirectory.createDirectories()
         reportPath.writeText(json.encodeToString(report))
+        return reportPath
     }
 
     fun writeWitness(
         witness: InlinedOxsts,
-        caseArtifactPath: Path,
+        caseDirectory: Path,
         qualifiedName: String,
-    ) {
-        val witnessPath = caseArtifactPath.resolve("witness.${fileExtensionProvider.primaryFileExtension}")
+    ): Path? {
+        val witnessPath = caseDirectory.resolve("witness.${fileExtensionProvider.primaryFileExtension}")
         try {
             witnessPath.parent?.createDirectories()
             val resourceSet = witness.classDeclaration.eResource().resourceSet
@@ -55,8 +57,10 @@ class VerificationArtifactWriter @Inject constructor(
                 serializer.serialize(witness, it, SaveOptions.defaultOptions())
             }
             logger.info { "[$qualifiedName] wrote witness artifact to $witnessPath" }
+            return witnessPath
         } catch (exception: Exception) {
             logger.warn(exception) { "[$qualifiedName] failed to write witness artifact at $witnessPath" }
+            return null
         }
     }
 

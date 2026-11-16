@@ -26,8 +26,8 @@ import kotlin.time.toKotlinDuration
  */
 interface SemantifyrVerifier {
 
-    suspend fun verify(verificationCase: VerificationCase, progressContext: ProgressContext = ProgressContext.Silent): VerificationResult
-    suspend fun verify(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext = ProgressContext.Silent): VerificationResult
+    suspend fun verify(verificationCase: VerificationCase, progressContext: ProgressContext = ProgressContext.Silent): VerificationOutcome
+    suspend fun verify(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext = ProgressContext.Silent): VerificationOutcome
 
     class Builder internal constructor() {
         private var injector: Injector? = null

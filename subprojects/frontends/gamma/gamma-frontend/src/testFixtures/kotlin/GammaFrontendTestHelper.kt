@@ -155,14 +155,14 @@ class GammaFrontendTestHelper {
             return result
         }
 
-        val witness = result.witness
-        if (validationPortfolio != null && witness != null) {
-            val outcome = frontend.validateWitness(gammaVerificationCase, witness.witnessPath, validationPortfolio).validation
-            assertThat(outcome.isValid)
+        val witnessPath = result.outcome.witnessPath
+        if (validationPortfolio != null && witnessPath != null) {
+            val validation = frontend.validateWitness(gammaVerificationCase, witnessPath, validationPortfolio).outcome.report.result
+            assertThat(validation.verdict)
                 .describedAs(
-                    "Witness of ${portfolio.id} for ${gammaVerificationCase.qualifiedName} must re-verify Passed via ${validationPortfolio.id} but got ${outcome.verification.verdict} (${outcome.verification.message ?: "no message"})",
+                    "Witness of ${portfolio.id} for ${gammaVerificationCase.qualifiedName} must re-verify Passed via ${validationPortfolio.id} (${validation.message ?: "no message"})",
                 )
-                .isTrue()
+                .isEqualTo(VerificationVerdict.Passed)
         }
         return result
     }
@@ -173,7 +173,7 @@ class GammaFrontendTestHelper {
         expectedVerdict: VerificationVerdict,
         result: GammaVerificationResult,
     ): Boolean {
-        val verification = result.verification
+        val verification = result.outcome.report.result
         val untrusted = !verification.isTrusted && (verification.verdict == VerificationVerdict.Inconclusive || verification.soundness == SoundnessDirection.UnderApproximating)
         if (verification.verdict != expectedVerdict && untrusted && hasUnclosedClockTest(frontend, gammaVerificationCase)) {
             logger.info { "${gammaVerificationCase.qualifiedName}: ${verification.verdict}, untrusted, as whole delays under-approximate a model whose clock tests are not all closed" }

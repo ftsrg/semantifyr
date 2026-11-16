@@ -31,7 +31,6 @@ import hu.bme.mit.semantifyr.frontends.sysml.SysMLv2Frontend
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.portfolios.Portfolios
-import hu.bme.mit.semantifyr.verifier.caseReportPath
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import org.eclipse.xtext.resource.FileExtensionProvider
@@ -102,7 +101,6 @@ class SysMLVerifyCommand @Inject constructor(
         val exitCode = cases.maxOf { case ->
             verifyCase(output, case.qualifiedName) {
                 frontend.verify(case)
-                caseReportPath(artifactOptions.resolvedOutputDirectory, case)
             }
         }
         if (exitCode != ExitCode.Success) {

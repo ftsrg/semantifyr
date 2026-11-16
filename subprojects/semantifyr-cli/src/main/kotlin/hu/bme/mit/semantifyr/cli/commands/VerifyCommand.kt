@@ -23,7 +23,6 @@ import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
-import hu.bme.mit.semantifyr.verifier.caseReportPath
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import org.eclipse.xtext.resource.FileExtensionProvider
@@ -75,7 +74,6 @@ class VerifyCommand @Inject constructor(
         val exitCode = cases.maxOf { case ->
             verifyCase(output, case.qualifiedName) {
                 verifier.verify(case)
-                caseReportPath(artifactOptions.resolvedOutputDirectory, case)
             }
         }
         if (exitCode != ExitCode.Success) {

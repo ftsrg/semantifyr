@@ -11,6 +11,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.google.gson.JsonParser;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandGson;
 import hu.bme.mit.semantifyr.lang.ide.wire.VerificationReportAdapter;
+import hu.bme.mit.semantifyr.verifier.VerificationOutcome;
+import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 
 class WitnessValidationResultTest {
@@ -43,8 +45,9 @@ class WitnessValidationResultTest {
     @Test
     void theValidationResultCarriesTheRecheckReportAsItsFileHoldsIt() {
         var report = VerificationReportAdapter.decode(RECHECK_REPORT);
-        var validation = hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult.from(report.getResult());
-        var result = WitnessValidationResult.fromValidation(validation, report, "smart");
+        var validation = hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult.from(
+                new VerificationOutcome(report, Path.of("report.json"), null));
+        var result = WitnessValidationResult.fromValidation(validation, "smart");
 
         var wire = CommandGson.INSTANCE.toJsonTree(result).getAsJsonObject();
 

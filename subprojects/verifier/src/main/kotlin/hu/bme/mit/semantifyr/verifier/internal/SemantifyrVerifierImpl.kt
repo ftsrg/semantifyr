@@ -33,6 +33,7 @@ import hu.bme.mit.semantifyr.verifier.ReportTrace
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.VerificationMetrics
+import hu.bme.mit.semantifyr.verifier.VerificationOutcome
 import hu.bme.mit.semantifyr.verifier.VerificationReport
 import hu.bme.mit.semantifyr.verifier.VerificationResult
 import hu.bme.mit.semantifyr.verifier.VerifierMetrics
@@ -41,7 +42,6 @@ import hu.bme.mit.semantifyr.verifier.caseRecheckDirectory
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.LimitedConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
-import hu.bme.mit.semantifyr.verifier.reportPath
 import hu.bme.mit.semantifyr.verifier.witness.ClassWitnessBackAnnotator
 import hu.bme.mit.semantifyr.verifier.witness.ClassWitnessTransformer
 import hu.bme.mit.semantifyr.verifier.witness.ReportTraceTransformer
@@ -101,7 +101,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         semantifyrVerifierConfiguration.maxConcurrency,
     )
 
-    override suspend fun verify(verificationCase: VerificationCase, progressContext: ProgressContext): VerificationResult {
+    override suspend fun verify(verificationCase: VerificationCase, progressContext: ProgressContext): VerificationOutcome {
         val deadline = markNow() + semantifyrVerifierConfiguration.timeout
         progressContext.reportProgress("Compiling ${verificationCase.qualifiedName}")
         logger.info { "Compiling '${verificationCase.qualifiedName}'" }
@@ -111,7 +111,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         }
     }
 
-    override suspend fun verify(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext): VerificationResult {
+    override suspend fun verify(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext): VerificationOutcome {
         val case = verificationCaseDiscoverer.caseOf(inlinedOxsts.classDeclaration)
         val deadline = markNow() + semantifyrVerifierConfiguration.timeout
         progressContext.reportProgress("Compiling ${case.qualifiedName}")
@@ -132,7 +132,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         progress: ProgressContext,
         deadline: ValueTimeMark,
         compile: () -> FlattenedCompilationContext,
-    ): VerificationResult {
+    ): VerificationOutcome {
         val compilationMark = markNow()
         val compilation = try {
             runInTimeout(progress, deadline) {
@@ -156,8 +156,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
                 ),
                 message = "Timeout (${semantifyrVerifierConfiguration.timeout}) exceeded while compiling.",
             )
-            writeReport(case, kind, caseDirectory, result, null)
-            return result
+            return writeArtifacts(case, kind, caseDirectory, result, null)
         }
         return verifyCompilation(compilation, case, kind, caseDirectory, progress, deadline)
     }
@@ -169,7 +168,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         caseDirectory: Path,
         progress: ProgressContext,
         deadline: ValueTimeMark,
-    ): VerificationResult {
+    ): VerificationOutcome {
         val qualifiedName = case.qualifiedName
         val startedAt = Clock.System.now()
         logger.info { "Verifying case '$qualifiedName' with portfolio '${semantifyrVerifierConfiguration.portfolio.id}' (timeout=${semantifyrVerifierConfiguration.timeout})" }
@@ -269,21 +268,16 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
 
         logger.info { "Case '$qualifiedName' -> ${result.verdict} in $totalDuration - ${result.message ?: "no message"}" }
 
-        writeReport(case, kind, caseDirectory, result, backAnnotation?.reportTrace)
-        if (backAnnotation != null) {
-            verificationArtifactWriter.writeWitness(backAnnotation.witness, caseDirectory, qualifiedName)
-        }
-
-        return result
+        return writeArtifacts(case, kind, caseDirectory, result, backAnnotation)
     }
 
-    private fun writeReport(
+    private fun writeArtifacts(
         case: VerificationCase,
         kind: ReportKind,
         caseDirectory: Path,
         result: VerificationResult,
-        reportTrace: ReportTrace?,
-    ) {
+        backAnnotation: BackAnnotation?,
+    ): VerificationOutcome {
         val report = VerificationReport(
             version = REPORT_VERSION,
             kind = kind,
@@ -292,9 +286,13 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
             optimization = semantifyrVerifierConfiguration.optimizationConfiguration,
             timeout = semantifyrVerifierConfiguration.timeout,
             result = result,
-            trace = reportTrace,
+            trace = backAnnotation?.reportTrace,
         )
-        verificationArtifactWriter.writeReport(reportPath(caseDirectory), report)
+        val reportPath = verificationArtifactWriter.writeReport(caseDirectory, report)
+        val witnessPath = backAnnotation?.let {
+            verificationArtifactWriter.writeWitness(it.witness, caseDirectory, case.qualifiedName)
+        }
+        return VerificationOutcome(report, reportPath, witnessPath)
     }
 
     private suspend fun runBackend(

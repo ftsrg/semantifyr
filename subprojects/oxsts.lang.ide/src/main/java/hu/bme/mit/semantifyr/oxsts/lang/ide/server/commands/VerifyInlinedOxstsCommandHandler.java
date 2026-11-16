@@ -15,15 +15,12 @@ import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts;
-import hu.bme.mit.semantifyr.verifier.CaseDirectoryNameKt;
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier;
-import hu.bme.mit.semantifyr.verifier.VerificationResult;
-import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer;
+import hu.bme.mit.semantifyr.verifier.VerificationOutcome;
 import java.util.List;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.BuildersKt;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
-import org.eclipse.xtext.resource.FileExtensionProvider;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,9 +38,6 @@ public class VerifyInlinedOxstsCommandHandler
 
     @Inject
     protected SemantifyrLoader semantifyrLoader;
-
-    @Inject
-    protected VerificationCaseDiscoverer verificationCaseDiscoverer;
 
     @Override
     public String getId() {
@@ -97,16 +91,11 @@ public class VerifyInlinedOxstsCommandHandler
                         .build();
 
                 progressContext.checkIsCancelled();
-                var verification = BuildersKt.<VerificationResult>runBlocking(
+                var outcome = BuildersKt.<VerificationOutcome>runBlocking(
                         EmptyCoroutineContext.INSTANCE,
                         (scope, continuation) -> verifier.verify(inlinedOxsts, progressContext, continuation));
-                LOGGER.info("LSP verify {}", verification.getVerdict());
-                var directory = CaseDirectoryNameKt.caseRecheckDirectory(
-                        outputDirectory, verificationCaseDiscoverer.caseOf(inlinedOxsts.getClassDeclaration()));
-                return VerificationCaseResult.fromCaseDirectory(
-                        directory,
-                        injector.getInstance(FileExtensionProvider.class).getPrimaryFileExtension(),
-                        portfolio.getId());
+                LOGGER.info("LSP verify {}", outcome.getReport().getResult().getVerdict());
+                return VerificationCaseResult.fromOutcome(outcome, portfolio.getId());
             } catch (Exception e) {
                 LOGGER.warn("Verification threw {}", e.getClass().getSimpleName(), e);
                 return VerificationCaseResult.errored(e.toString(), portfolio.getId());

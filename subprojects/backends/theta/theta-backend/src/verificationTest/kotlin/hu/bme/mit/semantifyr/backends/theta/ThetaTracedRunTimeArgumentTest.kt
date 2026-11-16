@@ -11,12 +11,9 @@ import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.verifier.ReportValue
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
-import hu.bme.mit.semantifyr.verifier.VerificationReport
 import hu.bme.mit.semantifyr.verifier.assertVerdict
 import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
-import hu.bme.mit.semantifyr.verifier.caseReportPath
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
-import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.entry
 import org.junit.jupiter.api.BeforeAll
@@ -24,7 +21,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.math.BigInteger
 import java.nio.file.Path
-import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 class ThetaTracedRunTimeArgumentTest {
@@ -81,16 +77,16 @@ class ThetaTracedRunTimeArgumentTest {
         val case = helper.collectVerificationCases(context).single()
         val outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(ThetaTracedRunTimeArgumentTest::class.java)
 
-        val result = helper.runVerificationCase(
+        val outcome = helper.runVerificationCase(
             context = context,
             case = case,
             verificationPortfolio = SingleBackendPortfolio(ThetaBackend(), ThetaConfig.CegarExplPredCombined),
             outputDirectory = outputDirectory,
         )
 
-        assertVerdict(case.qualifiedName, VerificationVerdict.Passed, result)
-        assertThat(result.witness).isNotNull()
-        val trace = Json.decodeFromString<VerificationReport>(caseReportPath(outputDirectory, case).readText()).trace!!
+        assertVerdict(case.qualifiedName, VerificationVerdict.Passed, outcome.report.result)
+        assertThat(outcome.report.result.witness).isNotNull()
+        val trace = outcome.report.trace!!
         assertThat(trace.variables).noneSatisfy {
             assertThat(it.variable).contains(TransitionTracerNames.ARGUMENT_PREFIX)
         }

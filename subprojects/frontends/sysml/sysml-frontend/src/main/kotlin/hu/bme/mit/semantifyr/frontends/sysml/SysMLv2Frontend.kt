@@ -21,9 +21,8 @@ import hu.bme.mit.semantifyr.oxsts.lang.library.ClasspathBasedOxstsLibrary
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
-import hu.bme.mit.semantifyr.verifier.VerificationResult
+import hu.bme.mit.semantifyr.verifier.VerificationOutcome
 import hu.bme.mit.semantifyr.verifier.caseDirectory
-import hu.bme.mit.semantifyr.verifier.caseReportPath
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import kotlinx.coroutines.Dispatchers
@@ -88,17 +87,17 @@ class SysMLv2Frontend private constructor(
     suspend fun verify(
         case: VerificationCase,
         progress: ProgressContext = ProgressContext.Silent,
-    ): VerificationResult {
+    ): VerificationOutcome {
         val verifier = buildVerifier(sysmlConfiguration.outputDirectory)
         logger.info { "Verifying SysMLv2 case '${case.qualifiedName}' (variant=${variant.name})" }
-        val result = verifier.verify(case, progress)
-        logger.info { "SysMLv2 case '${case.qualifiedName}' -> ${result.verdict}" }
-        if (result.witness != null) {
+        val outcome = verifier.verify(case, progress)
+        logger.info { "SysMLv2 case '${case.qualifiedName}' -> ${outcome.report.result.verdict}" }
+        if (outcome.report.result.witness != null) {
             withContext(Dispatchers.IO) {
-                writeSysMLTrace(case)
+                writeSysMLTrace(case, outcome.reportPath)
             }
         }
-        return result
+        return outcome
     }
 
     fun sysmlTracePath(case: VerificationCase): Path {
@@ -106,12 +105,12 @@ class SysMLv2Frontend private constructor(
     }
 
     // a witness the generator cannot express keeps its verdict, as an artifact the verifier fails to write does
-    private fun writeSysMLTrace(case: VerificationCase) {
+    private fun writeSysMLTrace(case: VerificationCase, reportPath: Path) {
         val tracePath = sysmlTracePath(case)
         try {
             sharedSysMLv2Compiler.trace(
                 sourcePath = sysmlConfiguration.sourcePath,
-                reportPath = caseReportPath(sysmlConfiguration.outputDirectory, case),
+                reportPath = reportPath,
                 nameMapPath = nameMapPath(compiledOxstsPath),
                 outputPath = tracePath,
             )

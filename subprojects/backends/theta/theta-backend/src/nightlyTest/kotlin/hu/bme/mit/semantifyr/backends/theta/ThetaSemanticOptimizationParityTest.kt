@@ -82,7 +82,7 @@ class ThetaSemanticOptimizationParityTest {
             outputDirectory = outputDirectory.resolve(name),
             timeout = 1.minutes,
             optimization = optimization,
-        )
+        ).report.result
     }
 
     private fun describe(result: VerificationResult): String {

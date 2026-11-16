@@ -36,7 +36,6 @@ import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.VerificationReport
 import hu.bme.mit.semantifyr.verifier.caseDirectoryName
-import hu.bme.mit.semantifyr.verifier.caseReportPath
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
@@ -85,7 +84,7 @@ class SemantifyrVerifierImplTest {
         val portfolio = ScriptedPortfolio { _, _ -> backendResult }
 
         val result = build(portfolio, output)
-            .verify(loadFirstCase())
+            .verify(loadFirstCase()).report.result
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(result.metadata.backendId).isEqualTo("fake-backend")
@@ -100,7 +99,7 @@ class SemantifyrVerifierImplTest {
         }
 
         val result = build(portfolio, output, timeout = 10.seconds)
-            .verify(loadFirstCase())
+            .verify(loadFirstCase()).report.result
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Timeout)
         assertThat(result.message).startsWith("Timeout").endsWith("exceeded.").doesNotContain("back-annotating")
@@ -128,12 +127,13 @@ class SemantifyrVerifierImplTest {
         }
         val case = loadFirstCase()
 
-        val result = build(portfolio, output, timeout = 1.milliseconds).verify(case)
+        val outcome = build(portfolio, output, timeout = 1.milliseconds).verify(case)
+        val result = outcome.report.result
 
+        assertThat(outcome.reportPath).exists()
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Timeout)
         assertThat(result.message).isEqualTo("Timeout (1ms) exceeded while compiling.")
         assertThat(portfolio.invocations).isZero
-        assertThat(caseReportPath(output, case)).exists()
     }
 
     @Test
@@ -142,7 +142,7 @@ class SemantifyrVerifierImplTest {
             RejectingVariablesContext(request).execute()
         }
 
-        val result = build(portfolio, output).verify(loadFirstCase())
+        val result = build(portfolio, output).verify(loadFirstCase()).report.result
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
         assertThat(result.message).isEqualTo("scripted does not support simple.semantifyr:12: variables of type int (x)")
@@ -155,7 +155,7 @@ class SemantifyrVerifierImplTest {
         }
 
         val result = build(portfolio, output)
-            .verify(loadFirstCase())
+            .verify(loadFirstCase()).report.result
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
         assertThat(result.message).contains("engine cannot represent")
@@ -168,7 +168,7 @@ class SemantifyrVerifierImplTest {
         }
 
         val result = build(portfolio, output)
-            .verify(loadFirstCase())
+            .verify(loadFirstCase()).report.result
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
         assertThat(result.message).contains("portfolio blew up")
@@ -195,7 +195,7 @@ class SemantifyrVerifierImplTest {
         }
 
         val result = build(portfolio, output)
-            .verify(loadFirstCase())
+            .verify(loadFirstCase()).report.result
 
         assertThat(result.metrics.totalDuration).isGreaterThan(Duration.ZERO)
         assertThat(result.metrics.verifier.compilationDuration).isGreaterThan(Duration.ZERO)
@@ -208,7 +208,7 @@ class SemantifyrVerifierImplTest {
         val portfolio = ScriptedPortfolio { _, _ -> error("boom") }
 
         val result = build(portfolio, output)
-            .verify(loadFirstCase())
+            .verify(loadFirstCase()).report.result
 
         assertThat(result.metrics.backend).isNull()
     }
@@ -218,11 +218,10 @@ class SemantifyrVerifierImplTest {
         val portfolio = ScriptedPortfolio { _, _ -> decisiveResult(VerificationVerdict.Passed) }
         val case = loadFirstCase()
 
-        build(portfolio, output, artifacts = ArtifactConfig.ALL).verify(case)
+        val outcome = build(portfolio, output, artifacts = ArtifactConfig.ALL).verify(case)
 
-        val caseDirectory = output.resolve("simple.${case.qualifiedName.replace("::", ".")}")
-        val reportFile = caseDirectory.resolve("report.json")
-        assertThat(reportFile.exists()).isTrue
+        assertThat(outcome.reportPath).isEqualTo(output.resolve("simple.${case.qualifiedName.replace("::", ".")}").resolve("report.json"))
+        assertThat(Json.decodeFromString<VerificationReport>(outcome.reportPath.readText())).isEqualTo(outcome.report)
     }
 
     @Test
@@ -246,30 +245,25 @@ class SemantifyrVerifierImplTest {
     }
 
     @Test
-    suspend fun `report json carries phase durations, optimizer stats and model sizes`(@TempDir output: Path) {
+    suspend fun `the compilation duration is the compilation's unfolding duration`(@TempDir output: Path) {
         val portfolio = ScriptedPortfolio { _, _ -> decisiveResult(VerificationVerdict.Passed) }
-        val case = loadFirstCase()
 
-        val result = build(portfolio, output, artifacts = ArtifactConfig.ALL).verify(case)
+        val result = build(portfolio, output, artifacts = ArtifactConfig.ALL).verify(loadFirstCase()).report.result
 
-        val report = Json.decodeFromString<VerificationReport>(caseReportPath(output, case).readText())
-        assertThat(report.result.metrics.verifier.compilation).isEqualTo(result.metrics.verifier.compilation)
         assertThat(result.metrics.verifier.compilationDuration).isEqualTo(result.metrics.verifier.compilation.unfoldingDuration)
     }
 
     @Test
-    suspend fun `report json carries the verdict's soundness direction and whether it is trusted`(@TempDir output: Path) {
+    suspend fun `the report carries the verdict's soundness direction and whether it is trusted`(@TempDir output: Path) {
         val portfolio = ScriptedPortfolio { _, _ ->
             decisiveResult(VerificationVerdict.Passed).copy(
                 soundness = SoundnessDirection.UnderApproximating,
                 isTrusted = false,
             )
         }
-        val case = loadFirstCase()
 
-        build(portfolio, output, artifacts = ArtifactConfig.ALL).verify(case)
+        val result = build(portfolio, output, artifacts = ArtifactConfig.ALL).verify(loadFirstCase()).report.result
 
-        val result = Json.decodeFromString<VerificationReport>(caseReportPath(output, case).readText()).result
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(result.soundness).isEqualTo(SoundnessDirection.UnderApproximating)
         assertThat(result.isTrusted).isFalse
@@ -288,8 +282,8 @@ class SemantifyrVerifierImplTest {
         val first = verifier.verify(witness)
         val second = verifier.verify(witness)
 
-        assertThat(first.verdict).isEqualTo(VerificationVerdict.Passed)
-        assertThat(second.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(first.report.result.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(second.report.result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(serializer.serialize(witness)).isEqualTo(before)
         assertThat(caseDirectory.resolve("report.json").exists()).isTrue
         assertThat(caseDirectory.resolve("witness.semantifyr").exists()).isTrue

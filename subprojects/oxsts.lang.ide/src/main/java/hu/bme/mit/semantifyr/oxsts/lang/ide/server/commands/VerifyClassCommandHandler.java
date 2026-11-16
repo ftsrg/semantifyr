@@ -18,16 +18,14 @@ import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
-import hu.bme.mit.semantifyr.verifier.CaseDirectoryNameKt;
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier;
-import hu.bme.mit.semantifyr.verifier.VerificationResult;
+import hu.bme.mit.semantifyr.verifier.VerificationOutcome;
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer;
 import java.util.List;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.BuildersKt;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
-import org.eclipse.xtext.resource.FileExtensionProvider;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,14 +116,14 @@ public class VerifyClassCommandHandler
 
                 var match = verificationCaseDiscoverer.findByQualifiedName(context, targetQualifiedName);
 
-                var verification = BuildersKt.<VerificationResult>runBlocking(
+                var outcome = BuildersKt.<VerificationOutcome>runBlocking(
                         EmptyCoroutineContext.INSTANCE,
                         (scope, continuation) -> verifier.verify(match, progressContext, continuation));
-                LOGGER.info("LSP verify '{}' -> {}", targetQualifiedName, verification.getVerdict());
-                var result = VerificationCaseResult.fromCaseDirectory(
-                        CaseDirectoryNameKt.caseDirectory(outputDirectory, match),
-                        injector.getInstance(FileExtensionProvider.class).getPrimaryFileExtension(),
-                        portfolio.getId());
+                LOGGER.info(
+                        "LSP verify '{}' -> {}",
+                        targetQualifiedName,
+                        outcome.getReport().getResult().getVerdict());
+                var result = VerificationCaseResult.fromOutcome(outcome, portfolio.getId());
                 if (serverSettings.keepsTemporaryArtifacts() && result.witnessUri() != null) {
                     witnessOwners.record(URI.createURI(result.witnessUri()), caseResource);
                 }

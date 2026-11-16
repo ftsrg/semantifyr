@@ -18,8 +18,6 @@ import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult;
-import hu.bme.mit.semantifyr.lang.ide.wire.VerificationReportAdapter;
-import java.io.IOException;
 import java.util.List;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.BuildersKt;
@@ -107,7 +105,7 @@ public class VerifyGammaCaseCommandHandler
                 LOGGER.info(
                         "LSP verify '{}' -> {}",
                         gammaCase.getQualifiedName(),
-                        gammaResult.getVerification().getVerdict());
+                        gammaResult.getOutcome().getReport().getResult().getVerdict());
 
                 return toCaseResult(gammaResult, portfolio.getId());
             } catch (Exception e) {
@@ -122,12 +120,10 @@ public class VerifyGammaCaseCommandHandler
     }
 
     // the witness pane shows the trace in the case's own language
-    private static VerificationCaseResult toCaseResult(GammaVerificationResult gammaResult, String portfolioId)
-            throws IOException {
-        var report = VerificationReportAdapter.read(gammaResult.getReportPath());
+    private static VerificationCaseResult toCaseResult(GammaVerificationResult gammaResult, String portfolioId) {
         var witness = gammaResult.getWitness();
         var witnessUri =
                 witness == null ? null : witness.getGammaTracePath().toUri().toString();
-        return VerificationCaseResult.fromReport(report, portfolioId, witnessUri);
+        return VerificationCaseResult.fromReport(gammaResult.getOutcome().getReport(), portfolioId, witnessUri);
     }
 }

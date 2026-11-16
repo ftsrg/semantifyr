@@ -6,12 +6,9 @@
 
 package hu.bme.mit.semantifyr.lang.ide.server.wire;
 
-import hu.bme.mit.semantifyr.lang.ide.wire.VerificationReportAdapter;
 import hu.bme.mit.semantifyr.verifier.VerificationMetricsDto;
+import hu.bme.mit.semantifyr.verifier.VerificationOutcome;
 import hu.bme.mit.semantifyr.verifier.VerificationReport;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import org.eclipse.emf.common.util.URI;
 
 public record VerificationCaseResult(
@@ -23,15 +20,12 @@ public record VerificationCaseResult(
         VerificationReport report,
         String witnessUri) {
 
-    public static VerificationCaseResult fromCaseDirectory(Path caseDirectory, String fileExtension, String portfolioId)
-            throws IOException {
-        var report = VerificationReportAdapter.read(caseDirectory.resolve("report.json"));
-        var witness = caseDirectory.resolve("witness." + fileExtension);
-        String witnessUri = null;
-        if (report.getTrace() != null && Files.isRegularFile(witness)) {
-            witnessUri = URI.createFileURI(witness.toAbsolutePath().toString()).toString();
-        }
-        return fromReport(report, portfolioId, witnessUri);
+    public static VerificationCaseResult fromOutcome(VerificationOutcome outcome, String portfolioId) {
+        var witness = outcome.getWitnessPath();
+        var witnessUri = witness == null
+                ? null
+                : URI.createFileURI(witness.toAbsolutePath().toString()).toString();
+        return fromReport(outcome.getReport(), portfolioId, witnessUri);
     }
 
     public static VerificationCaseResult fromReport(VerificationReport report, String portfolioId, String witnessUri) {
