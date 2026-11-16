@@ -12,7 +12,6 @@ import {
     missingCallsMessage,
     noWitnessMessage,
     type ReportCall,
-    reportKindLabel,
     type ResultTrace,
     resultTraceOf,
     soundnessLabel,
@@ -222,7 +221,6 @@ export function renderTrace(label: string, result: VerificationCaseResult, trace
     if (validation !== undefined) {
         lines.push("", `Validation: ${renderValidation(validation)}`);
     }
-    lines.push("", `Report: ${reportKindLabel(trace.kind)}`);
     if (trace.witnessUri !== null) {
         lines.push("", `${witnessLabel(trace.witnessUri)}: ${trace.witnessUri}`);
     }

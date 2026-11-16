@@ -50,7 +50,7 @@ function sameStart(left: Range, right: Range): boolean {
   return left.start.line === right.start.line && left.start.character === right.start.character
 }
 
-// a run's progress names its kind in the title of its begin; only the leading verb is matched, the rest is reworded freely
+// the titles are reworded freely, and the leading verb is the part that stays
 function runKindOf(title: string | undefined): 'verify' | 'validate' | null {
   if (title?.startsWith('Verif')) {
     return 'verify'

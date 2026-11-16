@@ -110,6 +110,65 @@ describe('the fixtures derived from a recorded transcript', () => {
     expect(fixture.validateProgress).toEqual(validation)
   })
 
+  it('keep the longest finished verification series when a shorter one finishes after it', () => {
+    const fixtures = fixturesOf(transcriptOf([
+      verify(2, 1),
+      created(100, 'b'),
+      ...secondVerification.map((value) => {
+        return progressed('b', value)
+      }),
+      server(response(2, { status: 'failed' })),
+      verify(3, 2),
+      created(101, 'a'),
+      ...firstVerification.map((value) => {
+        return progressed('a', value)
+      }),
+      server(response(3, { status: 'passed' })),
+    ]))
+
+    expect(fixtures.get('oxsts')!.verifyProgress).toEqual(secondVerification)
+  })
+
+  it('skip a verification series that never finished, however long it is', () => {
+    const fixtures = fixturesOf(transcriptOf([
+      verify(2, 1),
+      created(100, 'b'),
+      ...secondVerification.slice(0, -1).map((value) => {
+        return progressed('b', value)
+      }),
+      server(response(2, { status: 'failed' })),
+      verify(3, 2),
+      created(101, 'a'),
+      ...firstVerification.map((value) => {
+        return progressed('a', value)
+      }),
+      server(response(3, { status: 'passed' })),
+    ]))
+
+    expect(fixtures.get('oxsts')!.verifyProgress).toEqual(firstVerification)
+  })
+
+  it('never file a validation series as the verification series, though it is longer', () => {
+    const fixtures = fixturesOf(transcriptOf([
+      verify(2, 1),
+      created(100, 'a'),
+      ...firstVerification.map((value) => {
+        return progressed('a', value)
+      }),
+      server(response(2, { status: 'failed' })),
+      client(request(3, 'workspace/executeCommand', { command: 'oxsts.case.validateWitness', arguments: [{ uri: WITNESS_URI, range: rangeAt(0) }] })),
+      created(101, 'v'),
+      ...validation.map((value) => {
+        return progressed('v', value)
+      }),
+      server(response(3, { status: 'valid' })),
+    ]))
+
+    const fixture = fixtures.get('oxsts')!
+    expect(fixture.verifyProgress).toEqual(firstVerification)
+    expect(fixture.validateProgress).toEqual(validation)
+  })
+
   it('fail naming the flavor when it verified a case and no verification series finished', () => {
     const transcript = transcriptOf([
       verify(2, 1),

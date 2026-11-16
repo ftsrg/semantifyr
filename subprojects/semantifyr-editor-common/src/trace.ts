@@ -4,13 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { Fraction, ReportCall, ReportKind, ReportState, ReportTrace, ReportValue, VerificationCaseResult } from "./wire.ts";
+import type { Fraction, ReportCall, ReportState, ReportTrace, ReportValue, VerificationCaseResult } from "./wire.ts";
 
 const CLOCK_TYPE = "semantifyr::clock";
 
-// the trace of a result, with the report's kind and the file the trace's text was written to
+// the trace of a result, with the file the trace's text was written to
 export interface ResultTrace extends ReportTrace {
-    kind: ReportKind;
     witnessUri: string | null;
 }
 
@@ -76,7 +75,7 @@ export function resultTraceOf(result: VerificationCaseResult | null | undefined)
     if (!result || !report?.trace) {
         return null;
     }
-    return { ...report.trace, kind: report.kind, witnessUri: result.witnessUri ?? null };
+    return { ...report.trace, witnessUri: result.witnessUri ?? null };
 }
 
 export function formatReportValue(value: ReportValue): string {

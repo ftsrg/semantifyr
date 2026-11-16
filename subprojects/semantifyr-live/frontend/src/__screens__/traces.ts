@@ -135,7 +135,6 @@ function traceOf(witnessUri: string, recorded: boolean, timed: boolean): ResultT
       return { source: index, target: index + 1, elapsed: timed ? ELAPSED[index] ?? 0 : 0, calls: recorded ? calls : [] }
     }),
     missingCalls: null,
-    kind: 'run',
     witnessUri,
   }
 }

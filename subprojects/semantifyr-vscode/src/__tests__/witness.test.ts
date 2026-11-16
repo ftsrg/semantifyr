@@ -18,8 +18,6 @@ describe('renderTrace', () => {
             '',
             'Verdict: failed (backend theta-cegar-expl, portfolio theta, exact)',
             '',
-            'Report: Run',
-            '',
             `Witness: ${witnessUri}`,
             '',
             '## Init',
@@ -55,7 +53,7 @@ describe('renderTrace', () => {
     ])('labels the opened file %s as %s', (uri, label) => {
         const trace = { ...counterexample, witnessUri: uri };
 
-        expect(renderTrace('Safe', result('failed', trace), trace).split('\n')[6]).toBe(`${label}: ${uri}`);
+        expect(renderTrace('Safe', result('failed', trace), trace).split('\n')[4]).toBe(`${label}: ${uri}`);
     });
 
     it('appends the message of a passed verdict to the verdict line', () => {
@@ -113,8 +111,6 @@ describe('renderTrace', () => {
             '',
             'Verdict: passed (exact)',
             '',
-            'Report: Run',
-            '',
             '## Init',
             '',
             'No calls.',
@@ -136,12 +132,6 @@ describe('renderTrace', () => {
 });
 
 describe('renderTrace of what the report adds', () => {
-    it('names a validation', () => {
-        const trace: ResultTrace = { ...counterexample, kind: 're-check' };
-
-        expect(renderTrace('Safe', result('failed', trace), trace).split('\n')[4]).toBe('Report: Validation');
-    });
-
     it('gives each step its elapsed time in a timed model', () => {
         const trace: ResultTrace = { ...counterexample, steps: [{ source: 0, target: 1, elapsed: '3/2', calls: [] }] };
 

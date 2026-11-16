@@ -298,7 +298,6 @@ const EMPTY_TRACE: ResultTrace = {
   states: [{ values: {} }],
   steps: [],
   missingCalls: null,
-  kind: 'run',
   witnessUri: null,
 }
 

@@ -195,7 +195,6 @@ async function record(liveUrl: string, adminUserHeader: string | undefined): Pro
   return { transcript, admin }
 }
 
-
 function restOf(transcript: Transcript): RestFixture {
   const bodyOf = (path: string): unknown => {
     const found = transcript.rest.findLast((call) => {

@@ -141,11 +141,11 @@ describe("traceCalls", () => {
 });
 
 describe("resultTraceOf", () => {
-    const report = { kind: "re-check", trace: trace({}) } as VerificationReport;
+    const report = { kind: "run", trace: trace({}) } as VerificationReport;
 
-    it("pairs the report's trace with its kind and the file its text was written to", () => {
+    it("pairs the report's trace with the file its text was written to", () => {
         expect(resultTraceOf({ status: "failed", message: null, backendId: null, portfolioId: null, metrics: null, report, witnessUri: "file:///workspace/witness.semantifyr" }))
-            .toMatchObject({ root: "root", kind: "re-check", witnessUri: "file:///workspace/witness.semantifyr" });
+            .toMatchObject({ root: "root", witnessUri: "file:///workspace/witness.semantifyr" });
     });
 
     it("has no trace for a result without a report or a report without a trace", () => {

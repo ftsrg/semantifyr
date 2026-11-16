@@ -5,7 +5,7 @@
  */
 
 import type React from 'react'
-import { formatSeconds, isoDurationToMs, ReportKind, type SoundnessDirection, soundnessLabel } from '@semantifyr/editor-common'
+import { formatSeconds, isoDurationToMs, type SoundnessDirection, soundnessLabel } from '@semantifyr/editor-common'
 
 import { useStore } from '../lib/stores/useStore'
 import type { VerificationCaseState } from '../lib/verification/engine'
@@ -78,7 +78,7 @@ export function RunDetails({ caseState }: { caseState: VerificationCaseState }):
   return (
     <div className="run-details" data-testid="run-details">
       <span className="run-line">
-        <span className="run-label">{caseState.trace?.kind === ReportKind.Recheck ? 'Validation' : 'Verification'}</span>
+        <span className="run-label">Verification</span>
         <span>{runLine(caseState.metrics?.totalDuration, portfolio(caseState.portfolioId), caseState.backendId, caseState.waited, caseState.soundness)}</span>
       </span>
       <span className="run-line">

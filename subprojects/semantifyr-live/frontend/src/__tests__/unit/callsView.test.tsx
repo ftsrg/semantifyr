@@ -25,7 +25,6 @@ function traceOf(...calls: ReportCall[]): ResultTrace {
     states: [{ values: {} }, { values: {} }],
     steps: [{ source: 0, target: 1, elapsed: 0, calls }],
     missingCalls: null,
-    kind: 'run',
     witnessUri: null,
   }
 }

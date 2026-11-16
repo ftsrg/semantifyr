@@ -9,13 +9,12 @@ import {
     formatTraceCall,
     missingCallsMessage,
     noWitnessMessage,
-    reportKindLabel,
     traceStepLabel,
     witnessOpenFailureMessage,
     witnessValidationLabel,
     witnessValidationStatusOf,
 } from "../witness.ts";
-import { ReportKind, WitnessValidationStatus } from "../wire.ts";
+import { WitnessValidationStatus } from "../wire.ts";
 
 describe("formatTraceCall", () => {
     it("names the instance, the transition and the argument values", () => {
@@ -43,11 +42,6 @@ describe("witness messages", () => {
 
     it("says why the calls are missing", () => {
         expect(missingCallsMessage("the backend gave no trace variables")).toBe("The calls of this trace could not be obtained: the backend gave no trace variables");
-    });
-
-    it("tells a validation from a run", () => {
-        expect(reportKindLabel(ReportKind.Run)).toBe("Run");
-        expect(reportKindLabel(ReportKind.Recheck)).toBe("Validation");
     });
 
     it("names the witness that does not open and why", () => {

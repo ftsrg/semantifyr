@@ -50,14 +50,13 @@ export const counterexample: ResultTrace = {
         },
     ],
     missingCalls: null,
-    kind: 'run',
     witnessUri,
 };
 
 function reportOf(status: VerificationCaseResult['status'], trace: ResultTrace | null): VerificationReport {
     return {
         version: 2,
-        kind: trace?.kind ?? 'run',
+        kind: 'run',
         verificationCase: 'lamp::Safe',
         portfolioId: 'theta',
         optimization: { enabled: [] },
