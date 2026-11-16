@@ -27,6 +27,7 @@ import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.BuildersKt;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
+import org.eclipse.xtext.resource.FileExtensionProvider;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,7 +123,9 @@ public class VerifyClassCommandHandler
                         (scope, continuation) -> verifier.verify(match, progressContext, continuation));
                 LOGGER.info("LSP verify '{}' -> {}", targetQualifiedName, verification.getVerdict());
                 var result = VerificationCaseResult.fromCaseDirectory(
-                        CaseDirectoryNameKt.caseDirectory(outputDirectory, match), portfolio.getId());
+                        CaseDirectoryNameKt.caseDirectory(outputDirectory, match),
+                        injector.getInstance(FileExtensionProvider.class).getPrimaryFileExtension(),
+                        portfolio.getId());
                 if (serverSettings.keepsTemporaryArtifacts() && result.witnessUri() != null) {
                     witnessOwners.record(URI.createURI(result.witnessUri()), caseResource);
                 }

@@ -51,7 +51,7 @@ class UppaalWitnessReparseTest {
 
     private suspend fun checkStrictTestWitness(validationPortfolio: VerificationPortfolio) {
         val checked = helper.checkWitnessReparses(
-            modelPath = Path("build/test-models/semantic/clocks.oxsts"),
+            modelPath = Path("build/test-models/semantic/clocks.semantifyr"),
             qualifiedName = "semantifyr::verification::lang::clocks::ClockStrictTestDenseReach",
             verificationPortfolio = portfolio,
             outputDirectory = outputDirectory,

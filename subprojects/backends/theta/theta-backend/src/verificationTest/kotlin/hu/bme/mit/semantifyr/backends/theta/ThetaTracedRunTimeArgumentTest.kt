@@ -75,7 +75,7 @@ class ThetaTracedRunTimeArgumentTest {
 
     @Test
     suspend fun `a traced call with a run-time argument verifies with the argument's value in its call and not in the states`(@TempDir modelDirectory: Path) {
-        val modelFile = modelDirectory.resolve("traced_run_time_argument.oxsts")
+        val modelFile = modelDirectory.resolve("traced_run_time_argument.semantifyr")
         modelFile.writeText(MODEL)
         val context = helper.semantifyrLoader.loadStandaloneModel(modelFile)
         val case = helper.collectVerificationCases(context).single()

@@ -35,6 +35,7 @@ import hu.bme.mit.semantifyr.verifier.assumePortfolioAvailable
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import org.assertj.core.api.Assertions.assertThat
+import org.eclipse.xtext.resource.FileExtensionProvider
 import org.junit.jupiter.api.Named
 import org.junit.jupiter.params.provider.Arguments
 import java.nio.file.Path
@@ -185,15 +186,16 @@ class GammaFrontendTestHelper {
 
     private fun hasUnclosedClockTest(frontend: GammaFrontend, gammaVerificationCase: GammaVerificationCase): Boolean {
         val caseDirectory = frontend.outputDirectory.resolve(gammaVerificationCase.qualifiedName)
+        val fileExtension = oxstsInjector.getInstance(FileExtensionProvider::class.java).primaryFileExtension
         val importsDirectory = GammaCompiler.importsDirectory(caseDirectory)
         val importedPaths = if (importsDirectory.isDirectory()) {
-            importsDirectory.listDirectoryEntries("*.oxsts")
+            importsDirectory.listDirectoryEntries("*.$fileExtension")
         } else {
             emptyList()
         }
         val context = oxstsInjector.getInstance(SemantifyrLoader::class.java).startContext()
             .loadLibraryPaths(frontend.libraryPaths)
-            .loadModelPaths(importedPaths + listOf(caseDirectory.resolve(GammaCompiler.MODEL_FILE_NAME)))
+            .loadModelPaths(importedPaths + listOf(GammaCompiler.modelPath(caseDirectory, fileExtension)))
             .buildAndResolve()
         val gammaModel = gammaVerificationCase.declaration.eContainer() as GammaModelPackage
         val oxstsCase = oxstsInjector.getInstance(VerificationCaseDiscoverer::class.java).findByQualifiedName(

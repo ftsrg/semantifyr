@@ -24,9 +24,10 @@ public record VerificationCaseResult(
         String witnessUri) {
 
     // the verifier writes the report and the witness model of a case beside each other
-    public static VerificationCaseResult fromCaseDirectory(Path caseDirectory, String portfolioId) throws IOException {
+    public static VerificationCaseResult fromCaseDirectory(Path caseDirectory, String fileExtension, String portfolioId)
+            throws IOException {
         var report = VerificationReportAdapter.read(caseDirectory.resolve("report.json"));
-        var witness = caseDirectory.resolve("witness.oxsts");
+        var witness = caseDirectory.resolve("witness." + fileExtension);
         String witnessUri = null;
         if (report.getTrace() != null && Files.isRegularFile(witness)) {
             witnessUri = URI.createFileURI(witness.toAbsolutePath().toString()).toString();

@@ -116,7 +116,7 @@ class VerificationCaseResultTest {
     @Test
     void theWireCarriesTheReportAsItsFileHoldsIt() {
         var report = VerificationReportAdapter.decode(REPORT);
-        var result = VerificationCaseResult.fromReport(report, "smart", "file:/case/witness.oxsts");
+        var result = VerificationCaseResult.fromReport(report, "smart", "file:/case/witness.semantifyr");
 
         var wire = CommandGson.INSTANCE.toJsonTree(result).getAsJsonObject();
 

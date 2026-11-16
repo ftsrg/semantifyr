@@ -23,6 +23,7 @@ import java.util.List;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.BuildersKt;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
+import org.eclipse.xtext.resource.FileExtensionProvider;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,7 +103,10 @@ public class VerifyInlinedOxstsCommandHandler
                 LOGGER.info("LSP verify {}", verification.getVerdict());
                 var directory = CaseDirectoryNameKt.caseRecheckDirectory(
                         outputDirectory, verificationCaseDiscoverer.caseOf(inlinedOxsts.getClassDeclaration()));
-                return VerificationCaseResult.fromCaseDirectory(directory, portfolio.getId());
+                return VerificationCaseResult.fromCaseDirectory(
+                        directory,
+                        injector.getInstance(FileExtensionProvider.class).getPrimaryFileExtension(),
+                        portfolio.getId());
             } catch (Exception e) {
                 LOGGER.warn("Verification threw {}", e.getClass().getSimpleName(), e);
                 return VerificationCaseResult.errored(e.toString(), portfolio.getId());

@@ -44,7 +44,7 @@ class ReferenceTraceTest {
         val output = temporaryDirectory.resolve("out").resolve("trace.sysml")
         val compiler = SysMLv2Compiler(temporaryDirectory.resolve("cache"))
         val model = crossroadsWorkspace()
-        val nameMap = nameMapPath(compiler.compile(model, temporaryDirectory.resolve("compiled").resolve("crossroads.oxsts")))
+        val nameMap = nameMapPath(compiler.compile(model, temporaryDirectory.resolve("compiled").resolve("crossroads.semantifyr")))
         output.parent.createDirectories()
 
         assertThatThrownBy {
