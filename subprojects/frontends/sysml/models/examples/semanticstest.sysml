@@ -341,6 +341,25 @@ verification def WaitingAndDoneAreMutuallyExclusiveTestCase {
     }
 }
 
+part def SimultaneousDeadlinesModel {
+    part left : TimeoutTransitionModel;
+    part right : TimeoutTransitionModel;
+}
+
+verification def SimultaneousDeadlinesFireInDifferentStepsTestCase {
+    subject system : SimultaneousDeadlinesModel;
+    objective {
+        verify requirement {
+            require constraint {
+                eventually(
+                    isStateActive(system.left.Behaviour.Done)
+                    and isStateActive(system.right.Behaviour.Waiting)
+                )
+            }
+        }
+    }
+}
+
 part def GuardedTransitionModel {
     attribute counter : Integer := 0;
 
