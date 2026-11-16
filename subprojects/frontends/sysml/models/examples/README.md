@@ -19,6 +19,9 @@ The artifacts produced by Semantifyr will reside in the `./out` directory.
 | orion_protocol.sysml       | Bidirectional protocol, `accept when true`, timed keep-alive, cross-hierarchy transitions                                                  |
 | level_crossing.sysml       | Two tracks, a controller and a barrier; the controller forgets a second train                                                              |
 | landing_gear.sysml         | A landing gear behind bay doors after the ABZ 2014 case study, its controller reversing on the handle                                       |
+| lift_step1.sysml           | A lift, its door and motor, called whenever a passenger likes; its controller waits a fixed time for the door                            |
+| lift_step2.sysml           | The lift with an obstacle sensor in its door, which breaks the controller's fixed wait                                                    |
+| lift.sysml                 | The lift whose controller waits for the door's report                                                                                     |
 
 The verification cases were either added as natural "state reachability" properties, or were derived as safety properties from the model.
 

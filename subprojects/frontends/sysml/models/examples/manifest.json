@@ -334,6 +334,30 @@
                 { "name": "SpacecraftBatteryAlwaysAbove30", "verdict": "Unknown", "tier": "Nightly" },
                 { "name": "SpacecraftBatteryAlwaysAbove40", "verdict": "Unknown", "tier": "Nightly" }
             ]
+        },
+        {
+            "file": "lift_step1.sysml",
+            "cases": [
+                { "name": "DoorClosedWhileMoving", "verdict": "Passed", "tier": "Integration" },
+                { "name": "LiftCanMove", "verdict": "Passed", "tier": "Integration" },
+                { "name": "CanSetOffWithDoorOpen", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "lift_step2.sysml",
+            "cases": [
+                { "name": "DoorClosedWhileMoving", "verdict": "Failed", "tier": "Integration" },
+                { "name": "LiftCanMove", "verdict": "Passed", "tier": "Integration" },
+                { "name": "CanSetOffWithDoorOpen", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "lift.sysml",
+            "cases": [
+                { "name": "DoorClosedWhileMoving", "verdict": "Passed", "tier": "Integration" },
+                { "name": "LiftCanMove", "verdict": "Passed", "tier": "Integration" },
+                { "name": "CanSetOffWithDoorOpen", "verdict": "Failed", "tier": "Integration" }
+            ]
         }
     ]
 }
