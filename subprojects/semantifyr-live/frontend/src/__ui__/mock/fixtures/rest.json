@@ -1,10 +1,10 @@
 {
  "info": {
-  "uptime": "PT12M49.698113998S",
-  "startedAt": "2026-11-15T10:54:37.855821555Z",
+  "uptime": "PT12M25.144267050S",
+  "startedAt": "2026-11-16T00:41:38.556788214Z",
   "version": "0.1.0",
-  "commit": "0dadc11ad",
-  "buildTime": "2026-11-15T10:52:10.046891070Z",
+  "commit": "42687bf32",
+  "buildTime": "2026-11-16T00:19:16.351509545Z",
   "activeSessions": 0,
   "maxSessions": 256
  },
@@ -15,7 +15,7 @@
     "displayName": "OXSTS",
     "description": "Semantifyr's language for semantics",
     "languageId": "oxsts",
-    "fileName": "snippet.oxsts",
+    "fileName": "snippet.semantifyr",
     "verificationCommand": "oxsts.case.verify",
     "discoveryCommand": "oxsts.case.discover",
     "validateWitnessCommand": "oxsts.case.validateWitness",
@@ -27,7 +27,7 @@
     "displayName": "OXSTS with the Gamma library",
     "description": "Gamma's semantics",
     "languageId": "oxsts",
-    "fileName": "snippet.oxsts",
+    "fileName": "snippet.semantifyr",
     "verificationCommand": "oxsts.case.verify",
     "discoveryCommand": "oxsts.case.discover",
     "validateWitnessCommand": "oxsts.case.validateWitness",
@@ -39,7 +39,7 @@
     "displayName": "OXSTS with the SysML v2 library",
     "description": "SysML v2's semantics",
     "languageId": "oxsts",
-    "fileName": "snippet.oxsts",
+    "fileName": "snippet.semantifyr",
     "verificationCommand": "oxsts.case.verify",
     "discoveryCommand": "oxsts.case.discover",
     "validateWitnessCommand": "oxsts.case.validateWitness",
@@ -103,43 +103,43 @@
  },
  "libraries": {
   "builtin": [
-   "semantifyr.oxsts"
+   "standard.semantifyr"
   ],
   "semantic": {
    "oxsts-with-gamma-library": [
-    "Actions.oxsts",
-    "Asynchronous.oxsts",
-    "Components.oxsts",
-    "Events.oxsts",
-    "Expressions.oxsts",
-    "Ports.oxsts",
-    "Statecharts.oxsts",
-    "Triggers.oxsts",
-    "Variables.oxsts",
-    "Verification.oxsts"
+    "Actions.semantifyr",
+    "Asynchronous.semantifyr",
+    "Components.semantifyr",
+    "Events.semantifyr",
+    "Expressions.semantifyr",
+    "Ports.semantifyr",
+    "Statecharts.semantifyr",
+    "Triggers.semantifyr",
+    "Variables.semantifyr",
+    "Verification.semantifyr"
    ],
    "oxsts-with-sysmlv2-library": [
-    "Actions.oxsts",
-    "Attributes.oxsts",
-    "Expressions.oxsts",
-    "Items.oxsts",
-    "Parts.oxsts",
-    "Ports.oxsts",
-    "States.oxsts",
-    "Triggers.oxsts",
-    "Verification.oxsts"
+    "Actions.semantifyr",
+    "Attributes.semantifyr",
+    "Expressions.semantifyr",
+    "Items.semantifyr",
+    "Parts.semantifyr",
+    "Ports.semantifyr",
+    "States.semantifyr",
+    "Triggers.semantifyr",
+    "Verification.semantifyr"
    ],
    "gamma": [
-    "Actions.oxsts",
-    "Asynchronous.oxsts",
-    "Components.oxsts",
-    "Events.oxsts",
-    "Expressions.oxsts",
-    "Ports.oxsts",
-    "Statecharts.oxsts",
-    "Triggers.oxsts",
-    "Variables.oxsts",
-    "Verification.oxsts"
+    "Actions.semantifyr",
+    "Asynchronous.semantifyr",
+    "Components.semantifyr",
+    "Events.semantifyr",
+    "Expressions.semantifyr",
+    "Ports.semantifyr",
+    "Statecharts.semantifyr",
+    "Triggers.semantifyr",
+    "Variables.semantifyr",
+    "Verification.semantifyr"
    ]
   },
   "sysml": [
