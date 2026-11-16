@@ -2,12 +2,12 @@
 title: nuXmv
 sidebar_position: 4
 backend: true
-description: The nuXmv backend, its exact verdicts, which a portfolio trusts, its configurations and the constructs it refuses before it runs.
+description: The nuXmv backend, its exact verdicts, which a portfolio trusts, its configurations, how it realizes time and the constructs it refuses before it runs.
 ---
 
 # nuXmv
 
-[nuXmv](https://nuxmv.fbk.eu/) verifies the SMV translation of a case with unbounded integers, and its verdicts are exact, so a portfolio trusts every one of them; its `bdd-invar` configuration needs bounded integers. It needs `nuXmv` on `PATH`. It treats a `@Clock` variable as an ordinary variable. Before it runs, it reports a case Not supported when the case holds a construct listed below, naming each construct and its source line.
+[nuXmv](https://nuxmv.fbk.eu/) verifies the SMV translation of a case with unbounded integers, and its verdicts are exact, so a portfolio trusts every one of them; its `bdd-invar` configuration needs bounded integers. It needs `nuXmv` on `PATH`. It realizes the [wait before every main step](../language/specification/classes-and-behaviour/time.md#the-wait-before-a-step) over dense time: each clock is a real that the step's delay advances, so a model with clocks keeps its exact verdicts. Before it runs, it reports a case Not supported when the case holds a construct listed below, naming each construct and its source line.
 
 ## What the backend refuses
 
@@ -17,3 +17,4 @@ description: The nuXmv backend, its exact verdicts, which a portfolio trusts, it
 - Array literals: the backend receives arrays split into one variable per slot and has no form for an array value.
 - Array indexing: the backend receives arrays split into one variable per slot and has no form for indexing.
 - Integer variables, in the `bdd-invar` configuration only: the translation declares every integer unbounded, and nuXmv cannot build its binary decision diagrams over unbounded integers.
+- Clocks, in the `bdd-invar` configuration only: the translation declares every clock real, and nuXmv cannot build its binary decision diagrams over reals.

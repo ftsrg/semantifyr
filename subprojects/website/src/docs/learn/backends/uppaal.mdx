@@ -7,14 +7,11 @@ description: The Uppaal backend, its clocks, its under-approximating configurati
 
 # Uppaal
 
-[Uppaal](https://uppaal.org/) verifies the timed-automaton translation of a case and is the only backend that honours `@Clock`, which the other backends treat as an ordinary variable. It needs `verifyta` on `PATH`. It havocs an integer only among candidate values, so its configurations are under-approximating, and a portfolio trusts them when they find a trace, except `over-approximation` (`-A`, the convex hull of clock zones), which over-approximates the clock zones and is trusted when it finds none. It declares every integer with its static bound, or with a 31-bit range when it has none within 32 bits, so that an increment or a doubling cannot wrap before Uppaal checks the range, and stops a run as Not supported, naming the variable, when a value leaves the declared range, so a trace it finds never passes through a wrapped value; a proof over a counter without a guard such as `if (counter < 10) { counter := counter + 1 }` counts through that whole range and does not finish in practice. Before it runs, it reports a case Not supported when the case holds a construct listed below, naming each construct, or the variable it concerns, and its source line.
+[Uppaal](https://uppaal.org/) verifies the timed-automaton translation of a case and realizes the [wait before every main step](../language/specification/classes-and-behaviour/time.md#the-wait-before-a-step) over dense time with Uppaal's own clocks. It needs `verifyta` on `PATH`. It havocs an integer only among candidate values, so its configurations are under-approximating, and a portfolio trusts them when they find a trace, except `over-approximation` (`-A`, the convex hull of clock zones), which over-approximates the clock zones and is trusted when it finds none. It declares every integer with its static bound, or with a 31-bit range when it has none within 32 bits, so that an increment or a doubling cannot wrap before Uppaal checks the range, and stops a run as Not supported, naming the variable, when a value leaves the declared range, so a trace it finds never passes through a wrapped value; a proof over a counter without a guard such as `if (counter < 10) { counter := counter + 1 }` counts through that whole range and does not finish in practice. Before it runs, it reports a case Not supported when the case holds a construct listed below, naming each construct, or the variable it concerns, and its source line.
 
 ## What the backend refuses
 
 - Variables of type `real`, `string` or `any`: the Uppaal translation declares integer, boolean, enumeration and clock variables only.
-- `@Clock` on variables that are not data-typed: a clock stands for a time value, which an enumeration cannot hold.
-- Clock resets to values other than 0: the translation resets a clock to 0 only.
-- Havoc on clocks: a clock cannot take an arbitrary value.
 - For-operations: the Uppaal translation has no loop.
 - String literals: Uppaal has no strings.
 - Array literals: the backend receives arrays split into one variable per slot and has no form for an array value.
