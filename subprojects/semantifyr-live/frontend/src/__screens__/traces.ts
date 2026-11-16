@@ -106,7 +106,6 @@ const STEP_THREE = { ...STEP_TWO, 'trackA.Behaviour.activeState': 'trackA.Behavi
 const CALLS = [
   [
     call('trackB.Behaviour.UnnamedTransitionUsage1', 'states::Transition::fire', [call('trackB.controller', 'ports::Port::setOutgoingItem', [], 'global_TrainApproaching')]),
-    call('passTime', 'verification::VerificationCaseDefinition::passTime'),
   ],
   [
     call('controller.Behaviour.UnnamedTransitionUsage6', 'states::Transition::fire', [call('controller.barrier', 'ports::Port::setOutgoingItem', [], 'global_Lower')]),

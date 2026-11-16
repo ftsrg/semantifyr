@@ -94,7 +94,6 @@ describe("traceCalls", () => {
                 elapsed: 0,
                 calls: [
                     { self: "system.track.transition", transition: "Transition::fire", arguments: { item: { speed: 2 } }, calls: [call("system.track.port", "Port::send")] },
-                    call("system", "Case::passTime"),
                 ],
             },
             { source: 1, target: 2, elapsed: 0, calls: [] },
@@ -118,7 +117,6 @@ describe("traceCalls", () => {
                 ["system", "main", null, 0],
                 ["system.track.transition", "Transition::fire", 0, 1],
                 ["system.track.port", "Port::send", 1, 2],
-                ["system", "Case::passTime", 0, 1],
             ],
             [
                 ["system", "main", null, 0],
