@@ -11,10 +11,15 @@ import hu.bme.mit.semantifyr.backends.uppaal.ir.UppaalLocation
 import hu.bme.mit.semantifyr.backends.uppaal.ir.UppaalLocationKind
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
-class UppaalClockEdge(
-    val clockAtoms: List<UppaalClockAtom>,
-    val resets: List<VariableDeclaration>,
-)
+sealed class UppaalClockEdge {
+    class Test(
+        val clockAtoms: List<UppaalClockAtom>,
+    ) : UppaalClockEdge()
+
+    class Reset(
+        val clock: VariableDeclaration,
+    ) : UppaalClockEdge()
+}
 
 class UppaalEmissionContext {
 

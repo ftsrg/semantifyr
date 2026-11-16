@@ -35,18 +35,22 @@ class UppaalDelaySolver {
         }.toMutableMap()
         for ((step, edges) in steps.withIndex()) {
             for (edge in edges) {
-                for (atom in edge.clockAtoms) {
-                    val reset = lastReset[atom.clock] ?: 0
-                    if (reset == step) {
-                        if (!atom.holdsAt(0)) {
-                            throw WitnessFailedException("Uppaal's path fails a test of a clock reset in the same step")
+                when (edge) {
+                    is UppaalClockEdge.Test -> {
+                        for (atom in edge.clockAtoms) {
+                            val reset = lastReset[atom.clock] ?: 0
+                            if (reset == step) {
+                                if (!atom.holdsAt(0)) {
+                                    throw WitnessFailedException("Uppaal's path fails a test of a clock reset in the same step")
+                                }
+                            } else {
+                                constraints += DifferenceConstraint(step, reset, atom.op, atom.bound)
+                            }
                         }
-                    } else {
-                        constraints += DifferenceConstraint(step, reset, atom.op, atom.bound)
                     }
-                }
-                for (clock in edge.resets) {
-                    lastReset[clock] = step
+                    is UppaalClockEdge.Reset -> {
+                        lastReset[edge.clock] = step
+                    }
                 }
             }
             resetsAfter += lastReset.toMap()

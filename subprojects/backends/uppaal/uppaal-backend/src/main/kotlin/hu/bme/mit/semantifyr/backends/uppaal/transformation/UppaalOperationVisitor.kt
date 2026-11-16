@@ -101,7 +101,7 @@ class UppaalOperationVisitor @AssistedInject constructor(
         if (literal?.value != 0) {
             throw BackendUnsupportedException("Uppaal resets clock $name only to 0")
         }
-        val location = context.freshClockLocation(UppaalClockEdge(emptyList(), listOf(variable)))
+        val location = context.freshClockLocation(UppaalClockEdge.Reset(variable))
         context.edges += UppaalEdge(sourceId, location.id, assignment = "$name = 0")
         context.edges += UppaalEdge(location.id, targetId)
     }
@@ -120,7 +120,7 @@ class UppaalOperationVisitor @AssistedInject constructor(
             if (guard.clockAtoms.isEmpty()) {
                 context.edges += UppaalEdge(source, target, guard = rendered)
             } else {
-                val location = context.freshClockLocation(UppaalClockEdge(guard.clockAtoms, emptyList()))
+                val location = context.freshClockLocation(UppaalClockEdge.Test(guard.clockAtoms))
                 context.edges += UppaalEdge(source, location.id, guard = rendered)
                 context.edges += UppaalEdge(location.id, target)
             }
