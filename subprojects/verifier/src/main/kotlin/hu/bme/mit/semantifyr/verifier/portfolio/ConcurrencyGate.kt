@@ -10,6 +10,8 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 
 interface ConcurrencyGate {
+    val slots: Int
+
     suspend fun <T> withPermit(block: suspend () -> T): T
 }
 
@@ -20,6 +22,8 @@ class LimitedConcurrencyGate(
     init {
         require(maxConcurrency >= 1) { "maxConcurrency must be >= 1, got $maxConcurrency" }
     }
+
+    override val slots = maxConcurrency
 
     private val gate = Semaphore(maxConcurrency)
 

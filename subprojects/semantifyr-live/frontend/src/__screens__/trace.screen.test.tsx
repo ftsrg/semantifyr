@@ -348,17 +348,17 @@ describe('the documents menu', () => {
   // the headings of the groups and the first entries under each
   const ENTRIES: Readonly<Record<string, { headings: readonly string[], first: readonly string[], filtered: boolean }>> = {
     sysml: {
-      headings: ['Selected case', 'Model', 'SysML v2 standard library', 'Semantifyr Language standard library', 'Semantic library, in the Semantifyr Language'],
+      headings: ['Selected case', 'Model', 'SysML v2 standard library', 'Semantifyr standard library', 'Semantic library, in Semantifyr'],
       first: ['Trace of the selected case', 'Witness of the selected case', 'Semantifyr model', 'Collections.kerml', 'ScalarValues.kerml'],
       filtered: true,
     },
     gamma: {
-      headings: ['Selected case', 'Model', 'Semantifyr Language standard library', 'Semantic library, in the Semantifyr Language'],
+      headings: ['Selected case', 'Model', 'Semantifyr standard library', 'Semantic library, in Semantifyr'],
       first: ['Trace of the selected case', 'Witness of the selected case', 'Semantifyr model', 'standard.semantifyr', 'Actions.semantifyr'],
       filtered: false,
     },
     oxsts: {
-      headings: ['Selected case', 'Semantifyr Language standard library'],
+      headings: ['Selected case', 'Semantifyr standard library'],
       first: ['Witness of the selected case', 'standard.semantifyr'],
       filtered: false,
     },

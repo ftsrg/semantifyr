@@ -37,6 +37,8 @@ fun fakeCase(qualifiedName: String = "pkg.Foo", vararg tags: String): Verificati
 }
 
 val noopGate: ConcurrencyGate = object : ConcurrencyGate {
+    override val slots = Int.MAX_VALUE
+
     override suspend fun <T> withPermit(block: suspend () -> T): T {
         return block()
     }

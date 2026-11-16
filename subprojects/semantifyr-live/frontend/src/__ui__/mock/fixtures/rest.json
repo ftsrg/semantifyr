@@ -12,7 +12,7 @@
   "flavors": [
    {
     "id": "oxsts",
-    "displayName": "Semantifyr Language",
+    "displayName": "Semantifyr",
     "description": "Semantifyr's language for semantics",
     "languageId": "oxsts",
     "fileName": "snippet.semantifyr",
@@ -24,7 +24,7 @@
    },
    {
     "id": "oxsts-with-gamma-library",
-    "displayName": "Semantifyr Language with the Gamma library",
+    "displayName": "Semantifyr with the Gamma library",
     "description": "Gamma's semantics",
     "languageId": "oxsts",
     "fileName": "snippet.semantifyr",
@@ -36,7 +36,7 @@
    },
    {
     "id": "oxsts-with-sysmlv2-library",
-    "displayName": "Semantifyr Language with the SysML v2 library",
+    "displayName": "Semantifyr with the SysML v2 library",
     "description": "SysML v2's semantics",
     "languageId": "oxsts",
     "fileName": "snippet.semantifyr",

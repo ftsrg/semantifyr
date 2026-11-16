@@ -29,8 +29,8 @@ data class NuxmvConfig(
             checkCommand = "check_invar_ic3",
             setupCommand = "go_msat",
         )
-        val BmcInvar = NuxmvConfig(
-            id = "bmc-invar",
+        val KInductionInvar = NuxmvConfig(
+            id = "kinduction-invar",
             soundness = SoundnessDirection.Exact,
             checkCommand = "msat_check_invar_bmc -a een-sorensson",
             setupCommand = "go_msat",

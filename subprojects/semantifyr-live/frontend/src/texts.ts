@@ -70,9 +70,9 @@ export const LANGUAGES: Readonly<Record<string, LanguageTexts>> = {
     writeCase: 'Write a verification case with a component and an AG or EF property.',
   },
   oxsts: {
-    name: 'Semantifyr Language',
+    name: 'Semantifyr',
     detail: 'Semantifyr\'s language for semantics',
-    server: 'the language server of the Semantifyr Language',
+    server: 'the Semantifyr language server',
     writeCase: 'Mark a class @VerificationCase and give it a prop that returns an AG or EF formula.',
   },
 }

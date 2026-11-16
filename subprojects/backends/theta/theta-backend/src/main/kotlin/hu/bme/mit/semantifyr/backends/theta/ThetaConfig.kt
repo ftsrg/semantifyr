@@ -50,5 +50,12 @@ data class ThetaConfig(
             soundness = SoundnessDirection.Exact,
             parameters = "IC3 --flatten-depth 0 --stacktrace",
         )
+
+        // Horn solving reports a violation without a counterexample, so only a verdict that needs no witness is trusted
+        val Chc = ThetaConfig(
+            id = "chc",
+            soundness = SoundnessDirection.OverApproximating,
+            parameters = "CHC --solver Z3:new --flatten-depth 0 --stacktrace",
+        )
     }
 }

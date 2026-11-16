@@ -21,9 +21,9 @@ function oxstsFlavor(id: string, displayName: string): FlavorInfo {
 }
 
 export const servedFlavors: FlavorInfo[] = [
-  oxstsFlavor('oxsts', 'Semantifyr Language'),
-  oxstsFlavor('oxsts-with-gamma-library', 'Semantifyr Language with the Gamma library'),
-  oxstsFlavor('oxsts-with-sysmlv2-library', 'Semantifyr Language with the SysML v2 library'),
+  oxstsFlavor('oxsts', 'Semantifyr'),
+  oxstsFlavor('oxsts-with-gamma-library', 'Semantifyr with the Gamma library'),
+  oxstsFlavor('oxsts-with-sysmlv2-library', 'Semantifyr with the SysML v2 library'),
   {
     id: 'gamma',
     displayName: 'Gamma',

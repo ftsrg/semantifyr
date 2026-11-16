@@ -35,9 +35,9 @@ object Portfolios {
     val ThetaBoundedBmc: VerificationPortfolio = SingleBackendPortfolio(ThetaBackend(), ThetaConfig.BoundedBmc)
     val ThetaBoundedImc: VerificationPortfolio = SingleBackendPortfolio(ThetaBackend(), ThetaConfig.BoundedImc)
     val ThetaIc3: VerificationPortfolio = SingleBackendPortfolio(ThetaBackend(), ThetaConfig.Ic3)
+    val ThetaChc: VerificationPortfolio = SingleBackendPortfolio(ThetaBackend(), ThetaConfig.Chc)
 
     val UppaalDefault: VerificationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.Default)
-    val UppaalBreadthFirst: VerificationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.BreadthFirst)
     val UppaalDepthFirst: VerificationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.DepthFirst)
     val UppaalRandomDepthFirst: VerificationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.RandomDepthFirst)
     val UppaalOverApproximation: VerificationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.OverApproximation)
@@ -46,7 +46,7 @@ object Portfolios {
     val UppaalAggressiveInclusion: VerificationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.AggressiveInclusion)
 
     val NuxmvIc3Invar: VerificationPortfolio = SingleBackendPortfolio(NuxmvBackend(), NuxmvConfig.Ic3Invar)
-    val NuxmvBmcInvar: VerificationPortfolio = SingleBackendPortfolio(NuxmvBackend(), NuxmvConfig.BmcInvar)
+    val NuxmvKInductionInvar: VerificationPortfolio = SingleBackendPortfolio(NuxmvBackend(), NuxmvConfig.KInductionInvar)
     val NuxmvBddInvar: VerificationPortfolio = SingleBackendPortfolio(NuxmvBackend(), NuxmvConfig.BddInvar)
 
     val SpinExhaustiveDfs: VerificationPortfolio = SingleBackendPortfolio(SpinBackend(), SpinConfig.ExhaustiveDfs)
@@ -68,8 +68,8 @@ object Portfolios {
         ThetaBoundedBmc,
         ThetaBoundedImc,
         ThetaIc3,
+        ThetaChc,
         UppaalDefault,
-        UppaalBreadthFirst,
         UppaalDepthFirst,
         UppaalRandomDepthFirst,
         UppaalOverApproximation,
@@ -77,7 +77,7 @@ object Portfolios {
         UppaalUnderApproximationLarge,
         UppaalAggressiveInclusion,
         NuxmvIc3Invar,
-        NuxmvBmcInvar,
+        NuxmvKInductionInvar,
         NuxmvBddInvar,
         SpinExhaustiveDfs,
         SpinExhaustiveBfs,

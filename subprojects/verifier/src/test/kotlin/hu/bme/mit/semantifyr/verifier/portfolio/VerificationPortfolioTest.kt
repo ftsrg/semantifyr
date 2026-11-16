@@ -20,17 +20,35 @@ import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.fakeMetadata
 import hu.bme.mit.semantifyr.verifier.fakeRequest
 import hu.bme.mit.semantifyr.verifier.noopGate
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
+import java.util.Collections
 import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 
 private class TestPortfolio(
     override val id: String = "p",
-) : VerificationPortfolio() {
+    timeSource: TimeSource = TimeSource.Monotonic,
+) : VerificationPortfolio(timeSource) {
     override val displayName = id
     override val description = "test portfolio"
     override val executorKeys: Set<ExecutorKey<*>> = emptySet()
@@ -50,13 +68,30 @@ private class TestPortfolio(
         error("TestPortfolio.verify is unused; tests call runFirstDecisive / runFirstNDecisive / runAll directly")
     }
 
+    fun case(
+        gate: ConcurrencyGate,
+        timeout: Duration = Duration.INFINITE,
+        progress: ProgressContext = ProgressContext.Silent,
+    ): PortfolioCase {
+        return startCase(mock(), fakeRequest().copy(timeout = timeout), gate, ExecutionEnvironment.Empty, progress)
+    }
+
     suspend fun runFirstDecisive(
         gate: ConcurrencyGate,
         timeout: Duration = Duration.INFINITE,
         progress: ProgressContext = ProgressContext.Silent,
         block: PortfolioScope.() -> Unit,
     ): PortfolioOutcome {
-        return firstDecisive(gate, timeout, progress, block)
+        return firstDecisive(case(gate, timeout, progress), block = block)
+    }
+
+    suspend fun runFirstDecisive(
+        case: PortfolioCase,
+        window: Duration,
+        stage: String? = null,
+        block: PortfolioScope.() -> Unit,
+    ): PortfolioOutcome {
+        return firstDecisive(case, window, stage, block)
     }
 
     suspend fun runFirstNDecisive(
@@ -66,7 +101,7 @@ private class TestPortfolio(
         progress: ProgressContext = ProgressContext.Silent,
         block: PortfolioScope.() -> Unit,
     ): PortfolioOutcome {
-        return firstNDecisive(count, gate, timeout, progress, block)
+        return firstNDecisive(count, case(gate, timeout, progress), block = block)
     }
 
     suspend fun runAll(
@@ -75,7 +110,11 @@ private class TestPortfolio(
         progress: ProgressContext = ProgressContext.Silent,
         block: PortfolioScope.() -> Unit,
     ): PortfolioOutcome {
-        return all(gate, timeout, progress, block)
+        return all(case(gate, timeout, progress), block = block)
+    }
+
+    fun runUndecided(runs: List<LegRun>): PortfolioOutcome {
+        return undecided(runs)
     }
 }
 
@@ -86,6 +125,7 @@ private fun PortfolioOutcome.orFail(message: String): BackendVerificationResult 
     }
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class VerificationPortfolioTest {
 
     private val portfolio = TestPortfolio()
@@ -94,10 +134,8 @@ class VerificationPortfolioTest {
     private val parentInjector = mock<Injector>()
 
     private fun PortfolioScope.enqueue(backend: FakeBackend) {
-        async {
-            gate.withPermit {
-                backend.verify(parentInjector, FakeConfig(), request, environment)
-            }
+        leg(backend.id) {
+            backend.verify(parentInjector, FakeConfig(), request, environment)
         }
     }
 
@@ -610,5 +648,321 @@ class VerificationPortfolioTest {
         val result = outcome.orFail("expected decisive")
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(messages).anyMatch { it.startsWith("result 1/2: ") }
+    }
+
+    @Test
+    fun `at a window's close the running legs are cut and the waiting ones never start`() = runTest {
+        val portfolio = TestPortfolio(timeSource = testScheduler.timeSource)
+        val legs = List(5) {
+            FakeBackend.delayed("leg-$it", 60_000, VerificationVerdict.Passed)
+        }
+
+        val outcome = portfolio.runFirstDecisive(portfolio.case(LimitedConcurrencyGate(2)), window = 5.seconds) {
+            for (leg in legs) {
+                enqueue(leg)
+            }
+        }
+
+        assertThat(currentTime).isEqualTo(5_000)
+        assertThat(outcome).isInstanceOf(PortfolioOutcome.TimedOut::class.java)
+        assertThat(
+            outcome.runs.count {
+                it.end == LegEnd.Cut
+            },
+        ).isEqualTo(2)
+        assertThat(
+            outcome.runs.count {
+                it.end == LegEnd.NeverStarted
+            },
+        ).isEqualTo(3)
+        for ((index, run) in outcome.runs.withIndex()) {
+            val leg = legs[index]
+            if (run.end == LegEnd.Cut) {
+                assertThat(leg.cancellations.get()).isEqualTo(1)
+            } else {
+                assertThat(leg.invocations.get()).isZero
+            }
+        }
+    }
+
+    @Test
+    fun `a window is clamped to the time left of the case`() = runTest {
+        val portfolio = TestPortfolio(timeSource = testScheduler.timeSource)
+        val case = portfolio.case(noopGate, timeout = 10.seconds)
+        delay(8_000)
+        val slow = FakeBackend.delayed("slow", 60_000, VerificationVerdict.Passed)
+
+        val outcome = portfolio.runFirstDecisive(case, window = 5.seconds) {
+            enqueue(slow)
+        }
+
+        assertThat(currentTime).isEqualTo(10_000)
+        assertThat(outcome.runs.single().end).isEqualTo(LegEnd.Cut)
+    }
+
+    @Test
+    fun `a decided gate returns how each of its legs ended`() = runTest {
+        val winner = FakeBackend.delayed("winner", 10, VerificationVerdict.Passed)
+        val laggard = FakeBackend.delayed("laggard", 10_000, VerificationVerdict.Passed)
+
+        val outcome = portfolio.runFirstDecisive(noopGate) {
+            enqueue(winner)
+            enqueue(laggard)
+        }
+
+        assertThat(outcome).isInstanceOf(PortfolioOutcome.Decided::class.java)
+        assertThat(
+            outcome.runs.map {
+                it.leg
+            },
+        ).containsExactly("winner", "laggard")
+        assertThat((outcome.runs[0].end as LegEnd.Finished).result.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(outcome.runs[1].end).isEqualTo(LegEnd.Cut)
+    }
+
+    @Test
+    fun `a stage's runs and progress lines name the stage`() = runTest {
+        val messages = mutableListOf<String>()
+        val progress = object : ProgressContext {
+            override fun checkIsCancelled() {}
+            override fun reportProgress(message: String) {
+                messages += message
+            }
+        }
+        val decisive = FakeBackend.delayed("decisive", 10, VerificationVerdict.Passed)
+
+        val outcome = portfolio.runFirstDecisive(portfolio.case(noopGate, progress = progress), window = 5.seconds, stage = "first stage") {
+            enqueue(decisive)
+        }
+
+        assertThat(outcome.runs.single().stage).isEqualTo("first stage")
+        assertThat(messages).containsExactly("first stage: result 1/1: Passed")
+    }
+
+    @Test
+    fun `the case's result is Timeout when a leg was last cut or never started`() {
+        val outcome = portfolio.runUndecided(
+            listOf(
+                LegRun("a", "first stage", LegEnd.Cut),
+                LegRun("a", "last stage", finished("a", VerificationVerdict.Inconclusive)),
+                LegRun("b", "last stage", LegEnd.NeverStarted),
+            ),
+        )
+
+        val result = outcome.toBackendVerificationResult(Clock.System.now())
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Timeout)
+        assertThat(result.message).contains("first stage: a cut; last stage: a=Inconclusive, b never started")
+    }
+
+    @Test
+    fun `the case's result is classified over how every leg last ended`() {
+        val outcome = portfolio.runUndecided(
+            listOf(
+                LegRun("a", "first stage", LegEnd.Cut),
+                LegRun("b", "first stage", finished("b", VerificationVerdict.NotSupported)),
+                LegRun("a", "last stage", finished("a", VerificationVerdict.Inconclusive)),
+            ),
+        )
+
+        val result = outcome.toBackendVerificationResult(Clock.System.now())
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
+        assertThat(result.message).contains("first stage: a cut, b=NotSupported; last stage: a=Inconclusive")
+    }
+
+    @Test
+    fun `the case's result is NotSupported when every leg refused`() {
+        val outcome = portfolio.runUndecided(
+            listOf(
+                LegRun("a", "first stage", finished("a", VerificationVerdict.NotSupported)),
+                LegRun("b", "last stage", finished("b", VerificationVerdict.NotSupported)),
+            ),
+        )
+
+        assertThat(outcome.toBackendVerificationResult(Clock.System.now()).verdict).isEqualTo(VerificationVerdict.NotSupported)
+    }
+
+    @Test
+    fun `the case's result is Errored when every leg failed`() {
+        val outcome = portfolio.runUndecided(
+            listOf(
+                LegRun("a", "first stage", LegEnd.Threw(IllegalStateException("broken"))),
+                LegRun("b", "last stage", finished("b", VerificationVerdict.Errored)),
+            ),
+        )
+
+        assertThat(outcome.toBackendVerificationResult(Clock.System.now()).verdict).isEqualTo(VerificationVerdict.Errored)
+    }
+
+    @Test
+    fun `a trusted answer that arrives as the window closes decides the gate`() = runTest {
+        val portfolio = TestPortfolio(timeSource = testScheduler.timeSource)
+        val onTheClose = FakeBackend.delayed("on-the-close", 5_000, VerificationVerdict.Passed)
+
+        val outcome = portfolio.runFirstDecisive(portfolio.case(noopGate), window = 5.seconds) {
+            enqueue(onTheClose)
+        }
+
+        assertThat(outcome.orFail("expected the answer at the close to decide").metadata.backendId).isEqualTo("on-the-close")
+        assertThat(currentTime).isEqualTo(5_000)
+    }
+
+    @Test
+    suspend fun `after a window's close no waiting leg starts and every leg that ran is reported as run`() {
+        repeat(20) {
+            val invoked = Collections.synchronizedSet(mutableSetOf<String>())
+            val outcome = withContext(Dispatchers.Default) {
+                portfolio.runFirstDecisive(portfolio.case(LimitedConcurrencyGate(1)), window = 100.milliseconds) {
+                    for (name in listOf("a", "b")) {
+                        leg(name) {
+                            invoked += name
+                            try {
+                                awaitCancellation()
+                            } catch (cancellation: CancellationException) {
+                                withContext(NonCancellable) {
+                                    delay(30)
+                                }
+                                fakeResult(name, VerificationVerdict.Inconclusive)
+                            }
+                        }
+                    }
+                }
+            }
+
+            assertThat(invoked).hasSize(1)
+            for (run in outcome.runs) {
+                if (run.leg in invoked) {
+                    assertThat(run.end).isInstanceOf(LegEnd.Finished::class.java)
+                } else {
+                    assertThat(run.end).isEqualTo(LegEnd.NeverStarted)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `two gates side by side on one case share its slots and cancelling one leaves the other running`() = runTest {
+        val portfolio = TestPortfolio(timeSource = testScheduler.timeSource)
+        val case = portfolio.case(LimitedConcurrencyGate(2))
+        val cancelledLegs = List(2) {
+            FakeBackend.delayed("cancelled-$it", 60_000, VerificationVerdict.Passed)
+        }
+        val running = FakeBackend.delayed("running", 10_000, VerificationVerdict.Passed)
+
+        val cancelledGate = launch {
+            portfolio.runFirstDecisive(case, window = Duration.INFINITE) {
+                for (leg in cancelledLegs) {
+                    enqueue(leg)
+                }
+            }
+        }
+        val runningGate = async {
+            portfolio.runFirstDecisive(case, window = Duration.INFINITE) {
+                enqueue(running)
+            }
+        }
+        advanceTimeBy(1_000)
+        val startedBeforeCancel = (cancelledLegs + running).sumOf {
+            it.invocations.get()
+        }
+        cancelledGate.cancelAndJoin()
+        val outcome = runningGate.await()
+
+        assertThat(startedBeforeCancel).isEqualTo(2)
+        assertThat(
+            cancelledLegs.sumOf {
+                it.cancellations.get()
+            },
+        ).isEqualTo(
+            cancelledLegs.sumOf {
+                it.invocations.get()
+            },
+        )
+        assertThat(running.cancellations.get()).isZero
+        assertThat(outcome.orFail("expected the gate left running to decide").metadata.backendId).isEqualTo("running")
+    }
+
+    @Test
+    fun `a gate cancelled from outside cancels its legs, frees their permits and propagates the cancellation`() = runTest {
+        val gate = LimitedConcurrencyGate(2)
+        val first = FakeBackend.delayed("first", 60_000, VerificationVerdict.Passed)
+        val second = FakeBackend.delayed("second", 60_000, VerificationVerdict.Passed)
+        val waiting = FakeBackend.delayed("waiting", 60_000, VerificationVerdict.Passed)
+
+        val gateJob = launch {
+            portfolio.runFirstDecisive(gate) {
+                enqueue(first)
+                enqueue(second)
+                enqueue(waiting)
+            }
+        }
+        advanceTimeBy(1_000)
+        gateJob.cancelAndJoin()
+
+        assertThat(gateJob.isCancelled).isTrue
+        val legs = listOf(first, second, waiting)
+        assertThat(
+            legs.sumOf {
+                it.invocations.get()
+            },
+        ).isEqualTo(2)
+        assertThat(
+            legs.sumOf {
+                it.cancellations.get()
+            },
+        ).isEqualTo(2)
+        withTimeout(1_000) {
+            coroutineScope {
+                repeat(2) {
+                    launch {
+                        gate.withPermit {
+                            delay(10)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `all is Timeout when refusals meet a leg cut at the time limit`() = runTest {
+        val refusing = FakeBackend.verdict("refusing", VerificationVerdict.NotSupported)
+        val slow = FakeBackend.delayed("slow", 10_000, VerificationVerdict.Passed)
+
+        val outcome = portfolio.runAll(noopGate, timeout = 1.seconds) {
+            enqueue(refusing)
+            enqueue(slow)
+        }
+
+        assertThat(outcome).isInstanceOf(PortfolioOutcome.TimedOut::class.java)
+    }
+
+    @Test
+    suspend fun `all is Inconclusive when refusals meet a leg that threw`() {
+        val refusing = FakeBackend.verdict("refusing", VerificationVerdict.NotSupported)
+        val throwing = FakeBackend.throwing("throwing", IllegalStateException("broken"))
+
+        val outcome = portfolio.runAll(noopGate) {
+            enqueue(refusing)
+            enqueue(throwing)
+        }
+
+        assertThat(outcome).isInstanceOf(PortfolioOutcome.NoDecision::class.java)
+        assertThat(outcome.toBackendVerificationResult(Clock.System.now()).verdict).isEqualTo(VerificationVerdict.Inconclusive)
+    }
+
+    private fun fakeResult(id: String, verdict: VerificationVerdict): BackendVerificationResult {
+        return BackendVerificationResult(
+            verdict = verdict,
+            metadata = fakeMetadata(id),
+        )
+    }
+
+    private fun finished(id: String, verdict: VerificationVerdict): LegEnd {
+        return LegEnd.Finished(
+            BackendVerificationResult(
+                verdict = verdict,
+                metadata = fakeMetadata(id),
+            ),
+        )
     }
 }

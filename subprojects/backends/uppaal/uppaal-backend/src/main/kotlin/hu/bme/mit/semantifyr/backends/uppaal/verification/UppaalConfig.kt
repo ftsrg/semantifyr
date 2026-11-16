@@ -30,10 +30,6 @@ data class UppaalConfig(
             parameters = TRACE_FLAG,
         )
 
-        val BreadthFirst = UppaalConfig(
-            id = "breadth-first",
-            parameters = withTraceFlag("-o 0"),
-        )
         val DepthFirst = UppaalConfig(
             id = "depth-first",
             parameters = withTraceFlag("-o 1"),

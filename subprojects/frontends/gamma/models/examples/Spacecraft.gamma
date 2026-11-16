@@ -2,7 +2,7 @@
  * A spacecraft that sends its data to a ground station while it manages its battery.
  * The station pings the spacecraft when it starts operating, every ten seconds after and on each piece of data it receives; the spacecraft then transmits while it has data and charge, and its battery recharges in an orthogonal region.
  * The spacecraft starts a transmission only while it is not recharging; its charge and its data change in steps of ten.
- * The cases ask whether a transmission can start, whether the charge ever falls below 30, and whether the spacecraft can transmit while it recharges.
+ * The cases ask whether a transmission can start, whether the charge ever falls below 40, and whether the spacecraft can transmit while it recharges.
  */
 
 package Spacecraft
@@ -99,13 +99,13 @@ statechart Spacecraft[
     }
 
     transition from SendDataInitial to Sending
-    transition from Sending to Sending when timeout transmitTimeout [not (data <= 0 or batteryCharge < 40)] / data := data - 10; raise connection.data;
+    transition from Sending to Sending when timeout transmitTimeout [not (data <= 0 or batteryCharge <= 40)] / data := data - 10; raise connection.data;
     transition from ConsumePowerInitial to Consuming
-    transition from Consuming to Consuming when timeout consumeTimeout [not (batteryCharge < 40)] / batteryCharge := batteryCharge - 10;
+    transition from Consuming to Consuming when timeout consumeTimeout [not (batteryCharge <= 40)] / batteryCharge := batteryCharge - 10;
     transition from CommunicationInitial to WaitingPing
-    transition from WaitingPing to Transmitting when connection.ping [recharging = false and not (data <= 0 or batteryCharge < 40)]
-    transition from Transmitting to WaitingPing when timeout consumeTimeout [batteryCharge < 40]
-    transition from Transmitting to WaitingPing when timeout transmitTimeout [data <= 0 or batteryCharge < 40]
+    transition from WaitingPing to Transmitting when connection.ping [recharging = false and not (data <= 0 or batteryCharge <= 40)]
+    transition from Transmitting to WaitingPing when timeout consumeTimeout [batteryCharge <= 40]
+    transition from Transmitting to WaitingPing when timeout transmitTimeout [data <= 0 or batteryCharge <= 40]
     transition from BatteryInitial to NotRecharging
     transition from NotRecharging to Recharging when timeout checkBatteryTimeout [batteryCharge < 80]
     transition from Recharging to Recharging when timeout rechargeTimeout [batteryCharge < 100] / batteryCharge := batteryCharge + 10;
@@ -127,8 +127,8 @@ verification case TransmissionCanStart of SpaceMission {
     EF state spacecraft.Communication.Transmitting
 }
 
-verification case ChargeNeverBelow30 of SpaceMission {
-    AG (variable spacecraft.batteryCharge >= 30)
+verification case ChargeNeverBelow40 of SpaceMission {
+    AG (variable spacecraft.batteryCharge >= 40)
 }
 
 verification case CanTransmitWhileRecharging of SpaceMission {
