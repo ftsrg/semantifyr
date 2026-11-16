@@ -27,7 +27,7 @@ A nested state owns states of its own, holds the active one and is a state of it
 
 <LiveEmbed example={step1} show={['State']} />
 
-`initial` names the substate entered when the state is entered; `[0..1]` lets a state without substates leave it as `nothing`. `activate` activates the state, then its initial substate. An [`inline if`](../language/classes-and-behaviour/inline-operations.md#inline-if) is decided when the model is compiled, like `inline for`: for a state without an initial substate, the block is gone.
+`initial` names the substate entered when the state is entered; `[0..1]` lets a state without substates leave it as `nothing`. `activate` activates the state, then its initial substate. An [`inline if`](../specification/classes-and-behaviour/inline-operations.md#inline-if) is decided when the model is compiled, like `inline for`: for a state without an initial substate, the block is gone.
 
 <LiveEmbed example={step1} show={['TrafficLight']} />
 
@@ -54,7 +54,7 @@ A state asks only its parent whether it is active, and `operating` keeps its las
 
 <LiveEmbed example={step2} show={['State', 'Statechart']} />
 
-The light belongs to no state; while it runs, it is active, so `Statechart` says `true`. `State` [redefines](../language/classes-and-behaviour/properties.md#redefining-properties) the property: active when its parent holds it and the parent is active. The calls walk up the hierarchy to the light, resolved for each state when the model is compiled.
+The light belongs to no state; while it runs, it is active, so `Statechart` says `true`. `State` [redefines](../specification/classes-and-behaviour/properties.md#redefining-properties) the property: active when its parent holds it and the parent is active. The calls walk up the hierarchy to the light, resolved for each state when the model is compiled.
 
 <details>
 <summary>The verdicts Live shows</summary>
@@ -119,9 +119,9 @@ A statechart holds at most one current event, as it holds one active state, and 
 
 <LiveEmbed example={step5} show={['TrafficLight']} />
 
-The standby transitions replace their inherited trigger with an `EventTrigger` by [`redefine contains`](../language/classes-and-behaviour/features.md#redefine-and-redefines), and bind its event in a nested block of their own.
+The standby transitions replace their inherited trigger with an `EventTrigger` by [`redefine contains`](../specification/classes-and-behaviour/features.md#redefine-and-redefines), and bind its event in a nested block of their own.
 
-Events come from outside the light, so the cases send them: before each step, [`havoc`](../language/classes-and-behaviour/operations.md#havoc) on the light's `event` gives it any of its events, or none, and the verifier explores each. A new case's environment never sends `pause`; the `assume` after the `havoc` drops the steps in which it would:
+Events come from outside the light, so the cases send them: before each step, [`havoc`](../specification/classes-and-behaviour/operations.md#havoc) on the light's `event` gives it any of its events, or none, and the verifier explores each. A new case's environment never sends `pause`; the `assume` after the `havoc` drops the steps in which it would:
 
 <LiveEmbed example={step5} show={['NoStandbyWithoutPause']} />
 
@@ -138,11 +138,11 @@ Events come from outside the light, so the cases send them: before each step, [`
 
 ## An Emergency Override
 
-When an emergency vehicle approaches, both lights of the intersection turn red and stay red until the emergency is over, whatever state they are in. One emergency signal serves every intersection of a town, so it belongs to no light and no intersection: it is a [global feature](../language/classes-and-behaviour/features.md#top-level-global-features), declared outside every class and reached by name.
+When an emergency vehicle approaches, both lights of the intersection turn red and stay red until the emergency is over, whatever state they are in. One emergency signal serves every intersection of a town, so it belongs to no light and no intersection: it is a [global feature](../specification/classes-and-behaviour/features.md#top-level-global-features), declared outside every class and reached by name.
 
 <LiveEmbed example={hierarchy} show={['Emergency', 'emergency']} />
 
-The intersection consults it before it lets a light step. During an emergency it activates `operating` in both lights, which enters `red`, whose entry action switches the lamp to red; the [`if`](../language/classes-and-behaviour/operations.md#if) is decided in every step, as in [The Minimum Green Time](green-time.md).
+The intersection consults it before it lets a light step. During an emergency it activates `operating` in both lights, which enters `red`, whose entry action switches the lamp to red; the [`if`](../specification/classes-and-behaviour/operations.md#if) is decided in every step, as in [The Minimum Green Time](green-time.md).
 
 <LiveEmbed example={hierarchy} show={['Intersection']} />
 
@@ -150,7 +150,7 @@ A case lets the emergency start and end at any step:
 
 <LiveEmbed example={hierarchy} show={['EmergencyStopsTraffic']} />
 
-As in Java, `&&` binds tighter than `||` ([operator precedence](../language/foundations/expressions.md#operator-precedence)); the parentheses only make the grouping visible.
+As in Java, `&&` binds tighter than `||` ([operator precedence](../specification/foundations/expressions.md#operator-precedence)); the parentheses only make the grouping visible.
 
 <details>
 <summary>The verdicts Live shows</summary>
@@ -170,4 +170,4 @@ The whole model:
 
 ## Where the Lessons End
 
-You can now read and write a statechart library with nested states, entry actions, events and an environment. The production libraries build on the same patterns: Gamma's adds orthogonal regions, exit actions, guards and transitions across levels of the hierarchy, and SysML v2's adds parallel states and time triggers. Every construct is in the [language reference](../language/index.md), and [how OXSTS compiles](../compilation/index.mdx) shows how a model becomes what a backend checks.
+You can now read and write a statechart library with nested states, entry actions, events and an environment. The production libraries build on the same patterns: Gamma's adds orthogonal regions, exit actions, guards and transitions across levels of the hierarchy, and SysML v2's adds parallel states and time triggers. Every construct is in the [language reference](../specification/index.md), and [how OXSTS compiles](../compilation/index.mdx) shows how a model becomes what a backend checks.

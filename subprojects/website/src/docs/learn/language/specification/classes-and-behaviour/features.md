@@ -1,6 +1,6 @@
 ---
 title: Features
-slug: /learn/oxsts/language/features
+slug: /learn/language/specification/features
 sidebar_position: 8
 description: OXSTS features, the structural relationships between classes, resolved at instantiation, with their kinds, multiplicities, subsets, redefinition and bindings.
 ---

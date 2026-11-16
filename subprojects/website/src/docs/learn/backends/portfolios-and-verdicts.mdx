@@ -6,7 +6,7 @@ description: How a portfolio runs the backends side by side, in which direction 
 
 # Portfolios and Verdicts
 
-Verifying a case [compiles](../oxsts/compilation/index.mdx) it to a transition system and hands that to a portfolio. A portfolio is a strategy for the backend runs: which backends run under which configurations, how they run side by side, and how the verdict is decided from their answers. Where a backend found a run that shows the verdict, its [witness](../oxsts/language/library-and-output/inlined-models.md#witnesses) comes back with the verdict. The command line, Live and the VS Code extension all verify this way; `smart` is the default portfolio everywhere.
+Verifying a case [compiles](../language/compilation/index.mdx) it to a transition system and hands that to a portfolio. A portfolio is a strategy for the backend runs: which backends run under which configurations, how they run side by side, and how the verdict is decided from their answers. Where a backend found a run that shows the verdict, its [witness](../language/specification/library-and-output/inlined-models.md#witnesses) comes back with the verdict. The command line, Live and the VS Code extension all verify this way; `smart` is the default portfolio everywhere.
 
 ## Backends side by side
 

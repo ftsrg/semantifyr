@@ -1,6 +1,6 @@
 ---
 title: Expressions
-slug: /learn/oxsts/language/expressions
+slug: /learn/language/specification/expressions
 sidebar_position: 4
 description: OXSTS expressions, their literals, operators and precedence, casts, if-then-else and calls.
 ---

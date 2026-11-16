@@ -43,22 +43,22 @@ export const learnParts: LearnPart[] = [
   },
   {
     label: 'OXSTS',
-    opening: { doc: 'learn/oxsts/index' },
+    opening: { doc: 'learn/language/index' },
     parts: [
       {
         label: 'Language',
-        opening: { doc: 'learn/oxsts/language/index' },
-        directory: 'learn/oxsts/language',
+        opening: { doc: 'learn/language/specification/index' },
+        directory: 'learn/language/specification',
       },
       {
         label: 'Lessons',
-        opening: { doc: 'learn/oxsts/lessons/index' },
-        directory: 'learn/oxsts/lessons',
+        opening: { doc: 'learn/language/lessons/index' },
+        directory: 'learn/language/lessons',
       },
       {
         label: 'Compilation',
-        opening: { doc: 'learn/oxsts/compilation/index' },
-        directory: 'learn/oxsts/compilation',
+        opening: { doc: 'learn/language/compilation/index' },
+        directory: 'learn/language/compilation',
       },
     ],
   },

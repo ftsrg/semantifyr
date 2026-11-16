@@ -1,6 +1,6 @@
 ---
 title: Inlined Models
-slug: /learn/oxsts/language/inlined-models
+slug: /learn/language/specification/inlined-models
 sidebar_position: 13.5
 description: The inlined model, the form in which the compiler writes a compiled case and a witness, and the witness of a verdict, its form and the files beside it.
 ---

@@ -16,17 +16,17 @@ A browser is enough for this lesson. Each model on the page opens in Live, the e
 
 ## The Light
 
-A traffic light has three colors. Every OXSTS file starts with its package, and this one declares the colors as an [enumeration](../language/foundations/datatypes.md#enumerations):
+A traffic light has three colors. Every OXSTS file starts with its package, and this one declares the colors as an [enumeration](../specification/foundations/datatypes.md#enumerations):
 
 <LiveEmbed example={step1} show={['package', 'LightColor']} />
 
 Semicolons may end a statement, and nothing needs one.
 
-The light itself is a [class](../language/classes-and-behaviour/classes.md). Its state is one [variable](../language/classes-and-behaviour/variables.md), `color`, which starts at `LightColor::Red`. Its behavior is its main transition. Every class extends [`Anything`](../language/classes-and-behaviour/classes.md#the-anything-base-class), which declares an empty main transition and an empty `init`, so the light writes its own as `redefine tran`:
+The light itself is a [class](../specification/classes-and-behaviour/classes.md). Its state is one [variable](../specification/classes-and-behaviour/variables.md), `color`, which starts at `LightColor::Red`. Its behavior is its main transition. Every class extends [`Anything`](../specification/classes-and-behaviour/classes.md#the-anything-base-class), which declares an empty main transition and an empty `init`, so the light writes its own as `redefine tran`:
 
 <LiveEmbed example={step1} show={['TrafficLight']} />
 
-The main transition is a [`choice`](../language/classes-and-behaviour/operations.md#choice) of three branches. Each branch starts with an [`assume`](../language/classes-and-behaviour/operations.md#assumption): a branch whose assumption does not hold in the current state cannot be taken. The assignment `:=` then sets the next color.
+The main transition is a [`choice`](../specification/classes-and-behaviour/operations.md#choice) of three branches. Each branch starts with an [`assume`](../specification/classes-and-behaviour/operations.md#assumption): a branch whose assumption does not hold in the current state cannot be taken. The assignment `:=` then sets the next color.
 
 This is how a model runs, the one rule everything else builds on:
 
@@ -38,7 +38,7 @@ So the light goes from red to green to yellow and back to red, one color a step.
 
 ## The Question
 
-`@VerificationCase` makes the light a case that the verifier checks, and the [property](../language/classes-and-behaviour/properties.md#the-verification-property) at the bottom is the question it asks. [`EF`](../language/foundations/expressions.md#temporal-operators), "exists finally", asks whether some execution reaches a state where the expression holds: can the light ever be yellow?
+`@VerificationCase` makes the light a case that the verifier checks, and the [property](../specification/classes-and-behaviour/properties.md#the-verification-property) at the bottom is the question it asks. [`EF`](../specification/foundations/expressions.md#temporal-operators), "exists finally", asks whether some execution reaches a state where the expression holds: can the light ever be yellow?
 
 Before you run it, decide what you expect, and how many steps you think the light needs.
 

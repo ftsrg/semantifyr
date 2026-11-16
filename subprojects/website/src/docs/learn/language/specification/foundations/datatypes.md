@@ -1,6 +1,6 @@
 ---
 title: Datatypes
-slug: /learn/oxsts/language/datatypes
+slug: /learn/language/specification/datatypes
 sidebar_position: 2
 description: The data values OXSTS can represent, the primitive datatypes, enumerations and records.
 ---

@@ -1,6 +1,6 @@
 ---
 title: Properties
-slug: /learn/oxsts/language/properties
+slug: /learn/language/specification/properties
 sidebar_position: 9
 description: OXSTS properties, the pure computations used for guards, queries and the verification property.
 ---
