@@ -15,7 +15,6 @@ import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.oxsts.lang.utils.SourceLocation
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.emf.ecore.EObject
@@ -131,8 +130,7 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
 
         val verdict = interpret(rawVerdict, artifacts)
         val property = request.inlinedOxsts.property.expression
-        val declaredSoundness = declareSoundness(request.inlinedOxsts)
-        val isTrusted = declaredSoundness.trusts(verdict, property)
+        val isTrusted = soundness.trusts(verdict, property)
 
         val (witness, witnessDuration) = measureTimedValue {
             buildWitness(rawVerdict, artifacts)
@@ -159,7 +157,7 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
                 },
             ),
             inlinedWitness = witness,
-            soundness = declaredSoundness,
+            soundness = soundness,
             isTrusted = isTrusted,
         )
     }
@@ -190,10 +188,6 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
                 }
             }
         }
-    }
-
-    protected open fun declareSoundness(inlinedOxsts: InlinedOxsts): SoundnessDirection {
-        return soundness
     }
 
     protected abstract suspend fun prepare(): TArtifacts

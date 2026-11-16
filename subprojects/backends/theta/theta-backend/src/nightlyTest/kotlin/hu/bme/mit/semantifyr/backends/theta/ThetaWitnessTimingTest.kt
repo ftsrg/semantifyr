@@ -57,7 +57,7 @@ class ThetaWitnessTimingTest {
 
         val thetaInjector = injector.createChildInjector(ThetaBackendModule())
         val xsts = withVerificationScope {
-            thetaInjector.getInstance(ThetaModelTransformer::class.java).transform(inlinedOxsts, URI.createFileURI(thetaDirectory.resolve("timed.xsts").absolutePathString()), null)
+            thetaInjector.getInstance(ThetaModelTransformer::class.java).transform(inlinedOxsts, URI.createFileURI(thetaDirectory.resolve("timed.xsts").absolutePathString())).xsts
         }
         val durations = warmRepetitions {
             measureTime {

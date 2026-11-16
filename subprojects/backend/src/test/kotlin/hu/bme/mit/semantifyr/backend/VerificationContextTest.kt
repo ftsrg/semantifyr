@@ -65,7 +65,6 @@ class VerificationContextTest {
         private val witness: () -> InlinedWitness? = { null },
         inlinedOxsts: InlinedOxsts = modelChecking(OxstsFactory.createAG()),
         soundness: SoundnessDirection = SoundnessDirection.Exact,
-        private val declaredSoundness: SoundnessDirection? = null,
         override val capabilityChecker: BackendCapabilityChecker = RejectingVariables(),
     ) : VerificationContext<String, String>(
         backendId = "scripted",
@@ -96,10 +95,6 @@ class VerificationContextTest {
         override suspend fun buildWitness(rawVerdict: String?, artifacts: String): InlinedWitness? {
             phases += "witness $rawVerdict"
             return witness()
-        }
-
-        override fun declareSoundness(inlinedOxsts: InlinedOxsts): SoundnessDirection {
-            return declaredSoundness ?: super.declareSoundness(inlinedOxsts)
         }
     }
 
@@ -273,14 +268,6 @@ class VerificationContextTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
         assertThat(result.message).endsWith("the recorded argument ${argument.name} has no value in state 1")
-    }
-
-    @Test
-    suspend fun `a run declares its soundness direction from the model`() {
-        val result = ScriptedContext(declaredSoundness = SoundnessDirection.UnderApproximating).execute()
-
-        assertThat(result.soundness).isEqualTo(SoundnessDirection.UnderApproximating)
-        assertThat(result.isTrusted).isFalse
     }
 
     @Test

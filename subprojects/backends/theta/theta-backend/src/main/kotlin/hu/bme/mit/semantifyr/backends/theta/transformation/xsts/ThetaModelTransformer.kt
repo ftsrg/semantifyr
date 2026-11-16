@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.transformation.WHOLE_DELAY_VARIABLE_NAME
 import hu.bme.mit.semantifyr.backend.transformation.WholeDelay
+import hu.bme.mit.semantifyr.backend.transformation.WholeDelayLowering
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -25,19 +26,22 @@ import org.eclipse.emf.common.util.URI
 private typealias XstsTransition = Transition
 private typealias XstsSequenceOperation = SequenceOperation
 
+class ThetaArtifacts(
+    val xsts: XstsModel,
+    val wholeDelay: WholeDelay?,
+)
+
 class ThetaModelTransformer @Inject constructor(
     private val thetaOperationTransformer: ThetaOperationTransformer,
     private val thetaPropertyTransformer: ThetaPropertyTransformer,
     private val thetaDomainTransformer: ThetaDomainTransformer,
     private val thetaVariableTransformer: ThetaVariableTransformer,
     private val xstsModelCreator: XstsModelCreator,
+    private val wholeDelayLowering: WholeDelayLowering,
 ) {
 
-    fun transform(
-        inlinedOxsts: InlinedOxsts,
-        xstsUri: URI,
-        wholeDelay: WholeDelay?,
-    ): XstsModel {
+    fun transform(inlinedOxsts: InlinedOxsts, xstsUri: URI): ThetaArtifacts {
+        val wholeDelay = wholeDelayLowering.lower(inlinedOxsts)
         val xsts = xstsModelCreator.createEmptyXsts(xstsUri)
 
         for (variableDeclaration in inlinedOxsts.variables) {
@@ -66,7 +70,7 @@ class ThetaModelTransformer @Inject constructor(
             thetaDomainTransformer.transform(it)
         }.distinct()
 
-        return xsts
+        return ThetaArtifacts(xsts, wholeDelay)
     }
 
     private fun waitBeforeEveryStep(xsts: XstsModel, wholeDelay: WholeDelay) {

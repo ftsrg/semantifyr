@@ -13,7 +13,6 @@ import com.google.inject.assistedinject.AssistedInject
 import com.google.inject.assistedinject.FactoryModuleBuilder
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
-import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationBackend
 import hu.bme.mit.semantifyr.backend.VerificationContext
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
@@ -39,7 +38,6 @@ import hu.bme.mit.semantifyr.backends.spin.transformation.SpinModelTransformer
 import hu.bme.mit.semantifyr.backends.spin.transformation.SpinOperationVisitor
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.warn
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import java.io.File
@@ -85,18 +83,14 @@ class SpinVerificationContext @AssistedInject constructor(
     private val spinTraceParser: SpinTraceParser,
     private val spinLogVerdictParser: SpinLogVerdictParser,
     private val spinInlinedOxstsWitnessTransformer: SpinInlinedOxstsWitnessTransformer,
-    private val wholeDelayLowering: WholeDelayLowering,
+    wholeDelayLowering: WholeDelayLowering,
 ) : VerificationContext<SpinArtifacts, SpinVerdict>(
     backendId = "spin:${config.id}",
-    soundness = config.soundness,
+    soundness = wholeDelayLowering.soundness(request.inlinedOxsts, config.soundness),
     request = request,
 ) {
 
     private val artifactManager = SpinArtifactManager(request.artifactOutputPath)
-
-    override fun declareSoundness(inlinedOxsts: InlinedOxsts): SoundnessDirection {
-        return wholeDelayLowering.soundness(inlinedOxsts, super.declareSoundness(inlinedOxsts))
-    }
 
     override suspend fun prepare(): SpinArtifacts {
         currentCoroutineContext().ensureActive()

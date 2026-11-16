@@ -46,40 +46,49 @@ class SpinProctypeRenderer @Inject constructor(
     private fun renderInitChoice(builder: IndentingStringBuilder, branches: List<SequenceOperation>) {
         builder.appendLine("if")
         for (branch in branches) {
-            renderChoiceArm(builder, branch)
+            builder.appendLine(":: atomic {")
+            builder.indented {
+                appendLine("$SPIN_STABLE_FLAG = false;")
+                renderStep(this, branch)
+            }
+            builder.appendLine("}")
         }
         builder.appendLine("fi;")
-    }
-
-    private fun renderChoiceArm(
-        builder: IndentingStringBuilder,
-        branch: SequenceOperation,
-        wholeDelay: WholeDelay? = null,
-    ) {
-        builder.appendLine(":: atomic {")
-        builder.indented {
-            renderAtomicBody(this, branch, wholeDelay)
-        }
-        builder.appendLine("}")
     }
 
     private fun renderAtomicBranch(builder: IndentingStringBuilder, branch: SequenceOperation) {
         builder.appendLine("atomic {")
         builder.indented {
-            renderAtomicBody(this, branch)
+            appendLine("$SPIN_STABLE_FLAG = false;")
+            renderStep(this, branch)
         }
         builder.appendLine("}")
     }
 
-    private fun renderAtomicBody(
+    private fun renderTranLoop(
         builder: IndentingStringBuilder,
-        branch: SequenceOperation,
-        wholeDelay: WholeDelay? = null,
+        branches: List<SequenceOperation>,
+        wholeDelay: WholeDelay?,
     ) {
-        builder.appendLine("$SPIN_STABLE_FLAG = false;")
-        if (wholeDelay != null) {
-            renderWait(builder, wholeDelay)
+        if (branches.isEmpty()) {
+            return
         }
+        builder.appendLine("do")
+        for (branch in branches) {
+            builder.appendLine(":: atomic {")
+            builder.indented {
+                appendLine("$SPIN_STABLE_FLAG = false;")
+                if (wholeDelay != null) {
+                    renderWait(this, wholeDelay)
+                }
+                renderStep(this, branch)
+            }
+            builder.appendLine("}")
+        }
+        builder.appendLine("od;")
+    }
+
+    private fun renderStep(builder: IndentingStringBuilder, branch: SequenceOperation) {
         if (branch.steps.isEmpty()) {
             builder.appendLine("skip;")
         } else {
@@ -95,20 +104,5 @@ class SpinProctypeRenderer @Inject constructor(
             val advanced = "$name + $WHOLE_DELAY_VARIABLE_NAME"
             builder.appendLine("$name = ($advanced >= ${clock.saturation} -> ${clock.saturation} : $advanced);")
         }
-    }
-
-    private fun renderTranLoop(
-        builder: IndentingStringBuilder,
-        branches: List<SequenceOperation>,
-        wholeDelay: WholeDelay?,
-    ) {
-        if (branches.isEmpty()) {
-            return
-        }
-        builder.appendLine("do")
-        for (branch in branches) {
-            renderChoiceArm(builder, branch, wholeDelay)
-        }
-        builder.appendLine("od;")
     }
 }
