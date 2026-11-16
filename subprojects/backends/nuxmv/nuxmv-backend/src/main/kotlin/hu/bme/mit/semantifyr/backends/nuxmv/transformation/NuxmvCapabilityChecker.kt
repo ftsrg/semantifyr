@@ -8,9 +8,7 @@ package hu.bme.mit.semantifyr.backends.nuxmv.transformation
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
-import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString
@@ -18,7 +16,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.emf.ecore.EObject
 
 open class NuxmvCapabilityChecker @Inject constructor(
-    protected val builtinSymbolResolver: BuiltinSymbolResolver,
+    protected val nuxmvVariableTransformer: NuxmvVariableTransformer,
 ) : BackendCapabilityChecker() {
 
     override fun describeUnsupported(element: EObject): String? {
@@ -34,7 +32,7 @@ open class NuxmvCapabilityChecker @Inject constructor(
 
     private fun describeUnsupportedType(variable: VariableDeclaration): String? {
         val domain = variable.typeSpecification?.domain ?: return null
-        if (domain is EnumDeclaration || domain === builtinSymbolResolver.intDatatype(variable) || domain === builtinSymbolResolver.boolDatatype(variable) || domain === builtinSymbolResolver.clockDatatype(variable)) {
+        if (nuxmvVariableTransformer.kindOf(variable) != null) {
             return null
         }
         return "variables of type ${domain.name}"

@@ -44,10 +44,6 @@ class UppaalVariableTransformer @Inject constructor(
         return mangler.variableOf(name)
     }
 
-    fun isClock(variableDeclaration: VariableDeclaration): Boolean {
-        return variableDeclaration.typeSpecification?.domain === builtinSymbolResolver.clockDatatype(variableDeclaration)
-    }
-
     fun describe(variableDeclaration: VariableDeclaration): UppaalVariable {
         return descriptionCache.getOrPut(variableDeclaration) {
             val name = nameOf(variableDeclaration)
@@ -57,17 +53,21 @@ class UppaalVariableTransformer @Inject constructor(
         }
     }
 
-    private fun resolveKind(variableDeclaration: VariableDeclaration): UppaalVariableKind {
+    fun kindOf(variableDeclaration: VariableDeclaration): UppaalVariableKind? {
         val domain = variableDeclaration.typeSpecification?.domain
-            ?: error("Variable ${variableDeclaration.name} has no type specification")
-
         return when {
             domain === builtinSymbolResolver.clockDatatype(variableDeclaration) -> UppaalVariableKind.Clock
             domain is EnumDeclaration -> UppaalVariableKind.Enum
             domain === builtinSymbolResolver.intDatatype(variableDeclaration) -> UppaalVariableKind.Integer
             domain === builtinSymbolResolver.boolDatatype(variableDeclaration) -> UppaalVariableKind.Boolean
-            else -> throw BackendUnsupportedException("Uppaal does not support variables of type ${domain.name} (${variableDeclaration.name})")
+            else -> null
         }
+    }
+
+    private fun resolveKind(variableDeclaration: VariableDeclaration): UppaalVariableKind {
+        val domain = variableDeclaration.typeSpecification?.domain
+            ?: error("Variable ${variableDeclaration.name} has no type specification")
+        return kindOf(variableDeclaration) ?: throw BackendUnsupportedException("Uppaal does not support variables of type ${domain.name} (${variableDeclaration.name})")
     }
 
     fun nameOf(enumDeclaration: EnumDeclaration): String {

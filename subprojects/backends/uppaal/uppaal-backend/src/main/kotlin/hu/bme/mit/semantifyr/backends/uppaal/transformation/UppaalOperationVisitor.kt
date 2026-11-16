@@ -84,7 +84,7 @@ class UppaalOperationVisitor @AssistedInject constructor(
     override fun visit(operation: AssignmentOperation) {
         val variable = OxstsUtils.requireVariableReference(operation.reference)
         val name = uppaalVariableTransformer.nameOf(variable)
-        if (uppaalVariableTransformer.isClock(variable)) {
+        if (uppaalVariableTransformer.kindOf(variable) == UppaalVariableKind.Clock) {
             renderClockReset(variable, name, operation)
             return
         }
@@ -183,15 +183,12 @@ class UppaalOperationVisitor @AssistedInject constructor(
 
     private fun havoc(variable: VariableDeclaration) {
         val name = uppaalVariableTransformer.nameOf(variable)
-        if (uppaalVariableTransformer.isClock(variable)) {
-            throw BackendUnsupportedException("Uppaal does not support havoc on clock $name")
-        }
         val described = uppaalVariableTransformer.describe(variable)
         when (described.kind) {
             UppaalVariableKind.Integer -> renderIntegerHavoc(variable, name)
             UppaalVariableKind.Boolean -> renderBooleanHavoc(name)
             UppaalVariableKind.Enum -> renderEnumHavoc(described, name)
-            UppaalVariableKind.Clock -> error("unreachable: clock handled above")
+            UppaalVariableKind.Clock -> throw BackendUnsupportedException("Uppaal does not support havoc on clock $name")
         }
     }
 

@@ -40,7 +40,7 @@ class NuxmvInlinedOxstsWitnessTransformer @Inject constructor(
         }
         val stateVariables = inlinedOxsts.variables.toSet()
         val clocks = inlinedOxsts.variables.filter {
-            nuxmvVariableTransformer.isClock(it)
+            nuxmvVariableTransformer.kindOf(it) == NuxmvVariableKind.Clock
         }
 
         val running = mutableMapOf<VariableDeclaration, Expression>()
@@ -56,11 +56,12 @@ class NuxmvInlinedOxstsWitnessTransformer @Inject constructor(
                 if (variable !in stateVariables) {
                     continue
                 }
-                if (nuxmvVariableTransformer.isClock(variable)) {
+                val kind = nuxmvVariableTransformer.kindOf(variable)
+                if (kind == NuxmvVariableKind.Clock) {
                     runningClocks[variable] = parseReal(raw) ?: throw WitnessFailedException("nuXmv's trace holds $raw for $name, which is no value of a clock")
                     continue
                 }
-                running[variable] = parseValue(variable, raw) ?: throw WitnessFailedException("nuXmv's trace holds $raw for $name, which is no value of its type")
+                running[variable] = parseValue(variable, kind, raw) ?: throw WitnessFailedException("nuXmv's trace holds $raw for $name, which is no value of its type")
                 updated += variable
             }
             val values = inlinedOxsts.variables.mapNotNull { variable ->
@@ -123,10 +124,12 @@ class NuxmvInlinedOxstsWitnessTransformer @Inject constructor(
         return Fraction.of(decimal.unscaledValue(), BigInteger.TEN.pow(decimal.scale()))
     }
 
-    private fun parseValue(variable: VariableDeclaration, raw: String): Expression? {
-        val kind = nuxmvVariableTransformer.describe(variable).kind
+    private fun parseValue(
+        variable: VariableDeclaration,
+        kind: NuxmvVariableKind?,
+        raw: String,
+    ): Expression? {
         return when (kind) {
-            NuxmvVariableKind.Clock -> error("a clock's value is a fraction, read apart from the state values")
             NuxmvVariableKind.Integer -> raw.toIntOrNull()?.let {
                 OxstsFactory.createLiteralInteger(it)
             }
@@ -142,6 +145,7 @@ class NuxmvInlinedOxstsWitnessTransformer @Inject constructor(
                 } ?: return null
                 OxstsFactory.createElementReference(literal)
             }
+            NuxmvVariableKind.Clock, null -> null
         }
     }
 }

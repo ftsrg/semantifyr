@@ -39,7 +39,7 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
             uppaalVariableTransformer.nameOf(it)
         }
         val clocks = inlinedOxsts.variables.filter {
-            uppaalVariableTransformer.isClock(it)
+            uppaalVariableTransformer.kindOf(it) == UppaalVariableKind.Clock
         }
 
         val running = mutableMapOf<VariableDeclaration, Expression>()
@@ -89,7 +89,7 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
             if (variable !in stateVariables) {
                 continue
             }
-            val kind = uppaalVariableTransformer.describe(variable).kind
+            val kind = uppaalVariableTransformer.kindOf(variable)
             if (kind == UppaalVariableKind.Clock) {
                 continue
             }
@@ -127,7 +127,7 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
 
     private fun parseValue(
         variable: VariableDeclaration,
-        kind: UppaalVariableKind,
+        kind: UppaalVariableKind?,
         raw: String,
     ): Expression? {
         return when (kind) {
@@ -136,7 +136,7 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
             }
             UppaalVariableKind.Boolean -> parseBooleanValue(raw)
             UppaalVariableKind.Enum -> parseEnumValue(variable, raw)
-            UppaalVariableKind.Clock -> null
+            UppaalVariableKind.Clock, null -> null
         }
     }
 

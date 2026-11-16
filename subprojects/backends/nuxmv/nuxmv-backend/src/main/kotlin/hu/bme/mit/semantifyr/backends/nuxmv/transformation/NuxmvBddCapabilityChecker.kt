@@ -7,21 +7,21 @@
 package hu.bme.mit.semantifyr.backends.nuxmv.transformation
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.emf.ecore.EObject
 
 class NuxmvBddCapabilityChecker @Inject constructor(
-    builtinSymbolResolver: BuiltinSymbolResolver,
-) : NuxmvCapabilityChecker(builtinSymbolResolver) {
+    nuxmvVariableTransformer: NuxmvVariableTransformer,
+) : NuxmvCapabilityChecker(nuxmvVariableTransformer) {
 
     override fun describeUnsupported(element: EObject): String? {
-        if (element is VariableDeclaration && element.typeSpecification?.domain === builtinSymbolResolver.intDatatype(element)) {
-            return "integer variables"
+        if (element !is VariableDeclaration) {
+            return super.describeUnsupported(element)
         }
-        if (element is VariableDeclaration && element.typeSpecification?.domain === builtinSymbolResolver.clockDatatype(element)) {
-            return "clocks"
+        return when (nuxmvVariableTransformer.kindOf(element)) {
+            NuxmvVariableKind.Integer -> "integer variables"
+            NuxmvVariableKind.Clock -> "clocks"
+            else -> super.describeUnsupported(element)
         }
-        return super.describeUnsupported(element)
     }
 }
