@@ -5,6 +5,7 @@
  */
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.frontends.gamma.GammaCompiler
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ArithmeticUnaryOperator
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComparisonOperator
@@ -23,7 +24,6 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VariableReferenceExpress
 import hu.bme.mit.semantifyr.frontends.gamma.lang.tests.InjectWithGamma
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
 import hu.bme.mit.semantifyr.frontends.gamma.trace.GammaTraceGenerator
-import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.verifier.ReportCall
 import hu.bme.mit.semantifyr.verifier.ReportInitialEntry
 import hu.bme.mit.semantifyr.verifier.ReportState

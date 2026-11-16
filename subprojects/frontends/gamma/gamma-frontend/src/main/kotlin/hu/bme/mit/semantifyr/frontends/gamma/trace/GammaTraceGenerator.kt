@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.frontends.gamma.trace
 
 import com.google.inject.Inject
 import com.google.inject.Provider
+import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Act
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.AsynchronousAdapterDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.BooleanType
@@ -29,7 +30,6 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Transition
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.UnaryOp
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VariableDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclaration
-import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaNameMap
 import hu.bme.mit.semantifyr.verifier.ReportCall
 import hu.bme.mit.semantifyr.verifier.ReportState

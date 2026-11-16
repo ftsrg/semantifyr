@@ -41,7 +41,11 @@ object GammaTime {
         return value
     }
 
-    fun inUnit(value: Int, unit: TimeUnit, unitMilliseconds: Int): Int {
+    fun inUnit(
+        value: Int,
+        unit: TimeUnit,
+        unitMilliseconds: Int,
+    ): Int {
         val valueMilliseconds = milliseconds(value, unit)
         require(valueMilliseconds % unitMilliseconds == 0) {
             "The time value $valueMilliseconds ms is no whole number of the unit $unitMilliseconds ms"

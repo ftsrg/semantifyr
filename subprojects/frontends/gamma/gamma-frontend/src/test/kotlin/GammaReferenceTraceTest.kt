@@ -135,7 +135,11 @@ class GammaReferenceTraceTest {
         return CompiledReferenceCase(verificationCase, compiledModel)
     }
 
-    private fun generate(verificationCase: VerificationCaseDeclaration, trace: ReportTrace, compiledModel: CompiledGammaModel): ExecutionTrace {
+    private fun generate(
+        verificationCase: VerificationCaseDeclaration,
+        trace: ReportTrace,
+        compiledModel: CompiledGammaModel,
+    ): ExecutionTrace {
         return gammaTraceGenerator.generate(verificationCase, trace, compiledModel.nameMap, compiledModel.timeUnitMilliseconds)
     }
 
