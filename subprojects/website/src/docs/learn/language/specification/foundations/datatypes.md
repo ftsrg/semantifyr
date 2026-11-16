@@ -11,7 +11,7 @@ This page describes the **data values** Semantifyr can represent: primitives, en
 
 ## Primitive Datatypes
 
-The [standard library](../library-and-output/standard-library.md#datatypes) declares the primitive datatypes, and its page describes each. `int` holds the mathematical integers and `real` the real numbers, with no fixed width. A model may declare variables of every datatype, and it validates and compiles with them. Which datatypes a backend checks is on [the pages of the backends](../../../backends/index.mdx).
+The [standard library](../library-and-output/standard-library.md#datatypes) declares the primitive datatypes, and its page describes each. `int` holds the mathematical integers and `real` the real numbers, with no fixed width. A model may declare variables of every datatype, and it validates and compiles with them, a `clock` where [Time](../classes-and-behaviour/time.md#clocks) allows one. Which datatypes a backend checks is on [the pages of the backends](../../../backends/index.mdx).
 
 A datatype is declared with `extern datatype`, which the standard library alone may do: a model cannot add one.
 

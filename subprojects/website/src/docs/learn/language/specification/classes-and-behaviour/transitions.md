@@ -65,7 +65,7 @@ A transition declared **without** a name has an **implicit name** based on its k
 | `tran { ... }` | `main` |
 | `init { ... }` | `init` |
 
-Hence `tran { value := value + 1 }` is equivalent to a transition `tran main() { value := value + 1 }`. The implicit `main` and `init` transitions are the special transitions checked and run by the model checker.
+Hence `tran { value := value + 1 }` is equivalent to a transition `tran main() { value := value + 1 }`. The implicit `main` and `init` transitions are the special transitions checked and run by the model checker: each main step is a wait in which time passes followed by `main`, and `init` takes no time ([Time](time.md)).
 
 ```oxsts
 class Counter {
