@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.backend.transformation.BackendNameMangler
+import hu.bme.mit.semantifyr.backend.witness.BackendVariableNames
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
@@ -30,12 +31,12 @@ data class SpinVariable(
 @VerificationScoped
 class SpinVariableTransformer @Inject constructor(
     private val builtinSymbolResolver: BuiltinSymbolResolver,
-) {
+) : BackendVariableNames {
 
     private val mangler = BackendNameMangler()
     private val descriptionCache = mutableMapOf<VariableDeclaration, SpinVariable>()
 
-    fun nameOf(variableDeclaration: VariableDeclaration): String {
+    override fun nameOf(variableDeclaration: VariableDeclaration): String {
         return mangler.nameOf(variableDeclaration)
     }
 
@@ -48,17 +49,21 @@ class SpinVariableTransformer @Inject constructor(
         }
     }
 
-    private fun resolveKind(variableDeclaration: VariableDeclaration): SpinVariableKind {
+    fun kindOf(variableDeclaration: VariableDeclaration): SpinVariableKind? {
         val domain = variableDeclaration.typeSpecification?.domain
-            ?: error("Variable ${variableDeclaration.name} has no type specification")
-
         return when {
             domain is EnumDeclaration -> SpinVariableKind.Enum
             domain === builtinSymbolResolver.intDatatype(variableDeclaration) -> SpinVariableKind.Integer
             domain === builtinSymbolResolver.clockDatatype(variableDeclaration) -> SpinVariableKind.Integer
             domain === builtinSymbolResolver.boolDatatype(variableDeclaration) -> SpinVariableKind.Boolean
-            else -> throw BackendUnsupportedException("Spin does not support variables of type ${domain.name} (${variableDeclaration.name})")
+            else -> null
         }
+    }
+
+    private fun resolveKind(variableDeclaration: VariableDeclaration): SpinVariableKind {
+        val domain = variableDeclaration.typeSpecification?.domain
+            ?: error("Variable ${variableDeclaration.name} has no type specification")
+        return kindOf(variableDeclaration) ?: throw BackendUnsupportedException("Spin does not support variables of type ${domain.name} (${variableDeclaration.name})")
     }
 
     fun nameOf(enumDeclaration: EnumDeclaration): String {

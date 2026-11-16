@@ -6,9 +6,7 @@
 
 package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
-import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
-import hu.bme.mit.semantifyr.backend.transformation.WholeDelayLowering
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -34,7 +32,7 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
 
     private suspend fun xsts(body: String): String {
         return withTransformer {
-            serialize(it.transform(parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors, paints), testXstsUri, null))
+            serialize(it.transform(parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors, paints), testXstsUri).xsts)
         }
     }
 
@@ -243,7 +241,7 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
     @Test
     suspend fun `tracers are declared outside the control set`() {
         val xsts = withTransformer {
-            it.transform(compile("tracing", "TracedChoiceBranchReach"), testXstsUri, null)
+            it.transform(compile("tracing", "TracedChoiceBranchReach"), testXstsUri).xsts
         }
 
         val tracers = xsts.variableDeclarations.filter {
@@ -554,9 +552,6 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
         }
     }
 
-    @Inject
-    private lateinit var wholeDelayLowering: WholeDelayLowering
-
     @Test
     suspend fun `every main step starts with a bounded whole delay that advances each clock up to its saturation, and init waits for nothing`() {
         val inlinedOxsts = parse(
@@ -582,7 +577,7 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
         )
 
         val xsts = withTransformer {
-            serialize(it.transform(inlinedOxsts, testXstsUri, wholeDelayLowering.lower(inlinedOxsts)))
+            serialize(it.transform(inlinedOxsts, testXstsUri).xsts)
         }
 
         assertThat(xsts).isEqualTo(

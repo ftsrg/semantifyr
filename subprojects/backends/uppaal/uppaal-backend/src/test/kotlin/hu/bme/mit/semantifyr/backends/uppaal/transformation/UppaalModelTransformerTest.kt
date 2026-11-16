@@ -873,14 +873,10 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
 
         assertThat(clockEdges.keys).containsExactly("clock_loc_1", "clock_loc_2")
         assertThat(
-            clockEdges.getValue("clock_loc_1").clockAtoms.map {
+            (clockEdges.getValue("clock_loc_1") as UppaalClockEdge.Test).clockAtoms.map {
                 "${it.clock.name} ${it.op} ${it.bound}"
             },
         ).containsExactly("elapsed GREATER_EQ 2")
-        assertThat(
-            clockEdges.getValue("clock_loc_2").resets.map {
-                it.name
-            },
-        ).containsExactly("elapsed")
+        assertThat((clockEdges.getValue("clock_loc_2") as UppaalClockEdge.Reset).clock.name).isEqualTo("elapsed")
     }
 }

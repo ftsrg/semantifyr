@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendTestModels
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
+import hu.bme.mit.semantifyr.backend.scopes.withVerificationScopeBlocking
 import hu.bme.mit.semantifyr.backends.theta.ThetaBackendModule
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -37,7 +38,9 @@ abstract class ThetaTransformationTestBase {
     }
 
     protected fun capabilityChecker(): ThetaCapabilityChecker {
-        return childInjector.getInstance(ThetaCapabilityChecker::class.java)
+        return withVerificationScopeBlocking {
+            childInjector.getInstance(ThetaCapabilityChecker::class.java)
+        }
     }
 
     protected fun parse(source: String, vararg packages: String): InlinedOxsts {

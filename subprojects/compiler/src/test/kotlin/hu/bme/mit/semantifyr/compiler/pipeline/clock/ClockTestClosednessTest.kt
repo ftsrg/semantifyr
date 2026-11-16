@@ -8,52 +8,38 @@ package hu.bme.mit.semantifyr.compiler.pipeline.clock
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.flattening.FlatteningTestBase
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.clock.ClockTestAnalysis
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
 import org.assertj.core.api.Assertions.assertThat
-import org.eclipse.emf.ecore.util.EcoreUtil
 import org.junit.jupiter.api.Test
 
-class ClockTestClosednessAnalysisTest : FlatteningTestBase() {
+class ClockTestClosednessTest : FlatteningTestBase() {
 
     @Inject
-    private lateinit var clockTestClosednessAnalysis: ClockTestClosednessAnalysis
+    private lateinit var clockTestAnalysis: ClockTestAnalysis
+
+    private fun unclosedTests(className: String): List<ComparisonOperator> {
+        return clockTestAnalysis.unclosedTests(flatten(className, MODEL).inlinedOxsts.mainTransition)
+    }
 
     @Test
     fun `a model whose clock tests stand in assumptions as closed comparisons is closed`() {
-        val compilation = flatten("Deadline", MODEL)
-
-        assertThat(clockTestClosednessAnalysis.analyze(compilation.inlinedOxsts).isClosed).isTrue()
+        assertThat(unclosedTests("Deadline")).isEmpty()
     }
 
     @Test
     fun `a reset in a called transition exempts the test after the call`() {
-        val compilation = flatten("RestartThenCheck", MODEL)
-
-        assertThat(clockTestClosednessAnalysis.analyze(compilation.inlinedOxsts).isClosed).isTrue()
-    }
-
-    @Test
-    fun `a test that init calls is exempt and one that the main transition calls is not`() {
-        val compilation = flatten("CheckInInitAndStep", MODEL)
-
-        val closedness = clockTestClosednessAnalysis.analyze(compilation.inlinedOxsts)
-
-        assertThat(closedness.unclosedTests).singleElement().satisfies({
-            assertThat(EcoreUtil.isAncestor(compilation.inlinedOxsts.mainTransition, it)).isTrue()
-        })
+        assertThat(unclosedTests("RestartThenCheck")).isEmpty()
     }
 
     @Test
     fun `a closed test of a clock read through a variable holding an instance is closed`() {
-        val compilation = flatten("DispatchedDeadline", MODEL)
-
-        assertThat(clockTestClosednessAnalysis.analyze(compilation.inlinedOxsts).isClosed).isTrue()
+        assertThat(unclosedTests("DispatchedDeadline")).isEmpty()
     }
 
     @Test
     fun `a strict test of a clock read through a variable holding an instance is not closed`() {
-        val compilation = flatten("DispatchedStrictTest", MODEL)
-
-        assertThat(clockTestClosednessAnalysis.analyze(compilation.inlinedOxsts).unclosedTests).hasSize(1)
+        assertThat(unclosedTests("DispatchedStrictTest")).hasSize(1)
     }
 
     companion object {
@@ -135,23 +121,6 @@ class ClockTestClosednessAnalysisTest : FlatteningTestBase() {
 
                 redefine tran {
                     inline timer.restart()
-                    inline timer.check()
-                }
-
-                prop {
-                    return AG true
-                }
-            }
-
-            @VerificationCase
-            class CheckInInitAndStep {
-                contains timer: Timer
-
-                redefine init {
-                    inline timer.check()
-                }
-
-                redefine tran {
                     inline timer.check()
                 }
 

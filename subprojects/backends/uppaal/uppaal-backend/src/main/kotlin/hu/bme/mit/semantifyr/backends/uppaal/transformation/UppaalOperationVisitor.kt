@@ -84,7 +84,7 @@ class UppaalOperationVisitor @AssistedInject constructor(
     override fun visit(operation: AssignmentOperation) {
         val variable = OxstsUtils.requireVariableReference(operation.reference)
         val name = uppaalVariableTransformer.nameOf(variable)
-        if (uppaalVariableTransformer.isClock(variable)) {
+        if (uppaalVariableTransformer.kindOf(variable) == UppaalVariableKind.Clock) {
             renderClockReset(variable, name, operation)
             return
         }
@@ -101,7 +101,7 @@ class UppaalOperationVisitor @AssistedInject constructor(
         if (literal?.value != 0) {
             throw BackendUnsupportedException("Uppaal resets clock $name only to 0")
         }
-        val location = context.freshClockLocation(UppaalClockEdge(emptyList(), listOf(variable)))
+        val location = context.freshClockLocation(UppaalClockEdge.Reset(variable))
         context.edges += UppaalEdge(sourceId, location.id, assignment = "$name = 0")
         context.edges += UppaalEdge(location.id, targetId)
     }
@@ -120,7 +120,7 @@ class UppaalOperationVisitor @AssistedInject constructor(
             if (guard.clockAtoms.isEmpty()) {
                 context.edges += UppaalEdge(source, target, guard = rendered)
             } else {
-                val location = context.freshClockLocation(UppaalClockEdge(guard.clockAtoms, emptyList()))
+                val location = context.freshClockLocation(UppaalClockEdge.Test(guard.clockAtoms))
                 context.edges += UppaalEdge(source, location.id, guard = rendered)
                 context.edges += UppaalEdge(location.id, target)
             }
@@ -183,15 +183,12 @@ class UppaalOperationVisitor @AssistedInject constructor(
 
     private fun havoc(variable: VariableDeclaration) {
         val name = uppaalVariableTransformer.nameOf(variable)
-        if (uppaalVariableTransformer.isClock(variable)) {
-            throw BackendUnsupportedException("Uppaal does not support havoc on clock $name")
-        }
         val described = uppaalVariableTransformer.describe(variable)
         when (described.kind) {
             UppaalVariableKind.Integer -> renderIntegerHavoc(variable, name)
             UppaalVariableKind.Boolean -> renderBooleanHavoc(name)
             UppaalVariableKind.Enum -> renderEnumHavoc(described, name)
-            UppaalVariableKind.Clock -> error("unreachable: clock handled above")
+            UppaalVariableKind.Clock -> throw BackendUnsupportedException("Uppaal does not support havoc on clock $name")
         }
     }
 

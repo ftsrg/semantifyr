@@ -41,7 +41,7 @@ class NuxmvModelTransformer @Inject constructor(
         }
         val initializedVariables = collectInitializedVariables(variables)
         val clocks = variables.filter {
-            nuxmvVariableTransformer.isClock(it)
+            nuxmvVariableTransformer.kindOf(it) == NuxmvVariableKind.Clock
         }
         val initResults = transformInitBranches(inlinedOxsts, variables, initializedVariables)
         val tranResults = transformTranBranches(inlinedOxsts, clocks)

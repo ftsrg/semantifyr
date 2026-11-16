@@ -8,7 +8,6 @@ package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
-import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DataTypeDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
@@ -19,7 +18,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.emf.ecore.EObject
 
 class ThetaCapabilityChecker @Inject constructor(
-    private val builtinSymbolResolver: BuiltinSymbolResolver,
+    private val thetaDomainTransformer: ThetaDomainTransformer,
 ) : BackendCapabilityChecker() {
 
     override fun describeUnsupported(element: EObject): String? {
@@ -42,7 +41,7 @@ class ThetaCapabilityChecker @Inject constructor(
 
     private fun describeUnsupportedType(variable: VariableDeclaration): String? {
         val domain = variable.typeSpecification?.domain as? DataTypeDeclaration ?: return null
-        if (domain === builtinSymbolResolver.intDatatype(variable) || domain === builtinSymbolResolver.boolDatatype(variable) || domain === builtinSymbolResolver.clockDatatype(variable)) {
+        if (thetaDomainTransformer.typeOf(domain) != null) {
             return null
         }
         return "variables of type ${domain.name}"

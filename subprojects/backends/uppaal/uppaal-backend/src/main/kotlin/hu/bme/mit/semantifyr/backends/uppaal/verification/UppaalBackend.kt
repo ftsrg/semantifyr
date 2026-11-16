@@ -36,6 +36,7 @@ import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalCapabilityChec
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalModelTransformer
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalOperationVisitor
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalOverApproximationCapabilityChecker
+import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalVariableKind
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalVariableTransformer
 import hu.bme.mit.semantifyr.logging.info
 import kotlinx.coroutines.currentCoroutineContext
@@ -147,7 +148,7 @@ class UppaalVerificationContext @AssistedInject constructor(
     // Uppaal's concrete trace rounds its delays and fails on long runs of small ones
     private fun symbolicTraceFlag(): List<String> {
         val hasClocks = request.inlinedOxsts.variables.any {
-            uppaalVariableTransformer.isClock(it)
+            uppaalVariableTransformer.kindOf(it) == UppaalVariableKind.Clock
         }
         if (!hasClocks) {
             return emptyList()

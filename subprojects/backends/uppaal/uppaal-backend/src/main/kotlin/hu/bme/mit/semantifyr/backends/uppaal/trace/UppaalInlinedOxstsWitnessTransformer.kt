@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.backends.uppaal.trace
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.backend.witness.TraceVariableResolver
 import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
@@ -17,7 +18,6 @@ import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalVariableKind
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalVariableTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
@@ -35,16 +35,13 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
         trace: UppaalTrace,
         clockEdges: Map<String, UppaalClockEdge>,
     ): InlinedWitness {
-        val nameToVariable = inlinedOxsts.eAllOfType<VariableDeclaration>().associateBy {
-            uppaalVariableTransformer.nameOf(it)
-        }
+        val resolver = TraceVariableResolver(inlinedOxsts, uppaalVariableTransformer, emptySet(), "Uppaal's trace")
         val clocks = inlinedOxsts.variables.filter {
-            uppaalVariableTransformer.isClock(it)
+            uppaalVariableTransformer.kindOf(it) == UppaalVariableKind.Clock
         }
 
         val running = mutableMapOf<VariableDeclaration, Expression>()
         val updated = mutableSetOf<VariableDeclaration>()
-        val stateVariables = inlinedOxsts.variables.toSet()
 
         val stableValues = mutableListOf<List<WitnessStateValue>>()
         val steps = mutableListOf<List<UppaalClockEdge>>()
@@ -58,7 +55,7 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
             if (!state.isOxstsBoundary()) {
                 continue
             }
-            updateRunningValues(state, nameToVariable, stateVariables, running, updated)
+            updateRunningValues(state, resolver, running, updated)
             if (state.isStable()) {
                 stableValues += valuesOf(inlinedOxsts.variables, running, updated)
                 steps += stepEdges
@@ -79,17 +76,13 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
 
     private fun updateRunningValues(
         state: UppaalTraceState,
-        nameToVariable: Map<String, VariableDeclaration>,
-        stateVariables: Set<VariableDeclaration>,
+        resolver: TraceVariableResolver,
         running: MutableMap<VariableDeclaration, Expression>,
         updated: MutableSet<VariableDeclaration>,
     ) {
         for ((name, raw) in state.variableValues) {
-            val variable = nameToVariable[name] ?: throw WitnessFailedException("Uppaal's trace holds $name, which names no variable of the model")
-            if (variable !in stateVariables) {
-                continue
-            }
-            val kind = uppaalVariableTransformer.describe(variable).kind
+            val variable = resolver.stateVariableOf(name) ?: continue
+            val kind = uppaalVariableTransformer.kindOf(variable)
             if (kind == UppaalVariableKind.Clock) {
                 continue
             }
@@ -127,7 +120,7 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
 
     private fun parseValue(
         variable: VariableDeclaration,
-        kind: UppaalVariableKind,
+        kind: UppaalVariableKind?,
         raw: String,
     ): Expression? {
         return when (kind) {
@@ -136,7 +129,7 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
             }
             UppaalVariableKind.Boolean -> parseBooleanValue(raw)
             UppaalVariableKind.Enum -> parseEnumValue(variable, raw)
-            UppaalVariableKind.Clock -> null
+            UppaalVariableKind.Clock, null -> null
         }
     }
 

@@ -119,31 +119,16 @@ class UppaalGuardTransformer @Inject constructor(
     }
 
     private fun normalizeClockTest(comparison: ComparisonOperator, positive: Boolean): List<UppaalGuard> {
-        val clockOnLeft = clockTestAnalysis.isClockValued(comparison.left)
-        val clockSide = if (clockOnLeft) {
-            comparison.left
-        } else {
-            comparison.right
-        }
-        val boundSide = if (clockOnLeft) {
-            comparison.right
-        } else {
-            comparison.left
-        }
-        if (readsClock(boundSide)) {
+        val clockTest = clockTestAnalysis.clockTest(comparison) ?: throw BackendUnsupportedException("Uppaal reads a clock only in comparisons with a constant")
+        if (readsClock(clockTest.bound)) {
             throw BackendUnsupportedException("Uppaal compares a clock only with a constant")
         }
-        val oriented = if (clockOnLeft) {
-            comparison.op
-        } else {
-            mirrored(comparison.op)
-        }
         val op = if (positive) {
-            oriented
+            clockTest.operator
         } else {
-            negated(oriented)
+            ClockTestAnalysis.negated(clockTest.operator)
         }
-        val bound = evaluateBound(boundSide)
+        val bound = evaluateBound(clockTest.bound)
         // Uppaal refuses != on a clock
         val ops = if (op == ComparisonOp.NOT_EQ) {
             listOf(
@@ -153,7 +138,7 @@ class UppaalGuardTransformer @Inject constructor(
         } else {
             listOf(op)
         }
-        return leavesOf(clockSide).flatMap { leaf ->
+        return leavesOf(clockTest.clock).flatMap { leaf ->
             ops.flatMap {
                 product(leaf.guards, listOf(UppaalGuard(emptyList(), listOf(UppaalClockAtom(leaf.clock, it, bound)))))
             }
@@ -210,27 +195,5 @@ class UppaalGuardTransformer @Inject constructor(
 
     private fun union(left: List<UppaalGuard>, right: List<UppaalGuard>): List<UppaalGuard> {
         return left + right
-    }
-
-    private fun mirrored(op: ComparisonOp): ComparisonOp {
-        return when (op) {
-            ComparisonOp.LESS -> ComparisonOp.GREATER
-            ComparisonOp.LESS_EQ -> ComparisonOp.GREATER_EQ
-            ComparisonOp.GREATER -> ComparisonOp.LESS
-            ComparisonOp.GREATER_EQ -> ComparisonOp.LESS_EQ
-            ComparisonOp.EQ -> ComparisonOp.EQ
-            ComparisonOp.NOT_EQ -> ComparisonOp.NOT_EQ
-        }
-    }
-
-    private fun negated(op: ComparisonOp): ComparisonOp {
-        return when (op) {
-            ComparisonOp.LESS -> ComparisonOp.GREATER_EQ
-            ComparisonOp.LESS_EQ -> ComparisonOp.GREATER
-            ComparisonOp.GREATER -> ComparisonOp.LESS_EQ
-            ComparisonOp.GREATER_EQ -> ComparisonOp.LESS
-            ComparisonOp.EQ -> ComparisonOp.NOT_EQ
-            ComparisonOp.NOT_EQ -> ComparisonOp.EQ
-        }
     }
 }

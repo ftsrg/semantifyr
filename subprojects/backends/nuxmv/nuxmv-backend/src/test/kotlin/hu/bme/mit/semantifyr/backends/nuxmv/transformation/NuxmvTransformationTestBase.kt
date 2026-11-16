@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendTestModels
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
+import hu.bme.mit.semantifyr.backend.scopes.withVerificationScopeBlocking
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvBackendModule
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -28,11 +29,15 @@ abstract class NuxmvTransformationTestBase {
     }
 
     protected fun capabilityChecker(): NuxmvCapabilityChecker {
-        return childInjector.getInstance(NuxmvCapabilityChecker::class.java)
+        return withVerificationScopeBlocking {
+            childInjector.getInstance(NuxmvCapabilityChecker::class.java)
+        }
     }
 
     protected fun bddCapabilityChecker(): NuxmvBddCapabilityChecker {
-        return childInjector.getInstance(NuxmvBddCapabilityChecker::class.java)
+        return withVerificationScopeBlocking {
+            childInjector.getInstance(NuxmvBddCapabilityChecker::class.java)
+        }
     }
 
     protected fun parse(source: String, vararg packages: String): InlinedOxsts {

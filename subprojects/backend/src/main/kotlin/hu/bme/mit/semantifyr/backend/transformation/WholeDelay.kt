@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.backend.transformation
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
@@ -15,26 +14,20 @@ import hu.bme.mit.semantifyr.backend.witness.WitnessClockValue
 import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
-import hu.bme.mit.semantifyr.compiler.pipeline.clock.ClockTestClosednessAnalysis
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.clock.ClockTestAnalysis
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.IntegerEvaluation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfThenElse
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
 const val WHOLE_DELAY_VARIABLE_NAME = "__semantifyr_delay"
 
-// a clock and a delay together stay below 2^31 in the 32-bit integers of Spin
-private const val LARGEST_SATURATION = 1 shl 30
-
 class WholeDelayClock(
     val variable: VariableDeclaration,
-    val saturation: Int,
+    val saturation: Long,
 )
 
 class WholeDelay(
@@ -99,7 +92,7 @@ class WholeDelay(
     private fun clockValue(
         variable: VariableDeclaration,
         raw: Int,
-        saturation: Int,
+        saturation: Long,
         previousValues: Map<VariableDeclaration, Fraction>,
         elapsed: Fraction,
     ): Fraction {
@@ -117,7 +110,6 @@ class WholeDelay(
 
 class WholeDelayLowering @Inject constructor(
     private val clockTestAnalysis: ClockTestAnalysis,
-    private val clockTestClosednessAnalysis: ClockTestClosednessAnalysis,
     private val constantExpressionEvaluatorProvider: ConstantExpressionEvaluatorProvider,
 ) {
 
@@ -129,50 +121,26 @@ class WholeDelayLowering @Inject constructor(
             return null
         }
         val largestBounds = mutableMapOf<VariableDeclaration, Int>()
-        for (test in inlinedOxsts.eAllOfType<ComparisonOperator>()) {
-            val bound = boundOf(test) ?: continue
-            for (clock in clockLeaves(test.left) + clockLeaves(test.right)) {
-                largestBounds[clock] = maxOf(largestBounds[clock] ?: 0, bound)
+        for (comparison in inlinedOxsts.eAllOfType<ComparisonOperator>()) {
+            val test = clockTestAnalysis.clockTest(comparison) ?: continue
+            val evaluation = constantExpressionEvaluatorProvider.evaluate(test.bound) as? IntegerEvaluation
+                ?: error("A clock bound is no compile-time integer")
+            for (leaf in test.clockLeaves.orEmpty()) {
+                val clock = clockTestAnalysis.referencedClock(leaf)
+                largestBounds[clock] = maxOf(largestBounds[clock] ?: 0, evaluation.value)
             }
         }
         return WholeDelay(
             clocks.map {
-                WholeDelayClock(it, saturationOf(it, largestBounds[it] ?: 0))
+                WholeDelayClock(it, (largestBounds[it] ?: 0) + 1L)
             },
         )
     }
 
     fun soundness(inlinedOxsts: InlinedOxsts, configured: SoundnessDirection): SoundnessDirection {
-        if (clockTestClosednessAnalysis.analyze(inlinedOxsts).isClosed) {
+        if (clockTestAnalysis.unclosedTests(inlinedOxsts.mainTransition).isEmpty()) {
             return configured
         }
         return SoundnessDirection.UnderApproximating
-    }
-
-    private fun saturationOf(clock: VariableDeclaration, largestBound: Int): Int {
-        if (largestBound >= LARGEST_SATURATION) {
-            throw BackendUnsupportedException("A whole-delay backend takes clock bounds below $LARGEST_SATURATION (${clock.name})")
-        }
-        return largestBound + 1
-    }
-
-    private fun boundOf(test: ComparisonOperator): Int? {
-        val bound = if (clockTestAnalysis.isClockValued(test.left)) {
-            test.right
-        } else if (clockTestAnalysis.isClockValued(test.right)) {
-            test.left
-        } else {
-            return null
-        }
-        val evaluation = constantExpressionEvaluatorProvider.evaluate(bound) as? IntegerEvaluation
-            ?: error("A clock bound is no compile-time integer")
-        return evaluation.value
-    }
-
-    private fun clockLeaves(expression: Expression): List<VariableDeclaration> {
-        if (expression is IfThenElse) {
-            return clockLeaves(expression.then) + clockLeaves(expression.`else`)
-        }
-        return listOfNotNull(clockTestAnalysis.referencedClock(expression))
     }
 }

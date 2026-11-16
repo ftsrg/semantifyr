@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.backend.transformation.BackendNameMangler
+import hu.bme.mit.semantifyr.backend.witness.BackendVariableNames
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
@@ -31,17 +32,13 @@ data class NuxmvVariable(
 @VerificationScoped
 class NuxmvVariableTransformer @Inject constructor(
     private val builtinSymbolResolver: BuiltinSymbolResolver,
-) {
+) : BackendVariableNames {
 
     private val mangler = BackendNameMangler()
     private val descriptionCache = mutableMapOf<VariableDeclaration, NuxmvVariable>()
 
-    fun nameOf(variableDeclaration: VariableDeclaration): String {
+    override fun nameOf(variableDeclaration: VariableDeclaration): String {
         return mangler.nameOf(variableDeclaration)
-    }
-
-    fun isClock(variableDeclaration: VariableDeclaration): Boolean {
-        return variableDeclaration.typeSpecification?.domain === builtinSymbolResolver.clockDatatype(variableDeclaration)
     }
 
     fun describe(variableDeclaration: VariableDeclaration): NuxmvVariable {
@@ -53,17 +50,21 @@ class NuxmvVariableTransformer @Inject constructor(
         }
     }
 
-    private fun resolveKind(variableDeclaration: VariableDeclaration): NuxmvVariableKind {
+    fun kindOf(variableDeclaration: VariableDeclaration): NuxmvVariableKind? {
         val domain = variableDeclaration.typeSpecification?.domain
-            ?: error("Variable ${variableDeclaration.name} has no type specification")
-
         return when {
             domain === builtinSymbolResolver.clockDatatype(variableDeclaration) -> NuxmvVariableKind.Clock
             domain is EnumDeclaration -> NuxmvVariableKind.Enum
             domain === builtinSymbolResolver.intDatatype(variableDeclaration) -> NuxmvVariableKind.Integer
             domain === builtinSymbolResolver.boolDatatype(variableDeclaration) -> NuxmvVariableKind.Boolean
-            else -> throw BackendUnsupportedException("nuXmv does not support variables of type ${domain.name} (${variableDeclaration.name})")
+            else -> null
         }
+    }
+
+    private fun resolveKind(variableDeclaration: VariableDeclaration): NuxmvVariableKind {
+        val domain = variableDeclaration.typeSpecification?.domain
+            ?: error("Variable ${variableDeclaration.name} has no type specification")
+        return kindOf(variableDeclaration) ?: throw BackendUnsupportedException("nuXmv does not support variables of type ${domain.name} (${variableDeclaration.name})")
     }
 
     fun nameOf(enumDeclaration: EnumDeclaration): String {

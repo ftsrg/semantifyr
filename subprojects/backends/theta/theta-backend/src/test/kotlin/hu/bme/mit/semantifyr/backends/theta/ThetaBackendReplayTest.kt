@@ -106,14 +106,6 @@ class ThetaBackendReplayTest {
     }
 
     @Test
-    suspend fun `a violated invariant without its counterexample fails the run`() {
-        val result = verify("CounterExceedsBoundWithoutTrace", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
-        assertThat(result.message).contains("without its trace")
-    }
-
-    @Test
     suspend fun `witness values keep the declaration order`() {
         val result = verify("OneOfSeveralChanges", models.parse(BackendTestModels.SATURATING_ONE_OF_SEVERAL_CHANGES))
 

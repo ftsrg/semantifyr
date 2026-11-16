@@ -16,13 +16,13 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScopeBlocking
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
-import hu.bme.mit.semantifyr.compiler.pipeline.clock.ClockTestClosednessAnalysis
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.clock.ClockTestAnalysis
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -258,7 +258,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
     private fun hasUnclosedClockTest(case: VerificationCase, outputDirectory: Path): Boolean {
         val compiler = SemantifyrCompiler(injector, ArtifactConfig.NONE)
         val inlinedOxsts = compiler.compile(case.classDeclaration, outputDirectory.resolve("closedness").resolve(caseDirectoryName(case))).inlinedOxsts
-        return !injector.getInstance(ClockTestClosednessAnalysis::class.java).analyze(inlinedOxsts).isClosed
+        return injector.getInstance(ClockTestAnalysis::class.java).unclosedTests(inlinedOxsts.mainTransition).isNotEmpty()
     }
 
     suspend fun checkWitnessReparses(

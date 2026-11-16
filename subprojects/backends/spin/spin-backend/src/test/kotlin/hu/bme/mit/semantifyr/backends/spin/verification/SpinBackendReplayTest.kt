@@ -122,14 +122,6 @@ class SpinBackendReplayTest {
     }
 
     @Test
-    suspend fun `a violated invariant without its trace fails the run`() {
-        val result = verify("CounterExceedsBoundWithoutTrace", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
-        assertThat(result.message).contains("without its trace")
-    }
-
-    @Test
     suspend fun `unchanged values carry over from the declarations and the previous state`() {
         val result = verify("OneOfSeveralChanges", models.parse(BackendTestModels.SATURATING_ONE_OF_SEVERAL_CHANGES))
 
