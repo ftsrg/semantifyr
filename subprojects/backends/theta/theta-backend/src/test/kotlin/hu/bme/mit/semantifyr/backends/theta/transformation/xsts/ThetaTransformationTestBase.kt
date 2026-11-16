@@ -37,9 +37,9 @@ abstract class ThetaTransformationTestBase {
         URI.createFileURI(File("build/test-tmp/model.xsts").absolutePath)
     }
 
-    protected fun capabilityChecker(): ThetaCapabilityChecker {
+    protected fun capabilityChecker(type: Class<out ThetaCapabilityChecker>): ThetaCapabilityChecker {
         return withVerificationScopeBlocking {
-            childInjector.getInstance(ThetaCapabilityChecker::class.java)
+            childInjector.getInstance(type)
         }
     }
 
