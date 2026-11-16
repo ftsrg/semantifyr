@@ -31525,7 +31525,7 @@
    "kind": "begin",
    "title": "Verifying Gamma case LevelCrossing.TwoTrainsCanBeInTheCrossing",
    "cancellable": true,
-   "message": "Compiling Gamma to OXSTS"
+   "message": "Compiling Gamma to the Semantifyr Language"
   },
   {
    "kind": "report",
