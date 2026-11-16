@@ -193,7 +193,7 @@ class InlineOperationExpander @Inject constructor(
             tracedCall?.let {
                 add(it.tracerAssignment)
             }
-            addAll(arguments.temporaries)
+            addAll(arguments.runtimeArguments.values)
             tracedCall?.let {
                 addAll(it.argumentRecords)
             }
@@ -213,7 +213,6 @@ class InlineOperationExpander @Inject constructor(
     }
 
     private class ArgumentBinding(
-        val temporaries: List<LocalVarDeclarationOperation>,
         val runtimeArguments: Map<ParameterDeclaration, LocalVarDeclarationOperation>,
         val bindings: Map<ParameterDeclaration, Expression>,
     )
@@ -223,8 +222,8 @@ class InlineOperationExpander @Inject constructor(
         transitionDeclaration: TransitionDeclaration,
         callExpression: CallSuffixExpression,
     ): ArgumentBinding {
-        val temporaries = sortedMapOf<Int, LocalVarDeclarationOperation>()
-        val runtimeArguments = linkedMapOf<ParameterDeclaration, LocalVarDeclarationOperation>()
+        val runtimeParameters = sortedMapOf<Int, ParameterDeclaration>()
+        val temporaries = mutableMapOf<ParameterDeclaration, LocalVarDeclarationOperation>()
         val bindings = mutableMapOf<ParameterDeclaration, Expression>()
 
         for ((index, parameter) in transitionDeclaration.parameters.withIndex()) {
@@ -243,14 +242,19 @@ class InlineOperationExpander @Inject constructor(
                 it.expression = argument.expression.copy()
             }
             SourceLocation.recordOrigin(argument.expression, temporary)
-            temporaries[callExpression.arguments.indexOf(argument)] = temporary
-            runtimeArguments[parameter] = temporary
+            runtimeParameters[callExpression.arguments.indexOf(argument)] = parameter
+            temporaries[parameter] = temporary
             bindings[parameter] = OxstsFactory.createElementReference(temporary).also {
                 SourceLocation.recordOrigin(argument.expression, it)
             }
         }
 
-        return ArgumentBinding(temporaries.values.toList(), runtimeArguments, bindings)
+        return ArgumentBinding(
+            runtimeParameters.values.associateWith {
+                temporaries.getValue(it)
+            },
+            bindings,
+        )
     }
 
     private fun rewriteLocalVariables(operation: Operation, containerInstance: Instance) {

@@ -13,7 +13,7 @@ import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
 import hu.bme.mit.semantifyr.backend.witness.linearInlinedWitness
 import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
-import hu.bme.mit.semantifyr.compiler.pipeline.inlining.RecordedArgumentTrace
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.ArgumentTrace
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionCallTrace
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
@@ -256,7 +256,7 @@ class VerificationContextTest {
                 mapOf(
                     OxstsFactory.createVariableDeclaration() to transitionCallTrace(
                         listOf(
-                            RecordedArgumentTrace(OxstsFactory.createParameterDeclaration(), argument),
+                            ArgumentTrace.Recorded(OxstsFactory.createParameterDeclaration(), argument),
                         ),
                     ),
                 ),
@@ -382,12 +382,11 @@ private fun modelChecking(property: Expression): InlinedOxsts {
     }
 }
 
-private fun transitionCallTrace(recordedArguments: List<RecordedArgumentTrace>): TransitionCallTrace {
+private fun transitionCallTrace(arguments: List<ArgumentTrace>): TransitionCallTrace {
     return TransitionCallTrace(
         self = InstanceEvaluation(emptySet()),
         transitionDeclaration = OxstsFactory.createTransitionDeclaration(),
-        arguments = emptyList(),
-        recordedArguments = recordedArguments,
+        arguments = arguments,
         parent = null,
     )
 }

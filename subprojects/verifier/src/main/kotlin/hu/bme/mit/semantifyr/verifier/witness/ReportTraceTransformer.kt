@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.verifier.witness
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.ArgumentTrace
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionCallTrace
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider
@@ -155,19 +156,15 @@ class ReportTraceTransformer @Inject constructor(
     }
 
     private fun arguments(site: TransitionCallTrace, state: ClassWitnessState): Map<String, ReportValue> {
-        val compileTime = site.arguments.associate {
-            it.parameterDeclaration to reportValueConverter.value(it.evaluation)
-        }
-        val recorded = site.recordedArguments.associate {
-            val value = state.recordedArguments[it.variable]
-                ?: error("the recorded argument ${it.variable.name} has no value")
-            it.parameterDeclaration to reportValueConverter.value(value)
-        }
-        return site.transitionDeclaration.parameters.mapNotNull { parameter ->
-            (compileTime[parameter] ?: recorded[parameter])?.let {
-                parameter.name to it
+        return site.arguments.associate {
+            val value = when (it) {
+                is ArgumentTrace.Constant -> reportValueConverter.value(it.evaluation)
+                is ArgumentTrace.Recorded -> reportValueConverter.value(
+                    state.recordedArguments[it.variable] ?: error("the recorded argument ${it.variable.name} has no value"),
+                )
             }
-        }.toMap()
+            it.parameterDeclaration.name to value
+        }
     }
 
     private fun entries(state: ClassWitnessState): List<ReportEntry> {

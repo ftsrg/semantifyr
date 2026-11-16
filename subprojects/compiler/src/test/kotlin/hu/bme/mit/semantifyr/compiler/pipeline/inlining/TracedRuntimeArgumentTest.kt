@@ -25,8 +25,7 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
 
         val trace = compilation.transitionCallTraces.getTransitionCallTrace(compilation.tracer())
 
-        assertThat(trace.arguments).isEmpty()
-        val recorded = trace.recordedArguments.single()
+        val recorded = trace.arguments.single() as ArgumentTrace.Recorded
         assertThat(recorded.parameterDeclaration.name).isEqualTo("value")
         assertThat(recorded.variable.name).isEqualTo(TransitionTracerNames.argumentName(0, "value"))
         assertThat(compilation.inlinedOxsts.variables).contains(recorded.variable)

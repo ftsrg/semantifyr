@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.artifact
 
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluator
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluatorProvider
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.ArgumentTrace
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionCallTraceTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
@@ -220,7 +221,7 @@ class TransitionCallTraceTransformerTest {
         val trace = transformer.finalize(inlinedOxstsCalling(operation)).getTransitionCallTrace(variable)
 
         assertThat(trace.arguments.single().parameterDeclaration).isSameAs(parameter)
-        assertThat(trace.arguments.single().evaluation).isEqualTo(IntegerEvaluation(3))
+        assertThat((trace.arguments.single() as ArgumentTrace.Constant).evaluation).isEqualTo(IntegerEvaluation(3))
     }
 
     @Test
@@ -252,7 +253,7 @@ class TransitionCallTraceTransformerTest {
         val trace = transformer.finalize(inlinedOxstsCalling(operation)).getTransitionCallTrace(variable)
 
         assertThat(trace.arguments.single().parameterDeclaration).isSameAs(second)
-        assertThat(trace.arguments.single().evaluation).isEqualTo(IntegerEvaluation(3))
+        assertThat((trace.arguments.single() as ArgumentTrace.Constant).evaluation).isEqualTo(IntegerEvaluation(3))
     }
 
     private fun inlinedOxstsCalling(operation: AssignmentOperation): InlinedOxsts {

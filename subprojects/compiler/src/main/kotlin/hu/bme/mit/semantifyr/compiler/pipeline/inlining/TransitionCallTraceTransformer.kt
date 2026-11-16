@@ -40,23 +40,29 @@ import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtext.EcoreUtil2
 
-class ArgumentTrace(
-    val parameterDeclaration: ParameterDeclaration,
-    val evaluation: ExpressionEvaluation,
-)
+sealed interface ArgumentTrace {
+    val parameterDeclaration: ParameterDeclaration
 
-class RecordedArgumentTrace(
-    val parameterDeclaration: ParameterDeclaration,
-    val variable: VariableDeclaration,
-)
+    class Constant(
+        override val parameterDeclaration: ParameterDeclaration,
+        val evaluation: ExpressionEvaluation,
+    ) : ArgumentTrace
+
+    class Recorded(
+        override val parameterDeclaration: ParameterDeclaration,
+        val variable: VariableDeclaration,
+    ) : ArgumentTrace
+}
 
 class TransitionCallTrace(
     val self: InstanceEvaluation,
     val transitionDeclaration: TransitionDeclaration,
     val arguments: List<ArgumentTrace>,
-    val recordedArguments: List<RecordedArgumentTrace>,
     val parent: TransitionCallTrace?,
-)
+) {
+    val recordedArguments: List<ArgumentTrace.Recorded>
+        get() = arguments.filterIsInstance<ArgumentTrace.Recorded>()
+}
 
 class TracedCall(
     val tracerAssignment: AssignmentOperation,
@@ -87,31 +93,24 @@ class TransitionCallTraceTransformer @Inject constructor(
         val tracerVariable = createTracerVariable(tracerIndex, transitionDeclaration)
         val parent = findEnclosingTracer(callExpression)
 
-        val recordedArguments = runtimeArguments.map { (parameter, temporary) ->
-            RecordedArgumentTrace(parameter, createArgumentVariable(tracerIndex, parameter, temporary))
-        }
-
         val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(instance)
         val transitionCallTrace = TransitionCallTrace(
             self = InstanceEvaluation(containerInstance),
             transitionDeclaration = transitionDeclaration,
-            arguments = transitionDeclaration.parameters.filter {
-                it !in runtimeArguments
-            }.mapNotNull { parameter ->
-                val index = transitionDeclaration.parameters.indexOf(parameter)
+            arguments = transitionDeclaration.parameters.withIndex().mapNotNull { (index, parameter) ->
+                val temporary = runtimeArguments[parameter]
+                if (temporary != null) {
+                    return@mapNotNull ArgumentTrace.Recorded(parameter, createArgumentVariable(tracerIndex, parameter, temporary))
+                }
                 OxstsUtils.getArgumentFor(callExpression.arguments, parameter, index)?.let {
                     val evaluation = try {
                         evaluator.evaluateTyped(ExpressionEvaluation::class.java, it.expression)
                     } catch (_: EvaluationFailureException) {
                         sourceError(it.expression, "The argument of traced transition '${transitionDeclaration.name}' is not evaluable at compile time")
                     }
-                    ArgumentTrace(
-                        parameter,
-                        evaluation,
-                    )
+                    ArgumentTrace.Constant(parameter, evaluation)
                 }
             },
-            recordedArguments = recordedArguments,
             parent = parent,
         )
         enclose(body, transitionCallTrace)
@@ -120,7 +119,7 @@ class TransitionCallTraceTransformer @Inject constructor(
         tracerAssignments[tracerAssignment] = transitionCallTrace
         return TracedCall(
             tracerAssignment,
-            recordedArguments.map {
+            transitionCallTrace.recordedArguments.map {
                 OxstsFactory.createAssignmentOperation().also { record ->
                     record.reference = OxstsFactory.createElementReference(it.variable)
                     record.expression = OxstsFactory.createElementReference(runtimeArguments.getValue(it.parameterDeclaration))
