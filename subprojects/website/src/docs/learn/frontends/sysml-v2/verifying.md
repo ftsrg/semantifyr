@@ -100,7 +100,7 @@ The `verify` command translates `room.sysml` to OXSTS, an OXSTS model that insta
 
 For each case, the command prints its name, `PASSED` or `FAILED` with the time it took, and the path of its `report.json`, and it exits with status 5 when a case fails (the [exit codes](../../reference/command-line.mdx#exit-codes)).
 
-`--artifact-directory ../room-artifacts` keeps the translated model in `compiled/default/room.oxsts`, with its name map `room.names.json` beside it, and the artifacts of every case in a directory of its own; a case with a witness has `witness.json`, `trace.json`, `witness.oxsts` and `trace.sysml` among them. [Artifacts](../../reference/artifacts.mdx) describes each file.
+`--artifact-directory ../room-artifacts` keeps the translated model in `compiled/default/room.semantifyr`, with its name map `room.names.json` beside it, and the artifacts of every case in a directory of its own; a case with a witness has `witness.json`, `trace.json`, `witness.semantifyr` and `trace.sysml` among them. [Artifacts](../../reference/artifacts.mdx) describes each file.
 
 ## Reading the Witness
 

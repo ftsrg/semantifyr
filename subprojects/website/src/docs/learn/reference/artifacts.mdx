@@ -18,19 +18,19 @@ A verification writes the artifacts of each case into a directory of its own: wh
 
 ## The case directory
 
-A case directory is named after the model file without its extension and the qualified name of the case, joined by `.`, with `::` written as `.` and every character other than a letter, a digit, `.`, `_` and `-` as `_`. A name longer than 64 characters keeps its first 55 and ends in `-` and an eight-digit hexadecimal hash of the whole. A verification empties the directory before it writes. The case `semantifyr::verification::smoke::CounterReachesThree` of `smoke.oxsts` is in `smoke.semantifyr.verification.smoke.CounterReachesThree`.
+A case directory is named after the model file without its extension and the qualified name of the case, joined by `.`, with `::` written as `.` and every character other than a letter, a digit, `.`, `_` and `-` as `_`. A name longer than 64 characters keeps its first 55 and ends in `-` and an eight-digit hexadecimal hash of the whole. A verification empties the directory before it writes. The case `semantifyr::verification::smoke::CounterReachesThree` of `smoke.semantifyr` is in `smoke.semantifyr.verification.smoke.CounterReachesThree`.
 
 `--artifacts` chooses which of the compiler's artifacts, those with a name in parentheses below, are written: `none`, `all`, the default, which is every one but `compilation-step`, or `debug`, every one; `--enable-artifact` and `--disable-artifact` add and remove one by that name. The VS Code extension's `semantifyr.artifacts.preset` setting chooses the same. The report, the backends' files and the witness files are written under every preset.
 
 - `report.json`, for every case that compiles or whose compilation runs out of time: the verdict, the backend that answered and the times and sizes of the run, in the fields listed under [`verify`](command-line.mdx#verify).
-- `pipeline/instantiated.oxsts` (`instantiated-model`), `pipeline/inlined.oxsts` (`inlined-model`) and `pipeline/flattened.oxsts` (`flattened-model`): the model after each [phase of the compilation](../oxsts/compilation/index.mdx), each an [inlined model](../oxsts/language/library-and-output/inlined-models.md).
+- `pipeline/instantiated.semantifyr` (`instantiated-model`), `pipeline/inlined.semantifyr` (`inlined-model`) and `pipeline/flattened.semantifyr` (`flattened-model`): the model after each [phase of the compilation](../oxsts/compilation/index.mdx), each an [inlined model](../oxsts/language/library-and-output/inlined-models.md).
 - `mapping.json` (`mapping`): the number that stands for each instance in the flattened model, the instance named by its path from the root instance, as `{"instances": [{"name": ..., "id": ...}]}`.
-- `pipeline/steps/` (`compilation-step`): the model after every pass of the compiler, numbered in the order they ran and named after the pass, such as `000000_expressioncallinlining.oxsts`.
+- `pipeline/steps/` (`compilation-step`): the model after every pass of the compiler, numbered in the order they ran and named after the pass, such as `000000_expressioncallinlining.semantifyr`.
 - The files of each backend run: the model the backend was given (`inlined.xsts` for Theta, `model.smv` for nuXmv, `model.pml` for Spin, `model.xml` and `model.q` for Uppaal) and what the backend printed. A portfolio that runs several backend configurations gives each a subdirectory of its own.
-- `witness.oxsts`, `witness.json` and `trace.json`, for a verdict with a [witness](../oxsts/language/library-and-output/inlined-models.md#witnesses). `semantifyr-sysml` writes `trace.sysml` beside them ([SysML v2 traces](../frontends/sysml-v2/traces.mdx)), `semantifyr-gamma` `trace.get` ([Gamma traces](../frontends/gamma/traces.mdx)).
+- `witness.semantifyr`, `witness.json` and `trace.json`, for a verdict with a [witness](../oxsts/language/library-and-output/inlined-models.md#witnesses). `semantifyr-sysml` writes `trace.sysml` beside them ([SysML v2 traces](../frontends/sysml-v2/traces.mdx)), `semantifyr-gamma` `trace.get` ([Gamma traces](../frontends/gamma/traces.mdx)).
 - `validation/`: the case directory of the last [witness validation](../backends/portfolios-and-verdicts.mdx#validation), with the same files.
 
-`semantifyr-sysml` writes the translation of the model into `compiled/default/<model>.oxsts` at the top of the artifact directory, with its [name map](../frontends/sysml-v2/traces.mdx#the-name-map), `<model>.names.json`, beside it, and the case directories next to `compiled/`. `semantifyr-gamma` gives every case a directory named after its Gamma qualified name, holding the compiled model, `model.oxsts`, one OXSTS package per imported Gamma package under `imports/`, and the case directory under `verification/`.
+`semantifyr-sysml` writes the translation of the model into `compiled/default/<model>.semantifyr` at the top of the artifact directory, with its [name map](../frontends/sysml-v2/traces.mdx#the-name-map), `<model>.names.json`, beside it, and the case directories next to `compiled/`. `semantifyr-gamma` gives every case a directory named after its Gamma qualified name, holding the compiled model, `model.semantifyr`, one OXSTS package per imported Gamma package under `imports/`, and the case directory under `verification/`.
 
 ## Inlined models
 
@@ -38,7 +38,7 @@ The models under `pipeline/`, `semantifyr compile`'s output and the witness are 
 
 ## `witness.json`
 
-The state of every step of the witness, named as in [`witness.oxsts`](../oxsts/language/library-and-output/inlined-models.md#witnesses): `initializedStep` is the initial state, the one `init` produces, and `steps` holds one state for each step after it. Each value is OXSTS text: a literal, `nothing`, or an instance by its path, a global one by its qualified name.
+The state of every step of the witness, named as in [`witness.semantifyr`](../oxsts/language/library-and-output/inlined-models.md#witnesses): `initializedStep` is the initial state, the one `init` produces, and `steps` holds one state for each step after it. Each value is OXSTS text: a literal, `nothing`, or an instance by its path, a global one by its qualified name.
 
 <ReportFields fields={witnessFields} />
 

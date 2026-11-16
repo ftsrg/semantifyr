@@ -11,7 +11,7 @@ The extension lists the verification cases of the OXSTS and Gamma models of the 
 
 ## Verifying a Case
 
-1. Open a folder that holds a `.oxsts`, `.gamma` or `.gcd` file. The *Testing* view lists the verification cases of its models; the cases follow unsaved edits, and the generated models under `.artifacts/` are not listed.
+1. Open a folder that holds a `.semantifyr`, `.gamma` or `.gcd` file. The *Testing* view lists the verification cases of its models; the cases follow unsaved edits, and the generated models under `.artifacts/` are not listed.
 2. Run a case from the *Testing* view. Its verdict is the test's result.
 3. When the verdict comes with a [witness](../oxsts/language/library-and-output/inlined-models.md#witnesses), run **Show Witness** on the failure message or in the case's context menu. It opens the back-annotated witness read-only beside the model, for a Gamma case the witness as a Gamma execution trace, and next to it the trace: the calls and the state changes of each step.
 4. After a verdict with a witness the extension [validates](../backends/portfolios-and-verdicts.mdx#validation) the witness, and adds the result to the test message and the trace. **Validate Witness** in the same places runs it again.
@@ -20,7 +20,7 @@ The extension lists the verification cases of the OXSTS and Gamma models of the 
 
 - **Inline** above an OXSTS case compiles it and opens the [inlined model](../oxsts/language/library-and-output/inlined-models.md) read-only beside the source.
 - **Inline (with steps)** also writes the model after each compiler pass to `pipeline/steps/` next to it, in the artifacts directory the settings select.
-- **Compile** above an opened inlined model compiles it, unsaved edits included, and opens the result, `compiled.oxsts`, the same way.
+- **Compile** above an opened inlined model compiles it, unsaved edits included, and opens the result, `compiled.semantifyr`, the same way.
 
 ## Finding Your Way in OXSTS
 

@@ -29,7 +29,7 @@ No release is published yet. Until the first one, build a launcher with `./gradl
 
     semantifyr-sysml verify model.sysml
     semantifyr-gamma verify model.gamma
-    semantifyr verify model.oxsts
+    semantifyr verify model.semantifyr
 
 Each case gets a verdict and a report; `--help` lists the options, and `portfolios` the strategies for the backend runs.
 
