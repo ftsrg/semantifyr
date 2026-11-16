@@ -14,4 +14,6 @@ How a portfolio runs its backends side by side and decides the verdict from thei
 
 Choose a portfolio with `semantifyr verify --portfolio <id>`. A single-backend portfolio needs its backend installed, a combined one at least one of its backends; the `portfolios` command of every launcher, `semantifyr portfolios` for one, reports which portfolios are available on your machine, and `--portfolio` answers an id that names none with the ids that do.
 
+The table lists each leg's configured soundness direction; a run may declare a narrower one for its model, as [the backend's page](../backends/index.mdx) says.
+
 <PortfolioTable listing={listing} verifyHelp={verifyHelp} />

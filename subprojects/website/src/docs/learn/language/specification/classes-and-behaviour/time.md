@@ -47,7 +47,7 @@ class Lamp {
 
 A main step is a wait followed by the main [transition](transitions.md). The wait has no statement in the model: its amount is a choice of the step, every clock advances by it, and then the transition runs. `init` takes no time.
 
-The step's `assume` operations over clocks prune the choice, each reading the clocks as they stand when it runs, after the wait and any reset before it. An `assume` that bounds a clock from above is a deadline: on the paths that run it, the step waits only as long as the clock stays within the bound. A step after a reset that assumes `c <= 0` for that clock takes no time.
+The step's `assume` operations over clocks prune the choice, each reading the clocks as they stand when it runs, after the wait and any reset before it. An `assume` that bounds a clock from above is a deadline: on the paths that run it, the step waits only as long as the clock stays within the bound. A step that assumes `c <= 0` for a clock the step before it reset takes no time; a reset earlier in the same step does not bound the wait, since the `assume` then reads the clock after the reset.
 
 ```oxsts
 class Blinker {

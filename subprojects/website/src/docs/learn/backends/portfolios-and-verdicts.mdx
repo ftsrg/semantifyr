@@ -14,7 +14,7 @@ A portfolio is made of legs, each one backend under one configuration. A portfol
 
 ## Soundness directions
 
-Each leg is one backend configuration, listed with the direction in which its verdicts can be trusted; a run of [Theta](theta.mdx) on a model with a clock test that is not closed declares itself under-approximating. An exact leg is trusted both ways. An under-approximating leg explores only part of the behaviour, so it is trusted when it finds a trace (a Failed `AG` or a Passed `EF` property) and not when it reports that none exists. An over-approximating leg is trusted the other way round. Each [backend's page](index.mdx) says which of its verdicts a portfolio trusts.
+Each leg is one backend configuration, listed with the direction in which its verdicts can be trusted; a run may declare a narrower direction for its model, as the backend's page says. An exact leg is trusted both ways. An under-approximating leg explores only part of the behaviour, so it is trusted when it finds a trace (a Failed `AG` or a Passed `EF` property) and not when it reports that none exists. An over-approximating leg is trusted the other way round. Each [backend's page](index.mdx) says which of its verdicts a portfolio trusts.
 
 ## The verdict from the answers
 

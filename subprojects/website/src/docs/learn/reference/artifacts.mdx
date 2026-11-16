@@ -31,15 +31,15 @@ A case directory is named after the model file without its extension and the qua
 
 ## The report
 
-`report.json` is one document per case: `version` counts the versions of its format, `kind` says which run wrote it, `verificationCase`, `portfolioId`, `optimization` and `timeout` say what was verified and how, `result` holds the answer, and `trace`, for a verdict with a trace, the run the backend found.
+`report.json` is one document per case.
 
 <ReportFields fields={reportFields} />
 
-`result.verdict` is the verdict, `result.metadata.backendId` names the backend configuration that answered and `result.message` carries its message. `result.soundness` is the [soundness direction](../backends/portfolios-and-verdicts.mdx#soundness-directions) of that configuration's run on this model, and `result.isTrusted` says whether that direction backs the verdict; [Verdicts](command-line.mdx#verdicts) says what a portfolio does with an answer it does not back. `result.metrics` holds the times and sizes of the run.
+`result.soundness` is the [soundness direction](../backends/portfolios-and-verdicts.mdx#soundness-directions) of the answering configuration's run on this model, and `result.isTrusted` says whether that direction backs the verdict; [Verdicts](command-line.mdx#verdicts) says what a portfolio does with an answer it does not back.
 
 `trace.initial` names the first state, the one `init` produces, and holds the calls of `init`. Each entry of `trace.steps` is one step from its `source` state to its `target` state, both indices into `trace.states`, and `elapsed` is the time that passed before the step's transition ([Time](../language/specification/classes-and-behaviour/time.md)), 0 in a model without clocks. A state holds a value for every variable and clock the verified model kept, named by its path from `trace.root`, the root instance, an array slot by slot under a key of its own; a variable a state does not hold claims nothing. `trace.variables` lists each variable the states hold once with its type, and `trace.transitions` each observed transition with the types of its parameters.
 
-The calls of a step are the calls of the transitions annotated [`@Trace`](../language/specification/library-and-output/standard-library.md#trace) that ran in it, in the order they ran: each with its receiver, `self`, the qualified name of its `transition`, the value of each argument by parameter, run-time values included, and in `calls` the annotated calls made in its body. A call site is listed once in a step, with the arguments of its last run there. `trace.missingCalls` is the place for the reason when the calls of a result could not be obtained; every backend's run records them, so it is null.
+The calls of a step are the calls of the transitions annotated [`@Trace`](../language/specification/library-and-output/standard-library.md#trace) that ran in it, in the order they ran: each with its receiver, `self`, the qualified name of its `transition`, the value of each argument by parameter, run-time values included, and in `calls` the annotated calls made in its body. A call site is listed once in a step, with the arguments of its last run there. `trace.missingCalls` holds the reason when the calls of a run could not be obtained.
 
 A `value` is a JSON value: a boolean or a number as JSON writes them, `null` for no instance, an array as a JSON array, a record as an object, and a string for an enum literal, an instance by its path from the root instance or an integer too large for a JSON number, the type in `trace.variables` or `trace.transitions` saying which. An elapsed time is a `fraction`, as is a clock's value in a state: exact and in lowest terms, a whole amount a JSON number and any other a string such as `"3/2"`.
 

@@ -21,4 +21,5 @@ description: The Spin backend, why its proofs are not trusted, how it realizes t
 - Unbounded integer variables: Spin computes with 32-bit integers that wrap without notice, so a value beyond them would make a trace wrong; the property depends on a variable without a static bound, such as a counter without a guard like `if (counter < 10) { counter := counter + 1 }`.
 - Integer variables beyond the 32-bit range: Spin computes with 32-bit integers that wrap without notice, so a value beyond them would make a trace wrong; the property depends on a variable whose static bound exceeds them.
 - Arithmetic that may leave the 32-bit range: Spin computes with 32-bit integers that wrap without notice, so a value beyond them would make a trace wrong; the property depends on the arithmetic.
-- Clock bounds of 2<sup>30</sup> or more: a clock and a whole delay together stay within Spin's 32-bit integers.
+
+A model that compares a clock with a bound of 2<sup>30</sup> or more is answered Not supported too, when the run is prepared and without a source line: a clock and a whole delay together stay within Spin's 32-bit integers.
