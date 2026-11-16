@@ -21,13 +21,17 @@ class VerificationCaseResultTest {
                 "kind": "run",
                 "verificationCase": "example::LampCase",
                 "portfolioId": "smart",
+                "optimization": {
+                    "enabled": []
+                },
                 "timeout": "PT5M",
                 "result": {
                     "metadata": {
                         "backendId": "theta:cegar-expl",
                         "startedAt": "2026-11-15T10:00:00Z"
                     },
-                    "verdict": "Failed"
+                    "verdict": "Failed",
+                    "metrics": {}
                 },
                 "trace": {
                     "root": "root",
