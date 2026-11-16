@@ -20,10 +20,12 @@ import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.fakeMetadata
 import hu.bme.mit.semantifyr.verifier.fakeRequest
 import hu.bme.mit.semantifyr.verifier.noopGate
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -809,14 +811,18 @@ class VerificationPortfolioTest {
         repeat(20) {
             val invoked = Collections.synchronizedSet(mutableSetOf<String>())
             val outcome = withContext(Dispatchers.Default) {
-                portfolio.runFirstDecisive(portfolio.case(LimitedConcurrencyGate(1)), window = 20.milliseconds) {
+                portfolio.runFirstDecisive(portfolio.case(LimitedConcurrencyGate(1)), window = 100.milliseconds) {
                     for (name in listOf("a", "b")) {
                         leg(name) {
                             invoked += name
-                            withContext(NonCancellable) {
-                                delay(30)
+                            try {
+                                awaitCancellation()
+                            } catch (cancellation: CancellationException) {
+                                withContext(NonCancellable) {
+                                    delay(30)
+                                }
+                                fakeResult(name, VerificationVerdict.Inconclusive)
                             }
-                            fakeResult(name, VerificationVerdict.Inconclusive)
                         }
                     }
                 }
