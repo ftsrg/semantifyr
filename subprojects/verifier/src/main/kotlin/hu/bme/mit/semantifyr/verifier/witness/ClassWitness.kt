@@ -11,7 +11,6 @@ import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
 import hu.bme.mit.semantifyr.compiler.pipeline.context.ArraySlot
 import hu.bme.mit.semantifyr.compiler.pipeline.context.RecordField
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
 class ClassWitnessVariable(
@@ -25,10 +24,7 @@ class ClassWitnessVariable(
 class ClassWitnessStateValue(
     val variable: ClassWitnessVariable,
     val value: Expression,
-) {
-    val variableReference: Expression
-        get() = variable.reference
-}
+)
 
 class ClassWitnessClockValue(
     val variable: ClassWitnessVariable,
@@ -38,18 +34,12 @@ class ClassWitnessClockValue(
 class ClassWitnessState(
     val values: List<ClassWitnessStateValue>,
     val activatedTraces: List<WitnessStateValue>,
-    val clockValues: List<ClassWitnessClockValue> = emptyList(),
-    val elapsed: Fraction = Fraction.ZERO,
-    val recordedArguments: Map<VariableDeclaration, Expression> = emptyMap(),
+    val clockValues: List<ClassWitnessClockValue>,
+    val elapsed: Fraction,
+    val recordedArguments: Map<VariableDeclaration, Expression>,
 )
 
 class ClassWitness(
     val initializedState: ClassWitnessState,
     val transitionStates: List<ClassWitnessState>,
-    val nextStateMap: Map<ClassWitnessState, List<ClassWitnessState>>,
-    val inlinedOxsts: InlinedOxsts,
-) {
-    fun getNextStates(state: ClassWitnessState): List<ClassWitnessState> {
-        return nextStateMap[state] ?: emptyList()
-    }
-}
+)

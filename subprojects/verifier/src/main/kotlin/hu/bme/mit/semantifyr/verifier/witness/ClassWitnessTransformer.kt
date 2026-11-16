@@ -29,9 +29,7 @@ class ClassWitnessTransformer @Inject constructor(
     private inner class TransformerContext(
         private val compilation: FlattenedCompilationContext,
     ) {
-        val mappings = mutableMapOf<WitnessState, ClassWitnessState>()
-
-        fun transform(witnessState: WitnessState) = mappings.getOrPut(witnessState) {
+        fun transform(witnessState: WitnessState): ClassWitnessState {
             checkInterrupted()
             val (tracerVariableValues, nonTracerValues) = witnessState.values.partition {
                 TransitionTracerNames.isTracerName(it.variable.name)
@@ -45,7 +43,7 @@ class ClassWitnessTransformer @Inject constructor(
                 it.variable to backAnnotateInstancePointers(it.variable, it.value)
             }
 
-            ClassWitnessState(
+            return ClassWitnessState(
                 realVariableValues.map {
                     transform(it)
                 },
@@ -140,15 +138,9 @@ class ClassWitnessTransformer @Inject constructor(
         val transitionStates = inlinedWitness.transitionStates.map {
             context.transform(it)
         }
-        val nextStateMap = inlinedWitness.nextStateMap.map {
-            context.transform(it.key) to it.value.map { context.transform(it) }
-        }.toMap()
-
         return ClassWitness(
             initializedState,
             transitionStates,
-            nextStateMap,
-            inlinedWitness.inlinedOxsts,
         )
     }
 

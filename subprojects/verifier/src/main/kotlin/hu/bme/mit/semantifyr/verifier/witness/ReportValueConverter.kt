@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.verifier.witness
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluationVisitor
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.ExpressionEvaluationSerializer
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
@@ -54,10 +53,6 @@ class ReportValueConverter @Inject constructor(
     private val expressionEvaluationSerializer: ExpressionEvaluationSerializer,
     private val multiplicityRangeEvaluator: MultiplicityRangeEvaluator,
 ) {
-
-    fun fraction(value: Fraction): ReportValue {
-        return ReportValue.Rational(value)
-    }
 
     fun path(expression: Expression): String {
         return expressionSerializer.serialize(expression)
