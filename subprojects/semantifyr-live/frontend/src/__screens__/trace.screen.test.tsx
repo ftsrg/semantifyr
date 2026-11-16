@@ -92,11 +92,11 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
         return head.textContent
       })
       expect(heads.slice(0, 3)).toEqual(['environment', 'root', '…UnnamedTransitionUsage1'])
-      expect(heads).toHaveLength(8)
+      expect(heads).toHaveLength(7)
       expect(document.querySelector('.calls-head:nth-child(3)')?.getAttribute('title')).toBe('root.system.trackB.Behaviour.UnnamedTransitionUsage1')
       // the environment calls the root once in every step, and every recorded call has its caller's arrow
       expect(count('.call-arrow.from-environment')).toBe(count('.band'))
-      expect(count('.call-arrow:not(.from-environment)')).toBe(6)
+      expect(count('.call-arrow:not(.from-environment)')).toBe(5)
       expect(count('.call-arrow-label')).toBeGreaterThan(0)
       for (const label of document.querySelectorAll('.call-arrow-label')) {
         const [line, head] = [...label.parentElement!.querySelectorAll('path')].map((path) => {
@@ -136,7 +136,7 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
     language: 'gamma',
     view: 'calls',
     expectState: () => {
-      expect(count('.call')).toBe(10)
+      expect(count('.call')).toBe(9)
     },
   },
   'gamma-witness': {
@@ -160,7 +160,7 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
     language: 'oxsts',
     view: 'calls',
     expectState: () => {
-      expect(count('.call')).toBe(10)
+      expect(count('.call')).toBe(9)
     },
   },
   'oxsts-witness': {
