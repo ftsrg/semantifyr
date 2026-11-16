@@ -51,7 +51,7 @@ class ReferenceWitnessTest {
         val witness = backAnnotator.createWitnessInlinedOxsts(requireNotNull(report.trace), compilation, report.result.verdict)
         artifactWriter.writeWitness(witness, output, CASE)
 
-        assertThat(output.resolve("witness.semantifyr").readText()).isEqualTo(REFERENCE.resolve("blinker.witness.semantifyr").readText())
+        assertThat(output.resolve("witness.semantifyr").readText()).isEqualTo(REFERENCE.resolve("blinker.witness.semantifyr").readText().replace("\r\n", "\n"))
     }
 
     companion object {
