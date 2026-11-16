@@ -10,10 +10,11 @@ import com.google.inject.Inject
 import com.google.inject.Injector
 import com.google.inject.Module
 import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
-import hu.bme.mit.semantifyr.backend.SoundnessDirection
+import hu.bme.mit.semantifyr.backend.BackendConfig
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScopeBlocking
+import hu.bme.mit.semantifyr.backend.transformation.WholeDelayLowering
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
@@ -22,7 +23,6 @@ import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.clock.ClockTestAnalysis
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -94,6 +94,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         capabilityChecker: Class<out BackendCapabilityChecker>,
         outputDirectory: Path,
         filter: CaseFilter = CaseFilter.All,
+        wholeDelayConfiguration: BackendConfig? = null,
     ): List<Arguments> {
         val backendInjector = injector.createChildInjector(backendModule)
         val compiler = SemantifyrCompiler(injector, ArtifactConfig.NONE)
@@ -110,10 +111,25 @@ class SemantifyrVerifierTestHelper @Inject constructor(
                     "Leaving out ${case.qualifiedName}: ${capabilityChecker.simpleName} refuses $refusals"
                 }
             }
-            unsupported.isEmpty()
+            unsupported.isEmpty() && (wholeDelayConfiguration == null || !narrowsWholeDelay(case.qualifiedName, inlinedOxsts, wholeDelayConfiguration))
         }.map {
             Arguments.of(Named.of(it.qualifiedName, it))
         }
+    }
+
+    fun narrowsWholeDelay(
+        name: String,
+        inlinedOxsts: InlinedOxsts,
+        configuration: BackendConfig,
+    ): Boolean {
+        val soundness = withVerificationScopeBlocking {
+            injector.getInstance(WholeDelayLowering::class.java).soundness(inlinedOxsts, configuration.soundness)
+        }
+        if (soundness == configuration.soundness) {
+            return false
+        }
+        logger.info { "Leaving out $name: whole delays make ${configuration.id} $soundness on it" }
+        return true
     }
 
     suspend fun checkVerificationCase(
@@ -235,22 +251,12 @@ class SemantifyrVerifierTestHelper @Inject constructor(
 
         assumePortfolioAvailable(verificationPortfolio, environment)
         val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment).report.result
-        if (result.verdict != expectedVerdict && result.soundness == SoundnessDirection.UnderApproximating && !result.isTrusted && hasUnclosedClockTest(case, outputDirectory)) {
-            logger.info { "Result: ${result.verdict}, untrusted, as whole delays under-approximate a model whose clock tests are not all closed" }
-            return
-        }
         assertVerdict(case.qualifiedName, expectedVerdict, result, backendDiagnostics(outputDirectory, case))
         logger.info { "Result: ${result.verdict}" }
 
         val witness = result.witness ?: return
         val validation = validationPortfolio ?: return
         assertWitnessRevalidates(case, witness, validation, outputDirectory, validationTimeout, environment, expectedVerdict)
-    }
-
-    private fun hasUnclosedClockTest(case: VerificationCase, outputDirectory: Path): Boolean {
-        val compiler = SemantifyrCompiler(injector, ArtifactConfig.NONE)
-        val inlinedOxsts = compiler.compile(case.classDeclaration, outputDirectory.resolve("closedness").resolve(caseDirectoryName(case))).inlinedOxsts
-        return injector.getInstance(ClockTestAnalysis::class.java).unclosedTests(inlinedOxsts.mainTransition).isNotEmpty()
     }
 
     suspend fun checkWitnessReparses(

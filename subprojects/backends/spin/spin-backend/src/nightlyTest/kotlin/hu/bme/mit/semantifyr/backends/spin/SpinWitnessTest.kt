@@ -49,6 +49,7 @@ class SpinWitnessTest {
                 SpinBackendModule(),
                 SpinCapabilityChecker::class.java,
                 SemantifyrVerifierTestHelper.testArtifactRoot(SpinWitnessTest::class.java).resolve("capability-check"),
+                wholeDelayConfiguration = SpinConfig.SafeDfs,
             )
         }
     }
