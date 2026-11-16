@@ -1090,7 +1090,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (domain instanceof FeatureDeclaration feature && feature.getTypeSpecification() != null) {
             domain = feature.getTypeSpecification().getDomain();
         }
-        if (domain != builtinSymbolResolver.realDatatype(parameter) && domain != builtinSymbolResolver.stringDatatype(parameter)) {
+        if (domain != builtinSymbolResolver.realDatatype(parameter)
+                && domain != builtinSymbolResolver.stringDatatype(parameter)) {
             return;
         }
         Modality modality;
