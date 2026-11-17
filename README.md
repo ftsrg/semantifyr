@@ -45,6 +45,18 @@ Semantifyr is a research prototype of a PhD project at the Budapest University o
 
 Use Java 25. `./gradlew build` assembles and tests the project, including the verification smoke tests; Gradle provides Theta, and a test that needs nuXmv, Spin or Uppaal is skipped when that backend is not on `PATH`. `./gradlew integrationTest` runs the conformance and frontend suites, `./gradlew nightlyTest` the long-running cases.
 
+## Benchmarks
+
+A benchmark runs only on Linux with [BenchExec](https://github.com/sosy-lab/benchexec)'s `runexec`, which measures every process through cgroups v2:
+
+    python3 -m venv ~/.local/benchexec
+    ~/.local/benchexec/bin/pip install 'benchexec[systemd]==3.35'
+
+The `systemd` extra lets `runexec` create its cgroups through the user's systemd instance, which needs the `cpu`, `memory` and `pids` controllers delegated to the user (`cat /sys/fs/cgroup/user.slice/user-$(id -u).slice/user@$(id -u).service/cgroup.subtree_control`); BenchExec's [installation guide](https://github.com/sosy-lab/benchexec/blob/main/doc/INSTALL.md#setting-up-cgroups) describes the delegation. Run a benchmark by its class name with `runexec` on `PATH` or named by `-Prunexec`, and a program over the file it wrote:
+
+    ./gradlew :compiler:benchmark --args=CompilationPhasesBenchmark -Prunexec=$HOME/.local/benchexec/bin/runexec
+    ./gradlew :compiler:benchmarkProgram --args="CompilationPhasesRelation build/benchmark/CompilationPhasesBenchmark/<run>.json"
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
