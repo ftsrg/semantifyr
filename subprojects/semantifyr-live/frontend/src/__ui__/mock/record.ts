@@ -82,6 +82,14 @@ async function walkExamples(context: BrowserContext, liveUrl: string, address: s
   await page.close()
 }
 
+async function openExample(context: BrowserContext, liveUrl: string, address: string): Promise<void> {
+  const page = await context.newPage()
+  await page.goto(`${liveUrl}${address}`)
+  await settled(page)
+  console.log(`${page.url()}: ${await page.locator('.results .case-row').count()} cases`)
+  await page.close()
+}
+
 async function verifyAndRead(context: BrowserContext, liveUrl: string, address: string): Promise<void> {
   const page = await context.newPage()
   await page.goto(`${liveUrl}${address}`)
@@ -195,6 +203,8 @@ async function record(liveUrl: string, adminUserHeader: string | undefined): Pro
   for (const address of ['/language', '/language?library=gamma', '/language?library=sysml', '/gamma', '/sysml']) {
     await attempt(walkExamples(context, liveUrl, address))
   }
+  // the website's keyboard walk opens the first lesson's first step, which no menu lists
+  await attempt(openExample(context, liveUrl, '/language/modeling-and-verification-step1'))
   let admin: AdminFixture | null = null
   const running = context.newPage().then(async (page) => {
     const embed = await context.newPage()

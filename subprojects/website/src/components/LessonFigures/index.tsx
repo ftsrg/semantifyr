@@ -135,8 +135,8 @@ export function Junction(): React.JSX.Element {
       <Line className={styles.arrow} x1={410} y1={130} x2={306} y2={130} end="arrow" />
       <SignalHead x={124} y={14} lamps={['Red', 'Yellow', 'Green']} label="north" labelSide="left" />
       <SignalHead x={290} y={204} lamps={['Red', 'Yellow', 'Green']} label="east" />
-      <Line className={styles.dotted} x1={204} y1={80} x2={262} y2={80} />
-      <Text x={268} y={80} anchor="start" kind="caption" size={15}>sensor</Text>
+      <Line className={styles.dotted} x1={204} y1={70} x2={262} y2={36} />
+      <Text x={268} y={36} anchor="start" kind="caption" size={15}>sensor</Text>
       <Line className={styles.dotted} x1={280} y1={116} x2={280} y2={96} />
       <Text x={280} y={86} kind="caption" size={15}>sensor</Text>
     </Picture>
@@ -166,7 +166,6 @@ export type TraceRow = { name: string; lamps: Lamp[] } | { name: string; flags: 
 
 // the states of a trace in columns, a row for each light, sensor or number the page follows
 export function TraceTimeline({ rows, broken }: { rows: TraceRow[]; broken?: string }): React.JSX.Element {
-  const column = 70;
   const left = 132;
   const top = 40;
   const rowHeight = 50;
@@ -175,6 +174,8 @@ export function TraceTimeline({ rows, broken }: { rows: TraceRow[]; broken?: str
   }).reduce((longest, length) => {
     return Math.max(longest, length);
   }, 0);
+  // a long trace gets narrower columns, so that it stays readable on a phone
+  const column = states > 5 ? 54 : 70;
   const width = left + column * states + 8;
   const height = top + rowHeight * rows.length + (broken === undefined ? 8 : 34);
   const last = states - 1;
@@ -229,23 +230,23 @@ function ClassBox({ area, name, lines, abstract = false }: { area: Area; name: s
 }
 
 export function LibraryClasses(): React.JSX.Element {
-  const condition = { x: 120, y: 8, width: 160, height: 56 };
-  const state = { x: 8, y: 118, width: 150, height: 74 };
-  const sensor = { x: 242, y: 118, width: 150, height: 56 };
-  const statechart = { x: 8, y: 292, width: 170, height: 94 };
-  const transition = { x: 242, y: 292, width: 150, height: 56 };
+  const condition = { x: 120, y: 8, width: 160, height: 62 };
+  const state = { x: 8, y: 120, width: 150, height: 82 };
+  const sensor = { x: 242, y: 120, width: 150, height: 62 };
+  const statechart = { x: 8, y: 302, width: 150, height: 102 };
+  const transition = { x: 250, y: 302, width: 142, height: 62 };
   return (
-    <Picture width={400} height={420} label="The library's classes: State and Sensor are kinds of Condition, a Statechart contains states and transitions and holds its active state, and a Transition refers to the state it leaves, the state it enters and its guards, which are conditions">
+    <Picture width={400} height={414} label="The library's classes: State and Sensor are kinds of Condition, a Statechart contains states and transitions and holds its active state, and a Transition refers to the state it leaves, the state it enters and its guards, which are conditions">
       <Line className={styles.line} x1={83} y1={state.y} x2={170} y2={condition.y + condition.height + 2} end="triangle" />
       <Line className={styles.line} x1={317} y1={sensor.y} x2={230} y2={condition.y + condition.height + 2} end="triangle" />
       <Line className={styles.line} x1={60} y1={statechart.y} x2={60} y2={state.y + state.height} start="diamond" />
-      <Text x={68} y={226} anchor="start" kind="caption" size={15}>states</Text>
-      <Line className={styles.line} x1={statechart.x + statechart.width} y1={318} x2={transition.x} y2={318} start="diamond" />
-      <Text x={210} y={346} kind="caption" size={15}>transitions</Text>
+      <Text x={68} y={252} anchor="start" kind="caption" size={15}>states</Text>
+      <Line className={styles.line} x1={statechart.x + statechart.width} y1={330} x2={transition.x} y2={330} start="diamond" />
+      <Text x={204} y={314} kind="caption" size={15}>transitions</Text>
       <Line className={styles.arrow} x1={transition.x + 20} y1={transition.y} x2={state.x + state.width - 12} y2={state.y + state.height + 2} end="arrow" />
-      <Text x={196} y={226} anchor="start" kind="caption" size={15}>from, to</Text>
-      <Path className={styles.arrow} d={`M ${String(transition.x + transition.width - 20)} ${String(transition.y)} V 240 H 392 V 36 H ${String(condition.x + condition.width + 2)}`} end="arrow" />
-      <Text x={386} y={258} anchor="end" kind="caption" size={15}>guards</Text>
+      <Text x={214} y={240} anchor="start" kind="caption" size={15}>from, to</Text>
+      <Path className={styles.arrow} d={`M ${String(transition.x + transition.width - 20)} ${String(transition.y)} V 240 H 394 V 39 H ${String(condition.x + condition.width + 2)}`} end="arrow" />
+      <Text x={366} y={276} anchor="end" kind="caption" size={15}>guards</Text>
       <ClassBox area={condition} name="Condition" lines={['isActive()']} abstract />
       <ClassBox area={state} name="State" lines={['isActive()', 'activate()']} />
       <ClassBox area={sensor} name="Sensor" lines={['var detects']} />
@@ -359,9 +360,9 @@ export function NestedStates(): React.JSX.Element {
   const red = { x: 30, y: 84, width: 110, height: 38 };
   const green = { x: 180, y: 84, width: 110, height: 38 };
   const yellow = { x: 105, y: 180, width: 110, height: 38 };
-  const standby = { x: 340, y: 116, width: 110, height: 40 };
+  const standby = { x: 380, y: 116, width: 120, height: 40 };
   return (
-    <Picture width={460} height={250} label="A traffic light with nested states: the colors red, green and yellow are substates of an operating state, which starts at red; beside it a standby state, entered from operating on pause and left on resume">
+    <Picture width={510} height={250} label="A traffic light with nested states: the colors red, green and yellow are substates of an operating state, which starts at red; beside it a standby state, entered from operating on pause and left on resume">
       <rect className={styles.state} x={operating.x} y={operating.y} width={operating.width} height={operating.height} rx={18} />
       <Text x={operating.x + 16} y={operating.y + 22} anchor="start" kind="code">operating</Text>
       <circle className={styles.start} cx={85} cy={58} r={6} />
@@ -372,10 +373,10 @@ export function NestedStates(): React.JSX.Element {
       <StateBox area={red} name="red" lamp="Red" />
       <StateBox area={green} name="green" lamp="Green" />
       <StateBox area={yellow} name="yellow" lamp="Yellow" />
-      <Path className={styles.arrow} d="M 308 118 H 338" end="arrow" />
-      <Text x={324} y={104} kind="caption" size={14}>pause</Text>
-      <Path className={styles.arrow} d="M 338 152 H 310" end="arrow" />
-      <Text x={324} y={170} kind="caption" size={14}>resume</Text>
+      <Path className={styles.arrow} d="M 308 124 H 378" end="arrow" />
+      <Text x={344} y={108} kind="caption" size={15}>pause</Text>
+      <Path className={styles.arrow} d="M 378 148 H 310" end="arrow" />
+      <Text x={344} y={166} kind="caption" size={15}>resume</Text>
       <StateBox area={standby} name="standby" lamp="Standby" />
     </Picture>
   );
