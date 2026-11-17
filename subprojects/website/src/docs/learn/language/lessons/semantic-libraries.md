@@ -20,11 +20,11 @@ The goal of this lesson is to write models on a library of classes that says onc
 
 ## Running example
 
-In [Modeling and Verification](modeling-and-verification.md) the light was drawn as a state diagram, but the model said something else: a choice of assumptions over a color, written out once more for each light of the junction.
+In [Modeling and Verification](modeling-and-verification.md) the light was drawn as a state diagram, but the model was not written that way. It was a choice of assumptions over a color, written out again for each light of the junction.
 
-Why would we want to use a library? For reusability. What a state machine does when it runs is the same for every light: a transition fires while the state it leaves is active and its guards hold. Written once, as classes, it is reused by the two lights of the junction, by a pedestrian light, and by any light that comes later, and each of them only says what it is.
+Why would we want to use a library? For reusability. What a state machine does when it runs is the same for every light: a transition fires while the state it leaves is active and its guards hold. If we write it once, as classes, the two lights of the junction, a pedestrian light and any later light can all reuse it. Each of them then only says what it is.
 
-This lesson adds a crosswalk to the junction. It crosses the east road in front of the east light, and the pedestrians have a light of their own, which shows stop or walk, and a button they press when they want to cross.
+This lesson adds a crosswalk to the junction. It crosses the east road in front of the east light. The pedestrians have a light of their own, which shows stop or walk, and a button they press when they want to cross.
 
 <Junction crosswalk />
 
@@ -39,13 +39,13 @@ A library is a handful of ordinary classes. In ours, a state is an object, and a
 
 <LiveEmbed example={step1} show={['State', 'Statechart']} />
 
-A `Statechart` [contains](../specification/classes-and-behaviour/features.md#contains) any number of states, `[0..*]`, and each `State` knows the statechart that contains it through its [`container`](../specification/classes-and-behaviour/features.md#container) feature; [`opposite`](../specification/classes-and-behaviour/features.md#opposite) ties the two directions together. The type of `activeState` is a feature, `states`, so the variable holds one of this statechart's states, or `nothing` ([feature-typed variables](../specification/classes-and-behaviour/variables.md#feature-typed-variables)). A state compares itself with it to say whether it is active, and activating a state assigns it. The statechart's `init` activates its initial state once, before the first step, and in every step [`inline for choice`](../specification/classes-and-behaviour/inline-operations.md#inline-for-choice) fires one of its transitions, whichever can fire, unless the statechart stays as it is.
+A `Statechart` [contains](../specification/classes-and-behaviour/features.md#contains) any number of states, `[0..*]`. Each `State` knows the statechart that contains it through its [`container`](../specification/classes-and-behaviour/features.md#container) feature, and [`opposite`](../specification/classes-and-behaviour/features.md#opposite) ties the two directions together. The type of `activeState` is a feature, `states`, so the variable holds one of this statechart's states, or `nothing` ([feature-typed variables](../specification/classes-and-behaviour/variables.md#feature-typed-variables)). A state is active when `activeState` holds it, and activating a state assigns it to `activeState`. The statechart's `init` activates its initial state once, before the first step. In every step, [`inline for choice`](../specification/classes-and-behaviour/inline-operations.md#inline-for-choice) fires one of the transitions that can fire, or the statechart stays as it is.
 
 A transition is an object too:
 
 <LiveEmbed example={step1} show={['Transition']} />
 
-It [refers](../specification/classes-and-behaviour/features.md#refers) to the state it leaves and the state it enters, without owning them. Its main transition can be taken only while its source is active, and then activates its target; `inline` puts the body of the called transition in its place. `@Trace` makes the *Calls* view of a trace list each transition that fires.
+It [refers](../specification/classes-and-behaviour/features.md#refers) to the state it leaves and the state it enters, without owning them. Its main transition can be taken only while its source is active, and it activates its target. `inline` puts the body of the called transition in its place. `@Trace` makes the *Calls* view of a trace list each transition that fires.
 
 With these three classes, a traffic light is data:
 
@@ -64,23 +64,23 @@ The case passes, <CaseVerdict example={step2} name="PedestriansCanWalk" />, and 
 
 ## Guards
 
-A traffic light of the running example turns green only for a waiting car, and only while the crossing traffic is stopped. Such conditions are the guards of a transition. A guard is either a sensor, set by the environment as the car sensor of the first lesson was, or a state of another statechart, which holds while that state is active:
+A traffic light of the running example turns green only for a waiting car, and only while the crossing traffic is stopped. Such conditions are the guards of a transition. A guard can be a sensor, which the environment sets, as it set the car sensor in the first lesson. A guard can also be a state of another statechart, and then it holds while that state is active:
 
 <LiveEmbed example={step3} show={['Condition', 'Sensor', 'State']} />
 
-`Condition` is an [abstract class](../specification/classes-and-behaviour/classes.md#abstract-classes): it says that a condition can be active and leaves how to its subclasses. A transition refers to any number of guards, and [`inline for`](../specification/classes-and-behaviour/inline-operations.md#inline-for-sequence) assumes each of them before the transition fires:
+`Condition` is an [abstract class](../specification/classes-and-behaviour/classes.md#abstract-classes): it says that a condition can be active, and leaves it to its subclasses to say when. A transition refers to any number of guards, and [`inline for`](../specification/classes-and-behaviour/inline-operations.md#inline-for-sequence) assumes each of them before the transition fires:
 
 <LiveEmbed example={step3} show={['Transition']} />
 
 <LibraryClasses />
 
-The traffic light refers to its sensor and to the state in which the crossing traffic is stopped, and its transition to green declares both as guards. Which sensor and which state those are, the light leaves open:
+The traffic light refers to its sensor and to the state in which the crossing traffic is stopped, and its transition to green declares both as guards. The light leaves open which sensor and which state those are:
 
 <LiveEmbed example={step3} show={['TrafficLight']} />
 
 <LightAsData />
 
-The junction holds two traffic lights and their sensors, and fills in what each light left open, the north light waiting for the east light's red state and the east light for the north light's:
+The junction holds two traffic lights and their sensors, and fills in what each light left open. The north light waits for the east light's red state, and the east light for the north light's:
 
 <LiveEmbed example={step3} show={['Junction']} />
 
@@ -100,10 +100,10 @@ Before you verify, decide whether `WalkOnlyWhileEastRed` holds. The pedestrians 
 
 The problem is in the model, and the library can stay as it is. Find and fix it!
 
-When it is fixed, every case of the junction passes: <CaseVerdict example={final} name="NorthCanTurnGreen" />, <CaseVerdict example={final} name="NeverBothGreen" />, <CaseVerdict example={final} name="NorthGreenOnlyWhileEastRed" />, <CaseVerdict example={final} name="PedestriansCanWalk" /> and <CaseVerdict example={final} name="WalkOnlyWhileEastRed" />. A guard is checked only when its transition fires. The pedestrians started on red, and nothing kept the east light red after that, since it waited only for the north light:
+When it is fixed, every case of the junction passes: <CaseVerdict example={final} name="NorthCanTurnGreen" />, <CaseVerdict example={final} name="NeverBothGreen" />, <CaseVerdict example={final} name="NorthGreenOnlyWhileEastRed" />, <CaseVerdict example={final} name="PedestriansCanWalk" /> and <CaseVerdict example={final} name="WalkOnlyWhileEastRed" />. A guard is checked only at the moment its transition fires, and not afterwards. The pedestrians started to walk while the east light was red. After that, nothing kept the east light red, since it waited only for the north light:
 
 <TraceTimeline rows={[{ name: 'north', lamps: ['Red', 'Red', 'Red'] }, { name: 'east', lamps: ['Red', 'Red', 'Green'] }, { name: 'pedestrians', lamps: ['Stop', 'Walk', 'Walk'] }, { name: 'button', flags: [false, true, false] }, { name: 'east car', flags: [false, false, true] }]} broken="WalkOnlyWhileEastRed" />
 
-The east light has two things to wait for now, and the junction says so in its data. Compare your repair with <LiveLink example={final}>the final state of this lesson</LiveLink>.
+Now the east light waits for two things, and the junction gives both of them in its data. Compare your repair with <LiveLink example={final}>the final state of this lesson</LiveLink>.
 
 The lights are data now, and one rule is still written in the model: how the junction steps its lights. The next lesson, [Semantic Variants](semantic-variants.md), moves that rule into the library too, and changes it.

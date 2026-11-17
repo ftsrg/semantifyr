@@ -35,7 +35,7 @@ The junction must meet the following requirements:
 - A light is green only while the other light is red, so that the cars crossing in front of it have already stopped.
 - A waiting car can get green. A junction whose lights never change would meet the other two, and nobody could drive through it.
 
-Why verify a junction at all? Its controller is a few lines of logic, and it is easy to convince oneself that it is right. But the cars can arrive in any order, an unsafe moment may need one unlucky order of them, and watching the model run shows only the orders that happen to come up. A verifier looks at every order. In this lesson we model the junction and check its requirements with the verifier.
+Why verify a junction at all? Its controller is a few lines of logic, and it is easy to convince oneself that it is right. But the cars can arrive in any order, and an unsafe moment may need one unlucky order. Watching the model run shows only the orders that happen to come up. A verifier looks at every order. In this lesson we model the junction and check its requirements with the verifier.
 
 ## Modeling a light
 
@@ -43,13 +43,13 @@ Let us start with a single light that only switches between red and green. Its c
 
 <LiveEmbed example={step1} show={['LightColor']} />
 
-The light is a [class](../specification/classes-and-behaviour/classes.md). Its state is held in two [variables](../specification/classes-and-behaviour/variables.md): its color, which starts red, and whether its sensor sees a waiting car. What the light does in one step is its main transition, written as `redefine tran`, since every class inherits an empty one:
+The light is a [class](../specification/classes-and-behaviour/classes.md). Its state is held in two [variables](../specification/classes-and-behaviour/variables.md): its color, which starts red, and whether its sensor sees a waiting car. What the light does in one step is its main transition. It is written as `redefine tran`, since every class inherits an empty one:
 
 <LiveEmbed example={step1} show={['TrafficLight']} />
 
-The step starts with the environment: [`havoc`](../specification/classes-and-behaviour/operations.md#havoc) gives `carWaiting` any value, so that the verifier tries both a waiting car and an empty road. Then a [`choice`](../specification/classes-and-behaviour/operations.md#choice) takes one of its branches. A branch that starts with an [`assume`](../specification/classes-and-behaviour/operations.md#assumption) can only be taken in a state where the assumption holds, so the light turns green only from red and only for a waiting car, and a green light turns red again. The last branch is empty: the light may also stay as it is, since nothing in the model says how long a light keeps its color.
+The step starts with the environment: [`havoc`](../specification/classes-and-behaviour/operations.md#havoc) gives `carWaiting` any value, so that the verifier tries both a waiting car and an empty road. Then a [`choice`](../specification/classes-and-behaviour/operations.md#choice) takes one of its branches. A branch that starts with an [`assume`](../specification/classes-and-behaviour/operations.md#assumption) can only be taken in a state where the assumption holds. So the light turns green only from red and only for a waiting car, and a green light turns red again. The last branch is empty: the light may also stay as it is, since nothing in the model says how long a light keeps its color.
 
-A model runs from the state that the initial values of its variables give, and every step runs its main transition once. A step in which no branch can be taken does not happen, and the verifier explores every choice that a step can make.
+A model starts in the state given by the initial values of its variables, and every step runs its main transition once. A step in which no branch can be taken does not happen, and the verifier explores every choice that a step can make.
 
 ## Verification cases
 
@@ -59,7 +59,7 @@ A question about the model is asked in a verification case. The following case a
 
 `@VerificationCase` marks a class that the verifier checks. The case [extends](../specification/classes-and-behaviour/classes.md#inheritance) the light, so it is the light with a [property](../specification/classes-and-behaviour/properties.md#the-verification-property) added. `EF` asks whether something can ever happen: whether at least one execution reaches a state where the expression holds.
 
-Press **Open** on the block above. It opens the model in Live, the editor and verifier of Semantifyr in the browser, as the **Open** button of every block on this page does. Then press **Verify all** under the editor. The case passes, <CaseVerdict example={step1} name="LightCanTurnGreen" />, and below it Live opens its trace, the execution that the verifier found. In the *Steps* view of the trace, the sensor sees a car in the first step, and the light is green after it.
+Press **Open** on the block above. It opens the model in Live, the editor and verifier of Semantifyr in the browser. Every **Open** button on this page does the same. Then press **Verify all** under the editor. The case passes, <CaseVerdict example={step1} name="LightCanTurnGreen" />, and below it Live opens its trace, the execution that the verifier found. In the *Steps* view of the trace, the sensor sees a car in the first step, and the light is green after it.
 
 The editor checks the model as you type: a misspelled color is underlined with the problem, and `Ctrl+Space` lists what can be written at the cursor.
 
@@ -123,13 +123,13 @@ It passes: <CaseVerdict example={step3} name="NorthCanTurnGreen" />.
 
 ## Checking the requirements
 
-Now let us write the first requirement of the running example as a case. Add the case `NeverBothGreen`, which requires that the north and the east light are never green at the same time, and verify all. The case fails, <CaseVerdict example={step3} name="NeverBothGreen" />, so read its trace step by step. The verifier may find another execution than the one below, but it breaks the requirement the same way:
+Now let us write the first requirement of the running example as a case. Add the case `NeverBothGreen`, which requires that the north and the east light are never green at the same time, and verify all. The case fails, <CaseVerdict example={step3} name="NeverBothGreen" />, so read its trace step by step. The verifier may find a different execution from the one below, but it breaks the requirement in the same way:
 
 <TraceTimeline rows={[{ name: 'north', lamps: ['Red', 'Green', 'Green'] }, { name: 'east', lamps: ['Red', 'Red', 'Green'] }, { name: 'north car', flags: [false, true, true] }, { name: 'east car', flags: [false, false, true] }]} broken="NeverBothGreen" />
 
 Nothing in the model stops a light from turning green while the other one is green. The junction at this point is <LiveLink example={step3}>this state of the lesson</LiveLink>.
 
-Let us make the junction safe. Add a guard to the two branches in which a light turns green, so that `NeverBothGreen` passes. With such a guard both cases pass, <CaseVerdict example={step4} name="NorthCanTurnGreen" /> and <CaseVerdict example={step4} name="NeverBothGreen" />. A guard that never lets a light turn green would make `NeverBothGreen` pass as well: which case tells you that yours is not such a guard? Compare yours with <LiveLink example={step4}>one solution</LiveLink>.
+Let us make the junction safe. Add a guard to the two branches in which a light turns green, so that `NeverBothGreen` passes. With such a guard both cases pass, <CaseVerdict example={step4} name="NorthCanTurnGreen" /> and <CaseVerdict example={step4} name="NeverBothGreen" />. A guard that never lets a light turn green would also make `NeverBothGreen` pass. Which case shows that your guard is not like that? Compare yours with <LiveLink example={step4}>one solution</LiveLink>.
 
 The second requirement is stricter: a light is green only while the other light is red. Add the case `NorthGreenOnlyWhileEastRed`, which requires it of the north light; "if a, then b" is written `!a || b`. Before you verify, decide whether your guard makes it hold.
 

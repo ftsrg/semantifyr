@@ -22,7 +22,7 @@ The goal of this lesson is to change a rule of the statechart library, and to se
 
 The running example is the junction of [Semantic Libraries](semantic-libraries.md), with its crosswalk and its requirements: the two traffic lights are never both green, a light is green only while the other one is red, pedestrians walk only while the east light is red, a waiting car can get green and pedestrians can walk. We continue from where that lesson ended, <LiveLink example={libraries}>its final state</LiveLink>.
 
-Why would anyone change a rule of the library? Because the languages built on statecharts do not agree on their rules, and the same diagram then behaves differently from tool to tool. One rule on which they differ is how the parts of a system step. In some, one part moves in a step while the others wait. In some, every part moves in every step, one after the other. In others, every part moves at once, and each reacts to what it saw before the step. Gamma, for one, has all three, as its asynchronous, cascade and synchronous composition. Whoever defines a language has to know what such a rule does to the models written in it, and with the rule in a library, finding out is one edit and a verification run.
+Why would anyone change a rule of the library? Because the languages built on statecharts do not agree on their rules, and the same diagram then behaves differently from tool to tool. One rule on which they differ is how the parts of a system step. In some, one part moves in a step while the others wait. In some, every part moves in every step, one after the other. In others, every part moves at once, and each reacts to what it saw before the step. Gamma, for one, has all three, as its asynchronous, cascade and synchronous composition. Whoever defines a language has to know what such a rule does to the models written in it. With the rule in a library, finding out takes one edit and a verification run.
 
 The figure shows one step of the junction under each of the three rules, from both lights red with a car waiting at each.
 
@@ -46,9 +46,9 @@ Every case keeps its verdict again: <CaseVerdict example={step2} name="NorthCanT
 
 ## Synchronous composition
 
-In a synchronous composition, every part reacts to the same moment: each sees the state before the step, and all of them move at once. A part that fired its transition as soon as it chose it would change what the parts after it see. So a step comes in two halves, in which every part first chooses the transition it fires, or none, and only then do all of them move. We get there in three changes, and verify after each.
+In a synchronous composition, every part reacts to the same moment: each sees the state before the step, and all of them move at once. If a part fired its transition as soon as it chose it, the parts after it would already see its new state. So a step has two halves: first every part chooses the transition it fires, or none, and then all of them move. We get there in three changes, and verify after each.
 
-First, split what a transition does into two transitions of its own: `assumeEnabled`, which can be taken only when the transition can fire, and `fire`, which activates the target and is the one `@Trace` marks. The main transition of `Transition` calls both, so nothing changes yet: verify all, and every case keeps its verdict. Compare with <LiveLink example={step3}>this state</LiveLink>.
+First, split what a transition does into two transitions of its own: `assumeEnabled`, which can be taken only when the transition can fire, and `fire`, which activates the target. `@Trace` marks `fire`. The main transition of `Transition` calls both, so nothing changes yet: verify all, and every case keeps its verdict. Compare with <LiveLink example={step3}>this state</LiveLink>.
 
 Second, let a statechart choose before it moves. It remembers its choice in a variable that holds one of its transitions or nothing, as `activeState` holds one of its states. Give `Statechart` two transitions, `choose`, which chooses one of the transitions that can fire, or none, and `move`, which fires the chosen one. Nothing calls them yet, so every case keeps its verdict again. Compare with <LiveLink example={step4}>this state</LiveLink>.
 
@@ -58,7 +58,7 @@ This time three of them fail: <CaseVerdict example={final} name="NeverBothGreen"
 
 <TraceTimeline rows={[{ name: 'north', lamps: ['Red', 'Green'] }, { name: 'east', lamps: ['Red', 'Green'] }, { name: 'north car', flags: [false, true] }, { name: 'east car', flags: [false, true] }]} broken="NeverBothGreen" />
 
-Notice that we did not change any of the primary classes, only their behaviors. The lights, the junction and their cases are as they were, and the library's classes kept their features, but for the one variable that holds a statechart's choice. The guard that the first lesson found, that a light turns green only while the other one is red, is enough only as long as the two lights never decide at the same moment. Under the new rule they do, and each saw the other one red. <LiveLink example={final}>The final state of this lesson</LiveLink> has the library with the synchronous rule.
+Notice that we did not change any of the primary classes, only their behaviors. The lights, the junction and their cases are as they were. The library's classes kept their features too, except for the one new variable that holds a statechart's choice. In the first lesson, we fixed the guard so that a light turns green only while the other one is red. That guard is enough only as long as the two lights never decide at the same moment. Under the new rule they do: each sees the other one red, and both turn green. <LiveLink example={final}>The final state of this lesson</LiveLink> has the library with the synchronous rule.
 
 Why do the two cases that ask whether something can happen still pass?
 
