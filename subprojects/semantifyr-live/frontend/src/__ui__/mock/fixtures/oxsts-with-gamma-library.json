@@ -350,61 +350,61 @@
     "result": {
      "metadata": {
       "backendId": "nuxmv:kinduction-invar",
-      "startedAt": "2026-11-16T23:52:40.013499565Z"
+      "startedAt": "2026-11-17T09:35:02.298987659Z"
      },
      "verdict": "Passed",
      "soundness": "Exact",
      "isTrusted": true,
      "metrics": {
-      "totalDuration": "PT1.136601716S",
+      "totalDuration": "PT1.310432217S",
       "backend": {
-       "preparationDuration": "PT0.017847815S",
-       "verificationDuration": "PT0.415648181S",
-       "backAnnotationDuration": "PT0.026860019S"
+       "preparationDuration": "PT0.011140586S",
+       "verificationDuration": "PT0.649296525S",
+       "backAnnotationDuration": "PT0.007092819S"
       },
       "verifier": {
-       "compilationDuration": "PT0.763926089S",
+       "compilationDuration": "PT0.415444894S",
        "compilation": {
-        "createDuration": "PT0.008650845S",
-        "instantiationDuration": "PT0.012004800S",
-        "inliningDuration": "PT0.554105561S",
-        "flatteningDuration": "PT0.189164883S",
+        "createDuration": "PT0.005372196S",
+        "instantiationDuration": "PT0.007035855S",
+        "inliningDuration": "PT0.308423304S",
+        "flatteningDuration": "PT0.094613539S",
         "inliningOptimization": {
-         "duration": "PT0.043260248S",
+         "duration": "PT0.028110386S",
          "passes": [
           {
            "name": "OperationCallInlining",
-           "duration": "PT0.025738293S",
+           "duration": "PT0.013038748S",
            "runs": 855,
            "firings": 216
           },
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.011336151S",
+           "duration": "PT0.006951681S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.002728441S",
+           "duration": "PT0.003511650S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.001405609S",
+           "duration": "PT0.001848255S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.001827140S",
+           "duration": "PT0.002498256S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000016570S",
+           "duration": "PT0.000015693S",
            "runs": 1,
            "firings": 0
           }
@@ -412,59 +412,59 @@
          "analyses": []
         },
         "flatteningOptimization": {
-         "duration": "PT0.104677600S",
+         "duration": "PT0.052204795S",
          "passes": [
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.001952788S",
+           "duration": "PT0.000707551S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.000730069S",
+           "duration": "PT0.000248769S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000672299S",
+           "duration": "PT0.000251513S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000849891S",
+           "duration": "PT0.000261972S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.004650723S",
+           "duration": "PT0.002127712S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "CopyPropagationPass",
-           "duration": "PT0.055520732S",
+           "duration": "PT0.029624177S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "DeadStoreEliminationPass",
-           "duration": "PT0.001378967S",
+           "duration": "PT0.000573502S",
            "runs": 2,
            "firings": 1
           },
           {
            "name": "DeadCodeRemovalPass",
-           "duration": "PT0.023020924S",
+           "duration": "PT0.012306067S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "VariableLivenessPass",
-           "duration": "PT0.015553644S",
+           "duration": "PT0.005858422S",
            "runs": 2,
            "firings": 1
           }
@@ -472,17 +472,17 @@
          "analyses": [
           {
            "name": "ConstantValueAnalysis",
-           "duration": "PT0.004533380S",
+           "duration": "PT0.002030487S",
            "computations": 2
           },
           {
            "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.055330198S",
+           "duration": "PT0.029514246S",
            "computations": 2
           },
           {
            "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.022037136S",
+           "duration": "PT0.011896465S",
            "computations": 2
           }
          ]
@@ -503,8 +503,8 @@
          "expressions": 684
         }
        },
-       "backAnnotationDuration": "PT0.026065993S",
-       "portfolioDuration": "PT1.109968950S"
+       "backAnnotationDuration": "PT0.013599662S",
+       "portfolioDuration": "PT1.289094S"
       }
      },
      "message": null
@@ -1149,61 +1149,61 @@
     "result": {
      "metadata": {
       "backendId": "nuxmv:kinduction-invar",
-      "startedAt": "2026-11-16T23:52:40.245506089Z"
+      "startedAt": "2026-11-17T09:35:02.356896842Z"
      },
      "verdict": "Failed",
      "soundness": "Exact",
      "isTrusted": true,
      "metrics": {
-      "totalDuration": "PT3.393816862S",
+      "totalDuration": "PT2.820255995S",
       "backend": {
-       "preparationDuration": "PT0.022023296S",
-       "verificationDuration": "PT2.804529204S",
-       "backAnnotationDuration": "PT0.024074479S"
+       "preparationDuration": "PT0.011621797S",
+       "verificationDuration": "PT2.157448119S",
+       "backAnnotationDuration": "PT0.018005062S"
       },
       "verifier": {
-       "compilationDuration": "PT0.979152997S",
+       "compilationDuration": "PT0.506594146S",
        "compilation": {
-        "createDuration": "PT0.017408430S",
-        "instantiationDuration": "PT0.017403401S",
-        "inliningDuration": "PT0.713271844S",
-        "flatteningDuration": "PT0.231069322S",
+        "createDuration": "PT0.007809507S",
+        "instantiationDuration": "PT0.008344945S",
+        "inliningDuration": "PT0.407036929S",
+        "flatteningDuration": "PT0.083402765S",
         "inliningOptimization": {
-         "duration": "PT0.061642558S",
+         "duration": "PT0.029720573S",
          "passes": [
           {
            "name": "OperationCallInlining",
-           "duration": "PT0.031289312S",
+           "duration": "PT0.017768353S",
            "runs": 855,
            "firings": 216
           },
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.017073133S",
+           "duration": "PT0.005644779S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.005470240S",
+           "duration": "PT0.002821885S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.002855797S",
+           "duration": "PT0.001466275S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.004601123S",
+           "duration": "PT0.001784955S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000030945S",
+           "duration": "PT0.000015061S",
            "runs": 1,
            "firings": 0
           }
@@ -1211,59 +1211,59 @@
          "analyses": []
         },
         "flatteningOptimization": {
-         "duration": "PT0.136701737S",
+         "duration": "PT0.050806784S",
          "passes": [
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.001972099S",
+           "duration": "PT0.001046260S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.000789892S",
+           "duration": "PT0.000391989S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000525795S",
+           "duration": "PT0.000381644S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000512523S",
+           "duration": "PT0.000385653S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.003464533S",
+           "duration": "PT0.002648860S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "CopyPropagationPass",
-           "duration": "PT0.058124661S",
+           "duration": "PT0.026028647S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "DeadStoreEliminationPass",
-           "duration": "PT0.024327918S",
+           "duration": "PT0.000588479S",
            "runs": 2,
            "firings": 1
           },
           {
            "name": "DeadCodeRemovalPass",
-           "duration": "PT0.027747634S",
+           "duration": "PT0.010544139S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "VariableLivenessPass",
-           "duration": "PT0.018851028S",
+           "duration": "PT0.008547984S",
            "runs": 2,
            "firings": 1
           }
@@ -1271,17 +1271,17 @@
          "analyses": [
           {
            "name": "ConstantValueAnalysis",
-           "duration": "PT0.003370919S",
+           "duration": "PT0.002554017S",
            "computations": 2
           },
           {
            "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.057925231S",
+           "duration": "PT0.025922244S",
            "computations": 2
           },
           {
            "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.026522979S",
+           "duration": "PT0.009968231S",
            "computations": 2
           }
          ]
@@ -1302,8 +1302,8 @@
          "expressions": 688
         }
        },
-       "backAnnotationDuration": "PT0.009289496S",
-       "portfolioDuration": "PT3.384088067S"
+       "backAnnotationDuration": "PT0.005516874S",
+       "portfolioDuration": "PT2.814317253S"
       }
      },
      "message": null
@@ -2279,61 +2279,61 @@
     "result": {
      "metadata": {
       "backendId": "uppaal:default",
-      "startedAt": "2026-11-16T23:52:45.025169308Z"
+      "startedAt": "2026-11-17T09:35:06.409854894Z"
      },
      "verdict": "Passed",
      "soundness": "UnderApproximating",
      "isTrusted": true,
      "metrics": {
-      "totalDuration": "PT2.673728160S",
+      "totalDuration": "PT3.430658942S",
       "backend": {
-       "preparationDuration": "PT0.017367186S",
-       "verificationDuration": "PT2.232676623S",
-       "backAnnotationDuration": "PT0.104728337S"
+       "preparationDuration": "PT0.014111112S",
+       "verificationDuration": "PT2.471668S",
+       "backAnnotationDuration": "PT0.240404676S"
       },
       "verifier": {
-       "compilationDuration": "PT2.973602885S",
+       "compilationDuration": "PT1.975250771S",
        "compilation": {
-        "createDuration": "PT0.027418925S",
-        "instantiationDuration": "PT0.117156936S",
-        "inliningDuration": "PT2.290430543S",
-        "flatteningDuration": "PT0.538596481S",
+        "createDuration": "PT0.017600727S",
+        "instantiationDuration": "PT0.096768239S",
+        "inliningDuration": "PT1.227518406S",
+        "flatteningDuration": "PT0.633363399S",
         "inliningOptimization": {
-         "duration": "PT0.213839893S",
+         "duration": "PT0.073922673S",
          "passes": [
           {
            "name": "OperationCallInlining",
-           "duration": "PT0.133902940S",
+           "duration": "PT0.055030225S",
            "runs": 2351,
            "firings": 598
           },
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.033359756S",
+           "duration": "PT0.009192030S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.012792639S",
+           "duration": "PT0.004239928S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.004384169S",
+           "duration": "PT0.002396742S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.029147817S",
+           "duration": "PT0.002883455S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000031377S",
+           "duration": "PT0.000010467S",
            "runs": 1,
            "firings": 0
           }
@@ -2341,59 +2341,59 @@
          "analyses": []
         },
         "flatteningOptimization": {
-         "duration": "PT0.334175178S",
+         "duration": "PT0.354197695S",
          "passes": [
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.002749458S",
+           "duration": "PT0.003632493S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.001740104S",
+           "duration": "PT0.001631109S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.002050626S",
+           "duration": "PT0.001821992S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.001761725S",
+           "duration": "PT0.001596753S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.008324119S",
+           "duration": "PT0.010035852S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "CopyPropagationPass",
-           "duration": "PT0.133882696S",
+           "duration": "PT0.131538376S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadStoreEliminationPass",
-           "duration": "PT0.074816573S",
+           "duration": "PT0.074441945S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadCodeRemovalPass",
-           "duration": "PT0.055902309S",
+           "duration": "PT0.069075723S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "VariableLivenessPass",
-           "duration": "PT0.052601728S",
+           "duration": "PT0.060060737S",
            "runs": 3,
            "firings": 1
           }
@@ -2401,17 +2401,17 @@
          "analyses": [
           {
            "name": "ConstantValueAnalysis",
-           "duration": "PT0.008184318S",
+           "duration": "PT0.009812427S",
            "computations": 2
           },
           {
            "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.203768102S",
+           "duration": "PT0.200350216S",
            "computations": 3
           },
           {
            "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.052905025S",
+           "duration": "PT0.066442188S",
            "computations": 2
           }
          ]
@@ -2432,8 +2432,8 @@
          "expressions": 2513
         }
        },
-       "backAnnotationDuration": "PT0.005111991S",
-       "portfolioDuration": "PT2.668209127S"
+       "backAnnotationDuration": "PT0.007131781S",
+       "portfolioDuration": "PT3.423060220S"
       }
      },
      "message": null
@@ -3029,62 +3029,62 @@
     "timeout": "PT5M",
     "result": {
      "metadata": {
-      "backendId": "uppaal:default",
-      "startedAt": "2026-11-16T23:52:48.810878241Z"
+      "backendId": "theta:bounded-bmc",
+      "startedAt": "2026-11-17T09:35:11.080583441Z"
      },
      "verdict": "Passed",
-     "soundness": "UnderApproximating",
+     "soundness": "Exact",
      "isTrusted": true,
      "metrics": {
-      "totalDuration": "PT5.505196404S",
+      "totalDuration": "PT7.690546428S",
       "backend": {
-       "preparationDuration": "PT0.018230011S",
-       "verificationDuration": "PT4.639495898S",
-       "backAnnotationDuration": "PT0.389397458S"
+       "preparationDuration": "PT0.216901336S",
+       "verificationDuration": "PT6.032068720S",
+       "backAnnotationDuration": "PT0.573746491S"
       },
       "verifier": {
-       "compilationDuration": "PT4.854149740S",
+       "compilationDuration": "PT5.678798470S",
        "compilation": {
-        "createDuration": "PT0.004220940S",
-        "instantiationDuration": "PT0.041807742S",
-        "inliningDuration": "PT3.794583264S",
-        "flatteningDuration": "PT1.013537794S",
+        "createDuration": "PT0.004647675S",
+        "instantiationDuration": "PT0.040216645S",
+        "inliningDuration": "PT4.576398505S",
+        "flatteningDuration": "PT1.057535645S",
         "inliningOptimization": {
-         "duration": "PT0.418746258S",
+         "duration": "PT0.439532925S",
          "passes": [
           {
            "name": "OperationCallInlining",
-           "duration": "PT0.081285454S",
+           "duration": "PT0.137508318S",
            "runs": 4595,
            "firings": 1171
           },
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.222092927S",
+           "duration": "PT0.107072173S",
            "runs": 5,
            "firings": 4
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.046986730S",
+           "duration": "PT0.071691360S",
            "runs": 5,
            "firings": 1
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.032213352S",
+           "duration": "PT0.055751306S",
            "runs": 5,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.035346380S",
+           "duration": "PT0.066599090S",
            "runs": 5,
            "firings": 2
           },
           {
            "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000043721S",
+           "duration": "PT0.000198481S",
            "runs": 1,
            "firings": 0
           }
@@ -3092,59 +3092,59 @@
          "analyses": []
         },
         "flatteningOptimization": {
-         "duration": "PT0.600033799S",
+         "duration": "PT0.623179051S",
          "passes": [
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.004839817S",
+           "duration": "PT0.004987432S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.003156286S",
+           "duration": "PT0.002979562S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.003066991S",
+           "duration": "PT0.003307459S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.003080579S",
+           "duration": "PT0.002997993S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.015128578S",
+           "duration": "PT0.015007040S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "CopyPropagationPass",
-           "duration": "PT0.266171551S",
+           "duration": "PT0.274189249S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadStoreEliminationPass",
-           "duration": "PT0.141571158S",
+           "duration": "PT0.144289284S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadCodeRemovalPass",
-           "duration": "PT0.085667802S",
+           "duration": "PT0.096614467S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "VariableLivenessPass",
-           "duration": "PT0.077019280S",
+           "duration": "PT0.078471913S",
            "runs": 3,
            "firings": 1
           }
@@ -3152,17 +3152,17 @@
          "analyses": [
           {
            "name": "ConstantValueAnalysis",
-           "duration": "PT0.014963628S",
+           "duration": "PT0.014858920S",
            "computations": 2
           },
           {
            "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.398640172S",
+           "duration": "PT0.407206426S",
            "computations": 3
           },
           {
            "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.082200606S",
+           "duration": "PT0.093145869S",
            "computations": 2
           }
          ]
@@ -3183,8 +3183,8 @@
          "expressions": 5982
         }
        },
-       "backAnnotationDuration": "PT0.007236412S",
-       "portfolioDuration": "PT5.497670836S"
+       "backAnnotationDuration": "PT0.007091670S",
+       "portfolioDuration": "PT7.683184984S"
       }
      },
      "message": null
@@ -3963,7 +3963,7 @@
   "file:///workspace/.artifacts/snippet._LevelCrossing._TwoTrainsCanBeInTheCrossing/witness.semantifyr": "witness of _LevelCrossing::_TwoTrainsCanBeInTheCrossing\n\nvar step: int := 0\n\ncontains root: _LevelCrossing::_TwoTrainsCanBeInTheCrossing\n\ninit {\n    assume(step == 0)\n    inline root.init()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._Free)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Free)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._Idle)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Up)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == false)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == false)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 1\n}\n\ntran {\n    assume(step == 1)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._Approaching)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Approaching)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._Idle)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Up)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == true)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == true)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == true)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == true)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == false)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == false)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 2\n} or {\n    assume(step == 2)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._Near)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Near)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._TrainPresent)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Up)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == true)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == true)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 3\n} or {\n    assume(step == 3)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._InCrossing)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._InCrossing)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._TrainPresent)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Down)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == false)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == false)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 4\n}\n\nprop {\n    root.prop()\n}",
   "file:///workspace/.semantifyr/builtin/standard.semantifyr": "/*\n * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\n/*\n * The standard library, in scope in every file without an import, below the file's own package and its imports. It declares the primitive datatypes, `Anything`, the base class of every class, and the annotations the tools read.\n */\npackage semantifyr\n\n/*\n * The supertype of every type.\n */\nextern datatype any\n\n/*\n * Integer numbers.\n */\nextern datatype int\n\n/*\n * Real numbers.\n */\nextern datatype real\n\n/*\n * The Boolean values `true` and `false`.\n */\nextern datatype bool\n\n/*\n * Sequences of characters.\n */\nextern datatype string\n\n/*\n * Clocks measure time. A clock starts at 0, advances by the wait before every main step, is reset to 0 by assignment and is read only in comparisons with integers.\n */\nextern datatype clock\n\n/*\n * The implicit supertype of every class. Its `init` and its main transition do nothing, and a class that declares its own replaces them, with or without `redefine`.\n */\nclass Anything {\n    // contains children: Anything[0..*] opposite parent;\n    // container parent: Anything[0..1] opposite children;\n    /*\n     * The base main transition.\n     */\n    tran {\n    }\n\n    /*\n     * The base init transition.\n     */\n    init {\n    }\n}\n\n/*\n * Marks a class as a verification case, which the tools find and verify. The optional `summary` is the text the editors show for the case in place of its name.\n */\nannotation VerificationCase(summary: string[0..1])\n\n/*\n * Gives a verification case a category, such as `@Tag(\"slow\")`, by which the command line selects and skips cases.\n */\nannotation Tag(category: string)\n\n/*\n * Marks a variable that a backend may track from the start of its search. It is a hint for the backend's speed and changes neither the verdict nor the trace.\n */\nannotation Control\n\n/*\n * Marks a containment feature whose instance is created once in a model and shared by every instance of the class that declares the feature, instead of once for each.\n */\nannotation Shared\n\n/*\n * Marks a transition whose calls the trace lists: each call that fired, in the step it fired in, with its receiver's path from the root instance, such as `root.kitchen.lamp`, and the values of its arguments when the call fired.\n * \n * No argument of a call to a traced transition may be a record, or a real or string computed at run time.\n */\nannotation Trace\n\n/*\n * Excludes a variable from the optimizer passes that could remove or fold it, so that it stays in the model a backend receives and in the witness.\n */\nannotation NonOptimizable\n",
   "file:///workspace/Library/Actions.semantifyr": "/*\n * SPDX-FileCopyrightText: 2025 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\npackage semantifyr::gamma::actions\n\nimport semantifyr::gamma::variables\nimport semantifyr::gamma::expressions\nimport semantifyr::gamma::events\nimport semantifyr::gamma::ports\n\nabstract class Action {\n    redefine tran {\n    }\n}\n\nclass RaiseEventAction : Action {\n    refers port: Port[1]\n    refers event: Event[1]\n    contains arguments: Argument[0..*]\n\n    redefine tran {\n        inline for (argument in arguments) {\n            inline argument.parameter.set(argument.expression.evaluate())\n        }\n        inline port.setOutputEvent(event)\n    }\n}\n\nclass Argument {\n    refers parameter: Parameter[1]\n    contains expression: Expression[1]\n}\n\nclass SetTimeoutAction : Action {\n    refers timeout: Timeout[1]\n\n    redefine tran {\n        inline timeout.set()\n    }\n}\n\nclass AssignmentAction : Action {\n    refers variable: Variable[1]\n    contains expression: Expression[1]\n\n    redefine tran {\n        inline variable.set(expression.evaluate())\n    }\n}\n",
-  "file:///workspace/Library/Asynchronous.semantifyr": "/*\n * SPDX-FileCopyrightText: 2026 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\npackage semantifyr::gamma::asynchronous\n\nimport semantifyr::gamma::components\nimport semantifyr::gamma::events\nimport semantifyr::gamma::ports\n\nclass Clock {\n    refers rate: int\n\n    var elapsed: clock := 0\n\n    prop isUp(): bool {\n        return elapsed >= rate\n    }\n}\n\nabstract class MessageQueue {\n    // the mapper writes each queue's storage with its capacity as a literal, so a subclass holds the arrays and their accesses\n    container adapter: AsynchronousAdapter[0..1] opposite queues\n\n    refers capacity: int\n    refers priority: int\n    refers position: int\n    refers rank: int\n    refers environmental: bool = false\n    refers discardsOldest: bool = false\n\n    var size: int := 0\n\n    prop isEmpty(): bool {\n        return size <= 0\n    }\n\n    prop isFull(): bool {\n        return size >= capacity\n    }\n\n    abstract tran receive()\n\n    abstract tran shift()\n\n    abstract tran clear()\n\n    abstract tran receiveEnvironmentMessage()\n\n    abstract tran receiveClockTick(clock: Clock)\n\n    // the environment never drops a message, as in Gamma, so only a dispatch and a clock tick call this\n    tran dropOldestWhenFull() {\n        inline if (discardsOldest) {\n            if (isFull()) {\n                inline shift()\n            }\n        }\n    }\n}\n\nabstract class AsynchronousAdapter : Component {\n    contains wrapped: Component\n    contains queues: MessageQueue[0..*] opposite adapter\n    contains clocks: Clock[0..*]\n\n    refers scheduleCount: int = 1\n\n    redefine init {\n        inline wrapped.init()\n    }\n\n    redefine tran schedule() {\n        inline tickClocks()\n        inline receiveMessage()\n    }\n\n    tran tickClocks() {\n        inline for (clock in clocks) {\n            // no wait passes a tick, so the clock ticks once every rate\n            assume(clock.elapsed <= clock.rate)\n            if (clock.isUp()) {\n                clock.elapsed := 0\n                inline for (queue in queues) {\n                    inline queue.receiveClockTick(clock)\n                }\n            }\n        }\n    }\n\n    tran receiveMessage() {\n        var received: bool := false\n        inline for (turn in queues) {\n            inline for (queue in queues) {\n                inline if (queue.rank == turn.position) {\n                    if (!received && !queue.isEmpty()) {\n                        received := true\n                        inline queue.receive()\n                    }\n                }\n            }\n        }\n    }\n\n    tran run() {\n        inline wrapped.resetOutputEvents()\n        inline wrapped.main()\n    }\n\n    tran resetComponent() {\n        inline wrapped.restore()\n        inline wrapped.init()\n    }\n\n    tran clearQueues() {\n        inline for (queue in queues) {\n            inline queue.clear()\n        }\n    }\n\n    tran clearOtherQueues(kept: MessageQueue) {\n        inline for (queue in queues) {\n            inline if (queue != kept) {\n                inline queue.clear()\n            }\n        }\n    }\n\n    // a run resets the wrapped component's outputs, so a raised output stays until the adapter runs again\n    redefine tran resetOutputEvents() {\n    }\n\n    redefine tran havocInputEvents() {\n        inline for (queue in queues) {\n            inline if (queue.environmental) {\n                inline for (attempt in 1..queue.capacity) {\n                    inline offerEnvironmentMessage(queue)\n                }\n            }\n        }\n    }\n\n    tran offerEnvironmentMessage(queue: MessageQueue) {\n        var load: int := queue.size\n        var constrained: bool := false\n        inline for (other in queues) {\n            inline if (other.priority > queue.priority) {\n                load := load + other.size\n                constrained := true\n            }\n        }\n        if (!queue.isFull() && (!constrained || load < scheduleCount)) {\n            inline queue.receiveEnvironmentMessage()\n        }\n    }\n}\n\nabstract class MessageDispatch {\n    refers source: AsynchronousAdapter\n    refers event: Event\n    refers target: MessageQueue\n    refers resetsSource: bool = true\n\n    tran dispatch() {\n        if (event.isRaised) {\n            inline target.dropOldestWhenFull()\n            if (!target.isFull()) {\n                inline enqueue()\n            }\n            inline if (resetsSource) {\n                inline event.reset()\n            }\n        }\n    }\n\n    abstract tran enqueue()\n}\n\nabstract class AsynchronousComposite : Component {\n    contains adapters: AsynchronousAdapter[0..*]\n    contains dispatches: MessageDispatch[0..*]\n\n    redefine init {\n        inline for (adapter in adapters) {\n            inline adapter.init()\n        }\n\n        inline for (dispatch in dispatches) {\n            inline dispatch.dispatch()\n        }\n    }\n\n    tran tickClocks() {\n        inline for (adapter in adapters) {\n            inline adapter.tickClocks()\n        }\n    }\n\n    tran turn(adapter: AsynchronousAdapter) {\n        inline adapter.receiveMessage()\n        inline for (dispatch in dispatches) {\n            inline if (dispatch.source == adapter) {\n                inline dispatch.dispatch()\n            }\n        }\n    }\n\n    redefine tran resetOutputEvents() {\n    }\n\n    redefine tran havocInputEvents() {\n        inline for (adapter in adapters) {\n            inline adapter.havocInputEvents()\n        }\n    }\n}\n\nclass AsynchronousCompositeComponent : AsynchronousComposite {\n    // an adapter with no message does nothing when chosen, so a cycle may pass with no run\n    redefine tran schedule() {\n        inline tickClocks()\n        inline for choice (adapter in adapters) {\n            inline turn(adapter)\n        }\n    }\n}\n\nclass AsynchronousExecutionStep {\n    refers adapter: AsynchronousAdapter[1]\n}\n\nclass ScheduledAsynchronousCompositeComponent : AsynchronousComposite {\n    contains executionSteps: AsynchronousExecutionStep[0..*]\n\n    redefine tran schedule() {\n        inline tickClocks()\n        inline for (step in executionSteps) {\n            inline turn(step.adapter)\n        }\n    }\n}\n",
+  "file:///workspace/Library/Asynchronous.semantifyr": "/*\n * SPDX-FileCopyrightText: 2026 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\npackage semantifyr::gamma::asynchronous\n\nimport semantifyr::gamma::components\nimport semantifyr::gamma::events\nimport semantifyr::gamma::ports\n\nclass Clock {\n    refers rate: int\n\n    var elapsed: clock := 0\n\n    prop isUp(): bool {\n        return elapsed >= rate\n    }\n}\n\nabstract class StoredParameter {\n    container message: StoredMessage[0..1] opposite parameters\n\n    refers declaration: ParameterDeclaration\n    refers parameter: Parameter\n    refers capacity: int = message.queue.capacity\n\n    abstract tran store(index: int, value: any)\n\n    abstract tran storeArbitrary(index: int)\n\n    abstract tran deliver()\n\n    abstract tran shift()\n\n    abstract tran clear()\n}\n\nclass StoredInteger : StoredParameter {\n    var values: int[capacity] := [0, ...]\n\n    redefine tran store(index: int, value: int) {\n        values[index] := value\n    }\n\n    redefine tran storeArbitrary(index: int) {\n        var value: int := 0\n        havoc(value)\n        values[index] := value\n    }\n\n    redefine tran deliver() {\n        inline parameter.set(values[0])\n    }\n\n    redefine tran shift() {\n        inline for (index in 0..<capacity - 1) {\n            values[index] := values[index + 1]\n        }\n        values[capacity - 1] := 0\n    }\n\n    redefine tran clear() {\n        inline for (index in 0..<capacity) {\n            values[index] := 0\n        }\n    }\n}\n\nclass StoredBoolean : StoredParameter {\n    var values: bool[capacity] := [false, ...]\n\n    redefine tran store(index: int, value: bool) {\n        values[index] := value\n    }\n\n    redefine tran storeArbitrary(index: int) {\n        var value: bool := false\n        havoc(value)\n        values[index] := value\n    }\n\n    redefine tran deliver() {\n        inline parameter.set(values[0])\n    }\n\n    redefine tran shift() {\n        inline for (index in 0..<capacity - 1) {\n            values[index] := values[index + 1]\n        }\n        values[capacity - 1] := false\n    }\n\n    redefine tran clear() {\n        inline for (index in 0..<capacity) {\n            values[index] := false\n        }\n    }\n}\n\nclass StoredMessage {\n    container queue: MessageQueue[0..1] opposite messages\n    contains parameters: StoredParameter[0..*] opposite message\n\n    refers port: Port[0..1]\n    refers source: Event[0..1]\n    refers event: Event[0..1]\n    refers clock: Clock[0..1]\n\n    tran store(index: int, raised: Event) {\n        inline for (parameter in parameters) {\n            inline for (raisedParameter in raised.parameters) {\n                inline if (parameter.declaration == raisedParameter.declaration) {\n                    inline parameter.store(index, raisedParameter.evaluate())\n                }\n            }\n        }\n    }\n\n    tran storeArbitrary(index: int) {\n        inline for (parameter in parameters) {\n            inline parameter.storeArbitrary(index)\n        }\n    }\n\n    tran deliver() {\n        inline if (event != nothing) {\n            event.isRaised := true\n        }\n        inline for (parameter in parameters) {\n            inline parameter.deliver()\n        }\n    }\n\n    tran shift() {\n        inline for (parameter in parameters) {\n            inline parameter.shift()\n        }\n    }\n\n    tran clear() {\n        inline for (parameter in parameters) {\n            inline parameter.clear()\n        }\n    }\n}\n\nclass MessageQueue {\n    container adapter: AsynchronousAdapter[0..1] opposite queues\n    contains messages: StoredMessage[0..*] opposite queue\n    contains runningMessages: StoredMessage[0..*] subsets messages\n    contains resettingMessages: StoredMessage[0..*] subsets messages\n    contains clearingMessages: StoredMessage[0..*] subsets messages\n    contains clearingAllMessages: StoredMessage[0..*] subsets messages\n    contains clearingOtherMessages: StoredMessage[0..*] subsets messages\n\n    refers capacity: int\n    refers priority: int\n    refers position: int\n    refers rank: int\n    refers environmental: bool = false\n    refers discardsOldest: bool = false\n\n    var stored: StoredMessage[0..capacity] := [nothing, ...]\n    var size: int := 0\n\n    prop isEmpty(): bool {\n        return size <= 0\n    }\n\n    prop isFull(): bool {\n        return size >= capacity\n    }\n\n    tran enqueue(message: StoredMessage, raised: Event) {\n        inline if (capacity > 0) {\n            inline message.store(size, raised)\n            inline enqueueTick(message)\n        }\n    }\n\n    tran enqueueArbitrary(message: StoredMessage) {\n        inline if (capacity > 0) {\n            inline message.storeArbitrary(size)\n            inline enqueueTick(message)\n        }\n    }\n\n    tran enqueueTick(message: StoredMessage) {\n        inline if (capacity > 0) {\n            stored[size] := message\n            size := size + 1\n        }\n    }\n\n    tran receive() {\n        inline if (capacity > 0) {\n            var head: StoredMessage[0..1] := stored[0]\n            inline for (message in messages) {\n                if (head == message) {\n                    inline message.deliver()\n                }\n            }\n            inline shift()\n            inline if (runningMessages == messages) {\n                inline adapter.run()\n            } else {\n                inline if (runningMessages != nothing) {\n                    var runs: bool := false\n                    inline for (message in runningMessages) {\n                        runs := runs || head == message\n                    }\n                    if (runs) {\n                        inline adapter.run()\n                    }\n                }\n            }\n            inline if (resettingMessages == messages) {\n                inline adapter.resetComponent()\n            } else {\n                inline if (resettingMessages != nothing) {\n                    var resets: bool := false\n                    inline for (message in resettingMessages) {\n                        resets := resets || head == message\n                    }\n                    if (resets) {\n                        inline adapter.resetComponent()\n                    }\n                }\n            }\n            inline if (clearingMessages == messages) {\n                inline clear()\n            } else {\n                inline if (clearingMessages != nothing) {\n                    var clears: bool := false\n                    inline for (message in clearingMessages) {\n                        clears := clears || head == message\n                    }\n                    if (clears) {\n                        inline clear()\n                    }\n                }\n            }\n            inline if (clearingAllMessages == messages) {\n                inline adapter.clearQueues()\n            } else {\n                inline if (clearingAllMessages != nothing) {\n                    var clearsAll: bool := false\n                    inline for (message in clearingAllMessages) {\n                        clearsAll := clearsAll || head == message\n                    }\n                    if (clearsAll) {\n                        inline adapter.clearQueues()\n                    }\n                }\n            }\n            inline if (clearingOtherMessages == messages) {\n                inline adapter.clearOtherQueues(self)\n            } else {\n                inline if (clearingOtherMessages != nothing) {\n                    var clearsOthers: bool := false\n                    inline for (message in clearingOtherMessages) {\n                        clearsOthers := clearsOthers || head == message\n                    }\n                    if (clearsOthers) {\n                        inline adapter.clearOtherQueues(self)\n                    }\n                }\n            }\n        }\n    }\n\n    tran shift() {\n        inline if (capacity > 0) {\n            inline for (index in 0..<capacity - 1) {\n                stored[index] := stored[index + 1]\n            }\n            stored[capacity - 1] := nothing\n            inline for (message in messages) {\n                inline message.shift()\n            }\n            size := size - 1\n        }\n    }\n\n    tran clear() {\n        inline for (index in 0..<capacity) {\n            stored[index] := nothing\n        }\n        inline for (message in messages) {\n            inline message.clear()\n        }\n        size := 0\n    }\n\n    tran receiveEnvironmentMessage() {\n        choice {\n        } or {\n            inline for choice (message in messages) {\n                inline if (message.port != nothing) {\n                    inline message.port.receiveInputMessage(message.source)\n                    inline enqueueArbitrary(message)\n                }\n            }\n        }\n    }\n\n    tran receiveClockTick(clock: Clock) {\n        inline for (message in messages) {\n            inline if (message.clock == clock) {\n                inline dropOldestWhenFull()\n                if (!isFull()) {\n                    inline enqueueTick(message)\n                }\n            }\n        }\n    }\n\n    // the environment never drops a message, as in Gamma, so only a dispatch and a clock tick call this\n    tran dropOldestWhenFull() {\n        inline if (discardsOldest) {\n            if (isFull()) {\n                inline shift()\n            }\n        }\n    }\n}\n\nabstract class AsynchronousAdapter : Component {\n    contains wrapped: Component\n    contains queues: MessageQueue[0..*] opposite adapter\n    contains clocks: Clock[0..*]\n\n    refers scheduleCount: int = 1\n\n    redefine init {\n        inline wrapped.init()\n    }\n\n    redefine tran schedule() {\n        inline tickClocks()\n        inline receiveMessage()\n    }\n\n    tran tickClocks() {\n        inline for (clock in clocks) {\n            // no wait passes a tick, so the clock ticks once every rate\n            assume(clock.elapsed <= clock.rate)\n            if (clock.isUp()) {\n                clock.elapsed := 0\n                inline for (queue in queues) {\n                    inline queue.receiveClockTick(clock)\n                }\n            }\n        }\n    }\n\n    tran receiveMessage() {\n        var received: bool := false\n        inline for (turn in queues) {\n            inline for (queue in queues) {\n                inline if (queue.rank == turn.position) {\n                    if (!received && !queue.isEmpty()) {\n                        received := true\n                        inline queue.receive()\n                    }\n                }\n            }\n        }\n    }\n\n    tran run() {\n        inline wrapped.resetOutputEvents()\n        inline wrapped.main()\n    }\n\n    tran resetComponent() {\n        inline wrapped.restore()\n        inline wrapped.init()\n    }\n\n    tran clearQueues() {\n        inline for (queue in queues) {\n            inline queue.clear()\n        }\n    }\n\n    tran clearOtherQueues(kept: MessageQueue) {\n        inline for (queue in queues) {\n            inline if (queue != kept) {\n                inline queue.clear()\n            }\n        }\n    }\n\n    // a run resets the wrapped component's outputs, so a raised output stays until the adapter runs again\n    redefine tran resetOutputEvents() {\n    }\n\n    redefine tran havocInputEvents() {\n        inline for (queue in queues) {\n            inline if (queue.environmental) {\n                inline for (attempt in 1..queue.capacity) {\n                    inline offerEnvironmentMessage(queue)\n                }\n            }\n        }\n    }\n\n    tran offerEnvironmentMessage(queue: MessageQueue) {\n        var load: int := queue.size\n        var constrained: bool := false\n        inline for (other in queues) {\n            inline if (other.priority > queue.priority) {\n                load := load + other.size\n                constrained := true\n            }\n        }\n        if (!queue.isFull() && (!constrained || load < scheduleCount)) {\n            inline queue.receiveEnvironmentMessage()\n        }\n    }\n}\n\nclass MessageDispatch {\n    refers source: AsynchronousAdapter\n    refers event: Event\n    refers message: StoredMessage\n    refers resetsSource: bool = true\n\n    tran dispatch() {\n        if (event.isRaised) {\n            inline message.queue.dropOldestWhenFull()\n            if (!message.queue.isFull()) {\n                inline message.queue.enqueue(message, event)\n            }\n            inline if (resetsSource) {\n                inline event.reset()\n            }\n        }\n    }\n}\n\nabstract class AsynchronousComposite : Component {\n    contains adapters: AsynchronousAdapter[0..*]\n    contains dispatches: MessageDispatch[0..*]\n\n    redefine init {\n        inline for (adapter in adapters) {\n            inline adapter.init()\n        }\n\n        inline for (dispatch in dispatches) {\n            inline dispatch.dispatch()\n        }\n    }\n\n    tran tickClocks() {\n        inline for (adapter in adapters) {\n            inline adapter.tickClocks()\n        }\n    }\n\n    tran turn(adapter: AsynchronousAdapter) {\n        inline adapter.receiveMessage()\n        inline for (dispatch in dispatches) {\n            inline if (dispatch.source == adapter) {\n                inline dispatch.dispatch()\n            }\n        }\n    }\n\n    redefine tran resetOutputEvents() {\n    }\n\n    redefine tran havocInputEvents() {\n        inline for (adapter in adapters) {\n            inline adapter.havocInputEvents()\n        }\n    }\n}\n\nclass AsynchronousCompositeComponent : AsynchronousComposite {\n    // an adapter with no message does nothing when chosen, so a cycle may pass with no run\n    redefine tran schedule() {\n        inline tickClocks()\n        inline for choice (adapter in adapters) {\n            inline turn(adapter)\n        }\n    }\n}\n\nclass AsynchronousExecutionStep {\n    refers adapter: AsynchronousAdapter[1]\n}\n\nclass ScheduledAsynchronousCompositeComponent : AsynchronousComposite {\n    contains executionSteps: AsynchronousExecutionStep[0..*]\n\n    redefine tran schedule() {\n        inline tickClocks()\n        inline for (step in executionSteps) {\n            inline turn(step.adapter)\n        }\n    }\n}\n",
   "file:///workspace/Library/Components.semantifyr": "/*\n * SPDX-FileCopyrightText: 2025 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\npackage semantifyr::gamma::components\n\nimport semantifyr::gamma::events\nimport semantifyr::gamma::ports\n\nabstract class Component {\n    contains ports: Port[0..*]\n    contains timeouts: Timeout[0..*]\n\n    redefine tran {\n        inline schedule()\n    }\n\n    abstract tran schedule()\n\n    tran resetInputEvents() {\n        inline for (port in ports) {\n            inline port.resetInputEvents()\n        }\n    }\n\n    tran havocInputEvents() {\n        inline for (port in ports) {\n            inline port.havocInputEvents()\n        }\n    }\n\n    tran resetOutputEvents() {\n        inline for (port in ports) {\n            inline port.resetOutputEvents()\n        }\n    }\n\n    // timeouts are left as Gamma's initializing action leaves them, a state sets its own when entered\n    tran restore() {\n        inline for (port in ports) {\n            inline port.restore()\n        }\n    }\n}\n\nclass Channel {\n    refers inputPort: Port[1]\n    refers outputPort: Port[1]\n\n    redefine tran {\n        inline inputPort.transferOutputEvents(outputPort)\n        inline outputPort.transferOutputEvents(inputPort)\n    }\n\n    tran resetOutputEventsOf(component: Component) {\n        inline for (port in component.ports) {\n            inline if (port == inputPort) {\n                inline inputPort.resetOutputEvents()\n            }\n            inline if (port == outputPort) {\n                inline outputPort.resetOutputEvents()\n            }\n        }\n    }\n\n    tran transferOutputEventsOf(component: Component) {\n        inline for (port in component.ports) {\n            inline if (port == inputPort) {\n                inline inputPort.transferOutputEvents(outputPort)\n            }\n            inline if (port == outputPort) {\n                inline outputPort.transferOutputEvents(inputPort)\n            }\n        }\n    }\n}\n\nabstract class CompositeComponent : Component {\n    contains components: Component[0..*]\n    contains channels: Channel[0..*]\n\n    redefine init {\n        inline for (component in components) {\n            inline component.init()\n        }\n\n        inline for (channel in channels) {\n            inline channel.main()\n        }\n    }\n\n    redefine tran restore() {\n        inline for (port in ports) {\n            inline port.restore()\n        }\n\n        inline for (component in components) {\n            inline component.restore()\n        }\n    }\n}\n\nclass SyncComponent : CompositeComponent {\n    redefine tran schedule() {\n        inline for (component in components) {\n            inline component.resetOutputEvents()\n            inline component.main()\n        }\n\n        inline for (channel in channels) {\n            inline channel.main()\n        }\n\n        inline resetInputEvents()\n    }\n}\n\nclass ExecutionStep {\n    refers component: Component[1]\n}\n\nclass CascadeComponent : CompositeComponent {\n    contains executionSteps: ExecutionStep[0..*]\n\n    // a channel delivers at the raise; its source's outputs are not state in Gamma, so they are cleared before the source runs again\n    redefine tran schedule() {\n        inline for (step in executionSteps) {\n            inline for (channel in channels) {\n                inline channel.resetOutputEventsOf(step.component)\n            }\n\n            inline step.component.main()\n\n            inline for (channel in channels) {\n                inline channel.transferOutputEventsOf(step.component)\n            }\n        }\n    }\n}\n",
   "file:///workspace/Library/Events.semantifyr": "/*\n * SPDX-FileCopyrightText: 2025 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\npackage semantifyr::gamma::events\n\nimport semantifyr::gamma::expressions\n\nclass EventDeclaration\n\nclass Event {\n    // shared by every port's instance of the event, so a channel matches the instances of one event\n    contains declaration: EventDeclaration\n    contains parameters: Parameter[0..*]\n\n    refers persistent: bool = false\n\n    var isRaised: bool := false\n\n    tran reset() {\n        isRaised := false\n        inline if (!persistent) {\n            inline for (parameter in parameters) {\n                inline parameter.reset()\n            }\n        }\n    }\n\n    // a persistent parameter is restored too, as Gamma's component reset assigns every parameter its initial value\n    tran restore() {\n        isRaised := false\n        inline for (parameter in parameters) {\n            inline parameter.reset()\n        }\n    }\n\n    tran havocParameters() {\n        inline for (parameter in parameters) {\n            inline parameter.havoc()\n        }\n    }\n\n    tran copyParametersFrom(source: Event) {\n        inline for (parameter in parameters) {\n            inline for (sourceParameter in source.parameters) {\n                inline if (parameter.declaration == sourceParameter.declaration) {\n                    inline parameter.set(sourceParameter.evaluate())\n                }\n            }\n        }\n    }\n}\n\nclass ParameterDeclaration\n\nabstract class Parameter {\n    // shared like the event's declaration, so a channel matches the instances of one parameter\n    contains declaration: ParameterDeclaration\n\n    abstract prop evaluate(): any\n\n    abstract tran set(value: any)\n\n    abstract tran reset()\n\n    abstract tran havoc()\n}\n\nclass IntegerParameter : Parameter {\n    var value: int := 0\n\n    redefine prop evaluate(): int {\n        return value\n    }\n\n    redefine tran set(value: int) {\n        self.value := value\n    }\n\n    redefine tran reset() {\n        value := 0\n    }\n\n    redefine tran havoc() {\n        havoc(value)\n    }\n}\n\nclass BooleanParameter : Parameter {\n    var value: bool := false\n\n    redefine prop evaluate(): bool {\n        return value\n    }\n\n    redefine tran set(value: bool) {\n        self.value := value\n    }\n\n    redefine tran reset() {\n        value := false\n    }\n\n    redefine tran havoc() {\n        havoc(value)\n    }\n}\n\nclass ParameterExpression : Expression {\n    refers parameter: Parameter\n\n    redefine prop evaluate(): any {\n        return parameter.evaluate()\n    }\n}\n\nclass Timeout {\n    refers value: int = 0\n\n    var clock: clock := 0\n    // a timeout is up until it is first set\n    var isSet: bool := false\n\n    tran set() {\n        clock := 0\n        isSet := true\n    }\n\n    prop isUp(): bool {\n        return !isSet || clock >= value\n    }\n}\n",
   "file:///workspace/Library/Expressions.semantifyr": "package semantifyr::gamma::expressions\n\nabstract class Expression {\n    abstract prop evaluate(): any\n}\n\nabstract class LiteralExpression : Expression\nclass LiteralBooleanExpression : LiteralExpression {\n    refers value: bool[1]\n    redefine prop evaluate(): bool {\n        return value\n    }\n}\n\nclass LiteralIntegerExpression : LiteralExpression {\n    refers value: int[1]\n    redefine prop evaluate(): int {\n        return value\n    }\n}\n\nabstract class BinaryOperatorExpression : Expression {\n    contains left: Expression[1]\n    contains right: Expression[1]\n}\n\nclass LessThanOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): bool {\n        return left.evaluate() < right.evaluate()\n    }\n}\n\nclass LessThanOrEqualsOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): bool {\n        return left.evaluate() <= right.evaluate()\n    }\n}\n\nclass GreaterThanOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): bool {\n        return left.evaluate() > right.evaluate()\n    }\n}\n\nclass GreaterThanOrEqualsOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): bool {\n        return left.evaluate() >= right.evaluate()\n    }\n}\n\nclass PlusOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): any {\n        return left.evaluate() + right.evaluate()\n    }\n}\n\nclass MinusOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): any {\n        return left.evaluate() - right.evaluate()\n    }\n}\n\nclass MultiplyOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): any {\n        return left.evaluate() * right.evaluate()\n    }\n}\n\nclass DivideOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): any {\n        return left.evaluate() / right.evaluate()\n    }\n}\n\nclass EqualityOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): bool {\n        return left.evaluate() == right.evaluate()\n    }\n}\n\nclass InequalityOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): bool {\n        return left.evaluate() != right.evaluate()\n    }\n}\n\nclass OrOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): bool {\n        return left.evaluate() || right.evaluate()\n    }\n}\n\nclass AndOperatorExpression : BinaryOperatorExpression {\n    redefine prop evaluate(): bool {\n        return left.evaluate() && right.evaluate()\n    }\n}\n\nabstract class UnaryOperatorExpression : Expression {\n    contains body: Expression[1]\n}\n\nclass UnaryNotExpression : UnaryOperatorExpression {\n    redefine prop evaluate(): bool {\n        return !body.evaluate()\n    }\n}\n\nclass UnaryPlusExpression : UnaryOperatorExpression {\n    redefine prop evaluate(): any {\n        return body.evaluate()\n    }\n}\n\nclass UnaryMinusExpression : UnaryOperatorExpression {\n    redefine prop evaluate(): any {\n        return -body.evaluate()\n    }\n}\n\nabstract class FieldAccessExpression : Expression {\n    contains operand: Expression[1]\n\n    abstract prop updated(original: any, value: any): any\n}\n\nclass FieldUpdateExpression : Expression {\n    contains field: FieldAccessExpression[1]\n    contains value: Expression[1]\n\n    redefine prop evaluate(): any {\n        return field.updated(field.operand.evaluate(), value.evaluate())\n    }\n}\n\nabstract class TemporalOperatorExpression : Expression {\n    contains body: Expression[1]\n}\n\nclass Eventually : TemporalOperatorExpression {\n    redefine prop evaluate(): any {\n        return EF body.evaluate()\n    }\n}\n\nclass MustAlways : TemporalOperatorExpression {\n    redefine prop evaluate(): any {\n        return AG body.evaluate()\n    }\n}\n",
@@ -3986,15 +3986,23 @@
   },
   {
    "kind": "report",
-   "message": "racing 8 backend configurations"
+   "message": "first stage: racing 7 backend configurations within 10s"
   },
   {
    "kind": "report",
-   "message": "result 1/8: NotSupported"
+   "message": "running from the first stage: racing 2 backend configurations until the case's time runs out"
   },
   {
    "kind": "report",
-   "message": "result 2/8: Failed"
+   "message": "first stage: result 1/7: NotSupported"
+  },
+  {
+   "kind": "report",
+   "message": "first stage: result 2/7: Failed"
+  },
+  {
+   "kind": "report",
+   "message": "running from the first stage: result 1/2: Failed"
   },
   {
    "kind": "end"
@@ -4013,19 +4021,23 @@
   },
   {
    "kind": "report",
-   "message": "racing 8 backend configurations"
+   "message": "first stage: racing 7 backend configurations within 10s"
   },
   {
    "kind": "report",
-   "message": "result 1/8: NotSupported"
+   "message": "running from the first stage: racing 2 backend configurations until the case's time runs out"
   },
   {
    "kind": "report",
-   "message": "result 2/8: Passed"
+   "message": "first stage: result 1/7: NotSupported"
   },
   {
    "kind": "report",
-   "message": "result 3/8: Passed"
+   "message": "first stage: result 2/7: Passed"
+  },
+  {
+   "kind": "report",
+   "message": "first stage: result 3/7: Passed"
   },
   {
    "kind": "end"
