@@ -1918,7 +1918,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (leftClock || rightClock) {
             var boundType = leftClock ? rightType : leftType;
             var boundRange = boundType.getRange();
-            if ((boundRange != null && boundRange.getUpperBound() > 1)
+            if ((boundRange != null && (boundRange.getLowerBound() != 1 || boundRange.getUpperBound() != 1))
                     || (!typeCompatibility.isInt(boundType, operator)
                             && typeCompatibility.unwrappedDomain(boundType)
                                     != builtinSymbolResolver.intDatatype(operator))) {

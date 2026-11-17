@@ -96,6 +96,22 @@ public class ClockValidationTest {
     }
 
     @Test
+    void comparisonWithAnOptionalBoundIsRejected() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Timer {
+                refers limit: int[0..1] = 5
+                var elapsed: clock := 0
+                redefine tran {
+                    assume(elapsed <= limit)
+                }
+            }
+            """, CheckMode.ALL);
+
+        assertOnlyClockError(parsedPackage, "compared with an integer, found");
+    }
+
+    @Test
     void clockReadOutsideAComparisonIsRejected() {
         assertOnlyClockError("""
                 assume(elapsed)
