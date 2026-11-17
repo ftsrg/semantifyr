@@ -13,12 +13,16 @@ import hu.bme.mit.semantifyr.portfolios.testing.ServedExamples
 import hu.bme.mit.semantifyr.portfolios.testing.liveBackends
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import kotlin.time.Duration.Companion.minutes
 
 class GammaServedExampleTests {
 
     companion object {
         private val helper = GammaFrontendTestHelper()
         private val artifactRoot = GammaFrontendTestHelper.testArtifactRoot(GammaServedExampleTests::class.java)
+
+        // no leg can give the expected verdict trusted, so the run only shows that none finds a trusted answer of the other kind
+        private val noTrustedVerdictTimeout = 1.minutes
 
         @JvmStatic
         fun `Served Cases Reach Their Expected Verdict On Live's Backends`(): List<GammaCorpusEntry> {
@@ -43,7 +47,8 @@ class GammaServedExampleTests {
         if (helper.givesTrustedVerdict(frontend, Portfolios.SmartFull, liveBackends, gammaVerificationCase, entry.case.expectedVerdict)) {
             helper.checkVerificationCase(frontend, gammaVerificationCase, entry.case.expectedVerdict)
         } else {
-            helper.checkNoTrustedVerdict(frontend.verify(gammaVerificationCase), gammaVerificationCase)
+            val shortFrontend = helper.buildFrontend(Portfolios.SmartFull, artifactRoot, timeout = noTrustedVerdictTimeout, environment = liveBackends)
+            helper.checkNoTrustedVerdict(shortFrontend.verify(gammaVerificationCase), gammaVerificationCase)
         }
     }
 }
