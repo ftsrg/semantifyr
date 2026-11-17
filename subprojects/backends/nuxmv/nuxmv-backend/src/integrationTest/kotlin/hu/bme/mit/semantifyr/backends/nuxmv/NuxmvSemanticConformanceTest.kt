@@ -6,9 +6,7 @@
 
 package hu.bme.mit.semantifyr.backends.nuxmv
 
-import hu.bme.mit.semantifyr.backends.nuxmv.transformation.NuxmvCapabilityChecker
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvBackend
-import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvBackendModule
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
@@ -45,8 +43,8 @@ class NuxmvSemanticConformanceTest {
         fun `OXSTS Semantic Test Suite Passes`(): List<Arguments> {
             return helper.collectAcceptedCasesAsArguments(
                 context,
-                NuxmvBackendModule(),
-                NuxmvCapabilityChecker::class.java,
+                NuxmvBackend(),
+                NuxmvConfig.Ic3Invar,
                 SemantifyrVerifierTestHelper.testArtifactRoot(NuxmvSemanticConformanceTest::class.java).resolve("capability-check"),
             )
         }

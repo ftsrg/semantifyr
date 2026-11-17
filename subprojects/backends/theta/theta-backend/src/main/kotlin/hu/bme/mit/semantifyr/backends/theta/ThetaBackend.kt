@@ -60,16 +60,13 @@ class ThetaBackend : VerificationBackend<ThetaConfig>() {
         val injector = parentInjector.createChildInjector(ThetaBackendModule())
         return withVerificationScope {
             val factory = injector.getInstance(ThetaVerificationContext.Factory::class.java)
-            val context = factory.create(config, executor, request, capabilityCheckerOf(injector, config))
+            val context = factory.create(config, executor, request, capabilityChecker(parentInjector, config))
             context.execute()
         }
     }
 
     override fun capabilityChecker(parentInjector: Injector, config: ThetaConfig): BackendCapabilityChecker {
-        return capabilityCheckerOf(parentInjector.createChildInjector(ThetaBackendModule()), config)
-    }
-
-    private fun capabilityCheckerOf(injector: Injector, config: ThetaConfig): ThetaCapabilityChecker {
+        val injector = parentInjector.createChildInjector(ThetaBackendModule())
         if (config.soundness == SoundnessDirection.OverApproximating) {
             return injector.getInstance(ThetaHornCapabilityChecker::class.java)
         }
@@ -90,7 +87,7 @@ class ThetaVerificationContext @AssistedInject constructor(
     @param:Assisted private val config: ThetaConfig,
     @param:Assisted override val executor: ThetaXstsExecutor,
     @Assisted request: BackendVerificationRequest,
-    @param:Assisted override val capabilityChecker: ThetaCapabilityChecker,
+    @Assisted capabilityChecker: BackendCapabilityChecker,
     private val thetaModelTransformer: ThetaModelTransformer,
     private val xstsModelCreator: XstsModelCreator,
     private val thetaLogVerdictParser: ThetaLogVerdictParser,
@@ -102,6 +99,7 @@ class ThetaVerificationContext @AssistedInject constructor(
     backendId = "theta:${config.id}",
     configuredSoundness = config.soundness,
     request = request,
+    capabilityChecker = capabilityChecker,
 ) {
 
     private val artifactManager = ThetaArtifactManager(request.artifactOutputPath)
@@ -171,7 +169,7 @@ class ThetaVerificationContext @AssistedInject constructor(
             config: ThetaConfig,
             executor: ThetaXstsExecutor,
             request: BackendVerificationRequest,
-            capabilityChecker: ThetaCapabilityChecker,
+            capabilityChecker: BackendCapabilityChecker,
         ): ThetaVerificationContext
     }
 }

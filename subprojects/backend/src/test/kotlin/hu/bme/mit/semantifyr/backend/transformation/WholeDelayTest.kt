@@ -129,7 +129,7 @@ class WholeDelayTest {
     fun `a model whose clock tests are closed keeps the configured direction`() {
         val inlinedOxsts = parse(deadline)
 
-        assertThat(wholeDelayLowering.soundness(inlinedOxsts, SoundnessDirection.Exact)).isEqualTo(SoundnessDirection.Exact)
+        assertThat(wholeDelayLowering.soundness(inlinedOxsts)).isEqualTo(SoundnessDirection.Exact)
     }
 
     @Test
@@ -155,7 +155,7 @@ class WholeDelayTest {
             """,
         )
 
-        assertThat(wholeDelayLowering.soundness(inlinedOxsts, SoundnessDirection.Exact)).isEqualTo(SoundnessDirection.UnderApproximating)
+        assertThat(wholeDelayLowering.soundness(inlinedOxsts)).isEqualTo(SoundnessDirection.UnderApproximating)
     }
 
     @Test

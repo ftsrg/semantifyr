@@ -6,9 +6,7 @@
 
 package hu.bme.mit.semantifyr.backends.uppaal
 
-import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalCapabilityChecker
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalBackend
-import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalBackendModule
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.portfolios.Portfolios
@@ -47,8 +45,8 @@ class UppaalWitnessTest {
         fun `Witnesses Re-verify Through All Backends`(): List<Arguments> {
             return helper.collectAcceptedCasesAsArguments(
                 context,
-                UppaalBackendModule(),
-                UppaalCapabilityChecker::class.java,
+                UppaalBackend(),
+                UppaalConfig.Default,
                 SemantifyrVerifierTestHelper.testArtifactRoot(UppaalWitnessTest::class.java).resolve("capability-check"),
                 CaseFilter.Matching {
                     it.qualifiedName !in uppaalUndecidedCases

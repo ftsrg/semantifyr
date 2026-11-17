@@ -57,17 +57,14 @@ class NuxmvBackend : VerificationBackend<NuxmvConfig>() {
         val injector = parentInjector.createChildInjector(NuxmvBackendModule())
         return withVerificationScope {
             val factory = injector.getInstance(NuxmvVerificationContext.Factory::class.java)
-            val context = factory.create(config, executor, request, capabilityCheckerOf(injector, config))
+            val context = factory.create(config, executor, request, capabilityChecker(parentInjector, config))
             context.execute()
         }
     }
 
-    override fun capabilityChecker(parentInjector: Injector, config: NuxmvConfig): BackendCapabilityChecker {
-        return capabilityCheckerOf(parentInjector.createChildInjector(NuxmvBackendModule()), config)
-    }
-
     // go builds the BDD FSM, go_msat the SMT encoding
-    private fun capabilityCheckerOf(injector: Injector, config: NuxmvConfig): BackendCapabilityChecker {
+    override fun capabilityChecker(parentInjector: Injector, config: NuxmvConfig): BackendCapabilityChecker {
+        val injector = parentInjector.createChildInjector(NuxmvBackendModule())
         if (config.setupCommand == "go") {
             return injector.getInstance(NuxmvBddCapabilityChecker::class.java)
         }
@@ -90,7 +87,7 @@ class NuxmvVerificationContext @AssistedInject constructor(
     @param:Assisted private val config: NuxmvConfig,
     @param:Assisted override val executor: NuxmvExecutor,
     @Assisted request: BackendVerificationRequest,
-    @param:Assisted override val capabilityChecker: BackendCapabilityChecker,
+    @Assisted capabilityChecker: BackendCapabilityChecker,
     private val nuxmvModelTransformer: NuxmvModelTransformer,
     private val nuxmvTraceParser: NuxmvTraceParser,
     private val nuxmvLogVerdictParser: NuxmvLogVerdictParser,
@@ -99,6 +96,7 @@ class NuxmvVerificationContext @AssistedInject constructor(
     backendId = "nuxmv:${config.id}",
     configuredSoundness = config.soundness,
     request = request,
+    capabilityChecker = capabilityChecker,
 ) {
 
     private val artifactManager = NuxmvArtifactManager(request.artifactOutputPath)

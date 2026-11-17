@@ -126,25 +126,31 @@ class GammaFrontendTestHelper {
         return result
     }
 
-    fun givesTrustedVerdict(
-        frontend: GammaFrontend,
+    suspend fun checkTrustedVerdictOrNone(
         portfolio: VerificationPortfolio,
         environment: ExecutionEnvironment,
+        outputDirectory: Path,
         gammaVerificationCase: GammaVerificationCase,
-        verdict: VerificationVerdict,
-    ): Boolean {
-        val verificationCase = frontend.compile(gammaVerificationCase).verificationCase
-        val outputDirectory = frontend.outputDirectory.resolve(gammaVerificationCase.qualifiedName).resolve("trust")
-        val inlinedOxsts = SemantifyrCompiler(oxstsInjector, ArtifactConfig.NONE).compile(verificationCase.classDeclaration, outputDirectory).inlinedOxsts
-        return portfolio.legs.any {
-            environment.availability(it.executorKey).isUsable && it.trusts(oxstsInjector, inlinedOxsts, verdict)
+        expectedVerdict: VerificationVerdict,
+        noTrustedVerdictTimeout: Duration,
+    ) {
+        val trustDirectory = outputDirectory.resolve("trust")
+        val compiledCase = buildFrontend(portfolio, trustDirectory.resolve("gamma"), environment = environment).compile(gammaVerificationCase)
+        val inlinedOxsts = SemantifyrCompiler(oxstsInjector, ArtifactConfig.NONE).compile(
+            compiledCase.verificationCase.classDeclaration,
+            trustDirectory.resolve("oxsts").resolve(gammaVerificationCase.qualifiedName),
+        ).inlinedOxsts
+        val givesTrustedVerdict = portfolio.legs.any {
+            it.isAvailable(environment) && it.trusts(oxstsInjector, inlinedOxsts, expectedVerdict)
         }
-    }
-
-    fun checkNoTrustedVerdict(result: GammaVerificationResult, gammaVerificationCase: GammaVerificationCase) {
-        val verificationResult = result.outcome.report.result
-        assertThat(verificationResult.verdict)
-            .describedAs("${gammaVerificationCase.qualifiedName} has no trusted verdict on these backends (${verificationResult.message ?: "no message"})")
+        if (givesTrustedVerdict) {
+            checkVerificationCase(buildFrontend(portfolio, outputDirectory, environment = environment), gammaVerificationCase, expectedVerdict)
+            return
+        }
+        val frontend = buildFrontend(portfolio, outputDirectory, timeout = noTrustedVerdictTimeout, environment = environment)
+        val result = frontend.verify(gammaVerificationCase).outcome.report.result
+        assertThat(result.verdict)
+            .describedAs("${gammaVerificationCase.qualifiedName} has no trusted verdict on these backends (${result.message ?: "no message"})")
             .isIn(VerificationVerdict.Inconclusive, VerificationVerdict.Timeout)
     }
 

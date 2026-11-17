@@ -65,7 +65,7 @@ class VerificationContextTest {
             return null
         }
 
-        override fun soundness(inlinedOxsts: InlinedOxsts, configured: SoundnessDirection): SoundnessDirection {
+        override fun soundness(inlinedOxsts: InlinedOxsts): SoundnessDirection {
             return SoundnessDirection.UnderApproximating
         }
     }
@@ -78,11 +78,12 @@ class VerificationContextTest {
         inlinedOxsts: InlinedOxsts = modelChecking(OxstsFactory.createAG()),
         transitionCallTraces: TransitionCallTraceMap = TransitionCallTraceMap(emptyMap()),
         soundness: SoundnessDirection = SoundnessDirection.Exact,
-        override val capabilityChecker: BackendCapabilityChecker = RejectingVariables(),
+        capabilityChecker: BackendCapabilityChecker = RejectingVariables(),
     ) : VerificationContext<String, String>(
         backendId = "scripted",
         configuredSoundness = soundness,
         request = BackendVerificationRequest(inlinedOxsts, Path("build"), transitionCallTraces = transitionCallTraces),
+        capabilityChecker = capabilityChecker,
     ) {
         val phases = mutableListOf<String>()
 

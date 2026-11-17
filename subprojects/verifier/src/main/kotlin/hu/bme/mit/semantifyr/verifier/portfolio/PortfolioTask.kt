@@ -6,30 +6,13 @@
 
 package hu.bme.mit.semantifyr.verifier.portfolio
 
-import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendConfig
-import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
-import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationBackend
-import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 
 class PortfolioTask<T : BackendConfig>(
-    private val backend: VerificationBackend<T>,
-    private val config: T,
+    backend: VerificationBackend<T>,
+    config: T,
     val subPath: String,
 ) {
-    val executorKey = backend.executorKey
     val leg = PortfolioLeg(backend, config)
-
-    fun isAvailable(environment: ExecutionEnvironment): Boolean {
-        return environment.availability(backend.executorKey).isUsable
-    }
-
-    suspend fun run(
-        parentInjector: Injector,
-        request: BackendVerificationRequest,
-        environment: ExecutionEnvironment,
-    ): BackendVerificationResult {
-        return backend.verify(parentInjector, config, request, environment)
-    }
 }

@@ -25,6 +25,13 @@ enum class SoundnessDirection {
             UnderApproximating -> hasTrace(verdict, property)
         }
     }
+
+    fun throughLowering(lowering: SoundnessDirection): SoundnessDirection {
+        if (lowering == Exact) {
+            return this
+        }
+        return lowering
+    }
 }
 
 fun hasTrace(verdict: VerificationVerdict, property: Expression): Boolean {

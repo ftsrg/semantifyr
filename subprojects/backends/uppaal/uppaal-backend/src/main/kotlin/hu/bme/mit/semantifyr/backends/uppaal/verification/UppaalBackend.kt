@@ -61,16 +61,13 @@ class UppaalBackend : VerificationBackend<UppaalConfig>() {
         val injector = parentInjector.createChildInjector(UppaalBackendModule())
         return withVerificationScope {
             val factory = injector.getInstance(UppaalVerificationContext.Factory::class.java)
-            val context = factory.create(config, executor, request, capabilityCheckerOf(injector, config))
+            val context = factory.create(config, executor, request, capabilityChecker(parentInjector, config))
             context.execute()
         }
     }
 
     override fun capabilityChecker(parentInjector: Injector, config: UppaalConfig): BackendCapabilityChecker {
-        return capabilityCheckerOf(parentInjector.createChildInjector(UppaalBackendModule()), config)
-    }
-
-    private fun capabilityCheckerOf(injector: Injector, config: UppaalConfig): BackendCapabilityChecker {
+        val injector = parentInjector.createChildInjector(UppaalBackendModule())
         if (config.soundness == SoundnessDirection.OverApproximating) {
             return injector.getInstance(UppaalOverApproximationCapabilityChecker::class.java)
         }
@@ -92,7 +89,7 @@ class UppaalVerificationContext @AssistedInject constructor(
     @param:Assisted private val config: UppaalConfig,
     @param:Assisted override val executor: UppaalExecutor,
     @Assisted request: BackendVerificationRequest,
-    @param:Assisted override val capabilityChecker: BackendCapabilityChecker,
+    @Assisted capabilityChecker: BackendCapabilityChecker,
     private val uppaalModelTransformer: UppaalModelTransformer,
     private val uppaalTraceParser: UppaalTraceParser,
     private val uppaalLogVerdictParser: UppaalLogVerdictParser,
@@ -102,6 +99,7 @@ class UppaalVerificationContext @AssistedInject constructor(
     backendId = "uppaal:${config.id}",
     configuredSoundness = config.soundness,
     request = request,
+    capabilityChecker = capabilityChecker,
 ) {
 
     private val artifactManager = UppaalArtifactManager(request.artifactOutputPath)

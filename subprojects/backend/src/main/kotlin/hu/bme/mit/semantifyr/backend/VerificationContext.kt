@@ -26,12 +26,11 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
     protected val backendId: String,
     private val configuredSoundness: SoundnessDirection,
     protected val request: BackendVerificationRequest,
+    private val capabilityChecker: BackendCapabilityChecker,
 ) {
     protected val logger by loggerFactory()
 
     protected abstract val executor: BackendExecutor
-
-    protected open val capabilityChecker: BackendCapabilityChecker = BackendCapabilityChecker.Unlimited
 
     suspend fun execute(): BackendVerificationResult {
         val metadata = VerificationMetadata(
@@ -129,7 +128,7 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
 
         val verdict = interpret(rawVerdict, artifacts)
         val property = request.inlinedOxsts.property.expression
-        val soundness = capabilityChecker.soundness(request.inlinedOxsts, configuredSoundness)
+        val soundness = configuredSoundness.throughLowering(capabilityChecker.soundness(request.inlinedOxsts))
         val isTrusted = soundness.trusts(verdict, property)
 
         val (witness, witnessDuration) = measureTimedValue {

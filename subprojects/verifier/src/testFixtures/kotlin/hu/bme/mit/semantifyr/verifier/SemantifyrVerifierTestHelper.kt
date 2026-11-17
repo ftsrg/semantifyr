@@ -8,9 +8,9 @@ package hu.bme.mit.semantifyr.verifier
 
 import com.google.inject.Inject
 import com.google.inject.Injector
-import com.google.inject.Module
-import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
+import hu.bme.mit.semantifyr.backend.BackendConfig
 import hu.bme.mit.semantifyr.backend.SoundnessDirection
+import hu.bme.mit.semantifyr.backend.VerificationBackend
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScopeBlocking
@@ -87,32 +87,32 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         }
     }
 
-    fun collectAcceptedCasesAsArguments(
+    fun <T : BackendConfig> collectAcceptedCasesAsArguments(
         context: SemantifyrModelContext,
-        backendModule: Module,
-        capabilityChecker: Class<out BackendCapabilityChecker>,
+        backend: VerificationBackend<T>,
+        config: T,
         outputDirectory: Path,
         filter: CaseFilter = CaseFilter.All,
     ): List<Arguments> {
-        return collectSupportedCases(context, backendModule, capabilityChecker, outputDirectory, filter).filter {
+        return collectSupportedCases(context, backend, config, outputDirectory, filter).filter {
             if (it.loweredExactly) {
                 return@filter true
             }
-            logger.info { "Leaving out ${it.case.qualifiedName}: ${capabilityChecker.simpleName} answers that its backend approximates the model" }
+            logger.info { "Leaving out ${it.case.qualifiedName}: ${backend.id} approximates the model in its lowering" }
             false
         }.map {
             Arguments.of(Named.of(it.case.qualifiedName, it.case))
         }
     }
 
-    fun collectSupportedCasesAsArguments(
+    fun <T : BackendConfig> collectSupportedCasesAsArguments(
         context: SemantifyrModelContext,
-        backendModule: Module,
-        capabilityChecker: Class<out BackendCapabilityChecker>,
+        backend: VerificationBackend<T>,
+        config: T,
         outputDirectory: Path,
         filter: CaseFilter = CaseFilter.All,
     ): List<Arguments> {
-        return collectSupportedCases(context, backendModule, capabilityChecker, outputDirectory, filter).map {
+        return collectSupportedCases(context, backend, config, outputDirectory, filter).map {
             Arguments.of(Named.of(it.case.qualifiedName, it.case))
         }
     }
@@ -122,29 +122,27 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         val loweredExactly: Boolean,
     )
 
-    private fun collectSupportedCases(
+    private fun <T : BackendConfig> collectSupportedCases(
         context: SemantifyrModelContext,
-        backendModule: Module,
-        capabilityChecker: Class<out BackendCapabilityChecker>,
+        backend: VerificationBackend<T>,
+        config: T,
         outputDirectory: Path,
         filter: CaseFilter,
     ): List<SupportedCase> {
-        val backendInjector = injector.createChildInjector(backendModule)
         val compiler = SemantifyrCompiler(injector, ArtifactConfig.NONE)
         return collectVerificationCases(context, filter).mapNotNull { case ->
             val inlinedOxsts = compiler.compile(case.classDeclaration, outputDirectory.resolve(caseDirectoryName(case))).inlinedOxsts
             withVerificationScopeBlocking {
-                val checker = backendInjector.getInstance(capabilityChecker)
+                val checker = backend.capabilityChecker(injector, config)
                 val unsupported = checker.check(inlinedOxsts)
                 if (unsupported.isEmpty()) {
-                    // an exact configuration stays exact unless the backend's own lowering approximates the model
-                    SupportedCase(case, checker.soundness(inlinedOxsts, SoundnessDirection.Exact) == SoundnessDirection.Exact)
+                    SupportedCase(case, checker.soundness(inlinedOxsts) == SoundnessDirection.Exact)
                 } else {
                     logger.info {
                         val refusals = unsupported.map {
                             it.description
                         }.distinct().joinToString()
-                        "Leaving out ${case.qualifiedName}: ${capabilityChecker.simpleName} refuses $refusals"
+                        "Leaving out ${case.qualifiedName}: ${backend.id} refuses $refusals"
                     }
                     null
                 }
