@@ -119,26 +119,50 @@ function SensorLoop({ area }: { area: Area }): React.JSX.Element {
   return <rect className={styles.sensor} x={area.x} y={area.y} width={area.width} height={area.height} rx={3} />;
 }
 
-export function Junction(): React.JSX.Element {
+export function Junction({ crosswalk = false }: { crosswalk?: boolean }): React.JSX.Element {
+  const label = crosswalk
+    ? 'A junction of a road from the north and a road from the east, each with a traffic light and a sensor in the road before the junction, and a crosswalk over the east road in front of the east light, with a pedestrian light and its button'
+    : 'A junction of a road from the north and a road from the east, each with a traffic light and a sensor in the road before the junction';
+  // the crosswalk lies between the junction and the east stop line, so the east sensor and light move out
+  const eastSensor = crosswalk ? 318 : 262;
   return (
-    <Picture width={420} height={300} label="A junction of a road from the north and a road from the east, each with a traffic light and a sensor in the road before the junction">
+    <Picture width={420} height={300} label={label}>
       <rect className={styles.road} x={170} y={0} width={80} height={300} />
       <rect className={styles.road} x={0} y={110} width={420} height={80} />
       <rect className={styles.crossing} x={170} y={110} width={80} height={80} />
       <line className={styles.lane} x1={210} y1={0} x2={210} y2={110} />
       <line className={styles.lane} x1={210} y1={190} x2={210} y2={300} />
       <line className={styles.lane} x1={0} y1={150} x2={170} y2={150} />
-      <line className={styles.lane} x1={250} y1={150} x2={420} y2={150} />
+      <line className={styles.lane} x1={crosswalk ? 310 : 250} y1={150} x2={420} y2={150} />
+      {crosswalk
+        ? [0, 1, 2, 3, 4].map((index) => {
+          return <rect key={index} className={styles.zebra} x={262} y={114 + index * 15} width={40} height={8} />;
+        })
+        : null}
       <SensorLoop area={{ x: 176, y: 62, width: 28, height: 36 }} />
-      <SensorLoop area={{ x: 262, y: 116, width: 36, height: 28 }} />
+      <SensorLoop area={{ x: eastSensor, y: 116, width: 36, height: 28 }} />
       <Line className={styles.arrow} x1={190} y1={8} x2={190} y2={54} end="arrow" />
-      <Line className={styles.arrow} x1={410} y1={130} x2={306} y2={130} end="arrow" />
+      <Line className={styles.arrow} x1={416} y1={130} x2={eastSensor + 44} y2={130} end="arrow" />
       <SignalHead x={124} y={14} lamps={['Red', 'Yellow', 'Green']} label="north" labelSide="left" />
-      <SignalHead x={290} y={204} lamps={['Red', 'Yellow', 'Green']} label="east" />
       <Line className={styles.dotted} x1={204} y1={70} x2={262} y2={36} />
       <Text x={268} y={36} anchor="start" kind="caption" size={15}>sensor</Text>
-      <Line className={styles.dotted} x1={280} y1={116} x2={280} y2={96} />
-      <Text x={280} y={86} kind="caption" size={15}>sensor</Text>
+      {crosswalk
+        ? (
+          <g>
+            <SignalHead x={360} y={204} lamps={['Red', 'Yellow', 'Green']} label="east" labelSide="left" />
+            <SignalHead x={262} y={48} lamps={['Stop', 'Walk']} label="pedestrians" />
+            <rect className={styles.housing} x={272} y={198} width={20} height={20} rx={4} />
+            <circle className={styles.start} cx={282} cy={208} r={5} />
+            <Text x={300} y={208} anchor="start" kind="caption" size={15}>button</Text>
+          </g>
+        )
+        : (
+          <g>
+            <SignalHead x={290} y={204} lamps={['Red', 'Yellow', 'Green']} label="east" />
+            <Line className={styles.dotted} x1={280} y1={116} x2={280} y2={96} />
+            <Text x={280} y={86} kind="caption" size={15}>sensor</Text>
+          </g>
+        )}
     </Picture>
   );
 }
@@ -302,27 +326,6 @@ export function LightAsData(): React.JSX.Element {
   );
 }
 
-export function Crossing(): React.JSX.Element {
-  return (
-    <Picture width={420} height={250} label="A pedestrian crossing: a road with a crosswalk, a traffic light and a sensor for the cars, and a pedestrian light that shows stop or walk, with a button for the pedestrians">
-      <rect className={styles.road} x={0} y={90} width={420} height={90} />
-      {[0, 1, 2, 3, 4, 5].map((index) => {
-        return <rect key={index} className={styles.zebra} x={186} y={96 + index * 14} width={48} height={8} />;
-      })}
-      <SensorLoop area={{ x: 112, y: 144, width: 36, height: 28 }} />
-      <Line className={styles.arrow} x1={14} y1={158} x2={104} y2={158} end="arrow" />
-      <Line className={styles.arrow} x1={210} y1={240} x2={210} y2={192} end="arrow" />
-      <SignalHead x={130} y={0} lamps={['Red', 'Yellow', 'Green']} label="light" labelSide="left" />
-      <SignalHead x={262} y={22} lamps={['Stop', 'Walk']} label="pedestrians" />
-      <rect className={styles.housing} x={268} y={196} width={20} height={20} rx={4} />
-      <circle className={styles.start} cx={278} cy={206} r={5} />
-      <Text x={296} y={206} anchor="start" kind="caption" size={15}>button</Text>
-      <Line className={styles.dotted} x1={130} y1={172} x2={130} y2={204} />
-      <Text x={130} y={216} kind="caption" size={15}>sensor</Text>
-    </Picture>
-  );
-}
-
 function RulePanel({ x, title, north, east, note, broken = false }: { x: number; title: string[]; north: Lamp; east: Lamp; note: string; broken?: boolean }): React.JSX.Element {
   const center = x + 75;
   return (
@@ -362,7 +365,7 @@ export function NestedStates(): React.JSX.Element {
   const yellow = { x: 105, y: 180, width: 110, height: 38 };
   const standby = { x: 380, y: 116, width: 120, height: 40 };
   return (
-    <Picture width={510} height={250} label="A traffic light with nested states: the colors red, green and yellow are substates of an operating state, which starts at red; beside it a standby state, entered from operating on pause and left on resume">
+    <Picture width={510} height={250} label="A traffic light with nested states: the colors red, green and yellow are substates of an operating state, which starts at red; beside it a standby state, which the light enters from operating and leaves back to operating">
       <rect className={styles.state} x={operating.x} y={operating.y} width={operating.width} height={operating.height} rx={18} />
       <Text x={operating.x + 16} y={operating.y + 22} anchor="start" kind="code">operating</Text>
       <circle className={styles.start} cx={85} cy={58} r={6} />
@@ -374,9 +377,7 @@ export function NestedStates(): React.JSX.Element {
       <StateBox area={green} name="green" lamp="Green" />
       <StateBox area={yellow} name="yellow" lamp="Yellow" />
       <Path className={styles.arrow} d="M 308 124 H 378" end="arrow" />
-      <Text x={344} y={108} kind="caption" size={15}>pause</Text>
       <Path className={styles.arrow} d="M 378 148 H 310" end="arrow" />
-      <Text x={344} y={166} kind="caption" size={15}>resume</Text>
       <StateBox area={standby} name="standby" lamp="Standby" />
     </Picture>
   );

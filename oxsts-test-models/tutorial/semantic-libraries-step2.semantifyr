@@ -1,24 +1,11 @@
 /**
- * A small statechart library, the junction of two traffic lights and a pedestrian crossing written as data on it.
- * The pedestrian light walks whenever its button is pressed.
+ * A small statechart library of states and transitions, a traffic light and a pedestrian light written as data on it.
  */
 
-abstract class Condition {
-    abstract prop isActive(): bool
-}
-
-class Sensor : Condition {
-    var detects: bool := false
-
-    redefine prop isActive(): bool {
-        return detects
-    }
-}
-
-class State : Condition {
+class State {
     container parent: Statechart opposite states
 
-    redefine prop isActive(): bool {
+    prop isActive(): bool {
         return parent.activeState == self
     }
 
@@ -30,14 +17,10 @@ class State : Condition {
 class Transition {
     refers from: State
     refers to: State
-    refers guards: Condition[0..*]
 
     @Trace
     redefine tran {
         assume(from.isActive())
-        inline for (guard in guards) {
-            assume(guard.isActive())
-        }
         inline to.activate()
     }
 }
@@ -64,9 +47,6 @@ class Statechart {
 }
 
 class TrafficLight : Statechart {
-    refers sensor: Sensor
-    refers crossingStopped: State
-
     contains red: State subsets states
     contains yellow: State subsets states
     contains green: State subsets states
@@ -76,8 +56,6 @@ class TrafficLight : Statechart {
     contains redToGreen: Transition subsets transitions {
         redefine refers from: State = red
         redefine refers to: State = green
-        refers carWaiting: Condition subsets guards = sensor
-        refers crossingClear: Condition subsets guards = crossingStopped
     }
     contains greenToYellow: Transition subsets transitions {
         redefine refers from: State = green
@@ -90,8 +68,6 @@ class TrafficLight : Statechart {
 }
 
 class PedestrianLight : Statechart {
-    refers button: Sensor
-
     contains stop: State subsets states
     contains walk: State subsets states
 
@@ -100,7 +76,6 @@ class PedestrianLight : Statechart {
     contains stopToWalk: Transition subsets transitions {
         redefine refers from: State = stop
         redefine refers to: State = walk
-        refers pressed: Condition subsets guards = button
     }
     contains walkToStop: Transition subsets transitions {
         redefine refers from: State = walk
@@ -108,87 +83,16 @@ class PedestrianLight : Statechart {
     }
 }
 
-class Junction {
-    contains northSensor: Sensor
-    contains eastSensor: Sensor
-
-    contains north: TrafficLight {
-        redefine refers sensor: Sensor = northSensor
-        redefine refers crossingStopped: State = east.red
-    }
-    contains east: TrafficLight {
-        redefine refers sensor: Sensor = eastSensor
-        redefine refers crossingStopped: State = north.red
-    }
-
-    redefine init {
-        inline north.init()
-        inline east.init()
-    }
-
-    redefine tran {
-        havoc(northSensor.detects)
-        havoc(eastSensor.detects)
-        choice {
-            inline north.main()
-        } or {
-            inline east.main()
-        }
-    }
-}
-
-class Crossing {
-    contains carSensor: Sensor
-    contains pushButton: Sensor
-
-    contains light: TrafficLight {
-        redefine refers sensor: Sensor = carSensor
-        redefine refers crossingStopped: State = pedestrians.stop
-    }
-    contains pedestrians: PedestrianLight {
-        redefine refers button: Sensor = pushButton
-    }
-
-    redefine init {
-        inline light.init()
-        inline pedestrians.init()
-    }
-
-    redefine tran {
-        havoc(carSensor.detects)
-        havoc(pushButton.detects)
-        choice {
-            inline light.main()
-        } or {
-            inline pedestrians.main()
-        }
+@VerificationCase
+class LightCanTurnGreen : TrafficLight {
+    prop {
+        return EF green.isActive()
     }
 }
 
 @VerificationCase
-class NorthCanTurnGreen : Junction {
+class PedestriansCanWalk : PedestrianLight {
     prop {
-        return EF north.green.isActive()
-    }
-}
-
-@VerificationCase
-class NeverBothGreen : Junction {
-    prop {
-        return AG !(north.green.isActive() && east.green.isActive())
-    }
-}
-
-@VerificationCase
-class NorthGreenOnlyWhileEastRed : Junction {
-    prop {
-        return AG (!north.green.isActive() || east.red.isActive())
-    }
-}
-
-@VerificationCase
-class PedestriansCanWalk : Crossing {
-    prop {
-        return EF pedestrians.walk.isActive()
+        return EF walk.isActive()
     }
 }

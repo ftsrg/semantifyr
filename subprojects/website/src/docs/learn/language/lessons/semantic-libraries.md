@@ -1,16 +1,17 @@
 ---
 title: 'Semantic Libraries'
 sidebar_position: 2
-description: The second lesson of the Semantifyr Language. Read a small statechart library that says once how a statechart runs, write the traffic lights and a pedestrian light on it as data, and check a pedestrian crossing.
+description: The second lesson of the Semantifyr Language. Write the traffic lights and a pedestrian light as data on a small statechart library that says once how a statechart runs, add a crosswalk to the junction, and find what the obvious guard leaves open.
 ---
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
 import LiveLink from '@site/src/components/LiveLink';
 import CaseVerdict from '@site/src/components/CaseVerdict';
-import { Crossing, LibraryClasses, LightAsData, TraceTimeline } from '@site/src/components/LessonFigures';
+import { Junction, LibraryClasses, LightAsData, TraceTimeline } from '@site/src/components/LessonFigures';
 import step1 from '@served-examples/oxsts/semantic-libraries-step1';
 import step2 from '@served-examples/oxsts/semantic-libraries-step2';
 import step3 from '@served-examples/oxsts/semantic-libraries-step3';
+import step4 from '@served-examples/oxsts/semantic-libraries-step4';
 import final from '@served-examples/oxsts/semantic-libraries';
 
 # Semantic Libraries
@@ -21,83 +22,88 @@ The goal of this lesson is to write models on a library of classes that says onc
 
 In [Modeling and Verification](modeling-and-verification.md) the light was drawn as a state diagram, but the model said something else: a choice of assumptions over a color, written out once more for each light of the junction.
 
-Why would we want to use a library? For reusability. What a state machine does when it runs, that one of its transitions fires while its source state is active and its guards hold, is the same for every light. Written once, as classes, it is reused by the two lights of the junction, by a pedestrian light, and by any light that comes later, and each of them only says what it is.
+Why would we want to use a library? For reusability. What a state machine does when it runs is the same for every light: a transition fires while the state it leaves is active and its guards hold. Written once, as classes, it is reused by the two lights of the junction, by a pedestrian light, and by any light that comes later, and each of them only says what it is.
 
-This lesson adds a pedestrian crossing to the running example. A road is crossed by a crosswalk. The cars have a traffic light with the cycle and the sensor of the junction's lights, and the pedestrians have a light of their own, which shows stop or walk and turns to walk when someone presses its button.
+This lesson adds a crosswalk to the junction. It crosses the east road in front of the east light, and the pedestrians have a light of their own, which shows stop or walk, and a button they press when they want to cross.
 
-<Crossing />
+<Junction crosswalk />
 
-The crossing must meet the following requirements:
+The junction keeps the requirements of the first lesson and gets two more:
 
-- Pedestrians walk only while the traffic light is red.
+- Pedestrians walk only while the east light is red.
 - Pedestrians can walk.
 
-The junction keeps the requirements of the first lesson.
+## A statechart as objects
 
-## The library
-
-The library is a handful of classes. A state is an object, and the statechart that contains it holds the active one:
+A library is a handful of ordinary classes. In ours, a state is an object, and a statechart is an object that contains its states and holds the active one:
 
 <LiveEmbed example={step1} show={['State', 'Statechart']} />
 
-A class describes objects, its instances. `Statechart` [contains](../specification/classes-and-behaviour/features.md#contains) its states, any number of them, `[0..*]`, and each `State` knows the statechart that contains it through a [`container`](../specification/classes-and-behaviour/features.md#container) feature; [`opposite`](../specification/classes-and-behaviour/features.md#opposite) ties the two directions together. `activeState` is a [feature-typed variable](../specification/classes-and-behaviour/variables.md#feature-typed-variables): its values are the states of this statechart, or `nothing`. A statechart starts in its initial state, which its `init` transition activates once, before the first step. In every step it fires one of its transitions, whichever can fire, by [`inline for choice`](../specification/classes-and-behaviour/inline-operations.md#inline-for-choice), or it stays as it is, as the light of the first lesson could.
+A `Statechart` [contains](../specification/classes-and-behaviour/features.md#contains) any number of states, `[0..*]`, and each `State` knows the statechart that contains it through its [`container`](../specification/classes-and-behaviour/features.md#container) feature; [`opposite`](../specification/classes-and-behaviour/features.md#opposite) ties the two directions together. The type of `activeState` is a feature, `states`, so the variable holds one of this statechart's states, or `nothing` ([feature-typed variables](../specification/classes-and-behaviour/variables.md#feature-typed-variables)). A state compares itself with it to say whether it is active, and activating a state assigns it. The statechart's `init` activates its initial state once, before the first step, and in every step [`inline for choice`](../specification/classes-and-behaviour/inline-operations.md#inline-for-choice) fires one of its transitions, whichever can fire, unless the statechart stays as it is.
 
 A transition is an object too:
 
 <LiveEmbed example={step1} show={['Transition']} />
 
-A transition [refers](../specification/classes-and-behaviour/features.md#refers) to the state it leaves and the state it enters, without owning them, and to its guards, the conditions under which it may fire. Its main transition fires it: it can be taken only while its source is active and, by [`inline for`](../specification/classes-and-behaviour/inline-operations.md#inline-for-sequence), while each of its guards holds, and then it activates its target. `@Trace` makes the trace's *Calls* view list each transition that fires.
+It [refers](../specification/classes-and-behaviour/features.md#refers) to the state it leaves and the state it enters, without owning them. Its main transition can be taken only while its source is active, and then activates its target; `inline` puts the body of the called transition in its place. `@Trace` makes the *Calls* view of a trace list each transition that fires.
 
-A guard is a condition, and the library knows two kinds of them:
+With these three classes, a traffic light is data:
 
-<LiveEmbed example={step1} show={['Condition', 'Sensor']} />
+<LiveEmbed example={step1} show={['TrafficLight', 'LightCanTurnGreen']} />
 
-`Condition` is an [abstract class](../specification/classes-and-behaviour/classes.md#abstract-classes): it says that a condition can be active, and leaves how to its subclasses. A state is a condition, active while its statechart holds it, and so is a sensor, active while it detects something. A sensor is set by the environment, as the car sensor of the first lesson was.
+The light [extends](../specification/classes-and-behaviour/classes.md#inheritance) `Statechart`. Its three states [subset](../specification/classes-and-behaviour/features.md#subsets) the inherited `states`, so they are states of the light, and its three transitions subset `transitions`. The nested block of a transition [redefines](../specification/classes-and-behaviour/features.md#redefine-and-redefines) the references it inherits: `redefine refers from: State = red` [binds](../specification/classes-and-behaviour/features.md#feature-binding) the source of this transition to the light's red state when the model is compiled. The light has no sensor yet, so it turns green whenever it likes.
+
+Press **Open** on the block and verify all: `LightCanTurnGreen` passes, <CaseVerdict example={step1} name="LightCanTurnGreen" />, and the *Calls* view of its trace shows `redToGreen` firing.
+
+The pedestrian light is the first light to reuse the library.
+
+- Write a class `PedestrianLight` on the library. It shows stop or walk, starts at stop, and can switch between the two.
+- Add the case `PedestriansCanWalk`, which asks whether it can show walk.
+
+The case passes, <CaseVerdict example={step2} name="PedestriansCanWalk" />, and your pedestrian light says nothing about how it runs. Compare it with <LiveLink example={step2}>one solution</LiveLink>.
+
+## Guards
+
+A traffic light of the running example turns green only for a waiting car, and only while the crossing traffic is stopped. Such conditions are the guards of a transition. A guard is either a sensor, set by the environment as the car sensor of the first lesson was, or a state of another statechart, which holds while that state is active:
+
+<LiveEmbed example={step3} show={['Condition', 'Sensor', 'State']} />
+
+`Condition` is an [abstract class](../specification/classes-and-behaviour/classes.md#abstract-classes): it says that a condition can be active and leaves how to its subclasses. A transition refers to any number of guards, and [`inline for`](../specification/classes-and-behaviour/inline-operations.md#inline-for-sequence) assumes each of them before the transition fires:
+
+<LiveEmbed example={step3} show={['Transition']} />
 
 <LibraryClasses />
 
-## A light as data
+The traffic light refers to its sensor and to the state in which the crossing traffic is stopped, and its transition to green declares both as guards. Which sensor and which state those are, the light leaves open:
 
-The traffic light [extends](../specification/classes-and-behaviour/classes.md#inheritance) `Statechart`:
-
-<LiveEmbed example={step1} show={['TrafficLight']} />
-
-Its three states [subset](../specification/classes-and-behaviour/features.md#subsets) the inherited `states`, so they are states of the light, and its three transitions subset `transitions`. The nested block of each transition [redefines](../specification/classes-and-behaviour/features.md#redefine-and-redefines) the references it inherits for this light: `redefine refers from: State = red` [binds](../specification/classes-and-behaviour/features.md#feature-binding) the reference to the light's red state when the model is compiled. The transition to green declares two guards in its block, the light's sensor and the state in which the crossing traffic is stopped, and which sensor and which state those are, the light leaves open. Together this is the cycle of the running example as data:
+<LiveEmbed example={step3} show={['TrafficLight']} />
 
 <LightAsData />
 
-No line of the light says how it runs.
+The junction holds two traffic lights and their sensors, and fills in what each light left open, the north light waiting for the east light's red state and the east light for the north light's:
 
-## The junction
+<LiveEmbed example={step3} show={['Junction']} />
 
-A class can have as many instances as a model needs. The junction holds two traffic lights and their sensors:
+The north and the east light are two instances of `TrafficLight`, each with its own states, transitions and active state. A light contained in the junction does nothing unless the junction calls it: the junction's `init` starts both lights, and its main transition lets the environment set both sensors and then steps one of the lights.
 
-<LiveEmbed example={step1} show={['Junction']} />
+Open <LiveLink example={step3}>the junction on the library</LiveLink> and verify all. The requirements of the first lesson hold as they did on its model: <CaseVerdict example={step3} name="NorthCanTurnGreen" />, <CaseVerdict example={step3} name="NeverBothGreen" /> and <CaseVerdict example={step3} name="NorthGreenOnlyWhileEastRed" />. In the *Calls* view of `NorthCanTurnGreen`, a transition is named by its path, such as `root.north.redToGreen`, which tells the two lights apart.
 
-The north and the east light are two instances of `TrafficLight`, each with its own states, transitions and active state. The nested block of each binds what the light left open: its sensor, and the red state of the other light, which it waits for. The `init` and the main transition of a part run only where the whole calls them, so the junction's `init` starts both lights, and its main transition lets the environment set both sensors and then steps one of the lights.
+## The crosswalk
 
-Its cases are the requirements of the first lesson:
+Now let us add the crosswalk of the running example to the junction, without changing the library.
 
-<LiveEmbed example={step1} show={['NorthCanTurnGreen', 'NeverBothGreen', 'NorthGreenOnlyWhileEastRed']} />
+- The pedestrian light turns to walk only while its button is pressed and the east light is red.
+- The junction contains the pedestrian light and its button, which the environment presses or releases in every step, as it sets the sensors.
+- `PedestriansCanWalk` becomes a case of the junction, and the case `WalkOnlyWhileEastRed` requires that pedestrians walk only while the east light is red.
 
-Open <LiveLink example={step1}>this state of the lesson</LiveLink> and verify all. The three requirements hold on the library as they held on the model of the first lesson: <CaseVerdict example={step1} name="NorthCanTurnGreen" />, <CaseVerdict example={step1} name="NeverBothGreen" /> and <CaseVerdict example={step1} name="NorthGreenOnlyWhileEastRed" />. In the *Calls* view of `NorthCanTurnGreen`, a transition is named by its path, such as `root.north.redToGreen`, which tells the two lights apart, and in *Steps* the active state of each light is named the same way.
+Before you verify, decide whether `WalkOnlyWhileEastRed` holds. The pedestrians can walk, <CaseVerdict example={step4} name="PedestriansCanWalk" />, but with the crosswalk of <LiveLink example={step4}>this state of the junction</LiveLink> the requirement fails: <CaseVerdict example={step4} name="WalkOnlyWhileEastRed" />. Read its trace in Live. When do the pedestrians start to walk, and what does the east light do after that?
 
-## Reusing the library
+The problem is in the model, and the library can stay as it is. Find and fix it!
 
-Now let us build the crossing of the running example beside the junction, without changing the library.
+When it is fixed, every case of the junction passes: <CaseVerdict example={final} name="NorthCanTurnGreen" />, <CaseVerdict example={final} name="NeverBothGreen" />, <CaseVerdict example={final} name="NorthGreenOnlyWhileEastRed" />, <CaseVerdict example={final} name="PedestriansCanWalk" /> and <CaseVerdict example={final} name="WalkOnlyWhileEastRed" />. A guard is checked only when its transition fires. The pedestrians started on red, and nothing kept the east light red after that, since it waited only for the north light:
 
-- Add a class `PedestrianLight` on the library, with the states `stop` and `walk`, starting at stop. It refers to a sensor, its button, and turns to walk while the button is pressed. It turns back to stop at any time.
-- Add a class `Crossing` with a sensor for the cars, a push button, a traffic light and a pedestrian light, which steps one of its lights in each step as the junction does.
-- Add the case `PedestriansCanWalk`, which asks whether the pedestrian light can show walk.
+<TraceTimeline rows={[{ name: 'north', lamps: ['Red', 'Red', 'Red'] }, { name: 'east', lamps: ['Red', 'Red', 'Green'] }, { name: 'pedestrians', lamps: ['Stop', 'Walk', 'Walk'] }, { name: 'button', flags: [false, true, false] }, { name: 'east car', flags: [false, false, true] }]} broken="WalkOnlyWhileEastRed" />
 
-It passes: <CaseVerdict example={step2} name="PedestriansCanWalk" />. This state of the lesson can be opened in Live via <LiveLink example={step2}>this link</LiveLink>.
+The east light has two things to wait for now, and the junction says so in its data. Compare your repair with <LiveLink example={final}>the final state of this lesson</LiveLink>.
 
-Now add the case `WalkOnlyWhileRed`, which requires that pedestrians walk only while the traffic light is red, and decide its verdict before you verify. With the pedestrian light of the linked state it fails, <CaseVerdict example={step3} name="WalkOnlyWhileRed" />, and a trace of it looks like this:
-
-<TraceTimeline rows={[{ name: 'light', lamps: ['Red', 'Green', 'Green'] }, { name: 'pedestrians', lamps: ['Stop', 'Stop', 'Walk'] }, { name: 'car', flags: [false, true, true] }, { name: 'button', flags: [false, false, true] }]} broken="WalkOnlyWhileRed" />
-
-This state of the lesson can be opened in Live via <LiveLink example={step3}>this link</LiveLink>. The traffic light of the crossing needed no new line: it already waits for the crossing traffic to stop, and the crossing only told it which state that is. Give the pedestrian light the same kind of guard, so that it turns to walk only while the traffic light is red.
-
-Then both cases of the crossing pass, <CaseVerdict example={final} name="PedestriansCanWalk" /> and <CaseVerdict example={final} name="WalkOnlyWhileRed" />, and the junction's still do. Which lines of your pedestrian light say how it runs? The final state of this lesson can be opened in Live via <LiveLink example={final}>this link</LiveLink>.
-
-The models now say only what the lights are, and one rule is still written in them: how the junction and the crossing step their lights. The next lesson, [Semantic Variants](semantic-variants.md), moves that rule into the library too, and changes it.
+The lights are data now, and one rule is still written in the model: how the junction steps its lights. The next lesson, [Semantic Variants](semantic-variants.md), moves that rule into the library too, and changes it.

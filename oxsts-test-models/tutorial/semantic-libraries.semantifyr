@@ -1,6 +1,6 @@
 /**
- * A small statechart library of states, transitions and guards, and the junction of two traffic lights and a pedestrian crossing written as data on it.
- * Each light waits for the crossing traffic to stop.
+ * A small statechart library of states, transitions and guards, and the junction with a crosswalk written as data on it.
+ * A traffic light waits for any number of states, and the east light also waits for the pedestrians.
  */
 
 abstract class Condition {
@@ -65,7 +65,7 @@ class Statechart {
 
 class TrafficLight : Statechart {
     refers sensor: Sensor
-    refers crossingStopped: State
+    refers waitsFor: State[0..*]
 
     contains red: State subsets states
     contains yellow: State subsets states
@@ -77,7 +77,7 @@ class TrafficLight : Statechart {
         redefine refers from: State = red
         redefine refers to: State = green
         refers carWaiting: Condition subsets guards = sensor
-        refers crossingClear: Condition subsets guards = crossingStopped
+        refers crossingClear: Condition[0..*] subsets guards = waitsFor
     }
     contains greenToYellow: Transition subsets transitions {
         redefine refers from: State = green
@@ -113,55 +113,36 @@ class PedestrianLight : Statechart {
 class Junction {
     contains northSensor: Sensor
     contains eastSensor: Sensor
+    contains pushButton: Sensor
 
     contains north: TrafficLight {
         redefine refers sensor: Sensor = northSensor
-        redefine refers crossingStopped: State = east.red
+        refers eastStopped: State subsets waitsFor = east.red
     }
     contains east: TrafficLight {
         redefine refers sensor: Sensor = eastSensor
-        redefine refers crossingStopped: State = north.red
+        refers northStopped: State subsets waitsFor = north.red
+        refers pedestriansStopped: State subsets waitsFor = pedestrians.stop
+    }
+    contains pedestrians: PedestrianLight {
+        redefine refers button: Sensor = pushButton
+        redefine refers trafficStopped: State = east.red
     }
 
     redefine init {
         inline north.init()
         inline east.init()
+        inline pedestrians.init()
     }
 
     redefine tran {
         havoc(northSensor.detects)
         havoc(eastSensor.detects)
+        havoc(pushButton.detects)
         choice {
             inline north.main()
         } or {
             inline east.main()
-        }
-    }
-}
-
-class Crossing {
-    contains carSensor: Sensor
-    contains pushButton: Sensor
-
-    contains light: TrafficLight {
-        redefine refers sensor: Sensor = carSensor
-        redefine refers crossingStopped: State = pedestrians.stop
-    }
-    contains pedestrians: PedestrianLight {
-        redefine refers button: Sensor = pushButton
-        redefine refers trafficStopped: State = light.red
-    }
-
-    redefine init {
-        inline light.init()
-        inline pedestrians.init()
-    }
-
-    redefine tran {
-        havoc(carSensor.detects)
-        havoc(pushButton.detects)
-        choice {
-            inline light.main()
         } or {
             inline pedestrians.main()
         }
@@ -190,15 +171,15 @@ class NorthGreenOnlyWhileEastRed : Junction {
 }
 
 @VerificationCase
-class PedestriansCanWalk : Crossing {
+class PedestriansCanWalk : Junction {
     prop {
         return EF pedestrians.walk.isActive()
     }
 }
 
 @VerificationCase
-class WalkOnlyWhileRed : Crossing {
+class WalkOnlyWhileEastRed : Junction {
     prop {
-        return AG (!pedestrians.walk.isActive() || light.red.isActive())
+        return AG (!pedestrians.walk.isActive() || east.red.isActive())
     }
 }

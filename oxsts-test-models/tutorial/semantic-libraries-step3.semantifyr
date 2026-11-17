@@ -1,6 +1,6 @@
 /**
- * A small statechart library, the junction of two traffic lights and a pedestrian crossing written as data on it.
- * The pedestrian light walks whenever its button is pressed.
+ * A small statechart library of states, transitions and guards, and the junction of two traffic lights written as data on it.
+ * The pedestrian light is not part of the junction yet.
  */
 
 abstract class Condition {
@@ -90,8 +90,6 @@ class TrafficLight : Statechart {
 }
 
 class PedestrianLight : Statechart {
-    refers button: Sensor
-
     contains stop: State subsets states
     contains walk: State subsets states
 
@@ -100,7 +98,6 @@ class PedestrianLight : Statechart {
     contains stopToWalk: Transition subsets transitions {
         redefine refers from: State = stop
         redefine refers to: State = walk
-        refers pressed: Condition subsets guards = button
     }
     contains walkToStop: Transition subsets transitions {
         redefine refers from: State = walk
@@ -137,34 +134,6 @@ class Junction {
     }
 }
 
-class Crossing {
-    contains carSensor: Sensor
-    contains pushButton: Sensor
-
-    contains light: TrafficLight {
-        redefine refers sensor: Sensor = carSensor
-        redefine refers crossingStopped: State = pedestrians.stop
-    }
-    contains pedestrians: PedestrianLight {
-        redefine refers button: Sensor = pushButton
-    }
-
-    redefine init {
-        inline light.init()
-        inline pedestrians.init()
-    }
-
-    redefine tran {
-        havoc(carSensor.detects)
-        havoc(pushButton.detects)
-        choice {
-            inline light.main()
-        } or {
-            inline pedestrians.main()
-        }
-    }
-}
-
 @VerificationCase
 class NorthCanTurnGreen : Junction {
     prop {
@@ -187,15 +156,8 @@ class NorthGreenOnlyWhileEastRed : Junction {
 }
 
 @VerificationCase
-class PedestriansCanWalk : Crossing {
+class PedestriansCanWalk : PedestrianLight {
     prop {
-        return EF pedestrians.walk.isActive()
-    }
-}
-
-@VerificationCase
-class WalkOnlyWhileRed : Crossing {
-    prop {
-        return AG (!pedestrians.walk.isActive() || light.red.isActive())
+        return EF walk.isActive()
     }
 }

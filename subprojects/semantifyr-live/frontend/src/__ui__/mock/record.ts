@@ -199,7 +199,7 @@ async function record(liveUrl: string, adminUserHeader: string | undefined): Pro
       console.error('a scenario failed, the recording goes on without it', error)
     })
   }
-  await attempt(cancelRuns(context, liveUrl, '/language/hierarchy-and-events'))
+  await attempt(cancelRuns(context, liveUrl, '/language/extending-the-library-events'))
   for (const address of ['/language', '/language?library=gamma', '/language?library=sysml', '/gamma', '/sysml']) {
     await attempt(walkExamples(context, liveUrl, address))
   }
@@ -209,7 +209,7 @@ async function record(liveUrl: string, adminUserHeader: string | undefined): Pro
   const running = context.newPage().then(async (page) => {
     const embed = await context.newPage()
     await embed.goto(`${liveUrl}/gamma/level-crossing?view=embed`)
-    await page.goto(`${liveUrl}/language/hierarchy-and-events`)
+    await page.goto(`${liveUrl}/language/extending-the-library-events`)
     await settled(page)
     await page.locator('.results').getByRole('button', { name: 'Verify all', exact: true }).click()
     if (adminUserHeader !== undefined) {

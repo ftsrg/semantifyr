@@ -1,6 +1,6 @@
 /**
- * A statechart library with nested states: the colors of a traffic light are substates of an operating state, beside a standby state.
- * A light can leave its cycle for standby at any time.
+ * A statechart library with time and nested states: the colors of a traffic light are substates of an operating state, beside a standby state.
+ * A substate is active only while its parent is, and a light goes to standby only while the crossing traffic is stopped.
  */
 
 abstract class Condition {
@@ -53,7 +53,7 @@ class State : Statechart {
     var time: int := 0
 
     redefine prop isActive(): bool {
-        return parent.activeState == self
+        return parent.activeState == self && parent.isActive()
     }
 
     prop hasLasted(): bool {
@@ -116,7 +116,7 @@ class System {
 
 class TrafficLight : Statechart {
     refers sensor: Sensor
-    refers crossingStopped: State
+    refers waitsFor: State[0..*]
 
     contains operating: State subsets states {
         contains red: State subsets states
@@ -135,7 +135,7 @@ class TrafficLight : Statechart {
         redefine refers from: State = operating.red
         redefine refers to: State = operating.green
         refers carWaiting: Condition subsets guards = sensor
-        refers crossingClear: Condition subsets guards = crossingStopped
+        refers crossingClear: Condition[0..*] subsets guards = waitsFor
     }
     contains greenToYellow: Transition subsets transitions {
         redefine refers from: State = operating.green
@@ -148,6 +148,7 @@ class TrafficLight : Statechart {
     contains operatingToStandby: Transition subsets transitions {
         redefine refers from: State = operating
         redefine refers to: State = standby
+        refers crossingClear: Condition[0..*] subsets guards = waitsFor
     }
     contains standbyToOperating: Transition subsets transitions {
         redefine refers from: State = standby
@@ -179,28 +180,20 @@ class PedestrianLight : Statechart {
 class Junction : System {
     contains northSensor: Sensor subsets sensors
     contains eastSensor: Sensor subsets sensors
+    contains pushButton: Sensor subsets sensors
 
     contains north: TrafficLight subsets parts {
         redefine refers sensor: Sensor = northSensor
-        redefine refers crossingStopped: State = east.operating.red
+        refers eastStopped: State subsets waitsFor = east.operating.red
     }
     contains east: TrafficLight subsets parts {
         redefine refers sensor: Sensor = eastSensor
-        redefine refers crossingStopped: State = north.operating.red
-    }
-}
-
-class Crossing : System {
-    contains carSensor: Sensor subsets sensors
-    contains pushButton: Sensor subsets sensors
-
-    contains light: TrafficLight subsets parts {
-        redefine refers sensor: Sensor = carSensor
-        redefine refers crossingStopped: State = pedestrians.stop
+        refers northStopped: State subsets waitsFor = north.operating.red
+        refers pedestriansStopped: State subsets waitsFor = pedestrians.stop
     }
     contains pedestrians: PedestrianLight subsets parts {
         redefine refers button: Sensor = pushButton
-        redefine refers trafficStopped: State = light.operating.red
+        redefine refers trafficStopped: State = east.operating.red
     }
 }
 
@@ -226,16 +219,55 @@ class NorthGreenOnlyWhileEastRed : Junction {
 }
 
 @VerificationCase
-class PedestriansCanWalk : Crossing {
+class PedestriansCanWalk : Junction {
     prop {
         return EF pedestrians.walk.isActive()
     }
 }
 
 @VerificationCase
-class WalkOnlyWhileRed : Crossing {
+class WalkOnlyWhileEastRed : Junction {
     prop {
-        return AG (!pedestrians.walk.isActive() || light.operating.red.isActive())
+        return AG (!pedestrians.walk.isActive() || east.operating.red.isActive())
+    }
+}
+
+@VerificationCase
+class NorthGreenForThreeSteps {
+    contains junction: Junction
+    refers required: int = 3
+
+    var stepsGreen: int := 0
+    var leftGreenEarly: bool := false
+
+    redefine init {
+        inline junction.init()
+    }
+
+    redefine tran {
+        var wasGreen: bool := junction.north.operating.green.isActive()
+        inline junction.main()
+        if (junction.north.operating.green.isActive()) {
+            if (stepsGreen < required) {
+                stepsGreen := stepsGreen + 1
+            }
+        } else {
+            if (wasGreen && stepsGreen < required && !junction.north.standby.isActive()) {
+                leftGreenEarly := true
+            }
+            stepsGreen := 0
+        }
+    }
+
+    prop {
+        return AG !leftGreenEarly
+    }
+}
+
+@VerificationCase
+class NorthCanTurnYellow : Junction {
+    prop {
+        return EF north.operating.yellow.isActive()
     }
 }
 

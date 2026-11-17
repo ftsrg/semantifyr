@@ -32,7 +32,7 @@ class ConcurrentCompilationTest {
     @TempDir
     lateinit var temporaryDirectory: Path
 
-    private val model = Path("../../oxsts-test-models/tutorial/hierarchy-and-events.semantifyr")
+    private val model = Path("../../oxsts-test-models/tutorial/extending-the-library-events.semantifyr")
 
     private val copiesOfEachCase = 4
 

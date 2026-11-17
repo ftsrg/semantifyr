@@ -1,6 +1,6 @@
 /**
- * The junction and the pedestrian crossing on the statechart library, with a requirement on how long a light stays green.
- * The library knows nothing of time yet.
+ * A statechart library extended with time: a state counts the steps since it was entered and a transition waits for its minimum.
+ * A green light lasts at least three steps, said as data on the light.
  */
 
 abstract class Condition {
@@ -17,13 +17,27 @@ class Sensor : Condition {
 
 class State : Condition {
     container parent: Statechart opposite states
+    refers minimum: int = 0
+
+    var time: int := 0
 
     redefine prop isActive(): bool {
         return parent.activeState == self
     }
 
+    prop hasLasted(): bool {
+        return time >= minimum
+    }
+
     tran activate() {
         parent.activeState := self
+        time := 0
+    }
+
+    tran passTime() {
+        if (isActive() && time < minimum) {
+            time := time + 1
+        }
     }
 }
 
@@ -34,7 +48,7 @@ class Transition {
 
     @Trace
     redefine tran {
-        assume(from.isActive())
+        assume(from.isActive() && from.hasLasted())
         inline for (guard in guards) {
             assume(guard.isActive())
         }
@@ -51,6 +65,12 @@ class Statechart {
 
     redefine init {
         inline initial.activate()
+    }
+
+    tran passTime() {
+        inline for (state in states) {
+            inline state.passTime()
+        }
     }
 
     redefine tran {
@@ -77,6 +97,9 @@ class System {
         inline for (sensor in sensors) {
             havoc(sensor.detects)
         }
+        inline for (part in parts) {
+            inline part.passTime()
+        }
         inline for choice (part in parts) {
             inline part.main()
         }
@@ -85,11 +108,13 @@ class System {
 
 class TrafficLight : Statechart {
     refers sensor: Sensor
-    refers crossingStopped: State
+    refers waitsFor: State[0..*]
 
     contains red: State subsets states
     contains yellow: State subsets states
-    contains green: State subsets states
+    contains green: State subsets states {
+        redefine refers minimum: int = 3
+    }
 
     redefine refers initial: State = red
 
@@ -97,7 +122,7 @@ class TrafficLight : Statechart {
         redefine refers from: State = red
         redefine refers to: State = green
         refers carWaiting: Condition subsets guards = sensor
-        refers crossingClear: Condition subsets guards = crossingStopped
+        refers crossingClear: Condition[0..*] subsets guards = waitsFor
     }
     contains greenToYellow: Transition subsets transitions {
         redefine refers from: State = green
@@ -133,28 +158,20 @@ class PedestrianLight : Statechart {
 class Junction : System {
     contains northSensor: Sensor subsets sensors
     contains eastSensor: Sensor subsets sensors
+    contains pushButton: Sensor subsets sensors
 
     contains north: TrafficLight subsets parts {
         redefine refers sensor: Sensor = northSensor
-        redefine refers crossingStopped: State = east.red
+        refers eastStopped: State subsets waitsFor = east.red
     }
     contains east: TrafficLight subsets parts {
         redefine refers sensor: Sensor = eastSensor
-        redefine refers crossingStopped: State = north.red
-    }
-}
-
-class Crossing : System {
-    contains carSensor: Sensor subsets sensors
-    contains pushButton: Sensor subsets sensors
-
-    contains light: TrafficLight subsets parts {
-        redefine refers sensor: Sensor = carSensor
-        redefine refers crossingStopped: State = pedestrians.stop
+        refers northStopped: State subsets waitsFor = north.red
+        refers pedestriansStopped: State subsets waitsFor = pedestrians.stop
     }
     contains pedestrians: PedestrianLight subsets parts {
         redefine refers button: Sensor = pushButton
-        redefine refers trafficStopped: State = light.red
+        redefine refers trafficStopped: State = east.red
     }
 }
 
@@ -180,29 +197,23 @@ class NorthGreenOnlyWhileEastRed : Junction {
 }
 
 @VerificationCase
-class PedestriansCanWalk : Crossing {
+class PedestriansCanWalk : Junction {
     prop {
         return EF pedestrians.walk.isActive()
     }
 }
 
 @VerificationCase
-class WalkOnlyWhileRed : Crossing {
+class WalkOnlyWhileEastRed : Junction {
     prop {
-        return AG (!pedestrians.walk.isActive() || light.red.isActive())
-    }
-}
-
-@VerificationCase
-class NorthCanTurnYellow : Junction {
-    prop {
-        return EF north.yellow.isActive()
+        return AG (!pedestrians.walk.isActive() || east.red.isActive())
     }
 }
 
 @VerificationCase
 class NorthGreenForThreeSteps {
     contains junction: Junction
+    refers required: int = 3
 
     var stepsGreen: int := 0
     var leftGreenEarly: bool := false
@@ -215,11 +226,11 @@ class NorthGreenForThreeSteps {
         var wasGreen: bool := junction.north.green.isActive()
         inline junction.main()
         if (junction.north.green.isActive()) {
-            if (stepsGreen < 3) {
+            if (stepsGreen < required) {
                 stepsGreen := stepsGreen + 1
             }
         } else {
-            if (wasGreen && stepsGreen < 3) {
+            if (wasGreen && stepsGreen < required) {
                 leftGreenEarly := true
             }
             stepsGreen := 0
@@ -228,5 +239,12 @@ class NorthGreenForThreeSteps {
 
     prop {
         return AG !leftGreenEarly
+    }
+}
+
+@VerificationCase
+class NorthCanTurnYellow : Junction {
+    prop {
+        return EF north.yellow.isActive()
     }
 }

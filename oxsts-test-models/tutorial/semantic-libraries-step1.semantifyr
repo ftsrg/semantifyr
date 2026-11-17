@@ -1,23 +1,11 @@
 /**
- * A small statechart library of states, transitions and guards, and the junction of two traffic lights written as data on it.
+ * A small statechart library of states and transitions, and a traffic light written as data on it.
  */
 
-abstract class Condition {
-    abstract prop isActive(): bool
-}
-
-class Sensor : Condition {
-    var detects: bool := false
-
-    redefine prop isActive(): bool {
-        return detects
-    }
-}
-
-class State : Condition {
+class State {
     container parent: Statechart opposite states
 
-    redefine prop isActive(): bool {
+    prop isActive(): bool {
         return parent.activeState == self
     }
 
@@ -29,14 +17,10 @@ class State : Condition {
 class Transition {
     refers from: State
     refers to: State
-    refers guards: Condition[0..*]
 
     @Trace
     redefine tran {
         assume(from.isActive())
-        inline for (guard in guards) {
-            assume(guard.isActive())
-        }
         inline to.activate()
     }
 }
@@ -63,9 +47,6 @@ class Statechart {
 }
 
 class TrafficLight : Statechart {
-    refers sensor: Sensor
-    refers crossingStopped: State
-
     contains red: State subsets states
     contains yellow: State subsets states
     contains green: State subsets states
@@ -75,8 +56,6 @@ class TrafficLight : Statechart {
     contains redToGreen: Transition subsets transitions {
         redefine refers from: State = red
         redefine refers to: State = green
-        refers carWaiting: Condition subsets guards = sensor
-        refers crossingClear: Condition subsets guards = crossingStopped
     }
     contains greenToYellow: Transition subsets transitions {
         redefine refers from: State = green
@@ -88,52 +67,9 @@ class TrafficLight : Statechart {
     }
 }
 
-class Junction {
-    contains northSensor: Sensor
-    contains eastSensor: Sensor
-
-    contains north: TrafficLight {
-        redefine refers sensor: Sensor = northSensor
-        redefine refers crossingStopped: State = east.red
-    }
-    contains east: TrafficLight {
-        redefine refers sensor: Sensor = eastSensor
-        redefine refers crossingStopped: State = north.red
-    }
-
-    redefine init {
-        inline north.init()
-        inline east.init()
-    }
-
-    redefine tran {
-        havoc(northSensor.detects)
-        havoc(eastSensor.detects)
-        choice {
-            inline north.main()
-        } or {
-            inline east.main()
-        }
-    }
-}
-
 @VerificationCase
-class NorthCanTurnGreen : Junction {
+class LightCanTurnGreen : TrafficLight {
     prop {
-        return EF north.green.isActive()
-    }
-}
-
-@VerificationCase
-class NeverBothGreen : Junction {
-    prop {
-        return AG !(north.green.isActive() && east.green.isActive())
-    }
-}
-
-@VerificationCase
-class NorthGreenOnlyWhileEastRed : Junction {
-    prop {
-        return AG (!north.green.isActive() || east.red.isActive())
+        return EF green.isActive()
     }
 }

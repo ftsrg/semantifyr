@@ -1,6 +1,6 @@
 /**
  * A small statechart library on which every part of a system steps in every step, all at once, each reacting to the state before the step.
- * The junction and the pedestrian crossing are data on it, unchanged.
+ * The junction and its crosswalk are data on it, unchanged.
  */
 
 abstract class Condition {
@@ -119,7 +119,7 @@ class System {
 
 class TrafficLight : Statechart {
     refers sensor: Sensor
-    refers crossingStopped: State
+    refers waitsFor: State[0..*]
 
     contains red: State subsets states
     contains yellow: State subsets states
@@ -131,7 +131,7 @@ class TrafficLight : Statechart {
         redefine refers from: State = red
         redefine refers to: State = green
         refers carWaiting: Condition subsets guards = sensor
-        refers crossingClear: Condition subsets guards = crossingStopped
+        refers crossingClear: Condition[0..*] subsets guards = waitsFor
     }
     contains greenToYellow: Transition subsets transitions {
         redefine refers from: State = green
@@ -167,28 +167,20 @@ class PedestrianLight : Statechart {
 class Junction : System {
     contains northSensor: Sensor subsets sensors
     contains eastSensor: Sensor subsets sensors
+    contains pushButton: Sensor subsets sensors
 
     contains north: TrafficLight subsets parts {
         redefine refers sensor: Sensor = northSensor
-        redefine refers crossingStopped: State = east.red
+        refers eastStopped: State subsets waitsFor = east.red
     }
     contains east: TrafficLight subsets parts {
         redefine refers sensor: Sensor = eastSensor
-        redefine refers crossingStopped: State = north.red
-    }
-}
-
-class Crossing : System {
-    contains carSensor: Sensor subsets sensors
-    contains pushButton: Sensor subsets sensors
-
-    contains light: TrafficLight subsets parts {
-        redefine refers sensor: Sensor = carSensor
-        redefine refers crossingStopped: State = pedestrians.stop
+        refers northStopped: State subsets waitsFor = north.red
+        refers pedestriansStopped: State subsets waitsFor = pedestrians.stop
     }
     contains pedestrians: PedestrianLight subsets parts {
         redefine refers button: Sensor = pushButton
-        redefine refers trafficStopped: State = light.red
+        redefine refers trafficStopped: State = east.red
     }
 }
 
@@ -214,15 +206,15 @@ class NorthGreenOnlyWhileEastRed : Junction {
 }
 
 @VerificationCase
-class PedestriansCanWalk : Crossing {
+class PedestriansCanWalk : Junction {
     prop {
         return EF pedestrians.walk.isActive()
     }
 }
 
 @VerificationCase
-class WalkOnlyWhileRed : Crossing {
+class WalkOnlyWhileEastRed : Junction {
     prop {
-        return AG (!pedestrians.walk.isActive() || light.red.isActive())
+        return AG (!pedestrians.walk.isActive() || east.red.isActive())
     }
 }

@@ -120,7 +120,7 @@ describe('liveFlavors', () => {
     const ids = oxsts.examples.map((example) => example.id);
     expect(ids).toContain('modeling-and-verification');
     expect(ids).toContain('semantic-libraries');
-    expect(ids).toContain('hierarchy-and-events');
+    expect(ids).toContain('extending-the-library');
   });
 
   it('the trafficlight snapshots contain code that mentions a verification case', () => {

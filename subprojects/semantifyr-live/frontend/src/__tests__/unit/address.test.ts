@@ -94,7 +94,7 @@ describe('an address', () => {
     const model = await encodeCompressedBase64Url('package edited')
 
     expect(await resolved(`/language#model=${model}`)).toMatchObject({ flavor: { id: 'oxsts' }, text: 'package edited', shared: true, replace: true })
-    expect(await resolved(`/language/hierarchy-and-events#model=${model}`)).toMatchObject({ example: { id: 'hierarchy-and-events' }, text: 'package edited', shared: false })
+    expect(await resolved(`/language/extending-the-library#model=${model}`)).toMatchObject({ example: { id: 'extending-the-library' }, text: 'package edited', shared: false })
     expect(await resolved('/language#model=garbled')).toMatchObject({ shared: false, text: findExample(testFlavors()[0], 'level-crossing')?.code, problem: { kind: 'model' } })
   })
 
