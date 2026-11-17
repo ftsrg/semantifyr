@@ -15,6 +15,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
 class ClassWitnessVariable(
     val reference: Expression,
+    val entryReference: Expression,
     val declaredReference: Expression,
     val declaredVariable: VariableDeclaration,
     val arraySlot: ArraySlot?,

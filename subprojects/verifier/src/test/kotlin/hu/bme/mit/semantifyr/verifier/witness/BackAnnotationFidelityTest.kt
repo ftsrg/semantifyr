@@ -66,6 +66,7 @@ class BackAnnotationFidelityTest {
     private val tracingCase = "semantifyr::verification::lang::tracing::TracedChoiceBranchReach"
     private val arraysCase = "semantifyr::verification::lang::arrays::ArraySlotIndependenceReach"
     private val recordsCase = "semantifyr::verification::lang::records::ContainedRecordReach"
+    private val recordArrayCase = "semantifyr::verification::lang::records::RecordArrayRuntimeIndexReach"
     private val classTypedArraysCase = "semantifyr::verification::lang::arrays::ClassTypedArrayDispatchReach"
 
     private val kitchenOn = flattenedName("root", "kitchen", "lamp", "on")
@@ -354,6 +355,45 @@ class BackAnnotationFidelityTest {
         val annotated = backAnnotate(compilation, witness, output)
 
         assertThat(annotated.trace.variables.single().slot).isEqualTo(ObservedSlot(array = "root.store.slots", index = 1, size = 2))
+    }
+
+    @Test
+    fun `a slot of an array of records is held under the slot's key as an object of its kept fields and back-annotates field by field`(@TempDir output: Path) {
+        val case = loadCase("records.semantifyr", recordArrayCase)
+        val readings = flattenedName("root", "store", "readings") + RecordFlatteningPass.FIELD_SEPARATOR
+
+        val compilation = compile(case, output)
+        val model = compilation.inlinedOxsts
+        val witness = linearInlinedWitness(
+            model,
+            listOf(
+                model.state("${readings}value_2" to 2, "${readings}valid_2" to true),
+            ),
+        )
+        val annotated = backAnnotate(compilation, witness, output)
+
+        assertThat(annotated.trace.states.single().values).containsExactly(
+            entry(
+                "root.store.readings[2]",
+                ReportValue.Record(
+                    mapOf(
+                        "value" to ReportValue.Integer(BigInteger.TWO),
+                        "valid" to ReportValue.Bool(true),
+                    ),
+                ),
+            ),
+        )
+        assertThat(annotated.trace.variables).containsExactly(
+            ObservedVariable(
+                "root.store.readings[2]",
+                ReportType(ReportTypeKind.Record, "semantifyr::verification::lang::records::Reading"),
+                ObservedSlot(array = "root.store.readings", index = 2, size = 3),
+            ),
+        )
+        assertThat(annotated.witnessText).contains(
+            "root.store.readings[2].value == 2",
+            "root.store.readings[2].valid == true",
+        )
     }
 
     @Test

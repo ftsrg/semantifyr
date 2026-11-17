@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.verifier.witness
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.compiler.pipeline.context.ArraySlot
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.ArgumentTrace
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionCallTrace
@@ -173,13 +174,14 @@ class ReportTraceTransformer @Inject constructor(
             val variable = stateValue.variable
             val recordField = variable.recordField
             when {
-                variable.arraySlot != null -> {
-                    val key = reportValueConverter.path(variable.reference)
-                    groups[key] = EntryGroup.Single(slotEntry(key, stateValue))
-                }
                 recordField != null -> {
-                    val group = groups.getOrPut(reportValueConverter.path(variable.declaredReference)) {
-                        EntryGroup.Record(reportValueConverter.type(variable.declaredVariable.typeSpecification))
+                    val group = groups.getOrPut(reportValueConverter.path(variable.entryReference)) {
+                        EntryGroup.Record(
+                            reportValueConverter.elementType(variable.declaredVariable.typeSpecification),
+                            variable.arraySlot?.let {
+                                observedSlot(variable, it)
+                            },
+                        )
                     } as EntryGroup.Record
                     val fields = recordField.fields.dropLast(1).fold(group.fields) { fields, field ->
                         fields.nested.getOrPut(field.name) {
@@ -187,6 +189,10 @@ class ReportTraceTransformer @Inject constructor(
                         }
                     }
                     fields.values[recordField.fields.last().name] = reportValueConverter.value(stateValue.value)
+                }
+                variable.arraySlot != null -> {
+                    val key = reportValueConverter.path(variable.reference)
+                    groups[key] = EntryGroup.Single(slotEntry(key, stateValue, variable.arraySlot))
                 }
                 else -> {
                     val key = reportValueConverter.path(variable.reference)
@@ -205,23 +211,30 @@ class ReportTraceTransformer @Inject constructor(
         return groups.map { (key, group) ->
             when (group) {
                 is EntryGroup.Single -> group.entry
-                is EntryGroup.Record -> ReportEntry(key, group.type, group.fields.toValue())
+                is EntryGroup.Record -> ReportEntry(key, group.type, group.fields.toValue(), group.slot)
             }
         }
     }
 
-    private fun slotEntry(key: String, stateValue: ClassWitnessStateValue): ReportEntry {
+    private fun slotEntry(
+        key: String,
+        stateValue: ClassWitnessStateValue,
+        arraySlot: ArraySlot,
+    ): ReportEntry {
         val variable = stateValue.variable
-        val arraySlot = variable.arraySlot!!
         return ReportEntry(
             key,
             reportValueConverter.elementType(variable.declaredVariable.typeSpecification),
             reportValueConverter.value(stateValue.value),
-            ObservedSlot(
-                array = reportValueConverter.path(variable.declaredReference),
-                index = arraySlot.index,
-                size = arraySlot.size,
-            ),
+            observedSlot(variable, arraySlot),
+        )
+    }
+
+    private fun observedSlot(variable: ClassWitnessVariable, arraySlot: ArraySlot): ObservedSlot {
+        return ObservedSlot(
+            array = reportValueConverter.path(variable.declaredReference),
+            index = arraySlot.index,
+            size = arraySlot.size,
         )
     }
 
@@ -241,7 +254,7 @@ class ReportTraceTransformer @Inject constructor(
     private sealed interface EntryGroup {
         class Single(val entry: ReportEntry) : EntryGroup
 
-        class Record(val type: ReportType) : EntryGroup {
+        class Record(val type: ReportType, val slot: ObservedSlot?) : EntryGroup {
             val fields = RecordFields()
         }
     }

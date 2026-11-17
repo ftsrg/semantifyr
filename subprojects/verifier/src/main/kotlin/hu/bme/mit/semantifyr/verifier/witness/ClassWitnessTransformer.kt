@@ -121,6 +121,11 @@ class ClassWitnessTransformer @Inject constructor(
 
         return ClassWitnessVariable(
             variableReference,
+            if (recordField != null) {
+                slotReference
+            } else {
+                variableReference
+            },
             memberReference,
             originalVariable,
             arraySlot,
