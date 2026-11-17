@@ -74,7 +74,12 @@ jobs:
         run: .github/scripts/check-engines.sh spin docker
       - name: Gradle build
         shell: bash
-        run: ./gradlew build --continue -Pwebsite.apiDocs=$WEBSITE_API_DOCS
+        # the launchers' end-to-end tests stay on every platform, the start scripts being patched per platform
+        run: >-
+          ./gradlew build --continue -Pwebsite.apiDocs=$WEBSITE_API_DOCS
+          :semantifyr-cli:distZip :sysml-cli:distZip :gamma-cli:distZip
+          :semantifyr-cli:endToEndTest :sysml-cli:endToEndTest :gamma-cli:endToEndTest
+          :semantifyr-vscode:bundleExtension :website:assemble
       - name: Install the browsers for the live screen and UI tests
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: npx playwright install --with-deps chromium firefox webkit
@@ -86,7 +91,7 @@ jobs:
         run: ./gradlew :semantifyr-live-frontend:uiTest -PtestBrowser=chromium
       - name: Run the website's keyboard walk
         if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
-        run: ./gradlew :website:walkTest
+        run: ./gradlew :website:uiTest
       - name: Run the live screen tests on Firefox
         if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
         run: ./gradlew :semantifyr-live-frontend:screenTest -PtestBrowser=firefox
@@ -132,7 +137,7 @@ jobs:
           key: vscode-${{ runner.os }}-${{ steps.vscode.outputs.version }}
       - name: Run integration tests
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: ./gradlew integrationTest --continue
+        run: ./gradlew continuousIntegration --continue
       - name: Merge coverage reports
         if: ${{ matrix.os == 'ubuntu-latest' }}
         shell: bash
