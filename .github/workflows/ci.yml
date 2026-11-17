@@ -4,6 +4,8 @@
 
 name: Continuous Integration
 on:
+  push:
+    branches: [ "tiers-pipeline" ]
   pull_request:
     branches: [ "main" ]
   workflow_call:
@@ -166,7 +168,7 @@ jobs:
         shell: bash
         run: ./gradlew build --continue
       - name: Publish to SonarCloud and wait for its quality gate
-        if: ${{ runner.os == 'Linux' }}
+        if: ${{ runner.os == 'Linux' && github.ref != 'refs/heads/tiers-pipeline' }}
         shell: bash
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
