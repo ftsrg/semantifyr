@@ -17,24 +17,18 @@ class TraceValidationResultTest {
     fun `Passed maps to Valid`() {
         val mapped = WitnessValidationResult.from(fakeVerificationOutcome(verdict = VerificationVerdict.Passed))
         assertThat(mapped).isInstanceOf(WitnessValidationResult.Valid::class.java)
-        assertThat(mapped.isValid).isTrue
-        assertThat(mapped.isInvalid).isFalse
     }
 
     @Test
     fun `Failed maps to Invalid`() {
         val mapped = WitnessValidationResult.from(fakeVerificationOutcome(verdict = VerificationVerdict.Failed))
         assertThat(mapped).isInstanceOf(WitnessValidationResult.Invalid::class.java)
-        assertThat(mapped.isInvalid).isTrue
-        assertThat(mapped.isValid).isFalse
     }
 
     @Test
     fun `Inconclusive maps to Inconclusive`() {
         val mapped = WitnessValidationResult.from(fakeVerificationOutcome(verdict = VerificationVerdict.Inconclusive))
         assertThat(mapped).isInstanceOf(WitnessValidationResult.Inconclusive::class.java)
-        assertThat(mapped.isValid).isFalse
-        assertThat(mapped.isInvalid).isFalse
     }
 
     @Test
@@ -47,8 +41,6 @@ class TraceValidationResultTest {
     fun `Errored maps to Errored`() {
         val mapped = WitnessValidationResult.from(fakeVerificationOutcome(verdict = VerificationVerdict.Errored))
         assertThat(mapped).isInstanceOf(WitnessValidationResult.Errored::class.java)
-        assertThat(mapped.isValid).isFalse
-        assertThat(mapped.isInvalid).isFalse
     }
 
     @Test

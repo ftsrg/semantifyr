@@ -21,9 +21,6 @@ sealed class WitnessValidationResult {
     class Inconclusive(override val outcome: VerificationOutcome) : WitnessValidationResult()
     class Errored(override val outcome: VerificationOutcome) : WitnessValidationResult()
 
-    val isValid = this is Valid
-    val isInvalid = this is Invalid
-
     companion object {
         @JvmStatic
         fun from(outcome: VerificationOutcome): WitnessValidationResult = when (outcome.report.result.verdict) {
