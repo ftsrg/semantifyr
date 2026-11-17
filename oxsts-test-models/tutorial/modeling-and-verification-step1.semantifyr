@@ -1,8 +1,6 @@
 /**
- * One traffic light that switches between red and green.
+ * A traffic light that turns green for a waiting car, modelled directly in one class.
  */
-
-package example::trafficlight::intersection::step1
 
 enum LightColor {
     Red,
@@ -11,14 +9,17 @@ enum LightColor {
 
 class TrafficLight {
     var color: LightColor := LightColor::Red
+    var carWaiting: bool := false
 
     redefine tran {
+        havoc(carWaiting)
         choice {
-            assume(color == LightColor::Red)
+            assume(color == LightColor::Red && carWaiting)
             color := LightColor::Green
         } or {
             assume(color == LightColor::Green)
             color := LightColor::Red
+        } or {
         }
     }
 }

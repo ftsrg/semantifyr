@@ -1,8 +1,7 @@
 /**
- * Two traffic lights at an intersection, modelled in one class with a color for each.
+ * A junction of two roads, each with a traffic light and a sensor for waiting cars, modelled directly in one class.
+ * A light turns green for a waiting car, and only while the other light is red.
  */
-
-package example::trafficlight::intersection::step3
 
 enum LightColor {
     Red,
@@ -10,13 +9,17 @@ enum LightColor {
     Green,
 }
 
-class Intersection {
+class Junction {
     var north: LightColor := LightColor::Red
     var east: LightColor := LightColor::Red
+    var northCarWaiting: bool := false
+    var eastCarWaiting: bool := false
 
     redefine tran {
+        havoc(northCarWaiting)
+        havoc(eastCarWaiting)
         choice {
-            assume(north == LightColor::Red)
+            assume(north == LightColor::Red && northCarWaiting && east == LightColor::Red)
             north := LightColor::Green
         } or {
             assume(north == LightColor::Green)
@@ -25,7 +28,7 @@ class Intersection {
             assume(north == LightColor::Yellow)
             north := LightColor::Red
         } or {
-            assume(east == LightColor::Red)
+            assume(east == LightColor::Red && eastCarWaiting && north == LightColor::Red)
             east := LightColor::Green
         } or {
             assume(east == LightColor::Green)
@@ -33,20 +36,28 @@ class Intersection {
         } or {
             assume(east == LightColor::Yellow)
             east := LightColor::Red
+        } or {
         }
     }
 }
 
 @VerificationCase
-class EastCanTurnGreen : Intersection {
+class NorthCanTurnGreen : Junction {
     prop {
-        return EF (east == LightColor::Green)
+        return EF (north == LightColor::Green)
     }
 }
 
 @VerificationCase
-class NeverBothGreen : Intersection {
+class NeverBothGreen : Junction {
     prop {
         return AG !(north == LightColor::Green && east == LightColor::Green)
+    }
+}
+
+@VerificationCase
+class NorthGreenOnlyWhileEastRed : Junction {
+    prop {
+        return AG (north != LightColor::Green || east == LightColor::Red)
     }
 }

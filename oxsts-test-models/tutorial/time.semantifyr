@@ -1,0 +1,257 @@
+/**
+ * A statechart library in which a state counts the steps since it was entered and a transition waits for its minimum.
+ * A green light lasts at least three steps, said as data on the light.
+ */
+
+abstract class Condition {
+    abstract prop isActive(): bool
+}
+
+class Sensor : Condition {
+    var detects: bool := false
+
+    redefine prop isActive(): bool {
+        return detects
+    }
+}
+
+class State : Condition {
+    container parent: Statechart opposite states
+    refers minimum: int = 0
+
+    var time: int := 0
+
+    redefine prop isActive(): bool {
+        return parent.activeState == self
+    }
+
+    prop hasLasted(): bool {
+        return time >= minimum
+    }
+
+    tran activate() {
+        parent.activeState := self
+        time := 0
+    }
+
+    tran passTime() {
+        if (isActive() && time < minimum) {
+            time := time + 1
+        }
+    }
+}
+
+class Transition {
+    refers from: State
+    refers to: State
+    refers guards: Condition[0..*]
+
+    @Trace
+    redefine tran {
+        assume(from.isActive() && from.hasLasted())
+        inline for (guard in guards) {
+            assume(guard.isActive())
+        }
+        inline to.activate()
+    }
+}
+
+class Statechart {
+    contains states: State[0..*] opposite parent
+    contains transitions: Transition[0..*]
+    refers initial: State
+
+    var activeState: states[0..1] := nothing
+
+    redefine init {
+        inline initial.activate()
+    }
+
+    tran passTime() {
+        inline for (state in states) {
+            inline state.passTime()
+        }
+    }
+
+    redefine tran {
+        choice {
+            inline for choice (transition in transitions) {
+                inline transition.main()
+            }
+        } or {
+        }
+    }
+}
+
+class System {
+    contains sensors: Sensor[0..*]
+    contains parts: Statechart[0..*]
+
+    redefine init {
+        inline for (part in parts) {
+            inline part.init()
+        }
+    }
+
+    redefine tran {
+        inline for (sensor in sensors) {
+            havoc(sensor.detects)
+        }
+        inline for (part in parts) {
+            inline part.passTime()
+        }
+        inline for choice (part in parts) {
+            inline part.main()
+        }
+    }
+}
+
+class TrafficLight : Statechart {
+    refers sensor: Sensor
+    refers crossingStopped: State
+
+    contains red: State subsets states
+    contains yellow: State subsets states
+    contains green: State subsets states {
+        redefine refers minimum: int = 3
+    }
+
+    redefine refers initial: State = red
+
+    contains redToGreen: Transition subsets transitions {
+        redefine refers from: State = red
+        redefine refers to: State = green
+        refers carWaiting: Condition subsets guards = sensor
+        refers crossingClear: Condition subsets guards = crossingStopped
+    }
+    contains greenToYellow: Transition subsets transitions {
+        redefine refers from: State = green
+        redefine refers to: State = yellow
+    }
+    contains yellowToRed: Transition subsets transitions {
+        redefine refers from: State = yellow
+        redefine refers to: State = red
+    }
+}
+
+class PedestrianLight : Statechart {
+    refers button: Sensor
+    refers trafficStopped: State
+
+    contains stop: State subsets states
+    contains walk: State subsets states
+
+    redefine refers initial: State = stop
+
+    contains stopToWalk: Transition subsets transitions {
+        redefine refers from: State = stop
+        redefine refers to: State = walk
+        refers pressed: Condition subsets guards = button
+        refers trafficClear: Condition subsets guards = trafficStopped
+    }
+    contains walkToStop: Transition subsets transitions {
+        redefine refers from: State = walk
+        redefine refers to: State = stop
+    }
+}
+
+class Junction : System {
+    contains northSensor: Sensor subsets sensors
+    contains eastSensor: Sensor subsets sensors
+
+    contains north: TrafficLight subsets parts {
+        redefine refers sensor: Sensor = northSensor
+        redefine refers crossingStopped: State = east.red
+    }
+    contains east: TrafficLight subsets parts {
+        redefine refers sensor: Sensor = eastSensor
+        redefine refers crossingStopped: State = north.red
+    }
+}
+
+class Crossing : System {
+    contains carSensor: Sensor subsets sensors
+    contains pushButton: Sensor subsets sensors
+
+    contains light: TrafficLight subsets parts {
+        redefine refers sensor: Sensor = carSensor
+        redefine refers crossingStopped: State = pedestrians.stop
+    }
+    contains pedestrians: PedestrianLight subsets parts {
+        redefine refers button: Sensor = pushButton
+        redefine refers trafficStopped: State = light.red
+    }
+}
+
+@VerificationCase
+class NorthCanTurnGreen : Junction {
+    prop {
+        return EF north.green.isActive()
+    }
+}
+
+@VerificationCase
+class NeverBothGreen : Junction {
+    prop {
+        return AG !(north.green.isActive() && east.green.isActive())
+    }
+}
+
+@VerificationCase
+class NorthGreenOnlyWhileEastRed : Junction {
+    prop {
+        return AG (!north.green.isActive() || east.red.isActive())
+    }
+}
+
+@VerificationCase
+class PedestriansCanWalk : Crossing {
+    prop {
+        return EF pedestrians.walk.isActive()
+    }
+}
+
+@VerificationCase
+class WalkOnlyWhileRed : Crossing {
+    prop {
+        return AG (!pedestrians.walk.isActive() || light.red.isActive())
+    }
+}
+
+@VerificationCase
+class NorthCanTurnYellow : Junction {
+    prop {
+        return EF north.yellow.isActive()
+    }
+}
+
+@VerificationCase
+class NorthGreenForThreeSteps {
+    contains junction: Junction
+
+    var stepsGreen: int := 0
+    var leftGreenEarly: bool := false
+
+    redefine init {
+        inline junction.init()
+    }
+
+    redefine tran {
+        var wasGreen: bool := junction.north.green.isActive()
+        inline junction.main()
+        if (junction.north.green.isActive()) {
+            if (stepsGreen < 3) {
+                stepsGreen := stepsGreen + 1
+            }
+        } else {
+            if (wasGreen && stepsGreen < 3) {
+                leftGreenEarly := true
+            }
+            stepsGreen := 0
+        }
+    }
+
+    prop {
+        return AG !leftGreenEarly
+    }
+}
