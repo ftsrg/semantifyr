@@ -81,10 +81,18 @@ class Spans {
 
 class MeasuredProcesses internal constructor(
     private val runexec: Runexec,
-    private val deadline: TimeSource.Monotonic.ValueTimeMark?,
+    private val timeLimit: Duration?,
     val directory: Path,
 ) {
     internal val observations = mutableListOf<ProcessObservation>()
+
+    private var deadline: TimeSource.Monotonic.ValueTimeMark? = null
+
+    internal fun startClock() {
+        deadline = timeLimit?.let {
+            TimeSource.Monotonic.markNow() + it
+        }
+    }
 
     fun run(
         command: List<String>,

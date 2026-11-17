@@ -19,7 +19,6 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.system.exitProcess
-import kotlin.time.TimeSource
 
 private const val REPETITION_ARGUMENT = "--repetition"
 
@@ -112,7 +111,7 @@ private class BenchmarkRunner<C, R>(
         for ((index, repetition) in scheduled.withIndex()) {
             println("repetition ${index + 1} of ${scheduled.size}: round ${repetition.round + 1}, ${repetition.configuration}")
             val directory = runDirectory.resolve("round-${repetition.round + 1}").resolve(repetition.configuration).createDirectories()
-            val processes = MeasuredProcesses(runexec, deadline(), directory)
+            val processes = MeasuredProcesses(runexec, benchmark.timeLimit, directory)
             val loadBefore = LoadAverage.now()
             val report = when (benchmark) {
                 is InJvmBenchmark<C, R> -> {
@@ -135,12 +134,6 @@ private class BenchmarkRunner<C, R>(
         return file
     }
 
-    private fun deadline(): TimeSource.Monotonic.ValueTimeMark? {
-        return benchmark.timeLimit?.let {
-            TimeSource.Monotonic.markNow() + it
-        }
-    }
-
     private fun freshJvm(configuration: String, processes: MeasuredProcesses): CallsReport<R> {
         val reportFile = processes.directory.resolve("calls.json")
         val command = listOf(ProcessHandle.current().info().command().orElseThrow()) + ManagementFactory.getRuntimeMXBean().inputArguments + listOf(
@@ -153,6 +146,7 @@ private class BenchmarkRunner<C, R>(
             reportFile.toString(),
         )
         // the fresh JVM works where the benchmark task does, so a benchmark's relative paths name the same files
+        processes.startClock()
         processes.run(command, Path("").toAbsolutePath(), processes.directory.resolve("jvm.out"), processes.directory.resolve("jvm.err"))
         if (!reportFile.exists()) {
             return CallsReport(emptyList(), null)
@@ -168,6 +162,8 @@ private class BenchmarkRunner<C, R>(
         } catch (exception: Exception) {
             return CallsReport(emptyList(), Failure(Stage.Setup, exception.stackTraceToString()))
         }
+        // a process benchmark's limit is its process's, so its setup does not count against it
+        processes.startClock()
         try {
             return CallsReport(listOf(Call(false, emptyList(), instance.repetition(processes))), null)
         } catch (exception: Exception) {
