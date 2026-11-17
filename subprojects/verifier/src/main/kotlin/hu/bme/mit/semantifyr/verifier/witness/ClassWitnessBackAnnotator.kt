@@ -205,7 +205,7 @@ class ClassWitnessBackAnnotator @Inject constructor(
             return state.values.flatMap { (key, value) ->
                 val variable = paths.variables[key] ?: error("the report names the variable $key, which the verified model does not hold")
                 if (variable.recordField != null) {
-                    recordAssumptions(variable.entryReference.rooted(), variable.declaredVariable.typeSpecification.domain, value)
+                    recordAssumptions(variable.reference.rooted(), variable.declaredVariable.typeSpecification.domain, value)
                 } else if (clockTestAnalysis.isClock(variable.declaredVariable)) {
                     listOf(createAssumption(variable.reference.rooted(), scaled(clockValue(key, value))))
                 } else {
@@ -354,7 +354,7 @@ class ClassWitnessBackAnnotator @Inject constructor(
         val variables = linkedMapOf<String, ClassWitnessVariable>()
         for (variable in compilation.flatteningInfo.variableHolders.keys) {
             val located = classWitnessTransformer.locate(variable, compilation)
-            variables.putIfAbsent(reportValueConverter.path(located.entryReference), located)
+            variables.putIfAbsent(reportValueConverter.path(located.reference), located)
         }
         val instances = compilation.rootInstance.treeSequence().drop(1).associate {
             val reference = instanceReferenceProvider.getReference(it)

@@ -104,7 +104,7 @@ class ClassWitnessTransformer @Inject constructor(
             it.primary = holderReference
             it.member = originalVariable
         }
-        val slotReference = if (arraySlot != null) {
+        val reference = if (arraySlot != null) {
             OxstsFactory.createIndexingSuffixExpression().also {
                 it.primary = memberReference
                 it.index = OxstsFactory.createLiteralInteger(arraySlot.index)
@@ -112,20 +112,9 @@ class ClassWitnessTransformer @Inject constructor(
         } else {
             memberReference
         }
-        val variableReference = recordField?.fields?.fold<VariableDeclaration, Expression>(slotReference) { primary, field ->
-            OxstsFactory.createNavigationSuffixExpression().also {
-                it.primary = primary
-                it.member = field
-            }
-        } ?: slotReference
 
         return ClassWitnessVariable(
-            variableReference,
-            if (recordField != null) {
-                slotReference
-            } else {
-                variableReference
-            },
+            reference,
             memberReference,
             originalVariable,
             arraySlot,

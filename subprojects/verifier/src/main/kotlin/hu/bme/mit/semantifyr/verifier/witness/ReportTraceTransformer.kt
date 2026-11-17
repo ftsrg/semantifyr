@@ -175,7 +175,7 @@ class ReportTraceTransformer @Inject constructor(
             val recordField = variable.recordField
             when {
                 recordField != null -> {
-                    val group = groups.getOrPut(reportValueConverter.path(variable.entryReference)) {
+                    val group = groups.getOrPut(reportValueConverter.path(variable.reference)) {
                         EntryGroup.Record(
                             reportValueConverter.elementType(variable.declaredVariable.typeSpecification),
                             variable.arraySlot?.let {
@@ -192,7 +192,9 @@ class ReportTraceTransformer @Inject constructor(
                 }
                 variable.arraySlot != null -> {
                     val key = reportValueConverter.path(variable.reference)
-                    groups[key] = EntryGroup.Single(slotEntry(key, stateValue, variable.arraySlot))
+                    groups[key] = EntryGroup.Single(
+                        ReportEntry(key, reportValueConverter.elementType(variable.declaredVariable.typeSpecification), reportValueConverter.value(stateValue.value), observedSlot(variable, variable.arraySlot)),
+                    )
                 }
                 else -> {
                     val key = reportValueConverter.path(variable.reference)
@@ -214,20 +216,6 @@ class ReportTraceTransformer @Inject constructor(
                 is EntryGroup.Record -> ReportEntry(key, group.type, group.fields.toValue(), group.slot)
             }
         }
-    }
-
-    private fun slotEntry(
-        key: String,
-        stateValue: ClassWitnessStateValue,
-        arraySlot: ArraySlot,
-    ): ReportEntry {
-        val variable = stateValue.variable
-        return ReportEntry(
-            key,
-            reportValueConverter.elementType(variable.declaredVariable.typeSpecification),
-            reportValueConverter.value(stateValue.value),
-            observedSlot(variable, arraySlot),
-        )
     }
 
     private fun observedSlot(variable: ClassWitnessVariable, arraySlot: ArraySlot): ObservedSlot {
