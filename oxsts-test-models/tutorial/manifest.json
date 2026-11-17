@@ -171,6 +171,32 @@
             ]
         },
         {
+            "file": "extending-the-library-nested-states-step1.semantifyr",
+            "cases": [
+                { "name": "NorthCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Passed" },
+                { "name": "PedestriansCanWalk", "verdict": "Passed" },
+                { "name": "WalkOnlyWhileEastRed", "verdict": "Passed" },
+                { "name": "NorthGreenForThreeSteps", "verdict": "Passed" },
+                { "name": "NorthCanTurnYellow", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "extending-the-library-nested-states-step2.semantifyr",
+            "cases": [
+                { "name": "NorthCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Passed" },
+                { "name": "PedestriansCanWalk", "verdict": "Passed" },
+                { "name": "WalkOnlyWhileEastRed", "verdict": "Passed" },
+                { "name": "NorthGreenForThreeSteps", "verdict": "Failed" },
+                { "name": "NorthCanTurnYellow", "verdict": "Passed" },
+                { "name": "NorthCanStandBy", "verdict": "Passed" },
+                { "name": "NorthNeverGreenInStandby", "verdict": "Failed" }
+            ]
+        },
+        {
             "file": "extending-the-library-nested-states.semantifyr",
             "cases": [
                 { "name": "NorthCanTurnGreen", "verdict": "Passed" },

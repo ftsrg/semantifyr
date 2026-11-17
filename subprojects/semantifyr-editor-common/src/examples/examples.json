@@ -422,6 +422,44 @@
       "hidden": true
     },
     {
+      "id": "extending-the-library-nested-states-step1",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/extending-the-library-nested-states-step1.semantifyr",
+      "label": "Extending the Library, nested states, step 1",
+      "reason": "A step of the fourth lesson's optional task on nested states, run from its page.",
+      "page": "learn/language/lessons/extending-the-library",
+      "cases": [
+        "NorthCanTurnGreen",
+        "NeverBothGreen",
+        "NorthGreenOnlyWhileEastRed",
+        "PedestriansCanWalk",
+        "WalkOnlyWhileEastRed",
+        "NorthGreenForThreeSteps",
+        "NorthCanTurnYellow"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "extending-the-library-nested-states-step2",
+      "language": "oxsts",
+      "file": "oxsts-test-models/tutorial/extending-the-library-nested-states-step2.semantifyr",
+      "label": "Extending the Library, nested states, step 2",
+      "reason": "A step of the fourth lesson's optional task on nested states, run from its page.",
+      "page": "learn/language/lessons/extending-the-library",
+      "cases": [
+        "NorthCanTurnGreen",
+        "NeverBothGreen",
+        "NorthGreenOnlyWhileEastRed",
+        "PedestriansCanWalk",
+        "WalkOnlyWhileEastRed",
+        "NorthGreenForThreeSteps",
+        "NorthCanTurnYellow",
+        "NorthCanStandBy",
+        "NorthNeverGreenInStandby"
+      ],
+      "hidden": true
+    },
+    {
       "id": "extending-the-library-nested-states",
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/extending-the-library-nested-states.semantifyr",

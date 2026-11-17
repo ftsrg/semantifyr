@@ -12,6 +12,8 @@ import variants from '@served-examples/oxsts/semantic-variants-step1';
 import step1 from '@served-examples/oxsts/extending-the-library-step1';
 import step2 from '@served-examples/oxsts/extending-the-library-step2';
 import final from '@served-examples/oxsts/extending-the-library';
+import nestedStatesStep1 from '@served-examples/oxsts/extending-the-library-nested-states-step1';
+import nestedStatesStep2 from '@served-examples/oxsts/extending-the-library-nested-states-step2';
 import nestedStates from '@served-examples/oxsts/extending-the-library-nested-states';
 import events from '@served-examples/oxsts/extending-the-library-events';
 
@@ -52,15 +54,17 @@ A minimum that never ends would also meet the requirement: a light that never le
 
 The problem is in the library. Find and fix it!
 
-When it is fixed, every case passes: <CaseVerdict example={final} name="NorthCanTurnGreen" />, <CaseVerdict example={final} name="NeverBothGreen" />, <CaseVerdict example={final} name="NorthGreenOnlyWhileEastRed" />, <CaseVerdict example={final} name="PedestriansCanWalk" />, <CaseVerdict example={final} name="WalkOnlyWhileEastRed" />, <CaseVerdict example={final} name="NorthGreenForThreeSteps" /> and <CaseVerdict example={final} name="NorthCanTurnYellow" />. Before the fix, the green state kept the time it had counted. So when the light came back to green, the state had already lasted its minimum:
+When it is fixed, every case passes: <CaseVerdict example={final} name="NorthCanTurnGreen" />, <CaseVerdict example={final} name="NeverBothGreen" />, <CaseVerdict example={final} name="NorthGreenOnlyWhileEastRed" />, <CaseVerdict example={final} name="PedestriansCanWalk" />, <CaseVerdict example={final} name="WalkOnlyWhileEastRed" />, <CaseVerdict example={final} name="NorthGreenForThreeSteps" /> and <CaseVerdict example={final} name="NorthCanTurnYellow" />. One way to write the library with time is <LiveLink example={final}>the final state of this lesson</LiveLink>.
+
+A state's time belongs to one stay in the state. Before the fix, the green state kept the time it had counted. So when the light came back to green, the state had already lasted its minimum:
 
 <TraceTimeline rows={[{ name: 'north', lamps: ['Red', 'Green', 'Green', 'Green', 'Yellow', 'Red', 'Green', 'Yellow'] }, { name: 'green\'s time', numbers: [0, 0, 1, 2, 3, 3, 3, 3] }]} broken="NorthGreenForThreeSteps" />
 
-The junction did not change, and the light said its minimum in one line of data. How would the pedestrian light say that pedestrians walk for at least two steps? One way to write the library with time is <LiveLink example={final}>the final state of this lesson</LiveLink>.
+The junction did not change, and the light said its minimum in one line of data. How would the pedestrian light say that pedestrians walk for at least two steps?
 
 ## Optional tasks
 
-The statechart languages that engineers use have more than states, transitions and time. Two more extensions follow, each a task of its own with one solution to compare with. Both start from the final state of this lesson.
+The statechart languages that engineers use have more than states, transitions and time. Two more extensions follow, each a task of its own with one solution to compare with. Nested states start from the final state of this lesson, and events from the solution of nested states.
 
 ### Nested states
 
@@ -72,14 +76,16 @@ Grow the library and the light in four steps, and verify after each of them:
 
 - A state can contain states, as a statechart does, and a statechart can serve as a guard. Change only the library: every case keeps its verdict.
 - A state without substates has no initial state. When a state that has one is entered, its initial state is entered too, and time passes for substates as well: every case keeps its verdict.
-- The colors of the traffic light are substates of a state `operating`, which starts at red, and a state `standby` lies beside it; the light goes from operating to standby and back at any time. The junction, the pedestrians and the cases reach the colors inside operating.
-- The case `NorthCanStandBy` asks whether the north light can be in standby, and `NorthNeverGreenInStandby` requires that it is never in standby and green at the same time.
+- The colors of the traffic light become substates of a state `operating`, which starts at red, and the light starts in operating. Nothing new happens yet, but every path that names a color changes: the north light's red is now `north.operating.red`, in the light's own transitions, in the states the junction gives the lights to wait for, in the pedestrians' guard and in every case. Every case keeps its verdict.
+- A state `standby` lies beside operating, and the light goes from operating to standby and back at any time. The case `NorthCanStandBy` asks whether the north light can be in standby, and `NorthNeverGreenInStandby` requires that it is never in standby and green at the same time.
 
-Then make every requirement hold. Each repair uncovers the next flaw. The first is in the library and the second in the light. The third is in `NorthGreenForThreeSteps`, which counts a light that goes to standby while it is green as leaving green early: decide whether the light or the requirement is wrong. Compare with <LiveLink example={nestedStates}>one solution</LiveLink>.
+After the third step, your model can be compared with <LiveLink example={nestedStatesStep1}>this state of the lesson</LiveLink>. After the fourth, the north light can go to standby, <CaseVerdict example={nestedStatesStep2} name="NorthCanStandBy" />, but two requirements break on <LiveLink example={nestedStatesStep2}>the state with standby</LiveLink>: <CaseVerdict example={nestedStatesStep2} name="NorthNeverGreenInStandby" /> and <CaseVerdict example={nestedStatesStep2} name="NorthGreenForThreeSteps" />.
+
+Start from the state with standby, so that your library is the one this page speaks of, and make every requirement hold. There is a flaw in the library, and once it is repaired, a flaw in the light shows. `NorthGreenForThreeSteps` counts a light that goes to standby while it is green as leaving green early: decide whether the light or the requirement is wrong. Compare with <LiveLink example={nestedStates}>one solution</LiveLink>.
 
 ### Events
 
-So far a light goes to standby and back at any time. An operator should decide, with two events, pause and resume. A sensor says how things are, for as long as they stay so. The operator's pause happens at one moment, and the light should react to it once.
+So far a light goes to standby and back at any time. An operator should decide, with two events, pause and resume. A sensor says how things are, for as long as they stay so. The operator's pause happens at one moment, and the light should react to it once. This task starts from <LiveLink example={nestedStates}>the solution of nested states</LiveLink>.
 
 - An event belongs to a statechart. A statechart has at most one current event in a step, as it has one active state. An event is a condition that is active while it is the current one, so a transition takes it as a guard like any other.
 - In every step, before time passes, every part gets any one of its events, or none. [`havoc`](../specification/classes-and-behaviour/operations.md#havoc) on a variable that holds an instance chooses any instance it can hold, or nothing.
