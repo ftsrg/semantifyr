@@ -73,8 +73,11 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' }}
         # downloaded in every run, never cached or uploaded: nuXmv's licence forbids redistributing it
         run: |
-          .github/scripts/install-engines.sh --accept-nuxmv-license "$HOME/tools"
-          echo "$HOME/tools/bin" >> "$GITHUB_PATH"
+          mkdir -p "$HOME/tools"
+          curl -fsSL -o "$HOME/tools/nuXmv.tar.xz" "https://nuxmv.fbk.eu/theme/download.php?file=nuXmv-2.1.0-linux64.tar.xz"
+          echo "c7dfec43749bcb230c857efe81099b95d868b94efd9f81bccebe542a306a7c83  $HOME/tools/nuXmv.tar.xz" | sha256sum -c
+          tar -xJf "$HOME/tools/nuXmv.tar.xz" -C "$HOME/tools"
+          echo "$HOME/tools/nuXmv-2.1.0-linux64/bin" >> "$GITHUB_PATH"
       - name: Check the engines
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: .github/scripts/check-engines.sh spin nuxmv docker
