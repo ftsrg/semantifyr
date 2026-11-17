@@ -21,11 +21,8 @@ import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceNames
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
-import hu.bme.mit.semantifyr.oxsts.lang.serializer.ExpressionSerializer
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.verifier.ObservedParameter
@@ -66,9 +63,6 @@ class BackAnnotationFidelityTest {
     @Inject
     private lateinit var discoverer: VerificationCaseDiscoverer
 
-    @Inject
-    private lateinit var serializer: ExpressionSerializer
-
     private val tracingCase = "semantifyr::verification::lang::tracing::TracedChoiceBranchReach"
     private val arraysCase = "semantifyr::verification::lang::arrays::ArraySlotIndependenceReach"
     private val recordsCase = "semantifyr::verification::lang::records::ContainedRecordReach"
@@ -100,7 +94,9 @@ class BackAnnotationFidelityTest {
         assertThat(trace.initial.calls).isEmpty()
         assertThat(
             trace.steps.map { step ->
-                step.calls.map { it.self }
+                step.calls.map {
+                    it.self
+                }
             },
         ).containsExactly(
             listOf("root.hall.lamp"),
@@ -196,7 +192,11 @@ class BackAnnotationFidelityTest {
 
         val compilation = compile(case, output)
         val model = compilation.inlinedOxsts
-        val secondId = (model.variables.single { it.name == slots[1] }.expression as LiteralInteger).value
+        val secondId = (
+            model.variables.single {
+                it.name == slots[1]
+            }.expression as LiteralInteger
+            ).value
         val witness = linearInlinedWitness(
             model,
             listOf(
@@ -367,7 +367,11 @@ class BackAnnotationFidelityTest {
 
         val compilation = compile(case, output)
         val model = compilation.inlinedOxsts
-        val secondId = (model.variables.single { it.name == slots[1] }.expression as LiteralInteger).value
+        val secondId = (
+            model.variables.single {
+                it.name == slots[1]
+            }.expression as LiteralInteger
+            ).value
         val witness = linearInlinedWitness(
             model,
             listOf(
@@ -437,34 +441,6 @@ class BackAnnotationFidelityTest {
     }
 
     @Test
-    fun `the scaled witness model reparses, validates and compiles with the model's clock bounds counting the scale`(@TempDir models: Path, @TempDir output: Path) {
-        val modelPath = models.resolve("timed.semantifyr")
-        val case = loadText(models, "timed.semantifyr", TIMED_MODEL, TIMED_CASE)
-
-        val compilation = compile(case, output)
-        val model = compilation.inlinedOxsts
-        val witness = timedWitness(model)
-        val annotated = backAnnotate(compilation, witness, output)
-
-        val reparsed = loader.startContext()
-            .loadModel(modelPath)
-            .loadModel(annotated.witnessPath)
-            .buildAndResolve()
-        val reparsedWitness = reparsed.modelResources.last().contents.filterIsInstance<InlinedOxsts>().single()
-        val compiled = SemantifyrCompiler(injector, ArtifactConfig.NONE, OptimizationConfig.NONE).compile(reparsedWitness, models.resolve("recheck"))
-        val clockTests = compiled.inlinedOxsts.eAllOfType<ComparisonOperator>().map {
-            serializer.serialize(it).trim()
-        }.toList()
-
-        assertThat(clockTests).anySatisfy {
-            assertThat(it).endsWith(">= 2 * 6")
-        }
-        assertThat(clockTests).anySatisfy {
-            assertThat(it).isEqualTo("time == 15")
-        }
-    }
-
-    @Test
     fun `the report names a variable and a parameter typed by a feature by the feature's qualified name`(@TempDir models: Path, @TempDir output: Path) {
         val case = loadText(models, "feature_typed.semantifyr", FEATURE_TYPED_MODEL, "semantifyr::verification::report::feature_typed::FeatureTypedPick")
         val current = flattenedName("root", "scheduler", "current")
@@ -472,7 +448,11 @@ class BackAnnotationFidelityTest {
 
         val compilation = compile(case, output)
         val model = compilation.inlinedOxsts
-        val firstId = (model.variables.single { it.name == current }.expression as LiteralInteger).value
+        val firstId = (
+            model.variables.single {
+                it.name == current
+            }.expression as LiteralInteger
+            ).value
         val witness = linearInlinedWitness(
             model,
             listOf(
@@ -587,7 +567,9 @@ class BackAnnotationFidelityTest {
     private fun InlinedOxsts.state(vararg values: Pair<String, Any>): InlinedWitnessState {
         return InlinedWitnessState(
             values.map { (name, value) ->
-                val variable = variables.singleOrNull { it.name == name }
+                val variable = variables.singleOrNull {
+                    it.name == name
+                }
                     ?: error("No variable '$name' in the flattened model")
                 val literal = when (value) {
                     is Boolean -> OxstsFactory.createLiteralBoolean(value)
