@@ -24,7 +24,7 @@ public record WitnessValidationResult(
                 report.getResult().getMessage(),
                 portfolioId,
                 report,
-                VerificationCaseResult.uriOf(outcome.getWitnessPath()));
+                VerificationCaseResult.uriOf(outcome.getWitness()));
     }
 
     public static WitnessValidationResult errored(String message, String portfolioId) {

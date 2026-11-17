@@ -143,7 +143,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         assertVerdict(case.qualifiedName, expectedVerdict, outcome.report.result)
 
         if (expectsWitness(case, expectedVerdict)) {
-            val witness = outcome.report.result.witness
+            val witness = outcome.witness?.model
             assertThat(witness)
                 .describedAs("verdict $expectedVerdict for ${case.qualifiedName} must carry a back-annotated witness")
                 .isNotNull()
@@ -185,7 +185,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
     }
 
     private fun assertWitnessFilesPersisted(outcome: VerificationOutcome, case: VerificationCase) {
-        val witnessFile = outcome.witnessPath
+        val witnessFile = outcome.witness?.path
         val reportFile = outcome.reportPath
 
         assertThat(witnessFile)
@@ -246,11 +246,12 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         logger.info { "Checking test case $case (artifacts at $outputDirectory)" }
 
         assumePortfolioAvailable(verificationPortfolio, environment)
-        val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment).report.result
+        val outcome = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment)
+        val result = outcome.report.result
         assertVerdict(case.qualifiedName, expectedVerdict, result, backendDiagnostics(outputDirectory, case))
         logger.info { "Result: ${result.verdict}" }
 
-        val witness = result.witness ?: return
+        val witness = outcome.witness?.model ?: return
         val validation = validationPortfolio ?: return
         assertWitnessRevalidates(case, witness, validation, outputDirectory, validationTimeout, environment, expectedVerdict)
     }
@@ -269,7 +270,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         val outcome = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment)
         assertVerdict(case.qualifiedName, expectedVerdictFromTags(case), outcome.report.result)
 
-        val witnessPath = outcome.witnessPath
+        val witnessPath = outcome.witness?.path
         assertThat(witnessPath)
             .describedAs("witness.semantifyr must be written for ${case.qualifiedName}")
             .isNotNull()

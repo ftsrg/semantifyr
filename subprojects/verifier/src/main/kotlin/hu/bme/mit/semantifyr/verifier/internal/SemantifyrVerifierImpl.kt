@@ -36,6 +36,7 @@ import hu.bme.mit.semantifyr.verifier.VerificationMetrics
 import hu.bme.mit.semantifyr.verifier.VerificationOutcome
 import hu.bme.mit.semantifyr.verifier.VerificationReport
 import hu.bme.mit.semantifyr.verifier.VerificationResult
+import hu.bme.mit.semantifyr.verifier.VerificationWitness
 import hu.bme.mit.semantifyr.verifier.VerifierMetrics
 import hu.bme.mit.semantifyr.verifier.caseDirectory
 import hu.bme.mit.semantifyr.verifier.caseRecheckDirectory
@@ -54,6 +55,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withTimeout
 import org.eclipse.emf.ecore.util.EcoreUtil
+import java.io.IOException
 import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.createDirectories
@@ -262,7 +264,6 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
                     portfolioDuration = portfolioDuration,
                 ),
             ),
-            witness = backAnnotation?.witness,
             message = outcome.message,
         )
 
@@ -289,10 +290,29 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
             trace = backAnnotation?.reportTrace,
         )
         val reportPath = verificationArtifactWriter.writeReport(caseDirectory, report)
-        val witnessPath = backAnnotation?.let {
-            verificationArtifactWriter.writeWitness(it.witness, caseDirectory, case.qualifiedName)
+        return VerificationOutcome(
+            report,
+            reportPath,
+            backAnnotation?.let {
+                writeWitness(it.witness, caseDirectory, case.qualifiedName)
+            },
+        )
+    }
+
+    // a witness that cannot be written keeps its verdict
+    private fun writeWitness(
+        model: InlinedOxsts,
+        caseDirectory: Path,
+        qualifiedName: String,
+    ): VerificationWitness? {
+        try {
+            return VerificationWitness(model, verificationArtifactWriter.writeWitness(model, caseDirectory, qualifiedName))
+        } catch (exception: IOException) {
+            logger.warn(exception) { "[$qualifiedName] failed to write the witness" }
+        } catch (exception: RuntimeException) {
+            logger.warn(exception) { "[$qualifiedName] failed to serialize the witness" }
         }
-        return VerificationOutcome(report, reportPath, witnessPath)
+        return null
     }
 
     private suspend fun runBackend(

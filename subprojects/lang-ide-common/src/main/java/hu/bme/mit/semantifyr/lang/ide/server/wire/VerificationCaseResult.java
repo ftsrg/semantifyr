@@ -8,14 +8,14 @@ package hu.bme.mit.semantifyr.lang.ide.server.wire;
 
 import hu.bme.mit.semantifyr.verifier.VerificationOutcome;
 import hu.bme.mit.semantifyr.verifier.VerificationReport;
-import java.nio.file.Path;
+import hu.bme.mit.semantifyr.verifier.VerificationWitness;
 import org.eclipse.emf.common.util.URI;
 
 public record VerificationCaseResult(
         String status, String message, String portfolioId, VerificationReport report, String witnessUri) {
 
     public static VerificationCaseResult fromOutcome(VerificationOutcome outcome, String portfolioId) {
-        return fromReport(outcome.getReport(), portfolioId, uriOf(outcome.getWitnessPath()));
+        return fromReport(outcome.getReport(), portfolioId, uriOf(outcome.getWitness()));
     }
 
     public static VerificationCaseResult fromReport(VerificationReport report, String portfolioId, String witnessUri) {
@@ -24,10 +24,11 @@ public record VerificationCaseResult(
                 VerificationStatus.of(result.getVerdict()), result.getMessage(), portfolioId, report, witnessUri);
     }
 
-    static String uriOf(Path witness) {
+    static String uriOf(VerificationWitness witness) {
         return witness == null
                 ? null
-                : URI.createFileURI(witness.toAbsolutePath().toString()).toString();
+                : URI.createFileURI(witness.getPath().toAbsolutePath().toString())
+                        .toString();
     }
 
     public static VerificationCaseResult errored(String message, String portfolioId) {

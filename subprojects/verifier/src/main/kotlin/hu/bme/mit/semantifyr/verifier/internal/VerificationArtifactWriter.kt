@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.verifier.internal
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
-import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.VerificationReport
 import kotlinx.serialization.json.Json
@@ -45,23 +44,18 @@ class VerificationArtifactWriter @Inject constructor(
         witness: InlinedOxsts,
         caseDirectory: Path,
         qualifiedName: String,
-    ): Path? {
+    ): Path {
         val witnessPath = caseDirectory.resolve("witness.${fileExtensionProvider.primaryFileExtension}")
-        try {
-            witnessPath.parent?.createDirectories()
-            val resourceSet = witness.classDeclaration.eResource().resourceSet
-            val witnessUri = URI.createFileURI(witnessPath.toAbsolutePath().toString())
-            resourceSet.getResource(witnessUri, false)?.delete(emptyMap<Any, Any>())
-            resourceSet.createResource(witnessUri).contents += witness
-            witnessPath.bufferedWriter().use {
-                serializer.serialize(witness, it, SaveOptions.defaultOptions())
-            }
-            logger.info { "[$qualifiedName] wrote witness artifact to $witnessPath" }
-            return witnessPath
-        } catch (exception: Exception) {
-            logger.warn(exception) { "[$qualifiedName] failed to write witness artifact at $witnessPath" }
-            return null
+        witnessPath.parent?.createDirectories()
+        val resourceSet = witness.classDeclaration.eResource().resourceSet
+        val witnessUri = URI.createFileURI(witnessPath.toAbsolutePath().toString())
+        resourceSet.getResource(witnessUri, false)?.delete(emptyMap<Any, Any>())
+        resourceSet.createResource(witnessUri).contents += witness
+        witnessPath.bufferedWriter().use {
+            serializer.serialize(witness, it, SaveOptions.defaultOptions())
         }
+        logger.info { "[$qualifiedName] wrote witness artifact to $witnessPath" }
+        return witnessPath
     }
 
 }

@@ -158,7 +158,7 @@ class GammaFrontendTestHelper {
         val result = frontend.verify(gammaVerificationCase)
         assertVerdict(gammaVerificationCase.qualifiedName, entry.case.expectedVerdict, result.outcome.report.result)
 
-        val witnessPath = result.outcome.witnessPath
+        val witnessPath = result.outcome.witness?.path
         if (validationPortfolio != null && witnessPath != null) {
             val validation = frontend.validateWitness(gammaVerificationCase, witnessPath, validationPortfolio).outcome.report.result
             assertThat(validation.verdict)

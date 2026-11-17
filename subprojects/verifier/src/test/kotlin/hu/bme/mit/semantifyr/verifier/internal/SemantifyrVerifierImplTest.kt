@@ -241,7 +241,8 @@ class SemantifyrVerifierImplTest {
         assertThat(outcome.report.version).isEqualTo(REPORT_VERSION)
         assertThat(outcome.report.kind).isEqualTo(ReportKind.Run)
         assertThat(outcome.report.trace!!.steps).hasSize(1)
-        assertThat(outcome.witnessPath).exists()
+        assertThat(outcome.witness!!.path).exists()
+        assertThat(Json.decodeFromString<VerificationReport>(outcome.reportPath.readText())).isEqualTo(outcome.report)
     }
 
     @Test

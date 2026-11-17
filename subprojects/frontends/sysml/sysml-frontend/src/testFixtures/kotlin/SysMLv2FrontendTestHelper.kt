@@ -91,10 +91,10 @@ class SysMLv2FrontendTestHelper {
         entry: CorpusEntry,
     ): Path? {
         val case = verificationCase(frontend, entry)
-        val result = frontend.verify(case).report.result
-        assertVerdict(case.qualifiedName, entry.case.expectedVerdict, result)
+        val report = frontend.verify(case).report
+        assertVerdict(case.qualifiedName, entry.case.expectedVerdict, report.result)
         val tracePath = frontend.sysmlTracePath(case)
-        if (result.witness == null) {
+        if (report.trace == null) {
             assertThat(tracePath).describedAs("SysML trace of $entry, which has no witness").doesNotExist()
             return null
         }

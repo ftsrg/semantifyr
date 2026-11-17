@@ -6,10 +6,16 @@
 
 package hu.bme.mit.semantifyr.verifier
 
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import java.nio.file.Path
 
 class VerificationOutcome(
     val report: VerificationReport,
     val reportPath: Path,
-    val witnessPath: Path?,
+    val witness: VerificationWitness?,
+)
+
+class VerificationWitness(
+    val model: InlinedOxsts,
+    val path: Path,
 )

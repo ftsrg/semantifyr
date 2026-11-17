@@ -92,7 +92,7 @@ class SysMLv2Frontend private constructor(
         logger.info { "Verifying SysMLv2 case '${case.qualifiedName}' (variant=${variant.name})" }
         val outcome = verifier.verify(case, progress)
         logger.info { "SysMLv2 case '${case.qualifiedName}' -> ${outcome.report.result.verdict}" }
-        if (outcome.report.result.witness != null) {
+        if (outcome.report.trace != null) {
             withContext(Dispatchers.IO) {
                 writeSysMLTrace(case, outcome.reportPath)
             }
