@@ -10,6 +10,7 @@ The semantic library lives in `../models/libraries` (`default`, and the `topdown
 
 Running the tests:
 
-- `./gradlew :sysml-frontend:test` runs the smoke test.
-- `./gradlew :sysml-frontend:integrationTest` verifies the example models.
-- `./gradlew :sysml-frontend:nightlyTest` runs the long-running cases and the witness re-checks.
+- `./gradlew :sysml-frontend:test` runs the unit tests.
+- `./gradlew :sysml-frontend:semanticTest` verifies the library's semantic cases.
+- `./gradlew :sysml-frontend:integrationTest` verifies the example models; a case the manifest marks as nightly runs only with `-PheavyCases=true`.
+- `./gradlew :sysml-frontend:nightlyTest` runs the witness re-checks and the trace tests.

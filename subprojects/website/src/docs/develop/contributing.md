@@ -1,7 +1,7 @@
 ---
 title: Contributing
 sidebar_position: 1
-description: The essentials of contributing to Semantifyr - getting in touch, building it from a clone, the test levels and what to run for a change, the checks a review relies on, and making the change.
+description: The essentials of contributing to Semantifyr - getting in touch, building it from a clone, the test suites and what to run for a change, the checks a review relies on, and making the change.
 ---
 
 # Contributing
@@ -18,18 +18,20 @@ For anything beyond a small fix, open an issue or a discussion before you start:
 
 Fork the repository and clone your fork. [Install](../learn/start/install.md) says what a build needs and builds the launchers and the VS Code extension from the clone; Gradle downloads the rest, Theta and Node.js among it, and a test that needs nuXmv, Spin or Uppaal is skipped when that backend is not on `PATH`. [Architecture](index.md) says where each part of Semantifyr lives and where to start reading it.
 
-## Test Levels
+## Test Suites
 
-Every JVM module has the test suite `test`, and a module whose tests run real backends adds some of three more, each a Gradle task:
+A test lives in the suite of what it proves, each suite a Gradle task of the modules that have such tests:
 
-- `test`: unit tests, with fakes in place of the backends. `check` runs it.
-- `verificationTest`: smoke tests that run a real backend, one case per backend, each backend skipped when it is missing. `check` runs it.
-- `integrationTest`: the system end to end over the semantic test models and the frontends' corpora, on the real backends. `check` does not run it; CI does, after the build.
-- `nightlyTest`: the slow models, the witnesses checked by every backend and the timed tests. It runs nightly, on a machine with all four backends.
+- `test`: unit tests, one unit alone, with fakes in place of the backends. `build` runs it.
+- `adapterTest`: an adapter and its real backend understand each other, each backend skipped when it is missing. `build` runs it.
+- `semanticTest`: a construct of the language or a class of a semantic library means what it should, through the compiler and a backend.
+- `integrationTest`: our parts working together, the frontends' corpora and the served examples through to a verdict, and live.
+- `uiTest`: the built frontend in a browser against a mock backend, live's built application and the website's walk by keyboard; live's `screenTest` drives its screens in the same browsers.
+- `endToEndTest`: a package through its real entry point, the launchers' distributions, the VS Code extension and the server image.
 
-The TypeScript packages run their Vitest suites in their `npmCheck` task, beside the type check and the linter, which `check` runs too. Live's frontend adds `screenTest` and `uiTest`, which drive its screens and its built application in a browser, and the website `walkTest`, a walk by keyboard through the built site.
+`build` compiles, runs the static checks and the `test` and `adapterTest` suites, and packs nothing; a package has its own task, such as `installDist`. `./gradlew continuousIntegration` runs the semantic, integration and end-to-end suites, which CI runs after the build, and `./gradlew nightly` what the nightly runs on a machine with all four backends, the cases a manifest marks as nightly included. The TypeScript packages run their unit tests in their `npmCheck` task, beside the type check and the linter.
 
-Run the level that holds what you changed, as a task of the module you changed: `./gradlew :website:test` runs the website's unit tests, which validate every code example of these pages in the Semantifyr Language, and `./gradlew :website:npmCheck` its type check, linter and Vitest suites. A change of these pages also needs `./gradlew :website:assemble`, which fails on a broken link, and a change of their controls `./gradlew :website:walkTest`. CI runs `./gradlew build` on Linux, Windows and macOS, and on Linux the browser levels and `integrationTest` as well.
+Run the suite that holds what you changed, as a task of the module you changed: `./gradlew :website:test` runs the website's unit tests, which validate every code example of these pages in the Semantifyr Language, and `./gradlew :website:npmCheck` its type check, linter and Vitest suites. A change of these pages also needs `./gradlew :website:assemble`, which fails on a broken link, and a change of their controls `./gradlew :website:uiTest`. CI runs `./gradlew build` on Linux, Windows and macOS, and on Linux the browser suites and `continuousIntegration` as well.
 
 ## What a Review Checks
 
@@ -42,7 +44,7 @@ Run the level that holds what you changed, as a task of the module you changed: 
 
 1. Create a branch on your fork.
 2. Make the change, with its tests at the level that proves it, and the pages it alters.
-3. Run `./gradlew build` before you push, as the repository's [`CONTRIBUTING.md`](https://github.com/ftsrg/semantifyr/blob/main/CONTRIBUTING.md) asks; it runs the formatting check and the `test` and `verificationTest` suites with the rest of `check`.
+3. Run `./gradlew build` before you push, as the repository's [`CONTRIBUTING.md`](https://github.com/ftsrg/semantifyr/blob/main/CONTRIBUTING.md) asks; it runs the formatting check and the `test` and `adapterTest` suites with the rest of `check`.
 4. Open a pull request against `main`, saying what changed and why.
 
 By contributing you agree that your contribution is licensed under the project's [Eclipse Public License v2.0](https://github.com/ftsrg/semantifyr/blob/main/LICENSE).
