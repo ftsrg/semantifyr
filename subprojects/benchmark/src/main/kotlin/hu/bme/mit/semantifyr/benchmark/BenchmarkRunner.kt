@@ -152,7 +152,8 @@ private class BenchmarkRunner<C, R>(
             configuration,
             reportFile.toString(),
         )
-        processes.run(command, processes.directory, processes.directory.resolve("jvm.out"), processes.directory.resolve("jvm.err"))
+        // the fresh JVM works where the benchmark task does, so a benchmark's relative paths name the same files
+        processes.run(command, Path("").toAbsolutePath(), processes.directory.resolve("jvm.out"), processes.directory.resolve("jvm.err"))
         if (!reportFile.exists()) {
             return CallsReport(emptyList(), null)
         }

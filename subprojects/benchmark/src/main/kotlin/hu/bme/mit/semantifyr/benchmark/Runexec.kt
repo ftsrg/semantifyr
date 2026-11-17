@@ -57,7 +57,7 @@ class Runexec private constructor(
     val version: String,
 ) {
 
-    // runexec merges stderr into its output file behind a header of its own, so the tool writes its own files
+    // runexec merges stderr into its output file behind a header of its own, so the tool writes its own files and runexec's sit beside them
     fun run(
         command: List<String>,
         workingDirectory: Path,
@@ -75,7 +75,7 @@ class Runexec private constructor(
             executable,
             "--no-container",
             "--output",
-            workingDirectory.resolve("runexec.out").absolutePathString(),
+            outputFile.resolveSibling("${outputFile.fileName}.runexec").absolutePathString(),
         ) + limit + listOf(
             "--",
             "sh",
@@ -87,7 +87,7 @@ class Runexec private constructor(
         ) + command
         val process = ProcessBuilder(runexecCommand)
             .directory(workingDirectory.toFile())
-            .redirectError(workingDirectory.resolve("runexec.log").toFile())
+            .redirectError(outputFile.resolveSibling("${outputFile.fileName}.runexec.log").toFile())
             .start()
         val output = process.inputStream.bufferedReader().readText()
         process.waitFor()
@@ -107,7 +107,7 @@ class Runexec private constructor(
             try {
                 runexec.run(listOf("true"), directory, directory.resolve("out"), directory.resolve("err"), null)
             } catch (exception: NoSuchElementException) {
-                throw RunexecUnavailableException("runexec cannot measure on this host, see ${directory.resolve("runexec.log")}: its cgroup controllers must be delegated to this user, as the README says")
+                throw RunexecUnavailableException("runexec cannot measure on this host, see ${directory.resolve("out.runexec.log")}: its cgroup controllers must be delegated to this user, as the README says")
             }
             directory.toFile().deleteRecursively()
             return runexec

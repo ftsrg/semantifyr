@@ -46,7 +46,13 @@ fun main(arguments: Array<String>) {
         val all = byConfiguration.getValue("$model-all")
         val withoutCopyPropagation = byConfiguration.getValue("$model-without-copy-propagation")
         for (phase in phases) {
-            println("$model $phase, without copy propagation over all: ${ratioOfMeans(phaseMilliseconds(all, phase), phaseMilliseconds(withoutCopyPropagation, phase))}")
+            val baseline = phaseMilliseconds(all, phase)
+            val compared = phaseMilliseconds(withoutCopyPropagation, phase)
+            if (baseline.size < 2 || compared.size < 2) {
+                println("$model $phase: too few measured calls for a relation")
+            } else {
+                println("$model $phase, without copy propagation over all: ${ratioOfMeans(baseline, compared)}")
+            }
         }
     }
     val loads = run.repetitions.map {
