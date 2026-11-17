@@ -23,6 +23,8 @@ node {
     nodeProxySettings = ProxySettings.OFF
 }
 
+buildWithoutPackaging()
+
 val npmInstallServiceProvider = gradle.sharedServices.registerNpmInstallService()
 
 // the npm modules share one workspace root, and parallel installs into it corrupt node_modules

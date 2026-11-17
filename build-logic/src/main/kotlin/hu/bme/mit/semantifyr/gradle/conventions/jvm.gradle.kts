@@ -52,6 +52,15 @@ tasks.jar {
     }
 }
 
+// a case its manifest gives the nightly's tier runs in the nightly alone, or where a run asks for the heavy cases
+val heavyCases = providers.gradleProperty("heavyCases").orElse(
+    provider {
+        gradle.startParameter.taskNames.any {
+            it == "nightly" || it == ":nightly"
+        }.toString()
+    },
+)
+
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
     testLogging.showStandardStreams = true
@@ -60,6 +69,25 @@ tasks.withType<Test>().configureEach {
     // the JVM warnings the application convention silences
     jvmArgs("--enable-native-access=ALL-UNNAMED")
     systemProperty("guice_bytecode_gen_option", "DISABLED")
+    systemProperty("junit.jupiter.extensions.autodetection.enabled", "true")
+    systemProperty("junit.jupiter.extensions.autodetection.include", "hu.bme.mit.semantifyr.*")
+    systemProperty("semantifyr.heavyCases", heavyCases.get())
+}
+
+tasks.withType<Test>().matching {
+    it.name != "test"
+}.configureEach {
+    the<JacocoTaskExtension>().isEnabled = false
+}
+
+buildWithoutPackaging()
+
+tasks.named("build") {
+    dependsOn(
+        sourceSets.map {
+            it.classesTaskName
+        },
+    )
 }
 
 tasks.withType<JavaExec>().configureEach {
@@ -116,8 +144,7 @@ tasks.jacocoTestReport {
 }
 
 tasks.named("sonarResolver") {
-    // the nightly runs only on fured, so its report must not pull nightlyTest into CI
-    inputs.files(tasks.withType<JacocoReport>().matching { it.name != "jacocoNightlyTestReport" })
+    inputs.files(tasks.jacocoTestReport)
 }
 
 // plain values only, as the plugin is not yet updated to providers

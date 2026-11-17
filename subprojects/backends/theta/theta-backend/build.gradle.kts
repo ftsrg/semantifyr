@@ -22,6 +22,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
 
     testImplementation(testFixtures(project(":backend")))
+    testImplementation(testFixtures(project(":verifier")))
 }
 
 tasks.named("test") {

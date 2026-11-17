@@ -16,10 +16,6 @@ val verificationTestServiceProvider = gradle.sharedServices.registerVerification
 
 val libs = the<LibrariesForLibs>()
 
-val jacocoIntegrationTestReport = tasks.register<JacocoReport>("jacocoIntegrationTestReport") {
-    executionData.from(tasks.named<Test>("integrationTest").map { it.the<JacocoTaskExtension>().destinationFile!! })
-}
-
 testing {
     suites {
         register<JvmTestSuite>("integrationTest") {
@@ -40,8 +36,6 @@ testing {
                     usesService(verificationTestServiceProvider)
 
                     shouldRunAfter(suites.named("test"))
-
-                    finalizedBy(jacocoIntegrationTestReport)
                 }
             }
         }

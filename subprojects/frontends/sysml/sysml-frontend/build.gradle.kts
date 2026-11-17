@@ -10,6 +10,7 @@ import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
+    id("hu.bme.mit.semantifyr.gradle.conventions.semantic")
     id("hu.bme.mit.semantifyr.gradle.conventions.integration")
     id("hu.bme.mit.semantifyr.gradle.conventions.nightly")
     kotlin("jvm")
@@ -56,7 +57,12 @@ tasks.processResources {
     from(syncSysmlLibrary)
 }
 
-listOf("test", "integrationTest", "nightlyTest").forEach {
+listOf(
+    "test",
+    "semanticTest",
+    "integrationTest",
+    "nightlyTest",
+).forEach {
     tasks.named<Test>(it) {
         readsServedExamples()
     }

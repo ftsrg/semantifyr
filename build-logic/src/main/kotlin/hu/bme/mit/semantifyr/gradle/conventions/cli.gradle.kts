@@ -9,7 +9,7 @@ package hu.bme.mit.semantifyr.gradle.conventions
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.application")
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
-    id("hu.bme.mit.semantifyr.gradle.conventions.verification")
+    id("hu.bme.mit.semantifyr.gradle.conventions.end-to-end")
 }
 
 // the Theta the distribution ships
@@ -108,7 +108,7 @@ val unzipDistribution = tasks.register<Sync>("unzipDistribution") {
 
 testing {
     suites {
-        named<JvmTestSuite>("verificationTest") {
+        named<JvmTestSuite>("endToEndTest") {
             dependencies {
                 implementation(testFixtures(project(":cli-common")))
             }

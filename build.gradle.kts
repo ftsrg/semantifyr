@@ -78,29 +78,41 @@ configurations.consumable("apiDocsElements") {
     }
 }
 
-val suiteReportTasks = reporting.reports.run {
-    listOf(
-        register<JacocoCoverageReport>("mergedJacocoTestReport") { testSuiteName = "test" },
-        register<JacocoCoverageReport>("mergedJacocoVerificationTestReport") { testSuiteName = "verificationTest" },
-        register<JacocoCoverageReport>("mergedJacocoIntegrationTestReport") { testSuiteName = "integrationTest" },
-    ).map { report ->
-        report.flatMap { it.reportTask }
+reporting.reports.register<JacocoCoverageReport>("mergedJacocoReport") {
+    testSuiteName = "test"
+}
+
+fun suiteTasks(vararg suites: String): List<TaskCollection<Task>> {
+    return subprojects.map { subproject ->
+        subproject.tasks.matching {
+            it.name in suites
+        }
     }
 }
 
-tasks.register<JacocoReport>("mergedJacocoReport") {
+// the suites a tier runs beyond the local build's; the UI suite runs once per browser, called by its own name
+tasks.register("continuousIntegration") {
     group = "verification"
+    dependsOn(
+        suiteTasks(
+            "semanticTest",
+            "integrationTest",
+            "endToEndTest",
+        ),
+    )
+}
 
-    suiteReportTasks.forEach { reportTask ->
-        executionData.from(reportTask.map { it.executionData })
-        sourceDirectories.from(reportTask.map { it.sourceDirectories })
-        classDirectories.from(reportTask.map { it.classDirectories })
-    }
-
-    reports {
-        xml.required = true
-        html.required = true
-    }
+tasks.register("nightly") {
+    group = "verification"
+    dependsOn(
+        suiteTasks(
+            "adapterTest",
+            "semanticTest",
+            "integrationTest",
+            "endToEndTest",
+            "nightlyTest",
+        ),
+    )
 }
 
 val generatedSourceExclusions = "**/src-gen/**,**/generated/**,**/xtext-gen/**,**/emf-gen/**"
