@@ -65,7 +65,7 @@ class Statechart {
 
 class TrafficLight : Statechart {
     refers sensor: Sensor
-    refers crossingStopped: State
+    refers waitsFor: State[0..*]
 
     contains red: State subsets states
     contains yellow: State subsets states
@@ -77,7 +77,7 @@ class TrafficLight : Statechart {
         redefine refers from: State = red
         redefine refers to: State = green
         refers carWaiting: Condition subsets guards = sensor
-        refers crossingClear: Condition subsets guards = crossingStopped
+        refers crossingClear: Condition[0..*] subsets guards = waitsFor
     }
     contains greenToYellow: Transition subsets transitions {
         redefine refers from: State = green
@@ -111,11 +111,11 @@ class Junction {
 
     contains north: TrafficLight {
         redefine refers sensor: Sensor = northSensor
-        redefine refers crossingStopped: State = east.red
+        refers eastStopped: State subsets waitsFor = east.red
     }
     contains east: TrafficLight {
         redefine refers sensor: Sensor = eastSensor
-        redefine refers crossingStopped: State = north.red
+        refers northStopped: State subsets waitsFor = north.red
     }
 
     redefine init {

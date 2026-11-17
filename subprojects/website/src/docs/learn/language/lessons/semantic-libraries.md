@@ -74,13 +74,13 @@ A traffic light of the running example turns green only for a waiting car, and o
 
 <LibraryClasses />
 
-The traffic light refers to its sensor and to the state in which the crossing traffic is stopped, and its transition to green declares both as guards. The light leaves open which sensor and which state those are:
+The traffic light refers to its sensor and to the states it waits for, in which the crossing traffic is stopped. A light may wait for any number of states, so `waitsFor` is `[0..*]`. Its transition to green declares the sensor and every state in `waitsFor` as guards. The light leaves open which sensor and which states those are:
 
 <LiveEmbed example={step3} show={['TrafficLight']} />
 
 <LightAsData />
 
-The junction holds two traffic lights and their sensors, and fills in what each light left open. The north light waits for the east light's red state, and the east light for the north light's:
+The junction holds two traffic lights and their sensors, and fills in what each light left open. A light has one sensor, so the junction redefines `sensor`. A light waits for any number of states, so the junction names each of them in a reference of its own that subsets `waitsFor`, as the transition named each of its guards. Here the north light waits for the east light's red state, and the east light for the north light's:
 
 <LiveEmbed example={step3} show={['Junction']} />
 
@@ -98,12 +98,14 @@ Now let us add the crosswalk of the running example to the junction, without cha
 
 Before you verify, decide whether `WalkOnlyWhileEastRed` holds. The pedestrians can walk, <CaseVerdict example={step4} name="PedestriansCanWalk" />, but with the crosswalk of <LiveLink example={step4}>this state of the junction</LiveLink> the requirement fails: <CaseVerdict example={step4} name="WalkOnlyWhileEastRed" />. Read its trace in Live. When do the pedestrians start to walk, and what does the east light do after that?
 
-The problem is in the model, and the library can stay as it is. Find and fix it!
+The problem is in the model, and the library and the traffic light can stay as they are. Find and fix it!
 
-When it is fixed, every case of the junction passes: <CaseVerdict example={final} name="NorthCanTurnGreen" />, <CaseVerdict example={final} name="NeverBothGreen" />, <CaseVerdict example={final} name="NorthGreenOnlyWhileEastRed" />, <CaseVerdict example={final} name="PedestriansCanWalk" /> and <CaseVerdict example={final} name="WalkOnlyWhileEastRed" />. A guard is checked only at the moment its transition fires, and not afterwards. The pedestrians started to walk while the east light was red. After that, nothing kept the east light red, since it waited only for the north light:
+When it is fixed, every case of the junction passes: <CaseVerdict example={final} name="NorthCanTurnGreen" />, <CaseVerdict example={final} name="NeverBothGreen" />, <CaseVerdict example={final} name="NorthGreenOnlyWhileEastRed" />, <CaseVerdict example={final} name="PedestriansCanWalk" /> and <CaseVerdict example={final} name="WalkOnlyWhileEastRed" />. Compare your repair with <LiveLink example={final}>the final state of this lesson</LiveLink>.
+
+A guard is checked only at the moment its transition fires, and not afterwards. The pedestrians started to walk while the east light was red. After that, nothing kept the east light red, since it waited only for the north light:
 
 <TraceTimeline rows={[{ name: 'north', lamps: ['Red', 'Red', 'Red'] }, { name: 'east', lamps: ['Red', 'Red', 'Green'] }, { name: 'pedestrians', lamps: ['Stop', 'Walk', 'Walk'] }, { name: 'button', flags: [false, true, false] }, { name: 'east car', flags: [false, false, true] }]} broken="WalkOnlyWhileEastRed" />
 
-Now the east light waits for two things, and the junction gives both of them in its data. Compare your repair with <LiveLink example={final}>the final state of this lesson</LiveLink>.
+Now the east light waits for two states, and the junction names both of them in its data.
 
 The lights are data now, and one rule is still written in the model: how the junction steps its lights. The next lesson, [Semantic Variants](semantic-variants.md), moves that rule into the library too, and changes it.

@@ -299,7 +299,7 @@ export function LightAsData(): React.JSX.Element {
   const greenToYellow = { x: 290, y: 214, width: 150, height: 30 };
   const yellowToRed = { x: 10, y: 214, width: 130, height: 30 };
   return (
-    <Picture width={450} height={410} label="The traffic light as data: the states red, green and yellow, and the transitions redToGreen, greenToYellow and yellowToRed, each referring to the state it leaves and the state it enters; redToGreen also refers to two guards, the light's sensor and the state in which the crossing traffic is stopped">
+    <Picture width={450} height={410} label="The traffic light as data: the states red, green and yellow, and the transitions redToGreen, greenToYellow and yellowToRed, each referring to the state it leaves and the state it enters; redToGreen also refers to its guards, the light's sensor and the states it waits for, in which the crossing traffic is stopped">
       <Connector from={redToGreen} to={sensor} kind="dotted" />
       <Connector from={redToGreen} to={crossing} kind="dotted" />
       <Connector from={redToGreen} to={red} kind="dashed" />
@@ -309,7 +309,7 @@ export function LightAsData(): React.JSX.Element {
       <Connector from={yellowToRed} to={yellow} kind="dashed" />
       <Connector from={yellowToRed} to={red} />
       <ObjectBox area={sensor} name="sensor" />
-      <ObjectBox area={crossing} name="crossingStopped" />
+      <ObjectBox area={crossing} name="waitsFor" />
       <StateBox area={red} name="red" lamp="Red" />
       <StateBox area={green} name="green" lamp="Green" />
       <StateBox area={yellow} name="yellow" lamp="Yellow" />
