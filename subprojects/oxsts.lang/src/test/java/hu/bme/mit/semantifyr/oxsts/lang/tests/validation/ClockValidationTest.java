@@ -152,6 +152,35 @@ public class ClockValidationTest {
     }
 
     @Test
+    void clockArraySizedFromABindingIsRejected() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Timer {
+                refers capacity: int
+                var elapsed: clock[capacity] := [0, ...]
+            }
+            """, CheckMode.ALL);
+
+        assertOnlyClockError(parsedPackage, "cannot be an array element");
+    }
+
+    @Test
+    void comparisonWithAnArrayIsRejected() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Timer {
+                var elapsed: clock := 0
+                var limits: int[2] := [1, 2]
+                redefine tran {
+                    assume(elapsed <= limits)
+                }
+            }
+            """, CheckMode.ALL);
+
+        assertOnlyClockError(parsedPackage, "compared with an integer, found");
+    }
+
+    @Test
     void propertyReadingAClockIsRejected() {
         var parsedPackage = parseHelper.parse("""
             package test

@@ -1917,8 +1917,11 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
         if (leftClock || rightClock) {
             var boundType = leftClock ? rightType : leftType;
-            if (!typeCompatibility.isInt(boundType, operator)
-                    && typeCompatibility.unwrappedDomain(boundType) != builtinSymbolResolver.intDatatype(operator)) {
+            var boundRange = boundType.getRange();
+            if ((boundRange != null && boundRange.getUpperBound() > 1)
+                    || (!typeCompatibility.isInt(boundType, operator)
+                            && typeCompatibility.unwrappedDomain(boundType)
+                                    != builtinSymbolResolver.intDatatype(operator))) {
                 acceptError(
                         "A clock is compared with an integer, found " + formatType(boundType) + ".",
                         operator,
