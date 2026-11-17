@@ -18,7 +18,7 @@ const REPOSITORY = fileURLToPath(new URL('../../../../../', import.meta.url))
 
 describe('the language switch', () => {
   test('offers SysML v2, Gamma and the Semantifyr Language, and opens a session of the language chosen', async ({ ui }) => {
-    const page = await ui.open('/language/intersection')
+    const page = await ui.open('/language/modeling-and-verification')
     await casesListed(page)
 
     expect(await page.locator('.language-switch [role=group] button').allInnerTexts()).toEqual(['SysML v2', 'Gamma', 'Semantifyr'])
@@ -30,7 +30,7 @@ describe('the language switch', () => {
   })
 
   test('lists the libraries under the Semantifyr Language, and a flavour opens its own session', async ({ ui }) => {
-    const page = await ui.open('/language/intersection')
+    const page = await ui.open('/language/modeling-and-verification')
     await casesListed(page)
 
     await page.locator('.flavour-button').click()
@@ -238,7 +238,7 @@ function exampleOf(path: string): string {
 
 describe('switching many times', () => {
   test('ends every switch of language, flavour and example, in varied order and timing, with the cases listed and the marks of the shown document alone', async ({ ui }) => {
-    const page = await ui.open('/language/intersection', { height: 5800 })
+    const page = await ui.open('/language/modeling-and-verification', { height: 5800 })
     const done: string[] = []
     for (const { step, wait } of stepsOf(44, 7)) {
       await take(page, step)

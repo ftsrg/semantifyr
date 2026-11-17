@@ -128,13 +128,13 @@ describe("liveEditorUrl and parseLiveEditorUrl", () => {
     it("replace the parts of the base the link names and keep its other query parameters", async () => {
         const url = await liveEditorUrl("https://live.semantifyr.org/gamma/crossroads?backend=http://localhost:18080&view=embed&library=gamma#model=abc", {
             language: "oxsts",
-            example: "intersection",
+            example: "modeling-and-verification",
         });
 
         expect(new URL(url).searchParams.get("backend")).toBe("http://localhost:18080");
         expect(parsed(url)).toMatchObject({
             language: "language",
-            example: "intersection",
+            example: "modeling-and-verification",
             library: null,
             view: null,
             theme: null,

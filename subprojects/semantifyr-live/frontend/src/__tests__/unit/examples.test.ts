@@ -118,13 +118,13 @@ describe('liveFlavors', () => {
   it('the trafficlight tutorial snapshots are registered as named oxsts examples', () => {
     const oxsts = findFlavor(servedLiveFlavors, 'oxsts')!;
     const ids = oxsts.examples.map((example) => example.id);
-    expect(ids).toContain('intersection');
-    expect(ids).toContain('library');
-    expect(ids).toContain('hierarchy');
+    expect(ids).toContain('modeling-and-verification');
+    expect(ids).toContain('semantic-libraries');
+    expect(ids).toContain('hierarchy-and-events');
   });
 
   it('the trafficlight snapshots contain code that mentions a verification case', () => {
-    const direct = findExample(findFlavor(servedLiveFlavors, 'oxsts')!, 'intersection');
+    const direct = findExample(findFlavor(servedLiveFlavors, 'oxsts')!, 'modeling-and-verification');
     expect(direct?.code).toContain('@VerificationCase');
   });
 });
@@ -147,10 +147,10 @@ describe('the registry\'s examples', () => {
   it('a lesson\'s step opens by its address and the menu does not list it', () => {
     const oxsts = findFlavor(servedLiveFlavors, 'oxsts')!;
 
-    expect(findExample(oxsts, 'intersection-step1')?.code).toContain('package example::trafficlight::intersection::step1');
+    expect(findExample(oxsts, 'modeling-and-verification-step1')?.code).toContain('class LightCanTurnGreen : TrafficLight');
     expect(listedExamples(oxsts).map((example) => {
       return example.id;
-    })).not.toContain('intersection-step1');
+    })).not.toContain('modeling-and-verification-step1');
   });
 
   it('shows no description for a model whose file has no comment at its top', () => {

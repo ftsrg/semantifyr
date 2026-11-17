@@ -27,7 +27,7 @@ const FOCUSABLE = [
 ].join(', ');
 
 // a lesson's step, which embeds its examples
-const LESSON = '/learn/language/lessons/intersection/';
+const LESSON = '/learn/language/lessons/modeling-and-verification/';
 
 const PHONE = { width: 375, height: 812 };
 
@@ -394,7 +394,7 @@ describe('the keyboard', () => {
       return frame.locator('.monaco-editor .view-lines').first().innerText().catch(() => {
         return '';
       });
-    }, { timeout: 120_000 }).toContain('package');
+    }, { timeout: 120_000 }).toContain('LightColor');
     await expect.poll(editorFocused, { message: 'the opened example has the focus in its editor' }).toBe(true);
     await press(page);
     expect(await editorFocused(), 'Tab leaves the embedded editor').toBe(false);

@@ -191,7 +191,7 @@ async function record(liveUrl: string, adminUserHeader: string | undefined): Pro
       console.error('a scenario failed, the recording goes on without it', error)
     })
   }
-  await attempt(cancelRuns(context, liveUrl, '/language/hierarchy'))
+  await attempt(cancelRuns(context, liveUrl, '/language/hierarchy-and-events'))
   for (const address of ['/language', '/language?library=gamma', '/language?library=sysml', '/gamma', '/sysml']) {
     await attempt(walkExamples(context, liveUrl, address))
   }
@@ -199,7 +199,7 @@ async function record(liveUrl: string, adminUserHeader: string | undefined): Pro
   const running = context.newPage().then(async (page) => {
     const embed = await context.newPage()
     await embed.goto(`${liveUrl}/gamma/level-crossing?view=embed`)
-    await page.goto(`${liveUrl}/language/hierarchy`)
+    await page.goto(`${liveUrl}/language/hierarchy-and-events`)
     await settled(page)
     await page.locator('.results').getByRole('button', { name: 'Verify all', exact: true }).click()
     if (adminUserHeader !== undefined) {
@@ -215,7 +215,7 @@ async function record(liveUrl: string, adminUserHeader: string | undefined): Pro
     await page.close()
   })
   await attempt(running)
-  for (const address of ['/language/intersection', '/language/level-crossing', '/language/level-crossing?library=gamma', '/language/level-crossing?library=sysml', '/gamma/level-crossing', '/sysml/level-crossing']) {
+  for (const address of ['/language/modeling-and-verification', '/language/level-crossing', '/language/level-crossing?library=gamma', '/language/level-crossing?library=sysml', '/gamma/level-crossing', '/sysml/level-crossing']) {
     await attempt(verifyAndRead(context, liveUrl, address))
   }
   await browser.close()

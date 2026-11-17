@@ -13,7 +13,7 @@ import { describe, expect } from 'vitest'
 import { editorKeysOf, TEST_BROWSER } from '../testBrowser'
 import { casesListed, editor, editorWorkerLoaded, results, statesOf, test } from './harness'
 
-const INTERSECTION = readFileSync(join(import.meta.dirname, '../snippets/imported/tutorial/intersection.semantifyr'), 'utf-8')
+const INTERSECTION = readFileSync(join(import.meta.dirname, '../snippets/imported/tutorial/modeling-and-verification.semantifyr'), 'utf-8')
 
 interface Disk {
   // the file the open picker gives, the name the save picker gives
@@ -114,7 +114,7 @@ describe('opening a file', () => {
     }).toBe('mine.semantifyr - Semantifyr - Semantifyr Live')
     await casesListed(page)
     expect(await results(page).rows.count()).toBe(servedExamplesOf('oxsts').find((example) => {
-      return example.id === 'intersection'
+      return example.id === 'modeling-and-verification'
     })?.cases.length)
   })
 
@@ -137,7 +137,7 @@ describe('opening a file', () => {
   })
 
   test('by a drop opens the dropped file in its language', async ({ ui }) => {
-    const page = await ui.open('/language/intersection')
+    const page = await ui.open('/language/modeling-and-verification')
     await casesListed(page)
     ui.backend.answer('discover', () => {
       return []
@@ -185,7 +185,7 @@ describe('saving', () => {
 
   test('with Save as asks for a place under the suggested name and saves there', async ({ ui, skip }) => {
     skip(TEST_BROWSER !== 'chromium', NO_PICKERS)
-    const page = await ui.open('/language/intersection', { before: stubPickers })
+    const page = await ui.open('/language/modeling-and-verification', { before: stubPickers })
     await casesListed(page)
     await typeAtTheEnd(page, '\n// edited\n')
 
@@ -197,27 +197,27 @@ describe('saving', () => {
         return write.name
       })
     }).toEqual(['saved.semantifyr'])
-    expect((await diskOf(page)).suggested).toEqual(['intersection.semantifyr'])
+    expect((await diskOf(page)).suggested).toEqual(['modeling-and-verification.semantifyr'])
     await expect.poll(async () => {
       return page.title()
     }).toBe('saved.semantifyr - Semantifyr - Semantifyr Live')
   })
 
   test('downloads under the model\'s name where the browser has no save dialog', async ({ ui }) => {
-    const page = await ui.open('/language/intersection', { before: withoutPickers })
+    const page = await ui.open('/language/modeling-and-verification', { before: withoutPickers })
     await casesListed(page)
     await typeAtTheEnd(page, '\n// edited\n')
 
     const download = page.waitForEvent('download')
     await page.locator('.toolbar').getByRole('button', { name: 'Save', exact: true }).click()
 
-    expect((await download).suggestedFilename()).toBe('intersection.semantifyr')
+    expect((await download).suggestedFilename()).toBe('modeling-and-verification.semantifyr')
   })
 })
 
 describe('leaving the page', () => {
   test('with edits not saved to a file brings the browser\'s warning, and without them none', async ({ ui }) => {
-    const page = await ui.open('/language/intersection')
+    const page = await ui.open('/language/modeling-and-verification')
     await casesListed(page)
     await editorWorkerLoaded(page)
     const dialogs: string[] = []
