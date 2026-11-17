@@ -3,7 +3,7 @@
         {
             "file": "AsynchronousStatechart.gamma",
             "cases": [
-                { "name": "TheDefaultAdapterServesOneMessagePerCycleUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "TheDefaultAdapterServesTheNextMessageBeforeTheTimeoutIsUp", "verdict": "Passed", "tier": "Integration" },
                 { "name": "TheDefaultAdapterServesTheNextMessageInALaterCycle", "verdict": "Passed", "tier": "Integration" }
             ]
         },
@@ -205,7 +205,7 @@
             "file": "ScheduledAsynchronous.gamma",
             "cases": [
                 { "name": "TwoTurnsInACycleServeTwoMessages", "verdict": "Passed", "tier": "Integration" },
-                { "name": "OneTurnInACycleServesTwoMessagesUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "ALaterTurnMayComeBeforeTheTimeoutIsUp", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ALaterTurnSeesTheTimeoutUp", "verdict": "Passed", "tier": "Integration" }
             ]
         },

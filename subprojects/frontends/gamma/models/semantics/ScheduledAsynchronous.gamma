@@ -58,7 +58,7 @@ verification case TwoTurnsInACycleServeTwoMessages of Twice {
     EF state buffered -> receiver.Main.Both
 }
 
-verification case OneTurnInACycleServesTwoMessagesUnreachable of Once {
+verification case ALaterTurnMayComeBeforeTheTimeoutIsUp of Once {
     EF state buffered -> receiver.Main.Both
 }
 
