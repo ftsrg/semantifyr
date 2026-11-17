@@ -23,6 +23,15 @@ class ClockBoundCheckerTest : FlatteningTestBase() {
     }
 
     @Test
+    fun `a bound read from an array slot is refused, since a slot holds a run-time value`() {
+        val exception = assertThrows<IllegalStateException> {
+            flatten("SlotBound", MODEL)
+        }
+
+        assertThat(exception.message).contains("known only at run time")
+    }
+
+    @Test
     fun `a bound that a constant argument or a feature binds compiles`() {
         flatten("CompileTimeBound", MODEL)
     }
@@ -90,6 +99,20 @@ class ClockBoundCheckerTest : FlatteningTestBase() {
 
                 redefine tran {
                     inline timer.expire(limit)
+                }
+
+                prop {
+                    return AG true
+                }
+            }
+
+            @VerificationCase
+            class SlotBound {
+                contains timer: Timer
+                var limits: int[2] := [3, 4]
+
+                redefine tran {
+                    inline timer.expire(limits[1])
                 }
 
                 prop {
