@@ -350,61 +350,61 @@
     "result": {
      "metadata": {
       "backendId": "nuxmv:kinduction-invar",
-      "startedAt": "2026-11-17T09:35:02.298987659Z"
+      "startedAt": "2026-11-17T10:14:59.094155093Z"
      },
      "verdict": "Passed",
      "soundness": "Exact",
      "isTrusted": true,
      "metrics": {
-      "totalDuration": "PT1.310432217S",
+      "totalDuration": "PT1.883749995S",
       "backend": {
-       "preparationDuration": "PT0.011140586S",
-       "verificationDuration": "PT0.649296525S",
-       "backAnnotationDuration": "PT0.007092819S"
+       "preparationDuration": "PT0.011160800S",
+       "verificationDuration": "PT0.909640537S",
+       "backAnnotationDuration": "PT0.018027579S"
       },
       "verifier": {
-       "compilationDuration": "PT0.415444894S",
+       "compilationDuration": "PT0.502041402S",
        "compilation": {
-        "createDuration": "PT0.005372196S",
-        "instantiationDuration": "PT0.007035855S",
-        "inliningDuration": "PT0.308423304S",
-        "flatteningDuration": "PT0.094613539S",
+        "createDuration": "PT0.005389333S",
+        "instantiationDuration": "PT0.007765391S",
+        "inliningDuration": "PT0.366039379S",
+        "flatteningDuration": "PT0.122847299S",
         "inliningOptimization": {
-         "duration": "PT0.028110386S",
+         "duration": "PT0.028866850S",
          "passes": [
           {
            "name": "OperationCallInlining",
-           "duration": "PT0.013038748S",
+           "duration": "PT0.015473741S",
            "runs": 855,
            "firings": 216
           },
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.006951681S",
+           "duration": "PT0.006360402S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.003511650S",
+           "duration": "PT0.003216352S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.001848255S",
+           "duration": "PT0.001569778S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.002498256S",
+           "duration": "PT0.001970389S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000015693S",
+           "duration": "PT0.000017017S",
            "runs": 1,
            "firings": 0
           }
@@ -412,59 +412,59 @@
          "analyses": []
         },
         "flatteningOptimization": {
-         "duration": "PT0.052204795S",
+         "duration": "PT0.074270079S",
          "passes": [
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.000707551S",
+           "duration": "PT0.000812201S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.000248769S",
+           "duration": "PT0.000347904S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000251513S",
+           "duration": "PT0.000354025S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000261972S",
+           "duration": "PT0.000356606S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.002127712S",
+           "duration": "PT0.002471487S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "CopyPropagationPass",
-           "duration": "PT0.029624177S",
+           "duration": "PT0.031266552S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "DeadStoreEliminationPass",
-           "duration": "PT0.000573502S",
+           "duration": "PT0.012328237S",
            "runs": 2,
            "firings": 1
           },
           {
            "name": "DeadCodeRemovalPass",
-           "duration": "PT0.012306067S",
+           "duration": "PT0.015810115S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "VariableLivenessPass",
-           "duration": "PT0.005858422S",
+           "duration": "PT0.010309892S",
            "runs": 2,
            "firings": 1
           }
@@ -472,17 +472,17 @@
          "analyses": [
           {
            "name": "ConstantValueAnalysis",
-           "duration": "PT0.002030487S",
+           "duration": "PT0.002392712S",
            "computations": 2
           },
           {
            "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.029514246S",
+           "duration": "PT0.031114096S",
            "computations": 2
           },
           {
            "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.011896465S",
+           "duration": "PT0.015240772S",
            "computations": 2
           }
          ]
@@ -503,8 +503,8 @@
          "expressions": 684
         }
        },
-       "backAnnotationDuration": "PT0.013599662S",
-       "portfolioDuration": "PT1.289094S"
+       "backAnnotationDuration": "PT0.007651495S",
+       "portfolioDuration": "PT1.872810916S"
       }
      },
      "message": null
@@ -549,60 +549,40 @@
       {
        "variable": "root.component._trackA._Main.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::gamma::statecharts::Region::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::gamma::statecharts::Region::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.component._trackB._Main.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::gamma::statecharts::Region::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::gamma::statecharts::Region::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.component._controller._Main.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::gamma::statecharts::Region::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::gamma::statecharts::Region::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.component._barrier._Main.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::gamma::statecharts::Region::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::gamma::statecharts::Region::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -1149,61 +1129,61 @@
     "result": {
      "metadata": {
       "backendId": "nuxmv:kinduction-invar",
-      "startedAt": "2026-11-17T09:35:02.356896842Z"
+      "startedAt": "2026-11-17T10:14:59.062422520Z"
      },
      "verdict": "Failed",
      "soundness": "Exact",
      "isTrusted": true,
      "metrics": {
-      "totalDuration": "PT2.820255995S",
+      "totalDuration": "PT3.552781587S",
       "backend": {
-       "preparationDuration": "PT0.011621797S",
-       "verificationDuration": "PT2.157448119S",
-       "backAnnotationDuration": "PT0.018005062S"
+       "preparationDuration": "PT0.015111785S",
+       "verificationDuration": "PT2.588253031S",
+       "backAnnotationDuration": "PT0.017494015S"
       },
       "verifier": {
-       "compilationDuration": "PT0.506594146S",
+       "compilationDuration": "PT0.456012520S",
        "compilation": {
-        "createDuration": "PT0.007809507S",
-        "instantiationDuration": "PT0.008344945S",
-        "inliningDuration": "PT0.407036929S",
-        "flatteningDuration": "PT0.083402765S",
+        "createDuration": "PT0.004902271S",
+        "instantiationDuration": "PT0.005656354S",
+        "inliningDuration": "PT0.311718941S",
+        "flatteningDuration": "PT0.133734954S",
         "inliningOptimization": {
-         "duration": "PT0.029720573S",
+         "duration": "PT0.024158423S",
          "passes": [
           {
            "name": "OperationCallInlining",
-           "duration": "PT0.017768353S",
+           "duration": "PT0.012489644S",
            "runs": 855,
            "firings": 216
           },
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.005644779S",
+           "duration": "PT0.005662495S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.002821885S",
+           "duration": "PT0.002266991S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.001466275S",
+           "duration": "PT0.001544182S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.001784955S",
+           "duration": "PT0.001971008S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000015061S",
+           "duration": "PT0.000015476S",
            "runs": 1,
            "firings": 0
           }
@@ -1211,59 +1191,59 @@
          "analyses": []
         },
         "flatteningOptimization": {
-         "duration": "PT0.050806784S",
+         "duration": "PT0.082482204S",
          "passes": [
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.001046260S",
+           "duration": "PT0.001283301S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.000391989S",
+           "duration": "PT0.000483418S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000381644S",
+           "duration": "PT0.000465088S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000385653S",
+           "duration": "PT0.000491581S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.002648860S",
+           "duration": "PT0.003302198S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "CopyPropagationPass",
-           "duration": "PT0.026028647S",
+           "duration": "PT0.037755312S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "DeadStoreEliminationPass",
-           "duration": "PT0.000588479S",
+           "duration": "PT0.012670801S",
            "runs": 2,
            "firings": 1
           },
           {
            "name": "DeadCodeRemovalPass",
-           "duration": "PT0.010544139S",
+           "duration": "PT0.015982925S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "VariableLivenessPass",
-           "duration": "PT0.008547984S",
+           "duration": "PT0.009762978S",
            "runs": 2,
            "firings": 1
           }
@@ -1271,17 +1251,17 @@
          "analyses": [
           {
            "name": "ConstantValueAnalysis",
-           "duration": "PT0.002554017S",
+           "duration": "PT0.003180606S",
            "computations": 2
           },
           {
            "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.025922244S",
+           "duration": "PT0.037582729S",
            "computations": 2
           },
           {
            "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.009968231S",
+           "duration": "PT0.015344964S",
            "computations": 2
           }
          ]
@@ -1302,8 +1282,8 @@
          "expressions": 688
         }
        },
-       "backAnnotationDuration": "PT0.005516874S",
-       "portfolioDuration": "PT2.814317253S"
+       "backAnnotationDuration": "PT0.005665097S",
+       "portfolioDuration": "PT3.546760028S"
       }
      },
      "message": null
@@ -1348,60 +1328,40 @@
       {
        "variable": "root.component._trackA._Main.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::gamma::statecharts::Region::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::gamma::statecharts::Region::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.component._trackB._Main.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::gamma::statecharts::Region::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::gamma::statecharts::Region::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.component._controller._Main.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::gamma::statecharts::Region::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::gamma::statecharts::Region::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.component._barrier._Main.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::gamma::statecharts::Region::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::gamma::statecharts::Region::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -2279,61 +2239,61 @@
     "result": {
      "metadata": {
       "backendId": "uppaal:default",
-      "startedAt": "2026-11-17T09:35:06.409854894Z"
+      "startedAt": "2026-11-17T10:15:04.157149665Z"
      },
      "verdict": "Passed",
      "soundness": "UnderApproximating",
      "isTrusted": true,
      "metrics": {
-      "totalDuration": "PT3.430658942S",
+      "totalDuration": "PT4.179743585S",
       "backend": {
-       "preparationDuration": "PT0.014111112S",
-       "verificationDuration": "PT2.471668S",
-       "backAnnotationDuration": "PT0.240404676S"
+       "preparationDuration": "PT0.046189734S",
+       "verificationDuration": "PT3.160488151S",
+       "backAnnotationDuration": "PT0.184728577S"
       },
       "verifier": {
-       "compilationDuration": "PT1.975250771S",
+       "compilationDuration": "PT2.433834824S",
        "compilation": {
-        "createDuration": "PT0.017600727S",
-        "instantiationDuration": "PT0.096768239S",
-        "inliningDuration": "PT1.227518406S",
-        "flatteningDuration": "PT0.633363399S",
+        "createDuration": "PT0.020398234S",
+        "instantiationDuration": "PT0.098597305S",
+        "inliningDuration": "PT1.651039371S",
+        "flatteningDuration": "PT0.663799914S",
         "inliningOptimization": {
-         "duration": "PT0.073922673S",
+         "duration": "PT0.113340981S",
          "passes": [
           {
            "name": "OperationCallInlining",
-           "duration": "PT0.055030225S",
+           "duration": "PT0.062765952S",
            "runs": 2351,
            "firings": 598
           },
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.009192030S",
+           "duration": "PT0.027700258S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.004239928S",
+           "duration": "PT0.008518366S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.002396742S",
+           "duration": "PT0.007054739S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.002883455S",
+           "duration": "PT0.007006498S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000010467S",
+           "duration": "PT0.000020717S",
            "runs": 1,
            "firings": 0
           }
@@ -2341,59 +2301,59 @@
          "analyses": []
         },
         "flatteningOptimization": {
-         "duration": "PT0.354197695S",
+         "duration": "PT0.409893S",
          "passes": [
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.003632493S",
+           "duration": "PT0.004822251S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.001631109S",
+           "duration": "PT0.002453234S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.001821992S",
+           "duration": "PT0.002808949S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.001596753S",
+           "duration": "PT0.002398114S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.010035852S",
+           "duration": "PT0.012098035S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "CopyPropagationPass",
-           "duration": "PT0.131538376S",
+           "duration": "PT0.185143022S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadStoreEliminationPass",
-           "duration": "PT0.074441945S",
+           "duration": "PT0.088866712S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadCodeRemovalPass",
-           "duration": "PT0.069075723S",
+           "duration": "PT0.056433797S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "VariableLivenessPass",
-           "duration": "PT0.060060737S",
+           "duration": "PT0.054381832S",
            "runs": 3,
            "firings": 1
           }
@@ -2401,17 +2361,17 @@
          "analyses": [
           {
            "name": "ConstantValueAnalysis",
-           "duration": "PT0.009812427S",
+           "duration": "PT0.011877416S",
            "computations": 2
           },
           {
            "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.200350216S",
+           "duration": "PT0.268048181S",
            "computations": 3
           },
           {
            "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.066442188S",
+           "duration": "PT0.053644333S",
            "computations": 2
           }
          ]
@@ -2432,8 +2392,8 @@
          "expressions": 2513
         }
        },
-       "backAnnotationDuration": "PT0.007131781S",
-       "portfolioDuration": "PT3.423060220S"
+       "backAnnotationDuration": "PT0.006970478S",
+       "portfolioDuration": "PT4.172347369S"
       }
      },
      "message": null
@@ -2478,60 +2438,40 @@
       {
        "variable": "root.component._trackA._Main.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::gamma::statecharts::Region::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::gamma::statecharts::Region::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.component._trackB._Main.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::gamma::statecharts::Region::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::gamma::statecharts::Region::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.component._controller._Main.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::gamma::statecharts::Region::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::gamma::statecharts::Region::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.component._barrier._Main.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::gamma::statecharts::Region::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::gamma::statecharts::Region::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -3030,61 +2970,61 @@
     "result": {
      "metadata": {
       "backendId": "theta:bounded-bmc",
-      "startedAt": "2026-11-17T09:35:11.080583441Z"
+      "startedAt": "2026-11-17T10:15:09.205158646Z"
      },
      "verdict": "Passed",
      "soundness": "Exact",
      "isTrusted": true,
      "metrics": {
-      "totalDuration": "PT7.690546428S",
+      "totalDuration": "PT8.038966182S",
       "backend": {
-       "preparationDuration": "PT0.216901336S",
-       "verificationDuration": "PT6.032068720S",
-       "backAnnotationDuration": "PT0.573746491S"
+       "preparationDuration": "PT0.216667609S",
+       "verificationDuration": "PT5.951839072S",
+       "backAnnotationDuration": "PT0.902594122S"
       },
       "verifier": {
-       "compilationDuration": "PT5.678798470S",
+       "compilationDuration": "PT6.358216036S",
        "compilation": {
-        "createDuration": "PT0.004647675S",
-        "instantiationDuration": "PT0.040216645S",
-        "inliningDuration": "PT4.576398505S",
-        "flatteningDuration": "PT1.057535645S",
+        "createDuration": "PT0.003259182S",
+        "instantiationDuration": "PT0.028240840S",
+        "inliningDuration": "PT4.629060433S",
+        "flatteningDuration": "PT1.697655581S",
         "inliningOptimization": {
-         "duration": "PT0.439532925S",
+         "duration": "PT0.346032287S",
          "passes": [
           {
            "name": "OperationCallInlining",
-           "duration": "PT0.137508318S",
+           "duration": "PT0.092162306S",
            "runs": 4595,
            "firings": 1171
           },
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.107072173S",
+           "duration": "PT0.083522314S",
            "runs": 5,
            "firings": 4
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.071691360S",
+           "duration": "PT0.053702565S",
            "runs": 5,
            "firings": 1
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.055751306S",
+           "duration": "PT0.068062056S",
            "runs": 5,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.066599090S",
+           "duration": "PT0.047891942S",
            "runs": 5,
            "firings": 2
           },
           {
            "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000198481S",
+           "duration": "PT0.000044580S",
            "runs": 1,
            "firings": 0
           }
@@ -3092,59 +3032,59 @@
          "analyses": []
         },
         "flatteningOptimization": {
-         "duration": "PT0.623179051S",
+         "duration": "PT1.151075973S",
          "passes": [
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.004987432S",
+           "duration": "PT0.011553574S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.002979562S",
+           "duration": "PT0.009522938S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.003307459S",
+           "duration": "PT0.009777856S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.002997993S",
+           "duration": "PT0.009709164S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.015007040S",
+           "duration": "PT0.053165454S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "CopyPropagationPass",
-           "duration": "PT0.274189249S",
+           "duration": "PT0.672672876S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadStoreEliminationPass",
-           "duration": "PT0.144289284S",
+           "duration": "PT0.191422355S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadCodeRemovalPass",
-           "duration": "PT0.096614467S",
+           "duration": "PT0.102240227S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "VariableLivenessPass",
-           "duration": "PT0.078471913S",
+           "duration": "PT0.084779857S",
            "runs": 3,
            "firings": 1
           }
@@ -3152,17 +3092,17 @@
          "analyses": [
           {
            "name": "ConstantValueAnalysis",
-           "duration": "PT0.014858920S",
+           "duration": "PT0.052835936S",
            "computations": 2
           },
           {
            "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.407206426S",
+           "duration": "PT0.851554854S",
            "computations": 3
           },
           {
            "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.093145869S",
+           "duration": "PT0.097861311S",
            "computations": 2
           }
          ]
@@ -3183,8 +3123,8 @@
          "expressions": 5982
         }
        },
-       "backAnnotationDuration": "PT0.007091670S",
-       "portfolioDuration": "PT7.683184984S"
+       "backAnnotationDuration": "PT0.008010300S",
+       "portfolioDuration": "PT8.030646899S"
       }
      },
      "message": null
@@ -3229,60 +3169,40 @@
       {
        "variable": "root.component._trackA._Main.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::gamma::statecharts::Region::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::gamma::statecharts::Region::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.component._trackB._Main.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::gamma::statecharts::Region::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::gamma::statecharts::Region::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.component._controller._Main.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::gamma::statecharts::Region::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::gamma::statecharts::Region::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.component._barrier._Main.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::gamma::statecharts::Region::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::gamma::statecharts::Region::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -3999,10 +3919,6 @@
   {
    "kind": "report",
    "message": "first stage: result 2/7: Failed"
-  },
-  {
-   "kind": "report",
-   "message": "running from the first stage: result 1/2: Failed"
   },
   {
    "kind": "end"

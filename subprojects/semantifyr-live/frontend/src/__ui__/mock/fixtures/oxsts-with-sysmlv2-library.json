@@ -353,61 +353,61 @@
     "result": {
      "metadata": {
       "backendId": "uppaal:default",
-      "startedAt": "2026-11-16T23:54:58.898964652Z"
+      "startedAt": "2026-11-17T10:17:03.679056477Z"
      },
      "verdict": "Passed",
      "soundness": "UnderApproximating",
      "isTrusted": true,
      "metrics": {
-      "totalDuration": "PT0.964037192S",
+      "totalDuration": "PT0.935635282S",
       "backend": {
-       "preparationDuration": "PT0.003102778S",
-       "verificationDuration": "PT0.486892118S",
-       "backAnnotationDuration": "PT0.060633749S"
+       "preparationDuration": "PT0.002084950S",
+       "verificationDuration": "PT0.546971664S",
+       "backAnnotationDuration": "PT0.059217679S"
       },
       "verifier": {
-       "compilationDuration": "PT0.901779650S",
+       "compilationDuration": "PT0.333821773S",
        "compilation": {
-        "createDuration": "PT0.008847749S",
-        "instantiationDuration": "PT0.010579561S",
-        "inliningDuration": "PT0.575760592S",
-        "flatteningDuration": "PT0.306591748S",
+        "createDuration": "PT0.004032390S",
+        "instantiationDuration": "PT0.003212886S",
+        "inliningDuration": "PT0.194758375S",
+        "flatteningDuration": "PT0.131818122S",
         "inliningOptimization": {
-         "duration": "PT0.058532883S",
+         "duration": "PT0.017003523S",
          "passes": [
           {
            "name": "OperationCallInlining",
-           "duration": "PT0.021998312S",
+           "duration": "PT0.006567190S",
            "runs": 1148,
            "firings": 197
           },
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.013940882S",
+           "duration": "PT0.004408859S",
            "runs": 5,
            "firings": 4
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.012402832S",
+           "duration": "PT0.003843995S",
            "runs": 5,
            "firings": 2
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.004899499S",
+           "duration": "PT0.001071124S",
            "runs": 5,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.004924692S",
+           "duration": "PT0.000942449S",
            "runs": 5,
            "firings": 1
           },
           {
            "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000023082S",
+           "duration": "PT0.000006741S",
            "runs": 1,
            "firings": 0
           }
@@ -415,59 +415,59 @@
          "analyses": []
         },
         "flatteningOptimization": {
-         "duration": "PT0.205917588S",
+         "duration": "PT0.082860728S",
          "passes": [
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.002635762S",
+           "duration": "PT0.001024944S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.001443514S",
+           "duration": "PT0.000630907S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.001429985S",
+           "duration": "PT0.000605041S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.001402530S",
+           "duration": "PT0.000525842S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.016482499S",
+           "duration": "PT0.005732697S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "CopyPropagationPass",
-           "duration": "PT0.074712750S",
+           "duration": "PT0.036735112S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadStoreEliminationPass",
-           "duration": "PT0.043571164S",
+           "duration": "PT0.016420004S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadCodeRemovalPass",
-           "duration": "PT0.030675995S",
+           "duration": "PT0.010334213S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "VariableLivenessPass",
-           "duration": "PT0.033157565S",
+           "duration": "PT0.010604900S",
            "runs": 3,
            "firings": 1
           }
@@ -475,17 +475,17 @@
          "analyses": [
           {
            "name": "ConstantValueAnalysis",
-           "duration": "PT0.005821789S",
+           "duration": "PT0.002504007S",
            "computations": 2
           },
           {
            "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.115157133S",
+           "duration": "PT0.051590045S",
            "computations": 3
           },
           {
            "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.028834161S",
+           "duration": "PT0.009871197S",
            "computations": 2
           }
          ]
@@ -506,8 +506,8 @@
          "expressions": 849
         }
        },
-       "backAnnotationDuration": "PT0.008935034S",
-       "portfolioDuration": "PT0.954678284S"
+       "backAnnotationDuration": "PT0.001833239S",
+       "portfolioDuration": "PT0.933625132S"
       }
      },
      "message": null
@@ -556,30 +556,20 @@
       {
        "variable": "root.system.trackA.Behaviour.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::sysml::states::AbstractState::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::sysml::states::AbstractState::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.trackA.sensors.incomingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -596,45 +586,30 @@
       {
        "variable": "root.system.trackA.controller.outgoingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.trackB.Behaviour.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::sysml::states::AbstractState::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::sysml::states::AbstractState::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.trackB.sensors.incomingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -651,45 +626,30 @@
       {
        "variable": "root.system.trackB.controller.outgoingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.controller.Behaviour.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::sysml::states::AbstractState::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::sysml::states::AbstractState::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.controller.trackA.incomingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -706,15 +666,10 @@
       {
        "variable": "root.system.controller.trackB.incomingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -731,45 +686,30 @@
       {
        "variable": "root.system.controller.barrier.outgoingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.barrier.Behaviour.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::sysml::states::AbstractState::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::sysml::states::AbstractState::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.barrier.controller.incomingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -1162,61 +1102,61 @@
     "result": {
      "metadata": {
       "backendId": "uppaal:default",
-      "startedAt": "2026-11-16T23:54:58.869475206Z"
+      "startedAt": "2026-11-17T10:17:03.584005123Z"
      },
      "verdict": "Failed",
      "soundness": "UnderApproximating",
      "isTrusted": true,
      "metrics": {
-      "totalDuration": "PT1.656623242S",
+      "totalDuration": "PT1.030168719S",
       "backend": {
-       "preparationDuration": "PT0.006010986S",
-       "verificationDuration": "PT1.197280076S",
-       "backAnnotationDuration": "PT0.122834599S"
+       "preparationDuration": "PT0.001943324S",
+       "verificationDuration": "PT0.530170869S",
+       "backAnnotationDuration": "PT0.101929518S"
       },
       "verifier": {
-       "compilationDuration": "PT0.976756870S",
+       "compilationDuration": "PT0.266413799S",
        "compilation": {
-        "createDuration": "PT0.009264524S",
-        "instantiationDuration": "PT0.010465530S",
-        "inliningDuration": "PT0.645743905S",
-        "flatteningDuration": "PT0.311282911S",
+        "createDuration": "PT0.003686502S",
+        "instantiationDuration": "PT0.004895483S",
+        "inliningDuration": "PT0.166641904S",
+        "flatteningDuration": "PT0.091189910S",
         "inliningOptimization": {
-         "duration": "PT0.058943508S",
+         "duration": "PT0.014159346S",
          "passes": [
           {
            "name": "OperationCallInlining",
-           "duration": "PT0.022696539S",
+           "duration": "PT0.005654603S",
            "runs": 1148,
            "firings": 197
           },
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.014217390S",
+           "duration": "PT0.003454299S",
            "runs": 5,
            "firings": 4
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.012078640S",
+           "duration": "PT0.002604325S",
            "runs": 5,
            "firings": 2
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.004956808S",
+           "duration": "PT0.001259924S",
            "runs": 5,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.004550057S",
+           "duration": "PT0.000990012S",
            "runs": 5,
            "firings": 1
           },
           {
            "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000025246S",
+           "duration": "PT0.000008339S",
            "runs": 1,
            "firings": 0
           }
@@ -1224,59 +1164,59 @@
          "analyses": []
         },
         "flatteningOptimization": {
-         "duration": "PT0.207487017S",
+         "duration": "PT0.060365079S",
          "passes": [
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.002683805S",
+           "duration": "PT0.000946861S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.001418060S",
+           "duration": "PT0.000516305S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.001374993S",
+           "duration": "PT0.000520427S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.001330343S",
+           "duration": "PT0.000325750S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.017071217S",
+           "duration": "PT0.005179303S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "CopyPropagationPass",
-           "duration": "PT0.075569497S",
+           "duration": "PT0.021714196S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadStoreEliminationPass",
-           "duration": "PT0.044610094S",
+           "duration": "PT0.012829830S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadCodeRemovalPass",
-           "duration": "PT0.030742309S",
+           "duration": "PT0.008800385S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "VariableLivenessPass",
-           "duration": "PT0.032255789S",
+           "duration": "PT0.009386412S",
            "runs": 3,
            "firings": 1
           }
@@ -1284,17 +1224,17 @@
          "analyses": [
           {
            "name": "ConstantValueAnalysis",
-           "duration": "PT0.006514476S",
+           "duration": "PT0.002000086S",
            "computations": 2
           },
           {
            "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.117006464S",
+           "duration": "PT0.033687309S",
            "computations": 3
           },
           {
            "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.029018161S",
+           "duration": "PT0.008421193S",
            "computations": 2
           }
          ]
@@ -1315,8 +1255,8 @@
          "expressions": 853
         }
        },
-       "backAnnotationDuration": "PT0.006555317S",
-       "portfolioDuration": "PT1.649612754S"
+       "backAnnotationDuration": "PT0.002808862S",
+       "portfolioDuration": "PT1.027170643S"
       }
      },
      "message": null
@@ -1365,30 +1305,20 @@
       {
        "variable": "root.system.trackA.Behaviour.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::sysml::states::AbstractState::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::sysml::states::AbstractState::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.trackA.sensors.incomingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -1405,45 +1335,30 @@
       {
        "variable": "root.system.trackA.controller.outgoingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.trackB.Behaviour.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::sysml::states::AbstractState::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::sysml::states::AbstractState::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.trackB.sensors.incomingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -1460,45 +1375,30 @@
       {
        "variable": "root.system.trackB.controller.outgoingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.controller.Behaviour.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::sysml::states::AbstractState::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::sysml::states::AbstractState::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.controller.trackA.incomingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -1515,15 +1415,10 @@
       {
        "variable": "root.system.controller.trackB.incomingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -1540,45 +1435,30 @@
       {
        "variable": "root.system.controller.barrier.outgoingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.barrier.Behaviour.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::sysml::states::AbstractState::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::sysml::states::AbstractState::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.barrier.controller.incomingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -2138,61 +2018,61 @@
     "result": {
      "metadata": {
       "backendId": "uppaal:default",
-      "startedAt": "2026-11-16T23:55:03.728704645Z"
+      "startedAt": "2026-11-17T10:17:05.898375568Z"
      },
      "verdict": "Passed",
      "soundness": "UnderApproximating",
      "isTrusted": true,
      "metrics": {
-      "totalDuration": "PT0.946851576S",
+      "totalDuration": "PT1.152433912S",
       "backend": {
-       "preparationDuration": "PT0.009469684S",
-       "verificationDuration": "PT0.455096039S",
-       "backAnnotationDuration": "PT0.113056673S"
+       "preparationDuration": "PT0.006295816S",
+       "verificationDuration": "PT0.638045382S",
+       "backAnnotationDuration": "PT0.072098073S"
       },
       "verifier": {
-       "compilationDuration": "PT3.379840457S",
+       "compilationDuration": "PT1.156683215S",
        "compilation": {
-        "createDuration": "PT0.013770368S",
-        "instantiationDuration": "PT0.044026826S",
-        "inliningDuration": "PT2.010929111S",
-        "flatteningDuration": "PT1.311114152S",
+        "createDuration": "PT0.004802476S",
+        "instantiationDuration": "PT0.021117624S",
+        "inliningDuration": "PT0.663721055S",
+        "flatteningDuration": "PT0.467042060S",
         "inliningOptimization": {
-         "duration": "PT0.160472789S",
+         "duration": "PT0.046978536S",
          "passes": [
           {
            "name": "OperationCallInlining",
-           "duration": "PT0.058926094S",
+           "duration": "PT0.018649007S",
            "runs": 3188,
            "firings": 559
           },
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.040350429S",
+           "duration": "PT0.011375120S",
            "runs": 5,
            "firings": 4
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.033353013S",
+           "duration": "PT0.009023350S",
            "runs": 5,
            "firings": 2
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.014078394S",
+           "duration": "PT0.004063164S",
            "runs": 5,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.013077342S",
+           "duration": "PT0.003681869S",
            "runs": 5,
            "firings": 1
           },
           {
            "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000017817S",
+           "duration": "PT0.000007812S",
            "runs": 1,
            "firings": 0
           }
@@ -2200,59 +2080,59 @@
          "analyses": []
         },
         "flatteningOptimization": {
-         "duration": "PT0.737192559S",
+         "duration": "PT0.239671059S",
          "passes": [
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.006957951S",
+           "duration": "PT0.002138089S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.004256498S",
+           "duration": "PT0.001051806S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.004232121S",
+           "duration": "PT0.001077969S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.003885315S",
+           "duration": "PT0.001143317S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.051451216S",
+           "duration": "PT0.018039209S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "CopyPropagationPass",
-           "duration": "PT0.298265452S",
+           "duration": "PT0.092450419S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadStoreEliminationPass",
-           "duration": "PT0.184228746S",
+           "duration": "PT0.053715763S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadCodeRemovalPass",
-           "duration": "PT0.097954864S",
+           "duration": "PT0.034874423S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "VariableLivenessPass",
-           "duration": "PT0.085396173S",
+           "duration": "PT0.034925669S",
            "runs": 3,
            "firings": 1
           }
@@ -2260,17 +2140,17 @@
          "analyses": [
           {
            "name": "ConstantValueAnalysis",
-           "duration": "PT0.017786148S",
+           "duration": "PT0.006824930S",
            "computations": 2
           },
           {
            "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.455636944S",
+           "duration": "PT0.142133719S",
            "computations": 3
           },
           {
            "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.093436539S",
+           "duration": "PT0.033391304S",
            "computations": 2
           }
          ]
@@ -2291,8 +2171,8 @@
          "expressions": 3191
         }
        },
-       "backAnnotationDuration": "PT0.003943762S",
-       "portfolioDuration": "PT0.942586292S"
+       "backAnnotationDuration": "PT0.002613538S",
+       "portfolioDuration": "PT1.149554872S"
       }
      },
      "message": null
@@ -2341,30 +2221,20 @@
       {
        "variable": "root.system.trackA.Behaviour.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::sysml::states::AbstractState::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::sysml::states::AbstractState::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.trackA.sensors.incomingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -2381,45 +2251,30 @@
       {
        "variable": "root.system.trackA.controller.outgoingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.trackB.Behaviour.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::sysml::states::AbstractState::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::sysml::states::AbstractState::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.trackB.sensors.incomingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -2436,45 +2291,30 @@
       {
        "variable": "root.system.trackB.controller.outgoingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.controller.Behaviour.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::sysml::states::AbstractState::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::sysml::states::AbstractState::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.controller.trackA.incomingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -2491,15 +2331,10 @@
       {
        "variable": "root.system.controller.trackB.incomingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -2516,45 +2351,30 @@
       {
        "variable": "root.system.controller.barrier.outgoingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.barrier.Behaviour.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::sysml::states::AbstractState::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::sysml::states::AbstractState::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.barrier.controller.incomingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -2947,61 +2767,61 @@
     "result": {
      "metadata": {
       "backendId": "uppaal:default",
-      "startedAt": "2026-11-16T23:55:07.321287254Z"
+      "startedAt": "2026-11-17T10:17:08.480736064Z"
      },
      "verdict": "Passed",
      "soundness": "UnderApproximating",
      "isTrusted": true,
      "metrics": {
-      "totalDuration": "PT2.803516751S",
+      "totalDuration": "PT5.444606921S",
       "backend": {
-       "preparationDuration": "PT0.010941479S",
-       "verificationDuration": "PT1.231629415S",
-       "backAnnotationDuration": "PT0.804128884S"
+       "preparationDuration": "PT0.012235429S",
+       "verificationDuration": "PT3.529190653S",
+       "backAnnotationDuration": "PT1.062089635S"
       },
       "verifier": {
-       "compilationDuration": "PT6.445860470S",
+       "compilationDuration": "PT3.699476719S",
        "compilation": {
-        "createDuration": "PT0.006848914S",
-        "instantiationDuration": "PT0.044576783S",
-        "inliningDuration": "PT4.420239355S",
-        "flatteningDuration": "PT1.974195418S",
+        "createDuration": "PT0.003157648S",
+        "instantiationDuration": "PT0.024042418S",
+        "inliningDuration": "PT2.240574849S",
+        "flatteningDuration": "PT1.431701804S",
         "inliningOptimization": {
-         "duration": "PT0.325034605S",
+         "duration": "PT0.090897029S",
          "passes": [
           {
            "name": "OperationCallInlining",
-           "duration": "PT0.106263034S",
+           "duration": "PT0.033813187S",
            "runs": 6248,
            "firings": 1102
           },
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.084277008S",
+           "duration": "PT0.021568734S",
            "runs": 5,
            "firings": 4
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.070838066S",
+           "duration": "PT0.018120379S",
            "runs": 5,
            "firings": 2
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.033146076S",
+           "duration": "PT0.009415460S",
            "runs": 5,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.029757097S",
+           "duration": "PT0.007754446S",
            "runs": 5,
            "firings": 1
           },
           {
            "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000026483S",
+           "duration": "PT0.000014209S",
            "runs": 1,
            "firings": 0
           }
@@ -3009,59 +2829,59 @@
          "analyses": []
         },
         "flatteningOptimization": {
-         "duration": "PT0.967460367S",
+         "duration": "PT0.658855551S",
          "passes": [
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.008008292S",
+           "duration": "PT0.004245200S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.004230606S",
+           "duration": "PT0.002553823S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.004098441S",
+           "duration": "PT0.002738044S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.003887991S",
+           "duration": "PT0.002595584S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.065117828S",
+           "duration": "PT0.035446742S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "CopyPropagationPass",
-           "duration": "PT0.402651449S",
+           "duration": "PT0.264989471S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadStoreEliminationPass",
-           "duration": "PT0.217142230S",
+           "duration": "PT0.149801201S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadCodeRemovalPass",
-           "duration": "PT0.138304764S",
+           "duration": "PT0.093869204S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "VariableLivenessPass",
-           "duration": "PT0.123538744S",
+           "duration": "PT0.102313563S",
            "runs": 3,
            "firings": 1
           }
@@ -3069,17 +2889,17 @@
          "analyses": [
           {
            "name": "ConstantValueAnalysis",
-           "duration": "PT0.019500848S",
+           "duration": "PT0.010946930S",
            "computations": 2
           },
           {
            "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.605330536S",
+           "duration": "PT0.404743177S",
            "computations": 3
           },
           {
            "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.132198552S",
+           "duration": "PT0.089871457S",
            "computations": 2
           }
          ]
@@ -3100,8 +2920,8 @@
          "expressions": 8060
         }
        },
-       "backAnnotationDuration": "PT0.011424375S",
-       "portfolioDuration": "PT2.791697501S"
+       "backAnnotationDuration": "PT0.006511790S",
+       "portfolioDuration": "PT5.437832958S"
       }
      },
      "message": null
@@ -3150,30 +2970,20 @@
       {
        "variable": "root.system.trackA.Behaviour.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::sysml::states::AbstractState::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::sysml::states::AbstractState::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.trackA.sensors.incomingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -3190,45 +3000,30 @@
       {
        "variable": "root.system.trackA.controller.outgoingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.trackB.Behaviour.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::sysml::states::AbstractState::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::sysml::states::AbstractState::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.trackB.sensors.incomingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -3245,45 +3040,30 @@
       {
        "variable": "root.system.trackB.controller.outgoingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.controller.Behaviour.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::sysml::states::AbstractState::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::sysml::states::AbstractState::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.controller.trackA.incomingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -3300,15 +3080,10 @@
       {
        "variable": "root.system.controller.trackB.incomingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -3325,45 +3100,30 @@
       {
        "variable": "root.system.controller.barrier.outgoingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.barrier.Behaviour.activeState",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "feature",
-         "name": "semantifyr::sysml::states::AbstractState::states",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "feature",
+        "name": "semantifyr::sysml::states::AbstractState::states",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
       {
        "variable": "root.system.barrier.controller.incomingItem",
        "type": {
-        "kind": "array",
-        "name": null,
-        "element": {
-         "kind": "class",
-         "name": "semantifyr::sysml::items::Item",
-         "element": null,
-         "size": null
-        },
-        "size": 1
+        "kind": "class",
+        "name": "semantifyr::sysml::items::Item",
+        "element": null,
+        "size": null
        },
        "slot": null
       },
@@ -3914,29 +3674,33 @@
  "verifyProgress": [
   {
    "kind": "begin",
-   "title": "Verifying class TwoTrainsCanBeInTheCrossing",
+   "title": "Verifying class BarrierDownWhileTrainInCrossing",
    "cancellable": true,
    "message": "Initializing"
   },
   {
    "kind": "report",
-   "message": "Compiling semantifyr::sysml::model::TwoTrainsCanBeInTheCrossing"
+   "message": "Compiling semantifyr::sysml::model::BarrierDownWhileTrainInCrossing"
   },
   {
    "kind": "report",
-   "message": "racing 8 backend configurations"
+   "message": "first stage: racing 7 backend configurations within 10s"
   },
   {
    "kind": "report",
-   "message": "result 1/8: NotSupported"
+   "message": "running from the first stage: racing 2 backend configurations until the case's time runs out"
   },
   {
    "kind": "report",
-   "message": "result 2/8: Passed"
+   "message": "first stage: result 1/7: NotSupported"
   },
   {
    "kind": "report",
-   "message": "result 3/8: Passed"
+   "message": "first stage: result 2/7: Failed"
+  },
+  {
+   "kind": "report",
+   "message": "first stage: result 3/7: Failed"
   },
   {
    "kind": "end"
@@ -3955,19 +3719,23 @@
   },
   {
    "kind": "report",
-   "message": "racing 8 backend configurations"
+   "message": "first stage: racing 7 backend configurations within 10s"
   },
   {
    "kind": "report",
-   "message": "result 1/8: NotSupported"
+   "message": "running from the first stage: racing 2 backend configurations until the case's time runs out"
   },
   {
    "kind": "report",
-   "message": "result 2/8: Passed"
+   "message": "first stage: result 1/7: NotSupported"
   },
   {
    "kind": "report",
-   "message": "result 3/8: Passed"
+   "message": "first stage: result 2/7: Passed"
+  },
+  {
+   "kind": "report",
+   "message": "first stage: result 3/7: Passed"
   },
   {
    "kind": "end"
