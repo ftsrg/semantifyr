@@ -90,7 +90,7 @@ fun suiteTasks(vararg suites: String): List<TaskCollection<Task>> {
     }
 }
 
-// the suites a tier runs beyond the local build's; the UI suite runs once per browser, called by its own name
+// the suites a tier runs beyond the local build's; CI runs each in a job of its own, the UI suite once per browser
 tasks.register("continuousIntegration") {
     group = "verification"
     dependsOn(
@@ -98,6 +98,7 @@ tasks.register("continuousIntegration") {
             "semanticTest",
             "integrationTest",
             "endToEndTest",
+            "uiTest",
         ),
     )
 }
@@ -126,5 +127,7 @@ sonar {
         property("sonar.projectName", "Semantifyr")
         property("sonar.host.url", "https://sonarcloud.io")
         property("sonar.sourceEncoding", "UTF-8")
+        // a failed quality gate fails the scan, and with it the pull request's units job
+        property("sonar.qualitygate.wait", true)
     }
 }

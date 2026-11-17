@@ -250,7 +250,7 @@ fun NpmTask.runInTestBrowser(script: String, configuration: String) {
     }
 }
 
-tasks.register<NpmTask>("screenTest") {
+val screenTest = tasks.register<NpmTask>("screenTest") {
     runInTestBrowser("screens", "vitest.screen.config.ts")
     val buildDirectory = project.layout.buildDirectory
     outputs.dir(
@@ -260,10 +260,15 @@ tasks.register<NpmTask>("screenTest") {
     )
 }
 
-tasks.register<NpmTask>("uiTest") {
+val applicationTest = tasks.register<NpmTask>("applicationTest") {
     runInTestBrowser("ui", "vitest.ui.config.ts")
     inputs.files(npmAssemble)
     inputs.files(cloneSysmlWorker)
+}
+
+tasks.register("uiTest") {
+    group = "verification"
+    dependsOn(screenTest, applicationTest)
 }
 
 // a picture holds the fonts and the rendering of the browser and the system it is taken on

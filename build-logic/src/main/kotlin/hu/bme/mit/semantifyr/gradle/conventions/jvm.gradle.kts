@@ -82,7 +82,10 @@ tasks.withType<Test>().matching {
 
 buildWithoutPackaging()
 
-tasks.named("build") {
+// assemble compiles every source set too, so that the pipeline's test jobs start from what it made
+tasks.named {
+    it == "build" || it == "assemble"
+}.configureEach {
     dependsOn(
         sourceSets.map {
             it.classesTaskName

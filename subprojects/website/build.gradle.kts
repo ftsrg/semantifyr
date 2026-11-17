@@ -330,6 +330,10 @@ val walkBrowser = testChromium("The keyboard walk needs")
 
 tasks.register<NpmTask>("uiTest") {
     group = "verification"
+    val testBrowser = providers.gradleProperty("testBrowser").orElse("chromium")
+    onlyIf("the walk runs in Chromium alone") {
+        testBrowser.get() == "chromium"
+    }
 
     configureSharedInputs()
     inputs.file(project.layout.projectDirectory.file("vitest.walk.config.mts")).withPathSensitivity(PathSensitivity.RELATIVE)
