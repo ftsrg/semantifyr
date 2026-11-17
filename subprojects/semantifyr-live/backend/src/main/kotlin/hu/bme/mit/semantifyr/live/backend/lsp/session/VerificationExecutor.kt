@@ -78,20 +78,24 @@ class LiveVerificationExecutor : VerificationExecutor {
     }
 
     private fun rewriteWitnessUri(sessionDocumentManager: SessionDocumentManager, result: Any?): Any? {
-        val serverUri = when (result) {
-            is VerificationCaseResult -> result.witnessUri()
-            is WitnessValidationResult -> result.witnessUri()
-            else -> null
-        } ?: return result
+        return when (result) {
+            is VerificationCaseResult -> clientUriOf(sessionDocumentManager, result.witnessUri())?.let {
+                VerificationCaseResult(result.status(), result.message(), result.portfolioId(), result.report(), it)
+            } ?: result
+            is WitnessValidationResult -> clientUriOf(sessionDocumentManager, result.witnessUri())?.let {
+                WitnessValidationResult(result.status(), result.message(), result.portfolioId(), result.report(), it)
+            } ?: result
+            else -> result
+        }
+    }
+
+    private fun clientUriOf(sessionDocumentManager: SessionDocumentManager, serverUri: String?): String? {
+        serverUri ?: return null
         val clientUri = sessionDocumentManager.toClientUri(serverUri)
         if (clientUri == serverUri) {
             logger.warn { "Witness URI is not inside the workspace, leaving it untouched: $serverUri" }
-            return result
+            return null
         }
-        return when (result) {
-            is VerificationCaseResult -> VerificationCaseResult(result.status(), result.message(), result.portfolioId(), result.report(), clientUri)
-            is WitnessValidationResult -> WitnessValidationResult(result.status(), result.message(), result.portfolioId(), result.report(), clientUri)
-            else -> result
-        }
+        return clientUri
     }
 }

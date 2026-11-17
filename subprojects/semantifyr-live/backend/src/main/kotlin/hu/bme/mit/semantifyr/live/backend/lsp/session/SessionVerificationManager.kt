@@ -43,7 +43,6 @@ import java.time.Duration
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.TimeSource
 import kotlin.time.toJavaDuration
 
@@ -340,7 +339,7 @@ class SessionVerificationManager @Inject constructor(
             "instantiation" to compilation.instantiationDuration,
             "inlining" to compilation.inliningDuration,
             "flattening" to compilation.flatteningDuration,
-            "preparation" to maxOf(verifier.compilationDuration + backend.preparationDuration - compilation.createDuration - compilation.instantiationDuration - compilation.inliningDuration - compilation.flatteningDuration, ZERO),
+            "preparation" to backend.preparationDuration,
             "engine" to backend.verificationDuration,
             "back_annotation" to verifier.backAnnotationDuration + backend.backAnnotationDuration,
         )
