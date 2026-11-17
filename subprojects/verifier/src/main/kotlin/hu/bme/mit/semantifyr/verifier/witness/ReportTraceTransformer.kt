@@ -177,7 +177,7 @@ class ReportTraceTransformer @Inject constructor(
                 recordField != null -> {
                     val group = groups.getOrPut(reportValueConverter.path(variable.reference)) {
                         EntryGroup.Record(
-                            reportValueConverter.elementType(variable.declaredVariable.typeSpecification),
+                            reportValueConverter.type(variable.declaredVariable.typeSpecification),
                             variable.arraySlot?.let {
                                 observedSlot(variable, it)
                             },
@@ -193,7 +193,7 @@ class ReportTraceTransformer @Inject constructor(
                 variable.arraySlot != null -> {
                     val key = reportValueConverter.path(variable.reference)
                     groups[key] = EntryGroup.Single(
-                        ReportEntry(key, reportValueConverter.elementType(variable.declaredVariable.typeSpecification), reportValueConverter.value(stateValue.value), observedSlot(variable, variable.arraySlot)),
+                        ReportEntry(key, reportValueConverter.type(variable.declaredVariable.typeSpecification), reportValueConverter.value(stateValue.value), observedSlot(variable, variable.arraySlot)),
                     )
                 }
                 else -> {

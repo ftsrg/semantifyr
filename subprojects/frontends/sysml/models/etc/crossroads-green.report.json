@@ -223,30 +223,20 @@
             {
                 "variable": "root.system.controller.Behaviour.activeState",
                 "type": {
-                    "kind": "array",
-                    "name": null,
-                    "element": {
-                        "kind": "feature",
-                        "name": "semantifyr::sysml::states::AbstractState::states",
-                        "element": null,
-                        "size": null
-                    },
-                    "size": 1
+                    "kind": "feature",
+                    "name": "semantifyr::sysml::states::AbstractState::states",
+                    "element": null,
+                    "size": null
                 },
                 "slot": null
             },
             {
                 "variable": "root.system.controller.control.incomingItem",
                 "type": {
-                    "kind": "array",
-                    "name": null,
-                    "element": {
-                        "kind": "class",
-                        "name": "semantifyr::sysml::items::Item",
-                        "element": null,
-                        "size": null
-                    },
-                    "size": 1
+                    "kind": "class",
+                    "name": "semantifyr::sysml::items::Item",
+                    "element": null,
+                    "size": null
                 },
                 "slot": null
             },
@@ -263,60 +253,40 @@
             {
                 "variable": "root.system.controller.controlA.outgoingItem",
                 "type": {
-                    "kind": "array",
-                    "name": null,
-                    "element": {
-                        "kind": "class",
-                        "name": "semantifyr::sysml::items::Item",
-                        "element": null,
-                        "size": null
-                    },
-                    "size": 1
+                    "kind": "class",
+                    "name": "semantifyr::sysml::items::Item",
+                    "element": null,
+                    "size": null
                 },
                 "slot": null
             },
             {
                 "variable": "root.system.controller.controlB.outgoingItem",
                 "type": {
-                    "kind": "array",
-                    "name": null,
-                    "element": {
-                        "kind": "class",
-                        "name": "semantifyr::sysml::items::Item",
-                        "element": null,
-                        "size": null
-                    },
-                    "size": 1
+                    "kind": "class",
+                    "name": "semantifyr::sysml::items::Item",
+                    "element": null,
+                    "size": null
                 },
                 "slot": null
             },
             {
                 "variable": "root.system.trafficLightA.Behaviour.activeState",
                 "type": {
-                    "kind": "array",
-                    "name": null,
-                    "element": {
-                        "kind": "feature",
-                        "name": "semantifyr::sysml::states::AbstractState::states",
-                        "element": null,
-                        "size": null
-                    },
-                    "size": 1
+                    "kind": "feature",
+                    "name": "semantifyr::sysml::states::AbstractState::states",
+                    "element": null,
+                    "size": null
                 },
                 "slot": null
             },
             {
                 "variable": "root.system.trafficLightA.control.incomingItem",
                 "type": {
-                    "kind": "array",
-                    "name": null,
-                    "element": {
-                        "kind": "class",
-                        "name": "semantifyr::sysml::items::Item",
-                        "element": null,
-                        "size": null
-                    },
-                    "size": 1
+                    "kind": "class",
+                    "name": "semantifyr::sysml::items::Item",
+                    "element": null,
+                    "size": null
                 },
                 "slot": null
             },
@@ -333,30 +303,20 @@
             {
                 "variable": "root.system.trafficLightB.Behaviour.activeState",
                 "type": {
-                    "kind": "array",
-                    "name": null,
-                    "element": {
-                        "kind": "feature",
-                        "name": "semantifyr::sysml::states::AbstractState::states",
-                        "element": null,
-                        "size": null
-                    },
-                    "size": 1
+                    "kind": "feature",
+                    "name": "semantifyr::sysml::states::AbstractState::states",
+                    "element": null,
+                    "size": null
                 },
                 "slot": null
             },
             {
                 "variable": "root.system.trafficLightB.control.incomingItem",
                 "type": {
-                    "kind": "array",
-                    "name": null,
-                    "element": {
-                        "kind": "class",
-                        "name": "semantifyr::sysml::items::Item",
-                        "element": null,
-                        "size": null
-                    },
-                    "size": 1
+                    "kind": "class",
+                    "name": "semantifyr::sysml::items::Item",
+                    "element": null,
+                    "size": null
                 },
                 "slot": null
             },
@@ -373,75 +333,50 @@
             {
                 "variable": "root.system.controller.Behaviour.Operating.activeState",
                 "type": {
-                    "kind": "array",
-                    "name": null,
-                    "element": {
-                        "kind": "feature",
-                        "name": "semantifyr::sysml::states::AbstractState::states",
-                        "element": null,
-                        "size": null
-                    },
-                    "size": 1
+                    "kind": "feature",
+                    "name": "semantifyr::sysml::states::AbstractState::states",
+                    "element": null,
+                    "size": null
                 },
                 "slot": null
             },
             {
                 "variable": "root.system.trafficLightA.Behaviour.Normal.activeState",
                 "type": {
-                    "kind": "array",
-                    "name": null,
-                    "element": {
-                        "kind": "feature",
-                        "name": "semantifyr::sysml::states::AbstractState::states",
-                        "element": null,
-                        "size": null
-                    },
-                    "size": 1
+                    "kind": "feature",
+                    "name": "semantifyr::sysml::states::AbstractState::states",
+                    "element": null,
+                    "size": null
                 },
                 "slot": null
             },
             {
                 "variable": "root.system.trafficLightA.Behaviour.Interrupted.activeState",
                 "type": {
-                    "kind": "array",
-                    "name": null,
-                    "element": {
-                        "kind": "feature",
-                        "name": "semantifyr::sysml::states::AbstractState::states",
-                        "element": null,
-                        "size": null
-                    },
-                    "size": 1
+                    "kind": "feature",
+                    "name": "semantifyr::sysml::states::AbstractState::states",
+                    "element": null,
+                    "size": null
                 },
                 "slot": null
             },
             {
                 "variable": "root.system.trafficLightB.Behaviour.Normal.activeState",
                 "type": {
-                    "kind": "array",
-                    "name": null,
-                    "element": {
-                        "kind": "feature",
-                        "name": "semantifyr::sysml::states::AbstractState::states",
-                        "element": null,
-                        "size": null
-                    },
-                    "size": 1
+                    "kind": "feature",
+                    "name": "semantifyr::sysml::states::AbstractState::states",
+                    "element": null,
+                    "size": null
                 },
                 "slot": null
             },
             {
                 "variable": "root.system.trafficLightB.Behaviour.Interrupted.activeState",
                 "type": {
-                    "kind": "array",
-                    "name": null,
-                    "element": {
-                        "kind": "feature",
-                        "name": "semantifyr::sysml::states::AbstractState::states",
-                        "element": null,
-                        "size": null
-                    },
-                    "size": 1
+                    "kind": "feature",
+                    "name": "semantifyr::sysml::states::AbstractState::states",
+                    "element": null,
+                    "size": null
                 },
                 "slot": null
             },

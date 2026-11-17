@@ -13,7 +13,6 @@ import hu.bme.mit.semantifyr.compiler.pipeline.expression.ExpressionEvaluationSe
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider
-import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ArrayEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.BooleanEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EnumLiteralEvaluation
@@ -52,7 +51,6 @@ class ReportValueConverter @Inject constructor(
     private val instanceReferenceProvider: InstanceReferenceProvider,
     private val expressionSerializer: ExpressionSerializer,
     private val expressionEvaluationSerializer: ExpressionEvaluationSerializer,
-    private val multiplicityRangeEvaluator: MultiplicityRangeEvaluator,
 ) {
 
     fun path(expression: Expression): String {
@@ -113,21 +111,6 @@ class ReportValueConverter @Inject constructor(
     }
 
     fun type(typeSpecification: TypeSpecification?): ReportType {
-        val element = elementType(typeSpecification)
-        if (typeSpecification?.multiplicity == null) {
-            return element
-        }
-        val upperBound = multiplicityRangeEvaluator.evaluate(typeSpecification).upperBound
-        return ReportType(
-            kind = ReportTypeKind.Array,
-            element = element,
-            size = upperBound.takeIf {
-                it != RangeEvaluation.INFINITY
-            }?.toInt(),
-        )
-    }
-
-    fun elementType(typeSpecification: TypeSpecification?): ReportType {
         val domain = typeSpecification?.domain ?: error("a traced value has no declared type")
         val kind = when (domain) {
             is DataTypeDeclaration -> ReportTypeKind.Datatype
