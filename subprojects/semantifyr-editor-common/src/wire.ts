@@ -116,14 +116,11 @@ export type ReportTypeKind =
     | "enum"
     | "class"
     | "record"
-    | "feature"
-    | "array";
+    | "feature";
 
 export interface ReportType {
     kind: ReportTypeKind;
     name: string | null;
-    element: ReportType | null;
-    size: number | null;
 }
 
 export interface ObservedParameter {

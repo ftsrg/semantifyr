@@ -29,12 +29,12 @@ export const counterexample: ReportTrace = {
     transitions: [
         {
             transition: 'lamp::Lamp::toggle',
-            parameters: [{ parameter: 'brightness', type: { kind: 'datatype', name: 'semantifyr::int', element: null, size: null } }],
+            parameters: [{ parameter: 'brightness', type: { kind: 'datatype', name: 'semantifyr::int' } }],
         },
     ],
     variables: [
-        { variable: 'root.lamp.on', type: { kind: 'datatype', name: 'semantifyr::bool', element: null, size: null }, slot: null },
-        { variable: 'root.lamp.brightness', type: { kind: 'datatype', name: 'semantifyr::int', element: null, size: null }, slot: null },
+        { variable: 'root.lamp.on', type: { kind: 'datatype', name: 'semantifyr::bool' }, slot: null },
+        { variable: 'root.lamp.brightness', type: { kind: 'datatype', name: 'semantifyr::int' }, slot: null },
     ],
     initial: { state: 0, calls: [] },
     states: [

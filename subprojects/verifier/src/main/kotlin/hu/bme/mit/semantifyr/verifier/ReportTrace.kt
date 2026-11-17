@@ -26,17 +26,12 @@ enum class ReportTypeKind {
 
     @SerialName("feature")
     Feature,
-
-    @SerialName("array")
-    Array,
 }
 
 @Serializable
 data class ReportType(
     val kind: ReportTypeKind,
     val name: String? = null,
-    val element: ReportType? = null,
-    val size: Int? = null,
 )
 
 @Serializable

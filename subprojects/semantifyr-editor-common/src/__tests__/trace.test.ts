@@ -65,7 +65,7 @@ describe("traceStates", () => {
 describe("isTimed", () => {
     it("holds for a model that keeps a clock or lets time pass, and not for one that does neither", () => {
         const waited = trace({ states: [{ values: {} }, { values: {} }], steps: [{ source: 0, target: 1, elapsed: "3/2", calls: [] }] });
-        const clocked = trace({ variables: [{ variable: "root.timer", type: { kind: "datatype", name: "semantifyr::clock", element: null, size: null }, slot: null }] });
+        const clocked = trace({ variables: [{ variable: "root.timer", type: { kind: "datatype", name: "semantifyr::clock" }, slot: null }] });
 
         expect(isTimed(waited)).toBe(true);
         expect(isTimed(clocked)).toBe(true);

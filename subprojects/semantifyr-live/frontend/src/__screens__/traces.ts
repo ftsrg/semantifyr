@@ -127,7 +127,7 @@ function traceOf(recorded: boolean, timed: boolean): ReportTrace {
     root: 'root',
     transitions: [],
     variables: Object.keys(START).map((variable) => {
-      return { variable: `root.system.${variable}`, type: { kind: 'class', name: 'semantifyr::Anything', element: null, size: null }, slot: null }
+      return { variable: `root.system.${variable}`, type: { kind: 'class', name: 'semantifyr::Anything' }, slot: null }
     }),
     initial: { state: 0, calls: [] },
     states: [values(START), values(STEP_ONE), values(STEP_TWO), values(STEP_THREE)],
