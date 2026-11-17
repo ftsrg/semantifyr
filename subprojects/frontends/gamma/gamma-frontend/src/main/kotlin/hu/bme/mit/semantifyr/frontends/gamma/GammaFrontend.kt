@@ -94,9 +94,6 @@ class GammaFrontend @Inject private constructor(
     val timeout: Duration?
         get() = gammaFrontendConfiguration.timeout
 
-    val libraryPaths: List<Path>
-        get() = gammaFrontendConfiguration.libraryPaths
-
     suspend fun verify(
         gammaVerificationCase: GammaVerificationCase,
         progress: ProgressContext = ProgressContext.Silent,

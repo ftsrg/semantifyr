@@ -8,10 +8,7 @@ package hu.bme.mit.semantifyr.frontends.gamma.testing
 
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
-import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
-import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
-import hu.bme.mit.semantifyr.frontends.gamma.GammaCompiler
 import hu.bme.mit.semantifyr.frontends.gamma.GammaFrontend
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVariant
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVerificationCase
@@ -22,20 +19,14 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EF
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaRoot
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
-import hu.bme.mit.semantifyr.frontends.gamma.serialization.markName
-import hu.bme.mit.semantifyr.frontends.gamma.serialization.markQualifiedName
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.portfolios.Portfolios
-import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.assertVerdict
 import hu.bme.mit.semantifyr.verifier.assumePortfolioAvailable
-import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import org.assertj.core.api.Assertions.assertThat
-import org.eclipse.xtext.resource.FileExtensionProvider
 import org.junit.jupiter.api.Named
 import org.junit.jupiter.params.provider.Arguments
 import java.nio.file.Path
@@ -47,11 +38,10 @@ import kotlin.time.Duration.Companion.minutes
 
 enum class GammaTestEngine(
     val portfolio: VerificationPortfolio,
-    val exploresWholeDelays: Boolean = false,
 ) {
-    Theta(Portfolios.ThetaBoundedKInduction, true),
+    Theta(Portfolios.ThetaBoundedKInduction),
     Nuxmv(Portfolios.NuxmvIc3Invar),
-    Spin(Portfolios.SpinSafeDfs, true),
+    Spin(Portfolios.SpinSafeDfs),
     Uppaal(Portfolios.UppaalDefault),
 }
 
@@ -64,10 +54,6 @@ class GammaFrontendTestHelper {
     private val gammaReader = gammaInjector.getInstance(GammaReader::class.java)
     private val workspaces = mutableMapOf<Path, Map<Path, GammaRoot>>()
     private val gammaDiscoverer = gammaInjector.getInstance(GammaVerificationCaseDiscoverer::class.java)
-    private val verifierHelper = oxstsInjector.getInstance(SemantifyrVerifierTestHelper::class.java)
-    private val libraryPaths by lazy {
-        buildFrontend(Portfolios.SmartFull, Path("build", "test-artifacts", "case-selection")).libraryPaths
-    }
 
     fun discover(sourcePath: Path): List<GammaVerificationCase> {
         val gammaModel = gammaReader.readGammaFile(sourcePath.toFile())
@@ -94,9 +80,7 @@ class GammaFrontendTestHelper {
                 it.declaration.name == entry.case.name
             }
             if (gammaVerificationCase.declaration.expression is EF) {
-                GammaTestEngine.entries.asSequence().filter { engine ->
-                    !(engine.exploresWholeDelays && verifierHelper.underApproximatedByWholeDelays("${gammaVerificationCase.qualifiedName} on $engine", inlinedOxstsOf(gammaVerificationCase)))
-                }.map {
+                GammaTestEngine.entries.asSequence().map {
                     Arguments.of(Named.of(gammaVerificationCase.qualifiedName, entry), it)
                 }
             } else {
@@ -168,22 +152,6 @@ class GammaFrontendTestHelper {
                 .isEqualTo(VerificationVerdict.Passed)
         }
         return result
-    }
-
-    private fun inlinedOxstsOf(gammaVerificationCase: GammaVerificationCase): InlinedOxsts {
-        val directory = Path("build", "test-artifacts", "case-selection", gammaVerificationCase.qualifiedName)
-        val fileExtension = oxstsInjector.getInstance(FileExtensionProvider::class.java).primaryFileExtension
-        val gammaModel = gammaVerificationCase.declaration.eContainer() as GammaModelPackage
-        val compiled = gammaInjector.getInstance(GammaCompiler::class.java).compileWithImports(gammaModel, directory, fileExtension)
-        val context = oxstsInjector.getInstance(SemantifyrLoader::class.java).startContext()
-            .loadLibraryPaths(libraryPaths)
-            .loadModelPaths(compiled.importedPaths + listOf(compiled.modelPath))
-            .buildAndResolve()
-        val oxstsCase = oxstsInjector.getInstance(VerificationCaseDiscoverer::class.java).findByQualifiedName(
-            context,
-            "${markQualifiedName(gammaModel.name)}::${markName(gammaVerificationCase.declaration.name)}",
-        )
-        return SemantifyrCompiler(oxstsInjector, ArtifactConfig.NONE).compile(oxstsCase.classDeclaration, directory.resolve("compiled")).inlinedOxsts
     }
 
     companion object {
