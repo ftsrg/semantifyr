@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.portfolios
 
 import com.google.inject.Injector
+import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
 import hu.bme.mit.semantifyr.backend.BackendConfig
 import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
@@ -50,6 +51,10 @@ class PassingBackend<T : BackendConfig>(
     override val executorKey: ExecutorKey<BackendExecutor> = AvailableKey,
 ) : VerificationBackend<T>() {
 
+    override fun capabilityChecker(parentInjector: Injector, config: T): BackendCapabilityChecker {
+        return BackendCapabilityChecker.Unlimited
+    }
+
     override suspend fun verify(
         parentInjector: Injector,
         config: T,
@@ -64,6 +69,10 @@ class FailingBackend<T : BackendConfig>(
     override val id: String = "failing",
     override val executorKey: ExecutorKey<BackendExecutor> = AvailableKey,
 ) : VerificationBackend<T>() {
+
+    override fun capabilityChecker(parentInjector: Injector, config: T): BackendCapabilityChecker {
+        return BackendCapabilityChecker.Unlimited
+    }
 
     override suspend fun verify(
         parentInjector: Injector,
@@ -81,6 +90,10 @@ class ErroringBackend<T : BackendConfig>(
     private val message: String = "scripted failure",
 ) : VerificationBackend<T>() {
 
+    override fun capabilityChecker(parentInjector: Injector, config: T): BackendCapabilityChecker {
+        return BackendCapabilityChecker.Unlimited
+    }
+
     override suspend fun verify(
         parentInjector: Injector,
         config: T,
@@ -96,6 +109,10 @@ class UnreadableTraceBackend<T : BackendConfig>(
     override val executorKey: ExecutorKey<BackendExecutor> = AvailableKey,
 ) : VerificationBackend<T>() {
 
+    override fun capabilityChecker(parentInjector: Injector, config: T): BackendCapabilityChecker {
+        return BackendCapabilityChecker.Unlimited
+    }
+
     override suspend fun verify(
         parentInjector: Injector,
         config: T,
@@ -109,7 +126,7 @@ class UnreadableTraceBackend<T : BackendConfig>(
         id: String,
         config: BackendConfig,
         request: BackendVerificationRequest,
-    ) : VerificationContext<Unit, VerificationVerdict>(id, config.soundness, request) {
+    ) : VerificationContext<Unit, VerificationVerdict>(id, config.soundness, request, BackendCapabilityChecker.Unlimited) {
         override val executor = FakeExecutor(true)
 
         override suspend fun prepare() {
@@ -135,6 +152,10 @@ class NotSupportedBackend<T : BackendConfig>(
     override val executorKey: ExecutorKey<BackendExecutor> = AvailableKey,
 ) : VerificationBackend<T>() {
 
+    override fun capabilityChecker(parentInjector: Injector, config: T): BackendCapabilityChecker {
+        return BackendCapabilityChecker.Unlimited
+    }
+
     override suspend fun verify(
         parentInjector: Injector,
         config: T,
@@ -155,6 +176,10 @@ class SlowBackend<T : BackendConfig>(
     private val delayMillis: Long = 10_000,
     private val verdict: VerificationVerdict = VerificationVerdict.Passed,
 ) : VerificationBackend<T>() {
+
+    override fun capabilityChecker(parentInjector: Injector, config: T): BackendCapabilityChecker {
+        return BackendCapabilityChecker.Unlimited
+    }
 
     val invocations = AtomicInteger(0)
     val cancellations = AtomicInteger(0)
@@ -193,6 +218,10 @@ class ScriptedBackend<T : BackendConfig>(
     private val answers: Map<String, ScriptedAnswer> = emptyMap(),
     override val executorKey: ExecutorKey<BackendExecutor> = AvailableKey,
 ) : VerificationBackend<T>() {
+
+    override fun capabilityChecker(parentInjector: Injector, config: T): BackendCapabilityChecker {
+        return BackendCapabilityChecker.Unlimited
+    }
 
     val starts = mutableListOf<ScriptedStart>()
     val cancellations = mutableListOf<String>()

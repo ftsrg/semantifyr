@@ -78,7 +78,7 @@ class PortfolioScope internal constructor(
 
     internal fun leg(task: PortfolioTask<*>, subPath: String) {
         leg(task.leg.id) {
-            task.run(case.parentInjector, case.request.withSubPath(subPath), case.environment)
+            task.leg.run(case.parentInjector, case.request.withSubPath(subPath), case.environment)
         }
     }
 }
@@ -122,7 +122,19 @@ class PortfolioLeg<T : BackendConfig>(
     val soundness = config.soundness
     val executorKey = backend.executorKey
 
-    fun trusts(
+    fun isAvailable(environment: ExecutionEnvironment): Boolean {
+        return environment.availability(executorKey).isUsable
+    }
+
+    suspend fun run(
+        parentInjector: Injector,
+        request: BackendVerificationRequest,
+        environment: ExecutionEnvironment,
+    ): BackendVerificationResult {
+        return backend.verify(parentInjector, config, request, environment)
+    }
+
+    suspend fun trusts(
         parentInjector: Injector,
         inlinedOxsts: InlinedOxsts,
         verdict: VerificationVerdict,
@@ -398,7 +410,7 @@ abstract class VerificationPortfolio(
             return PortfolioOutcome.NoDecision(availability.reason, emptyList())
         }
         val available = stages.tasks.filter {
-            it.isAvailable(case.environment)
+            it.leg.isAvailable(case.environment)
         }
         if (available.size <= case.slots) {
             logger.info { "$id: racing ${available.size} configurations on ${case.slots} slots (timeout ${case.time})" }

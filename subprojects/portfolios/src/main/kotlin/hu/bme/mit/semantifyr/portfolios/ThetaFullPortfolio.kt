@@ -39,12 +39,12 @@ class ThetaFullPortfolio(
         PortfolioTask(theta, ThetaConfig.BoundedKInduction, "kinduction"),
     )
 
-    override val executorKeys: Set<ExecutorKey<*>> = tasks.map { it.executorKey }.toSet()
+    override val executorKeys: Set<ExecutorKey<*>> = tasks.map { it.leg.executorKey }.toSet()
     override val legs = tasks.map { it.leg }
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
         val anyAvailable = tasks.any {
-            it.isAvailable(environment)
+            it.leg.isAvailable(environment)
         }
         return if (anyAvailable) {
             AvailabilityReport.Available
@@ -63,7 +63,7 @@ class ThetaFullPortfolio(
         progress: ProgressContext,
     ): BackendVerificationResult {
         val startedAt = Clock.System.now()
-        if (!tasks.any { it.isAvailable(environment) }) {
+        if (!tasks.any { it.leg.isAvailable(environment) }) {
             logger.info { "$id: no available Theta executor on this host" }
             return BackendVerificationResult(
                 metadata = VerificationMetadata(
