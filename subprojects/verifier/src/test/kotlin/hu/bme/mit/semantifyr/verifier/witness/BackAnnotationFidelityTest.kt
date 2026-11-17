@@ -340,24 +340,6 @@ class BackAnnotationFidelityTest {
     }
 
     @Test
-    fun `a slot of an array sized from a binding names the size of its instance`(@TempDir models: Path, @TempDir output: Path) {
-        val case = loadText(models, "sized.semantifyr", SIZED_ARRAY_MODEL, "semantifyr::verification::report::sized::SizedSlotReach")
-        val slot = flattenedName("root", "store", "slots_1")
-
-        val compilation = compile(case, output)
-        val model = compilation.inlinedOxsts
-        val witness = linearInlinedWitness(
-            model,
-            listOf(
-                model.state(slot to 1),
-            ),
-        )
-        val annotated = backAnnotate(compilation, witness, output)
-
-        assertThat(annotated.trace.variables.single().slot).isEqualTo(ObservedSlot(array = "root.store.slots", index = 1, size = 2))
-    }
-
-    @Test
     fun `a slot of an array of records is held under the slot's key as an object of its kept fields and back-annotates field by field`(@TempDir output: Path) {
         val case = loadCase("records.semantifyr", recordArrayCase)
         val readings = flattenedName("root", "store", "readings") + RecordFlatteningPass.FIELD_SEPARATOR
@@ -670,30 +652,6 @@ class BackAnnotationFidelityTest {
 
     companion object {
         private const val TIMED_CASE = "semantifyr::verification::report::timed::TimerFires"
-
-        private val SIZED_ARRAY_MODEL = """
-            package semantifyr::verification::report::sized
-
-            class Store {
-                refers capacity: int
-                var slots: int[capacity] := [0, ...]
-            }
-
-            @VerificationCase
-            class SizedSlotReach {
-                contains store: Store {
-                    redefine refers capacity: int = 2
-                }
-
-                redefine tran {
-                    store.slots[1] := 1
-                }
-
-                prop {
-                    return EF (store.slots[1] == 1)
-                }
-            }
-        """.trimIndent()
 
         private val RUN_TIME_ARGUMENT_MODEL = """
             package semantifyr::verification::report::run_time_argument

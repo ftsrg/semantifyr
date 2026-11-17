@@ -85,12 +85,14 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
         )
 
         assertThat(flattened.slotNames("one")).containsExactly(member("root", "one", "slots") + "_0")
+        assertThat(flattened.flatteningInfo.arraySlots.getValue(flattened.variableNamed(member("root", "one", "slots") + "_0")).size).isEqualTo(1)
         assertThat(flattened.slotNames("three")).hasSize(3)
         for (index in 0..2) {
             val slot = flattened.variableNamed(member("root", "three", "slots") + "_$index")
             assertThat(flattened.initialValue(slot.name)).isEqualTo(7)
             assertThat(flattened.flatteningInfo.arraySlots.getValue(slot).index).isEqualTo(index)
             assertThat(flattened.flatteningInfo.arraySlots.getValue(slot).arrayVariable.name).isEqualTo("slots")
+            assertThat(flattened.flatteningInfo.arraySlots.getValue(slot).size).isEqualTo(3)
         }
         assertThat(flattened.inlinedOxsts.eAllOfType<IndexingSuffixExpression>().toList()).isEmpty()
     }
