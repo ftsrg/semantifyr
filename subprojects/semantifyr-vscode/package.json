@@ -283,7 +283,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:integration": "node src/__integration__/run.mjs",
+    "test:end-to-end": "node src/__end-to-end__/run.mjs",
     "check": "npm run typecheck && npm run lint && npm run test",
     "assemble": "node esbuild.mjs",
     "assemble:watch": "node esbuild.mjs --watch",

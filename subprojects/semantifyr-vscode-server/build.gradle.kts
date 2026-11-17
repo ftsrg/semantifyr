@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.conventions.buildWithoutPackaging
 import hu.bme.mit.semantifyr.gradle.conventions.corpusModels
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import org.apache.tools.ant.taskdefs.condition.Os
@@ -103,7 +104,9 @@ tasks.assemble {
     dependsOn(prepareDockerBuild)
 }
 
-val imageTest = tasks.register<Exec>("imageTest") {
+buildWithoutPackaging()
+
+tasks.register<Exec>("endToEndTest") {
     group = "verification"
     dependsOn(prepareDockerBuild)
     onlyIf("the image test needs a POSIX shell") {
@@ -111,9 +114,4 @@ val imageTest = tasks.register<Exec>("imageTest") {
     }
 
     commandLine("./image-test.sh", "semantifyr-vscode-server:test")
-}
-
-tasks.register("integrationTest") {
-    group = "verification"
-    dependsOn(imageTest)
 }

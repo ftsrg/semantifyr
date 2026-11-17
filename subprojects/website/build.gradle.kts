@@ -328,7 +328,7 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
 
 val walkBrowser = testChromium("The keyboard walk needs")
 
-tasks.register<NpmTask>("walkTest") {
+tasks.register<NpmTask>("uiTest") {
     group = "verification"
 
     configureSharedInputs()

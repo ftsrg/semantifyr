@@ -217,6 +217,16 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
     stampOnSuccess()
 }
 
+tasks.register<NpmTask>("integrationTest") {
+    group = "verification"
+
+    configureSharedInputs()
+
+    npmCommand.set(listOf("run", "test:integration"))
+
+    stampOnSuccess()
+}
+
 val testBrowser = providers.gradleProperty("testBrowser").orElse("chromium")
 
 fun NpmTask.runInTestBrowser(script: String, configuration: String) {
