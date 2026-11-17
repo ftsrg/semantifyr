@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
+import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.UnsupportedConstruct
 import hu.bme.mit.semantifyr.backend.transformation.WholeDelayLowering
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral
@@ -32,6 +33,10 @@ open class ThetaCapabilityChecker @Inject constructor(
         }.map {
             UnsupportedConstruct(it.variable, "clocks bounded at the largest 32-bit integer")
         }
+    }
+
+    override fun soundness(inlinedOxsts: InlinedOxsts, configured: SoundnessDirection): SoundnessDirection {
+        return wholeDelayLowering.soundness(inlinedOxsts, configured)
     }
 
     override fun describeUnsupported(element: EObject): String? {

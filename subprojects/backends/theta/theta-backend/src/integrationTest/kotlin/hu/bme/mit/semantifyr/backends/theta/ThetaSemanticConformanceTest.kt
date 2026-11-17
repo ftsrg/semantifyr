@@ -44,7 +44,6 @@ class ThetaSemanticConformanceTest {
                 ThetaBackendModule(),
                 ThetaCapabilityChecker::class.java,
                 SemantifyrVerifierTestHelper.testArtifactRoot(ThetaSemanticConformanceTest::class.java).resolve("capability-check"),
-                exploresWholeDelays = true,
             )
         }
     }

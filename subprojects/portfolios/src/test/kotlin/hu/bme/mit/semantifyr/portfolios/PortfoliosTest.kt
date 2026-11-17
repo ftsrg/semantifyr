@@ -7,8 +7,8 @@
 package hu.bme.mit.semantifyr.portfolios
 
 import hu.bme.mit.semantifyr.backend.SoundnessDirection
-import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.tuple
 import org.junit.jupiter.api.Test
 
 class PortfoliosTest {
@@ -22,22 +22,22 @@ class PortfoliosTest {
 
     @Test
     fun `a racing portfolio lists each leg with its soundness direction`() {
-        assertThat(Portfolios.SmartFull.legs).contains(
-            PortfolioLeg("theta:cegar-expl", SoundnessDirection.Exact),
-            PortfolioLeg("theta:cegar-expl-pred-combined", SoundnessDirection.Exact),
-            PortfolioLeg("theta:chc", SoundnessDirection.OverApproximating),
-            PortfolioLeg("nuxmv:kinduction-invar", SoundnessDirection.Exact),
-            PortfolioLeg("nuxmv:ic3-invar", SoundnessDirection.Exact),
-            PortfolioLeg("spin:safe-dfs", SoundnessDirection.UnderApproximating),
-            PortfolioLeg("uppaal:default", SoundnessDirection.UnderApproximating),
-            PortfolioLeg("uppaal:over-approximation", SoundnessDirection.OverApproximating),
+        assertThat(Portfolios.SmartFull.legs).extracting("id", "soundness").contains(
+            tuple("theta:cegar-expl", SoundnessDirection.Exact),
+            tuple("theta:cegar-expl-pred-combined", SoundnessDirection.Exact),
+            tuple("theta:chc", SoundnessDirection.OverApproximating),
+            tuple("nuxmv:kinduction-invar", SoundnessDirection.Exact),
+            tuple("nuxmv:ic3-invar", SoundnessDirection.Exact),
+            tuple("spin:safe-dfs", SoundnessDirection.UnderApproximating),
+            tuple("uppaal:default", SoundnessDirection.UnderApproximating),
+            tuple("uppaal:over-approximation", SoundnessDirection.OverApproximating),
         )
     }
 
     @Test
     fun `a single-backend portfolio lists its configuration as its leg`() {
-        assertThat(Portfolios.UppaalDefault.legs).containsExactly(
-            PortfolioLeg("uppaal:default", SoundnessDirection.UnderApproximating),
+        assertThat(Portfolios.UppaalDefault.legs).extracting("id", "soundness").containsExactly(
+            tuple("uppaal:default", SoundnessDirection.UnderApproximating),
         )
     }
 }

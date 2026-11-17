@@ -11,6 +11,7 @@ import com.google.inject.Injector
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
 import com.google.inject.assistedinject.FactoryModuleBuilder
+import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationBackend
@@ -20,7 +21,6 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScope
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
-import hu.bme.mit.semantifyr.backend.transformation.WholeDelayLowering
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backends.spin.SpinExecutionSpecification
@@ -62,6 +62,10 @@ class SpinBackend : VerificationBackend<SpinConfig>() {
             context.execute()
         }
     }
+
+    override fun capabilityChecker(parentInjector: Injector, config: SpinConfig): BackendCapabilityChecker {
+        return parentInjector.createChildInjector(SpinBackendModule()).getInstance(SpinCapabilityChecker::class.java)
+    }
 }
 
 class SpinBackendModule : AbstractModule() {
@@ -83,10 +87,9 @@ class SpinVerificationContext @AssistedInject constructor(
     private val spinTraceParser: SpinTraceParser,
     private val spinLogVerdictParser: SpinLogVerdictParser,
     private val spinInlinedOxstsWitnessTransformer: SpinInlinedOxstsWitnessTransformer,
-    wholeDelayLowering: WholeDelayLowering,
 ) : VerificationContext<SpinArtifacts, SpinVerdict>(
     backendId = "spin:${config.id}",
-    soundness = wholeDelayLowering.soundness(request.inlinedOxsts, config.soundness),
+    configuredSoundness = config.soundness,
     request = request,
 ) {
 

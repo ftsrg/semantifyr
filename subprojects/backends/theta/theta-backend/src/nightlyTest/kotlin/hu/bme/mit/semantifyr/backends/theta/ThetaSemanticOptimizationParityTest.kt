@@ -47,12 +47,11 @@ class ThetaSemanticOptimizationParityTest {
 
         @JvmStatic
         fun `Every Optimization Keeps The Verdict Of No Optimization`(): List<Arguments> {
-            return helper.collectAcceptedCasesAsArguments(
+            return helper.collectSupportedCasesAsArguments(
                 context,
                 ThetaBackendModule(),
                 ThetaCapabilityChecker::class.java,
                 SemantifyrVerifierTestHelper.testArtifactRoot(ThetaSemanticOptimizationParityTest::class.java).resolve("capability-check"),
-                exploresWholeDelays = true,
             )
         }
     }

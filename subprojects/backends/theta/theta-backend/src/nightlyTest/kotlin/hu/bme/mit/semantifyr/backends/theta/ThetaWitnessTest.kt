@@ -46,7 +46,6 @@ class ThetaWitnessTest {
                 ThetaBackendModule(),
                 ThetaCapabilityChecker::class.java,
                 SemantifyrVerifierTestHelper.testArtifactRoot(ThetaWitnessTest::class.java).resolve("capability-check"),
-                exploresWholeDelays = true,
             )
         }
     }

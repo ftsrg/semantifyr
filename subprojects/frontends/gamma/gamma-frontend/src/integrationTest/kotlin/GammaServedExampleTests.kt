@@ -40,6 +40,10 @@ class GammaServedExampleTests {
             it.declaration.name == entry.case.name
         }
         val frontend = helper.buildFrontend(Portfolios.SmartFull, artifactRoot, environment = liveBackends)
-        helper.checkVerificationCase(frontend, gammaVerificationCase, entry.case.expectedVerdict)
+        if (helper.givesTrustedVerdict(frontend, Portfolios.SmartFull, liveBackends, gammaVerificationCase, entry.case.expectedVerdict)) {
+            helper.checkVerificationCase(frontend, gammaVerificationCase, entry.case.expectedVerdict)
+        } else {
+            helper.checkNoTrustedVerdict(frontend.verify(gammaVerificationCase), gammaVerificationCase)
+        }
     }
 }

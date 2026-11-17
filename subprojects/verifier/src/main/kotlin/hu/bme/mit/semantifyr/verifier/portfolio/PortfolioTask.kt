@@ -19,7 +19,7 @@ class PortfolioTask<T : BackendConfig>(
     val subPath: String,
 ) {
     val executorKey = backend.executorKey
-    val leg = PortfolioLeg("${backend.id}:${config.id}", config.soundness)
+    val leg = PortfolioLeg(backend, config)
 
     fun isAvailable(environment: ExecutionEnvironment): Boolean {
         return environment.availability(backend.executorKey).isUsable

@@ -87,7 +87,7 @@ class SemantifyrVerifierTestHelperTest {
         override val id: String = "fixed"
         override val displayName: String = id
         override val description: String = "test-only"
-        override val legs: List<PortfolioLeg> = emptyList()
+        override val legs: List<PortfolioLeg<*>> = emptyList()
 
         override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
             return if (available) {

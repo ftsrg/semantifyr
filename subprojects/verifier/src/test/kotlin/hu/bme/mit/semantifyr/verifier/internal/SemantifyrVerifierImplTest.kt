@@ -423,7 +423,7 @@ class SemantifyrVerifierImplTest {
         override val displayName: String = "scripted"
         override val description: String = "test-only"
         override val executorKeys: Set<ExecutorKey<*>> = emptySet()
-        override val legs: List<PortfolioLeg> = emptyList()
+        override val legs: List<PortfolioLeg<*>> = emptyList()
 
         var invocations: Int = 0
             private set

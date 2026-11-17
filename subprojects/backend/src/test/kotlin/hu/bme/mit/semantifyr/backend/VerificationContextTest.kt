@@ -60,6 +60,16 @@ class VerificationContextTest {
         }
     }
 
+    private class UnderApproximatedModels : BackendCapabilityChecker() {
+        override fun describeUnsupported(element: EObject): String? {
+            return null
+        }
+
+        override fun soundness(inlinedOxsts: InlinedOxsts, configured: SoundnessDirection): SoundnessDirection {
+            return SoundnessDirection.UnderApproximating
+        }
+    }
+
     private class ScriptedContext(
         override val executor: CountingExecutor = CountingExecutor(),
         private val preparationFailure: Exception? = null,
@@ -71,7 +81,7 @@ class VerificationContextTest {
         override val capabilityChecker: BackendCapabilityChecker = RejectingVariables(),
     ) : VerificationContext<String, String>(
         backendId = "scripted",
-        soundness = soundness,
+        configuredSoundness = soundness,
         request = BackendVerificationRequest(inlinedOxsts, Path("build"), transitionCallTraces = transitionCallTraces),
     ) {
         val phases = mutableListOf<String>()
@@ -125,6 +135,16 @@ class VerificationContextTest {
         val result = context.execute()
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(result.soundness).isEqualTo(SoundnessDirection.UnderApproximating)
+        assertThat(result.isTrusted).isFalse
+    }
+
+    @Test
+    suspend fun `the result carries the direction the capability checker answers on the model`() {
+        val context = ScriptedContext(capabilityChecker = UnderApproximatedModels())
+
+        val result = context.execute()
+
         assertThat(result.soundness).isEqualTo(SoundnessDirection.UnderApproximating)
         assertThat(result.isTrusted).isFalse
     }
@@ -364,7 +384,7 @@ class VerificationContextTest {
     }
 }
 
-private fun modelChecking(property: Expression): InlinedOxsts {
+internal fun modelChecking(property: Expression): InlinedOxsts {
     return OxstsFactory.createInlinedOxsts().also {
         it.property = OxstsFactory.createPropertyDeclaration().also { declaration ->
             declaration.expression = property

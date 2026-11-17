@@ -14,7 +14,6 @@ import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScopeBlocking
-import hu.bme.mit.semantifyr.backend.transformation.WholeDelayLowering
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
@@ -94,38 +93,63 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         capabilityChecker: Class<out BackendCapabilityChecker>,
         outputDirectory: Path,
         filter: CaseFilter = CaseFilter.All,
-        exploresWholeDelays: Boolean = false,
     ): List<Arguments> {
-        val backendInjector = injector.createChildInjector(backendModule)
-        val compiler = SemantifyrCompiler(injector, ArtifactConfig.NONE)
-        return collectVerificationCases(context, filter).filter { case ->
-            val inlinedOxsts = compiler.compile(case.classDeclaration, outputDirectory.resolve(caseDirectoryName(case))).inlinedOxsts
-            val unsupported = withVerificationScopeBlocking {
-                backendInjector.getInstance(capabilityChecker).check(inlinedOxsts)
+        return collectSupportedCases(context, backendModule, capabilityChecker, outputDirectory, filter).filter {
+            if (it.loweredExactly) {
+                return@filter true
             }
-            if (unsupported.isNotEmpty()) {
-                logger.info {
-                    val refusals = unsupported.map {
-                        it.description
-                    }.distinct().joinToString()
-                    "Leaving out ${case.qualifiedName}: ${capabilityChecker.simpleName} refuses $refusals"
-                }
-            }
-            unsupported.isEmpty() && !(exploresWholeDelays && underApproximatedByWholeDelays(case.qualifiedName, inlinedOxsts))
+            logger.info { "Leaving out ${it.case.qualifiedName}: ${capabilityChecker.simpleName} answers that its backend approximates the model" }
+            false
         }.map {
-            Arguments.of(Named.of(it.qualifiedName, it))
+            Arguments.of(Named.of(it.case.qualifiedName, it.case))
         }
     }
 
-    fun underApproximatedByWholeDelays(name: String, inlinedOxsts: InlinedOxsts): Boolean {
-        val soundness = withVerificationScopeBlocking {
-            injector.getInstance(WholeDelayLowering::class.java).soundness(inlinedOxsts, SoundnessDirection.Exact)
+    fun collectSupportedCasesAsArguments(
+        context: SemantifyrModelContext,
+        backendModule: Module,
+        capabilityChecker: Class<out BackendCapabilityChecker>,
+        outputDirectory: Path,
+        filter: CaseFilter = CaseFilter.All,
+    ): List<Arguments> {
+        return collectSupportedCases(context, backendModule, capabilityChecker, outputDirectory, filter).map {
+            Arguments.of(Named.of(it.case.qualifiedName, it.case))
         }
-        if (soundness == SoundnessDirection.Exact) {
-            return false
+    }
+
+    private class SupportedCase(
+        val case: VerificationCase,
+        val loweredExactly: Boolean,
+    )
+
+    private fun collectSupportedCases(
+        context: SemantifyrModelContext,
+        backendModule: Module,
+        capabilityChecker: Class<out BackendCapabilityChecker>,
+        outputDirectory: Path,
+        filter: CaseFilter,
+    ): List<SupportedCase> {
+        val backendInjector = injector.createChildInjector(backendModule)
+        val compiler = SemantifyrCompiler(injector, ArtifactConfig.NONE)
+        return collectVerificationCases(context, filter).mapNotNull { case ->
+            val inlinedOxsts = compiler.compile(case.classDeclaration, outputDirectory.resolve(caseDirectoryName(case))).inlinedOxsts
+            withVerificationScopeBlocking {
+                val checker = backendInjector.getInstance(capabilityChecker)
+                val unsupported = checker.check(inlinedOxsts)
+                if (unsupported.isEmpty()) {
+                    // an exact configuration stays exact unless the backend's own lowering approximates the model
+                    SupportedCase(case, checker.soundness(inlinedOxsts, SoundnessDirection.Exact) == SoundnessDirection.Exact)
+                } else {
+                    logger.info {
+                        val refusals = unsupported.map {
+                            it.description
+                        }.distinct().joinToString()
+                        "Leaving out ${case.qualifiedName}: ${capabilityChecker.simpleName} refuses $refusals"
+                    }
+                    null
+                }
+            }
         }
-        logger.info { "Leaving out $name: whole delays under-approximate it" }
-        return true
     }
 
     suspend fun checkVerificationCase(

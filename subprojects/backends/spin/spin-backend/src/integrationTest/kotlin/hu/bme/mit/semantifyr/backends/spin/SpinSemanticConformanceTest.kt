@@ -50,7 +50,6 @@ class SpinSemanticConformanceTest {
                 SpinBackendModule(),
                 SpinCapabilityChecker::class.java,
                 SemantifyrVerifierTestHelper.testArtifactRoot(SpinSemanticConformanceTest::class.java).resolve("capability-check"),
-                exploresWholeDelays = true,
             )
         }
     }
