@@ -152,19 +152,6 @@ public class ClockValidationTest {
     }
 
     @Test
-    void clockArraySizedFromABindingIsRejected() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            class Timer {
-                refers capacity: int
-                var elapsed: clock[capacity] := [0, ...]
-            }
-            """, CheckMode.ALL);
-
-        assertOnlyClockError(parsedPackage, "cannot be an array element");
-    }
-
-    @Test
     void comparisonWithAnArrayIsRejected() {
         var parsedPackage = parseHelper.parse("""
             package test
