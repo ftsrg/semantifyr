@@ -35,8 +35,8 @@ open class ThetaCapabilityChecker @Inject constructor(
         }
     }
 
-    override fun soundness(inlinedOxsts: InlinedOxsts, configured: SoundnessDirection): SoundnessDirection {
-        return wholeDelayLowering.soundness(inlinedOxsts, configured)
+    override fun soundness(inlinedOxsts: InlinedOxsts): SoundnessDirection {
+        return wholeDelayLowering.soundness(inlinedOxsts)
     }
 
     override fun describeUnsupported(element: EObject): String? {

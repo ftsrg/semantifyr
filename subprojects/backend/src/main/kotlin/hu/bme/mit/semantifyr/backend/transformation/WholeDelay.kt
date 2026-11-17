@@ -119,9 +119,9 @@ class WholeDelayLowering @Inject constructor(
         )
     }
 
-    fun soundness(inlinedOxsts: InlinedOxsts, configured: SoundnessDirection): SoundnessDirection {
+    fun soundness(inlinedOxsts: InlinedOxsts): SoundnessDirection {
         if (clockTestAnalysis.unclosedTests(inlinedOxsts.mainTransition).isEmpty()) {
-            return configured
+            return SoundnessDirection.Exact
         }
         return SoundnessDirection.UnderApproximating
     }

@@ -39,8 +39,8 @@ abstract class BackendCapabilityChecker {
         return emptyList()
     }
 
-    open fun soundness(inlinedOxsts: InlinedOxsts, configured: SoundnessDirection): SoundnessDirection {
-        return configured
+    open fun soundness(inlinedOxsts: InlinedOxsts): SoundnessDirection {
+        return SoundnessDirection.Exact
     }
 
     object Unlimited : BackendCapabilityChecker() {

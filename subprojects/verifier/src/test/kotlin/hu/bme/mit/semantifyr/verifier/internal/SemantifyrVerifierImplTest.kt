@@ -386,21 +386,21 @@ class SemantifyrVerifierImplTest {
         )
     }
 
+    private class RejectingVariables : BackendCapabilityChecker() {
+        override fun describeUnsupported(element: EObject): String? {
+            if (element is VariableDeclaration) {
+                return "variables of type int"
+            }
+            return null
+        }
+    }
+
     private class RejectingVariablesContext(
         request: BackendVerificationRequest,
-    ) : VerificationContext<Unit, Unit>("scripted", SoundnessDirection.Exact, request) {
+    ) : VerificationContext<Unit, Unit>("scripted", SoundnessDirection.Exact, request, RejectingVariables()) {
         override val executor = object : BackendExecutor {
             override fun isAvailable(): Boolean {
                 return true
-            }
-        }
-
-        override val capabilityChecker = object : BackendCapabilityChecker() {
-            override fun describeUnsupported(element: EObject): String? {
-                if (element is VariableDeclaration) {
-                    return "variables of type int"
-                }
-                return null
             }
         }
 

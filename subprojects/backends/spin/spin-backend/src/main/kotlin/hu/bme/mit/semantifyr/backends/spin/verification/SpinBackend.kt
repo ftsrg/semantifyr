@@ -58,7 +58,7 @@ class SpinBackend : VerificationBackend<SpinConfig>() {
         val injector = parentInjector.createChildInjector(SpinBackendModule())
         return withVerificationScope {
             val factory = injector.getInstance(SpinVerificationContext.Factory::class.java)
-            val context = factory.create(config, executor, request)
+            val context = factory.create(config, executor, request, capabilityChecker(parentInjector, config))
             context.execute()
         }
     }
@@ -82,7 +82,7 @@ class SpinVerificationContext @AssistedInject constructor(
     @param:Assisted private val config: SpinConfig,
     @param:Assisted override val executor: SpinExecutor,
     @Assisted request: BackendVerificationRequest,
-    override val capabilityChecker: SpinCapabilityChecker,
+    @Assisted capabilityChecker: BackendCapabilityChecker,
     private val spinModelTransformer: SpinModelTransformer,
     private val spinTraceParser: SpinTraceParser,
     private val spinLogVerdictParser: SpinLogVerdictParser,
@@ -91,6 +91,7 @@ class SpinVerificationContext @AssistedInject constructor(
     backendId = "spin:${config.id}",
     configuredSoundness = config.soundness,
     request = request,
+    capabilityChecker = capabilityChecker,
 ) {
 
     private val artifactManager = SpinArtifactManager(request.artifactOutputPath)
@@ -217,6 +218,7 @@ class SpinVerificationContext @AssistedInject constructor(
             config: SpinConfig,
             executor: SpinExecutor,
             request: BackendVerificationRequest,
+            capabilityChecker: BackendCapabilityChecker,
         ): SpinVerificationContext
     }
 }

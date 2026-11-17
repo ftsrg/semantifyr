@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.verifier
 
 import com.google.inject.Injector
+import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
 import hu.bme.mit.semantifyr.backend.BackendConfig
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
@@ -120,6 +121,10 @@ class FakeBackend(
     override val id: String,
     private val behavior: suspend () -> BackendVerificationResult,
 ) : VerificationBackend<FakeConfig>() {
+
+    override fun capabilityChecker(parentInjector: Injector, config: FakeConfig): BackendCapabilityChecker {
+        return BackendCapabilityChecker.Unlimited
+    }
     override val executorKey = FakeExecutorKey
 
     val invocations = AtomicInteger(0)

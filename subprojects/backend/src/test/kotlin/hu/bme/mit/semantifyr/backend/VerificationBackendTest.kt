@@ -25,15 +25,12 @@ class VerificationBackendTest {
         override val soundness = SoundnessDirection.Exact
     }
 
-    private class UnderApproximatingVariables : BackendCapabilityChecker() {
+    private class UnderApproximatingLowering : BackendCapabilityChecker() {
         override fun describeUnsupported(element: EObject): String? {
             return null
         }
 
-        override fun soundness(inlinedOxsts: InlinedOxsts, configured: SoundnessDirection): SoundnessDirection {
-            if (inlinedOxsts.variables.isEmpty()) {
-                return configured
-            }
+        override fun soundness(inlinedOxsts: InlinedOxsts): SoundnessDirection {
             return SoundnessDirection.UnderApproximating
         }
     }
@@ -71,25 +68,16 @@ class VerificationBackendTest {
     private val injector = Guice.createInjector()
 
     @Test
-    fun `a backend trusts either verdict of a configuration that stays exact on the model`() {
-        val backend = CheckedBackend(UnderApproximatingVariables())
+    suspend fun `a backend trusts only a verdict with a trace on a model its lowering under-approximates`() {
+        val backend = CheckedBackend(UnderApproximatingLowering())
         val inlinedOxsts = modelChecking(OxstsFactory.createAG())
-
-        assertThat(backend.trusts(injector, ExactConfig(), inlinedOxsts, VerificationVerdict.Passed)).isTrue
-        assertThat(backend.trusts(injector, ExactConfig(), inlinedOxsts, VerificationVerdict.Failed)).isTrue
-    }
-
-    @Test
-    fun `a backend trusts only a verdict with a trace on a model its checker answers under-approximated`() {
-        val backend = CheckedBackend(UnderApproximatingVariables())
-        val inlinedOxsts = withVariable(modelChecking(OxstsFactory.createAG()))
 
         assertThat(backend.trusts(injector, ExactConfig(), inlinedOxsts, VerificationVerdict.Passed)).isFalse
         assertThat(backend.trusts(injector, ExactConfig(), inlinedOxsts, VerificationVerdict.Failed)).isTrue
     }
 
     @Test
-    fun `a backend trusts no verdict on a model its checker refuses`() {
+    suspend fun `a backend trusts no verdict on a model its checker refuses`() {
         val backend = CheckedBackend(RefusingVariables())
         val inlinedOxsts = withVariable(modelChecking(OxstsFactory.createAG()))
 
