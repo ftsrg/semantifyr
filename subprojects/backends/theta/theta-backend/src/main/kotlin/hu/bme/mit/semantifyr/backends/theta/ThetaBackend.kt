@@ -11,6 +11,7 @@ import com.google.inject.Injector
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
 import com.google.inject.assistedinject.FactoryModuleBuilder
+import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.SoundnessDirection
@@ -59,9 +60,20 @@ class ThetaBackend : VerificationBackend<ThetaConfig>() {
         val injector = parentInjector.createChildInjector(ThetaBackendModule())
         return withVerificationScope {
             val factory = injector.getInstance(ThetaVerificationContext.Factory::class.java)
-            val context = factory.create(config, executor, request)
+            val context = factory.create(config, executor, request, capabilityCheckerOf(injector, config))
             context.execute()
         }
+    }
+
+    override fun capabilityChecker(parentInjector: Injector, config: ThetaConfig): BackendCapabilityChecker {
+        return capabilityCheckerOf(parentInjector.createChildInjector(ThetaBackendModule()), config)
+    }
+
+    private fun capabilityCheckerOf(injector: Injector, config: ThetaConfig): ThetaCapabilityChecker {
+        if (config.soundness == SoundnessDirection.OverApproximating) {
+            return injector.getInstance(ThetaHornCapabilityChecker::class.java)
+        }
+        return injector.getInstance(ThetaCapabilityChecker::class.java)
     }
 }
 
@@ -78,8 +90,7 @@ class ThetaVerificationContext @AssistedInject constructor(
     @param:Assisted private val config: ThetaConfig,
     @param:Assisted override val executor: ThetaXstsExecutor,
     @Assisted request: BackendVerificationRequest,
-    thetaCapabilityChecker: ThetaCapabilityChecker,
-    thetaHornCapabilityChecker: ThetaHornCapabilityChecker,
+    @param:Assisted override val capabilityChecker: ThetaCapabilityChecker,
     private val thetaModelTransformer: ThetaModelTransformer,
     private val xstsModelCreator: XstsModelCreator,
     private val thetaLogVerdictParser: ThetaLogVerdictParser,
@@ -92,12 +103,6 @@ class ThetaVerificationContext @AssistedInject constructor(
     configuredSoundness = config.soundness,
     request = request,
 ) {
-
-    override val capabilityChecker = if (config.soundness == SoundnessDirection.OverApproximating) {
-        thetaHornCapabilityChecker
-    } else {
-        thetaCapabilityChecker
-    }
 
     private val artifactManager = ThetaArtifactManager(request.artifactOutputPath)
 
@@ -166,6 +171,7 @@ class ThetaVerificationContext @AssistedInject constructor(
             config: ThetaConfig,
             executor: ThetaXstsExecutor,
             request: BackendVerificationRequest,
+            capabilityChecker: ThetaCapabilityChecker,
         ): ThetaVerificationContext
     }
 }

@@ -11,6 +11,7 @@ import com.google.inject.Injector
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
 import com.google.inject.assistedinject.FactoryModuleBuilder
+import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationBackend
@@ -56,9 +57,21 @@ class NuxmvBackend : VerificationBackend<NuxmvConfig>() {
         val injector = parentInjector.createChildInjector(NuxmvBackendModule())
         return withVerificationScope {
             val factory = injector.getInstance(NuxmvVerificationContext.Factory::class.java)
-            val context = factory.create(config, executor, request)
+            val context = factory.create(config, executor, request, capabilityCheckerOf(injector, config))
             context.execute()
         }
+    }
+
+    override fun capabilityChecker(parentInjector: Injector, config: NuxmvConfig): BackendCapabilityChecker {
+        return capabilityCheckerOf(parentInjector.createChildInjector(NuxmvBackendModule()), config)
+    }
+
+    // go builds the BDD FSM, go_msat the SMT encoding
+    private fun capabilityCheckerOf(injector: Injector, config: NuxmvConfig): BackendCapabilityChecker {
+        if (config.setupCommand == "go") {
+            return injector.getInstance(NuxmvBddCapabilityChecker::class.java)
+        }
+        return injector.getInstance(NuxmvCapabilityChecker::class.java)
     }
 }
 
@@ -77,8 +90,7 @@ class NuxmvVerificationContext @AssistedInject constructor(
     @param:Assisted private val config: NuxmvConfig,
     @param:Assisted override val executor: NuxmvExecutor,
     @Assisted request: BackendVerificationRequest,
-    nuxmvCapabilityChecker: NuxmvCapabilityChecker,
-    nuxmvBddCapabilityChecker: NuxmvBddCapabilityChecker,
+    @param:Assisted override val capabilityChecker: BackendCapabilityChecker,
     private val nuxmvModelTransformer: NuxmvModelTransformer,
     private val nuxmvTraceParser: NuxmvTraceParser,
     private val nuxmvLogVerdictParser: NuxmvLogVerdictParser,
@@ -88,13 +100,6 @@ class NuxmvVerificationContext @AssistedInject constructor(
     configuredSoundness = config.soundness,
     request = request,
 ) {
-
-    // go builds the BDD FSM, go_msat the SMT encoding
-    override val capabilityChecker = if (config.setupCommand == "go") {
-        nuxmvBddCapabilityChecker
-    } else {
-        nuxmvCapabilityChecker
-    }
 
     private val artifactManager = NuxmvArtifactManager(request.artifactOutputPath)
 
@@ -191,6 +196,7 @@ class NuxmvVerificationContext @AssistedInject constructor(
             config: NuxmvConfig,
             executor: NuxmvExecutor,
             request: BackendVerificationRequest,
+            capabilityChecker: BackendCapabilityChecker,
         ): NuxmvVerificationContext
     }
 }

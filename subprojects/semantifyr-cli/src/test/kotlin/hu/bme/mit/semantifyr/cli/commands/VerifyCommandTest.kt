@@ -399,7 +399,7 @@ class VerifyCommandTest {
         override val displayName = id
         override val description = "test-only"
         override val executorKeys = emptySet<ExecutorKey<*>>()
-        override val legs = emptyList<PortfolioLeg>()
+        override val legs = emptyList<PortfolioLeg<*>>()
 
         override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
             return AvailabilityReport.Unavailable("no engine", listOf("install an engine"))

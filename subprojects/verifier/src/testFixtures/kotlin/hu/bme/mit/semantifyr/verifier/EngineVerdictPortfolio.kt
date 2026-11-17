@@ -28,7 +28,7 @@ class EngineVerdictPortfolio<T : BackendConfig>(
     override val displayName = "${backend.id} ${configuration.id}"
     override val description = "The verdict of ${backend.id} ${configuration.id}, trusted or not"
     override val executorKeys: Set<ExecutorKey<*>> = setOf(backend.executorKey)
-    override val legs = listOf(PortfolioLeg("${backend.id}:${configuration.id}", configuration.soundness))
+    override val legs = listOf(PortfolioLeg(backend, configuration))
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
         return environment.availability(backend.executorKey)

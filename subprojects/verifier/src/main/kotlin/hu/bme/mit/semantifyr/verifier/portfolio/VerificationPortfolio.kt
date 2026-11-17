@@ -7,10 +7,11 @@
 package hu.bme.mit.semantifyr.verifier.portfolio
 
 import com.google.inject.Injector
+import hu.bme.mit.semantifyr.backend.BackendConfig
 import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
-import hu.bme.mit.semantifyr.backend.SoundnessDirection
+import hu.bme.mit.semantifyr.backend.VerificationBackend
 import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
@@ -19,6 +20,7 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -112,10 +114,22 @@ data class LegRun(
     val end: LegEnd,
 )
 
-data class PortfolioLeg(
-    val id: String,
-    val soundness: SoundnessDirection,
-)
+class PortfolioLeg<T : BackendConfig>(
+    private val backend: VerificationBackend<T>,
+    private val config: T,
+) {
+    val id = "${backend.id}:${config.id}"
+    val soundness = config.soundness
+    val executorKey = backend.executorKey
+
+    fun trusts(
+        parentInjector: Injector,
+        inlinedOxsts: InlinedOxsts,
+        verdict: VerificationVerdict,
+    ): Boolean {
+        return backend.trusts(parentInjector, config, inlinedOxsts, verdict)
+    }
+}
 
 fun BackendVerificationRequest.withSubPath(subpath: String): BackendVerificationRequest {
     return this.copy(artifactOutputPath = artifactOutputPath.resolve(subpath))
@@ -223,7 +237,7 @@ abstract class VerificationPortfolio(
     abstract val displayName: String
     abstract val description: String
     abstract val executorKeys: Set<ExecutorKey<*>>
-    abstract val legs: List<PortfolioLeg>
+    abstract val legs: List<PortfolioLeg<*>>
 
     abstract fun availability(environment: ExecutionEnvironment = ExecutionEnvironment.Empty): AvailabilityReport
 

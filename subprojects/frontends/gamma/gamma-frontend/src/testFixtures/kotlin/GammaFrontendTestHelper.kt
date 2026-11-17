@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.frontends.gamma.testing
 
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.frontends.gamma.GammaFrontend
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVariant
@@ -123,6 +124,28 @@ class GammaFrontendTestHelper {
         val result = frontend.verify(gammaVerificationCase)
         assertVerdict(gammaVerificationCase.qualifiedName, expectedVerdict, result.outcome.report.result)
         return result
+    }
+
+    fun givesTrustedVerdict(
+        frontend: GammaFrontend,
+        portfolio: VerificationPortfolio,
+        environment: ExecutionEnvironment,
+        gammaVerificationCase: GammaVerificationCase,
+        verdict: VerificationVerdict,
+    ): Boolean {
+        val verificationCase = frontend.compile(gammaVerificationCase).verificationCase
+        val outputDirectory = frontend.outputDirectory.resolve(gammaVerificationCase.qualifiedName).resolve("trust")
+        val inlinedOxsts = SemantifyrCompiler(oxstsInjector, ArtifactConfig.NONE).compile(verificationCase.classDeclaration, outputDirectory).inlinedOxsts
+        return portfolio.legs.any {
+            environment.availability(it.executorKey).isUsable && it.trusts(oxstsInjector, inlinedOxsts, verdict)
+        }
+    }
+
+    fun checkNoTrustedVerdict(result: GammaVerificationResult, gammaVerificationCase: GammaVerificationCase) {
+        val verificationResult = result.outcome.report.result
+        assertThat(verificationResult.verdict)
+            .describedAs("${gammaVerificationCase.qualifiedName} has no trusted verdict on these backends (${verificationResult.message ?: "no message"})")
+            .isIn(VerificationVerdict.Inconclusive, VerificationVerdict.Timeout)
     }
 
     suspend fun checkVerificationCaseOn(

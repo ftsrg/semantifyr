@@ -11,6 +11,7 @@ import com.google.inject.Injector
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
 import com.google.inject.assistedinject.FactoryModuleBuilder
+import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
@@ -60,9 +61,20 @@ class UppaalBackend : VerificationBackend<UppaalConfig>() {
         val injector = parentInjector.createChildInjector(UppaalBackendModule())
         return withVerificationScope {
             val factory = injector.getInstance(UppaalVerificationContext.Factory::class.java)
-            val context = factory.create(config, executor, request)
+            val context = factory.create(config, executor, request, capabilityCheckerOf(injector, config))
             context.execute()
         }
+    }
+
+    override fun capabilityChecker(parentInjector: Injector, config: UppaalConfig): BackendCapabilityChecker {
+        return capabilityCheckerOf(parentInjector.createChildInjector(UppaalBackendModule()), config)
+    }
+
+    private fun capabilityCheckerOf(injector: Injector, config: UppaalConfig): BackendCapabilityChecker {
+        if (config.soundness == SoundnessDirection.OverApproximating) {
+            return injector.getInstance(UppaalOverApproximationCapabilityChecker::class.java)
+        }
+        return injector.getInstance(UppaalCapabilityChecker::class.java)
     }
 }
 
@@ -80,8 +92,7 @@ class UppaalVerificationContext @AssistedInject constructor(
     @param:Assisted private val config: UppaalConfig,
     @param:Assisted override val executor: UppaalExecutor,
     @Assisted request: BackendVerificationRequest,
-    uppaalCapabilityChecker: UppaalCapabilityChecker,
-    overApproximationCapabilityChecker: UppaalOverApproximationCapabilityChecker,
+    @param:Assisted override val capabilityChecker: BackendCapabilityChecker,
     private val uppaalModelTransformer: UppaalModelTransformer,
     private val uppaalTraceParser: UppaalTraceParser,
     private val uppaalLogVerdictParser: UppaalLogVerdictParser,
@@ -92,12 +103,6 @@ class UppaalVerificationContext @AssistedInject constructor(
     configuredSoundness = config.soundness,
     request = request,
 ) {
-
-    override val capabilityChecker = if (config.soundness == SoundnessDirection.OverApproximating) {
-        overApproximationCapabilityChecker
-    } else {
-        uppaalCapabilityChecker
-    }
 
     private val artifactManager = UppaalArtifactManager(request.artifactOutputPath)
 
@@ -206,6 +211,7 @@ class UppaalVerificationContext @AssistedInject constructor(
             config: UppaalConfig,
             executor: UppaalExecutor,
             request: BackendVerificationRequest,
+            capabilityChecker: BackendCapabilityChecker,
         ): UppaalVerificationContext
     }
 }

@@ -25,6 +25,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.ReportTrace
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
+import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.VerificationOutcome
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
@@ -45,6 +46,11 @@ import kotlin.time.toKotlinDuration
 data class GammaVerificationCase(
     val qualifiedName: String,
     val declaration: VerificationCaseDeclaration,
+)
+
+class CompiledGammaCase(
+    val model: CompiledGammaModel,
+    val verificationCase: VerificationCase,
 )
 
 class GammaWitness(
@@ -99,12 +105,26 @@ class GammaFrontend @Inject private constructor(
         progress: ProgressContext = ProgressContext.Silent,
     ): GammaVerificationResult {
         val qualifiedName = gammaVerificationCase.qualifiedName
-        val baseDirectory = caseDirectory(gammaVerificationCase)
-        val gammaModel = EcoreUtil2.getContainerOfType(gammaVerificationCase.declaration, GammaModelPackage::class.java)
 
         logger.info { "Verifying Gamma case '$qualifiedName'" }
 
-        val compiledModel = gammaCompiler.compileWithImports(gammaModel, baseDirectory, oxstsFileExtension)
+        val compiledCase = compile(gammaVerificationCase)
+        val verificationDirectory = caseDirectory(gammaVerificationCase).resolve("verification")
+        val semantifyrVerifier = buildVerifier(verificationDirectory)
+
+        val outcome = semantifyrVerifier.verify(compiledCase.verificationCase, progress)
+        val witness = outcome.report.trace?.let {
+            val gammaTracePath = outcome.reportPath.resolveSibling(GAMMA_TRACE_FILE_NAME)
+            val gammaTrace = writeGammaTrace(gammaVerificationCase, it, compiledCase.model, gammaTracePath)
+            GammaWitness(gammaTrace, gammaTracePath)
+        }
+        logger.info { "Gamma case '$qualifiedName' -> ${outcome.report.result.verdict}" }
+        return GammaVerificationResult(outcome, witness)
+    }
+
+    fun compile(gammaVerificationCase: GammaVerificationCase): CompiledGammaCase {
+        val gammaModel = EcoreUtil2.getContainerOfType(gammaVerificationCase.declaration, GammaModelPackage::class.java)
+        val compiledModel = gammaCompiler.compileWithImports(gammaModel, caseDirectory(gammaVerificationCase), oxstsFileExtension)
 
         val context = semantifyrLoader.startContext()
             .loadLibraryPaths(gammaFrontendConfiguration.libraryPaths)
@@ -112,19 +132,7 @@ class GammaFrontend @Inject private constructor(
             .buildAndResolve()
 
         val oxstsVerificationCaseName = "${markQualifiedName(gammaModel.name)}::${markName(gammaVerificationCase.declaration.name)}"
-        val oxstsVerificationCase = verificationCaseDiscoverer.findByQualifiedName(context, oxstsVerificationCaseName)
-
-        val verificationDirectory = baseDirectory.resolve("verification")
-        val semantifyrVerifier = buildVerifier(verificationDirectory)
-
-        val outcome = semantifyrVerifier.verify(oxstsVerificationCase, progress)
-        val witness = outcome.report.trace?.let {
-            val gammaTracePath = outcome.reportPath.resolveSibling(GAMMA_TRACE_FILE_NAME)
-            val gammaTrace = writeGammaTrace(gammaVerificationCase, it, compiledModel, gammaTracePath)
-            GammaWitness(gammaTrace, gammaTracePath)
-        }
-        logger.info { "Gamma case '$qualifiedName' -> ${outcome.report.result.verdict}" }
-        return GammaVerificationResult(outcome, witness)
+        return CompiledGammaCase(compiledModel, verificationCaseDiscoverer.findByQualifiedName(context, oxstsVerificationCaseName))
     }
 
     private fun writeGammaTrace(
