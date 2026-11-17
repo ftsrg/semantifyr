@@ -69,9 +69,15 @@ jobs:
       - name: Install Spin
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: sudo apt-get update && sudo apt-get install -y spin
+      - name: Install nuXmv
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        # downloaded in every run, never cached or uploaded: nuXmv's licence forbids redistributing it
+        run: |
+          .github/scripts/install-engines.sh --accept-nuxmv-license "$HOME/tools"
+          echo "$HOME/tools/bin" >> "$GITHUB_PATH"
       - name: Check the engines
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: .github/scripts/check-engines.sh spin docker
+        run: .github/scripts/check-engines.sh spin nuxmv docker
       - name: Gradle build
         shell: bash
         run: ./gradlew build --continue -Pwebsite.apiDocs=$WEBSITE_API_DOCS
