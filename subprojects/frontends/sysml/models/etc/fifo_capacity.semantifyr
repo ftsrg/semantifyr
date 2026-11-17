@@ -1,0 +1,250 @@
+package semantifyr::sysml::fixture
+
+import semantifyr::sysml::expressions
+import semantifyr::sysml::attributes
+import semantifyr::sysml::states
+import semantifyr::sysml::parts
+import semantifyr::sysml::ports
+import semantifyr::sysml::items
+import semantifyr::sysml::actions
+import semantifyr::sysml::triggers
+import semantifyr::sysml::verification
+
+class Oldest : Item
+
+global containment global_Oldest: Oldest[1]
+
+class Middle : Item
+
+global containment global_Middle: Middle[1]
+
+class Newest : Item
+
+global containment global_Newest: Newest[1]
+
+class Feed : NormalPort
+
+class ConjugatedFeed : ConjugatedPort
+
+class Producer : Part {
+    contains output: Feed subsets ports
+    contains Behaviour: ExhibitedState redefines exhibitState {
+        contains Idle: State subsets states
+        contains SentOldest: State subsets states
+        contains SentMiddle: State subsets states
+        contains SentNewest: State subsets states
+        contains enterIdle: Transition subsets transitions {
+            redefine refers from: StateNode = start
+            redefine refers to: StateNode = Idle
+        }
+        contains sendOldest: Transition subsets transitions {
+            redefine refers from: StateNode = Idle
+            redefine refers to: StateNode = SentOldest
+            redefine contains action: SendItemAction {
+                redefine refers viaPort: Port = output
+                redefine refers payload: Item = global_Oldest
+            }
+        }
+        contains sendMiddle: Transition subsets transitions {
+            redefine refers from: StateNode = SentOldest
+            redefine refers to: StateNode = SentMiddle
+            redefine contains action: SendItemAction {
+                redefine refers viaPort: Port = output
+                redefine refers payload: Item = global_Middle
+            }
+        }
+        contains sendNewest: Transition subsets transitions {
+            redefine refers from: StateNode = SentMiddle
+            redefine refers to: StateNode = SentNewest
+            redefine contains action: SendItemAction {
+                redefine refers viaPort: Port = output
+                redefine refers payload: Item = global_Newest
+            }
+        }
+    }
+}
+
+class Consumer : Part {
+    contains input: ConjugatedFeed subsets ports
+    contains Behaviour: ExhibitedState redefines exhibitState {
+        contains Idle: State subsets states
+        contains FirstWait: State subsets states
+        contains SecondWait: State subsets states
+        contains Ready: State subsets states
+        contains GotOldest: State subsets states
+        contains GotMiddle: State subsets states
+        contains GotNewest: State subsets states
+        contains OutOfOrder: State subsets states
+        contains enterIdle: Transition subsets transitions {
+            redefine refers from: StateNode = start
+            redefine refers to: StateNode = Idle
+        }
+        contains waitFirst: Transition subsets transitions {
+            redefine refers from: StateNode = Idle
+            redefine refers to: StateNode = FirstWait
+        }
+        contains waitSecond: Transition subsets transitions {
+            redefine refers from: StateNode = FirstWait
+            redefine refers to: StateNode = SecondWait
+        }
+        contains getReady: Transition subsets transitions {
+            redefine refers from: StateNode = SecondWait
+            redefine refers to: StateNode = Ready
+        }
+        contains acceptOldest: Transition subsets transitions {
+            redefine refers from: StateNode = Ready
+            redefine refers to: StateNode = GotOldest
+            redefine contains acceptAction: AcceptItemAction {
+                redefine refers viaPort: Port = input
+                redefine refers payload: Item = global_Oldest
+            }
+        }
+        contains acceptMiddleFirst: Transition subsets transitions {
+            redefine refers from: StateNode = Ready
+            redefine refers to: StateNode = OutOfOrder
+            redefine contains acceptAction: AcceptItemAction {
+                redefine refers viaPort: Port = input
+                redefine refers payload: Item = global_Middle
+            }
+        }
+        contains acceptMiddle: Transition subsets transitions {
+            redefine refers from: StateNode = GotOldest
+            redefine refers to: StateNode = GotMiddle
+            redefine contains acceptAction: AcceptItemAction {
+                redefine refers viaPort: Port = input
+                redefine refers payload: Item = global_Middle
+            }
+        }
+        contains acceptNewest: Transition subsets transitions {
+            redefine refers from: StateNode = GotMiddle
+            redefine refers to: StateNode = GotNewest
+            redefine contains acceptAction: AcceptItemAction {
+                redefine refers viaPort: Port = input
+                redefine refers payload: Item = global_Newest
+            }
+        }
+    }
+}
+
+class Sink : Part {
+    contains input: ConjugatedFeed subsets ports
+}
+
+class QueueOfThreeModel : Part {
+    contains producer: Producer subsets parts
+    contains consumer: Consumer subsets parts {
+        redefine contains input: ConjugatedFeed subsets ports {
+            redefine refers capacity: int = 3
+        }
+    }
+    contains flow: Flow subsets flows {
+        redefine refers source: Port = producer.output
+        redefine refers target: Port = consumer.input
+    }
+}
+
+class QueueOfOneModel : Part {
+    contains producer: Producer subsets parts
+    contains consumer: Consumer subsets parts {
+        redefine contains input: ConjugatedFeed subsets ports {
+            redefine refers capacity: int = 1
+        }
+    }
+    contains sink: Sink subsets parts {
+        redefine contains input: ConjugatedFeed subsets ports {
+            redefine refers capacity: int = 0
+        }
+    }
+    contains flow: Flow subsets flows {
+        redefine refers source: Port = producer.output
+        redefine refers target: Port = consumer.input
+    }
+    contains sinkFlow: Flow subsets flows {
+        redefine refers source: Port = producer.output
+        redefine refers target: Port = sink.input
+    }
+}
+
+class QueueOfNoneModel : Part {
+    contains producer: Producer subsets parts
+    contains consumer: Consumer subsets parts {
+        redefine contains input: ConjugatedFeed subsets ports {
+            redefine refers capacity: int = 0
+        }
+    }
+    contains flow: Flow subsets flows {
+        redefine refers source: Port = producer.output
+        redefine refers target: Port = consumer.input
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class QueueOfThreeAcceptsNewestTestCase : VerificationCaseDefinition {
+    contains system: QueueOfThreeModel[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains constraint: Eventually subsets requiredConstraints {
+            redefine contains body: IsStateActiveExpression {
+                redefine refers state: AbstractState = system.consumer.Behaviour.GotNewest
+            }
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class QueueOfThreeNeverAcceptsOutOfOrderTestCase : VerificationCaseDefinition {
+    contains system: QueueOfThreeModel[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains constraint: MustAlways subsets requiredConstraints {
+            redefine contains body: UnaryNotExpression {
+                redefine contains operand: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.consumer.Behaviour.OutOfOrder
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class QueueOfOneAcceptsOldestTestCase : VerificationCaseDefinition {
+    contains system: QueueOfOneModel[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains constraint: Eventually subsets requiredConstraints {
+            redefine contains body: IsStateActiveExpression {
+                redefine refers state: AbstractState = system.consumer.Behaviour.GotOldest
+            }
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class QueueOfOneDropsMiddleTestCase : VerificationCaseDefinition {
+    contains system: QueueOfOneModel[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains constraint: MustAlways subsets requiredConstraints {
+            redefine contains body: UnaryNotExpression {
+                redefine contains operand: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.consumer.Behaviour.GotMiddle
+                }
+            }
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class QueueOfNoneNeverAcceptsTestCase : VerificationCaseDefinition {
+    contains system: QueueOfNoneModel[1] redefines subject
+    redefine contains objective: Requirement[1] {
+        contains constraint: MustAlways subsets requiredConstraints {
+            redefine contains body: UnaryNotExpression {
+                redefine contains operand: IsStateActiveExpression {
+                    redefine refers state: AbstractState = system.consumer.Behaviour.GotOldest
+                }
+            }
+        }
+    }
+}

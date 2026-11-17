@@ -7,7 +7,9 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.flattening
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.LocalVariableManager
+import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceTree
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
@@ -24,6 +26,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.DefiniteMultiplicity
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
@@ -44,21 +47,80 @@ class ArrayFlatteningPass @Inject constructor(
     private val constantExpressionEvaluatorProvider: ConstantExpressionEvaluatorProvider,
     private val localVariableManager: LocalVariableManager,
     private val builtinSymbolResolver: BuiltinSymbolResolver,
+    private val compileTimeExpressionEvaluatorProvider: CompileTimeExpressionEvaluatorProvider,
 ) {
 
-    fun flattenArrays(inlinedOxsts: InlinedOxsts): Map<VariableDeclaration, List<VariableDeclaration>> {
+    fun flattenArrays(
+        inlinedOxsts: InlinedOxsts,
+        instanceTree: InstanceTree,
+    ): Map<VariableDeclaration, List<VariableDeclaration>> {
         val arrayVariables = collectArrayVariables(inlinedOxsts)
-        expandWholeArrayOperations(inlinedOxsts, arrayVariables.associateWith { slotCount(it) })
+        val slotCounts = arrayVariables.associateWith {
+            slotCount(it, instanceTree)
+        }
+        rejectUsesWithoutStorage(inlinedOxsts, slotCounts)
+        expandWholeArrayOperations(inlinedOxsts, slotCounts)
         return arrayVariables.associateWith {
-            flattenVariable(it)
+            flattenVariable(it, slotCounts.getValue(it))
         }
     }
 
-    private fun slotCount(arrayVariable: VariableDeclaration): Int {
-        return multiplicityRangeEvaluator.evaluate(arrayVariable.typeSpecification).upperBound.toInt()
+    private fun slotCount(
+        arrayVariable: VariableDeclaration,
+        instanceTree: InstanceTree,
+    ): Int {
+        val typeSpecification = arrayVariable.typeSpecification
+        val range = multiplicityRangeEvaluator.evaluate(typeSpecification)
+        if (!range.isPerInstance()) {
+            return range.upperBound.toInt()
+        }
+        val multiplicity = typeSpecification.multiplicity as DefiniteMultiplicity
+        // the pull-down rewrote the size to the instance's path, so the root evaluates it
+        val size = when (val evaluation = compileTimeExpressionEvaluatorProvider.evaluate(instanceTree.rootInstance, multiplicity.expression)) {
+            is IntegerEvaluation -> RangeEvaluation.of(evaluation.value.toLong())
+            is RangeEvaluation -> evaluation
+            else -> sourceError(multiplicity.expression, "The size of an array must evaluate to an integer or a range.")
+        }
+        if (!size.isBounded()) {
+            sourceError(multiplicity.expression, "The size of '${arrayVariable.name}' has no upper bound.")
+        }
+        if (size.upperBound < 0 || size.lowerBound > size.upperBound) {
+            sourceError(multiplicity.expression, "The size of '${arrayVariable.name}' is ${size.lowerBound}..${size.upperBound}, which holds no number of slots.")
+        }
+        return size.upperBound.toInt()
     }
 
-    private fun expandWholeArrayOperations(inlinedOxsts: InlinedOxsts, slotCounts: Map<VariableDeclaration, Int>) {
+    // inlining removed the guarded uses, so a use left here belongs to an instance of size none
+    private fun rejectUsesWithoutStorage(
+        inlinedOxsts: InlinedOxsts,
+        slotCounts: Map<VariableDeclaration, Int>,
+    ) {
+        val withoutStorage = slotCounts.filterValues {
+            it == 0
+        }.keys
+        if (withoutStorage.isEmpty()) {
+            return
+        }
+        for (use in inlinedOxsts.eAllOfType<Expression>()) {
+            val variable = referencedVariable(use) ?: continue
+            if (variable in withoutStorage) {
+                sourceError(use, "'${variable.name}' has a size of none and no storage, so it cannot be used; guard the use with an inline if on its size.")
+            }
+        }
+    }
+
+    private fun referencedVariable(expression: Expression): VariableDeclaration? {
+        return when (expression) {
+            is ElementReference -> expression.element as? VariableDeclaration
+            is NavigationSuffixExpression -> expression.member as? VariableDeclaration
+            else -> null
+        }
+    }
+
+    private fun expandWholeArrayOperations(
+        inlinedOxsts: InlinedOxsts,
+        slotCounts: Map<VariableDeclaration, Int>,
+    ) {
         fun arrayOf(expression: Expression?): VariableDeclaration? {
             val variable = when (expression) {
                 is ElementReference -> expression.element
@@ -88,8 +150,32 @@ class ArrayFlatteningPass @Inject constructor(
                 EcoreUtil2.replace(indexing, indexInto(primary, indexing.index))
             }
         }
+        fun checkLength(
+            expression: Expression,
+            slotCount: Int,
+            array: Expression,
+        ) {
+            if (expression is IfThenElse) {
+                checkLength(expression.then, slotCount, array)
+                checkLength(expression.`else`, slotCount, array)
+                return
+            }
+            val length = (expression as? ArrayLiteral)?.values?.size ?: slotCountOf(expression) ?: return
+            if (length != slotCount) {
+                val name = arrayOf(array)?.let {
+                    "'${it.name}'"
+                } ?: "the array"
+                sourceError(expression, "This array has $length slots where $name holds $slotCount.")
+            }
+        }
+
         for (comparison in inlinedOxsts.eAllOfType<ComparisonOperator>().toList()) {
-            val slotCount = slotCountOf(comparison.left) ?: slotCountOf(comparison.right) ?: continue
+            val named = listOf(comparison.left, comparison.right).firstOrNull {
+                arrayOf(it) != null
+            } ?: comparison.left
+            val slotCount = slotCountOf(named) ?: slotCountOf(comparison.left) ?: slotCountOf(comparison.right) ?: continue
+            checkLength(comparison.left, slotCount, named)
+            checkLength(comparison.right, slotCount, named)
             val slotComparisons = (0 until slotCount).map { index ->
                 OxstsFactory.createComparisonOperator().also {
                     it.op = comparison.op
@@ -110,6 +196,7 @@ class ArrayFlatteningPass @Inject constructor(
         }
         for (assignment in inlinedOxsts.eAllOfType<AssignmentOperation>().toList()) {
             val array = arrayOf(assignment.reference) ?: continue
+            checkLength(assignment.expression, slotCounts.getValue(array), assignment.reference)
             replaceInSequence(assignment, assignSlots(assignment, array, slotCounts.getValue(array)))
         }
         for (havoc in inlinedOxsts.eAllOfType<HavocOperation>().toList()) {
@@ -227,15 +314,17 @@ class ArrayFlatteningPass @Inject constructor(
             val range = multiplicityRangeEvaluator.evaluate(typeSpec)
             val upper = range.upperBound
 
-            upper != RangeEvaluation.INFINITY && upper > 1
+            range.isPerInstance() || (upper != RangeEvaluation.INFINITY && upper > 1)
         }.toList()
     }
 
-    private fun flattenVariable(arrayVariable: VariableDeclaration): List<VariableDeclaration> {
+    private fun flattenVariable(
+        arrayVariable: VariableDeclaration,
+        slotCount: Int,
+    ): List<VariableDeclaration> {
         val typeSpec = arrayVariable.typeSpecification ?: return emptyList()
-        val range = multiplicityRangeEvaluator.evaluate(typeSpec)
-        val slotCount = range.upperBound.toInt()
         if (slotCount <= 0) {
+            insertSlotsAndRemoveOriginal(arrayVariable, emptyList())
             return emptyList()
         }
 
@@ -279,10 +368,15 @@ class ArrayFlatteningPass @Inject constructor(
             sourceError(arrayVariable, "Array initializer must be an array literal.")
         }
         val values = initializer.values
+        if (initializer.isRepeatsLast && values.size <= slotCount) {
+            return (0..<slotCount).map {
+                values[minOf(it, values.lastIndex)].copy()
+            }
+        }
         if (values.size != slotCount) {
             sourceError(
-                arrayVariable,
-                "Array literal has ${values.size} values but the array holds $slotCount slots.",
+                initializer,
+                "Array literal has ${values.size} values but '${arrayVariable.name}' holds $slotCount slots.",
             )
         }
         return values.map {

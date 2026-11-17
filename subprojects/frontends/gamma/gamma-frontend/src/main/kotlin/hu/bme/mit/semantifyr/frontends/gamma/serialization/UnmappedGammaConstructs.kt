@@ -203,14 +203,6 @@ object UnmappedGammaConstructs {
     }
 
     private fun describeMessages(queue: QueueMapping, owner: String): String? {
-        val recordMessage = queue.portMessages.firstOrNull { message ->
-            message.event!!.parameters.any {
-                GammaUtils.resolveType(it.type) is RecordType
-            }
-        }
-        if (recordMessage != null) {
-            return "the record-typed parameter of '${recordMessage.event!!.name}' stored in $owner"
-        }
         val mismatched = queue.messages.firstOrNull {
             it.targetEvent != null && it.targetEvent.parameters.size != it.event!!.parameters.size
         }

@@ -159,6 +159,37 @@ class GammaToOxstsSerializer(
             }
         }
 
+        appendIndent("class $STORED_CLASS$recordName : StoredParameter") {
+            appendLine("var values: $qualifiedRecord[capacity] := [${defaultValue(recordType)}, ...]")
+            appendLine()
+            appendIndent("redefine tran store(index: int, value: $qualifiedRecord)") {
+                appendLine("values[index] := value")
+            }
+            appendLine()
+            appendIndent("redefine tran storeArbitrary(index: int)") {
+                appendLine("var value: $qualifiedRecord := ${defaultValue(recordType)}")
+                appendLine("havoc(value)")
+                appendLine("values[index] := value")
+            }
+            appendLine()
+            appendIndent("redefine tran deliver()") {
+                appendLine("inline parameter.set(values[0])")
+            }
+            appendLine()
+            appendIndent("redefine tran shift()") {
+                appendIndent("inline for (index in 0..<capacity - 1)") {
+                    appendLine("values[index] := values[index + 1]")
+                }
+                appendLine("values[capacity - 1] := ${defaultValue(recordType)}")
+            }
+            appendLine()
+            appendIndent("redefine tran clear()") {
+                appendIndent("inline for (index in 0..<capacity)") {
+                    appendLine("values[index] := ${defaultValue(recordType)}")
+                }
+            }
+        }
+
         appendIndent("class $VARIABLE_CLASS$recordName : Variable") {
             val defaults = defaultBindings(recordType)
             for (binding in defaults) {
@@ -336,6 +367,15 @@ class GammaToOxstsSerializer(
         }
     }
 
+    private fun storedParameterClassName(type: Type): String {
+        return when (val resolved = GammaUtils.resolveType(type)) {
+            is IntegerType -> "StoredInteger"
+            is BooleanType -> "StoredBoolean"
+            is RecordType -> recordClassName(STORED_CLASS, resolved.eContainer() as TypeDeclaration)
+            else -> error("Unknown type: $type")
+        }
+    }
+
     private fun IndentingStringBuilder.serialize(interfaceDeclaration: InterfaceDeclaration) {
         val parents = interfaceDeclaration.parents
         if (parents.size == 1) {
@@ -438,15 +478,9 @@ class GammaToOxstsSerializer(
 
     private fun queueFeatureName(adapter: ComponentDeclaration, queue: QueueMapping): String {
         if (queue.element is StatechartDeclaration) {
-            return nameMap.declare(adapter, queue.element, "$QUEUE_CLASS${queue.name}")
+            return nameMap.declare(adapter, queue.element, "$QUEUE_FEATURE${queue.name}")
         }
         return nameMap.declare(adapter, queue.element, markName(queue.name))
-    }
-
-    private fun queueClassName(adapter: ComponentDeclaration, queue: QueueMapping): String {
-        val gammaPackage = gammaPackageOf(adapter)
-        val name = nameMap.declareGenerated(gammaPackage, queue.element, "$QUEUE_CLASS${adapter.name}_${queue.name}")
-        return "${markQualifiedName(gammaPackage.name)}::$name"
     }
 
     private fun adapterPortPath(adapter: ComponentDeclaration, port: PortDeclaration): String {
@@ -497,10 +531,6 @@ class GammaToOxstsSerializer(
                 serializeQueueFeature(component, wrappedFeature, queue, position)
             }
         }
-
-        for (queue in mapping.queues) {
-            serializeQueueClass(component, queue)
-        }
     }
 
     private fun IndentingStringBuilder.serializeQueueFeature(
@@ -510,226 +540,82 @@ class GammaToOxstsSerializer(
         position: Int,
     ) {
         val flag = environmentalFlag(queue)
+        val messageNames = storedMessageNames(queue)
         appendLine("refers $flag: bool = ${!queue.storesClocks && queue.portMessages.isNotEmpty()}")
-        appendIndent("contains ${queueFeatureName(adapter, queue)}: ${queueClassName(adapter, queue)} subsets queues") {
+        appendIndent("contains ${queueFeatureName(adapter, queue)}: MessageQueue subsets queues") {
+            appendLine("redefine refers capacity: int = ${queue.capacity}")
+            appendLine("redefine refers priority: int = ${queue.priority}")
             appendLine("redefine refers position: int = $position")
             appendLine("redefine refers rank: int = ${queue.rank}")
             appendLine("redefine refers environmental: bool = $flag")
-            for (message in queue.messages) {
-                val identifier = message.identifier
-                if (message.port != null && message.event != null) {
-                    val portPath = adapterPortPath(adapter, message.port)
-                    appendLine("redefine refers $PORT_REFERENCE$identifier: Port = $portPath")
-                    appendLine("redefine refers $SOURCE_REFERENCE$identifier: Event = ${inputEventPath(message.port, message.event, portPath)}")
-                }
-                if (message.targetPort != null && message.targetEvent != null) {
-                    val eventPath = inputEventPath(message.targetPort, message.targetEvent, "$wrappedFeature.${markName(message.targetPort.name)}")
-                    appendLine("redefine refers $EVENT_REFERENCE$identifier: Event = $eventPath")
-                    for (parameter in message.targetEvent.parameters) {
-                        appendLine("redefine refers $PARAMETER_REFERENCE$identifier${markName(parameter.name)}: Parameter = $eventPath.${markName(parameter.name)}")
-                    }
-                }
-                if (message.clock != null) {
-                    appendLine("redefine refers $CLOCK_REFERENCE$identifier: Clock = ${markName(message.clock.name)}")
-                }
-            }
-        }
-    }
-
-    private fun storedParameters(message: QueuedMessage): List<ParameterDeclaration> {
-        return message.event?.parameters.orEmpty()
-    }
-
-    private fun IndentingStringBuilder.serializeQueueClass(adapter: ComponentDeclaration, queue: QueueMapping) {
-        val capacity = queue.capacity
-        appendIndent("class ${queueClassName(adapter, queue).substringAfterLast("::")} : MessageQueue") {
-            appendLine("redefine refers capacity: int = $capacity")
-            appendLine("redefine refers priority: int = ${queue.priority}")
             if (queue.discardsOldest) {
                 appendLine("redefine refers discardsOldest: bool = true")
             }
-            appendLine()
             for (message in queue.messages) {
-                val identifier = message.identifier
-                if (message.port != null) {
-                    appendLine("refers $PORT_REFERENCE$identifier: Port")
-                    appendLine("refers $SOURCE_REFERENCE$identifier: Event")
-                }
-                if (message.targetEvent != null) {
-                    appendLine("refers $EVENT_REFERENCE$identifier: Event")
-                    for (parameter in message.targetEvent.parameters) {
-                        appendLine("refers $PARAMETER_REFERENCE$identifier${markName(parameter.name)}: Parameter")
-                    }
-                }
-                if (message.clock != null) {
-                    appendLine("refers $CLOCK_REFERENCE$identifier: Clock")
-                }
+                serializeStoredMessage(adapter, wrappedFeature, message, messageNames.getValue(message.identifier))
             }
-            appendLine()
-            // a size of one reads as a multiplicity, so a queue of one message gets a second cell it never uses
-            val length = maxOf(capacity, 2)
-            appendLine("var $IDENTIFIERS: int[$length] := ${arrayLiteral(length, "0")}")
-            for (message in queue.messages) {
-                for (parameter in storedParameters(message)) {
-                    val type = oxstsType(parameter.type)
-                    appendLine("var ${valuesName(message, parameter)}: $type[$length] := ${arrayLiteral(length, defaultValue(parameter.type))}")
-                }
-            }
-            appendLine()
-            serializeReceive(queue)
-            appendLine()
-            serializeShift(queue)
-            appendLine()
-            serializeClear(queue)
-            for (message in queue.messages) {
-                appendLine()
-                serializeEnqueue(message)
-            }
-            appendLine()
-            serializeEnvironmentMessage(queue)
-            appendLine()
-            serializeClockTick(queue)
         }
     }
 
-    private fun arrayLiteral(capacity: Int, value: String): String {
-        return List(capacity) {
-            value
-        }.joinToString(", ", "[", "]")
-    }
-
-    private fun valuesName(message: QueuedMessage, parameter: ParameterDeclaration): String {
-        return "$VALUES_ARRAY${message.identifier}${markName(parameter.name)}"
-    }
-
-    private fun IndentingStringBuilder.serializeReceive(queue: QueueMapping) {
-        appendIndent("redefine tran receive()") {
-            appendLine("var $IDENTIFIER: int := $IDENTIFIERS[0]")
-            for (message in queue.messages) {
-                val targetEvent = message.targetEvent ?: continue
-                appendIndent("if ($IDENTIFIER == ${message.identifier})") {
-                    appendLine("$EVENT_REFERENCE${message.identifier}.isRaised := true")
-                    for ((index, parameter) in targetEvent.parameters.withIndex()) {
-                        val stored = storedParameters(message)[index]
-                        appendLine("inline $PARAMETER_REFERENCE${message.identifier}${markName(parameter.name)}.set(${valuesName(message, stored)}[0])")
+    private fun IndentingStringBuilder.serializeStoredMessage(
+        adapter: ComponentDeclaration,
+        wrappedFeature: String,
+        message: QueuedMessage,
+        name: String,
+    ) {
+        appendIndent("contains $name: StoredMessage subsets ${controlFeature(message.control)}") {
+            if (message.port != null && message.event != null) {
+                val portPath = adapterPortPath(adapter, message.port)
+                val sourcePath = inputEventPath(message.port, message.event, portPath)
+                appendLine("redefine refers port: Port = $portPath")
+                appendLine("redefine refers source: Event = $sourcePath")
+                if (message.targetPort != null && message.targetEvent != null) {
+                    val eventPath = inputEventPath(message.targetPort, message.targetEvent, "$wrappedFeature.${markName(message.targetPort.name)}")
+                    appendLine("redefine refers event: Event = $eventPath")
+                    for ((index, parameter) in message.event.parameters.withIndex()) {
+                        val target = message.targetEvent.parameters[index]
+                        appendIndent("contains ${markName(parameter.name)}: ${storedParameterClassName(parameter.type)} subsets parameters") {
+                            appendLine("redefine refers declaration: ParameterDeclaration = $sourcePath.${markName(parameter.name)}.declaration")
+                            appendLine("redefine refers parameter: Parameter = $eventPath.${markName(target.name)}")
+                        }
                     }
                 }
             }
-            appendLine("inline $SHIFT_TRANSITION()")
-            val controls = queue.messages.groupBy {
-                it.control
-            }
-            for ((control, messages) in controls) {
-                val call = when (control) {
-                    MessageControl.NONE -> continue
-                    MessageControl.RUN -> "inline adapter.run()"
-                    MessageControl.RESET -> "inline adapter.resetComponent()"
-                    MessageControl.CLEAR_QUEUE -> "inline clear()"
-                    MessageControl.CLEAR_QUEUES -> "inline adapter.clearQueues()"
-                    MessageControl.CLEAR_OTHER_QUEUES -> "inline adapter.clearOtherQueues(self)"
-                }
-                if (messages.size == queue.messages.size) {
-                    appendLine(call)
-                    continue
-                }
-                val condition = messages.joinToString(" || ") {
-                    "$IDENTIFIER == ${it.identifier}"
-                }
-                appendIndent("if ($condition)") {
-                    appendLine(call)
-                }
+            if (message.clock != null) {
+                appendLine("redefine refers clock: Clock = ${markName(message.clock.name)}")
             }
         }
     }
 
-    private fun IndentingStringBuilder.serializeShift(queue: QueueMapping) {
-        val arrays = listOf(IDENTIFIERS to "0") + queue.messages.flatMap { message ->
-            storedParameters(message).map {
-                valuesName(message, it) to defaultValue(it.type)
-            }
-        }
-        appendIndent("redefine tran $SHIFT_TRANSITION()") {
-            appendIndent("inline for (index in 0..<capacity - 1)") {
-                for ((array, _) in arrays) {
-                    appendLine("$array[index] := $array[index + 1]")
-                }
-            }
-            for ((array, default) in arrays) {
-                appendLine("$array[capacity - 1] := $default")
-            }
-            appendLine("size := size - 1")
+    private fun controlFeature(control: MessageControl): String {
+        return when (control) {
+            MessageControl.NONE -> "messages"
+            MessageControl.RUN -> "runningMessages"
+            MessageControl.RESET -> "resettingMessages"
+            MessageControl.CLEAR_QUEUE -> "clearingMessages"
+            MessageControl.CLEAR_QUEUES -> "clearingAllMessages"
+            MessageControl.CLEAR_OTHER_QUEUES -> "clearingOtherMessages"
         }
     }
 
-    private fun IndentingStringBuilder.serializeClear(queue: QueueMapping) {
-        val arrays = listOf(IDENTIFIERS to "0") + queue.messages.flatMap { message ->
-            storedParameters(message).map {
-                valuesName(message, it) to defaultValue(it.type)
+    private fun storedMessageNames(queue: QueueMapping): Map<Int, String> {
+        val taken = mutableSetOf<String>()
+        val names = mutableMapOf<Int, String>()
+        for (message in queue.messages) {
+            val derived = if (message.clock != null) {
+                "$TICK_MESSAGE${message.clock.name}"
+            } else {
+                "$STORED_MESSAGE${message.port!!.name}_${message.event!!.name}"
             }
-        }
-        appendIndent("redefine tran clear()") {
-            appendIndent("inline for (index in 0..<capacity)") {
-                for ((array, default) in arrays) {
-                    appendLine("$array[index] := $default")
-                }
+            var name = derived
+            var number = 2
+            while (!taken.add(name)) {
+                name = "${derived}_$number"
+                number++
             }
-            appendLine("size := 0")
+            names[message.identifier] = name
         }
-    }
-
-    private fun IndentingStringBuilder.serializeEnqueue(message: QueuedMessage) {
-        val parameters = storedParameters(message).joinToString(", ") {
-            "$VALUE_PARAMETER${markName(it.name)}: ${oxstsType(it.type)}"
-        }
-        appendIndent("tran $ENQUEUE_TRANSITION${message.identifier}($parameters)") {
-            appendLine("$IDENTIFIERS[size] := ${message.identifier}")
-            for (parameter in storedParameters(message)) {
-                appendLine("${valuesName(message, parameter)}[size] := $VALUE_PARAMETER${markName(parameter.name)}")
-            }
-            appendLine("size := size + 1")
-        }
-    }
-
-    private fun IndentingStringBuilder.serializeEnvironmentMessage(queue: QueueMapping) {
-        appendIndent("redefine tran receiveEnvironmentMessage()") {
-            if (queue.portMessages.isEmpty()) {
-                return@appendIndent
-            }
-            appendLine("choice {")
-            for (message in queue.portMessages) {
-                appendLine("} or {")
-                indented {
-                    val parameters = storedParameters(message)
-                    for (parameter in parameters) {
-                        val local = "$VALUE_PARAMETER${markName(parameter.name)}"
-                        appendLine("var $local: ${oxstsType(parameter.type)} := ${defaultValue(parameter.type)}")
-                        appendLine("havoc($local)")
-                    }
-                    appendLine("inline $PORT_REFERENCE${message.identifier}.receiveInputMessage($SOURCE_REFERENCE${message.identifier})")
-                    val arguments = parameters.joinToString(", ") {
-                        "$VALUE_PARAMETER${markName(it.name)}"
-                    }
-                    appendLine("inline $ENQUEUE_TRANSITION${message.identifier}($arguments)")
-                }
-            }
-            appendLine("}")
-        }
-    }
-
-    private fun IndentingStringBuilder.serializeClockTick(queue: QueueMapping) {
-        appendIndent("redefine tran receiveClockTick(clock: Clock)") {
-            for (message in queue.messages) {
-                if (message.clock == null) {
-                    continue
-                }
-                appendIndent("inline if (clock == $CLOCK_REFERENCE${message.identifier})") {
-                    appendLine("inline dropOldestWhenFull()")
-                    appendIndent("if (!isFull())") {
-                        appendLine("inline $ENQUEUE_TRANSITION${message.identifier}()")
-                    }
-                }
-            }
-        }
+        return names
     }
 
     private fun IndentingStringBuilder.serializeAsynchronousComposite(component: CompositeComponentDeclaration, superclass: String) {
@@ -737,7 +623,7 @@ class GammaToOxstsSerializer(
         val dispatchNames = mutableMapOf<DispatchMapping, String>()
         val taken = mutableSetOf<String>()
         for (dispatch in dispatches) {
-            val derived = "$DISPATCH_CLASS${component.name}_${dispatch.sourceInstance.name}_${dispatch.sourcePort.name}_${dispatch.event.name}_to_${dispatch.targetInstance.name}_${dispatch.targetPort.name}"
+            val derived = "$DISPATCH_FEATURE${component.name}_${dispatch.sourceInstance.name}_${dispatch.sourcePort.name}_${dispatch.event.name}_to_${dispatch.targetInstance.name}_${dispatch.targetPort.name}"
             var name = derived
             var number = 2
             while (!taken.add(name)) {
@@ -771,10 +657,6 @@ class GammaToOxstsSerializer(
                 serializeAsynchronousExecutionSteps(component)
             }
         }
-
-        for (dispatch in dispatches) {
-            serializeDispatchClass(dispatch, dispatchNames.getValue(dispatch))
-        }
     }
 
     private fun IndentingStringBuilder.serializeAdapterInstance(composite: CompositeComponentDeclaration, instance: ComponentInstance) {
@@ -801,31 +683,14 @@ class GammaToOxstsSerializer(
         val source = markName(dispatch.sourceInstance.name)
         val target = markName(dispatch.targetInstance.name)
         val eventPath = outputEventPath(dispatch.sourcePort, dispatch.event, "$source.${adapterPortPath(dispatch.sourceInstance.component, dispatch.sourcePort)}")
-        appendIndent("contains $name: ${markQualifiedName(gammaPackageOf(dispatch.sourceInstance).name)}::$name subsets dispatches") {
+        val queuePath = "$target.${queueFeatureName(dispatch.targetInstance.component, dispatch.queue)}"
+        val message = storedMessageNames(dispatch.queue).getValue(dispatch.message.identifier)
+        appendIndent("contains $name: MessageDispatch subsets dispatches") {
             appendLine("redefine refers source: AsynchronousAdapter = $source")
             appendLine("redefine refers event: Event = $eventPath")
-            appendLine("redefine refers target: ${queueClassName(dispatch.targetInstance.component, dispatch.queue)} = $target.${queueFeatureName(dispatch.targetInstance.component, dispatch.queue)}")
-            for (parameter in dispatch.event.parameters) {
-                appendLine("redefine refers $DISPATCHED_PARAMETER${markName(parameter.name)}: Parameter = $eventPath.${markName(parameter.name)}")
-            }
+            appendLine("redefine refers message: StoredMessage = $queuePath.$message")
             if (!dispatch.resetsSource) {
                 appendLine("redefine refers resetsSource: bool = false")
-            }
-        }
-    }
-
-    private fun IndentingStringBuilder.serializeDispatchClass(dispatch: DispatchMapping, name: String) {
-        appendIndent("class $name : MessageDispatch") {
-            appendLine("redefine refers target: ${queueClassName(dispatch.targetInstance.component, dispatch.queue)}")
-            for (parameter in dispatch.event.parameters) {
-                appendLine("refers $DISPATCHED_PARAMETER${markName(parameter.name)}: Parameter")
-            }
-            appendLine()
-            appendIndent("redefine tran enqueue()") {
-                val arguments = dispatch.event.parameters.joinToString(", ") {
-                    "$DISPATCHED_PARAMETER${markName(it.name)}.evaluate() as ${oxstsType(it.type)}"
-                }
-                appendLine("inline target.$ENQUEUE_TRANSITION${dispatch.message.identifier}($arguments)")
             }
         }
     }
@@ -1647,20 +1512,11 @@ class GammaToOxstsSerializer(
         private const val OUTPUT_HALF = "output"
         private const val WRAPPED_FEATURE = "wrapped"
         private const val ADAPTER_CLASS = "adapter_"
-        private const val QUEUE_CLASS = "queue_"
-        private const val DISPATCH_CLASS = "dispatch_"
+        private const val QUEUE_FEATURE = "queue_"
+        private const val STORED_CLASS = "stored"
+        private const val STORED_MESSAGE = "message_"
+        private const val TICK_MESSAGE = "tick_"
+        private const val DISPATCH_FEATURE = "dispatch_"
         private const val ENVIRONMENTAL_FLAG = "environmental_"
-        private const val IDENTIFIERS = "identifiers"
-        private const val IDENTIFIER = "identifier"
-        private const val VALUES_ARRAY = "values_"
-        private const val VALUE_PARAMETER = "value"
-        private const val PORT_REFERENCE = "port_"
-        private const val SOURCE_REFERENCE = "source_"
-        private const val EVENT_REFERENCE = "event_"
-        private const val PARAMETER_REFERENCE = "parameter_"
-        private const val CLOCK_REFERENCE = "clock_"
-        private const val DISPATCHED_PARAMETER = "parameter"
-        private const val SHIFT_TRANSITION = "shift"
-        private const val ENQUEUE_TRANSITION = "enqueue_"
     }
 }

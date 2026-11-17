@@ -52,6 +52,33 @@ public class OxstsFormatterTest {
     }
 
     @Test
+    void serializedArrayKeepsItsSizeFromABindingAndItsRepeatedLastValue() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Store {
+                refers capacity: int
+                var slots: int[capacity] := [0, ...]
+                var items: int[0..capacity] := [1, 2, ...]
+            }
+            """);
+        parsedPackage.assertNoResourceErrors();
+        var resourceSet = parsedPackage.getOxstsPackage().eResource().getResourceSet();
+        var copy = EcoreUtil.copy(parsedPackage.getOxstsPackage());
+        resourceSet
+                .createResource(URI.createURI("copy.semantifyr"))
+                .getContents()
+                .add(copy);
+
+        var serialized =
+                serializer.serialize(copy, SaveOptions.newBuilder().format().getOptions());
+
+        assertThat(serialized)
+                .contains(
+                        "    var slots: int[capacity] := [0, ...]\n",
+                        "    var items: int[0..capacity] := [1, 2, ...]\n");
+    }
+
+    @Test
     void serializedDeclarationIsIndentedWithFourSpacesAndHasNoSpaceBeforeItsParameters() {
         var parsedPackage = parseHelper.parse("""
             package test

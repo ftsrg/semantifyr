@@ -54,6 +54,28 @@ When no execution of `init` is enabled, as with `init { assume(false) }`, the sy
 
 A variable type may include a multiplicity bracket. This is how optional values are declared. A bounded multiplicity above one declares a fixed-size array, such as `var slots: int[3] := [0, 0, 0]`, whose initializer gives every slot. An array of class or feature type, such as `var queue: Job[2] := [first, second]`, holds one instance per slot, and a call or a read through a slot, such as `inline queue[i].finish()` or `queue[i].done`, acts on the instance the slot holds. An array is read and written slot by slot (`slots[i]`), or as a whole: `slots := other`, `slots := [0, 0, 0]`, `havoc(slots)` and `slots == other` act on every slot. An array's upper bound is known at compile time: a variable of multiplicity `[]`, `[*]` or `[n..*]` is rejected, as is an array literal initializer with fewer values than the lower bound or more than the upper bound; one with at least the lower bound and fewer than the upper bound, such as two values for `int[2..3]`, leaves a slot without a value.
 
+The initial value of an array may end in `...` after at least one value: the last written value fills the remaining slots, so `[0, ...]` gives every slot 0 and `[1, 2, 0, ...]` writes a prefix. A literal ending in `...` takes its length from the variable it initializes and is rejected anywhere else, in an assignment or a comparison among others, and so is a prefix longer than a size written as a number.
+
+The size of a class-level array may come from a binding of its class, such as `int[capacity]` or `Item[0..capacity]` beside `refers capacity: int`. Each bound is evaluated on the instance, so every instance holds as many slots as its own binding gives, and such an array takes an index at one slot as at any other. A lower bound of 0 admits `nothing` in a slot. A bound that reads the state is rejected, and so is a size from a binding on a local variable. What depends on the size is checked when an instance is compiled, and the error names the instance: a literal or an array of another length assigned or compared, an initial value longer than the size, a constant index outside it, and a size below none. At a size of none the variable has no storage: the declaration with its initial value stands, and any other use is an error for that instance, so a class whose size may be none guards each use with an `inline if` on the size, or, in a property, with an [if-then-else](../foundations/expressions.md#if-then-else) on it: `return if capacity > 0 then items[0] == item else false`.
+
+```oxsts
+class Item
+
+class Queue {
+  refers capacity: int = 2
+  var values: int[capacity] := [0, ...]
+  var items: Item[0..capacity] := [nothing, ...]
+  var size: int := 0
+
+  tran put(value: int) {
+    inline if (capacity > 0) {
+      values[size] := value
+    }
+    size := size + 1
+  }
+}
+```
+
 ```oxsts
 // hide-start
 class Item

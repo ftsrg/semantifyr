@@ -20,9 +20,141 @@ class Clock {
     }
 }
 
-abstract class MessageQueue {
-    // the mapper writes each queue's storage with its capacity as a literal, so a subclass holds the arrays and their accesses
+abstract class StoredParameter {
+    container message: StoredMessage[0..1] opposite parameters
+
+    refers declaration: ParameterDeclaration
+    refers parameter: Parameter
+    refers capacity: int = message.queue.capacity
+
+    abstract tran store(index: int, value: any)
+
+    abstract tran storeArbitrary(index: int)
+
+    abstract tran deliver()
+
+    abstract tran shift()
+
+    abstract tran clear()
+}
+
+class StoredInteger : StoredParameter {
+    var values: int[capacity] := [0, ...]
+
+    redefine tran store(index: int, value: int) {
+        values[index] := value
+    }
+
+    redefine tran storeArbitrary(index: int) {
+        var value: int := 0
+        havoc(value)
+        values[index] := value
+    }
+
+    redefine tran deliver() {
+        inline parameter.set(values[0])
+    }
+
+    redefine tran shift() {
+        inline for (index in 0..<capacity - 1) {
+            values[index] := values[index + 1]
+        }
+        values[capacity - 1] := 0
+    }
+
+    redefine tran clear() {
+        inline for (index in 0..<capacity) {
+            values[index] := 0
+        }
+    }
+}
+
+class StoredBoolean : StoredParameter {
+    var values: bool[capacity] := [false, ...]
+
+    redefine tran store(index: int, value: bool) {
+        values[index] := value
+    }
+
+    redefine tran storeArbitrary(index: int) {
+        var value: bool := false
+        havoc(value)
+        values[index] := value
+    }
+
+    redefine tran deliver() {
+        inline parameter.set(values[0])
+    }
+
+    redefine tran shift() {
+        inline for (index in 0..<capacity - 1) {
+            values[index] := values[index + 1]
+        }
+        values[capacity - 1] := false
+    }
+
+    redefine tran clear() {
+        inline for (index in 0..<capacity) {
+            values[index] := false
+        }
+    }
+}
+
+class StoredMessage {
+    container queue: MessageQueue[0..1] opposite messages
+    contains parameters: StoredParameter[0..*] opposite message
+
+    refers port: Port[0..1]
+    refers source: Event[0..1]
+    refers event: Event[0..1]
+    refers clock: Clock[0..1]
+
+    tran store(index: int, raised: Event) {
+        inline for (parameter in parameters) {
+            inline for (raisedParameter in raised.parameters) {
+                inline if (parameter.declaration == raisedParameter.declaration) {
+                    inline parameter.store(index, raisedParameter.evaluate())
+                }
+            }
+        }
+    }
+
+    tran storeArbitrary(index: int) {
+        inline for (parameter in parameters) {
+            inline parameter.storeArbitrary(index)
+        }
+    }
+
+    tran deliver() {
+        inline if (event != nothing) {
+            event.isRaised := true
+        }
+        inline for (parameter in parameters) {
+            inline parameter.deliver()
+        }
+    }
+
+    tran shift() {
+        inline for (parameter in parameters) {
+            inline parameter.shift()
+        }
+    }
+
+    tran clear() {
+        inline for (parameter in parameters) {
+            inline parameter.clear()
+        }
+    }
+}
+
+class MessageQueue {
     container adapter: AsynchronousAdapter[0..1] opposite queues
+    contains messages: StoredMessage[0..*] opposite queue
+    contains runningMessages: StoredMessage[0..*] subsets messages
+    contains resettingMessages: StoredMessage[0..*] subsets messages
+    contains clearingMessages: StoredMessage[0..*] subsets messages
+    contains clearingAllMessages: StoredMessage[0..*] subsets messages
+    contains clearingOtherMessages: StoredMessage[0..*] subsets messages
 
     refers capacity: int
     refers priority: int
@@ -31,6 +163,7 @@ abstract class MessageQueue {
     refers environmental: bool = false
     refers discardsOldest: bool = false
 
+    var stored: StoredMessage[0..capacity] := [nothing, ...]
     var size: int := 0
 
     prop isEmpty(): bool {
@@ -41,15 +174,149 @@ abstract class MessageQueue {
         return size >= capacity
     }
 
-    abstract tran receive()
+    tran enqueue(message: StoredMessage, raised: Event) {
+        inline if (capacity > 0) {
+            inline message.store(size, raised)
+            inline enqueueTick(message)
+        }
+    }
 
-    abstract tran shift()
+    tran enqueueArbitrary(message: StoredMessage) {
+        inline if (capacity > 0) {
+            inline message.storeArbitrary(size)
+            inline enqueueTick(message)
+        }
+    }
 
-    abstract tran clear()
+    tran enqueueTick(message: StoredMessage) {
+        inline if (capacity > 0) {
+            stored[size] := message
+            size := size + 1
+        }
+    }
 
-    abstract tran receiveEnvironmentMessage()
+    tran receive() {
+        inline if (capacity > 0) {
+            var head: StoredMessage[0..1] := stored[0]
+            inline for (message in messages) {
+                if (head == message) {
+                    inline message.deliver()
+                }
+            }
+            inline shift()
+            inline if (runningMessages == messages) {
+                inline adapter.run()
+            } else {
+                inline if (runningMessages != nothing) {
+                    var runs: bool := false
+                    inline for (message in runningMessages) {
+                        runs := runs || head == message
+                    }
+                    if (runs) {
+                        inline adapter.run()
+                    }
+                }
+            }
+            inline if (resettingMessages == messages) {
+                inline adapter.resetComponent()
+            } else {
+                inline if (resettingMessages != nothing) {
+                    var resets: bool := false
+                    inline for (message in resettingMessages) {
+                        resets := resets || head == message
+                    }
+                    if (resets) {
+                        inline adapter.resetComponent()
+                    }
+                }
+            }
+            inline if (clearingMessages == messages) {
+                inline clear()
+            } else {
+                inline if (clearingMessages != nothing) {
+                    var clears: bool := false
+                    inline for (message in clearingMessages) {
+                        clears := clears || head == message
+                    }
+                    if (clears) {
+                        inline clear()
+                    }
+                }
+            }
+            inline if (clearingAllMessages == messages) {
+                inline adapter.clearQueues()
+            } else {
+                inline if (clearingAllMessages != nothing) {
+                    var clearsAll: bool := false
+                    inline for (message in clearingAllMessages) {
+                        clearsAll := clearsAll || head == message
+                    }
+                    if (clearsAll) {
+                        inline adapter.clearQueues()
+                    }
+                }
+            }
+            inline if (clearingOtherMessages == messages) {
+                inline adapter.clearOtherQueues(self)
+            } else {
+                inline if (clearingOtherMessages != nothing) {
+                    var clearsOthers: bool := false
+                    inline for (message in clearingOtherMessages) {
+                        clearsOthers := clearsOthers || head == message
+                    }
+                    if (clearsOthers) {
+                        inline adapter.clearOtherQueues(self)
+                    }
+                }
+            }
+        }
+    }
 
-    abstract tran receiveClockTick(clock: Clock)
+    tran shift() {
+        inline if (capacity > 0) {
+            inline for (index in 0..<capacity - 1) {
+                stored[index] := stored[index + 1]
+            }
+            stored[capacity - 1] := nothing
+            inline for (message in messages) {
+                inline message.shift()
+            }
+            size := size - 1
+        }
+    }
+
+    tran clear() {
+        inline for (index in 0..<capacity) {
+            stored[index] := nothing
+        }
+        inline for (message in messages) {
+            inline message.clear()
+        }
+        size := 0
+    }
+
+    tran receiveEnvironmentMessage() {
+        choice {
+        } or {
+            inline for choice (message in messages) {
+                inline if (message.port != nothing) {
+                    inline message.port.receiveInputMessage(message.source)
+                    inline enqueueArbitrary(message)
+                }
+            }
+        }
+    }
+
+    tran receiveClockTick(clock: Clock) {
+        inline for (message in messages) {
+            inline if (message.clock == clock) {
+                inline dropOldestWhenFull()
+                if (!isFull()) {
+                    inline enqueueTick(message)
+                }
+            }
+        }
+    }
 
     // the environment never drops a message, as in Gamma, so only a dispatch and a clock tick call this
     tran dropOldestWhenFull() {
@@ -157,25 +424,23 @@ abstract class AsynchronousAdapter : Component {
     }
 }
 
-abstract class MessageDispatch {
+class MessageDispatch {
     refers source: AsynchronousAdapter
     refers event: Event
-    refers target: MessageQueue
+    refers message: StoredMessage
     refers resetsSource: bool = true
 
     tran dispatch() {
         if (event.isRaised) {
-            inline target.dropOldestWhenFull()
-            if (!target.isFull()) {
-                inline enqueue()
+            inline message.queue.dropOldestWhenFull()
+            if (!message.queue.isFull()) {
+                inline message.queue.enqueue(message, event)
             }
             inline if (resetsSource) {
                 inline event.reset()
             }
         }
     }
-
-    abstract tran enqueue()
 }
 
 abstract class AsynchronousComposite : Component {

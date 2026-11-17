@@ -232,18 +232,6 @@ public class RecordValidationTest {
     }
 
     @Test
-    void arrayOfRecordsIsRejected() {
-        var parsedPackage = parseHelper.parse(RECORDS + """
-            class Holder {
-                var points: Point[2] := [Point { x = 0 }, Point { x = 0 }]
-            }
-            """, CheckMode.ALL);
-
-        parsedPackage.assertNoResourceErrors();
-        assertOnlyErrorsAreUnsupported(parsedPackage, "Arrays of records");
-    }
-
-    @Test
     void optionalRecordIsRejected() {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Holder {

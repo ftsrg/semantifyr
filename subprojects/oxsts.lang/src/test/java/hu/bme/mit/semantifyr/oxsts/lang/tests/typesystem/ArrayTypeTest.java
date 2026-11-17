@@ -6,10 +6,13 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.typesystem;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
 import hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator;
+import org.eclipse.xtext.diagnostics.Severity;
 import org.eclipse.xtext.validation.CheckMode;
 import org.junit.jupiter.api.Test;
 
@@ -112,6 +115,59 @@ public class ArrayTypeTest {
             """, CheckMode.ALL);
 
         parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "array of the same size");
+    }
+
+    @Test
+    void slotOfAnArrayAdmittingNothingTakesNothingAndAnOptionalValue() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Item
+            class Port {
+                refers capacity: int
+                contains first: Item
+                var fixedItems: Item[0..2] := [nothing, nothing]
+                var items: Item[0..capacity] := [nothing, ...]
+                var index: int := 0
+                redefine tran {
+                    var current: Item[0..1] := first
+                    fixedItems[0] := nothing
+                    fixedItems[index] := current
+                    items[index] := nothing
+                    items[0] := current
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
+    }
+
+    @Test
+    void slotOfAnArrayNotAdmittingNothingRefusesNothing() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Item
+            class Port {
+                refers capacity: int
+                contains first: Item
+                var fixedItems: Item[2] := [first, first]
+                var items: Item[capacity] := [first, ...]
+                redefine tran {
+                    var current: Item[0..1] := first
+                    fixedItems[0] := nothing
+                    items[0] := current
+                }
+            }
+            """, CheckMode.ALL);
+
+        assertThat(parsedPackage.getIssues())
+                .filteredOn(issue -> {
+                    return issue.getSeverity() == Severity.ERROR;
+                })
+                .hasSize(2)
+                .allSatisfy(issue -> {
+                    assertThat(issue.getCode()).isEqualTo(OxstsValidator.TYPE_MISMATCH);
+                });
     }
 
     @Test

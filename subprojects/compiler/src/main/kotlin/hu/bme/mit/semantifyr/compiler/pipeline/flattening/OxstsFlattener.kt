@@ -127,12 +127,12 @@ class OxstsFlattener @Inject constructor(
         val recordFields = registerRecordFields(recordFieldVariables, variableHolders, variableMappings)
 
         logger.debug { "Flattening array variables" }
-        val arraySlotVariables = arrayFlatteningPass.flattenArrays(inlinedOxsts)
+        val arraySlotVariables = arrayFlatteningPass.flattenArrays(inlinedOxsts, instanceTree)
         logger.debug { "Flattened ${arraySlotVariables.size} array variable(s)" }
         if (arraySlotVariables.isNotEmpty()) {
             compilationArtifactManager.commitStep(CompilationPass.ArrayFlattening)
         }
-        val arraySlots = registerArraySlots(arraySlotVariables, variableHolders, variableMappings, variableInstanceDomain)
+        val arraySlots = registerArraySlots(arraySlotVariables, variableHolders, variableMappings, variableInstanceDomain, recordFields)
 
         logger.debug { "Rewriting feature-typed variables" }
         if (rewriteFeatureTypedVariables(inlinedOxsts, variableInstanceDomain)) {
@@ -217,6 +217,7 @@ class OxstsFlattener @Inject constructor(
         variableHolders: MutableMap<VariableDeclaration, Instance>,
         variableMappings: Map<Instance, Map<VariableDeclaration, VariableDeclaration>>,
         variableInstanceDomain: MutableMap<VariableDeclaration, Set<Instance>>,
+        recordFields: MutableMap<VariableDeclaration, RecordField>,
     ): Map<VariableDeclaration, ArraySlot> {
         val arraySlots = mutableMapOf<VariableDeclaration, ArraySlot>()
         for ((arrayVariable, slotVariables) in arraySlotVariables) {
@@ -226,12 +227,16 @@ class OxstsFlattener @Inject constructor(
                 }
             }
             val holder = variableHolders[arrayVariable] ?: continue
-            val originalVariable = variableMappings.getValue(holder).entries.single {
+            val recordField = recordFields[arrayVariable]
+            val originalVariable = recordField?.recordVariable ?: variableMappings.getValue(holder).entries.single {
                 it.value == arrayVariable
             }.key
             for ((index, slotVariable) in slotVariables.withIndex()) {
                 variableHolders[slotVariable] = holder
                 arraySlots[slotVariable] = ArraySlot(originalVariable, index)
+                if (recordField != null) {
+                    recordFields[slotVariable] = recordField
+                }
             }
         }
         return arraySlots
@@ -241,7 +246,7 @@ class OxstsFlattener @Inject constructor(
         recordFieldVariables: Map<VariableDeclaration, Map<List<VariableDeclaration>, VariableDeclaration>>,
         variableHolders: MutableMap<VariableDeclaration, Instance>,
         variableMappings: Map<Instance, Map<VariableDeclaration, VariableDeclaration>>,
-    ): Map<VariableDeclaration, RecordField> {
+    ): MutableMap<VariableDeclaration, RecordField> {
         val recordFields = mutableMapOf<VariableDeclaration, RecordField>()
         for ((recordVariable, fieldVariables) in recordFieldVariables) {
             val holder = variableHolders[recordVariable] ?: continue

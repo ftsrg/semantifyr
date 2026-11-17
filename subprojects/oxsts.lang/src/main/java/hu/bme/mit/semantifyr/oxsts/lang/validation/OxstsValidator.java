@@ -652,10 +652,22 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (range.getLowerBound() == 1 && range.getUpperBound() == 1) {
             return;
         }
-        var message = isFixedSizeArray(typeSpecification)
-                ? "Arrays of records are not yet supported by the compiler."
-                : "A value of record type '" + record.getName() + "' must hold exactly one record.";
-        acceptError(message, typeSpecification, UNSUPPORTED_FEATURE);
+        if (!isFixedSizeArray(typeSpecification)) {
+            acceptError(
+                    "A value of record type '" + record.getName() + "' must hold exactly one record.",
+                    typeSpecification,
+                    UNSUPPORTED_FEATURE);
+        } else if (!isClassLevelVariable(typeSpecification.eContainer())) {
+            acceptError(
+                    "Arrays of records are not yet supported by the compiler outside a class-level variable.",
+                    typeSpecification,
+                    UNSUPPORTED_FEATURE);
+        } else if (range.getLowerBound() == 0) {
+            acceptError(
+                    "A slot of an array of records holds a record, never nothing; the lower bound cannot be 0.",
+                    typeSpecification,
+                    UNSUPPORTED_FEATURE);
+        }
     }
 
     @Check
@@ -1219,6 +1231,10 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (actual == null || typeCompatibility.isClock(declared, variableDeclaration)) {
             return;
         }
+        if (initializer instanceof ArrayLiteral literal && literal.isRepeatsLast()) {
+            actual = new ImmutableTypeEvaluation(actual.getDomain(), declared.getRange());
+        }
+        actual = asArrayOfOne(initializer, actual, declared);
         if (!typeCompatibility.isAssignable(declared, actual, variableDeclaration)) {
             acceptError(
                     "Initializer of type "
@@ -1450,6 +1466,9 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
         if (current == target) {
             return;
+        }
+        if (current instanceof IndexingSuffixExpression indexing) {
+            current = indexing.getPrimary();
         }
         if (current instanceof ElementReference reference
                 && reference.getElement() instanceof ParameterDeclaration parameter) {
@@ -1753,6 +1772,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
                 || typeCompatibility.isClock(rhsType, assignmentOperation)) {
             return;
         }
+        rhsType = asArrayOfOne(rhs, rhsType, lhsType);
+        lhsType = asWrittenSlot(lhs, lhsType);
         if (!typeCompatibility.isAssignable(lhsType, rhsType, assignmentOperation)) {
             acceptError(
                     "Cannot assign value of type "
@@ -1905,6 +1926,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
             }
             return;
         }
+        leftType = asArrayOfOne(left, leftType, rightType);
+        rightType = asArrayOfOne(right, rightType, leftType);
         if (!typeCompatibility.isComparable(leftType, rightType, operator)) {
             acceptError(
                     "Cannot compare values of type " + formatType(leftType) + " and " + formatType(rightType) + ".",
@@ -1922,8 +1945,10 @@ public class OxstsValidator extends AbstractOxstsValidator {
         } else if ((isFixedSizeArray(leftType) || isFixedSizeArray(rightType))
                 && (!isFixedSizeArray(leftType)
                         || !isFixedSizeArray(rightType)
-                        || leftType.getRange().getUpperBound()
-                                != rightType.getRange().getUpperBound()
+                        || (!leftType.getRange().isPerInstance()
+                                && !rightType.getRange().isPerInstance()
+                                && leftType.getRange().getUpperBound()
+                                        != rightType.getRange().getUpperBound())
                         || (operator.getOp() != ComparisonOp.EQ && operator.getOp() != ComparisonOp.NOT_EQ))) {
             acceptError(
                     "Arrays can only be compared with == and != to an array of the same size.",
@@ -1942,6 +1967,36 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     operator,
                     TYPE_MISMATCH);
         }
+    }
+
+    private static TypeEvaluation asArrayOfOne(Expression expression, TypeEvaluation type, TypeEvaluation other) {
+        if (expression instanceof ArrayLiteral literal
+                && !literal.isRepeatsLast()
+                && literal.getValues().size() == 1
+                && other != null
+                && other.getRange() != null
+                && other.getRange().isPerInstance()
+                && type.getRange() != null) {
+            return new ImmutableTypeEvaluation(
+                    type.getDomain(),
+                    RangeEvaluation.perInstance(type.getRange().getLowerBound()));
+        }
+        return type;
+    }
+
+    private TypeEvaluation asWrittenSlot(Expression target, TypeEvaluation type) {
+        if (!(target instanceof IndexingSuffixExpression indexing)
+                || type instanceof InvalidTypeEvaluation
+                || type.getRange() == null) {
+            return type;
+        }
+        var arrayType = evaluateTypeSafely(indexing.getPrimary());
+        if (arrayType == null
+                || arrayType.getRange() == null
+                || arrayType.getRange().getLowerBound() != 0) {
+            return type;
+        }
+        return new ImmutableTypeEvaluation(type.getDomain(), RangeEvaluation.OPTIONAL);
     }
 
     private static boolean isFixedSizeArray(TypeEvaluation type) {
@@ -1976,6 +2031,55 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     expression,
                     TYPE_MISMATCH);
         }
+    }
+
+    @Check
+    public void checkRepeatingArrayLiteralPlacement(ArrayLiteral arrayLiteral) {
+        if (!arrayLiteral.isRepeatsLast()) {
+            return;
+        }
+        if (arrayLiteral.eContainer() instanceof VariableDeclaration variable
+                && variable.getExpression() == arrayLiteral
+                && variable.getTypeSpecification() != null
+                && isFixedSizeArray(variable.getTypeSpecification())) {
+            return;
+        }
+        acceptError(
+                "An array literal ending in '...' takes its length from a declaration, so it is only the initial value of an array variable.",
+                arrayLiteral,
+                TYPE_MISMATCH);
+    }
+
+    @Check
+    public void checkLocalArraySizeConstant(VariableDeclaration variableDeclaration) {
+        var typeSpecification = variableDeclaration.getTypeSpecification();
+        if (typeSpecification == null
+                || typeSpecification.getMultiplicity() == null
+                || isClassLevelVariable(variableDeclaration)
+                || variableDeclaration.eContainer() instanceof RecordDeclaration) {
+            return;
+        }
+        RangeEvaluation range;
+        try {
+            range = multiplicityRangeEvaluator.evaluate(typeSpecification);
+        } catch (RuntimeException e) {
+            return;
+        }
+        if (range.isPerInstance()) {
+            acceptError(
+                    "The size of local array '"
+                            + variableDeclaration.getName()
+                            + "' must be a constant; only a class-level variable takes its size from a binding.",
+                    variableDeclaration,
+                    OxstsPackage.Literals.VARIABLE_DECLARATION__TYPE_SPECIFICATION,
+                    0,
+                    UNSUPPORTED_FEATURE);
+        }
+    }
+
+    private static boolean isClassLevelVariable(EObject element) {
+        return element instanceof VariableDeclaration
+                && (element.eContainer() instanceof ClassDeclaration || element.eContainer() instanceof InlinedOxsts);
     }
 
     @Check
@@ -2034,7 +2138,34 @@ public class OxstsValidator extends AbstractOxstsValidator {
             return;
         }
         var range = multiplicityRangeEvaluator.evaluate(typeSpecification);
+        if (range.isPerInstance()) {
+            if (range.getLowerBound() > 0
+                    && arrayLiteral.getValues().stream().anyMatch(LiteralNothing.class::isInstance)) {
+                acceptError(
+                        "A slot of '"
+                                + variableDeclaration.getName()
+                                + "' holds a value, never nothing; a lower bound of 0 admits nothing in a slot.",
+                        arrayLiteral,
+                        TYPE_MISMATCH);
+            }
+            return;
+        }
         var valueCount = arrayLiteral.getValues().size();
+        if (arrayLiteral.isRepeatsLast()) {
+            if (valueCount > range.getUpperBound()) {
+                acceptError(
+                        "Array literal gives "
+                                + valueCount
+                                + " values for the "
+                                + range.getUpperBound()
+                                + " slots of '"
+                                + variableDeclaration.getName()
+                                + "'.",
+                        arrayLiteral,
+                        TYPE_MISMATCH);
+            }
+            return;
+        }
         // a literal outside the multiplicity is already a type mismatch
         if (valueCount >= range.getLowerBound() && valueCount < range.getUpperBound()) {
             acceptError(

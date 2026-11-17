@@ -252,6 +252,7 @@ object Oxsts : MetaPackage(
 
     object ArrayLiteral : MetaClass(LiteralExpression) {
         val values by contains(MANY) { Expression }
+        val repeatsLast by attribute(EBoolean, ONE, default = false)
     }
 
     object RecordLiteral : MetaClass(LiteralExpression) {
