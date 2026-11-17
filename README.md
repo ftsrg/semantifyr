@@ -43,7 +43,7 @@ Semantifyr is a research prototype of a PhD project at the Budapest University o
 
 ## Build from source
 
-Use Java 25. `./gradlew build` compiles, runs the static checks, the unit tests and the backends' adapter tests, and packs nothing: a package is built by its own task, such as `installDist` or `:semantifyr-vscode:bundleExtension`. Gradle provides Theta, and a test that needs nuXmv, Spin or Uppaal is skipped when that backend is not on `PATH`. `./gradlew continuousIntegration` runs the semantic, integration and end-to-end suites, `./gradlew nightly` what the nightly runs, the cases a manifest marks as nightly included.
+Use Java 25. `./gradlew build` compiles, runs the static checks, the unit tests and the backends' adapter tests, and packs nothing: a package is built by its own task, such as `installDist` or `:semantifyr-vscode:bundleExtension`. Gradle provides Theta, and a test that needs nuXmv, Spin or Uppaal is skipped when that backend is not on `PATH`. `./gradlew assemble` compiles every source set and builds every package. `./gradlew continuousIntegration` runs the semantic, integration, end-to-end and UI suites, `./gradlew nightly` what the nightly runs, the cases a manifest marks as nightly included.
 
 ## Contributing
 
