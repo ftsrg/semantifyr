@@ -5,17 +5,24 @@
  */
 
 // @ts-check
-import { copyFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as esbuild from 'esbuild';
-import { runTests } from '@vscode/test-electron';
+import { runTests, runVSCodeCommand } from '@vscode/test-electron';
 import packageJson from '../../package.json' with { type: 'json' };
 
-const extensionDevelopmentPath = fileURLToPath(new URL('../..', import.meta.url));
-const testDirectory = path.join(extensionDevelopmentPath, '.vscode-test');
+const vsix = process.env.SEMANTIFYR_VSIX;
+if (!vsix) {
+    throw new Error('SEMANTIFYR_VSIX names no packed extension');
+}
+
+const testDirectory = fileURLToPath(new URL('../../.vscode-test', import.meta.url));
 const suite = path.join(testDirectory, 'suite.cjs');
+const extensionsDirectory = path.join(testDirectory, 'extensions');
+const userDataDirectory = path.join(testDirectory, 'user-data');
+const version = packageJson.engines.vscode.replace('^', '');
 
 await esbuild.build({
     entryPoints: [fileURLToPath(new URL('suite.ts', import.meta.url))],
@@ -27,6 +34,16 @@ await esbuild.build({
     target: 'ES2023',
 });
 
+// VS Code runs a test suite only beside an extension under development, so the suite gets one that contributes nothing
+const harness = path.join(testDirectory, 'harness');
+mkdirSync(harness, { recursive: true });
+writeFileSync(path.join(harness, 'package.json'), JSON.stringify({
+    name: 'semantifyr-end-to-end',
+    publisher: 'ftsrg',
+    version: '0.0.0',
+    engines: packageJson.engines,
+}));
+
 const workspace = mkdtempSync(path.join(os.tmpdir(), 'semantifyr-vscode-'));
 copyFileSync(fileURLToPath(new URL('../../../../oxsts-test-models/smoke/smoke.semantifyr', import.meta.url)), path.join(workspace, 'smoke.semantifyr'));
 
@@ -35,21 +52,30 @@ delete process.env.DISPLAY;
 delete process.env.WAYLAND_DISPLAY;
 delete process.env.ELECTRON_RUN_AS_NODE;
 
+rmSync(extensionsDirectory, { recursive: true, force: true });
+
 try {
-    await runTests({
-        version: packageJson.engines.vscode.replace('^', ''),
+    await runVSCodeCommand([
+        '--install-extension', vsix,
+        '--user-data-dir', userDataDirectory,
+        '--extensions-dir', extensionsDirectory,
+    ], {
+        version,
         cachePath: testDirectory,
-        extensionDevelopmentPath,
+    });
+    await runTests({
+        version,
+        cachePath: testDirectory,
+        extensionDevelopmentPath: harness,
         extensionTestsPath: suite,
         launchArgs: [
             workspace,
-            '--disable-extensions',
             '--disable-workspace-trust',
             '--disable-gpu',
             '--no-sandbox',
             '--ozone-platform=headless',
-            '--user-data-dir', path.join(testDirectory, 'user-data'),
-            '--extensions-dir', path.join(testDirectory, 'extensions'),
+            '--user-data-dir', userDataDirectory,
+            '--extensions-dir', extensionsDirectory,
         ],
     });
 } finally {

@@ -100,23 +100,6 @@ val cloneTheta = tasks.register<Sync>("cloneTheta") {
     into(thetaDirectory)
 }
 
-tasks.register<NpmTask>("endToEndTest") {
-    group = "verification"
-
-    configureSharedInputs()
-    inputs.files(cloneDistribution)
-    inputs.files(npmAssemble)
-    inputs.files(cloneTheta)
-    inputs.file(rootProject.layout.projectDirectory.file("oxsts-test-models/smoke/smoke.semantifyr"))
-
-    npmCommand.set(listOf("run", "test:end-to-end"))
-    environment.put("PATH", thetaDirectory.zip(providers.environmentVariable("PATH")) { directory, path ->
-        "${directory.asFile.absolutePath}${File.pathSeparator}$path"
-    })
-
-    stampOnSuccess()
-}
-
 val vsixFile = project.layout.buildDirectory.file("semantifyr-${project.version}.vsix")
 
 val bundleExtension = tasks.register<NpmTask>("bundleExtension") {
@@ -145,10 +128,30 @@ val bundleExtension = tasks.register<NpmTask>("bundleExtension") {
     outputs.file(vsixFile)
 }
 
+tasks.register<NpmTask>("endToEndTest") {
+    group = "verification"
+
+    configureSharedInputs()
+    inputs.files(bundleExtension)
+    inputs.files(cloneTheta)
+    inputs.file(rootProject.layout.projectDirectory.file("oxsts-test-models/smoke/smoke.semantifyr"))
+
+    npmCommand.set(listOf("run", "test:end-to-end"))
+    environment.put("SEMANTIFYR_VSIX", vsixFile.map {
+        it.asFile.absolutePath
+    })
+    environment.put("PATH", thetaDirectory.zip(providers.environmentVariable("PATH")) { directory, path ->
+        "${directory.asFile.absolutePath}${File.pathSeparator}$path"
+    })
+
+    stampOnSuccess()
+}
+
 tasks {
     assemble {
         inputs.files(cloneDistribution)
         inputs.files(npmAssemble)
+        inputs.files(bundleExtension)
     }
 
     check {
