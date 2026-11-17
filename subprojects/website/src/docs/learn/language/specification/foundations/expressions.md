@@ -425,7 +425,7 @@ Temporal operators denote logical formulae over the possible executions of the s
 | Operator | Meaning |
 |----------|---------|
 | `AG expr` | Always globally. `expr` holds in **every** reachable state. Use for safety properties. |
-| `EF expr` | Exists finally. `expr` holds in **some** reachable state. Use for reachability checks. |
+| `EF expr` | Exists in the future. `expr` holds in **some** reachable state. Use for reachability checks. |
 
 ```oxsts
 // hide-start

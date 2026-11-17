@@ -62,6 +62,21 @@
   fill: none;
 }
 
+.dotted {
+  stroke: var(--text-secondary);
+  stroke-width: 2;
+  stroke-dasharray: 2 4;
+  stroke-linecap: round;
+  fill: none;
+}
+
+.sensor {
+  fill: none;
+  stroke: var(--text-secondary);
+  stroke-width: 2;
+  stroke-dasharray: 5 3;
+}
+
 .head {
   fill: var(--text-secondary);
 }
