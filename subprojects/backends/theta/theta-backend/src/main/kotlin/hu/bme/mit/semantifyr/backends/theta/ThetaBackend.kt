@@ -21,7 +21,6 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScope
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
-import hu.bme.mit.semantifyr.backend.transformation.WholeDelayLowering
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backends.theta.artifacts.ThetaArtifactManager
 import hu.bme.mit.semantifyr.backends.theta.backannotation.CexReader
@@ -88,10 +87,9 @@ class ThetaVerificationContext @AssistedInject constructor(
     private val cexWitnessTransformer: CexWitnessTransformer,
     private val xstsWitnessTransformer: XstsWitnessTransformer,
     private val inlinedWitnessTransformer: InlinedWitnessTransformer,
-    wholeDelayLowering: WholeDelayLowering,
 ) : VerificationContext<ThetaArtifacts, ThetaVerdict>(
     backendId = "theta:${config.id}",
-    soundness = wholeDelayLowering.soundness(request.inlinedOxsts, config.soundness),
+    configuredSoundness = config.soundness,
     request = request,
 ) {
 

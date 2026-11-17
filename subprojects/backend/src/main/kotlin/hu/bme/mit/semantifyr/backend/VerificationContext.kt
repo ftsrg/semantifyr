@@ -24,7 +24,7 @@ import kotlin.time.measureTimedValue
 
 abstract class VerificationContext<TArtifacts, TRawVerdict>(
     protected val backendId: String,
-    private val soundness: SoundnessDirection,
+    private val configuredSoundness: SoundnessDirection,
     protected val request: BackendVerificationRequest,
 ) {
     protected val logger by loggerFactory()
@@ -129,6 +129,7 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
 
         val verdict = interpret(rawVerdict, artifacts)
         val property = request.inlinedOxsts.property.expression
+        val soundness = capabilityChecker.soundness(request.inlinedOxsts, configuredSoundness)
         val isTrusted = soundness.trusts(verdict, property)
 
         val (witness, witnessDuration) = measureTimedValue {

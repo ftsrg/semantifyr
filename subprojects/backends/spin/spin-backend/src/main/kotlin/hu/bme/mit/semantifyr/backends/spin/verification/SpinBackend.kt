@@ -20,7 +20,6 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScope
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
-import hu.bme.mit.semantifyr.backend.transformation.WholeDelayLowering
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backends.spin.SpinExecutionSpecification
@@ -83,10 +82,9 @@ class SpinVerificationContext @AssistedInject constructor(
     private val spinTraceParser: SpinTraceParser,
     private val spinLogVerdictParser: SpinLogVerdictParser,
     private val spinInlinedOxstsWitnessTransformer: SpinInlinedOxstsWitnessTransformer,
-    wholeDelayLowering: WholeDelayLowering,
 ) : VerificationContext<SpinArtifacts, SpinVerdict>(
     backendId = "spin:${config.id}",
-    soundness = wholeDelayLowering.soundness(request.inlinedOxsts, config.soundness),
+    configuredSoundness = config.soundness,
     request = request,
 ) {
 

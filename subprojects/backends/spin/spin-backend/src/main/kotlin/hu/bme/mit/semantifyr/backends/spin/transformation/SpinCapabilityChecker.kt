@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.backends.spin.transformation
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
+import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.UnsupportedConstruct
 import hu.bme.mit.semantifyr.backend.transformation.IntegerRangeChecker
 import hu.bme.mit.semantifyr.backend.transformation.WholeDelayLowering
@@ -45,6 +46,10 @@ class SpinCapabilityChecker @Inject constructor(
         }.map {
             UnsupportedConstruct(it.variable, "clocks that a whole delay may carry beyond the 32-bit range")
         }
+    }
+
+    override fun soundness(inlinedOxsts: InlinedOxsts, configured: SoundnessDirection): SoundnessDirection {
+        return wholeDelayLowering.soundness(inlinedOxsts, configured)
     }
 
     override fun describeUnsupported(element: EObject): String? {

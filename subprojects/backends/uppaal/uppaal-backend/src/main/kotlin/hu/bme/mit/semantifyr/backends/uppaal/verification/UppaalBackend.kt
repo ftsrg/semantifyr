@@ -89,7 +89,7 @@ class UppaalVerificationContext @AssistedInject constructor(
     private val uppaalVariableTransformer: UppaalVariableTransformer,
 ) : VerificationContext<UppaalArtifacts, UppaalVerdict>(
     backendId = "uppaal:${config.id}",
-    soundness = config.soundness,
+    configuredSoundness = config.soundness,
     request = request,
 ) {
 

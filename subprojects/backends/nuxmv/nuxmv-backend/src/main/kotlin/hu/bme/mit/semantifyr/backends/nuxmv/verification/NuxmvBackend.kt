@@ -85,7 +85,7 @@ class NuxmvVerificationContext @AssistedInject constructor(
     private val nuxmvInlinedOxstsWitnessTransformer: NuxmvInlinedOxstsWitnessTransformer,
 ) : VerificationContext<NuxmvArtifacts, NuxmvVerdict>(
     backendId = "nuxmv:${config.id}",
-    soundness = config.soundness,
+    configuredSoundness = config.soundness,
     request = request,
 ) {
 
