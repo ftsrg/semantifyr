@@ -97,6 +97,25 @@ class OxstsHoverTest extends OxstsLanguageServerTest {
     }
 
     @Test
+    void hoverOnAnArraySizedFromABindingShowsTheSizeAsWritten() throws Exception {
+        var contents = hover("""
+                refers capacity: int = 2
+                var slots: int[capacity] := [0, ...]
+
+                tran clear() {
+                    sl<|>ots := [0, 0]
+                }
+                """);
+
+        assertThat(contents).isEqualTo("""
+                `example::crossing::Crossing`
+
+                ```oxsts
+                var slots: int[capacity]
+                ```""");
+    }
+
+    @Test
     void hoverOnAParameterShowsItsType() throws Exception {
         var contents = hover("""
                 tran switchTo(target: LightColor) {

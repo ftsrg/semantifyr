@@ -8,12 +8,18 @@ package hu.bme.mit.semantifyr.oxsts.lang.semantics;
 
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EvaluationFailureException;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.IntegerEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OnResourceSetChangeEvictingCache;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DefiniteMultiplicity;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParameterDeclaration;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.RangeExpression;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TypeSpecification;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnboundedMultiplicity;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration;
 import org.eclipse.xtext.util.Tuples;
 
 public class MultiplicityRangeEvaluator {
@@ -45,7 +51,15 @@ public class MultiplicityRangeEvaluator {
     }
 
     protected RangeEvaluation compute(DefiniteMultiplicity definiteMultiplicity) {
-        var evaluation = constantExpressionEvaluatorProvider.evaluate(definiteMultiplicity.getExpression());
+        ExpressionEvaluation evaluation;
+        try {
+            evaluation = constantExpressionEvaluatorProvider.evaluate(definiteMultiplicity.getExpression());
+        } catch (EvaluationFailureException e) {
+            if (!holdsValues(definiteMultiplicity)) {
+                throw e;
+            }
+            return RangeEvaluation.perInstance(lowerBoundOf(definiteMultiplicity.getExpression()));
+        }
 
         if (evaluation instanceof RangeEvaluation rangeEvaluation) {
             return rangeEvaluation;
@@ -56,5 +70,26 @@ public class MultiplicityRangeEvaluator {
         }
 
         throw new IllegalArgumentException("Expression could not be evaluated to a range!");
+    }
+
+    private static boolean holdsValues(DefiniteMultiplicity definiteMultiplicity) {
+        var holder = definiteMultiplicity.eContainer() == null
+                ? null
+                : definiteMultiplicity.eContainer().eContainer();
+        return holder instanceof VariableDeclaration || holder instanceof ParameterDeclaration;
+    }
+
+    private long lowerBoundOf(Expression expression) {
+        if (!(expression instanceof RangeExpression range)) {
+            return 1;
+        }
+        try {
+            if (constantExpressionEvaluatorProvider.evaluate(range.getLeft()) instanceof IntegerEvaluation(int value)) {
+                return value;
+            }
+        } catch (EvaluationFailureException e) {
+            return 1;
+        }
+        return 1;
     }
 }

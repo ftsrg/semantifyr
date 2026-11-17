@@ -573,7 +573,7 @@ LiteralString:
 ;
 
 ArrayLiteral:
-    {ArrayLiteral} '[' (values+=Expression (',' values+=Expression)* ','?)? ']'
+    {ArrayLiteral} '[' (values+=Expression (',' values+=Expression)* (',' repeatsLast?='...'?)?)? ']'
 ;
 
 // `x := p` followed by a sequence `{ y := 1 }` starts the same way; a sequence step never uses `=`

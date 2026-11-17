@@ -65,4 +65,30 @@ class ThetaWitnessReparseTest {
             "root.slots[2]" to "1",
         )
     }
+
+    @Test
+    suspend fun `witness of an array of records sized from a binding names the slot and then the field, holds no value of a size of none, and reparses and re-verifies`() {
+        val result = helper.checkWitnessReparses(
+            modelPath = Path("build/test-models/semantic/records.semantifyr"),
+            qualifiedName = "semantifyr::verification::lang::records::RecordArrayRuntimeIndexReach",
+            verificationPortfolio = portfolio,
+            outputDirectory = outputDirectory,
+        )
+
+        val finalState = requireNotNull(result.trace).witnessState.steps.last().values.map {
+            it.variable to it.value
+        }
+        assertThat(finalState).contains(
+            "root.store.readings[2].value" to "2",
+            "root.store.readings[2].valid" to "true",
+        )
+        val namedVariables = requireNotNull(result.trace).witnessState.steps.flatMap {
+            it.values
+        }.map {
+            it.variable
+        }
+        assertThat(namedVariables).isNotEmpty().noneMatch {
+            it.startsWith("root.none.")
+        }
+    }
 }

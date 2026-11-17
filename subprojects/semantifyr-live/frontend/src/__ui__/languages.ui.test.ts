@@ -34,7 +34,9 @@ describe('the language switch', () => {
     await casesListed(page)
 
     await page.locator('.flavour-button').click()
-    expect(await page.getByRole('menuitem').locator('.menu-item-label').allInnerTexts()).toEqual(['None', 'Gamma', 'SysML v2'])
+    await expect.poll(async () => {
+      return page.getByRole('menuitem').locator('.menu-item-label').allInnerTexts()
+    }).toEqual(['None', 'Gamma', 'SysML v2'])
     await page.getByRole('menuitem', { name: /SysML v2's semantics/ }).click()
 
     await casesListed(page)

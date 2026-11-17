@@ -10,8 +10,13 @@ import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManager
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EvaluationFailureException
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.ExpressionModalityEvaluatorProvider
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.Modality
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.TypeCompatibility
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.TypeEvaluation
@@ -37,6 +42,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralReal
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParameterDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RangeExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordLiteral
@@ -49,6 +55,8 @@ class ExpressionCallInliner @AssistedInject constructor(
     private val expressionCallExpander: ExpressionCallExpander,
     private val expressionTypeEvaluatorProvider: ExpressionTypeEvaluatorProvider,
     private val typeCompatibility: TypeCompatibility,
+    private val compileTimeExpressionEvaluatorProvider: CompileTimeExpressionEvaluatorProvider,
+    private val expressionModalityEvaluatorProvider: ExpressionModalityEvaluatorProvider,
 ) : ExpressionVisitor<Unit>() {
 
     private val processorQueue = ArrayDeque<Expression>()
@@ -214,9 +222,37 @@ class ExpressionCallInliner @AssistedInject constructor(
     }
 
     override fun visit(expression: IfThenElse) {
+        val decision = decisionOrNull(expression.guard)
+        if (decision != null) {
+            val taken = if (decision) {
+                expression.then
+            } else {
+                expression.`else`
+            }
+            EcoreUtil2.replace(expression, taken)
+            processorQueue.addFirst(taken)
+            return
+        }
         processorQueue.addFirst(expression.guard)
         processorQueue.addFirst(expression.then)
         processorQueue.addFirst(expression.`else`)
+    }
+
+    private fun decisionOrNull(guard: Expression): Boolean? {
+        if (expressionModalityEvaluatorProvider.evaluate(guard) == Modality.RUNTIME) {
+            return null
+        }
+        val readsParameter = (listOf(guard) + guard.eAllOfType<ElementReference>().toList()).any {
+            it is ElementReference && it.element is ParameterDeclaration
+        }
+        if (readsParameter) {
+            return null
+        }
+        return try {
+            compileTimeExpressionEvaluatorProvider.getEvaluator(instance).evaluateBoolean(guard)
+        } catch (_: EvaluationFailureException) {
+            null
+        }
     }
 
     private fun rewriteFeatureReference(expression: Expression) {

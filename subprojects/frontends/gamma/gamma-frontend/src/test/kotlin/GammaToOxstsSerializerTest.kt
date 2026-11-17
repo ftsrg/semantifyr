@@ -1736,25 +1736,66 @@ class GammaToOxstsSerializerTest {
     }
 
     @Test
-    fun `a queue is a generated class whose storage has the capacity as a literal`() {
+    fun `a queue is an instance of the library's queue holding one stored message per event with a stored parameter per parameter`() {
         val lines = asynchronousLines()
 
         assertThat(lines).containsSequence(
-            "class queue_Buffered_high : MessageQueue {",
+            "contains _high: MessageQueue subsets queues {",
             "redefine refers capacity: int = 1",
             "redefine refers priority: int = 2",
+            "redefine refers position: int = 1",
+            "redefine refers rank: int = 0",
+            "redefine refers environmental: bool = environmental_high",
+            "contains message_signals_first: StoredMessage subsets messages {",
+            "redefine refers port: Port = _receiver._signals",
+            "redefine refers source: Event = _receiver._signals.interface._first",
+            "redefine refers event: Event = _receiver._signals.interface._first",
+            "contains _value: StoredInteger subsets parameters {",
+            "redefine refers declaration: ParameterDeclaration = _receiver._signals.interface._first._value.declaration",
+            "redefine refers parameter: Parameter = _receiver._signals.interface._first._value",
+            "}",
+            "}",
+            "contains message_signals_second: StoredMessage subsets messages {",
         )
-        assertThat(lines).contains(
-            "var identifiers: int[2] := [0, 0]",
-            "var values_1_value: int[2] := [0, 0]",
-            "var identifiers: int[2] := [0, 0]",
+    }
+
+    @Test
+    fun `stored messages whose port and event names join alike are numbered in model order`() {
+        val lines = oxstsLines(
+            """
+                package test
+                interface Wide {
+                    in event b_c
+                }
+                interface Narrow {
+                    in event c
+                }
+                @Asynchronous
+                statechart Receiver [
+                    port a : provides Wide,
+                    port a_b : provides Narrow
+                ] {
+                }
+            """,
+        )
+
+        assertThat(lines).containsSequence(
+            "contains message_a_b_c: StoredMessage subsets runningMessages {",
+            "redefine refers port: Port = wrapped._a",
         )
         assertThat(lines).containsSequence(
-            "tran enqueue_1(value_value: int) {",
-            "identifiers[size] := 1",
-            "values_1_value[size] := value_value",
-            "size := size + 1",
+            "contains message_a_b_c_2: StoredMessage subsets runningMessages {",
+            "redefine refers port: Port = wrapped._a_b",
         )
+    }
+
+    @Test
+    fun `the mapper writes no queue or dispatch class`() {
+        val lines = asynchronousLines()
+
+        assertThat(lines).noneMatch {
+            it.startsWith("class queue_") || it.startsWith("class dispatch_") || it.contains(": MessageQueue {") || it.contains(": MessageDispatch {")
+        }
     }
 
     @Test
@@ -1762,25 +1803,23 @@ class GammaToOxstsSerializerTest {
         val lines = asynchronousLines()
 
         assertThat(lines).containsSequence(
-            "contains _low: _test::queue_Buffered_low subsets queues {",
+            "contains _low: MessageQueue subsets queues {",
+            "redefine refers capacity: int = 2",
+            "redefine refers priority: int = 1",
             "redefine refers position: int = 0",
             "redefine refers rank: int = 1",
         )
         assertThat(lines).containsSequence(
-            "contains _high: _test::queue_Buffered_high subsets queues {",
+            "contains _high: MessageQueue subsets queues {",
+            "redefine refers capacity: int = 1",
+            "redefine refers priority: int = 2",
             "redefine refers position: int = 1",
             "redefine refers rank: int = 0",
         )
         assertThat(lines).containsSequence(
-            "inline shift()",
-            "if (identifier == 2) {",
-            "inline adapter.run()",
-        )
-        assertThat(lines).containsSequence(
-            "inline if (clock == clock_2) {",
-            "inline dropOldestWhenFull()",
-            "if (!isFull()) {",
-            "inline enqueue_2()",
+            "contains tick_ticker: StoredMessage subsets runningMessages {",
+            "redefine refers clock: Clock = _ticker",
+            "}",
         )
     }
 
@@ -1810,21 +1849,15 @@ class GammaToOxstsSerializerTest {
             """,
         )
 
-        assertThat(lines).containsSequence(
-            "if (identifier == 1) {",
-            "inline adapter.run()",
-            "}",
-            "if (identifier == 2) {",
-            "inline adapter.resetComponent()",
-            "}",
-            "if (identifier == 3) {",
-            "inline clear()",
-            "}",
+        assertThat(lines).contains(
+            "contains message_signals_first: StoredMessage subsets runningMessages {",
+            "contains message_signals_second: StoredMessage subsets resettingMessages {",
+            "contains message_signals_third: StoredMessage subsets clearingMessages {",
         )
     }
 
     @Test
-    fun `a queue discarding the oldest message binds it and redefines the shift that drops it`() {
+    fun `a queue discarding the oldest message binds it`() {
         val lines = oxstsLines(
             """
                 package test
@@ -1845,16 +1878,13 @@ class GammaToOxstsSerializerTest {
         )
 
         assertThat(lines).containsSequence(
-            "class queue_Buffered_messages : MessageQueue {",
+            "contains _messages: MessageQueue subsets queues {",
             "redefine refers capacity: int = 2",
             "redefine refers priority: int = 1",
+            "redefine refers position: int = 0",
+            "redefine refers rank: int = 0",
+            "redefine refers environmental: bool = environmental_messages",
             "redefine refers discardsOldest: bool = true",
-        )
-        assertThat(lines).containsSequence(
-            "redefine tran shift() {",
-            "inline for (index in 0..<capacity - 1) {",
-            "identifiers[index] := identifiers[index + 1]",
-            "values_1_value[index] := values_1_value[index + 1]",
         )
     }
 
@@ -1896,18 +1926,16 @@ class GammaToOxstsSerializerTest {
         )
 
         assertThat(lines).containsSequence(
-            "contains dispatch_System_sender_signals_first_to_left_signals: _test::dispatch_System_sender_signals_first_to_left_signals subsets dispatches {",
+            "contains dispatch_System_sender_signals_first_to_left_signals: MessageDispatch subsets dispatches {",
             "redefine refers source: AsynchronousAdapter = _sender",
             "redefine refers event: Event = _sender.wrapped._signals.interface._first",
-            "redefine refers target: _test::queue_Receiver_ReceiverMessageQueue = _left.queue_ReceiverMessageQueue",
-            "redefine refers parameter_value: Parameter = _sender.wrapped._signals.interface._first._value",
+            "redefine refers message: StoredMessage = _left.queue_ReceiverMessageQueue.message_signals_first",
             "redefine refers resetsSource: bool = false",
             "}",
-            "contains dispatch_System_sender_signals_first_to_right_signals: _test::dispatch_System_sender_signals_first_to_right_signals subsets dispatches {",
+            "contains dispatch_System_sender_signals_first_to_right_signals: MessageDispatch subsets dispatches {",
             "redefine refers source: AsynchronousAdapter = _sender",
             "redefine refers event: Event = _sender.wrapped._signals.interface._first",
-            "redefine refers target: _test::queue_Receiver_ReceiverMessageQueue = _right.queue_ReceiverMessageQueue",
-            "redefine refers parameter_value: Parameter = _sender.wrapped._signals.interface._first._value",
+            "redefine refers message: StoredMessage = _right.queue_ReceiverMessageQueue.message_signals_first",
             "}",
         )
     }
@@ -1922,9 +1950,39 @@ class GammaToOxstsSerializerTest {
             "refers _signals: Port subsets ports = wrapped._signals",
             "refers _replies: Port subsets ports = wrapped._replies",
             "refers environmental_SenderMessageQueue: bool = true",
-            "contains queue_SenderMessageQueue: _test::queue_Sender_SenderMessageQueue subsets queues {",
+            "contains queue_SenderMessageQueue: MessageQueue subsets queues {",
+            "redefine refers capacity: int = 4",
         )
-        assertThat(lines).contains("redefine refers capacity: int = 4")
+    }
+
+    @Test
+    fun `a record parameter of a queued message is stored by the record type's stored parameter class`() {
+        val lines = oxstsLines(
+            """
+                package test
+                type Point : record {
+                    x : integer
+                }
+                interface Signals {
+                    in event first(position : Point)
+                }
+                @Asynchronous
+                statechart Receiver [
+                    port signals : provides Signals
+                ] {
+                }
+            """,
+        )
+
+        assertThat(lines).containsSequence(
+            "class stored_Point : StoredParameter {",
+            "var values: _test::_Point[capacity] := [_test::_Point { _x = 0 }, ...]",
+        )
+        assertThat(lines).containsSequence(
+            "contains _position: _test::stored_Point subsets parameters {",
+            "redefine refers declaration: ParameterDeclaration = wrapped._signals.interface._first._position.declaration",
+            "redefine refers parameter: Parameter = wrapped._signals.interface._first._position",
+        )
     }
 
     @Test
@@ -1941,10 +1999,10 @@ class GammaToOxstsSerializerTest {
             "redefine refers environmental_high: bool = false",
         )
         assertThat(lines).containsSequence(
-            "contains dispatch_System_sender_replies_done_to_buffered_replies: _test::dispatch_System_sender_replies_done_to_buffered_replies subsets dispatches {",
+            "contains dispatch_System_sender_replies_done_to_buffered_replies: MessageDispatch subsets dispatches {",
             "redefine refers source: AsynchronousAdapter = _sender",
             "redefine refers event: Event = _sender.wrapped._replies.interface._done",
-            "redefine refers target: _test::queue_Buffered_low = _buffered._low",
+            "redefine refers message: StoredMessage = _buffered._low.message_replies_done",
         )
         assertThat(lines).containsSequence(
             "contains execute_sender: AsynchronousExecutionStep subsets executionSteps {",
@@ -2138,23 +2196,6 @@ class GammaToOxstsSerializerTest {
                         }
                         verification case Ticks of Ticking {
                             EF true
-                        }
-                    """,
-                ),
-                Arguments.of(
-                    "the record-typed parameter of 'first' stored in the queue of statechart 'Receiver'",
-                    """
-                        package test
-                        type Point : record {
-                            x : integer
-                        }
-                        interface Signals {
-                            in event first(position : Point)
-                        }
-                        @Asynchronous
-                        statechart Receiver [
-                            port signals : provides Signals
-                        ] {
                         }
                     """,
                 ),

@@ -10,6 +10,8 @@ public class RangeEvaluation implements ExpressionEvaluation {
     // the bounds of an int range lie within int, so these markers cannot collide with a bound
     public static final long INFINITY = Long.MAX_VALUE;
     public static final long NEGATIVE_INFINITY = Long.MIN_VALUE;
+    // a size each instance decides: above every int bound, so an array of no constant size
+    public static final long PER_INSTANCE = Long.MAX_VALUE - 1;
 
     public static final RangeEvaluation UNBOUNDED = new RangeEvaluation(NEGATIVE_INFINITY, INFINITY);
     public static final RangeEvaluation NONE = new RangeEvaluation(0, 0);
@@ -32,6 +34,14 @@ public class RangeEvaluation implements ExpressionEvaluation {
 
     public long getUpperBound() {
         return upperBound;
+    }
+
+    public boolean isPerInstance() {
+        return upperBound == PER_INSTANCE;
+    }
+
+    public static RangeEvaluation perInstance(long lowerBound) {
+        return new RangeEvaluation(lowerBound, PER_INSTANCE);
     }
 
     public boolean isBounded() {

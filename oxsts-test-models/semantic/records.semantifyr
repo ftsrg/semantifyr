@@ -477,3 +477,100 @@ class RecordParameterViolated {
         return AG point.x <= 1
     }
 }
+
+class ReadingStore {
+    refers capacity: int
+    var readings: Reading[capacity] := [Reading { value = 0 }, ...]
+
+    tran bump(index: int) {
+        inline if (capacity > 0) {
+            readings[index].value := readings[index].value + 1
+            readings[index].valid := true
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class RecordArrayRuntimeIndexReach {
+    contains store: ReadingStore {
+        redefine refers capacity: int = 3
+    }
+    contains none: ReadingStore {
+        redefine refers capacity: int = 0
+    }
+    var index: int := 0
+
+    redefine tran {
+        havoc(index)
+        assume(0 <= index && index < 3)
+        inline store.bump(index)
+        inline none.bump(index)
+    }
+
+    prop {
+        return EF (store.readings[2].value == 2 && store.readings[2].valid && !store.readings[0].valid)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class RecordArrayRuntimeIndexViolated {
+    contains store: ReadingStore {
+        redefine refers capacity: int = 3
+    }
+    contains none: ReadingStore {
+        redefine refers capacity: int = 0
+    }
+    var index: int := 0
+
+    redefine tran {
+        havoc(index)
+        assume(0 <= index && index < 3)
+        inline store.bump(index)
+        inline none.bump(index)
+    }
+
+    prop {
+        return AG !store.readings[2].valid
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class RecordArrayWholeCopyBound {
+    var readings: Reading[2] := [Reading { value = 1, valid = true }, Reading { value = 2 }]
+    var held: Reading := Reading { value = 0 }
+
+    redefine tran {
+        choice {
+            held := readings[1]
+            readings[1] := readings[0]
+            readings[0] := held
+        } or {
+            assume(1 <= readings[0].value && readings[0].value <= 2)
+            readings[readings[0].value - 1] := Reading { value = 5 }
+        }
+    }
+
+    prop {
+        return AG (!(readings[0].value == 5 && readings[0].valid) && !(readings[1].value == 5 && readings[1].valid))
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class RecordArrayWholeCopyViolated {
+    var readings: Reading[2] := [Reading { value = 1, valid = true }, Reading { value = 2 }]
+    var held: Reading := Reading { value = 0 }
+
+    redefine tran {
+        held := readings[1]
+        readings[1] := readings[0]
+        readings[0] := held
+    }
+
+    prop {
+        return AG readings[0].valid
+    }
+}

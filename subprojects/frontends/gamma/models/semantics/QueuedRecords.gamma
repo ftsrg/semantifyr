@@ -1,0 +1,106 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package QueuedRecords
+
+type Point : record {
+    x : integer,
+    y : integer
+}
+
+interface Go {
+    in event go
+}
+
+interface Positions {
+    out event moved(position : Point)
+}
+
+@Asynchronous
+statechart Sender capacity (1) [
+    port control : provides Go,
+    port positions : provides Positions
+] {
+    var point : Point := #Point { x := 4, y := 2 }
+    var later : Point := #Point { x := 5, y := 3 }
+
+    region Main {
+        initial MainInitial
+        state Idle
+        state Sent
+        state SentLater
+    }
+
+    transition from MainInitial to Idle
+    transition from Idle to Sent when control.go / raise positions.moved(point);
+    transition from Sent to SentLater when control.go / raise positions.moved(later);
+}
+
+statechart Receiver [
+    port positions : requires Positions,
+    port input : requires Positions
+] {
+    var lastX : integer
+    var lastY : integer
+
+    region Main {
+        initial MainInitial
+        state Waiting
+        state Got
+        state Twice
+        state FromEnvironment
+    }
+
+    transition from MainInitial to Waiting
+    transition from Waiting to Got when positions.moved [positions.moved::position.x > 3] / lastX := positions.moved::position.x; lastY := positions.moved::position.y;
+    transition from Got to Twice when positions.moved
+    transition from Waiting to FromEnvironment when input.moved [input.moved::position.x > 3] / lastX := input.moved::position.x; lastY := input.moved::position.y;
+}
+
+adapter Buffered of component receiver : Receiver {
+    when any / run
+    queue messages (priority = 1, capacity = 1, discard = oldest) {
+        positions.any
+    }
+    queue inputs (priority = 2, capacity = 1) {
+        input.any
+    }
+}
+
+async System [
+    port control : provides Go,
+    port input : requires Positions
+] {
+    component sender : Sender
+    component receiver : Buffered
+    bind control -> sender.control
+    bind input -> receiver.input
+    channel [ sender.positions ] -o)- [ receiver.positions ]
+}
+
+verification case AQueuedRecordArrivesWithItsFields of System {
+    EF (state receiver -> receiver.Main.Got and variable receiver -> receiver.lastX = 4 and variable receiver -> receiver.lastY = 2)
+}
+
+verification case AQueuedRecordArrivingWithTheFieldsOfNeitherUnreachable of System {
+    EF (state receiver -> receiver.Main.Got and not ((variable receiver -> receiver.lastX = 4 and variable receiver -> receiver.lastY = 2) or (variable receiver -> receiver.lastX = 5 and variable receiver -> receiver.lastY = 3)))
+}
+
+verification case AFullQueueDiscardingTheOldestDeliversTheNewerRecord of System {
+    EF (state receiver -> receiver.Main.Got and variable receiver -> receiver.lastX = 5 and variable receiver -> receiver.lastY = 3)
+}
+
+verification case AFullQueueDeliveringTheNewerRecordBeforeTheOlderUnreachable of System {
+    EF (state receiver -> receiver.Main.Twice and variable receiver -> receiver.lastX = 5)
+}
+
+verification case TheEnvironmentQueuesAnyRecord of System {
+    EF (state receiver -> receiver.Main.FromEnvironment and variable receiver -> receiver.lastX = 7 and variable receiver -> receiver.lastY = -1)
+}
+
+verification case TheEnvironmentQueuesARecordTheGuardBlocksUnreachable of System {
+    EF (state receiver -> receiver.Main.FromEnvironment and variable receiver -> receiver.lastX = 3)
+}

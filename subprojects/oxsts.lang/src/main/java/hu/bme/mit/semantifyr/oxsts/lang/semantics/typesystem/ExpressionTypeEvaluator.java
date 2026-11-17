@@ -140,6 +140,9 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
         var elementType = evaluate(values.getFirst());
         var elementDomain =
                 elementType != null ? elementType.getDomain() : builtinSymbolResolver.anyDatatype(expression);
+        if (expression.isRepeatsLast()) {
+            return new ImmutableTypeEvaluation(elementDomain, RangeEvaluation.perInstance(1));
+        }
         return new ImmutableTypeEvaluation(elementDomain, RangeEvaluation.of(values.size()));
     }
 

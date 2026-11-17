@@ -173,6 +173,17 @@
             ]
         },
         {
+            "file": "QueuedRecords.gamma",
+            "cases": [
+                { "name": "AQueuedRecordArrivesWithItsFields", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AQueuedRecordArrivingWithTheFieldsOfNeitherUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "AFullQueueDiscardingTheOldestDeliversTheNewerRecord", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AFullQueueDeliveringTheNewerRecordBeforeTheOlderUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "TheEnvironmentQueuesAnyRecord", "verdict": "Passed", "tier": "Integration" },
+                { "name": "TheEnvironmentQueuesARecordTheGuardBlocksUnreachable", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
             "file": "Records.gamma",
             "cases": [
                 { "name": "RecordVariableStartsFromItsInitialValue", "verdict": "Passed", "tier": "Integration" },

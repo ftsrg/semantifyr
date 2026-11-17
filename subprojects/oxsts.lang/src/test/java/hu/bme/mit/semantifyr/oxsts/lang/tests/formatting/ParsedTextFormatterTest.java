@@ -187,6 +187,27 @@ public class ParsedTextFormatterTest {
     }
 
     @Test
+    void sizeFromABindingAndARepeatedLastValueAreWrittenCompactly() {
+        assertFormatted("""
+                package test
+
+                class Store {
+                    refers capacity: int
+
+                    var slots: int[ 0 .. capacity ] := [1 ,2 ,  ... ]
+                }
+                """, """
+                package test
+
+                class Store {
+                    refers capacity: int
+
+                    var slots: int[0..capacity] := [1, 2, ...]
+                }
+                """);
+    }
+
+    @Test
     void keywordsGetOneSpace() {
         assertFormatted("""
                 package   test

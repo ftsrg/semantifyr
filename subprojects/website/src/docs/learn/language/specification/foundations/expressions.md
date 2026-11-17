@@ -22,10 +22,10 @@ Expressions compute values. They appear in [property](../classes-and-behaviour/p
 | String | `"hello"` |
 | Nothing | `nothing` |
 | Infinity | `*` |
-| Array | `[a, b, c]`, `[]` |
+| Array | `[a, b, c]`, `[]`, `[0, ...]` |
 | Record (see [Records](datatypes.md#records)) | `Point { x = 0, y = 0 }` |
 
-[Lexical Structure](lexical-structure.md#literals) gives the forms of the literals, and [Datatypes](datatypes.md) their types. The values of an array literal share a type, and `[a, b, c]` has the multiplicity `[3]`.
+[Lexical Structure](lexical-structure.md#literals) gives the forms of the literals, and [Datatypes](datatypes.md) their types. The values of an array literal share a type, and `[a, b, c]` has the multiplicity `[3]`. A literal ending in `...`, such as `[0, ...]`, is the initial value of an array and takes its length from it ([Variables](../classes-and-behaviour/variables.md#multiplicity-on-the-type)).
 
 ## `self`
 
@@ -235,7 +235,7 @@ class Child {
 
 ## Indexing (`[]`)
 
-`a[i]` is the slot `i` of the array `a`, counted from 0, and has the array's domain with the multiplicity `[1]`. The index is numeric, and indexing a value whose multiplicity's upper bound is at most one, such as an `int` variable, is rejected. The index may read the state, and then the slot is chosen when the model runs. A slot is read and written like a variable.
+`a[i]` is the slot `i` of the array `a`, counted from 0, and has the array's domain with the multiplicity `[1]`. The index is numeric, and indexing a value whose multiplicity's upper bound is at most one, such as an `int` variable, is rejected. The index may read the state, and then the slot is chosen when the model runs. A slot is read and written like a variable, and a slot of an array whose lower bound is 0, such as `Item[0..2]`, takes `nothing` when it is written.
 
 ```oxsts
 // hide-start
@@ -388,7 +388,7 @@ class Flag {
 
 ## If-Then-Else
 
-`if guard then a else b` is `a` when the guard holds and `b` otherwise. The guard is Boolean, the `else` branch is required, and the two branches join ([Comparison and Joining](types.md#comparison-and-joining)); either is rejected otherwise. Its type is the joined type of the branches, so `if dark then lamp else nothing` holds at most one instance. Unlike the [`if` operation](../classes-and-behaviour/operations.md#if), it is an expression and changes no state.
+`if guard then a else b` is `a` when the guard holds and `b` otherwise. The guard is Boolean, the `else` branch is required, and the two branches join ([Comparison and Joining](types.md#comparison-and-joining)); either is rejected otherwise. Its type is the joined type of the branches, so `if dark then lamp else nothing` holds at most one instance. Unlike the [`if` operation](../classes-and-behaviour/operations.md#if), it is an expression and changes no state. A guard evaluated at compile time, one that reads no state, decides the expression when the case is compiled, as the guard of an `inline if` does, and the branch not taken is not compiled.
 
 ```oxsts
 class Lamp
