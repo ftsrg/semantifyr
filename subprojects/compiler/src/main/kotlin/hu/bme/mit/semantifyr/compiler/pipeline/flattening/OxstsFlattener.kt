@@ -233,7 +233,7 @@ class OxstsFlattener @Inject constructor(
             }.key
             for ((index, slotVariable) in slotVariables.withIndex()) {
                 variableHolders[slotVariable] = holder
-                arraySlots[slotVariable] = ArraySlot(originalVariable, index)
+                arraySlots[slotVariable] = ArraySlot(originalVariable, index, slotVariables.size)
                 if (recordField != null) {
                     recordFields[slotVariable] = recordField
                 }

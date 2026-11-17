@@ -212,15 +212,15 @@ class ReportTraceTransformer @Inject constructor(
 
     private fun slotEntry(key: String, stateValue: ClassWitnessStateValue): ReportEntry {
         val variable = stateValue.variable
-        val typeSpecification = variable.declaredVariable.typeSpecification
+        val arraySlot = variable.arraySlot!!
         return ReportEntry(
             key,
-            reportValueConverter.elementType(typeSpecification),
+            reportValueConverter.elementType(variable.declaredVariable.typeSpecification),
             reportValueConverter.value(stateValue.value),
             ObservedSlot(
                 array = reportValueConverter.path(variable.declaredReference),
-                index = variable.arraySlot!!.index,
-                size = reportValueConverter.type(typeSpecification).size,
+                index = arraySlot.index,
+                size = arraySlot.size,
             ),
         )
     }

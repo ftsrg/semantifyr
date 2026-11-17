@@ -108,6 +108,7 @@ class FlattenedCompilationContext(
 class ArraySlot(
     val arrayVariable: VariableDeclaration,
     val index: Int,
+    val size: Int,
 )
 
 class RecordField(

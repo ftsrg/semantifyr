@@ -139,7 +139,7 @@ export interface ObservedTransition {
 export interface ObservedSlot {
     array: string;
     index: number;
-    size: number | null;
+    size: number;
 }
 
 export interface ObservedVariable {

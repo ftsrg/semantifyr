@@ -55,7 +55,7 @@ data class ObservedTransition(
 data class ObservedSlot(
     val array: String,
     val index: Int,
-    val size: Int?,
+    val size: Int,
 )
 
 @Serializable
