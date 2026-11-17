@@ -56,7 +56,6 @@ export interface VerificationCaseState {
   status: VerificationCaseStatus
   message?: string
   report?: VerificationReport
-  // the file the verification wrote its witness or the language's trace to
   witnessUri?: string
   witnessValidation?: WitnessValidationStatus
   validationMessage?: string | undefined

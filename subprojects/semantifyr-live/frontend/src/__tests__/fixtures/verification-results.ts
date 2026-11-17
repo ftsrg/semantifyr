@@ -6,18 +6,13 @@
 
 import type { VerificationCaseResult, VerificationReport } from '@semantifyr/editor-common';
 
-export const sampleReport = {
-  version: 2,
-  kind: 'run',
-  verificationCase: 'example::Case',
-  portfolioId: 'smart',
-  result: {
-    metadata: { backendId: 'theta-cegar', startedAt: '2026-11-16T10:00:00Z' },
-    verdict: 'Failed',
-    soundness: 'UnderApproximating',
-    metrics: { totalDuration: 'PT1S' },
-    message: 'property fails',
-  },
+import { reportOf } from './reports';
+
+export const sampleReport = reportOf({
+  verdict: 'Failed',
+  backendId: 'theta-cegar',
+  seconds: 1,
+  soundness: 'UnderApproximating',
   trace: {
     root: 'root',
     transitions: [],
@@ -27,7 +22,7 @@ export const sampleReport = {
     steps: [],
     missingCalls: null,
   },
-} as unknown as VerificationReport;
+})
 
 export const sampleValidationReport: VerificationReport = { ...sampleReport, kind: 're-check', trace: null };
 

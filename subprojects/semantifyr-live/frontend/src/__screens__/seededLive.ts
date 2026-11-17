@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { isoDurationToMs, type LibrariesResponse, type ModelSize, type OptimizationStats, type PortfolioInfo, type ReportKind, type ReportTrace, type ReportVerdict, type SoundnessDirection, type VerificationCaseSpecification, type VerificationReport } from '@semantifyr/editor-common'
+import { isoDurationToMs, type LibrariesResponse, type PortfolioInfo, type ReportTrace, type VerificationCaseSpecification } from '@semantifyr/editor-common'
 
 import { findExample, liveFlavors, type LiveFlavor } from '../examples'
 import { SemantifyrLiveApi } from '../lib/api/lspExtensions'
@@ -24,6 +24,7 @@ import type { SharedResults } from '../lib/workspace/sharedResults'
 import type { QueuedVerification, RunTiming } from '../lib/workspace/verification'
 import { createShellState, type ShellState } from '../shells/shellState'
 import { servedFlavors } from '../__tests__/fixtures/flavors'
+import { reportOf } from '../__tests__/fixtures/reports'
 
 export interface Seed {
   flavorId?: string
@@ -298,58 +299,6 @@ const EMPTY_TRACE: ReportTrace = {
   states: [{ values: {} }],
   steps: [],
   missingCalls: null,
-}
-
-const NO_OPTIMIZATION: OptimizationStats = { duration: 'PT0S', passes: [], analyses: [] }
-
-const NO_SIZE: ModelSize = { variables: 0, operations: 0, expressions: 0 }
-
-export interface ReportSeed {
-  verdict: ReportVerdict
-  backendId: string
-  seconds: number
-  soundness?: SoundnessDirection
-  kind?: ReportKind
-  trace?: ReportTrace | null
-}
-
-export function reportOf(seed: ReportSeed): VerificationReport {
-  return {
-    version: 2,
-    kind: seed.kind ?? 'run',
-    verificationCase: 'example::Case',
-    portfolioId: 'smart',
-    optimization: { enabled: [] },
-    timeout: 'PT5M',
-    result: {
-      metadata: { backendId: seed.backendId, startedAt: '2026-11-16T10:00:00Z' },
-      verdict: seed.verdict,
-      soundness: seed.soundness ?? 'Exact',
-      isTrusted: true,
-      metrics: {
-        totalDuration: `PT${seed.seconds}S`,
-        backend: { preparationDuration: 'PT0S', verificationDuration: `PT${seed.seconds}S`, backAnnotationDuration: 'PT0S' },
-        verifier: {
-          compilationDuration: 'PT0S',
-          compilation: {
-            createDuration: 'PT0S',
-            instantiationDuration: 'PT0S',
-            inliningDuration: 'PT0S',
-            flatteningDuration: 'PT0S',
-            inliningOptimization: NO_OPTIMIZATION,
-            flatteningOptimization: NO_OPTIMIZATION,
-            inputSize: NO_SIZE,
-            inlinedSize: NO_SIZE,
-            flattenedSize: NO_SIZE,
-          },
-          backAnnotationDuration: 'PT0S',
-          portfolioDuration: `PT${seed.seconds}S`,
-        },
-      },
-      message: null,
-    },
-    trace: seed.trace ?? null,
-  }
 }
 
 export function finished(caseInfo: VerificationCaseSpecification, status: 'passed' | 'failed', seconds: number): VerificationCaseState {

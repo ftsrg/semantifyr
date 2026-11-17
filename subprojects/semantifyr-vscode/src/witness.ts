@@ -235,7 +235,9 @@ export function renderTrace(label: string, result: VerificationCaseResult, valid
     lines.push("", `## ${traceStepLabel(0)}`, "", ...renderCalls(trace, trace.initial.calls), "", ...renderStart(states.start));
     trace.steps.forEach((step, index) => {
         const elapsed = timed ? ["", `Elapsed: ${String(step.elapsed)}`] : [];
-        const changes = (states.steps[index] ?? []).filter((variable) => variable.changed);
+        const changes = (states.steps[index] ?? []).filter((variable) => {
+            return variable.changed;
+        });
         lines.push("", `## ${traceStepLabel(index + 1)}`, ...elapsed, "", ...renderCalls(trace, step.calls), "", ...renderChanges(changes));
     });
     return `${lines.join("\n")}\n`;

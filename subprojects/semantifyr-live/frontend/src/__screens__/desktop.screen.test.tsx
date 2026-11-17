@@ -17,7 +17,8 @@ import type { VerificationCaseState, VerificationState } from '../lib/verificati
 import { modelOxstsTabOf } from '../lib/workspace/libraryTabs'
 import { ShellRoot } from '../shells/ShellRoot'
 import { ABOUT, CASE_MESSAGES, DOCUMENTATION, noCases, PRIVACY_URL, SOURCE_CODE_URL, TRACE_HINTS, VALIDATION, WEBSITE_URL } from '../texts'
-import { caseOf, CONNECTED, finished, reportOf, seedLive, type Seed } from './seededLive'
+import { reportOf } from '../__tests__/fixtures/reports'
+import { caseOf, CONNECTED, finished, seedLive, type Seed } from './seededLive'
 
 // Goal: every desktop state the mockup draws lays out inside the viewport in both themes, with the real editor;
 // the proof is the layout itself, measured in a browser, never the pixels

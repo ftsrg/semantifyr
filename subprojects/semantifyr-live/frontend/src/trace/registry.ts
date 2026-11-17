@@ -18,7 +18,6 @@ import { textView, type TraceTextSource } from './TextView'
 
 export interface TraceViewProps {
   trace: ReportTrace
-  // the file the verification wrote its witness or the language's trace to
   witnessUri: string | null
   caseName: string
   verdict: VerdictStatus
@@ -58,9 +57,9 @@ function steps(label: string): TraceView {
   return { id: 'steps', label, layout: 'list', View: StepsView }
 }
 
-function witness(label: string, uriOf: (witnessUri: string | null, runtime: LanguageRuntime | null) => string | null | undefined): TraceView {
+function witness(label: string, uriOf?: (witnessUri: string | null, runtime: LanguageRuntime | null) => string | null | undefined): TraceView {
   return textView('witness', label, (context) => {
-    const fileUri = uriOf(context.witnessUri, context.runtime)
+    const fileUri = uriOf ? uriOf(context.witnessUri, context.runtime) : context.witnessUri
     return fileUri
       ? {
         tabId: 'trace-witness',
@@ -96,9 +95,7 @@ const OXSTS_TRACE: TraceLanguage = {
   views: [
     steps('Steps'),
     CALLS,
-    witness('Witness', (witnessUri) => {
-      return witnessUri
-    }),
+    witness('Witness'),
   ],
 }
 

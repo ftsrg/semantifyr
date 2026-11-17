@@ -9,7 +9,8 @@ import type { Fraction, ReportCall, ReportState, ReportTrace } from '@semantifyr
 import { findExample, liveFlavors } from '../examples'
 import type { VerificationCaseState } from '../lib/verification/engine'
 import { servedFlavors } from '../__tests__/fixtures/flavors'
-import { reportOf, seedLive, type Seed, type Seeded } from './seededLive'
+import { reportOf } from '../__tests__/fixtures/reports'
+import { seedLive, type Seed, type Seeded } from './seededLive'
 
 // A failed case of the level crossing with its trace in each language, and a Live that reads the trace's documents
 
