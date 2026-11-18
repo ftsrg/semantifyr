@@ -65,6 +65,8 @@ const CASES_KNOWN = startStep(finishStep(finishStep(STEPS, InitializationSteps.c
 
 const READY = finishStep(CASES_KNOWN, InitializationSteps.initialize.id, 0)
 
+const FINDING_CASES = startStep(startStep(finishStep(STEPS, InitializationSteps.connect.id, 0), InitializationSteps.initialize.id, 0), InitializationSteps.cases.id, 0)
+
 function statusOf(input: Partial<ShellStatusInput>): string {
   return shellStatus({ ...statusInput(), ...input }).text
 }
@@ -221,6 +223,7 @@ describe('the status line', () => {
 
   it('says why Verify all did not run, and what initializes', () => {
     expect(statusOf({ blockedErrors: 2 })).toBe('Verify all did not run: the model has 2 errors')
+    expect(statusOf({ blockedErrors: 1 })).toBe('Verify all did not run: the model has 1 error')
     const initializing = startStep(STEPS, InitializationSteps.connect.id, 0)
     expect(statusOf({ initialization: initializing })).toBe('Initializing SysML v2: connecting to the server')
   })
@@ -229,6 +232,7 @@ describe('the status line', () => {
     const verification: VerificationState = { phase: 'idle', discovery: 'discovered', cases: [result('a', 'stale')] }
     expect(statusOf({ initialization: CASES_KNOWN, verification })).toBe('Initializing the language server')
     expect(statusOf({ initialization: CASES_KNOWN, verification, queued: { caseId: null } })).toBe('Verify all waits: initializing the language server')
+    expect(statusOf({ initialization: FINDING_CASES, queued: { caseId: null } })).toBe('Verify all waits: finding the verification cases')
     expect(shellStatus({ ...statusInput(), initialization: CASES_KNOWN, verification, queued: { caseId: 'example::a' } })).toMatchObject({ kind: 'busy', text: 'Verify ', caseName: 'a', after: ' waits: initializing the language server' })
   })
 
