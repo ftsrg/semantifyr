@@ -30,6 +30,7 @@ import hu.bme.mit.semantifyr.verifier.TraceDto
 import hu.bme.mit.semantifyr.verifier.VerificationResult
 import hu.bme.mit.semantifyr.verifier.VerificationResultDto
 import hu.bme.mit.semantifyr.verifier.WitnessValidationResultDto
+import hu.bme.mit.semantifyr.verifier.boundedDirectoryName
 import hu.bme.mit.semantifyr.verifier.caseReportPath
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
@@ -48,6 +49,9 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.writeText
 import kotlin.time.Duration
 import kotlin.time.toKotlinDuration
+
+// the verifier nests its own bounded case directory below this one, and a backend's working directory has to fit Windows' 260 characters
+private const val MAX_GAMMA_CASE_DIRECTORY_LENGTH = 32
 
 data class GammaVerificationCase(
     val qualifiedName: String,
@@ -279,7 +283,7 @@ class GammaFrontend @Inject private constructor(
     }
 
     private fun caseDirectory(gammaVerificationCase: GammaVerificationCase): Path {
-        return gammaFrontendConfiguration.outputDirectory.resolve(gammaVerificationCase.qualifiedName)
+        return gammaFrontendConfiguration.outputDirectory.resolve(boundedDirectoryName(gammaVerificationCase.qualifiedName, MAX_GAMMA_CASE_DIRECTORY_LENGTH))
     }
 
     private fun buildVerifier(
