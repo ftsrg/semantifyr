@@ -55,10 +55,10 @@ class SingleBackendPortfolioTest {
         @JvmStatic
         fun untrustedResults(): List<Arguments> {
             return listOf(
-                Arguments.of(SoundnessDirection.UnderApproximating, VerificationVerdict.Passed, Property.AG, "spin's Passed on an AG property is not trusted: the leg is under-approximating"),
-                Arguments.of(SoundnessDirection.UnderApproximating, VerificationVerdict.Failed, Property.EF, "spin's Failed on an EF property is not trusted: the leg is under-approximating"),
-                Arguments.of(SoundnessDirection.OverApproximating, VerificationVerdict.Failed, Property.AG, "spin's Failed on an AG property is not trusted: the leg is over-approximating"),
-                Arguments.of(SoundnessDirection.OverApproximating, VerificationVerdict.Passed, Property.EF, "spin's Passed on an EF property is not trusted: the leg is over-approximating"),
+                Arguments.of(SoundnessDirection.UnderApproximating, VerificationVerdict.Passed, Property.AG, "spin:fake's Passed on an AG property is not trusted: the leg is under-approximating"),
+                Arguments.of(SoundnessDirection.UnderApproximating, VerificationVerdict.Failed, Property.EF, "spin:fake's Failed on an EF property is not trusted: the leg is under-approximating"),
+                Arguments.of(SoundnessDirection.OverApproximating, VerificationVerdict.Failed, Property.AG, "spin:fake's Failed on an AG property is not trusted: the leg is over-approximating"),
+                Arguments.of(SoundnessDirection.OverApproximating, VerificationVerdict.Passed, Property.EF, "spin:fake's Passed on an EF property is not trusted: the leg is over-approximating"),
             )
         }
     }
