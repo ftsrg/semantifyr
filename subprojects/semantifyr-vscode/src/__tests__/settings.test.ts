@@ -102,7 +102,14 @@ describe('settings reaching the server', () => {
         state.configurationChanged.fire({ affectsConfiguration: (section) => section === 'editor' });
         subscription.dispose();
         state.configurationChanged.fire({ affectsConfiguration: () => true });
-        await new Promise((resolve) => setTimeout(resolve, 20));
+        // the connection keeps the order of its messages, so a marker sent last arrives after any settings sent before it
+        const marked = new Promise<void>((resolve) => {
+            client.server.onNotification('test/marker', () => {
+                resolve();
+            });
+        });
+        await client.sendNotification('test/marker');
+        await marked;
         expect(received).toEqual(['smart', 'theta']);
     });
 });
