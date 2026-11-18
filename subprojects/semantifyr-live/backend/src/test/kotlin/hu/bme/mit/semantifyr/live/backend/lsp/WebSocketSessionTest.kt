@@ -42,6 +42,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.lsp4j.CodeAction
 import org.eclipse.lsp4j.CodeActionContext
 import org.eclipse.lsp4j.CodeActionParams
+import org.eclipse.lsp4j.DiagnosticSeverity
 import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.InlayHint
 import org.eclipse.lsp4j.InlayHintKind
@@ -100,7 +101,7 @@ class WebSocketSessionTest {
     }
 
     @Test
-    fun `initialize over websocket advertises only the flavor's commands`(@TempDir tmp: Path) = testApplication {
+    fun `initialize over websocket advertises code actions and only the flavor's commands`(@TempDir tmp: Path) = testApplication {
         installSemantifyrApp(webSockets = true) {
             installSemantifyrLiveBackend(testInjector(config(tmp)))
         }
@@ -114,17 +115,6 @@ class WebSocketSessionTest {
                 "oxsts.redefinable.redefined.navigate",
                 "oxsts.redefinable.redefiners.navigate",
             )
-        }
-    }
-
-    @Test
-    fun `initialize advertises code actions for the oxsts flavor`(@TempDir tmp: Path) = testApplication {
-        installSemantifyrApp(webSockets = true) {
-            installSemantifyrLiveBackend(testInjector(config(tmp)))
-        }
-        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
-            send(Frame.Text(LspWire.initializeRequest()))
-            val response = awaitResponseFor(id = 1).resultAs(InitializeResult::class.java)
             assertThat(response.capabilities.codeActionProvider.left).isTrue
         }
     }
@@ -169,6 +159,38 @@ class WebSocketSessionTest {
             val edit = edits.getValue(uri)[0]
             assertThat(edit.newText).isEqualTo("redefine ")
             assertThat(edit.range.start).isEqualTo(Position(8, 4))
+        }
+    }
+
+    @Test
+    fun `a compile-time if is published as a hint at its keyword`(@TempDir tmp: Path) = testApplication {
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(testInjector(config(tmp)))
+        }
+        val uri = "file:///workspace/snippet.semantifyr"
+        val model = """
+            package test
+
+            class Counter {
+                var count: int := 0
+
+                redefine tran {
+                    if (1 < 2) {
+                        count := 1
+                    }
+                }
+            }
+        """.trimIndent()
+        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
+            openWith(uri, model)
+            val diagnostics = awaitPublishDiagnostics(uri).paramsAs(PublishDiagnosticsParams::class.java).diagnostics
+            val hints = diagnostics.filter {
+                it.code?.left == "OXSTS.COULD_BE_INLINE"
+            }
+            assertThat(hints).hasSize(1)
+            assertThat(hints[0].severity).isEqualTo(DiagnosticSeverity.Hint)
+            assertThat(hints[0].range.start).isEqualTo(Position(6, 8))
+            assertThat(hints[0].range.end).isEqualTo(Position(6, 10))
         }
     }
 
