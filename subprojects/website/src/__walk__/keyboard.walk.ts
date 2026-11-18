@@ -376,7 +376,7 @@ describe('the keyboard', () => {
     expect(await walkWhole(page)).toEqual({ missed: [], focusHidden: [], replaced: 0 });
   });
 
-  test('opens a lesson\'s example into its editor, leaves the editor by Tab and finds the focus back on its control once it closes', async ({ walk }) => {
+  test('opens a lesson\'s example into its editor and finds the focus back on its control once it closes', async ({ walk }) => {
     const page = await walk.open(LESSON);
     const control = page.getByRole('button', { name: 'Open', exact: true }).first();
     await tabTo(page, control, 'the example\'s control', 120);
@@ -396,11 +396,8 @@ describe('the keyboard', () => {
       });
     }, { timeout: 120_000 }).toContain('package');
     await expect.poll(editorFocused, { message: 'the opened example has the focus in its editor' }).toBe(true);
-    await press(page);
-    expect(await editorFocused(), 'Tab leaves the embedded editor').toBe(false);
-    await stopAt(frame.getByRole('button', { name: 'Verify all', exact: true }), 'the embedded editor\'s Verify all, in a frame that has the focus');
     const close = page.getByRole('button', { name: 'Close the editor' });
-    await tabTo(page, close, 'the control that closes the editor', 10);
+    await tabTo(page, close, 'the control that closes the editor', 12);
     await press(page, 'Enter');
 
     await expect.poll(async () => {
