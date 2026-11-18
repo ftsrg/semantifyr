@@ -12,5 +12,5 @@ Running the tests:
 
 - `./gradlew :sysml-frontend:test` runs the unit tests.
 - `./gradlew :sysml-frontend:semanticTest` verifies the library's semantic cases.
-- `./gradlew :sysml-frontend:integrationTest` verifies the example models; a case the manifest marks as nightly runs only with `-PheavyCases=true`.
-- `./gradlew :sysml-frontend:nightlyTest` runs the witness re-checks and the trace tests.
+- `./gradlew :sysml-frontend:integrationTest` verifies the example models.
+- `./gradlew :sysml-frontend:nightlyTest` verifies the cases the manifest marks as nightly, and runs the witness re-checks and the trace tests.

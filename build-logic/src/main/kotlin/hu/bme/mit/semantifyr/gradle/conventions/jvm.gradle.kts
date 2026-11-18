@@ -53,14 +53,6 @@ tasks.jar {
     }
 }
 
-val heavyCases = providers.gradleProperty("heavyCases").orElse(
-    provider {
-        gradle.startParameter.taskNames.any {
-            it == "nightly" || it == ":nightly"
-        }.toString()
-    },
-)
-
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
     testLogging.showStandardStreams = true
@@ -69,9 +61,6 @@ tasks.withType<Test>().configureEach {
     // the JVM warnings the application convention silences
     jvmArgs("--enable-native-access=ALL-UNNAMED")
     systemProperty("guice_bytecode_gen_option", "DISABLED")
-    systemProperty("junit.jupiter.extensions.autodetection.enabled", "true")
-    systemProperty("junit.jupiter.extensions.autodetection.include", "hu.bme.mit.semantifyr.*")
-    systemProperty("semantifyr.heavyCases", heavyCases.get())
 }
 
 tasks.withType<JavaExec>().configureEach {

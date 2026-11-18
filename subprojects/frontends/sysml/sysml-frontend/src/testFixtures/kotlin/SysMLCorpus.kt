@@ -8,7 +8,6 @@ package hu.bme.mit.semantifyr.frontends.sysml.testing
 
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.frontends.sysml.SysMLv2Variant
-import hu.bme.mit.semantifyr.verifier.TieredCase
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.nio.file.Path
@@ -56,12 +55,7 @@ data class CorpusModel(
 data class CorpusEntry(
     val model: CorpusModel,
     val case: CorpusCase,
-) : TieredCase {
-    override val heavy: Boolean
-        get() {
-            return case.tier == CorpusTier.Nightly
-        }
-
+) {
     override fun toString(): String {
         return "${model.file} - ${case.name}"
     }

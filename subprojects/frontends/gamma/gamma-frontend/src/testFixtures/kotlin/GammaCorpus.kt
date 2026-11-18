@@ -9,8 +9,6 @@ package hu.bme.mit.semantifyr.frontends.gamma.testing
 import hu.bme.mit.semantifyr.verifier.CaseManifest
 import hu.bme.mit.semantifyr.verifier.ManifestCase
 import hu.bme.mit.semantifyr.verifier.ManifestModel
-import hu.bme.mit.semantifyr.verifier.ManifestTier
-import hu.bme.mit.semantifyr.verifier.TieredCase
 import java.nio.file.Path
 import kotlin.io.path.Path
 
@@ -18,12 +16,7 @@ data class GammaCorpusEntry(
     val directory: Path,
     val model: ManifestModel,
     val case: ManifestCase,
-) : TieredCase {
-    override val heavy: Boolean
-        get() {
-            return case.tier == ManifestTier.Nightly
-        }
-
+) {
     val modelPath: Path
         get() {
             return directory.resolve(model.file)
