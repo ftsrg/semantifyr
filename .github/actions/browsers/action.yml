@@ -1,0 +1,40 @@
+# SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
+name: Browsers
+description: Installs the browsers the lock file's Playwright names and their system packages, both kept in the Actions cache.
+inputs:
+  browsers:
+    description: The browsers, separated by spaces.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Name the browser cache
+      id: cache-key
+      shell: sh
+      env:
+        BROWSERS: ${{ inputs.browsers }}
+      # apt keeps the packages it downloads in the cached directory, so that a slow mirror is met once per runner image
+      run: |
+        version=$(jq -r '.packages["node_modules/playwright"].version' package-lock.json)
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+        echo "key=browsers-$ImageOS-$ImageVersion-$version-$(echo "$BROWSERS" | tr ' ' '-')" >> "$GITHUB_OUTPUT"
+        mkdir -p "$HOME/.cache/apt-archives/partial"
+        printf 'Dir::Cache::Archives "%s";\nAPT::Keep-Downloaded-Packages "true";\n' "$HOME/.cache/apt-archives" | sudo tee /etc/apt/apt.conf.d/90-cached-archives > /dev/null
+    - name: Restore the browser cache
+      uses: actions/cache@v6
+      with:
+        path: |
+          ~/.cache/ms-playwright
+          ~/.cache/apt-archives
+          !~/.cache/apt-archives/partial
+          !~/.cache/apt-archives/lock
+        key: ${{ steps.cache-key.outputs.key }}
+    - name: Install the browsers
+      shell: sh
+      env:
+        BROWSERS: ${{ inputs.browsers }}
+        VERSION: ${{ steps.cache-key.outputs.version }}
+      run: npx --yes "playwright@$VERSION" install --with-deps $BROWSERS

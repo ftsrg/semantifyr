@@ -330,7 +330,11 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - name: Install the browser
-        run: npx --yes "playwright@$(jq -r '.packages["node_modules/playwright"].version' package-lock.json)" install --with-deps "$BROWSER"
+        # a stuck download fails as itself rather than taking the run past its budget
+        timeout-minutes: 5
+        uses: ./.github/actions/browsers
+        with:
+          browsers: ${{ matrix.browser }}
       - name: Download the build cache
         uses: actions/download-artifact@v8
         with:
@@ -430,7 +434,10 @@ jobs:
         run: npm run smoke -w @ftsrg/semantifyr-live-frontend
       - name: Install the browsers for the live flows
         id: browsers
-        run: npx playwright install --with-deps chromium firefox webkit
+        timeout-minutes: 5
+        uses: ./.github/actions/browsers
+        with:
+          browsers: chromium firefox webkit
       - name: Run the live flows on the image on Chromium
         if: ${{ !cancelled() && steps.browsers.outcome == 'success' }}
         timeout-minutes: 15
