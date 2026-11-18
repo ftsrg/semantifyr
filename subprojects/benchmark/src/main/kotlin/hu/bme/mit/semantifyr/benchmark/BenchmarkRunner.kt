@@ -138,7 +138,6 @@ private fun <R> analyzeFile(benchmark: Benchmark<R>, file: Path) {
     benchmark.analyze(benchmarkJson.decodeFromString(BenchmarkRun.serializer(resultSerializer(benchmark)), file.readText()))
 }
 
-// a written file names no type, so the result's type is read from the benchmark's class
 @Suppress("UNCHECKED_CAST")
 private fun <R> resultSerializer(benchmark: Benchmark<R>): KSerializer<R> {
     val superType = benchmark.javaClass.genericSuperclass as ParameterizedType

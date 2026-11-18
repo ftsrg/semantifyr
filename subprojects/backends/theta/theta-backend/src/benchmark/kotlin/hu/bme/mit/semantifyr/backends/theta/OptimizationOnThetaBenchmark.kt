@@ -70,7 +70,6 @@ class OptimizationOnThetaBenchmark : Benchmark<ThetaResult>() {
             val baselineName = "${configuration.substringBefore('/')}/all"
             val baseline = run.repetitionsOf(baselineName)
             val compared = run.repetitionsOf(configuration)
-            // a cut or undecided repetition would shorten a mean
             if (configuration == baselineName || !decidedByTheta(baseline) || !decidedByTheta(compared)) {
                 logger.warn { "$configuration: ${outcomes(compared)}" }
             } else {

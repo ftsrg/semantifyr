@@ -57,7 +57,6 @@ internal fun <R> startFreshJvm(
     )
     val command = listOf(java) + ManagementFactory.getRuntimeMXBean().inputArguments + arguments
     val loadBefore = LoadAverage.now()
-    // in the task's working directory, where a benchmark's relative paths point
     val jvm = try {
         runexec.run(command, Path("").toAbsolutePath(), directory.resolve("jvm.out"), directory.resolve("jvm.err"), timeLimit)
     } catch (exception: MeasurementFailedException) {
@@ -112,7 +111,6 @@ object FreshJvm {
         }
         val callsSerializer = ListSerializer(Call.serializer(resultSerializer(runClass)))
         val measurement = Measurement(runexec, null, directory)
-        // a JVM cut at its time limit keeps the calls it finished
         measurement.writeFinishedCalls = {
             writeAtomically(directory.resolve(CALLS_FILE), benchmarkJson.encodeToString(callsSerializer, it))
         }

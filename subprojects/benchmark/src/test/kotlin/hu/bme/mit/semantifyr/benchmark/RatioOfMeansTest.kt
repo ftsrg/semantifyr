@@ -13,9 +13,6 @@ import kotlin.math.sqrt
 
 class RatioOfMeansTest {
 
-    // baseline mean 10, variance 0.5, half-width 2.776445 * sqrt(0.5 / 5) = 0.877989;
-    // compared mean 7.5, variance 0.625, half-width 2.776445 * sqrt(0.625 / 5) = 0.981622;
-    // Kalibera and Jones' equation 5 gives (75 -+ sqrt(75^2 - (100 - 0.877989^2)(56.25 - 0.981622^2))) / (100 - 0.877989^2)
     private val baseline = listOf(10.0, 11.0, 9.0, 10.0, 10.0)
     private val compared = listOf(7.0, 8.5, 6.5, 7.5, 8.0)
 

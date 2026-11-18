@@ -52,7 +52,6 @@ fun ratioOfMeans(
     val comparedTerm = comparedMean * comparedMean - comparedHalfWidth * comparedHalfWidth
     val discriminant = product * product - denominator * comparedTerm
     val ratio = comparedMean / baselineMean
-    // the baseline's own interval holds zero, so the ratio is bounded on no side
     if (denominator <= 0) {
         return RatioOfMeans(ratio, null, null, confidenceLevel, baseline.size, compared.size)
     }
