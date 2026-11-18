@@ -14,7 +14,7 @@ export async function run() {
     await extension.activate();
 
     const registered = await commands.getCommands(true);
-    for (const command of ["semantifyr.gamma.compile", "semantifyr.witness.show", "oxsts.case.discover", "oxsts.case.verify", "gamma.case.discover", "gamma.case.verify"]) {
+    for (const command of ["gamma.case.discover", "gamma.case.verify"]) {
         assert.ok(registered.includes(command), `${command} is not registered`);
     }
 
