@@ -37,7 +37,7 @@ services:
         ipv4_address: 172.30.0.254
 
   oauth2-proxy:
-    image: quay.io/oauth2-proxy/oauth2-proxy:v7.15.5
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.15.6
     command:
       - --provider=github
       - --github-user=${GITHUB_USERS:?GITHUB_USERS is not set}
