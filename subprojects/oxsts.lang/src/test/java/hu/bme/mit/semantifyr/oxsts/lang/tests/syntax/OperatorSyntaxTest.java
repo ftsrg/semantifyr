@@ -354,9 +354,7 @@ public class OperatorSyntaxTest {
                 var total: int := 2147483648
             }
             """);
-        assertThat(parsedPackage.getResourceErrors())
-                .singleElement()
-                .isInstanceOf(XtextSyntaxDiagnostic.class);
+        assertThat(parsedPackage.getResourceErrors()).singleElement().isInstanceOf(XtextSyntaxDiagnostic.class);
     }
 
     @Test

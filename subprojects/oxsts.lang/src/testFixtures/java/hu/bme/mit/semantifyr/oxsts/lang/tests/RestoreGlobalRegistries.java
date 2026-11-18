@@ -18,7 +18,7 @@ import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-// createInjectorAndDoEMFRegistration rewrites the JVM-global EMF and Xtext registries, so the class puts back what it found
+// registering a language rewrites the JVM-global EMF and Xtext registries, so the class puts back what it found
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited

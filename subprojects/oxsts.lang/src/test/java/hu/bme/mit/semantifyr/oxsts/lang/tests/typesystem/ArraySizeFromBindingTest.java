@@ -248,9 +248,7 @@ public class ArraySizeFromBindingTest {
             }
             """);
 
-        assertThat(parsedPackage.getResourceErrors())
-                .singleElement()
-                .isInstanceOf(XtextSyntaxDiagnostic.class);
+        assertThat(parsedPackage.getResourceErrors()).singleElement().isInstanceOf(XtextSyntaxDiagnostic.class);
     }
 
     @Test
