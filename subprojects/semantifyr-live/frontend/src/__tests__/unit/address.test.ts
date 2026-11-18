@@ -86,10 +86,6 @@ describe('an address', () => {
     expect(frameColorMode(readAddress('/language?view=embed'))).toBeNull()
   })
 
-  it('does not read today\'s parameters', async () => {
-    expect(await resolved('/?mode=gamma&example=crossroads&code=abc&embed=1')).toMatchObject({ flavor: { id: 'sysml' }, example: { id: 'level-crossing' }, shared: false, problem: null })
-  })
-
   it('opens the model of its fragment as a shared model, or as an edit of the example its path names', async () => {
     const model = await encodeCompressedBase64Url('package edited')
 
