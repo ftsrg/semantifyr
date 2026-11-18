@@ -6,7 +6,6 @@
 
 import hu.bme.mit.semantifyr.gradle.conventions.readsServedExamples
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
-import hu.bme.mit.semantifyr.gradle.conventions.translatesSysML
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
@@ -58,7 +57,6 @@ tasks.processResources {
 
 tasks.withType<Test>().configureEach {
     readsServedExamples()
-    translatesSysML()
     inputs.files(syncSysmlTestModels)
     inputs.dir(layout.projectDirectory.dir("../models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("../models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)

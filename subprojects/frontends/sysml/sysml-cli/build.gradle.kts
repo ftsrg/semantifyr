@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.gradle.conventions.translatesSysML
-
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.cli")
     id("hu.bme.mit.semantifyr.gradle.conventions.suites")
@@ -53,8 +51,4 @@ listOf(
             .withPropertyName("oxstsSemanticModels")
             .withPathSensitivity(PathSensitivity.RELATIVE)
     }
-}
-
-tasks.withType<Test>().configureEach {
-    translatesSysML()
 }
