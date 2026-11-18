@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.frontends.gamma.discovery.GammaVerificationCaseDisc
 import hu.bme.mit.semantifyr.frontends.gamma.lang.tests.InjectWithGamma
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaFrontendTestHelper
+import hu.bme.mit.semantifyr.oxsts.lang.tests.RestoreGlobalRegistries
 import hu.bme.mit.semantifyr.verifier.FakeBackend
 import hu.bme.mit.semantifyr.verifier.FakeConfig
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
@@ -24,6 +25,7 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
+@RestoreGlobalRegistries
 @InjectWithGamma
 class GammaCompilationTests {
 

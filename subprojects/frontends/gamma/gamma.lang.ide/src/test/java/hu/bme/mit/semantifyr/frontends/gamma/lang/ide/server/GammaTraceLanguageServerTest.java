@@ -18,6 +18,7 @@ import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseSpecification;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationStatus;
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup;
+import hu.bme.mit.semantifyr.oxsts.lang.tests.RestoreGlobalRegistries;
 import hu.bme.mit.semantifyr.portfolios.Portfolios;
 import java.net.URI;
 import java.nio.file.Files;
@@ -56,6 +57,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+@RestoreGlobalRegistries
 class GammaTraceLanguageServerTest {
 
     private static final Path MODELS = Path.of("..", "models");

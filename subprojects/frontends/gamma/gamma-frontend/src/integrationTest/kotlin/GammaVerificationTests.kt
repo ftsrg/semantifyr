@@ -7,6 +7,7 @@
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaCorpus
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaCorpusEntry
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaFrontendTestHelper
+import hu.bme.mit.semantifyr.oxsts.lang.tests.RestoreGlobalRegistries
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.portfolios.testing.ExampleLanguage
 import hu.bme.mit.semantifyr.portfolios.testing.ServedExamples
@@ -16,6 +17,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import kotlin.io.path.name
 
+@RestoreGlobalRegistries
 class GammaVerificationTests {
 
     companion object {

@@ -11,8 +11,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.ide.GammaIdeSetup;
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup;
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinLibrary;
+import hu.bme.mit.semantifyr.oxsts.lang.tests.RestoreGlobalRegistries;
 import org.junit.jupiter.api.Test;
 
+@RestoreGlobalRegistries
 class GammaBuiltinLibraryTest {
 
     @Test
