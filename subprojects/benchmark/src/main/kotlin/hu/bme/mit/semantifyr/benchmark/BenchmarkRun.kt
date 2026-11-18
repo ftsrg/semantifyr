@@ -18,8 +18,8 @@ import kotlin.io.path.writeText
 import kotlin.time.Duration
 
 @Serializable
-data class BenchmarkRun<C, R>(
-    val statement: Statement<C>,
+data class BenchmarkRun<R>(
+    val statement: Statement,
     val startedAt: String,
     val context: Map<String, JsonElement>,
     val repetitions: List<Repetition<R>>,
@@ -38,12 +38,10 @@ data class BenchmarkRun<C, R>(
 }
 
 @Serializable
-data class Statement<C>(
+data class Statement(
     val benchmark: String,
-    val configurations: Map<String, C>,
-    val isolation: Isolation,
-    val schedule: InterleavedRounds,
-    val timeLimit: Duration?,
+    val configurations: Map<String, JsonElement>,
+    val repetitions: Int,
 )
 
 @Serializable
@@ -51,6 +49,7 @@ data class Repetition<R>(
     val configuration: String,
     val round: Int,
     val hostState: HostState,
+    val timeLimit: Duration?,
     val jvm: ProcessObservation?,
     val calls: List<Call<R>>,
     val failure: Failure?,
@@ -68,7 +67,7 @@ data class Call<R>(
     val warmUp: Boolean,
     val spans: List<SpanObservation>,
     val processes: List<ProcessObservation>,
-    val result: R,
+    val result: R?,
 ) {
     fun spanSeconds(name: String): Double {
         return spans.single {
@@ -115,6 +114,7 @@ data class LoadAverage(
     }
 }
 
+@PublishedApi
 internal val benchmarkJson = Json {
     prettyPrint = true
     encodeDefaults = true

@@ -6,21 +6,21 @@
 
 package hu.bme.mit.semantifyr.backends.theta
 
+import hu.bme.mit.semantifyr.benchmark.Benchmark
 import hu.bme.mit.semantifyr.benchmark.BenchmarkRun
-import hu.bme.mit.semantifyr.benchmark.BenchmarkSource
 import hu.bme.mit.semantifyr.benchmark.ProcessObservation
 import hu.bme.mit.semantifyr.benchmark.Repetition
-import hu.bme.mit.semantifyr.benchmark.RunnerJvm
-import hu.bme.mit.semantifyr.benchmark.Trial
-import hu.bme.mit.semantifyr.benchmark.benchmark
+import hu.bme.mit.semantifyr.benchmark.combinations
+import hu.bme.mit.semantifyr.benchmark.inThisJvm
+import hu.bme.mit.semantifyr.benchmark.interleavedRounds
 import hu.bme.mit.semantifyr.benchmark.ratioOfMeans
 import hu.bme.mit.semantifyr.compiler.CaseCompilation
 import hu.bme.mit.semantifyr.compiler.ModelCase
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPass
 import hu.bme.mit.semantifyr.logging.info
+import hu.bme.mit.semantifyr.logging.loggerFactory
 import kotlinx.serialization.Serializable
-import org.slf4j.Logger
 import kotlin.time.Duration.Companion.seconds
 
 @Serializable
@@ -44,40 +44,35 @@ private val optimizationSets = mapOf(
     "without-$it" to allPasses - it
 }
 
-class OptimizationOnThetaBenchmark : BenchmarkSource {
-    override val benchmark = benchmark(
-        configurations = models.flatMap { (modelName, model) ->
-            optimizationSets.map { (setName, passes) ->
-                "$modelName/$setName" to OptimizationCell(model, passes)
+class OptimizationOnThetaBenchmark : Benchmark<ThetaResult>() {
+    private val logger by loggerFactory()
+
+    private val cells = combinations(models, optimizationSets, ::OptimizationCell)
+
+    private val theta = MeasuredTheta()
+
+    override fun measure(): BenchmarkRun<ThetaResult> {
+        return interleavedRounds(cells, context = listOf(ThetaInstallation)) { cell ->
+            val compiled = CaseCompilation(cell.model, OptimizationConfig(cell.passes)).whole()
+            inThisJvm(timeLimit = 60.seconds) { measurement ->
+                theta.verify(compiled, measurement.measured().processes)
             }
-        }.toMap(),
-        isolation = RunnerJvm,
-        timeLimit = 60.seconds,
-        context = listOf(
-            ThetaInstallation,
-        ),
-        analysis = ::relate,
-    ) { configuration ->
-        val compiled = CaseCompilation(configuration.model, OptimizationConfig(configuration.passes)).whole()
-        val theta = MeasuredTheta()
-        Trial {
-            theta.verify(compiled, it.processes)
         }
     }
-}
 
-private fun relate(run: BenchmarkRun<OptimizationCell, ThetaResult>, logger: Logger) {
-    for (configuration in run.statement.configurations.keys) {
-        val baselineName = "${configuration.substringBefore('/')}/all"
-        val baseline = run.repetitionsOf(baselineName)
-        val compared = run.repetitionsOf(configuration)
-        // a cut or undecided repetition would shorten a mean
-        if (configuration == baselineName || !decidedByTheta(baseline) || !decidedByTheta(compared)) {
-            logger.info { "$configuration: ${outcomes(compared)}" }
-        } else {
-            val wallTime = ratioOfMeans(thetaSeconds(baseline, ProcessObservation::wallTimeSeconds), thetaSeconds(compared, ProcessObservation::wallTimeSeconds))
-            val cpuTime = ratioOfMeans(thetaSeconds(baseline, ProcessObservation::cpuTimeSeconds), thetaSeconds(compared, ProcessObservation::cpuTimeSeconds))
-            logger.info { "$configuration over all, wall time $wallTime, CPU time $cpuTime" }
+    override fun analyze(run: BenchmarkRun<ThetaResult>) {
+        for (configuration in run.statement.configurations.keys) {
+            val baselineName = "${configuration.substringBefore('/')}/all"
+            val baseline = run.repetitionsOf(baselineName)
+            val compared = run.repetitionsOf(configuration)
+            // a cut or undecided repetition would shorten a mean
+            if (configuration == baselineName || !decidedByTheta(baseline) || !decidedByTheta(compared)) {
+                logger.info { "$configuration: ${outcomes(compared)}" }
+            } else {
+                val wallTime = ratioOfMeans(thetaSeconds(baseline, ProcessObservation::wallTimeSeconds), thetaSeconds(compared, ProcessObservation::wallTimeSeconds))
+                val cpuTime = ratioOfMeans(thetaSeconds(baseline, ProcessObservation::cpuTimeSeconds), thetaSeconds(compared, ProcessObservation::cpuTimeSeconds))
+                logger.info { "$configuration over all, wall time $wallTime, CPU time $cpuTime" }
+            }
         }
     }
 }
@@ -86,7 +81,8 @@ private fun decidedByTheta(repetitions: List<Repetition<ThetaResult>>): Boolean 
     return repetitions.size >= 2 && repetitions.all {
         val call = it.measuredCall
         val process = call?.processes?.singleOrNull()
-        call != null && call.result.verdict.isDecisive && process != null && process.terminationReason == null
+        val result = call?.result
+        result != null && result.verdict.isDecisive && process != null && process.terminationReason == null
     }
 }
 
@@ -106,7 +102,7 @@ private fun outcomes(repetitions: List<Repetition<ThetaResult>>): String {
         if (failure != null) {
             "${failure.stage} failed: ${failure.stackTrace.lines().first()}"
         } else if (cut != null) {
-            "${call.result.verdict} cut at $cut"
+            "${call.result?.verdict} cut at $cut"
         } else {
             "${call?.result?.verdict} with ${call?.processes?.size} processes"
         }

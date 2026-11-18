@@ -62,12 +62,9 @@ class BenchmarkFileTest {
             statement = Statement(
                 benchmark = "CellBenchmark",
                 configurations = mapOf(
-                    "crossroads/all" to ModelCell("crossroads", setOf("copy-propagation")),
-                    "crossroads/none" to ModelCell("crossroads", emptySet()),
+                    "crossroads/all" to benchmarkJson.encodeToJsonElement(ModelCell.serializer(), ModelCell("crossroads", setOf("copy-propagation"))),
                 ),
-                isolation = FreshJvm(warmUpCalls = 3),
-                schedule = InterleavedRounds(),
-                timeLimit = 60.seconds,
+                repetitions = 5,
             ),
             startedAt = "2026-11-17T08:00:00Z",
             context = mapOf(
@@ -78,6 +75,7 @@ class BenchmarkFileTest {
                     configuration = "crossroads/all",
                     round = 0,
                     hostState = HostState(LoadAverage(1.5, 2.0, 2.5), LoadAverage(1.6, 2.0, 2.5)),
+                    timeLimit = 60.seconds,
                     jvm = process,
                     calls = listOf(
                         Call(false, emptyList(), listOf(process), BackendAnswer("Passed", null)),
@@ -88,15 +86,16 @@ class BenchmarkFileTest {
                     configuration = "crossroads/none",
                     round = 0,
                     hostState = HostState(LoadAverage(1.6, 2.0, 2.5), LoadAverage(1.7, 2.0, 2.5)),
+                    timeLimit = null,
                     jvm = null,
                     calls = listOf(
-                        Call(true, listOf(SpanObservation("flattening", 1200)), emptyList(), BackendAnswer("Inconclusive", "cut")),
+                        Call(true, listOf(SpanObservation("flattening", 1200)), emptyList(), null),
                     ),
                     failure = Failure(Stage.Setup, "IllegalStateException: refused"),
                 ),
             ),
         )
-        val serializer = BenchmarkRun.serializer(ModelCell.serializer(), BackendAnswer.serializer())
+        val serializer = BenchmarkRun.serializer(BackendAnswer.serializer())
 
         val read = benchmarkJson.decodeFromString(serializer, benchmarkJson.encodeToString(serializer, run))
 

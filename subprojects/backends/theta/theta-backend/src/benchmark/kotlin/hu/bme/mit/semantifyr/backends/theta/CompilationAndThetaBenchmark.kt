@@ -6,12 +6,13 @@
 
 package hu.bme.mit.semantifyr.backends.theta
 
+import hu.bme.mit.semantifyr.benchmark.Benchmark
 import hu.bme.mit.semantifyr.benchmark.BenchmarkRun
-import hu.bme.mit.semantifyr.benchmark.BenchmarkSource
 import hu.bme.mit.semantifyr.benchmark.Call
-import hu.bme.mit.semantifyr.benchmark.FreshJvm
-import hu.bme.mit.semantifyr.benchmark.Trial
-import hu.bme.mit.semantifyr.benchmark.benchmark
+import hu.bme.mit.semantifyr.benchmark.FreshJvmRun
+import hu.bme.mit.semantifyr.benchmark.Measurement
+import hu.bme.mit.semantifyr.benchmark.freshJvm
+import hu.bme.mit.semantifyr.benchmark.interleavedRounds
 import hu.bme.mit.semantifyr.benchmark.ratioOfMeans
 import hu.bme.mit.semantifyr.compiler.CaseCompilation
 import hu.bme.mit.semantifyr.compiler.ModelCase
@@ -19,8 +20,8 @@ import hu.bme.mit.semantifyr.compiler.pipeline.context.ModelSize
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPass
 import hu.bme.mit.semantifyr.logging.info
+import hu.bme.mit.semantifyr.logging.loggerFactory
 import kotlinx.serialization.Serializable
-import org.slf4j.Logger
 import kotlin.time.Duration.Companion.seconds
 
 @Serializable
@@ -38,40 +39,47 @@ private val phases = listOf(
     "flattening",
 )
 
-class CompilationAndThetaBenchmark : BenchmarkSource {
-    override val benchmark = benchmark(
-        configurations = mapOf(
-            "crossroads/all" to OptimizationCell(crossroads, OptimizationPass.entries.toSet()),
-            "crossroads/none" to OptimizationCell(crossroads, emptySet()),
-        ),
-        isolation = FreshJvm(warmUpCalls = 3),
-        timeLimit = 300.seconds,
-        context = listOf(
-            ThetaInstallation,
-        ),
-        analysis = ::relate,
-    ) { configuration ->
-        val compilation = CaseCompilation(configuration.model, OptimizationConfig(configuration.passes))
+class CompilationAndThetaRun(private val cell: OptimizationCell) : FreshJvmRun<CompiledThetaResult> {
+    override fun run(measurement: Measurement): CompiledThetaResult {
+        val compilation = CaseCompilation(cell.model, OptimizationConfig(cell.passes))
         val theta = MeasuredTheta()
-        Trial {
-            val compiled = compilation.phases(it.spans)
-            CompiledThetaResult(compiled.flattenedSize, theta.verify(compiled.flattened, it.processes))
+        repeat(3) {
+            val warmUp = measurement.warmUp()
+            theta.verify(compilation.phases(warmUp.spans).flattened, warmUp.processes)
         }
+        val measured = measurement.measured()
+        val compiled = compilation.phases(measured.spans)
+        return CompiledThetaResult(compiled.flattenedSize, theta.verify(compiled.flattened, measured.processes))
     }
 }
 
-private fun relate(run: BenchmarkRun<OptimizationCell, CompiledThetaResult>, logger: Logger) {
-    val baseline = run.repetitionsOf("crossroads/all").mapNotNull {
-        it.measuredCall
+class CompilationAndThetaBenchmark : Benchmark<CompiledThetaResult>() {
+    private val logger by loggerFactory()
+
+    private val cells = mapOf(
+        "crossroads/all" to OptimizationCell(crossroads, OptimizationPass.entries.toSet()),
+        "crossroads/none" to OptimizationCell(crossroads, emptySet()),
+    )
+
+    override fun measure(): BenchmarkRun<CompiledThetaResult> {
+        return interleavedRounds(cells, context = listOf(ThetaInstallation)) { cell ->
+            freshJvm(CompilationAndThetaRun::class, cell, timeLimit = 300.seconds)
+        }
     }
-    val compared = run.repetitionsOf("crossroads/none").mapNotNull {
-        it.measuredCall
+
+    override fun analyze(run: BenchmarkRun<CompiledThetaResult>) {
+        val baseline = run.repetitionsOf("crossroads/all").mapNotNull {
+            it.measuredCall
+        }
+        val compared = run.repetitionsOf("crossroads/none").mapNotNull {
+            it.measuredCall
+        }
+        logger.info { "none over all, compilation ${ratioOfMeans(compilationSeconds(baseline), compilationSeconds(compared))}" }
+        logger.info { "none over all, Theta ${ratioOfMeans(thetaSeconds(baseline), thetaSeconds(compared))}" }
+        val baselineTotal = compilationSeconds(baseline).zip(thetaSeconds(baseline), Double::plus)
+        val comparedTotal = compilationSeconds(compared).zip(thetaSeconds(compared), Double::plus)
+        logger.info { "none over all, compilation and Theta together ${ratioOfMeans(baselineTotal, comparedTotal)}" }
     }
-    logger.info { "none over all, compilation ${ratioOfMeans(compilationSeconds(baseline), compilationSeconds(compared))}" }
-    logger.info { "none over all, Theta ${ratioOfMeans(thetaSeconds(baseline), thetaSeconds(compared))}" }
-    val baselineTotal = compilationSeconds(baseline).zip(thetaSeconds(baseline), Double::plus)
-    val comparedTotal = compilationSeconds(compared).zip(thetaSeconds(compared), Double::plus)
-    logger.info { "none over all, compilation and Theta together ${ratioOfMeans(baselineTotal, comparedTotal)}" }
 }
 
 private fun compilationSeconds(calls: List<Call<CompiledThetaResult>>): List<Double> {

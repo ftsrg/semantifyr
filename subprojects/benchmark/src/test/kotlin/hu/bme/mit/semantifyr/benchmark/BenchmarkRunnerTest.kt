@@ -11,49 +11,16 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermissions
-import kotlin.io.path.readText
 import kotlin.io.path.setPosixFilePermissions
 import kotlin.io.path.writeText
 
-class SwallowingBenchmark : BenchmarkSource {
-    override val benchmark = benchmark(
-        configurations = mapOf(
-            "crossroads/all" to ModelCell("crossroads", emptySet()),
-        ),
-        isolation = RunnerJvm,
-    ) {
-        Trial { measurement ->
-            val directory = measurement.processes.directory
-            try {
-                measurement.processes.run(listOf("echo"), directory, directory.resolve("out"), directory.resolve("err"))
-                BackendAnswer("Passed", null)
-            } catch (exception: Exception) {
-                BackendAnswer("Errored", exception.message)
-            }
-        }
+class OutOfMemoryRun(cell: ModelCell) : FreshJvmRun<BackendAnswer> {
+    init {
+        throw OutOfMemoryError("setup of ${cell.model} ran out of memory")
     }
-}
 
-class OverflowingSetupBenchmark : BenchmarkSource {
-    override val benchmark = benchmark<ModelCell, BackendAnswer>(
-        configurations = mapOf(
-            "crossroads/all" to ModelCell("crossroads", emptySet()),
-            "crossroads/none" to ModelCell("crossroads", emptySet()),
-        ),
-        isolation = RunnerJvm,
-    ) {
-        throw StackOverflowError("setup overflowed")
-    }
-}
-
-class OutOfMemorySetupBenchmark : BenchmarkSource {
-    override val benchmark = benchmark<ModelCell, BackendAnswer>(
-        configurations = mapOf(
-            "crossroads/all" to ModelCell("crossroads", emptySet()),
-        ),
-        isolation = FreshJvm(),
-    ) {
-        throw OutOfMemoryError("setup ran out of memory")
+    override fun run(measurement: Measurement): BackendAnswer {
+        return BackendAnswer("Passed", null)
     }
 }
 
@@ -62,6 +29,11 @@ class BenchmarkRunnerTest {
     @TempDir
     lateinit var directory: Path
 
+    private val cells = mapOf(
+        "crossroads/all" to ModelCell("crossroads", emptySet()),
+        "crossroads/none" to ModelCell("crossroads", emptySet()),
+    )
+
     private fun standIn(name: String): String {
         val script = directory.resolve(name)
         script.writeText(checkNotNull(javaClass.getResource("/runexec/$name")).readText())
@@ -69,16 +41,35 @@ class BenchmarkRunnerTest {
         return script.toString()
     }
 
-    private fun run(source: BenchmarkSource, runexec: String): BenchmarkRun<ModelCell, BackendAnswer> {
-        val file = runBenchmark(source, runexec, directory.resolve("benchmark"))
-        return benchmarkJson.decodeFromString(BenchmarkRun.serializer(ModelCell.serializer(), BackendAnswer.serializer()), file.readText())
+    private fun run(runexec: String, repetition: RepetitionScope.(ModelCell) -> Measured<BackendAnswer>): BenchmarkRun<BackendAnswer> {
+        return runInterleavedRounds(
+            name = "TestBenchmark",
+            cases = cells,
+            repetitions = 5,
+            context = emptyList(),
+            configurationSerializer = ModelCell.serializer(),
+            resultSerializer = BackendAnswer.serializer(),
+            runexecExecutable = runexec,
+            outputDirectory = directory.resolve("benchmark"),
+            repetition = repetition,
+        )
     }
 
     @Test
     fun `a measurement runexec fails is the repetition's failure and not the result the benchmark made of it`() {
-        val run = run(SwallowingBenchmark(), standIn("measuring-nothing.sh"))
+        val run = run(standIn("measuring-nothing.sh")) {
+            inThisJvm { measurement ->
+                val processes = measurement.measured().processes
+                try {
+                    processes.run(listOf("echo"), processes.directory, processes.directory.resolve("out"), processes.directory.resolve("err"))
+                    BackendAnswer("Passed", null)
+                } catch (exception: Exception) {
+                    BackendAnswer("Errored", exception.message)
+                }
+            }
+        }
 
-        assertThat(run.repetitions).hasSize(5).allSatisfy {
+        assertThat(run.repetitions).hasSize(10).allSatisfy {
             assertThat(it.failure?.stage).isEqualTo(Stage.Measurement)
             assertThat(it.calls).isEmpty()
             assertThat(it.jvm).isNull()
@@ -86,8 +77,10 @@ class BenchmarkRunnerTest {
     }
 
     @Test
-    fun `an error thrown in a process benchmark's setup is that repetition's failed setup and the run goes on`() {
-        val run = run(OverflowingSetupBenchmark(), standIn("stand-in.sh"))
+    fun `an error thrown in a repetition's prework is that repetition's failed setup and the run goes on`() {
+        val run = run(standIn("stand-in.sh")) {
+            throw StackOverflowError("setup overflowed")
+        }
 
         assertThat(run.repetitions).hasSize(10).allSatisfy {
             assertThat(it.failure?.stage).isEqualTo(Stage.Setup)
@@ -96,10 +89,12 @@ class BenchmarkRunnerTest {
     }
 
     @Test
-    fun `an error thrown in a fresh JVM's setup reaches its calls file`() {
-        val run = run(OutOfMemorySetupBenchmark(), standIn("stand-in.sh"))
+    fun `an error thrown while a fresh JVM creates its run reaches the repetition`() {
+        val run = run(standIn("stand-in.sh")) { cell ->
+            freshJvm(OutOfMemoryRun::class, cell)
+        }
 
-        assertThat(run.repetitions).hasSize(5).allSatisfy {
+        assertThat(run.repetitions).hasSize(10).allSatisfy {
             assertThat(it.failure?.stage).isEqualTo(Stage.Setup)
             assertThat(it.failure?.stackTrace).contains("OutOfMemoryError")
             assertThat(it.jvm).isNotNull()

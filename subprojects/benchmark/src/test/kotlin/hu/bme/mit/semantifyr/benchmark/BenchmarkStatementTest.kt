@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.benchmark
 import kotlinx.serialization.Serializable
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.assertj.core.api.Assertions.entry
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
@@ -26,19 +27,6 @@ data class BackendAnswer(
     val message: String?,
 )
 
-class CellBenchmark : BenchmarkSource {
-    override val benchmark = benchmark(
-        configurations = mapOf(
-            "crossroads/all" to ModelCell("crossroads", setOf("copy-propagation")),
-        ),
-        isolation = RunnerJvm,
-    ) {
-        Trial {
-            BackendAnswer("Passed", null)
-        }
-    }
-}
-
 class BenchmarkStatementTest {
 
     @TempDir
@@ -46,26 +34,59 @@ class BenchmarkStatementTest {
 
     @Test
     fun `the rounds interleave the configurations, each once per round in its stated order`() {
-        val scheduled = InterleavedRounds(5).order(listOf("b", "a"))
+        val scheduled = roundOrder(listOf("b", "a", "c"), 2)
 
         assertThat(scheduled).containsExactly(
             ScheduledRepetition(0, "b"),
             ScheduledRepetition(0, "a"),
+            ScheduledRepetition(0, "c"),
             ScheduledRepetition(1, "b"),
             ScheduledRepetition(1, "a"),
-            ScheduledRepetition(2, "b"),
-            ScheduledRepetition(2, "a"),
-            ScheduledRepetition(3, "b"),
-            ScheduledRepetition(3, "a"),
-            ScheduledRepetition(4, "b"),
-            ScheduledRepetition(4, "a"),
+            ScheduledRepetition(1, "c"),
+        )
+    }
+
+    @Test
+    fun `the combinations are every pair of the named values, named after both`() {
+        val combined = combinations(
+            mapOf(
+                "crossroads" to "crossroads",
+                "hierarchy" to "hierarchy",
+            ),
+            mapOf(
+                "all" to setOf("copy-propagation"),
+                "none" to emptySet(),
+            ),
+            ::ModelCell,
+        )
+
+        assertThat(combined).containsExactly(
+            entry("crossroads/all", ModelCell("crossroads", setOf("copy-propagation"))),
+            entry("crossroads/none", ModelCell("crossroads", emptySet())),
+            entry("hierarchy/all", ModelCell("hierarchy", setOf("copy-propagation"))),
+            entry("hierarchy/none", ModelCell("hierarchy", emptySet())),
         )
     }
 
     @Test
     fun `a missing runexec refuses the run before anything is written`() {
         assertThatThrownBy {
-            runBenchmark(CellBenchmark(), outputDirectory.resolve("absent").resolve("runexec").toString(), outputDirectory)
+            runInterleavedRounds(
+                name = "CellBenchmark",
+                cases = mapOf(
+                    "crossroads/all" to ModelCell("crossroads", emptySet()),
+                ),
+                repetitions = 5,
+                context = emptyList(),
+                configurationSerializer = ModelCell.serializer(),
+                resultSerializer = BackendAnswer.serializer(),
+                runexecExecutable = outputDirectory.resolve("absent").resolve("runexec").toString(),
+                outputDirectory = outputDirectory,
+            ) {
+                inThisJvm {
+                    BackendAnswer("Passed", null)
+                }
+            }
         }.isInstanceOf(RunexecUnavailableException::class.java).hasMessageContaining("runexec is missing")
         assertThat(outputDirectory.listDirectoryEntries()).isEmpty()
     }
