@@ -6,19 +6,13 @@
 
 package hu.bme.mit.semantifyr.benchmark
 
-import com.sun.management.OperatingSystemMXBean
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.serializer
-import java.lang.management.ManagementFactory
-import java.net.InetAddress
+import kotlinx.serialization.json.JsonElement
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.time.Instant
 import kotlin.io.path.Path
-import kotlin.io.path.readLines
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.time.Duration
@@ -26,22 +20,29 @@ import kotlin.time.Duration
 @Serializable
 data class BenchmarkRun<C, R>(
     val statement: Statement<C>,
-    val context: RunContext,
+    val startedAt: String,
+    val context: Map<String, JsonElement>,
     val repetitions: List<Repetition<R>>,
-)
+) {
+    fun <V> context(source: ContextSource<V>): V? {
+        return context[source.name]?.let {
+            benchmarkJson.decodeFromJsonElement(source.serializer, it)
+        }
+    }
 
-enum class BenchmarkKind {
-    InJvm,
-    Process,
+    fun repetitionsOf(configuration: String): List<Repetition<R>> {
+        return repetitions.filter {
+            it.configuration == configuration
+        }
+    }
 }
 
 @Serializable
 data class Statement<C>(
     val benchmark: String,
-    val kind: BenchmarkKind,
     val configurations: Map<String, C>,
-    val repetitions: Int,
-    val warmUpCalls: Int?,
+    val isolation: Isolation,
+    val schedule: InterleavedRounds,
     val timeLimit: Duration?,
 )
 
@@ -50,17 +51,31 @@ data class Repetition<R>(
     val configuration: String,
     val round: Int,
     val hostState: HostState,
-    val processes: List<ProcessObservation>,
+    val jvm: ProcessObservation?,
     val calls: List<Call<R>>,
     val failure: Failure?,
-)
+) {
+    val measuredCall: Call<R>?
+        get() {
+            return calls.singleOrNull {
+                !it.warmUp
+            }
+        }
+}
 
 @Serializable
 data class Call<R>(
     val warmUp: Boolean,
     val spans: List<SpanObservation>,
+    val processes: List<ProcessObservation>,
     val result: R,
-)
+) {
+    fun spanSeconds(name: String): Double {
+        return spans.single {
+            it.name == name
+        }.wallTimeNanoseconds / 1e9
+    }
+}
 
 @Serializable
 data class SpanObservation(
@@ -100,77 +115,13 @@ data class LoadAverage(
     }
 }
 
-@Serializable
-data class RunContext(
-    val startedAt: String,
-    val revision: String?,
-    val uncommittedChanges: Boolean?,
-    val backendVersions: Map<String, String?>,
-    val runexec: String,
-    val hostName: String,
-    val operatingSystem: String,
-    val processorModel: String?,
-    val processors: Int,
-    val physicalMemoryBytes: Long,
-    val jvm: String,
-    val jvmArguments: List<String>,
-    val maximumHeapBytes: Long,
-) {
-    companion object {
-        fun record(backendVersions: Map<String, String?>, runexec: Runexec): RunContext {
-            val system = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
-            val processorModel = Path("/proc/cpuinfo").readLines().firstOrNull {
-                it.startsWith("model name")
-            }?.substringAfter(':')?.trim()
-            return RunContext(
-                startedAt = Instant.now().toString(),
-                revision = commandOutputOrNull("git", "rev-parse", "HEAD"),
-                uncommittedChanges = commandOutputOrNull("git", "status", "--porcelain")?.isNotEmpty(),
-                backendVersions = backendVersions,
-                runexec = runexec.version,
-                hostName = InetAddress.getLocalHost().hostName,
-                operatingSystem = "${system.name} ${system.version} ${system.arch}",
-                processorModel = processorModel,
-                processors = system.availableProcessors,
-                physicalMemoryBytes = system.totalMemorySize,
-                jvm = "${System.getProperty("java.vm.name")} ${System.getProperty("java.runtime.version")}",
-                jvmArguments = ManagementFactory.getRuntimeMXBean().inputArguments,
-                maximumHeapBytes = Runtime.getRuntime().maxMemory(),
-            )
-        }
-    }
-}
-
 internal val benchmarkJson = Json {
     prettyPrint = true
     encodeDefaults = true
-}
-
-internal fun <C, R> writeBenchmarkRun(
-    file: Path,
-    run: BenchmarkRun<C, R>,
-    configurationSerializer: KSerializer<C>,
-    resultSerializer: KSerializer<R>,
-) {
-    val serializer = BenchmarkRun.serializer(configurationSerializer, resultSerializer)
-    writeAtomically(file, benchmarkJson.encodeToString(serializer, run))
 }
 
 internal fun writeAtomically(file: Path, text: String) {
     val temporaryFile = file.resolveSibling("${file.fileName}.writing")
     temporaryFile.writeText(text)
     Files.move(temporaryFile, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
-}
-
-fun <C, R> readBenchmarkRun(
-    file: Path,
-    configurationSerializer: KSerializer<C>,
-    resultSerializer: KSerializer<R>,
-): BenchmarkRun<C, R> {
-    val serializer = BenchmarkRun.serializer(configurationSerializer, resultSerializer)
-    return benchmarkJson.decodeFromString(serializer, file.readText())
-}
-
-inline fun <reified C, reified R> readBenchmarkRun(file: Path): BenchmarkRun<C, R> {
-    return readBenchmarkRun(file, serializer<C>(), serializer<R>())
 }

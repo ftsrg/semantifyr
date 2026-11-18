@@ -26,17 +26,16 @@ data class BackendAnswer(
     val message: String?,
 )
 
-abstract class ModuleBenchmark<C> : ProcessBenchmark<C, BackendAnswer>()
-
-abstract class ModuleBenchmarkOfCells : ModuleBenchmark<ModelCell>()
-
-class CellBenchmark : ModuleBenchmarkOfCells() {
-    override val configurations = mapOf(
-        "crossroads/all" to ModelCell("crossroads", setOf("copy-propagation")),
-    )
-
-    override fun repetition(processes: MeasuredProcesses): BackendAnswer {
-        return BackendAnswer("Passed", null)
+class CellBenchmark : BenchmarkSource {
+    override val benchmark = benchmark(
+        configurations = mapOf(
+            "crossroads/all" to ModelCell("crossroads", setOf("copy-propagation")),
+        ),
+        isolation = RunnerJvm,
+    ) {
+        Trial {
+            BackendAnswer("Passed", null)
+        }
     }
 }
 
@@ -46,24 +45,20 @@ class BenchmarkStatementTest {
     lateinit var outputDirectory: Path
 
     @Test
-    fun `the serializers are found through bases that bind a type argument`() {
-        val benchmark = CellBenchmark()
-
-        assertThat(benchmark.configurationSerializer.descriptor).isEqualTo(ModelCell.serializer().descriptor)
-        assertThat(benchmark.resultSerializer.descriptor).isEqualTo(BackendAnswer.serializer().descriptor)
-    }
-
-    @Test
     fun `the rounds interleave the configurations, each once per round in its stated order`() {
-        val scheduled = interleavedRounds(listOf("b", "a", "c"), 2)
+        val scheduled = InterleavedRounds(5).order(listOf("b", "a"))
 
         assertThat(scheduled).containsExactly(
             ScheduledRepetition(0, "b"),
             ScheduledRepetition(0, "a"),
-            ScheduledRepetition(0, "c"),
             ScheduledRepetition(1, "b"),
             ScheduledRepetition(1, "a"),
-            ScheduledRepetition(1, "c"),
+            ScheduledRepetition(2, "b"),
+            ScheduledRepetition(2, "a"),
+            ScheduledRepetition(3, "b"),
+            ScheduledRepetition(3, "a"),
+            ScheduledRepetition(4, "b"),
+            ScheduledRepetition(4, "a"),
         )
     }
 

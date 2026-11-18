@@ -16,10 +16,17 @@ val libs = the<LibrariesForLibs>()
 
 val benchmark = sourceSets.create("benchmark")
 
+// another module's benchmarks combine this module's blocks
+java {
+    registerFeature("benchmark") {
+        usingSourceSet(benchmark)
+        disablePublication()
+    }
+}
+
 dependencies {
-    "benchmarkImplementation"(project())
-    "benchmarkImplementation"(project(":benchmark"))
-    "benchmarkImplementation"(project(":logging"))
+    "benchmarkApi"(project())
+    "benchmarkApi"(project(":benchmark"))
     "benchmarkRuntimeOnly"(libs.slf4j.log4j)
 }
 
@@ -31,7 +38,7 @@ val runexec = providers.gradleProperty("runexec")
 
 tasks.register<JavaExec>("benchmark") {
     group = "benchmark"
-    description = "Runs the benchmark class named by --args."
+    description = "Runs the benchmark class named by the first of --args and its analysis, or only its analysis over the files named by the rest."
     classpath = benchmark.runtimeClasspath
     mainClass = "hu.bme.mit.semantifyr.benchmark.BenchmarkRunnerKt"
     workingDir = layout.projectDirectory.asFile
@@ -42,15 +49,4 @@ tasks.register<JavaExec>("benchmark") {
         systemProperty("benchmark.runexec", runexec.get())
     }
     doNotTrackState("a benchmark always runs and its numbers never come from the build cache")
-}
-
-tasks.register<JavaExec>("benchmarkProgram") {
-    group = "benchmark"
-    description = "Runs the program named by the first of --args over the benchmark files named by the rest."
-    classpath = benchmark.runtimeClasspath
-    mainClass = "hu.bme.mit.semantifyr.benchmark.BenchmarkProgramKt"
-    workingDir = layout.projectDirectory.asFile
-    jvmArgs("--enable-native-access=ALL-UNNAMED")
-    systemProperty("log4j2.configurationFile", "log4j2-benchmark-program.properties")
-    doNotTrackState("a program reads benchmark files that are no declared input")
 }

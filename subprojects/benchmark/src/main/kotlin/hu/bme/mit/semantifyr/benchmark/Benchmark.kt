@@ -7,106 +7,54 @@
 package hu.bme.mit.semantifyr.benchmark
 
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.serializer
-import java.lang.reflect.ParameterizedType
-import java.lang.reflect.Type
+import org.slf4j.Logger
 import java.nio.file.Path
+import kotlin.io.path.readText
 import kotlin.time.Duration
-import kotlin.time.TimeSource
 
-sealed class Benchmark<C, R> {
-    val name: String = javaClass.simpleName
-
-    abstract val configurations: Map<String, C>
-
-    open val repetitions = 5
-
-    open val timeLimit: Duration? = null
-
-    open fun setUp(configuration: C) {
-    }
-
-    open fun backendVersions(): Map<String, String?> {
-        return emptyMap()
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    internal val configurationSerializer by lazy {
-        serializer(boundTypeArgument(0)) as KSerializer<C>
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    internal val resultSerializer by lazy {
-        serializer(boundTypeArgument(1)) as KSerializer<R>
-    }
-
-    private fun boundTypeArgument(index: Int): Type {
-        val bindings = mutableMapOf<Type, Type>()
-        var current: Class<*> = javaClass
-        while (current != Benchmark::class.java) {
-            val superType = current.genericSuperclass
-            if (superType is ParameterizedType) {
-                val parameters = (superType.rawType as Class<*>).typeParameters
-                parameters.zip(superType.actualTypeArguments).forEach { (parameter, argument) ->
-                    bindings[parameter] = bindings[argument] ?: argument
-                }
-            }
-            current = current.superclass
-        }
-        return bindings.getValue(Benchmark::class.java.typeParameters[index])
-    }
+interface BenchmarkSource {
+    val benchmark: Benchmark<*, *>
 }
 
-abstract class InJvmBenchmark<C, R> : Benchmark<C, R>() {
-    open val warmUpCalls = 0
-
-    abstract fun call(spans: Spans): R
+fun interface Trial<R> {
+    fun call(measurement: Measurement): R
 }
 
-abstract class ProcessBenchmark<C, R> : Benchmark<C, R>() {
-    abstract fun repetition(processes: MeasuredProcesses): R
-}
-
-class Spans {
-    internal val observations = mutableListOf<SpanObservation>()
-
-    fun <T> measure(name: String, block: () -> T): T {
-        val mark = TimeSource.Monotonic.markNow()
-        val value = block()
-        observations += SpanObservation(name, mark.elapsedNow().inWholeNanoseconds)
-        return value
-    }
-}
-
-class MeasuredProcesses internal constructor(
-    private val runexec: Runexec,
-    timeLimit: Duration?,
-    val directory: Path,
+class Benchmark<C, R> @PublishedApi internal constructor(
+    val configurations: Map<String, C>,
+    val isolation: Isolation,
+    val schedule: InterleavedRounds,
+    val timeLimit: Duration?,
+    val context: List<ContextSource<*>>,
+    private val trial: (C) -> Trial<R>,
+    private val analysis: (BenchmarkRun<C, R>, Logger) -> Unit,
+    configurationSerializer: KSerializer<C>,
+    resultSerializer: KSerializer<R>,
 ) {
-    internal val observations = mutableListOf<ProcessObservation>()
+    internal val runSerializer = BenchmarkRun.serializer(configurationSerializer, resultSerializer)
 
-    internal var measurementFailure: MeasurementFailedException? = null
+    internal val callsSerializer = ListSerializer(Call.serializer(resultSerializer))
 
-    private val deadline = timeLimit?.let {
-        TimeSource.Monotonic.markNow() + it
+    internal fun setUp(configuration: String): Trial<R> {
+        return trial(configurations.getValue(configuration))
     }
 
-    fun run(
-        command: List<String>,
-        workingDirectory: Path,
-        outputFile: Path,
-        errorFile: Path,
-    ): ProcessObservation {
-        val timeLeft = deadline?.let {
-            -it.elapsedNow()
-        }
-        try {
-            val observation = runexec.run(command, workingDirectory, outputFile, errorFile, timeLeft)
-            observations += observation
-            return observation
-        } catch (exception: MeasurementFailedException) {
-            measurementFailure = exception
-            throw exception
-        }
+    internal fun analyze(file: Path, logger: Logger) {
+        analysis(benchmarkJson.decodeFromString(runSerializer, file.readText()), logger)
     }
+}
+
+inline fun <reified C, reified R> benchmark(
+    configurations: Map<String, C>,
+    isolation: Isolation,
+    schedule: InterleavedRounds = InterleavedRounds(),
+    timeLimit: Duration? = null,
+    context: List<ContextSource<*>> = emptyList(),
+    noinline analysis: (BenchmarkRun<C, R>, Logger) -> Unit = { _, _ ->
+    },
+    noinline trial: (C) -> Trial<R>,
+): Benchmark<C, R> {
+    return Benchmark(configurations, isolation, schedule, timeLimit, context, trial, analysis, serializer(), serializer())
 }

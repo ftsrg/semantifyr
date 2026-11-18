@@ -27,6 +27,11 @@ dependencies {
     testImplementation(testFixtures(project(":backend")))
 
     "benchmarkImplementation"(project(":verifier"))
+    "benchmarkImplementation"(project(":compiler")) {
+        capabilities {
+            requireFeature("benchmark")
+        }
+    }
     "benchmarkImplementation"(libs.kotlinx.coroutines.core)
 }
 

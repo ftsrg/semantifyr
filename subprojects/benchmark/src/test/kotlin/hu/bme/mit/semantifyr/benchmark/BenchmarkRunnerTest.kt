@@ -11,52 +11,49 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermissions
+import kotlin.io.path.readText
 import kotlin.io.path.setPosixFilePermissions
 import kotlin.io.path.writeText
 
-class SwallowingBenchmark : ProcessBenchmark<ModelCell, BackendAnswer>() {
-    override val configurations = mapOf(
-        "crossroads/all" to ModelCell("crossroads", emptySet()),
-    )
-
-    override fun repetition(processes: MeasuredProcesses): BackendAnswer {
-        try {
-            processes.run(listOf("echo"), processes.directory, processes.directory.resolve("out"), processes.directory.resolve("err"))
-        } catch (exception: Exception) {
-            return BackendAnswer("Errored", exception.message)
+class SwallowingBenchmark : BenchmarkSource {
+    override val benchmark = benchmark(
+        configurations = mapOf(
+            "crossroads/all" to ModelCell("crossroads", emptySet()),
+        ),
+        isolation = RunnerJvm,
+    ) {
+        Trial { measurement ->
+            val directory = measurement.processes.directory
+            try {
+                measurement.processes.run(listOf("echo"), directory, directory.resolve("out"), directory.resolve("err"))
+                BackendAnswer("Passed", null)
+            } catch (exception: Exception) {
+                BackendAnswer("Errored", exception.message)
+            }
         }
-        return BackendAnswer("Passed", null)
     }
 }
 
-class OverflowingSetupBenchmark : ProcessBenchmark<ModelCell, BackendAnswer>() {
-    override val configurations = mapOf(
-        "crossroads/all" to ModelCell("crossroads", emptySet()),
-        "crossroads/none" to ModelCell("crossroads", emptySet()),
-    )
-
-    override fun setUp(configuration: ModelCell) {
-        super.setUp(configuration)
+class OverflowingSetupBenchmark : BenchmarkSource {
+    override val benchmark = benchmark<ModelCell, BackendAnswer>(
+        configurations = mapOf(
+            "crossroads/all" to ModelCell("crossroads", emptySet()),
+            "crossroads/none" to ModelCell("crossroads", emptySet()),
+        ),
+        isolation = RunnerJvm,
+    ) {
         throw StackOverflowError("setup overflowed")
     }
-
-    override fun repetition(processes: MeasuredProcesses): BackendAnswer {
-        return BackendAnswer("Passed", null)
-    }
 }
 
-class OutOfMemorySetupBenchmark : InJvmBenchmark<ModelCell, BackendAnswer>() {
-    override val configurations = mapOf(
-        "crossroads/all" to ModelCell("crossroads", emptySet()),
-    )
-
-    override fun setUp(configuration: ModelCell) {
-        super.setUp(configuration)
+class OutOfMemorySetupBenchmark : BenchmarkSource {
+    override val benchmark = benchmark<ModelCell, BackendAnswer>(
+        configurations = mapOf(
+            "crossroads/all" to ModelCell("crossroads", emptySet()),
+        ),
+        isolation = FreshJvm(),
+    ) {
         throw OutOfMemoryError("setup ran out of memory")
-    }
-
-    override fun call(spans: Spans): BackendAnswer {
-        return BackendAnswer("Passed", null)
     }
 }
 
@@ -72,8 +69,9 @@ class BenchmarkRunnerTest {
         return script.toString()
     }
 
-    private fun run(benchmark: Benchmark<*, *>, runexec: String): BenchmarkRun<ModelCell, BackendAnswer> {
-        return readBenchmarkRun(runBenchmark(benchmark, runexec, directory.resolve("benchmark")))
+    private fun run(source: BenchmarkSource, runexec: String): BenchmarkRun<ModelCell, BackendAnswer> {
+        val file = runBenchmark(source, runexec, directory.resolve("benchmark"))
+        return benchmarkJson.decodeFromString(BenchmarkRun.serializer(ModelCell.serializer(), BackendAnswer.serializer()), file.readText())
     }
 
     @Test
@@ -83,7 +81,7 @@ class BenchmarkRunnerTest {
         assertThat(run.repetitions).hasSize(5).allSatisfy {
             assertThat(it.failure?.stage).isEqualTo(Stage.Measurement)
             assertThat(it.calls).isEmpty()
-            assertThat(it.processes).isEmpty()
+            assertThat(it.jvm).isNull()
         }
     }
 
@@ -104,7 +102,7 @@ class BenchmarkRunnerTest {
         assertThat(run.repetitions).hasSize(5).allSatisfy {
             assertThat(it.failure?.stage).isEqualTo(Stage.Setup)
             assertThat(it.failure?.stackTrace).contains("OutOfMemoryError")
-            assertThat(it.processes).hasSize(1)
+            assertThat(it.jvm).isNotNull()
         }
     }
 }

@@ -31,7 +31,7 @@ data class RatioOfMeans(
     }
 }
 
-// Fieller's interval as Kalibera and Jones give it in section 10.1
+// Kalibera and Jones, Rigorous Benchmarking in Reasonable Time, section 10.1, https://doi.org/10.1145/2464157.2464160
 fun ratioOfMeans(
     baseline: List<Double>,
     compared: List<Double>,

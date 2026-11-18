@@ -62,8 +62,8 @@ class RunexecUnavailableException(message: String) : Exception(message)
 
 class MeasurementFailedException(message: String) : Exception(message)
 
-class Runexec private constructor(
-    private val executable: String,
+class Runexec internal constructor(
+    internal val executable: String,
     val version: String,
 ) {
 
