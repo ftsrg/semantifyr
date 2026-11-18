@@ -48,6 +48,18 @@ class NuxmvLogVerdictParserTest {
     }
 
     @Test
+    fun `a bounded check that found neither a proof nor a counterexample yields null`() {
+        val verdict = parser.parse(
+            sequenceOf(
+                "-- no proof or counterexample found with bound 0",
+                "-- no proof or counterexample found with bound 1",
+                "-- no proof or counterexample found with bound 10",
+            ),
+        )
+        assertThat(verdict).isNull()
+    }
+
+    @Test
     fun `empty input yields null`() {
         assertThat(parser.parse(emptySequence())).isNull()
     }

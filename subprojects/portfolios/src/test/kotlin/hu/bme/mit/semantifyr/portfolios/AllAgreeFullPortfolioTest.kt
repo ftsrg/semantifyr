@@ -74,7 +74,7 @@ class AllAgreeFullPortfolioTest {
     }
 
     @Test
-    suspend fun `a witness that every backend replays validates`(
+    suspend fun `every backend passing a reachability case passes with no message`(
         @TempDir output: Path,
     ) {
         val portfolio = AllAgreeFullPortfolio(

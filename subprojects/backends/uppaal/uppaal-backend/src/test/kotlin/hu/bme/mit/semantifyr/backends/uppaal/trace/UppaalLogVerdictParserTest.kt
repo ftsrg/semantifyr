@@ -49,6 +49,12 @@ class UppaalLogVerdictParserTest {
     }
 
     @Test
+    fun `an answer the approximation leaves uncertain yields null`() {
+        assertThat(parser.parse(sequenceOf("Verifying formula 1", " -- Formula MAY be satisfied."))).isNull()
+        assertThat(parser.parse(sequenceOf("Verifying formula 1", " -- Formula MAY NOT be satisfied."))).isNull()
+    }
+
+    @Test
     fun `unrelated lines yield null`() {
         assertThat(parser.parse(sequenceOf("Verifying ...", "Generating witness ..."))).isNull()
     }

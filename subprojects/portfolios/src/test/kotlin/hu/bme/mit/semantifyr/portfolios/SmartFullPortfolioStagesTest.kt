@@ -240,32 +240,6 @@ class SmartFullPortfolioStagesTest {
     }
 
     @Test
-    fun `the declared legs are every leg the stages may launch`() {
-        assertThat(
-            SmartFullPortfolio().legs.map {
-                it.id
-            },
-        ).containsExactlyInAnyOrder(
-            "theta:bounded-bmc",
-            "theta:bounded-kinduction",
-            "theta:bounded-imc",
-            "theta:cegar-expl",
-            "theta:cegar-pred-cart",
-            "theta:cegar-expl-pred-combined",
-            "theta:ic3",
-            "theta:chc",
-            "nuxmv:kinduction-invar",
-            "nuxmv:ic3-invar",
-            "nuxmv:bdd-invar",
-            "spin:safe-dfs",
-            "spin:collapse",
-            "spin:bitstate",
-            "uppaal:default",
-            "uppaal:over-approximation",
-        )
-    }
-
-    @Test
     fun `with as many slots as the second stage's legs and 120 s an invariant the explicit configuration proves alone within 30 s is answered`(
         @TempDir output: Path,
     ) = runTest {

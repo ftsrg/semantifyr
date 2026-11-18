@@ -10,22 +10,10 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-class VerificationVerdictTest {
+class VerificationResultTest {
 
     @Test
-    fun `Passed and Failed are decisive`() {
-        assertThat(VerificationVerdict.Passed.isDecisive).isTrue
-        assertThat(VerificationVerdict.Failed.isDecisive).isTrue
-    }
-
-    @Test
-    fun `Errored and Inconclusive are not decisive`() {
-        assertThat(VerificationVerdict.Errored.isDecisive).isFalse
-        assertThat(VerificationVerdict.Inconclusive.isDecisive).isFalse
-    }
-
-    @Test
-    fun `VerificationResult helpers reflect verdict`() {
+    fun `a result is passed, failed and decisive by its verdict`() {
         val passed = fakeVerificationResult(verdict = VerificationVerdict.Passed)
         val failed = fakeVerificationResult(verdict = VerificationVerdict.Failed)
         val errored = fakeVerificationResult(verdict = VerificationVerdict.Errored)
