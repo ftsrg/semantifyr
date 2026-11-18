@@ -372,10 +372,13 @@ export async function createEditor(
   };
   const editorApp = new EditorApp(editorAppConfig);
   await editorApp.start(host);
-  try {
-    editorApp.getEditor()?.focus();
-  } catch {
-    /* focusing is best-effort */
+  // a menu the user opened while the editor started keeps the focus, and with it stays open
+  if (document.activeElement === null || document.activeElement === document.body) {
+    try {
+      editorApp.getEditor()?.focus();
+    } catch {
+      /* focusing is best-effort */
+    }
   }
 
   return { editorApp, fsOverlay };
