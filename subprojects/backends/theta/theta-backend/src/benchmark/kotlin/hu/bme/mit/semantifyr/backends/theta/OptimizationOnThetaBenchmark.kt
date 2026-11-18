@@ -17,8 +17,8 @@ import hu.bme.mit.semantifyr.compiler.CaseCompilation
 import hu.bme.mit.semantifyr.compiler.ModelCase
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPass
-import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
+import hu.bme.mit.semantifyr.logging.warn
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration.Companion.seconds
 
@@ -72,11 +72,11 @@ class OptimizationOnThetaBenchmark : Benchmark<ThetaResult>() {
             val compared = run.repetitionsOf(configuration)
             // a cut or undecided repetition would shorten a mean
             if (configuration == baselineName || !decidedByTheta(baseline) || !decidedByTheta(compared)) {
-                logger.info { "$configuration: ${outcomes(compared)}" }
+                logger.warn { "$configuration: ${outcomes(compared)}" }
             } else {
                 val wallTime = ratioOfMeans(thetaSeconds(baseline, ProcessObservation::wallTimeSeconds), thetaSeconds(compared, ProcessObservation::wallTimeSeconds))
                 val cpuTime = ratioOfMeans(thetaSeconds(baseline, ProcessObservation::cpuTimeSeconds), thetaSeconds(compared, ProcessObservation::cpuTimeSeconds))
-                logger.info { "$configuration over all, wall time $wallTime, CPU time $cpuTime" }
+                logger.warn { "$configuration over all, wall time $wallTime, CPU time $cpuTime" }
             }
         }
     }

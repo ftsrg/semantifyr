@@ -18,8 +18,8 @@ import hu.bme.mit.semantifyr.compiler.ModelCase
 import hu.bme.mit.semantifyr.compiler.pipeline.context.ModelSize
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPass
-import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
+import hu.bme.mit.semantifyr.logging.warn
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration.Companion.seconds
 
@@ -78,11 +78,11 @@ class CompilationAndThetaBenchmark : Benchmark<CompiledThetaResult>() {
         val compared = run.repetitionsOf("crossroads/none").mapNotNull {
             it.measuredCall
         }
-        logger.info { "none over all, compilation ${ratioOfMeans(compilationSeconds(baseline), compilationSeconds(compared))}" }
-        logger.info { "none over all, Theta ${ratioOfMeans(thetaSeconds(baseline), thetaSeconds(compared))}" }
+        logger.warn { "none over all, compilation ${ratioOfMeans(compilationSeconds(baseline), compilationSeconds(compared))}" }
+        logger.warn { "none over all, Theta ${ratioOfMeans(thetaSeconds(baseline), thetaSeconds(compared))}" }
         val baselineTotal = compilationSeconds(baseline).zip(thetaSeconds(baseline), Double::plus)
         val comparedTotal = compilationSeconds(compared).zip(thetaSeconds(compared), Double::plus)
-        logger.info { "none over all, compilation and Theta together ${ratioOfMeans(baselineTotal, comparedTotal)}" }
+        logger.warn { "none over all, compilation and Theta together ${ratioOfMeans(baselineTotal, comparedTotal)}" }
     }
 }
 

@@ -17,8 +17,8 @@ import hu.bme.mit.semantifyr.compiler.pipeline.context.ModelSize
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationStats
-import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
+import hu.bme.mit.semantifyr.logging.warn
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -89,11 +89,11 @@ class CompilationPhasesBenchmark : Benchmark<PhasesResult>() {
             val peaks = repetitions.mapNotNull {
                 it.jvm?.peakMemoryBytes?.shr(20)
             }
-            logger.info { "$configuration: peak memory of the fresh JVM ${peaks.joinToString()} MiB" }
+            logger.warn { "$configuration: peak memory of the fresh JVM ${peaks.joinToString()} MiB" }
             repetitions.firstNotNullOfOrNull {
                 it.measuredCall?.result
             }?.flatteningOptimization?.passes?.forEach {
-                logger.info { "  flattening pass ${it.name}: ${it.runs} runs, ${it.firings} firings, ${it.duration} as the compiler counts it" }
+                logger.warn { "  flattening pass ${it.name}: ${it.runs} runs, ${it.firings} firings, ${it.duration} as the compiler counts it" }
             }
         }
         for (model in models.keys) {
@@ -101,9 +101,9 @@ class CompilationPhasesBenchmark : Benchmark<PhasesResult>() {
                 val baseline = phaseSeconds(run, "$model/all", phase)
                 val compared = phaseSeconds(run, "$model/without-copy-propagation", phase)
                 if (baseline.size < 2 || compared.size < 2) {
-                    logger.info { "$model $phase: too few measured calls for a relation" }
+                    logger.warn { "$model $phase: too few measured calls for a relation" }
                 } else {
-                    logger.info { "$model $phase, without copy propagation over all: ${ratioOfMeans(baseline, compared)}" }
+                    logger.warn { "$model $phase, without copy propagation over all: ${ratioOfMeans(baseline, compared)}" }
                 }
             }
         }

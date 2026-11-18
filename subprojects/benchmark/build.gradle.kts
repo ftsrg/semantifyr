@@ -14,6 +14,4 @@ dependencies {
     api(libs.kotlinx.serialization.json)
 
     api(project(":logging"))
-
-    implementation(libs.log4j.core)
 }

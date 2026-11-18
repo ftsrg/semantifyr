@@ -12,19 +12,15 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.serializer
-import org.apache.logging.log4j.Level
-import org.apache.logging.log4j.core.config.Configurator
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.lang.reflect.ParameterizedType
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
-import java.util.jar.JarFile
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createParentDirectories
-import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 import kotlin.io.path.readText
@@ -84,7 +80,6 @@ fun main(arguments: Array<String>) {
         logger.error { "No benchmark is named $name" }
         exitProcess(1)
     }
-    logBenchmarkClassesAtInfo()
     val benchmark = benchmarkClass.getDeclaredConstructor().newInstance() as Benchmark<*>
     val files = arguments.drop(1)
     try {
@@ -148,47 +143,6 @@ private fun <R> analyzeFile(benchmark: Benchmark<R>, file: Path) {
 private fun <R> resultSerializer(benchmark: Benchmark<R>): KSerializer<R> {
     val superType = benchmark.javaClass.genericSuperclass as ParameterizedType
     return serializer(superType.actualTypeArguments.single()) as KSerializer<R>
-}
-
-internal fun logBenchmarkClassesAtInfo(
-    sourceSets: List<Path> = System.getProperty("benchmark.sourceSets").orEmpty().split(File.pathSeparator).filter {
-        it.isNotEmpty()
-    }.map {
-        Path(it)
-    },
-) {
-    // a source set's classes directory for a language it has no sources in is never created
-    val classNames = sourceSets.filter {
-        it.exists()
-    }.flatMap {
-        classNames(it)
-    }
-    Configurator.setLevel(
-        classNames.associateWith {
-            Level.INFO
-        },
-    )
-}
-
-private fun classNames(sourceSet: Path): List<String> {
-    if (sourceSet.isDirectory()) {
-        return Files.walk(sourceSet).use { paths ->
-            paths.filter {
-                it.name.endsWith(".class")
-            }.map {
-                sourceSet.relativize(it).joinToString(".").removeSuffix(".class")
-            }.toList()
-        }
-    }
-    return JarFile(sourceSet.toFile()).use { jar ->
-        jar.entries().asSequence().map {
-            it.name
-        }.filter {
-            it.endsWith(".class")
-        }.map {
-            it.removeSuffix(".class").replace('/', '.')
-        }.toList()
-    }
 }
 
 private fun findClass(simpleName: String): Class<*>? {
