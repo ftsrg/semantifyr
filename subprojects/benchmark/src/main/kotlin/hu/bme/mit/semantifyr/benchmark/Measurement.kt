@@ -124,11 +124,21 @@ class MeasuredProcesses internal constructor(
     }
 }
 
-fun <R> RepetitionScope.inThisJvm(timeLimit: Duration? = null, call: (Measurement) -> R): Measured<R> {
-    val measurement = Measurement(runexec, timeLimit, directory)
+class Measured<R> internal constructor(
+    internal val hostState: HostState,
+    internal val timeLimit: Duration?,
+    internal val jvm: ProcessObservation?,
+    internal val calls: List<Call<R>>,
+    internal val failure: Failure?,
+)
+
+fun <R> inThisJvm(timeLimit: Duration? = null, call: (Measurement) -> R): Measured<R> {
+    val loadBefore = LoadAverage.now()
+    val measurement = Measurement(BenchmarkEnvironment.runexec, timeLimit, BenchmarkEnvironment.nextDirectory())
     try {
-        return Measured(null, measurement.calls(call(measurement)), null, timeLimit)
+        val calls = measurement.calls(call(measurement))
+        return Measured(HostState(loadBefore, LoadAverage.now()), timeLimit, null, calls, null)
     } catch (throwable: Throwable) {
-        return Measured(null, emptyList(), measurement.failure(throwable), timeLimit)
+        return Measured(HostState(loadBefore, LoadAverage.now()), timeLimit, null, emptyList(), measurement.failure(throwable))
     }
 }

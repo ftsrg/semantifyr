@@ -12,7 +12,6 @@ import hu.bme.mit.semantifyr.benchmark.ProcessObservation
 import hu.bme.mit.semantifyr.benchmark.Repetition
 import hu.bme.mit.semantifyr.benchmark.combinations
 import hu.bme.mit.semantifyr.benchmark.inThisJvm
-import hu.bme.mit.semantifyr.benchmark.interleavedRounds
 import hu.bme.mit.semantifyr.benchmark.ratioOfMeans
 import hu.bme.mit.semantifyr.compiler.CaseCompilation
 import hu.bme.mit.semantifyr.compiler.ModelCase
@@ -52,16 +51,22 @@ class OptimizationOnThetaBenchmark : Benchmark<ThetaResult>() {
     private val theta = MeasuredTheta()
 
     override fun measure(): BenchmarkRun<ThetaResult> {
-        return interleavedRounds(cells, context = listOf(ThetaInstallation)) { cell ->
-            val compiled = CaseCompilation(cell.model, OptimizationConfig(cell.passes)).whole()
-            inThisJvm(timeLimit = 60.seconds) { measurement ->
-                theta.verify(compiled, measurement.measured().processes)
+        val run = BenchmarkRun<ThetaResult>()
+        run.record(ThetaInstallation)
+        for ((name, cell) in cells) {
+            repeat(5) {
+                val compiled = CaseCompilation(cell.model, OptimizationConfig(cell.passes)).whole()
+                val measured = inThisJvm(timeLimit = 60.seconds) { measurement ->
+                    theta.verify(compiled, measurement.measured().processes)
+                }
+                run.add(name, cell, measured)
             }
         }
+        return run
     }
 
     override fun analyze(run: BenchmarkRun<ThetaResult>) {
-        for (configuration in run.statement.configurations.keys) {
+        for (configuration in run.configurations.keys) {
             val baselineName = "${configuration.substringBefore('/')}/all"
             val baseline = run.repetitionsOf(baselineName)
             val compared = run.repetitionsOf(configuration)

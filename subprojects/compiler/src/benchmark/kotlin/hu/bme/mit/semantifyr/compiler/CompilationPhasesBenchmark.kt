@@ -12,7 +12,6 @@ import hu.bme.mit.semantifyr.benchmark.FreshJvmRun
 import hu.bme.mit.semantifyr.benchmark.Measurement
 import hu.bme.mit.semantifyr.benchmark.combinations
 import hu.bme.mit.semantifyr.benchmark.freshJvm
-import hu.bme.mit.semantifyr.benchmark.interleavedRounds
 import hu.bme.mit.semantifyr.benchmark.ratioOfMeans
 import hu.bme.mit.semantifyr.compiler.pipeline.context.ModelSize
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
@@ -75,13 +74,17 @@ class CompilationPhasesBenchmark : Benchmark<PhasesResult>() {
     private val cases = combinations(models, optimizations, ::CompilerCase)
 
     override fun measure(): BenchmarkRun<PhasesResult> {
-        return interleavedRounds(cases) { case ->
-            freshJvm(CompilationPhasesRun::class, case)
+        val run = BenchmarkRun<PhasesResult>()
+        for ((name, case) in cases) {
+            repeat(5) {
+                run.add(name, case, freshJvm(CompilationPhasesRun::class, case))
+            }
         }
+        return run
     }
 
     override fun analyze(run: BenchmarkRun<PhasesResult>) {
-        for (configuration in run.statement.configurations.keys) {
+        for (configuration in run.configurations.keys) {
             val repetitions = run.repetitionsOf(configuration)
             val peaks = repetitions.mapNotNull {
                 it.jvm?.peakMemoryBytes?.shr(20)

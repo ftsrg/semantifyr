@@ -12,7 +12,6 @@ import hu.bme.mit.semantifyr.benchmark.Call
 import hu.bme.mit.semantifyr.benchmark.FreshJvmRun
 import hu.bme.mit.semantifyr.benchmark.Measurement
 import hu.bme.mit.semantifyr.benchmark.freshJvm
-import hu.bme.mit.semantifyr.benchmark.interleavedRounds
 import hu.bme.mit.semantifyr.benchmark.ratioOfMeans
 import hu.bme.mit.semantifyr.compiler.CaseCompilation
 import hu.bme.mit.semantifyr.compiler.ModelCase
@@ -62,9 +61,14 @@ class CompilationAndThetaBenchmark : Benchmark<CompiledThetaResult>() {
     )
 
     override fun measure(): BenchmarkRun<CompiledThetaResult> {
-        return interleavedRounds(cells, context = listOf(ThetaInstallation)) { cell ->
-            freshJvm(CompilationAndThetaRun::class, cell, timeLimit = 300.seconds)
+        val run = BenchmarkRun<CompiledThetaResult>()
+        run.record(ThetaInstallation)
+        for ((name, cell) in cells) {
+            repeat(5) {
+                run.add(name, cell, freshJvm(CompilationAndThetaRun::class, cell, timeLimit = 300.seconds))
+            }
         }
+        return run
     }
 
     override fun analyze(run: BenchmarkRun<CompiledThetaResult>) {

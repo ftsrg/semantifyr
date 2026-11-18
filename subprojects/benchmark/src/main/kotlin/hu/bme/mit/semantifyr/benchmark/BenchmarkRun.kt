@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.benchmark
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.serializer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -18,16 +19,55 @@ import kotlin.io.path.writeText
 import kotlin.time.Duration
 
 @Serializable
-data class BenchmarkRun<R>(
-    val statement: Statement,
-    val startedAt: String,
-    val context: Map<String, JsonElement>,
-    val repetitions: List<Repetition<R>>,
-) {
+class BenchmarkRun<R> {
+    var benchmark = ""
+        internal set
+
+    var startedAt = ""
+        internal set
+
+    private val context = mutableMapOf<String, JsonElement>()
+
+    private val configurationValues = mutableMapOf<String, JsonElement>()
+
+    private val recordedRepetitions = mutableListOf<Repetition<R>>()
+
+    val configurations: Map<String, JsonElement>
+        get() {
+            return configurationValues
+        }
+
+    val repetitions: List<Repetition<R>>
+        get() {
+            return recordedRepetitions
+        }
+
+    fun record(source: ContextSource<*>) {
+        context[source.name] = source.recordAsJson()
+    }
+
     fun <V> context(source: ContextSource<V>): V? {
         return context[source.name]?.let {
             benchmarkJson.decodeFromJsonElement(source.serializer, it)
         }
+    }
+
+    inline fun <reified C> add(
+        configuration: String,
+        value: C,
+        measured: Measured<R>,
+    ) {
+        addEncoded(configuration, benchmarkJson.encodeToJsonElement(serializer<C>(), value), measured)
+    }
+
+    @PublishedApi
+    internal fun addEncoded(
+        configuration: String,
+        value: JsonElement,
+        measured: Measured<R>,
+    ) {
+        configurationValues[configuration] = value
+        recordedRepetitions += Repetition(configuration, measured.hostState, measured.timeLimit, measured.jvm, measured.calls, measured.failure)
     }
 
     fun repetitionsOf(configuration: String): List<Repetition<R>> {
@@ -38,16 +78,8 @@ data class BenchmarkRun<R>(
 }
 
 @Serializable
-data class Statement(
-    val benchmark: String,
-    val configurations: Map<String, JsonElement>,
-    val repetitions: Int,
-)
-
-@Serializable
 data class Repetition<R>(
     val configuration: String,
-    val round: Int,
     val hostState: HostState,
     val timeLimit: Duration?,
     val jvm: ProcessObservation?,

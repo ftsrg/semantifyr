@@ -57,49 +57,42 @@ class BenchmarkFileTest {
     @Test
     fun `a written run reads back as it was written`() {
         val process = ProcessObservation.parse(recordedRunexecOutput("finished"))
-        val revision = Revision("f3ecb96875af926bd3ad0d266e4ddca7cbb0442a", true)
-        val run = BenchmarkRun(
-            statement = Statement(
-                benchmark = "CellBenchmark",
-                configurations = mapOf(
-                    "crossroads/all" to benchmarkJson.encodeToJsonElement(ModelCell.serializer(), ModelCell("crossroads", setOf("copy-propagation"))),
+        val run = BenchmarkRun<BackendAnswer>()
+        run.record(CodeRevision)
+        run.add(
+            "crossroads/all",
+            ModelCell("crossroads", setOf("copy-propagation")),
+            Measured(
+                hostState = HostState(LoadAverage(1.5, 2.0, 2.5), LoadAverage(1.6, 2.0, 2.5)),
+                timeLimit = 60.seconds,
+                jvm = process,
+                calls = listOf(
+                    Call(false, emptyList(), listOf(process), BackendAnswer("Passed", null)),
                 ),
-                repetitions = 5,
+                failure = null,
             ),
-            startedAt = "2026-11-17T08:00:00Z",
-            context = mapOf(
-                CodeRevision.name to benchmarkJson.encodeToJsonElement(Revision.serializer(), revision),
-            ),
-            repetitions = listOf(
-                Repetition(
-                    configuration = "crossroads/all",
-                    round = 0,
-                    hostState = HostState(LoadAverage(1.5, 2.0, 2.5), LoadAverage(1.6, 2.0, 2.5)),
-                    timeLimit = 60.seconds,
-                    jvm = process,
-                    calls = listOf(
-                        Call(false, emptyList(), listOf(process), BackendAnswer("Passed", null)),
-                    ),
-                    failure = null,
+        )
+        run.add(
+            "crossroads/none",
+            ModelCell("crossroads", emptySet()),
+            Measured(
+                hostState = HostState(LoadAverage(1.6, 2.0, 2.5), LoadAverage(1.7, 2.0, 2.5)),
+                timeLimit = null,
+                jvm = null,
+                calls = listOf(
+                    Call(true, listOf(SpanObservation("flattening", 1200)), emptyList(), null),
                 ),
-                Repetition(
-                    configuration = "crossroads/none",
-                    round = 0,
-                    hostState = HostState(LoadAverage(1.6, 2.0, 2.5), LoadAverage(1.7, 2.0, 2.5)),
-                    timeLimit = null,
-                    jvm = null,
-                    calls = listOf(
-                        Call(true, listOf(SpanObservation("flattening", 1200)), emptyList(), null),
-                    ),
-                    failure = Failure(Stage.Setup, "IllegalStateException: refused"),
-                ),
+                failure = Failure(Stage.Call, "IllegalStateException: refused"),
             ),
         )
         val serializer = BenchmarkRun.serializer(BackendAnswer.serializer())
+        val written = benchmarkJson.encodeToString(serializer, run)
 
-        val read = benchmarkJson.decodeFromString(serializer, benchmarkJson.encodeToString(serializer, run))
+        val read = benchmarkJson.decodeFromString(serializer, written)
 
-        assertThat(read).isEqualTo(run)
-        assertThat(read.context(CodeRevision)).isEqualTo(revision)
+        assertThat(benchmarkJson.encodeToString(serializer, read)).isEqualTo(written)
+        assertThat(read.repetitions).isEqualTo(run.repetitions)
+        assertThat(read.configurations).isEqualTo(run.configurations)
+        assertThat(read.context(CodeRevision)).isEqualTo(run.context(CodeRevision))
     }
 }

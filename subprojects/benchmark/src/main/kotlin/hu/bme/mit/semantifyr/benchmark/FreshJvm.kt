@@ -27,22 +27,23 @@ interface FreshJvmRun<R> {
     fun run(measurement: Measurement): R
 }
 
-inline fun <reified I, reified R> RepetitionScope.freshJvm(
+inline fun <reified I, reified R> freshJvm(
     run: KClass<out FreshJvmRun<R>>,
     input: I,
     timeLimit: Duration? = null,
 ): Measured<R> {
-    return startFreshJvm(this, run.java.name, benchmarkJson.encodeToString(serializer<I>(), input), serializer<R>(), timeLimit)
+    return startFreshJvm(run.java.name, benchmarkJson.encodeToString(serializer<I>(), input), serializer<R>(), timeLimit)
 }
 
 @PublishedApi
 internal fun <R> startFreshJvm(
-    scope: RepetitionScope,
     runClass: String,
     input: String,
     resultSerializer: KSerializer<R>,
     timeLimit: Duration?,
 ): Measured<R> {
+    val directory = BenchmarkEnvironment.nextDirectory()
+    val runexec = BenchmarkEnvironment.runexec
     val java = Path(System.getProperty("java.home"), "bin", "java").toString()
     val arguments = listOf(
         "-cp",
@@ -50,17 +51,17 @@ internal fun <R> startFreshJvm(
         FreshJvm::class.java.name,
         runClass,
         input,
-        scope.directory.toString(),
-        scope.runexec.executable,
-        scope.runexec.version,
+        directory.toString(),
+        runexec.executable,
+        runexec.version,
     )
     val command = listOf(java) + ManagementFactory.getRuntimeMXBean().inputArguments + arguments
-    val directory = scope.directory
+    val loadBefore = LoadAverage.now()
     // in the task's working directory, where a benchmark's relative paths point
     val jvm = try {
-        scope.runexec.run(command, Path("").toAbsolutePath(), directory.resolve("jvm.out"), directory.resolve("jvm.err"), timeLimit)
+        runexec.run(command, Path("").toAbsolutePath(), directory.resolve("jvm.out"), directory.resolve("jvm.err"), timeLimit)
     } catch (exception: MeasurementFailedException) {
-        return Measured(null, emptyList(), Failure(Stage.Measurement, exception.stackTraceToString()), timeLimit)
+        return Measured(HostState(loadBefore, LoadAverage.now()), timeLimit, null, emptyList(), Failure(Stage.Measurement, exception.stackTraceToString()))
     }
     val callsFile = directory.resolve(CALLS_FILE)
     val failureFile = directory.resolve(FAILURE_FILE)
@@ -74,7 +75,7 @@ internal fun <R> startFreshJvm(
     } else {
         null
     }
-    return Measured(jvm, calls, failure, timeLimit)
+    return Measured(HostState(loadBefore, LoadAverage.now()), timeLimit, jvm, calls, failure)
 }
 
 object FreshJvm {

@@ -27,24 +27,23 @@ data class BackendAnswer(
     val message: String?,
 )
 
+class CellBenchmark : Benchmark<BackendAnswer>() {
+    override fun measure(): BenchmarkRun<BackendAnswer> {
+        val run = BenchmarkRun<BackendAnswer>()
+        repeat(5) {
+            val measured = inThisJvm {
+                BackendAnswer("Passed", null)
+            }
+            run.add("crossroads/all", ModelCell("crossroads", emptySet()), measured)
+        }
+        return run
+    }
+}
+
 class BenchmarkStatementTest {
 
     @TempDir
     lateinit var outputDirectory: Path
-
-    @Test
-    fun `the rounds interleave the configurations, each once per round in its stated order`() {
-        val scheduled = roundOrder(listOf("b", "a", "c"), 2)
-
-        assertThat(scheduled).containsExactly(
-            ScheduledRepetition(0, "b"),
-            ScheduledRepetition(0, "a"),
-            ScheduledRepetition(0, "c"),
-            ScheduledRepetition(1, "b"),
-            ScheduledRepetition(1, "a"),
-            ScheduledRepetition(1, "c"),
-        )
-    }
 
     @Test
     fun `the combinations are every pair of the named values, named after both`() {
@@ -71,22 +70,7 @@ class BenchmarkStatementTest {
     @Test
     fun `a missing runexec refuses the run before anything is written`() {
         assertThatThrownBy {
-            runInterleavedRounds(
-                name = "CellBenchmark",
-                cases = mapOf(
-                    "crossroads/all" to ModelCell("crossroads", emptySet()),
-                ),
-                repetitions = 5,
-                context = emptyList(),
-                configurationSerializer = ModelCell.serializer(),
-                resultSerializer = BackendAnswer.serializer(),
-                runexecExecutable = outputDirectory.resolve("absent").resolve("runexec").toString(),
-                outputDirectory = outputDirectory,
-            ) {
-                inThisJvm {
-                    BackendAnswer("Passed", null)
-                }
-            }
+            measureAndWrite(CellBenchmark(), outputDirectory.resolve("absent").resolve("runexec").toString(), outputDirectory)
         }.isInstanceOf(RunexecUnavailableException::class.java).hasMessageContaining("runexec is missing")
         assertThat(outputDirectory.listDirectoryEntries()).isEmpty()
     }

@@ -29,11 +29,6 @@ class BenchmarkRunnerTest {
     @TempDir
     lateinit var directory: Path
 
-    private val cells = mapOf(
-        "crossroads/all" to ModelCell("crossroads", emptySet()),
-        "crossroads/none" to ModelCell("crossroads", emptySet()),
-    )
-
     private fun standIn(name: String): String {
         val script = directory.resolve(name)
         script.writeText(checkNotNull(javaClass.getResource("/runexec/$name")).readText())
@@ -41,63 +36,37 @@ class BenchmarkRunnerTest {
         return script.toString()
     }
 
-    private fun run(runexec: String, repetition: RepetitionScope.(ModelCell) -> Measured<BackendAnswer>): BenchmarkRun<BackendAnswer> {
-        return runInterleavedRounds(
-            name = "TestBenchmark",
-            cases = cells,
-            repetitions = 5,
-            context = emptyList(),
-            configurationSerializer = ModelCell.serializer(),
-            resultSerializer = BackendAnswer.serializer(),
-            runexecExecutable = runexec,
-            outputDirectory = directory.resolve("benchmark"),
-            repetition = repetition,
-        )
+    private fun start(runexec: String) {
+        BenchmarkEnvironment.start(Runexec.probe(runexec), directory.resolve("benchmark"))
     }
 
     @Test
     fun `a measurement runexec fails is the repetition's failure and not the result the benchmark made of it`() {
-        val run = run(standIn("measuring-nothing.sh")) {
-            inThisJvm { measurement ->
-                val processes = measurement.measured().processes
-                try {
-                    processes.run(listOf("echo"), processes.directory, processes.directory.resolve("out"), processes.directory.resolve("err"))
-                    BackendAnswer("Passed", null)
-                } catch (exception: Exception) {
-                    BackendAnswer("Errored", exception.message)
-                }
+        start(standIn("measuring-nothing.sh"))
+
+        val measured = inThisJvm { measurement ->
+            val processes = measurement.measured().processes
+            try {
+                processes.run(listOf("echo"), processes.directory, processes.directory.resolve("out"), processes.directory.resolve("err"))
+                BackendAnswer("Passed", null)
+            } catch (exception: Exception) {
+                BackendAnswer("Errored", exception.message)
             }
         }
 
-        assertThat(run.repetitions).hasSize(10).allSatisfy {
-            assertThat(it.failure?.stage).isEqualTo(Stage.Measurement)
-            assertThat(it.calls).isEmpty()
-            assertThat(it.jvm).isNull()
-        }
-    }
-
-    @Test
-    fun `an error thrown in a repetition's prework is that repetition's failed setup and the run goes on`() {
-        val run = run(standIn("stand-in.sh")) {
-            throw StackOverflowError("setup overflowed")
-        }
-
-        assertThat(run.repetitions).hasSize(10).allSatisfy {
-            assertThat(it.failure?.stage).isEqualTo(Stage.Setup)
-            assertThat(it.failure?.stackTrace).contains("StackOverflowError")
-        }
+        assertThat(measured.failure?.stage).isEqualTo(Stage.Measurement)
+        assertThat(measured.calls).isEmpty()
+        assertThat(measured.jvm).isNull()
     }
 
     @Test
     fun `an error thrown while a fresh JVM creates its run reaches the repetition`() {
-        val run = run(standIn("stand-in.sh")) { cell ->
-            freshJvm(OutOfMemoryRun::class, cell)
-        }
+        start(standIn("stand-in.sh"))
 
-        assertThat(run.repetitions).hasSize(10).allSatisfy {
-            assertThat(it.failure?.stage).isEqualTo(Stage.Setup)
-            assertThat(it.failure?.stackTrace).contains("OutOfMemoryError")
-            assertThat(it.jvm).isNotNull()
-        }
+        val measured = freshJvm(OutOfMemoryRun::class, ModelCell("crossroads", emptySet()))
+
+        assertThat(measured.failure?.stage).isEqualTo(Stage.Setup)
+        assertThat(measured.failure?.stackTrace).contains("OutOfMemoryError")
+        assertThat(measured.jvm).isNotNull()
     }
 }
