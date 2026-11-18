@@ -49,6 +49,7 @@ class NuxmvWitnessTest {
                 NuxmvBackendModule(),
                 NuxmvCapabilityChecker::class.java,
                 SemantifyrVerifierTestHelper.testArtifactRoot(NuxmvWitnessTest::class.java).resolve("capability-check"),
+                helper.casesExpectingWitness,
             )
         }
     }

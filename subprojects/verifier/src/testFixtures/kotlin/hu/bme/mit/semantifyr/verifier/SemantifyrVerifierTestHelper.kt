@@ -154,6 +154,10 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         }
     }
 
+    val casesExpectingWitness = CaseFilter.Matching {
+        expectsWitness(it, expectedVerdictFromTags(it))
+    }
+
     private fun expectsWitness(case: VerificationCase, verdict: VerificationVerdict): Boolean {
         val property = case.classDeclaration.eAllContents().asSequence().filterIsInstance<PropertyDeclaration>().firstOrNull {
             NamingUtil.getName(it) == "prop"
@@ -232,9 +236,13 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         assertVerdict(case.qualifiedName, expectedVerdict, result, backendDiagnostics(outputDirectory, case))
         logger.info { "Result: ${result.verdict}" }
 
-        val trace = result.trace ?: return
-        val validation = validationPortfolio ?: return
-        assertWitnessRevalidates(case, trace, validation, outputDirectory, validationTimeout, environment, expectedVerdict)
+        if (validationPortfolio == null || !expectsWitness(case, expectedVerdict)) {
+            return
+        }
+        assertThat(result.trace)
+            .describedAs("verdict $expectedVerdict for ${case.qualifiedName} must carry a witness")
+            .isNotNull()
+        assertWitnessRevalidates(case, requireNotNull(result.trace), validationPortfolio, outputDirectory, validationTimeout, environment, expectedVerdict)
     }
 
     suspend fun checkWitnessReparses(

@@ -51,7 +51,7 @@ class UppaalWitnessTest {
                 UppaalCapabilityChecker::class.java,
                 SemantifyrVerifierTestHelper.testArtifactRoot(UppaalWitnessTest::class.java).resolve("capability-check"),
                 CaseFilter.Matching {
-                    it.qualifiedName !in uppaalUndecidedCases
+                    it.qualifiedName !in uppaalUndecidedCases && helper.casesExpectingWitness.matches(it)
                 },
             )
         }
