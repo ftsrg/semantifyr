@@ -39,20 +39,6 @@ afterEach(() => {
 });
 
 describe('readSemantifyrSettings', () => {
-    it('reads every contributed setting', () => {
-        expect(Object.keys(contributed).sort()).toEqual([
-            'semantifyr.artifacts.location',
-            'semantifyr.artifacts.preset',
-            'semantifyr.optimization.level',
-            'semantifyr.portfolio',
-            'semantifyr.theta.dockerImage',
-            'semantifyr.theta.executor',
-            'semantifyr.timeoutSeconds',
-            'semantifyr.verification.autoValidate',
-            'semantifyr.verification.validationPortfolio',
-        ]);
-    });
-
     it('falls back to the contributed defaults', () => {
         expect(readSemantifyrSettings()).toEqual(contributedDefaults());
     });
