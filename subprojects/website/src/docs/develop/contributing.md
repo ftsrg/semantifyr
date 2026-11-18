@@ -25,7 +25,7 @@ Every JVM module has the test suite `test`, and a module whose tests run real ba
 - `test`: unit tests, with fakes in place of the backends. `check` runs it.
 - `verificationTest`: smoke tests that run a real backend, one case per backend, each backend skipped when it is missing. `check` runs it.
 - `integrationTest`: the system end to end over the semantic test models and the frontends' corpora, on the real backends. `check` does not run it; CI does, after the build.
-- `nightlyTest`: the slow models, the witnesses checked by every backend and the timed tests. It runs nightly, on a machine with all four backends.
+- `nightlyTest`: the slow models and the witnesses checked by every backend. It runs nightly, on a machine with all four backends.
 
 The TypeScript packages run their Vitest suites in their `npmCheck` task, beside the type check and the linter, which `check` runs too. Live's frontend adds `screenTest` and `uiTest`, which drive its screens and its built application in a browser, and the website `walkTest`, a walk by keyboard through the built site.
 
