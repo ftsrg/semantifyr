@@ -10,6 +10,8 @@ import kotlinx.serialization.builtins.ListSerializer
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.EnabledOnOs
+import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermissions
@@ -70,6 +72,7 @@ class BenchmarkRunnerTest {
     }
 
     @Test
+    @EnabledOnOs(OS.LINUX)
     fun `a measurement runexec fails is the repetition's failure and not the result the benchmark made of it`() {
         start(standIn("measuring-nothing.sh"))
 
@@ -100,6 +103,7 @@ class BenchmarkRunnerTest {
     }
 
     @Test
+    @EnabledOnOs(OS.LINUX)
     fun `a measure that stops leaves the repetitions added before it in the run's file`() {
         val outputDirectory = directory.resolve("benchmark")
 
