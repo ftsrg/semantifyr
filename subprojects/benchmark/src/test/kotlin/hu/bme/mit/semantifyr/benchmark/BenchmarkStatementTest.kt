@@ -71,7 +71,7 @@ class BenchmarkStatementTest {
     fun `a missing runexec refuses the run before anything is written`() {
         assertThatThrownBy {
             runBenchmark(CellBenchmark(), outputDirectory.resolve("absent").resolve("runexec").toString(), outputDirectory)
-        }.isInstanceOf(RunexecUnavailableException::class.java).hasMessageContaining("runexec is not available")
+        }.isInstanceOf(RunexecUnavailableException::class.java).hasMessageContaining("runexec is missing")
         assertThat(outputDirectory.listDirectoryEntries()).isEmpty()
     }
 }

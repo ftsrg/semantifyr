@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.benchmark
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
@@ -49,6 +50,13 @@ class BenchmarkFileTest {
         assertThat(observation.exitSignal).isEqualTo(9)
         assertThat(observation.exitCode).isNull()
         assertThat(observation.wallTimeSeconds).isEqualTo(2.007904615951702)
+    }
+
+    @Test
+    fun `a process runexec could not start is a failed measurement`() {
+        assertThatThrownBy {
+            ProcessObservation.parse(recordedRunexecOutput("failed-to-start"))
+        }.isInstanceOf(MeasurementFailedException::class.java)
     }
 
     @Test

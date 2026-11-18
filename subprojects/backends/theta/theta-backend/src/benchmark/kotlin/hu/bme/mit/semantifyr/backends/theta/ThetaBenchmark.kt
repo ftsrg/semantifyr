@@ -11,7 +11,7 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.benchmark.MeasuredProcesses
 import hu.bme.mit.semantifyr.benchmark.ProcessBenchmark
-import hu.bme.mit.semantifyr.benchmark.commandOutput
+import hu.bme.mit.semantifyr.benchmark.commandOutputOrNull
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
@@ -23,7 +23,6 @@ import hu.bme.mit.semantifyr.verifier.internal.TrivialVerifier
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlin.io.path.Path
-import kotlin.io.path.createTempDirectory
 import kotlin.time.Clock
 
 @Serializable
@@ -52,9 +51,9 @@ abstract class ThetaBenchmark<C> : ProcessBenchmark<C, ThetaResult>() {
 
     abstract fun compile(configuration: C): FlattenedCompilationContext
 
-    override fun backendVersions(): Map<String, String> {
+    override fun backendVersions(): Map<String, String?> {
         return mapOf(
-            "theta-xsts-cli" to commandOutput("theta-xsts-cli", "--version").lines().last(),
+            "theta-xsts-cli" to commandOutputOrNull("theta-xsts-cli", "--version")?.lines()?.last(),
         )
     }
 
@@ -93,6 +92,6 @@ abstract class ThetaBenchmark<C> : ProcessBenchmark<C, ThetaResult>() {
         val caseClass = context.loadModel(Path(model.file)).buildAndResolve().modelResources.single().allContents.asSequence().filterIsInstance<ClassDeclaration>().single {
             it.name == model.case
         }
-        return SemantifyrCompiler(injector, ArtifactConfig.NONE, optimization).compile(caseClass, createTempDirectory("theta-benchmark"))
+        return SemantifyrCompiler(injector, ArtifactConfig.NONE, optimization).compile(caseClass, Path("build", "benchmark-artifacts"))
     }
 }

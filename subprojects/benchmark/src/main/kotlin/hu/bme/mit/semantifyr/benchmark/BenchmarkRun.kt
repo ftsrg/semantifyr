@@ -13,7 +13,9 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import java.lang.management.ManagementFactory
 import java.net.InetAddress
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.time.Instant
 import kotlin.io.path.Path
 import kotlin.io.path.readLines
@@ -69,6 +71,7 @@ data class SpanObservation(
 enum class Stage {
     Setup,
     Call,
+    Measurement,
 }
 
 @Serializable
@@ -100,13 +103,13 @@ data class LoadAverage(
 @Serializable
 data class RunContext(
     val startedAt: String,
-    val revision: String,
-    val uncommittedChanges: Boolean,
-    val backendVersions: Map<String, String>,
+    val revision: String?,
+    val uncommittedChanges: Boolean?,
+    val backendVersions: Map<String, String?>,
     val runexec: String,
     val hostName: String,
     val operatingSystem: String,
-    val processorModel: String,
+    val processorModel: String?,
     val processors: Int,
     val physicalMemoryBytes: Long,
     val jvm: String,
@@ -114,20 +117,20 @@ data class RunContext(
     val maximumHeapBytes: Long,
 ) {
     companion object {
-        fun record(backendVersions: Map<String, String>, runexec: Runexec): RunContext {
+        fun record(backendVersions: Map<String, String?>, runexec: Runexec): RunContext {
             val system = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
             val processorModel = Path("/proc/cpuinfo").readLines().firstOrNull {
                 it.startsWith("model name")
             }?.substringAfter(':')?.trim()
             return RunContext(
                 startedAt = Instant.now().toString(),
-                revision = commandOutput("git", "rev-parse", "HEAD"),
-                uncommittedChanges = commandOutput("git", "status", "--porcelain").isNotEmpty(),
+                revision = commandOutputOrNull("git", "rev-parse", "HEAD"),
+                uncommittedChanges = commandOutputOrNull("git", "status", "--porcelain")?.isNotEmpty(),
                 backendVersions = backendVersions,
                 runexec = runexec.version,
                 hostName = InetAddress.getLocalHost().hostName,
                 operatingSystem = "${system.name} ${system.version} ${system.arch}",
-                processorModel = processorModel ?: "unknown",
+                processorModel = processorModel,
                 processors = system.availableProcessors,
                 physicalMemoryBytes = system.totalMemorySize,
                 jvm = "${System.getProperty("java.vm.name")} ${System.getProperty("java.runtime.version")}",
@@ -149,7 +152,13 @@ internal fun <C, R> writeBenchmarkRun(
     configurationSerializer: KSerializer<C>,
     resultSerializer: KSerializer<R>,
 ) {
-    file.writeText(benchmarkJson.encodeToString(BenchmarkRun.serializer(configurationSerializer, resultSerializer), run))
+    writeAtomically(file, benchmarkJson.encodeToString(BenchmarkRun.serializer(configurationSerializer, resultSerializer), run))
+}
+
+internal fun writeAtomically(file: Path, text: String) {
+    val temporaryFile = file.resolveSibling("${file.fileName}.writing")
+    temporaryFile.writeText(text)
+    Files.move(temporaryFile, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
 }
 
 fun <C, R> readBenchmarkRun(

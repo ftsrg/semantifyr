@@ -26,7 +26,7 @@ sealed class Benchmark<C, R> {
     open fun setUp(configuration: C) {
     }
 
-    open fun backendVersions(): Map<String, String> {
+    open fun backendVersions(): Map<String, String?> {
         return emptyMap()
     }
 
@@ -86,6 +86,8 @@ class MeasuredProcesses internal constructor(
 ) {
     internal val observations = mutableListOf<ProcessObservation>()
 
+    internal var measurementFailure: MeasurementFailedException? = null
+
     private var deadline: TimeSource.Monotonic.ValueTimeMark? = null
 
     internal fun startClock() {
@@ -103,8 +105,13 @@ class MeasuredProcesses internal constructor(
         val timeLeft = deadline?.let {
             -it.elapsedNow()
         }
-        val observation = runexec.run(command, workingDirectory, outputFile, errorFile, timeLeft)
-        observations += observation
-        return observation
+        try {
+            val observation = runexec.run(command, workingDirectory, outputFile, errorFile, timeLeft)
+            observations += observation
+            return observation
+        } catch (exception: MeasurementFailedException) {
+            measurementFailure = exception
+            throw exception
+        }
     }
 }

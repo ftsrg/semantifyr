@@ -34,6 +34,15 @@ data class ProcessObservation(
             }.associate {
                 it.substringBefore('=') to it.substringAfter('=')
             }
+            val measured = listOf(
+                "starttime",
+                "walltime",
+                "cputime",
+                "memory",
+            )
+            if (!values.keys.containsAll(measured)) {
+                throw MeasurementFailedException("runexec measured nothing and reported ${values.entries.joinToString()}")
+            }
             return ProcessObservation(
                 startTime = values.getValue("starttime"),
                 wallTimeSeconds = values.getValue("walltime").removeSuffix("s").toDouble(),
@@ -51,6 +60,8 @@ data class ProcessObservation(
 }
 
 class RunexecUnavailableException(message: String) : Exception(message)
+
+class MeasurementFailedException(message: String) : Exception(message)
 
 class Runexec private constructor(
     private val executable: String,
@@ -87,27 +98,30 @@ class Runexec private constructor(
         ) + command
         val process = ProcessBuilder(runexecCommand)
             .directory(workingDirectory.toFile())
-            .redirectError(outputFile.resolveSibling("${outputFile.fileName}.runexec.log").toFile())
+            .redirectError(runexecLog(outputFile).toFile())
             .start()
         val output = process.inputStream.bufferedReader().readText()
-        process.waitFor()
+        val exitCode = process.waitFor()
+        if (exitCode != 0) {
+            throw MeasurementFailedException("runexec exited with $exitCode as ${runexecLog(outputFile)} shows")
+        }
         return ProcessObservation.parse(output)
+    }
+
+    private fun runexecLog(outputFile: Path): Path {
+        return outputFile.resolveSibling("${outputFile.fileName}.runexec.log")
     }
 
     companion object {
         // an installed runexec may still lack the delegated cgroups it measures through, so the probe measures a command
         fun probe(executable: String): Runexec {
-            val version = try {
-                commandOutput(executable, "--version")
-            } catch (exception: IOException) {
-                throw RunexecUnavailableException("runexec is not available as '$executable': a benchmark measures its processes and its memory only through BenchExec's runexec, set up as the README says")
-            }
+            val version = commandOutputOrNull(executable, "--version") ?: throw RunexecUnavailableException("runexec is missing at $executable")
             val directory = Files.createTempDirectory("runexec-probe")
             val runexec = Runexec(executable, version)
             try {
                 runexec.run(listOf("true"), directory, directory.resolve("out"), directory.resolve("err"), null)
-            } catch (exception: NoSuchElementException) {
-                throw RunexecUnavailableException("runexec cannot measure on this host, see ${directory.resolve("out.runexec.log")}: its cgroup controllers must be delegated to this user, as the README says")
+            } catch (exception: MeasurementFailedException) {
+                throw RunexecUnavailableException("runexec cannot measure on this host as ${directory.resolve("out.runexec.log")} shows")
             }
             directory.toFile().deleteRecursively()
             return runexec
@@ -115,9 +129,15 @@ class Runexec private constructor(
     }
 }
 
-fun commandOutput(vararg command: String): String {
-    val process = ProcessBuilder(*command).redirectErrorStream(true).start()
+fun commandOutputOrNull(vararg command: String): String? {
+    val process = try {
+        ProcessBuilder(*command).redirectError(ProcessBuilder.Redirect.DISCARD).start()
+    } catch (exception: IOException) {
+        return null
+    }
     val output = process.inputStream.bufferedReader().readText().trim()
-    process.waitFor()
+    if (process.waitFor() != 0) {
+        return null
+    }
     return output
 }
