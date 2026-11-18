@@ -29074,61 +29074,61 @@
     "result": {
      "metadata": {
       "backendId": "nuxmv:kinduction-invar",
-      "startedAt": "2026-11-17T10:16:17.480181037Z"
+      "startedAt": "2026-11-17T23:53:00.570894131Z"
      },
      "verdict": "Passed",
      "soundness": "Exact",
      "isTrusted": true,
      "metrics": {
-      "totalDuration": "PT2.355138884S",
+      "totalDuration": "PT2.047679525S",
       "backend": {
-       "preparationDuration": "PT0.003940832S",
-       "verificationDuration": "PT0.868464396S",
-       "backAnnotationDuration": "PT0.011324482S"
+       "preparationDuration": "PT0.006189483S",
+       "verificationDuration": "PT0.823767528S",
+       "backAnnotationDuration": "PT0.011793548S"
       },
       "verifier": {
-       "compilationDuration": "PT0.232768903S",
+       "compilationDuration": "PT0.223169659S",
        "compilation": {
-        "createDuration": "PT0.004283379S",
-        "instantiationDuration": "PT0.004095607S",
-        "inliningDuration": "PT0.159394587S",
-        "flatteningDuration": "PT0.064995330S",
+        "createDuration": "PT0.008751275S",
+        "instantiationDuration": "PT0.004506944S",
+        "inliningDuration": "PT0.152817311S",
+        "flatteningDuration": "PT0.057094129S",
         "inliningOptimization": {
-         "duration": "PT0.012416917S",
+         "duration": "PT0.012691929S",
          "passes": [
           {
            "name": "OperationCallInlining",
-           "duration": "PT0.007083581S",
+           "duration": "PT0.006666833S",
            "runs": 855,
            "firings": 216
           },
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.002479327S",
+           "duration": "PT0.002649596S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.001262150S",
+           "duration": "PT0.001377918S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000646846S",
+           "duration": "PT0.000935510S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000812060S",
+           "duration": "PT0.000922817S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000006183S",
+           "duration": "PT0.000009195S",
            "runs": 1,
            "firings": 0
           }
@@ -29136,59 +29136,59 @@
          "analyses": []
         },
         "flatteningOptimization": {
-         "duration": "PT0.041882248S",
+         "duration": "PT0.034007731S",
          "passes": [
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.000599612S",
+           "duration": "PT0.000522364S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.000348802S",
+           "duration": "PT0.000208593S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000350430S",
+           "duration": "PT0.000202201S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000372697S",
+           "duration": "PT0.000208865S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.002142309S",
+           "duration": "PT0.001414933S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "CopyPropagationPass",
-           "duration": "PT0.023711737S",
+           "duration": "PT0.017796214S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "DeadStoreEliminationPass",
-           "duration": "PT0.000434506S",
+           "duration": "PT0.000578771S",
            "runs": 2,
            "firings": 1
           },
           {
            "name": "DeadCodeRemovalPass",
-           "duration": "PT0.007545336S",
+           "duration": "PT0.008058888S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "VariableLivenessPass",
-           "duration": "PT0.006273577S",
+           "duration": "PT0.004903798S",
            "runs": 2,
            "firings": 1
           }
@@ -29196,17 +29196,17 @@
          "analyses": [
           {
            "name": "ConstantValueAnalysis",
-           "duration": "PT0.002055330S",
+           "duration": "PT0.001370466S",
            "computations": 2
           },
           {
            "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.023606218S",
+           "duration": "PT0.017697215S",
            "computations": 2
           },
           {
            "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.007291586S",
+           "duration": "PT0.007809278S",
            "computations": 2
           }
          ]
@@ -29227,8 +29227,8 @@
          "expressions": 684
         }
        },
-       "backAnnotationDuration": "PT0.008458542S",
-       "portfolioDuration": "PT2.346348757S"
+       "backAnnotationDuration": "PT0.009350719S",
+       "portfolioDuration": "PT2.037997023S"
       }
      },
      "message": null
@@ -29243,9 +29243,7 @@
          "parameter": "event",
          "type": {
           "kind": "class",
-          "name": "semantifyr::gamma::events::Event",
-          "element": null,
-          "size": null
+          "name": "semantifyr::gamma::events::Event"
          }
         }
        ]
@@ -29261,9 +29259,7 @@
          "parameter": "event",
          "type": {
           "kind": "class",
-          "name": "semantifyr::gamma::events::Event",
-          "element": null,
-          "size": null
+          "name": "semantifyr::gamma::events::Event"
          }
         }
        ]
@@ -29274,9 +29270,7 @@
        "variable": "root.component._trackA._Main.activeState",
        "type": {
         "kind": "feature",
-        "name": "semantifyr::gamma::statecharts::Region::states",
-        "element": null,
-        "size": null
+        "name": "semantifyr::gamma::statecharts::Region::states"
        },
        "slot": null
       },
@@ -29284,9 +29278,7 @@
        "variable": "root.component._trackB._Main.activeState",
        "type": {
         "kind": "feature",
-        "name": "semantifyr::gamma::statecharts::Region::states",
-        "element": null,
-        "size": null
+        "name": "semantifyr::gamma::statecharts::Region::states"
        },
        "slot": null
       },
@@ -29294,9 +29286,7 @@
        "variable": "root.component._controller._Main.activeState",
        "type": {
         "kind": "feature",
-        "name": "semantifyr::gamma::statecharts::Region::states",
-        "element": null,
-        "size": null
+        "name": "semantifyr::gamma::statecharts::Region::states"
        },
        "slot": null
       },
@@ -29304,9 +29294,7 @@
        "variable": "root.component._barrier._Main.activeState",
        "type": {
         "kind": "feature",
-        "name": "semantifyr::gamma::statecharts::Region::states",
-        "element": null,
-        "size": null
+        "name": "semantifyr::gamma::statecharts::Region::states"
        },
        "slot": null
       },
@@ -29314,9 +29302,7 @@
        "variable": "root.component._trackA._sensors.interface._approach.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -29324,9 +29310,7 @@
        "variable": "root.component._trackA._sensors.interface._near.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -29334,9 +29318,7 @@
        "variable": "root.component._trackA._sensors.interface._enter.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -29344,9 +29326,7 @@
        "variable": "root.component._trackA._sensors.interface._leave.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -29354,9 +29334,7 @@
        "variable": "root.component._trackA._controller.interface._trainApproaching.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -29364,9 +29342,7 @@
        "variable": "root.component._trackA._controller.interface._trainLeft.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -29374,9 +29350,7 @@
        "variable": "root.component._trackB._sensors.interface._approach.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -29384,9 +29358,7 @@
        "variable": "root.component._trackB._sensors.interface._near.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -29394,9 +29366,7 @@
        "variable": "root.component._trackB._sensors.interface._enter.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -29404,9 +29374,7 @@
        "variable": "root.component._trackB._sensors.interface._leave.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -29414,9 +29382,7 @@
        "variable": "root.component._trackB._controller.interface._trainApproaching.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -29424,9 +29390,7 @@
        "variable": "root.component._trackB._controller.interface._trainLeft.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -29434,9 +29398,7 @@
        "variable": "root.component._controller._trackA.interface._trainApproaching.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -29444,9 +29406,7 @@
        "variable": "root.component._controller._trackA.interface._trainLeft.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -29454,9 +29414,7 @@
        "variable": "root.component._controller._trackB.interface._trainApproaching.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -29464,9 +29422,7 @@
        "variable": "root.component._controller._trackB.interface._trainLeft.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -29474,9 +29430,7 @@
        "variable": "root.component._controller._barrier.interface._lower.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -29484,9 +29438,7 @@
        "variable": "root.component._controller._barrier.interface._lift.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -29494,9 +29446,7 @@
        "variable": "root.component._barrier._controller.interface._lower.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -29504,9 +29454,7 @@
        "variable": "root.component._barrier._controller.interface._lift.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       }
@@ -29853,61 +29801,61 @@
     "result": {
      "metadata": {
       "backendId": "nuxmv:kinduction-invar",
-      "startedAt": "2026-11-17T10:16:17.536881958Z"
+      "startedAt": "2026-11-17T23:53:00.618406322Z"
      },
      "verdict": "Failed",
      "soundness": "Exact",
      "isTrusted": true,
      "metrics": {
-      "totalDuration": "PT3.901136592S",
+      "totalDuration": "PT3.542859633S",
       "backend": {
-       "preparationDuration": "PT0.006348388S",
-       "verificationDuration": "PT2.600846671S",
-       "backAnnotationDuration": "PT0.009357653S"
+       "preparationDuration": "PT0.006617434S",
+       "verificationDuration": "PT2.075204455S",
+       "backAnnotationDuration": "PT0.013792319S"
       },
       "verifier": {
-       "compilationDuration": "PT0.274383061S",
+       "compilationDuration": "PT0.265540940S",
        "compilation": {
-        "createDuration": "PT0.004209033S",
-        "instantiationDuration": "PT0.005501656S",
-        "inliningDuration": "PT0.183599324S",
-        "flatteningDuration": "PT0.081073048S",
+        "createDuration": "PT0.007497699S",
+        "instantiationDuration": "PT0.006006371S",
+        "inliningDuration": "PT0.197141272S",
+        "flatteningDuration": "PT0.054895598S",
         "inliningOptimization": {
-         "duration": "PT0.018652115S",
+         "duration": "PT0.014691711S",
          "passes": [
           {
            "name": "OperationCallInlining",
-           "duration": "PT0.008639916S",
+           "duration": "PT0.009412231S",
            "runs": 855,
            "firings": 216
           },
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.004519730S",
+           "duration": "PT0.002557804S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.002667696S",
+           "duration": "PT0.001259799S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.001192329S",
+           "duration": "PT0.000633369S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.001479776S",
+           "duration": "PT0.000763265S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000010954S",
+           "duration": "PT0.000008605S",
            "runs": 1,
            "firings": 0
           }
@@ -29915,59 +29863,59 @@
          "analyses": []
         },
         "flatteningOptimization": {
-         "duration": "PT0.045012240S",
+         "duration": "PT0.032940571S",
          "passes": [
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.000401602S",
+           "duration": "PT0.000451427S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.000205392S",
+           "duration": "PT0.000217242S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000198648S",
+           "duration": "PT0.000206923S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000207606S",
+           "duration": "PT0.000212508S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.001358580S",
+           "duration": "PT0.001467878S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "CopyPropagationPass",
-           "duration": "PT0.024766912S",
+           "duration": "PT0.017271044S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "DeadStoreEliminationPass",
-           "duration": "PT0.000500641S",
+           "duration": "PT0.000489058S",
            "runs": 2,
            "firings": 1
           },
           {
            "name": "DeadCodeRemovalPass",
-           "duration": "PT0.010269253S",
+           "duration": "PT0.007549095S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "VariableLivenessPass",
-           "duration": "PT0.006973051S",
+           "duration": "PT0.004945908S",
            "runs": 2,
            "firings": 1
           }
@@ -29975,17 +29923,17 @@
          "analyses": [
           {
            "name": "ConstantValueAnalysis",
-           "duration": "PT0.001307129S",
+           "duration": "PT0.001421814S",
            "computations": 2
           },
           {
            "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.024670526S",
+           "duration": "PT0.017181377S",
            "computations": 2
           },
           {
            "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.009832994S",
+           "duration": "PT0.007135212S",
            "computations": 2
           }
          ]
@@ -30006,8 +29954,8 @@
          "expressions": 688
         }
        },
-       "backAnnotationDuration": "PT0.003720036S",
-       "portfolioDuration": "PT3.897087992S"
+       "backAnnotationDuration": "PT0.004530086S",
+       "portfolioDuration": "PT3.537992101S"
       }
      },
      "message": null
@@ -30022,9 +29970,7 @@
          "parameter": "event",
          "type": {
           "kind": "class",
-          "name": "semantifyr::gamma::events::Event",
-          "element": null,
-          "size": null
+          "name": "semantifyr::gamma::events::Event"
          }
         }
        ]
@@ -30040,9 +29986,7 @@
          "parameter": "event",
          "type": {
           "kind": "class",
-          "name": "semantifyr::gamma::events::Event",
-          "element": null,
-          "size": null
+          "name": "semantifyr::gamma::events::Event"
          }
         }
        ]
@@ -30053,9 +29997,7 @@
        "variable": "root.component._trackA._Main.activeState",
        "type": {
         "kind": "feature",
-        "name": "semantifyr::gamma::statecharts::Region::states",
-        "element": null,
-        "size": null
+        "name": "semantifyr::gamma::statecharts::Region::states"
        },
        "slot": null
       },
@@ -30063,9 +30005,7 @@
        "variable": "root.component._trackB._Main.activeState",
        "type": {
         "kind": "feature",
-        "name": "semantifyr::gamma::statecharts::Region::states",
-        "element": null,
-        "size": null
+        "name": "semantifyr::gamma::statecharts::Region::states"
        },
        "slot": null
       },
@@ -30073,9 +30013,7 @@
        "variable": "root.component._controller._Main.activeState",
        "type": {
         "kind": "feature",
-        "name": "semantifyr::gamma::statecharts::Region::states",
-        "element": null,
-        "size": null
+        "name": "semantifyr::gamma::statecharts::Region::states"
        },
        "slot": null
       },
@@ -30083,9 +30021,7 @@
        "variable": "root.component._barrier._Main.activeState",
        "type": {
         "kind": "feature",
-        "name": "semantifyr::gamma::statecharts::Region::states",
-        "element": null,
-        "size": null
+        "name": "semantifyr::gamma::statecharts::Region::states"
        },
        "slot": null
       },
@@ -30093,9 +30029,7 @@
        "variable": "root.component._trackA._sensors.interface._approach.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -30103,9 +30037,7 @@
        "variable": "root.component._trackA._sensors.interface._near.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -30113,9 +30045,7 @@
        "variable": "root.component._trackA._sensors.interface._enter.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -30123,9 +30053,7 @@
        "variable": "root.component._trackA._sensors.interface._leave.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -30133,9 +30061,7 @@
        "variable": "root.component._trackA._controller.interface._trainApproaching.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -30143,9 +30069,7 @@
        "variable": "root.component._trackA._controller.interface._trainLeft.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -30153,9 +30077,7 @@
        "variable": "root.component._trackB._sensors.interface._approach.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -30163,9 +30085,7 @@
        "variable": "root.component._trackB._sensors.interface._near.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -30173,9 +30093,7 @@
        "variable": "root.component._trackB._sensors.interface._enter.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -30183,9 +30101,7 @@
        "variable": "root.component._trackB._sensors.interface._leave.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -30193,9 +30109,7 @@
        "variable": "root.component._trackB._controller.interface._trainApproaching.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -30203,9 +30117,7 @@
        "variable": "root.component._trackB._controller.interface._trainLeft.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -30213,9 +30125,7 @@
        "variable": "root.component._controller._trackA.interface._trainApproaching.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -30223,9 +30133,7 @@
        "variable": "root.component._controller._trackA.interface._trainLeft.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -30233,9 +30141,7 @@
        "variable": "root.component._controller._trackB.interface._trainApproaching.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -30243,9 +30149,7 @@
        "variable": "root.component._controller._trackB.interface._trainLeft.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -30253,9 +30157,7 @@
        "variable": "root.component._controller._barrier.interface._lower.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -30263,9 +30165,7 @@
        "variable": "root.component._controller._barrier.interface._lift.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -30273,9 +30173,7 @@
        "variable": "root.component._barrier._controller.interface._lower.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -30283,9 +30181,7 @@
        "variable": "root.component._barrier._controller.interface._lift.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       }
@@ -30962,62 +30858,62 @@
     "timeout": "PT5M",
     "result": {
      "metadata": {
-      "backendId": "uppaal:default",
-      "startedAt": "2026-11-17T10:16:22.091796094Z"
+      "backendId": "nuxmv:kinduction-invar",
+      "startedAt": "2026-11-17T23:53:04.946672644Z"
      },
      "verdict": "Passed",
-     "soundness": "UnderApproximating",
+     "soundness": "Exact",
      "isTrusted": true,
      "metrics": {
-      "totalDuration": "PT2.737046581S",
+      "totalDuration": "PT3.547963816S",
       "backend": {
-       "preparationDuration": "PT0.003726606S",
-       "verificationDuration": "PT2.058027063S",
-       "backAnnotationDuration": "PT0.163188258S"
+       "preparationDuration": "PT0.018419150S",
+       "verificationDuration": "PT2.653666608S",
+       "backAnnotationDuration": "PT0.026881468S"
       },
       "verifier": {
-       "compilationDuration": "PT1.459984782S",
+       "compilationDuration": "PT1.166008098S",
        "compilation": {
-        "createDuration": "PT0.004682445S",
-        "instantiationDuration": "PT0.166790952S",
-        "inliningDuration": "PT1.012378142S",
-        "flatteningDuration": "PT0.276133243S",
+        "createDuration": "PT0.004869798S",
+        "instantiationDuration": "PT0.032940166S",
+        "inliningDuration": "PT0.828818561S",
+        "flatteningDuration": "PT0.299379573S",
         "inliningOptimization": {
-         "duration": "PT0.070764594S",
+         "duration": "PT0.055329075S",
          "passes": [
           {
            "name": "OperationCallInlining",
-           "duration": "PT0.038625246S",
+           "duration": "PT0.031118218S",
            "runs": 2351,
            "firings": 598
           },
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.015417470S",
+           "duration": "PT0.011121679S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.008526457S",
+           "duration": "PT0.005597236S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.003178947S",
+           "duration": "PT0.002943027S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.004756617S",
+           "duration": "PT0.004327845S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000011318S",
+           "duration": "PT0.000010601S",
            "runs": 1,
            "firings": 0
           }
@@ -31025,59 +30921,59 @@
          "analyses": []
         },
         "flatteningOptimization": {
-         "duration": "PT0.175682704S",
+         "duration": "PT0.190470519S",
          "passes": [
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.001459064S",
+           "duration": "PT0.001580600S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.000900956S",
+           "duration": "PT0.001009890S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000954288S",
+           "duration": "PT0.001096700S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000917876S",
+           "duration": "PT0.001048308S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.005342239S",
+           "duration": "PT0.005123289S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "CopyPropagationPass",
-           "duration": "PT0.073282810S",
+           "duration": "PT0.080390893S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadStoreEliminationPass",
-           "duration": "PT0.039142107S",
+           "duration": "PT0.041344429S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadCodeRemovalPass",
-           "duration": "PT0.027678659S",
+           "duration": "PT0.029693613S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "VariableLivenessPass",
-           "duration": "PT0.025765942S",
+           "duration": "PT0.028965151S",
            "runs": 3,
            "firings": 1
           }
@@ -31085,17 +30981,17 @@
          "analyses": [
           {
            "name": "ConstantValueAnalysis",
-           "duration": "PT0.005214157S",
+           "duration": "PT0.005034099S",
            "computations": 2
           },
           {
            "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.109543952S",
+           "duration": "PT0.118795425S",
            "computations": 3
           },
           {
            "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.026521868S",
+           "duration": "PT0.028309049S",
            "computations": 2
           }
          ]
@@ -31116,8 +31012,8 @@
          "expressions": 2513
         }
        },
-       "backAnnotationDuration": "PT0.003824412S",
-       "portfolioDuration": "PT2.732965743S"
+       "backAnnotationDuration": "PT0.004621155S",
+       "portfolioDuration": "PT3.543054535S"
       }
      },
      "message": null
@@ -31132,9 +31028,7 @@
          "parameter": "event",
          "type": {
           "kind": "class",
-          "name": "semantifyr::gamma::events::Event",
-          "element": null,
-          "size": null
+          "name": "semantifyr::gamma::events::Event"
          }
         }
        ]
@@ -31150,9 +31044,7 @@
          "parameter": "event",
          "type": {
           "kind": "class",
-          "name": "semantifyr::gamma::events::Event",
-          "element": null,
-          "size": null
+          "name": "semantifyr::gamma::events::Event"
          }
         }
        ]
@@ -31163,9 +31055,7 @@
        "variable": "root.component._trackA._Main.activeState",
        "type": {
         "kind": "feature",
-        "name": "semantifyr::gamma::statecharts::Region::states",
-        "element": null,
-        "size": null
+        "name": "semantifyr::gamma::statecharts::Region::states"
        },
        "slot": null
       },
@@ -31173,9 +31063,7 @@
        "variable": "root.component._trackB._Main.activeState",
        "type": {
         "kind": "feature",
-        "name": "semantifyr::gamma::statecharts::Region::states",
-        "element": null,
-        "size": null
+        "name": "semantifyr::gamma::statecharts::Region::states"
        },
        "slot": null
       },
@@ -31183,9 +31071,7 @@
        "variable": "root.component._controller._Main.activeState",
        "type": {
         "kind": "feature",
-        "name": "semantifyr::gamma::statecharts::Region::states",
-        "element": null,
-        "size": null
+        "name": "semantifyr::gamma::statecharts::Region::states"
        },
        "slot": null
       },
@@ -31193,9 +31079,7 @@
        "variable": "root.component._barrier._Main.activeState",
        "type": {
         "kind": "feature",
-        "name": "semantifyr::gamma::statecharts::Region::states",
-        "element": null,
-        "size": null
+        "name": "semantifyr::gamma::statecharts::Region::states"
        },
        "slot": null
       },
@@ -31203,9 +31087,7 @@
        "variable": "root.component._trackA._sensors.interface._approach.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31213,9 +31095,7 @@
        "variable": "root.component._trackA._sensors.interface._near.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31223,9 +31103,7 @@
        "variable": "root.component._trackA._sensors.interface._enter.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31233,9 +31111,7 @@
        "variable": "root.component._trackA._sensors.interface._leave.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31243,9 +31119,7 @@
        "variable": "root.component._trackA._controller.interface._trainApproaching.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31253,9 +31127,7 @@
        "variable": "root.component._trackA._controller.interface._trainLeft.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31263,9 +31135,7 @@
        "variable": "root.component._trackB._sensors.interface._approach.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31273,9 +31143,7 @@
        "variable": "root.component._trackB._sensors.interface._near.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31283,9 +31151,7 @@
        "variable": "root.component._trackB._sensors.interface._enter.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31293,9 +31159,7 @@
        "variable": "root.component._trackB._sensors.interface._leave.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31303,9 +31167,7 @@
        "variable": "root.component._trackB._controller.interface._trainApproaching.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31313,9 +31175,7 @@
        "variable": "root.component._trackB._controller.interface._trainLeft.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31323,9 +31183,7 @@
        "variable": "root.component._controller._trackA.interface._trainApproaching.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31333,9 +31191,7 @@
        "variable": "root.component._controller._trackA.interface._trainLeft.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31343,9 +31199,7 @@
        "variable": "root.component._controller._trackB.interface._trainApproaching.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31353,9 +31207,7 @@
        "variable": "root.component._controller._trackB.interface._trainLeft.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31363,9 +31215,7 @@
        "variable": "root.component._controller._barrier.interface._lower.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31373,9 +31223,7 @@
        "variable": "root.component._controller._barrier.interface._lift.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31383,9 +31231,7 @@
        "variable": "root.component._barrier._controller.interface._lower.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31393,9 +31239,7 @@
        "variable": "root.component._barrier._controller.interface._lift.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       }
@@ -31606,7 +31450,7 @@
          "calls": []
         },
         {
-         "self": "root.component._controller._Main.transition_Idle_to_TrainPresent_on_trackA_trainApproaching",
+         "self": "root.component._controller._Main.transition_Idle_to_TrainPresent_on_trackB_trainApproaching",
          "transition": "semantifyr::gamma::statecharts::Transition::fire",
          "arguments": {},
          "calls": [
@@ -31694,61 +31538,61 @@
     "result": {
      "metadata": {
       "backendId": "theta:bounded-bmc",
-      "startedAt": "2026-11-17T10:16:25.972961958Z"
+      "startedAt": "2026-11-17T23:53:09.612913980Z"
      },
      "verdict": "Passed",
      "soundness": "Exact",
      "isTrusted": true,
      "metrics": {
-      "totalDuration": "PT6.316171149S",
+      "totalDuration": "PT5.990055388S",
       "backend": {
-       "preparationDuration": "PT0.179672214S",
-       "verificationDuration": "PT5.533723805S",
-       "backAnnotationDuration": "PT0.089709960S"
+       "preparationDuration": "PT0.213574715S",
+       "verificationDuration": "PT5.308338889S",
+       "backAnnotationDuration": "PT0.143451887S"
       },
       "verifier": {
-       "compilationDuration": "PT4.249738098S",
+       "compilationDuration": "PT5.153903697S",
        "compilation": {
-        "createDuration": "PT0.002282104S",
-        "instantiationDuration": "PT0.020698038S",
-        "inliningDuration": "PT3.225472057S",
-        "flatteningDuration": "PT1.001285899S",
+        "createDuration": "PT0.002103214S",
+        "instantiationDuration": "PT0.034342397S",
+        "inliningDuration": "PT3.560005268S",
+        "flatteningDuration": "PT1.557452818S",
         "inliningOptimization": {
-         "duration": "PT0.177359413S",
+         "duration": "PT0.222819777S",
          "passes": [
           {
            "name": "OperationCallInlining",
-           "duration": "PT0.035787651S",
+           "duration": "PT0.044542968S",
            "runs": 4595,
            "firings": 1171
           },
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.053220901S",
+           "duration": "PT0.069280551S",
            "runs": 5,
            "firings": 4
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.033180421S",
+           "duration": "PT0.043334606S",
            "runs": 5,
            "firings": 1
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.023729771S",
+           "duration": "PT0.030919722S",
            "runs": 5,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.029725378S",
+           "duration": "PT0.034041384S",
            "runs": 5,
            "firings": 2
           },
           {
            "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000028697S",
+           "duration": "PT0.000038277S",
            "runs": 1,
            "firings": 0
           }
@@ -31756,59 +31600,59 @@
          "analyses": []
         },
         "flatteningOptimization": {
-         "duration": "PT0.578855953S",
+         "duration": "PT0.912068126S",
          "passes": [
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.004551681S",
+           "duration": "PT0.008457918S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.002761211S",
+           "duration": "PT0.006988652S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.002771730S",
+           "duration": "PT0.012306865S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.002748944S",
+           "duration": "PT0.006466271S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.011522755S",
+           "duration": "PT0.026211394S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "CopyPropagationPass",
-           "duration": "PT0.245376783S",
+           "duration": "PT0.455574014S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadStoreEliminationPass",
-           "duration": "PT0.151211764S",
+           "duration": "PT0.204406068S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadCodeRemovalPass",
-           "duration": "PT0.083034831S",
+           "duration": "PT0.102172035S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "VariableLivenessPass",
-           "duration": "PT0.074586171S",
+           "duration": "PT0.088972525S",
            "runs": 3,
            "firings": 1
           }
@@ -31816,17 +31660,17 @@
          "analyses": [
           {
            "name": "ConstantValueAnalysis",
-           "duration": "PT0.011425632S",
+           "duration": "PT0.025992920S",
            "computations": 2
           },
           {
            "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.388295641S",
+           "duration": "PT0.648400397S",
            "computations": 3
           },
           {
            "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.080228478S",
+           "duration": "PT0.095959753S",
            "computations": 2
           }
          ]
@@ -31847,8 +31691,8 @@
          "expressions": 5982
         }
        },
-       "backAnnotationDuration": "PT0.006961307S",
-       "portfolioDuration": "PT6.308930607S"
+       "backAnnotationDuration": "PT0.006648312S",
+       "portfolioDuration": "PT5.983113853S"
       }
      },
      "message": null
@@ -31863,9 +31707,7 @@
          "parameter": "event",
          "type": {
           "kind": "class",
-          "name": "semantifyr::gamma::events::Event",
-          "element": null,
-          "size": null
+          "name": "semantifyr::gamma::events::Event"
          }
         }
        ]
@@ -31881,9 +31723,7 @@
          "parameter": "event",
          "type": {
           "kind": "class",
-          "name": "semantifyr::gamma::events::Event",
-          "element": null,
-          "size": null
+          "name": "semantifyr::gamma::events::Event"
          }
         }
        ]
@@ -31894,9 +31734,7 @@
        "variable": "root.component._trackA._Main.activeState",
        "type": {
         "kind": "feature",
-        "name": "semantifyr::gamma::statecharts::Region::states",
-        "element": null,
-        "size": null
+        "name": "semantifyr::gamma::statecharts::Region::states"
        },
        "slot": null
       },
@@ -31904,9 +31742,7 @@
        "variable": "root.component._trackB._Main.activeState",
        "type": {
         "kind": "feature",
-        "name": "semantifyr::gamma::statecharts::Region::states",
-        "element": null,
-        "size": null
+        "name": "semantifyr::gamma::statecharts::Region::states"
        },
        "slot": null
       },
@@ -31914,9 +31750,7 @@
        "variable": "root.component._controller._Main.activeState",
        "type": {
         "kind": "feature",
-        "name": "semantifyr::gamma::statecharts::Region::states",
-        "element": null,
-        "size": null
+        "name": "semantifyr::gamma::statecharts::Region::states"
        },
        "slot": null
       },
@@ -31924,9 +31758,7 @@
        "variable": "root.component._barrier._Main.activeState",
        "type": {
         "kind": "feature",
-        "name": "semantifyr::gamma::statecharts::Region::states",
-        "element": null,
-        "size": null
+        "name": "semantifyr::gamma::statecharts::Region::states"
        },
        "slot": null
       },
@@ -31934,9 +31766,7 @@
        "variable": "root.component._trackA._sensors.interface._approach.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31944,9 +31774,7 @@
        "variable": "root.component._trackA._sensors.interface._near.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31954,9 +31782,7 @@
        "variable": "root.component._trackA._sensors.interface._enter.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31964,9 +31790,7 @@
        "variable": "root.component._trackA._sensors.interface._leave.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31974,9 +31798,7 @@
        "variable": "root.component._trackA._controller.interface._trainApproaching.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31984,9 +31806,7 @@
        "variable": "root.component._trackA._controller.interface._trainLeft.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -31994,9 +31814,7 @@
        "variable": "root.component._trackB._sensors.interface._approach.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -32004,9 +31822,7 @@
        "variable": "root.component._trackB._sensors.interface._near.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -32014,9 +31830,7 @@
        "variable": "root.component._trackB._sensors.interface._enter.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -32024,9 +31838,7 @@
        "variable": "root.component._trackB._sensors.interface._leave.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -32034,9 +31846,7 @@
        "variable": "root.component._trackB._controller.interface._trainApproaching.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -32044,9 +31854,7 @@
        "variable": "root.component._trackB._controller.interface._trainLeft.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -32054,9 +31862,7 @@
        "variable": "root.component._controller._trackA.interface._trainApproaching.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -32064,9 +31870,7 @@
        "variable": "root.component._controller._trackA.interface._trainLeft.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -32074,9 +31878,7 @@
        "variable": "root.component._controller._trackB.interface._trainApproaching.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -32084,9 +31886,7 @@
        "variable": "root.component._controller._trackB.interface._trainLeft.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -32094,9 +31894,7 @@
        "variable": "root.component._controller._barrier.interface._lower.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -32104,9 +31902,7 @@
        "variable": "root.component._controller._barrier.interface._lift.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -32114,9 +31910,7 @@
        "variable": "root.component._barrier._controller.interface._lower.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       },
@@ -32124,9 +31918,7 @@
        "variable": "root.component._barrier._controller.interface._lift.isRaised",
        "type": {
         "kind": "datatype",
-        "name": "semantifyr::bool",
-        "element": null,
-        "size": null
+        "name": "semantifyr::bool"
        },
        "slot": null
       }
