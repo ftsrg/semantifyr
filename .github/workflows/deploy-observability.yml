@@ -22,7 +22,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
-      # Grafana skips a dashboard it cannot parse and stays healthy, so the deploy would not fail on it
       - name: Check the dashboards
         run: jq empty deploy/observability/*.json
       - name: Configure SSH
