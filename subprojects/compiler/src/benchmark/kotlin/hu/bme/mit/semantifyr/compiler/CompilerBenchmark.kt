@@ -32,6 +32,12 @@ data class CompilerCase(
     val optimization: OptimizationConfig,
 )
 
+class CompilationPhases(
+    val instantiator: OxstsInstantiator,
+    val inliner: OxstsInliner,
+    val flattener: OxstsFlattener,
+)
+
 abstract class CompilerBenchmark<R> : InJvmBenchmark<CompilerCase, R>() {
 
     protected val outputDirectory = Path("build", "benchmark-artifacts")
@@ -41,12 +47,6 @@ abstract class CompilerBenchmark<R> : InJvmBenchmark<CompilerCase, R>() {
     protected lateinit var creator: InlinedOxstsModelCreator
 
     protected lateinit var sizeCounter: ModelSizeCounter
-
-    protected lateinit var instantiator: OxstsInstantiator
-
-    protected lateinit var inliner: OxstsInliner
-
-    protected lateinit var flattener: OxstsFlattener
 
     private lateinit var injector: Injector
 
@@ -58,7 +58,8 @@ abstract class CompilerBenchmark<R> : InJvmBenchmark<CompilerCase, R>() {
             .loadLibraries(modelDirectory.resolve("library"))
             .loadModel(modelDirectory.resolve("${configuration.model}.semantifyr"))
             .buildAndResolve()
-        caseClass = context.modelResources.single().allContents.asSequence().filterIsInstance<ClassDeclaration>().single {
+        val classes = context.modelResources.single().allContents.asSequence().filterIsInstance<ClassDeclaration>()
+        caseClass = classes.single {
             it.name == configuration.case
         }
         injector = rootInjector.createChildInjector(CompilationModule(ArtifactConfig.NONE, configuration.optimization))
@@ -66,14 +67,17 @@ abstract class CompilerBenchmark<R> : InJvmBenchmark<CompilerCase, R>() {
         sizeCounter = injector.getInstance(ModelSizeCounter::class.java)
     }
 
-    // the phases' components hold compilation-scoped state, so they are fetched in the scope before the author's spans
-    protected fun <T> inCompilationScope(created: CreatedCompilationContext, block: () -> T): T {
+    // the phases hold compilation-scoped state, so they exist only inside the scope
+    protected fun <T> inCompilationScope(created: CreatedCompilationContext, block: CompilationPhases.() -> T): T {
+        val request = CompilationRequest(inlinedOxsts = created.inlinedOxsts, outputDirectory = outputDirectory)
         try {
-            return withCompilationScopeBlocking(CompilationRequest(inlinedOxsts = created.inlinedOxsts, outputDirectory = outputDirectory)) {
-                instantiator = injector.getInstance(OxstsInstantiator::class.java)
-                inliner = injector.getInstance(OxstsInliner::class.java)
-                flattener = injector.getInstance(OxstsFlattener::class.java)
-                block()
+            return withCompilationScopeBlocking(request) {
+                val phases = CompilationPhases(
+                    instantiator = injector.getInstance(OxstsInstantiator::class.java),
+                    inliner = injector.getInstance(OxstsInliner::class.java),
+                    flattener = injector.getInstance(OxstsFlattener::class.java),
+                )
+                phases.block()
             }
         } finally {
             caseClass.eResource().resourceSet.resources.remove(created.inlinedOxsts.eResource())

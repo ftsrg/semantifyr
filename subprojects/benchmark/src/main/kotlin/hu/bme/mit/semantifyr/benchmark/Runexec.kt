@@ -13,6 +13,7 @@ import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 import kotlin.math.ceil
 import kotlin.time.Duration
+import kotlin.time.DurationUnit
 
 @Serializable
 data class ProcessObservation(
@@ -34,20 +35,18 @@ data class ProcessObservation(
             }.associate {
                 it.substringBefore('=') to it.substringAfter('=')
             }
-            val measured = listOf(
-                "starttime",
-                "walltime",
-                "cputime",
-                "memory",
-            )
-            if (!values.keys.containsAll(measured)) {
+            val startTime = values["starttime"]
+            val wallTime = values["walltime"]
+            val cpuTime = values["cputime"]
+            val memory = values["memory"]
+            if (startTime == null || wallTime == null || cpuTime == null || memory == null) {
                 throw MeasurementFailedException("runexec measured nothing and reported ${values.entries.joinToString()}")
             }
             return ProcessObservation(
-                startTime = values.getValue("starttime"),
-                wallTimeSeconds = values.getValue("walltime").removeSuffix("s").toDouble(),
-                cpuTimeSeconds = values.getValue("cputime").removeSuffix("s").toDouble(),
-                peakMemoryBytes = values.getValue("memory").removeSuffix("B").toLong(),
+                startTime = startTime,
+                wallTimeSeconds = wallTime.removeSuffix("s").toDouble(),
+                cpuTimeSeconds = cpuTime.removeSuffix("s").toDouble(),
+                peakMemoryBytes = memory.removeSuffix("B").toLong(),
                 terminationReason = values["terminationreason"],
                 exitCode = values["returnvalue"]?.toInt(),
                 exitSignal = values["exitsignal"]?.toInt(),
@@ -68,7 +67,7 @@ class Runexec private constructor(
     val version: String,
 ) {
 
-    // runexec merges stderr into its output file behind a header of its own, so the tool writes its own files and runexec's sit beside them
+    // runexec merges the tool's error output into its own output file, so the tool writes to files of its own
     fun run(
         command: List<String>,
         workingDirectory: Path,
@@ -76,19 +75,15 @@ class Runexec private constructor(
         errorFile: Path,
         timeLimit: Duration?,
     ): ProcessObservation {
-        val limit = timeLimit?.let {
+        val runexecOutput = outputFile.resolveSibling("${outputFile.fileName}.runexec")
+        val runexecLog = outputFile.resolveSibling("${outputFile.fileName}.runexec.log")
+        val limitOptions = timeLimit?.let {
             listOf(
                 "--walltimelimit",
-                ceil(it.inWholeMilliseconds.coerceAtLeast(1) / 1000.0).toLong().toString(),
+                ceil(it.toDouble(DurationUnit.SECONDS)).toLong().coerceAtLeast(1).toString(),
             )
-        } ?: emptyList()
-        val runexecCommand = listOf(
-            executable,
-            "--no-container",
-            "--output",
-            outputFile.resolveSibling("${outputFile.fileName}.runexec").absolutePathString(),
-        ) + limit + listOf(
-            "--",
+        }.orEmpty()
+        val redirectedCommand = listOf(
             "sh",
             "-c",
             "output=\"$1\"; error=\"$2\"; shift 2; exec \"$@\" >> \"\$output\" 2>> \"\$error\"",
@@ -96,26 +91,29 @@ class Runexec private constructor(
             outputFile.absolutePathString(),
             errorFile.absolutePathString(),
         ) + command
+        val runexecCommand = listOf(
+            executable,
+            "--no-container",
+            "--output",
+            runexecOutput.absolutePathString(),
+        ) + limitOptions + "--" + redirectedCommand
         val process = ProcessBuilder(runexecCommand)
             .directory(workingDirectory.toFile())
-            .redirectError(runexecLog(outputFile).toFile())
+            .redirectError(runexecLog.toFile())
             .start()
         val output = process.inputStream.bufferedReader().readText()
         val exitCode = process.waitFor()
         if (exitCode != 0) {
-            throw MeasurementFailedException("runexec exited with $exitCode as ${runexecLog(outputFile)} shows")
+            throw MeasurementFailedException("runexec exited with $exitCode as $runexecLog shows")
         }
         return ProcessObservation.parse(output)
     }
 
-    private fun runexecLog(outputFile: Path): Path {
-        return outputFile.resolveSibling("${outputFile.fileName}.runexec.log")
-    }
-
     companion object {
-        // an installed runexec may still lack the delegated cgroups it measures through, so the probe measures a command
+        // runexec without delegated cgroups still answers --version, so the probe measures a command
         fun probe(executable: String): Runexec {
-            val version = commandOutputOrNull(executable, "--version") ?: throw RunexecUnavailableException("runexec is missing at $executable")
+            val version = commandOutputOrNull(executable, "--version")
+                ?: throw RunexecUnavailableException("runexec is missing at $executable")
             val directory = Files.createTempDirectory("runexec-probe")
             val runexec = Runexec(executable, version)
             try {

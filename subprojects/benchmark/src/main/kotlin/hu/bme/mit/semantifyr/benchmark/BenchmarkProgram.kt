@@ -11,35 +11,33 @@ import java.nio.file.Files
 import kotlin.io.path.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.name
-import kotlin.streams.asSequence
 
 fun main(arguments: Array<String>) {
-    val program = findClass("${arguments.first()}Kt") ?: findClass(arguments.first())
-    requireNotNull(program) {
-        "no program named ${arguments.first()} in the benchmark source set"
+    val name = arguments.first()
+    val program = requireNotNull(findClass("${name}Kt") ?: findClass(name)) {
+        "no program is named $name"
     }
     program.getMethod("main", Array<String>::class.java).invoke(null, arguments.drop(1).toTypedArray())
 }
 
-// the build's tasks name a class by its simple name, which only the benchmark source set's directories hold
 internal fun findClass(simpleName: String): Class<*>? {
-    val matches = System.getProperty("java.class.path").split(File.pathSeparator).map {
+    val classNames = System.getProperty("java.class.path").split(File.pathSeparator).map {
         Path(it)
     }.filter {
         it.isDirectory()
     }.flatMap { root ->
         Files.walk(root).use { paths ->
-            paths.asSequence().filter {
+            paths.filter {
                 it.name == "$simpleName.class"
             }.map {
-                root.relativize(it)
+                root.relativize(it).joinToString(".").removeSuffix(".class")
             }.toList()
         }
     }
-    require(matches.size <= 1) {
-        "several classes are named $simpleName: ${matches.joinToString()}"
+    require(classNames.size <= 1) {
+        "several classes are named $simpleName"
     }
-    return matches.singleOrNull()?.let {
-        Class.forName(it.joinToString(".").removeSuffix(".class"))
+    return classNames.singleOrNull()?.let {
+        Class.forName(it)
     }
 }

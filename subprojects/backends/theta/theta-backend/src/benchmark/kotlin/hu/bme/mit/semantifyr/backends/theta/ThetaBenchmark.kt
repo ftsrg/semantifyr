@@ -89,9 +89,11 @@ abstract class ThetaBenchmark<C> : ProcessBenchmark<C, ThetaResult>() {
         if (model.library != null) {
             context = context.loadLibraries(Path(model.library))
         }
-        val caseClass = context.loadModel(Path(model.file)).buildAndResolve().modelResources.single().allContents.asSequence().filterIsInstance<ClassDeclaration>().single {
+        val modelResource = context.loadModel(Path(model.file)).buildAndResolve().modelResources.single()
+        val caseClass = modelResource.allContents.asSequence().filterIsInstance<ClassDeclaration>().single {
             it.name == model.case
         }
-        return SemantifyrCompiler(injector, ArtifactConfig.NONE, optimization).compile(caseClass, Path("build", "benchmark-artifacts"))
+        val compiler = SemantifyrCompiler(injector, ArtifactConfig.NONE, optimization)
+        return compiler.compile(caseClass, Path("build", "benchmark-artifacts"))
     }
 }

@@ -6,9 +6,12 @@
 
 package hu.bme.mit.semantifyr.benchmark
 
+import hu.bme.mit.semantifyr.logging.error
+import hu.bme.mit.semantifyr.logging.info
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
+import org.slf4j.LoggerFactory
 import java.lang.invoke.MethodHandles
 import java.lang.management.ManagementFactory
 import java.nio.file.Path
@@ -23,28 +26,25 @@ private const val REPETITION_ARGUMENT = "--repetition"
 
 private val runnerClass = MethodHandles.lookup().lookupClass().name
 
+private val logger = LoggerFactory.getLogger(runnerClass)
+
 fun main(arguments: Array<String>) {
     if (arguments.first() == REPETITION_ARGUMENT) {
-        val reportFile = Path(arguments[3])
-        val benchmark = try {
-            instantiate(arguments[1]) as InJvmBenchmark<*, *>
-        } catch (throwable: Throwable) {
-            // no calls exist yet, so any result serializer writes the same report
-            writeCallsReport(reportFile, CallsReport(emptyList(), Failure(Stage.Setup, throwable.stackTraceToString())), Unit.serializer())
-            exitProcess(0)
-        }
-        runCalls(benchmark, arguments[2], reportFile)
+        runCalls(arguments[1], arguments[2], Path(arguments[3]))
         exitProcess(0)
+    }
+    val benchmarkClass = findClass(arguments.single())
+    if (benchmarkClass == null) {
+        logger.error { "No benchmark is named ${arguments.single()}" }
+        exitProcess(1)
     }
     val runexec = System.getProperty("benchmark.runexec") ?: "runexec"
     val outputDirectory = Path(System.getProperty("benchmark.output") ?: "build/benchmark")
     try {
-        val benchmarkClass = requireNotNull(findClass(arguments.single())) {
-            "no benchmark named ${arguments.single()} in the benchmark source set"
-        }
-        println(runBenchmark(instantiate(benchmarkClass.name), runexec, outputDirectory))
+        val file = runBenchmark(instantiate(benchmarkClass.name), runexec, outputDirectory)
+        logger.info { "Wrote $file" }
     } catch (exception: RunexecUnavailableException) {
-        System.err.println("error: ${exception.message}")
+        logger.error { exception.message.orEmpty() }
         exitProcess(1)
     }
     exitProcess(0)
@@ -68,7 +68,6 @@ internal data class ScheduledRepetition(
     val configuration: String,
 )
 
-// every configuration once per round, so all of them see the same drift of the host's load
 internal fun interleavedRounds(configurations: List<String>, repetitions: Int): List<ScheduledRepetition> {
     return (0..<repetitions).flatMap { round ->
         configurations.map {
@@ -81,6 +80,11 @@ internal fun interleavedRounds(configurations: List<String>, repetitions: Int): 
 internal data class CallsReport<R>(
     val calls: List<Call<R>>,
     val failure: Failure?,
+)
+
+private class MeasuredReport<R>(
+    val processes: MeasuredProcesses?,
+    val report: CallsReport<R>,
 )
 
 private class BenchmarkRunner<C, R>(
@@ -116,40 +120,43 @@ private class BenchmarkRunner<C, R>(
     fun run(): Path {
         val scheduled = interleavedRounds(benchmark.configurations.keys.toList(), benchmark.repetitions)
         for ((index, repetition) in scheduled.withIndex()) {
-            println("repetition ${index + 1} of ${scheduled.size}: round ${repetition.round + 1}, ${repetition.configuration}")
+            logger.info { "Repetition ${index + 1} of ${scheduled.size}: round ${repetition.round + 1}, ${repetition.configuration}" }
             val directory = runDirectory.resolve("round-${repetition.round + 1}").resolve(repetition.configuration).createDirectories()
-            val processes = MeasuredProcesses(runexec, benchmark.timeLimit, directory)
             val loadBefore = LoadAverage.now()
-            val measuredReport = when (benchmark) {
+            val measured = when (benchmark) {
                 is InJvmBenchmark<C, R> -> {
-                    freshJvm(repetition.configuration, processes)
+                    freshJvm(repetition.configuration, directory)
                 }
                 is ProcessBenchmark<C, R> -> {
-                    processRepetition(repetition.configuration, processes)
+                    processRepetition(repetition.configuration, directory)
                 }
             }
-            val measurementFailure = processes.measurementFailure
-            val report = if (measurementFailure != null) {
-                CallsReport(emptyList(), Failure(Stage.Measurement, measurementFailure.stackTraceToString()))
-            } else {
-                measuredReport
-            }
+            val measurementFailure = measured.processes?.measurementFailure
             repetitions += Repetition(
                 configuration = repetition.configuration,
                 round = repetition.round,
                 hostState = HostState(loadBefore, LoadAverage.now()),
-                processes = processes.observations.toList(),
-                calls = report.calls,
-                failure = report.failure,
+                processes = measured.processes?.observations.orEmpty(),
+                calls = if (measurementFailure == null) {
+                    measured.report.calls
+                } else {
+                    emptyList()
+                },
+                failure = if (measurementFailure == null) {
+                    measured.report.failure
+                } else {
+                    Failure(Stage.Measurement, measurementFailure.stackTraceToString())
+                },
             )
             writeBenchmarkRun(file, BenchmarkRun(statement, context, repetitions), benchmark.configurationSerializer, benchmark.resultSerializer)
         }
         return file
     }
 
-    private fun freshJvm(configuration: String, processes: MeasuredProcesses): CallsReport<R> {
-        val reportFile = processes.directory.resolve("calls.json")
-        val command = listOf(ProcessHandle.current().info().command().orElseThrow()) + ManagementFactory.getRuntimeMXBean().inputArguments + listOf(
+    private fun freshJvm(configuration: String, directory: Path): MeasuredReport<R> {
+        val reportFile = directory.resolve("calls.json")
+        val java = Path(System.getProperty("java.home"), "bin", "java").toString()
+        val repetitionArguments = listOf(
             "-cp",
             System.getProperty("java.class.path"),
             runnerClass,
@@ -158,40 +165,57 @@ private class BenchmarkRunner<C, R>(
             configuration,
             reportFile.toString(),
         )
-        // the fresh JVM works where the benchmark task does, so a benchmark's relative paths name the same files
-        processes.startClock()
+        val command = listOf(java) + ManagementFactory.getRuntimeMXBean().inputArguments + repetitionArguments
+        val processes = MeasuredProcesses(runexec, benchmark.timeLimit, directory)
         try {
-            processes.run(command, Path("").toAbsolutePath(), processes.directory.resolve("jvm.out"), processes.directory.resolve("jvm.err"))
+            // in the task's working directory, where a benchmark's relative paths point
+            processes.run(command, Path("").toAbsolutePath(), directory.resolve("jvm.out"), directory.resolve("jvm.err"))
         } catch (exception: MeasurementFailedException) {
-            return CallsReport(emptyList(), null)
+            return MeasuredReport(processes, CallsReport(emptyList(), null))
         }
         if (!reportFile.exists()) {
-            return CallsReport(emptyList(), null)
+            return MeasuredReport(processes, CallsReport(emptyList(), null))
         }
-        return benchmarkJson.decodeFromString(CallsReport.serializer(benchmark.resultSerializer), reportFile.readText())
+        val report = benchmarkJson.decodeFromString(CallsReport.serializer(benchmark.resultSerializer), reportFile.readText())
+        return MeasuredReport(processes, report)
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun processRepetition(configuration: String, processes: MeasuredProcesses): CallsReport<R> {
+    private fun processRepetition(configuration: String, directory: Path): MeasuredReport<R> {
         val instance = try {
-            val instance = instantiate(benchmark.javaClass.name) as ProcessBenchmark<C, R>
-            instance.setUp(benchmark.configurations.getValue(configuration))
-            instance
+            (instantiate(benchmark.javaClass.name) as ProcessBenchmark<C, R>).also {
+                it.setUp(benchmark.configurations.getValue(configuration))
+            }
         } catch (throwable: Throwable) {
-            return CallsReport(emptyList(), Failure(Stage.Setup, throwable.stackTraceToString()))
+            return MeasuredReport(null, CallsReport(emptyList(), Failure(Stage.Setup, throwable.stackTraceToString())))
         }
-        // a process benchmark's limit is its process's, so its setup does not count against it
-        processes.startClock()
-        try {
-            return CallsReport(listOf(Call(false, emptyList(), instance.repetition(processes))), null)
+        val processes = MeasuredProcesses(runexec, benchmark.timeLimit, directory)
+        val report = try {
+            CallsReport(listOf(Call(false, emptyList(), instance.repetition(processes))), null)
         } catch (throwable: Throwable) {
-            return CallsReport(emptyList(), Failure(Stage.Call, throwable.stackTraceToString()))
+            CallsReport(emptyList(), Failure(Stage.Call, throwable.stackTraceToString()))
         }
+        return MeasuredReport(processes, report)
     }
 }
 
 private fun instantiate(className: String): Benchmark<*, *> {
     return Class.forName(className).getDeclaredConstructor().newInstance() as Benchmark<*, *>
+}
+
+private fun runCalls(
+    className: String,
+    configuration: String,
+    reportFile: Path,
+) {
+    val benchmark = try {
+        instantiate(className) as InJvmBenchmark<*, *>
+    } catch (throwable: Throwable) {
+        // without calls every result serializer writes the same report
+        writeCallsReport(reportFile, CallsReport(emptyList(), Failure(Stage.Setup, throwable.stackTraceToString())), Unit.serializer())
+        return
+    }
+    runCalls(benchmark, configuration, reportFile)
 }
 
 private fun <C, R> runCalls(

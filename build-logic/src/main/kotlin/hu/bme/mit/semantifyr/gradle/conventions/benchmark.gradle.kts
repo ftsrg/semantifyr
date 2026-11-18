@@ -19,6 +19,7 @@ val benchmark = sourceSets.create("benchmark")
 dependencies {
     "benchmarkImplementation"(project())
     "benchmarkImplementation"(project(":benchmark"))
+    "benchmarkImplementation"(project(":logging"))
     "benchmarkRuntimeOnly"(libs.slf4j.log4j)
 }
 
@@ -35,6 +36,7 @@ tasks.register<JavaExec>("benchmark") {
     mainClass = "hu.bme.mit.semantifyr.benchmark.BenchmarkRunnerKt"
     workingDir = layout.projectDirectory.asFile
     jvmArgs("--enable-native-access=ALL-UNNAMED")
+    systemProperty("log4j2.configurationFile", "log4j2-benchmark.properties")
     systemProperty("benchmark.output", layout.buildDirectory.dir("benchmark").get().asFile.absolutePath)
     if (runexec.isPresent) {
         systemProperty("benchmark.runexec", runexec.get())
@@ -49,5 +51,6 @@ tasks.register<JavaExec>("benchmarkProgram") {
     mainClass = "hu.bme.mit.semantifyr.benchmark.BenchmarkProgramKt"
     workingDir = layout.projectDirectory.asFile
     jvmArgs("--enable-native-access=ALL-UNNAMED")
+    systemProperty("log4j2.configurationFile", "log4j2-benchmark-program.properties")
     doNotTrackState("a program reads benchmark files that are no declared input")
 }

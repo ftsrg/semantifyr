@@ -10,6 +10,8 @@ import hu.bme.mit.semantifyr.benchmark.Call
 import hu.bme.mit.semantifyr.benchmark.Repetition
 import hu.bme.mit.semantifyr.benchmark.ratioOfMeans
 import hu.bme.mit.semantifyr.benchmark.readBenchmarkRun
+import hu.bme.mit.semantifyr.logging.info
+import org.slf4j.LoggerFactory
 import java.util.Locale
 import kotlin.io.path.Path
 
@@ -19,6 +21,8 @@ private val phases = listOf(
     "inlining",
     "flattening",
 )
+
+private val logger = LoggerFactory.getLogger("CompilationPhasesRelation")
 
 fun main(arguments: Array<String>) {
     val run = readBenchmarkRun<CompilerCase, PhasesResult>(Path(arguments.single()))
@@ -30,10 +34,10 @@ fun main(arguments: Array<String>) {
         val measured = repetitions.mapNotNull {
             measuredCall(it)
         }
-        println("$configuration: ${measured.size} measured calls in ${repetitions.size} repetitions")
+        logger.info { "$configuration: ${measured.size} measured calls in ${repetitions.size} repetitions" }
         if (measured.isNotEmpty()) {
             for (phase in phases) {
-                println("  $phase %.1f ms".format(Locale.ROOT, phaseMilliseconds(repetitions, phase).average()))
+                logger.info { "  $phase %.1f ms".format(Locale.ROOT, phaseMilliseconds(repetitions, phase).average()) }
             }
         }
         val peaks = repetitions.flatMap {
@@ -41,9 +45,10 @@ fun main(arguments: Array<String>) {
         }.map {
             it.peakMemoryBytes / (1 shl 20)
         }
-        println("  peak memory of the fresh JVM: ${peaks.joinToString()} MiB")
+        logger.info { "  peak memory of the fresh JVM: ${peaks.joinToString()} MiB" }
         measured.firstOrNull()?.result?.flatteningOptimization?.passes?.forEach {
-            println("  flattening pass ${it.name}: ${it.runs} runs, ${it.firings} firings, %.1f ms as the compiler counts it".format(Locale.ROOT, it.duration.inWholeMicroseconds / 1e3))
+            val milliseconds = "%.1f".format(Locale.ROOT, it.duration.inWholeMicroseconds / 1e3)
+            logger.info { "  flattening pass ${it.name}: ${it.runs} runs, ${it.firings} firings, $milliseconds ms as the compiler counts it" }
         }
     }
     for (model in listOf("crossroads", "spacecraft")) {
@@ -53,9 +58,9 @@ fun main(arguments: Array<String>) {
             val baseline = phaseMilliseconds(all, phase)
             val compared = phaseMilliseconds(withoutCopyPropagation, phase)
             if (baseline.size < 2 || compared.size < 2) {
-                println("$model $phase: too few measured calls for a relation")
+                logger.info { "$model $phase: too few measured calls for a relation" }
             } else {
-                println("$model $phase, without copy propagation over all: ${ratioOfMeans(baseline, compared)}")
+                logger.info { "$model $phase, without copy propagation over all: ${ratioOfMeans(baseline, compared)}" }
             }
         }
     }
@@ -63,7 +68,8 @@ fun main(arguments: Array<String>) {
         it.hostState.loadBefore.oneMinute
     }
     if (loads.isNotEmpty()) {
-        println("load average before the repetitions: %.1f to %.1f on ${run.context.processors} processors".format(Locale.ROOT, loads.min(), loads.max()))
+        val range = "%.1f to %.1f".format(Locale.ROOT, loads.min(), loads.max())
+        logger.info { "load average before the repetitions: $range on ${run.context.processors} processors" }
     }
 }
 

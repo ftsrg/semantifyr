@@ -152,7 +152,8 @@ internal fun <C, R> writeBenchmarkRun(
     configurationSerializer: KSerializer<C>,
     resultSerializer: KSerializer<R>,
 ) {
-    writeAtomically(file, benchmarkJson.encodeToString(BenchmarkRun.serializer(configurationSerializer, resultSerializer), run))
+    val serializer = BenchmarkRun.serializer(configurationSerializer, resultSerializer)
+    writeAtomically(file, benchmarkJson.encodeToString(serializer, run))
 }
 
 internal fun writeAtomically(file: Path, text: String) {
@@ -166,7 +167,8 @@ fun <C, R> readBenchmarkRun(
     configurationSerializer: KSerializer<C>,
     resultSerializer: KSerializer<R>,
 ): BenchmarkRun<C, R> {
-    return benchmarkJson.decodeFromString(BenchmarkRun.serializer(configurationSerializer, resultSerializer), file.readText())
+    val serializer = BenchmarkRun.serializer(configurationSerializer, resultSerializer)
+    return benchmarkJson.decodeFromString(serializer, file.readText())
 }
 
 inline fun <reified C, reified R> readBenchmarkRun(file: Path): BenchmarkRun<C, R> {

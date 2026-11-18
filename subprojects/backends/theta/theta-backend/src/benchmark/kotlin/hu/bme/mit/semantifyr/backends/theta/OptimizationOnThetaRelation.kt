@@ -9,15 +9,19 @@ package hu.bme.mit.semantifyr.backends.theta
 import hu.bme.mit.semantifyr.benchmark.Repetition
 import hu.bme.mit.semantifyr.benchmark.ratioOfMeans
 import hu.bme.mit.semantifyr.benchmark.readBenchmarkRun
+import hu.bme.mit.semantifyr.logging.info
+import org.slf4j.LoggerFactory
 import java.util.Locale
 import kotlin.io.path.Path
+
+private val logger = LoggerFactory.getLogger("OptimizationOnThetaRelation")
 
 fun main(arguments: Array<String>) {
     val run = readBenchmarkRun<OptimizationCell, ThetaResult>(Path(arguments.single()))
     val byConfiguration = run.repetitions.groupBy {
         it.configuration
     }
-    // a set counts only when Theta decided it in every repetition within the limit, so no cut run shortens a mean
+    // a cut or undecided repetition would shorten a mean
     val decided = byConfiguration.filterValues { repetitions ->
         repetitions.size >= 2 && repetitions.all {
             isDecidedByTheta(it)
@@ -28,18 +32,21 @@ fun main(arguments: Array<String>) {
         val baseline = decided["$modelName/all"]
         val compared = decided[configuration]
         if (configuration == "$modelName/all") {
-            println("$configuration: ${outcomes(byConfiguration[configuration].orEmpty())}")
+            logger.info { "$configuration: ${outcomes(byConfiguration[configuration].orEmpty())}" }
         } else if (baseline == null || compared == null) {
-            println("$configuration: not comparable with all, ${outcomes(byConfiguration[configuration].orEmpty())}")
+            logger.info { "$configuration: not comparable with all, ${outcomes(byConfiguration[configuration].orEmpty())}" }
         } else {
-            println("$configuration over all, wall time ${ratioOfMeans(wallTimes(baseline), wallTimes(compared))}, CPU time ${ratioOfMeans(cpuTimes(baseline), cpuTimes(compared))}")
+            val wallTime = ratioOfMeans(wallTimes(baseline), wallTimes(compared))
+            val cpuTime = ratioOfMeans(cpuTimes(baseline), cpuTimes(compared))
+            logger.info { "$configuration over all, wall time $wallTime, CPU time $cpuTime" }
         }
     }
     val loads = run.repetitions.map {
         it.hostState.loadBefore.oneMinute
     }
     if (loads.isNotEmpty()) {
-        println("load average before the repetitions: %.1f to %.1f on ${run.context.processors} processors".format(Locale.ROOT, loads.min(), loads.max()))
+        val range = "%.1f to %.1f".format(Locale.ROOT, loads.min(), loads.max())
+        logger.info { "load average before the repetitions: $range on ${run.context.processors} processors" }
     }
 }
 

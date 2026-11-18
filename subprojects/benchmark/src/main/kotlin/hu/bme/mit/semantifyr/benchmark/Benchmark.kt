@@ -32,16 +32,15 @@ sealed class Benchmark<C, R> {
 
     @Suppress("UNCHECKED_CAST")
     internal val configurationSerializer by lazy {
-        serializer(boundTypeArguments().getValue(Benchmark::class.java.typeParameters[0])) as KSerializer<C>
+        serializer(boundTypeArgument(0)) as KSerializer<C>
     }
 
     @Suppress("UNCHECKED_CAST")
     internal val resultSerializer by lazy {
-        serializer(boundTypeArguments().getValue(Benchmark::class.java.typeParameters[1])) as KSerializer<R>
+        serializer(boundTypeArgument(1)) as KSerializer<R>
     }
 
-    // a module's base may bind a type argument, so the bindings are followed from the class up to Benchmark
-    private fun boundTypeArguments(): Map<Type, Type> {
+    private fun boundTypeArgument(index: Int): Type {
         val bindings = mutableMapOf<Type, Type>()
         var current: Class<*> = javaClass
         while (current != Benchmark::class.java) {
@@ -54,7 +53,7 @@ sealed class Benchmark<C, R> {
             }
             current = current.superclass
         }
-        return bindings
+        return bindings.getValue(Benchmark::class.java.typeParameters[index])
     }
 }
 
@@ -81,19 +80,15 @@ class Spans {
 
 class MeasuredProcesses internal constructor(
     private val runexec: Runexec,
-    private val timeLimit: Duration?,
+    timeLimit: Duration?,
     val directory: Path,
 ) {
     internal val observations = mutableListOf<ProcessObservation>()
 
     internal var measurementFailure: MeasurementFailedException? = null
 
-    private var deadline: TimeSource.Monotonic.ValueTimeMark? = null
-
-    internal fun startClock() {
-        deadline = timeLimit?.let {
-            TimeSource.Monotonic.markNow() + it
-        }
+    private val deadline = timeLimit?.let {
+        TimeSource.Monotonic.markNow() + it
     }
 
     fun run(
