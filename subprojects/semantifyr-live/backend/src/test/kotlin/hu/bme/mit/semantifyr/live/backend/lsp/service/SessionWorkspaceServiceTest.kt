@@ -138,7 +138,11 @@ class SessionWorkspaceServiceTest {
         val fixture = Fixture()
         assertThatThrownBy {
             fixture.service.executeCommand(ExecuteCommandParams("oxsts.case.verify", listOf<Any>(verifyArgs(portfolio = null))))
-        }.isInstanceOf(ResponseErrorException::class.java).hasMessageContaining("portfolio")
+        }.isInstanceOfSatisfying(ResponseErrorException::class.java) {
+            assertThat(it.responseError.code).isEqualTo(ResponseErrorCode.InvalidParams.value)
+            assertThat(it.responseError.message).contains("portfolio")
+        }
+        verify(fixture.sessionVerificationManager, never()).launch(any(), any(), any())
     }
 
     @Test
