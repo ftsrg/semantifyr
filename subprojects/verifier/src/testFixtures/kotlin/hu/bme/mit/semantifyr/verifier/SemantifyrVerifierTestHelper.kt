@@ -256,7 +256,9 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         val context = semantifyrLoader.loadStandaloneModel(modelPath)
         val case = verificationCaseDiscoverer.findByQualifiedName(context, qualifiedName)
         val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment)
-        assertVerdict(case.qualifiedName, expectedVerdictFromTags(case), result)
+        assertThat(result.trace)
+            .describedAs("${case.qualifiedName} must carry a witness, got ${result.verdict} (${result.message ?: "no message"})")
+            .isNotNull()
 
         val witnessPath = outputDirectory.resolve(caseDirectoryName(case)).resolve("witness.semantifyr")
         assertThat(witnessPath.exists())

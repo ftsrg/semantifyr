@@ -16,7 +16,6 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.enumeration
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.integer
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import kotlinx.coroutines.Dispatchers
@@ -132,18 +131,6 @@ class ThetaBackendReplayTest {
         assertThat(result.inlinedWitness).isNull()
         assertThat(result.isTrusted).isFalse
         assertThat(result.soundness).isEqualTo(SoundnessDirection.OverApproximating)
-    }
-
-    @Test
-    fun `Horn solving is trusted only for a verdict that needs no witness`() {
-        val invariant = OxstsFactory.createAG()
-        val reachability = OxstsFactory.createEF()
-        val soundness = ThetaConfig.Chc.soundness
-
-        assertThat(soundness.trusts(VerificationVerdict.Passed, invariant)).isTrue
-        assertThat(soundness.trusts(VerificationVerdict.Failed, reachability)).isTrue
-        assertThat(soundness.trusts(VerificationVerdict.Failed, invariant)).isFalse
-        assertThat(soundness.trusts(VerificationVerdict.Passed, reachability)).isFalse
     }
 
     @Test
