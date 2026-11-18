@@ -1,8 +1,6 @@
 /**
- * One traffic light that cycles from red to green to yellow.
+ * A traffic light that goes from red to green, yellow and red again, and turns green only for a waiting car.
  */
-
-package example::trafficlight::onelight
 
 enum LightColor {
     Red,
@@ -10,13 +8,14 @@ enum LightColor {
     Green,
 }
 
-@VerificationCase
 class TrafficLight {
     var color: LightColor := LightColor::Red
+    var carWaiting: bool := false
 
     redefine tran {
+        havoc(carWaiting)
         choice {
-            assume(color == LightColor::Red)
+            assume(color == LightColor::Red && carWaiting)
             color := LightColor::Green
         } or {
             assume(color == LightColor::Green)
@@ -24,9 +23,20 @@ class TrafficLight {
         } or {
             assume(color == LightColor::Yellow)
             color := LightColor::Red
+        } or {
         }
     }
+}
 
+@VerificationCase
+class LightCanTurnGreen : TrafficLight {
+    prop {
+        return EF (color == LightColor::Green)
+    }
+}
+
+@VerificationCase
+class LightCanTurnYellow : TrafficLight {
     prop {
         return EF (color == LightColor::Yellow)
     }

@@ -143,7 +143,13 @@ export function liveExampleUrl(base: string, language: string, example: string):
     return url.toString();
 }
 
-export async function liveEditorUrl(base: string, link: LiveEditorLink): Promise<string> {
+export interface CompressedLiveEditorLink extends Omit<LiveEditorLink, "model" | "verdicts"> {
+    compressedModel?: string | undefined;
+    compressedVerdicts?: string | undefined;
+}
+
+// for a model compressed beforehand, as a page's build does, so that the address is known while the page renders
+export function compressedLiveEditorUrl(base: string, link: CompressedLiveEditorLink): string {
     const url = new URL(base);
     url.pathname = pathOf([addressNameOf(link.language), link.example]);
     setOrDelete(url.searchParams, "library", link.library);
@@ -152,17 +158,20 @@ export async function liveEditorUrl(base: string, link: LiveEditorLink): Promise
     setOrDelete(url.searchParams, "frame", link.frame);
     setOrDelete(url.searchParams, "lines", link.lines === undefined ? undefined : `${link.lines.first}-${link.lines.last}`);
     const fragment = new URLSearchParams();
-    if (link.model !== undefined) {
-        fragment.set("model", await encodeCompressedBase64Url(link.model));
-    }
-    if (link.case !== undefined) {
-        fragment.set("case", link.case);
-    }
-    if (link.verdicts !== undefined && link.verdicts.length > 0) {
-        fragment.set("verdicts", await encodeCompressedBase64Url(JSON.stringify(link.verdicts)));
-    }
+    setOrDelete(fragment, "model", link.compressedModel);
+    setOrDelete(fragment, "case", link.case);
+    setOrDelete(fragment, "verdicts", link.compressedVerdicts);
     url.hash = fragment.toString();
     return url.toString();
+}
+
+export async function liveEditorUrl(base: string, link: LiveEditorLink): Promise<string> {
+    const { model, verdicts, ...shown } = link;
+    return compressedLiveEditorUrl(base, {
+        ...shown,
+        compressedModel: model === undefined ? undefined : await encodeCompressedBase64Url(model),
+        compressedVerdicts: verdicts === undefined || verdicts.length === 0 ? undefined : await encodeCompressedBase64Url(JSON.stringify(verdicts)),
+    });
 }
 
 function setOrDelete(parameters: URLSearchParams, name: string, value: string | undefined): void {

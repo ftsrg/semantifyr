@@ -11,7 +11,8 @@ import type { Options as PagesOptions } from '@docusaurus/plugin-content-pages';
 import type { Options as ClassicThemeOptions } from '@docusaurus/theme-classic';
 import type { UserThemeConfig } from '@docusaurus/theme-common';
 import type { Config, Plugin } from '@docusaurus/types';
-import { servedExamples, type CaseManifest, type ServedExample } from '@semantifyr/editor-common/examples';
+import { encodeCompressedBase64Url } from '@semantifyr/editor-common';
+import { servedExamples, type CaseManifest, type ExampleLanguage } from '@semantifyr/editor-common/examples';
 import type { PrismTheme } from 'prism-react-renderer';
 import remarkFences from './src/plugins/remarkFences';
 import sourceAliases from './source-aliases.json';
@@ -28,10 +29,23 @@ const codeBlockTheme: PrismTheme = {
 
 const liveBackendUrl = process.env.SEMANTIFYR_LIVE_URL ?? 'https://live.semantifyr.org';
 
-function expectedVerdicts(example: ServedExample): Record<string, string> {
-  const file = path.resolve(__dirname, '../..', example.file);
-  const manifest = JSON.parse(readFileSync(path.join(path.dirname(file), 'manifest.json'), 'utf8')) as CaseManifest;
-  const model = manifest.models.find((candidate) => {
+const REPOSITORY = path.resolve(__dirname, '../..');
+
+// the lessons' stages, which no registry serves: their pages link into live with the text in the address
+const LESSON_STAGES = 'oxsts-test-models/tutorial';
+
+interface PageModelSource {
+  language: ExampleLanguage;
+  file: string;
+  id?: string;
+}
+
+function manifestOf(directory: string): CaseManifest {
+  return JSON.parse(readFileSync(path.join(REPOSITORY, directory, 'manifest.json'), 'utf8')) as CaseManifest;
+}
+
+function expectedVerdicts(file: string): Record<string, string> {
+  const model = manifestOf(path.dirname(file)).models.find((candidate) => {
     return candidate.file === path.basename(file);
   });
   return Object.fromEntries((model?.cases ?? []).map((declaredCase) => {
@@ -39,23 +53,35 @@ function expectedVerdicts(example: ServedExample): Record<string, string> {
   }));
 }
 
-function servedExamplesPlugin(): Plugin {
+// by the address a page imports each from
+function pageModelSources(): Record<string, PageModelSource> {
+  const served = servedExamples.map((example): [string, PageModelSource] => {
+    return [`served-examples/${example.language}/${example.id}`, { language: example.language, file: example.file, id: example.id }];
+  });
+  const stages = manifestOf(LESSON_STAGES).models.map((model): [string, PageModelSource] => {
+    return [`lesson-stages/${path.basename(model.file, '.semantifyr')}`, { language: 'oxsts', file: `${LESSON_STAGES}/${model.file}` }];
+  });
+  return Object.fromEntries([...served, ...stages]);
+}
+
+function pageModelsPlugin(): Plugin {
   let directory = '';
   return {
-    name: 'served-examples',
+    name: 'page-models',
     async contentLoaded({ actions }) {
-      for (const example of servedExamples) {
-        const address = `${example.language}/${example.id}`;
+      for (const [address, source] of Object.entries(pageModelSources())) {
+        const file = path.join(REPOSITORY, source.file);
+        const model = { ...source, verdicts: expectedVerdicts(source.file), compressedModel: await encodeCompressedBase64Url(readFileSync(file, 'utf8')) };
         const written = await actions.createData(`${address}.js`, [
-          `import text from ${JSON.stringify(path.resolve(__dirname, '../..', example.file))};`,
-          `export default { language: ${JSON.stringify(example.language)}, id: ${JSON.stringify(example.id)}, text, verdicts: ${JSON.stringify(expectedVerdicts(example))} };`,
+          `import text from ${JSON.stringify(file)};`,
+          `export default { ...${JSON.stringify(model)}, text };`,
           '',
         ].join('\n'));
         directory = written.slice(0, -`${address}.js`.length);
       }
     },
     configureWebpack() {
-      return { resolve: { alias: { '@served-examples': directory } } };
+      return { resolve: { alias: { '@served-examples': `${directory}served-examples`, '@lesson-stages': `${directory}lesson-stages` } } };
     },
   };
 }
@@ -225,7 +251,7 @@ export default {
       {} satisfies PagesOptions,
     ],
     '@docusaurus/plugin-sitemap',
-    servedExamplesPlugin,
+    pageModelsPlugin,
     pageHeadsPlugin,
     backendsPlugin,
     () => ({

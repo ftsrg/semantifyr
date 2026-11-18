@@ -116,7 +116,7 @@ export function bundledExamplesOf(flavorId: string): LiveExample[] {
   return BUNDLED_EXAMPLES[flavorId] ?? [blank(flavorId)];
 }
 
-// the examples live's menu lists: a lesson's step is opened by its address alone, and the blank model has a place of its own
+// the examples live's menu lists: a hidden example is opened by its address alone, and the blank model has a place of its own
 export function listedExamples(flavor: { examples: readonly LiveExample[] }): LiveExample[] {
   return flavor.examples.filter((example) => {
     return example.served !== null && example.served.hidden !== true;

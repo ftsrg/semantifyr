@@ -1,0 +1,56 @@
+/**
+ * A junction of two roads, each with a traffic light and a sensor for waiting cars, modelled directly in one class.
+ * The two lights do not look at each other yet.
+ */
+
+enum LightColor {
+    Red,
+    Yellow,
+    Green,
+}
+
+class Junction {
+    var north: LightColor := LightColor::Red
+    var east: LightColor := LightColor::Red
+    var northCarWaiting: bool := false
+    var eastCarWaiting: bool := false
+
+    redefine tran {
+        havoc(northCarWaiting)
+        havoc(eastCarWaiting)
+        choice {
+            assume(north == LightColor::Red && northCarWaiting)
+            north := LightColor::Green
+        } or {
+            assume(north == LightColor::Green)
+            north := LightColor::Yellow
+        } or {
+            assume(north == LightColor::Yellow)
+            north := LightColor::Red
+        } or {
+            assume(east == LightColor::Red && eastCarWaiting)
+            east := LightColor::Green
+        } or {
+            assume(east == LightColor::Green)
+            east := LightColor::Yellow
+        } or {
+            assume(east == LightColor::Yellow)
+            east := LightColor::Red
+        } or {
+        }
+    }
+}
+
+@VerificationCase
+class NorthCanTurnGreen : Junction {
+    prop {
+        return EF (north == LightColor::Green)
+    }
+}
+
+@VerificationCase
+class NeverBothGreen : Junction {
+    prop {
+        return AG !(north == LightColor::Green && east == LightColor::Green)
+    }
+}

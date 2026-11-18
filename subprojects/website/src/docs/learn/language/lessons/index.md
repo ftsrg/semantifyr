@@ -1,15 +1,14 @@
 ---
-title: 'Traffic Light'
+title: 'Lessons'
 sidebar_position: 0
-description: The lessons of the Semantifyr Language, five levels on a traffic light and an intersection of two, and what you verify at each level.
+description: The lessons of the Semantifyr Language, on a junction of two traffic lights, a crosswalk and a small statechart library they are written on.
 ---
 
-# Traffic Light
+# Lessons
 
-These lessons teach the Semantifyr Language, Semantifyr's language for semantics, on one example: a traffic light, then an intersection of two. Each level adds what its cases need, and each step runs in Live in the place of its code block. They are meant to be read in order.
+These lessons teach the Semantifyr Language on one running example: a junction of two traffic lights and the cars that arrive at it, later a crosswalk with a pedestrian light, and a small statechart library that they are written on. You build the models yourself in Live, and each state of a lesson can be opened from its page. The lessons are meant to be read in order.
 
-1. [One Light](one-light.md): you verify that a light can turn yellow, and read the trace that shows how.
-2. [The Intersection](intersection.md): you verify that two lights are never green together, that they still switch, and that a light turns green only while the other is red.
-3. [The Minimum Green Time](green-time.md): you verify with an integer counter and a case that counts on its own that a light stays green for at least three steps.
-4. [A Statechart Library](library.md): you verify a light built on a library of states and transitions, and a crossing where pedestrians walk only while the traffic light is red.
-5. [Hierarchy, Events and the Environment](hierarchy.md): you verify a light with nested states, entry actions and events sent by its environment, and an emergency that turns an intersection red.
+1. [Modeling and Verification](modeling-and-verification.md): model the junction directly, write its requirements as verification cases, and find and fix a flaw that the obvious guard leaves.
+2. [Semantic Libraries](semantic-libraries.md): write the lights as data on a library that says once how a statechart runs, and reuse it for a crosswalk.
+3. [Semantic Variants](semantic-variants.md): move into the library how the parts of a system step, change that rule as statechart languages differ on it, and see the same junction break its requirements.
+4. [Extending the Library](extending-the-library.md): give the library time, so that a light says as data that it stays green for at least three steps, and grow it further with nested states and events.
