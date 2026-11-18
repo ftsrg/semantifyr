@@ -28,7 +28,7 @@ class SysMLNightlyVerificationTests {
         }
 
         @JvmStatic
-        fun `Nightly Cases Without A Known Verdict Are Recorded`(): List<CorpusEntry> {
+        fun `Nightly Cases Without A Known Verdict Verify Without An Error`(): List<CorpusEntry> {
             return SysMLCorpus.load().entries.filter {
                 it.case.tier == CorpusTier.Nightly && it.case.verdict == CorpusVerdict.Unknown
             }
@@ -44,8 +44,8 @@ class SysMLNightlyVerificationTests {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource
-    suspend fun `Nightly Cases Without A Known Verdict Are Recorded`(entry: CorpusEntry) {
+    suspend fun `Nightly Cases Without A Known Verdict Verify Without An Error`(entry: CorpusEntry) {
         val frontend = helper.buildFrontend(entry, Portfolios.SmartFull, artifactRoot)
-        helper.recordVerificationCase(frontend, entry)
+        helper.checkVerifiesWithoutError(frontend, entry)
     }
 }

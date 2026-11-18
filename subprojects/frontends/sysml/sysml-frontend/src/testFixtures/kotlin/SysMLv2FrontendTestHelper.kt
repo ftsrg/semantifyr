@@ -102,7 +102,7 @@ class SysMLv2FrontendTestHelper {
         return tracePath
     }
 
-    suspend fun recordVerificationCase(
+    suspend fun checkVerifiesWithoutError(
         frontend: SysMLv2Frontend,
         entry: CorpusEntry,
     ) {
@@ -111,6 +111,13 @@ class SysMLv2FrontendTestHelper {
         Assertions.assertNotEquals(VerificationVerdict.Errored, result.verdict) {
             "$entry errored: ${result.message ?: "no message"}"
         }
+    }
+
+    fun expectsWitness(
+        frontend: SysMLv2Frontend,
+        entry: CorpusEntry,
+    ): Boolean {
+        return verifierTestHelper.expectsWitness(verificationCase(frontend, entry), entry.case.expectedVerdict)
     }
 
     suspend fun checkConformance(

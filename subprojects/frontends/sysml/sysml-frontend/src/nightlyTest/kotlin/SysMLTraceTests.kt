@@ -18,9 +18,6 @@ class SysMLTraceTests {
     companion object {
         private val helper = SysMLv2FrontendTestHelper()
         private val artifactRoot = SysMLv2FrontendTestHelper.testArtifactRoot(SysMLTraceTests::class.java)
-
-        // whether a case has a witness follows from its property's root operator and its verdict, which the manifest does not hold: 76 corpus, 4 guarded initial transition and 3 tutorial witnesses among the 118 plus 3 cases the integration suites verify
-        private const val EXPECTED_TRACES = 83
     }
 
     @Test
@@ -44,12 +41,18 @@ class SysMLTraceTests {
             helper.buildFrontend(source, Portfolios.SmartFull, artifactRoot.resolve(source.nameWithoutExtension)) to entries
         }
 
-        val traces = (corpus + guarded + tutorial).flatMap { (frontend, entries) ->
+        val cases = corpus + guarded + tutorial
+        val traces = cases.flatMap { (frontend, entries) ->
             entries.mapNotNull {
                 helper.checkSysMLTrace(frontend, it)
             }
         }
+        val expectedTraces = cases.sumOf { (frontend, entries) ->
+            entries.count {
+                helper.expectsWitness(frontend, it)
+            }
+        }
 
-        assertThat(traces).hasSize(EXPECTED_TRACES)
+        assertThat(traces).isNotEmpty().hasSize(expectedTraces)
     }
 }
