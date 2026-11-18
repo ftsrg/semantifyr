@@ -46,8 +46,16 @@ jobs:
         uses: ./.github/actions/toolchain
         with:
           gradle-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
-      - name: Compile and pack
-        run: ./gradlew assemble -Pwebsite.apiDocs=true
+      - name: Install the backends
+        uses: ./.github/actions/backends
+      - name: Run the unit and adapter suites
+        run: ./gradlew build --continue
+      - name: Publish to SonarCloud
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: .github/scripts/sonar.sh
+      - name: Pack
+        run: ./gradlew pack -Pwebsite.apiDocs=true
       - name: Stop Gradle
         run: ./gradlew --stop
       # the test jobs take what this job compiled from its build cache, as a pull request's run writes no cache entry
@@ -105,31 +113,6 @@ jobs:
           path: subprojects/semantifyr-live/backend/build/distributions/live-image-context.tar.gz
           compression-level: 0
           retention-days: 1
-
-  units-linux:
-    name: Units and adapters (ubuntu-latest)
-    needs: build
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - name: Set up the toolchain
-        uses: ./.github/actions/toolchain
-        with:
-          gradle-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
-          build-cache: true
-      - name: Install the backends
-        uses: ./.github/actions/backends
-      - name: Run the unit and adapter suites
-        run: ./gradlew build --continue
-      - name: Publish to SonarCloud
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: .github/scripts/sonar.sh
 
   # these legs take nothing from the Build job, so they start with the run
   units-windows-macos:
@@ -404,7 +387,7 @@ jobs:
     name: Push the live image
     if: ${{ inputs.publish }}
     needs:
-      - units-linux
+      - build
       - units-windows-macos
       - semantic
       - integration
