@@ -194,6 +194,7 @@ describe('validateResult', () => {
       portfolioId: 'smart',
       report: null,
       witnessUri: witness,
+      traceUri: null,
     }
   }
 
@@ -248,7 +249,7 @@ describe('validateResult', () => {
     expect(validation).toEqual({ name: 'Case', edited: true, status: 'valid', message: null, wallMs: 0, queueMs: 250, serverMs: 2000 })
   })
 
-  it('sends the case location for a flavor that validates by case', async () => {
+  it('sends the case location and the witness for a flavor that validates by case', async () => {
     const client = fakeClient()
 
     await validateResult(client, runningAfter(0), {
@@ -262,7 +263,7 @@ describe('validateResult', () => {
 
     expect(client.sendRequest.mock.calls[0]![1]).toEqual({
       command: 'gamma.witness.validate',
-      arguments: [{ ...verificationCase.location, portfolio: 'smart' }],
+      arguments: [{ ...verificationCase.location, witnessUri, portfolio: 'smart' }],
     })
   })
 

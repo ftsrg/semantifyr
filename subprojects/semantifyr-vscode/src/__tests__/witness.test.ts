@@ -47,11 +47,10 @@ describe('renderTrace', () => {
         ].join('\n'));
     });
 
-    it.each([
-        ['file:/tmp/semantifyr/lamp.Safe/witness.semantifyr', 'Witness'],
-        ['file:/tmp/semantifyr/crossroads.Green/trace.get', 'Gamma trace'],
-    ])('labels the opened file %s as %s', (uri, label) => {
-        expect(renderTrace('Safe', { ...result('failed', counterexample), witnessUri: uri }).split('\n')[4]).toBe(`${label}: ${uri}`);
+    it('lists the Gamma trace before the witness of a result that has both', () => {
+        const traceUri = 'file:/tmp/semantifyr/crossroads.Green/trace.get';
+
+        expect(renderTrace('Safe', { ...result('failed', counterexample), traceUri }).split('\n').slice(4, 7)).toEqual([`Gamma trace: ${traceUri}`, '', `Witness: ${witnessUri}`]);
     });
 
     it('appends the message of a passed verdict to the verdict line', () => {

@@ -81,7 +81,7 @@ class SessionVerificationManagerTest {
 
     private fun result(kind: VerificationKind): Any {
         return when (kind) {
-            VerificationKind.Verify -> VerificationCaseResult(VerificationStatus.PASSED, null, "smart", null, null)
+            VerificationKind.Verify -> VerificationCaseResult(VerificationStatus.PASSED, null, "smart", null, null, null)
             VerificationKind.Validate -> WitnessValidationResult(WitnessValidationStatus.VALID, null, "smart", null, null)
         }
     }
@@ -184,7 +184,7 @@ class SessionVerificationManagerTest {
 
     @Test
     suspend fun `a verify drops the queued validation of the witness its case left`() {
-        val witnessResult = VerificationCaseResult(VerificationStatus.FAILED, null, "smart", null, witnessUri)
+        val witnessResult = VerificationCaseResult(VerificationStatus.FAILED, null, "smart", null, witnessUri, null)
         launch(VerificationKind.Verify, documentUri, 1) {
             witnessResult
         }.await()
@@ -239,7 +239,7 @@ class SessionVerificationManagerTest {
                 ),
             ),
         )
-        val result = VerificationCaseResult(VerificationStatus.PASSED, null, "smart", fakeVerificationReport(VerificationVerdict.Passed, "theta", ReportKind.Run, metrics), null)
+        val result = VerificationCaseResult(VerificationStatus.PASSED, null, "smart", fakeVerificationReport(VerificationVerdict.Passed, "theta", ReportKind.Run, metrics), null, null)
 
         launch(VerificationKind.Verify, documentUri, 1) {
             result

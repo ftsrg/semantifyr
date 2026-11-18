@@ -266,7 +266,7 @@ describe('the chosen view of the trace', () => {
     const language = LANGUAGES.sysml!
     const first = caseState(language, { validated: false, recorded: true })
     const second: typeof first = { ...first, caseInfo: { ...first.caseInfo, id: 'TwoTrainsCanBeInTheCrossing', label: 'TwoTrainsCanBeInTheCrossing' } }
-    const { witnessUri: _witnessUri, ...firstWithoutText } = first
+    const { witnessUri: _witnessUri, traceUri: _traceUri, ...firstWithoutText } = first
     const withoutText: typeof first = { ...firstWithoutText, caseInfo: { ...first.caseInfo, id: 'NoText', label: 'NoText' } }
     const { live, shell } = seedWithTrace(language, first)
     const flavor = live.workspace.get().flavor!
@@ -311,10 +311,10 @@ describe('the text of a trace', () => {
     const language = LANGUAGES.sysml!
     const traced = caseState(language, { validated: false, recorded: true })
     // a document of its own, which no test before opened
-    const witnessUri = 'file:///workspace/traces/Kept.trace.sysml'
-    const kept: typeof traced = { ...traced, caseInfo: { ...traced.caseInfo, id: 'Kept', label: 'Kept' }, witnessUri }
+    const traceUri = 'file:///workspace/traces/Kept.trace.sysml'
+    const kept: typeof traced = { ...traced, caseInfo: { ...traced.caseInfo, id: 'Kept', label: 'Kept' }, traceUri }
     const { live, shell } = seedWithTrace(language, kept)
-    const sysmlTrace = await live.workspace.get().runtime!.api.readDocument(language.traceUri)
+    const sysmlTrace = await live.workspace.get().runtime!.api.readDocument(language.traceUri!)
     live.workspace.get().runtime!.api.readDocument = () => {
       return Promise.resolve(sysmlTrace)
     }

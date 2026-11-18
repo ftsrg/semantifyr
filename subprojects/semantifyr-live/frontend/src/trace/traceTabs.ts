@@ -34,7 +34,7 @@ export function followTraceTabs(live: Live, runtime: LanguageRuntime, languageId
       const view = views.find((candidate) => {
         return candidate.id === followed.view
       })
-      const source = caseState && trace && view?.source ? view.source({ witnessUri: caseState.witnessUri ?? null, caseName: caseRowOf(caseState).name, runtime }) : null
+      const source = caseState && trace && view?.source ? view.source({ witnessUri: caseState.witnessUri ?? null, traceUri: caseState.traceUri ?? null, caseName: caseRowOf(caseState).name }) : null
       if (!trace || !source) {
         reading.delete(tab.id)
         live.tabs.close(tab.id)

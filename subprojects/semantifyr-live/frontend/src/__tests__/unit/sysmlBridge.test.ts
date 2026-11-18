@@ -28,6 +28,7 @@ function failedResult(): VerificationCaseResult {
     portfolioId: 'smart',
     report,
     witnessUri,
+    traceUri: null,
   }
 }
 
@@ -123,7 +124,8 @@ describe('sysml bridge', () => {
       command: 'syside.semantifyr.sysml.trace',
       arguments: [{ uri: fileUri, report, nameMap }],
     })
-    const traceUri = result.witnessUri ?? ''
+    expect(result.witnessUri).toBe(witnessUri)
+    const traceUri = result.traceUri ?? ''
     expect(traceUri).toBe('file:///workspace/traces/LampNeverLit.trace.sysml')
     await expect(bridge.client.sendRequest('semantifyr/live/session/document/read', { uri: traceUri })).resolves.toEqual({ text: 'part def LampNeverLitTrace;' })
   })
@@ -222,10 +224,10 @@ describe('sysml bridge', () => {
 
     expect(result.status).toBe(VerificationStatus.Failed)
     expect(result.message).toContain('no such element')
-    await expect(bridge.client.sendRequest('semantifyr/live/session/document/read', { uri: result.witnessUri })).resolves.toEqual({ text: null })
+    await expect(bridge.client.sendRequest('semantifyr/live/session/document/read', { uri: result.traceUri })).resolves.toEqual({ text: null })
   })
 
-  it('validates the OXSTS witness behind the trace', async () => {
+  it('validates the OXSTS witness through the OXSTS session', async () => {
     const oxsts = stubOxsts()
     const { run, bridge } = verifyRequest(stubWorker(), oxsts.client)
     const result = await run()
@@ -248,17 +250,6 @@ describe('sysml bridge', () => {
 
     expect(bridge.translateNotification('semantifyr/live/session/verification/changed', params)).toEqual({
       active: [{ verificationId: '1', location: { uri: fileUri, range: sysmlRange } }],
-    })
-  })
-
-  it('reports a validation of the OXSTS witness at the trace the page knows', async () => {
-    const { run, bridge } = verifyRequest(stubWorker(), stubOxsts().client)
-    const result = await run()
-    const witnessRange = { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } }
-    const params = { active: [{ verificationId: '2', kind: 'Validate', location: { uri: witnessUri, range: witnessRange } }] }
-
-    expect(bridge.translateNotification('semantifyr/live/session/verification/changed', params)).toEqual({
-      active: [{ verificationId: '2', kind: 'Validate', location: { uri: result.witnessUri, range: witnessRange } }],
     })
   })
 

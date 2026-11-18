@@ -173,7 +173,7 @@ export function createSysmlLanguage(id: string, flavors: readonly LiveFlavor[]):
         runtime.scheduleReconnect()
       }
       onWorkerStopped = handleWorkerStopped
-      return { ...runtime, witnessUriOf: bridge.witnessUriOf }
+      return runtime
     },
   }
 }

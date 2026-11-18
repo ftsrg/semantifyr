@@ -35,6 +35,10 @@ export interface VerificationCaseRequest {
     portfolio?: string;
 }
 
+export interface WitnessValidationRequest extends VerificationCaseRequest {
+    witnessUri?: string;
+}
+
 export const VerificationStatus = {
     Passed: "passed",
     Failed: "failed",
@@ -228,6 +232,7 @@ export interface VerificationCaseResult {
     portfolioId: string | null;
     report: VerificationReport | null;
     witnessUri: string | null;
+    traceUri: string | null;
 }
 
 export const WitnessValidationStatus = {

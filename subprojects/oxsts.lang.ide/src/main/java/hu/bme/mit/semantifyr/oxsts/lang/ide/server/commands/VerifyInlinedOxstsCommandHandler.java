@@ -95,7 +95,7 @@ public class VerifyInlinedOxstsCommandHandler
                         EmptyCoroutineContext.INSTANCE,
                         (scope, continuation) -> verifier.verify(inlinedOxsts, progressContext, continuation));
                 LOGGER.info("LSP verify {}", outcome.getReport().getResult().getVerdict());
-                return VerificationCaseResult.fromOutcome(outcome, portfolio.getId());
+                return VerificationCaseResult.fromOutcome(outcome, portfolio.getId(), null);
             } catch (Exception e) {
                 LOGGER.warn("Verification threw {}", e.getClass().getSimpleName(), e);
                 return VerificationCaseResult.errored(e.toString(), portfolio.getId());

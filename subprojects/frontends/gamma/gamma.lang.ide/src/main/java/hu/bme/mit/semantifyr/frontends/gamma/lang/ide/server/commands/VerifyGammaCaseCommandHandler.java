@@ -119,11 +119,10 @@ public class VerifyGammaCaseCommandHandler
         });
     }
 
-    // the witness pane shows the trace in the case's own language
     private static VerificationCaseResult toCaseResult(GammaVerificationResult gammaResult, String portfolioId) {
         var witness = gammaResult.getWitness();
-        var witnessUri =
+        var traceUri =
                 witness == null ? null : witness.getGammaTracePath().toUri().toString();
-        return VerificationCaseResult.fromReport(gammaResult.getOutcome().getReport(), portfolioId, witnessUri);
+        return VerificationCaseResult.fromOutcome(gammaResult.getOutcome(), portfolioId, traceUri);
     }
 }

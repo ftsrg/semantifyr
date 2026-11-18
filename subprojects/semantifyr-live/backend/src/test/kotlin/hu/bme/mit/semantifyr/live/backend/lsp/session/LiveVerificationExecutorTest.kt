@@ -6,9 +6,11 @@
 
 package hu.bme.mit.semantifyr.live.backend.lsp.session
 
+import com.google.gson.JsonElement
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandGson
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
+import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationRequest
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocument
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionRequestManager
@@ -18,6 +20,7 @@ import org.eclipse.lsp4j.ExecuteCommandParams
 import org.eclipse.xtext.util.CancelIndicator
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
@@ -65,27 +68,47 @@ class LiveVerificationExecutorTest {
 
     @Test
     fun `a result without a trace is returned unchanged`() = runTest {
-        val raw = VerificationCaseResult("passed", "ok", "smart", null, null)
+        val raw = VerificationCaseResult("passed", "ok", "smart", null, null, null)
         val fixture = Fixture(raw)
-        assertThat(executor.execute(fixture.requestManager, fixture.documents, noArgs())).isSameAs(raw)
+        assertThat(executor.execute(fixture.requestManager, fixture.documents, noArgs())).isEqualTo(raw)
     }
 
     @Test
-    fun `a witness URI inside the workspace is rewritten and the inline source dropped`() = runTest {
-        val serverUri = "file:/abs/sessions/x/.artifacts/Case/witness.semantifyr"
+    fun `a witness URI and a trace URI inside the workspace are rewritten to the client's`() = runTest {
+        val witnessUri = "file:/abs/sessions/x/.artifacts/Case/witness.semantifyr"
+        val traceUri = "file:/abs/sessions/x/.artifacts/Case/trace.get"
         val raw = VerificationCaseResult(
             "failed",
             "counterexample",
             "smart",
             null,
-            serverUri,
+            witnessUri,
+            traceUri,
         )
         val fixture = Fixture(raw)
-        whenever(fixture.documents.toClientUri(serverUri)).thenReturn("file:///workspace/.artifacts/Case/witness.semantifyr")
+        whenever(fixture.documents.toClientUri(witnessUri)).thenReturn("file:///workspace/.artifacts/Case/witness.semantifyr")
+        whenever(fixture.documents.toClientUri(traceUri)).thenReturn("file:///workspace/.artifacts/Case/trace.get")
 
         val result = executor.execute(fixture.requestManager, fixture.documents, noArgs()) as VerificationCaseResult
         assertThat(result.status()).isEqualTo("failed")
         assertThat(result.witnessUri()).isEqualTo("file:///workspace/.artifacts/Case/witness.semantifyr")
+        assertThat(result.traceUri()).isEqualTo("file:///workspace/.artifacts/Case/trace.get")
+    }
+
+    @Test
+    fun `the witness a validation by case is given reaches the language server at its server URI`() = runTest {
+        val fixture = Fixture("ignored")
+        val clientWitnessUri = "file:///workspace/.artifacts/Case/witness.semantifyr"
+        val serverWitnessUri = "file:///abs/sessions/x/.artifacts/Case/witness.semantifyr"
+        whenever(fixture.documents.clientToServer(clientWitnessUri)).thenReturn(serverWitnessUri)
+        val request = WitnessValidationRequest("file:///workspace/snippet.gamma", null, "smart", clientWitnessUri)
+
+        executor.execute(fixture.requestManager, fixture.documents, ExecuteCommandParams("gamma.witness.validate", listOf<Any>(CommandGson.INSTANCE.toJsonTree(request))))
+
+        val forwarded = argumentCaptor<ExecuteCommandParams>()
+        verify(fixture.requestManager).executeCommand(forwarded.capture())
+        val forwardedRequest = CommandGson.INSTANCE.fromJson(forwarded.firstValue.arguments.single() as JsonElement, WitnessValidationRequest::class.java)
+        assertThat(forwardedRequest).isEqualTo(WitnessValidationRequest("file:///workspace/snippet.gamma", null, "smart", serverWitnessUri))
     }
 
     @Test
@@ -97,11 +120,12 @@ class LiveVerificationExecutorTest {
             "smart",
             null,
             outsideUri,
+            null,
         )
         val fixture = Fixture(raw)
         whenever(fixture.documents.toClientUri(outsideUri)).thenReturn(outsideUri)
 
-        assertThat(executor.execute(fixture.requestManager, fixture.documents, noArgs())).isSameAs(raw)
+        assertThat(executor.execute(fixture.requestManager, fixture.documents, noArgs())).isEqualTo(raw)
     }
 
     @Test

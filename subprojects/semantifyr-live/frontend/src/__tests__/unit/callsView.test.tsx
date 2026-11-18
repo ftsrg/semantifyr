@@ -30,7 +30,7 @@ function traceOf(...calls: ReportCall[]): ReportTrace {
 
 function show(trace: ReportTrace): HTMLElement {
   const { container } = render(
-    <CallsView trace={trace} witnessUri={null} caseName="Case" verdict="failed" expandedStep={null} expandStep={() => {}} runtime={null} openTab={null} growing={false} wrapping={false} />,
+    <CallsView trace={trace} witnessUri={null} traceUri={null} caseName="Case" verdict="failed" expandedStep={null} expandStep={() => {}} runtime={null} openTab={null} growing={false} wrapping={false} />,
   )
   return container
 }

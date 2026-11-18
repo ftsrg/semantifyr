@@ -8,4 +8,5 @@ package hu.bme.mit.semantifyr.frontends.gamma.lang.ide.server.commands;
 
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclaration;
 
-public record ValidateWitnessCommandParams(VerificationCaseDeclaration caseDeclaration, String portfolioId) {}
+public record ValidateWitnessCommandParams(
+        VerificationCaseDeclaration caseDeclaration, String portfolioId, String witnessUri) {}

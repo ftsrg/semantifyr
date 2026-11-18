@@ -144,13 +144,15 @@ export interface Language {
   caseName: string
   // where the example defines the case
   definition: string
-  traceUri: string
+  witnessUri: string
+  // the language's own trace, absent for a Semantifyr model
+  traceUri?: string
 }
 
 export const LANGUAGES: Readonly<Record<string, Language>> = {
-  sysml: { flavorId: 'sysml', exampleId: 'level-crossing', caseName: 'BarrierDownWhileTrainInCrossing', definition: 'verification def BarrierDownWhileTrainInCrossing', traceUri: SYSML_TRACE_URI },
-  gamma: { flavorId: 'gamma', exampleId: 'level-crossing', caseName: 'BarrierDownWhileTrainInCrossing', definition: 'verification case BarrierDownWhileTrainInCrossing', traceUri: GAMMA_TRACE_URI },
-  oxsts: { flavorId: 'oxsts', exampleId: 'level-crossing', caseName: 'BarrierDownWhileTrainInCrossing', definition: 'class BarrierDownWhileTrainInCrossing', traceUri: OXSTS_WITNESS_URI },
+  sysml: { flavorId: 'sysml', exampleId: 'level-crossing', caseName: 'BarrierDownWhileTrainInCrossing', definition: 'verification def BarrierDownWhileTrainInCrossing', witnessUri: SYSML_WITNESS_URI, traceUri: SYSML_TRACE_URI },
+  gamma: { flavorId: 'gamma', exampleId: 'level-crossing', caseName: 'BarrierDownWhileTrainInCrossing', definition: 'verification case BarrierDownWhileTrainInCrossing', witnessUri: GAMMA_WITNESS_URI, traceUri: GAMMA_TRACE_URI },
+  oxsts: { flavorId: 'oxsts', exampleId: 'level-crossing', caseName: 'BarrierDownWhileTrainInCrossing', definition: 'class BarrierDownWhileTrainInCrossing', witnessUri: OXSTS_WITNESS_URI },
 }
 
 const VALIDATION = reportOf({ verdict: 'Passed', backendId: 'spin:safe', seconds: 0.6, soundness: 'UnderApproximating', kind: 're-check' })
@@ -170,7 +172,8 @@ export function caseState(language: Language, options: { validated: boolean, rec
     resultStatus: 'failed',
     portfolioId: 'smart',
     report: reportOf({ verdict: 'Failed', backendId: 'theta:cegar', seconds: 2.9, soundness: 'UnderApproximating', trace: traceOf(options.recorded, options.timed ?? false) }),
-    witnessUri: language.traceUri,
+    witnessUri: language.witnessUri,
+    ...(language.traceUri ? { traceUri: language.traceUri } : {}),
     ...(options.validated
       ? { waited: 30_000, validationWaited: 4_000, witnessValidation: 'valid' as const, validationReport: VALIDATION, validationPortfolioIdUsed: 'smart' }
       : {}),
@@ -183,9 +186,6 @@ export function seedWithTrace(language: Language, state: VerificationCaseState, 
   if (runtime) {
     runtime.api.readDocument = (uri) => {
       return Promise.resolve(TEXTS[uri] ?? null)
-    }
-    runtime.witnessUriOf = (uri) => {
-      return uri === SYSML_TRACE_URI ? SYSML_WITNESS_URI : undefined
     }
   }
   return seeded

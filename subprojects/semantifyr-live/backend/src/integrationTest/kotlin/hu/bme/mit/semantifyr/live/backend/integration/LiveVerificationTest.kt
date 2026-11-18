@@ -10,6 +10,7 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseSpecification
+import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationStatus
 import hu.bme.mit.semantifyr.live.backend.lsp.service.ReadDocumentParams
@@ -150,7 +151,7 @@ class LiveVerificationTest {
                 )
                 val verifyResult = awaitResponseFor(id = 3, timeout = 2.minutes).resultAs(VerificationCaseResult::class.java)
                 assertThat(verifyResult.status()).isEqualTo(expectedStatus("Simple.gamma", "LeaderStatechartIdleReachable"))
-                val traceUri = verifyResult.witnessUri()
+                val traceUri = verifyResult.traceUri()
                     ?: error("verify produced no trace URI: $verifyResult")
                 assertThat(traceUri).startsWith("file:///workspace/").endsWith("/trace.get")
 
@@ -192,7 +193,11 @@ class LiveVerificationTest {
                 val verifyResult = awaitResponseFor(id = 4, timeout = 2.minutes).resultAs(VerificationCaseResult::class.java)
                 assertThat(verifyResult.status()).isEqualTo(expectedStatus("Simple.gamma", "LeaderStatechartIdleReachable"))
 
-                send(Frame.Text(LspWire.executeCommandRequest(id = 5, command = "gamma.witness.validate", arguments = listOf(request))))
+                val witnessUri = verifyResult.witnessUri()
+                    ?: error("verify produced no witness URI: $verifyResult")
+                assertThat(witnessUri).startsWith("file:///workspace/")
+                val witnessRequest = WitnessValidationRequest(documentUri, selectedCase.location().range, "smart", witnessUri)
+                send(Frame.Text(LspWire.executeCommandRequest(id = 5, command = "gamma.witness.validate", arguments = listOf(witnessRequest))))
                 val validation = awaitResponseFor(id = 5, timeout = 2.minutes).resultAs(WitnessValidationResult::class.java)
                 assertThat(validation.status())
                     .describedAs("witness validation: $validation")

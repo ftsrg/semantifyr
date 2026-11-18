@@ -32,6 +32,7 @@ export const passedResult: VerificationCaseResult = {
   portfolioId: 'smart',
   report: { ...sampleReport, trace: null },
   witnessUri: null,
+  traceUri: null,
 };
 
 export const failedResult: VerificationCaseResult = {
@@ -40,4 +41,5 @@ export const failedResult: VerificationCaseResult = {
   portfolioId: 'smart',
   report: sampleReport,
   witnessUri: 'inmemory:///workspace/snippet.witness.semantifyr',
+  traceUri: null,
 };

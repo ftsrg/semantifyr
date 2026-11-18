@@ -98,14 +98,14 @@ export class WitnessView implements TextDocumentContentProvider {
             return;
         }
         let column = ViewColumn.Beside;
-        const witnessUri = witness.result.witnessUri;
-        if (witnessUri !== null) {
+        const openedUri = witness.result.traceUri ?? witness.result.witnessUri;
+        if (openedUri !== null) {
             try {
-                const editor = await window.showTextDocument(Uri.parse(witnessUri), { viewColumn: ViewColumn.Beside, preview: false });
+                const editor = await window.showTextDocument(Uri.parse(openedUri), { viewColumn: ViewColumn.Beside, preview: false });
                 await commands.executeCommand("workbench.action.files.setActiveEditorReadonlyInSession");
                 column = editor.viewColumn ?? column;
             } catch (error: unknown) {
-                void writeErrorMessage(`${witnessOpenFailureMessage(witnessUri, error)}\n`);
+                void writeErrorMessage(`${witnessOpenFailureMessage(openedUri, error)}\n`);
             }
         }
         const traceDocument = await workspace.openTextDocument(witness.traceUri);
@@ -219,8 +219,11 @@ export function renderTrace(label: string, result: VerificationCaseResult, valid
     if (validation !== undefined) {
         lines.push("", `Validation: ${renderValidation(validation)}`);
     }
+    if (result.traceUri !== null) {
+        lines.push("", `Gamma trace: ${result.traceUri}`);
+    }
     if (result.witnessUri !== null) {
-        lines.push("", `${witnessLabel(result.witnessUri)}: ${result.witnessUri}`);
+        lines.push("", `Witness: ${result.witnessUri}`);
     }
     const trace = report?.trace;
     if (!trace) {
@@ -241,10 +244,6 @@ export function renderTrace(label: string, result: VerificationCaseResult, valid
         lines.push("", `## ${traceStepLabel(index + 1)}`, ...elapsed, "", ...renderCalls(trace, step.calls), "", ...renderChanges(changes));
     });
     return `${lines.join("\n")}\n`;
-}
-
-function witnessLabel(witnessUri: string): string {
-    return witnessUri.endsWith(".get") ? "Gamma trace" : "Witness";
 }
 
 function renderOrigin(result: { backendId: string | null; portfolioId: string | null }, facts: readonly string[] = []): string {

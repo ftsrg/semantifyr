@@ -92,7 +92,7 @@ function reportOf(status: VerificationCaseResult['status'], trace: ReportTrace |
 }
 
 export function result(status: VerificationCaseResult['status'], trace: ReportTrace | null = null, message: string | null = null): VerificationCaseResult {
-    return { status, message, portfolioId: 'theta', report: reportOf(status, trace), witnessUri: trace === null ? null : witnessUri };
+    return { status, message, portfolioId: 'theta', report: reportOf(status, trace), witnessUri: trace === null ? null : witnessUri, traceUri: null };
 }
 
 export function validationReport(): VerificationReport {

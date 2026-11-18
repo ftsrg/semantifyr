@@ -6,9 +6,9 @@
 
 import type {
     Range,
-    VerificationCaseRequest,
     VerificationCaseResult,
     VerificationCaseSpecification,
+    WitnessValidationRequest,
     WitnessValidationResult,
 } from "./wire.ts";
 
@@ -39,6 +39,10 @@ export interface VerificationCaseLocation {
     range: Range;
 }
 
+export interface WitnessValidationLocation extends VerificationCaseLocation {
+    witnessUri?: string;
+}
+
 export interface VerifyCaseOptions {
     portfolio?: string;
     token?: CancellationToken;
@@ -56,20 +60,20 @@ export async function verifyCase(
 export async function validateWitness(
     client: LspClient,
     validationCommand: string,
-    location: VerificationCaseLocation,
+    location: WitnessValidationLocation,
     options: VerifyCaseOptions = {},
 ): Promise<WitnessValidationResult | null> {
     return await executeLocationCommand(client, validationCommand, location, options) as WitnessValidationResult | null;
 }
 
-// gamma.witness.validate takes the case, oxsts.case.validateWitness the back-annotated witness model
+// gamma.witness.validate takes the case and the witness its verification wrote, oxsts.case.validateWitness the back-annotated witness model
 export function witnessValidationLocation(
     caseLocation: VerificationCaseLocation,
     witnessUri: string,
     byCase: boolean,
-): VerificationCaseLocation {
+): WitnessValidationLocation {
     if (byCase) {
-        return caseLocation;
+        return { ...caseLocation, witnessUri };
     }
     return {
         uri: witnessUri,
@@ -80,12 +84,13 @@ export function witnessValidationLocation(
 async function executeLocationCommand(
     client: LspClient,
     command: string,
-    location: VerificationCaseLocation,
+    location: WitnessValidationLocation,
     options: VerifyCaseOptions,
 ): Promise<unknown> {
-    const args: VerificationCaseRequest = {
+    const args: WitnessValidationRequest = {
         uri: location.uri,
         range: location.range,
+        ...(location.witnessUri ? { witnessUri: location.witnessUri } : {}),
         ...(options.portfolio ? { portfolio: options.portfolio } : {}),
     };
     const params = { command, arguments: [args] };

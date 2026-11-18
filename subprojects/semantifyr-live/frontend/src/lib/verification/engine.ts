@@ -12,6 +12,7 @@ import {
   type VerificationCaseResult,
   type VerificationCaseSpecification,
   type VerificationReport,
+  type WitnessValidationLocation,
   type WitnessValidationResult,
   type WitnessValidationStatus,
   verifyCase,
@@ -24,8 +25,6 @@ import {
 } from 'vscode-jsonrpc'
 
 import type { ActiveVerificationInfo, VerificationState as ServerState } from '../api/types'
-
-export type VerificationCaseLocation = Location
 
 export type {
   Location,
@@ -57,6 +56,7 @@ export interface VerificationCaseState {
   message?: string
   report?: VerificationReport
   witnessUri?: string
+  traceUri?: string
   witnessValidation?: WitnessValidationStatus
   validationMessage?: string | undefined
   // True between the trace arriving and the follow-up validateWitness resolving.
@@ -339,6 +339,7 @@ interface VerifyOutcome {
   message?: string
   report?: VerificationReport
   witnessUri?: string
+  traceUri?: string
 }
 
 function toVerifyOutcome(response: VerificationCaseResult | null): VerifyOutcome {
@@ -347,6 +348,7 @@ function toVerifyOutcome(response: VerificationCaseResult | null): VerifyOutcome
     ...(response?.message != null ? { message: response.message } : {}),
     ...(response?.report ? { report: response.report } : {}),
     ...(response?.witnessUri ? { witnessUri: response.witnessUri } : {}),
+    ...(response?.traceUri ? { traceUri: response.traceUri } : {}),
   }
 }
 
@@ -366,6 +368,7 @@ function applyVerifyOutcome(
     ...(outcome.message != null ? { message: outcome.message } : {}),
     ...(outcome.report ? { report: outcome.report } : {}),
     ...(outcome.witnessUri ? { witnessUri: outcome.witnessUri } : {}),
+    ...(outcome.traceUri ? { traceUri: outcome.traceUri } : {}),
     ...(portfolioId !== undefined ? { portfolioId } : {}),
   }
 }
@@ -719,7 +722,7 @@ export interface WitnessValidationOutcome {
 export async function validateWitness(
   client: LspClient,
   validateCommand: string,
-  location: VerificationCaseLocation,
+  location: WitnessValidationLocation,
   options: RunVerificationOptions = {},
   token?: CancellationToken,
 ): Promise<WitnessValidationOutcome> {
@@ -775,7 +778,7 @@ export function dispatchAutoValidation(
   client: LspClient,
   validateCommand: string,
   caseId: string,
-  location: VerificationCaseLocation,
+  location: WitnessValidationLocation,
   setState: StateUpdater,
   options: { validationPortfolioId?: string | undefined } = {},
 ): void {

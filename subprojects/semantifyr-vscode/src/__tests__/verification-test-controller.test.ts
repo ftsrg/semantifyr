@@ -358,7 +358,7 @@ describe('witness validation', () => {
         expect(event.message.contextValue).toBe('semantifyr.witness.validatable');
     });
 
-    it('sends the case location for a validation by case', async () => {
+    it('sends the case location and the witness for a validation by case', async () => {
         await setUp(byCase);
         verify = () => result('failed', counterexample);
         validate = () => valid;
@@ -368,7 +368,7 @@ describe('witness validation', () => {
 
         expect(requests.at(-1)).toEqual({
             method: 'workspace/executeCommand',
-            parameters: { command: 'gamma.witness.validate', arguments: [{ uri: modelUri, range: safeCase.location.range }] },
+            parameters: { command: 'gamma.witness.validate', arguments: [{ uri: modelUri, range: safeCase.location.range, witnessUri }] },
         });
         expect(window.showInformationMessage).toHaveBeenLastCalledWith('Safe: Witness valid (portfolio smart)');
     });
@@ -443,7 +443,7 @@ describe('witness validation', () => {
 
         await run([caseItem('lamp::Safe')]);
 
-        expect((validations()[0]!.parameters as ExecuteCommandParams).arguments).toEqual([{ uri: modelUri, range: safeCase.location.range, portfolio: 'all-agree' }]);
+        expect((validations()[0]!.parameters as ExecuteCommandParams).arguments).toEqual([{ uri: modelUri, range: safeCase.location.range, witnessUri, portfolio: 'all-agree' }]);
     });
 
     it('adds the validation of a passed verdict with a witness to the output at the case', async () => {

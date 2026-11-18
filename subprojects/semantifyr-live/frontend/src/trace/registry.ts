@@ -19,6 +19,7 @@ import { textView, type TraceTextSource } from './TextView'
 export interface TraceViewProps {
   trace: ReportTrace
   witnessUri: string | null
+  traceUri: string | null
   caseName: string
   verdict: VerdictStatus
   expandedStep: number | null
@@ -35,7 +36,7 @@ export type TraceLayout =
   | 'calls'
   | 'text'
 
-export type TraceSourceContext = Pick<TraceViewProps, 'witnessUri' | 'caseName' | 'runtime'>
+export type TraceSourceContext = Pick<TraceViewProps, 'witnessUri' | 'traceUri' | 'caseName'>
 
 export interface TraceView {
   id: string
@@ -57,13 +58,12 @@ function steps(label: string): TraceView {
   return { id: 'steps', label, layout: 'list', View: StepsView }
 }
 
-function witness(label: string, uriOf?: (witnessUri: string | null, runtime: LanguageRuntime | null) => string | null | undefined): TraceView {
+function witness(label: string): TraceView {
   return textView('witness', label, (context) => {
-    const fileUri = uriOf ? uriOf(context.witnessUri, context.runtime) : context.witnessUri
-    return fileUri
+    return context.witnessUri
       ? {
         tabId: 'trace-witness',
-        fileUri,
+        fileUri: context.witnessUri,
         label: `${context.caseName}.witness${OXSTS_EXTENSION}`,
         languageId: 'oxsts',
         banner: TRACE_BANNERS.witness(context.caseName),
@@ -74,21 +74,16 @@ function witness(label: string, uriOf?: (witnessUri: string | null, runtime: Lan
 
 function languageTrace(label: string, languageId: string, fileName: (caseName: string) => string, languageName: string): TraceView {
   return textView('own', label, (context) => {
-    return context.witnessUri
+    return context.traceUri
       ? {
         tabId: 'trace-text',
-        fileUri: context.witnessUri,
+        fileUri: context.traceUri,
         label: fileName(context.caseName),
         languageId,
         banner: TRACE_BANNERS.own(context.caseName, languageName),
       }
       : null
   })
-}
-
-// the Gamma frontend writes its trace beside the witness
-function gammaWitnessOf(witnessUri: string | null): string | null {
-  return witnessUri?.replace(/[^/]*$/, `witness${OXSTS_EXTENSION}`) ?? null
 }
 
 const OXSTS_TRACE: TraceLanguage = {
@@ -107,9 +102,7 @@ const TRACE_LANGUAGES: Readonly<Record<string, TraceLanguage>> = {
       }, 'SysML v2'),
       steps('Steps'),
       CALLS,
-      witness('Witness', (witnessUri, runtime) => {
-        return witnessUri ? runtime?.witnessUriOf?.(witnessUri) : null
-      }),
+      witness('Witness'),
     ],
   },
   gamma: {
@@ -119,7 +112,7 @@ const TRACE_LANGUAGES: Readonly<Record<string, TraceLanguage>> = {
       }, 'Gamma'),
       steps('Steps'),
       CALLS,
-      witness('Witness', gammaWitnessOf),
+      witness('Witness'),
     ],
   },
   oxsts: OXSTS_TRACE,

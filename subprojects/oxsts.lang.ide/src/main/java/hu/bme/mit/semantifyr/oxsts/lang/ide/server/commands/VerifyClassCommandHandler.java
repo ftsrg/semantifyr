@@ -123,7 +123,7 @@ public class VerifyClassCommandHandler
                         "LSP verify '{}' -> {}",
                         targetQualifiedName,
                         outcome.getReport().getResult().getVerdict());
-                var result = VerificationCaseResult.fromOutcome(outcome, portfolio.getId());
+                var result = VerificationCaseResult.fromOutcome(outcome, portfolio.getId(), null);
                 if (serverSettings.keepsTemporaryArtifacts() && result.witnessUri() != null) {
                     witnessOwners.record(URI.createURI(result.witnessUri()), caseResource);
                 }

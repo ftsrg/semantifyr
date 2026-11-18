@@ -51,7 +51,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class WebSocketVerificationFlowTest {
 
-    private val cannedResult = VerificationCaseResult("passed", "ok", "smart", fakeVerificationReport(VerificationVerdict.Passed, "theta"), null)
+    private val cannedResult = VerificationCaseResult("passed", "ok", "smart", fakeVerificationReport(VerificationVerdict.Passed, "theta"), null, null)
 
     private val validationReport = fakeVerificationReport(VerificationVerdict.Passed, "theta", ReportKind.Recheck)
 

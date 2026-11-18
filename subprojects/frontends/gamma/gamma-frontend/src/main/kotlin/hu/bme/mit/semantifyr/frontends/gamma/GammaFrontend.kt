@@ -147,19 +147,6 @@ class GammaFrontend @Inject private constructor(
         return gammaTrace
     }
 
-    // a verify run puts its one case's artifacts, the witness among them, in a single directory under verification/
-    fun findWitness(gammaVerificationCase: GammaVerificationCase): Path? {
-        val verificationDirectory = caseDirectory(gammaVerificationCase).resolve("verification")
-        if (!verificationDirectory.isDirectory()) {
-            return null
-        }
-        return verificationDirectory.listDirectoryEntries().map {
-            it.resolve("witness.$oxstsFileExtension")
-        }.singleOrNull {
-            it.isRegularFile()
-        }
-    }
-
     suspend fun validateWitness(
         gammaVerificationCase: GammaVerificationCase,
         witnessPath: Path,

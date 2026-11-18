@@ -166,7 +166,7 @@ describe('runAllVerifications', () => {
     expect(states.at(-1)!.cases[0]!.validationReport).toEqual(sampleValidationReport);
   });
 
-  it('sends the case location instead of the witness location when the command validates by case', async () => {
+  it('sends the case location and the witness its verification wrote when the command validates by case', async () => {
     const gammaCase = { ...sampleCase('a'), location: { uri: 'file:///workspace/snippet.gamma', range: { start: { line: 4, character: 0 }, end: { line: 6, character: 1 } } } };
     const sendRequest = vi.fn<LspClient['sendRequest']>(async (_method, parameters) => {
       if ((parameters as { command?: string }).command === 'gamma.case.verify') {
@@ -190,10 +190,11 @@ describe('runAllVerifications', () => {
     await vi.waitFor(() => {
       expect(states.at(-1)!.cases[0]!.witnessValidation).toBe('valid');
     });
-    const parameters = sendRequest.mock.calls[1]![1] as { command: string; arguments: { uri: string; range: unknown }[] };
+    const parameters = sendRequest.mock.calls[1]![1] as { command: string; arguments: { uri: string; range: unknown; witnessUri?: string }[] };
     expect(parameters.command).toBe('gamma.witness.validate');
     expect(parameters.arguments[0]!.uri).toBe(gammaCase.location.uri);
     expect(parameters.arguments[0]!.range).toEqual(gammaCase.location.range);
+    expect(parameters.arguments[0]!.witnessUri).toBe(failedResult.witnessUri);
   });
 
   it('skips auto-validation when the trace has no witnessUri', async () => {
