@@ -14,7 +14,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import kotlin.io.path.Path
 
-class ThetaSmokeTest {
+class ThetaAdapterTest {
 
     companion object {
 
@@ -41,7 +41,7 @@ class ThetaSmokeTest {
             case = case,
             verificationPortfolio = SingleBackendPortfolio(ThetaBackend(), ThetaConfig.CegarExplPredCombined),
             validationPortfolio = SingleBackendPortfolio(ThetaBackend(), ThetaConfig.CegarExplPredCombined),
-            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(ThetaSmokeTest::class.java),
+            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(ThetaAdapterTest::class.java),
             expectedVerdict = helper.expectedVerdictFromTags(case),
         )
     }

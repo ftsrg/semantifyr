@@ -16,7 +16,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import kotlin.io.path.Path
 
-class UppaalSmokeTest {
+class UppaalAdapterTest {
 
     companion object {
 
@@ -43,7 +43,7 @@ class UppaalSmokeTest {
             case = case,
             verificationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.Default),
             validationPortfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.Default),
-            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(UppaalSmokeTest::class.java),
+            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(UppaalAdapterTest::class.java),
             expectedVerdict = helper.expectedVerdictFromTags(case),
         )
     }

@@ -12,13 +12,12 @@ import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import org.opentest4j.TestAbortedException
 import java.lang.reflect.Method
 
-// a case whose manifest gives it the nightly's tier
 interface TieredCase {
     val heavy: Boolean
 }
 
 // found by JUnit's extension detection, so that no test names it and no list restates the manifests
-class HeavyCases : InvocationInterceptor {
+class HeavyCaseInterceptor : InvocationInterceptor {
     override fun interceptTestTemplateMethod(
         invocation: InvocationInterceptor.Invocation<Void?>,
         invocationContext: ReflectiveInvocationContext<Method>,

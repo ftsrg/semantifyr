@@ -16,7 +16,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import kotlin.io.path.Path
 
-class NuxmvSmokeTest {
+class NuxmvAdapterTest {
 
     companion object {
 
@@ -43,7 +43,7 @@ class NuxmvSmokeTest {
             case = case,
             verificationPortfolio = SingleBackendPortfolio(NuxmvBackend(), NuxmvConfig.Ic3Invar),
             validationPortfolio = SingleBackendPortfolio(NuxmvBackend(), NuxmvConfig.Ic3Invar),
-            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(NuxmvSmokeTest::class.java),
+            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(NuxmvAdapterTest::class.java),
             expectedVerdict = helper.expectedVerdictFromTags(case),
         )
     }

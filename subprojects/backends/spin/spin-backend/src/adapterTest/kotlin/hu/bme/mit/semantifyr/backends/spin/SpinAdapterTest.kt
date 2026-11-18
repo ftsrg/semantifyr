@@ -16,7 +16,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import kotlin.io.path.Path
 
-class SpinSmokeTest {
+class SpinAdapterTest {
 
     companion object {
 
@@ -43,7 +43,7 @@ class SpinSmokeTest {
             case = case,
             verificationPortfolio = SingleBackendPortfolio(SpinBackend(), SpinConfig.SafeDfs),
             validationPortfolio = SingleBackendPortfolio(SpinBackend(), SpinConfig.SafeDfs),
-            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(SpinSmokeTest::class.java),
+            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(SpinAdapterTest::class.java),
             expectedVerdict = helper.expectedVerdictFromTags(case),
         )
     }
