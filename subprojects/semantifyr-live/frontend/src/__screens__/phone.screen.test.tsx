@@ -213,7 +213,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       // the trace's editor wraps its lines once it has measured its pane, which a slower engine does after the settling time
       await expect.poll(() => {
         return wrapped('.pane-trace .trace-frame')
-      }).toBe(true)
+      }, { timeout: 10_000 }).toBe(true)
     },
     expectState: () => {
       expect(visiblePanes()).toEqual(['Trace'])
