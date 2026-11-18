@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationStatus;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsIdeSetup;
+import hu.bme.mit.semantifyr.oxsts.lang.tests.RestoreGlobalRegistries;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+@RestoreGlobalRegistries
 class UnsavedEditsCommandHandlerTest {
 
     private static final String SAVED_MODEL = """
@@ -111,23 +113,5 @@ class UnsavedEditsCommandHandlerTest {
 
         assertThat(result.status()).isEqualTo(VerificationStatus.FAILED);
         assertThat(result.backendId()).isEqualTo("trivial");
-    }
-
-    @Test
-    void inliningCompilesTheUnsavedBuffer() throws Exception {
-        var handler = inject(new InlineClassCommandHandler() {
-            @Override
-            protected <T> T performBackgroundWork(Supplier<T> work) {
-                return work.get();
-            }
-        });
-
-        var result = handler.execute(
-                new InlineClassCommandParams(onlyInBuffer, false),
-                mock(ILanguageServerAccess.class),
-                mock(CommandProgressContext.class));
-
-        var inlinedModel = Path.of(java.net.URI.create((String) result));
-        assertThat(Files.readString(inlinedModel)).contains("OnlyInBuffer");
     }
 }

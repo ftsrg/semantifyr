@@ -10,6 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.Injector;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsIdeSetup;
+import hu.bme.mit.semantifyr.oxsts.lang.tests.RestoreGlobalRegistries;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsFactory;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage;
@@ -29,6 +30,7 @@ import org.eclipse.xtext.resource.XtextResourceSet;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+@RestoreGlobalRegistries
 class InsertedMemberFormattingTest {
 
     private static Injector injector;
