@@ -91,9 +91,3 @@ fun List<VerificationCaseSpecification>.pickByLabelSuffix(suffix: String): Verif
         it.label().endsWith(suffix)
     } ?: error("Expected verification case ending in '$suffix' in the discovered list: $this")
 }
-
-fun acceptAnyKnownStatus(label: String, result: VerificationCaseResult) {
-    assertThat(result.status())
-        .describedAs("verification status for $label: $result")
-        .isIn("passed", "failed", "inconclusive", "not_supported")
-}

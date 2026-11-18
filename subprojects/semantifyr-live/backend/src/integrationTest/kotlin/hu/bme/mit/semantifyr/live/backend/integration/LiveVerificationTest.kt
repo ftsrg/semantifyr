@@ -18,7 +18,6 @@ import hu.bme.mit.semantifyr.live.backend.testing.LspWire
 import hu.bme.mit.semantifyr.live.backend.testing.StagedTestSupport
 import hu.bme.mit.semantifyr.live.backend.testing.StagedTestSupport.config
 import hu.bme.mit.semantifyr.live.backend.testing.StagedTestSupport.stagedModel
-import hu.bme.mit.semantifyr.live.backend.testing.acceptAnyKnownStatus
 import hu.bme.mit.semantifyr.live.backend.testing.awaitPublishDiagnostics
 import hu.bme.mit.semantifyr.live.backend.testing.awaitResponseFor
 import hu.bme.mit.semantifyr.live.backend.testing.discoverCases
@@ -211,19 +210,23 @@ class LiveVerificationTest {
 
     @Test
     suspend fun `oxsts-with-gamma-library verifies a compiled gamma example`(@TempDir tmp: Path) {
-        verifyFirstCase(
+        verifyCompiledCase(
             tmp = tmp,
             flavor = "oxsts-with-gamma-library",
             modelSource = stagedModel(StagedTestSupport.gammaLibraryModelsDirectory, "semantifyr.live.gammaLibraryModels", "Simple.semantifyr"),
+            caseName = "LeaderStatechartIdleReachable",
+            expectedStatus = expectedStatus("Simple.gamma", "LeaderStatechartIdleReachable"),
         )
     }
 
     @Test
     suspend fun `oxsts-with-sysmlv2-library verifies a compiled sysml example`(@TempDir tmp: Path) {
-        verifyFirstCase(
+        verifyCompiledCase(
             tmp = tmp,
             flavor = "oxsts-with-sysmlv2-library",
             modelSource = stagedModel(StagedTestSupport.sysmlLibraryModelsDirectory, "semantifyr.live.sysmlLibraryModels", "door_access.semantifyr"),
+            caseName = "LockedReachable",
+            expectedStatus = "passed",
         )
     }
 
@@ -251,20 +254,22 @@ class LiveVerificationTest {
         }
     }
 
-    private suspend fun verifyFirstCase(
+    private suspend fun verifyCompiledCase(
         tmp: Path,
         flavor: String,
         modelSource: String,
+        caseName: String,
+        expectedStatus: String,
     ) {
         verifyEndToEnd(
             tmp = tmp,
             flavor = flavor,
             modelSource = modelSource,
             pickCase = {
-                it.first()
+                it.pickByLabelSuffix(caseName)
             },
             assertVerdict = {
-                acceptAnyKnownStatus(flavor, it)
+                assertThat(it.status()).describedAs("$flavor $caseName: $it").isEqualTo(expectedStatus)
             },
             verifyTimeout = 2.minutes,
         )
