@@ -12,7 +12,11 @@ plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
 }
 
-val backendRunServiceProvider = gradle.sharedServices.registerBackendRunService()
+val backendRuns = providers.gradleProperty("backendRuns").map {
+    it.toInt()
+}.orElse(1)
+
+val backendRunServiceProvider = gradle.sharedServices.registerBackendRunService(backendRuns)
 
 val libs = the<LibrariesForLibs>()
 

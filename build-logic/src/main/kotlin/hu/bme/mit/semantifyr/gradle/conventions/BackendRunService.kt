@@ -15,8 +15,8 @@ abstract class BackendRunService : BuildService<BuildServiceParameters.None>
 
 internal const val BACKEND_RUN_SERVICE_NAME = "backendRunService"
 
-fun BuildServiceRegistry.registerBackendRunService(): Provider<BackendRunService> {
+fun BuildServiceRegistry.registerBackendRunService(limit: Provider<Int>): Provider<BackendRunService> {
     return registerIfAbsent(BACKEND_RUN_SERVICE_NAME, BackendRunService::class.java) {
-        maxParallelUsages.set(1)
+        maxParallelUsages.set(limit)
     }
 }
