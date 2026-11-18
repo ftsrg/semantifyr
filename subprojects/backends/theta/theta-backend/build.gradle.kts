@@ -72,7 +72,7 @@ val syncBenchmarkModels = tasks.register<Sync>("syncBenchmarkModels") {
         into("gamma/library")
     }
     from(rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial")) {
-        include("hierarchy.$oxstsFileExtension")
+        include("extending-the-library-nested-states.$oxstsFileExtension")
         into("tutorial")
     }
     into(layout.buildDirectory.dir("benchmark-models"))
