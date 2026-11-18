@@ -15,6 +15,7 @@ import { CaseTrace } from '../trace/CaseTrace'
 import { caseOf, finished, seedLive, type Seed, type Seeded } from './seededLive'
 import { caseState, LANGUAGES, seedWithTrace } from './traces'
 import { noCases } from '../texts'
+import { settledOn } from './settled'
 import { colorModes } from './themes'
 
 // Goal: every phone state the mockup draws lays out in the phone's viewport in both themes, one pane at a time,
@@ -332,10 +333,7 @@ describe('the phone shell', () => {
           return document.querySelector('.monaco-editor .view-line')
         }, { timeout: 60_000 }).toBeTruthy()
         await screen.act?.()
-        await new Promise((resolve) => {
-          setTimeout(resolve, 600)
-        })
-        screen.expectState()
+        await settledOn(screen.expectState)
         expectLayout()
         await page.screenshot({ path: `../../build/screens/${server.browser}/phone-${state}-${colorMode}.png` })
       })

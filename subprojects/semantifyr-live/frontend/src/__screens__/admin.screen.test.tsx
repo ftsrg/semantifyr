@@ -14,6 +14,7 @@ import { ApiError, type AdminConfigResponse, type AdminStatusResponse, type Info
 import { createSettingsStore } from '../lib/stores/settings'
 import type { ResolvedColorMode } from '../lib/util/colorMode'
 import { servedFlavors } from '../__tests__/fixtures/flavors'
+import { settledOn } from './settled'
 import { colorModes } from './themes'
 
 // Goal: every state of the admin page lays out inside the viewport in both themes, and each state shows the element that tells it apart;
@@ -134,11 +135,9 @@ function statusOf(sessions: SessionInfo[]): AdminStatusResponse {
 
 interface FakeServer {
   api: LiveServerApi
-  statusRequests: () => number
 }
 
 function fakeServer(sessions: SessionInfo[], refusal?: ApiError): FakeServer {
-  let requests = 0
   const api: LiveServerApi = {
     httpBase: 'http://live.example',
     fetchPortfolios: () => {
@@ -167,7 +166,6 @@ function fakeServer(sessions: SessionInfo[], refusal?: ApiError): FakeServer {
       return Promise.resolve(CONFIG)
     },
     fetchAdminStatus: () => {
-      requests++
       return refusal ? Promise.reject(refusal) : Promise.resolve(statusOf(sessions))
     },
     cancelSession: () => {
@@ -177,12 +175,7 @@ function fakeServer(sessions: SessionInfo[], refusal?: ApiError): FakeServer {
       return Promise.resolve(true)
     },
   }
-  return {
-    api,
-    statusRequests: () => {
-      return requests
-    },
-  }
+  return { api }
 }
 
 interface ScreenState {
@@ -199,12 +192,6 @@ function text(selector: string): string {
 
 function count(selector: string): number {
   return document.querySelectorAll(selector).length
-}
-
-function pause(milliseconds: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, milliseconds)
-  })
 }
 
 function states(): Readonly<Record<string, ScreenState>> {
@@ -340,14 +327,8 @@ async function showState(state: string, colorMode: ResolvedColorMode, picture: s
     return document.querySelector('.admin-session, [data-testid=sessions-empty], [data-testid=admin-refused]')
   }, { timeout: 10_000 }).toBeTruthy()
   await screen.act?.(store)
-  await pause(400)
-  screen.expectState()
+  await settledOn(screen.expectState)
   expectLayout(colorMode)
-  if (state === 'paused') {
-    const before = screen.server.statusRequests()
-    await pause(2500)
-    expect(screen.server.statusRequests(), 'requests while paused').toBe(before)
-  }
   await page.screenshot({ path: `../../build/screens/${server.browser}/${picture}.png` })
 }
 

@@ -35,6 +35,17 @@ function penDigitizer(): void {
   }
 }
 
+// the editor applies typed text at once and draws it in the next frame, so two frames later it shows what it took
+async function drawn(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    for (let frame = 0; frame < 2; frame++) {
+      await new Promise((resolve) => {
+        requestAnimationFrame(resolve)
+      })
+    }
+  })
+}
+
 async function ready(page: Page): Promise<void> {
   await expect.poll(async () => {
     return phone(page).lines.innerText()
@@ -97,7 +108,7 @@ describe('touch input', () => {
 
       await phone(page).lines.tap()
       await page.keyboard.insertText('locked ')
-      await page.waitForTimeout(300)
+      await drawn(page)
       expect(await phone(page).lines.innerText()).not.toContain('locked')
       await page.getByRole('button', { name: 'Edit' }).first().tap()
       await phone(page).lines.tap()
@@ -108,7 +119,7 @@ describe('touch input', () => {
       }).toContain('unlocked')
       await page.getByRole('button', { name: 'Done' }).first().tap()
       await page.keyboard.insertText('again ')
-      await page.waitForTimeout(300)
+      await drawn(page)
       expect(await phone(page).lines.innerText()).not.toContain('again')
     })
   }

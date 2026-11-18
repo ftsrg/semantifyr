@@ -16,6 +16,7 @@ import { CaseTrace } from '../trace/CaseTrace'
 import { caseOf, finished, seedLive, type Seed, type Seeded } from './seededLive'
 import type { MouseAction } from '../../vitest.screen.config'
 import { caseState, LANGUAGES, seedWithTrace } from './traces'
+import { settledOn } from './settled'
 import { colorModes } from './themes'
 
 // Goal: an embed in a frame of a fixed size fills it and never grows: the document does not scroll, the open trace and the model
@@ -292,15 +293,17 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       await mouse('mouseReleased', x, y, 1)
       await mouse('mousePressed', x, y, 2)
       await mouse('mouseReleased', x, y, 2)
-      await new Promise((resolve) => {
-        setTimeout(resolve, 100)
-      })
+      const narrowest = SPLITS.at(-1)!
+      await expect.poll(() => {
+        return columns().results
+      }).not.toBe(narrowest.results)
       SPLITS.push(columns())
       document.querySelector<HTMLElement>('.embed > .splitter')!.focus()
       await userEvent.keyboard('{ArrowLeft}')
-      await new Promise((resolve) => {
-        setTimeout(resolve, 100)
-      })
+      const reset = SPLITS.at(-1)!
+      await expect.poll(() => {
+        return columns().results
+      }).not.toBe(reset.results)
       SPLITS.push(columns())
     },
     expectState: () => {
@@ -359,10 +362,7 @@ describe('the embed in a fixed frame', () => {
           return document.querySelector('.monaco-editor .view-line')
         }, { timeout: 60_000 }).toBeTruthy()
         await screen.act?.()
-        await new Promise((resolve) => {
-          setTimeout(resolve, 600)
-        })
-        screen.expectState()
+        await settledOn(screen.expectState)
 
         const embed = document.querySelector<HTMLElement>('[data-testid=embed-shell]')!
         const frame = embed.getBoundingClientRect()

@@ -11,6 +11,7 @@ import { page, server } from 'vitest/browser'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
 import { ShellRoot } from '../shells/ShellRoot'
 import { caseOf, finished, seedLive, type Seed } from './seededLive'
+import { settledOn } from './settled'
 import { colorModes } from './themes'
 
 // Goal: a tablet gets the desktop shell, and in either orientation nothing of it overflows the viewport or clips its words
@@ -123,14 +124,13 @@ describe('the desktop shell on a tablet', () => {
           await expect.poll(() => {
             return document.querySelector('.monaco-editor .view-line')
           }, { timeout: 60_000 }).toBeTruthy()
-          await new Promise((resolve) => {
-            setTimeout(resolve, 600)
+          await settledOn(() => {
+            expect(count('[data-testid=desktop-shell]')).toBe(1)
+            for (const name of ['Open', 'Save']) {
+              expect(page.getByRole('button', { name, exact: true }).elements(), `${name} named in the toolbar`).toHaveLength(1)
+            }
+            screen.expectState()
           })
-          expect(count('[data-testid=desktop-shell]')).toBe(1)
-          for (const name of ['Open', 'Save']) {
-            expect(page.getByRole('button', { name, exact: true }).elements(), `${name} named in the toolbar`).toHaveLength(1)
-          }
-          screen.expectState()
           const { scrollWidth, clientWidth } = document.documentElement
           expect(scrollWidth, 'horizontal overflow').toBeLessThanOrEqual(clientWidth)
           expectInViewport('.toolbar .button, .toolbar .segmented-option, .results-header .button, .statusbar')

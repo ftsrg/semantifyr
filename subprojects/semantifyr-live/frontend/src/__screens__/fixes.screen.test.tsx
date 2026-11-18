@@ -14,6 +14,7 @@ import { connectionLost, INITIAL_CONNECTION } from '../lib/stores/connection'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
 import { ShellRoot } from '../shells/ShellRoot'
 import { caseOf, finished, seedLive, type Seed } from './seededLive'
+import { settledOn } from './settled'
 import { colorModes } from './themes'
 
 // Goal: what the desktop shows while a case is run again, in both themes
@@ -154,10 +155,7 @@ describe('the fixes of the desktop shell', () => {
           return document.querySelector('.monaco-editor .view-line, [data-testid=waiting-model]')
         }, { timeout: 60_000 }).toBeTruthy()
         await screen.act?.()
-        await new Promise((resolve) => {
-          setTimeout(resolve, 600)
-        })
-        screen.expectState()
+        await settledOn(screen.expectState)
         await page.screenshot({ path: `../../build/screens/${server.browser}/fixes-${state}-${colorMode}.png` })
       })
     }

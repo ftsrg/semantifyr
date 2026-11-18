@@ -14,6 +14,7 @@ import { ShellRoot } from '../shells/ShellRoot'
 import { CaseTrace } from '../trace/CaseTrace'
 import { caseOf, finished, seedLive, type Seed, type Seeded } from './seededLive'
 import { caseState, LANGUAGES, seedWithTrace } from './traces'
+import { settledOn } from './settled'
 
 // Goal: both embed views lay out at the width the mockup frames them, in both themes, with the real editor
 
@@ -246,10 +247,7 @@ describe('the embed shell', () => {
           return document.querySelector(waiting ? '.code-line' : '.monaco-editor .view-line')
         }, { timeout: 60_000 }).toBeTruthy()
         await screen.act?.()
-        await new Promise((resolve) => {
-          setTimeout(resolve, 600)
-        })
-        screen.expectState()
+        await settledOn(screen.expectState)
 
         const embed = document.querySelector<HTMLElement>('[data-testid=embed-shell]')!
         const box = embed.getBoundingClientRect()
