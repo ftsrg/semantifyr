@@ -17,18 +17,31 @@ import io.ktor.websocket.WebSocketSession
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.eclipse.emf.common.util.URI
+import org.eclipse.lsp4j.DiagnosticSeverity
+import org.eclipse.lsp4j.Position
+import org.eclipse.lsp4j.PublishDiagnosticsParams
+import org.eclipse.lsp4j.Range
+import org.eclipse.lsp4j.services.LanguageClient
+import org.eclipse.xtext.util.CancelIndicator
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.mock
 import java.nio.file.Files
 import java.nio.file.Path
 
 class SessionDocumentManagerTest {
 
+    private companion object {
+        val languageServices by lazy {
+            LiveOxstsLanguageSetup(emptyGlobalsModule())
+                .createInjectorAndDoEMFRegistration()
+                .getInstance(LanguageServices::class.java)
+        }
+    }
+
     private fun buildManager(workingDirectory: Path): SessionDocumentManager {
-        val languageServices = LiveOxstsLanguageSetup(emptyGlobalsModule())
-            .createInjectorAndDoEMFRegistration()
-            .getInstance(LanguageServices::class.java)
         val sessionContext = SessionContext(
             sessionId = "test-session",
             remoteIp = "127.0.0.1",
@@ -185,5 +198,51 @@ class SessionDocumentManagerTest {
     fun `readDocumentText returns null for a missing file`(@TempDir tmp: Path) {
         val manager = buildManager(tmp)
         assertThat(manager.readDocumentText("file:///workspace/ghost.semantifyr")).isNull()
+    }
+
+    @Test
+    fun `validation publishes each issue under the client uri with a zero-based range, its severity and its code`(@TempDir tmp: Path) {
+        val manager = buildManager(tmp)
+        val model = """
+            package test
+
+            class Counter {
+                var count: int := 0
+                var limit: Missing
+
+                redefine tran {
+                    if (1 < 2) {
+                        count := 1
+                    }
+                }
+            }
+        """.trimIndent()
+        manager.openByClient("file:///workspace/snippet.semantifyr", model)
+        val published = mutableListOf<PublishDiagnosticsParams>()
+        val client = mock<LanguageClient> {
+            on { publishDiagnostics(any()) } doAnswer {
+                published += it.getArgument<PublishDiagnosticsParams>(0)
+                Unit
+            }
+        }
+
+        manager.validateAll(client, CancelIndicator.NullImpl)
+
+        val diagnostics = published.single().also {
+            assertThat(it.uri).isEqualTo("file:///workspace/snippet.semantifyr")
+        }.diagnostics
+        assertThat(diagnostics).allSatisfy {
+            assertThat(it.source).isEqualTo("semantifyr")
+        }
+        val unresolved = diagnostics.single {
+            it.code?.left == "org.eclipse.xtext.diagnostics.Diagnostic.Linking"
+        }
+        assertThat(unresolved.severity).isEqualTo(DiagnosticSeverity.Error)
+        assertThat(unresolved.range).isEqualTo(Range(Position(4, 15), Position(4, 22)))
+        val hint = diagnostics.single {
+            it.code?.left == "OXSTS.COULD_BE_INLINE"
+        }
+        assertThat(hint.severity).isEqualTo(DiagnosticSeverity.Hint)
+        assertThat(hint.range).isEqualTo(Range(Position(7, 8), Position(7, 10)))
     }
 }
