@@ -36,7 +36,8 @@ suspend fun runSysMLCli(
     val commandInjector = if (compiler == null) {
         injector
     } else {
-        injector.createChildInjector(
+        // a child's binding blocks the same binding in its parent, so the shared injector gets no child
+        OxstsStandaloneSetup().createInjectorAndDoEMFRegistration().createChildInjector(
             Module {
                 it.bind(SysMLv2Compiler::class.java).toInstance(compiler)
             },
