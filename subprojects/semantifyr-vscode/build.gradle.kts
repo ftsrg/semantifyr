@@ -124,6 +124,8 @@ val bundleExtension = tasks.register<NpmTask>("bundleExtension") {
     inputs.files(editorCommonFiles)
 
     npmCommand.set(listOf("run", "bundle", "--", version, "--no-git-tag-version", "--no-update-package-json"))
+    // both write dist, and the package must not take a development build written beside it
+    mustRunAfter(npmAssemble)
 
     outputs.file(vsixFile)
 }
